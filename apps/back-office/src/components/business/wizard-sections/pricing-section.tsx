@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState as _useState, useEffect as _useEffect } from 'react';
 
 import { DollarSign, Calculator, Info } from 'lucide-react';
 
@@ -26,7 +26,7 @@ interface PricingSectionProps {
 export function PricingSection({
   formData,
   setFormData,
-  onSave,
+  onSave: _onSave,
 }: PricingSectionProps) {
   const updateField = (field: keyof WizardFormData, value: any) => {
     setFormData({

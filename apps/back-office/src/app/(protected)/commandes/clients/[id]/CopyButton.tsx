@@ -24,7 +24,11 @@ export function CopyButton({ text, label = 'Copier' }: CopyButtonProps) {
 
   return (
     <button
-      onClick={handleCopy}
+      onClick={() => {
+        void handleCopy().catch(error => {
+          console.error('[CopyButton] handleCopy failed:', error);
+        });
+      }}
       className="text-xs text-muted-foreground hover:text-foreground underline flex items-center gap-1"
       title={`Copier ${label.toLowerCase()}`}
     >

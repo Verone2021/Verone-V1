@@ -6,10 +6,7 @@ import { Building2, Save, X, Edit, FileText } from 'lucide-react';
 
 import { ButtonV2 } from '@verone/ui';
 import { cn } from '@verone/utils';
-import {
-  useInlineEdit,
-  type EditableSection,
-} from '@verone/common/hooks';
+import { useInlineEdit, type EditableSection } from '@verone/common/hooks';
 
 interface Organisation {
   id: string;

@@ -19,7 +19,6 @@ import { useRouter } from 'next/navigation';
 
 import { ButtonUnified } from '@verone/ui';
 import { spacing, colors } from '@verone/ui/design-system';
-import { cn } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
 import { formatDistanceToNow, format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -29,10 +28,7 @@ import {
   Phone,
   Building2,
   User,
-  Clock,
-  MessageSquare,
   AlertCircle,
-  CheckCircle,
   Edit,
   Save,
   X,
@@ -100,7 +96,11 @@ export default function SubmissionDetailPage({
 
   // Unwrap params (Next.js 15 passes params as Promise for client components)
   useEffect(() => {
-    params.then(p => setId(p.id));
+    void params
+      .then(p => setId(p.id))
+      .catch(error => {
+        console.error('[ContactDetail] Params unwrap failed:', error);
+      });
   }, [params]);
 
   // Fetch data
@@ -127,7 +127,7 @@ export default function SubmissionDetailPage({
         setSubmission(sub);
         setNewStatus(sub.status);
         setNewPriority(sub.priority);
-        setNewNotes(sub.internal_notes || '');
+        setNewNotes(sub.internal_notes ?? '');
 
         // Fetch form type (using any to bypass type checking for new table)
         const { data: type, error: typeError } = await (supabase as any)
@@ -146,7 +146,9 @@ export default function SubmissionDetailPage({
       }
     }
 
-    fetchData();
+    void fetchData().catch(error => {
+      console.error('[ContactDetail] Fetch data failed:', error);
+    });
   }, [id, router]);
 
   // Save status
@@ -209,12 +211,12 @@ export default function SubmissionDetailPage({
 
       const { error } = await (supabase as any)
         .from('form_submissions')
-        .update({ internal_notes: newNotes || null })
+        .update({ internal_notes: newNotes ?? null })
         .eq('id', submission.id);
 
       if (error) throw error;
 
-      setSubmission({ ...submission, internal_notes: newNotes || null });
+      setSubmission({ ...submission, internal_notes: newNotes ?? null });
       setEditingNotes(false);
     } catch (error) {
       console.error('Error updating notes:', error);
@@ -322,7 +324,14 @@ export default function SubmissionDetailPage({
                 <ButtonUnified
                   variant="default"
                   size="sm"
-                  onClick={saveStatus}
+                  onClick={() => {
+                    void saveStatus().catch(error => {
+                      console.error(
+                        '[ContactDetail] Save status failed:',
+                        error
+                      );
+                    });
+                  }}
                   disabled={saving}
                 >
                   <Save className="h-4 w-4 mr-1" />
@@ -369,7 +378,14 @@ export default function SubmissionDetailPage({
                 <ButtonUnified
                   variant="default"
                   size="sm"
-                  onClick={savePriority}
+                  onClick={() => {
+                    void savePriority().catch(error => {
+                      console.error(
+                        '[ContactDetail] Save priority failed:',
+                        error
+                      );
+                    });
+                  }}
                   disabled={saving}
                 >
                   <Save className="h-4 w-4 mr-1" />
@@ -581,7 +597,14 @@ export default function SubmissionDetailPage({
                     <ButtonUnified
                       variant="default"
                       size="sm"
-                      onClick={saveNotes}
+                      onClick={() => {
+                        void saveNotes().catch(error => {
+                          console.error(
+                            '[ContactDetail] Save notes failed:',
+                            error
+                          );
+                        });
+                      }}
                       disabled={saving}
                     >
                       <Save className="h-4 w-4 mr-1" />
@@ -592,7 +615,7 @@ export default function SubmissionDetailPage({
                       size="sm"
                       onClick={() => {
                         setEditingNotes(false);
-                        setNewNotes(submission.internal_notes || '');
+                        setNewNotes(submission.internal_notes ?? '');
                       }}
                     >
                       Annuler
@@ -721,22 +744,29 @@ export default function SubmissionDetailPage({
                   variant="secondary"
                   size="sm"
                   className="w-full"
-                  onClick={async () => {
-                    if (
-                      confirm(
-                        'Convertir cette soumission en commande ? Cette action fermera la soumission.'
-                      )
-                    ) {
-                      const result = await convertToOrder(submission.id, {});
-                      if (result.success) {
-                        alert(
-                          `Commande créée avec succès! ID: ${result.orderId}`
-                        );
-                        router.refresh();
-                      } else {
-                        alert(`Erreur: ${result.error}`);
+                  onClick={() => {
+                    void (async () => {
+                      if (
+                        confirm(
+                          'Convertir cette soumission en commande ? Cette action fermera la soumission.'
+                        )
+                      ) {
+                        const result = await convertToOrder(submission.id, {});
+                        if (result.success) {
+                          alert(
+                            `Commande créée avec succès! ID: ${result.orderId}`
+                          );
+                          router.refresh();
+                        } else {
+                          alert(`Erreur: ${result.error}`);
+                        }
                       }
-                    }
+                    })().catch(error => {
+                      console.error(
+                        '[ContactDetail] Convert to order failed:',
+                        error
+                      );
+                    });
                   }}
                 >
                   Convertir en commande
@@ -746,25 +776,32 @@ export default function SubmissionDetailPage({
                   variant="secondary"
                   size="sm"
                   className="w-full"
-                  onClick={async () => {
-                    if (
-                      confirm(
-                        'Créer une consultation pour cette soumission ? Cette action fermera la soumission.'
-                      )
-                    ) {
-                      const result = await convertToConsultation(
-                        submission.id,
-                        {}
-                      );
-                      if (result.success) {
-                        alert(
-                          `Consultation créée avec succès! ID: ${result.consultationId}`
+                  onClick={() => {
+                    void (async () => {
+                      if (
+                        confirm(
+                          'Créer une consultation pour cette soumission ? Cette action fermera la soumission.'
+                        )
+                      ) {
+                        const result = await convertToConsultation(
+                          submission.id,
+                          {}
                         );
-                        router.refresh();
-                      } else {
-                        alert(`Erreur: ${result.error}`);
+                        if (result.success) {
+                          alert(
+                            `Consultation créée avec succès! ID: ${result.consultationId}`
+                          );
+                          router.refresh();
+                        } else {
+                          alert(`Erreur: ${result.error}`);
+                        }
                       }
-                    }
+                    })().catch(error => {
+                      console.error(
+                        '[ContactDetail] Convert to consultation failed:',
+                        error
+                      );
+                    });
                   }}
                 >
                   Créer une consultation
@@ -774,31 +811,38 @@ export default function SubmissionDetailPage({
                   variant="secondary"
                   size="sm"
                   className="w-full"
-                  onClick={async () => {
-                    const clientId = prompt(
-                      "ID de l'organisation ou enseigne:"
-                    );
-                    if (!clientId) return;
-
-                    const clientType = confirm(
-                      'Cliquez OK pour Organisation, Annuler pour Enseigne'
-                    )
-                      ? 'organisation'
-                      : 'enseigne';
-
-                    const result = await convertToSourcing(submission.id, {
-                      client_type: clientType,
-                      client_id: clientId,
-                    });
-
-                    if (result.success) {
-                      alert(
-                        `Sourcing créé avec succès! ID: ${result.productId}`
+                  onClick={() => {
+                    void (async () => {
+                      const clientId = prompt(
+                        "ID de l'organisation ou enseigne:"
                       );
-                      router.refresh();
-                    } else {
-                      alert(`Erreur: ${result.error}`);
-                    }
+                      if (!clientId) return;
+
+                      const clientType = confirm(
+                        'Cliquez OK pour Organisation, Annuler pour Enseigne'
+                      )
+                        ? 'organisation'
+                        : 'enseigne';
+
+                      const result = await convertToSourcing(submission.id, {
+                        client_type: clientType,
+                        client_id: clientId,
+                      });
+
+                      if (result.success) {
+                        alert(
+                          `Sourcing créé avec succès! ID: ${result.productId}`
+                        );
+                        router.refresh();
+                      } else {
+                        alert(`Erreur: ${result.error}`);
+                      }
+                    })().catch(error => {
+                      console.error(
+                        '[ContactDetail] Convert to sourcing failed:',
+                        error
+                      );
+                    });
                   }}
                 >
                   Créer un sourcing
@@ -808,22 +852,29 @@ export default function SubmissionDetailPage({
                   variant="secondary"
                   size="sm"
                   className="w-full"
-                  onClick={async () => {
-                    if (
-                      confirm(
-                        'Créer un contact CRM pour cette personne ? Cette action fermera la soumission.'
-                      )
-                    ) {
-                      const result = await convertToContact(submission.id);
-                      if (result.success) {
-                        alert(
-                          `Contact créé avec succès! ID: ${result.contactId}`
-                        );
-                        router.refresh();
-                      } else {
-                        alert(`Erreur: ${result.error}`);
+                  onClick={() => {
+                    void (async () => {
+                      if (
+                        confirm(
+                          'Créer un contact CRM pour cette personne ? Cette action fermera la soumission.'
+                        )
+                      ) {
+                        const result = await convertToContact(submission.id);
+                        if (result.success) {
+                          alert(
+                            `Contact créé avec succès! ID: ${result.contactId}`
+                          );
+                          router.refresh();
+                        } else {
+                          alert(`Erreur: ${result.error}`);
+                        }
                       }
-                    }
+                    })().catch(error => {
+                      console.error(
+                        '[ContactDetail] Convert to contact failed:',
+                        error
+                      );
+                    });
                   }}
                 >
                   Créer un contact CRM
@@ -837,16 +888,25 @@ export default function SubmissionDetailPage({
                     variant="default"
                     size="sm"
                     className="w-full"
-                    onClick={async () => {
-                      if (confirm('Marquer cette soumission comme résolue ?')) {
-                        const result = await markAsResolved(submission.id);
-                        if (result.success) {
-                          alert('Soumission marquée comme résolue');
-                          router.refresh();
-                        } else {
-                          alert(`Erreur: ${result.error}`);
+                    onClick={() => {
+                      void (async () => {
+                        if (
+                          confirm('Marquer cette soumission comme résolue ?')
+                        ) {
+                          const result = await markAsResolved(submission.id);
+                          if (result.success) {
+                            alert('Soumission marquée comme résolue');
+                            router.refresh();
+                          } else {
+                            alert(`Erreur: ${result.error}`);
+                          }
                         }
-                      }
+                      })().catch(error => {
+                        console.error(
+                          '[ContactDetail] Mark as resolved failed:',
+                          error
+                        );
+                      });
                     }}
                   >
                     ✓ Marquer comme résolu

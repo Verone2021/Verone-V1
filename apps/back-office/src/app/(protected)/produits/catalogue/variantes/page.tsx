@@ -13,15 +13,11 @@ import {
   Plus,
   Edit3,
   Trash2,
-  Eye,
-  EyeOff,
   ExternalLink,
   Package,
   Palette,
   Ruler,
   Layers,
-  TreePine,
-  FolderOpen,
   Tags,
   X,
   Archive,
@@ -78,7 +74,7 @@ export default function VariantesPage() {
   // Stabiliser les filtres avec useMemo pour éviter boucle infinie
   const stableFilters = useMemo(
     () => ({
-      search: filters.search || undefined,
+      search: filters.search ?? undefined,
       variant_type: filters.type === 'all' ? undefined : (filters.type as any),
       is_active:
         filters.status === 'all' ? undefined : filters.status === 'active',
@@ -92,7 +88,7 @@ export default function VariantesPage() {
     loading,
     error,
     refetch,
-    createVariantGroup,
+    createVariantGroup: _createVariantGroup,
     updateVariantGroup,
     deleteVariantGroup,
     removeProductFromGroup,
@@ -155,7 +151,9 @@ export default function VariantesPage() {
         : await archiveVariantGroup(groupId);
 
       if (result) {
-        refetch();
+        void refetch().catch(error => {
+          console.error('[Variants] Refetch after archive failed:', error);
+        });
         if (activeTab === 'archived') {
           await handleLoadArchivedGroups();
         }
@@ -191,7 +189,9 @@ export default function VariantesPage() {
           title: 'Produit retiré',
           description: `"${productName}" a été retiré du groupe`,
         });
-        refetch();
+        void refetch().catch(error => {
+          console.error('[Variants] Refetch after remove failed:', error);
+        });
       }
     },
     [removeProductFromGroup, toast, refetch]
@@ -200,7 +200,9 @@ export default function VariantesPage() {
   // Charger les groupes archivés quand on change d'onglet
   useEffect(() => {
     if (activeTab === 'archived' && archivedVariantGroups.length === 0) {
-      handleLoadArchivedGroups();
+      void handleLoadArchivedGroups().catch(error => {
+        console.error('[Variants] Load archived groups failed:', error);
+      });
     }
   }, [activeTab, archivedVariantGroups.length, handleLoadArchivedGroups]);
 
@@ -305,7 +307,15 @@ export default function VariantesPage() {
                     <button
                       onClick={e => {
                         e.stopPropagation();
-                        handleRemoveProduct(product.id, product.name);
+                        void handleRemoveProduct(
+                          product.id,
+                          product.name
+                        ).catch(error => {
+                          console.error(
+                            '[Variants] Remove product failed:',
+                            error
+                          );
+                        });
                       }}
                       className="absolute top-0.5 right-0.5 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover/product:opacity-100 transition-opacity hover:bg-red-600"
                       title={`Retirer ${product.name}`}
@@ -368,7 +378,11 @@ export default function VariantesPage() {
               <ButtonV2
                 size="sm"
                 variant="ghost"
-                onClick={() => handleArchiveGroup(group.id, false)}
+                onClick={() => {
+                  void handleArchiveGroup(group.id, false).catch(error => {
+                    console.error('[Variants] Archive group failed:', error);
+                  });
+                }}
                 icon={Archive}
                 className="w-full"
                 title="Archiver le groupe"
@@ -392,7 +406,11 @@ export default function VariantesPage() {
               <ButtonV2
                 size="sm"
                 variant="secondary"
-                onClick={() => handleArchiveGroup(group.id, true)}
+                onClick={() => {
+                  void handleArchiveGroup(group.id, true).catch(error => {
+                    console.error('[Variants] Restore group failed:', error);
+                  });
+                }}
                 icon={ArchiveRestore}
                 className="w-full"
                 title="Restaurer le groupe"
@@ -402,7 +420,11 @@ export default function VariantesPage() {
               <ButtonV2
                 size="sm"
                 variant="destructive"
-                onClick={() => handleDeleteGroup(group.id)}
+                onClick={() => {
+                  void handleDeleteGroup(group.id).catch(error => {
+                    console.error('[Variants] Delete group failed:', error);
+                  });
+                }}
                 icon={Trash2}
                 className="w-full"
                 title="Supprimer le groupe"
@@ -641,8 +663,13 @@ export default function VariantesPage() {
             isOpen={showEditModal}
             onClose={() => setShowEditModal(false)}
             onSuccess={groupId => {
-              console.log('Groupe créé:', groupId);
-              refetch();
+              console.warn('Groupe créé:', groupId);
+              void refetch().catch(error => {
+                console.error(
+                  '[Variants] Refetch after creation failed:',
+                  error
+                );
+              });
               setShowEditModal(false);
             }}
           />
@@ -658,7 +685,9 @@ export default function VariantesPage() {
             }}
             onSubmit={async (groupId, data) => {
               await updateVariantGroup(groupId, data);
-              refetch();
+              void refetch().catch(error => {
+                console.error('[Variants] Refetch after update failed:', error);
+              });
               setShowEditModal(false);
               setEditingGroup(null);
             }}
@@ -675,9 +704,14 @@ export default function VariantesPage() {
               setSelectedGroupForProducts(null);
             }}
             group={selectedGroupForProducts}
-            onSubmit={async data => {
+            onSubmit={async _data => {
               // L'ajout du produit au groupe est géré par le modal
-              refetch();
+              void refetch().catch(error => {
+                console.error(
+                  '[Variants] Refetch after add products failed:',
+                  error
+                );
+              });
               toast({
                 title: 'Produits ajoutés',
                 description:

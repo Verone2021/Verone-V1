@@ -376,7 +376,7 @@ async function createLinkMeOrder(
   // 2. Calculer les totaux avec TVA par ligne
   let productsHt = 0;
   let totalTva = 0;
-  let totalRetrocession = 0;
+  let _totalRetrocession = 0;
 
   for (const item of input.items) {
     const lineTotal = item.quantity * item.unit_price_ht;
@@ -384,7 +384,7 @@ async function createLinkMeOrder(
     productsHt += lineTotal;
     totalTva += lineTva;
     // Commission calculee sur base_price_ht (135EUR), pas sur unit_price_ht (168.75EUR)
-    totalRetrocession +=
+    _totalRetrocession +=
       item.quantity * item.base_price_ht * item.retrocession_rate;
   }
 
@@ -423,7 +423,7 @@ async function createLinkMeOrder(
     total_ht: totalHt,
     total_ttc: totalTtc,
     tax_rate: 0, // TVA calculee par ligne, pas globale
-    notes: input.internal_notes || null,
+    notes: input.internal_notes ?? null,
     // Frais additionnels
     shipping_cost_ht: shippingCostHt,
     insurance_cost_ht: insuranceCostHt,
@@ -432,7 +432,7 @@ async function createLinkMeOrder(
     shipping_address: input.shipping_address
       ? JSON.stringify({
           address_line1: input.shipping_address.address_line1,
-          address_line2: input.shipping_address.address_line2 || '',
+          address_line2: input.shipping_address.address_line2 ?? '',
           city: input.shipping_address.city,
           postal_code: input.shipping_address.postal_code,
           country: input.shipping_address.country || 'FR',
@@ -468,7 +468,7 @@ async function createLinkMeOrder(
     // CORRECTION: utiliser base_price_ht (prix catalogue) et non unit_price_ht (prix vente)
     retrocession_amount:
       item.quantity * item.base_price_ht * item.retrocession_rate,
-    linkme_selection_item_id: item.linkme_selection_item_id || null,
+    linkme_selection_item_id: item.linkme_selection_item_id ?? null,
   }));
 
   const { error: itemsError } = await supabase
@@ -509,10 +509,12 @@ export function useCreateLinkMeOrder() {
 
   return useMutation({
     mutationFn: createLinkMeOrder,
-    onSuccess: () => {
+    onSuccess: async () => {
       // Invalider le cache pour rafraîchir les listes
-      queryClient.invalidateQueries({ queryKey: ['linkme-orders'] });
-      queryClient.invalidateQueries({ queryKey: ['sales-orders'] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['linkme-orders'] }),
+        queryClient.invalidateQueries({ queryKey: ['sales-orders'] }),
+      ]);
     },
   });
 }
@@ -537,13 +539,15 @@ export function useUpdateLinkMeOrder() {
 
   return useMutation({
     mutationFn: updateLinkMeOrder,
-    onSuccess: (_, variables) => {
+    onSuccess: async (_, variables) => {
       // Invalider le cache pour rafraîchir les listes
-      queryClient.invalidateQueries({ queryKey: ['linkme-orders'] });
-      queryClient.invalidateQueries({
-        queryKey: ['linkme-order', variables.id],
-      });
-      queryClient.invalidateQueries({ queryKey: ['sales-orders'] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['linkme-orders'] }),
+        queryClient.invalidateQueries({
+          queryKey: ['linkme-order', variables.id],
+        }),
+        queryClient.invalidateQueries({ queryKey: ['sales-orders'] }),
+      ]);
     },
   });
 }

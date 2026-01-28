@@ -14,7 +14,7 @@ import {
 } from '@verone/organisations';
 import { Badge } from '@verone/ui';
 import { ButtonV2, IconButton } from '@verone/ui';
-import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
+import { Card, CardContent, CardHeader } from '@verone/ui';
 import { Input } from '@verone/ui';
 import {
   Pagination,
@@ -123,7 +123,7 @@ export default function EnseignesPage() {
 
   // Hook pour récupérer les organisations de l'enseigne sélectionnée (pour le modal d'attribution)
   const { enseigne: enseigneWithOrgs } = useEnseigne(
-    assignOrgsEnseigne?.id || ''
+    assignOrgsEnseigne?.id ?? ''
   );
 
   // Charger les enseignes archivées
@@ -162,7 +162,9 @@ export default function EnseignesPage() {
 
   useEffect(() => {
     if (activeTab === 'archived') {
-      loadArchivedEnseignes();
+      void loadArchivedEnseignes().catch(error => {
+        console.error('[Enseignes] Load archived data failed:', error);
+      });
     }
   }, [activeTab]);
 
@@ -234,8 +236,8 @@ export default function EnseignesPage() {
   const handleOpenEditModal = (enseigne: Enseigne) => {
     setFormData({
       name: enseigne.name,
-      description: enseigne.description || '',
-      logo_url: enseigne.logo_url || '',
+      description: enseigne.description ?? '',
+      logo_url: enseigne.logo_url ?? '',
       is_active: enseigne.is_active,
     });
     setEditingEnseigne(enseigne);
@@ -260,14 +262,14 @@ export default function EnseignesPage() {
     try {
       if (editingEnseigne) {
         // En mode édition, ne pas inclure logo_url car géré par EnseigneLogoUploadButton
-        const { logo_url, ...updateData } = formData;
+        const { logo_url: _logo_url, ...updateData } = formData;
         await updateEnseigne({
           id: editingEnseigne.id,
           ...updateData,
         });
       } else {
         // En mode création, pas de logo_url (sera ajouté après)
-        const { logo_url, ...createData } = formData;
+        const { logo_url: _logo_url2, ...createData } = formData;
         await createEnseigne(createData);
       }
       handleCloseModal();
@@ -279,8 +281,12 @@ export default function EnseignesPage() {
   // Archiver/Désarchiver une enseigne
   const handleArchive = async (enseigne: Enseigne) => {
     await toggleEnseigneStatus(enseigne.id);
-    refetch();
-    loadArchivedEnseignes();
+    void refetch().catch(error => {
+      console.error('[Enseignes] Refetch after archive failed:', error);
+    });
+    void loadArchivedEnseignes().catch(error => {
+      console.error('[Enseignes] Load archived after archive failed:', error);
+    });
   };
 
   // Supprimer une enseigne (avec dissociation des organisations)
@@ -292,8 +298,12 @@ export default function EnseignesPage() {
       // Les organisations seront automatiquement dissociées par la cascade FK
       await deleteEnseigne(deleteConfirmEnseigne.id);
       setDeleteConfirmEnseigne(null);
-      refetch();
-      loadArchivedEnseignes();
+      void refetch().catch(error => {
+        console.error('[Enseignes] Refetch after delete failed:', error);
+      });
+      void loadArchivedEnseignes().catch(error => {
+        console.error('[Enseignes] Load archived after delete failed:', error);
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -568,7 +578,12 @@ export default function EnseignesPage() {
                             size="sm"
                             onClick={e => {
                               e.stopPropagation();
-                              handleArchive(enseigne);
+                              void handleArchive(enseigne).catch(error => {
+                                console.error(
+                                  '[Enseignes] Archive action failed:',
+                                  error
+                                );
+                              });
                             }}
                           />
                         </>
@@ -591,7 +606,12 @@ export default function EnseignesPage() {
                             size="sm"
                             onClick={e => {
                               e.stopPropagation();
-                              handleArchive(enseigne);
+                              void handleArchive(enseigne).catch(error => {
+                                console.error(
+                                  '[Enseignes] Archive action failed:',
+                                  error
+                                );
+                              });
                             }}
                           />
                           <IconButton
@@ -733,7 +753,14 @@ export default function EnseignesPage() {
                               size="sm"
                               icon={Archive}
                               label="Archiver"
-                              onClick={() => handleArchive(enseigne)}
+                              onClick={() => {
+                                void handleArchive(enseigne).catch(error => {
+                                  console.error(
+                                    '[Enseignes] Archive action failed:',
+                                    error
+                                  );
+                                });
+                              }}
                             />
                           </>
                         ) : (
@@ -743,7 +770,14 @@ export default function EnseignesPage() {
                               size="sm"
                               icon={ArchiveRestore}
                               label="Restaurer"
-                              onClick={() => handleArchive(enseigne)}
+                              onClick={() => {
+                                void handleArchive(enseigne).catch(error => {
+                                  console.error(
+                                    '[Enseignes] Archive action failed:',
+                                    error
+                                  );
+                                });
+                              }}
                             />
                             <IconButton
                               variant="danger"
@@ -843,7 +877,14 @@ export default function EnseignesPage() {
                   enseigneId={editingEnseigne.id}
                   enseigneName={editingEnseigne.name}
                   currentLogoUrl={editingEnseigne.logo_url}
-                  onUploadSuccess={() => refetch()}
+                  onUploadSuccess={() => {
+                    void refetch().catch(error => {
+                      console.error(
+                        '[Enseignes] Refetch after upload failed:',
+                        error
+                      );
+                    });
+                  }}
                   size="md"
                 />
               </div>
@@ -874,7 +915,11 @@ export default function EnseignesPage() {
             </ButtonV2>
             <ButtonV2
               variant="primary"
-              onClick={handleSubmit}
+              onClick={() => {
+                void handleSubmit().catch(error => {
+                  console.error('[Enseignes] Submit failed:', error);
+                });
+              }}
               loading={isSubmitting}
               disabled={!formData.name.trim()}
             >
@@ -941,7 +986,11 @@ export default function EnseignesPage() {
             </ButtonV2>
             <ButtonV2
               variant="destructive"
-              onClick={handleDelete}
+              onClick={() => {
+                void handleDelete().catch(error => {
+                  console.error('[Enseignes] Delete failed:', error);
+                });
+              }}
               loading={isSubmitting}
             >
               Supprimer définitivement
@@ -970,7 +1019,12 @@ export default function EnseignesPage() {
           return await unlinkOrganisationFromEnseigne(organisationId);
         }}
         onSuccess={() => {
-          refetch();
+          void refetch().catch(error => {
+            console.error(
+              '[Enseignes] Refetch after assign success failed:',
+              error
+            );
+          });
         }}
       />
     </div>

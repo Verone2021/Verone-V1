@@ -1,8 +1,10 @@
 'use client';
 
 import { use } from 'react';
-import Link from 'next/link';
+
 import Image from 'next/image';
+import Link from 'next/link';
+
 import { ArrowLeft, Store, Package, ArrowRight } from 'lucide-react';
 
 import { useAffiliateBySlug } from '../../../lib/hooks/use-linkme-public';

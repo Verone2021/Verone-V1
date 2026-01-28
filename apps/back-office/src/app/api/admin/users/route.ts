@@ -40,11 +40,11 @@ export async function GET() {
     }
 
     // Vérifier rôle owner
-    const { data: profile, error: profileError } = (await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('user_profiles')
       .select('role')
       .eq('user_id', user.id)
-      .single()) as { data: any; error: any };
+      .single();
 
     if (profileError || profile?.role !== 'owner') {
       return NextResponse.json(
@@ -54,7 +54,7 @@ export async function GET() {
     }
 
     // Récupérer tous les utilisateurs
-    const { data: profiles, error: profilesError } = (await supabase
+    const { data: profiles, error: profilesError } = await supabase
       .from('user_profiles')
       .select(
         `
@@ -64,7 +64,7 @@ export async function GET() {
         role
       `
       )
-      .order('last_name')) as { data: any[]; error: any };
+      .order('last_name');
 
     if (profilesError) {
       throw profilesError;
@@ -79,13 +79,10 @@ export async function GET() {
         );
 
         // Stats d'activité via fonction SQL
-        const { data: stats } = await (supabase as any).rpc(
-          'get_user_activity_stats',
-          {
-            p_user_id: profile.user_id,
-            p_days: 30,
-          }
-        );
+        const { data: stats } = await supabase.rpc('get_user_activity_stats', {
+          p_user_id: profile.user_id,
+          p_days: 30,
+        });
 
         const userStats = stats?.[0] || {
           total_sessions: 0,

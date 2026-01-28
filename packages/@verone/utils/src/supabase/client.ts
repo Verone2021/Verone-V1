@@ -2,8 +2,11 @@
  * 🔧 Supabase Client - Client Side
  *
  * Configuration client pour authentification et requêtes
- * Singleton pattern par app pour éviter multiple GoTrueClient instances
- * et isoler les sessions entre apps (back-office, linkme, site)
+ * Singleton pattern pour éviter multiple GoTrueClient instances
+ *
+ * NOTE: Toutes les apps partagent le même cookie Supabase par défaut.
+ * L'isolation des sessions par app n'est PAS supportée par @supabase/ssr.
+ * Les permissions sont gérées côté serveur via RLS et user_app_roles.
  */
 
 import { createBrowserClient } from '@supabase/ssr';
@@ -53,20 +56,37 @@ const ssrMockClient: any = {
 };
 
 /**
- * Crée un client Supabase pour le navigateur avec cookie isolé par app
+ * Détecte automatiquement l'app courante basée sur l'URL
+ * Utilisé quand appName n'est pas fourni explicitement
+ */
+function detectApp(): AppName {
+  if (typeof window === 'undefined') return 'backoffice';
+
+  const hostname = window.location.hostname;
+  const port = window.location.port;
+
+  // Détection par port (dev local)
+  if (port === '3002') return 'linkme';
+  if (port === '3001') return 'site';
+
+  // Détection par hostname (production)
+  if (hostname.includes('linkme')) return 'linkme';
+  if (hostname.includes('site')) return 'site';
+
+  return 'backoffice';
+}
+
+/**
+ * Crée un client Supabase pour le navigateur
  *
- * @param appName - Nom de l'app ('backoffice', 'linkme', 'site')
- * @returns Client Supabase configuré avec cookie distinct
+ * @param appName - Nom de l'app (optionnel, pour logging/debug)
+ * @returns Client Supabase avec cookie par défaut
  *
  * @example
- * // Back-office (défaut)
  * const supabase = createClient();
- *
- * // LinkMe
- * const supabase = createClient('linkme');
  */
 export const createClient = (
-  appName: AppName = 'backoffice'
+  appName?: AppName
 ): ReturnType<typeof createBrowserClient<Database>> => {
   // CRITICAL: Prevent SSR/SSG execution
   // During Next.js static generation, window is not defined
@@ -75,26 +95,23 @@ export const createClient = (
     return ssrMockClient;
   }
 
-  // ✅ FIX: Utiliser le cache global pour résister au HMR
+  // Auto-détection de l'app (pour debug/logging uniquement)
+  const resolvedAppName = appName ?? detectApp();
+
+  // Utiliser le cache global pour résister au HMR
   const clients: ClientsCache = (globalThis as any)[globalKey] || {};
 
-  if (!clients[appName]) {
-    // Back-office utilise le cookie par défaut (rétrocompatibilité)
-    // LinkMe et Site utilisent des cookies distincts pour isoler les sessions
-    const options =
-      appName === 'backoffice'
-        ? {} // Cookie par défaut: sb-{PROJECT_ID}-auth-token
-        : { cookieOptions: { name: `sb-${appName}-auth` } };
-
-    clients[appName] = createBrowserClient<Database>(
+  if (!clients[resolvedAppName]) {
+    // Toutes les apps utilisent le cookie par défaut: sb-{PROJECT_ID}-auth-token
+    // L'option cookieOptions de createBrowserClient n'est PAS supportée par @supabase/ssr
+    clients[resolvedAppName] = createBrowserClient<Database>(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      options
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
 
     // Persister dans le cache global
     (globalThis as any)[globalKey] = clients;
   }
 
-  return clients[appName];
+  return clients[resolvedAppName];
 };

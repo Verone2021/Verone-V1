@@ -25,6 +25,7 @@ import {
   TableHeader,
   TableRow,
 } from '@verone/ui';
+import { LINKME_CONSTANTS } from '@verone/utils';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import {
@@ -344,7 +345,11 @@ export function OrderDetailModal({
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right font-semibold text-emerald-600">
-                        +{formatPrice(item.affiliate_margin * 1.2)}
+                        +
+                        {formatPrice(
+                          item.affiliate_margin *
+                            (1 + LINKME_CONSTANTS.DEFAULT_TAX_RATE)
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -384,7 +389,11 @@ export function OrderDetailModal({
                     Votre Commission TTC
                   </p>
                   <p className="text-lg font-bold text-emerald-600">
-                    +{formatPrice(order.total_affiliate_margin * 1.2)}
+                    +
+                    {formatPrice(
+                      order.total_affiliate_margin *
+                        (1 + LINKME_CONSTANTS.DEFAULT_TAX_RATE)
+                    )}
                   </p>
                 </div>
               </div>

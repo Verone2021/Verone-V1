@@ -44,9 +44,9 @@ import {
   useEnseigneOrganisations,
   type EnseigneOrganisation,
 } from '../../../lib/hooks/use-enseigne-organisations';
+import { useOrganisationContacts } from '../../../lib/hooks/use-organisation-contacts';
 import { useOrganisationStats } from '../../../lib/hooks/use-organisation-stats';
 import { useUserAffiliate } from '../../../lib/hooks/use-user-selection';
-import { useOrganisationContacts } from '../../../lib/hooks/use-organisation-contacts';
 
 // Import dynamique de la carte (SSR désactivé)
 const MapLibreMapView = dynamic(
@@ -93,7 +93,7 @@ function OrganisationsPageContent(): JSX.Element | null {
   // Déterminer si l'onglet Contacts doit être affiché
   // Visible uniquement pour enseigne_admin
   const showContactsTab = linkMeRole?.role === 'enseigne_admin' && !!enseigneId;
-  const contactsCount = enseigneContactsData?.contacts.length || 0;
+  const contactsCount = enseigneContactsData?.contacts.length ?? 0;
 
   // Mutation archivage
   const { mutate: archiveOrg, isPending: isArchiving } =
@@ -210,9 +210,9 @@ function OrganisationsPageContent(): JSX.Element | null {
     return filtered.filter(
       org =>
         org.legal_name.toLowerCase().includes(searchLower) ||
-        org.trade_name?.toLowerCase().includes(searchLower) ||
-        org.city?.toLowerCase().includes(searchLower) ||
-        org.shipping_city?.toLowerCase().includes(searchLower)
+        (org.trade_name?.toLowerCase().includes(searchLower) ?? false) ||
+        (org.city?.toLowerCase().includes(searchLower) ?? false) ||
+        (org.shipping_city?.toLowerCase().includes(searchLower) ?? false)
     );
   }, [organisations, searchTerm, activeTab]);
 
@@ -617,7 +617,7 @@ function OrganisationsPageContent(): JSX.Element | null {
         open={archiveDialogOpen}
         onOpenChange={setArchiveDialogOpen}
         title="Archiver cette organisation ?"
-        description={`${orgToArchive?.trade_name || orgToArchive?.legal_name || 'Cette organisation'} sera archivée. L'équipe Vérone sera notifiée.`}
+        description={`${orgToArchive?.trade_name ?? orgToArchive?.legal_name ?? 'Cette organisation'} sera archivée. L'équipe Vérone sera notifiée.`}
         confirmText="Archiver"
         cancelText="Annuler"
         variant="destructive"
@@ -629,8 +629,8 @@ function OrganisationsPageContent(): JSX.Element | null {
       <QuickEditShippingAddressModal
         organisationId={shippingAddressModalOrg?.id ?? ''}
         organisationName={
-          shippingAddressModalOrg?.trade_name ||
-          shippingAddressModalOrg?.legal_name ||
+          shippingAddressModalOrg?.trade_name ??
+          shippingAddressModalOrg?.legal_name ??
           ''
         }
         isOpen={!!shippingAddressModalOrg}
@@ -640,8 +640,8 @@ function OrganisationsPageContent(): JSX.Element | null {
       <QuickEditOwnershipTypeModal
         organisationId={ownershipTypeModalOrg?.id ?? ''}
         organisationName={
-          ownershipTypeModalOrg?.trade_name ||
-          ownershipTypeModalOrg?.legal_name ||
+          ownershipTypeModalOrg?.trade_name ??
+          ownershipTypeModalOrg?.legal_name ??
           ''
         }
         isOpen={!!ownershipTypeModalOrg}

@@ -11,7 +11,7 @@ import { useState, useEffect, useMemo } from 'react';
 
 import { createClient } from '@verone/utils/supabase/client';
 
-export interface QueryOptions<T> {
+export interface QueryOptions<T = any> {
   tableName: string;
   select?: string;
   filters?: (query: any) => any;
@@ -81,7 +81,9 @@ export function useSupabaseQuery<T>(options: QueryOptions<T>): QueryState<T> {
 
   useEffect(() => {
     if (options.autoFetch !== false) {
-      fetch();
+      void fetch().catch(error => {
+        console.error('[useSupabaseQuery] useEffect fetch failed:', error);
+      });
     }
   }, [options.tableName]);
 

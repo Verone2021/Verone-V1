@@ -28,9 +28,10 @@ import {
   DialogHeader,
   DialogTitle,
   Input,
-  Label,
+  Label as _Label,
   Separator,
 } from '@verone/ui';
+import { calculateMargin, LINKME_CONSTANTS } from '@verone/utils';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import {
@@ -109,7 +110,7 @@ export function EditOrderModal({
           _delete: false,
         }))
       );
-      setDesiredDeliveryDate(order.desired_delivery_date || '');
+      setDesiredDeliveryDate(order.desired_delivery_date ?? '');
     }
   }, [order]);
 
@@ -125,15 +126,18 @@ export function EditOrderModal({
         productsHt = roundMoney(
           productsHt + item.quantity * item.unit_price_ht
         );
-        // Commission = base_price_ht * margin_rate * quantity
+        // ✅ SSOT: Utiliser calculateMargin pour obtenir le gain correct
+        const { gainEuros } = calculateMargin({
+          basePriceHt: item.base_price_ht,
+          marginRate: item.margin_rate,
+        });
         totalCommission = roundMoney(
-          totalCommission +
-            item.quantity * item.base_price_ht * item.margin_rate
+          totalCommission + gainEuros * item.quantity
         );
       }
     }
 
-    const shippingHt = order?.shipping_cost_ht || 0;
+    const shippingHt = order?.shipping_cost_ht ?? 0;
     const totalHt = roundMoney(productsHt + shippingHt);
     const totalTtc = roundMoney(totalHt * 1.2); // TVA 20%
 
@@ -151,7 +155,7 @@ export function EditOrderModal({
     if (!order) return false;
 
     const dateChanged =
-      desiredDeliveryDate !== (order.desired_delivery_date || '');
+      desiredDeliveryDate !== (order.desired_delivery_date ?? '');
     const itemsChanged = items.some(
       item => item.quantity !== item.originalQuantity || item._delete
     );
@@ -209,7 +213,7 @@ export function EditOrderModal({
         onSuccess?.();
         onClose();
       } else {
-        toast.error(result.error || 'Erreur lors de la mise à jour');
+        toast.error(result.error ?? 'Erreur lors de la mise à jour');
       }
     } catch (error) {
       console.error('Erreur mise à jour:', error);
@@ -446,10 +450,14 @@ export function EditOrderModal({
                 </div>
                 <div className="flex justify-between pt-2 border-t border-emerald-200 bg-emerald-50 -mx-4 px-4 py-2 rounded-b-lg">
                   <span className="text-emerald-700 font-medium">
-                    Votre commission
+                    Votre commission TTC
                   </span>
                   <span className="text-lg font-bold text-emerald-600">
-                    +{formatPrice(totals.totalCommission * 1.2)}
+                    +
+                    {formatPrice(
+                      totals.totalCommission *
+                        (1 + LINKME_CONSTANTS.DEFAULT_TAX_RATE)
+                    )}
                   </span>
                 </div>
               </div>
@@ -484,7 +492,11 @@ export function EditOrderModal({
             Annuler
           </Button>
           <Button
-            onClick={handleSave}
+            onClick={() => {
+              void handleSave().catch(error => {
+                console.error('[EditOrderModal] Save failed:', error);
+              });
+            }}
             disabled={!hasChanges || updateOrder.isPending || !isEditable}
             className="bg-[#5DBEBB] hover:bg-[#4DAEAB] text-white"
           >

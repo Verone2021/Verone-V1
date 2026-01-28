@@ -41,7 +41,7 @@ export function useFeaturedSelections() {
         throw error;
       }
 
-      return (data as unknown as SelectionWithAffiliate[]) || [];
+      return (data as unknown as SelectionWithAffiliate[]) ?? [];
     },
     staleTime: 60000, // 1 minute
   });
@@ -66,7 +66,7 @@ export function useActiveAffiliates() {
         throw error;
       }
 
-      return (data as unknown as LinkMeAffiliate[]) || [];
+      return (data as unknown as LinkMeAffiliate[]) ?? [];
     },
     staleTime: 60000,
   });
@@ -114,7 +114,7 @@ export function useAffiliateBySlug(slug: string) {
         ...(affiliate as unknown as LinkMeAffiliate),
         selections: (selections ||
           []) as unknown as AffiliateWithSelections['selections'],
-        selections_count: selections?.length || 0,
+        selections_count: selections?.length ?? 0,
       };
     },
     enabled: !!slug,
@@ -189,7 +189,9 @@ export function useSelectionWithProducts(
       }
 
       // Récupérer les images primaires des produits
-      const productIds = items?.map((item: any) => item.product_id) || [];
+      const productIds = (items ?? []).map(
+        item => (item as { product_id: string }).product_id
+      );
       const { data: images } = await supabase
         .from('product_images')
         .select('product_id, public_url')
@@ -197,17 +199,26 @@ export function useSelectionWithProducts(
         .eq('is_primary', true);
 
       const imageMap = new Map(
-        (images || []).map((img: any) => [img.product_id, img.public_url])
+        (images ?? []).map(img => [
+          (img as { product_id: string }).product_id,
+          (img as { public_url: string }).public_url,
+        ])
       );
 
       // Enrichir les items avec les images
-      const enrichedItems = (items || []).map((item: any) => ({
-        ...item,
-        product: {
-          ...item.product,
-          primary_image_url: imageMap.get(item.product_id) || null,
-        },
-      }));
+      const enrichedItems = (items ?? []).map(item => {
+        const typedItem = item as {
+          product_id: string;
+          product: Record<string, unknown>;
+        };
+        return {
+          ...item,
+          product: {
+            ...typedItem.product,
+            primary_image_url: imageMap.get(typedItem.product_id) ?? null,
+          },
+        };
+      });
 
       return {
         ...selection,
@@ -230,7 +241,7 @@ export function useSelectionWithProducts(
  */
 export function useIncrementSelectionViews() {
   return async (selectionId: string) => {
-    // Cast as any car RPC non typée dans les types générés
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
     const { error } = await (supabase as any).rpc('increment_selection_views', {
       p_selection_id: selectionId,
     });
@@ -257,13 +268,13 @@ function getLogoPublicUrl(logoPath: string | null): string | null {
   if (!logoPath) return null;
 
   // Si c'est déjà une URL complète, la retourner telle quelle
-  if (logoPath.startsWith('http://') || logoPath.startsWith('https://')) {
+  if (logoPath.startsWith('http://') ?? logoPath.startsWith('https://')) {
     return logoPath;
   }
 
   // Construire l'URL publique Supabase Storage
   const { data } = supabase.storage.from('logos').getPublicUrl(logoPath);
-  return data?.publicUrl || null;
+  return data?.publicUrl ?? null;
 }
 
 // ID du canal LinkMe dans channel_pricing
@@ -336,9 +347,9 @@ export function useVisibleSuppliers() {
       }
 
       // Transformer en format VisibleSupplier avec URL logo complète
-      return (suppliers || []).map(s => ({
+      return (suppliers ?? []).map(s => ({
         id: s.id,
-        name: s.trade_name || s.legal_name || 'Fournisseur',
+        name: s.trade_name ?? s.legal_name ?? 'Fournisseur',
         logo_url: getLogoPublicUrl(s.logo_url),
       }));
     },

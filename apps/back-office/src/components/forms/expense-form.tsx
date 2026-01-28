@@ -132,7 +132,9 @@ export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
       }
     }
 
-    fetchData();
+    void fetchData().catch(error => {
+      console.error('[ExpenseForm] fetchData failed:', error);
+    });
   }, []);
 
   // Auto-générer numéro dépense
@@ -162,7 +164,9 @@ export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
       }
     }
 
-    generateDocumentNumber();
+    void generateDocumentNumber().catch(error => {
+      console.error('[ExpenseForm] generateDocumentNumber failed:', error);
+    });
   }, []);
 
   // Calcul automatique TVA et TTC
@@ -383,13 +387,20 @@ export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
   };
 
   // Handler upload fichier
-  const handleFileUpload = (url: string, fileName: string) => {
+  const handleFileUpload = (url: string, _fileName: string) => {
     setFormData({ ...formData, uploaded_file_url: url });
     setHasUploadedFile(true);
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form
+      onSubmit={e => {
+        void handleSubmit(e).catch(error => {
+          console.error('[ExpenseForm] handleSubmit failed:', error);
+        });
+      }}
+      className="space-y-6"
+    >
       <Card>
         <CardHeader>
           <CardTitle>Informations Dépense</CardTitle>
@@ -574,7 +585,7 @@ export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
                     type="number"
                     step="0.01"
                     min="0"
-                    value={formData.vatLine10Ht || ''}
+                    value={formData.vatLine10Ht ?? ''}
                     onChange={e =>
                       setFormData({
                         ...formData,
@@ -595,7 +606,7 @@ export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
                     type="number"
                     step="0.01"
                     min="0"
-                    value={formData.vatLine20Ht || ''}
+                    value={formData.vatLine20Ht ?? ''}
                     onChange={e =>
                       setFormData({
                         ...formData,

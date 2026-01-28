@@ -99,29 +99,39 @@ export function useOrganisationContacts(
         .eq('is_active', true);
 
       // Filtrer selon ownership_type et mode d'affichage
-      if (ownershipType === 'franchise' && includeEnseigneContacts && enseigneId && organisationId) {
+      if (
+        ownershipType === 'franchise' &&
+        includeEnseigneContacts &&
+        enseigneId &&
+        organisationId
+      ) {
         // FRANCHISE + Bouton cliqué : Contacts restaurant + contacts enseigne
         // Note: Le filtrage billing/delivery sera fait côté UI (contacts enseigne = responsable commande uniquement)
         query = query.or(
           `organisation_id.eq.${organisationId},enseigne_id.eq.${enseigneId}`
         );
-
       } else if (ownershipType === 'franchise' && organisationId) {
         // FRANCHISE (défaut) : Seulement contacts restaurant
         query = query.eq('organisation_id', organisationId);
-
-      } else if (ownershipType === 'succursale' && includeEnseigneContacts && enseigneId && organisationId) {
+      } else if (
+        ownershipType === 'succursale' &&
+        includeEnseigneContacts &&
+        enseigneId &&
+        organisationId
+      ) {
         // SUCCURSALE + Bouton cliqué : Contacts enseigne uniquement
         query = query.or(
           `enseigne_id.eq.${enseigneId},and(organisation_id.eq.${organisationId},enseigne_id.eq.${enseigneId})`
         );
-
-      } else if (ownershipType === 'succursale' && enseigneId && organisationId) {
+      } else if (
+        ownershipType === 'succursale' &&
+        enseigneId &&
+        organisationId
+      ) {
         // SUCCURSALE (défaut) : Contacts restaurant + partagés enseigne/restaurant
         query = query.or(
           `organisation_id.eq.${organisationId},and(organisation_id.eq.${organisationId},enseigne_id.eq.${enseigneId})`
         );
-
       } else if (organisationId) {
         // Fallback : seulement contacts organisation
         query = query.eq('organisation_id', organisationId);
@@ -185,14 +195,14 @@ export function useOrganisationContacts(
       const hasBilling = !!billingContact || isPrimaryComplete;
 
       // Grouper contacts par appartenance (utiliser data brut avant mapping)
-      const restaurantContacts = (data || []).filter(c =>
-        c.organisation_id === organisationId
+      const restaurantContacts = (data || []).filter(
+        c => c.organisation_id === organisationId
       );
-      const enseigneContacts = (data || []).filter(c =>
-        c.enseigne_id === enseigneId && !c.organisation_id
+      const enseigneContacts = (data || []).filter(
+        c => c.enseigne_id === enseigneId && !c.organisation_id
       );
-      const sharedContacts = (data || []).filter(c =>
-        c.organisation_id && c.enseigne_id
+      const sharedContacts = (data || []).filter(
+        c => c.organisation_id && c.enseigne_id
       );
 
       return {
@@ -329,8 +339,8 @@ export function useUpdateOrganisationContacts() {
 
       return { success: true };
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
+    onSuccess: async (_, variables) => {
+      await queryClient.invalidateQueries({
         queryKey: ['organisation-contacts', variables.organisationId],
       });
       toast.success('Contacts mis à jour');
@@ -395,8 +405,8 @@ export function useCreateOrganisationContacts() {
 
       return { success: true };
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
+    onSuccess: async (_, variables) => {
+      await queryClient.invalidateQueries({
         queryKey: ['organisation-contacts', variables.organisationId],
       });
     },

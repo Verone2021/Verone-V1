@@ -127,7 +127,7 @@ export function useMarkNotificationReviewed() {
         .from('affiliate_archive_requests')
         .update({
           status,
-          admin_note: adminNote || null,
+          admin_note: adminNote ?? null,
           reviewed_at: new Date().toISOString(),
         })
         .eq('id', notificationId);
@@ -138,9 +138,11 @@ export function useMarkNotificationReviewed() {
 
       return notificationId;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['archive-notifications'] });
-      queryClient.invalidateQueries({
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ['archive-notifications'],
+      });
+      await queryClient.invalidateQueries({
         queryKey: ['archive-notifications-count'],
       });
       toast.success('Notification traitée');

@@ -11,10 +11,6 @@
  * @since 2025-12-20
  */
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-
 import { useQuery } from '@tanstack/react-query';
 import { createClient } from '@verone/utils/supabase/client';
 
@@ -61,8 +57,8 @@ export function useAffiliateStorageSummary() {
       const { data, error } = await (supabase.rpc as any)(
         'get_affiliate_storage_summary',
         {
-          p_owner_enseigne_id: enseigneId || null,
-          p_owner_organisation_id: organisationId || null,
+          p_owner_enseigne_id: enseigneId ?? null,
+          p_owner_organisation_id: organisationId ?? null,
         }
       );
 
@@ -108,8 +104,8 @@ export function useAffiliateStorageDetails() {
       const { data, error } = await (supabase.rpc as any)(
         'get_storage_details',
         {
-          p_owner_enseigne_id: enseigneId || null,
-          p_owner_organisation_id: organisationId || null,
+          p_owner_enseigne_id: enseigneId ?? null,
+          p_owner_organisation_id: organisationId ?? null,
         }
       );
 
@@ -118,7 +114,7 @@ export function useAffiliateStorageDetails() {
         throw error;
       }
 
-      return (data || []) as StorageAllocation[];
+      return (data ?? []) as StorageAllocation[];
     },
     enabled: !!(enseigneId || organisationId),
     staleTime: 60000,
@@ -146,8 +142,8 @@ export function useAffiliateBillableStorage() {
       const { data, error } = await (supabase.rpc as any)(
         'get_storage_details',
         {
-          p_owner_enseigne_id: enseigneId || null,
-          p_owner_organisation_id: organisationId || null,
+          p_owner_enseigne_id: enseigneId ?? null,
+          p_owner_organisation_id: organisationId ?? null,
         }
       );
 
@@ -157,7 +153,7 @@ export function useAffiliateBillableStorage() {
       }
 
       // Filtrer uniquement les produits facturables
-      return ((data || []) as StorageAllocation[]).filter(
+      return ((data ?? []) as StorageAllocation[]).filter(
         allocation => allocation.billable_in_storage === true
       );
     },
@@ -195,7 +191,7 @@ export function useStoragePricingTiers() {
         return [];
       }
 
-      return data || [];
+      return data ?? [];
     },
     staleTime: 300000, // 5 minutes
   });

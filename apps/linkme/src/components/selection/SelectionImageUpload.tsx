@@ -10,6 +10,7 @@
 
 import { useRef, useState } from 'react';
 
+import Image from 'next/image';
 import { Camera, Loader2, Trash2, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -113,7 +114,7 @@ export function SelectionImageUpload({
     }
   };
 
-  const triggerFileInput = (): void => {
+  const _triggerFileInput = (): void => {
     fileInputRef.current?.click();
   };
 
@@ -121,10 +122,11 @@ export function SelectionImageUpload({
   if (currentImageUrl) {
     return (
       <div className="relative h-48 bg-gradient-to-br from-linkme-turquoise/20 to-linkme-royal/20 group">
-        <img
+        <Image
           src={currentImageUrl}
           alt={selectionName}
-          className="w-full h-full object-cover"
+          fill
+          className="object-cover"
         />
 
         {/* Overlay on hover with actions */}

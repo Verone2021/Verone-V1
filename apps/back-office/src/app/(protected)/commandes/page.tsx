@@ -1,12 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 
 import Link from 'next/link';
 
 import { useSalesOrders } from '@verone/orders';
 import { usePurchaseOrders } from '@verone/orders';
-import { Badge } from '@verone/ui';
 import { ButtonUnified } from '@verone/ui';
 import {
   Card,
@@ -21,10 +20,6 @@ import {
   Package,
   TrendingUp,
   Users,
-  Truck,
-  Clock,
-  CheckCircle,
-  AlertCircle,
   ArrowRight,
   BarChart3,
   ShoppingBag,
@@ -33,7 +28,7 @@ import {
 export default function CommandesOverviewPage() {
   const {
     loading: salesLoading,
-    orders: salesOrders,
+    orders: _salesOrders,
     stats: salesStats,
     fetchOrders: fetchSalesOrders,
     fetchStats: fetchSalesStats,
@@ -41,17 +36,25 @@ export default function CommandesOverviewPage() {
 
   const {
     loading: purchaseLoading,
-    orders: purchaseOrders,
+    orders: _purchaseOrders,
     stats: purchaseStats,
     fetchOrders: fetchPurchaseOrders,
     fetchStats: fetchPurchaseStats,
   } = usePurchaseOrders();
 
   useEffect(() => {
-    fetchSalesOrders();
-    fetchSalesStats();
-    fetchPurchaseOrders();
-    fetchPurchaseStats();
+    void fetchSalesOrders().catch(error =>
+      console.error('[CommandesPage] fetchSalesOrders failed:', error)
+    );
+    void fetchSalesStats().catch(error =>
+      console.error('[CommandesPage] fetchSalesStats failed:', error)
+    );
+    void fetchPurchaseOrders().catch(error =>
+      console.error('[CommandesPage] fetchPurchaseOrders failed:', error)
+    );
+    void fetchPurchaseStats().catch(error =>
+      console.error('[CommandesPage] fetchPurchaseStats failed:', error)
+    );
   }, [
     fetchSalesOrders,
     fetchSalesStats,

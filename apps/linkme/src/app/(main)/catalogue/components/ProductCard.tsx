@@ -23,8 +23,12 @@ interface ProductCardProps {
 }
 
 /**
- * Calcule le prix client LinkMe avec commission
+ * Calcule le prix client LinkMe avec commission plateforme
  * Formule: prix_vente × (1 + commission_rate / 100)
+ *
+ * Note: Cette commission est celle de la plateforme LinkMe (différent de la marge affilié)
+ * - Commission plateforme: prélevée sur le prix pour rémunérer LinkMe
+ * - Marge affilié: gain de l'affilié (configuré dans la sélection, pas ici)
  */
 function calculateCustomerPrice(
   sellingPriceHT: number,
@@ -53,7 +57,7 @@ export function ProductCard({
   showCustomBadge = false,
 }: ProductCardProps): JSX.Element {
   const [isHovered, setIsHovered] = useState(false);
-  const displayTitle = product.custom_title || product.name;
+  const displayTitle = product.custom_title ?? product.name;
 
   // Prix client calculé = prix vente × (1 + commission%)
   const customerPriceHT = calculateCustomerPrice(
@@ -61,8 +65,8 @@ export function ProductCard({
     product.channel_commission_rate
   );
 
-  // Calculer la marge en pourcentage
-  const marginPercent = product.channel_commission_rate ?? 0;
+  // Commission du canal (plateforme LinkMe), différent de la marge affilié
+  const channelCommissionPercent = product.channel_commission_rate ?? 0;
 
   return (
     <div
@@ -117,11 +121,11 @@ export function ProductCard({
             </p>
           </div>
 
-          {/* Margin Badge - Top Right */}
-          {marginPercent > 0 && (
+          {/* Commission Badge - Top Right (commission plateforme LinkMe) */}
+          {channelCommissionPercent > 0 && (
             <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-sm rounded-full px-3 py-1.5 shadow-lg">
               <span className="text-xs font-medium text-linkme-turquoise">
-                {marginPercent}% marge
+                +{channelCommissionPercent}% inclus
               </span>
             </div>
           )}
@@ -214,7 +218,7 @@ export function ProductListItem({
   onAddToSelection,
   showCustomBadge = false,
 }: ProductListItemProps): JSX.Element {
-  const displayTitle = product.custom_title || product.name;
+  const displayTitle = product.custom_title ?? product.name;
 
   // Prix client calculé = prix vente × (1 + commission%)
   const customerPriceHT = calculateCustomerPrice(

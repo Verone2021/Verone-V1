@@ -31,20 +31,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@verone/ui';
 import { formatPrice } from '@verone/utils';
 import {
   Package,
-  Search,
-  Filter,
   Plus,
   AlertTriangle,
   TrendingDown,
   TrendingUp,
-  Eye,
   History,
-  BarChart3,
   RefreshCw,
   Download,
-  Calendar,
   ArrowUpDown,
-  X,
   Clock,
   Boxes,
 } from 'lucide-react';
@@ -103,8 +97,12 @@ export default function CatalogueStocksPage() {
 
   // Charger les données au montage
   useEffect(() => {
-    loadCatalogueData();
-    fetchAllStock();
+    void loadCatalogueData().catch(error => {
+      console.error('[CatalogueStocks] loadCatalogueData failed:', error);
+    });
+    void fetchAllStock().catch(error => {
+      console.error('[CatalogueStocks] fetchAllStock failed:', error);
+    });
   }, []);
 
   // Données enrichies produits + stock
@@ -189,13 +187,20 @@ export default function CatalogueStocksPage() {
   };
 
   const handleMovementSuccess = () => {
-    fetchAllStock();
+    void fetchAllStock().catch(error => {
+      console.error(
+        '[CatalogueStocks] fetchAllStock (movement) failed:',
+        error
+      );
+    });
     setSelectedProduct(null);
     setShowMovementModal(false);
   };
 
   const handleGeneralMovementSuccess = () => {
-    fetchAllStock();
+    void fetchAllStock().catch(error => {
+      console.error('[CatalogueStocks] fetchAllStock (general) failed:', error);
+    });
     setShowGeneralMovementModal(false);
   };
 
@@ -238,7 +243,11 @@ export default function CatalogueStocksPage() {
           </ButtonV2>
           <ButtonV2
             variant="outline"
-            onClick={handleRefresh}
+            onClick={() => {
+              void handleRefresh().catch(error => {
+                console.error('[CatalogueStocks] handleRefresh failed:', error);
+              });
+            }}
             disabled={loading}
           >
             <RefreshCw

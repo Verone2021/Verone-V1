@@ -20,15 +20,23 @@ import {
   DialogTitle,
   DialogDescription,
   Badge,
-  Button,
+  Button as _Button,
 } from '@verone/ui';
-import { Building2, MapPin, Euro, Coins, Package, Users, Loader2, UserX } from 'lucide-react';
-
-import { useOrganisationContacts } from '../../lib/hooks/use-organisation-contacts';
-import { ContactDisplayCard } from '../contacts/ContactDisplayCard';
+import {
+  Building2,
+  MapPin,
+  Euro,
+  Coins,
+  Package,
+  Users,
+  Loader2,
+  UserX,
+} from 'lucide-react';
 
 import type { EnseigneOrganisation } from '../../lib/hooks/use-enseigne-organisations';
+import { useOrganisationContacts } from '../../lib/hooks/use-organisation-contacts';
 import type { OrganisationStats } from '../../lib/hooks/use-organisation-stats';
+import { ContactDisplayCard } from '../contacts/ContactDisplayCard';
 
 // =====================================================================
 // TYPES
@@ -64,37 +72,25 @@ export function OrganisationDetailModal({
   open,
   onOpenChange,
 }: OrganisationDetailModalProps) {
-  if (!organisation) return null;
-
-  const displayName = organisation.trade_name || organisation.legal_name;
-
-  // Fetch contacts
-  const { data: contactsData, isLoading: contactsLoading } = useOrganisationContacts(
-    organisation.id
-  );
+  // IMPORTANT: Les hooks doivent être appelés avant tout early return
+  // Fetch contacts (utilise organisation.id si disponible, sinon string vide)
+  const { data: contactsData, isLoading: contactsLoading } =
+    useOrganisationContacts(organisation?.id ?? '');
 
   // Group contacts by role
   const groupedContacts = useMemo(() => {
-    const contacts = contactsData?.contacts || [];
+    const contacts = contactsData?.contacts ?? [];
     return {
-      primary: contacts.filter((c) => c.isPrimaryContact),
-      billing: contacts.filter(
-        (c) => c.isBillingContact && !c.isPrimaryContact
-      ),
+      primary: contacts.filter(c => c.isPrimaryContact),
+      billing: contacts.filter(c => c.isBillingContact && !c.isPrimaryContact),
       commercial: contacts.filter(
-        (c) =>
-          c.isCommercialContact &&
-          !c.isPrimaryContact &&
-          !c.isBillingContact
+        c => c.isCommercialContact && !c.isPrimaryContact && !c.isBillingContact
       ),
       technical: contacts.filter(
-        (c) =>
-          c.isTechnicalContact &&
-          !c.isPrimaryContact &&
-          !c.isBillingContact
+        c => c.isTechnicalContact && !c.isPrimaryContact && !c.isBillingContact
       ),
       others: contacts.filter(
-        (c) =>
+        c =>
           !c.isPrimaryContact &&
           !c.isBillingContact &&
           !c.isCommercialContact &&
@@ -102,6 +98,11 @@ export function OrganisationDetailModal({
       ),
     };
   }, [contactsData]);
+
+  // Early return après les hooks
+  if (!organisation) return null;
+
+  const displayName = organisation.trade_name ?? organisation.legal_name;
 
   // Construire l'adresse complète
   const shippingAddress = [
@@ -202,7 +203,7 @@ export function OrganisationDetailModal({
                 Contacts
               </h4>
               <Badge variant="outline">
-                {contactsData?.contacts.length || 0} contact(s)
+                {contactsData?.contacts.length ?? 0} contact(s)
               </Badge>
             </div>
 
@@ -231,7 +232,7 @@ export function OrganisationDetailModal({
                       Contact Principal
                     </h5>
                     <div className="space-y-2">
-                      {groupedContacts.primary.map((contact) => (
+                      {groupedContacts.primary.map(contact => (
                         <ContactDisplayCard
                           key={contact.id}
                           contact={contact}
@@ -248,7 +249,7 @@ export function OrganisationDetailModal({
                       Contact Facturation
                     </h5>
                     <div className="space-y-2">
-                      {groupedContacts.billing.map((contact) => (
+                      {groupedContacts.billing.map(contact => (
                         <ContactDisplayCard
                           key={contact.id}
                           contact={contact}
@@ -265,7 +266,7 @@ export function OrganisationDetailModal({
                       Contact Commercial
                     </h5>
                     <div className="space-y-2">
-                      {groupedContacts.commercial.map((contact) => (
+                      {groupedContacts.commercial.map(contact => (
                         <ContactDisplayCard
                           key={contact.id}
                           contact={contact}
@@ -282,7 +283,7 @@ export function OrganisationDetailModal({
                       Contact Technique
                     </h5>
                     <div className="space-y-2">
-                      {groupedContacts.technical.map((contact) => (
+                      {groupedContacts.technical.map(contact => (
                         <ContactDisplayCard
                           key={contact.id}
                           contact={contact}
@@ -299,7 +300,7 @@ export function OrganisationDetailModal({
                       Autres Contacts
                     </h5>
                     <div className="space-y-2">
-                      {groupedContacts.others.map((contact) => (
+                      {groupedContacts.others.map(contact => (
                         <ContactDisplayCard
                           key={contact.id}
                           contact={contact}

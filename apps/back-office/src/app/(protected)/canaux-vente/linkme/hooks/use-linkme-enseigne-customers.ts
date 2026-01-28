@@ -7,6 +7,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createClient } from '@verone/utils/supabase/client';
 
+import type { Database } from '@verone/types';
+
+// Types Supabase
+type Organisation = Database['public']['Tables']['organisations']['Row'];
+type IndividualCustomer =
+  Database['public']['Tables']['individual_customers']['Row'];
 const supabase = createClient();
 
 // ============================================
@@ -24,7 +30,7 @@ export interface EnseigneOrganisationCustomer {
   city: string | null;
   postal_code: string | null;
   is_active: boolean;
-  created_at: string;
+  created_at: string | null;
   source_type: 'internal' | 'linkme' | 'site-internet' | 'manual' | null;
   source_affiliate_id: string | null;
 }
@@ -39,7 +45,7 @@ export interface EnseigneIndividualCustomer {
   address_line1: string | null;
   city: string | null;
   postal_code: string | null;
-  created_at: string;
+  created_at: string | null;
   source_type: 'internal' | 'linkme' | 'site-internet' | 'manual' | null;
   source_affiliate_id: string | null;
 }
@@ -87,7 +93,7 @@ export interface CreateIndividualCustomerInput {
 async function fetchEnseigneOrganisations(
   enseigneId: string
 ): Promise<EnseigneOrganisationCustomer[]> {
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from('organisations')
     .select(
       'id, legal_name, trade_name, email, phone, address_line1, city, postal_code, is_active, created_at, source_type, source_affiliate_id'
@@ -101,7 +107,7 @@ async function fetchEnseigneOrganisations(
     throw error;
   }
 
-  return (data || []).map((org: any) => ({
+  return (data || []).map(org => ({
     id: org.id,
     name: org.trade_name || org.legal_name,
     legal_name: org.legal_name,
@@ -124,7 +130,7 @@ async function fetchEnseigneOrganisations(
 async function fetchEnseigneIndividualCustomers(
   enseigneId: string
 ): Promise<EnseigneIndividualCustomer[]> {
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from('individual_customers')
     .select(
       'id, first_name, last_name, email, phone, address_line1, city, postal_code, created_at, source_type, source_affiliate_id'
@@ -137,7 +143,7 @@ async function fetchEnseigneIndividualCustomers(
     throw error;
   }
 
-  return (data || []).map((customer: any) => ({
+  return (data || []).map(customer => ({
     id: customer.id,
     first_name: customer.first_name,
     last_name: customer.last_name,
@@ -184,7 +190,7 @@ async function fetchOrganisationIndividualCustomers(
     throw error;
   }
 
-  return (data || []).map((customer: any) => ({
+  return (data || []).map(customer => ({
     id: customer.id,
     first_name: customer.first_name,
     last_name: customer.last_name,
@@ -245,8 +251,11 @@ export function useLinkMeEnseigneCustomers(enseigneId: string | null) {
     isError: orgsQuery.isError || individualsQuery.isError,
     error: orgsQuery.error || individualsQuery.error,
     refetch: () => {
-      orgsQuery.refetch();
-      individualsQuery.refetch();
+      void Promise.all([orgsQuery.refetch(), individualsQuery.refetch()]).catch(
+        error => {
+          console.error('[LinkMeEnseigneCustomers] Refetch failed:', error);
+        }
+      );
     },
   };
 }
@@ -267,7 +276,7 @@ export function useLinkMeOrganisationIndividualCustomers(
     queryFn: () =>
       fetchOrganisationIndividualCustomers(
         organisationId!,
-        affiliateId || undefined
+        affiliateId ?? undefined
       ),
     enabled: !!organisationId,
     staleTime: 30000,
@@ -337,10 +346,16 @@ export function useLinkMeAffiliateCustomers(
 
     refetch: () => {
       if (isEnseigne) {
-        enseigneOrgsQuery.refetch();
-        enseigneIndividualsQuery.refetch();
+        void Promise.all([
+          enseigneOrgsQuery.refetch(),
+          enseigneIndividualsQuery.refetch(),
+        ]).catch(error => {
+          console.error('[LinkMeAffiliateCustomers] Refetch failed:', error);
+        });
       } else {
-        orgIndividualsQuery.refetch();
+        void orgIndividualsQuery.refetch().catch(error => {
+          console.error('[LinkMeAffiliateCustomers] Refetch failed:', error);
+        });
       }
     },
 
@@ -362,23 +377,23 @@ export function useCreateEnseigneOrganisation() {
 
   return useMutation({
     mutationFn: async (input: CreateOrganisationInput) => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('organisations')
         .insert({
           enseigne_id: input.enseigne_id,
           legal_name: input.legal_name,
-          trade_name: input.trade_name || null,
-          email: input.email || null,
-          phone: input.phone || null,
-          address_line1: input.address_line1 || null,
-          address_line2: input.address_line2 || null,
-          city: input.city || null,
-          postal_code: input.postal_code || null,
+          trade_name: input.trade_name ?? null,
+          email: input.email ?? null,
+          phone: input.phone ?? null,
+          address_line1: input.address_line1 ?? null,
+          address_line2: input.address_line2 ?? null,
+          city: input.city ?? null,
+          postal_code: input.postal_code ?? null,
           country: input.country || 'FR',
           type: 'customer', // Toujours client
           is_active: true,
           source_type: input.source_type || 'linkme', // Par défaut depuis CMS LinkMe
-          source_affiliate_id: input.source_affiliate_id || null,
+          source_affiliate_id: input.source_affiliate_id ?? null,
         })
         .select()
         .single();
@@ -386,8 +401,8 @@ export function useCreateEnseigneOrganisation() {
       if (error) throw error;
       return data;
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
+    onSuccess: async (_, variables) => {
+      await queryClient.invalidateQueries({
         queryKey: ['linkme-enseigne-organisations', variables.enseigne_id],
       });
     },
@@ -409,33 +424,25 @@ export function useCreateEnseigneIndividualCustomer() {
         throw new Error('Email requis pour créer un client particulier');
       }
 
-      const insertData: Record<string, unknown> = {
+      const insertData = {
         first_name: input.first_name,
         last_name: input.last_name,
         email: input.email.trim(), // NOT NULL - requis
-        phone: input.phone || null,
-        address_line1: input.address_line1 || null,
-        address_line2: input.address_line2 || null,
-        city: input.city || null,
-        postal_code: input.postal_code || null,
-        country: input.country || 'FR',
-        source_type: input.source_type || 'linkme',
-        source_affiliate_id: input.source_affiliate_id || null,
+        phone: input.phone ?? null,
+        address_line1: input.address_line1 ?? null,
+        address_line2: input.address_line2 ?? null,
+        city: input.city ?? null,
+        postal_code: input.postal_code ?? null,
+        country: input.country ?? 'FR',
+        source_type: input.source_type ?? 'linkme',
+        source_affiliate_id: input.source_affiliate_id ?? null,
+        enseigne_id: input.enseigne_id ?? undefined,
+        organisation_id: input.organisation_id ?? undefined,
       };
 
-      // enseigne_id pour les enseignes
-      if (input.enseigne_id) {
-        insertData.enseigne_id = input.enseigne_id;
-      }
+      console.warn('📝 Création client particulier:', insertData);
 
-      // organisation_id pour les org_independante (NOUVEAU)
-      if (input.organisation_id) {
-        insertData.organisation_id = input.organisation_id;
-      }
-
-      console.log('📝 Création client particulier:', insertData);
-
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('individual_customers')
         .insert(insertData)
         .select()
@@ -446,13 +453,13 @@ export function useCreateEnseigneIndividualCustomer() {
         throw error;
       }
 
-      console.log('✅ Client créé:', data);
+      console.warn('✅ Client créé:', data);
       return data;
     },
-    onSuccess: (_, variables) => {
+    onSuccess: async (_, variables) => {
       // Invalider le cache pour l'enseigne si spécifiée
       if (variables.enseigne_id) {
-        queryClient.invalidateQueries({
+        await queryClient.invalidateQueries({
           queryKey: [
             'linkme-enseigne-individual-customers',
             variables.enseigne_id,
@@ -462,13 +469,13 @@ export function useCreateEnseigneIndividualCustomer() {
 
       // Invalider le cache pour l'organisation si spécifiée (NOUVEAU - org_independante)
       if (variables.organisation_id) {
-        queryClient.invalidateQueries({
+        await queryClient.invalidateQueries({
           queryKey: ['linkme-organisation-individual-customers'],
         });
       }
 
       // Toujours invalider la liste générale des clients
-      queryClient.invalidateQueries({
+      await queryClient.invalidateQueries({
         queryKey: ['individual-customers'],
       });
     },

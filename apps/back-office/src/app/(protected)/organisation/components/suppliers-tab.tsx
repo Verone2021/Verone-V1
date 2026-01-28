@@ -2,34 +2,17 @@
 
 import { useState, useMemo, useEffect } from 'react';
 
-import Link from 'next/link';
-
-import { SupplierCategoryBadge } from '@verone/categories';
 import { OrganisationListView } from '@verone/customers';
-import { OrganisationLogo } from '@verone/organisations';
 import { OrganisationCard } from '@verone/organisations';
 import { SupplierFormModal } from '@verone/organisations';
 import { useSuppliers, type Organisation } from '@verone/organisations';
-import { SupplierSegmentBadge, SupplierSegmentType } from '@verone/suppliers';
 import { Input } from '@verone/ui';
 import { Card, CardContent } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
-import { Badge } from '@verone/ui';
 import { spacing, colors } from '@verone/ui/design-system';
 import { cn } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
-import {
-  Search,
-  Plus,
-  MapPin,
-  Archive,
-  ArchiveRestore,
-  Trash2,
-  ExternalLink,
-  Building2,
-  LayoutGrid,
-  List,
-} from 'lucide-react';
+import { Search, Plus, Building2, LayoutGrid, List } from 'lucide-react';
 
 export function SuppliersTab() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -40,14 +23,13 @@ export function SuppliersTab() {
   );
   const [archivedLoading, setArchivedLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedSupplier, setSelectedSupplier] = useState<Organisation | null>(
-    null
-  );
+  const [selectedSupplier, _setSelectedSupplier] =
+    useState<Organisation | null>(null);
 
   const filters = useMemo(
     () => ({
       is_active: true,
-      search: searchQuery || undefined,
+      search: searchQuery ?? undefined,
     }),
     [searchQuery]
   );
@@ -99,7 +81,12 @@ export function SuppliersTab() {
 
   useEffect(() => {
     if (activeTab === 'archived') {
-      loadArchivedSuppliersData();
+      void loadArchivedSuppliersData().catch(error => {
+        console.error(
+          '[SuppliersTab] Failed to load archived suppliers:',
+          error
+        );
+      });
     }
   }, [activeTab]);
 
@@ -107,7 +94,7 @@ export function SuppliersTab() {
     if (!supplier.archived_at) {
       const success = await archiveOrganisation(supplier.id);
       if (success) {
-        refetch();
+        await refetch();
         if (activeTab === 'archived') {
           await loadArchivedSuppliersData();
         }
@@ -115,7 +102,7 @@ export function SuppliersTab() {
     } else {
       const success = await unarchiveOrganisation(supplier.id);
       if (success) {
-        refetch();
+        await refetch();
         await loadArchivedSuppliersData();
       }
     }
@@ -127,9 +114,13 @@ export function SuppliersTab() {
     );
 
     if (confirmed) {
-      const success = await hardDeleteOrganisation(supplier.id);
-      if (success) {
-        await loadArchivedSuppliersData();
+      try {
+        const success = await hardDeleteOrganisation(supplier.id);
+        if (success) {
+          await loadArchivedSuppliersData();
+        }
+      } catch (error) {
+        console.error('[SuppliersTab] Failed to delete supplier:', error);
       }
     }
   };
@@ -292,8 +283,16 @@ export function SuppliersTab() {
                 } as any
               }
               activeTab={activeTab}
-              onArchive={() => handleArchive(supplier)}
-              onDelete={() => handleDelete(supplier)}
+              onArchive={() => {
+                void handleArchive(supplier).catch(error => {
+                  console.error('[SuppliersTab] Archive failed:', error);
+                });
+              }}
+              onDelete={() => {
+                void handleDelete(supplier).catch(error => {
+                  console.error('[SuppliersTab] Delete failed:', error);
+                });
+              }}
             />
           ))}
         </div>
@@ -310,11 +309,19 @@ export function SuppliersTab() {
               activeTab={activeTab}
               onArchive={id => {
                 const supplier = displayedSuppliers.find(s => s.id === id);
-                if (supplier) handleArchive(supplier);
+                if (supplier) {
+                  void handleArchive(supplier).catch(error => {
+                    console.error('[SuppliersTab] Archive failed:', error);
+                  });
+                }
               }}
               onDelete={id => {
                 const supplier = displayedSuppliers.find(s => s.id === id);
-                if (supplier) handleDelete(supplier);
+                if (supplier) {
+                  void handleDelete(supplier).catch(error => {
+                    console.error('[SuppliersTab] Delete failed:', error);
+                  });
+                }
               }}
             />
           </CardContent>
@@ -326,7 +333,12 @@ export function SuppliersTab() {
         onClose={() => setIsModalOpen(false)}
         supplier={selectedSupplier as any}
         onSuccess={() => {
-          refetch();
+          void refetch().catch(error => {
+            console.error(
+              '[SuppliersTab] Refetch after success failed:',
+              error
+            );
+          });
           setIsModalOpen(false);
         }}
       />

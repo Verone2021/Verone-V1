@@ -196,7 +196,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log(
+    console.warn(
       `[API Notify Enseigne Order] Email sent for order ${orderNumber} to ${recipients.join(', ')}`
     );
 

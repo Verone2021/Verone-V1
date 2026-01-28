@@ -42,7 +42,7 @@ export function SelectionHeader({
   onSearchClick,
   navItems,
   activeSection,
-  onNavClick,
+  onNavClick: _onNavClick,
   showPointsDeVente = false,
 }: ISelectionHeaderProps): React.JSX.Element {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);

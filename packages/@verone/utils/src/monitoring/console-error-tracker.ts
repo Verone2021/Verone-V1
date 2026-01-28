@@ -3,7 +3,7 @@
 /**
  * 🔍 Console Error Tracker - Simple & Professional
  *
- * Remplace Sentry par une solution légère basée sur console.log structuré
+ * Solution légère basée sur console.log structuré
  * Compatible avec MCP Playwright Browser pour récupération automatique
  *
  * Features :
@@ -67,9 +67,12 @@ class ConsoleErrorTracker {
     });
 
     // Unhandled promise rejections
-    window.addEventListener('unhandledrejection', (event: PromiseRejectionEvent) => {
-      this.trackError('error', [`Unhandled Promise: ${event.reason}`]);
-    });
+    window.addEventListener(
+      'unhandledrejection',
+      (event: PromiseRejectionEvent) => {
+        this.trackError('error', [`Unhandled Promise: ${event.reason}`]);
+      }
+    );
 
     this.isSetup = true;
     console.log('✅ [ConsoleErrorTracker] Monitoring activé');

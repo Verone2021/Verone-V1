@@ -86,8 +86,8 @@ export function ContactsSection({
           firstName: data.primaryContact.firstName || '',
           lastName: data.primaryContact.lastName || '',
           email: data.primaryContact.email || '',
-          phone: data.primaryContact.phone || '',
-          title: data.primaryContact.title || '',
+          phone: data.primaryContact.phone ?? '',
+          title: data.primaryContact.title ?? '',
         });
       }
 
@@ -100,8 +100,8 @@ export function ContactsSection({
           firstName: data.billingContact.firstName || '',
           lastName: data.billingContact.lastName || '',
           email: data.billingContact.email || '',
-          phone: data.billingContact.phone || '',
-          title: data.billingContact.title || '',
+          phone: data.billingContact.phone ?? '',
+          title: data.billingContact.title ?? '',
         });
       } else {
         setBillingIsSameAsPrimary(true);
@@ -201,8 +201,8 @@ export function ContactsSection({
         firstName: data.primaryContact.firstName || '',
         lastName: data.primaryContact.lastName || '',
         email: data.primaryContact.email || '',
-        phone: data.primaryContact.phone || '',
-        title: data.primaryContact.title || '',
+        phone: data.primaryContact.phone ?? '',
+        title: data.primaryContact.title ?? '',
       });
     }
     if (data?.billingContact) {
@@ -210,8 +210,8 @@ export function ContactsSection({
         firstName: data.billingContact.firstName || '',
         lastName: data.billingContact.lastName || '',
         email: data.billingContact.email || '',
-        phone: data.billingContact.phone || '',
-        title: data.billingContact.title || '',
+        phone: data.billingContact.phone ?? '',
+        title: data.billingContact.title ?? '',
       });
     }
     setIsEditing(false);
@@ -478,7 +478,11 @@ export function ContactsSection({
             )}
             <Button
               size="sm"
-              onClick={handleSave}
+              onClick={() => {
+                void handleSave().catch(error => {
+                  console.error('[ContactsSection] Save failed:', error);
+                });
+              }}
               disabled={!isFormValid || updateMutation.isPending}
             >
               {updateMutation.isPending ? (

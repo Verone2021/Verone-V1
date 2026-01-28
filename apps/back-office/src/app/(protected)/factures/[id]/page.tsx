@@ -30,16 +30,13 @@ import {
   TableHeader,
   TableRow,
 } from '@verone/ui';
-import { Money, StatusPill } from '@verone/ui-business';
+import { StatusPill } from '@verone/ui-business';
 import { featureFlags } from '@verone/utils/feature-flags';
 import {
   AlertTriangle,
   ArrowLeft,
-  ArrowRight,
-  Calendar,
   Building2,
   FileText,
-  Download,
   CreditCard,
   Clock,
   Lock,
@@ -54,6 +51,7 @@ import {
   XCircle,
   Pencil,
   Landmark,
+  Archive,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -254,6 +252,7 @@ export default function DocumentDetailPage({
   const [showDeclineDialog, setShowDeclineDialog] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showReconcileModal, setShowReconcileModal] = useState(false);
+  const [showArchiveDialog, setShowArchiveDialog] = useState(false);
 
   // Fetch document data
   useEffect(() => {
@@ -294,7 +293,9 @@ export default function DocumentDetailPage({
       setLoading(false);
     }
 
-    fetchDocument();
+    void fetchDocument().catch(error => {
+      console.error('[DocumentDetail] Fetch failed:', error);
+    });
   }, [id, typeParam]);
 
   // ===== ACTION HANDLERS =====
@@ -502,7 +503,7 @@ export default function DocumentDetailPage({
     window.open(pdfPath, '_blank');
   };
 
-  const handleMarkPaid = async () => {
+  const _handleMarkPaid = async () => {
     if (!document || documentType !== 'invoice') return;
     setActionLoading('markPaid');
 
@@ -525,6 +526,30 @@ export default function DocumentDetailPage({
     }
   };
 
+  const handleArchive = async () => {
+    if (!document) return;
+    setActionLoading('archive');
+    setShowArchiveDialog(false);
+
+    try {
+      const response = await fetch(`/api/financial-documents/${id}/archive`, {
+        method: 'POST',
+      });
+      const data = await response.json();
+
+      if (!data.success) throw new Error(data.error);
+
+      toast.success('Facture archivée avec succès');
+      router.push('/factures');
+    } catch (err) {
+      toast.error(
+        `Erreur: ${err instanceof Error ? err.message : 'Erreur inconnue'}`
+      );
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   // ===== COMPUTED VALUES =====
 
   const isDraft = document?.status === 'draft';
@@ -535,6 +560,7 @@ export default function DocumentDetailPage({
     document?.status === 'overdue' ||
     document?.status === 'pending';
   const isPaid = document?.status === 'paid';
+  const isCancelled = document?.status === 'cancelled';
   const isOverdue =
     documentType === 'invoice' &&
     document?.payment_deadline &&
@@ -692,7 +718,11 @@ export default function DocumentDetailPage({
           {isFinalized && (
             <Button
               variant="outline"
-              onClick={handleSendEmail}
+              onClick={() => {
+                void handleSendEmail().catch(error => {
+                  console.error('[DocumentDetail] Send email failed:', error);
+                });
+              }}
               disabled={actionLoading === 'email'}
             >
               {actionLoading === 'email' ? (
@@ -789,6 +819,26 @@ export default function DocumentDetailPage({
               Créer un avoir
             </Button>
           )}
+
+          {/* Archive (validated invoices only) */}
+          {documentType === 'invoice' &&
+            !isCancelled &&
+            ['draft_validated', 'finalized', 'sent', 'paid'].includes(
+              (document as any)?.workflow_status ?? ''
+            ) && (
+              <Button
+                variant="outline"
+                onClick={() => setShowArchiveDialog(true)}
+                disabled={actionLoading === 'archive'}
+              >
+                {actionLoading === 'archive' ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Archive className="h-4 w-4 mr-2" />
+                )}
+                Archiver
+              </Button>
+            )}
 
           {/* Delete (drafts only) */}
           {isDraft && (
@@ -925,7 +975,7 @@ export default function DocumentDetailPage({
                           </div>
                         </TableCell>
                         <TableCell className="text-right">
-                          {item.quantity} {item.unit || ''}
+                          {item.quantity} {item.unit ?? ''}
                         </TableCell>
                         <TableCell className="text-right">
                           {item.unit_price?.value} {item.unit_price?.currency}
@@ -1096,7 +1146,11 @@ export default function DocumentDetailPage({
             <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction
               className="bg-amber-600 text-white hover:bg-amber-700"
-              onClick={handleFinalize}
+              onClick={() => {
+                void handleFinalize().catch(error => {
+                  console.error('[DocumentDetail] Finalize failed:', error);
+                });
+              }}
             >
               Oui, finaliser
             </AlertDialogAction>
@@ -1120,7 +1174,11 @@ export default function DocumentDetailPage({
             <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction
               className="bg-red-600 text-white hover:bg-red-700"
-              onClick={handleDelete}
+              onClick={() => {
+                void handleDelete().catch(error => {
+                  console.error('[DocumentDetail] Delete failed:', error);
+                });
+              }}
             >
               Supprimer
             </AlertDialogAction>
@@ -1140,7 +1198,13 @@ export default function DocumentDetailPage({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConvertToInvoice}>
+            <AlertDialogAction
+              onClick={() => {
+                void handleConvertToInvoice().catch(error => {
+                  console.error('[DocumentDetail] Convert failed:', error);
+                });
+              }}
+            >
               Convertir en facture
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -1162,7 +1226,16 @@ export default function DocumentDetailPage({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={handleCreateCreditNote}>
+            <AlertDialogAction
+              onClick={() => {
+                void handleCreateCreditNote().catch(error => {
+                  console.error(
+                    '[DocumentDetail] Create credit note failed:',
+                    error
+                  );
+                });
+              }}
+            >
               Créer l&apos;avoir
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -1185,7 +1258,11 @@ export default function DocumentDetailPage({
             <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction
               className="bg-green-600 text-white hover:bg-green-700"
-              onClick={handleAcceptQuote}
+              onClick={() => {
+                void handleAcceptQuote().catch(error => {
+                  console.error('[DocumentDetail] Accept quote failed:', error);
+                });
+              }}
             >
               Marquer accepté
             </AlertDialogAction>
@@ -1209,9 +1286,50 @@ export default function DocumentDetailPage({
             <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction
               className="bg-red-600 text-white hover:bg-red-700"
-              onClick={handleDeclineQuote}
+              onClick={() => {
+                void handleDeclineQuote().catch(error => {
+                  console.error(
+                    '[DocumentDetail] Decline quote failed:',
+                    error
+                  );
+                });
+              }}
             >
               Marquer refusé
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Archive dialog */}
+      <AlertDialog open={showArchiveDialog} onOpenChange={setShowArchiveDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Archive className="h-5 w-5" />
+              Archiver cette facture ?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3">
+              <p>
+                Cette facture sera masquée de la liste principale et déplacée
+                dans les archives.
+              </p>
+              <p>
+                Vous pourrez la restaurer depuis l&apos;onglet
+                &quot;Archives&quot; si nécessaire.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                void handleArchive().catch(error => {
+                  console.error('[DocumentDetail] Archive failed:', error);
+                });
+              }}
+            >
+              Archiver
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

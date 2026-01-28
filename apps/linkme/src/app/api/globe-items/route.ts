@@ -17,13 +17,13 @@ type GlobeItem = {
   image_url: string;
 };
 
-type ProductRow = {
+type _ProductRow = {
   id: string;
   name: string;
   product_images: Array<{ public_url: string }>;
 };
 
-type OrganisationRow = {
+type _OrganisationRow = {
   id: string;
   name: string;
   logo_url: string | null;
@@ -38,12 +38,6 @@ export async function GET(): Promise<NextResponse> {
       .from('linkme_globe_items')
       .select('item_type, id, name, image_url')
       .limit(50);
-
-    console.log('[API GLOBE] Vue linkme_globe_items:', {
-      error: viewError?.message || null,
-      count: viewData?.length ?? 0,
-      sample: viewData?.[0] || null,
-    });
 
     if (viewError) {
       console.error('[API GLOBE] View error:', viewError);

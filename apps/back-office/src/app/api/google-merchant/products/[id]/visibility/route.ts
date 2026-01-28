@@ -85,7 +85,7 @@ export async function PATCH(
 
     const { visible }: ToggleVisibilityRequest = validation.data;
 
-    console.log(
+    console.warn(
       `[API] Toggle visibility for product ${productId}: ${visible ? 'SHOW' : 'HIDE'}`
     );
 
@@ -128,7 +128,7 @@ export async function PATCH(
       );
     }
 
-    console.log(
+    console.warn(
       `[API] Visibility toggled successfully: ${visible ? 'VISIBLE' : 'HIDDEN'}`
     );
 

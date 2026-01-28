@@ -64,7 +64,7 @@ export default function SourcingProductDetailPage() {
         title: 'Échantillon commandé',
         description: "La demande d'échantillon a été enregistrée avec succès",
       });
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: 'Erreur',
         description: "Impossible de commander l'échantillon",
@@ -192,7 +192,7 @@ export default function SourcingProductDetailPage() {
                 description: 'Les modifications ont été sauvegardées',
               });
               await refetch();
-            } catch (error) {
+            } catch (_error) {
               toast({
                 title: 'Erreur',
                 description: 'Impossible de mettre à jour le produit',
@@ -233,7 +233,14 @@ export default function SourcingProductDetailPage() {
                     </p>
                   </div>
                   <ButtonV2
-                    onClick={handleOrderSample}
+                    onClick={() => {
+                      void handleOrderSample().catch(error => {
+                        console.error(
+                          '[SourcingDetail] handleOrderSample failed:',
+                          error
+                        );
+                      });
+                    }}
                     disabled={!product.supplier_id}
                     className="w-full bg-gray-800 hover:bg-gray-900 text-white disabled:bg-gray-300 disabled:cursor-not-allowed disabled:text-gray-500"
                   >
@@ -261,7 +268,14 @@ export default function SourcingProductDetailPage() {
                     </p>
                   </div>
                   <ButtonV2
-                    onClick={handleValidateSourcing}
+                    onClick={() => {
+                      void handleValidateSourcing().catch(error => {
+                        console.error(
+                          '[SourcingDetail] handleValidateSourcing failed:',
+                          error
+                        );
+                      });
+                    }}
                     disabled={!product.supplier_id}
                     className="w-full bg-green-600 hover:bg-green-700 text-white disabled:bg-gray-300 disabled:cursor-not-allowed"
                   >
@@ -308,7 +322,11 @@ export default function SourcingProductDetailPage() {
           productId={productId}
           productName={product.name}
           productType="draft"
-          onImagesUpdated={() => fetchImages()}
+          onImagesUpdated={() => {
+            void fetchImages().catch(error => {
+              console.error('[SourcingDetail] fetchImages failed:', error);
+            });
+          }}
         />
       )}
     </div>

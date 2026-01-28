@@ -47,10 +47,12 @@ export function useArchiveOrganisation() {
 
       return orgId;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       // Invalider les queries pour rafraîchir la liste
-      queryClient.invalidateQueries({ queryKey: ['enseigne-organisations'] });
-      queryClient.invalidateQueries({ queryKey: ['organisation-stats'] });
+      await queryClient.invalidateQueries({
+        queryKey: ['enseigne-organisations'],
+      });
+      await queryClient.invalidateQueries({ queryKey: ['organisation-stats'] });
       toast.success("Organisation archivée. L'équipe Vérone a été notifiée.");
     },
     onError: (error: Error) => {

@@ -11,13 +11,10 @@
  * @since 2025-12-04
  */
 
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { calculateMargin } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
 
 import { useAuth } from '../../contexts/AuthContext';
@@ -179,7 +176,8 @@ export function useUserAffiliate() {
       };
     },
     enabled: !!user && !!linkMeRole,
-    staleTime: 60000,
+    // PERF: Increased cache time from 60s to 5min (affiliate data rarely changes)
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 }
 
@@ -227,7 +225,8 @@ export function useUserSelections() {
       }));
     },
     enabled: !!affiliate,
-    staleTime: 30000,
+    // PERF: Increased cache time from 30s to 2min
+    staleTime: 2 * 60 * 1000, // 2 minutes
   });
 }
 
@@ -307,11 +306,13 @@ export function useSelectionItems(selectionId: string | null) {
         // Données pour produits affiliés
         category_name: item.product?.subcategory?.name ?? null,
         is_affiliate_product: !!item.product?.created_by_affiliate,
-        affiliate_commission_rate: item.product?.affiliate_commission_rate ?? null,
+        affiliate_commission_rate:
+          item.product?.affiliate_commission_rate ?? null,
       }));
     },
     enabled: !!selectionId,
-    staleTime: 30000,
+    // PERF: Increased cache time from 30s to 2min
+    staleTime: 2 * 60 * 1000, // 2 minutes
   });
 }
 
@@ -359,8 +360,8 @@ export function useCreateSelection() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['user-selections'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['user-selections'] });
     },
   });
 }
@@ -419,7 +420,8 @@ export function useAddToSelection() {
       const basePriceHt = catalogProduct.custom_price_ht ?? calculatedPrice;
       const marginRate =
         catalogProduct.suggested_margin_rate ?? affiliate.default_margin_rate;
-      const sellingPriceHt = basePriceHt * (1 + marginRate / 100);
+      // Note: selling_price_ht est calculé côté DB (colonne GENERATED avec formule taux de marque)
+      // Le calcul ici n'est pas nécessaire car l'API n'utilise que base_price_ht et margin_rate
 
       // Récupérer le prochain display_order
       const { data: existingItems } = await supabase
@@ -460,11 +462,11 @@ export function useAddToSelection() {
       // L'API gère déjà le products_count
       return result.item;
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
+    onSuccess: async (_, variables) => {
+      await queryClient.invalidateQueries({
         queryKey: ['selection-items', variables.selectionId],
       });
-      queryClient.invalidateQueries({ queryKey: ['user-selections'] });
+      await queryClient.invalidateQueries({ queryKey: ['user-selections'] });
     },
   });
 }
@@ -533,10 +535,8 @@ export function useAddToSelectionWithMargin() {
 
       const basePriceHt = catalogProduct.custom_price_ht ?? calculatedPrice;
 
-      // Utiliser la marge fournie par l'utilisateur
-      const commissionRate = affiliate.linkme_commission_rate || 5;
-      const sellingPriceHt =
-        basePriceHt * (1 + commissionRate / 100 + input.marginRate / 100);
+      // Note: selling_price_ht est calculé côté DB (colonne GENERATED avec formule taux de marque)
+      // Le calcul ici n'est pas nécessaire car l'API n'utilise que base_price_ht et margin_rate
 
       // Récupérer le prochain display_order
       const { data: existingItems } = await supabase
@@ -576,11 +576,11 @@ export function useAddToSelectionWithMargin() {
       // L'API gère déjà le products_count
       return result.item;
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
+    onSuccess: async (_, variables) => {
+      await queryClient.invalidateQueries({
         queryKey: ['selection-items', variables.selectionId],
       });
-      queryClient.invalidateQueries({ queryKey: ['user-selections'] });
+      await queryClient.invalidateQueries({ queryKey: ['user-selections'] });
     },
   });
 }
@@ -615,11 +615,11 @@ export function useRemoveFromSelection() {
         })
         .eq('id', input.selectionId);
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
+    onSuccess: async (_, variables) => {
+      await queryClient.invalidateQueries({
         queryKey: ['selection-items', variables.selectionId],
       });
-      queryClient.invalidateQueries({ queryKey: ['user-selections'] });
+      await queryClient.invalidateQueries({ queryKey: ['user-selections'] });
     },
   });
 }
@@ -637,30 +637,23 @@ export function useUpdateItemMargin() {
       marginRate: number;
     }) => {
       const supabase = createClient();
-      // Récupérer le prix de base actuel
-      const { data: item, error: fetchError } = await (supabase as any)
-        .from('linkme_selection_items')
-        .select('base_price_ht')
-        .eq('id', input.itemId)
-        .single();
 
-      if (fetchError) throw fetchError;
-
-      const sellingPriceHt = item.base_price_ht * (1 + input.marginRate / 100);
-
+      // Note: selling_price_ht est une colonne GENERATED en DB
+      // Elle est calculée automatiquement avec la formule taux de marque:
+      // selling_price_ht = base_price_ht / (1 - margin_rate / 100)
+      // On ne met à jour que margin_rate, le reste est calculé automatiquement
       const { error } = await (supabase as any)
         .from('linkme_selection_items')
         .update({
           margin_rate: input.marginRate,
-          selling_price_ht: sellingPriceHt,
           updated_at: new Date().toISOString(),
         })
         .eq('id', input.itemId);
 
       if (error) throw error;
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
+    onSuccess: async (_, variables) => {
+      await queryClient.invalidateQueries({
         queryKey: ['selection-items', variables.selectionId],
       });
     },
@@ -693,8 +686,8 @@ export function useToggleSelectionPublished() {
 
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['user-selections'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['user-selections'] });
     },
   });
 }
@@ -723,8 +716,8 @@ export function useUpdateSelectionPriceDisplayMode() {
 
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['user-selections'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['user-selections'] });
     },
   });
 }
@@ -755,7 +748,8 @@ export function useSelectionProductIds(selectionId: string | null) {
       );
     },
     enabled: !!selectionId,
-    staleTime: 30000,
+    // PERF: Increased cache time from 30s to 2min
+    staleTime: 2 * 60 * 1000, // 2 minutes
   });
 }
 
@@ -790,8 +784,8 @@ export function useReorderProducts() {
         throw new Error('Erreur lors de la réorganisation');
       }
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
+    onSuccess: async (_, variables) => {
+      await queryClient.invalidateQueries({
         queryKey: ['selection-items', variables.selectionId],
       });
     },
@@ -822,8 +816,8 @@ export function useUpdateAffiliateProductPrice() {
 
       if (error) throw error;
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
+    onSuccess: async (_, variables) => {
+      await queryClient.invalidateQueries({
         queryKey: ['selection-items', variables.selectionId],
       });
     },

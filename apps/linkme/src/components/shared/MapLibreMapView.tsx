@@ -68,7 +68,7 @@ interface PointProperties {
   orgIndex: number;
 }
 
-type GeoJSONPoint = GeoJSON.Feature<
+type _GeoJSONPoint = GeoJSON.Feature<
   GeoJSON.Point,
   ClusterProperties | PointProperties
 >;
@@ -385,7 +385,7 @@ export function MapLibreMapView({
         })}
 
         {/* Popup pour l'organisation sélectionnée */}
-        {selectedOrg && selectedOrg.longitude && selectedOrg.latitude && (
+        {selectedOrg?.longitude && selectedOrg?.latitude && (
           <Popup
             longitude={selectedOrg.longitude}
             latitude={selectedOrg.latitude}
@@ -397,7 +397,7 @@ export function MapLibreMapView({
           >
             <MapPopupCard
               organisation={selectedOrg}
-              onViewDetails={onViewDetails || (() => {})}
+              onViewDetails={onViewDetails ?? (() => {})}
               onClose={() => setSelectedOrg(null)}
             />
           </Popup>

@@ -3,13 +3,14 @@
 /**
  * OrderStepper - Sidebar de navigation pour le formulaire multi-étapes
  *
- * Affiche les 7 étapes avec :
+ * Affiche les 8 étapes avec :
  * - Numéro et label de chaque étape
  * - État (active, complétée, disabled)
  * - Indicateur visuel de progression
  *
  * @module OrderStepper
  * @since 2026-01-20
+ * @updated 2026-01-24 - Refonte 7→8 étapes (séparation contacts)
  */
 
 import { cn } from '@verone/ui';
@@ -17,8 +18,10 @@ import {
   Store,
   Package,
   ShoppingCart,
-  Users,
-  Truck,
+  User,
+  FileText,
+  MapPin,
+  Truck as _Truck,
   CheckCircle,
   ListChecks,
 } from 'lucide-react';
@@ -77,20 +80,27 @@ export const ORDER_STEPS: OrderStep[] = [
   },
   {
     id: 5,
-    label: 'Contacts',
-    shortLabel: 'Contacts',
-    icon: Users,
-    description: 'Responsable, facturation, livraison',
+    label: 'Contact Responsable',
+    shortLabel: 'Responsable',
+    icon: User,
+    description: 'Responsable de la commande',
   },
   {
     id: 6,
-    label: 'Livraison',
-    shortLabel: 'Livraison',
-    icon: Truck,
-    description: 'Adresse et options',
+    label: 'Facturation',
+    shortLabel: 'Facturation',
+    icon: FileText,
+    description: 'Contact et adresse de facturation',
   },
   {
     id: 7,
+    label: 'Adresse de contact de livraison',
+    shortLabel: 'Livraison',
+    icon: MapPin,
+    description: 'Contact livraison, adresse et options',
+  },
+  {
+    id: 8,
     label: 'Validation',
     shortLabel: 'Validation',
     icon: CheckCircle,
@@ -110,12 +120,16 @@ export function OrderStepper({
 }: OrderStepperProps) {
   const canNavigateTo = (step: number) => {
     // Peut naviguer vers les étapes complétées ou l'étape courante
-    return completedSteps.includes(step) || step === currentStep || step < currentStep;
+    return (
+      completedSteps.includes(step) ||
+      step === currentStep ||
+      step < currentStep
+    );
   };
 
   return (
     <nav className={cn('flex flex-col gap-1', className)}>
-      {ORDER_STEPS.map((step, index) => {
+      {ORDER_STEPS.map((step, _index) => {
         const isActive = currentStep === step.id;
         const isCompleted = completedSteps.includes(step.id);
         const isClickable = canNavigateTo(step.id) && !!onStepClick;
@@ -130,10 +144,14 @@ export function OrderStepper({
             className={cn(
               'flex items-start gap-3 p-3 rounded-lg text-left transition-all',
               'focus:outline-none focus:ring-2 focus:ring-linkme-turquoise/50',
-              isActive && 'bg-linkme-turquoise/10 border border-linkme-turquoise/30',
+              isActive &&
+                'bg-linkme-turquoise/10 border border-linkme-turquoise/30',
               !isActive && isCompleted && 'bg-green-50 hover:bg-green-100',
-              !isActive && !isCompleted && !isClickable && 'opacity-50 cursor-not-allowed',
-              !isActive && !isCompleted && isClickable && 'hover:bg-gray-50',
+              !isActive &&
+                !isCompleted &&
+                !isClickable &&
+                'opacity-50 cursor-not-allowed',
+              !isActive && !isCompleted && isClickable && 'hover:bg-gray-50'
             )}
           >
             {/* Indicateur numéroté */}

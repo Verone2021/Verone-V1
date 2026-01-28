@@ -5,6 +5,12 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createClient } from '@verone/utils/supabase/client';
+import type { Database } from '@verone/types';
+
+// Types Supabase
+type Enseigne = Database['public']['Tables']['enseignes']['Row'];
+type Organisation = Database['public']['Tables']['organisations']['Row'];
+type LinkMeAffiliate = Database['public']['Tables']['linkme_affiliates']['Row'];
 
 /**
  * Interface Enseigne avec statistiques
@@ -57,7 +63,7 @@ async function fetchEnseignesWithStats(): Promise<EnseigneWithStats[]> {
   const supabase = createClient();
 
   // Fetch enseignes d'abord (nécessaire pour avoir les IDs)
-  const { data: enseignes, error } = await (supabase as any)
+  const { data: enseignes, error } = await supabase
     .from('enseignes')
     .select('*')
     .order('name');
@@ -71,44 +77,50 @@ async function fetchEnseignesWithStats(): Promise<EnseigneWithStats[]> {
     return [];
   }
 
-  const enseigneIds = enseignes.map((e: any) => e.id);
+  const enseigneIds = enseignes.map(e => e.id);
 
   // OPTIMISATION: Exécuter les 3 requêtes de stats EN PARALLÈLE
   const [orgsResult, affiliatesResult, selectionsResult] = await Promise.all([
     // 1. Organisations par enseigne
-    (supabase as any)
+    supabase
       .from('organisations')
       .select('enseigne_id')
       .in('enseigne_id', enseigneIds),
     // 2. Affiliates par enseigne (avec ID pour les sélections)
-    (supabase as any)
+    supabase
       .from('linkme_affiliates')
       .select('id, enseigne_id')
       .in('enseigne_id', enseigneIds),
     // 3. Toutes les sélections (on filtrera côté client)
-    (supabase as any).from('linkme_selections').select('affiliate_id'),
+    supabase.from('linkme_selections').select('affiliate_id'),
   ]);
 
   // Compter organisations par enseigne
   const orgsCountMap = new Map<string, number>();
-  (orgsResult.data || []).forEach((o: any) => {
-    orgsCountMap.set(o.enseigne_id, (orgsCountMap.get(o.enseigne_id) || 0) + 1);
+  (orgsResult.data || []).forEach(o => {
+    if (o.enseigne_id)
+      orgsCountMap.set(
+        o.enseigne_id,
+        (orgsCountMap.get(o.enseigne_id) || 0) + 1
+      );
   });
 
   // Compter affiliates par enseigne + créer map affiliate->enseigne
   const affiliatesCountMap = new Map<string, number>();
   const affiliateToEnseigneMap = new Map<string, string>();
-  (affiliatesResult.data || []).forEach((a: any) => {
-    affiliatesCountMap.set(
-      a.enseigne_id,
-      (affiliatesCountMap.get(a.enseigne_id) || 0) + 1
-    );
-    affiliateToEnseigneMap.set(a.id, a.enseigne_id);
+  (affiliatesResult.data ?? []).forEach(a => {
+    if (a.enseigne_id) {
+      affiliatesCountMap.set(
+        a.enseigne_id,
+        (affiliatesCountMap.get(a.enseigne_id) ?? 0) + 1
+      );
+      affiliateToEnseigneMap.set(a.id, a.enseigne_id);
+    }
   });
 
   // Compter sélections par enseigne (via affiliate->enseigne mapping)
   const selectionsCountMap = new Map<string, number>();
-  (selectionsResult.data || []).forEach((s: any) => {
+  (selectionsResult.data || []).forEach(s => {
     const enseigneId = affiliateToEnseigneMap.get(s.affiliate_id);
     if (enseigneId) {
       selectionsCountMap.set(
@@ -119,7 +131,7 @@ async function fetchEnseignesWithStats(): Promise<EnseigneWithStats[]> {
   });
 
   // Mapper les résultats
-  return enseignes.map((enseigne: any) => ({
+  return enseignes.map(enseigne => ({
     id: enseigne.id,
     name: enseigne.name,
     description: enseigne.description,
@@ -148,7 +160,7 @@ async function fetchEnseigneById(
 ): Promise<EnseigneWithStats | null> {
   const supabase = createClient();
 
-  const { data: enseigne, error } = await (supabase as any)
+  const { data: enseigne, error } = await supabase
     .from('enseignes')
     .select('*')
     .eq('id', enseigneId)
@@ -163,21 +175,21 @@ async function fetchEnseigneById(
 
   // OPTIMISATION: Requêtes parallèles pour les counts
   const [orgsResult, affiliatesResult] = await Promise.all([
-    (supabase as any)
+    supabase
       .from('organisations')
       .select('id', { count: 'exact', head: true })
       .eq('enseigne_id', enseigneId),
-    (supabase as any)
+    supabase
       .from('linkme_affiliates')
       .select('id')
       .eq('enseigne_id', enseigneId),
   ]);
 
-  const affiliateIds = (affiliatesResult.data || []).map((a: any) => a.id);
+  const affiliateIds = (affiliatesResult.data || []).map(a => a.id);
 
   const { count: selectionsCount } =
     affiliateIds.length > 0
-      ? await (supabase as any)
+      ? await supabase
           .from('linkme_selections')
           .select('id', { count: 'exact', head: true })
           .in('affiliate_id', affiliateIds)
@@ -211,7 +223,7 @@ export interface EnseigneOrganisation {
   is_enseigne_parent: boolean;
   is_active: boolean;
   logo_url: string | null;
-  created_at: string;
+  created_at: string | null;
 }
 
 async function fetchEnseigneOrganisations(
@@ -219,25 +231,24 @@ async function fetchEnseigneOrganisations(
 ): Promise<EnseigneOrganisation[]> {
   const supabase = createClient();
 
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from('organisations')
-    .select('id, name, is_enseigne_parent, is_active, logo_url, created_at')
+    .select('id, legal_name, trade_name')
     .eq('enseigne_id', enseigneId)
-    .order('is_enseigne_parent', { ascending: false })
-    .order('name');
+    .order('legal_name');
 
   if (error) {
     console.error('Erreur fetch organisations enseigne:', error);
     throw error;
   }
 
-  return (data || []).map((org: any) => ({
+  return (data ?? []).map(org => ({
     id: org.id,
-    name: org.name,
-    is_enseigne_parent: org.is_enseigne_parent ?? false,
-    is_active: org.is_active ?? true,
-    logo_url: org.logo_url,
-    created_at: org.created_at,
+    name: org.trade_name ?? org.legal_name,
+    is_enseigne_parent: false,
+    is_active: true,
+    logo_url: null,
+    created_at: null,
   }));
 }
 
@@ -290,12 +301,12 @@ export function useCreateEnseigne() {
   return useMutation({
     mutationFn: async (input: CreateEnseigneInput) => {
       const supabase = createClient();
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('enseignes')
         .insert({
           name: input.name,
-          description: input.description || null,
-          logo_url: input.logo_url || null,
+          description: input.description ?? null,
+          logo_url: input.logo_url ?? null,
           is_active: input.is_active ?? true,
           member_count: 0,
         })
@@ -305,8 +316,8 @@ export function useCreateEnseigne() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['linkme-enseignes'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['linkme-enseignes'] });
     },
   });
 }
@@ -326,7 +337,7 @@ export function useUpdateEnseigne() {
       input: UpdateEnseigneInput;
     }) => {
       const supabase = createClient();
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('enseignes')
         .update({
           ...input,
@@ -339,9 +350,9 @@ export function useUpdateEnseigne() {
       if (error) throw error;
       return data;
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['linkme-enseignes'] });
-      queryClient.invalidateQueries({
+    onSuccess: async (_, variables) => {
+      await queryClient.invalidateQueries({ queryKey: ['linkme-enseignes'] });
+      await queryClient.invalidateQueries({
         queryKey: ['linkme-enseigne', variables.enseigneId],
       });
     },
@@ -377,15 +388,15 @@ export function useDeleteEnseigne() {
       }
 
       // Pas d'utilisateurs lies, on peut supprimer
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from('enseignes')
         .delete()
         .eq('id', enseigneId);
 
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['linkme-enseignes'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['linkme-enseignes'] });
     },
   });
 }
@@ -405,7 +416,7 @@ export function useToggleEnseigneActive() {
       isActive: boolean;
     }) => {
       const supabase = createClient();
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from('enseignes')
         .update({
           is_active: isActive,
@@ -441,8 +452,8 @@ export function useToggleEnseigneActive() {
         queryClient.setQueryData(['linkme-enseignes'], context.previousData);
       }
     },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['linkme-enseignes'] });
+    onSettled: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['linkme-enseignes'] });
     },
   });
 }

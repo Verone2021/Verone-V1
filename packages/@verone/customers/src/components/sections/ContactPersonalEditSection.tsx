@@ -4,10 +4,7 @@ import { User, Save, X, Edit } from 'lucide-react';
 
 import { ButtonV2 } from '@verone/ui';
 import { cn } from '@verone/utils';
-import {
-  useInlineEdit,
-  type EditableSection,
-} from '@verone/common/hooks';
+import { useInlineEdit, type EditableSection } from '@verone/common/hooks';
 import type { Contact } from '@verone/types';
 
 interface ContactPersonalEditSectionProps {

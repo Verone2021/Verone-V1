@@ -1,17 +1,19 @@
 /**
  * Schémas Zod pour le formulaire de commande unifié
  *
- * Structure en 7 étapes :
+ * Structure en 8 étapes :
  * 1. Restaurant (existant ou nouveau)
  * 2. Sélection (choix si plusieurs)
  * 3. Produits (ajout au panier)
  * 4. Panier (récapitulatif modifiable)
- * 5. Contacts (responsable, facturation, livraison)
- * 6. Livraison (adresse, date, options)
- * 7. Validation (récapitulatif final)
+ * 5. Contact Responsable (responsable de la commande)
+ * 6. Facturation (contact + adresse facturation)
+ * 7. Adresse et Options (contact livraison + adresse + date + options)
+ * 8. Validation (récapitulatif final)
  *
  * @module order-form.schema
  * @since 2026-01-20
+ * @updated 2026-01-24 - Refonte 7→8 étapes
  */
 
 import { z } from 'zod';
@@ -37,7 +39,11 @@ export type ContactBase = z.infer<typeof contactBaseSchema>;
 /**
  * Mode de sélection de contact
  */
-export const contactModeSchema = z.enum(['existing', 'new', 'same_as_responsable']);
+export const contactModeSchema = z.enum([
+  'existing',
+  'new',
+  'same_as_responsable',
+]);
 export type ContactMode = z.infer<typeof contactModeSchema>;
 
 /**
@@ -95,31 +101,43 @@ export const newRestaurantSchema = z.object({
   address: z.string().optional(),
   ownershipType: z.enum(['succursale', 'franchise']),
   // Géolocalisation automatique via AddressAutocomplete
-  country: z.string().default('FR'),           // Code ISO (FR, LU, BE...)
+  country: z.string().default('FR'), // Code ISO (FR, LU, BE...)
   latitude: z.number().nullable().optional(),
   longitude: z.number().nullable().optional(),
 });
 
-export const restaurantStepSchema = z.object({
-  mode: z.enum(['existing', 'new']),
-  existingId: z.string().uuid().optional().nullable(),
-  existingName: z.string().optional(), // Pour affichage
-  existingCity: z.string().optional(), // Pour affichage
-  existingOwnershipType: z.enum(['succursale', 'franchise']).optional().nullable(),
-  existingCountry: z.string().optional().nullable(), // Pour calcul TVA (FR=20%, autres=0%)
-  newRestaurant: newRestaurantSchema.optional().nullable(),
-}).refine(
-  (data) => {
-    if (data.mode === 'existing') {
-      return !!data.existingId;
+export const restaurantStepSchema = z
+  .object({
+    mode: z.enum(['existing', 'new']),
+    existingId: z.string().uuid().optional().nullable(),
+    existingName: z.string().optional(), // Pour affichage
+    existingCity: z.string().optional(), // Pour affichage
+    existingOwnershipType: z
+      .enum(['succursale', 'franchise'])
+      .optional()
+      .nullable(),
+    existingCountry: z.string().optional().nullable(), // Pour calcul TVA (FR=20%, autres=0%)
+    newRestaurant: newRestaurantSchema.optional().nullable(),
+  })
+  .refine(
+    data => {
+      if (data.mode === 'existing') {
+        // Restaurant existant : ID requis ET type requis (persisté en BD)
+        return !!data.existingId && !!data.existingOwnershipType;
+      }
+      // Nouveau restaurant : validation standard
+      return (
+        data.newRestaurant &&
+        data.newRestaurant.tradeName.length >= 2 &&
+        data.newRestaurant.city.length >= 2 &&
+        !!data.newRestaurant.ownershipType
+      );
+    },
+    {
+      message:
+        'Veuillez sélectionner le type du restaurant (franchise ou succursale)',
     }
-    return data.newRestaurant &&
-           data.newRestaurant.tradeName.length >= 2 &&
-           data.newRestaurant.city.length >= 2 &&
-           !!data.newRestaurant.ownershipType;
-  },
-  { message: 'Sélectionnez un restaurant ou créez-en un nouveau' }
-);
+  );
 
 export type RestaurantStepData = z.infer<typeof restaurantStepSchema>;
 
@@ -159,7 +177,9 @@ export const cartItemSchema = z.object({
 export type CartItem = z.infer<typeof cartItemSchema>;
 
 export const cartStepSchema = z.object({
-  items: z.array(cartItemSchema).min(1, 'Ajoutez au moins un produit au panier'),
+  items: z
+    .array(cartItemSchema)
+    .min(1, 'Ajoutez au moins un produit au panier'),
 });
 
 export type CartStepData = z.infer<typeof cartStepSchema>;
@@ -235,12 +255,27 @@ export type BillingOrgData = z.infer<typeof billingOrgSchema>;
  *
  * IMPORTANT: L'organisation est FIXE (= restaurant de l'étape 1)
  * On gère uniquement les ADRESSES de facturation
+ *
+ * Modes disponibles:
+ * - 'restaurant_address': Utilise l'adresse du restaurant (défaut)
+ * - 'existing_billing': Utilise une adresse existante de la table addresses
+ * - 'new_billing': Crée une nouvelle adresse
+ * - 'parent_address': Utilise l'adresse de la maison mère (succursales uniquement)
  */
 export const billingAddressSchema = z.object({
-  mode: z.enum(['restaurant_address', 'existing_billing', 'new_billing']),
+  mode: z.enum([
+    'restaurant_address',
+    'existing_billing',
+    'new_billing',
+    'parent_address',
+  ]),
   existingAddressId: z.string().uuid().nullable(),
   customAddress: partialAddressSchema.nullable(),
   setAsDefault: z.boolean().default(false),
+  /** Si true, remplace l'adresse du restaurant par la nouvelle adresse */
+  replaceExistingAddress: z.boolean().default(false),
+  /** ID de l'organisation source pour la sauvegarde des modifications */
+  sourceOrganisationId: z.string().uuid().optional().nullable(),
 });
 
 export type BillingAddressData = z.infer<typeof billingAddressSchema>;
@@ -260,58 +295,65 @@ export const deliverySectionSchema = z.object({
 
 export type DeliverySectionData = z.infer<typeof deliverySectionSchema>;
 
-export const contactsStepSchema = z.object({
-  // Contact responsable restaurant (obligatoire)
-  responsable: contactBaseSchema,
-  existingResponsableId: z.string().uuid().optional().nullable(),
+export const contactsStepSchema = z
+  .object({
+    // Contact responsable restaurant (obligatoire)
+    responsable: contactBaseSchema,
+    existingResponsableId: z.string().uuid().optional().nullable(),
 
-  // Contact de facturation (PERSONNE)
-  billingContact: billingContactSchema,
+    // Contact de facturation (PERSONNE)
+    billingContact: billingContactSchema,
 
-  // Organisation de facturation (ENTITÉ) - LEGACY, kept for compatibility
-  billingOrg: billingOrgSchema,
+    // Organisation de facturation (ENTITÉ) - LEGACY, kept for compatibility
+    billingOrg: billingOrgSchema,
 
-  // Adresse de facturation (V2) - L'org est fixe, on gère l'adresse
-  billingAddress: billingAddressSchema,
+    // Adresse de facturation (V2) - L'org est fixe, on gère l'adresse
+    billingAddress: billingAddressSchema,
 
-  // Contact & Adresse facturation (LEGACY - pour compatibilité)
-  billing: billingSectionSchema,
+    // Contact & Adresse facturation (LEGACY - pour compatibilité)
+    billing: billingSectionSchema,
 
-  // Contact & Adresse livraison/réception
-  delivery: deliverySectionSchema,
-}).refine(
-  (data) => {
-    // Validation contact facturation: soit même que responsable, soit contact existant/nouveau
-    if (data.billingContact.mode !== 'same_as_responsable') {
-      return !!data.billingContact.contact || !!data.billingContact.existingContactId;
-    }
-    return true;
-  },
-  { message: 'Contact facturation requis', path: ['billingContact'] }
-).refine(
-  (data) => {
-    // Validation adresse facturation (V2)
-    if (data.billingAddress.mode === 'new_billing') {
-      const addr = data.billingAddress.customAddress;
-      return !!(addr?.addressLine1 && addr?.postalCode && addr?.city);
-    }
-    if (data.billingAddress.mode === 'existing_billing') {
-      return !!data.billingAddress.existingAddressId;
-    }
-    // 'restaurant_address' is always valid
-    return true;
-  },
-  { message: 'Adresse de facturation requise', path: ['billingAddress'] }
-).refine(
-  (data) => {
-    // Validation livraison : soit même que responsable, soit contact custom
-    if (!data.delivery.sameAsResponsable) {
-      return !!data.delivery.contact || !!data.delivery.existingContactId;
-    }
-    return true;
-  },
-  { message: 'Contact livraison requis', path: ['delivery'] }
-);
+    // Contact & Adresse livraison/réception
+    delivery: deliverySectionSchema,
+  })
+  .refine(
+    data => {
+      // Validation contact facturation: soit même que responsable, soit contact existant/nouveau
+      if (data.billingContact.mode !== 'same_as_responsable') {
+        return (
+          !!data.billingContact.contact ||
+          !!data.billingContact.existingContactId
+        );
+      }
+      return true;
+    },
+    { message: 'Contact facturation requis', path: ['billingContact'] }
+  )
+  .refine(
+    data => {
+      // Validation adresse facturation (V2)
+      if (data.billingAddress.mode === 'new_billing') {
+        const addr = data.billingAddress.customAddress;
+        return !!(addr?.addressLine1 && addr?.postalCode && addr?.city);
+      }
+      if (data.billingAddress.mode === 'existing_billing') {
+        return !!data.billingAddress.existingAddressId;
+      }
+      // 'restaurant_address' and 'parent_address' are always valid
+      return true;
+    },
+    { message: 'Adresse de facturation requise', path: ['billingAddress'] }
+  )
+  .refine(
+    data => {
+      // Validation livraison : soit même que responsable, soit contact custom
+      if (!data.delivery.sameAsResponsable) {
+        return !!data.delivery.contact || !!data.delivery.existingContactId;
+      }
+      return true;
+    },
+    { message: 'Contact livraison requis', path: ['delivery'] }
+  );
 
 export type ContactsStepData = z.infer<typeof contactsStepSchema>;
 
@@ -319,36 +361,42 @@ export type ContactsStepData = z.infer<typeof contactsStepSchema>;
 // ÉTAPE 6 : LIVRAISON
 // ============================================================================
 
-export const deliveryStepSchema = z.object({
-  // Adresse livraison
-  address: z.string().min(5, 'Adresse requise (min. 5 caractères)'),
-  postalCode: z.string().min(4, 'Code postal requis'),
-  city: z.string().min(2, 'Ville requise'),
+export const deliveryStepSchema = z
+  .object({
+    // Adresse livraison
+    address: z.string().min(5, 'Adresse requise (min. 5 caractères)'),
+    postalCode: z.string().min(4, 'Code postal requis'),
+    city: z.string().min(2, 'Ville requise'),
 
-  // Date souhaitée (optionnelle)
-  desiredDate: z.date().optional().nullable(),
+    // Date souhaitée (optionnelle)
+    desiredDate: z.date().optional().nullable(),
 
-  // Options
-  isMallDelivery: z.boolean().default(false),
-  mallEmail: z.string().email('Email centre commercial invalide').optional().nullable(),
-  semiTrailerAccessible: z.boolean().default(false),
+    // Options
+    isMallDelivery: z.boolean().default(false),
+    mallEmail: z
+      .string()
+      .email('Email centre commercial invalide')
+      .optional()
+      .nullable(),
+    semiTrailerAccessible: z.boolean().default(true),
 
-  // Upload formulaire d'accès
-  accessFormUrl: z.string().url().optional().nullable(),
-  accessFormFile: z.any().optional().nullable(), // File pour upload
+    // Upload formulaire d'accès
+    accessFormUrl: z.string().url().optional().nullable(),
+    accessFormFile: z.any().optional().nullable(), // File pour upload
 
-  // Notes
-  notes: z.string().optional(),
-}).refine(
-  (data) => {
-    // Si centre commercial, email requis
-    if (data.isMallDelivery && !data.mallEmail) {
-      return false;
-    }
-    return true;
-  },
-  { message: 'Email du centre commercial requis', path: ['mallEmail'] }
-);
+    // Notes
+    notes: z.string().optional(),
+  })
+  .refine(
+    data => {
+      // Si centre commercial, email requis
+      if (data.isMallDelivery && !data.mallEmail) {
+        return false;
+      }
+      return true;
+    },
+    { message: 'Email du centre commercial requis', path: ['mallEmail'] }
+  );
 
 export type DeliveryStepData = z.infer<typeof deliveryStepSchema>;
 
@@ -430,6 +478,7 @@ export const defaultContactsStep: ContactsStepData = {
     existingAddressId: null,
     customAddress: null,
     setAsDefault: false,
+    replaceExistingAddress: false,
   },
   // Legacy billing (pour compatibilité)
   billing: {
@@ -456,7 +505,7 @@ export const defaultDeliveryStep: DeliveryStepData = {
   desiredDate: null,
   isMallDelivery: false,
   mallEmail: null,
-  semiTrailerAccessible: false,
+  semiTrailerAccessible: true,
   accessFormUrl: null,
   accessFormFile: null,
   notes: '',
@@ -474,7 +523,35 @@ export const defaultOrderFormData: OrderFormData = {
 // HELPERS DE VALIDATION PAR ÉTAPE
 // ============================================================================
 
-export function validateStep(step: number, data: Partial<OrderFormData>): boolean {
+/**
+ * Schéma de validation pour l'étape 5 : Contact Responsable uniquement
+ */
+export const responsableStepSchema = z.object({
+  responsable: contactBaseSchema,
+  existingResponsableId: z.string().uuid().optional().nullable(),
+});
+
+/**
+ * Schéma de validation pour l'étape 6 : Contact + Adresse Facturation
+ */
+export const billingStepValidationSchema = z.object({
+  billingContact: billingContactSchema,
+  billingAddress: billingAddressSchema,
+});
+
+/**
+ * Schéma de validation pour l'étape 7 : Contact Livraison + Adresse + Options
+ * Combine les données de contacts.delivery et delivery
+ */
+export const shippingStepValidationSchema = z.object({
+  contactDelivery: deliverySectionSchema,
+  delivery: deliveryStepSchema,
+});
+
+export function validateStep(
+  step: number,
+  data: Partial<OrderFormData>
+): boolean {
   try {
     switch (step) {
       case 1:
@@ -493,14 +570,30 @@ export function validateStep(step: number, data: Partial<OrderFormData>): boolea
         cartStepSchema.parse(data.cart);
         return true;
       case 5:
+        // Step 5: Contact Responsable uniquement
         if (!data.contacts) return false;
-        contactsStepSchema.parse(data.contacts);
+        responsableStepSchema.parse({
+          responsable: data.contacts.responsable,
+          existingResponsableId: data.contacts.existingResponsableId,
+        });
         return true;
       case 6:
-        if (!data.delivery) return false;
-        deliveryStepSchema.parse(data.delivery);
+        // Step 6: Contact + Adresse Facturation
+        if (!data.contacts) return false;
+        billingStepValidationSchema.parse({
+          billingContact: data.contacts.billingContact,
+          billingAddress: data.contacts.billingAddress,
+        });
         return true;
       case 7:
+        // Step 7: Contact Livraison + Adresse + Date + Options
+        if (!data.contacts || !data.delivery) return false;
+        shippingStepValidationSchema.parse({
+          contactDelivery: data.contacts.delivery,
+          delivery: data.delivery,
+        });
+        return true;
+      case 8:
         // Validation finale
         orderFormSchema.parse(data);
         return true;
@@ -512,13 +605,30 @@ export function validateStep(step: number, data: Partial<OrderFormData>): boolea
   }
 }
 
-export function getStepErrors(step: number, data: Partial<OrderFormData>): string[] {
+export function getStepErrors(
+  step: number,
+  data: Partial<OrderFormData>
+): string[] {
   try {
     switch (step) {
-      case 1:
+      case 1: {
         if (!data.restaurant) return ['Données restaurant manquantes'];
+        const errors: string[] = [];
+        // Vérification spécifique pour restaurant existant
+        if (data.restaurant.mode === 'existing') {
+          if (!data.restaurant.existingId) {
+            errors.push('Veuillez sélectionner un restaurant');
+          }
+          if (!data.restaurant.existingOwnershipType) {
+            errors.push(
+              'Veuillez définir le type du restaurant (franchise ou succursale)'
+            );
+          }
+          if (errors.length > 0) return errors;
+        }
         restaurantStepSchema.parse(data.restaurant);
         return [];
+      }
       case 2:
         if (!data.selection) return ['Données sélection manquantes'];
         selectionStepSchema.parse(data.selection);
@@ -528,14 +638,31 @@ export function getStepErrors(step: number, data: Partial<OrderFormData>): strin
         cartStepSchema.parse(data.cart);
         return [];
       case 5:
+        // Step 5: Contact Responsable uniquement
         if (!data.contacts) return ['Données contacts manquantes'];
-        contactsStepSchema.parse(data.contacts);
+        responsableStepSchema.parse({
+          responsable: data.contacts.responsable,
+          existingResponsableId: data.contacts.existingResponsableId,
+        });
         return [];
       case 6:
-        if (!data.delivery) return ['Données livraison manquantes'];
-        deliveryStepSchema.parse(data.delivery);
+        // Step 6: Contact + Adresse Facturation
+        if (!data.contacts) return ['Données contacts manquantes'];
+        billingStepValidationSchema.parse({
+          billingContact: data.contacts.billingContact,
+          billingAddress: data.contacts.billingAddress,
+        });
         return [];
       case 7:
+        // Step 7: Contact Livraison + Adresse + Date + Options
+        if (!data.contacts) return ['Données contact livraison manquantes'];
+        if (!data.delivery) return ['Données livraison manquantes'];
+        shippingStepValidationSchema.parse({
+          contactDelivery: data.contacts.delivery,
+          delivery: data.delivery,
+        });
+        return [];
+      case 8:
         orderFormSchema.parse(data);
         return [];
       default:
@@ -543,7 +670,7 @@ export function getStepErrors(step: number, data: Partial<OrderFormData>): strin
     }
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return error.issues.map((e) => e.message);
+      return error.issues.map(e => e.message);
     }
     return ['Erreur de validation inconnue'];
   }

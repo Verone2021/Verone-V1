@@ -35,7 +35,7 @@ export function useTogglePublish() {
         throw error;
       }
     },
-    onSuccess: (_, variables) => {
+    onSuccess: async (_, variables) => {
       toast({
         title: variables.is_published ? 'Produit publié' : 'Produit dépublié',
         description: variables.is_published
@@ -44,10 +44,10 @@ export function useTogglePublish() {
       });
 
       // Invalider cache
-      queryClient.invalidateQueries({
+      await queryClient.invalidateQueries({
         queryKey: ['site-internet-product-detail', variables.product_id],
       });
-      queryClient.invalidateQueries({
+      await queryClient.invalidateQueries({
         queryKey: ['site-internet-products'],
       });
     },

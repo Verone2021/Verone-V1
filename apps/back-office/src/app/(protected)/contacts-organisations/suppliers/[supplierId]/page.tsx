@@ -102,7 +102,9 @@ export default function SupplierDetailPage() {
         console.error('Erreur chargement canaux organisation:', err);
       }
     }
-    fetchOrganisationChannels();
+    void fetchOrganisationChannels().catch(error => {
+      console.error('[SupplierDetailPage] Fetch channels failed:', error);
+    });
   }, [supplierId]);
 
   // Hook centralisé pour les compteurs d'onglets
@@ -112,13 +114,17 @@ export default function SupplierDetailPage() {
   });
 
   // Gestionnaire de mise à jour des données fournisseur
-  const handleSupplierUpdate = (updatedData: Partial<Organisation>) => {
+  const handleSupplierUpdate = (_updatedData: Partial<Organisation>) => {
     // Rafraîchir les données du fournisseur immédiatement
     refetchSupplier();
     // Rafraîchir la liste des organisations (cache)
-    refetch();
+    void refetch().catch(error => {
+      console.error('[SupplierDetail] Refetch organisations failed:', error);
+    });
     // Rafraîchir les compteurs
-    refreshCounts();
+    void refreshCounts().catch(error => {
+      console.error('[SupplierDetail] Refresh counts failed:', error);
+    });
   };
 
   // Configuration des onglets avec compteurs du hook + modules déployés
@@ -219,15 +225,25 @@ export default function SupplierDetailPage() {
       // Archiver
       const success = await archiveOrganisation(supplier.id);
       if (success) {
-        console.log('✅ Fournisseur archivé avec succès');
-        refetch();
+        console.warn('✅ Fournisseur archivé avec succès');
+        void refetch().catch(error => {
+          console.error(
+            '[SupplierDetail] Refetch after archive failed:',
+            error
+          );
+        });
       }
     } else {
       // Restaurer
       const success = await unarchiveOrganisation(supplier.id);
       if (success) {
-        console.log('✅ Fournisseur restauré avec succès');
-        refetch();
+        console.warn('✅ Fournisseur restauré avec succès');
+        void refetch().catch(error => {
+          console.error(
+            '[SupplierDetail] Refetch after unarchive failed:',
+            error
+          );
+        });
       }
     }
   };
@@ -279,7 +295,14 @@ export default function SupplierDetailPage() {
         <div className="flex gap-2">
           <ButtonV2
             variant={supplier.archived_at ? 'success' : 'danger'}
-            onClick={handleArchive}
+            onClick={() => {
+              void handleArchive().catch(error => {
+                console.error(
+                  '[SupplierDetailPage] Archive action failed:',
+                  error
+                );
+              });
+            }}
           >
             {supplier.archived_at ? (
               <>
@@ -372,7 +395,14 @@ export default function SupplierDetailPage() {
             organisationName={supplier.legal_name}
             organisationType="supplier"
             currentLogoUrl={supplier.logo_url}
-            onUploadSuccess={() => refetch()}
+            onUploadSuccess={() => {
+              void refetch().catch(error => {
+                console.error(
+                  '[SupplierDetail] Refetch after logo upload failed:',
+                  error
+                );
+              });
+            }}
           />
 
           {/* Performance & Qualité */}

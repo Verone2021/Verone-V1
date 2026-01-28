@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
 
 import { AuthProvider } from '../../contexts/AuthContext';
-import { SentryUserContext } from '../SentryUserContext';
+import { cleanupLegacyCookies } from '../../lib/cleanup-legacy-cookies';
 import { CartDrawer } from '../cart/CartDrawer';
 import { CartProvider } from '../cart/CartProvider';
 
@@ -27,16 +27,19 @@ export function Providers({ children }: ProvidersProps): React.ReactElement {
       })
   );
 
+  // Cleanup cookies obsolètes au mount (une seule fois)
+  useEffect(() => {
+    cleanupLegacyCookies();
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <SentryUserContext>
-          <CartProvider>
-            {children}
-            <CartDrawer />
-            <Toaster position="top-right" richColors />
-          </CartProvider>
-        </SentryUserContext>
+        <CartProvider>
+          {children}
+          <CartDrawer />
+          <Toaster position="top-right" richColors />
+        </CartProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

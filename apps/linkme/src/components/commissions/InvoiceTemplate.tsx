@@ -21,7 +21,7 @@ import type {
 } from '../../types/analytics';
 import {
   formatCurrency,
-  formatDateFR,
+  formatDateFR as _formatDateFR,
   VERONE_LEGAL_INFO,
 } from '../../types/analytics';
 
@@ -72,7 +72,7 @@ export function InvoiceTemplate({
       '',
       ...commissions.map(
         c =>
-          `• Commande #${c.orderNumber} - ${c.selectionName || 'Sélection'} : ${formatCurrency(c.affiliateCommission)}`
+          `• Commande #${c.orderNumber} - ${c.selectionName ?? 'Sélection'} : ${formatCurrency(c.affiliateCommission)}`
       ),
     ];
     try {
@@ -118,7 +118,14 @@ export function InvoiceTemplate({
       {showActions && (
         <div className="flex flex-wrap items-center gap-2 justify-end print:hidden">
           <button
-            onClick={handleCopyDestinataire}
+            onClick={() => {
+              void handleCopyDestinataire().catch(error => {
+                console.error(
+                  '[InvoiceTemplate] Copy destinataire failed:',
+                  error
+                );
+              });
+            }}
             className="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-800 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
           >
             {copiedField === 'destinataire' ? (
@@ -129,7 +136,14 @@ export function InvoiceTemplate({
             {copiedField === 'destinataire' ? 'Copié !' : 'Copier destinataire'}
           </button>
           <button
-            onClick={handleCopyDesignation}
+            onClick={() => {
+              void handleCopyDesignation().catch(error => {
+                console.error(
+                  '[InvoiceTemplate] Copy designation failed:',
+                  error
+                );
+              });
+            }}
             className="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-800 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
           >
             {copiedField === 'designation' ? (
@@ -140,7 +154,11 @@ export function InvoiceTemplate({
             {copiedField === 'designation' ? 'Copié !' : 'Copier désignation'}
           </button>
           <button
-            onClick={handleCopyMontant}
+            onClick={() => {
+              void handleCopyMontant().catch(error => {
+                console.error('[InvoiceTemplate] Copy montant failed:', error);
+              });
+            }}
             className="flex items-center gap-2 px-3 py-1.5 text-sm text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors font-medium"
           >
             {copiedField === 'montant' ? (

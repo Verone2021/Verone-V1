@@ -19,7 +19,6 @@ import { Progress } from '@verone/ui';
 import {
   BarChart,
   LineChart,
-  PieChart,
   TrendingUp,
   TrendingDown,
   Activity,
@@ -28,8 +27,6 @@ import {
   Clock,
   CheckCircle,
   Package,
-  Palette,
-  FolderTree,
   Monitor,
   Smartphone,
   Tablet,
@@ -124,7 +121,7 @@ function WebVitalBadge({
   unit: string;
   metric: 'lcp' | 'fid' | 'cls';
 }) {
-  const { rating, color } = getWebVitalRating(metric, value);
+  const { rating, color: _color } = getWebVitalRating(metric, value);
 
   const ratingColors = {
     good: 'bg-green-100 text-green-700 border-green-200',

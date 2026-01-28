@@ -10,7 +10,7 @@ import { NextResponse } from 'next/server';
 import { logger } from '@verone/utils/logger';
 import { withLogging } from '@verone/utils/middleware/logging';
 
-async function healthCheck(req: NextRequest) {
+async function healthCheck(_req: NextRequest) {
   const startTime = Date.now();
 
   // Vérification santé système

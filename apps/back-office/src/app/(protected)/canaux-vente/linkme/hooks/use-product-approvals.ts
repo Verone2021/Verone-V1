@@ -105,10 +105,10 @@ export function usePendingApprovals() {
       // Map data to flat structure
       return (data || []).map((product: Record<string, unknown>) => ({
         ...product,
-        enseigne_name: (product.enseigne as { name?: string })?.name || null,
+        enseigne_name: (product.enseigne as { name?: string })?.name ?? null,
         affiliate_display_name:
           (product.linkme_affiliates as { display_name?: string })
-            ?.display_name || null,
+            ?.display_name ?? null,
       })) as PendingProduct[];
     },
     staleTime: 30000,
@@ -186,10 +186,10 @@ export function useAllAffiliateProducts(
 
         return {
           ...product,
-          enseigne_name: (product.enseigne as { name?: string })?.name || null,
+          enseigne_name: (product.enseigne as { name?: string })?.name ?? null,
           affiliate_display_name:
             (product.linkme_affiliates as { display_name?: string })
-              ?.display_name || null,
+              ?.display_name ?? null,
           // Storage info: if there's an affiliate_product reception, it's stored at Vérone
           affiliate_storage_type: affiliateReception ? 'verone' : 'self',
           affiliate_stock_quantity:
@@ -251,10 +251,14 @@ export function useApproveProduct() {
 
       return data as unknown as ApprovalResult;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['pending-approvals'] });
-      queryClient.invalidateQueries({ queryKey: ['pending-approvals-count'] });
-      queryClient.invalidateQueries({ queryKey: ['all-affiliate-products'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['pending-approvals'] });
+      await queryClient.invalidateQueries({
+        queryKey: ['pending-approvals-count'],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ['all-affiliate-products'],
+      });
     },
   });
 }
@@ -287,10 +291,14 @@ export function useRejectProduct() {
 
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['pending-approvals'] });
-      queryClient.invalidateQueries({ queryKey: ['pending-approvals-count'] });
-      queryClient.invalidateQueries({ queryKey: ['all-affiliate-products'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['pending-approvals'] });
+      await queryClient.invalidateQueries({
+        queryKey: ['pending-approvals-count'],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ['all-affiliate-products'],
+      });
     },
   });
 }
@@ -363,9 +371,11 @@ export function useUpdateAffiliateProduct() {
 
       return result;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['all-affiliate-products'] });
-      queryClient.invalidateQueries({
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ['all-affiliate-products'],
+      });
+      await queryClient.invalidateQueries({
         queryKey: ['product-commission-history'],
       });
     },

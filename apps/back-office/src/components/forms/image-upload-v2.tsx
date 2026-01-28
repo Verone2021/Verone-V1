@@ -25,7 +25,6 @@ import {
 } from 'lucide-react';
 
 import { useImageUpload, type UseImageUploadProps } from '@verone/common';
-import type { BucketType } from '@verone/utils/upload/validation';
 
 import { cn } from '@verone/utils';
 
@@ -62,11 +61,11 @@ export function ImageUploadV2({
     validationError,
     uploadResult,
     userProfile,
-    bucketConfig,
+    bucketConfig: _bucketConfig,
     uploadFile,
     validateFile,
     clearError,
-    reset,
+    reset: _reset,
     deleteUploadedFile,
     canUpload,
     supportedTypes,
@@ -75,7 +74,7 @@ export function ImageUploadV2({
     bucket,
     autoUpload,
     onUploadSuccess: result => {
-      console.log('🎉 Upload terminé:', result?.publicUrl);
+      console.warn('🎉 Upload terminé:', result?.publicUrl);
       onImageUpload(result?.publicUrl ?? '');
     },
     onUploadError: error => {
@@ -106,9 +105,9 @@ export function ImageUploadV2({
     const success = await uploadFile(file);
 
     if (success) {
-      console.log('✅ Upload réussi');
+      console.warn('✅ Upload réussi');
     } else {
-      console.log('❌ Upload échoué');
+      console.warn('❌ Upload échoué');
     }
   };
 
@@ -165,14 +164,18 @@ export function ImageUploadV2({
 
     const files = e.dataTransfer.files;
     if (files && files[0]) {
-      handleFileSelect(files[0]);
+      void handleFileSelect(files[0]).catch(error => {
+        console.error('[ImageUploadV2] handleFileSelect failed:', error);
+      });
     }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files[0]) {
-      handleFileSelect(files[0]);
+      void handleFileSelect(files[0]).catch(error => {
+        console.error('[ImageUploadV2] handleFileSelect failed:', error);
+      });
     }
   };
 
@@ -270,7 +273,14 @@ export function ImageUploadV2({
             variant="destructive"
             size="sm"
             className="absolute -top-2 -right-2 w-6 h-6 p-0 rounded-full"
-            onClick={handleRemoveImage}
+            onClick={() => {
+              void handleRemoveImage().catch(error => {
+                console.error(
+                  '[ImageUploadV2] handleRemoveImage failed:',
+                  error
+                );
+              });
+            }}
           >
             <X className="w-3 h-3" />
           </ButtonV2>

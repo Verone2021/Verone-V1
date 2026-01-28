@@ -144,8 +144,12 @@ export function StoreLocatorMap({
                     maxZoom={4}
                   >
                     <Geographies geography={EUROPE_GEO_URL}>
-                      {({ geographies }) =>
-                        geographies.map(geo => (
+                      {({
+                        geographies,
+                      }: {
+                        geographies: Array<{ rsmKey: string }>;
+                      }) =>
+                        geographies.map((geo: { rsmKey: string }) => (
                           <Geography
                             key={geo.rsmKey}
                             geography={geo}
@@ -167,7 +171,7 @@ export function StoreLocatorMap({
                       <Marker
                         key={org.id}
                         coordinates={[org.longitude!, org.latitude!]}
-                        onMouseEnter={e => {
+                        onMouseEnter={(e: React.MouseEvent) => {
                           setHoveredStore(org);
                           setTooltipPosition({
                             x: e.clientX,

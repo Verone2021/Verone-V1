@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const supabase = await createClient();
+    const supabase = createClient();
 
     // Récupérer la transaction pour calculer les montants
     const { data: transaction, error: fetchError } = await supabase

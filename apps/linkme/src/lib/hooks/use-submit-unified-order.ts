@@ -80,7 +80,6 @@ export function useSubmitUnifiedOrder() {
             quantity: item.quantity,
           }));
 
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const { data: orderId, error: rpcError } = await (
             supabase.rpc as any
           )('create_affiliate_order', {
@@ -106,8 +105,8 @@ export function useSubmitUnifiedOrder() {
           );
 
           // Invalider les caches
-          queryClient.invalidateQueries({ queryKey: ['linkme-orders'] });
-          queryClient.invalidateQueries({
+          await queryClient.invalidateQueries({ queryKey: ['linkme-orders'] });
+          await queryClient.invalidateQueries({
             queryKey: ['affiliate-orders', affiliateId],
           });
 
@@ -265,7 +264,6 @@ export function useSubmitUnifiedOrder() {
             notes: data.delivery.notes || null,
           };
 
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const { data: result, error: rpcError } = await (supabase.rpc as any)(
             'create_public_linkme_order',
             {
@@ -329,7 +327,7 @@ export function useSubmitUnifiedOrder() {
                 isNewRestaurant: true,
                 totalTtc: totalTtc,
                 source: 'unified_form',
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
                 affiliateName: (selectionData?.linkme_affiliates as any)?.name,
                 selectionName: selectionData?.name,
               }),
@@ -339,8 +337,8 @@ export function useSubmitUnifiedOrder() {
           }
 
           // Invalider les caches
-          queryClient.invalidateQueries({ queryKey: ['linkme-orders'] });
-          queryClient.invalidateQueries({
+          await queryClient.invalidateQueries({ queryKey: ['linkme-orders'] });
+          await queryClient.invalidateQueries({
             queryKey: ['affiliate-orders', affiliateId],
           });
 

@@ -53,6 +53,8 @@ const securityHeaders = {
       formAction: ["'self'"],
       frameAncestors: ["'none'"],
       upgradeInsecureRequests: [],
+      // CSP Reporting - collect violations
+      reportUri: ['/api/csp-report'],
     },
   },
 

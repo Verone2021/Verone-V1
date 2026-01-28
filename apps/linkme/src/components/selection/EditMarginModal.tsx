@@ -16,7 +16,9 @@
  */
 
 import { useState, useMemo } from 'react';
+import Image from 'next/image';
 
+import { calculateMargin, LINKME_CONSTANTS } from '@verone/utils';
 import {
   X,
   Loader2,
@@ -25,7 +27,7 @@ import {
   TrendingUp,
   AlertTriangle,
   AlertCircle,
-  Info,
+  Info as _Info,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -41,10 +43,8 @@ interface EditMarginModalProps {
   onClose: () => void;
 }
 
-// Constantes (alignées avec AddToSelectionModal)
-const MIN_MARGIN = 1;
-const BUFFER_RATE = 5;
-const LINKME_COMMISSION = 5;
+// Constantes centralisées (SSOT)
+const { MIN_MARGIN, BUFFER_RATE, PLATFORM_COMMISSION_RATE } = LINKME_CONSTANTS;
 
 export function EditMarginModal({
   item,
@@ -63,7 +63,7 @@ export function EditMarginModal({
     // Prix public estimé = base × 1.5 (estimation conservative)
     const publicPriceHt = basePriceHt * 1.5;
     const commissionRate =
-      affiliate?.linkme_commission_rate || LINKME_COMMISSION;
+      affiliate?.linkme_commission_rate ?? PLATFORM_COMMISSION_RATE;
 
     // Prix LinkMe = prix base × (1 + commission)
     const prixLinkMe = basePriceHt * (1 + commissionRate / 100);
@@ -90,22 +90,25 @@ export function EditMarginModal({
     };
   }, [item.base_price_ht, affiliate]);
 
-  // Calculer prix vente et gain
+  // Calculer prix vente et gain avec la SSOT (taux de marque)
   const calculations = useMemo(() => {
     const basePriceHt = item.base_price_ht;
     const commissionRate =
-      affiliate?.linkme_commission_rate || LINKME_COMMISSION;
+      affiliate?.linkme_commission_rate ?? PLATFORM_COMMISSION_RATE;
 
-    // Prix vente = base × (1 + commission + marge)
-    const sellingPrice =
-      basePriceHt * (1 + commissionRate / 100 + marginRate / 100);
+    // Calcul avec la SSOT - formule TAUX DE MARQUE
+    // selling_price = base_price / (1 - margin_rate/100)
+    const { sellingPriceHt, gainEuros } = calculateMargin({
+      basePriceHt,
+      marginRate,
+    });
 
-    // Gain = base × marge
-    const gain = basePriceHt * (marginRate / 100);
+    // Prix final incluant la commission plateforme
+    const finalPrice = sellingPriceHt * (1 + commissionRate / 100);
 
     return {
-      sellingPrice: Math.round(sellingPrice * 100) / 100,
-      gain: Math.round(gain * 100) / 100,
+      sellingPrice: Math.round(finalPrice * 100) / 100,
+      gain: gainEuros,
     };
   }, [item.base_price_ht, marginRate, affiliate]);
 
@@ -128,8 +131,12 @@ export function EditMarginModal({
       });
       toast.success('Marge mise à jour avec succès');
       onClose();
-    } catch (error: any) {
-      toast.error(error.message || 'Erreur lors de la mise à jour');
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : 'Erreur lors de la mise à jour';
+      toast.error(errorMessage);
     }
   };
 
@@ -163,12 +170,13 @@ export function EditMarginModal({
 
         {/* Produit - Image plus grande */}
         <div className="px-6 py-4 bg-gray-50 border-b flex items-center gap-4">
-          <div className="w-16 h-16 bg-white rounded-xl overflow-hidden flex-shrink-0 border shadow-sm">
+          <div className="w-16 h-16 bg-white rounded-xl overflow-hidden flex-shrink-0 border shadow-sm relative">
             {item.product_image_url ? (
-              <img
+              <Image
                 src={item.product_image_url}
                 alt={item.product_name}
-                className="w-full h-full object-cover"
+                fill
+                className="object-cover"
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-gray-300">
@@ -343,7 +351,11 @@ export function EditMarginModal({
             Annuler
           </button>
           <button
-            onClick={handleSave}
+            onClick={() => {
+              void handleSave().catch(error => {
+                console.error('[EditMarginModal] Save failed:', error);
+              });
+            }}
             disabled={updateMargin.isPending || marginRate === item.margin_rate}
             className="flex items-center gap-2 px-5 py-2.5 text-sm bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
           >

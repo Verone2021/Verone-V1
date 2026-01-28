@@ -27,7 +27,6 @@ import {
   useTransactionActions,
   useUnreconciledOrders,
   type UnifiedTransaction,
-  type UnifiedStatus,
 } from '@verone/finance/hooks';
 import {
   Card,
@@ -69,7 +68,6 @@ import {
   Settings,
   Tag,
   Upload,
-  RefreshCw,
   CheckCircle2,
   XCircle,
   ChevronLeft,
@@ -566,13 +564,13 @@ function TransactionsPageLegacy() {
     useBankReconciliation();
 
   // Hook dépenses pour les stats
-  const { stats: expenseStats } = useExpenses({ status: 'all' });
+  const { stats: _expenseStats } = useExpenses({ status: 'all' });
 
   // Toutes les transactions combinées
   const allTransactions = useMemo(() => {
     return [...creditTransactions, ...debitTransactions].sort((a, b) => {
-      const dateA = new Date(a.emitted_at || '').getTime();
-      const dateB = new Date(b.emitted_at || '').getTime();
+      const dateA = new Date(a.emitted_at ?? '').getTime();
+      const dateB = new Date(b.emitted_at ?? '').getTime();
       return dateB - dateA;
     });
   }, [creditTransactions, debitTransactions]);
@@ -664,11 +662,11 @@ function TransactionsPageLegacy() {
     return {
       id: selectedTransaction.id,
       transaction_id: selectedTransaction.transaction_id,
-      label: selectedTransaction.label || '',
+      label: selectedTransaction.label ?? '',
       counterparty_name: selectedTransaction.counterparty_name,
       amount: selectedTransaction.amount,
       currency: selectedTransaction.currency || 'EUR',
-      emitted_at: selectedTransaction.emitted_at || '',
+      emitted_at: selectedTransaction.emitted_at ?? '',
       has_attachment: Boolean(
         selectedTransaction.attachment_ids &&
           selectedTransaction.attachment_ids.length > 0
@@ -864,7 +862,14 @@ function TransactionsPageLegacy() {
                       transaction={tx}
                       onClick={() => setSelectedTransaction(tx)}
                       isSelected={selectedTransaction?.id === tx.id}
-                      onLink={() => refresh()}
+                      onLink={() => {
+                        void refresh().catch(error => {
+                          console.error(
+                            '[Transactions] Refresh after link failed:',
+                            error
+                          );
+                        });
+                      }}
                       suggestion={suggestionsMap.get(tx.id)}
                     />
                   ))}
@@ -896,7 +901,14 @@ function TransactionsPageLegacy() {
               onClose={() => setSelectedTransaction(null)}
               onOpenRapprochementModal={() => setShowRapprochementModal(true)}
               onOpenUploadModal={() => setShowUploadModal(true)}
-              onLink={() => refresh()}
+              onLink={() => {
+                void refresh().catch(error => {
+                  console.error(
+                    '[Transactions] Refresh after link failed:',
+                    error
+                  );
+                });
+              }}
               suggestion={suggestionsMap.get(selectedTransaction.id)}
             />
           )}
@@ -917,7 +929,9 @@ function TransactionsPageLegacy() {
         counterpartyName={selectedTransaction?.counterparty_name}
         onSuccess={() => {
           toast.success('Transaction rapprochée');
-          refresh();
+          void refresh().catch(error => {
+            console.error('[Transactions] Refresh failed:', error);
+          });
           setShowRapprochementModal(false);
         }}
       />
@@ -929,7 +943,9 @@ function TransactionsPageLegacy() {
         onOpenChange={setShowUploadModal}
         onUploadComplete={() => {
           toast.success('Justificatif uploadé');
-          refresh();
+          void refresh().catch(error => {
+            console.error('[Transactions] Refresh failed:', error);
+          });
           setShowUploadModal(false);
         }}
       />
@@ -1009,7 +1025,7 @@ function TransactionsPageV2() {
     filters: {
       status: activeTab === 'all' ? 'all' : activeTab,
       side: sideFilter === 'all' ? 'all' : sideFilter,
-      search: search || undefined,
+      search: search ?? undefined,
       year: yearFilter,
     },
     pageSize: 20,
@@ -1037,8 +1053,8 @@ function TransactionsPageV2() {
   const {
     classify,
     linkOrganisation,
-    ignore,
-    unignore,
+    ignore: _ignore,
+    unignore: _unignore,
     toggleIgnore,
     markCCA,
   } = useTransactionActions();
@@ -1053,7 +1069,7 @@ function TransactionsPageV2() {
     setFilters({
       status: tab === 'all' ? 'all' : tab,
       side: sideFilter === 'all' ? 'all' : sideFilter,
-      search: search || undefined,
+      search: search ?? undefined,
       year: yearFilter,
     });
   };
@@ -1065,7 +1081,7 @@ function TransactionsPageV2() {
     setFilters({
       status: activeTab === 'all' ? 'all' : activeTab,
       side: side === 'all' ? 'all' : side,
-      search: search || undefined,
+      search: search ?? undefined,
       year: yearFilter,
     });
   };
@@ -1077,7 +1093,7 @@ function TransactionsPageV2() {
     setFilters({
       status: activeTab === 'all' ? 'all' : activeTab,
       side: sideFilter === 'all' ? 'all' : sideFilter,
-      search: search || undefined,
+      search: search ?? undefined,
       year,
     });
   };
@@ -1088,7 +1104,7 @@ function TransactionsPageV2() {
     setFilters({
       status: activeTab === 'all' ? 'all' : activeTab,
       side: sideFilter === 'all' ? 'all' : sideFilter,
-      search: value || undefined,
+      search: value ?? undefined,
       year: yearFilter,
     });
   };
@@ -1146,7 +1162,9 @@ function TransactionsPageV2() {
       if (updateError) throw updateError;
 
       toast.success(`${eligibleIds.length} transactions catégorisées en 707`);
-      refresh();
+      void refresh().catch(error => {
+        console.error('[Transactions] Refresh failed:', error);
+      });
     } catch (err) {
       toast.error('Erreur lors de la catégorisation');
       console.error('[AutoCategorize] Error:', err);
@@ -1156,7 +1174,7 @@ function TransactionsPageV2() {
   };
 
   // Classification handler
-  const handleClassify = async (categoryPcg: string) => {
+  const _handleClassify = async (categoryPcg: string) => {
     if (!selectedTransaction) return;
     const result = await classify(selectedTransaction.id, categoryPcg);
     if (result.success) {
@@ -1169,7 +1187,7 @@ function TransactionsPageV2() {
   };
 
   // Link organisation handler
-  const handleLinkOrganisation = async (organisationId: string) => {
+  const _handleLinkOrganisation = async (organisationId: string) => {
     if (!selectedTransaction) return;
     const result = await linkOrganisation(
       selectedTransaction.id,
@@ -1207,8 +1225,8 @@ function TransactionsPageV2() {
   };
 
   // Legacy ignore handler (for backward compatibility)
-  const handleIgnore = async () => handleToggleIgnore(true);
-  const handleUnignore = async () => handleToggleIgnore(false);
+  const _handleIgnore = async () => handleToggleIgnore(true);
+  const _handleUnignore = async () => handleToggleIgnore(false);
 
   // Toggle justification optional (remplace "Ignorer")
   const handleToggleJustificationOptional = async (optional: boolean) => {
@@ -1231,7 +1249,7 @@ function TransactionsPageV2() {
   };
 
   // CCA handler
-  const handleMarkCCA = async () => {
+  const _handleMarkCCA = async () => {
     if (!selectedTransaction) return;
     const result = await markCCA(selectedTransaction.id);
     if (result.success) {
@@ -1268,11 +1286,11 @@ function TransactionsPageV2() {
     return {
       id: tx.id,
       transaction_id: tx.transaction_id,
-      label: tx.label || '',
+      label: tx.label ?? '',
       counterparty_name: tx.counterparty_name,
       amount: tx.amount,
       currency: 'EUR',
-      emitted_at: tx.emitted_at || '',
+      emitted_at: tx.emitted_at ?? '',
       has_attachment: tx.has_attachment,
       matched_document_id: tx.matched_document_id,
       order_number: null,
@@ -1309,7 +1327,14 @@ function TransactionsPageV2() {
             <Button
               variant="outline"
               size="sm"
-              onClick={handleAutoCategorizeCredits}
+              onClick={() => {
+                void handleAutoCategorizeCredits().catch(error => {
+                  console.error(
+                    '[Transactions] Auto categorize failed:',
+                    error
+                  );
+                });
+              }}
               disabled={isAutoCategorizing}
               title="Catégoriser toutes les entrées non classées en 707 (Ventes)"
             >
@@ -2002,28 +2027,39 @@ function TransactionsPageV2() {
                                   selectedTransaction.vat_rate?.toString() ||
                                   'none'
                                 }
-                                onValueChange={async value => {
-                                  const newRate =
-                                    value === 'none' ? null : parseFloat(value);
-                                  try {
-                                    const res = await fetch(
-                                      '/api/transactions/update-vat',
-                                      {
-                                        method: 'POST',
-                                        headers: {
-                                          'Content-Type': 'application/json',
-                                        },
-                                        body: JSON.stringify({
-                                          transaction_id:
-                                            selectedTransaction.id,
-                                          vat_rate: newRate,
-                                        }),
+                                onValueChange={value => {
+                                  void (async () => {
+                                    const newRate =
+                                      value === 'none'
+                                        ? null
+                                        : parseFloat(value);
+                                    try {
+                                      const res = await fetch(
+                                        '/api/transactions/update-vat',
+                                        {
+                                          method: 'POST',
+                                          headers: {
+                                            'Content-Type': 'application/json',
+                                          },
+                                          body: JSON.stringify({
+                                            transaction_id:
+                                              selectedTransaction.id,
+                                            vat_rate: newRate,
+                                          }),
+                                        }
+                                      );
+                                      if (res.ok) {
+                                        void refresh().catch(error => {
+                                          console.error(
+                                            '[Transactions] Refresh after update failed:',
+                                            error
+                                          );
+                                        });
                                       }
-                                    );
-                                    if (res.ok) refresh();
-                                  } catch (err) {
-                                    console.error('[TVA update] Error:', err);
-                                  }
+                                    } catch (err) {
+                                      console.error('[TVA update] Error:', err);
+                                    }
+                                  })();
                                 }}
                               >
                                 <SelectTrigger className="h-5 text-[9px]">
@@ -2123,9 +2159,16 @@ function TransactionsPageV2() {
                                     <ExternalLink className="h-2.5 w-2.5" />
                                   </button>
                                   <button
-                                    onClick={() =>
-                                      handleDeleteAttachment(att.id)
-                                    }
+                                    onClick={() => {
+                                      void handleDeleteAttachment(att.id).catch(
+                                        error => {
+                                          console.error(
+                                            '[Transactions] Delete attachment failed:',
+                                            error
+                                          );
+                                        }
+                                      );
+                                    }}
                                     className="opacity-0 group-hover:opacity-100 p-0.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-opacity"
                                     title="Supprimer ce justificatif"
                                   >
@@ -2247,7 +2290,16 @@ function TransactionsPageV2() {
                     <Button
                       variant="outline"
                       className="w-full justify-start gap-1.5 h-7 text-xs text-green-600 hover:text-green-700"
-                      onClick={() => handleToggleJustificationOptional(false)}
+                      onClick={() => {
+                        void handleToggleJustificationOptional(false).catch(
+                          error => {
+                            console.error(
+                              '[Transactions] Toggle justification failed:',
+                              error
+                            );
+                          }
+                        );
+                      }}
                     >
                       <FileCheck className="h-3 w-3" />
                       Justificatif requis
@@ -2256,7 +2308,16 @@ function TransactionsPageV2() {
                     <Button
                       variant="ghost"
                       className="w-full justify-start gap-1.5 h-7 text-xs text-muted-foreground"
-                      onClick={() => handleToggleJustificationOptional(true)}
+                      onClick={() => {
+                        void handleToggleJustificationOptional(true).catch(
+                          error => {
+                            console.error(
+                              '[Transactions] Toggle justification failed:',
+                              error
+                            );
+                          }
+                        );
+                      }}
                     >
                       <FileX className="h-3 w-3" />
                       Justificatif facultatif
@@ -2280,14 +2341,21 @@ function TransactionsPageV2() {
         }
         amount={selectedTransaction?.amount}
         transactionId={selectedTransaction?.id}
-        counterpartyName={selectedTransaction?.counterparty_name || undefined}
-        currentCategory={selectedTransaction?.category_pcg || undefined}
+        counterpartyName={selectedTransaction?.counterparty_name ?? undefined}
+        currentCategory={selectedTransaction?.category_pcg ?? undefined}
         existingRuleId={
           selectedTransaction
             ? suggestionsMap.get(selectedTransaction.id)?.matchedRule?.id
             : undefined
         }
-        onSuccess={refresh}
+        onSuccess={() => {
+          void refresh().catch(error => {
+            console.error(
+              '[Transactions] Refresh after success failed:',
+              error
+            );
+          });
+        }}
       />
 
       {/* Modal Organisation */}
@@ -2301,7 +2369,14 @@ function TransactionsPageV2() {
         }
         transactionCount={1}
         totalAmount={selectedTransaction?.amount}
-        onSuccess={refresh}
+        onSuccess={() => {
+          void refresh().catch(error => {
+            console.error(
+              '[Transactions] Refresh after success failed:',
+              error
+            );
+          });
+        }}
         transactionSide={selectedTransaction?.side}
       />
 
@@ -2319,7 +2394,9 @@ function TransactionsPageV2() {
         counterpartyName={selectedTransaction?.counterparty_name}
         onSuccess={() => {
           toast.success('Transaction rapprochee');
-          refresh();
+          void refresh().catch(error => {
+            console.error('[Transactions] Refresh failed:', error);
+          });
           setShowRapprochementModal(false);
         }}
       />
@@ -2334,7 +2411,9 @@ function TransactionsPageV2() {
         }}
         onUploadComplete={() => {
           toast.success('Justificatif uploadé');
-          refresh();
+          void refresh().catch(error => {
+            console.error('[Transactions] Refresh failed:', error);
+          });
           setShowUploadModal(false);
           setUploadTransaction(null);
         }}
@@ -2350,8 +2429,12 @@ function TransactionsPageV2() {
         confirmApply={confirmApply}
         onSuccess={() => {
           setEditingRule(null);
-          refetchRules();
-          refresh();
+          void refetchRules().catch(error => {
+            console.error('[Transactions] Refetch rules failed:', error);
+          });
+          void refresh().catch(error => {
+            console.error('[Transactions] Refresh failed:', error);
+          });
         }}
       />
     </div>

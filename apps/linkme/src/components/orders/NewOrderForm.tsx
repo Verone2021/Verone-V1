@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * NewOrderForm - Formulaire de commande en 7 étapes
+ * NewOrderForm - Formulaire de commande en 8 étapes
  *
  * Composant orchestrateur qui :
  * - Affiche le stepper sidebar
@@ -10,6 +10,7 @@
  *
  * @module NewOrderForm
  * @since 2026-01-20
+ * @updated 2026-01-24 - Refonte 7→8 étapes
  */
 
 import { useCallback } from 'react';
@@ -17,25 +18,21 @@ import { useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { cn } from '@verone/ui';
-import {
-  ChevronLeft,
-  ChevronRight,
-  Loader2,
-  AlertCircle,
-} from 'lucide-react';
+import { ChevronLeft, ChevronRight, Loader2, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { useOrderForm } from '../../lib/hooks/use-order-form';
 import { OrderStepper, ORDER_STEPS } from './OrderStepper';
 
 // Steps components
+import { BillingStep } from './steps/BillingStep';
+import { CartStep } from './steps/CartStep';
+import { ProductsStep } from './steps/ProductsStep';
+import { ResponsableStep } from './steps/ResponsableStep';
 import { RestaurantStep } from './steps/RestaurantStep';
 import { SelectionStep } from './steps/SelectionStep';
-import { ProductsStep } from './steps/ProductsStep';
-import { CartStep } from './steps/CartStep';
-import { ContactsStep } from './steps/ContactsStep';
-import { DeliveryStep } from './steps/DeliveryStep';
+import { ShippingStep } from './steps/ShippingStep';
 import { ValidationStep } from './steps/ValidationStep';
+import { useOrderForm } from '../../lib/hooks/use-order-form';
 
 // ============================================================================
 // COMPONENT
@@ -91,12 +88,7 @@ export function NewOrderForm() {
 
     switch (currentStep) {
       case 1:
-        return (
-          <RestaurantStep
-            {...commonProps}
-            onUpdate={updateRestaurant}
-          />
-        );
+        return <RestaurantStep {...commonProps} onUpdate={updateRestaurant} />;
       case 2:
         return (
           <SelectionStep
@@ -122,20 +114,18 @@ export function NewOrderForm() {
           />
         );
       case 5:
+        return <ResponsableStep {...commonProps} onUpdate={updateContacts} />;
+      case 6:
+        return <BillingStep {...commonProps} onUpdate={updateContacts} />;
+      case 7:
         return (
-          <ContactsStep
+          <ShippingStep
             {...commonProps}
             onUpdate={updateContacts}
+            onUpdateDelivery={updateDelivery}
           />
         );
-      case 6:
-        return (
-          <DeliveryStep
-            {...commonProps}
-            onUpdate={updateDelivery}
-          />
-        );
-      case 7:
+      case 8:
         return (
           <ValidationStep
             {...commonProps}
@@ -148,7 +138,7 @@ export function NewOrderForm() {
     }
   };
 
-  const currentStepInfo = ORDER_STEPS.find((s) => s.id === currentStep);
+  const currentStepInfo = ORDER_STEPS.find(s => s.id === currentStep);
 
   return (
     <div className="flex min-h-[calc(100vh-120px)]">
@@ -206,7 +196,7 @@ export function NewOrderForm() {
               </button>
 
               {/* Bouton Suivant / Confirmer */}
-              {currentStep < 7 ? (
+              {currentStep < 8 ? (
                 <button
                   type="button"
                   onClick={nextStep}
@@ -224,7 +214,11 @@ export function NewOrderForm() {
               ) : (
                 <button
                   type="button"
-                  onClick={handleSubmit}
+                  onClick={() => {
+                    void handleSubmit().catch(error => {
+                      console.error('[NewOrderForm] Submit failed:', error);
+                    });
+                  }}
                   disabled={isSubmitting}
                   className={cn(
                     'flex items-center gap-1.5 px-5 py-2 rounded-lg font-medium text-sm transition-colors',
@@ -276,7 +270,8 @@ export function NewOrderForm() {
         {currentStep >= 3 && cartTotals.itemsCount > 0 && (
           <div className="bg-white border-t px-6 py-3">
             <div className="flex items-center justify-center text-sm text-gray-600">
-              <span className="font-medium">{cartTotals.itemsCount}</span>&nbsp;produit
+              <span className="font-medium">{cartTotals.itemsCount}</span>
+              &nbsp;produit
               {cartTotals.itemsCount > 1 ? 's' : ''}&nbsp;•&nbsp;
               <span className="font-semibold text-gray-900 ml-1">
                 {cartTotals.totalTTC.toLocaleString('fr-FR', {

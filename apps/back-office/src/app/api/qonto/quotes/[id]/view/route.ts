@@ -31,7 +31,7 @@ export async function GET(
     // Récupérer le devis
     const quote = await client.getClientQuoteById(id);
 
-    console.log('[API Qonto Quote View] Quote data:', {
+    console.warn('[API Qonto Quote View] Quote data:', {
       id: quote.id,
       quote_number: quote.quote_number,
       status: quote.status,
@@ -45,13 +45,13 @@ export async function GET(
 
     // Si pas de pdf_url, essayer avec attachment_id
     if (!pdfUrl && quote.attachment_id) {
-      console.log(
+      console.warn(
         '[API Qonto Quote View] No pdf_url, trying attachment_id:',
         quote.attachment_id
       );
       try {
         const attachment = await client.getAttachment(quote.attachment_id);
-        console.log('[API Qonto Quote View] Attachment response:', attachment);
+        console.warn('[API Qonto Quote View] Attachment response:', attachment);
         pdfUrl = attachment.url;
       } catch (attachmentError) {
         console.error(
@@ -84,12 +84,12 @@ export async function GET(
       );
     }
 
-    console.log('[API Qonto Quote View] Fetching PDF from:', pdfUrl);
+    console.warn('[API Qonto Quote View] Fetching PDF from:', pdfUrl);
 
     // Télécharger le PDF depuis l'URL
     const pdfResponse = await fetch(pdfUrl);
 
-    console.log(
+    console.warn(
       '[API Qonto Quote View] PDF response status:',
       pdfResponse.status
     );
@@ -122,7 +122,7 @@ export async function GET(
 
     const pdfBuffer = await pdfResponse.arrayBuffer();
 
-    console.log(
+    console.warn(
       '[API Qonto Quote View] PDF buffer size:',
       pdfBuffer.byteLength
     );

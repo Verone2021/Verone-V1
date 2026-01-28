@@ -213,7 +213,7 @@ export function CategoriesSection() {
             : 'Catégorie masquée du menu',
           description: `La catégorie a été ${newVisibility ? 'rendue visible' : 'masquée'} dans la navigation du site.`,
         });
-      } catch (error) {
+      } catch (_error) {
         toast({
           title: 'Erreur',
           description: 'Impossible de modifier la visibilité de la catégorie.',
@@ -248,7 +248,11 @@ export function CategoriesSection() {
             : 'Impossible de charger les catégories. Veuillez réessayer.'
         }
         variant="destructive"
-        onRetry={() => refetch()}
+        onRetry={() => {
+          void refetch().catch(error => {
+            console.error('[CategoriesSection] Refetch failed:', error);
+          });
+        }}
       />
     );
   }
@@ -343,7 +347,17 @@ export function CategoriesSection() {
                     key={category.id}
                     category={category}
                     level={0}
-                    onToggleVisibility={handleToggleVisibility}
+                    onToggleVisibility={(categoryId, newVisibility) => {
+                      void handleToggleVisibility(
+                        categoryId,
+                        newVisibility
+                      ).catch(error => {
+                        console.error(
+                          '[CategoriesSection] handleToggleVisibility failed:',
+                          error
+                        );
+                      });
+                    }}
                     isTogglingId={togglingId}
                   />
                 ))

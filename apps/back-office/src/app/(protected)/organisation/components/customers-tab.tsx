@@ -2,11 +2,8 @@
 
 import { useState, useMemo, useEffect } from 'react';
 
-import Link from 'next/link';
-
 import { CustomerFormModal } from '@verone/customers';
 import { OrganisationListView } from '@verone/customers';
-import { OrganisationLogo } from '@verone/organisations';
 import { OrganisationCard } from '@verone/organisations';
 import {
   useOrganisations,
@@ -16,22 +13,10 @@ import {
 import { Input } from '@verone/ui';
 import { Card, CardContent } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
-import { Badge } from '@verone/ui';
 import { spacing, colors } from '@verone/ui/design-system';
 import { cn } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
-import {
-  Search,
-  Plus,
-  MapPin,
-  Archive,
-  ArchiveRestore,
-  Trash2,
-  ExternalLink,
-  Building2,
-  LayoutGrid,
-  List,
-} from 'lucide-react';
+import { Search, Plus, Building2, LayoutGrid, List } from 'lucide-react';
 
 // ✅ FIX TypeScript: Utiliser type Organisation (pas de Customer local)
 // IMPORTANT: Organisation utilise "legal_name" (pas "name")
@@ -46,14 +31,13 @@ export function CustomersTab() {
   );
   const [archivedLoading, setArchivedLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedCustomer, setSelectedCustomer] = useState<Organisation | null>(
-    null
-  );
+  const [selectedCustomer, _setSelectedCustomer] =
+    useState<Organisation | null>(null);
 
   const filters = useMemo(
     () => ({
       is_active: true,
-      search: searchQuery || undefined,
+      search: searchQuery ?? undefined,
     }),
     [searchQuery]
   );
@@ -72,7 +56,7 @@ export function CustomersTab() {
     return customers.filter(customer => customer.type === 'customer');
   }, [customers]);
 
-  const stats = useMemo(() => {
+  const _stats = useMemo(() => {
     const total = filteredCustomers.length;
     const active = filteredCustomers.filter(c => c.is_active).length;
     const professional = filteredCustomers.filter(
@@ -107,7 +91,9 @@ export function CustomersTab() {
 
   useEffect(() => {
     if (activeTab === 'archived') {
-      loadArchivedCustomersData();
+      void loadArchivedCustomersData().catch(error => {
+        console.error('[CustomersTab] Load archived failed:', error);
+      });
     }
   }, [activeTab]);
 
@@ -115,7 +101,7 @@ export function CustomersTab() {
     if (!customer.archived_at) {
       const success = await archiveOrganisation(customer.id);
       if (success) {
-        refetch();
+        await refetch();
         if (activeTab === 'archived') {
           await loadArchivedCustomersData();
         }
@@ -123,7 +109,7 @@ export function CustomersTab() {
     } else {
       const success = await unarchiveOrganisation(customer.id);
       if (success) {
-        refetch();
+        await refetch();
         await loadArchivedCustomersData();
       }
     }
@@ -302,8 +288,16 @@ export function CustomersTab() {
                 } as any
               }
               activeTab={activeTab}
-              onArchive={() => handleArchive(customer)}
-              onDelete={() => handleDelete(customer)}
+              onArchive={() => {
+                void handleArchive(customer).catch(error => {
+                  console.error('[CustomersTab] Archive failed:', error);
+                });
+              }}
+              onDelete={() => {
+                void handleDelete(customer).catch(error => {
+                  console.error('[CustomersTab] Delete failed:', error);
+                });
+              }}
             />
           ))}
         </div>
@@ -320,11 +314,19 @@ export function CustomersTab() {
               activeTab={activeTab}
               onArchive={id => {
                 const customer = displayedCustomers.find(c => c.id === id);
-                if (customer) handleArchive(customer);
+                if (customer) {
+                  void handleArchive(customer).catch(error => {
+                    console.error('[CustomersTab] Archive failed:', error);
+                  });
+                }
               }}
               onDelete={id => {
                 const customer = displayedCustomers.find(c => c.id === id);
-                if (customer) handleDelete(customer);
+                if (customer) {
+                  void handleDelete(customer).catch(error => {
+                    console.error('[CustomersTab] Delete failed:', error);
+                  });
+                }
               }}
             />
           </CardContent>
@@ -335,11 +337,15 @@ export function CustomersTab() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onCustomerCreated={() => {
-          refetch();
+          void refetch().catch(error => {
+            console.error('[CustomersTab] Refetch failed:', error);
+          });
           setIsModalOpen(false);
         }}
         onCustomerUpdated={() => {
-          refetch();
+          void refetch().catch(error => {
+            console.error('[CustomersTab] Refetch failed:', error);
+          });
           setIsModalOpen(false);
         }}
         customer={selectedCustomer as any}

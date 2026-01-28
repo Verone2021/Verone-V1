@@ -46,15 +46,10 @@ import {
 } from '../../hooks/use-linkme-catalog';
 import {
   useLinkMeUsers,
-  type LinkMeUser,
   LINKME_ROLE_LABELS,
   LINKME_ROLE_COLORS,
 } from '../../hooks/use-linkme-users';
-import {
-  calculateLinkMeMargins,
-  calculateFinalClientPrice,
-  getMarginColor,
-} from '../../types';
+import { calculateFinalClientPrice, getMarginColor } from '../../types';
 
 // ============================================================================
 // Types
@@ -83,7 +78,7 @@ type CatalogProduct = LinkMeCatalogProduct;
 // ============================================================================
 
 const DEFAULT_COMMISSION_RATE = 0.05; // 5%
-const DEFAULT_BUFFER_RATE = 0.05; // 5%
+const _DEFAULT_BUFFER_RATE = 0.05; // 5%
 const MIN_MARGIN_RATE = 0.01; // 1%
 const DEFAULT_MARGIN_RATE = 0.15; // 15%
 
@@ -446,7 +441,7 @@ export default function NewSelectionPage() {
         body: JSON.stringify({
           user_id: selectedUserId,
           name: selectionName,
-          description: selectionDescription || null,
+          description: selectionDescription ?? null,
           status,
           products: selectedProducts.map(p => ({
             product_id: p.product_id,
@@ -507,7 +502,11 @@ export default function NewSelectionPage() {
           <ButtonV2
             variant="primary"
             icon={Check}
-            onClick={handleCreate}
+            onClick={() => {
+              void handleCreate().catch(error => {
+                console.error('[NewSelectionPage] handleCreate failed:', error);
+              });
+            }}
             loading={isCreating}
             disabled={
               isCreating ||

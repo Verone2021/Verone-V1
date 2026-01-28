@@ -218,11 +218,11 @@ export function useCreatePaymentRequest() {
 
       // Calculer les totaux
       const totalTTC = commissions.reduce(
-        (sum, c) => sum + (c.affiliate_commission_ttc || 0),
+        (sum, c) => sum + (c.affiliate_commission_ttc ?? 0),
         0
       );
       const totalHT = commissions.reduce(
-        (sum, c) => sum + (c.affiliate_commission || 0),
+        (sum, c) => sum + (c.affiliate_commission ?? 0),
         0
       );
 
@@ -250,7 +250,7 @@ export function useCreatePaymentRequest() {
       const items = commissions.map(c => ({
         payment_request_id: request.id,
         commission_id: c.id,
-        commission_amount_ttc: c.affiliate_commission_ttc || 0,
+        commission_amount_ttc: c.affiliate_commission_ttc ?? 0,
       }));
 
       const { error: itemsError } = await supabase
@@ -271,10 +271,12 @@ export function useCreatePaymentRequest() {
 
       return mapPaymentRequest(request);
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       // Invalider les caches
-      queryClient.invalidateQueries({ queryKey: ['payment-requests'] });
-      queryClient.invalidateQueries({ queryKey: ['affiliate-commissions'] });
+      await queryClient.invalidateQueries({ queryKey: ['payment-requests'] });
+      await queryClient.invalidateQueries({
+        queryKey: ['affiliate-commissions'],
+      });
     },
   });
 }
@@ -343,9 +345,11 @@ export function useUploadInvoice() {
 
       return fileUrl;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['payment-requests'] });
-      queryClient.invalidateQueries({ queryKey: ['payment-request-detail'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['payment-requests'] });
+      await queryClient.invalidateQueries({
+        queryKey: ['payment-request-detail'],
+      });
     },
   });
 }
@@ -370,9 +374,11 @@ export function useCancelPaymentRequest() {
         throw new Error("Erreur lors de l'annulation de la demande");
       }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['payment-requests'] });
-      queryClient.invalidateQueries({ queryKey: ['affiliate-commissions'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['payment-requests'] });
+      await queryClient.invalidateQueries({
+        queryKey: ['affiliate-commissions'],
+      });
     },
   });
 }

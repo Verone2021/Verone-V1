@@ -91,4 +91,4 @@ Primary_sources:
 
 - `CLAUDE.md` - Instructions projet
 - `.env.local` - Variables locales
-- `docs/current/serena/vercel-no-docker.md` - Deployment
+- `docs/current/serena/vercel-workflow.md` - Deployment

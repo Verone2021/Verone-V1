@@ -393,9 +393,13 @@ export function OrganisationDetailSheet({
   );
 
   // Map ownership_type: 'propre' -> 'succursale' for compatibility
-  const contactOwnershipType = data?.organisation?.ownership_type === 'propre'
-    ? 'succursale'
-    : (data?.organisation?.ownership_type as 'succursale' | 'franchise' | null);
+  const contactOwnershipType =
+    data?.organisation?.ownership_type === 'propre'
+      ? 'succursale'
+      : (data?.organisation?.ownership_type as
+          | 'succursale'
+          | 'franchise'
+          | null);
 
   const { data: contactsData, isLoading: contactsLoading } =
     useOrganisationContacts(
@@ -457,11 +461,13 @@ export function OrganisationDetailSheet({
 
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
         queryKey: ['organisation-detail', organisationId],
       });
-      queryClient.invalidateQueries({ queryKey: ['enseigne-organisations'] });
+      await queryClient.invalidateQueries({
+        queryKey: ['enseigne-organisations'],
+      });
       toast.success('Modifications enregistrées');
       setEditingSection(null);
     },

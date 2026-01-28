@@ -76,7 +76,9 @@ export async function POST(
 
     const { statusesData }: PollStatusesRequest = validation.data;
 
-    console.log(`[API] Poll statuses request: ${statusesData.length} products`);
+    console.warn(
+      `[API] Poll statuses request: ${statusesData.length} products`
+    );
 
     // 2. Initialisation Supabase
     const supabase = await createServerClient();
@@ -86,7 +88,7 @@ export async function POST(
     const statusesJsonb = statusesData.map(s => ({
       product_id: s.productId,
       google_status: s.googleStatus,
-      google_status_detail: s.googleStatusDetail || null,
+      google_status_detail: s.googleStatusDetail ?? null,
     }));
 
     // 4. Appeler RPC poll_google_merchant_statuses
@@ -129,7 +131,7 @@ export async function POST(
 
     const updatedCount = result[0].updated_count;
 
-    console.log(
+    console.warn(
       `[API] Poll statuses completed: ${updatedCount} products updated`
     );
 

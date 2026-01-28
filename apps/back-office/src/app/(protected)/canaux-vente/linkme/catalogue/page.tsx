@@ -273,7 +273,7 @@ export default function LinkMeCataloguePage() {
   ]);
 
   // Handlers
-  const handleToggleEnabled = async (product: LinkMeCatalogProduct) => {
+  const _handleToggleEnabled = async (product: LinkMeCatalogProduct) => {
     try {
       await toggleEnabledMutation.mutateAsync({
         catalogProductId: product.id,
@@ -289,7 +289,7 @@ export default function LinkMeCataloguePage() {
     }
   };
 
-  const handleToggleFeatured = async (product: LinkMeCatalogProduct) => {
+  const _handleToggleFeatured = async (product: LinkMeCatalogProduct) => {
     try {
       await toggleFeaturedMutation.mutateAsync({
         catalogProductId: product.id,
@@ -1305,7 +1305,7 @@ export default function LinkMeCataloguePage() {
           <Card>
             <div className="divide-y">
               {filteredAffiliateProducts.map(product => {
-                const clientPrice =
+                const _clientPrice =
                   product.product_selling_price_ht &&
                   product.linkme_commission_rate !== null
                     ? product.product_selling_price_ht *

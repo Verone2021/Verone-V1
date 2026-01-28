@@ -163,6 +163,7 @@ export function useAffiliateNetwork(affiliateId: string | null) {
 
       const supabase = createClient();
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
       const { data, error } = await (supabase.rpc as any)(
         'get_customers_for_affiliate',
         { p_affiliate_id: affiliateId }
@@ -175,7 +176,7 @@ export function useAffiliateNetwork(affiliateId: string | null) {
 
       // Filtrer uniquement le réseau (is_franchisee = true ou organisations créées par l'affilié)
       // Pour l'instant, on garde toutes les organisations (réseau = tous)
-      const customers = (data || []) as AffiliateCustomer[];
+      const customers = (data ?? []) as AffiliateCustomer[];
 
       // Ne garder que les organisations (pas les particuliers)
       return customers.filter(c => c.customer_type === 'organization');
@@ -247,10 +248,10 @@ export function useArchiveOrganisation() {
   return useMutation({
     mutationFn: async ({
       organisationId,
-      note,
+      _note,
     }: {
       organisationId: string;
-      note?: string;
+      _note?: string;
     }) => {
       const supabase = createClient();
 
@@ -269,9 +270,11 @@ export function useArchiveOrganisation() {
 
       return organisationId;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['affiliate-network'] });
-      queryClient.invalidateQueries({ queryKey: ['affiliate-customers'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['affiliate-network'] });
+      await queryClient.invalidateQueries({
+        queryKey: ['affiliate-customers'],
+      });
       toast.success('Organisation archivée', {
         description: "L'équipe Vérone a été notifiée.",
       });
@@ -309,9 +312,11 @@ export function useRestoreOrganisation() {
 
       return organisationId;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['affiliate-network'] });
-      queryClient.invalidateQueries({ queryKey: ['affiliate-customers'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['affiliate-network'] });
+      await queryClient.invalidateQueries({
+        queryKey: ['affiliate-customers'],
+      });
       toast.success('Organisation restaurée');
     },
     onError: (error: Error) => {

@@ -96,7 +96,7 @@ function hasAttachment(tx: BankTransaction): boolean {
 
 function getPaymentMethod(tx: BankTransaction): string {
   // Try to detect from label
-  const detected = detectBankPaymentMethod(tx.label || '');
+  const detected = detectBankPaymentMethod(tx.label ?? '');
   if (detected) return formatBankPaymentMethod(detected);
 
   // Try from raw_data

@@ -41,7 +41,9 @@ export default function PreviewEmailTemplatePage() {
   const [showRawHtml, setShowRawHtml] = useState(false);
 
   useEffect(() => {
-    loadTemplate();
+    void loadTemplate().catch(error => {
+      console.error('[EmailPreviewPage] loadTemplate failed:', error);
+    });
   }, [slug]);
 
   useEffect(() => {
@@ -193,7 +195,7 @@ export default function PreviewEmailTemplatePage() {
                   </label>
                   <Input
                     type="text"
-                    value={variableValues[variable] || ''}
+                    value={variableValues[variable] ?? ''}
                     onChange={e =>
                       setVariableValues(prev => ({
                         ...prev,

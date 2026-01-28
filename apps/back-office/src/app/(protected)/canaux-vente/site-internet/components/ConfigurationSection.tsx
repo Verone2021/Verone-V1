@@ -21,12 +21,10 @@ import { ErrorStateCard } from '@verone/ui';
 import { Input } from '@verone/ui';
 import { Textarea } from '@verone/ui';
 import { Label } from '@verone/ui';
-import { Switch } from '@verone/ui';
 import {
   Globe,
   Search,
   Mail,
-  Phone,
   BarChart3,
   Upload,
   Loader2,
@@ -87,23 +85,23 @@ export function ConfigurationSection() {
   useEffect(() => {
     if (config) {
       setIdentityForm({
-        domain_url: config.domain_url || '',
-        site_name: config.site_name || '',
+        domain_url: config.domain_url ?? '',
+        site_name: config.site_name ?? '',
       });
       setSeoForm({
-        default_meta_title: config.default_meta_title || '',
-        default_meta_description: config.default_meta_description || '',
+        default_meta_title: config.default_meta_title ?? '',
+        default_meta_description: config.default_meta_description ?? '',
         meta_keywords: (config.meta_keywords || []).join(', '),
       });
       setContactForm({
-        contact_email: config.contact_email || '',
-        contact_phone: config.contact_phone || '',
+        contact_email: config.contact_email ?? '',
+        contact_phone: config.contact_phone ?? '',
       });
       setAnalyticsForm({
         google_analytics_id:
-          config.config?.analytics?.google_analytics_id || '',
+          config.config?.analytics?.google_analytics_id ?? '',
         facebook_pixel_id: '', // Not in config schema, placeholder
-        gtm_id: config.config?.analytics?.google_tag_manager_id || '',
+        gtm_id: config.config?.analytics?.google_tag_manager_id ?? '',
       });
     }
   }, [config]);
@@ -119,7 +117,7 @@ export function ConfigurationSection() {
         title: 'Identité sauvegardée',
         description: 'Les informations du site ont été mises à jour.',
       });
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: 'Erreur',
         description: 'Impossible de sauvegarder les informations.',
@@ -143,7 +141,7 @@ export function ConfigurationSection() {
         title: 'SEO sauvegardé',
         description: 'Les paramètres SEO par défaut ont été mis à jour.',
       });
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: 'Erreur',
         description: 'Impossible de sauvegarder les paramètres SEO.',
@@ -163,7 +161,7 @@ export function ConfigurationSection() {
         title: 'Contact sauvegardé',
         description: 'Les informations de contact ont été mises à jour.',
       });
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: 'Erreur',
         description: 'Impossible de sauvegarder les informations de contact.',
@@ -184,7 +182,7 @@ export function ConfigurationSection() {
         title: 'Analytics sauvegardé',
         description: 'Les identifiants de tracking ont été mis à jour.',
       });
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: 'Erreur',
         description: 'Impossible de sauvegarder les identifiants analytics.',
@@ -224,7 +222,7 @@ export function ConfigurationSection() {
           title: 'Logo uploadé',
           description: 'Le logo du site a été mis à jour.',
         });
-      } catch (error) {
+      } catch (_error) {
         toast({
           title: 'Erreur',
           description: "Impossible d'uploader le logo.",
@@ -257,7 +255,11 @@ export function ConfigurationSection() {
             : 'Impossible de charger la configuration. Veuillez réessayer.'
         }
         variant="destructive"
-        onRetry={() => refetch()}
+        onRetry={() => {
+          void refetch().catch(error => {
+            console.error('[ConfigurationSection] Refetch failed:', error);
+          });
+        }}
       />
     );
   }
@@ -319,7 +321,14 @@ export function ConfigurationSection() {
                   type="file"
                   accept="image/*"
                   className="hidden"
-                  onChange={handleLogoUpload}
+                  onChange={e => {
+                    void handleLogoUpload(e).catch(error => {
+                      console.error(
+                        '[ConfigurationSection] Logo upload failed:',
+                        error
+                      );
+                    });
+                  }}
                 />
                 <ButtonV2
                   variant="outline"
@@ -386,7 +395,14 @@ export function ConfigurationSection() {
           {/* Actions */}
           <div className="flex justify-end">
             <ButtonV2
-              onClick={handleSaveIdentity}
+              onClick={() => {
+                void handleSaveIdentity().catch(error => {
+                  console.error(
+                    '[ConfigurationSection] Save identity failed:',
+                    error
+                  );
+                });
+              }}
               disabled={updateConfig.isPending}
             >
               {updateConfig.isPending ? (
@@ -476,7 +492,17 @@ export function ConfigurationSection() {
 
           {/* Actions */}
           <div className="flex justify-end">
-            <ButtonV2 onClick={handleSaveSEO} disabled={updateConfig.isPending}>
+            <ButtonV2
+              onClick={() => {
+                void handleSaveSEO().catch(error => {
+                  console.error(
+                    '[ConfigurationSection] Save SEO failed:',
+                    error
+                  );
+                });
+              }}
+              disabled={updateConfig.isPending}
+            >
               {updateConfig.isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -542,7 +568,14 @@ export function ConfigurationSection() {
           {/* Actions */}
           <div className="flex justify-end">
             <ButtonV2
-              onClick={handleSaveContact}
+              onClick={() => {
+                void handleSaveContact().catch(error => {
+                  console.error(
+                    '[ConfigurationSection] Save contact failed:',
+                    error
+                  );
+                });
+              }}
               disabled={updateConfig.isPending}
             >
               {updateConfig.isPending ? (
@@ -630,7 +663,14 @@ export function ConfigurationSection() {
           {/* Actions */}
           <div className="flex justify-end">
             <ButtonV2
-              onClick={handleSaveAnalytics}
+              onClick={() => {
+                void handleSaveAnalytics().catch(error => {
+                  console.error(
+                    '[ConfigurationSection] Save analytics failed:',
+                    error
+                  );
+                });
+              }}
               disabled={updateConfigJSON.isPending}
             >
               {updateConfigJSON.isPending ? (

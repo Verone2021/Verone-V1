@@ -18,10 +18,7 @@ import { Input } from '@verone/ui';
 import { Label } from '@verone/ui';
 import type { SelectedProduct } from '@verone/products/components/selectors/UniversalProductSelectorV2';
 import { UniversalProductSelectorV2 } from '@verone/products/components/selectors/UniversalProductSelectorV2';
-import type {
-  AddProductToGroupData,
-  VariantGroup,
-} from '@verone/types';
+import type { AddProductToGroupData, VariantGroup } from '@verone/types';
 
 interface VariantAddProductModalProps {
   isOpen: boolean;

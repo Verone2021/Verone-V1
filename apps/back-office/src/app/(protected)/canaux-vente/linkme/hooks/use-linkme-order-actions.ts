@@ -13,6 +13,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createClient } from '@verone/utils/supabase/client';
+import type { Database } from '@verone/types';
 
 // ============================================
 // TYPES
@@ -139,7 +140,7 @@ async function approveOrder(
   }
 
   // 2b. CASCADE: Si ouverture (is_new_restaurant = true), créer organisation + contacts
-  let createdOrganisationId: string | null = null;
+  const _createdOrganisationIdDecl: string | null = null;
   if (details.is_new_restaurant) {
     // a) Créer l'organisation avec les données du formulaire
     const { data: newOrg, error: orgError } = await supabase
@@ -150,8 +151,8 @@ async function approveOrder(
           details.owner_company_trade_name ||
           'À compléter',
         trade_name: details.owner_company_trade_name,
-        email: details.owner_email,
-        phone: details.owner_phone,
+        email: details.owner_email ?? null,
+        phone: details.owner_phone ?? null,
         approval_status: 'approved',
         approved_at: new Date().toISOString(),
       })
@@ -163,7 +164,7 @@ async function approveOrder(
       throw new Error(`Erreur création organisation: ${orgError.message}`);
     }
 
-    createdOrganisationId = newOrg.id;
+    const _createdOrganisationId = newOrg.id;
 
     // b) Lier la commande à l'organisation nouvellement créée
     const { error: linkError } = await supabase
@@ -180,18 +181,19 @@ async function approveOrder(
     }
 
     // c) Créer contact propriétaire
-    const ownerName = details.owner_name || '';
+    const ownerName = details.owner_name ?? '';
     const ownerNameParts = ownerName.split(' ');
-    const { error: ownerContactError } = await (supabase.from as any)(
-      'contacts'
-    ).insert({
+    const contactData: Database['public']['Tables']['contacts']['Insert'] = {
       organisation_id: newOrg.id,
-      first_name: ownerNameParts[0] || '',
-      last_name: ownerNameParts.slice(1).join(' ') || '',
-      email: details.owner_email,
-      phone: details.owner_phone,
+      first_name: ownerNameParts[0] ?? '',
+      last_name: ownerNameParts.slice(1).join(' ') ?? '',
+      email: details.owner_email ?? '',
+      phone: details.owner_phone ?? null,
       is_primary_contact: true,
-    });
+    };
+    const { error: ownerContactError } = await supabase
+      .from('contacts')
+      .insert(contactData);
 
     if (ownerContactError) {
       console.error('Erreur création contact propriétaire:', ownerContactError);
@@ -204,14 +206,14 @@ async function approveOrder(
       details.billing_email &&
       details.billing_email !== details.owner_email
     ) {
-      const billingName = details.billing_name || '';
+      const billingName = details.billing_name ?? '';
       const billingNameParts = billingName.split(' ');
       const { error: billingContactError } = await supabase
         .from('contacts')
         .insert({
           organisation_id: newOrg.id,
-          first_name: billingNameParts[0] || '',
-          last_name: billingNameParts.slice(1).join(' ') || '',
+          first_name: billingNameParts[0] ?? '',
+          last_name: billingNameParts.slice(1).join(' ') ?? '',
           email: details.billing_email,
           phone: details.billing_phone,
           is_billing_contact: true,
@@ -270,11 +272,11 @@ async function approveOrder(
     .single();
   const ownerName = details.owner_contact_same_as_requester
     ? details.requester_name
-    : details.owner_name || details.requester_name;
-  const organisationName =
-    (orderData?.organisations as any)?.trade_name ||
-    (orderData?.organisations as any)?.legal_name ||
-    null;
+    : (details.owner_name ?? details.requester_name);
+  const orgData = orderData?.organisations as
+    | { trade_name?: string | null; legal_name?: string | null }
+    | undefined;
+  const organisationName = orgData?.trade_name ?? orgData?.legal_name ?? null;
   try {
     await fetch('/api/emails/linkme-order-approved', {
       method: 'POST',
@@ -336,9 +338,12 @@ async function requestInfo(
   const order = orderResult.data;
 
   // Organisation récupérée via jointure (peut être array ou objet selon Supabase)
-  const orgRaw = order.organisations as any;
+  const orgRaw = order.organisations as
+    | { trade_name?: string | null; legal_name?: string | null }
+    | Array<{ trade_name?: string | null; legal_name?: string | null }>
+    | undefined;
   const orgData = Array.isArray(orgRaw) ? orgRaw[0] : orgRaw;
-  const organisationName = orgData?.trade_name || orgData?.legal_name || null;
+  const organisationName = orgData?.trade_name ?? orgData?.legal_name ?? null;
 
   const timestamp = new Date().toLocaleString('fr-FR');
   const newNote = `[${timestamp}] DEMANDE COMPLEMENTS: ${input.message}`;
@@ -417,9 +422,12 @@ async function rejectOrder(
   const order = orderResult.data;
 
   // Organisation récupérée via jointure (peut être array ou objet selon Supabase)
-  const orgRaw = order.organisations as any;
+  const orgRaw = order.organisations as
+    | { trade_name?: string | null; legal_name?: string | null }
+    | Array<{ trade_name?: string | null; legal_name?: string | null }>
+    | undefined;
   const orgData = Array.isArray(orgRaw) ? orgRaw[0] : orgRaw;
-  const organisationName = orgData?.trade_name || orgData?.legal_name || null;
+  const organisationName = orgData?.trade_name ?? orgData?.legal_name ?? null;
 
   const timestamp = new Date().toLocaleString('fr-FR');
   const newNote = `[${timestamp}] COMMANDE REFUSEE: ${input.reason}`;
@@ -475,10 +483,14 @@ export function useApproveOrder() {
 
   return useMutation({
     mutationFn: approveOrder,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['linkme-orders'] });
-      queryClient.invalidateQueries({ queryKey: ['linkme-orders-to-process'] });
-      queryClient.invalidateQueries({ queryKey: ['sales-orders'] });
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['linkme-orders'] }),
+        queryClient.invalidateQueries({
+          queryKey: ['linkme-orders-to-process'],
+        }),
+        queryClient.invalidateQueries({ queryKey: ['sales-orders'] }),
+      ]);
     },
   });
 }
@@ -491,9 +503,13 @@ export function useRequestInfo() {
 
   return useMutation({
     mutationFn: requestInfo,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['linkme-orders'] });
-      queryClient.invalidateQueries({ queryKey: ['linkme-orders-to-process'] });
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['linkme-orders'] }),
+        queryClient.invalidateQueries({
+          queryKey: ['linkme-orders-to-process'],
+        }),
+      ]);
     },
   });
 }
@@ -506,12 +522,16 @@ export function useRejectOrder() {
 
   return useMutation({
     mutationFn: rejectOrder,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['linkme-orders'] });
-      queryClient.invalidateQueries({ queryKey: ['linkme-orders-to-process'] });
-      queryClient.invalidateQueries({ queryKey: ['sales-orders'] });
-      queryClient.invalidateQueries({ queryKey: ['pending-orders'] });
-      queryClient.invalidateQueries({ queryKey: ['pending-orders-count'] });
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['linkme-orders'] }),
+        queryClient.invalidateQueries({
+          queryKey: ['linkme-orders-to-process'],
+        }),
+        queryClient.invalidateQueries({ queryKey: ['sales-orders'] }),
+        queryClient.invalidateQueries({ queryKey: ['pending-orders'] }),
+        queryClient.invalidateQueries({ queryKey: ['pending-orders-count'] }),
+      ]);
     },
   });
 }
@@ -593,9 +613,11 @@ export function useUpdateLinkMeDetails() {
 
   return useMutation({
     mutationFn: updateLinkMeDetails,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['linkme-orders'] });
-      queryClient.invalidateQueries({ queryKey: ['pending-orders'] });
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['linkme-orders'] }),
+        queryClient.invalidateQueries({ queryKey: ['pending-orders'] }),
+      ]);
     },
   });
 }
@@ -776,7 +798,14 @@ export function usePendingOrders() {
             organisationsMap.set(org.id, {
               trade_name: org.trade_name,
               legal_name: org.legal_name,
-              enseigne_name: (org.enseigne as any)?.name || null,
+              enseigne_name: (org.enseigne as
+                | { name?: string | null }
+                | Array<{ name?: string | null }>
+                | undefined)
+                ? Array.isArray(org.enseigne)
+                  ? (org.enseigne[0]?.name ?? null)
+                  : ((org.enseigne as { name?: string | null }).name ?? null)
+                : null,
             });
           }
         }
@@ -799,15 +828,32 @@ export function usePendingOrders() {
         }
 
         // Extract linkme details (can be single object or array depending on Supabase query)
-        const linkmeDetailsRaw = order.sales_order_linkme_details as any;
+        const linkmeDetailsRaw = order.sales_order_linkme_details as
+          | LinkMeOrderDetails
+          | LinkMeOrderDetails[]
+          | undefined;
         const linkmeDetails = Array.isArray(linkmeDetailsRaw)
-          ? linkmeDetailsRaw[0] || null
-          : linkmeDetailsRaw || null;
+          ? (linkmeDetailsRaw[0] ?? null)
+          : (linkmeDetailsRaw ?? null);
 
         // Map items with proper typing and extract primary image
         const items: PendingOrderItem[] = (
-          (order.sales_order_items as any[]) ?? []
-        ).map((item: any) => {
+          (order.sales_order_items as unknown as Array<{
+            id: string;
+            quantity: number;
+            unit_price_ht: number | null;
+            total_ht: number | null;
+            products?: {
+              id: string;
+              name: string;
+              sku: string;
+              product_images?: Array<{
+                public_url: string;
+                is_primary: boolean;
+              }>;
+            };
+          }>) ?? []
+        ).map(item => {
           // Extract primary image from product_images array
           const productImages = item.products?.product_images as
             | Array<{ public_url: string; is_primary: boolean }>
@@ -818,15 +864,15 @@ export function usePendingOrders() {
             null;
 
           return {
-            id: item.id as string,
-            quantity: item.quantity as number,
+            id: item.id,
+            quantity: item.quantity,
             unit_price_ht: item.unit_price_ht as number,
             total_ht: item.total_ht as number,
             products: item.products
               ? {
-                  id: item.products.id as string,
-                  name: item.products.name as string,
-                  sku: item.products.sku as string,
+                  id: item.products.id,
+                  name: item.products.name,
+                  sku: item.products.sku,
                   primary_image_url: primaryImage,
                 }
               : null,
@@ -840,9 +886,9 @@ export function usePendingOrders() {
           total_ht: order.total_ht,
           total_ttc: order.total_ttc,
           created_at: order.created_at,
-          requester_name: linkmeDetails?.requester_name || null,
-          requester_email: linkmeDetails?.requester_email || null,
-          requester_type: linkmeDetails?.requester_type || null,
+          requester_name: linkmeDetails?.requester_name ?? null,
+          requester_email: linkmeDetails?.requester_email ?? null,
+          requester_type: linkmeDetails?.requester_type ?? null,
           organisation_name: organisationName,
           enseigne_name: enseigneName,
           linkme_details: linkmeDetails
@@ -1005,8 +1051,8 @@ export function useAllLinkMeOrders(status?: OrderValidationStatus) {
               | null;
             const enseigneName = enseignes
               ? Array.isArray(enseignes)
-                ? enseignes[0]?.name || null
-                : enseignes.name || null
+                ? (enseignes[0]?.name ?? null)
+                : (enseignes.name ?? null)
               : null;
             organisationsMap.set(org.id as string, {
               trade_name: org.trade_name as string | null,
@@ -1047,8 +1093,8 @@ export function useAllLinkMeOrders(status?: OrderValidationStatus) {
               ? {
                   id: products.id as string,
                   name: products.name as string,
-                  sku: (products.sku as string) || '',
-                  primary_image_url: primaryImage?.public_url || null,
+                  sku: (products.sku as string) ?? '',
+                  primary_image_url: primaryImage?.public_url ?? null,
                 }
               : null,
           };
@@ -1061,8 +1107,9 @@ export function useAllLinkMeOrders(status?: OrderValidationStatus) {
           total_ht: order.total_ht,
           total_ttc: order.total_ttc,
           created_at: order.created_at,
-          organisation_name: orgData?.trade_name || orgData?.legal_name || null,
-          enseigne_name: orgData?.enseigne_name || null,
+          organisation_name:
+            (orgData?.trade_name || orgData?.legal_name) ?? null,
+          enseigne_name: orgData?.enseigne_name ?? null,
           requester_type: linkmeDetails?.requester_type as string | null,
           requester_name: linkmeDetails?.requester_name as string | null,
           requester_email: linkmeDetails?.requester_email as string | null,

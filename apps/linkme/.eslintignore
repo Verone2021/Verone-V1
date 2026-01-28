@@ -1,4 +1,0 @@
-# Sentry configuration files
-sentry.edge.config.ts
-sentry.client.config.ts
-sentry.server.config.ts

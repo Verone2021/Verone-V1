@@ -5,12 +5,20 @@ import { useState } from 'react';
 import { CardProductLuxury } from '@/components/ui/CardProductLuxury';
 import { useCatalogueProducts } from '@/hooks/use-catalogue-products';
 
+type SortOption =
+  | 'name_asc'
+  | 'name_desc'
+  | 'price_asc'
+  | 'price_desc'
+  | 'newest'
+  | 'oldest';
+
 export default function CataloguePage() {
-  const [sortBy, setSortBy] = useState<string>('newest');
+  const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   const { data: products, isLoading: productsLoading } = useCatalogueProducts({
-    sortBy: sortBy as any,
+    sortBy,
     searchQuery: searchQuery || undefined,
   });
 
@@ -43,7 +51,7 @@ export default function CataloguePage() {
           {/* Tri */}
           <select
             value={sortBy}
-            onChange={e => setSortBy(e.target.value)}
+            onChange={e => setSortBy(e.target.value as SortOption)}
             className="border border-verone-gray-300 rounded-none px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-verone-black"
           >
             <option value="newest">Nouveautés</option>

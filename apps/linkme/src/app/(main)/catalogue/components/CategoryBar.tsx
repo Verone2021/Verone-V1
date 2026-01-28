@@ -34,7 +34,7 @@ export function CategoryBar({
 
     products.forEach(product => {
       if (product.category_name) {
-        const count = categoryMap.get(product.category_name) || 0;
+        const count = categoryMap.get(product.category_name) ?? 0;
         categoryMap.set(product.category_name, count + 1);
       }
     });
@@ -146,7 +146,9 @@ export function ActiveFilters({
   onClearAll,
 }: ActiveFiltersProps): JSX.Element | null {
   const hasFilters =
-    selectedCategory || selectedSubcategory || productTypeFilter !== 'all';
+    Boolean(selectedCategory) ||
+    Boolean(selectedSubcategory) ||
+    productTypeFilter !== 'all';
 
   if (!hasFilters) return null;
 

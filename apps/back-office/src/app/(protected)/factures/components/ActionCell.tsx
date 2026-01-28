@@ -27,6 +27,8 @@ import {
   Loader2,
   CheckCircle,
   XCircle,
+  Archive,
+  ArchiveRestore,
 } from 'lucide-react';
 
 // =====================================================================
@@ -69,6 +71,10 @@ interface IActionCellProps {
   onAccept?: () => Promise<void>;
   onDecline?: () => Promise<void>;
   onDownloadPdf?: () => Promise<void>;
+  isArchived?: boolean;
+  onArchive?: () => Promise<void>;
+  onUnarchive?: () => Promise<void>;
+  workflowStatus?: string | null;
 }
 
 // =====================================================================
@@ -91,6 +97,10 @@ export function ActionCell({
   onAccept,
   onDecline,
   onDownloadPdf,
+  isArchived,
+  onArchive,
+  onUnarchive,
+  workflowStatus,
 }: IActionCellProps): React.ReactNode {
   const [loading, setLoading] = useState<string | null>(null);
 
@@ -229,6 +239,54 @@ export function ActionCell({
               <FileX className="h-4 w-4 mr-2" />
             )}
             Créer un avoir
+          </DropdownMenuItem>
+        );
+      }
+
+      // Archive (validated invoices only, not archived)
+      if (
+        !isArchived &&
+        ['draft_validated', 'finalized', 'sent', 'paid'].includes(
+          workflowStatus ?? ''
+        ) &&
+        onArchive
+      ) {
+        if (items.length > 0) {
+          items.push(<DropdownMenuSeparator key="sep-archive" />);
+        }
+        items.push(
+          <DropdownMenuItem
+            key="archive"
+            onClick={() => void handleAction(onArchive, 'archive')}
+            disabled={loading === 'archive'}
+          >
+            {loading === 'archive' ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Archive className="h-4 w-4 mr-2" />
+            )}
+            Archiver
+          </DropdownMenuItem>
+        );
+      }
+
+      // Unarchive (archived invoices only)
+      if (isArchived && onUnarchive) {
+        if (items.length > 0) {
+          items.push(<DropdownMenuSeparator key="sep-unarchive" />);
+        }
+        items.push(
+          <DropdownMenuItem
+            key="unarchive"
+            onClick={() => void handleAction(onUnarchive, 'unarchive')}
+            disabled={loading === 'unarchive'}
+          >
+            {loading === 'unarchive' ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <ArchiveRestore className="h-4 w-4 mr-2" />
+            )}
+            Désarchiver
           </DropdownMenuItem>
         );
       }

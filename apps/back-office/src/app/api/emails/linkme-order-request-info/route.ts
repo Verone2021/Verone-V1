@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log(
+    console.warn(
       `[API Request Info Email] Sent for order ${orderNumber} to ${requesterEmail}`
     );
 

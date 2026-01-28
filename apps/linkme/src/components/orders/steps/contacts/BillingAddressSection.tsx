@@ -27,13 +27,22 @@ import {
   Checkbox,
   Label,
 } from '@verone/ui';
-import { Building2, ChevronDown, Check, MapPin, AlertCircle } from 'lucide-react';
+import {
+  Building2,
+  ChevronDown,
+  Check,
+  MapPin,
+  AlertCircle,
+} from 'lucide-react';
 
-import { useEntityAddresses, type Address } from '@/lib/hooks/use-entity-addresses';
-import type { PartialAddressData } from '../../schemas/order-form.schema';
+import {
+  useEntityAddresses,
+  type Address,
+} from '@/lib/hooks/use-entity-addresses';
 
-import { AddressGrid } from './AddressGrid';
 import { AddressForm } from './AddressForm';
+import { AddressGrid } from './AddressGrid';
+import type { PartialAddressData } from '../../schemas/order-form.schema';
 
 // ============================================================================
 // TYPES
@@ -48,7 +57,10 @@ interface RestaurantInfo {
   postalCode?: string | null;
 }
 
-export type BillingAddressMode = 'restaurant_address' | 'existing_billing' | 'new_billing';
+export type BillingAddressMode =
+  | 'restaurant_address'
+  | 'existing_billing'
+  | 'new_billing';
 
 export interface BillingAddressData {
   /** Mode de sélection d'adresse */
@@ -93,11 +105,13 @@ function FixedOrganisationCard({ restaurant }: FixedOrganisationCardProps) {
           </div>
           <div className="min-w-0 flex-1">
             <h3 className="font-semibold text-gray-900 text-sm leading-tight">
-              {restaurant.name || 'Restaurant'}
+              {restaurant.name ?? 'Restaurant'}
             </h3>
             <p className="text-xs text-gray-500 mt-0.5">
-              {restaurant.city || 'Adresse non renseignée'}
-              {restaurant.country && restaurant.country !== 'FR' && ` (${restaurant.country})`}
+              {restaurant.city ?? 'Adresse non renseignée'}
+              {restaurant.country &&
+                restaurant.country !== 'FR' &&
+                ` (${restaurant.country})`}
             </p>
             {restaurant.addressLine1 && (
               <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1">
@@ -130,11 +144,8 @@ export function BillingAddressSection({
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   // Fetch existing billing addresses for this restaurant
-  const { data: addressesData, isLoading: addressesLoading } = useEntityAddresses(
-    'organisation',
-    restaurant?.id || null,
-    'billing'
-  );
+  const { data: addressesData, isLoading: addressesLoading } =
+    useEntityAddresses('organisation', restaurant?.id ?? null, 'billing');
 
   // Check if section is complete
   const isComplete = useMemo(() => {
@@ -184,7 +195,7 @@ export function BillingAddressSection({
         addressLine1: '',
         postalCode: '',
         city: '',
-        country: restaurant?.country || 'FR',
+        country: restaurant?.country ?? 'FR',
       },
     });
   }, [onUpdate, restaurant?.country]);
@@ -207,14 +218,23 @@ export function BillingAddressSection({
 
   // Get selected address info for display
   const selectedAddress = useMemo(() => {
-    if (billingAddress.mode === 'existing_billing' && billingAddress.existingAddressId) {
-      return addressesData?.all.find((a) => a.id === billingAddress.existingAddressId);
+    if (
+      billingAddress.mode === 'existing_billing' &&
+      billingAddress.existingAddressId
+    ) {
+      return addressesData?.all.find(
+        a => a.id === billingAddress.existingAddressId
+      );
     }
     return null;
-  }, [billingAddress.mode, billingAddress.existingAddressId, addressesData?.all]);
+  }, [
+    billingAddress.mode,
+    billingAddress.existingAddressId,
+    addressesData?.all,
+  ]);
 
   // Existing billing addresses (excluding default restaurant address)
-  const billingAddresses = addressesData?.billing || [];
+  const billingAddresses = addressesData?.billing ?? [];
 
   if (!restaurant) {
     return null;
@@ -247,9 +267,7 @@ export function BillingAddressSection({
                 <h3 className="font-semibold text-gray-900">
                   Adresse de Facturation
                 </h3>
-                <p className="text-sm text-gray-500">
-                  Adresse pour la facture
-                </p>
+                <p className="text-sm text-gray-500">Adresse pour la facture</p>
               </div>
             </div>
             <ChevronDown
@@ -280,8 +298,10 @@ export function BillingAddressSection({
                 isCreatingNew={billingAddress.mode === 'new_billing'}
                 showRestaurantAddressOption
                 onSelectRestaurantAddress={handleSelectRestaurantAddress}
-                isRestaurantAddressActive={billingAddress.mode === 'restaurant_address'}
-                restaurantName={restaurant.name || undefined}
+                isRestaurantAddressActive={
+                  billingAddress.mode === 'restaurant_address'
+                }
+                restaurantName={restaurant.name ?? undefined}
                 label="Sélectionner l'adresse de facturation"
               />
             )}
@@ -293,11 +313,11 @@ export function BillingAddressSection({
                   <Check className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
                   <div className="text-sm text-green-700">
                     <p className="font-medium">
-                      {selectedAddress.label || selectedAddress.addressLine1}
+                      {selectedAddress.label ?? selectedAddress.addressLine1}
                     </p>
                     <p className="text-xs">
-                      {selectedAddress.addressLine1}, {selectedAddress.postalCode}{' '}
-                      {selectedAddress.city}
+                      {selectedAddress.addressLine1},{' '}
+                      {selectedAddress.postalCode} {selectedAddress.city}
                     </p>
                   </div>
                 </div>
@@ -312,7 +332,8 @@ export function BillingAddressSection({
                   <div className="text-sm text-green-700">
                     <p className="font-medium">Adresse du restaurant</p>
                     <p className="text-xs">
-                      La facture sera adressée à {restaurant.name} ({restaurant.city})
+                      La facture sera adressée à {restaurant.name} (
+                      {restaurant.city})
                     </p>
                   </div>
                 </div>
@@ -360,8 +381,9 @@ export function BillingAddressSection({
                 <AlertCircle className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
                 <div className="text-sm text-blue-700">
                   <p>
-                    L&apos;organisation facturée est <strong>{restaurant.name}</strong>.
-                    Vous pouvez choisir une adresse différente pour la livraison de la facture.
+                    L&apos;organisation facturée est{' '}
+                    <strong>{restaurant.name}</strong>. Vous pouvez choisir une
+                    adresse différente pour la livraison de la facture.
                   </p>
                 </div>
               </div>

@@ -126,7 +126,9 @@ function useEnseigneSelections(enseigneId: string | null) {
       setLoading(false);
     };
 
-    fetchSelections();
+    void fetchSelections().catch(error => {
+      console.error('[useSelections] fetchSelections failed:', error);
+    });
   }, [enseigneId]);
 
   return { selections, loading };
@@ -200,7 +202,7 @@ function useEnseigneProducts(enseigneId: string | null) {
             supplier_reference: p.supplier_reference,
             created_at: p.created_at,
             created_by_affiliate: p.created_by_affiliate,
-            primary_image_url: primaryImg?.public_url || null,
+            primary_image_url: primaryImg?.public_url ?? null,
           };
         });
 
@@ -212,7 +214,9 @@ function useEnseigneProducts(enseigneId: string | null) {
       setLoading(false);
     };
 
-    fetchProducts();
+    void fetchProducts().catch(error => {
+      console.error('[useProducts] fetchProducts failed:', error);
+    });
   }, [enseigneId]);
 
   return { surMesure, affilies, loading };
@@ -304,12 +308,12 @@ export default function EnseigneDetailPage() {
           {/* Tableau organisations membres */}
           <EnseigneOrganisationsTable
             organisations={stats?.organisationsWithRevenue || []}
-            parentOrganisation={stats?.parentOrganisation || null}
+            parentOrganisation={stats?.parentOrganisation ?? null}
             loading={statsLoading}
             enseigneId={id}
             onAddOrganisations={() => {
               // TODO: Modal ajout organisations
-              console.log('Add organisations to enseigne:', enseigne.id);
+              console.warn('Add organisations to enseigne:', enseigne.id);
             }}
           />
         </TabsContent>

@@ -190,7 +190,9 @@ export default function CollectionDetailPage({
           title: 'Produit retiré',
           description: `"${productName}" a été retiré de la collection`,
         });
-        refetch();
+        void refetch().catch(error => {
+          console.error('[Collections] Refetch failed:', error);
+        });
       } else {
         toast({
           title: 'Erreur',
@@ -208,7 +210,7 @@ export default function CollectionDetailPage({
 
   // Handlers édition inline - Nom
   const handleStartEditName = useCallback(() => {
-    setEditedName(collection?.name || '');
+    setEditedName(collection?.name ?? '');
     setEditingName(true);
   }, [collection?.name]);
 
@@ -246,7 +248,7 @@ export default function CollectionDetailPage({
 
   // Handlers édition inline - Description
   const handleStartEditDescription = useCallback(() => {
-    setEditedDescription(collection?.description || '');
+    setEditedDescription(collection?.description ?? '');
     setEditingDescription(true);
   }, [collection?.description]);
 
@@ -259,7 +261,7 @@ export default function CollectionDetailPage({
     setSavingDescription(true);
     const success = await updateCollection({
       id: collectionId,
-      description: editedDescription || undefined,
+      description: editedDescription ?? undefined,
     });
 
     if (success) {
@@ -287,7 +289,7 @@ export default function CollectionDetailPage({
 
   // Handlers édition inline - Style
   const handleStartEditStyle = useCallback(() => {
-    setEditedStyle((collection?.style || null) as any);
+    setEditedStyle((collection?.style ?? null) as any);
     setEditingStyle(true);
   }, [collection?.style]);
 
@@ -396,7 +398,7 @@ export default function CollectionDetailPage({
 
   // Handlers édition inline - Meta Title
   const handleStartEditMetaTitle = useCallback(() => {
-    setEditedMetaTitle(collection?.meta_title || '');
+    setEditedMetaTitle(collection?.meta_title ?? '');
     setEditingMetaTitle(true);
   }, [collection?.meta_title]);
 
@@ -405,7 +407,7 @@ export default function CollectionDetailPage({
 
     const success = await updateCollection({
       id: collectionId,
-      description: editedMetaTitle || undefined,
+      description: editedMetaTitle ?? undefined,
     });
 
     if (success) {
@@ -426,7 +428,7 @@ export default function CollectionDetailPage({
 
   // Handlers édition inline - Meta Description
   const handleStartEditMetaDescription = useCallback(() => {
-    setEditedMetaDescription(collection?.meta_description || '');
+    setEditedMetaDescription(collection?.meta_description ?? '');
     setEditingMetaDescription(true);
   }, [collection?.meta_description]);
 
@@ -435,7 +437,7 @@ export default function CollectionDetailPage({
 
     const success = await updateCollection({
       id: collectionId,
-      description: editedMetaDescription || undefined,
+      description: editedMetaDescription ?? undefined,
     });
 
     if (success) {
@@ -613,9 +615,17 @@ export default function CollectionDetailPage({
                   type="text"
                   value={editedName}
                   onChange={e => setEditedName(e.target.value)}
-                  onBlur={handleSaveName}
+                  onBlur={() => {
+                    void handleSaveName().catch(error => {
+                      console.error('[Collections] Save name failed:', error);
+                    });
+                  }}
                   onKeyDown={e => {
-                    if (e.key === 'Enter') handleSaveName();
+                    if (e.key === 'Enter') {
+                      void handleSaveName().catch(error => {
+                        console.error('[Collections] Save name failed:', error);
+                      });
+                    }
                     if (e.key === 'Escape') handleCancelEditName();
                   }}
                   disabled={savingName}
@@ -650,7 +660,14 @@ export default function CollectionDetailPage({
                 <Textarea
                   value={editedDescription}
                   onChange={e => setEditedDescription(e.target.value)}
-                  onBlur={handleSaveDescription}
+                  onBlur={() => {
+                    void handleSaveDescription().catch(error => {
+                      console.error(
+                        '[Collections] Save description failed:',
+                        error
+                      );
+                    });
+                  }}
                   onKeyDown={e => {
                     if (e.key === 'Escape') handleCancelEditDescription();
                   }}
@@ -701,13 +718,18 @@ export default function CollectionDetailPage({
                     <button
                       key={styleOption.value}
                       type="button"
-                      onClick={() =>
-                        handleSelectStyle(
+                      onClick={() => {
+                        void handleSelectStyle(
                           editedStyle === styleOption.value
                             ? null
                             : styleOption.value
-                        )
-                      }
+                        ).catch(error => {
+                          console.error(
+                            '[Collections] Select style failed:',
+                            error
+                          );
+                        });
+                      }}
                       disabled={savingStyle}
                       className={cn(
                         'flex flex-col items-center gap-2 p-3 rounded-lg border-2 text-center transition-all',
@@ -819,7 +841,14 @@ export default function CollectionDetailPage({
                 <div className="flex gap-2">
                   <ButtonV2
                     size="sm"
-                    onClick={handleSaveRooms}
+                    onClick={() => {
+                      void handleSaveRooms().catch(error => {
+                        console.error(
+                          '[Collections] Save rooms failed:',
+                          error
+                        );
+                      });
+                    }}
                     disabled={savingRooms}
                     className="bg-black text-white hover:bg-gray-800"
                   >
@@ -916,7 +945,11 @@ export default function CollectionDetailPage({
                 <div className="flex gap-2">
                   <ButtonV2
                     size="sm"
-                    onClick={handleSaveTags}
+                    onClick={() => {
+                      void handleSaveTags().catch(error => {
+                        console.error('[Collections] Save tags failed:', error);
+                      });
+                    }}
                     disabled={savingTags}
                     className="bg-black text-white hover:bg-gray-800"
                   >
@@ -979,9 +1012,23 @@ export default function CollectionDetailPage({
                 <Input
                   value={editedMetaTitle}
                   onChange={e => setEditedMetaTitle(e.target.value)}
-                  onBlur={handleSaveMetaTitle}
+                  onBlur={() => {
+                    void handleSaveMetaTitle().catch(error => {
+                      console.error(
+                        '[Collections] Save meta title failed:',
+                        error
+                      );
+                    });
+                  }}
                   onKeyDown={e => {
-                    if (e.key === 'Enter') handleSaveMetaTitle();
+                    if (e.key === 'Enter') {
+                      void handleSaveMetaTitle().catch(error => {
+                        console.error(
+                          '[Collections] Save meta title failed:',
+                          error
+                        );
+                      });
+                    }
                     if (e.key === 'Escape') handleCancelEditMetaTitle();
                   }}
                   disabled={savingMetaTitle}
@@ -1025,7 +1072,14 @@ export default function CollectionDetailPage({
                 <Textarea
                   value={editedMetaDescription}
                   onChange={e => setEditedMetaDescription(e.target.value)}
-                  onBlur={handleSaveMetaDescription}
+                  onBlur={() => {
+                    void handleSaveMetaDescription().catch(error => {
+                      console.error(
+                        '[Collections] Save meta description failed:',
+                        error
+                      );
+                    });
+                  }}
                   onKeyDown={e => {
                     if (e.key === 'Escape') handleCancelEditMetaDescription();
                   }}
@@ -1191,7 +1245,16 @@ export default function CollectionDetailPage({
                 key={product.id}
                 product={product}
                 position={(product as any).position || 0}
-                onRemove={handleRemoveProduct}
+                onRemove={() => {
+                  void handleRemoveProduct(product.id, product.name).catch(
+                    error => {
+                      console.error(
+                        '[Collections] Remove product failed:',
+                        error
+                      );
+                    }
+                  );
+                }}
                 router={router}
               />
             ))}
@@ -1222,7 +1285,9 @@ export default function CollectionDetailPage({
           open={showManageProductsModal}
           onClose={() => {
             setShowManageProductsModal(false);
-            refetch();
+            void refetch().catch(error => {
+              console.error('[Collections] Refetch failed:', error);
+            });
           }}
           onSelect={async (products: SelectedProduct[]) => {
             if (!collection) {

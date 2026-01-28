@@ -15,7 +15,6 @@ import {
   useActiveEnseignes,
   type Organisation,
 } from '@verone/organisations';
-import type { Database } from '@verone/types';
 import { Badge } from '@verone/ui';
 import { ButtonV2, IconButton } from '@verone/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
@@ -30,7 +29,6 @@ import {
 import {
   Pagination,
   PaginationContent,
-  PaginationEllipsis,
   PaginationItem,
   PaginationLink,
   PaginationNext,
@@ -48,15 +46,11 @@ import { spacing, colors } from '@verone/ui/design-system';
 import { cn } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
 import {
-  Users,
   Search,
   Plus,
-  Phone,
-  Mail,
   MapPin,
   Eye,
   Building2,
-  User,
   ArrowLeft,
   Archive,
   ArchiveRestore,
@@ -68,7 +62,6 @@ import {
 } from 'lucide-react';
 
 import { FavoriteToggleButton } from '@/components/business/favorite-toggle-button';
-import { HeartBadge } from '@/components/business/heart-badge';
 
 // ✅ FIX TypeScript: Utiliser type Organisation (pas de Customer local)
 // Interface Organisation définie dans use-organisations.ts
@@ -167,8 +160,8 @@ export default function CustomersPage() {
   const filters = useMemo(
     () => ({
       is_active: true,
-      search: searchQuery || undefined,
-      customer_type: urlType || undefined,
+      search: searchQuery ?? undefined,
+      customer_type: urlType ?? undefined,
     }),
     [searchQuery, urlType]
   );
@@ -231,7 +224,9 @@ export default function CustomersPage() {
   };
 
   const handleCustomerSuccess = () => {
-    refetch();
+    void refetch().catch(error => {
+      console.error('[Customers] Refetch failed:', error);
+    });
     handleCloseModal();
   };
 
@@ -257,7 +252,9 @@ export default function CustomersPage() {
 
   useEffect(() => {
     if (activeTab === 'archived') {
-      loadArchivedCustomersData();
+      void loadArchivedCustomersData().catch(error => {
+        console.error('[Customers] Load archived data failed:', error);
+      });
     }
   }, [activeTab]);
 
@@ -265,7 +262,9 @@ export default function CustomersPage() {
     if (!customer.archived_at) {
       const success = await archiveOrganisation(customer.id);
       if (success) {
-        refetch();
+        void refetch().catch(error => {
+          console.error('[Customers] Refetch after archive failed:', error);
+        });
         if (activeTab === 'archived') {
           await loadArchivedCustomersData();
         }
@@ -273,7 +272,9 @@ export default function CustomersPage() {
     } else {
       const success = await unarchiveOrganisation(customer.id);
       if (success) {
-        refetch();
+        void refetch().catch(error => {
+          console.error('[Customers] Refetch after unarchive failed:', error);
+        });
         await loadArchivedCustomersData();
       }
     }
@@ -696,8 +697,20 @@ export default function CustomersPage() {
                                   organisationType="customer"
                                   disabled={!customer.is_active}
                                   onToggleComplete={() => {
-                                    refetch();
-                                    loadArchivedCustomersData();
+                                    void refetch().catch(error => {
+                                      console.error(
+                                        '[Customers] Refetch after favorite toggle failed:',
+                                        error
+                                      );
+                                    });
+                                    void loadArchivedCustomersData().catch(
+                                      error => {
+                                        console.error(
+                                          '[Customers] Load archived after favorite toggle failed:',
+                                          error
+                                        );
+                                      }
+                                    );
                                   }}
                                   className="h-7 px-2"
                                 />
@@ -714,7 +727,16 @@ export default function CustomersPage() {
                                 <IconButton
                                   variant="danger"
                                   size="sm"
-                                  onClick={() => handleArchive(customer)}
+                                  onClick={() => {
+                                    void handleArchive(customer).catch(
+                                      error => {
+                                        console.error(
+                                          '[Customers] Archive action failed:',
+                                          error
+                                        );
+                                      }
+                                    );
+                                  }}
                                   icon={Archive}
                                   label="Archiver"
                                 />
@@ -729,15 +751,36 @@ export default function CustomersPage() {
                                   organisationType="customer"
                                   disabled={!customer.is_active}
                                   onToggleComplete={() => {
-                                    refetch();
-                                    loadArchivedCustomersData();
+                                    void refetch().catch(error => {
+                                      console.error(
+                                        '[Customers] Refetch after favorite toggle failed:',
+                                        error
+                                      );
+                                    });
+                                    void loadArchivedCustomersData().catch(
+                                      error => {
+                                        console.error(
+                                          '[Customers] Load archived after favorite toggle failed:',
+                                          error
+                                        );
+                                      }
+                                    );
                                   }}
                                   className="h-7 px-2"
                                 />
                                 <IconButton
                                   variant="success"
                                   size="sm"
-                                  onClick={() => handleArchive(customer)}
+                                  onClick={() => {
+                                    void handleArchive(customer).catch(
+                                      error => {
+                                        console.error(
+                                          '[Customers] Archive action failed:',
+                                          error
+                                        );
+                                      }
+                                    );
+                                  }}
                                   icon={ArchiveRestore}
                                   label="Restaurer"
                                 />
@@ -898,8 +941,20 @@ export default function CustomersPage() {
                                 organisationType="customer"
                                 disabled={!customer.is_active}
                                 onToggleComplete={() => {
-                                  refetch();
-                                  loadArchivedCustomersData();
+                                  void refetch().catch(error => {
+                                    console.error(
+                                      '[Customers] Refetch after favorite toggle failed:',
+                                      error
+                                    );
+                                  });
+                                  void loadArchivedCustomersData().catch(
+                                    error => {
+                                      console.error(
+                                        '[Customers] Load archived after favorite toggle failed:',
+                                        error
+                                      );
+                                    }
+                                  );
                                 }}
                                 className="h-7 px-2"
                               />
@@ -916,7 +971,14 @@ export default function CustomersPage() {
                               <IconButton
                                 variant="danger"
                                 size="sm"
-                                onClick={() => handleArchive(customer)}
+                                onClick={() => {
+                                  void handleArchive(customer).catch(error => {
+                                    console.error(
+                                      '[Customers] Archive action failed:',
+                                      error
+                                    );
+                                  });
+                                }}
                                 icon={Archive}
                                 label="Archiver"
                               />
@@ -931,15 +993,34 @@ export default function CustomersPage() {
                                 organisationType="customer"
                                 disabled={!customer.is_active}
                                 onToggleComplete={() => {
-                                  refetch();
-                                  loadArchivedCustomersData();
+                                  void refetch().catch(error => {
+                                    console.error(
+                                      '[Customers] Refetch after favorite toggle failed:',
+                                      error
+                                    );
+                                  });
+                                  void loadArchivedCustomersData().catch(
+                                    error => {
+                                      console.error(
+                                        '[Customers] Load archived after favorite toggle failed:',
+                                        error
+                                      );
+                                    }
+                                  );
                                 }}
                                 className="h-7 px-2"
                               />
                               <IconButton
                                 variant="success"
                                 size="sm"
-                                onClick={() => handleArchive(customer)}
+                                onClick={() => {
+                                  void handleArchive(customer).catch(error => {
+                                    console.error(
+                                      '[Customers] Archive action failed:',
+                                      error
+                                    );
+                                  });
+                                }}
                                 icon={ArchiveRestore}
                                 label="Restaurer"
                               />

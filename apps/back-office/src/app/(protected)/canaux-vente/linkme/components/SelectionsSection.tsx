@@ -5,7 +5,6 @@ import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 
 import { useToast } from '@verone/common';
-import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import {
   Card,
@@ -32,7 +31,6 @@ import {
   SelectValue,
 } from '@verone/ui';
 import { Skeleton } from '@verone/ui';
-import { Checkbox } from '@verone/ui';
 import {
   Table,
   TableBody,
@@ -47,7 +45,6 @@ import {
   Search,
   Layers,
   Eye,
-  ExternalLink,
   Package,
   ShoppingBag,
   Archive,
@@ -143,7 +140,9 @@ export function SelectionsSection() {
   const [productSearch, setProductSearch] = useState('');
 
   useEffect(() => {
-    fetchData();
+    void fetchData().catch(error => {
+      console.error('[SelectionsSection] Initial fetch failed:', error);
+    });
   }, []);
 
   // Filtrer les produits du catalogue par recherche
@@ -235,9 +234,9 @@ export function SelectionsSection() {
           id: item.id,
           product_id: item.product_id,
           product_name: item.products?.name || 'Produit inconnu',
-          product_reference: item.products?.sku || '',
+          product_reference: item.products?.sku ?? '',
           product_price_ht: Number(item.public_price_ht) || 0,
-          product_image_url: imageMap.get(item.product_id) || null,
+          product_image_url: imageMap.get(item.product_id) ?? null,
           max_margin_rate: Number(item.max_margin_rate) || 30,
           min_margin_rate: Number(item.min_margin_rate) || 5,
           suggested_margin_rate: Number(item.suggested_margin_rate) || 15,
@@ -300,7 +299,7 @@ export function SelectionsSection() {
           affiliate_id: formData.affiliate_id,
           name: formData.name.trim(),
           slug: slug,
-          description: formData.description || null,
+          description: formData.description ?? null,
           share_token: shareToken,
           products_count: selectedProducts.length,
           views_count: 0,
@@ -338,7 +337,9 @@ export function SelectionsSection() {
       // Reset et refresh
       setIsCreateModalOpen(false);
       resetForm();
-      fetchData();
+      void fetchData().catch(error => {
+        console.error('[SelectionsSection] Fetch after create failed:', error);
+      });
     } catch (error) {
       console.error('Error creating selection:', error);
       toast({
@@ -696,7 +697,14 @@ export function SelectionsSection() {
                             variant="outline"
                             size="icon"
                             className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
-                            onClick={() => handleArchive(selection)}
+                            onClick={() => {
+                              void handleArchive(selection).catch(error => {
+                                console.error(
+                                  '[SelectionsSection] Archive failed:',
+                                  error
+                                );
+                              });
+                            }}
                             title="Désarchiver la sélection"
                           >
                             <ArchiveRestore className="h-4 w-4" />
@@ -706,7 +714,14 @@ export function SelectionsSection() {
                             variant="outline"
                             size="icon"
                             className="h-8 w-8 text-orange-500 hover:text-orange-600 hover:bg-orange-50"
-                            onClick={() => handleArchive(selection)}
+                            onClick={() => {
+                              void handleArchive(selection).catch(error => {
+                                console.error(
+                                  '[SelectionsSection] Archive failed:',
+                                  error
+                                );
+                              });
+                            }}
                             title="Archiver la sélection"
                           >
                             <Archive className="h-4 w-4" />
@@ -719,12 +734,17 @@ export function SelectionsSection() {
                             variant="outline"
                             size="icon"
                             className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
-                            onClick={() =>
-                              handleDeleteSelection(
+                            onClick={() => {
+                              void handleDeleteSelection(
                                 selection.id,
                                 selection.name
-                              )
-                            }
+                              ).catch(error => {
+                                console.error(
+                                  '[SelectionsSection] Delete failed:',
+                                  error
+                                );
+                              });
+                            }}
                             title="Supprimer la sélection"
                           >
                             <Trash2 className="h-4 w-4" />
@@ -920,7 +940,14 @@ export function SelectionsSection() {
               Annuler
             </ButtonV2>
             <ButtonV2
-              onClick={handleCreateSelection}
+              onClick={() => {
+                void handleCreateSelection().catch(error => {
+                  console.error(
+                    '[SelectionsSection] Create selection failed:',
+                    error
+                  );
+                });
+              }}
               disabled={
                 saving ||
                 !formData.affiliate_id ||

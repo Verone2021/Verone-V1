@@ -5,7 +5,7 @@
 
 ---
 
-## 15 Memories CRITICAL
+## 16 Memories CRITICAL
 
 Ces memories sont **stables, transverses, et essentielles** pour le bon fonctionnement de Claude Code.
 
@@ -23,9 +23,10 @@ Ces memories sont **stables, transverses, et essentielles** pour le bon fonction
 | 10  | `claude-code-workflow.md`     | Tooling     | Workflow 5 etapes obligatoire          | OK     |
 | 11  | `project-decisions.md`        | Business    | Decisions non-negociables              | OK     |
 | 12  | `turborepo-paths.md`          | Tooling     | Chemins corrects Turborepo             | OK     |
-| 13  | `vercel-no-docker.md`         | Deploy      | JAMAIS Docker, toujours Vercel         | OK     |
+| 13  | `vercel-workflow.md`          | Deploy      | Workflow Vercel + Supabase Cloud       | OK     |
 | 14  | `qonto-never-finalize.md`     | Back-office | JAMAIS finaliser factures              | OK     |
 | 15  | `user-expectations.md`        | Tooling     | Pas d'options, resoudre directement    | OK     |
+| 16  | `e2e-tests-quickstart.md`     | Testing     | Guide rapide tests E2E LinkMe          | OK     |
 
 ---
 
@@ -64,9 +65,10 @@ Updated: YYYY-MM-DD
 | `claude-code-workflow-2025-12.md`                   | `claude-code-workflow.md`          |
 | `project-decisions-non-negotiable-2025-12.md`       | `project-decisions.md`             |
 | `turborepo-paths-reference-2025-11-20.md`           | `turborepo-paths.md`               |
-| `vercel-workflow-no-docker.md`                      | `vercel-no-docker.md`              |
+| `vercel-workflow.md`                                | `vercel-workflow.md`               |
 | `qonto-invoices-never-finalize-2026-01-07.md`       | `qonto-never-finalize.md`          |
 | `user-expectations-no-options.md`                   | `user-expectations.md`             |
+| `packages/e2e-linkme/QUICKSTART.md`                 | `e2e-tests-quickstart.md`          |
 
 ---
 

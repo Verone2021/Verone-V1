@@ -70,8 +70,8 @@ export function PaymentSection({
     individual_customers:
       customerType === 'individual'
         ? {
-            first_name: customerName.split(' ')[0] || '',
-            last_name: customerName.split(' ').slice(1).join(' ') || '',
+            first_name: customerName.split(' ')[0] ?? '',
+            last_name: customerName.split(' ').slice(1).join(' ') ?? '',
             email: customerEmail,
           }
         : null,
@@ -79,7 +79,7 @@ export function PaymentSection({
   };
 
   const handleInvoiceCreated = (invoiceId: string): void => {
-    console.log('[PaymentSection] Invoice created:', invoiceId);
+    console.warn('[PaymentSection] Invoice created:', invoiceId);
     // On pourrait recharger la page ou afficher un message de succes
   };
 

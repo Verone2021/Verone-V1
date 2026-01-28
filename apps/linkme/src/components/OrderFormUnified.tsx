@@ -372,15 +372,15 @@ export function OrderFormUnified({
         responsable: {
           ...prev.responsable,
           name: `${primary.firstName} ${primary.lastName}`,
-          email: primary.email || '',
-          phone: primary.phone || primary.mobile || '',
+          email: primary.email ?? '',
+          phone: primary.phone ?? primary.mobile ?? '',
         },
         billing: {
           ...prev.billing,
           contactSource: 'responsable',
           name: `${primary.firstName} ${primary.lastName}`,
-          email: primary.email || '',
-          phone: primary.phone || primary.mobile || '',
+          email: primary.email ?? '',
+          phone: primary.phone ?? primary.mobile ?? '',
         },
       }));
     }
@@ -395,7 +395,7 @@ export function OrderFormUnified({
       try {
         const cached = localStorage.getItem(REQUESTER_CACHE_KEY);
         if (cached) {
-          const parsedCache: RequesterCache = JSON.parse(cached);
+          const parsedCache = JSON.parse(cached) as RequesterCache;
 
           // Vérifier si le cache n'est pas expiré
           if (parsedCache.expiresAt > Date.now()) {
@@ -657,7 +657,7 @@ export function OrderFormUnified({
   }, [data.delivery]);
 
   // Validation Step 6 : Validation panier
-  const validateStep6 = useCallback((): boolean => {
+  const _validateStep6 = useCallback((): boolean => {
     const newErrors: Record<string, string> = {};
 
     if (cart.length === 0) {
@@ -869,7 +869,7 @@ export function OrderFormUnified({
                   </div>
                 ) : (
                   <select
-                    value={data.existingOrganisationId || ''}
+                    value={data.existingOrganisationId ?? ''}
                     onChange={e =>
                       updateData({
                         existingOrganisationId: e.target.value || null,
@@ -884,7 +884,7 @@ export function OrderFormUnified({
                     <option value="">-- Choisir un restaurant --</option>
                     {organisations.map(org => (
                       <option key={org.id} value={org.id}>
-                        {org.trade_name || org.legal_name}
+                        {org.trade_name ?? org.legal_name}
                         {org.city ? ` (${org.city})` : ''}
                       </option>
                     ))}
@@ -1523,9 +1523,11 @@ function OpeningStep2Restaurant({
   // Filtrer organisations par recherche
   const filteredOrgs = organisations?.filter(
     org =>
-      org.trade_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      org.legal_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      org.city?.toLowerCase().includes(searchQuery.toLowerCase())
+      (org.trade_name?.toLowerCase().includes(searchQuery.toLowerCase()) ??
+        false) ||
+      (org.legal_name?.toLowerCase().includes(searchQuery.toLowerCase()) ??
+        false) ||
+      (org.city?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false)
   );
 
   if (data.isNewRestaurant === false) {
@@ -1578,7 +1580,7 @@ function OpeningStep2Restaurant({
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
                         <h4 className="font-medium">
-                          {org.trade_name || org.legal_name}
+                          {org.trade_name ?? org.legal_name}
                         </h4>
                         {org.ownership_type && (
                           <Badge
@@ -1595,7 +1597,7 @@ function OpeningStep2Restaurant({
                         )}
                       </div>
                       <p className="text-sm text-gray-600 mt-1">
-                        {org.shipping_address_line1 || 'Adresse non renseignée'}
+                        {org.shipping_address_line1 ?? 'Adresse non renseignée'}
                       </p>
                       <p className="text-sm text-gray-500">
                         {org.postal_code} {org.city}
@@ -1640,7 +1642,7 @@ function OpeningStep2Restaurant({
           Type de restaurant <span className="text-red-500">*</span>
         </Label>
         <RadioGroup
-          value={data.newRestaurant.ownershipType || ''}
+          value={data.newRestaurant.ownershipType ?? ''}
           onValueChange={(value: 'succursale' | 'franchise') =>
             updateData({
               newRestaurant: {
@@ -1941,7 +1943,7 @@ function CompanyFields({ data, errors, updateData }: CompanyFieldsProps) {
           type="file"
           accept=".pdf,.jpg,.jpeg,.png"
           onChange={e => {
-            const file = e.target.files?.[0] || null;
+            const file = e.target.files?.[0] ?? null;
             updateData({
               responsable: { ...data.responsable, kbisFile: file },
             });
@@ -1981,7 +1983,7 @@ function OpeningStep3Responsable({ data, errors, updateData }: StepProps) {
         {contacts?.allContacts && contacts.allContacts.length > 0 ? (
           <>
             <RadioGroup
-              value={data.existingContact.selectedContactId || ''}
+              value={data.existingContact.selectedContactId ?? ''}
               onValueChange={value =>
                 updateData({
                   existingContact: {
@@ -2154,7 +2156,7 @@ function OpeningStep5Delivery({ data, errors, updateData }: StepProps) {
     const supabase = createClient();
     const fileName = `${Date.now()}_${file.name}`;
 
-    const { data: uploadData, error } = await supabase.storage
+    const { data: _uploadData, error } = await supabase.storage
       .from('linkme-delivery-forms')
       .upload(fileName, file);
 
@@ -2441,7 +2443,11 @@ function OpeningStep5Delivery({ data, errors, updateData }: StepProps) {
                 id="accessFormUpload"
                 type="file"
                 accept=".pdf,.png,.jpg,.jpeg"
-                onChange={handleFileUpload}
+                onChange={e => {
+                  void handleFileUpload(e).catch(error => {
+                    console.error('[OrderForm] File upload failed:', error);
+                  });
+                }}
               />
               <p className="text-xs text-gray-500 mt-1">
                 Formats acceptés : PDF, PNG, JPG (max 5 MB)
@@ -2557,7 +2563,7 @@ function OpeningStep4Billing({
                 </Label>
                 <div className="mt-2 text-sm text-gray-700">
                   <p className="font-medium">
-                    {parentOrg.trade_name || parentOrg.legal_name}
+                    {parentOrg.trade_name ?? parentOrg.legal_name}
                   </p>
                   <p className="text-gray-600">{parentOrg.address_line1}</p>
                   <p className="text-gray-600">

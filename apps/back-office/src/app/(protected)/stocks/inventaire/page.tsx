@@ -9,19 +9,11 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { ProductHistoryModal } from '@verone/products';
 import { InventoryAdjustmentModal } from '@verone/stock';
 import { StockReportsModal } from '@verone/stock';
-import { useStockMovements } from '@verone/stock';
 import { useStockInventory } from '@verone/stock';
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import { Card, CardContent } from '@verone/ui';
 import { IconButton } from '@verone/ui';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '@verone/ui';
 import { Input } from '@verone/ui';
 import { formatPrice } from '@verone/utils';
 import {
@@ -36,10 +28,6 @@ import {
   History,
   Settings,
   Calendar,
-  Clock,
-  User,
-  FileText,
-  ExternalLink,
   Filter,
   X,
   AlertTriangle,
@@ -72,7 +60,9 @@ export default function InventairePage() {
     useStockInventory();
 
   useEffect(() => {
-    fetchInventory();
+    void fetchInventory().catch(error => {
+      console.error('[Inventaire] fetchInventory failed:', error);
+    });
   }, [fetchInventory]);
 
   // Ouvrir automatiquement le modal si query param ?id= présent (venant des notifications)
@@ -88,7 +78,9 @@ export default function InventairePage() {
   }, [searchParams, inventory, isHistoryModalOpen]);
 
   const handleRefresh = () => {
-    fetchInventory(filters);
+    void fetchInventory(filters).catch(error => {
+      console.error('[Inventaire] handleRefresh failed:', error);
+    });
   };
 
   const handleExport = () => {
@@ -100,7 +92,9 @@ export default function InventairePage() {
   };
 
   const handleApplyFilters = () => {
-    fetchInventory(filters);
+    void fetchInventory(filters).catch(error => {
+      console.error('[Inventaire] handleApplyFilters failed:', error);
+    });
   };
 
   const openHistoryModal = (product: any) => {
@@ -155,7 +149,9 @@ export default function InventairePage() {
     setShowOnlyWithStock(false);
     setQuickDateFilter('all');
     setStockLevelFilter('all');
-    fetchInventory();
+    void fetchInventory().catch(error => {
+      console.error('[Inventaire] handleResetFilters failed:', error);
+    });
   };
 
   // Nombre de filtres actifs
@@ -716,7 +712,12 @@ export default function InventairePage() {
         isOpen={isAdjustmentModalOpen}
         onClose={() => setIsAdjustmentModalOpen(false)}
         onSuccess={() => {
-          fetchInventory(); // Refresh data après ajustement
+          void fetchInventory().catch(error => {
+            console.error(
+              '[Inventaire] onSuccess fetchInventory failed:',
+              error
+            );
+          }); // Refresh data après ajustement
         }}
         product={selectedProduct}
       />

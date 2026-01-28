@@ -23,11 +23,7 @@ import {
 } from 'lucide-react';
 
 import type { Collection } from '@verone/collections';
-import {
-  useCollections,
-  CollectionFilters,
-  CreateCollectionData,
-} from '@verone/collections';
+import { useCollections } from '@verone/collections';
 import type { CreateCollectionInput } from '@verone/common';
 import { CollectionCreationWizard } from '@verone/common';
 import { useToast } from '@verone/common';
@@ -58,7 +54,7 @@ const formatCollectionStyle = (style?: string): string => {
 };
 
 // Helper pour formater la catégorie de pièce
-const formatRoomCategory = (roomCategory?: string): string => {
+const _formatRoomCategory = (roomCategory?: string): string => {
   if (!roomCategory) return '';
   const roomMap: Record<string, string> = {
     chambre: 'Chambre',
@@ -114,7 +110,7 @@ export default function CollectionsPage() {
     unarchiveCollection,
     addProductsToCollection,
   } = useCollections({
-    search: filters.search || undefined,
+    search: filters.search ?? undefined,
     status: filters.status,
     visibility: filters.visibility,
   });
@@ -135,7 +131,12 @@ export default function CollectionsPage() {
   // Charger les collections archivées quand on change d'onglet
   useEffect(() => {
     if (activeTab === 'archived') {
-      loadArchivedCollectionsData();
+      void loadArchivedCollectionsData().catch(error => {
+        console.error(
+          '[Collections] loadArchivedCollectionsData failed:',
+          error
+        );
+      });
     }
   }, [activeTab]);
 
@@ -164,7 +165,7 @@ export default function CollectionsPage() {
     });
   };
 
-  const formatPrice = (priceInCents: number) => {
+  const _formatPrice = (priceInCents: number) => {
     return new Intl.NumberFormat('fr-FR', {
       style: 'currency',
       currency: 'EUR',
@@ -258,7 +259,7 @@ export default function CollectionsPage() {
       try {
         if (collection.archived_at) {
           await unarchiveCollection(collection.id);
-          console.log('✅ Collection restaurée:', collection.name);
+          console.warn('✅ Collection restaurée:', collection.name);
           toast({
             title: 'Collection restaurée',
             description: 'La collection a été restaurée avec succès',
@@ -267,7 +268,7 @@ export default function CollectionsPage() {
           await loadArchivedCollectionsData();
         } else {
           await archiveCollection(collection.id);
-          console.log('✅ Collection archivée:', collection.name);
+          console.warn('✅ Collection archivée:', collection.name);
           toast({
             title: 'Collection archivée',
             description: 'La collection a été archivée avec succès',
@@ -485,7 +486,14 @@ export default function CollectionsPage() {
               <ButtonV2
                 size="sm"
                 variant="ghost"
-                onClick={() => handleArchiveCollection(collection)}
+                onClick={() => {
+                  void handleArchiveCollection(collection).catch(error => {
+                    console.error(
+                      '[Collections] handleArchiveCollection failed:',
+                      error
+                    );
+                  });
+                }}
                 icon={Archive}
                 className="w-full"
                 title="Archiver"
@@ -511,7 +519,14 @@ export default function CollectionsPage() {
               <ButtonV2
                 size="sm"
                 variant="secondary"
-                onClick={() => handleArchiveCollection(collection)}
+                onClick={() => {
+                  void handleArchiveCollection(collection).catch(error => {
+                    console.error(
+                      '[Collections] handleArchiveCollection (restore) failed:',
+                      error
+                    );
+                  });
+                }}
                 icon={ArchiveRestore}
                 className="w-full"
                 title="Restaurer"
@@ -521,7 +536,14 @@ export default function CollectionsPage() {
               <ButtonV2
                 size="sm"
                 variant="destructive"
-                onClick={() => handleDeleteCollection(collection.id)}
+                onClick={() => {
+                  void handleDeleteCollection(collection.id).catch(error => {
+                    console.error(
+                      '[Collections] handleDeleteCollection failed:',
+                      error
+                    );
+                  });
+                }}
                 icon={Trash2}
                 className="w-full"
                 title="Supprimer"
@@ -663,7 +685,18 @@ export default function CollectionsPage() {
             {selectedCollections.length !== 1 ? 's' : ''} sélectionnée
             {selectedCollections.length !== 1 ? 's' : ''}
           </span>
-          <ButtonV2 variant="ghost" size="sm" onClick={handleBulkStatusToggle}>
+          <ButtonV2
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              void handleBulkStatusToggle().catch(error => {
+                console.error(
+                  '[Collections] handleBulkStatusToggle failed:',
+                  error
+                );
+              });
+            }}
+          >
             Changer le statut
           </ButtonV2>
           <ButtonV2

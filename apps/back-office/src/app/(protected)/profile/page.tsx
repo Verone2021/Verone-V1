@@ -6,8 +6,6 @@ import type { User as SupabaseUser } from '@supabase/supabase-js';
 import { ButtonUnified } from '@verone/ui';
 import { Input } from '@verone/ui';
 import { RoleBadge, type UserRole } from '@verone/ui';
-import { themeV2 } from '@verone/ui/theme-v2';
-import { cn } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
 import {
   validateProfileForm,
@@ -78,9 +76,9 @@ export default function ProfilePage() {
 
       // Initialize edit data
       setEditData({
-        email: user.email || '',
+        email: user.email ?? '',
         raw_user_meta_data: {
-          name: user.user_metadata?.name || user.email?.split('@')[0] || '',
+          name: (user.user_metadata?.name || user.email?.split('@')[0]) ?? '',
         },
         first_name: '',
         last_name: '',
@@ -102,17 +100,19 @@ export default function ProfilePage() {
         // Update edit data with profile info
         setEditData(prevData => ({
           ...prevData,
-          first_name: profileData.first_name || '',
-          last_name: profileData.last_name || '',
-          phone: profileData.phone || '',
-          job_title: profileData.job_title || '',
+          first_name: profileData.first_name ?? '',
+          last_name: profileData.last_name ?? '',
+          phone: profileData.phone ?? '',
+          job_title: profileData.job_title ?? '',
         }));
       }
 
       setLoading(false);
     };
 
-    loadUserData();
+    void loadUserData().catch(error => {
+      console.error('[ProfilePage] useEffect loadUserData failed:', error);
+    });
   }, []);
 
   const handleSaveProfile = async () => {
@@ -150,14 +150,14 @@ export default function ProfilePage() {
 
       // Update user profile with validated and sanitized data
       const sanitizedData = sanitizeProfileData(validationResult.formatted);
-      console.log('🔍 Diagnostic profile update:', {
+      console.warn('🔍 Diagnostic profile update:', {
         user_id: user.id,
         sanitizedData,
         originalFormData: validationResult.formatted,
       });
 
       // Vérifier si le profil existe avant update
-      const { data: existingProfile, error: checkError } = await supabase
+      const { data: _existingProfile, error: checkError } = await supabase
         .from('user_profiles')
         .select('user_id')
         .eq('user_id', user.id)
@@ -165,7 +165,7 @@ export default function ProfilePage() {
 
       if (checkError) {
         console.error('❌ Erreur vérification profil existant:', checkError);
-        console.log('Profil inexistant - tentative de création');
+        console.warn('Profil inexistant - tentative de création');
 
         // Profil n'existe pas, le créer
         const { error: createError } = await supabase
@@ -184,9 +184,9 @@ export default function ProfilePage() {
           });
           return;
         }
-        console.log('✅ Profil créé avec succès');
+        console.warn('✅ Profil créé avec succès');
       } else {
-        console.log('✅ Profil existant trouvé, tentative update');
+        console.warn('✅ Profil existant trouvé, tentative update');
 
         const { error: profileError } = await supabase
           .from('user_profiles')
@@ -203,7 +203,7 @@ export default function ProfilePage() {
           });
           return;
         }
-        console.log('✅ Profil mis à jour avec succès');
+        console.warn('✅ Profil mis à jour avec succès');
       }
 
       // Refresh user data
@@ -269,7 +269,14 @@ export default function ProfilePage() {
             {isEditing ? (
               <>
                 <ButtonUnified
-                  onClick={handleSaveProfile}
+                  onClick={() => {
+                    void handleSaveProfile().catch(error => {
+                      console.error(
+                        '[ProfilePage] handleSaveProfile failed:',
+                        error
+                      );
+                    });
+                  }}
                   disabled={saveLoading}
                   loading={saveLoading}
                   variant="success"

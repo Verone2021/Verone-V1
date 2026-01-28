@@ -11,7 +11,7 @@
 
 import { NextResponse } from 'next/server';
 
-import { createServerClient } from '@/lib/supabase-server';
+import { createClient } from '@supabase/supabase-js';
 
 // Type pour la configuration de page
 type PageConfiguration = {
@@ -49,18 +49,30 @@ export async function GET(
       );
     }
 
-    const supabase = await createServerClient();
+    // Client anonyme sans session (route publique)
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
 
     // Récupérer la configuration de la page
-    const { data, error } = await supabase
+    const { data, error } = (await supabase
       .from('linkme_page_configurations')
       .select('*')
       .eq('page_id', pageId)
-      .single();
+      .single()) as {
+      data: PageConfiguration | null;
+      error: { code?: string } | null;
+    };
 
     if (error) {
       // Si la table n'existe pas ou pas de données, retourner config par défaut
-      if (error.code === 'PGRST116' || error.code === '42P01') {
+      // PGRST116 = row not found, PGRST205 = table not found, 42P01 = undefined table
+      if (
+        error.code === 'PGRST116' ||
+        error.code === 'PGRST205' ||
+        error.code === '42P01'
+      ) {
         return NextResponse.json({
           page_id: pageId,
           ...DEFAULT_CONFIG,

@@ -17,6 +17,7 @@
 
 import { useState, useEffect } from 'react';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 
@@ -73,7 +74,7 @@ export default function SelectionProductsPage() {
   const selectionId = params.id as string;
 
   const { user, linkMeRole, initializing: authLoading } = useAuth();
-  const { data: affiliate, isLoading: affiliateLoading } = useUserAffiliate();
+  const { data: _affiliate, isLoading: affiliateLoading } = useUserAffiliate();
   const { data: selections, isLoading: selectionsLoading } =
     useUserSelections();
 
@@ -145,7 +146,7 @@ export default function SelectionProductsPage() {
           },
           onError: () => {
             // Restaurer l'ordre précédent en cas d'erreur
-            setLocalItems(items || []);
+            setLocalItems(items ?? []);
             toast.error('Erreur lors de la réorganisation');
           },
         }
@@ -326,7 +327,11 @@ export default function SelectionProductsPage() {
                       key={item.id}
                       item={item}
                       onEdit={() => setEditingItem(item)}
-                      onRemove={() => handleRemoveItem(item)}
+                      onRemove={() => {
+                        void handleRemoveItem(item).catch(error => {
+                          console.error('[ProductList] Remove failed:', error);
+                        });
+                      }}
                       isDeleting={deletingItemId === item.id}
                       disabled={!!searchQuery}
                     />
@@ -451,9 +456,11 @@ function SortableProductItem({
       {/* Image */}
       <div className="w-14 h-14 bg-gray-100 rounded-xl overflow-hidden flex-shrink-0">
         {item.product_image_url ? (
-          <img
+          <Image
             src={item.product_image_url}
             alt={item.product_name}
+            width={56}
+            height={56}
             className="w-full h-full object-cover"
           />
         ) : (

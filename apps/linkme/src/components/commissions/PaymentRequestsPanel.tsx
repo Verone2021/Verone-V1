@@ -258,7 +258,12 @@ function UploadInvoiceModal({
             Annuler
           </button>
           <button
-            onClick={handleUpload}
+            onClick={() => {
+              void handleUpload().catch(error => {
+                console.error('[UploadInvoiceModal] Upload failed:', error);
+                setError("Erreur lors de l'upload");
+              });
+            }}
             disabled={!selectedFile || uploadMutation.isPending}
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
@@ -293,7 +298,7 @@ export function PaymentRequestsPanel({ className }: PaymentRequestsPanelProps) {
   const { data: requests, isLoading, refetch } = useAffiliatePaymentRequests();
 
   // Trier par date et limiter l'affichage
-  const sortedRequests = [...(requests || [])].sort(
+  const sortedRequests = [...(requests ?? [])].sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
 
@@ -306,14 +311,14 @@ export function PaymentRequestsPanel({ className }: PaymentRequestsPanelProps) {
   const activeCount =
     requests?.filter(
       r => r.status === 'pending' || r.status === 'invoice_received'
-    ).length || 0;
+    ).length ?? 0;
   const totalPending =
     requests
       ?.filter(r => r.status === 'pending' || r.status === 'invoice_received')
-      .reduce((sum, r) => sum + r.totalAmountTTC, 0) || 0;
+      .reduce((sum, r) => sum + r.totalAmountTTC, 0) ?? 0;
 
   return (
-    <Card className={`p-0 overflow-hidden ${className || ''}`}>
+    <Card className={`p-0 overflow-hidden ${className ?? ''}`}>
       {/* Header */}
       <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-indigo-50 to-purple-50">
         <div className="flex items-center justify-between">
@@ -381,7 +386,11 @@ export function PaymentRequestsPanel({ className }: PaymentRequestsPanelProps) {
         isOpen={!!uploadModalRequestId}
         requestId={uploadModalRequestId}
         onClose={() => setUploadModalRequestId(null)}
-        onSuccess={() => refetch()}
+        onSuccess={() => {
+          void refetch().catch(error => {
+            console.error('[PaymentRequestsPanel] Refetch failed:', error);
+          });
+        }}
       />
     </Card>
   );

@@ -12,6 +12,7 @@
 
 import { useState } from 'react';
 
+import { useQueryClient } from '@tanstack/react-query';
 import {
   Dialog,
   DialogContent,
@@ -25,7 +26,6 @@ import {
 } from '@verone/ui';
 import { createClient } from '@verone/utils/supabase/client';
 import { toast } from 'sonner';
-import { useQueryClient } from '@tanstack/react-query';
 
 // ============================================================================
 // TYPES
@@ -83,7 +83,9 @@ export function CreateEnseigneContactModal({
       if (error) throw error;
 
       toast.success('Contact créé avec succès');
-      queryClient.invalidateQueries({ queryKey: ['organisation-contacts'] });
+      await queryClient.invalidateQueries({
+        queryKey: ['organisation-contacts'],
+      });
       onClose();
     } catch (error) {
       console.error('Erreur création contact:', error);
@@ -100,7 +102,17 @@ export function CreateEnseigneContactModal({
           <DialogTitle>Nouveau Contact Enseigne</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form
+          onSubmit={e => {
+            void handleSubmit(e).catch(error => {
+              console.error(
+                '[CreateEnseigneContactModal] Submit failed:',
+                error
+              );
+            });
+          }}
+          className="space-y-4"
+        >
           {/* Nom et Prénom */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -110,8 +122,8 @@ export function CreateEnseigneContactModal({
               <Input
                 id="firstName"
                 value={formData.firstName}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, firstName: e.target.value }))
+                onChange={e =>
+                  setFormData(prev => ({ ...prev, firstName: e.target.value }))
                 }
                 required
               />
@@ -124,8 +136,8 @@ export function CreateEnseigneContactModal({
               <Input
                 id="lastName"
                 value={formData.lastName}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, lastName: e.target.value }))
+                onChange={e =>
+                  setFormData(prev => ({ ...prev, lastName: e.target.value }))
                 }
                 required
               />
@@ -141,8 +153,8 @@ export function CreateEnseigneContactModal({
               id="email"
               type="email"
               value={formData.email}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, email: e.target.value }))
+              onChange={e =>
+                setFormData(prev => ({ ...prev, email: e.target.value }))
               }
               required
             />
@@ -155,8 +167,8 @@ export function CreateEnseigneContactModal({
               id="phone"
               type="tel"
               value={formData.phone}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, phone: e.target.value }))
+              onChange={e =>
+                setFormData(prev => ({ ...prev, phone: e.target.value }))
               }
               placeholder="06 12 34 56 78"
             />
@@ -168,8 +180,8 @@ export function CreateEnseigneContactModal({
             <Input
               id="title"
               value={formData.title}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, title: e.target.value }))
+              onChange={e =>
+                setFormData(prev => ({ ...prev, title: e.target.value }))
               }
               placeholder="Ex: Responsable Facturation"
             />
@@ -183,8 +195,8 @@ export function CreateEnseigneContactModal({
                 <Checkbox
                   id="isBillingContact"
                   checked={formData.isBillingContact}
-                  onCheckedChange={(checked) =>
-                    setFormData((prev) => ({
+                  onCheckedChange={checked =>
+                    setFormData(prev => ({
                       ...prev,
                       isBillingContact: !!checked,
                     }))
@@ -199,8 +211,8 @@ export function CreateEnseigneContactModal({
                 <Checkbox
                   id="isCommercialContact"
                   checked={formData.isCommercialContact}
-                  onCheckedChange={(checked) =>
-                    setFormData((prev) => ({
+                  onCheckedChange={checked =>
+                    setFormData(prev => ({
                       ...prev,
                       isCommercialContact: !!checked,
                     }))
@@ -215,8 +227,8 @@ export function CreateEnseigneContactModal({
                 <Checkbox
                   id="isTechnicalContact"
                   checked={formData.isTechnicalContact}
-                  onCheckedChange={(checked) =>
-                    setFormData((prev) => ({
+                  onCheckedChange={checked =>
+                    setFormData(prev => ({
                       ...prev,
                       isTechnicalContact: !!checked,
                     }))

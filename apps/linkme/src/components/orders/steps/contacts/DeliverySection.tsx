@@ -15,20 +15,25 @@
 
 import { useState, useCallback, useMemo, useEffect } from 'react';
 
-import { Card, cn, Collapsible, CollapsibleContent, CollapsibleTrigger } from '@verone/ui';
+import {
+  Card,
+  cn,
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@verone/ui';
 import { Truck, ChevronDown, Check, AlertCircle } from 'lucide-react';
 
 import type { OrganisationContact } from '@/lib/hooks/use-organisation-contacts';
 
+import { AddressForm } from './AddressForm';
+import { ContactSelector } from './ContactSelector';
 import type {
   DeliverySectionData,
   ContactBase,
   PartialAddressData,
 } from '../../schemas/order-form.schema';
 import { defaultContact } from '../../schemas/order-form.schema';
-
-import { ContactSelector } from './ContactSelector';
-import { AddressForm } from './AddressForm';
 
 // ============================================================================
 // TYPES
@@ -71,15 +76,15 @@ function buildRestaurantShippingAddress(
 
   return {
     addressLine1: hasShippingAddress
-      ? restaurant.shipping_address_line1 || ''
-      : restaurant.address_line1 || '',
+      ? (restaurant.shipping_address_line1 ?? '')
+      : (restaurant.address_line1 ?? ''),
     postalCode: hasShippingAddress
-      ? restaurant.shipping_postal_code || ''
-      : restaurant.postal_code || '',
+      ? (restaurant.shipping_postal_code ?? '')
+      : (restaurant.postal_code ?? ''),
     city: hasShippingAddress
-      ? restaurant.shipping_city || ''
-      : restaurant.city || '',
-    country: restaurant.country || 'FR',
+      ? (restaurant.shipping_city ?? '')
+      : (restaurant.city ?? ''),
+    country: restaurant.country ?? 'FR',
   };
 }
 
@@ -119,7 +124,7 @@ export function DeliverySection({
     }
     // Need contact (existing or new)
     const hasContact =
-      delivery.existingContactId ||
+      delivery.existingContactId ??
       (delivery.contact?.firstName &&
         delivery.contact?.lastName &&
         delivery.contact?.email);
@@ -146,8 +151,8 @@ export function DeliverySection({
           firstName: contact.firstName,
           lastName: contact.lastName,
           email: contact.email,
-          phone: contact.phone || contact.mobile || '',
-          position: contact.title || '',
+          phone: contact.phone ?? contact.mobile ?? '',
+          position: contact.title ?? '',
         },
         sameAsResponsable: false,
       });
@@ -171,7 +176,7 @@ export function DeliverySection({
     (field: keyof ContactBase, value: string) => {
       onUpdate({
         contact: {
-          ...(delivery.contact || defaultContact),
+          ...(delivery.contact ?? defaultContact),
           [field]: value,
         },
       });
@@ -198,7 +203,7 @@ export function DeliverySection({
   // Determine if we should show the address form
   const showAddressForm =
     !delivery.sameAsResponsable &&
-    (delivery.existingContactId || showContactForm);
+    (delivery.existingContactId ?? showContactForm);
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
@@ -246,7 +251,7 @@ export function DeliverySection({
             {/* Contact Selection */}
             <ContactSelector
               contacts={existingContacts}
-              selectedId={delivery.existingContactId || null}
+              selectedId={delivery.existingContactId ?? null}
               onSelect={handleContactSelect}
               onCreateNew={handleCreateNew}
               showSameAsOption
@@ -267,8 +272,8 @@ export function DeliverySection({
                     </label>
                     <input
                       type="text"
-                      value={delivery.contact?.firstName || ''}
-                      onChange={(e) =>
+                      value={delivery.contact?.firstName ?? ''}
+                      onChange={e =>
                         handleContactChange('firstName', e.target.value)
                       }
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -282,8 +287,8 @@ export function DeliverySection({
                     </label>
                     <input
                       type="text"
-                      value={delivery.contact?.lastName || ''}
-                      onChange={(e) =>
+                      value={delivery.contact?.lastName ?? ''}
+                      onChange={e =>
                         handleContactChange('lastName', e.target.value)
                       }
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -297,8 +302,8 @@ export function DeliverySection({
                     </label>
                     <input
                       type="email"
-                      value={delivery.contact?.email || ''}
-                      onChange={(e) =>
+                      value={delivery.contact?.email ?? ''}
+                      onChange={e =>
                         handleContactChange('email', e.target.value)
                       }
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -312,8 +317,8 @@ export function DeliverySection({
                     </label>
                     <input
                       type="tel"
-                      value={delivery.contact?.phone || ''}
-                      onChange={(e) =>
+                      value={delivery.contact?.phone ?? ''}
+                      onChange={e =>
                         handleContactChange('phone', e.target.value)
                       }
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -331,7 +336,7 @@ export function DeliverySection({
                   Adresse de livraison
                 </h4>
                 <AddressForm
-                  address={delivery.address || null}
+                  address={delivery.address ?? null}
                   onChange={handleAddressChange}
                   showLegalFields={false}
                   showSaveAsDefault
@@ -351,8 +356,8 @@ export function DeliverySection({
                     <p>
                       La livraison sera effectuée à :{' '}
                       <strong>
-                        {delivery.address.addressLine1}, {delivery.address.postalCode}{' '}
-                        {delivery.address.city}
+                        {delivery.address.addressLine1},{' '}
+                        {delivery.address.postalCode} {delivery.address.city}
                       </strong>
                     </p>
                     {delivery.saveAddressAsDefault && (

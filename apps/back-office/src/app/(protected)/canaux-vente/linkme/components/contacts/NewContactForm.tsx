@@ -143,7 +143,11 @@ export function NewContactForm({
       <div className="flex gap-2">
         <button
           type="button"
-          onClick={handleSubmit}
+          onClick={() => {
+            void handleSubmit().catch(error => {
+              console.error('[NewContactForm] handleSubmit failed:', error);
+            });
+          }}
           disabled={!canSubmit}
           className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
         >

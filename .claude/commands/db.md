@@ -1,3 +1,9 @@
+---
+description: /db - Opérations Supabase Rapides
+argument-hint: <operation> [args] (query|logs|migrations|advisors|schema|types|rls-test|stats)
+allowed-tools: [Bash, Read, Grep]
+---
+
 # /db - Opérations Supabase Rapides
 
 Shortcuts pour opérations database courantes : queries, migrations, logs, advisors.
@@ -177,9 +183,9 @@ RLS Policies:
 
 ```bash
 # Méthode officielle Supabase (sans Docker)
-# Token disponible dans .mcp.env (non committé)
+# Token et Project ID disponibles dans .mcp.env (non committé)
 SUPABASE_ACCESS_TOKEN="${SUPABASE_ACCESS_TOKEN}" \
-npx supabase@latest gen types typescript --project-id aorroydfjsrygmosnzrl \
+npx supabase@latest gen types typescript --project-id "${SUPABASE_PROJECT_ID}" \
 > apps/back-office/src/types/supabase.ts
 
 # Copier vers packages
@@ -325,16 +331,17 @@ Activity (Last 24h):
 # Connection disponible dans .mcp.env (non committé)
 ${DATABASE_URL}
 
-# Format complet (si besoin)
-postgresql://postgres.aorroydfjsrygmosnzrl:[PASSWORD]@aws-1-eu-west-3.pooler.supabase.com:5432/postgres
+# Format complet (utiliser variables d'env, JAMAIS hardcoder)
+# postgresql://postgres.[PROJECT_ID]:[PASSWORD]@aws-1-eu-west-3.pooler.supabase.com:5432/postgres
 ```
 
 **Détails:**
 
 - **Mode**: Pooler Session (IPv4 + IPv6)
-- **Project**: aorroydfjsrygmosnzrl
+- **Project**: Voir SUPABASE_PROJECT_ID dans .mcp.env
 - **Region**: eu-west-3 (AWS Paris)
 - **JAMAIS** Docker/localhost:54322
+- **JAMAIS** hardcoder Project ID ou credentials
 
 ## Error Handling
 

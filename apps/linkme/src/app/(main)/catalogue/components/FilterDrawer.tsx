@@ -67,7 +67,7 @@ export function FilterDrawer({
       }
 
       if (product.subcategory_name) {
-        const count = subcategoryMap.get(product.subcategory_name) || 0;
+        const count = subcategoryMap.get(product.subcategory_name) ?? 0;
         subcategoryMap.set(product.subcategory_name, count + 1);
       }
     });

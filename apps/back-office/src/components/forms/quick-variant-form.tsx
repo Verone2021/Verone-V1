@@ -228,10 +228,10 @@ export function QuickVariantForm({
             cost_price: formData.cost_price,
             status: 'in_stock',
             variant_attributes: {
-              color: formData.color || null,
-              size: formData.size || null,
-              material: formData.material || null,
-              pattern: formData.pattern || null,
+              color: formData.color ?? null,
+              size: formData.size ?? null,
+              material: formData.material ?? null,
+              pattern: formData.pattern ?? null,
             },
             variant_group_id: variantGroupId,
             variant_position: nextPosition,
@@ -402,7 +402,14 @@ export function QuickVariantForm({
           </p>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form
+          onSubmit={e => {
+            void handleSubmit(e).catch(error => {
+              console.error('[QuickVariantForm] handleSubmit failed:', error);
+            });
+          }}
+          className="space-y-6"
+        >
           {/* Aperçu nom produit auto-généré */}
           <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
             <Label className="text-blue-900 text-sm font-medium">
@@ -463,7 +470,7 @@ export function QuickVariantForm({
               type="number"
               step="0.01"
               min="0"
-              value={formData.cost_price || ''}
+              value={formData.cost_price ?? ''}
               onChange={e =>
                 setFormData(prev => ({
                   ...prev,
@@ -523,7 +530,12 @@ export function QuickVariantForm({
                       onChange={e => {
                         const file = e.target.files?.[0];
                         if (file && file.size <= 5 * 1024 * 1024) {
-                          handleImageUpload(file);
+                          void handleImageUpload(file).catch(error => {
+                            console.error(
+                              '[QuickVariantForm] handleImageUpload failed:',
+                              error
+                            );
+                          });
                         } else {
                           toast({
                             title: '❌ Fichier trop volumineux',

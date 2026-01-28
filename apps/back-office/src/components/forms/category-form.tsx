@@ -78,10 +78,10 @@ export function CategoryForm({
 
   // État du formulaire
   const [formData, setFormData] = useState<CategoryFormData>({
-    family_id: initialData?.family_id || '',
-    name: initialData?.name || '',
-    description: initialData?.description || '',
-    image_url: initialData?.image_url || '',
+    family_id: initialData?.family_id ?? '',
+    name: initialData?.name ?? '',
+    description: initialData?.description ?? '',
+    image_url: initialData?.image_url ?? '',
     display_order: initialData?.display_order || 1,
     is_active: initialData?.is_active ?? true,
   });
@@ -90,10 +90,10 @@ export function CategoryForm({
   useEffect(() => {
     if (isOpen) {
       setFormData({
-        family_id: initialData?.family_id || '',
-        name: initialData?.name || '',
-        description: initialData?.description || '',
-        image_url: initialData?.image_url || '',
+        family_id: initialData?.family_id ?? '',
+        name: initialData?.name ?? '',
+        description: initialData?.description ?? '',
+        image_url: initialData?.image_url ?? '',
         display_order: initialData?.display_order || 1,
         is_active: initialData?.is_active ?? true,
       });
@@ -263,7 +263,14 @@ export function CategoryForm({
           <DialogTitle className="text-black">{title}</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form
+          onSubmit={e => {
+            void handleSubmit(e).catch(error => {
+              console.error('[CategoryForm] handleSubmit failed:', error);
+            });
+          }}
+          className="space-y-6"
+        >
           {/* Famille parent */}
           <div className="space-y-2">
             <Label className="text-black">Famille parent*</Label>
@@ -376,7 +383,12 @@ export function CategoryForm({
                       onChange={e => {
                         const file = e.target.files?.[0];
                         if (file && file.size <= 5 * 1024 * 1024) {
-                          handleImageUpload(file);
+                          void handleImageUpload(file).catch(error => {
+                            console.error(
+                              '[CategoryForm] handleImageUpload failed:',
+                              error
+                            );
+                          });
                         } else {
                           toast({
                             title: '❌ Fichier trop volumineux',

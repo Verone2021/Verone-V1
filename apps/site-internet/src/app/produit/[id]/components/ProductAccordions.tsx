@@ -18,27 +18,39 @@ import {
 } from '@verone/ui';
 import { Truck, Shield, Package } from 'lucide-react';
 
+interface ProductDimensions {
+  length?: number;
+  width?: number;
+  height?: number;
+  depth?: number;
+  longueur?: number;
+  largeur?: number;
+  hauteur?: number;
+  profondeur?: number;
+  unit?: string;
+}
+
 interface ProductAccordionsProps {
   product: {
     description: string | null;
     technical_description: string | null;
-    dimensions: any; // JSONB { length, width, height, unit }
+    dimensions: ProductDimensions | null;
     weight: number | null;
     requires_assembly: boolean | null;
   };
 }
 
 // Helper: Formatter dimensions au format L x l x H
-const formatDimensions = (dims: any): string | null => {
+const formatDimensions = (dims: ProductDimensions | null): string | null => {
   if (!dims) return null;
 
-  const length = dims.length || dims.longueur;
-  const width = dims.width || dims.largeur;
-  const height = dims.height || dims.hauteur;
-  const depth = dims.depth || dims.profondeur;
-  const unit = dims.unit || 'cm';
+  const length = dims.length ?? dims.longueur;
+  const width = dims.width ?? dims.largeur;
+  const height = dims.height ?? dims.hauteur;
+  const depth = dims.depth ?? dims.profondeur;
+  const unit = dims.unit ?? 'cm';
 
-  const h = height || depth;
+  const h = height ?? depth;
 
   if (length && width && h) {
     return `${length} x ${width} x ${h} ${unit}`;

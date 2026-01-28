@@ -1,14 +1,17 @@
-import { LinkMeSidebar } from './components/LinkMeSidebar';
+/**
+ * LinkMe Layout
+ *
+ * Navigation tabs are now handled by ChannelTabs component
+ * in the auth-wrapper layout (removed double sidebar pattern)
+ *
+ * @see /Users/romeodossantos/.claude/plans/greedy-chasing-hinton.md
+ */
 
 export default function LinkMeLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <div className="flex h-[calc(100vh-64px)]">
-      <LinkMeSidebar />
-      <main className="flex-1 overflow-auto bg-gray-50">{children}</main>
-    </div>
-  );
+  // Simple passthrough - tabs handled by parent layout
+  return <>{children}</>;
 }

@@ -19,24 +19,10 @@ import {
 } from '@verone/categories';
 import { Badge } from '@verone/ui';
 import { ButtonUnified } from '@verone/ui';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@verone/ui';
+import { Card, CardContent } from '@verone/ui';
 import { VéroneCard } from '@verone/ui';
 import type { Database } from '@verone/utils/supabase/types';
-import {
-  ArrowLeft,
-  Plus,
-  Edit,
-  Trash2,
-  FolderOpen,
-  Package,
-  Tag,
-} from 'lucide-react';
+import { ArrowLeft, Plus, Edit, FolderOpen, Package, Tag } from 'lucide-react';
 
 import { FamilyCrudForm } from '@/components/forms/family-crud-form';
 import { SubcategoryForm } from '@/components/forms/subcategory-form';
@@ -79,14 +65,14 @@ export default function CategoryDetailPage() {
   useEffect(() => {
     if (allCategories && categoryId) {
       const foundCategory = allCategories.find(c => c.id === categoryId);
-      setCategory(foundCategory || null);
+      setCategory(foundCategory ?? null);
     }
   }, [allCategories, categoryId]);
 
   useEffect(() => {
     if (families && category?.family_id) {
       const foundFamily = families.find(f => f.id === category.family_id);
-      setFamily(foundFamily || null);
+      setFamily(foundFamily ?? null);
     }
   }, [families, category]);
 
@@ -405,7 +391,7 @@ export default function CategoryDetailPage() {
                 <VéroneCard
                   key={subcategory.id}
                   title={subcategory.name}
-                  imageUrl={subcategory.image_url || undefined}
+                  imageUrl={subcategory.image_url ?? undefined}
                   entityType="subcategory"
                   slug={subcategory.slug}
                   count={subcategory.products_count || 0}
@@ -414,9 +400,17 @@ export default function CategoryDetailPage() {
                   iconPosition="top-right"
                   onClick={() => handleSubcategoryClick(subcategory.id)}
                   onEdit={() => handleEditSubcategory(subcategory)}
-                  onDelete={() =>
-                    handleDeleteSubcategory(subcategory.id, subcategory.name)
-                  }
+                  onDelete={() => {
+                    void handleDeleteSubcategory(
+                      subcategory.id,
+                      subcategory.name
+                    ).catch(error => {
+                      console.error(
+                        '[Categories] handleDeleteSubcategory failed:',
+                        error
+                      );
+                    });
+                  }}
                 />
               ))}
             </div>
@@ -436,11 +430,11 @@ export default function CategoryDetailPage() {
             ? {
                 id: category.id,
                 name: category.name,
-                description: category.description || '',
+                description: category.description ?? '',
                 is_active: category.is_active ?? true,
                 display_order: category.display_order || 1,
                 parent_id: category.family_id ?? undefined,
-                image_url: category.image_url || undefined,
+                image_url: category.image_url ?? undefined,
               }
             : undefined
         }
@@ -457,18 +451,23 @@ export default function CategoryDetailPage() {
           allCategories?.map(c => ({
             id: c.id,
             name: c.name,
-            family_name: family?.name || '',
+            family_name: family?.name ?? '',
           })) || []
         }
         onSubmit={subcategory => {
           // Adapter la réponse pour le hook useSubcategories
-          handleSubmitNewSubcategory({
+          void handleSubmitNewSubcategory({
             name: subcategory.name,
             description: subcategory.description,
             category_id: subcategory.category_id,
             is_active: subcategory.is_active,
             display_order: subcategory.display_order,
             image_url: subcategory.image_url,
+          }).catch(error => {
+            console.error(
+              '[Categories] handleSubmitNewSubcategory failed:',
+              error
+            );
           });
         }}
       />
@@ -486,11 +485,11 @@ export default function CategoryDetailPage() {
             ? ({
                 id: editingSubcategory.id,
                 parent_id: editingSubcategory.category_id,
-                family_id: category?.family_id || '',
+                family_id: category?.family_id ?? '',
                 name: editingSubcategory.name,
                 slug: editingSubcategory.slug,
-                description: editingSubcategory.description || '',
-                image_url: editingSubcategory.image_url || '',
+                description: editingSubcategory.description ?? '',
+                image_url: editingSubcategory.image_url ?? '',
                 display_order: editingSubcategory.display_order || 1,
                 is_active: editingSubcategory.is_active ?? true,
                 level: 2 as const,
@@ -501,17 +500,22 @@ export default function CategoryDetailPage() {
           allCategories?.map(c => ({
             id: c.id,
             name: c.name,
-            family_name: family?.name || '',
+            family_name: family?.name ?? '',
           })) || []
         }
         onSubmit={subcategory => {
           // Adapter la réponse pour le hook useSubcategories
-          handleSubmitEditSubcategory({
+          void handleSubmitEditSubcategory({
             name: subcategory.name,
             description: subcategory.description,
             is_active: subcategory.is_active,
             display_order: subcategory.display_order,
             image_url: subcategory.image_url,
+          }).catch(error => {
+            console.error(
+              '[Categories] handleSubmitEditSubcategory failed:',
+              error
+            );
           });
         }}
       />

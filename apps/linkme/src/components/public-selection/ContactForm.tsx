@@ -88,10 +88,13 @@ export function ContactForm({
         }),
       });
 
-      const data = await response.json();
+      const data = (await response.json()) as {
+        success: boolean;
+        error?: string;
+      };
 
       if (!response.ok || !data.success) {
-        throw new Error(data.error || "Erreur lors de l'envoi");
+        throw new Error(data.error ?? "Erreur lors de l'envoi");
       }
 
       // Success: show confirmation and reset form
@@ -172,7 +175,14 @@ export function ContactForm({
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form
+          onSubmit={e => {
+            void handleSubmit(e).catch(error => {
+              console.error('[ContactForm] Submit failed:', error);
+            });
+          }}
+          className="space-y-6"
+        >
           {/* Name Row */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>

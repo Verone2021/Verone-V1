@@ -60,13 +60,26 @@ export function VariantsSection({
       }
 
       // Filtrer par variant_group_id et exclure produit actuel
-      const variantsData = ((data as any[]) || [])
+      // Type pour les données RPC
+      interface RPCProduct {
+        product_id: string;
+        slug: string;
+        name: string;
+        sku: string;
+        primary_image_url: string | null;
+        price_ttc: number;
+        discount_rate: number | null;
+        is_eligible: boolean;
+        variant_group_id: string | null;
+      }
+
+      const variantsData = ((data as RPCProduct[]) || [])
         .filter(
-          (p: any) =>
+          (p: RPCProduct) =>
             p.variant_group_id === variantGroupId &&
             p.product_id !== currentProductId
         )
-        .map((p: any) => ({
+        .map((p: RPCProduct) => ({
           product_id: p.product_id,
           slug: p.slug,
           name: p.name,

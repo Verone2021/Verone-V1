@@ -10,8 +10,6 @@ import {
   CardTitle,
 } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
-import { Input } from '@verone/ui';
-import { Label } from '@verone/ui';
 import {
   Webhook,
   Key,
@@ -234,7 +232,11 @@ function ApiKeyRow({ apiKey }: ApiKeyRowProps) {
             )}
           </button>
           <button
-            onClick={handleCopy}
+            onClick={() => {
+              void handleCopy().catch(error => {
+                console.error('[IntegrationsPage] handleCopy failed:', error);
+              });
+            }}
             className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
           >
             {copied ? (

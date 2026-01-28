@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
 
     // Fetch transactions
     const result = await client.getTransactions({
-      side: side || undefined,
+      side: side ?? undefined,
       perPage: perPageStr ? parseInt(perPageStr, 10) : 50,
       currentPage: pageStr ? parseInt(pageStr, 10) : 1,
     });

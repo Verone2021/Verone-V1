@@ -25,7 +25,7 @@ import { useAuth } from '@/contexts/AuthContext';
  */
 export function useEnseigneId(): string | null {
   const { linkMeRole } = useAuth();
-  return linkMeRole?.enseigne_id || null;
+  return linkMeRole?.enseigne_id ?? null;
 }
 
 export default useEnseigneId;

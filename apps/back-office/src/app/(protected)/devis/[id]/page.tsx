@@ -389,7 +389,14 @@ export default function QuoteDetailPage(): React.ReactNode {
           Voir PDF
         </Button>
         {/* Télécharger PDF */}
-        <Button variant="outline" onClick={handleDownloadPdf}>
+        <Button
+          variant="outline"
+          onClick={() => {
+            void handleDownloadPdf().catch(error => {
+              console.error('[Devis] handleDownloadPdf failed:', error);
+            });
+          }}
+        >
           <Download className="mr-2 h-4 w-4" />
           Télécharger PDF
         </Button>
@@ -739,7 +746,13 @@ export default function QuoteDetailPage(): React.ReactNode {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={handleFinalize}>
+            <AlertDialogAction
+              onClick={() => {
+                void handleFinalize().catch(error => {
+                  console.error('[Devis] handleFinalize failed:', error);
+                });
+              }}
+            >
               Envoyer
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -758,7 +771,11 @@ export default function QuoteDetailPage(): React.ReactNode {
             <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={handleDelete}
+              onClick={() => {
+                void handleDelete().catch(error => {
+                  console.error('[Devis] handleDelete failed:', error);
+                });
+              }}
             >
               Supprimer
             </AlertDialogAction>
@@ -780,7 +797,13 @@ export default function QuoteDetailPage(): React.ReactNode {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConvert}>
+            <AlertDialogAction
+              onClick={() => {
+                void handleConvert().catch(error => {
+                  console.error('[Devis] handleConvert failed:', error);
+                });
+              }}
+            >
               Convertir en facture
             </AlertDialogAction>
           </AlertDialogFooter>

@@ -199,9 +199,9 @@ export function useToggleCollectionVisibility() {
         );
       }
     },
-    onSettled: () => {
+    onSettled: async () => {
       // 7. Refetch to sync with server
-      queryClient.invalidateQueries({
+      await queryClient.invalidateQueries({
         queryKey: ['site-internet-collections'],
       });
     },
@@ -232,8 +232,8 @@ export function useUpdateCollectionOrder() {
 
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
         queryKey: ['site-internet-collections'],
       });
     },

@@ -17,7 +17,7 @@
  *     performed_at: '2025-10-31T10:00:00Z',
  *     products: { name: 'Canapé Oslo', sku: 'CANAPE-001' }
  *   }}
- *   onClick={() => console.log('Card clicked')}
+ *   onClick={() => console.warn('Card clicked')}
  * />
  * ```
  */

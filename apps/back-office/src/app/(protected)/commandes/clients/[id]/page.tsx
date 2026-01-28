@@ -13,7 +13,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
 // NOTE: ShipmentsSection supprimée - sera recréée ultérieurement
-import { Badge, Button, Card } from '@verone/ui';
+import { Badge, Card } from '@verone/ui';
 import { createClient } from '@verone/utils/supabase/server';
 import {
   ArrowLeft,
@@ -23,14 +23,49 @@ import {
   Mail,
   Phone,
   Building2,
-  CreditCard,
-  CheckCircle,
-  AlertCircle,
 } from 'lucide-react';
 
 import { CopyButton } from './CopyButton';
 import { FeesSection } from './FeesSection';
+import { InvoicesSection } from './InvoicesSection';
 import { PaymentSection } from './PaymentSection';
+
+// Types pour order avec jointures
+interface OrderWithRelations {
+  id: string;
+  order_number: string;
+  status: string;
+  payment_status: string | null;
+  customer_id: string | null;
+  customer_type: string | null;
+  shipping_address: unknown;
+  total_ht: number | null;
+  total_ttc: number | null;
+  shipping_cost_ht: number | null;
+  handling_cost_ht: number | null;
+  insurance_cost_ht: number | null;
+  fees_vat_rate: number | null;
+  created_at: string | null;
+  created_by: string | null;
+  channel_id: string | null;
+  sales_channels?: {
+    id: string;
+    name: string;
+    code: string;
+  } | null;
+  sales_order_items?: Array<{
+    id: string;
+    product_id: string | null;
+    quantity: number;
+    quantity_shipped: number | null;
+    unit_price_ht: number | null;
+    products?: {
+      id: string;
+      name: string;
+      sku: string;
+    } | null;
+  }>;
+}
 
 interface OrderDetailPageProps {
   params: Promise<{ id: string }>;
@@ -40,10 +75,13 @@ export default async function OrderDetailPage({
   params,
 }: OrderDetailPageProps) {
   const { id } = await params;
-  const supabase = await createClient();
+  const supabase = createClient();
 
   // 1. Récupérer commande de base
-  const { data: order, error } = await supabase
+  let order: OrderWithRelations | null = null;
+
+  // Essayer d'abord requête directe
+  const { data: orderData, error: orderError } = await supabase
     .from('sales_orders')
     .select(
       `
@@ -81,9 +119,70 @@ export default async function OrderDetailPage({
     .eq('id', id)
     .single();
 
-  if (error || !order) {
-    console.error('[Order Detail] Error:', error);
-    notFound();
+  if (orderData) {
+    order = orderData;
+  } else {
+    // FALLBACK: Essayer via RPC get_linkme_orders pour les commandes LinkMe
+    const { data: linkmeOrders, error: linkmeError } = await supabase.rpc(
+      'get_linkme_orders',
+      {}
+    );
+
+    if (linkmeOrders && linkmeOrders.length > 0) {
+      const linkmeOrder = linkmeOrders.find((o: { id: string }) => o.id === id);
+      if (linkmeOrder) {
+        // Transformer format RPC vers format attendu
+        order = {
+          id: linkmeOrder.id,
+          order_number: linkmeOrder.order_number,
+          status: linkmeOrder.status,
+          payment_status: linkmeOrder.payment_status,
+          customer_id: linkmeOrder.customer_id,
+          customer_type: linkmeOrder.customer_type,
+          shipping_address: linkmeOrder.shipping_address,
+          total_ht: linkmeOrder.total_ht,
+          total_ttc: linkmeOrder.total_ttc,
+          shipping_cost_ht: linkmeOrder.shipping_cost_ht || 0,
+          handling_cost_ht: linkmeOrder.handling_cost_ht || 0,
+          insurance_cost_ht: linkmeOrder.insurance_cost_ht || 0,
+          fees_vat_rate: 20, // Défaut
+          created_at: linkmeOrder.created_at,
+          created_by: linkmeOrder.created_by_affiliate_id,
+          channel_id: '93c68db1-5a30-4168-89ec-6383152be405', // LinkMe channel
+          sales_channels: {
+            id: '93c68db1-5a30-4168-89ec-6383152be405',
+            name: 'LinkMe',
+            code: 'linkme',
+          },
+          sales_order_items: (
+            (linkmeOrder.items as Array<{
+              id: string;
+              product_id: string;
+              quantity: number;
+              unit_price_ht: number;
+              product_name: string;
+              product_sku: string;
+            }>) ?? []
+          ).map(item => ({
+            id: item.id,
+            product_id: item.product_id,
+            quantity: item.quantity,
+            quantity_shipped: 0, // À calculer depuis shipments si nécessaire
+            unit_price_ht: item.unit_price_ht,
+            products: {
+              id: item.product_id,
+              name: item.product_name,
+              sku: item.product_sku,
+            },
+          })),
+        };
+      }
+    }
+
+    if (!order) {
+      console.error('[Order Detail] Error:', orderError || linkmeError);
+      notFound();
+    }
   }
 
   // 2. Récupérer customer selon type
@@ -101,8 +200,8 @@ export default async function OrderDetailPage({
 
     if (org) {
       customerName = org.trade_name || org.legal_name;
-      customerEmail = org.email || '';
-      customerPhone = org.phone || '';
+      customerEmail = org.email ?? '';
+      customerPhone = org.phone ?? '';
       isOrganisation = true;
     }
   } else if (order.customer_type === 'individual' && order.customer_id) {
@@ -114,8 +213,8 @@ export default async function OrderDetailPage({
 
     if (individual) {
       customerName = `${individual.first_name} ${individual.last_name}`;
-      customerEmail = individual.email || '';
-      customerPhone = individual.phone || '';
+      customerEmail = individual.email ?? '';
+      customerPhone = individual.phone ?? '';
     }
   }
 
@@ -124,30 +223,40 @@ export default async function OrderDetailPage({
   let creatorEmail = '';
 
   if (order.created_by) {
-    const { data: creatorInfo } = await (supabase.rpc as any)('get_user_info', {
+    const { data: creatorInfo } = await supabase.rpc('get_user_info', {
       p_user_id: order.created_by,
     });
 
-    if (creatorInfo && creatorInfo.length > 0) {
-      const firstName = creatorInfo[0].first_name || 'Utilisateur';
-      const lastName = creatorInfo[0].last_name || '';
+    if (creatorInfo && Array.isArray(creatorInfo) && creatorInfo.length > 0) {
+      const creator = creatorInfo[0] as {
+        first_name?: string;
+        last_name?: string;
+        email?: string;
+      };
+      const firstName = creator.first_name ?? 'Utilisateur';
+      const lastName = creator.last_name ?? '';
       creatorName = `${firstName} ${lastName}`.trim();
-      creatorEmail = creatorInfo[0].email || '';
+      creatorEmail = creator.email ?? '';
     }
   }
 
   // 4. Récupérer canal de vente
-  const salesChannel = (order as any).sales_channels;
-  const channelName = salesChannel?.name || null;
+  const salesChannel = order.sales_channels;
+  const channelName = salesChannel?.name ?? null;
 
   // 5. Parser adresse
-  const shippingAddr = order.shipping_address as any;
+  const shippingAddr = order.shipping_address as
+    | string
+    | { address?: string }
+    | null
+    | undefined;
   const addressText =
     typeof shippingAddr === 'string'
       ? shippingAddr
-      : shippingAddr?.address || 'Adresse non renseignée';
+      : ((shippingAddr as { address?: string } | undefined)?.address ??
+        'Adresse non renseignée');
 
-  const items = order.sales_order_items as any[];
+  const items = order.sales_order_items ?? [];
 
   return (
     <div className="min-h-screen bg-background p-8">
@@ -253,11 +362,11 @@ export default async function OrderDetailPage({
               </div>
 
               <div className="space-y-3">
-                {items.map((item: any) => {
+                {items.map(item => {
                   const percentShipped =
                     item.quantity > 0
                       ? Math.round(
-                          (item.quantity_shipped / item.quantity) * 100
+                          ((item.quantity_shipped ?? 0) / item.quantity) * 100
                         )
                       : 0;
 
@@ -336,7 +445,9 @@ export default async function OrderDetailPage({
                 <div>
                   <span className="text-muted-foreground">Date création:</span>
                   <span className="ml-2 font-medium">
-                    {new Date(order.created_at).toLocaleDateString('fr-FR')}
+                    {order.created_at
+                      ? new Date(order.created_at).toLocaleDateString('fr-FR')
+                      : 'N/A'}
                   </span>
                 </div>
                 {creatorName && (
@@ -383,7 +494,7 @@ export default async function OrderDetailPage({
               paymentTerms="immediate"
               paymentStatus={order.payment_status || 'pending'}
               customerName={customerName}
-              customerEmail={customerEmail || null}
+              customerEmail={customerEmail ?? null}
               customerType={
                 order.customer_type === 'organization'
                   ? 'organization'
@@ -397,6 +508,9 @@ export default async function OrderDetailPage({
                 products: item.products ? { name: item.products.name } : null,
               }))}
             />
+
+            {/* Section Factures liées - Workflow 3 statuts */}
+            <InvoicesSection orderId={order.id} />
           </div>
         </div>
 

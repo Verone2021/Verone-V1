@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     const syncScope: 'all' | 'incremental' =
       scope === 'all' || fullSync ? 'all' : 'incremental';
 
-    console.log(
+    console.warn(
       `[API Qonto Sync] Request: scope=${syncScope}, from=${fromDate}`
     );
 

@@ -61,7 +61,9 @@ export default function EditWebhookPage() {
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
-    loadWebhook();
+    void loadWebhook().catch(error => {
+      console.error('[WebhookEditPage] loadWebhook failed:', error);
+    });
   }, [webhookId]);
 
   async function loadWebhook() {
@@ -83,7 +85,7 @@ export default function EditWebhookPage() {
       setWebhook(webhookData as WebhookConfig);
       setName(data.name);
       setUrl(data.url);
-      setDescription(data.description || '');
+      setDescription(data.description ?? '');
       setSecret(data.secret);
       setSelectedEvents(Array.isArray(data.events) ? data.events : []);
       setActive(data.active ?? true);
@@ -145,7 +147,7 @@ export default function EditWebhookPage() {
         .update({
           name,
           url,
-          description: description.trim() || null,
+          description: description.trim() ?? null,
           secret,
           events: selectedEvents,
           active,
@@ -216,7 +218,11 @@ export default function EditWebhookPage() {
 
           <ButtonUnified
             variant="success"
-            onClick={handleSave}
+            onClick={() => {
+              void handleSave().catch(error => {
+                console.error('[WebhookEditPage] handleSave failed:', error);
+              });
+            }}
             disabled={saving}
           >
             <Save className="h-4 w-4" />

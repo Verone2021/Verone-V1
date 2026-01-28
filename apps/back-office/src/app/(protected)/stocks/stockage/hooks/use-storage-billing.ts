@@ -11,7 +11,7 @@ import { useQuery } from '@tanstack/react-query';
 import { createClient } from '@verone/utils/supabase/client';
 
 // Helper pour appeler des RPC non encore dans les types generes
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 const callRpc = (
   supabase: SupabaseClient<any>,
   name: string,
@@ -179,8 +179,8 @@ export function useStorageWeightedAverage(
           p_owner_enseigne_id: ownerType === 'enseigne' ? ownerId : null,
           p_owner_organisation_id:
             ownerType === 'organisation' ? ownerId : null,
-          p_start_date: startDate || null,
-          p_end_date: endDate || null,
+          p_start_date: startDate ?? null,
+          p_end_date: endDate ?? null,
         }
       );
 

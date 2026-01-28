@@ -143,7 +143,8 @@ const ERROR_DETECTION_LAYERS = {
     };
 
     // Alertes si dépassement SLA
-    const issues: Array<{ type: string; message: string; severity: string }> = [];
+    const issues: Array<{ type: string; message: string; severity: string }> =
+      [];
     if (metrics.loadTime > 2000) {
       issues.push({
         type: 'performance',

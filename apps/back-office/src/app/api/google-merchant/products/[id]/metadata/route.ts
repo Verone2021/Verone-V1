@@ -98,7 +98,7 @@ export async function PATCH(
     const { customTitle, customDescription }: UpdateMetadataRequest =
       validation.data;
 
-    console.log(`[API] Update metadata for product ${productId}:`, {
+    console.warn(`[API] Update metadata for product ${productId}:`, {
       customTitle: customTitle?.substring(0, 50),
       customDescription: customDescription?.substring(0, 50),
     });
@@ -111,8 +111,8 @@ export async function PATCH(
       'update_google_merchant_metadata',
       {
         p_product_id: productId,
-        p_custom_title: customTitle || null,
-        p_custom_description: customDescription || null,
+        p_custom_title: customTitle ?? null,
+        p_custom_description: customDescription ?? null,
       }
     );
 
@@ -140,7 +140,9 @@ export async function PATCH(
       );
     }
 
-    console.log(`[API] Metadata updated successfully for product ${productId}`);
+    console.warn(
+      `[API] Metadata updated successfully for product ${productId}`
+    );
 
     return NextResponse.json({
       success: true,

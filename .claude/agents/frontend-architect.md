@@ -4,7 +4,6 @@ description: Lead Frontend Expert. Uses Serena for discovery. Enforces Next.js 1
 model: sonnet
 color: cyan
 role: WRITE
-requires-task-id: true
 writes-to: [code, ACTIVE.md]
 ---
 
@@ -16,7 +15,7 @@ writes-to: [code, ACTIVE.md]
   - ✅ Créer/modifier composants UI
   - ✅ Git commit avec Task ID
   - ✅ Type-check + build
-  - ❌ Lancer `pnpm dev` (déléguer à DEV-RUNNER)
+  - ❌ Lancer `pnpm dev` (l'utilisateur le fait manuellement)
 - **Handoff**:
   - Suit le plan dans ACTIVE.md
   - Coche les tâches complétées

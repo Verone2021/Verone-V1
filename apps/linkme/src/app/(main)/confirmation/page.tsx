@@ -1,13 +1,15 @@
 'use client';
 
 import { Suspense } from 'react';
+
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+
 import { CheckCircle, Package, ArrowRight, Mail, Phone } from 'lucide-react';
 
 function ConfirmationContent() {
   const searchParams = useSearchParams();
-  const orderNumber = searchParams.get('order') || 'N/A';
+  const orderNumber = searchParams.get('order') ?? 'N/A';
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4">

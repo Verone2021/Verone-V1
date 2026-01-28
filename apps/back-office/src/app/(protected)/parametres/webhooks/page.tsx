@@ -13,7 +13,6 @@ import {
   Trash2,
   Power,
   Activity,
-  AlertCircle,
   CheckCircle2,
   XCircle,
   TestTube,
@@ -51,7 +50,9 @@ export default function WebhooksPage() {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
   useEffect(() => {
-    loadWebhooks();
+    void loadWebhooks().catch(error => {
+      console.error('[WebhooksPage] loadWebhooks failed:', error);
+    });
   }, []);
 
   async function loadWebhooks() {
@@ -347,7 +348,14 @@ export default function WebhooksPage() {
                     <ButtonUnified
                       variant="outline"
                       size="sm"
-                      onClick={() => testWebhook(webhook)}
+                      onClick={() => {
+                        void testWebhook(webhook).catch(error => {
+                          console.error(
+                            '[WebhooksPage] testWebhook failed:',
+                            error
+                          );
+                        });
+                      }}
                     >
                       <TestTube className="h-4 w-4" />
                       Test
@@ -356,9 +364,17 @@ export default function WebhooksPage() {
                     <ButtonUnified
                       variant="outline"
                       size="sm"
-                      onClick={() =>
-                        toggleWebhook(webhook.id, webhook.active ?? false)
-                      }
+                      onClick={() => {
+                        void toggleWebhook(
+                          webhook.id,
+                          webhook.active ?? false
+                        ).catch(error => {
+                          console.error(
+                            '[WebhooksPage] toggleWebhook failed:',
+                            error
+                          );
+                        });
+                      }}
                     >
                       <Power
                         className={`h-4 w-4 ${webhook.active ? 'text-green-600' : 'text-gray-400'}`}
@@ -376,7 +392,14 @@ export default function WebhooksPage() {
                         <ButtonUnified
                           variant="danger"
                           size="sm"
-                          onClick={() => deleteWebhook(webhook.id)}
+                          onClick={() => {
+                            void deleteWebhook(webhook.id).catch(error => {
+                              console.error(
+                                '[WebhooksPage] deleteWebhook failed:',
+                                error
+                              );
+                            });
+                          }}
                         >
                           Confirmer
                         </ButtonUnified>

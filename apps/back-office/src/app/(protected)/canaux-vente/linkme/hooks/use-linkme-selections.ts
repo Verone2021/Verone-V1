@@ -5,6 +5,11 @@ import { useToast } from '@verone/common';
 import { createClient } from '@verone/utils/supabase/client';
 
 const supabase = createClient();
+import type { Database, Json } from '@verone/types';
+
+// Types Supabase
+type LinkMeAffiliate = Database['public']['Tables']['linkme_affiliates']['Row'];
+type Organisation = Database['public']['Tables']['organisations']['Row'];
 
 // ID du canal LinkMe
 const LINKME_CHANNEL_ID = '93c68db1-5a30-4168-89ec-6383152be405';
@@ -32,7 +37,7 @@ export interface SelectionItem {
     /** Description du produit (pour modal détail) */
     description?: string | null;
     /** Arguments de vente (pour modal détail) */
-    selling_points?: string[] | null;
+    selling_points?: Json;
     /** Poids en kg */
     weight_kg?: number | null;
     /** Dimensions en cm (jsonb) */
@@ -166,8 +171,8 @@ async function fetchSelectionById(
 
   // 2. Récupérer les items de la sélection avec les produits (données étendues pour modal)
   // Inclut les champs produits affilié pour le modèle inversé (Verone prélève commission)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: items, error: itemsError } = await (supabase as any)
+
+  const { data: items, error: itemsError } = await supabase
     .from('linkme_selection_items')
     .select(
       `
@@ -230,8 +235,8 @@ async function fetchSelectionById(
     }
 
     // 4. Récupérer les données channel_pricing complètes (canal LinkMe)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: channelPrices } = await (supabase as any)
+
+    const { data: channelPrices } = await supabase
       .from('channel_pricing')
       .select(
         'id, product_id, channel_commission_rate, custom_price_ht, public_price_ht, min_margin_rate, max_margin_rate, suggested_margin_rate, buffer_rate'
@@ -259,7 +264,7 @@ async function fetchSelectionById(
   // 5. Combiner les données (y compris données étendues pour modal)
   const itemsWithImages = (items || []).map(item => {
     const channelData = channelPricingDataByProductId[item.product_id];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const rawProduct = item.product;
     return {
       ...item,
@@ -276,8 +281,8 @@ async function fetchSelectionById(
             weight_kg: rawProduct.weight,
             dimensions_cm: rawProduct.dimensions,
             subcategory_id:
-              rawProduct.subcategory_id || rawProduct.subcategory?.id || null,
-            category_name: rawProduct.subcategory?.name || null,
+              (rawProduct.subcategory_id || rawProduct.subcategory?.id) ?? null,
+            category_name: rawProduct.subcategory?.name ?? null,
             supplier_name:
               rawProduct.supplier?.trade_name ||
               rawProduct.supplier?.legal_name ||
@@ -289,7 +294,7 @@ async function fetchSelectionById(
             affiliate_payout_ht: rawProduct.affiliate_payout_ht ?? null,
           }
         : undefined,
-      product_image_url: imagesByProductId[item.product_id] || null,
+      product_image_url: imagesByProductId[item.product_id] ?? null,
       channel_pricing_id: channelPricingIdByProductId[item.product_id] ?? null,
       commission_rate: commissionByProductId[item.product_id] ?? null,
       catalog_price_ht: catalogPriceByProductId[item.product_id] ?? null,
@@ -351,11 +356,13 @@ export function useUpdateSelection() {
 
       if (error) throw error;
     },
-    onSuccess: (_, { selectionId }) => {
-      queryClient.invalidateQueries({
-        queryKey: ['linkme-selection', selectionId],
-      });
-      queryClient.invalidateQueries({ queryKey: ['linkme-selections'] });
+    onSuccess: async (_, { selectionId }) => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ['linkme-selection', selectionId],
+        }),
+        queryClient.invalidateQueries({ queryKey: ['linkme-selections'] }),
+      ]);
       toast({
         title: 'Sélection mise à jour',
         description: 'Les modifications ont été enregistrées.',
@@ -413,11 +420,13 @@ export function useAddProductToSelection() {
 
       return data.item?.id; // Retourne l'ID du nouvel item
     },
-    onSuccess: (_, { selectionId }) => {
-      queryClient.invalidateQueries({
-        queryKey: ['linkme-selection', selectionId],
-      });
-      queryClient.invalidateQueries({ queryKey: ['linkme-selections'] });
+    onSuccess: async (_, { selectionId }) => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ['linkme-selection', selectionId],
+        }),
+        queryClient.invalidateQueries({ queryKey: ['linkme-selections'] }),
+      ]);
       toast({
         title: 'Produit ajouté',
         description: 'Le produit a été ajouté à la sélection.',
@@ -464,11 +473,13 @@ export function useRemoveProductFromSelection() {
         p_selection_id: selectionId,
       });
     },
-    onSuccess: (_, { selectionId }) => {
-      queryClient.invalidateQueries({
-        queryKey: ['linkme-selection', selectionId],
-      });
-      queryClient.invalidateQueries({ queryKey: ['linkme-selections'] });
+    onSuccess: async (_, { selectionId }) => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ['linkme-selection', selectionId],
+        }),
+        queryClient.invalidateQueries({ queryKey: ['linkme-selections'] }),
+      ]);
       toast({
         title: 'Produit retiré',
         description: 'Le produit a été retiré de la sélection.',
@@ -519,8 +530,8 @@ export function useUpdateProductMargin() {
 
       if (error) throw error;
     },
-    onSuccess: (_, { selectionId }) => {
-      queryClient.invalidateQueries({
+    onSuccess: async (_, { selectionId }) => {
+      await queryClient.invalidateQueries({
         queryKey: ['linkme-selection', selectionId],
       });
       toast({
@@ -568,7 +579,7 @@ export function useUpdateSelectionItem() {
   return useMutation({
     mutationFn: async ({
       itemId,
-      selectionId,
+      selectionId: _selectionId,
       data,
     }: {
       itemId: string;
@@ -585,11 +596,13 @@ export function useUpdateSelectionItem() {
 
       if (error) throw error;
     },
-    onSuccess: (_, { selectionId }) => {
-      queryClient.invalidateQueries({
-        queryKey: ['linkme-selection', selectionId],
-      });
-      queryClient.invalidateQueries({ queryKey: ['linkme-selections'] });
+    onSuccess: async (_, { selectionId }) => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ['linkme-selection', selectionId],
+        }),
+        queryClient.invalidateQueries({ queryKey: ['linkme-selections'] }),
+      ]);
       toast({
         title: 'Produit mis à jour',
         description: 'Les modifications ont été enregistrées.',
@@ -623,8 +636,8 @@ export function useDeleteSelection() {
 
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['linkme-selections'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['linkme-selections'] });
       toast({
         title: 'Sélection supprimée',
         description: 'La sélection a été supprimée définitivement.',
@@ -734,7 +747,7 @@ async function fetchEnseigneSourcedProducts(
       sku: p.sku,
       selling_price_ht: Math.round(sellingPrice * 100) / 100, // Arrondi 2 décimales
       supplier_reference: p.supplier_reference,
-      primary_image_url: imagesByProductId[p.id] || null,
+      primary_image_url: imagesByProductId[p.id] ?? null,
     };
   });
 }
@@ -833,7 +846,7 @@ async function fetchSelectionsByEnseigne(
     archived_at: s.archived_at,
     products_count: s.products_count,
     affiliate_id: s.affiliate_id,
-    affiliate_name: affiliateNamesById[s.affiliate_id] || '',
+    affiliate_name: affiliateNamesById[s.affiliate_id] ?? '',
   }));
 }
 

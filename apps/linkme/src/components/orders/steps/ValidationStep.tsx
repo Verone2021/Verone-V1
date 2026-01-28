@@ -40,7 +40,7 @@ import {
   FileText,
   Calendar,
   Coins,
-  Loader2,
+  Loader2 as _Loader2,
 } from 'lucide-react';
 
 import type { OrderFormData } from '../schemas/order-form.schema';
@@ -92,10 +92,10 @@ function getOwnershipLabel(type: string | null): string {
 
 export function ValidationStep({
   formData,
-  errors,
+  errors: _errors,
   cartTotals,
-  onSubmit,
-  isSubmitting,
+  onSubmit: _onSubmit,
+  isSubmitting: _isSubmitting,
 }: ValidationStepProps) {
   const [openSections, setOpenSections] = useState<string[]>([
     'restaurant',
@@ -104,9 +104,9 @@ export function ValidationStep({
   ]);
 
   const toggleSection = (section: string) => {
-    setOpenSections((prev) =>
+    setOpenSections(prev =>
       prev.includes(section)
-        ? prev.filter((s) => s !== section)
+        ? prev.filter(s => s !== section)
         : [...prev, section]
     );
   };
@@ -138,8 +138,8 @@ export function ValidationStep({
               Récapitulatif de votre commande
             </h3>
             <p className="text-sm text-green-700 mt-1">
-              Vérifiez les informations ci-dessous avant de confirmer. Vous pouvez
-              revenir aux étapes précédentes pour modifier si nécessaire.
+              Vérifiez les informations ci-dessous avant de confirmer. Vous
+              pouvez revenir aux étapes précédentes pour modifier si nécessaire.
             </p>
           </div>
         </div>
@@ -187,7 +187,7 @@ export function ValidationStep({
                       : 'bg-amber-100 text-amber-700'
                   )}
                 >
-                  {getOwnershipLabel(restaurantType || null)}
+                  {getOwnershipLabel(restaurantType ?? null)}
                 </span>
               </div>
               {restaurantCity && (
@@ -287,7 +287,7 @@ export function ValidationStep({
           <CollapsibleContent>
             <div className="p-4 pt-0 border-t">
               <div className="space-y-3">
-                {formData.cart.items.map((item) => (
+                {formData.cart.items.map(item => (
                   <div
                     key={item.selectionItemId}
                     className="flex items-center gap-3 py-2 border-b last:border-b-0"
@@ -311,7 +311,8 @@ export function ValidationStep({
                         {item.productName}
                       </p>
                       <p className="text-xs text-gray-500">
-                        {item.quantity} × {formatCurrency(item.unitPriceHt)} € HT
+                        {item.quantity} × {formatCurrency(item.unitPriceHt)} €
+                        HT
                       </p>
                     </div>
                     <div className="text-right">
@@ -507,7 +508,9 @@ export function ValidationStep({
             <div className="p-4 pt-0 border-t space-y-3">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Total HT</span>
-                <span className="font-medium">{formatCurrency(cartTotals.totalHT)} €</span>
+                <span className="font-medium">
+                  {formatCurrency(cartTotals.totalHT)} €
+                </span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">
@@ -515,7 +518,9 @@ export function ValidationStep({
                     ? 'TVA (0%) - Export'
                     : `TVA (${Math.round(cartTotals.effectiveTaxRate * 100)}%)`}
                 </span>
-                <span className="font-medium">{formatCurrency(cartTotals.totalTVA)} €</span>
+                <span className="font-medium">
+                  {formatCurrency(cartTotals.totalTVA)} €
+                </span>
               </div>
               <div className="flex justify-between pt-2 border-t">
                 <span className="font-semibold">Total TTC</span>

@@ -11,27 +11,16 @@ import {
 } from '@verone/organisations';
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@verone/ui';
+import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
 import { Input } from '@verone/ui';
 import {
   Users,
   Search,
-  Filter,
   Plus,
   Phone,
   Mail,
   Building,
-  User,
   Eye,
-  Edit,
-  MapPin,
-  Briefcase,
   UserCheck,
   Archive,
   Trash2,
@@ -66,7 +55,9 @@ export default function ContactsPage() {
 
   // Charger tous les contacts au montage
   useEffect(() => {
-    fetchContacts();
+    void fetchContacts().catch(error => {
+      console.error('[ContactsPage] fetchContacts failed:', error);
+    });
   }, [fetchContacts]);
 
   // Filtrer les contacts selon les critères
@@ -143,10 +134,10 @@ export default function ContactsPage() {
     try {
       if (contact.is_active) {
         await deactivateContact(contact.id);
-        console.log('✅ Contact archivé avec succès');
+        console.warn('✅ Contact archivé avec succès');
       } else {
         await activateContact(contact.id);
-        console.log('✅ Contact restauré avec succès');
+        console.warn('✅ Contact restauré avec succès');
       }
     } catch (error) {
       console.error('❌ Erreur archivage contact:', error);
@@ -161,7 +152,7 @@ export default function ContactsPage() {
     if (confirmed) {
       try {
         await deleteContact(contact.id);
-        console.log('✅ Contact supprimé définitivement');
+        console.warn('✅ Contact supprimé définitivement');
       } catch (error) {
         console.error('❌ Erreur suppression contact:', error);
       }
@@ -404,7 +395,7 @@ export default function ContactsPage() {
                 <tbody className="divide-y divide-gray-200">
                   {filteredContacts.map(contact => {
                     const orgTypeInfo = getOrganisationTypeInfo(
-                      contact.organisation?.type || ''
+                      contact.organisation?.type ?? ''
                     );
 
                     return (
@@ -484,7 +475,14 @@ export default function ContactsPage() {
                                 !contact.is_active ? 'success' : 'danger'
                               }
                               size="sm"
-                              onClick={() => handleArchive(contact)}
+                              onClick={() => {
+                                void handleArchive(contact).catch(error => {
+                                  console.error(
+                                    '[ContactsPage] handleArchive failed:',
+                                    error
+                                  );
+                                });
+                              }}
                             >
                               {!contact.is_active ? (
                                 <ArchiveRestore className="h-4 w-4" />
@@ -497,7 +495,14 @@ export default function ContactsPage() {
                             <ButtonV2
                               variant="danger"
                               size="sm"
-                              onClick={() => handleDelete(contact)}
+                              onClick={() => {
+                                void handleDelete(contact).catch(error => {
+                                  console.error(
+                                    '[ContactsPage] handleDelete failed:',
+                                    error
+                                  );
+                                });
+                              }}
                             >
                               <Trash2 className="h-4 w-4" />
                             </ButtonV2>

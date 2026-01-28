@@ -95,43 +95,52 @@ export function FranceMap({
         >
           <ZoomableGroup center={[2.5, 46.5]} zoom={1}>
             <Geographies geography={FRANCE_REGIONS_URL}>
-              {({ geographies }) =>
-                geographies.map(geo => {
-                  const regionName = geo.properties.nom;
-                  const regionCode = REGION_NAME_TO_CODE[regionName] || '';
-                  const count = regionDataMap.get(regionCode) || 0;
+              {({
+                geographies,
+              }: {
+                geographies: Array<{
+                  rsmKey: string;
+                  properties: { nom: string };
+                }>;
+              }) =>
+                geographies.map(
+                  (geo: { rsmKey: string; properties: { nom: string } }) => {
+                    const regionName = geo.properties.nom;
+                    const regionCode = REGION_NAME_TO_CODE[regionName] ?? '';
+                    const count = regionDataMap.get(regionCode) ?? 0;
 
-                  return (
-                    <Geography
-                      key={geo.rsmKey}
-                      geography={geo}
-                      fill={getColor(count)}
-                      stroke="#ffffff"
-                      strokeWidth={1}
-                      style={{
-                        default: { outline: 'none' },
-                        hover: {
-                          fill: '#fbbf24',
-                          outline: 'none',
-                          cursor: 'pointer',
-                        },
-                        pressed: { outline: 'none' },
-                      }}
-                      onMouseEnter={e => {
-                        setTooltipContent(
-                          `${regionName}: ${count} établissement${count > 1 ? 's' : ''}`
-                        );
-                        setTooltipPosition({
-                          x: e.clientX,
-                          y: e.clientY,
-                        });
-                      }}
-                      onMouseLeave={() => {
-                        setTooltipContent(null);
-                      }}
-                    />
-                  );
-                })
+                    return (
+                      <Geography
+                        key={geo.rsmKey}
+                        geography={geo}
+                        fill={getColor(count)}
+                        stroke="#ffffff"
+                        strokeWidth={1}
+                        style={{
+                          default: { outline: 'none' },
+                          hover: {
+                            fill: '#fbbf24',
+                            outline: 'none',
+                            cursor: 'pointer',
+                          },
+                          pressed: { outline: 'none' },
+                        }}
+                        onMouseEnter={(e: React.MouseEvent) => {
+                          setTooltipContent(
+                            `${regionName}: ${count} établissement${count > 1 ? 's' : ''}`
+                          );
+                          setTooltipPosition({
+                            x: e.clientX,
+                            y: e.clientY,
+                          });
+                        }}
+                        onMouseLeave={() => {
+                          setTooltipContent(null);
+                        }}
+                      />
+                    );
+                  }
+                )
               }
             </Geographies>
           </ZoomableGroup>

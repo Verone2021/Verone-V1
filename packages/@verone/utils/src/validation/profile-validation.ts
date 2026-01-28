@@ -20,7 +20,7 @@ export function validatePhone(phone: string): ValidationResult {
   }
 
   // Nettoyer le numéro (enlever espaces, tirets, points)
-  const cleaned = phone.replace(/[\s\-\.\(\)]/g, '');
+  const cleaned = phone.replace(/[\s.()-]/g, '');
 
   // Patterns français acceptés
   const patterns = [
@@ -75,7 +75,7 @@ export function validateFirstName(firstName: string): ValidationResult {
   }
 
   // Caractères autorisés : lettres, espaces, apostrophes, tirets
-  const validPattern = /^[a-zA-ZÀ-ÿŸØø\s\-\'\.]+$/;
+  const validPattern = /^[a-zA-ZÀ-ÿŸØø\s'.-]+$/;
 
   if (!validPattern.test(trimmed)) {
     return {
@@ -105,7 +105,7 @@ export function validateLastName(lastName: string): ValidationResult {
   }
 
   // Caractères autorisés : lettres, espaces, apostrophes, tirets
-  const validPattern = /^[a-zA-ZÀ-ÿŸØø\s\-\'\.]+$/;
+  const validPattern = /^[a-zA-ZÀ-ÿŸØø\s'.-]+$/;
 
   if (!validPattern.test(trimmed)) {
     return {
@@ -245,7 +245,7 @@ export function sanitizeProfileData(
   return {
     first_name: data.firstName?.trim() || null,
     last_name: data.lastName?.trim() || null,
-    phone: data.phone?.replace(/[\s\-\.\(\)]/g, '') || null,
+    phone: data.phone?.replace(/[\s.()-]/g, '') || null,
     job_title: data.jobTitle?.trim() || null,
   };
 }

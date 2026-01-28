@@ -72,11 +72,11 @@ export async function GET(
       address = {
         name: 'Entreprise', // Prénom = "Entreprise"
         surname: org.legal_name, // Nom = Nom entreprise
-        email: org.email || '',
-        phone: org.phone || '',
-        street1: org.address_line1 || '',
-        city: org.city || '',
-        zip_code: org.postal_code || '',
+        email: org.email ?? '',
+        phone: org.phone ?? '',
+        street1: org.address_line1 ?? '',
+        city: org.city ?? '',
+        zip_code: org.postal_code ?? '',
         country: org.country || 'FR',
         company: org.legal_name, // Champ company
       };
@@ -102,11 +102,11 @@ export async function GET(
       address = {
         name: customer.first_name,
         surname: customer.last_name,
-        email: customer.email || '',
-        phone: customer.phone || '',
-        street1: customer.address_line1 || '',
-        city: customer.city || '',
-        zip_code: customer.postal_code || '',
+        email: customer.email ?? '',
+        phone: customer.phone ?? '',
+        street1: customer.address_line1 ?? '',
+        city: customer.city ?? '',
+        zip_code: customer.postal_code ?? '',
         country: customer.country || 'FR',
       };
     }

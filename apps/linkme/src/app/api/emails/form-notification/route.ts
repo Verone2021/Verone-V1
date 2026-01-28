@@ -27,9 +27,26 @@ interface FormNotificationRequest {
   submissionId: string;
 }
 
+interface FormSubmission {
+  id: string;
+  form_type: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string | null;
+  company_name: string | null;
+  role: string | null;
+  subject: string | null;
+  message: string;
+  source: string;
+  priority: string;
+  status: string;
+  created_at: string;
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const body: FormNotificationRequest = await request.json();
+    const body = (await request.json()) as FormNotificationRequest;
 
     const { submissionId } = body;
 
@@ -43,7 +60,7 @@ export async function POST(request: NextRequest) {
 
     // Fetch submission details from database
     const supabase = await createServerClient();
-    const { data: submission, error: fetchError } = await supabase
+    const { data: submission, error: fetchError } = (await supabase
       .from('form_submissions')
       .select(
         `
@@ -64,9 +81,9 @@ export async function POST(request: NextRequest) {
       `
       )
       .eq('id', submissionId)
-      .single();
+      .single()) as { data: FormSubmission | null; error: Error | null };
 
-    if (fetchError || !submission) {
+    if (fetchError ?? !submission) {
       return NextResponse.json(
         { success: false, error: 'Submission not found' },
         { status: 404 }
@@ -87,7 +104,10 @@ export async function POST(request: NextRequest) {
       .eq('setting_key', 'notification_emails')
       .single();
 
-    const notificationEmails = settings?.setting_value?.form_submissions || [
+    const settingsValue = settings?.setting_value as
+      | { form_submissions?: string[] }
+      | undefined;
+    const notificationEmails = settingsValue?.form_submissions ?? [
       'veronebyromeo@gmail.com',
     ];
 
@@ -116,7 +136,7 @@ export async function POST(request: NextRequest) {
     };
 
     const priorityStyle =
-      priorityColors[submission.priority] || priorityColors.medium;
+      priorityColors[submission.priority] ?? priorityColors.medium;
 
     // Build notification email HTML
     const emailHtml = `
@@ -131,7 +151,7 @@ export async function POST(request: NextRequest) {
   <!-- Header -->
   <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 8px 8px 0 0; text-align: center;">
     <h1 style="color: white; font-size: 24px; margin: 0;">
-      ${formType?.icon || '📝'} Nouvelle ${formType?.label || 'demande'}
+      ${formType?.icon ?? '📝'} Nouvelle ${formType?.label ?? 'demande'}
     </h1>
   </div>
 
@@ -227,7 +247,7 @@ export async function POST(request: NextRequest) {
 
     <!-- Action Button -->
     <div style="text-align: center; margin-top: 30px;">
-      <a href="${process.env.NEXT_PUBLIC_BACK_OFFICE_URL || 'http://localhost:3000'}/prises-contact?id=${submission.id}"
+      <a href="${process.env.NEXT_PUBLIC_BACK_OFFICE_URL ?? 'http://localhost:3000'}/prises-contact?id=${submission.id}"
          style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 6px rgba(102, 126, 234, 0.3);">
         📋 Voir dans le back-office →
       </a>
@@ -251,7 +271,7 @@ export async function POST(request: NextRequest) {
 
     // If Resend is not configured, return early with success (emails disabled)
     if (!resendClient) {
-      console.log(
+      console.warn(
         `[API Form Notification] Skipping notification emails for submission ${submissionId} - Resend not configured`
       );
       return NextResponse.json({
@@ -261,12 +281,13 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    const typedEmails = notificationEmails;
     const results = await Promise.allSettled(
-      notificationEmails.map((email: string) =>
+      typedEmails.map(email =>
         resendClient.emails.send({
-          from: process.env.RESEND_FROM_EMAIL || 'notifications@verone.fr',
+          from: process.env.RESEND_FROM_EMAIL ?? 'notifications@verone.fr',
           to: email,
-          subject: `[${priorityStyle.label}] ${formType?.label || 'Nouvelle demande'} - ${submission.first_name} ${submission.last_name}`,
+          subject: `[${priorityStyle.label}] ${formType?.label ?? 'Nouvelle demande'} - ${submission.first_name} ${submission.last_name}`,
           html: emailHtml,
           replyTo: submission.email,
         })
@@ -277,10 +298,6 @@ export async function POST(request: NextRequest) {
     if (failures.length > 0) {
       console.error('[API Form Notification] Some emails failed:', failures);
     }
-
-    console.log(
-      `[API Form Notification] Sent for submission ${submissionId} - ${results.length} emails`
-    );
 
     return NextResponse.json({
       success: true,
@@ -313,5 +330,5 @@ function getStatusBadge(status: string): string {
     closed: '<span style="color: #6b7280; font-weight: 600;">🔒 Fermé</span>',
     spam: '<span style="color: #dc2626; font-weight: 600;">🚫 Spam</span>',
   };
-  return badges[status] || status;
+  return badges[status] ?? status;
 }

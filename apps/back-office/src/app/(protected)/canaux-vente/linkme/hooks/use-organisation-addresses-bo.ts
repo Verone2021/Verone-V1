@@ -13,6 +13,9 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createClient } from '@verone/utils/supabase/client';
+// Database type is used by TypeScript for supabase.rpc() type inference
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import type { Database } from '@verone/types';
 import { toast } from 'sonner';
 
 // ============================================
@@ -89,8 +92,8 @@ export function useOrganisationAddressesBO(
 
       const supabase = createClient();
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let query = (supabase as any)
+      // Build query with proper typing
+      const baseQuery = supabase
         .from('addresses')
         .select('*')
         .eq('owner_type', 'organisation')
@@ -99,11 +102,10 @@ export function useOrganisationAddressesBO(
         .order('is_default', { ascending: false })
         .order('created_at', { ascending: false });
 
-      if (addressType) {
-        query = query.eq('address_type', addressType);
-      }
-
-      const { data, error } = await query;
+      // Add address type filter if specified
+      const { data, error } = addressType
+        ? await baseQuery.eq('address_type', addressType)
+        : await baseQuery;
 
       if (error) {
         console.error('[useOrganisationAddressesBO] Error:', error);
@@ -111,7 +113,7 @@ export function useOrganisationAddressesBO(
       }
 
       // Transform to camelCase
-      const addresses: AddressBO[] = (data || []).map(
+      const addresses: AddressBO[] = (data ?? []).map(
         (row: Record<string, unknown>) => ({
           id: row.id as string,
           ownerType: row.owner_type as string,
@@ -137,8 +139,8 @@ export function useOrganisationAddressesBO(
       const shipping = addresses.filter(a => a.addressType === 'shipping');
 
       // Find defaults
-      const defaultBilling = billing.find(a => a.isDefault) || null;
-      const defaultShipping = shipping.find(a => a.isDefault) || null;
+      const defaultBilling = billing.find(a => a.isDefault) ?? null;
+      const defaultShipping = shipping.find(a => a.isDefault) ?? null;
 
       return {
         billing,
@@ -177,13 +179,14 @@ export function useCreateAddressBO() {
         postal_code: input.postalCode,
         city: input.city,
         region: input.region,
+        // NOTE: Using || intentionally - empty string should default to 'FR'
+        // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
         country: input.country || 'FR',
         latitude: input.latitude,
         longitude: input.longitude,
       };
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (supabase.rpc as any)('upsert_address', {
+      const { data, error } = await supabase.rpc('upsert_address', {
         p_owner_type: input.ownerType,
         p_owner_id: input.ownerId,
         p_address_type: input.addressType,
@@ -197,10 +200,10 @@ export function useCreateAddressBO() {
         throw error;
       }
 
-      return data as string;
+      return data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: ['organisation-addresses-bo', variables.ownerId],
       });
       toast.success('Adresse créée avec succès');

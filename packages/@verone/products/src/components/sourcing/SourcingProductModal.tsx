@@ -5,12 +5,7 @@ import { useState } from 'react';
 import { X, Sparkles } from 'lucide-react';
 
 import { ButtonV2 } from '@verone/ui';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@verone/ui';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@verone/ui';
 import { useToast } from '@verone/common/hooks';
 
 import { SourcingQuickForm } from './SourcingQuickForm';

@@ -20,13 +20,13 @@ interface FormSubmissionRequest {
   subject?: string;
   message: string;
   source: string; // 'linkme', 'website', etc.
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   priority?: 'low' | 'medium' | 'high' | 'urgent';
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const body: FormSubmissionRequest = await request.json();
+    const body = (await request.json()) as FormSubmissionRequest;
 
     // Validation
     if (
@@ -54,11 +54,14 @@ export async function POST(request: NextRequest) {
 
     // Verify form type exists
     const supabase = await createServerClient();
-    const { data: formType, error: formTypeError } = await supabase
+    const { data: formType, error: formTypeError } = (await supabase
       .from('form_types')
       .select('code, label, enabled')
       .eq('code', body.formType)
-      .single();
+      .single()) as {
+      data: { code: string; label: string; enabled: boolean } | null;
+      error: Error | null;
+    };
 
     if (formTypeError || !formType) {
       return NextResponse.json(
@@ -75,27 +78,30 @@ export async function POST(request: NextRequest) {
     }
 
     // Insert form submission
-    const { data: submission, error: insertError } = await supabase
+    const { data: submission, error: insertError } = (await supabase
       .from('form_submissions')
       .insert({
         form_type: body.formType,
         first_name: body.firstName,
         last_name: body.lastName,
         email: body.email,
-        phone: body.phone || null,
-        company_name: body.company || null,
-        role: body.role || null,
-        subject: body.subject || null,
+        phone: body.phone ?? null,
+        company_name: body.company ?? null,
+        role: body.role ?? null,
+        subject: body.subject ?? null,
         message: body.message,
         source: body.source,
-        metadata: body.metadata || null,
-        priority: body.priority || 'medium',
+        metadata: body.metadata ?? null,
+        priority: body.priority ?? 'medium',
         status: 'new',
       })
       .select('id, form_type, created_at')
-      .single();
+      .single()) as {
+      data: { id: string; form_type: string; created_at: string } | null;
+      error: Error | null;
+    };
 
-    if (insertError) {
+    if (insertError || !submission) {
       console.error('[API Forms Submit] Insert error:', insertError);
       return NextResponse.json(
         { success: false, error: "Erreur lors de l'enregistrement" },
@@ -131,9 +137,8 @@ export async function POST(request: NextRequest) {
       // Don't fail the request if email fails
     }
 
-    console.log(
-      `[API Forms Submit] Submission ${submission.id} created for form type ${body.formType}`
-    );
+    // Submission created successfully
+    // (logging removed per ESLint no-console rule)
 
     return NextResponse.json({
       success: true,

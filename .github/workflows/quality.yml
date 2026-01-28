@@ -1,0 +1,183 @@
+name: Quality Checks (ESLint + Type-Check + Build)
+
+on:
+  pull_request:
+    branches:
+      - main
+      - integration/*
+  push:
+    branches:
+      - main
+
+# Annuler les workflows en cours si nouveau push
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: ESLint + Type-Check + Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Nécessaire pour comparer avec base branch
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: ESLint Check
+        id: eslint
+        run: |
+          echo "## 🔍 ESLint Results" >> $GITHUB_STEP_SUMMARY
+
+          # Lancer ESLint et capturer le résultat
+          if pnpm lint 2>&1 | tee eslint-output.txt; then
+            echo "✅ **ESLint**: No errors found" >> $GITHUB_STEP_SUMMARY
+            echo "eslint_status=success" >> $GITHUB_OUTPUT
+          else
+            echo "❌ **ESLint**: Errors detected" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            tail -50 eslint-output.txt >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo "eslint_status=failure" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+      - name: Type-Check
+        id: typecheck
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 📘 Type-Check Results" >> $GITHUB_STEP_SUMMARY
+
+          if pnpm type-check 2>&1 | tee typecheck-output.txt; then
+            echo "✅ **Type-Check**: No type errors" >> $GITHUB_STEP_SUMMARY
+            echo "typecheck_status=success" >> $GITHUB_OUTPUT
+          else
+            echo "❌ **Type-Check**: Type errors detected" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            tail -50 typecheck-output.txt >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo "typecheck_status=failure" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+      - name: Build
+        id: build
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 🏗️ Build Results" >> $GITHUB_STEP_SUMMARY
+
+          if pnpm build 2>&1 | tee build-output.txt; then
+            echo "✅ **Build**: Successful" >> $GITHUB_STEP_SUMMARY
+            echo "build_status=success" >> $GITHUB_OUTPUT
+          else
+            echo "❌ **Build**: Failed" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            tail -100 build-output.txt >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo "build_status=failure" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+      - name: Comment PR on Failure
+        if: failure() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+
+            let comment = '## ❌ Quality Checks Failed\n\n';
+
+            // Ajouter détails ESLint si échec
+            if (fs.existsSync('eslint-output.txt')) {
+              const eslintOutput = fs.readFileSync('eslint-output.txt', 'utf8');
+              const errorLines = eslintOutput.split('\n').filter(line =>
+                line.includes('error') || line.includes('✖')
+              ).slice(0, 20);
+
+              if (errorLines.length > 0) {
+                comment += '### 🔴 ESLint Errors\n\n';
+                comment += '```\n';
+                comment += errorLines.join('\n');
+                comment += '\n```\n\n';
+              }
+            }
+
+            // Ajouter détails Type-Check si échec
+            if (fs.existsSync('typecheck-output.txt')) {
+              const typecheckOutput = fs.readFileSync('typecheck-output.txt', 'utf8');
+              const errorLines = typecheckOutput.split('\n').filter(line =>
+                line.includes('error TS') || line.includes('Error:')
+              ).slice(0, 20);
+
+              if (errorLines.length > 0) {
+                comment += '### 📘 Type Errors\n\n';
+                comment += '```\n';
+                comment += errorLines.join('\n');
+                comment += '\n```\n\n';
+              }
+            }
+
+            // Ajouter détails Build si échec
+            if (fs.existsSync('build-output.txt')) {
+              const buildOutput = fs.readFileSync('build-output.txt', 'utf8');
+              const errorLines = buildOutput.split('\n').filter(line =>
+                line.includes('Error:') || line.includes('Failed')
+              ).slice(0, 20);
+
+              if (errorLines.length > 0) {
+                comment += '### 🏗️ Build Errors\n\n';
+                comment += '```\n';
+                comment += errorLines.join('\n');
+                comment += '\n```\n\n';
+              }
+            }
+
+            comment += '---\n\n';
+            comment += '**Action Required**: Please fix these errors before merging.\n\n';
+            comment += '**How to fix**:\n';
+            comment += '1. Run `pnpm lint` locally to see all errors\n';
+            comment += '2. Run `pnpm type-check` to check types\n';
+            comment += '3. Run `pnpm build` to verify build\n';
+            comment += '4. Fix errors and push again\n\n';
+            comment += '**Pre-commit hook**: Make sure Husky pre-commit hook is installed (`pnpm prepare`)\n';
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+      - name: Success Summary
+        if: success()
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## ✅ All Quality Checks Passed!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ ESLint: No errors" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Type-Check: No type errors" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Build: Successful" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🎉 This PR is ready for review!" >> $GITHUB_STEP_SUMMARY

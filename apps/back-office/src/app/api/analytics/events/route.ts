@@ -11,7 +11,7 @@ import { NextResponse } from 'next/server';
 import { anonymizeIP, simplifyUserAgent } from '@verone/utils/analytics';
 import { createClient } from '@verone/utils/supabase/server';
 
-// Node.js runtime (suppression Edge pour compatibilité Sentry)
+// Node.js runtime
 export const dynamic = 'force-dynamic';
 
 interface ActivityEvent {
@@ -72,17 +72,17 @@ export async function POST(request: NextRequest) {
     // Préparer données log avec anonymisation RGPD
     const activityLog = {
       user_id: user.id,
-      organisation_id: profile?.organisation_id || null,
+      organisation_id: profile?.organisation_id ?? null,
       action: event.action,
-      table_name: event.table_name || null,
-      record_id: event.record_id || null,
-      old_data: event.old_data || null,
-      new_data: event.new_data || null,
+      table_name: event.table_name ?? null,
+      record_id: event.record_id ?? null,
+      old_data: event.old_data ?? null,
+      new_data: event.new_data ?? null,
       severity: event.severity || 'info',
       metadata: event.metadata || {},
-      session_id: event.metadata?.session_duration?.toString() || null, // Utiliser comme proxy session
+      session_id: event.metadata?.session_duration?.toString() ?? null, // Utiliser comme proxy session
       page_url:
-        event.metadata?.page_url || request.headers.get('referer') || null,
+        (event.metadata?.page_url || request.headers.get('referer')) ?? null,
       user_agent: simplifyUserAgent(rawUA), // ✅ Anonymisé production
       ip_address: anonymizeIP(rawIP), // ✅ Anonymisée production
     };

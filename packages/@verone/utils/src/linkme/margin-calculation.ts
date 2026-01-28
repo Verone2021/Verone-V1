@@ -69,7 +69,9 @@ export interface AffiliateCommissionResult {
  * @param input - Prix de base et taux de marge
  * @returns Prix de vente, gain en euros, et taux de marge
  */
-export function calculateMargin(input: MarginCalculationInput): MarginCalculationResult {
+export function calculateMargin(
+  input: MarginCalculationInput
+): MarginCalculationResult {
   const { basePriceHt, marginRate } = input;
 
   // Validation
@@ -229,7 +231,7 @@ export interface CartTotalsResult {
  */
 export function calculateCartTotals(
   items: CartItemForCalculation[],
-  defaultTaxRate: number = 0.20
+  defaultTaxRate: number = 0.2
 ): CartTotalsResult {
   let totalHT = 0;
   let totalTVA = 0;
@@ -237,13 +239,23 @@ export function calculateCartTotals(
   let itemsCount = 0;
 
   for (const item of items) {
-    const { basePriceHt, marginRate, quantity, isAffiliateProduct, affiliateCommissionRate, taxRate } = item;
+    const {
+      basePriceHt,
+      marginRate,
+      quantity,
+      isAffiliateProduct,
+      affiliateCommissionRate,
+      taxRate,
+    } = item;
 
     // Utiliser le taux spécifique de l'item ou le taux par défaut de l'organisation
     const effectiveItemTaxRate = taxRate ?? defaultTaxRate;
 
     // Calcul du prix de vente avec la formule TAUX DE MARQUE
-    const { sellingPriceHt, gainEuros } = calculateMargin({ basePriceHt, marginRate });
+    const { sellingPriceHt, gainEuros } = calculateMargin({
+      basePriceHt,
+      marginRate,
+    });
 
     // Total HT
     const lineHT = sellingPriceHt * quantity;

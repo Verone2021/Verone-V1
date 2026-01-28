@@ -22,7 +22,6 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-  Switch,
   Table,
   TableBody,
   TableCell,
@@ -46,7 +45,6 @@ import {
   Plus,
   Trash2,
   Eye,
-  EyeOff,
   Pencil,
   Package,
   ShoppingCart,
@@ -81,7 +79,7 @@ import {
 type CatalogProduct = LinkMeCatalogProduct;
 
 // Configuration des statuts
-const statusConfig = {
+const _statusConfig = {
   draft: { label: 'Brouillon', variant: 'secondary' as const },
   active: { label: 'Active', variant: 'default' as const },
   archived: { label: 'Archivée', variant: 'outline' as const },
@@ -150,9 +148,9 @@ export default function SelectionDetailPage({
   useEffect(() => {
     if (selection) {
       setFormData({
-        name: selection.name || '',
-        description: selection.description || '',
-        archived_at: selection.archived_at || null,
+        name: selection.name ?? '',
+        description: selection.description ?? '',
+        archived_at: selection.archived_at ?? null,
         price_display_mode: selection.price_display_mode || 'TTC',
       });
     }
@@ -376,7 +374,11 @@ export default function SelectionDetailPage({
             </a>
           )}
           <Button
-            onClick={handleSave}
+            onClick={() => {
+              void handleSave().catch(error => {
+                console.error('[Selections] handleSave failed:', error);
+              });
+            }}
             disabled={!isDirty || updateSelection.isPending}
           >
             {updateSelection.isPending ? (
@@ -818,7 +820,16 @@ export default function SelectionDetailPage({
                               size="icon"
                               variant="ghost"
                               className="h-8 w-8 text-destructive hover:text-destructive"
-                              onClick={() => handleRemoveProduct(item.id)}
+                              onClick={() => {
+                                void handleRemoveProduct(item.id).catch(
+                                  error => {
+                                    console.error(
+                                      '[Selections] handleRemoveProduct failed:',
+                                      error
+                                    );
+                                  }
+                                );
+                              }}
                               disabled={removeProduct.isPending}
                               title="Supprimer"
                             >
@@ -1066,7 +1077,11 @@ export default function SelectionDetailPage({
               Annuler
             </Button>
             <Button
-              onClick={handleAddProduct}
+              onClick={() => {
+                void handleAddProduct().catch(error => {
+                  console.error('[Selections] handleAddProduct failed:', error);
+                });
+              }}
               disabled={!selectedProductId || addProduct.isPending}
             >
               {addProduct.isPending ? (

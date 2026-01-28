@@ -16,7 +16,13 @@ import { Badge } from '@verone/ui';
 import { cn } from '@verone/utils';
 import { Store, Map, Users, Contact } from 'lucide-react';
 
-type TabType = 'all' | 'succursale' | 'franchise' | 'incomplete' | 'map' | 'contacts';
+type TabType =
+  | 'all'
+  | 'succursale'
+  | 'franchise'
+  | 'incomplete'
+  | 'map'
+  | 'contacts';
 
 interface ITabStats {
   all: number;

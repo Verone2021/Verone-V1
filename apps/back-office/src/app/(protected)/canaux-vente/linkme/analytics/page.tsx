@@ -218,13 +218,15 @@ export default function LinkMeAnalyticsPage() {
   // Fetch data with new filter system
   const { data, isLoading, error, refetch } = useLinkMeAnalytics('year', {
     year: filters.year,
-    startDate: dateRange.startDate || undefined,
-    endDate: dateRange.endDate || undefined,
+    startDate: dateRange.startDate ?? undefined,
+    endDate: dateRange.endDate ?? undefined,
   });
 
   // Handler for refresh button
   const handleRefresh = useCallback(() => {
-    refetch();
+    void refetch().catch(error => {
+      console.error('[LinkMeAnalytics] refetch failed:', error);
+    });
   }, [refetch]);
 
   return (

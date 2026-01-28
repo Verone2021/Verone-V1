@@ -51,7 +51,7 @@ export async function createConsultation(
       ? `enseigne ${consultationData.enseigne_id}`
       : `organisation ${consultationData.organisation_id}`;
 
-    console.log(
+    console.warn(
       `🔍 [Server Action ADMIN] Tentative création consultation pour ${clientLabel} par user ${userId}`
     );
 
@@ -60,8 +60,8 @@ export async function createConsultation(
 
     // Préparer les données avec valeurs par défaut
     const dataToInsert = {
-      enseigne_id: consultationData.enseigne_id || null,
-      organisation_id: consultationData.organisation_id || null,
+      enseigne_id: consultationData.enseigne_id ?? null,
+      organisation_id: consultationData.organisation_id ?? null,
       client_email: consultationData.client_email,
       client_phone: consultationData.client_phone,
       descriptif: consultationData.descriptif,
@@ -74,7 +74,7 @@ export async function createConsultation(
       created_by: userId,
     };
 
-    console.log(`🔧 [Server Action] Données à insérer:`, dataToInsert);
+    console.warn(`🔧 [Server Action] Données à insérer:`, dataToInsert);
 
     // Insérer la consultation
     const { data: newConsultation, error: insertError } = await supabase
@@ -100,7 +100,7 @@ export async function createConsultation(
       };
     }
 
-    console.log(
+    console.warn(
       `✅ [Server Action] Consultation créée avec succès: ${newConsultation.id}`
     );
 

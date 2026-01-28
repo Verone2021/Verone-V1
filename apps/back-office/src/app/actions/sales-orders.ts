@@ -36,7 +36,7 @@ export async function updateSalesOrderStatus(
     const supabase = createAdminClient();
 
     // Log pour debug
-    console.log(
+    console.warn(
       `🔍 [Server Action ADMIN] Tentative mise à jour commande ${orderId} vers ${newStatus} par user ${userId}`
     );
 
@@ -68,7 +68,7 @@ export async function updateSalesOrderStatus(
       };
     }
 
-    console.log(
+    console.warn(
       `📊 [Server Action] Commande trouvée: ${existingOrder.order_number}, statut actuel: ${existingOrder.status}`
     );
 
@@ -99,7 +99,7 @@ export async function updateSalesOrderStatus(
       updateFields.cancelled_by = userId;
     }
 
-    console.log(`🔧 [Server Action] Champs à mettre à jour:`, updateFields);
+    console.warn(`🔧 [Server Action] Champs à mettre à jour:`, updateFields);
 
     // Mettre à jour le statut de la commande
     const { data: updatedData, error: updateError } = await supabase
@@ -127,7 +127,7 @@ export async function updateSalesOrderStatus(
       };
     }
 
-    console.log(
+    console.warn(
       `✅ [Server Action] Commande ${existingOrder.order_number} mise à jour avec succès: ${existingOrder.status} → ${newStatus}`
     );
 

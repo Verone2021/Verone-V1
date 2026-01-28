@@ -10,9 +10,8 @@
  *
  * @module LandingFooter
  * @since 2026-01-07
+ * @updated 2026-01-23 - Liens vers vraies pages, newsletter desactivee
  */
-
-import { useState } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
@@ -21,7 +20,6 @@ import {
   Send,
   Mail,
   MapPin,
-  Phone,
   Instagram,
   Linkedin,
   Facebook,
@@ -30,39 +28,25 @@ import {
 // Footer links
 const LINKS = {
   about: [
-    { label: 'Notre histoire', href: '#about' },
-    { label: 'Equipe', href: '#team' },
-    { label: 'Carrieres', href: '#careers' },
+    { label: 'A propos', href: '/about' },
+    { label: 'Contact', href: '/contact' },
   ],
   useful: [
     { label: 'Comment ca marche', href: '#how-it-works' },
-    { label: 'FAQ', href: '#faq' },
     { label: 'Conditions generales', href: '/cgu' },
     { label: 'Politique de confidentialite', href: '/privacy' },
   ],
 };
 
-// Social links
+// Social links - à créer
+// TODO: Créer comptes sociaux LinkMe et mettre à jour les URLs
 const SOCIALS = [
-  { icon: Instagram, href: '#', label: 'Instagram' },
-  { icon: Linkedin, href: '#', label: 'LinkedIn' },
-  { icon: Facebook, href: '#', label: 'Facebook' },
+  { icon: Instagram, href: 'https://instagram.com', label: 'Instagram' },
+  { icon: Linkedin, href: 'https://linkedin.com', label: 'LinkedIn' },
+  { icon: Facebook, href: 'https://facebook.com', label: 'Facebook' },
 ];
 
 export function LandingFooter(): JSX.Element {
-  const [email, setEmail] = useState('');
-  const [subscribed, setSubscribed] = useState(false);
-
-  const handleSubscribe = (e: React.FormEvent): void => {
-    e.preventDefault();
-    if (email) {
-      // TODO: Implement newsletter subscription
-      setSubscribed(true);
-      setEmail('');
-      setTimeout(() => setSubscribed(false), 3000);
-    }
-  };
-
   return (
     <footer id="contact" className="bg-[#183559] text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
@@ -135,48 +119,40 @@ export function LandingFooter(): JSX.Element {
           <div>
             <h3 className="font-semibold text-base mb-4">Newsletter</h3>
             <p className="text-white/60 text-sm mb-4">
-              Recevez nos actualites et offres exclusives.
+              Bientot disponible - Inscrivez-vous pour recevoir nos actualites.
             </p>
-            <form onSubmit={handleSubscribe} className="relative mb-6">
+            {/* Newsletter desactivee pour l'instant */}
+            <div className="relative mb-6 opacity-50 pointer-events-none">
               <input
                 type="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
+                disabled
                 placeholder="Votre email"
-                className="w-full px-4 py-2.5 pr-12 bg-white/10 border border-white/20 rounded-lg text-sm text-white placeholder:text-white/40 focus:outline-none focus:border-[#5DBEBB] transition-colors"
+                className="w-full px-4 py-2.5 pr-12 bg-white/10 border border-white/20 rounded-lg text-sm text-white placeholder:text-white/40"
               />
               <button
-                type="submit"
-                className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-md bg-[#5DBEBB] text-white hover:bg-[#4CA9A6] transition-colors"
+                type="button"
+                disabled
+                className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-md bg-[#5DBEBB]/50 text-white"
                 aria-label="S'inscrire"
               >
                 <Send className="h-4 w-4" />
               </button>
-            </form>
-            {subscribed && (
-              <p className="text-[#5DBEBB] text-sm mb-4">
-                Merci pour votre inscription !
-              </p>
-            )}
+            </div>
 
-            {/* Contact info */}
+            {/* Contact info - A remplir avec vraies coordonnees */}
             <div className="space-y-2 text-sm text-white/60">
               <div className="flex items-center gap-2">
                 <Mail className="h-4 w-4" />
                 <a
-                  href="mailto:contact@linkme.fr"
+                  href="mailto:contact@verone.io"
                   className="hover:text-white transition-colors"
                 >
-                  contact@linkme.fr
+                  contact@verone.io
                 </a>
-              </div>
-              <div className="flex items-center gap-2">
-                <Phone className="h-4 w-4" />
-                <span>+33 1 23 45 67 89</span>
               </div>
               <div className="flex items-start gap-2">
                 <MapPin className="h-4 w-4 mt-0.5" />
-                <span>Paris, France</span>
+                <span>France</span>
               </div>
             </div>
           </div>

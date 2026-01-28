@@ -37,6 +37,7 @@ import { useState, useMemo, useCallback, useEffect } from 'react';
 
 import { useQueryClient } from '@tanstack/react-query';
 import { AddressAutocomplete, type AddressResult } from '@verone/ui';
+import { calculateMargin } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
 import {
   X,
@@ -361,7 +362,13 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
     cart.forEach(item => {
       const lineHt = item.unitPriceHt * item.quantity;
       totalHt += lineHt;
-      totalMargin += item.basePriceHt * (item.marginRate / 100) * item.quantity;
+      // Calcul du gain avec la SSOT (taux de marque)
+      // Le gain = selling_price - base_price (calculé par la formule taux de marque)
+      const { gainEuros } = calculateMargin({
+        basePriceHt: item.basePriceHt,
+        marginRate: item.marginRate,
+      });
+      totalMargin += gainEuros * item.quantity;
       const tvaAmount = lineHt * item.taxRate;
       tvaByRate.set(
         item.taxRate,
@@ -647,7 +654,6 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
         throw new Error(`Erreur création commande: ${rpcError.message}`);
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const rpcResult = result;
 
       if (!rpcResult?.success) {
@@ -692,8 +698,8 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
       }
 
       // Invalider les caches
-      queryClient.invalidateQueries({ queryKey: ['linkme-orders'] });
-      queryClient.invalidateQueries({
+      await queryClient.invalidateQueries({ queryKey: ['linkme-orders'] });
+      await queryClient.invalidateQueries({
         queryKey: ['affiliate-orders', affiliate.id],
       });
 
@@ -1195,39 +1201,44 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
                               </div>
 
                               <div className="space-y-2 mb-4 max-h-96 overflow-y-auto">
-                                {cart.map(item => (
-                                  <div
-                                    key={item.selectionItemId}
-                                    className="flex items-center justify-between bg-white rounded-lg p-3 text-sm"
-                                  >
-                                    <div className="flex-1 min-w-0 mr-2">
-                                      <p className="font-medium text-gray-900 truncate">
-                                        {item.productName}
-                                      </p>
-                                      <p className="text-xs text-gray-500">
-                                        x{item.quantity} •{' '}
-                                        {item.unitPriceHt.toFixed(2)} €
-                                      </p>
+                                {cart.map(item => {
+                                  // Calcul du gain avec la SSOT (taux de marque)
+                                  const { gainEuros } = calculateMargin({
+                                    basePriceHt: item.basePriceHt,
+                                    marginRate: item.marginRate,
+                                  });
+                                  return (
+                                    <div
+                                      key={item.selectionItemId}
+                                      className="flex items-center justify-between bg-white rounded-lg p-3 text-sm"
+                                    >
+                                      <div className="flex-1 min-w-0 mr-2">
+                                        <p className="font-medium text-gray-900 truncate">
+                                          {item.productName}
+                                        </p>
+                                        <p className="text-xs text-gray-500">
+                                          x{item.quantity} •{' '}
+                                          {item.unitPriceHt.toFixed(2)} €
+                                        </p>
+                                      </div>
+                                      <div className="text-right">
+                                        <p className="font-semibold text-gray-900">
+                                          {(
+                                            item.quantity * item.unitPriceHt
+                                          ).toFixed(2)}{' '}
+                                          €
+                                        </p>
+                                        <p className="text-xs text-green-600">
+                                          +
+                                          {(gainEuros * item.quantity).toFixed(
+                                            2
+                                          )}{' '}
+                                          €
+                                        </p>
+                                      </div>
                                     </div>
-                                    <div className="text-right">
-                                      <p className="font-semibold text-gray-900">
-                                        {(
-                                          item.quantity * item.unitPriceHt
-                                        ).toFixed(2)}{' '}
-                                        €
-                                      </p>
-                                      <p className="text-xs text-green-600">
-                                        +
-                                        {(
-                                          item.quantity *
-                                          item.basePriceHt *
-                                          (item.marginRate / 100)
-                                        ).toFixed(2)}{' '}
-                                        €
-                                      </p>
-                                    </div>
-                                  </div>
-                                ))}
+                                  );
+                                })}
                               </div>
 
                               {/* Totaux */}
@@ -1333,10 +1344,12 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
                           <tbody className="divide-y">
                             {cart.map(item => {
                               const lineHt = item.quantity * item.unitPriceHt;
-                              const lineMargin =
-                                item.quantity *
-                                item.basePriceHt *
-                                (item.marginRate / 100);
+                              // Calcul du gain avec la SSOT (taux de marque)
+                              const { gainEuros } = calculateMargin({
+                                basePriceHt: item.basePriceHt,
+                                marginRate: item.marginRate,
+                              });
+                              const lineMargin = gainEuros * item.quantity;
                               return (
                                 <tr
                                   key={item.selectionItemId}
@@ -1494,7 +1507,11 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
                 </div>
               )}
               <button
-                onClick={handleSubmitExisting}
+                onClick={() => {
+                  void handleSubmitExisting().catch(error => {
+                    console.error('[CreateOrderModal] Submit failed:', error);
+                  });
+                }}
                 disabled={
                   !canSubmitExisting ||
                   createOrder.isPending ||
@@ -2320,39 +2337,41 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
                           </div>
 
                           <div className="space-y-2 mb-4 max-h-96 overflow-y-auto">
-                            {cart.map(item => (
-                              <div
-                                key={item.selectionItemId}
-                                className="flex items-center justify-between bg-white rounded-lg p-3 text-sm"
-                              >
-                                <div className="flex-1 min-w-0 mr-2">
-                                  <p className="font-medium text-gray-900 truncate">
-                                    {item.productName}
-                                  </p>
-                                  <p className="text-xs text-gray-500">
-                                    x{item.quantity} •{' '}
-                                    {item.unitPriceHt.toFixed(2)} €
-                                  </p>
+                            {cart.map(item => {
+                              // Calcul du gain avec la SSOT (taux de marque)
+                              const { gainEuros } = calculateMargin({
+                                basePriceHt: item.basePriceHt,
+                                marginRate: item.marginRate,
+                              });
+                              return (
+                                <div
+                                  key={item.selectionItemId}
+                                  className="flex items-center justify-between bg-white rounded-lg p-3 text-sm"
+                                >
+                                  <div className="flex-1 min-w-0 mr-2">
+                                    <p className="font-medium text-gray-900 truncate">
+                                      {item.productName}
+                                    </p>
+                                    <p className="text-xs text-gray-500">
+                                      x{item.quantity} •{' '}
+                                      {item.unitPriceHt.toFixed(2)} €
+                                    </p>
+                                  </div>
+                                  <div className="text-right">
+                                    <p className="font-semibold text-gray-900">
+                                      {(
+                                        item.quantity * item.unitPriceHt
+                                      ).toFixed(2)}{' '}
+                                      €
+                                    </p>
+                                    <p className="text-xs text-green-600">
+                                      +{(gainEuros * item.quantity).toFixed(2)}{' '}
+                                      €
+                                    </p>
+                                  </div>
                                 </div>
-                                <div className="text-right">
-                                  <p className="font-semibold text-gray-900">
-                                    {(item.quantity * item.unitPriceHt).toFixed(
-                                      2
-                                    )}{' '}
-                                    €
-                                  </p>
-                                  <p className="text-xs text-green-600">
-                                    +
-                                    {(
-                                      item.quantity *
-                                      item.basePriceHt *
-                                      (item.marginRate / 100)
-                                    ).toFixed(2)}{' '}
-                                    €
-                                  </p>
-                                </div>
-                              </div>
-                            ))}
+                              );
+                            })}
                           </div>
 
                           {/* Totaux */}
@@ -2585,10 +2604,12 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
                   <tbody className="divide-y">
                     {cart.map(item => {
                       const lineHt = item.quantity * item.unitPriceHt;
-                      const lineMargin =
-                        item.quantity *
-                        item.basePriceHt *
-                        (item.marginRate / 100);
+                      // Calcul du gain avec la SSOT (taux de marque)
+                      const { gainEuros } = calculateMargin({
+                        basePriceHt: item.basePriceHt,
+                        marginRate: item.marginRate,
+                      });
+                      const lineMargin = gainEuros * item.quantity;
                       return (
                         <tr key={item.selectionItemId}>
                           <td className="px-4 py-2">
@@ -2796,7 +2817,12 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
               <button
                 onClick={() => {
                   setShowConfirmModal(false);
-                  handleSubmitNew();
+                  void handleSubmitNew().catch(error => {
+                    console.error(
+                      '[CreateOrderModal] Submit new failed:',
+                      error
+                    );
+                  });
                 }}
                 disabled={createOrder.isPending}
                 className="flex items-center gap-2 px-6 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 font-medium transition-colors"

@@ -20,7 +20,6 @@ import {
 import {
   ArrowLeft,
   Download,
-  Eye,
   RefreshCw,
   FileText,
   FileCheck,
@@ -85,7 +84,7 @@ type DocumentType = 'invoice' | 'quote' | 'credit_note';
 
 function StatusBadge({
   status,
-  type,
+  type: _type,
 }: {
   status: string;
   type: DocumentType;

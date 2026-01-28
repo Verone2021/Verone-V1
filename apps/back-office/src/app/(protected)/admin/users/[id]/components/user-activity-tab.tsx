@@ -15,7 +15,6 @@ import { useEffect, useState } from 'react';
 import {
   Activity,
   Clock,
-  Calendar,
   TrendingUp,
   BarChart3,
   MousePointer,
@@ -23,13 +22,11 @@ import {
   Zap,
   Target,
   Eye,
-  ChevronRight,
   Loader2,
   AlertCircle,
 } from 'lucide-react';
 
 import type { UserDetailData } from '../page';
-import { UserModuleActivityDashboard } from './user-module-activity-dashboard';
 
 interface UserActivityTabProps {
   user: UserDetailData;
@@ -86,7 +83,9 @@ export function UserActivityTab({ user }: UserActivityTabProps) {
       }
     };
 
-    fetchActivity();
+    void fetchActivity().catch(error => {
+      console.error('[UserActivityTab] useEffect fetchActivity failed:', error);
+    });
   }, [user.id]);
 
   const getEngagementLevel = (score: number) => {
@@ -128,7 +127,7 @@ export function UserActivityTab({ user }: UserActivityTabProps) {
     return date.toLocaleDateString('fr-FR');
   };
 
-  const getActionIcon = (action: string) => {
+  const _getActionIcon = (action: string) => {
     if (action.includes('page_view')) return <Eye className="h-4 w-4" />;
     if (action.includes('form_submit'))
       return <MousePointer className="h-4 w-4" />;
@@ -333,9 +332,9 @@ export function UserActivityTab({ user }: UserActivityTabProps) {
       </div>
 
       {/* Dashboard modules avec barres de progression */}
-      <div className="space-y-2">
+      {/* <div className="space-y-2">
         <UserModuleActivityDashboard userId={user.id} days={30} />
-      </div>
+      </div> */}
 
       {/* Sessions actives */}
       {activityData.active_sessions.length > 0 && (

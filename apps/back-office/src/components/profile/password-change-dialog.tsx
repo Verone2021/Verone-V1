@@ -63,7 +63,7 @@ export function PasswordChangeDialog({
       uppercase: /[A-Z]/.test(password),
       lowercase: /[a-z]/.test(password),
       number: /[0-9]/.test(password),
-      special: /[!@#$%^&*(),.?\":{}|<>]/.test(password),
+      special: /[!@#$%^&*(),.?"':{}|<>]/.test(password),
     };
 
     const score = Object.values(requirements).filter(Boolean).length;
@@ -150,7 +150,9 @@ export function PasswordChangeDialog({
         );
 
         // Déconnexion forcée pour sécurité
-        supabase.auth.signOut();
+        void supabase.auth.signOut().catch(error => {
+          console.error('[PasswordChangeDialog] signOut failed:', error);
+        });
         window.location.href = '/login';
       }, 2000);
     } catch (error: any) {
@@ -198,7 +200,17 @@ export function PasswordChangeDialog({
             </div>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form
+            onSubmit={e => {
+              void handleSubmit(e).catch(error => {
+                console.error(
+                  '[PasswordChangeDialog] handleSubmit failed:',
+                  error
+                );
+              });
+            }}
+            className="space-y-4"
+          >
             {/* Nouveau mot de passe */}
             <div className="space-y-2">
               <label

@@ -1,0 +1,25 @@
+#!/bin/sh
+
+# Validation format commit: [APP-DOMAIN-NNN] type: message
+# Exemples:
+#   [LM-ORD-009] feat: refonte workflow order form
+#   [NO-TASK] chore: update dependencies
+
+commit_msg_file=$1
+commit_msg=$(cat "$commit_msg_file")
+
+# Regex: [APP-DOMAIN-NNN] ou [NO-TASK]
+pattern="^\[(([A-Z]{2,4}-[A-Z]{3,10}-[0-9]{3})|NO-TASK)\] (feat|fix|chore|docs|refactor|test|style|perf):"
+
+if ! echo "$commit_msg" | grep -qE "$pattern"; then
+  echo "❌ Commit message invalide"
+  echo ""
+  echo "Format requis: [APP-DOMAIN-NNN] type: description"
+  echo ""
+  echo "Exemples valides:"
+  echo "  [LM-ORD-009] feat: refonte workflow order form"
+  echo "  [BO-DASH-001] fix: cache invalidation"
+  echo "  [NO-TASK] chore: update dependencies"
+  echo ""
+  exit 1
+fi

@@ -20,7 +20,7 @@ interface ActionResult {
  */
 export async function getNotificationEmails(): Promise<ActionResult> {
   try {
-    const supabase = await createClient();
+    const supabase = createClient();
 
     const { data, error } = await (supabase as any)
       .from('app_settings')
@@ -58,7 +58,7 @@ export async function addNotificationEmail(
   email: string
 ): Promise<ActionResult> {
   try {
-    const supabase = await createClient();
+    const supabase = createClient();
 
     // Récupérer la configuration actuelle
     const { data: currentData } = await (supabase as any)
@@ -120,7 +120,7 @@ export async function removeNotificationEmail(
   email: string
 ): Promise<ActionResult> {
   try {
-    const supabase = await createClient();
+    const supabase = createClient();
 
     // Récupérer la configuration actuelle
     const { data: currentData } = await (supabase as any)

@@ -50,7 +50,9 @@ export default function ProduitsPage() {
         setLoading(false);
       }
     };
-    loadMetrics();
+    void loadMetrics().catch(error => {
+      console.error('[Products] Load metrics failed:', error);
+    });
   }, []);
 
   // Calcul métriques dérivées

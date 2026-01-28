@@ -26,7 +26,6 @@ import { WeightEditSection } from '@verone/products';
 import { ClientOrEnseigneSelector, useProductImages } from '@verone/products';
 import { StockEditSection } from '@verone/stock';
 import { StockStatusCompact } from '@verone/stock';
-import type { Database } from '@verone/types';
 import {
   Dialog,
   DialogContent,
@@ -35,7 +34,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@verone/ui';
-import { Badge, ButtonUnified, IconButton, Switch, Label } from '@verone/ui';
+import { Badge, ButtonUnified, Switch, Label } from '@verone/ui';
 import { cn, checkSLOCompliance } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
 import {
@@ -60,7 +59,7 @@ import {
 } from 'lucide-react';
 
 // Champs obligatoires pour un produit complet
-const REQUIRED_PRODUCT_FIELDS = [
+const _REQUIRED_PRODUCT_FIELDS = [
   'name',
   'sku',
   'supplier_id',
@@ -70,7 +69,7 @@ const REQUIRED_PRODUCT_FIELDS = [
 ] as const;
 
 // Mapping des champs avec leurs libellés
-const PRODUCT_FIELD_LABELS: Record<string, string> = {
+const _PRODUCT_FIELD_LABELS: Record<string, string> = {
   name: 'Nom du produit',
   sku: 'Référence SKU',
   supplier_id: 'Fournisseur',
@@ -173,7 +172,11 @@ interface Product {
     id: string;
     display_name: string;
     enseigne?: { id: string; name: string } | null;
-    organisation?: { id: string; legal_name: string; trade_name: string | null } | null;
+    organisation?: {
+      id: string;
+      legal_name: string;
+      trade_name: string | null;
+    } | null;
   } | null;
   supplier?: {
     id: string;
@@ -232,10 +235,11 @@ export default function ProductDetailPage() {
   const [isCategorizeModalOpen, setIsCategorizeModalOpen] = useState(false);
 
   // Hook pour récupérer les images du produit (table product_images)
-  const { images: productImages, primaryImage } = useProductImages({
-    productId: productId || '',
-    autoFetch: true,
-  });
+  const { images: productImages, primaryImage: _primaryImage } =
+    useProductImages({
+      productId: productId ?? '',
+      autoFetch: true,
+    });
 
   const startTime = Date.now();
 
@@ -359,18 +363,27 @@ export default function ProductDetailPage() {
 
         if (error) {
           console.error('❌ Erreur sauvegarde produit:', error);
-          fetchProduct(); // Rollback UI si erreur
+          void fetchProduct().catch(fetchError => {
+            console.error('[ProductDetail] Rollback fetch failed:', fetchError);
+          }); // Rollback UI si erreur
         } else {
-          console.log('✅ Produit sauvegardé en DB:', updatedData);
+          console.warn('✅ Produit sauvegardé en DB:', updatedData);
           // 3. Recharger les données complètes si champs relationnels modifiés
           // (pour mettre à jour le breadcrumb et autres données jointes)
           if ('subcategory_id' in updatedData || 'supplier_id' in updatedData) {
-            fetchProduct();
+            void fetchProduct().catch(fetchError => {
+              console.error(
+                '[ProductDetail] Fetch after update failed:',
+                fetchError
+              );
+            });
           }
         }
       } catch (err) {
         console.error('❌ Erreur sauvegarde produit:', err);
-        fetchProduct(); // Rollback UI
+        void fetchProduct().catch(fetchError => {
+          console.error('[ProductDetail] Rollback fetch failed:', fetchError);
+        }); // Rollback UI
       }
     },
     [productId, fetchProduct]
@@ -385,7 +398,9 @@ export default function ProductDetailPage() {
   };
 
   useEffect(() => {
-    fetchProduct();
+    void fetchProduct().catch(error => {
+      console.error('[ProductDetail] Initial fetch failed:', error);
+    });
   }, [productId]);
 
   // ✅ HOOKS DÉPLACÉS AVANT RETURNS CONDITIONNELS (React Rules of Hooks)
@@ -440,11 +455,13 @@ export default function ProductDetailPage() {
     if (product?.created_by_affiliate) {
       return {
         type: 'affiliate',
-        affiliateName: product.affiliate_creator?.enseigne?.name
-          || product.affiliate_creator?.organisation?.trade_name
-          || product.affiliate_creator?.organisation?.legal_name
-          || 'Affilié inconnu',
-        affiliateDisplayName: product.affiliate_creator?.display_name || undefined,
+        affiliateName:
+          product.affiliate_creator?.enseigne?.name ||
+          product.affiliate_creator?.organisation?.trade_name ||
+          product.affiliate_creator?.organisation?.legal_name ||
+          'Affilié inconnu',
+        affiliateDisplayName:
+          product.affiliate_creator?.display_name ?? undefined,
       };
     }
     // PRIORITÉ 2: Sur mesure enseigne
@@ -469,7 +486,12 @@ export default function ProductDetailPage() {
     }
     // DÉFAUT: Catalogue interne
     return { type: 'interne' };
-  }, [product?.created_by_affiliate, product?.affiliate_creator, product?.enseigne, product?.assigned_client]);
+  }, [
+    product?.created_by_affiliate,
+    product?.affiliate_creator,
+    product?.enseigne,
+    product?.assigned_client,
+  ]);
 
   // État de chargement
   if (loading) {
@@ -676,15 +698,21 @@ export default function ProductDetailPage() {
                   <div className="flex items-center gap-2">
                     <UserCircle2 className="h-5 w-5 text-purple-600 flex-shrink-0" />
                     <div>
-                      <p className="text-sm font-medium text-purple-900">Produit affilié</p>
+                      <p className="text-sm font-medium text-purple-900">
+                        Produit affilié
+                      </p>
                       <p className="text-xs text-purple-700">
                         Canal de vente: LinkMe
                       </p>
                       <p className="text-xs text-purple-700">
-                        Créé par: {product.affiliate_creator?.display_name || sourcing.affiliateName || 'Affilié inconnu'}
+                        Créé par:{' '}
+                        {product.affiliate_creator?.display_name ||
+                          sourcing.affiliateName ||
+                          'Affilié inconnu'}
                       </p>
                       <p className="text-xs text-purple-600 mt-1">
-                        Ce produit ne peut pas être marqué comme &quot;sur mesure&quot; car il appartient à l&apos;affilié.
+                        Ce produit ne peut pas être marqué comme &quot;sur
+                        mesure&quot; car il appartient à l&apos;affilié.
                       </p>
                     </div>
                   </div>
@@ -712,8 +740,9 @@ export default function ProductDetailPage() {
                         : 'secondary'
                   }
                   className={cn(
-                    "flex items-center gap-1",
-                    sourcing.type === 'affiliate' && "bg-purple-50 border-purple-300 text-purple-700"
+                    'flex items-center gap-1',
+                    sourcing.type === 'affiliate' &&
+                      'bg-purple-50 border-purple-300 text-purple-700'
                   )}
                 >
                   {sourcing.type === 'affiliate' ? (
@@ -739,15 +768,25 @@ export default function ProductDetailPage() {
                 enseigneId={product.enseigne_id}
                 organisationId={product.assigned_client_id}
                 onEnseigneChange={(enseigneId, _enseigneName, _parentOrgId) => {
-                  handleProductUpdate({
+                  void handleProductUpdate({
                     enseigne_id: enseigneId,
                     assigned_client_id: null, // Reset l'autre si on sélectionne une enseigne
+                  }).catch(error => {
+                    console.error(
+                      '[ProductDetail] Enseigne update failed:',
+                      error
+                    );
                   });
                 }}
                 onOrganisationChange={(organisationId, _organisationName) => {
-                  handleProductUpdate({
+                  void handleProductUpdate({
                     assigned_client_id: organisationId,
                     enseigne_id: null, // Reset l'autre si on sélectionne une organisation
+                  }).catch(error => {
+                    console.error(
+                      '[ProductDetail] Organisation update failed:',
+                      error
+                    );
                   });
                 }}
                 disabled={!!product.created_by_affiliate}
@@ -841,12 +880,12 @@ export default function ProductDetailPage() {
           >
             <SupplierEditSection
               product={product as any}
-              variantGroup={(product.variant_group || undefined) as any}
+              variantGroup={(product.variant_group ?? undefined) as any}
               onUpdate={handleProductUpdate as any}
             />
             <WeightEditSection
               product={product as any}
-              variantGroup={(product.variant_group || undefined) as any}
+              variantGroup={(product.variant_group ?? undefined) as any}
               onUpdate={handleProductUpdate as any}
               className="mt-4"
             />
@@ -973,10 +1012,17 @@ export default function ProductDetailPage() {
                   product.supplier?.trade_name) ??
                 undefined
               }
-              costPrice={product.cost_price || undefined}
+              costPrice={product.cost_price ?? undefined}
               disabled={(product.stock_quantity ?? 0) >= 1}
               onRequirementChange={requiresSample => {
-                handleProductUpdate({ requires_sample: requiresSample });
+                void handleProductUpdate({
+                  requires_sample: requiresSample,
+                }).catch(error => {
+                  console.error(
+                    '[ProductDetail] Sample requirement update failed:',
+                    error
+                  );
+                });
               }}
             />
           </ProductDetailAccordion>
@@ -1002,7 +1048,14 @@ export default function ProductDetailPage() {
                 <Switch
                   checked={product.show_on_linkme_globe ?? false}
                   onCheckedChange={(checked: boolean) => {
-                    handleProductUpdate({ show_on_linkme_globe: checked });
+                    void handleProductUpdate({
+                      show_on_linkme_globe: checked,
+                    }).catch(error => {
+                      console.error(
+                        '[ProductDetail] Globe visibility update failed:',
+                        error
+                      );
+                    });
                   }}
                   disabled={productImages.length === 0}
                 />
@@ -1063,7 +1116,14 @@ export default function ProductDetailPage() {
         productName={product.name}
         productType="product"
         maxImages={20}
-        onImagesUpdated={fetchProduct}
+        onImagesUpdated={() => {
+          void fetchProduct().catch(error => {
+            console.error(
+              '[ProductDetail] Fetch after images updated failed:',
+              error
+            );
+          });
+        }}
       />
 
       {/* Modal de gestion des caractéristiques */}
@@ -1079,7 +1139,14 @@ export default function ProductDetailPage() {
             | undefined,
           weight: product.weight ?? undefined,
         }}
-        onUpdate={handleProductUpdate}
+        onUpdate={data => {
+          void handleProductUpdate(data).catch(error => {
+            console.error(
+              '[ProductDetail] Characteristics update failed:',
+              error
+            );
+          });
+        }}
       />
 
       {/* Modal de gestion des descriptions */}
@@ -1095,7 +1162,11 @@ export default function ProductDetailPage() {
             | string[]
             | undefined,
         }}
-        onUpdate={handleProductUpdate}
+        onUpdate={data => {
+          void handleProductUpdate(data).catch(error => {
+            console.error('[ProductDetail] Descriptions update failed:', error);
+          });
+        }}
       />
 
       {/* Modal de modification de la catégorisation */}
@@ -1117,11 +1188,16 @@ export default function ProductDetailPage() {
 
           <div className="py-4">
             <CategoryHierarchySelector
-              value={product.subcategory_id || ''}
+              value={product.subcategory_id ?? ''}
               onChange={(subcategoryId, hierarchyInfo) => {
                 if (subcategoryId && hierarchyInfo) {
-                  handleProductUpdate({
+                  void handleProductUpdate({
                     subcategory_id: subcategoryId,
+                  }).catch(error => {
+                    console.error(
+                      '[ProductDetail] Subcategory update failed:',
+                      error
+                    );
                   });
                   setIsCategorizeModalOpen(false);
                 }

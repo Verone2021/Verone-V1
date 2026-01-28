@@ -2,7 +2,10 @@
  * 🔧 Supabase Server - Server Side
  *
  * Configuration server pour middleware et server components
- * Supporte l'isolation des sessions par app via cookie distinct
+ *
+ * NOTE: Toutes les apps partagent le même cookie Supabase par défaut.
+ * L'isolation des sessions par app n'est PAS supportée par @supabase/ssr.
+ * Les permissions sont gérées côté serveur via RLS et user_app_roles.
  *
  * ⚠️ MIGRATION 2025-12-12: API cookies migrée vers getAll/setAll
  * Ancienne API get/set/remove deprecated depuis @supabase/ssr v0.5.0+
@@ -18,63 +21,26 @@ import type { AppName } from './client';
 import type { Database } from './types';
 
 /**
- * Crée un client Supabase pour le serveur avec cookie isolé par app
+ * Crée un client Supabase pour le serveur
  *
- * @param appName - Nom de l'app ('backoffice', 'linkme', 'site')
- * @returns Client Supabase configuré avec cookie distinct
+ * @param _appName - Paramètre ignoré (rétrocompatibilité)
+ * @returns Client Supabase avec cookie par défaut
  *
  * @example
- * // Back-office (défaut)
  * const supabase = await createServerClient();
- *
- * // LinkMe
- * const supabase = await createServerClient('linkme');
  */
-export const createServerClient = async (appName: AppName = 'backoffice') => {
+export const createServerClient = async (_appName?: AppName) => {
   const cookieStore = await cookies();
 
-  // Back-office utilise le cookie par défaut (rétrocompatibilité)
-  // LinkMe et Site utilisent des cookies distincts pour isoler les sessions
-  if (appName === 'backoffice') {
-    // Cookie par défaut: sb-{PROJECT_ID}-auth-token - pas de filtrage
-    return createSupabaseServerClient<Database>(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll();
-          },
-          setAll(cookiesToSet) {
-            try {
-              cookiesToSet.forEach(({ name, value, options }) => {
-                cookieStore.set(name, value, options);
-              });
-            } catch {
-              // setAll peut échouer dans Server Components (read-only)
-            }
-          },
-        },
-      }
-    );
-  }
-
-  // LinkMe et Site: cookie personnalisé avec filtrage
-  const cookiePrefix = `sb-${appName}-auth`;
-
+  // Toutes les apps utilisent le cookie par défaut: sb-{PROJECT_ID}-auth-token
+  // L'option cookieOptions de @supabase/ssr n'est PAS supportée
   return createSupabaseServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
-      cookieOptions: {
-        name: cookiePrefix,
-      },
       cookies: {
         getAll() {
-          // Filtrer pour ne retourner que les cookies de cette app
-          return cookieStore
-            .getAll()
-            .filter(c => c.name.startsWith(cookiePrefix));
+          return cookieStore.getAll();
         },
         setAll(cookiesToSet) {
           try {

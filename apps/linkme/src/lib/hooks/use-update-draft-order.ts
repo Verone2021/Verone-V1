@@ -166,24 +166,33 @@ async function updateDraftOrder(
     }
   } else {
     // Pas de modification d'items, garder le total existant
-    const existingItems = currentOrder.sales_order_items as any[];
-    for (const item of existingItems || []) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const existingItems = currentOrder.sales_order_items as any as Array<{
+      quantity: number;
+      unit_price_ht: number;
+    }>;
+    for (const item of existingItems ?? []) {
       newProductsHt += item.quantity * item.unit_price_ht;
     }
   }
 
   // 3. Calculer les nouveaux totaux
-  const shippingCostHt = currentOrder.shipping_cost_ht || 0;
-  const insuranceCostHt = currentOrder.insurance_cost_ht || 0;
-  const handlingCostHt = currentOrder.handling_cost_ht || 0;
-  const taxRate = currentOrder.tax_rate || 0.2;
+  const shippingCostHt = currentOrder.shipping_cost_ht ?? 0;
+  const insuranceCostHt = currentOrder.insurance_cost_ht ?? 0;
+  const handlingCostHt = currentOrder.handling_cost_ht ?? 0;
+  const taxRate = currentOrder.tax_rate ?? 0.2;
 
   const newTotalHt =
     newProductsHt + shippingCostHt + insuranceCostHt + handlingCostHt;
   const newTotalTtc = newTotalHt * (1 + taxRate);
 
   // 4. Mettre à jour la commande principale
-  const updateData: Record<string, any> = {
+  const updateData: {
+    total_ht: number;
+    total_ttc: number;
+    updated_at: string;
+    customer_id?: string;
+  } = {
     total_ht: Math.round(newTotalHt * 100) / 100,
     total_ttc: Math.round(newTotalTtc * 100) / 100,
     updated_at: new Date().toISOString(),
@@ -212,7 +221,12 @@ async function updateDraftOrder(
 
   // 5. Mettre à jour les détails LinkMe si nécessaire
   if (input.desiredDeliveryDate || input.requesterInfo) {
-    const linkmeDetailsUpdate: Record<string, any> = {};
+    const linkmeDetailsUpdate: {
+      desired_delivery_date?: string;
+      requester_name?: string;
+      requester_email?: string;
+      requester_phone?: string;
+    } = {};
 
     if (input.desiredDeliveryDate) {
       linkmeDetailsUpdate.desired_delivery_date = input.desiredDeliveryDate;
@@ -265,15 +279,15 @@ export function useUpdateDraftOrder() {
 
   return useMutation({
     mutationFn: updateDraftOrder,
-    onSuccess: result => {
+    onSuccess: async result => {
       if (result.success) {
         // Invalider tous les caches concernés pour synchronisation bidirectionnelle
-        queryClient.invalidateQueries({ queryKey: ['linkme-orders'] });
-        queryClient.invalidateQueries({
+        await queryClient.invalidateQueries({ queryKey: ['linkme-orders'] });
+        await queryClient.invalidateQueries({
           queryKey: ['linkme-order', result.orderId],
         });
         // Aussi invalider les caches du back-office pour synchronisation
-        queryClient.invalidateQueries({ queryKey: ['sales-orders'] });
+        await queryClient.invalidateQueries({ queryKey: ['sales-orders'] });
       }
     },
     onError: error => {

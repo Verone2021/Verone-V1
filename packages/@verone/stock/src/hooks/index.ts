@@ -15,6 +15,5 @@ export { useStock, type StockSummary } from './use-stock';
 export { useStockMovements, type StockMovement } from './use-stock-movements';
 export { useStockUI } from './use-stock-ui';
 
-
 // Re-export types
 export type { StockReasonCode, MovementType } from './use-stock-movements';

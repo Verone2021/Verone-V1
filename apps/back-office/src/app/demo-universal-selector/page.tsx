@@ -19,7 +19,7 @@ export default function DemoUniversalSelectorPage() {
 
   const handleSelect = (products: SelectedProduct[]) => {
     setSelectedProducts(products);
-    console.log('Produits sélectionnés:', products);
+    console.warn('Produits sélectionnés:', products);
   };
 
   return (

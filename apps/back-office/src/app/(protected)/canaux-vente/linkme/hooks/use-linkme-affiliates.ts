@@ -5,6 +5,12 @@
  */
 
 'use client';
+import type { Database } from '@verone/types';
+
+// Types Supabase
+type LinkMeAffiliateRow =
+  Database['public']['Tables']['linkme_affiliates']['Row'];
+type Organisation = Database['public']['Tables']['organisations']['Row'];
 
 import { useQuery } from '@tanstack/react-query';
 import { createClient } from '@verone/utils/supabase/client';
@@ -43,7 +49,7 @@ async function fetchLinkMeAffiliates(
   const supabase = createClient();
 
   // Récupérer les affiliés avec les enseignes et organisations jointes
-  const { data: affiliates, error } = await (supabase as any)
+  const { data: affiliates, error } = await supabase
     .from('linkme_affiliates')
     .select(
       `
@@ -73,8 +79,8 @@ async function fetchLinkMeAffiliates(
   }
 
   // Récupérer les sélections pour compter par affilié
-  const affiliateIds = affiliates.map((a: any) => a.id);
-  const { data: selections } = await (supabase as any)
+  const affiliateIds = affiliates.map(a => a.id);
+  const { data: selections } = await supabase
     .from('linkme_selections')
     .select('affiliate_id')
     .in('affiliate_id', affiliateIds)
@@ -82,7 +88,7 @@ async function fetchLinkMeAffiliates(
 
   // Compter les sélections par affilié
   const selectionsCountMap = new Map<string, number>();
-  (selections || []).forEach((s: any) => {
+  (selections || []).forEach(s => {
     selectionsCountMap.set(
       s.affiliate_id,
       (selectionsCountMap.get(s.affiliate_id) || 0) + 1
@@ -91,14 +97,14 @@ async function fetchLinkMeAffiliates(
 
   // Mapper les résultats
   const result: LinkMeAffiliate[] = affiliates
-    .map((affiliate: any) => {
+    .map(affiliate => {
       // Déterminer le type basé sur enseigne_id ou organisation_id
       const affiliateType: AffiliateType = affiliate.enseigne_id
         ? 'enseigne'
         : 'org_independante';
 
       // Nom de l'enseigne ou organisation
-      const enseigneName = affiliate.enseigne?.name || null;
+      const enseigneName = affiliate.enseigne?.name ?? null;
       const organisationName =
         affiliate.organisation?.trade_name ||
         affiliate.organisation?.legal_name ||
@@ -139,7 +145,7 @@ async function fetchLinkMeAffiliateById(
 ): Promise<LinkMeAffiliate | null> {
   const supabase = createClient();
 
-  const { data: affiliate, error } = await (supabase as any)
+  const { data: affiliate, error } = await supabase
     .from('linkme_affiliates')
     .select(
       `
@@ -167,7 +173,7 @@ async function fetchLinkMeAffiliateById(
   if (!affiliate) return null;
 
   // Compter les sélections
-  const { count: selectionsCount } = await (supabase as any)
+  const { count: selectionsCount } = await supabase
     .from('linkme_selections')
     .select('id', { count: 'exact', head: true })
     .eq('affiliate_id', affiliateId)
@@ -184,7 +190,7 @@ async function fetchLinkMeAffiliateById(
     type: affiliateType,
     enseigne_id: affiliate.enseigne_id,
     organisation_id: affiliate.organisation_id,
-    enseigne_name: affiliate.enseigne?.name || null,
+    enseigne_name: affiliate.enseigne?.name ?? null,
     organisation_name:
       affiliate.organisation?.trade_name ||
       affiliate.organisation?.legal_name ||
@@ -237,7 +243,7 @@ export function useLinkMeSelectionsByAffiliate(affiliateId: string | null) {
       if (!affiliateId) return [];
 
       const supabase = createClient();
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('linkme_selections')
         .select('id, name, slug, products_count, archived_at')
         .eq('affiliate_id', affiliateId)

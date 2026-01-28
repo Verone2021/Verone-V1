@@ -291,7 +291,7 @@ export function formatDateFR(
   const dateObj = typeof date === 'string' ? new Date(date) : date;
   return dateObj.toLocaleDateString(
     'fr-FR',
-    options || {
+    options ?? {
       day: '2-digit',
       month: 'long',
       year: 'numeric',

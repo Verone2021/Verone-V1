@@ -10,7 +10,6 @@ import { useToast } from '@verone/common';
 import type { SelectedProduct } from '@verone/products';
 import { CreateProductInGroupModal } from '@verone/products';
 import { EditProductVariantModal } from '@verone/products';
-import { VariantCreationModal } from '@verone/products';
 import { VariantGroupEditModal } from '@verone/products';
 import { UniversalProductSelectorV2 } from '@verone/products';
 import { useVariantGroups } from '@verone/products';
@@ -37,7 +36,6 @@ import {
   Palette,
   Ruler,
   Layers,
-  Settings,
   Home,
   ExternalLink,
 } from 'lucide-react';
@@ -98,7 +96,7 @@ interface VariantProductCardProps {
 
 function VariantProductCard({
   product,
-  variantType,
+  variantType: _variantType,
   hasCommonSupplier,
   groupDimensions,
   onRemove,
@@ -239,11 +237,12 @@ export default function VariantGroupDetailPage({
     removeProductFromGroup,
     updateVariantGroup,
     createProductInGroup,
-    updateProductInGroup,
+    updateProductInGroup: _updateProductInGroup,
     addProductsToGroup,
     refetch,
   } = useVariantGroups();
-  const { updateProductVariantAttribute } = useProductVariantEditing();
+  const { updateProductVariantAttribute: _updateProductVariantAttribute } =
+    useProductVariantEditing();
 
   // États pour modals
   const [showEditModal, setShowEditModal] = useState(false);
@@ -380,7 +379,7 @@ export default function VariantGroupDetailPage({
 
   // Édition inline du nom
   const handleStartEditName = useCallback(() => {
-    setEditedName(variantGroup?.name || '');
+    setEditedName(variantGroup?.name ?? '');
     setEditingName(true);
   }, [variantGroup?.name]);
 
@@ -520,16 +519,30 @@ export default function VariantGroupDetailPage({
           </ButtonV2>
           <div>
             <div className="flex items-center gap-3">
-              {getVariantTypeIcon(variantGroup.variant_type || '')}
+              {getVariantTypeIcon(variantGroup.variant_type ?? '')}
               {editingName ? (
                 <div className="flex items-center gap-2">
                   <Input
                     type="text"
                     value={editedName}
                     onChange={e => setEditedName(e.target.value)}
-                    onBlur={handleSaveName}
+                    onBlur={() => {
+                      void handleSaveName().catch(error => {
+                        console.error(
+                          '[VariantGroup] Save name failed:',
+                          error
+                        );
+                      });
+                    }}
                     onKeyDown={e => {
-                      if (e.key === 'Enter') handleSaveName();
+                      if (e.key === 'Enter') {
+                        void handleSaveName().catch(error => {
+                          console.error(
+                            '[VariantGroup] Save name failed:',
+                            error
+                          );
+                        });
+                      }
                       if (e.key === 'Escape') handleCancelEditName();
                     }}
                     disabled={savingName}
@@ -607,7 +620,7 @@ export default function VariantGroupDetailPage({
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Type</CardTitle>
-            {getVariantTypeIcon(variantGroup.variant_type || '')}
+            {getVariantTypeIcon(variantGroup.variant_type ?? '')}
           </CardHeader>
           <CardContent>
             <div className="text-sm font-medium">
@@ -681,7 +694,9 @@ export default function VariantGroupDetailPage({
                       | 'material'
                       | 'pattern';
                     setEditedType(newType);
-                    handleSaveType(newType);
+                    void handleSaveType(newType).catch(error => {
+                      console.error('[VariantGroup] Save type failed:', error);
+                    });
                   }}
                   disabled={savingType}
                   className="border border-gray-300 rounded-md px-3 py-1 text-sm"
@@ -705,7 +720,7 @@ export default function VariantGroupDetailPage({
               </div>
             ) : (
               <div className="flex items-center gap-2 group">
-                {getVariantTypeIcon(variantGroup.variant_type || '')}
+                {getVariantTypeIcon(variantGroup.variant_type ?? '')}
                 <span className="text-sm text-gray-900 font-medium">
                   {formatVariantType(variantGroup.variant_type)}
                 </span>
@@ -870,7 +885,7 @@ export default function VariantGroupDetailPage({
               <VariantProductCard
                 key={product.id}
                 product={product}
-                variantType={variantGroup.variant_type || ''}
+                variantType={variantGroup.variant_type ?? ''}
                 hasCommonSupplier={variantGroup.has_common_supplier || false}
                 groupDimensions={
                   variantGroup.dimensions_length
@@ -882,7 +897,14 @@ export default function VariantGroupDetailPage({
                       } as any)
                     : null
                 }
-                onRemove={handleRemoveProduct}
+                onRemove={(id, name) => {
+                  void handleRemoveProduct(id, name).catch(error => {
+                    console.error(
+                      '[VariantGroup] Remove product failed:',
+                      error
+                    );
+                  });
+                }}
                 onEdit={handleEditProduct}
                 router={router}
               />
@@ -955,7 +977,11 @@ export default function VariantGroupDetailPage({
           onClose={handleCloseEditProductModal}
           product={selectedProductForEdit}
           variantGroup={variantGroup}
-          onSuccess={handleProductUpdated}
+          onSuccess={() => {
+            void handleProductUpdated().catch(error => {
+              console.error('[VariantGroup] Product update failed:', error);
+            });
+          }}
         />
       )}
     </div>

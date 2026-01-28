@@ -6,7 +6,7 @@
 
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 
 import Image from 'next/image';
 
@@ -35,7 +35,6 @@ import {
   Euro,
   Image as ImageIcon,
   Package,
-  CheckCircle,
   AlertCircle,
   Loader2,
   Upload,
@@ -178,7 +177,7 @@ export function EditSiteInternetProductModal({
   const [errors, setErrors] = useState<z.ZodIssue[]>([]);
   const [showPhotosModal, setShowPhotosModal] = useState(false);
   const [showImageViewer, setShowImageViewer] = useState(false);
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [selectedImageIndex, _setSelectedImageIndex] = useState(0);
   const supabase = createClient();
 
   // Récupérer les images du catalogue produit via hook
@@ -188,7 +187,7 @@ export function EditSiteInternetProductModal({
     fetchImages,
     setPrimaryImage,
     deleteImage,
-    uploadImage,
+    uploadImage: _uploadImage,
   } = useProductImages({
     productId: product.product_id,
     autoFetch: true,
@@ -200,7 +199,7 @@ export function EditSiteInternetProductModal({
 
     return catalogueImages.map(img => ({
       id: img.id,
-      public_url: img.public_url || '',
+      public_url: img.public_url ?? '',
       alt_text: img.alt_text || `${product.name}`,
       is_primary: img.is_primary || false,
     }));
@@ -208,7 +207,7 @@ export function EditSiteInternetProductModal({
 
   // État formulaire
   const [formData, setFormData] = useState<Partial<ProductFormData>>({
-    slug: product.slug || '',
+    slug: product.slug ?? '',
     is_published_online: product.is_published,
     custom_title: '',
     custom_description: '',
@@ -220,16 +219,16 @@ export function EditSiteInternetProductModal({
     notes: '',
     is_active: true,
     // Nouveaux champs informations produit
-    custom_description_long: product.description || '',
-    custom_technical_description: product.technical_description || '',
-    custom_brand: product.brand || '',
+    custom_description_long: product.description ?? '',
+    custom_technical_description: product.technical_description ?? '',
+    custom_brand: product.brand ?? '',
     custom_selling_points: product.selling_points || [],
   });
 
   // Mutation update
   const updateProduct = useMutation({
     mutationFn: async (data: Partial<ProductFormData>) => {
-      console.log('🔍 Mutation START', {
+      console.warn('🔍 Mutation START', {
         productId: product.product_id,
         data: {
           slug: data.slug,
@@ -240,13 +239,13 @@ export function EditSiteInternetProductModal({
       });
 
       const channelId = await getChannelId();
-      console.log('✅ Channel ID récupéré:', channelId);
+      console.warn('✅ Channel ID récupéré:', channelId);
 
       // 1. Update products table (slug, meta_title, meta_description, is_published_online)
       const { error: productsError } = await supabase
         .from('products')
         .update({
-          slug: data.slug || null, // Convertir chaîne vide en null
+          slug: data.slug ?? null, // Convertir chaîne vide en null
           meta_title: data.meta_title,
           meta_description: data.meta_description,
           is_published_online: data.is_published_online,
@@ -262,7 +261,7 @@ export function EditSiteInternetProductModal({
         console.error('❌ Erreur products update:', productsError);
         throw productsError;
       }
-      console.log('✅ Products table updated');
+      console.warn('✅ Products table updated');
 
       // 2. Upsert channel_product_metadata (incluant nouveaux champs)
       if (
@@ -295,7 +294,7 @@ export function EditSiteInternetProductModal({
           console.error('❌ Erreur metadata upsert:', metadataError);
           throw metadataError;
         }
-        console.log('✅ Metadata upserted');
+        console.warn('✅ Metadata upserted');
       }
 
       // 3. Upsert channel_pricing (si prix OU réduction modifiés)
@@ -307,10 +306,10 @@ export function EditSiteInternetProductModal({
               product_id: product.product_id,
               channel_id: channelId,
               custom_price_ht: data.custom_price_ht,
-              discount_rate: data.discount_rate || null,
+              discount_rate: data.discount_rate ?? null,
               markup_rate: null, // Toujours null (mode custom_price uniquement)
               min_quantity: data.min_quantity || 1,
-              notes: data.notes || null,
+              notes: data.notes ?? null,
               is_active: data.is_active ?? true,
             },
             { onConflict: 'product_id,channel_id,min_quantity' }
@@ -321,14 +320,16 @@ export function EditSiteInternetProductModal({
           console.error('❌ Erreur pricing upsert:', pricingError);
           throw pricingError;
         }
-        console.log('✅ Pricing upserted');
+        console.warn('✅ Pricing upserted');
       }
 
-      console.log('🎉 Mutation COMPLETE');
+      console.warn('🎉 Mutation COMPLETE');
     },
-    onSuccess: () => {
-      console.log('🎉 onSuccess callback');
-      queryClient.invalidateQueries({ queryKey: ['site-internet-products'] });
+    onSuccess: async () => {
+      console.warn('🎉 onSuccess callback');
+      await queryClient.invalidateQueries({
+        queryKey: ['site-internet-products'],
+      });
       toast({
         title: 'Produit mis à jour',
         description: 'Les modifications ont été enregistrées avec succès',
@@ -845,7 +846,14 @@ export function EditSiteInternetProductModal({
                     <ButtonV2
                       variant="outline"
                       size="sm"
-                      onClick={() => fetchImages()}
+                      onClick={() => {
+                        void fetchImages().catch(error => {
+                          console.error(
+                            '[EditSiteInternetProductModal] fetchImages failed:',
+                            error
+                          );
+                        });
+                      }}
                       disabled={imagesLoading}
                     >
                       {imagesLoading ? (
@@ -885,7 +893,7 @@ export function EditSiteInternetProductModal({
                             {/* Image - Prend toute la carte en responsive */}
                             <div className="aspect-square relative bg-gray-100">
                               <Image
-                                src={image.public_url || ''}
+                                src={image.public_url ?? ''}
                                 alt={image.alt_text || `Photo ${index + 1}`}
                                 fill
                                 className="object-cover"
@@ -911,22 +919,29 @@ export function EditSiteInternetProductModal({
                                   <ButtonV2
                                     size="sm"
                                     variant="secondary"
-                                    onClick={async () => {
-                                      try {
-                                        await setPrimaryImage(image.id);
-                                        toast({
-                                          title: 'Image principale définie',
-                                          description:
-                                            "L'image a été définie comme principale avec succès",
-                                        });
-                                      } catch (error) {
-                                        toast({
-                                          title: 'Erreur',
-                                          description:
-                                            "Impossible de définir l'image comme principale",
-                                          variant: 'destructive',
-                                        });
-                                      }
+                                    onClick={() => {
+                                      void (async () => {
+                                        try {
+                                          await setPrimaryImage(image.id);
+                                          toast({
+                                            title: 'Image principale définie',
+                                            description:
+                                              "L'image a été définie comme principale avec succès",
+                                          });
+                                        } catch (_error) {
+                                          toast({
+                                            title: 'Erreur',
+                                            description:
+                                              "Impossible de définir l'image comme principale",
+                                            variant: 'destructive',
+                                          });
+                                        }
+                                      })().catch(error => {
+                                        console.error(
+                                          '[EditSiteInternetProductModal] setPrimaryImage failed:',
+                                          error
+                                        );
+                                      });
                                     }}
                                     className="h-9 px-3 bg-white/90 hover:bg-white text-black border-0 relative z-40"
                                   >
@@ -939,31 +954,38 @@ export function EditSiteInternetProductModal({
                                 <ButtonV2
                                   size="sm"
                                   variant="destructive"
-                                  onClick={async () => {
-                                    if (image.is_primary) {
-                                      toast({
-                                        title: 'Image principale',
-                                        description:
-                                          'Définissez une autre image comme principale avant de supprimer',
-                                        variant: 'destructive',
-                                      });
-                                      return;
-                                    }
-                                    try {
-                                      await deleteImage(image.id);
-                                      toast({
-                                        title: 'Image supprimée',
-                                        description:
-                                          "L'image a été supprimée avec succès",
-                                      });
-                                    } catch (error) {
-                                      toast({
-                                        title: 'Erreur',
-                                        description:
-                                          "Impossible de supprimer l'image",
-                                        variant: 'destructive',
-                                      });
-                                    }
+                                  onClick={() => {
+                                    void (async () => {
+                                      if (image.is_primary) {
+                                        toast({
+                                          title: 'Image principale',
+                                          description:
+                                            'Définissez une autre image comme principale avant de supprimer',
+                                          variant: 'destructive',
+                                        });
+                                        return;
+                                      }
+                                      try {
+                                        await deleteImage(image.id);
+                                        toast({
+                                          title: 'Image supprimée',
+                                          description:
+                                            "L'image a été supprimée avec succès",
+                                        });
+                                      } catch (_error) {
+                                        toast({
+                                          title: 'Erreur',
+                                          description:
+                                            "Impossible de supprimer l'image",
+                                          variant: 'destructive',
+                                        });
+                                      }
+                                    })().catch(error => {
+                                      console.error(
+                                        '[EditSiteInternetProductModal] deleteImage failed:',
+                                        error
+                                      );
+                                    });
                                   }}
                                   className="h-9 px-3 bg-red-500/90 hover:bg-red-600 text-white border-0 relative z-40"
                                 >
@@ -1377,9 +1399,16 @@ export function EditSiteInternetProductModal({
           productType="product"
           onImagesUpdated={() => {
             // Invalider cache pour recharger les images
-            queryClient.invalidateQueries({
-              queryKey: ['site-internet-products'],
-            });
+            void queryClient
+              .invalidateQueries({
+                queryKey: ['site-internet-products'],
+              })
+              .catch(error => {
+                console.error(
+                  '[EditSiteInternetProductModal] invalidateQueries failed:',
+                  error
+                );
+              });
           }}
         />
       )}

@@ -54,7 +54,7 @@ export function LinkMeDeleteUserDialog({
       onOpenChange(false);
       onUserDeleted?.();
 
-      console.log('Utilisateur LinkMe désactivé avec succès');
+      console.warn('Utilisateur LinkMe désactivé avec succès');
     } catch (error: any) {
       console.error('Erreur suppression utilisateur:', error);
       setError(error.message || "Une erreur inattendue s'est produite");
@@ -151,7 +151,14 @@ export function LinkMeDeleteUserDialog({
             type="button"
             variant="destructive"
             icon={Trash2}
-            onClick={handleDelete}
+            onClick={() => {
+              void handleDelete().catch(error => {
+                console.error(
+                  '[LinkMeDeleteUserDialog] handleDelete failed:',
+                  error
+                );
+              });
+            }}
             loading={deleteMutation.isPending}
             disabled={deleteMutation.isPending}
           >

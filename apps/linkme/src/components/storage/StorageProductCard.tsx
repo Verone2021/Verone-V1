@@ -6,7 +6,7 @@
  * @since 2025-12-22
  */
 
-import { Package, Box, CheckCircle, XCircle } from 'lucide-react';
+import { Package, Box as _Box, CheckCircle, XCircle } from 'lucide-react';
 
 import type {
   StorageAllocation,
@@ -82,7 +82,7 @@ export function StorageProductCard({
             </div>
             <div className="text-right">
               <p className="text-sm font-bold text-green-600">
-                ~{formatPrice(estimatedPrice || 0)}
+                ~{formatPrice(estimatedPrice ?? 0)}
               </p>
               <p className="text-[10px] text-gray-400">par mois</p>
             </div>

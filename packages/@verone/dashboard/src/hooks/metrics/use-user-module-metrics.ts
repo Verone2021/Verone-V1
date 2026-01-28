@@ -43,7 +43,7 @@ function extractModuleFromUrl(pageUrl: string | null): string | null {
   if (!pageUrl) return null;
 
   // Extraire première partie du path (après le premier /)
-  const match = pageUrl.match(/^\/([^\/]+)/);
+  const match = pageUrl.match(/^\/([^/]+)/);
   if (!match) return null;
 
   return match[1];

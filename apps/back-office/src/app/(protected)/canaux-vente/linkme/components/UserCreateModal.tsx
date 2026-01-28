@@ -57,7 +57,7 @@ export function UserCreateModal({ isOpen, onClose }: UserCreateModalProps) {
   // Pour org_independante: charge TOUTES les organisations DISPONIBLES (sans filtre enseigne)
   // Le 2ème paramètre exclut les organisations qui ont déjà un utilisateur org_independante
   const { data: organisations } = useLinkMeOrganisationsSelect(
-    role === 'org_independante' ? undefined : enseigneId || undefined,
+    role === 'org_independante' ? undefined : (enseigneId ?? undefined),
     role === 'org_independante' // Exclure les orgs déjà utilisées pour org_independante
   );
 
@@ -135,10 +135,10 @@ export function UserCreateModal({ isOpen, onClose }: UserCreateModalProps) {
       password,
       first_name: firstName,
       last_name: lastName,
-      phone: phone || undefined,
+      phone: phone ?? undefined,
       role,
-      enseigne_id: enseigneId || undefined,
-      organisation_id: organisationId || undefined,
+      enseigne_id: enseigneId ?? undefined,
+      organisation_id: organisationId ?? undefined,
     };
 
     try {
@@ -181,7 +181,11 @@ export function UserCreateModal({ isOpen, onClose }: UserCreateModalProps) {
           {/* Form */}
           <form
             id="create-user-form"
-            onSubmit={handleSubmit}
+            onSubmit={e => {
+              void handleSubmit(e).catch(error => {
+                console.error('[UserCreateModal] handleSubmit failed:', error);
+              });
+            }}
             className="p-6 space-y-5 overflow-y-auto flex-1"
           >
             {/* Email */}

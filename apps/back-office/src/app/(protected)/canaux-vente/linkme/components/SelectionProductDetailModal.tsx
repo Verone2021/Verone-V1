@@ -22,7 +22,6 @@ import {
   Tag,
   Truck,
   Check,
-  Info,
   FileDown,
   Euro,
   Loader2,
@@ -247,7 +246,9 @@ export function SelectionProductDetailModal({
   if (!item) return null;
 
   const product = item.product;
-  const sellingPoints = product?.selling_points || [];
+  const sellingPoints = (
+    Array.isArray(product?.selling_points) ? product.selling_points : []
+  ) as string[];
   const isViewMode = mode === 'view';
 
   return (
@@ -587,7 +588,14 @@ export function SelectionProductDetailModal({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => handleDownloadPdf(true)}
+                onClick={() => {
+                  void handleDownloadPdf(true).catch(error => {
+                    console.error(
+                      '[SelectionProductDetailModal] handleDownloadPdf failed:',
+                      error
+                    );
+                  });
+                }}
                 disabled={isGeneratingPdf}
               >
                 {isGeneratingPdf ? (
@@ -600,7 +608,14 @@ export function SelectionProductDetailModal({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => handleDownloadPdf(false)}
+                onClick={() => {
+                  void handleDownloadPdf(false).catch(error => {
+                    console.error(
+                      '[SelectionProductDetailModal] handleDownloadPdf (no margin) failed:',
+                      error
+                    );
+                  });
+                }}
                 disabled={isGeneratingPdf}
               >
                 {isGeneratingPdf ? (
@@ -628,7 +643,14 @@ export function SelectionProductDetailModal({
             </Button>
             {!isViewMode && (
               <Button
-                onClick={handleSave}
+                onClick={() => {
+                  void handleSave().catch(error => {
+                    console.error(
+                      '[SelectionProductDetailModal] handleSave failed:',
+                      error
+                    );
+                  });
+                }}
                 disabled={!hasChanges || isSaving}
                 className={cn(hasChanges && 'bg-primary hover:bg-primary/90')}
               >

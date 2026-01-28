@@ -68,7 +68,7 @@ export function UserEditModal({ isOpen, user, onClose }: UserEditModalProps) {
   // Fetch organisations basées sur l'enseigne sélectionnée
   // Pour org_independante: charge TOUTES les organisations (sans filtre enseigne)
   const { data: organisations } = useLinkMeOrganisationsSelect(
-    role === 'org_independante' ? undefined : enseigneId || undefined
+    role === 'org_independante' ? undefined : (enseigneId ?? undefined)
   );
 
   // Validation
@@ -77,13 +77,13 @@ export function UserEditModal({ isOpen, user, onClose }: UserEditModalProps) {
   // Initialiser le formulaire avec les valeurs de l'utilisateur
   useEffect(() => {
     if (isOpen && user) {
-      setFirstName(user.first_name || '');
-      setLastName(user.last_name || '');
-      setEmail(user.email || '');
-      setPhone(user.phone || '');
+      setFirstName(user.first_name ?? '');
+      setLastName(user.last_name ?? '');
+      setEmail(user.email ?? '');
+      setPhone(user.phone ?? '');
       setRole(user.linkme_role);
-      setEnseigneId(user.enseigne_id || '');
-      setOrganisationId(user.organisation_id || '');
+      setEnseigneId(user.enseigne_id ?? '');
+      setOrganisationId(user.organisation_id ?? '');
       setIsActive(user.is_active);
       setNewPassword('');
       setConfirmPassword('');
@@ -195,10 +195,10 @@ export function UserEditModal({ isOpen, user, onClose }: UserEditModalProps) {
       const input: UpdateLinkMeUserInput = {
         first_name: firstName,
         last_name: lastName,
-        phone: phone || undefined,
+        phone: phone ?? undefined,
         role,
-        enseigne_id: enseigneId || null,
-        organisation_id: organisationId || null,
+        enseigne_id: enseigneId ?? null,
+        organisation_id: organisationId ?? null,
         is_active: isActive,
       };
 
@@ -253,7 +253,11 @@ export function UserEditModal({ isOpen, user, onClose }: UserEditModalProps) {
           {/* Form */}
           <form
             id="edit-user-form"
-            onSubmit={handleSubmit}
+            onSubmit={e => {
+              void handleSubmit(e).catch(error => {
+                console.error('[UserEditModal] handleSubmit failed:', error);
+              });
+            }}
             className="p-6 space-y-5 overflow-y-auto flex-1"
           >
             {/* === SECTION 1: PROFIL === */}

@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@verone/ui';
-import { X, Save, Loader2 } from 'lucide-react';
+import { Save, Loader2 } from 'lucide-react';
 
 import { ImageUploadV2 } from './image-upload-v2';
 import { cn } from '@verone/utils';
@@ -100,8 +100,8 @@ export function FamilyCrudForm({
   useEffect(() => {
     if (initialData) {
       setFormData({
-        name: initialData.name || '',
-        description: initialData.description || '',
+        name: initialData.name ?? '',
+        description: initialData.description ?? '',
         is_active: initialData.is_active ?? true,
         display_order: initialData.display_order || 1,
         parent_id: initialData.parent_id,
@@ -212,7 +212,14 @@ export function FamilyCrudForm({
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form
+          onSubmit={e => {
+            void handleSubmit(e).catch(error => {
+              console.error('[FamilyCrudForm] Submit failed:', error);
+            });
+          }}
+          className="space-y-6"
+        >
           {/* Sélection parent pour catégories et sous-catégories */}
           {(type === 'category' || type === 'subcategory') && (
             <div className="space-y-2">
@@ -241,7 +248,7 @@ export function FamilyCrudForm({
                 // Mode création : sélection normale
                 <>
                   <Select
-                    value={formData.parent_id || ''}
+                    value={formData.parent_id ?? ''}
                     onValueChange={value => updateField('parent_id', value)}
                   >
                     <SelectTrigger

@@ -376,6 +376,7 @@ export class QontoSyncService {
             // Timeout
             break;
           }
+          // eslint-disable-next-line no-constant-condition -- intentional infinite loop with break conditions above
         } while (true);
 
         // Log par compte bancaire (observabilité)

@@ -9,7 +9,6 @@ import {
   getPcgCategory,
   getPcgCategoriesByType,
   getPcgColor,
-  PCG_SUGGESTED_CATEGORIES,
 } from '@verone/finance';
 import {
   QuickClassificationModal,
@@ -40,8 +39,6 @@ import {
 import { createClient } from '@verone/utils/supabase/client';
 import {
   AlertCircle,
-  ArrowDownLeft,
-  ArrowUpRight,
   CheckCircle2,
   ChevronDown,
   ChevronRight,
@@ -368,7 +365,7 @@ export default function DepensesPage() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setFilters(prev => {
-        const newSearch = searchValue.trim() || undefined;
+        const newSearch = searchValue.trim() ?? undefined;
         // Ne mettre à jour que si la valeur a réellement changé
         if (prev.search === newSearch) return prev;
         return { ...prev, search: newSearch };
@@ -382,7 +379,7 @@ export default function DepensesPage() {
   // Dashboard stats pour les graphiques
   const {
     evolution,
-    expenseBreakdown,
+    expenseBreakdown: _expenseBreakdown,
     loading: dashboardLoading,
   } = useTreasuryStats();
 
@@ -425,7 +422,7 @@ export default function DepensesPage() {
       try {
         const count = await autoClassifyAll();
         if (count > 0) {
-          console.log(
+          console.warn(
             `[DepensesPage] ${count} transaction(s) classée(s) automatiquement`
           );
           // Rafraîchir la liste des dépenses si des transactions ont été classées
@@ -435,7 +432,9 @@ export default function DepensesPage() {
         console.error('[DepensesPage] Auto-classify error:', err);
       }
     };
-    runAutoClassify();
+    void runAutoClassify().catch(error => {
+      console.error('[DepensesPage] Auto-classify init failed:', error);
+    });
   }, [autoClassifyAll, refetch]);
 
   // Map pour accès rapide aux suggestions par ID
@@ -485,7 +484,7 @@ export default function DepensesPage() {
 
   // SLICE 3: Trouver la règle sélectionnée
   const selectedRule = useMemo(
-    () => rules.find(r => r.id === selectedRuleId) || null,
+    () => rules.find(r => r.id === selectedRuleId) ?? null,
     [rules, selectedRuleId]
   );
 
@@ -585,7 +584,9 @@ export default function DepensesPage() {
 
   // Charger les données du graphique au montage et quand l'année change
   useEffect(() => {
-    fetchChartData();
+    void fetchChartData().catch(error => {
+      console.error('[DepensesPage] Fetch chart data failed:', error);
+    });
   }, [fetchChartData]);
 
   // Onglets de statut avec compteurs (simplifié: 3 onglets)
@@ -725,7 +726,11 @@ export default function DepensesPage() {
             </Link>
             <Button
               variant="outline"
-              onClick={() => refetch()}
+              onClick={() => {
+                void refetch().catch(error => {
+                  console.error('[DepensesPage] Refetch failed:', error);
+                });
+              }}
               disabled={isLoading}
             >
               <RefreshCw
@@ -840,7 +845,7 @@ export default function DepensesPage() {
             {/* Filtre année */}
             <select
               className="px-3 py-2 border border-slate-200 rounded-lg text-sm"
-              value={filters.year || ''}
+              value={filters.year ?? ''}
               onChange={e =>
                 setFilters(prev => ({
                   ...prev,
@@ -859,11 +864,11 @@ export default function DepensesPage() {
             {/* Filtre catégorie PCG (adapté selon le side) */}
             <select
               className="px-3 py-2 border border-slate-200 rounded-lg text-sm"
-              value={filters.category || ''}
+              value={filters.category ?? ''}
               onChange={e =>
                 setFilters(prev => ({
                   ...prev,
-                  category: e.target.value || undefined,
+                  category: e.target.value ?? undefined,
                 }))
               }
             >
@@ -913,7 +918,11 @@ export default function DepensesPage() {
               <p className="text-red-600">{error}</p>
               <Button
                 variant="outline"
-                onClick={() => refetch()}
+                onClick={() => {
+                  void refetch().catch(error => {
+                    console.error('[DepensesPage] Refetch failed:', error);
+                  });
+                }}
                 className="mt-4"
               >
                 Réessayer
@@ -1129,9 +1138,26 @@ export default function DepensesPage() {
                       expense={expense}
                       onClassify={handleClassify}
                       onViewAttachment={handleViewAttachment}
-                      onLink={() => refetch()}
+                      onLink={() => {
+                        void refetch().catch(error => {
+                          console.error(
+                            '[DepensesPage] Refetch after link failed:',
+                            error
+                          );
+                        });
+                      }}
                       onViewRule={handleViewRule}
-                      onConfirmSuggestion={handleConfirmSuggestion}
+                      onConfirmSuggestion={(ruleId, organisationId) => {
+                        void handleConfirmSuggestion(
+                          ruleId,
+                          organisationId
+                        ).catch(error => {
+                          console.error(
+                            '[DepensesPage] Confirm suggestion failed:',
+                            error
+                          );
+                        });
+                      }}
                       suggestion={suggestionsMap.get(expense.id)}
                     />
                   ))}
@@ -1161,9 +1187,9 @@ export default function DepensesPage() {
         amount={selectedExpense?.amount || 0}
         transactionId={selectedExpense?.transaction_id}
         counterpartyName={
-          selectedExpense?.transaction_counterparty_name || undefined
+          selectedExpense?.transaction_counterparty_name ?? undefined
         }
-        currentCategory={selectedExpense?.category || undefined}
+        currentCategory={selectedExpense?.category ?? undefined}
         existingRuleId={
           selectedExpense
             ? suggestionsMap.get(selectedExpense.id)?.matchedRule?.id
@@ -1174,7 +1200,14 @@ export default function DepensesPage() {
         currentVatRate={selectedExpense?.vat_rate ?? undefined}
         currentVatSource={selectedExpense?.vat_source ?? undefined}
         currentVatBreakdown={selectedExpense?.vat_breakdown ?? undefined}
-        onSuccess={handleClassifySuccess}
+        onSuccess={() => {
+          void handleClassifySuccess().catch(error => {
+            console.error(
+              '[DepensesPage] Classify success callback failed:',
+              error
+            );
+          });
+        }}
       />
 
       {/* SLICE 3: Modal pour voir/modifier une règle */}
@@ -1185,7 +1218,14 @@ export default function DepensesPage() {
         onUpdate={updateMatchingRule}
         previewApply={previewApply}
         confirmApply={confirmApply}
-        onSuccess={handleRuleSuccess}
+        onSuccess={() => {
+          void handleRuleSuccess().catch(error => {
+            console.error(
+              '[DepensesPage] Rule success callback failed:',
+              error
+            );
+          });
+        }}
       />
 
       {/* Modal de liaison d'organisation (depuis la vue groupée) */}
@@ -1196,7 +1236,14 @@ export default function DepensesPage() {
           label={selectedLabelForLink.label}
           transactionCount={selectedLabelForLink.transactionCount}
           totalAmount={selectedLabelForLink.totalAmount}
-          onSuccess={handleLinkSuccess}
+          onSuccess={() => {
+            void handleLinkSuccess().catch(error => {
+              console.error(
+                '[DepensesPage] Link success callback failed:',
+                error
+              );
+            });
+          }}
         />
       )}
     </div>

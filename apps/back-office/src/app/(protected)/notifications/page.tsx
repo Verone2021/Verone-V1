@@ -27,7 +27,6 @@ import {
   isToday,
   isYesterday,
   isThisWeek,
-  startOfWeek,
 } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Bell, Search, CheckCheck, Trash2, Filter, X } from 'lucide-react';
@@ -35,7 +34,7 @@ import { Bell, Search, CheckCheck, Trash2, Filter, X } from 'lucide-react';
 // Types pour les filtres
 type FilterTab = 'all' | 'unread' | 'urgent' | 'by-type';
 type NotificationType = DatabaseNotification['type'];
-type NotificationSeverity = DatabaseNotification['severity'];
+type _NotificationSeverity = DatabaseNotification['severity'];
 
 /**
  * Grouping des notifications par date
@@ -242,7 +241,14 @@ const NotificationCard = ({
                   icon={CheckCheck}
                   size="sm"
                   label="Marquer comme lu"
-                  onClick={() => onMarkAsRead(notification.id)}
+                  onClick={() => {
+                    void onMarkAsRead(notification.id).catch(error => {
+                      console.error(
+                        '[Notifications] onMarkAsRead failed:',
+                        error
+                      );
+                    });
+                  }}
                 />
               )}
 
@@ -252,7 +258,11 @@ const NotificationCard = ({
                 size="sm"
                 className="text-red-500 hover:text-red-700 hover:bg-red-50"
                 label="Supprimer"
-                onClick={() => onDelete(notification.id)}
+                onClick={() => {
+                  void onDelete(notification.id).catch(error => {
+                    console.error('[Notifications] onDelete failed:', error);
+                  });
+                }}
               />
             </div>
           </div>
@@ -392,7 +402,14 @@ export default function NotificationsPage() {
                 <ButtonUnified
                   variant="secondary"
                   size="sm"
-                  onClick={() => markAllAsRead()}
+                  onClick={() => {
+                    void markAllAsRead().catch(error => {
+                      console.error(
+                        '[Notifications] markAllAsRead failed:',
+                        error
+                      );
+                    });
+                  }}
                 >
                   <CheckCheck className="h-4 w-4 mr-1" />
                   Tout marquer lu

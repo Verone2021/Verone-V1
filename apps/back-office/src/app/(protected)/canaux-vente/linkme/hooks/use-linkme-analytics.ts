@@ -361,7 +361,7 @@ export function useLinkMeAnalytics(
           return {
             id: s.id,
             name: s.name,
-            slug: s.slug || '',
+            slug: s.slug ?? '',
             affiliateName:
               (s.affiliate as { display_name: string } | null)?.display_name ||
               'Inconnu',
@@ -411,7 +411,12 @@ export function useLinkMeAnalytics(
   }, [period, startDateISO, endDateISO, year]);
 
   useEffect(() => {
-    fetchAnalytics();
+    void fetchAnalytics().catch(error => {
+      console.error(
+        '[useLinkMeAnalytics] useEffect fetchAnalytics failed:',
+        error
+      );
+    });
   }, [fetchAnalytics]);
 
   return { data, isLoading, error, refetch: fetchAnalytics };

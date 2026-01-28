@@ -14,7 +14,7 @@ export async function POST(
   context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = await createClient();
+    const supabase = createClient();
     const params = await context.params;
     const orderId = params.id;
 
@@ -85,7 +85,7 @@ export async function POST(
       );
     }
 
-    console.log(
+    console.warn(
       `[Close Order] Order ${order.order_number} closed successfully`,
       {
         units_released: unitsReleased,

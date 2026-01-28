@@ -28,6 +28,8 @@ interface AddressCardProps {
   onClick: () => void;
   /** Disabled state */
   disabled?: boolean;
+  /** Optional badge to display (e.g., "Maison mère") */
+  badge?: string;
 }
 
 // ============================================================================
@@ -39,9 +41,10 @@ export function AddressCard({
   isSelected,
   onClick,
   disabled = false,
+  badge,
 }: AddressCardProps) {
   // Build display label
-  const displayLabel = address.label || address.addressLine1;
+  const displayLabel = address.label ?? address.addressLine1;
   const displayCity = address.city
     ? `${address.postalCode} ${address.city}`
     : '';
@@ -100,6 +103,15 @@ export function AddressCard({
 
           {/* Badges */}
           <div className="flex items-center gap-1 mt-1.5">
+            {badge && (
+              <Badge
+                variant="outline"
+                size="sm"
+                className="text-purple-600 border-purple-300 bg-purple-50"
+              >
+                {badge}
+              </Badge>
+            )}
             {address.isDefault && (
               <Badge variant="info" size="sm">
                 Défaut

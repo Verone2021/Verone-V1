@@ -16,9 +16,9 @@ import { useState } from 'react';
 import { Button, Card } from '@verone/ui';
 import { Plus, Users, Loader2 } from 'lucide-react';
 
+import { CreateEnseigneContactModal } from './CreateEnseigneContactModal';
 import { useOrganisationContacts } from '../../lib/hooks/use-organisation-contacts';
 import { ContactDisplayCard } from '../contacts/ContactDisplayCard';
-import { CreateEnseigneContactModal } from './CreateEnseigneContactModal';
 
 // ============================================================================
 // TYPES
@@ -37,7 +37,7 @@ interface EnseigneContactsTabProps {
 
 export function EnseigneContactsTab({
   enseigneId,
-  parentOrgId,
+  parentOrgId: _parentOrgId,
 }: EnseigneContactsTabProps) {
   const [showCreateModal, setShowCreateModal] = useState(false);
 
@@ -49,7 +49,7 @@ export function EnseigneContactsTab({
     true // Include enseigne contacts
   );
 
-  const enseigneContacts = contactsData?.contacts || [];
+  const enseigneContacts = contactsData?.contacts ?? [];
 
   if (isLoading) {
     return (
@@ -91,19 +91,19 @@ export function EnseigneContactsTab({
           <div className="flex-1">
             <p className="text-sm text-gray-500 mb-1">Facturation</p>
             <p className="text-2xl font-bold text-blue-600">
-              {enseigneContacts.filter((c) => c.isBillingContact).length}
+              {enseigneContacts.filter(c => c.isBillingContact).length}
             </p>
           </div>
           <div className="flex-1">
             <p className="text-sm text-gray-500 mb-1">Commercial</p>
             <p className="text-2xl font-bold text-green-600">
-              {enseigneContacts.filter((c) => c.isCommercialContact).length}
+              {enseigneContacts.filter(c => c.isCommercialContact).length}
             </p>
           </div>
           <div className="flex-1">
             <p className="text-sm text-gray-500 mb-1">Technique</p>
             <p className="text-2xl font-bold text-purple-600">
-              {enseigneContacts.filter((c) => c.isTechnicalContact).length}
+              {enseigneContacts.filter(c => c.isTechnicalContact).length}
             </p>
           </div>
         </div>
@@ -127,7 +127,7 @@ export function EnseigneContactsTab({
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {enseigneContacts.map((contact) => (
+          {enseigneContacts.map(contact => (
             <ContactDisplayCard
               key={contact.id}
               contact={contact}

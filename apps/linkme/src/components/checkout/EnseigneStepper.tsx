@@ -20,11 +20,11 @@ import {
   FileText,
   ChevronLeft,
   ChevronRight,
-  Check,
+  Check as _Check,
   Loader2,
   AlertCircle,
   Package,
-  ShoppingBag,
+  ShoppingBag as _ShoppingBag,
   Minus,
   Plus,
   Trash2,
@@ -241,7 +241,9 @@ export function EnseigneStepper({
     if (currentStep === 1 && !validateStep1()) return;
     if (currentStep === 3) {
       if (!validateStep3()) return;
-      handleSubmit();
+      void handleSubmit().catch(error => {
+        console.error('[EnseigneStepper] Submit failed:', error);
+      });
       return;
     }
     setCurrentStep(prev => Math.min(prev + 1, 3));
@@ -263,7 +265,7 @@ export function EnseigneStepper({
     if (result.success && result.orderNumber) {
       onSuccess(result.orderNumber);
     } else {
-      setErrors({ submit: result.error || 'Erreur lors de la soumission' });
+      setErrors({ submit: result.error ?? 'Erreur lors de la soumission' });
     }
   };
 
@@ -800,7 +802,7 @@ function Step1Demandeur({
               </p>
             ) : (
               <select
-                value={data.existingOrganisationId || ''}
+                value={data.existingOrganisationId ?? ''}
                 onChange={e =>
                   updateData({ existingOrganisationId: e.target.value || null })
                 }
@@ -813,7 +815,7 @@ function Step1Demandeur({
                 <option value="">-- Choisir un restaurant --</option>
                 {organisations.map(org => (
                   <option key={org.id} value={org.id}>
-                    {org.trade_name || org.legal_name}
+                    {org.trade_name ?? org.legal_name}
                     {org.city ? ` (${org.city})` : ''}
                   </option>
                 ))}
@@ -981,7 +983,7 @@ function Step2Proprietaire({ data, updateData }: Step2Props) {
                 </label>
                 <input
                   type="text"
-                  value={data.ownerKbisUrl || ''}
+                  value={data.ownerKbisUrl ?? ''}
                   onChange={e =>
                     updateData({ ownerKbisUrl: e.target.value || null })
                   }

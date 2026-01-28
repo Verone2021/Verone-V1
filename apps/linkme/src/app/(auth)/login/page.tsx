@@ -16,7 +16,6 @@
 import { useState, useEffect, Suspense } from 'react';
 
 import Image from 'next/image';
-import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 import {
@@ -95,7 +94,7 @@ function LoginContent(): JSX.Element {
     },
   ];
 
-  const redirectUrl = searchParams.get('redirect') ?? '/';
+  const redirectUrl = searchParams.get('redirect') ?? '/dashboard';
 
   type GlobeApiItem = {
     id: string;

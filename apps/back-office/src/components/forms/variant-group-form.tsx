@@ -1,10 +1,9 @@
 'use client';
 
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 
 import Link from 'next/link';
 
-import { COLLECTION_STYLE_OPTIONS } from '@verone/types';
 import type { RoomType } from '@verone/types';
 import type { VariantGroup, VariantType } from '@verone/types';
 import { ButtonV2 } from '@verone/ui';
@@ -27,7 +26,7 @@ import {
   SelectValue,
 } from '@verone/ui';
 import { cn } from '@verone/utils';
-import { X, Plus, ExternalLink } from 'lucide-react';
+import { Plus, ExternalLink } from 'lucide-react';
 
 import { useFamilies } from '@verone/categories';
 import { useCategories } from '@verone/categories';
@@ -185,7 +184,9 @@ export function VariantGroupForm({
       }
     };
 
-    loadSubcategories();
+    void loadSubcategories().catch(error => {
+      console.error('[VariantGroupForm] loadSubcategories failed:', error);
+    });
 
     return () => {
       isMounted = false;
@@ -211,11 +212,11 @@ export function VariantGroupForm({
           base_sku: editingGroup.base_sku,
           subcategory_id: editingGroup.subcategory_id,
           variant_type: editingGroup.variant_type || 'color',
-          style: editingGroup.style || '',
+          style: editingGroup.style ?? '',
           suitable_rooms: (editingGroup.suitable_rooms || []) as RoomType[],
-          common_length: dimensions.length?.toString() || '',
-          common_width: dimensions.width?.toString() || '',
-          common_height: dimensions.height?.toString() || '',
+          common_length: dimensions.length?.toString() ?? '',
+          common_width: dimensions.width?.toString() ?? '',
+          common_height: dimensions.height?.toString() ?? '',
           common_dimensions_unit: dimensions.unit || 'cm',
         } as any);
       } else {
@@ -282,9 +283,9 @@ export function VariantGroupForm({
         formData.common_height;
       const common_dimensions = hasDimensions
         ? {
-            length: parseFloat(formData.common_length) || null,
-            width: parseFloat(formData.common_width) || null,
-            height: parseFloat(formData.common_height) || null,
+            length: parseFloat(formData.common_length) ?? null,
+            width: parseFloat(formData.common_width) ?? null,
+            height: parseFloat(formData.common_height) ?? null,
             unit: formData.common_dimensions_unit,
           }
         : null;
@@ -294,13 +295,13 @@ export function VariantGroupForm({
         base_sku: formData.base_sku.trim(),
         subcategory_id: formData.subcategory_id,
         variant_type: formData.variant_type,
-        style: formData.style || null,
+        style: formData.style ?? null,
         suitable_rooms:
           formData.suitable_rooms.length > 0 ? formData.suitable_rooms : null,
         common_dimensions,
         has_common_supplier: formData.has_common_supplier,
         supplier_id: formData.has_common_supplier
-          ? formData.supplier_id || null
+          ? (formData.supplier_id ?? null)
           : null,
       };
 
@@ -359,7 +360,14 @@ export function VariantGroupForm({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form
+          onSubmit={e => {
+            void handleSubmit(e).catch(error => {
+              console.error('[VariantGroupForm] handleSubmit failed:', error);
+            });
+          }}
+          className="space-y-6"
+        >
           {/* Nom du groupe */}
           <div className="space-y-2">
             <Label htmlFor="name" className="text-sm font-medium">

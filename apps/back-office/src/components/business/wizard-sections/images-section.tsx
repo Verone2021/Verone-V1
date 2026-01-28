@@ -37,8 +37,8 @@ interface ImagesSectionProps {
 export function ImagesSection({
   selectedImages,
   setSelectedImages,
-  formData,
-  onSave,
+  formData: _formData,
+  onSave: _onSave,
 }: ImagesSectionProps) {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);

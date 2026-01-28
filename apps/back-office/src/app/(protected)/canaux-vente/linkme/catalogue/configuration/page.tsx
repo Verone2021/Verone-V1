@@ -3,7 +3,7 @@
 import { useState, useMemo, useCallback } from 'react';
 
 import { ProductThumbnail } from '@verone/products/components/images/ProductThumbnail';
-import { Badge, Progress } from '@verone/ui';
+import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
 import { Input } from '@verone/ui';
@@ -26,7 +26,6 @@ import {
   Minus,
   Loader2,
   AlertCircle,
-  CheckCircle2,
   Package,
   DollarSign,
   Percent,
@@ -404,7 +403,9 @@ export default function LinkMePricingConfigPage() {
     if (successCount > 0) {
       toast.success(`${successCount} produit(s) mis à jour`);
       setPendingChanges(new Map());
-      refetch();
+      void refetch().catch(error => {
+        console.error('[ConfigurationPage] refetch failed:', error);
+      });
     }
     if (errorCount > 0) {
       toast.error(`${errorCount} erreur(s) lors de la mise à jour`);
@@ -538,7 +539,14 @@ export default function LinkMePricingConfigPage() {
                 </ButtonV2>
                 <ButtonV2
                   size="sm"
-                  onClick={handleSaveAll}
+                  onClick={() => {
+                    void handleSaveAll().catch(error => {
+                      console.error(
+                        '[ConfigurationPage] handleSaveAll failed:',
+                        error
+                      );
+                    });
+                  }}
                   disabled={updatePricingMutation.isPending}
                 >
                   {updatePricingMutation.isPending ? (

@@ -30,14 +30,14 @@ export async function POST(
     const body: AddMessageRequest = await request.json();
 
     // Validation
-    if (!body.message || !body.message.trim()) {
+    if (!body.message?.trim()) {
       return NextResponse.json(
         { success: false, error: 'Le message ne peut pas être vide' },
         { status: 400 }
       );
     }
 
-    const supabase = await createClient();
+    const supabase = createClient();
 
     // Vérifier l'authentification
     const {
@@ -91,7 +91,7 @@ export async function POST(
 
         if (emailResponse.ok) {
           const emailData = await emailResponse.json();
-          emailId = emailData.emailId || null;
+          emailId = emailData.emailId ?? null;
         } else {
           console.warn(
             '[API Messages] Email sending failed, but message will be saved'

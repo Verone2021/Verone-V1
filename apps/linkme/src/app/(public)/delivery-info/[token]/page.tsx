@@ -46,6 +46,14 @@ import {
 // TYPES
 // ============================================
 
+interface OrderItem {
+  id: string;
+  quantity: number;
+  products: {
+    name: string;
+  } | null;
+}
+
 interface OrderWithDetails {
   id: string;
   order_number: string;
@@ -200,10 +208,17 @@ export default function DeliveryInfoPage() {
                   total_ttc: orderData.total_ttc,
                   status: orderData.status,
                   expected_delivery_date: orderData.expected_delivery_date,
-                  organisation: orderData.organisations as any,
-                  linkmeDetails: detailsData as any,
-                  items: (orderData.sales_order_items || []).map(
-                    (item: any) => ({
+                  organisation:
+                    (
+                      orderData.organisations as Array<{
+                        trade_name: string | null;
+                        legal_name: string;
+                      }> | null
+                    )?.[0] ?? null,
+                  linkmeDetails:
+                    detailsData as OrderWithDetails['linkmeDetails'],
+                  items: (orderData.sales_order_items ?? []).map(
+                    (item: OrderItem) => ({
                       id: item.id,
                       quantity: item.quantity,
                       product: item.products,
@@ -276,13 +291,21 @@ export default function DeliveryInfoPage() {
             total_ttc: orderData.total_ttc,
             status: orderData.status,
             expected_delivery_date: orderData.expected_delivery_date,
-            organisation: orderData.organisations as any,
-            linkmeDetails: detailsData as any,
-            items: (orderData.sales_order_items || []).map((item: any) => ({
-              id: item.id,
-              quantity: item.quantity,
-              product: item.products,
-            })),
+            organisation:
+              (
+                orderData.organisations as Array<{
+                  trade_name: string | null;
+                  legal_name: string;
+                }> | null
+              )?.[0] ?? null,
+            linkmeDetails: detailsData as OrderWithDetails['linkmeDetails'],
+            items: (orderData.sales_order_items ?? []).map(
+              (item: OrderItem) => ({
+                id: item.id,
+                quantity: item.quantity,
+                product: item.products,
+              })
+            ),
           },
         });
       } catch (err) {
@@ -300,7 +323,9 @@ export default function DeliveryInfoPage() {
     }
 
     if (token) {
-      validateToken();
+      void validateToken().catch(error => {
+        console.error('[DeliveryInfo] Validation failed:', error);
+      });
     }
   }, [token]);
 
@@ -377,7 +402,7 @@ export default function DeliveryInfoPage() {
               {validation?.expired ? 'Lien expiré' : 'Lien invalide'}
             </CardTitle>
             <CardDescription>
-              {validation?.error ||
+              {validation?.error ??
                 "Ce lien n'est plus valide. Veuillez contacter le support."}
             </CardDescription>
           </CardHeader>
@@ -493,8 +518,8 @@ export default function DeliveryInfoPage() {
                 <span className="text-gray-600">Restaurant</span>
               </div>
               <span className="font-medium">
-                {order.organisation?.trade_name ||
-                  order.organisation?.legal_name ||
+                {order.organisation?.trade_name ??
+                  order.organisation?.legal_name ??
                   '-'}
               </span>
             </div>
@@ -504,7 +529,7 @@ export default function DeliveryInfoPage() {
             <div className="space-y-2">
               {order.items.map(item => (
                 <div key={item.id} className="flex justify-between text-sm">
-                  <span>{item.product?.name || 'Produit'}</span>
+                  <span>{item.product?.name ?? 'Produit'}</span>
                   <Badge variant="outline">× {item.quantity}</Badge>
                 </div>
               ))}
@@ -558,7 +583,14 @@ export default function DeliveryInfoPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form
+              onSubmit={e => {
+                void handleSubmit(e).catch(error => {
+                  console.error('[DeliveryInfo] Submit failed:', error);
+                });
+              }}
+              className="space-y-4"
+            >
               <div className="space-y-2">
                 <Label
                   htmlFor="receptionName"

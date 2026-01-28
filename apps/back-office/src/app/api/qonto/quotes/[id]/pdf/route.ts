@@ -32,7 +32,7 @@ export async function GET(
     const quote = await client.getClientQuoteById(id);
 
     // DEBUG: Logger les champs disponibles pour le PDF
-    console.log('[API Qonto Quote PDF] Quote data:', {
+    console.warn('[API Qonto Quote PDF] Quote data:', {
       id: quote.id,
       quote_number: quote.quote_number,
       status: quote.status,
@@ -46,13 +46,13 @@ export async function GET(
 
     // Si pas de pdf_url, essayer avec attachment_id
     if (!pdfUrl && quote.attachment_id) {
-      console.log(
+      console.warn(
         '[API Qonto Quote PDF] No pdf_url, trying attachment_id:',
         quote.attachment_id
       );
       try {
         const attachment = await client.getAttachment(quote.attachment_id);
-        console.log('[API Qonto Quote PDF] Attachment response:', attachment);
+        console.warn('[API Qonto Quote PDF] Attachment response:', attachment);
         pdfUrl = attachment.url;
       } catch (attachmentError) {
         console.error(
@@ -75,12 +75,12 @@ export async function GET(
       );
     }
 
-    console.log('[API Qonto Quote PDF] Fetching PDF from:', pdfUrl);
+    console.warn('[API Qonto Quote PDF] Fetching PDF from:', pdfUrl);
 
     // Télécharger le PDF depuis l'URL
     const pdfResponse = await fetch(pdfUrl);
 
-    console.log(
+    console.warn(
       '[API Qonto Quote PDF] PDF response status:',
       pdfResponse.status
     );
@@ -102,7 +102,10 @@ export async function GET(
 
     const pdfBuffer = await pdfResponse.arrayBuffer();
 
-    console.log('[API Qonto Quote PDF] PDF buffer size:', pdfBuffer.byteLength);
+    console.warn(
+      '[API Qonto Quote PDF] PDF buffer size:',
+      pdfBuffer.byteLength
+    );
 
     // Vérifier que le PDF n'est pas vide
     if (pdfBuffer.byteLength === 0) {

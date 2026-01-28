@@ -17,7 +17,7 @@ import {
   X,
   Loader2,
   Star,
-  StarOff,
+  StarOff as _StarOff,
   ImagePlus,
   AlertCircle,
 } from 'lucide-react';
@@ -146,7 +146,10 @@ export function ProductImageUpload({
     setDragActive(false);
 
     if (disabled || !canAddMore) return;
-    handleFileSelect(e.dataTransfer.files);
+    void handleFileSelect(e.dataTransfer.files).catch(error => {
+      console.error('[ProductImageUpload] handleDrop failed:', error);
+      setLocalError("Erreur lors de l'upload");
+    });
   };
 
   // Si pas de productId, afficher un message
@@ -173,7 +176,7 @@ export function ProductImageUpload({
               {image.public_url ? (
                 <Image
                   src={image.public_url}
-                  alt={image.alt_text || 'Image produit'}
+                  alt={image.alt_text ?? 'Image produit'}
                   fill
                   className="object-cover"
                   sizes="(max-width: 640px) 50vw, 33vw"
@@ -197,7 +200,17 @@ export function ProductImageUpload({
                   {!image.is_primary && (
                     <button
                       type="button"
-                      onClick={() => handleSetPrimary(image)}
+                      onClick={() => {
+                        void handleSetPrimary(image).catch(error => {
+                          console.error(
+                            '[ProductImageUpload] Set primary failed:',
+                            error
+                          );
+                          setLocalError(
+                            "Erreur lors de la définition de l'image principale"
+                          );
+                        });
+                      }}
                       className="p-2 bg-white rounded-full hover:bg-yellow-50 transition-colors"
                       title="Definir comme principale"
                     >
@@ -206,7 +219,15 @@ export function ProductImageUpload({
                   )}
                   <button
                     type="button"
-                    onClick={() => handleDelete(image)}
+                    onClick={() => {
+                      void handleDelete(image).catch(error => {
+                        console.error(
+                          '[ProductImageUpload] Delete failed:',
+                          error
+                        );
+                        setLocalError('Erreur lors de la suppression');
+                      });
+                    }}
                     className="p-2 bg-white rounded-full hover:bg-red-50 transition-colors"
                     title="Supprimer"
                   >
@@ -238,7 +259,15 @@ export function ProductImageUpload({
             type="file"
             accept={ALLOWED_TYPES.join(',')}
             multiple
-            onChange={e => handleFileSelect(e.target.files)}
+            onChange={e => {
+              void handleFileSelect(e.target.files).catch(error => {
+                console.error(
+                  '[ProductImageUpload] File select failed:',
+                  error
+                );
+                setLocalError('Erreur lors de la sélection du fichier');
+              });
+            }}
             className="hidden"
           />
 
@@ -284,11 +313,11 @@ export function ProductImageUpload({
       )}
 
       {/* Erreur */}
-      {(localError || uploadImage.error) && (
+      {(Boolean(localError) || Boolean(uploadImage.error)) && (
         <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
           <AlertCircle className="h-4 w-4 text-red-500 flex-shrink-0" />
           <p className="text-sm text-red-600">
-            {localError ||
+            {localError ??
               (uploadImage.error instanceof Error
                 ? uploadImage.error.message
                 : "Erreur lors de l'upload")}

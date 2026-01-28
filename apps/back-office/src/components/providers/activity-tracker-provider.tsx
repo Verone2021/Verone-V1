@@ -39,7 +39,9 @@ export function ActivityTrackerProvider({
       setUser(session?.user ?? null);
     };
 
-    getSession();
+    void getSession().catch(error => {
+      console.error('[ActivityTracker] getSession failed:', error);
+    });
 
     // Écouter changements authentification
     const {
@@ -54,10 +56,10 @@ export function ActivityTrackerProvider({
   // Initialiser tracker uniquement si user authentifié
   const {
     trackEvent,
-    trackFormSubmit,
-    trackSearch,
-    trackFilterApplied,
-    currentSession,
+    trackFormSubmit: _trackFormSubmit,
+    trackSearch: _trackSearch,
+    trackFilterApplied: _trackFilterApplied,
+    currentSession: _currentSession,
     flushEvents,
   } = useUserActivityTracker();
 
@@ -94,7 +96,9 @@ export function ActivityTrackerProvider({
   // Flush événements avant fermeture page
   useEffect(() => {
     const handleBeforeUnload = () => {
-      flushEvents();
+      void flushEvents().catch(error => {
+        console.error('[ActivityTracker] flushEvents failed:', error);
+      });
     };
 
     window.addEventListener('beforeunload', handleBeforeUnload);

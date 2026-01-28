@@ -150,7 +150,9 @@ export async function POST(request: NextRequest) {
 
     // Vérifier que Resend est configuré
     if (!resend) {
-      console.warn('[API Form Reply] Resend not configured (RESEND_API_KEY missing)');
+      console.warn(
+        '[API Form Reply] Resend not configured (RESEND_API_KEY missing)'
+      );
       return NextResponse.json(
         {
           success: false,
@@ -205,7 +207,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log(
+    console.warn(
       `[API Form Reply] Email sent successfully to ${body.recipientEmail} (ID: ${data?.id})`
     );
 

@@ -23,7 +23,7 @@ interface SupplierSectionProps {
 export function SupplierSection({
   formData,
   setFormData,
-  onSave,
+  onSave: _onSave,
 }: SupplierSectionProps) {
   const updateField = (field: keyof WizardFormData, value: any) => {
     setFormData({

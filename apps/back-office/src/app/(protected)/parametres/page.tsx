@@ -9,7 +9,6 @@ import {
   User,
   Shield,
   Bell,
-  Globe,
   Palette,
   Database,
   Save,

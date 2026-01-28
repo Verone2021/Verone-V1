@@ -139,7 +139,11 @@ export default function ReceptionsPage() {
 
   // Charger stats
   useEffect(() => {
-    loadReceptionStats().then(setStats);
+    void loadReceptionStats()
+      .then(setStats)
+      .catch(error => {
+        console.error('[Receptions] Failed to load stats:', error);
+      });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -165,7 +169,11 @@ export default function ReceptionsPage() {
         filters.overdue_only = true;
       }
 
-      loadPurchaseOrdersReadyForReception(filters).then(setOrders);
+      void loadPurchaseOrdersReadyForReception(filters)
+        .then(setOrders)
+        .catch(error => {
+          console.error('[Receptions] Failed to load purchase orders:', error);
+        });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusFilter, searchTerm, urgencyFilter, activeTab, sourceFilter]);
@@ -176,9 +184,14 @@ export default function ReceptionsPage() {
       activeTab === 'to-receive' &&
       (sourceFilter === 'affiliates' || sourceFilter === 'all')
     ) {
-      loadAffiliateProductReceptions({ search: searchTerm }).then(
-        setAffiliateReceptions
-      );
+      void loadAffiliateProductReceptions({ search: searchTerm })
+        .then(setAffiliateReceptions)
+        .catch(error => {
+          console.error(
+            '[Receptions] Failed to load affiliate receptions:',
+            error
+          );
+        });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchTerm, activeTab, sourceFilter]);
@@ -195,13 +208,24 @@ export default function ReceptionsPage() {
       }
 
       // Charger historique POs fournisseurs
-      loadPurchaseOrdersReadyForReception(filters).then(setHistoryOrders);
+      void loadPurchaseOrdersReadyForReception(filters)
+        .then(setHistoryOrders)
+        .catch(error => {
+          console.error('[Receptions] Failed to load history orders:', error);
+        });
 
       // Charger historique réceptions affiliés (completed/cancelled)
-      loadAffiliateProductReceptions({
+      void loadAffiliateProductReceptions({
         status: 'completed',
         search: historySearchTerm,
-      }).then(setAffiliateHistory);
+      })
+        .then(setAffiliateHistory)
+        .catch(error => {
+          console.error(
+            '[Receptions] Failed to load affiliate history:',
+            error
+          );
+        });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [historySearchTerm, activeTab]);
@@ -213,8 +237,16 @@ export default function ReceptionsPage() {
 
   const handleReceptionSuccess = () => {
     // Recharger stats et liste
-    loadReceptionStats().then(setStats);
-    loadPurchaseOrdersReadyForReception().then(setOrders);
+    void loadReceptionStats()
+      .then(setStats)
+      .catch(error => {
+        console.error('[Receptions] Failed to reload stats:', error);
+      });
+    void loadPurchaseOrdersReadyForReception()
+      .then(setOrders)
+      .catch(error => {
+        console.error('[Receptions] Failed to reload orders:', error);
+      });
     setShowReceptionModal(false);
     setSelectedOrder(null);
   };
@@ -234,8 +266,19 @@ export default function ReceptionsPage() {
   // Handler pour succès réception affilié (appelé par le modal)
   const handleAffiliateReceptionSuccess = () => {
     // Recharger la liste et stats
-    loadAffiliateProductReceptions().then(setAffiliateReceptions);
-    loadReceptionStats().then(setStats);
+    void loadAffiliateProductReceptions()
+      .then(setAffiliateReceptions)
+      .catch(error => {
+        console.error(
+          '[Receptions] Failed to reload affiliate receptions:',
+          error
+        );
+      });
+    void loadReceptionStats()
+      .then(setStats)
+      .catch(error => {
+        console.error('[Receptions] Failed to reload stats:', error);
+      });
     setSelectedAffiliateReception(null);
   };
 
@@ -931,7 +974,14 @@ export default function ReceptionsPage() {
                                   size="sm"
                                   onClick={e => {
                                     e.stopPropagation();
-                                    handleViewHistory(order);
+                                    void handleViewHistory(order).catch(
+                                      error => {
+                                        console.error(
+                                          '[Receptions] Failed to view history:',
+                                          error
+                                        );
+                                      }
+                                    );
                                   }}
                                 >
                                   <Eye className="h-4 w-4 mr-2" />

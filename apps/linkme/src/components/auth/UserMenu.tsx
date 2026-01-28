@@ -39,7 +39,7 @@ interface IUserMenuProps {
 }
 
 export function UserMenu({ className }: IUserMenuProps): JSX.Element | null {
-  const router = useRouter();
+  const _router = useRouter();
   const { user, linkMeRole, signOut } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);

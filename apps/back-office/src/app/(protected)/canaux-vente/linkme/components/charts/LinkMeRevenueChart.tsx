@@ -9,8 +9,6 @@
 
 import { TrendingUp } from 'lucide-react';
 import {
-  LineChart,
-  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -84,7 +82,7 @@ export function LinkMeRevenueChart({
   }
 
   // Déterminer le label de l'axe X selon la période
-  const getXAxisLabel = () => {
+  const _getXAxisLabel = () => {
     switch (period) {
       case 'week':
         return 'Jour';

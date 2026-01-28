@@ -4,7 +4,6 @@ description: Lead Tech Orchestrator. Analyzes complex tasks, creates plans, dele
 model: sonnet
 color: purple
 role: PLAN
-requires-task-id: false
 writes-to: [ACTIVE.md]
 ---
 
@@ -86,7 +85,6 @@ Delegate to these agents (use EXACT names):
 - **database-architect**: Tables, migrations, triggers, RLS, Supabase types
 - **frontend-architect**: Pages, components, forms, interfaces (Next.js 15)
 - **verone-debug-investigator**: Errors, bugs, technical problems
-- **action**: Batch cleanup operations (max 5 items)
 
 For code discovery, use `/explore` command instead of an agent.
 
@@ -111,11 +109,39 @@ Thought 5: Evaluate complexity and time
 Conclusion: Optimal strategy
 ```
 
-## 3. CONSULT SERENA (if needed)
+## 3. CONSULT SERENA (OBLIGATOIRE)
 
-- Check relevant memories for business rules
-- Verify existing patterns
-- Avoid duplication
+**TOUJOURS lire** :
+```bash
+mcp__serena__read_memory("workflow-strict-rules")
+mcp__serena__read_memory("verone-business-application-context")
+```
+
+**SI domaine DATABASE** :
+```bash
+mcp__serena__read_memory("database-migrations-convention")
+mcp__serena__read_memory("supabase-workflow-correct")
+```
+
+**SI domaine AUTH** :
+```bash
+mcp__serena__read_memory("auth-paths-immutable")
+mcp__serena__read_memory("auth-multi-canal-phase1-phase2-complete-2025-11-19")
+```
+
+**SI domaine FRONTEND** :
+```bash
+mcp__serena__read_memory("code_style_conventions")
+mcp__serena__read_memory("tech_stack")
+```
+
+**SI domaine TESTING** :
+```bash
+mcp__serena__read_memory("playwright-best-practices-2025-12")
+mcp__serena__read_memory("playwright-login-first-mandatory")
+```
+
+**Index complet**: `mcp__serena__read_memory("memories-index-2026-01")`
 
 ## 4. CREATE PLAN
 
@@ -240,10 +266,8 @@ Conclusion : **pas besoin d'une table "performance_metrics"** d'abord, puis on s
    - Fix minimal
 
 3. **Déléguer (séquentiel)** :
-   - data layer → **data-layer-auditor**
    - DB perf → **database-architect**
    - UI perf → **frontend-architect**
-   - garde-fous → **audit-governor**
 
 4. **Consolider un rapport unique** :
    - `docs/current/perf/perf-audit-YYYY-MM-DD.md`

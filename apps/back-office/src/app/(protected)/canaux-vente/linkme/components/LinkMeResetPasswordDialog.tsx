@@ -21,7 +21,7 @@ import { Input } from '@verone/ui';
 import { Label } from '@verone/ui';
 import { Key, X, Eye, EyeOff } from 'lucide-react';
 
-import type { LinkMeUser, LinkMeRole } from '../hooks/use-linkme-users';
+import type { LinkMeUser } from '../hooks/use-linkme-users';
 import {
   LINKME_ROLE_LABELS,
   LINKME_ROLE_COLORS,
@@ -94,7 +94,7 @@ export function LinkMeResetPasswordDialog({
       onOpenChange(false);
       onPasswordReset?.();
 
-      console.log('Mot de passe réinitialisé avec succès');
+      console.warn('Mot de passe réinitialisé avec succès');
     } catch (error: any) {
       console.error('Erreur réinitialisation mot de passe:', error);
       setError(error.message || "Une erreur inattendue s'est produite");
@@ -148,7 +148,17 @@ export function LinkMeResetPasswordDialog({
           </div>
         </div>
 
-        <form onSubmit={handleReset} className="space-y-4">
+        <form
+          onSubmit={e => {
+            void handleReset(e).catch(error => {
+              console.error(
+                '[LinkMeResetPasswordDialog] handleReset failed:',
+                error
+              );
+            });
+          }}
+          className="space-y-4"
+        >
           {/* Nouveau mot de passe */}
           <div className="space-y-2">
             <Label

@@ -14,7 +14,7 @@ import {
 
 import { useCart } from '../../../components/cart/CartProvider';
 
-const TVA_RATE = 0.2;
+const _TVA_RATE = 0.2;
 
 function formatPrice(price: number): string {
   return new Intl.NumberFormat('fr-FR', {

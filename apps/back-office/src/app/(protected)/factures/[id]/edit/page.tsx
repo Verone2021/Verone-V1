@@ -283,8 +283,8 @@ export default function EditDraftPage({ params }: IPageProps) {
                 setItems(
                   doc.items.map((item: QontoInvoiceItem) => ({
                     id: generateId(),
-                    title: item.title || '',
-                    description: item.description || '',
+                    title: item.title ?? '',
+                    description: item.description ?? '',
                     quantity: item.quantity || '1',
                     unit: item.unit || 'unit',
                     unitPrice: item.unit_price?.value || '0',
@@ -306,12 +306,12 @@ export default function EditDraftPage({ params }: IPageProps) {
                 ]);
               }
 
-              setHeader(doc.header || '');
-              setFooter(doc.footer || '');
-              setTermsAndConditions(doc.terms_and_conditions || '');
-              setDueDate(doc.payment_deadline || '');
-              setExpiryDate(doc.expiry_date || '');
-              setReason(doc.reason || '');
+              setHeader(doc.header ?? '');
+              setFooter(doc.footer ?? '');
+              setTermsAndConditions(doc.terms_and_conditions ?? '');
+              setDueDate(doc.payment_deadline ?? '');
+              setExpiryDate(doc.expiry_date ?? '');
+              setReason(doc.reason ?? '');
 
               setLoading(false);
               return;
@@ -326,7 +326,9 @@ export default function EditDraftPage({ params }: IPageProps) {
       setLoading(false);
     }
 
-    loadDocument();
+    void loadDocument().catch(error => {
+      console.error('[FacturesEdit] loadDocument failed:', error);
+    });
   }, [id, typeParam]);
 
   // Item handlers
@@ -377,7 +379,7 @@ export default function EditDraftPage({ params }: IPageProps) {
       const body: Record<string, unknown> = {
         items: validItems.map(item => ({
           title: item.title,
-          description: item.description || undefined,
+          description: item.description ?? undefined,
           quantity: item.quantity,
           unit: item.unit,
           unitPrice: {
@@ -505,7 +507,14 @@ export default function EditDraftPage({ params }: IPageProps) {
             </p>
           </div>
         </div>
-        <Button onClick={handleSave} disabled={saving}>
+        <Button
+          onClick={() => {
+            void handleSave().catch(error => {
+              console.error('[FacturesEdit] handleSave failed:', error);
+            });
+          }}
+          disabled={saving}
+        >
           {saving ? (
             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
           ) : (
@@ -689,7 +698,14 @@ export default function EditDraftPage({ params }: IPageProps) {
         <Button variant="outline" onClick={() => router.back()}>
           Annuler
         </Button>
-        <Button onClick={handleSave} disabled={saving}>
+        <Button
+          onClick={() => {
+            void handleSave().catch(error => {
+              console.error('[FacturesEdit] handleSave failed:', error);
+            });
+          }}
+          disabled={saving}
+        >
           {saving ? (
             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
           ) : (

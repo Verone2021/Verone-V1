@@ -35,7 +35,6 @@ import {
   LINKME_ROLE_LABELS,
   LINKME_ROLE_COLORS,
   LINKME_ROLE_PERMISSIONS,
-  type LinkMeRole,
 } from '../../hooks/use-linkme-users';
 
 // Types
@@ -88,7 +87,7 @@ function useUserSelections(
           .eq('enseigne_id', enseigneId)
           .limit(1)
           .single();
-        affiliateId = affiliate?.id || null;
+        affiliateId = affiliate?.id ?? null;
       }
 
       if (!affiliateId && organisationId) {
@@ -98,7 +97,7 @@ function useUserSelections(
           .eq('organisation_id', organisationId)
           .limit(1)
           .single();
-        affiliateId = affiliate?.id || null;
+        affiliateId = affiliate?.id ?? null;
       }
 
       if (!affiliateId) {
@@ -125,7 +124,9 @@ function useUserSelections(
       setLoading(false);
     };
 
-    fetchSelections();
+    void fetchSelections().catch(error => {
+      console.error('[useUserSelections] fetchSelections failed:', error);
+    });
   }, [enseigneId, organisationId]);
 
   return { selections, loading };
@@ -166,7 +167,7 @@ function useUserStats(
           .eq('enseigne_id', enseigneId)
           .limit(1)
           .single();
-        affiliateId = affiliate?.id || null;
+        affiliateId = affiliate?.id ?? null;
       }
 
       if (!affiliateId && organisationId) {
@@ -176,7 +177,7 @@ function useUserStats(
           .eq('organisation_id', organisationId)
           .limit(1)
           .single();
-        affiliateId = affiliate?.id || null;
+        affiliateId = affiliate?.id ?? null;
       }
 
       if (!affiliateId) {
@@ -201,7 +202,9 @@ function useUserStats(
       setLoading(false);
     };
 
-    fetchStats();
+    void fetchStats().catch(error => {
+      console.error('[useUserStats] fetchStats failed:', error);
+    });
   }, [enseigneId, organisationId]);
 
   return { stats, loading };
@@ -224,12 +227,12 @@ export default function UserDetailPage() {
 
   // Hooks dépendants des données utilisateur (enseigne/organisation)
   const { selections, loading: selectionsLoading } = useUserSelections(
-    user?.enseigne_id || null,
-    user?.organisation_id || null
+    user?.enseigne_id ?? null,
+    user?.organisation_id ?? null
   );
   const { stats, loading: statsLoading } = useUserStats(
-    user?.enseigne_id || null,
-    user?.organisation_id || null
+    user?.enseigne_id ?? null,
+    user?.organisation_id ?? null
   );
 
   // État onglet actif
@@ -292,7 +295,7 @@ export default function UserDetailPage() {
           <div className="flex items-center gap-4">
             <Avatar className="h-16 w-16">
               <AvatarImage
-                src={user.avatar_url || undefined}
+                src={user.avatar_url ?? undefined}
                 alt={user.email}
               />
               <AvatarFallback className="text-lg bg-blue-100 text-blue-700">

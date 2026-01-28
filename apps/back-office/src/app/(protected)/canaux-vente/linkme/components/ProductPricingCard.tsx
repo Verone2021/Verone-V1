@@ -702,7 +702,11 @@ export function ProductPricingCard({
 
         {/* Bouton sauvegarde */}
         <Button
-          onClick={handleSave}
+          onClick={() => {
+            void handleSave().catch(error => {
+              console.error('[ProductPricingCard] handleSave failed:', error);
+            });
+          }}
           disabled={!isDirty || isSaving}
           className="w-full"
         >

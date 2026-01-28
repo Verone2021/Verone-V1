@@ -15,22 +15,18 @@ import {
   Package,
   BarChart3,
   ArrowUpDown,
-  ArrowDownToLine,
-  ArrowUpFromLine,
   AlertTriangle,
   Grid3x3,
   TrendingUp,
   RefreshCw,
   CheckCircle,
-  Eye,
-  RotateCcw,
 } from 'lucide-react';
 
 import { StockKPICard } from '@/components/ui-v2/stock/stock-kpi-card';
 
 export default function StocksDashboardPage() {
   const router = useRouter();
-  const { metrics, loading, error, refetch } = useStockDashboard();
+  const { metrics, loading, error: _error, refetch } = useStockDashboard();
 
   // Hooks pour widgets
   const {
@@ -47,13 +43,17 @@ export default function StocksDashboardPage() {
 
   // Charger derniers mouvements réels au montage
   useEffect(() => {
-    fetchMovements({ affects_forecast: false, limit: 5 });
+    void fetchMovements({ affects_forecast: false, limit: 5 }).catch(error => {
+      console.error('[StocksPage] fetchMovements failed:', error);
+    });
   }, [fetchMovements]);
 
   // Auto-refresh alertes stock toutes les 30 secondes
   useEffect(() => {
     const interval = setInterval(() => {
-      fetchAlerts();
+      void fetchAlerts().catch(error => {
+        console.error('[StocksPage] fetchAlerts failed:', error);
+      });
     }, 30000);
 
     return () => clearInterval(interval);
@@ -100,7 +100,11 @@ export default function StocksDashboardPage() {
             <ButtonV2
               variant="outline"
               size="sm"
-              onClick={() => refetch()}
+              onClick={() => {
+                void refetch().catch(error => {
+                  console.error('[StocksPage] refetch failed:', error);
+                });
+              }}
               disabled={loading}
               className="border-black text-black hover:bg-black hover:text-white transition-all duration-200"
             >

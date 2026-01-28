@@ -9,8 +9,12 @@
  * - CTAs a droite (Se connecter + Devenir partenaire)
  * - Menu mobile avec Sheet
  *
+ * Note: Ce header n'est visible que par les visiteurs NON connectés.
+ * Les utilisateurs connectés sont redirigés vers le dashboard par le middleware.
+ *
  * @module LandingHeader
  * @since 2026-01-07
+ * @updated 2026-01-23 - Simplifié (plus de détection session côté client)
  */
 
 import { useState } from 'react';
@@ -24,8 +28,8 @@ import { Menu, X, LogIn, ArrowRight } from 'lucide-react';
 const NAV_ITEMS = [
   { label: 'Accueil', href: '/' },
   { label: 'Comment ca marche', href: '#how-it-works' },
-  { label: 'A propos', href: '#about' },
-  { label: 'Contact', href: '#contact' },
+  { label: 'A propos', href: '/about' },
+  { label: 'Contact', href: '/contact' },
 ];
 
 export function LandingHeader(): JSX.Element {
@@ -70,7 +74,7 @@ export function LandingHeader(): JSX.Element {
               Se connecter
             </Link>
             <Link
-              href="#contact"
+              href="/contact"
               className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-[#5DBEBB] to-[#5DBEBB]/80 rounded-lg hover:from-[#4CA9A6] hover:to-[#4CA9A6]/80 transition-all shadow-sm hover:shadow-md"
             >
               Devenir partenaire
@@ -118,7 +122,7 @@ export function LandingHeader(): JSX.Element {
                 Se connecter
               </Link>
               <Link
-                href="#contact"
+                href="/contact"
                 className="flex items-center justify-center gap-2 w-full px-4 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-[#5DBEBB] to-[#5DBEBB]/80 rounded-lg hover:from-[#4CA9A6] hover:to-[#4CA9A6]/80 transition-all"
                 onClick={() => setMobileMenuOpen(false)}
               >

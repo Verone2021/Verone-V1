@@ -106,8 +106,8 @@ function CatalogueContent(): JSX.Element | null {
     generalProducts,
     isLoading: productsLoading,
   } = useCategorizedCatalogProducts(
-    linkMeRole?.enseigne_id || null,
-    linkMeRole?.organisation_id || null
+    linkMeRole?.enseigne_id ?? null,
+    linkMeRole?.organisation_id ?? null
   );
 
   // State filtres
@@ -235,9 +235,9 @@ function CatalogueContent(): JSX.Element | null {
   };
 
   const hasActiveFilters =
-    searchTerm ||
-    selectedCategory ||
-    selectedSubcategory ||
+    Boolean(searchTerm) ||
+    Boolean(selectedCategory) ||
+    Boolean(selectedSubcategory) ||
     productTypeFilter !== 'all';
 
   // Chargement

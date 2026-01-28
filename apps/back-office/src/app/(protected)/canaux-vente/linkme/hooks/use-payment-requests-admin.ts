@@ -160,7 +160,7 @@ export function usePaymentRequestsAdmin(statusFilter?: string) {
       return (typedData || []).map(item => ({
         ...item,
         status: item.status as PaymentRequestAdmin['status'],
-        affiliate: item.linkme_affiliates || undefined,
+        affiliate: item.linkme_affiliates ?? undefined,
       }));
     },
     staleTime: 30000,
@@ -191,7 +191,7 @@ export function useMarkAsPaid() {
         .update({
           status: 'paid',
           paid_at: new Date().toISOString(),
-          paid_by: userData?.user?.id || null,
+          paid_by: userData?.user?.id ?? null,
           payment_reference: input.paymentReference,
         })
         .eq('id', input.requestId);
@@ -201,9 +201,13 @@ export function useMarkAsPaid() {
         throw new Error('Erreur lors du marquage comme payée');
       }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['payment-requests-admin'] });
-      queryClient.invalidateQueries({ queryKey: ['payment-requests-counts'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ['payment-requests-admin'],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ['payment-requests-counts'],
+      });
     },
   });
 }
@@ -231,9 +235,13 @@ export function useCancelPaymentRequestAdmin() {
         throw new Error("Erreur lors de l'annulation");
       }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['payment-requests-admin'] });
-      queryClient.invalidateQueries({ queryKey: ['payment-requests-counts'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ['payment-requests-admin'],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ['payment-requests-counts'],
+      });
     },
   });
 }
@@ -357,11 +365,15 @@ export function useCreatePaymentRequestAdmin() {
         status: request.status as PaymentRequestAdmin['status'],
       };
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       // Invalider les caches
-      queryClient.invalidateQueries({ queryKey: ['payment-requests-admin'] });
-      queryClient.invalidateQueries({ queryKey: ['payment-requests-counts'] });
-      queryClient.invalidateQueries({ queryKey: ['linkme-commissions'] });
+      await queryClient.invalidateQueries({
+        queryKey: ['payment-requests-admin'],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ['payment-requests-counts'],
+      });
+      await queryClient.invalidateQueries({ queryKey: ['linkme-commissions'] });
     },
   });
 }
@@ -405,7 +417,7 @@ export function useRecentPaymentRequests(limit: number = 5) {
       return (typedData || []).map(item => ({
         ...item,
         status: item.status as PaymentRequestAdmin['status'],
-        affiliate: item.linkme_affiliates || undefined,
+        affiliate: item.linkme_affiliates ?? undefined,
       }));
     },
     staleTime: 30000,

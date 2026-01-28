@@ -43,7 +43,7 @@ export function useUpdatePricing() {
         discount_rate: hasDiscount ? params.discount_rate : null,
         markup_rate: null, // Toujours null (mode non utilisé pour Site Internet)
         min_quantity: params.min_quantity || 1,
-        notes: params.notes || null,
+        notes: params.notes ?? null,
         is_active: params.is_active ?? true,
       };
 
@@ -61,17 +61,17 @@ export function useUpdatePricing() {
 
       return data;
     },
-    onSuccess: (_, variables) => {
+    onSuccess: async (_, variables) => {
       toast({
         title: 'Prix mis à jour',
         description: 'La tarification du produit a été sauvegardée',
       });
 
       // Invalider cache
-      queryClient.invalidateQueries({
+      await queryClient.invalidateQueries({
         queryKey: ['site-internet-product-detail', variables.product_id],
       });
-      queryClient.invalidateQueries({
+      await queryClient.invalidateQueries({
         queryKey: ['site-internet-products'],
       });
     },

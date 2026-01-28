@@ -49,7 +49,6 @@
 | Service          | Usage                                    | Status |
 | ---------------- | ---------------------------------------- | ------ |
 | **Qonto**        | Facturation, PDF, rapprochement bancaire | ACTIF  |
-| **Sentry**       | Monitoring erreurs                       | ACTIF  |
 | **Google OAuth** | Authentification                         | ACTIF  |
 | **Supabase**     | Database, Auth, Storage                  | ACTIF  |
 | **Vercel**       | Hosting, Deploy                          | ACTIF  |

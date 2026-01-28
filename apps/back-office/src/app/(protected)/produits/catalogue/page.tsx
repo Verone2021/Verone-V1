@@ -106,7 +106,7 @@ export default function CataloguePage() {
   });
 
   // Fonction de recherche debouncée - synchronise avec useCatalogue
-  const debouncedSearch = useMemo(
+  const _debouncedSearch = useMemo(
     () =>
       debounce((searchTerm: string) => {
         const newFilters = { ...filters, search: searchTerm };
@@ -213,7 +213,9 @@ export default function CataloguePage() {
   // Charger les produits archivés quand on change d'onglet
   useEffect(() => {
     if (activeTab === 'archived') {
-      loadArchivedProductsData();
+      void loadArchivedProductsData().catch(error => {
+        console.error('[Catalogue] loadArchivedProductsData failed:', error);
+      });
     }
   }, [activeTab, filters]);
 
@@ -235,7 +237,7 @@ export default function CataloguePage() {
       id: product.id,
       type: 'product' as const,
       title: product.name,
-      subtitle: product.sku || undefined,
+      subtitle: product.sku ?? undefined,
       url: `/produits/${product.id}`,
     }));
   }, [products]);
@@ -276,12 +278,12 @@ export default function CataloguePage() {
     try {
       if (product.archived_at) {
         await unarchiveProduct(product.id);
-        console.log('✅ Produit restauré:', product.name);
+        console.warn('✅ Produit restauré:', product.name);
         // Rafraîchir la liste des archivés après restauration
         await loadArchivedProductsData();
       } else {
         await archiveProduct(product.id);
-        console.log('✅ Produit archivé:', product.name);
+        console.warn('✅ Produit archivé:', product.name);
         // Rafraîchir la liste des archivés après archivage
         await loadArchivedProductsData();
       }
@@ -298,7 +300,7 @@ export default function CataloguePage() {
     if (confirmed) {
       try {
         await deleteProduct(product.id);
-        console.log('✅ Produit supprimé définitivement:', product.name);
+        console.warn('✅ Produit supprimé définitivement:', product.name);
       } catch (error) {
         console.error('❌ Erreur suppression produit:', error);
       }
@@ -535,8 +537,22 @@ export default function CataloguePage() {
                           } as any
                         }
                         index={index}
-                        onArchive={handleArchiveProduct}
-                        onDelete={handleDeleteProduct}
+                        onArchive={product => {
+                          void handleArchiveProduct(product).catch(error => {
+                            console.error(
+                              '[Catalogue] handleArchiveProduct failed:',
+                              error
+                            );
+                          });
+                        }}
+                        onDelete={product => {
+                          void handleDeleteProduct(product).catch(error => {
+                            console.error(
+                              '[Catalogue] handleDeleteProduct failed:',
+                              error
+                            );
+                          });
+                        }}
                         archived={!!product.archived_at}
                       />
                     ))}

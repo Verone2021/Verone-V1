@@ -11,12 +11,6 @@
  * @since 2025-12-20
  */
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createClient } from '@verone/utils/supabase/client';
 
@@ -106,7 +100,7 @@ export function useAffiliateProducts() {
           throw error;
         }
 
-        return (data || []) as AffiliateProduct[];
+        return (data ?? []) as AffiliateProduct[];
       }
 
       // Pour enseigne_admin, utiliser la RPC existante
@@ -124,7 +118,7 @@ export function useAffiliateProducts() {
         throw error;
       }
 
-      return (data || []) as AffiliateProduct[];
+      return (data ?? []) as AffiliateProduct[];
     },
     enabled: !!enseigneId || (isOrgIndependante && !!organisationId),
     staleTime: 30000,
@@ -164,7 +158,7 @@ export function useAffiliateProduct(productId: string | undefined) {
 
       // RPC returns array, get first element
       const product = Array.isArray(data) ? data[0] : data;
-      return product || null;
+      return product ?? null;
     },
     enabled: !!productId && !!enseigneId,
   });
@@ -243,10 +237,10 @@ export function useCreateAffiliateProduct() {
       const insertData: Record<string, unknown> = {
         name: input.name,
         sku,
-        description: input.description || null,
+        description: input.description ?? null,
         affiliate_payout_ht: input.affiliate_payout_ht,
         affiliate_approval_status: 'draft',
-        dimensions: input.dimensions || null,
+        dimensions: input.dimensions ?? null,
         enseigne_id: targetEnseigneId,
         created_by_affiliate: affiliate.id,
         product_status: 'draft',
@@ -272,8 +266,8 @@ export function useCreateAffiliateProduct() {
 
       return data as AffiliateProduct;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['affiliate-products'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['affiliate-products'] });
     },
   });
 }
@@ -325,9 +319,9 @@ export function useUpdateAffiliateProduct() {
 
       return data as AffiliateProduct;
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['affiliate-products'] });
-      queryClient.invalidateQueries({
+    onSuccess: async (_, variables) => {
+      await queryClient.invalidateQueries({ queryKey: ['affiliate-products'] });
+      await queryClient.invalidateQueries({
         queryKey: ['affiliate-product', variables.productId],
       });
     },
@@ -356,8 +350,8 @@ export function useSubmitForApproval() {
 
       return data as boolean;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['affiliate-products'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['affiliate-products'] });
     },
   });
 }
@@ -382,7 +376,7 @@ export function useAffiliateProductPrice(
         'calculate_affiliate_product_price',
         {
           p_product_id: productId,
-          p_margin_rate: marginRate || null,
+          p_margin_rate: marginRate ?? null,
         }
       );
 
@@ -434,8 +428,8 @@ export function useRevertToDraft() {
 
       return true;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['affiliate-products'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['affiliate-products'] });
     },
   });
 }

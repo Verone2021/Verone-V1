@@ -162,8 +162,8 @@ export function usePendingOrganisations() {
 
       return (data || []).map((org: Record<string, unknown>) => ({
         ...org,
-        enseigne_name: (org.enseigne as { name?: string })?.name || null,
-        affiliate_display_name: displayNameMap.get(org.id as string) || null,
+        enseigne_name: (org.enseigne as { name?: string })?.name ?? null,
+        affiliate_display_name: displayNameMap.get(org.id as string) ?? null,
       })) as PendingOrganisation[];
     },
     staleTime: 30000,
@@ -247,8 +247,8 @@ export function useAllOrganisationsWithApproval(
 
       return (data || []).map((org: Record<string, unknown>) => ({
         ...org,
-        enseigne_name: (org.enseigne as { name?: string })?.name || null,
-        affiliate_display_name: displayNameMap.get(org.id as string) || null,
+        enseigne_name: (org.enseigne as { name?: string })?.name ?? null,
+        affiliate_display_name: displayNameMap.get(org.id as string) ?? null,
       })) as PendingOrganisation[];
     },
     staleTime: 30000,
@@ -275,7 +275,7 @@ export function useApproveOrganisation() {
         .update({
           approval_status: 'approved',
           approved_at: new Date().toISOString(),
-          approved_by: user?.id || null,
+          approved_by: user?.id ?? null,
           updated_at: new Date().toISOString(),
         })
         .eq('id', organisationId);
@@ -287,12 +287,14 @@ export function useApproveOrganisation() {
 
       return { success: true };
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['pending-organisations'] });
-      queryClient.invalidateQueries({
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ['pending-organisations'],
+      });
+      await queryClient.invalidateQueries({
         queryKey: ['pending-organisations-count'],
       });
-      queryClient.invalidateQueries({
+      await queryClient.invalidateQueries({
         queryKey: ['all-organisations-approval'],
       });
     },
@@ -308,7 +310,7 @@ export function useRejectOrganisation() {
   return useMutation({
     mutationFn: async ({
       organisationId,
-      reason,
+      reason: _reason,
     }: {
       organisationId: string;
       reason: string;
@@ -325,7 +327,7 @@ export function useRejectOrganisation() {
         .update({
           approval_status: 'rejected',
           approved_at: new Date().toISOString(),
-          approved_by: user?.id || null,
+          approved_by: user?.id ?? null,
           // Store rejection reason in notes or a dedicated field if exists
           updated_at: new Date().toISOString(),
         })
@@ -338,12 +340,14 @@ export function useRejectOrganisation() {
 
       return { success: true };
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['pending-organisations'] });
-      queryClient.invalidateQueries({
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ['pending-organisations'],
+      });
+      await queryClient.invalidateQueries({
         queryKey: ['pending-organisations-count'],
       });
-      queryClient.invalidateQueries({
+      await queryClient.invalidateQueries({
         queryKey: ['all-organisations-approval'],
       });
     },

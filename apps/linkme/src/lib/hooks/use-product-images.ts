@@ -92,7 +92,7 @@ export function useUploadProductImage() {
       setProgress(20);
 
       // Generate unique filename
-      const fileExt = file.name.split('.').pop() || 'jpg';
+      const fileExt = file.name.split('.').pop() ?? 'jpg';
       const timestamp = Date.now();
       const random = Math.random().toString(36).substring(2, 8);
       const fileName = `affiliate/${productId}/${timestamp}-${random}.${fileExt}`;
@@ -100,7 +100,7 @@ export function useUploadProductImage() {
       setProgress(30);
 
       // Upload to storage
-      const { data: uploadData, error: uploadError } = await supabase.storage
+      const { data: _uploadData, error: uploadError } = await supabase.storage
         .from(BUCKET)
         .upload(fileName, file, {
           cacheControl: '3600',
@@ -166,8 +166,8 @@ export function useUploadProductImage() {
       setProgress(100);
       return imageRecord as ProductImage;
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
+    onSuccess: async (_, variables) => {
+      await queryClient.invalidateQueries({
         queryKey: ['product-images', variables.productId],
       });
       setProgress(0);
@@ -189,7 +189,7 @@ export function useDeleteProductImage() {
   return useMutation({
     mutationFn: async ({
       imageId,
-      productId,
+      productId: _productId,
       storagePath,
     }: {
       imageId: string;
@@ -212,8 +212,8 @@ export function useDeleteProductImage() {
       // Delete from storage
       await supabase.storage.from(BUCKET).remove([storagePath]);
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
+    onSuccess: async (_, variables) => {
+      await queryClient.invalidateQueries({
         queryKey: ['product-images', variables.productId],
       });
     },
@@ -252,8 +252,8 @@ export function useSetPrimaryImage() {
         throw new Error(`Erreur: ${error.message}`);
       }
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
+    onSuccess: async (_, variables) => {
+      await queryClient.invalidateQueries({
         queryKey: ['product-images', variables.productId],
       });
     },

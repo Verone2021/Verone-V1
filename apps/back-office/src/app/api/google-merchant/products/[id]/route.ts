@@ -55,7 +55,7 @@ export async function DELETE(
       );
     }
 
-    console.log(`[API] Remove product from Google Merchant: ${productId}`);
+    console.warn(`[API] Remove product from Google Merchant: ${productId}`);
 
     // 2. Initialisation Supabase
     const supabase = await createServerClient();
@@ -92,7 +92,7 @@ export async function DELETE(
       );
     }
 
-    console.log(
+    console.warn(
       `[API] Product removed successfully (soft delete): ${productId}`
     );
 

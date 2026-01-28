@@ -169,6 +169,7 @@ export function validateFile(file: File, bucket: BucketType): ValidationResult {
  */
 function isValidFileName(fileName: string): boolean {
   // Éviter les caractères problématiques pour S3/Supabase
+  // eslint-disable-next-line no-control-regex -- intentionally detecting control chars to reject them
   const invalidChars = /[<>:"/\\|?*\x00-\x1f]/;
   const hasInvalidChars = invalidChars.test(fileName);
 

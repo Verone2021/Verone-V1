@@ -3,18 +3,21 @@
 ## Vue d'ensemble
 
 Le système de gestion des formulaires (BO-FORM-001) envoie des emails automatiques via [Resend](https://resend.com) :
+
 - **Confirmation client** : Email envoyé au client après soumission
 - **Notification admin** : Email envoyé à l'équipe pour chaque nouvelle soumission
 
 ## Mode Dégradé (Sans Configuration)
 
 Le système fonctionne **sans configuration email** :
+
 - Les formulaires sont acceptés et sauvegardés en base
 - Les notifications in-app fonctionnent via triggers DB
 - Les emails sont simplement désactivés (graceful degradation)
 - Logs : `[API Form *] Resend not configured - emails disabled`
 
 Idéal pour :
+
 - Développement local
 - Tests
 - Environnements staging
@@ -111,8 +114,10 @@ WHERE setting_key = 'notification_emails';
 ```
 
 Pour ajouter/modifier les destinataires :
+
 1. Via le back-office : `/parametres/notifications` (Phase 6 - à implémenter)
 2. Via SQL direct :
+
 ```sql
 UPDATE app_settings
 SET setting_value = '{"form_submissions": ["email1@verone.fr", "email2@verone.fr"]}'::jsonb
@@ -126,18 +131,21 @@ WHERE setting_key = 'notification_emails';
 **Symptôme** : Logs `Resend not configured - emails disabled`
 
 **Solution** :
+
 1. Vérifier que `RESEND_API_KEY` est définie dans `.env.local`
 2. Redémarrer le serveur dev
 
 **Symptôme** : Erreur 401 Unauthorized
 
 **Solution** :
+
 1. Vérifier que la clé API est valide
 2. Vérifier que la clé n'a pas expiré dans Resend Dashboard
 
 **Symptôme** : Erreur 403 Forbidden
 
 **Solution** :
+
 1. Vérifier que le domaine `RESEND_FROM_EMAIL` est vérifié dans Resend
 2. Utiliser l'email de test Resend : `onboarding@resend.dev`
 
@@ -158,11 +166,13 @@ grep "error:" | grep -i email
 ## Limites Resend
 
 ### Plan Gratuit
+
 - 100 emails/jour
 - 1 domaine vérifié
 - Rate limit : 2 requêtes/seconde
 
 ### Plan Payant (recommandé production)
+
 - 50,000 emails/mois à partir de $20/mois
 - Domaines illimités
 - Rate limit : 10 requêtes/seconde
@@ -185,6 +195,7 @@ ContactForm.tsx (LinkMe)
 ## Sécurité
 
 ⚠️ **IMPORTANT** :
+
 - Ne JAMAIS commiter `.env.local` dans Git
 - Stocker `RESEND_API_KEY` dans les secrets Vercel (production)
 - Utiliser des clés API différentes par environnement (dev/staging/prod)

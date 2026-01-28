@@ -13,7 +13,7 @@
  * @since 2026-01-20
  */
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 
 import { User, MapPin, Loader2, ChevronDown, Check } from 'lucide-react';
 
@@ -116,7 +116,9 @@ function SectionHeader({
         <div
           className={cn(
             'w-8 h-8 rounded-full flex items-center justify-center',
-            isComplete ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-500'
+            isComplete
+              ? 'bg-green-100 text-green-600'
+              : 'bg-gray-100 text-gray-500'
           )}
         >
           {isComplete ? <Check className="h-4 w-4" /> : icon}
@@ -153,10 +155,14 @@ export function ContactsAddressesSection({
   const [deliveryAddressOpen, setDeliveryAddressOpen] = useState(false);
 
   // Form states
-  const [showNewBillingContactForm, setShowNewBillingContactForm] = useState(false);
-  const [showNewBillingAddressForm, setShowNewBillingAddressForm] = useState(false);
-  const [showNewDeliveryContactForm, setShowNewDeliveryContactForm] = useState(false);
-  const [showNewDeliveryAddressForm, setShowNewDeliveryAddressForm] = useState(false);
+  const [showNewBillingContactForm, setShowNewBillingContactForm] =
+    useState(false);
+  const [showNewBillingAddressForm, setShowNewBillingAddressForm] =
+    useState(false);
+  const [showNewDeliveryContactForm, setShowNewDeliveryContactForm] =
+    useState(false);
+  const [showNewDeliveryAddressForm, setShowNewDeliveryAddressForm] =
+    useState(false);
 
   // Data hooks
   const { data: contactsData, isLoading: contactsLoading } =
@@ -215,8 +221,8 @@ export function ContactsAddressesSection({
         firstName: formData.firstName,
         lastName: formData.lastName,
         email: formData.email,
-        phone: formData.phone || undefined,
-        title: formData.title || undefined,
+        phone: formData.phone ?? undefined,
+        title: formData.title ?? undefined,
         isBillingContact: true,
       });
 
@@ -290,15 +296,15 @@ export function ContactsAddressesSection({
         ownerId: organisationId,
         ownerType: 'organisation',
         addressType: 'billing',
-        label: formData.label || undefined,
+        label: formData.label ?? undefined,
         addressLine1: formData.addressLine1,
-        addressLine2: formData.addressLine2 || undefined,
+        addressLine2: formData.addressLine2 ?? undefined,
         postalCode: formData.postalCode,
         city: formData.city,
         country: formData.country,
-        legalName: formData.legalName || undefined,
-        siret: formData.siret || undefined,
-        vatNumber: formData.vatNumber || undefined,
+        legalName: formData.legalName ?? undefined,
+        siret: formData.siret ?? undefined,
+        vatNumber: formData.vatNumber ?? undefined,
       });
 
       onUpdate({
@@ -366,8 +372,8 @@ export function ContactsAddressesSection({
         firstName: formData.firstName,
         lastName: formData.lastName,
         email: formData.email,
-        phone: formData.phone || undefined,
-        title: formData.title || undefined,
+        phone: formData.phone ?? undefined,
+        title: formData.title ?? undefined,
         isDeliveryContact: true,
       });
 
@@ -426,9 +432,9 @@ export function ContactsAddressesSection({
         ownerId: organisationId,
         ownerType: 'organisation',
         addressType: 'shipping',
-        label: formData.label || undefined,
+        label: formData.label ?? undefined,
         addressLine1: formData.addressLine1,
-        addressLine2: formData.addressLine2 || undefined,
+        addressLine2: formData.addressLine2 ?? undefined,
         postalCode: formData.postalCode,
         city: formData.city,
         country: formData.country,
@@ -563,7 +569,9 @@ export function ContactsAddressesSection({
                   {orgWithEnseigne && (
                     <OrganisationAddressCard
                       id={orgWithEnseigne.id}
-                      name={orgWithEnseigne.tradeName || orgWithEnseigne.legalName}
+                      name={
+                        orgWithEnseigne.tradeName || orgWithEnseigne.legalName
+                      }
                       logoUrl={orgWithEnseigne.logoUrl}
                       ownershipType={orgWithEnseigne.ownershipType}
                       address={orgWithEnseigne.address}
@@ -590,7 +598,9 @@ export function ContactsAddressesSection({
                         data.billingAddress?.mode === 'existing' &&
                         data.billingAddress.addressId === address.id
                       }
-                      onClick={() => handleSelectBillingAddressExisting(address)}
+                      onClick={() =>
+                        handleSelectBillingAddressExisting(address)
+                      }
                     />
                   ))}
 
@@ -731,12 +741,17 @@ export function ContactsAddressesSection({
                       {orgWithEnseigne && (
                         <OrganisationAddressCard
                           id={orgWithEnseigne.id}
-                          name={orgWithEnseigne.tradeName || orgWithEnseigne.legalName}
+                          name={
+                            orgWithEnseigne.tradeName ||
+                            orgWithEnseigne.legalName
+                          }
                           logoUrl={orgWithEnseigne.logoUrl}
                           ownershipType={orgWithEnseigne.ownershipType}
                           address={orgWithEnseigne.address}
                           label="Adresse du restaurant"
-                          isSelected={data.deliveryAddress?.mode === 'restaurant'}
+                          isSelected={
+                            data.deliveryAddress?.mode === 'restaurant'
+                          }
                           onClick={handleSelectDeliveryAddressRestaurant}
                         />
                       )}
@@ -755,7 +770,9 @@ export function ContactsAddressesSection({
                         onCancel={() => setShowNewDeliveryAddressForm(false)}
                         isSubmitting={createAddress.isPending}
                         sectionLabel="Nouvelle adresse de livraison"
-                        defaultCountry={orgWithEnseigne?.address?.country || 'FR'}
+                        defaultCountry={
+                          orgWithEnseigne?.address?.country || 'FR'
+                        }
                       />
                     )}
                   </>

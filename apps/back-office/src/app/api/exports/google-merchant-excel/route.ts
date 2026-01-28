@@ -70,7 +70,7 @@ async function getProductsForExport(supabase: any, filters: any = {}) {
 
   const { data: products, error } = await query;
 
-  console.log('[API] Supabase query result:', {
+  console.warn('[API] Supabase query result:', {
     products,
     error,
     count: products?.length,
@@ -97,7 +97,7 @@ function generateExcelFile(
   // 2. Préparer les données avec headers
   const worksheetData = [
     [...headers], // En-têtes en première ligne (copie mutable)
-    ...excelData.map(row => headers.map(header => row[header] || '')),
+    ...excelData.map(row => headers.map(header => row[header] ?? '')),
   ];
 
   // 3. Créer la worksheet
@@ -174,9 +174,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     // Paramètres de filtrage
     const filters = {
-      status: searchParams.get('status') || undefined,
-      categoryId: searchParams.get('categoryId') || undefined,
-      supplierId: searchParams.get('supplierId') || undefined,
+      status: searchParams.get('status') ?? undefined,
+      categoryId: searchParams.get('categoryId') ?? undefined,
+      supplierId: searchParams.get('supplierId') ?? undefined,
       limit: searchParams.get('limit')
         ? parseInt(searchParams.get('limit')!)
         : undefined,
@@ -186,7 +186,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const includeErrors = searchParams.get('includeErrors') === 'true';
     const downloadMode = searchParams.get('download') !== 'false'; // Par défaut true
 
-    console.log('[API] Google Merchant Excel export requested:', {
+    console.warn('[API] Google Merchant Excel export requested:', {
       filters,
       includeErrors,
       downloadMode,
@@ -199,7 +199,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     let products;
     try {
       products = await getProductsForExport(supabase, filters);
-      console.log(`[API] Retrieved ${products.length} products for export`);
+      console.warn(`[API] Retrieved ${products.length} products for export`);
     } catch (error: any) {
       console.error('[API] Error retrieving products:', error);
       return NextResponse.json(
@@ -225,7 +225,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const enrichedProducts = products.map((product: any) => {
       // Extraire l'item_group_id si le produit fait partie d'un groupe de variantes
       const variantGroup = product.variant_group?.[0]?.group;
-      const item_group_id = variantGroup?.item_group_id || null;
+      const item_group_id = variantGroup?.item_group_id ?? null;
 
       return {
         ...product,
@@ -233,7 +233,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       };
     });
 
-    console.log(`[API] Products enriched with variant data:`, {
+    console.warn(`[API] Products enriched with variant data:`, {
       total: enrichedProducts.length,
       withVariants: enrichedProducts.filter((p: any) => p.item_group_id).length,
     });
@@ -245,7 +245,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       summary,
     } = prepareExcelData(enrichedProducts);
 
-    console.log(`[API] Excel data prepared:`, summary);
+    console.warn(`[API] Excel data prepared:`, summary);
 
     if (excelData.length === 0) {
       return NextResponse.json(
@@ -271,7 +271,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         fileName,
         GOOGLE_MERCHANT_EXCEL_HEADERS
       );
-      console.log(`[API] Excel file generated: ${fileName}`);
+      console.warn(`[API] Excel file generated: ${fileName}`);
     } catch (error: any) {
       console.error('[API] Error generating Excel file:', error);
       return NextResponse.json(
@@ -350,7 +350,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const body = await request.json();
     const { filters = {}, options = {}, productIds = null } = body;
 
-    console.log('[API] Advanced Excel export requested:', {
+    console.warn('[API] Advanced Excel export requested:', {
       filters,
       options,
       productIds,
@@ -380,7 +380,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       products = await getProductsForExport(supabase, filters);
     }
 
-    console.log(
+    console.warn(
       `[API] Retrieved ${products.length} products for advanced export`
     );
 

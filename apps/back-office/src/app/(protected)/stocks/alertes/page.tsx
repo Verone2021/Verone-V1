@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useMemo } from 'react';
 
-import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 import { useToast } from '@verone/common';
@@ -35,18 +34,11 @@ import {
   Bell,
   Filter,
   Search,
-  Download,
   Package,
-  TrendingDown,
-  Clock,
-  Eye,
   RefreshCw,
-  AlertCircle,
   Info,
   XCircle,
   CheckCircle,
-  Zap,
-  BarChart3,
 } from 'lucide-react';
 
 import { QuickPurchaseOrderModal } from '@/components/business/quick-purchase-order-modal';
@@ -93,7 +85,7 @@ interface StockAlert {
 export default function StockAlertesPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { toast } = useToast();
+  const { toast: _toast } = useToast(); // Reserved for future toast notifications
 
   const [filters, setFilters] = useState({
     severity: '',
@@ -106,7 +98,7 @@ export default function StockAlertesPage() {
   const [showFilters, toggleShowFilters] = useToggle(false);
   const [
     showQuickPurchaseModal,
-    toggleQuickPurchaseModal,
+    _toggleQuickPurchaseModal,
     setShowQuickPurchaseModal,
   ] = useToggle(false);
   const [selectedProductForOrder, setSelectedProductForOrder] = useState<{
@@ -119,13 +111,13 @@ export default function StockAlertesPage() {
 
   // State modal détail commande fournisseur
   const [showOrderDetailModal, setShowOrderDetailModal] = useState(false);
-  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const [_selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
 
   // Hook pour récupérer commande complète
   const {
     fetchOrder,
     currentOrder,
-    loading: loadingOrder,
+    loading: _loadingOrder,
   } = usePurchaseOrders();
 
   const {
@@ -135,9 +127,9 @@ export default function StockAlertesPage() {
     criticalAlerts,
     warningAlerts,
     alertsInDraft,
-    alertsNotInDraft,
-    isProductInDraft,
-    getQuantityInDraft,
+    alertsNotInDraft: _alertsNotInDraft,
+    isProductInDraft: _isProductInDraft,
+    getQuantityInDraft: _getQuantityInDraft,
   } = useStockAlerts();
 
   // Mapper les alertes du hook vers l'interface locale
@@ -311,7 +303,9 @@ export default function StockAlertesPage() {
   // Auto-refresh polling (fallback)
   useEffect(() => {
     const interval = setInterval(() => {
-      fetchAlerts();
+      void fetchAlerts().catch(error => {
+        console.error('[AlertesPage] Auto-refresh failed:', error);
+      });
     }, 30000); // Rafraîchir toutes les 30 secondes
 
     return () => clearInterval(interval);
@@ -320,10 +314,12 @@ export default function StockAlertesPage() {
   // ✅ Écouter événements de changement de commandes pour rafraîchissement immédiat
   useEffect(() => {
     const handleStockAlertsRefresh = () => {
-      console.log(
+      console.warn(
         '📢 [ALERTES] Événement stock-alerts-refresh reçu, rafraîchissement...'
       );
-      fetchAlerts();
+      void fetchAlerts().catch(error => {
+        console.error('[AlertesPage] Event refresh failed:', error);
+      });
     };
 
     window.addEventListener('stock-alerts-refresh', handleStockAlertsRefresh);
@@ -334,7 +330,8 @@ export default function StockAlertesPage() {
       );
   }, [fetchAlerts]);
 
-  const getSeverityIcon = (severity: AlertSeverity) => {
+  // Reserved for future severity badge implementations
+  const _getSeverityIcon = (severity: AlertSeverity) => {
     switch (severity) {
       case 'critical':
         return <XCircle className="h-4 w-4 text-red-600" />;
@@ -345,7 +342,7 @@ export default function StockAlertesPage() {
     }
   };
 
-  const getSeverityColor = (severity: AlertSeverity) => {
+  const _getSeverityColor = (severity: AlertSeverity) => {
     switch (severity) {
       case 'critical':
         return 'border-red-300 text-red-600 bg-red-50';
@@ -381,7 +378,14 @@ export default function StockAlertesPage() {
             <div className="flex items-center space-x-3">
               <ButtonV2
                 variant="outline"
-                onClick={() => fetchAlerts()}
+                onClick={() => {
+                  void fetchAlerts().catch(error => {
+                    console.error(
+                      '[AlertesPage] Manual refresh failed:',
+                      error
+                    );
+                  });
+                }}
                 disabled={loading}
                 className="border-black text-black hover:bg-black hover:text-white"
               >
@@ -628,9 +632,9 @@ export default function StockAlertesPage() {
                         key={alert.id}
                         alert={{
                           id: alert.id,
-                          product_id: alert.productId || '',
-                          product_name: alert.productName || '',
-                          sku: alert.productSku || '',
+                          product_id: alert.productId ?? '',
+                          product_name: alert.productName ?? '',
+                          sku: alert.productSku ?? '',
                           stock_real: alert.currentStock || 0,
                           stock_forecasted_in: alert.stock_forecasted_in || 0,
                           stock_forecasted_out: alert.stock_forecasted_out || 0,
@@ -648,7 +652,7 @@ export default function StockAlertesPage() {
                           draft_order_id: alert.draft_order_id,
                           draft_order_number: alert.draft_order_number,
                           validated: alert.validated || false,
-                          validated_at: alert.validated_at || null,
+                          validated_at: alert.validated_at ?? null,
                         }}
                         onActionClick={clickedAlert => {
                           // Calculer le manque réel : min_stock - stock_previsionnel
@@ -667,7 +671,14 @@ export default function StockAlertesPage() {
                           // - Si seuil atteint ET commande existe → Ouvrir détails commande
                           // - Si seuil NON atteint (même avec commande existante) → Ouvrir modal pour commander le complément
                           if (seuilAtteint && clickedAlert.draft_order_id) {
-                            handleOpenOrderDetail(clickedAlert.draft_order_id);
+                            void handleOpenOrderDetail(
+                              clickedAlert.draft_order_id
+                            ).catch(error => {
+                              console.error(
+                                '[AlertesPage] Open order detail failed:',
+                                error
+                              );
+                            });
                             return;
                           }
 
@@ -722,9 +733,9 @@ export default function StockAlertesPage() {
                         key={alert.id}
                         alert={{
                           id: alert.id,
-                          product_id: alert.productId || '',
-                          product_name: alert.productName || '',
-                          sku: alert.productSku || '',
+                          product_id: alert.productId ?? '',
+                          product_name: alert.productName ?? '',
+                          sku: alert.productSku ?? '',
                           stock_real: alert.currentStock || 0,
                           stock_forecasted_in: alert.stock_forecasted_in || 0,
                           stock_forecasted_out: alert.stock_forecasted_out || 0,
@@ -742,7 +753,7 @@ export default function StockAlertesPage() {
                           draft_order_id: alert.draft_order_id,
                           draft_order_number: alert.draft_order_number,
                           validated: alert.validated || false,
-                          validated_at: alert.validated_at || null,
+                          validated_at: alert.validated_at ?? null,
                         }}
                         onActionClick={clickedAlert => {
                           // Calculer le manque réel : min_stock - stock_previsionnel
@@ -761,7 +772,14 @@ export default function StockAlertesPage() {
                           // - Si seuil atteint ET commande existe → Ouvrir détails commande
                           // - Si seuil NON atteint (même avec commande existante) → Ouvrir modal pour commander le complément
                           if (seuilAtteint && clickedAlert.draft_order_id) {
-                            handleOpenOrderDetail(clickedAlert.draft_order_id);
+                            void handleOpenOrderDetail(
+                              clickedAlert.draft_order_id
+                            ).catch(error => {
+                              console.error(
+                                '[AlertesPage] Open order detail failed:',
+                                error
+                              );
+                            });
                             return;
                           }
 
@@ -793,7 +811,12 @@ export default function StockAlertesPage() {
           productId={selectedProductForOrder.productId}
           shortageQuantity={selectedProductForOrder.shortageQuantity}
           onSuccess={() => {
-            fetchAlerts(); // Rafraîchir les alertes
+            void fetchAlerts().catch(error => {
+              console.error(
+                '[AlertesPage] Refresh after order success failed:',
+                error
+              );
+            });
           }}
         />
       )}
@@ -808,7 +831,12 @@ export default function StockAlertesPage() {
             setSelectedOrderId(null);
           }}
           onUpdate={() => {
-            fetchAlerts(); // Rafraîchir alertes après modifications
+            void fetchAlerts().catch(error => {
+              console.error(
+                '[AlertesPage] Refresh after order update failed:',
+                error
+              );
+            });
           }}
         />
       )}

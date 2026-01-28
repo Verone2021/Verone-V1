@@ -369,7 +369,14 @@ export function PaymentRequestModalAdmin({
               {/* Actions de copie */}
               <div className="flex flex-wrap items-center gap-2 justify-end">
                 <button
-                  onClick={handleCopyDestinataire}
+                  onClick={() => {
+                    void handleCopyDestinataire().catch(error => {
+                      console.error(
+                        '[PaymentRequestModalAdmin] handleCopyDestinataire failed:',
+                        error
+                      );
+                    });
+                  }}
                   className="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-800 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
                 >
                   {copiedField === 'destinataire' ? (
@@ -382,7 +389,14 @@ export function PaymentRequestModalAdmin({
                     : 'Copier destinataire'}
                 </button>
                 <button
-                  onClick={handleCopyDesignation}
+                  onClick={() => {
+                    void handleCopyDesignation().catch(error => {
+                      console.error(
+                        '[PaymentRequestModalAdmin] handleCopyDesignation failed:',
+                        error
+                      );
+                    });
+                  }}
                   className="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-800 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
                 >
                   {copiedField === 'designation' ? (
@@ -395,7 +409,14 @@ export function PaymentRequestModalAdmin({
                     : 'Copier désignation'}
                 </button>
                 <button
-                  onClick={handleCopyMontant}
+                  onClick={() => {
+                    void handleCopyMontant().catch(error => {
+                      console.error(
+                        '[PaymentRequestModalAdmin] handleCopyMontant failed:',
+                        error
+                      );
+                    });
+                  }}
                   className="flex items-center gap-2 px-3 py-1.5 text-sm text-emerald-600 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition-colors font-medium"
                 >
                   {copiedField === 'montant' ? (
@@ -617,7 +638,14 @@ export function PaymentRequestModalAdmin({
               </button>
             ) : (
               <button
-                onClick={handleSubmit}
+                onClick={() => {
+                  void handleSubmit().catch(error => {
+                    console.error(
+                      '[PaymentRequestModalAdmin] handleSubmit failed:',
+                      error
+                    );
+                  });
+                }}
                 disabled={createMutation.isPending}
                 className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-lg hover:from-emerald-700 hover:to-teal-700 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
               >

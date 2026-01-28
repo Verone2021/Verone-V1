@@ -3,7 +3,6 @@
 import { useState, useMemo, useEffect } from 'react';
 
 import Image from 'next/image';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 import { useToast } from '@verone/common';
@@ -29,7 +28,6 @@ import { Label } from '@verone/ui';
 import { Skeleton } from '@verone/ui';
 import { Switch } from '@verone/ui';
 import { Tabs, TabsList, TabsTrigger } from '@verone/ui';
-import { cn } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
 import {
   Plus,
@@ -42,16 +40,12 @@ import {
   XCircle,
   Eye,
   Briefcase,
-  ExternalLink,
-  Package,
-  TrendingUp,
   Archive,
   ArchiveRestore,
 } from 'lucide-react';
 
 import {
   useLinkMeEnseignes,
-  useLinkMeEnseigne,
   useLinkMeEnseigneOrganisations,
   useCreateEnseigne,
   useUpdateEnseigne,
@@ -103,7 +97,11 @@ export function EnseignesSection() {
   const [loadingOrgs, setLoadingOrgs] = useState(false);
 
   // Hooks queries
-  const { data: enseignes, isLoading, refetch } = useLinkMeEnseignes();
+  const {
+    data: enseignes,
+    isLoading,
+    refetch: _refetch,
+  } = useLinkMeEnseignes();
   const { data: selectedEnseigneOrgs } = useLinkMeEnseigneOrganisations(
     isDetailModalOpen ? (selectedEnseigne?.id ?? null) : null
   );
@@ -188,8 +186,13 @@ export function EnseignesSection() {
 
     // Charger immédiatement au montage (pas de lazy-loading)
     // pour que le compteur de l'onglet affiche la bonne valeur
-    fetchOrganisationsIndependantes();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    void fetchOrganisationsIndependantes().catch(error => {
+      console.error(
+        '[EnseignesSection] fetchOrganisationsIndependantes failed:',
+        error
+      );
+    });
+  }, []);
 
   // Filtered enseignes
   const filteredEnseignes = useMemo(() => {
@@ -282,7 +285,7 @@ export function EnseignesSection() {
     }
   };
 
-  const handleDeleteEnseigne = async (enseigne: EnseigneWithStats) => {
+  const _handleDeleteEnseigne = async (enseigne: EnseigneWithStats) => {
     if (!confirm(`Êtes-vous sûr de vouloir supprimer "${enseigne.name}" ?`))
       return;
 
@@ -320,18 +323,18 @@ export function EnseignesSection() {
     }
   };
 
-  const openEditModal = (enseigne: EnseigneWithStats) => {
+  const _openEditModal = (enseigne: EnseigneWithStats) => {
     setSelectedEnseigne(enseigne);
     setFormData({
       name: enseigne.name,
-      description: enseigne.description || '',
+      description: enseigne.description ?? '',
       logo_url: enseigne.logo_url,
       is_active: enseigne.is_active,
     });
     setIsEditModalOpen(true);
   };
 
-  const openDetailModal = (enseigne: EnseigneWithStats) => {
+  const _openDetailModal = (enseigne: EnseigneWithStats) => {
     setSelectedEnseigne(enseigne);
     setIsDetailModalOpen(true);
   };
@@ -614,7 +617,7 @@ export function EnseignesSection() {
                         <div className="h-16 w-16 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden border">
                           {enseigne.logo_url ? (
                             <Image
-                              src={getLogoUrl(enseigne.logo_url) || ''}
+                              src={getLogoUrl(enseigne.logo_url) ?? ''}
                               alt={enseigne.name}
                               width={64}
                               height={64}
@@ -674,7 +677,12 @@ export function EnseignesSection() {
                           size="sm"
                           onClick={e => {
                             e.stopPropagation();
-                            handleToggleActive(enseigne);
+                            void handleToggleActive(enseigne).catch(error => {
+                              console.error(
+                                '[EnseignesSection] handleToggleActive failed:',
+                                error
+                              );
+                            });
                           }}
                         />
                       </div>
@@ -775,7 +783,7 @@ export function EnseignesSection() {
                         <div className="h-16 w-16 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden border">
                           {org.logo_url ? (
                             <Image
-                              src={getLogoUrl(org.logo_url) || ''}
+                              src={getLogoUrl(org.logo_url) ?? ''}
                               alt={org.trade_name || org.legal_name}
                               width={64}
                               height={64}
@@ -900,7 +908,14 @@ export function EnseignesSection() {
               Annuler
             </ButtonV2>
             <ButtonV2
-              onClick={handleCreateEnseigne}
+              onClick={() => {
+                void handleCreateEnseigne().catch(error => {
+                  console.error(
+                    '[EnseignesSection] handleCreateEnseigne failed:',
+                    error
+                  );
+                });
+              }}
               loading={createEnseigne.isPending}
             >
               {createEnseigne.isPending ? 'Création...' : 'Créer'}
@@ -957,7 +972,14 @@ export function EnseignesSection() {
               Annuler
             </ButtonV2>
             <ButtonV2
-              onClick={handleUpdateEnseigne}
+              onClick={() => {
+                void handleUpdateEnseigne().catch(error => {
+                  console.error(
+                    '[EnseignesSection] handleUpdateEnseigne failed:',
+                    error
+                  );
+                });
+              }}
               loading={updateEnseigne.isPending}
             >
               {updateEnseigne.isPending ? 'Enregistrement...' : 'Enregistrer'}
@@ -974,7 +996,7 @@ export function EnseignesSection() {
               {selectedEnseigne?.logo_url && (
                 <div className="h-10 w-10 rounded-lg bg-gray-100 overflow-hidden border">
                   <Image
-                    src={getLogoUrl(selectedEnseigne.logo_url) || ''}
+                    src={getLogoUrl(selectedEnseigne.logo_url) ?? ''}
                     alt={selectedEnseigne.name}
                     width={40}
                     height={40}
@@ -1061,7 +1083,7 @@ export function EnseignesSection() {
                         <div className="flex items-center gap-3">
                           {org.logo_url ? (
                             <Image
-                              src={getLogoUrl(org.logo_url) || ''}
+                              src={getLogoUrl(org.logo_url) ?? ''}
                               alt={org.name}
                               width={32}
                               height={32}
@@ -1103,7 +1125,12 @@ export function EnseignesSection() {
               variant={selectedEnseigne?.is_active ? 'secondary' : 'default'}
               onClick={() => {
                 if (selectedEnseigne) {
-                  handleToggleActive(selectedEnseigne);
+                  void handleToggleActive(selectedEnseigne).catch(error => {
+                    console.error(
+                      '[EnseignesSection] handleToggleActive (dialog) failed:',
+                      error
+                    );
+                  });
                 }
               }}
               icon={selectedEnseigne?.is_active ? Archive : ArchiveRestore}

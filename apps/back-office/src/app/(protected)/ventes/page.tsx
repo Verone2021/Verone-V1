@@ -18,7 +18,6 @@ import {
   TrendingUp,
   Euro,
   Calendar,
-  CheckCircle,
   Clock,
   AlertCircle,
   Users,

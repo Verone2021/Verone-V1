@@ -30,12 +30,12 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-import type { OrderFormData, CartItem } from '../schemas/order-form.schema';
 import type { SelectionItem } from '../../../lib/hooks/use-user-selection';
 import {
   useSelectionItems,
   useUpdateAffiliateProductPrice,
 } from '../../../lib/hooks/use-user-selection';
+import type { OrderFormData, CartItem } from '../schemas/order-form.schema';
 
 // ============================================================================
 // TYPES
@@ -94,14 +94,16 @@ function getMarginIndicator(marginRate: number): {
 
 export function ProductsStep({
   formData,
-  errors,
+  errors: _errors,
   cartTotals,
   onAddToCart,
   onUpdateQuantity,
 }: ProductsStepProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [quantities, setQuantities] = useState<Record<string, number>>({});
-  const [selectedCategory, setSelectedCategory] = useState<string | undefined>();
+  const [selectedCategory, setSelectedCategory] = useState<
+    string | undefined
+  >();
   // Prix personnalisés pour les produits affiliés (clé = itemId, valeur = prix HT)
   const [customPrices, setCustomPrices] = useState<Record<string, number>>({});
 
@@ -118,9 +120,9 @@ export function ProductsStep({
     if (!selectionItems) return [];
 
     const categoryMap = new Map<string, number>();
-    selectionItems.forEach((item) => {
+    selectionItems.forEach(item => {
       if (item.category_name) {
-        const count = categoryMap.get(item.category_name) || 0;
+        const count = categoryMap.get(item.category_name) ?? 0;
         categoryMap.set(item.category_name, count + 1);
       }
     });
@@ -138,14 +140,16 @@ export function ProductsStep({
 
     // Filtre par catégorie
     if (selectedCategory) {
-      filtered = filtered.filter((item) => item.category_name === selectedCategory);
+      filtered = filtered.filter(
+        item => item.category_name === selectedCategory
+      );
     }
 
     // Filtre par recherche
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(
-        (item) =>
+        item =>
           item.product_name.toLowerCase().includes(query) ||
           item.product_reference.toLowerCase().includes(query)
       );
@@ -156,13 +160,13 @@ export function ProductsStep({
 
   // Vérifier si un produit est déjà dans le panier
   const isInCart = (selectionItemId: string) => {
-    return formData.cart.items.some((i) => i.selectionItemId === selectionItemId);
+    return formData.cart.items.some(i => i.selectionItemId === selectionItemId);
   };
 
   // Handler pour modifier le prix d'un produit affilié
   const handlePriceChange = (itemId: string, newPrice: number) => {
     if (isNaN(newPrice) || newPrice < 0) return;
-    setCustomPrices((prev) => ({ ...prev, [itemId]: newPrice }));
+    setCustomPrices(prev => ({ ...prev, [itemId]: newPrice }));
   };
 
   // Handler pour sauvegarder le prix modifié (sur blur)
@@ -180,11 +184,14 @@ export function ProductsStep({
         onSuccess: () => {
           toast.success('Prix mis à jour');
         },
-        onError: (error) => {
+        onError: error => {
           toast.error('Erreur lors de la mise à jour du prix');
           console.error(error);
           // Réinitialiser au prix original
-          setCustomPrices((prev) => ({ ...prev, [item.id]: item.selling_price_ht }));
+          setCustomPrices(prev => ({
+            ...prev,
+            [item.id]: item.selling_price_ht,
+          }));
         },
       }
     );
@@ -218,7 +225,7 @@ export function ProductsStep({
     });
 
     // Reset quantity
-    setQuantities((prev) => ({ ...prev, [item.id]: 1 }));
+    setQuantities(prev => ({ ...prev, [item.id]: 1 }));
   };
 
   // Pas de sélection choisie
@@ -230,7 +237,8 @@ export function ProductsStep({
           Aucune sélection choisie
         </h3>
         <p className="text-gray-500">
-          Veuillez d&apos;abord sélectionner une sélection de produits (étape 2).
+          Veuillez d&apos;abord sélectionner une sélection de produits (étape
+          2).
         </p>
       </div>
     );
@@ -271,7 +279,7 @@ export function ProductsStep({
             type="text"
             placeholder="Rechercher un produit..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={e => setSearchQuery(e.target.value)}
             className="pl-10"
           />
         </div>
@@ -280,7 +288,8 @@ export function ProductsStep({
         <div className="flex items-center gap-2 px-4 py-2 bg-linkme-turquoise/10 rounded-lg">
           <ShoppingCart className="h-5 w-5 text-linkme-turquoise" />
           <span className="font-medium text-linkme-turquoise">
-            {cartTotals.itemsCount} article{cartTotals.itemsCount > 1 ? 's' : ''}
+            {cartTotals.itemsCount} article
+            {cartTotals.itemsCount > 1 ? 's' : ''}
           </span>
           <span className="text-gray-500">•</span>
           <span className="font-semibold text-gray-900">
@@ -295,10 +304,13 @@ export function ProductsStep({
 
       {/* Info sélection */}
       <div className="text-sm text-gray-500">
-        Sélection : <span className="font-medium">{formData.selection.selectionName}</span>
+        Sélection :{' '}
+        <span className="font-medium">{formData.selection.selectionName}</span>
         {' • '}
-        {filteredProducts.length} produit{filteredProducts.length > 1 ? 's' : ''}{' '}
-        {(searchQuery || selectedCategory) && `(filtré${filteredProducts.length > 1 ? 's' : ''})`}
+        {filteredProducts.length} produit
+        {filteredProducts.length > 1 ? 's' : ''}{' '}
+        {(searchQuery || selectedCategory) &&
+          `(filtré${filteredProducts.length > 1 ? 's' : ''})`}
       </div>
 
       {/* Barre de catégories */}
@@ -325,7 +337,7 @@ export function ProductsStep({
             </span>
           </button>
 
-          {categories.map((cat) => (
+          {categories.map(cat => (
             <button
               key={cat.name}
               type="button"
@@ -341,7 +353,9 @@ export function ProductsStep({
               <span
                 className={cn(
                   'text-xs px-1.5 py-0.5 rounded-full',
-                  selectedCategory === cat.name ? 'bg-white/20' : 'bg-white text-gray-500'
+                  selectedCategory === cat.name
+                    ? 'bg-white/20'
+                    : 'bg-white text-gray-500'
                 )}
               >
                 {cat.count}
@@ -355,16 +369,21 @@ export function ProductsStep({
       {filteredProducts.length === 0 ? (
         <div className="text-center py-12">
           <Search className="h-10 w-10 text-gray-300 mx-auto mb-3" />
-          <p className="text-gray-500">Aucun produit ne correspond à votre recherche</p>
+          <p className="text-gray-500">
+            Aucun produit ne correspond à votre recherche
+          </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {filteredProducts.map((item) => {
+          {filteredProducts.map(item => {
             const marginIndicator = getMarginIndicator(item.margin_rate);
             const inCart = isInCart(item.id);
-            const cartItem = formData.cart.items.find((i) => i.selectionItemId === item.id);
+            const cartItem = formData.cart.items.find(
+              i => i.selectionItemId === item.id
+            );
             // Afficher la quantité du panier si produit dans panier, sinon quantité locale
-            const displayQuantity = inCart && cartItem ? cartItem.quantity : (quantities[item.id] || 1);
+            const displayQuantity =
+              inCart && cartItem ? cartItem.quantity : quantities[item.id] || 1;
 
             return (
               <Card
@@ -421,14 +440,21 @@ export function ProductsStep({
                             type="number"
                             step="0.01"
                             min="0"
-                            value={customPrices[item.id] ?? item.selling_price_ht}
-                            onChange={(e) =>
-                              handlePriceChange(item.id, parseFloat(e.target.value) || 0)
+                            value={
+                              customPrices[item.id] ?? item.selling_price_ht
+                            }
+                            onChange={e =>
+                              handlePriceChange(
+                                item.id,
+                                parseFloat(e.target.value) || 0
+                              )
                             }
                             onBlur={() => handlePriceSave(item)}
                             className="w-20 text-lg font-bold text-gray-900 border rounded px-2 py-0.5 focus:outline-none focus:ring-2 focus:ring-blue-300"
                           />
-                          <span className="text-lg font-bold text-gray-900">€</span>
+                          <span className="text-lg font-bold text-gray-900">
+                            €
+                          </span>
                         </div>
                       ) : (
                         <p className="text-lg font-bold text-gray-900">
@@ -440,7 +466,9 @@ export function ProductsStep({
                         </p>
                       )}
                       <p className="text-xs text-gray-500">
-                        {item.is_affiliate_product ? 'Prix HT (modifiable)' : 'Prix HT'}
+                        {item.is_affiliate_product
+                          ? 'Prix HT (modifiable)'
+                          : 'Prix HT'}
                       </p>
                     </div>
                     {/* Badge: "Votre produit" pour affilié, marge pour catalogue */}
@@ -471,10 +499,13 @@ export function ProductsStep({
                         onClick={() => {
                           if (inCart && cartItem) {
                             // Produit dans le panier -> modifier directement la quantité du panier
-                            onUpdateQuantity(item.id, Math.max(1, cartItem.quantity - 1));
+                            onUpdateQuantity(
+                              item.id,
+                              Math.max(1, cartItem.quantity - 1)
+                            );
                           } else {
                             // Produit pas dans le panier -> modifier la quantité locale
-                            setQuantities((prev) => ({
+                            setQuantities(prev => ({
                               ...prev,
                               [item.id]: Math.max(1, (prev[item.id] || 1) - 1),
                             }));
@@ -488,12 +519,15 @@ export function ProductsStep({
                         type="number"
                         min={1}
                         value={displayQuantity}
-                        onChange={(e) => {
-                          const newValue = Math.max(1, parseInt(e.target.value) || 1);
+                        onChange={e => {
+                          const newValue = Math.max(
+                            1,
+                            parseInt(e.target.value) || 1
+                          );
                           if (inCart && cartItem) {
                             onUpdateQuantity(item.id, newValue);
                           } else {
-                            setQuantities((prev) => ({
+                            setQuantities(prev => ({
                               ...prev,
                               [item.id]: newValue,
                             }));
@@ -509,7 +543,7 @@ export function ProductsStep({
                             onUpdateQuantity(item.id, cartItem.quantity + 1);
                           } else {
                             // Produit pas dans le panier -> modifier la quantité locale
-                            setQuantities((prev) => ({
+                            setQuantities(prev => ({
                               ...prev,
                               [item.id]: (prev[item.id] || 1) + 1,
                             }));

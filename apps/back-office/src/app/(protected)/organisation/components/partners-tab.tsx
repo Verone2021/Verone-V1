@@ -2,32 +2,17 @@
 
 import { useState, useMemo, useEffect } from 'react';
 
-import Link from 'next/link';
-
 import { OrganisationListView } from '@verone/customers';
-import { OrganisationLogo } from '@verone/organisations';
 import { OrganisationCard } from '@verone/organisations';
 import { PartnerFormModal } from '@verone/organisations';
 import { useOrganisations } from '@verone/organisations';
 import { Input } from '@verone/ui';
 import { Card, CardContent } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
-import { Badge } from '@verone/ui';
 import { spacing, colors } from '@verone/ui/design-system';
 import { cn } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
-import {
-  Search,
-  Plus,
-  MapPin,
-  Archive,
-  ArchiveRestore,
-  Trash2,
-  ExternalLink,
-  Building2,
-  LayoutGrid,
-  List,
-} from 'lucide-react';
+import { Search, Plus, Building2, LayoutGrid, List } from 'lucide-react';
 
 export function PartnersTab() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -36,13 +21,13 @@ export function PartnersTab() {
   const [archivedPartners, setArchivedPartners] = useState<any[]>([]);
   const [archivedLoading, setArchivedLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedPartner, setSelectedPartner] = useState<any>(null);
+  const [selectedPartner, _setSelectedPartner] = useState<any>(null);
 
   const filters = useMemo(
     () => ({
       type: 'partner' as const,
       is_active: true,
-      search: searchQuery || undefined,
+      search: searchQuery ?? undefined,
     }),
     [searchQuery]
   );
@@ -78,7 +63,9 @@ export function PartnersTab() {
 
   useEffect(() => {
     if (activeTab === 'archived') {
-      loadArchivedPartnersData();
+      void loadArchivedPartnersData().catch(error => {
+        console.error('[PartnersTab] Failed to load archived partners:', error);
+      });
     }
   }, [activeTab]);
 
@@ -86,7 +73,7 @@ export function PartnersTab() {
     if (!partner.archived_at) {
       const success = await archiveOrganisation(partner.id);
       if (success) {
-        refetch();
+        await refetch();
         if (activeTab === 'archived') {
           await loadArchivedPartnersData();
         }
@@ -94,7 +81,7 @@ export function PartnersTab() {
     } else {
       const success = await unarchiveOrganisation(partner.id);
       if (success) {
-        refetch();
+        await refetch();
         await loadArchivedPartnersData();
       }
     }
@@ -106,9 +93,13 @@ export function PartnersTab() {
     );
 
     if (confirmed) {
-      const success = await hardDeleteOrganisation(partner.id);
-      if (success) {
-        await loadArchivedPartnersData();
+      try {
+        const success = await hardDeleteOrganisation(partner.id);
+        if (success) {
+          await loadArchivedPartnersData();
+        }
+      } catch (error) {
+        console.error('[PartnersTab] Failed to delete partner:', error);
       }
     }
   };
@@ -269,8 +260,16 @@ export function PartnersTab() {
                 type: 'partner',
               }}
               activeTab={activeTab}
-              onArchive={() => handleArchive(partner)}
-              onDelete={() => handleDelete(partner)}
+              onArchive={() => {
+                void handleArchive(partner).catch(error => {
+                  console.error('[PartnersTab] Archive failed:', error);
+                });
+              }}
+              onDelete={() => {
+                void handleDelete(partner).catch(error => {
+                  console.error('[PartnersTab] Delete failed:', error);
+                });
+              }}
             />
           ))}
         </div>
@@ -285,11 +284,19 @@ export function PartnersTab() {
               activeTab={activeTab}
               onArchive={id => {
                 const partner = displayedPartners.find(p => p.id === id);
-                if (partner) handleArchive(partner);
+                if (partner) {
+                  void handleArchive(partner).catch(error => {
+                    console.error('[PartnersTab] Archive failed:', error);
+                  });
+                }
               }}
               onDelete={id => {
                 const partner = displayedPartners.find(p => p.id === id);
-                if (partner) handleDelete(partner);
+                if (partner) {
+                  void handleDelete(partner).catch(error => {
+                    console.error('[PartnersTab] Delete failed:', error);
+                  });
+                }
               }}
             />
           </CardContent>
@@ -301,7 +308,9 @@ export function PartnersTab() {
         onClose={() => setIsModalOpen(false)}
         partner={selectedPartner}
         onSuccess={() => {
-          refetch();
+          void refetch().catch(error => {
+            console.error('[PartnersTab] Refetch after success failed:', error);
+          });
           setIsModalOpen(false);
         }}
       />

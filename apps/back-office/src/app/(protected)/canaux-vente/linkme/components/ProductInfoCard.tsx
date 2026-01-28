@@ -187,7 +187,7 @@ export function ProductInfoCard({
             onChange={e => {
               setFormData(prev => ({
                 ...prev,
-                custom_title: e.target.value || null,
+                custom_title: e.target.value ?? null,
               }));
               setIsDirty(true);
             }}
@@ -249,7 +249,7 @@ export function ProductInfoCard({
             onChange={e => {
               setFormData(prev => ({
                 ...prev,
-                custom_description: e.target.value || null,
+                custom_description: e.target.value ?? null,
               }));
               setIsDirty(true);
             }}
@@ -368,7 +368,11 @@ export function ProductInfoCard({
 
         {/* Bouton sauvegarde */}
         <Button
-          onClick={handleSave}
+          onClick={() => {
+            void handleSave().catch(error => {
+              console.error('[ProductInfoCard] handleSave failed:', error);
+            });
+          }}
           disabled={!isDirty || isSaving}
           className="w-full"
         >

@@ -11,7 +11,6 @@ import {
   ArrowLeft,
   AlertCircle,
   CheckCircle2,
-  Plus,
   X,
 } from 'lucide-react';
 
@@ -92,7 +91,7 @@ export default function NewWebhookPage() {
         .insert({
           name,
           url,
-          description: description.trim() || null,
+          description: description.trim() ?? null,
           secret,
           events: selectedEvents,
           active,
@@ -136,7 +135,11 @@ export default function NewWebhookPage() {
 
           <ButtonUnified
             variant="success"
-            onClick={handleSave}
+            onClick={() => {
+              void handleSave().catch(error => {
+                console.error('[WebhookNewPage] handleSave failed:', error);
+              });
+            }}
             disabled={saving}
           >
             <Save className="h-4 w-4" />

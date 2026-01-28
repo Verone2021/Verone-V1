@@ -65,7 +65,7 @@ export default function ProfilPage(): JSX.Element | null {
   const [isEditing, setIsEditing] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [showPasswordSection, setShowPasswordSection] = useState(false);
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [_showCurrentPassword, _setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [passwordSuccess, setPasswordSuccess] = useState(false);
@@ -88,7 +88,7 @@ export default function ProfilPage(): JSX.Element | null {
   });
 
   // Formulaire mot de passe
-  const [currentPassword, setCurrentPassword] = useState('');
+  const [_currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
@@ -103,10 +103,10 @@ export default function ProfilPage(): JSX.Element | null {
   useEffect(() => {
     if (profile) {
       reset({
-        first_name: profile.first_name || '',
-        last_name: profile.last_name || '',
-        phone: profile.phone || '',
-        title: profile.title || '',
+        first_name: profile.first_name ?? '',
+        last_name: profile.last_name ?? '',
+        phone: profile.phone ?? '',
+        title: profile.title ?? '',
       });
     }
   }, [profile, reset]);
@@ -134,10 +134,10 @@ export default function ProfilPage(): JSX.Element | null {
     setIsEditing(false);
     if (profile) {
       reset({
-        first_name: profile.first_name || '',
-        last_name: profile.last_name || '',
-        phone: profile.phone || '',
-        title: profile.title || '',
+        first_name: profile.first_name ?? '',
+        last_name: profile.last_name ?? '',
+        phone: profile.phone ?? '',
+        title: profile.title ?? '',
       });
     }
   };
@@ -277,7 +277,14 @@ export default function ProfilPage(): JSX.Element | null {
               <div className="p-6">
                 {isEditing ? (
                   /* Mode édition */
-                  <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                  <form
+                    onSubmit={e => {
+                      void handleSubmit(onSubmit)(e).catch(error => {
+                        console.error('[Profile] Submit failed:', error);
+                      });
+                    }}
+                    className="space-y-4"
+                  >
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label
@@ -389,13 +396,13 @@ export default function ProfilPage(): JSX.Element | null {
                       <div>
                         <p className="text-sm text-gray-500">Prénom</p>
                         <p className="text-gray-900 font-medium">
-                          {profile?.first_name || '-'}
+                          {profile?.first_name ?? '-'}
                         </p>
                       </div>
                       <div>
                         <p className="text-sm text-gray-500">Nom</p>
                         <p className="text-gray-900 font-medium">
-                          {profile?.last_name || '-'}
+                          {profile?.last_name ?? '-'}
                         </p>
                       </div>
                     </div>
@@ -403,14 +410,14 @@ export default function ProfilPage(): JSX.Element | null {
                       <p className="text-sm text-gray-500">Téléphone</p>
                       <p className="text-gray-900 font-medium flex items-center gap-2">
                         <Phone className="h-4 w-4 text-gray-400" />
-                        {profile?.phone || 'Non renseigné'}
+                        {profile?.phone ?? 'Non renseigné'}
                       </p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-500">Fonction</p>
                       <p className="text-gray-900 font-medium flex items-center gap-2">
                         <Briefcase className="h-4 w-4 text-gray-400" />
-                        {profile?.title || 'Non renseignée'}
+                        {profile?.title ?? 'Non renseignée'}
                       </p>
                     </div>
                   </div>

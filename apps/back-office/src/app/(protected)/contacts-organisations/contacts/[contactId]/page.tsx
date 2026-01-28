@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
@@ -21,8 +21,6 @@ import {
   ArrowLeft,
   User,
   Building2,
-  Calendar,
-  Trash2,
   MessageCircle,
   Clock,
   Archive,
@@ -50,7 +48,9 @@ export default function ContactDetailPage() {
   // Charger le contact au montage
   useEffect(() => {
     if (contactId) {
-      fetchContact(contactId as string);
+      void fetchContact(contactId as string).catch(error => {
+        console.error('[ContactDetailPage] fetchContact failed:', error);
+      });
     }
   }, [contactId, fetchContact]);
 
@@ -60,7 +60,12 @@ export default function ContactDetailPage() {
       const updatedContact = { ...currentContact, ...updatedData };
       setCurrentContact(updatedContact);
       // Rafraîchir les données depuis la base
-      fetchContact(currentContact.id);
+      void fetchContact(currentContact.id).catch(error => {
+        console.error(
+          '[ContactDetailPage] handleContactUpdate fetchContact failed:',
+          error
+        );
+      });
     }
   };
 
@@ -235,7 +240,7 @@ export default function ContactDetailPage() {
                 )}{' '}
               •{' '}
               {getOrganisationTypeLabel(
-                currentContact.organisation?.type || ''
+                currentContact.organisation?.type ?? ''
               )}
             </span>
             {currentContact.title && (
@@ -252,7 +257,14 @@ export default function ContactDetailPage() {
         <div className="flex gap-2">
           <ButtonV2
             variant={currentContact.is_active ? 'danger' : 'success'}
-            onClick={handleToggleActive}
+            onClick={() => {
+              void handleToggleActive().catch(error => {
+                console.error(
+                  '[ContactDetailPage] handleToggleActive failed:',
+                  error
+                );
+              });
+            }}
           >
             {currentContact.is_active ? (
               <>

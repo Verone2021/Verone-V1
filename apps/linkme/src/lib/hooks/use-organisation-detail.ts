@@ -194,7 +194,7 @@ export function useOrganisationDetail(organisationId: string | null) {
         .limit(5);
 
       // Récupérer les commissions pour ces commandes
-      const orderIds = (orders || [])
+      const orderIds = (orders ?? [])
         .map(o => o.id)
         .filter((id): id is string => id !== null && id !== undefined);
       const commissionsMap = new Map<string, number>();
@@ -217,14 +217,14 @@ export function useOrganisationDetail(organisationId: string | null) {
         }
       }
 
-      const recentOrders: OrganisationOrder[] = (orders || []).map(order => ({
-        id: order.id || '',
+      const recentOrders: OrganisationOrder[] = (orders ?? []).map(order => ({
+        id: order.id ?? '',
         reference:
-          order.order_number || `CMD-${(order.id || '').substring(0, 8)}`,
-        created_at: order.created_at || new Date().toISOString(),
+          order.order_number ?? `CMD-${(order.id ?? '').substring(0, 8)}`,
+        created_at: order.created_at ?? new Date().toISOString(),
         total_ht: Number(order.total_ht) || 0,
-        status: order.status || 'draft',
-        commission_ht: commissionsMap.get(order.id || '') || 0,
+        status: order.status ?? 'draft',
+        commission_ht: commissionsMap.get(order.id ?? '') ?? 0,
       }));
 
       return {

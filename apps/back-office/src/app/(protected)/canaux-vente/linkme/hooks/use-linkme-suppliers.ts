@@ -112,8 +112,8 @@ export function useToggleLinkMeSupplierVisibility() {
 
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['linkme-suppliers'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['linkme-suppliers'] });
     },
   });
 }
@@ -139,8 +139,8 @@ export function useUpdateLinkMeSupplierOrder() {
 
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['linkme-suppliers'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['linkme-suppliers'] });
     },
   });
 }

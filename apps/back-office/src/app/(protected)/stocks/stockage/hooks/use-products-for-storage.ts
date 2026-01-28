@@ -11,7 +11,6 @@ import type { UseQueryResult } from '@tanstack/react-query';
 import { useQuery } from '@tanstack/react-query';
 import { createClient } from '@verone/utils/supabase/client';
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ProductForStorage {
   id: string;
   name: string;

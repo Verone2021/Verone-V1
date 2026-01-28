@@ -55,7 +55,9 @@ export default function EditEmailTemplatePage() {
   const [variablesInput, setVariablesInput] = useState('');
 
   useEffect(() => {
-    loadTemplate();
+    void loadTemplate().catch(error => {
+      console.error('[EmailEditPage] loadTemplate failed:', error);
+    });
   }, [slug]);
 
   async function loadTemplate() {
@@ -189,7 +191,11 @@ export default function EditEmailTemplatePage() {
             </ButtonUnified>
             <ButtonUnified
               variant="success"
-              onClick={handleSave}
+              onClick={() => {
+                void handleSave().catch(error => {
+                  console.error('[EmailEditPage] handleSave failed:', error);
+                });
+              }}
               disabled={saving}
             >
               <Save className="h-4 w-4" />

@@ -154,7 +154,11 @@ export function AppSidebar(): JSX.Element | null {
           {/* Logout Section */}
           <div className="p-3 border-t border-gray-100">
             <button
-              onClick={handleSignOut}
+              onClick={() => {
+                void handleSignOut().catch(error => {
+                  console.error('[AppSidebar] Sign out failed:', error);
+                });
+              }}
               className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-red-50 hover:text-red-600 transition-all duration-200"
             >
               <LogOut className="h-5 w-5 flex-shrink-0" />
@@ -217,7 +221,11 @@ export function AppSidebar(): JSX.Element | null {
       {/* Logout Section */}
       <div className="p-2 border-t border-gray-100">
         <button
-          onClick={handleSignOut}
+          onClick={() => {
+            void handleSignOut().catch(error => {
+              console.error('[AppSidebar] Sign out failed:', error);
+            });
+          }}
           title={!isExpanded ? 'Se déconnecter' : undefined}
           className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-red-50 hover:text-red-600 transition-all duration-200"
         >

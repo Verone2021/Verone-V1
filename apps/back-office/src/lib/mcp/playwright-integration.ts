@@ -26,7 +26,9 @@ export class MCPPlaywrightIntegration {
   private isInitialized = false;
 
   constructor() {
-    this.initialize();
+    void this.initialize().catch(error => {
+      console.error('[PlaywrightIntegration] initialize failed:', error);
+    });
   }
 
   /**
@@ -35,12 +37,9 @@ export class MCPPlaywrightIntegration {
   private async initialize() {
     try {
       this.isInitialized = true;
-      console.log('✅ [MCP Playwright] Système initialisé');
-
-      // Note: Sentry breadcrumb supprimé (Phase 1 - Sentry désactivé)
+      console.warn('✅ [MCP Playwright] Système initialisé');
     } catch (error) {
       console.error('❌ [MCP Playwright] Erreur initialisation:', error);
-      // Note: Sentry.captureException supprimé (Phase 1)
       throw error;
     }
   }
@@ -54,9 +53,8 @@ export class MCPPlaywrightIntegration {
     }
 
     const startTime = Date.now();
-    console.log(`🚀 [MCP] Exécution test: ${context.testTitle}`);
+    console.warn(`🚀 [MCP] Exécution test: ${context.testTitle}`);
 
-    // Note: Sentry.startSpan supprimé - exécution directe sans tracing
     try {
       // Test simplifié focus sur erreurs console
       const consoleErrors = await this.getConsoleErrors();
@@ -82,7 +80,7 @@ export class MCPPlaywrightIntegration {
         });
       } else {
         // Success feedback in console
-        console.log(`✅ [MCP] Test réussi: ${context.testTitle}`, {
+        console.warn(`✅ [MCP] Test réussi: ${context.testTitle}`, {
           testId: context.testId,
           duration: result.duration,
         });
@@ -100,7 +98,6 @@ export class MCPPlaywrightIntegration {
         performance: { loadTime: Date.now() - startTime },
       };
 
-      // Note: Sentry.captureException supprimé (Phase 1)
       console.error(`❌ [MCP] Erreur test: ${context.testTitle}`, {
         test_type: context.moduleType,
         test_id: context.testId,
@@ -113,13 +110,12 @@ export class MCPPlaywrightIntegration {
 
   /**
    * 🔍 Récupération erreurs console
-   * Note: Version allégée sans Sentry - utiliser MCP Playwright browser_console_messages
+   * Utiliser MCP Playwright browser_console_messages pour la détection
    */
   private async getConsoleErrors(): Promise<string[]> {
     try {
-      // Note: globalSentryDetector supprimé (Phase 1)
       // Pour détecter erreurs console, utiliser mcp__playwright-lane-1__browser_console_messages
-      console.log(
+      console.warn(
         '[MCP] getConsoleErrors: Utiliser browser_console_messages pour détection erreurs'
       );
       return [];
@@ -174,7 +170,7 @@ export function getTestUrlForTest(test: any): string {
   return moduleUrlMap[moduleKey] || '/dashboard';
 }
 
-export function getExpectedElementsForTest(test: any): string[] {
+export function getExpectedElementsForTest(_test: any): string[] {
   // Elements de base attendus selon le module
   const baseElements = ['.main-content', 'nav', 'header'];
   return baseElements;

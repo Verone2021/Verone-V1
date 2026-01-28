@@ -16,7 +16,7 @@ export default function TestPurchaseOrderPage() {
   const supabase = createClient();
 
   const log = (msg: string) => {
-    console.log(msg);
+    console.warn(msg);
     setLogs(prev => [
       ...prev,
       `${new Date().toISOString().slice(11, 19)} - ${msg}`,
@@ -71,7 +71,9 @@ export default function TestPurchaseOrderPage() {
     log(`🔘 Clic bouton - showProducts était: ${showProducts}`);
     setShowProducts(!showProducts);
     if (!showProducts) {
-      loadProducts();
+      void loadProducts().catch(error => {
+        console.error('[TestPurchaseOrderPage] loadProducts failed:', error);
+      });
     }
   };
 
@@ -101,7 +103,14 @@ export default function TestPurchaseOrderPage() {
       <div className="border p-4 rounded mb-4">
         <h2 className="font-bold mb-2">Étape 1: Fournisseurs</h2>
         <button
-          onClick={loadSuppliers}
+          onClick={() => {
+            void loadSuppliers().catch(error => {
+              console.error(
+                '[TestPurchaseOrderPage] loadSuppliers failed:',
+                error
+              );
+            });
+          }}
           className="bg-blue-500 text-white px-4 py-2 rounded mr-2"
         >
           Charger fournisseurs

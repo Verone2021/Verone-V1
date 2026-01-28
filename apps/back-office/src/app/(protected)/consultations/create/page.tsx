@@ -159,8 +159,8 @@ export default function CreateConsultationPage() {
 
       // Préparer les données avec enseigne_id et/ou organisation_id
       const dataToSubmit: CreateConsultationData = {
-        enseigne_id: formData.enseigne_id || undefined,
-        organisation_id: formData.organisation_id || undefined,
+        enseigne_id: formData.enseigne_id ?? undefined,
+        organisation_id: formData.organisation_id ?? undefined,
         client_email: formData.client_email.trim(),
         descriptif: formData.descriptif.trim(),
         priority_level: formData.priority_level || 2,
@@ -251,7 +251,17 @@ export default function CreateConsultationPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form
+                onSubmit={e => {
+                  void handleSubmit(e).catch(error => {
+                    console.error(
+                      '[CreateConsultationPage] handleSubmit failed:',
+                      error
+                    );
+                  });
+                }}
+                className="space-y-6"
+              >
                 {/* Informations client */}
                 <div className="space-y-4">
                   <h3 className="text-lg font-medium text-black">
@@ -381,7 +391,7 @@ export default function CreateConsultationPage() {
                         type="number"
                         min="0"
                         step="100"
-                        value={formData.tarif_maximum || ''}
+                        value={formData.tarif_maximum ?? ''}
                         onChange={e =>
                           handleInputChange(
                             'tarif_maximum',

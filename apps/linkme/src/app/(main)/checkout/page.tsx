@@ -271,8 +271,8 @@ export default function CheckoutPage() {
           unit_price_ht: item.selling_price_ht,
           total_price_ht: item.selling_price_ht * item.quantity,
         })),
-        affiliate_id: affiliateId || '',
-        selection_id: selectionId || '',
+        affiliate_id: affiliateId ?? '',
+        selection_id: selectionId ?? '',
         total_ht: totalHT,
         total_ttc: totalTTC,
         total_tva: totalTVA,
@@ -285,10 +285,15 @@ export default function CheckoutPage() {
         body: JSON.stringify(orderData),
       });
 
-      const result = await response.json();
+      const result = (await response.json()) as {
+        success: boolean;
+        token?: string;
+        order_ref?: string;
+        error?: string;
+      };
 
       if (!result.success || !result.token) {
-        throw new Error(result.error || 'Échec de création de la commande');
+        throw new Error(result.error ?? 'Échec de création de la commande');
       }
 
       // Déterminer le mode (sandbox ou prod) via variable d'environnement
@@ -432,7 +437,14 @@ export default function CheckoutPage() {
         <div className="lg:grid lg:grid-cols-12 lg:gap-6">
           {/* Checkout Form */}
           <div className="lg:col-span-7">
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form
+              onSubmit={e => {
+                void handleSubmit(e).catch(error => {
+                  console.error('[Checkout] Submit failed:', error);
+                });
+              }}
+              className="space-y-4"
+            >
               {/* Contact Information */}
               <div className="bg-white rounded-lg border p-4">
                 <h2 className="text-base font-bold text-gray-900 mb-3 flex items-center gap-2">

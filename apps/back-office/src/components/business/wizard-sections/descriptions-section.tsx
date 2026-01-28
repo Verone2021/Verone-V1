@@ -27,7 +27,7 @@ interface DescriptionsSectionProps {
 export function DescriptionsSection({
   formData,
   setFormData,
-  onSave,
+  onSave: _onSave,
 }: DescriptionsSectionProps) {
   const [newSellingPoint, setNewSellingPoint] = useState('');
 

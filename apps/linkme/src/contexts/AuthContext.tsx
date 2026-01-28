@@ -23,10 +23,9 @@ import {
 import type { User, Session } from '@supabase/supabase-js';
 
 // Client SSR-safe (singleton) - utilise cookies pour la session
-// Cookie distinct 'sb-linkme-auth' pour isoler la session de LinkMe
 import { createClient } from '@verone/utils/supabase/client';
 
-const supabase = createClient('linkme');
+const supabase = createClient();
 
 // Types
 export type LinkMeRole =
@@ -161,11 +160,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
         if (data) {
           console.log('[AuthContext] v_linkme_users SUCCESS', {
             userId: data.user_id,
+            userRoleId: data.user_role_id,
             role: data.linkme_role,
           });
 
           setLinkMeRole({
-            id: data.id || data.user_id,
+            // FIX: Use user_role_id (from user_app_roles.id) instead of undefined data.id
+            id: data.user_role_id || data.user_id,
             user_id: data.user_id,
             role: data.linkme_role as LinkMeRole,
             enseigne_id: data.enseigne_id,
@@ -240,7 +241,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
     };
 
-    initSession();
+    void initSession().catch(error => {
+      console.error('[AuthContext] initSession failed:', error);
+    });
 
     // Écouter les changements d'auth
     const {

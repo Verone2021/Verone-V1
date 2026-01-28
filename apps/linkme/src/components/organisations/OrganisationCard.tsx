@@ -91,9 +91,9 @@ function getOwnershipBadge(
 
 function getAddressLines(org: EnseigneOrganisation): AddressLines {
   // Priorité à l'adresse de livraison
-  if (org.shipping_address_line1 || org.shipping_city) {
+  if (Boolean(org.shipping_address_line1) || Boolean(org.shipping_city)) {
     return {
-      line1: org.shipping_address_line1 || null,
+      line1: org.shipping_address_line1 ?? null,
       line2:
         [org.shipping_postal_code, org.shipping_city]
           .filter(Boolean)
@@ -126,9 +126,9 @@ export function OrganisationCard({
   onEditOwnershipType,
 }: OrganisationCardProps) {
   const queryClient = useQueryClient();
-  const displayName = organisation.trade_name || organisation.legal_name;
+  const displayName = organisation.trade_name ?? organisation.legal_name;
   const address = getAddressLines(organisation);
-  const hasAddress = address.line1 || address.line2;
+  const hasAddress = Boolean(address.line1) || Boolean(address.line2);
   const ownershipBadge = getOwnershipBadge(organisation.ownership_type);
 
   // Détection des champs manquants pour les badges cliquables
@@ -150,8 +150,10 @@ export function OrganisationCard({
       if (error) throw error;
       return ownershipType;
     },
-    onSuccess: ownershipType => {
-      queryClient.invalidateQueries({ queryKey: ['enseigne-organisations'] });
+    onSuccess: async ownershipType => {
+      await queryClient.invalidateQueries({
+        queryKey: ['enseigne-organisations'],
+      });
       toast.success(
         `Type défini : ${ownershipType === 'succursale' ? 'Restaurant propre' : 'Franchise'}`
       );
@@ -176,7 +178,7 @@ export function OrganisationCard({
             </h3>
             {hasAddress && (
               <p className="text-xs text-gray-500 mt-0.5 truncate">
-                {address.line2 || address.line1}
+                {address.line2 ?? address.line1}
               </p>
             )}
           </div>

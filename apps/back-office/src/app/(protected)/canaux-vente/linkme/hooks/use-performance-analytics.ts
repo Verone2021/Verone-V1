@@ -289,7 +289,7 @@ export function usePerformanceAnalytics(filters: PerformanceFilters) {
               id: product.id,
               name: product.name,
               sku: product.sku || '-',
-              imageUrl: productImages.get(product.id) || null,
+              imageUrl: productImages.get(product.id) ?? null,
               quantitySold: item.quantity || 0,
               totalRevenueHT: item.total_ht || 0,
               orderIds: new Set([item.sales_order_id]),
@@ -344,7 +344,7 @@ export function usePerformanceAnalytics(filters: PerformanceFilters) {
           affiliateMap.set(affiliate.id, {
             id: affiliate.id,
             displayName: affiliate.display_name,
-            slug: affiliate.slug || '',
+            slug: affiliate.slug ?? '',
             ordersCount: 1,
             totalRevenueHT: c.order_amount_ht || 0,
             totalCommissionsTTC: c.affiliate_commission_ttc || 0,
@@ -396,8 +396,8 @@ export function usePerformanceAnalytics(filters: PerformanceFilters) {
           selectionMap.set(selection.id, {
             id: selection.id,
             name: selection.name,
-            slug: selection.slug || '',
-            affiliateId: affiliate?.id || '',
+            slug: selection.slug ?? '',
+            affiliateId: affiliate?.id ?? '',
             affiliateName: affiliate?.display_name || 'Inconnu',
             ordersCount: 1,
             totalRevenueHT: c.order_amount_ht || 0,
@@ -472,7 +472,7 @@ export function useAffiliatesList() {
       return (data || []).map(a => ({
         id: a.id,
         displayName: a.display_name,
-        slug: a.slug || '',
+        slug: a.slug ?? '',
       }));
     },
     staleTime: 60000, // 1 minute cache
@@ -505,7 +505,7 @@ export function useAffiliateSelections(affiliateId: string | null) {
       return (data || []).map(s => ({
         id: s.id,
         name: s.name,
-        slug: s.slug || '',
+        slug: s.slug ?? '',
         productsCount: s.products_count || 0,
       }));
     },

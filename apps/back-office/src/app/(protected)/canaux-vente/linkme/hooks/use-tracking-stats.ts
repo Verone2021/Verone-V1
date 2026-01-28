@@ -81,7 +81,7 @@ export function useTrackingStats() {
         name: selection.name,
         slug: selection.slug,
         affiliate_name: selection.affiliate?.display_name || 'Inconnu',
-        affiliate_slug: selection.affiliate?.slug || '',
+        affiliate_slug: selection.affiliate?.slug ?? '',
         views_count: selection.views_count || 0,
         orders_count: selection.orders_count || 0,
         total_revenue: selection.total_revenue || 0,

@@ -27,7 +27,6 @@ import {
   CardTitle,
   Input,
   Tabs,
-  TabsContent,
   TabsList,
   TabsTrigger,
 } from '@verone/ui';
@@ -62,9 +61,9 @@ export default function ReglesPage() {
 
   // Pré-remplissage depuis classification (query params)
   const createFromClassification = searchParams.get('create') === 'true';
-  const prefillLabel = searchParams.get('label') || '';
-  const prefillCategory = searchParams.get('category') || '';
-  const prefillTva = searchParams.get('tva') || '';
+  const prefillLabel = searchParams.get('label') ?? '';
+  const _prefillCategory = searchParams.get('category') ?? '';
+  const _prefillTva = searchParams.get('tva') ?? '';
 
   // Hooks de données
   const {
@@ -243,7 +242,7 @@ export default function ReglesPage() {
   };
 
   // Sauvegarder les modifications d'une règle
-  const handleSaveRule = async (
+  const _handleSaveRule = async (
     ruleId: string,
     data: {
       organisation_id?: string | null;
@@ -299,7 +298,16 @@ export default function ReglesPage() {
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
-              onClick={() => Promise.all([refetchLabels(), refetchRules()])}
+              onClick={() => {
+                void Promise.all([refetchLabels(), refetchRules()]).catch(
+                  error => {
+                    console.error(
+                      '[DepensesReglesPage] Refresh failed:',
+                      error
+                    );
+                  }
+                );
+              }}
               disabled={isLoading}
             >
               <RefreshCw
@@ -308,7 +316,17 @@ export default function ReglesPage() {
               />
               Actualiser
             </Button>
-            <Button onClick={handleApplyAll} disabled={rules.length === 0}>
+            <Button
+              onClick={() => {
+                void handleApplyAll().catch(error => {
+                  console.error(
+                    '[DepensesReglesPage] Apply all failed:',
+                    error
+                  );
+                });
+              }}
+              disabled={rules.length === 0}
+            >
               <Zap size={16} className="mr-2" />
               Appliquer toutes les règles
             </Button>
@@ -567,7 +585,12 @@ export default function ReglesPage() {
                             size="sm"
                             onClick={e => {
                               e.stopPropagation();
-                              handleDeleteRule(rule.id);
+                              void handleDeleteRule(rule.id).catch(error => {
+                                console.error(
+                                  '[DepensesReglesPage] Delete rule failed:',
+                                  error
+                                );
+                              });
                             }}
                             className="text-red-500 hover:text-red-700"
                           >
@@ -592,7 +615,14 @@ export default function ReglesPage() {
           label={selectedLabel.label}
           transactionCount={selectedLabel.transactionCount}
           totalAmount={selectedLabel.totalAmount}
-          onSuccess={handleLinkSuccess}
+          onSuccess={() => {
+            void handleLinkSuccess().catch(error => {
+              console.error(
+                '[DepensesReglesPage] Link success handler failed:',
+                error
+              );
+            });
+          }}
         />
       )}
 
@@ -606,7 +636,9 @@ export default function ReglesPage() {
         confirmApply={confirmApply}
         onSuccess={() => {
           setEditingRule(null);
-          refetchRules();
+          void refetchRules().catch(error => {
+            console.error('[DepensesReglesPage] Refetch rules failed:', error);
+          });
         }}
       />
 
@@ -618,7 +650,14 @@ export default function ReglesPage() {
           label={classifyLabel.label}
           amount={classifyLabel.totalAmount}
           transactionCount={classifyLabel.transactionCount}
-          onSuccess={handleClassifySuccess}
+          onSuccess={() => {
+            void handleClassifySuccess().catch(error => {
+              console.error(
+                '[DepensesReglesPage] Classify success handler failed:',
+                error
+              );
+            });
+          }}
         />
       )}
     </div>

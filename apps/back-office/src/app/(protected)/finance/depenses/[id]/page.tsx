@@ -34,7 +34,6 @@ import {
   ArrowLeft,
   FileText,
   Download,
-  Euro,
   Calendar,
   Building2,
   AlertCircle,
@@ -134,7 +133,9 @@ export default function ExpenseDetailPage(props: PageProps) {
   };
 
   useEffect(() => {
-    fetchDocument();
+    void fetchDocument().catch(error => {
+      console.error('[Depenses] fetchDocument failed:', error);
+    });
   }, [params.id]);
 
   // Badge status helper
@@ -171,8 +172,17 @@ export default function ExpenseDetailPage(props: PageProps) {
   // Handle payment success
   const handlePaymentSuccess = () => {
     setShowPaymentForm(false);
-    fetchDocument(); // Refresh document (amount_paid updated)
-    refreshPayments(); // Refresh payments list
+    // Refresh document (amount_paid updated)
+    fetchDocument().catch(error => {
+      console.error('[Depenses] fetchDocument (payment) failed:', error);
+    });
+    // Refresh payments list
+    const result = refreshPayments();
+    if (result instanceof Promise) {
+      result.catch(error => {
+        console.error('[Depenses] refreshPayments failed:', error);
+      });
+    }
   };
 
   if (loading) {

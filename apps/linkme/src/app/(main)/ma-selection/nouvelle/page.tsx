@@ -17,6 +17,7 @@
 
 import { useState } from 'react';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
@@ -54,7 +55,7 @@ export default function NewSelectionPage() {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [visibility, setVisibility] = useState<'draft' | 'public'>('draft');
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imagePreview, _setImagePreview] = useState<string | null>(null);
 
   // Handler création
   const handleSubmit = async (e: React.FormEvent) => {
@@ -66,10 +67,10 @@ export default function NewSelectionPage() {
     }
 
     try {
-      const newSelection = await createSelectionMutation.mutateAsync({
+      const newSelection = (await createSelectionMutation.mutateAsync({
         name: name.trim(),
         description: description.trim() || undefined,
-      });
+      })) as { id: string };
 
       toast.success('Sélection créée avec succès !');
 
@@ -203,7 +204,14 @@ export default function NewSelectionPage() {
         </div>
 
         {/* Formulaire */}
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form
+          onSubmit={e => {
+            void handleSubmit(e).catch(error => {
+              console.error('[NewSelection] Submit failed:', error);
+            });
+          }}
+          className="space-y-6"
+        >
           {/* Card principale */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-6">
             {/* Image de couverture */}
@@ -217,10 +225,11 @@ export default function NewSelectionPage() {
                 className="w-full h-40 border-2 border-dashed border-linkme-turquoise/30 rounded-xl hover:border-linkme-turquoise transition-all duration-200 flex flex-col items-center justify-center gap-3 bg-linkme-turquoise/5 hover:bg-linkme-turquoise/10 group"
               >
                 {imagePreview ? (
-                  <img
+                  <Image
                     src={imagePreview}
                     alt="Aperçu"
-                    className="w-full h-full object-cover rounded-xl"
+                    fill
+                    className="object-cover rounded-xl"
                   />
                 ) : (
                   <>

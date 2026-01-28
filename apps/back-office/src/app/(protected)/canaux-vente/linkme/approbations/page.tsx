@@ -47,7 +47,6 @@ import {
   User,
   ShoppingCart,
   Building2,
-  ExternalLink,
   Mail,
   Phone,
   MapPin,
@@ -56,24 +55,17 @@ import {
   ChevronDown,
   ChevronRight,
   Store,
-  FileText,
-  Calendar,
-  Briefcase,
 } from 'lucide-react';
 
 import {
-  usePendingOrders,
   usePendingOrdersCount,
   useApproveOrder,
   useRejectOrder,
   useAllLinkMeOrders,
   type PendingOrder,
-  type PendingOrderItem,
-  type PendingOrderLinkMeDetails,
   type OrderValidationStatus,
 } from '../hooks/use-linkme-order-actions';
 import {
-  usePendingOrganisations,
   usePendingOrganisationsCount,
   useAllOrganisationsWithApproval,
   useApproveOrganisation,
@@ -82,13 +74,11 @@ import {
   type OrganisationApprovalStatus,
 } from '../hooks/use-organisation-approvals';
 import {
-  usePendingApprovals,
   usePendingApprovalsCount,
   useAllAffiliateProducts,
   useApproveProduct,
   useRejectProduct,
   useUpdateAffiliateProduct,
-  useProductCommissionHistory,
   COMMISSION_RATES,
   type PendingProduct,
   type AffiliateProductApprovalStatus,
@@ -246,7 +236,9 @@ function CommandesTab() {
     e.stopPropagation(); // Éviter de toggle la ligne
     try {
       await approveOrder.mutateAsync({ orderId: order.id });
-      refetch();
+      void refetch().catch(error => {
+        console.error('[Approbations] Refetch failed:', error);
+      });
     } catch {
       alert("Erreur lors de l'approbation");
     }
@@ -269,14 +261,16 @@ function CommandesTab() {
       });
       setIsRejectDialogOpen(false);
       setSelectedOrder(null);
-      refetch();
+      void refetch().catch(error => {
+        console.error('[Approbations] Refetch failed:', error);
+      });
     } catch {
       alert('Erreur lors du rejet');
     }
   };
 
-  // Format du type de demandeur
-  const formatRequesterType = (type: string | null | undefined) => {
+  // Format du type de demandeur - Reserved
+  const _formatRequesterType = (type: string | null | undefined) => {
     if (!type) return '-';
     const types: Record<string, string> = {
       responsable_enseigne: 'Responsable enseigne',
@@ -460,7 +454,14 @@ function CommandesTab() {
                           </Button>
                           <Button
                             size="sm"
-                            onClick={e => handleApprove(order, e)}
+                            onClick={e => {
+                              void handleApprove(order, e).catch(error => {
+                                console.error(
+                                  '[Approbations] Approve failed:',
+                                  error
+                                );
+                              });
+                            }}
                             disabled={approveOrder.isPending}
                             className="bg-green-600 hover:bg-green-700"
                           >
@@ -564,7 +565,11 @@ function CommandesTab() {
             </Button>
             <Button
               variant="destructive"
-              onClick={handleRejectConfirm}
+              onClick={() => {
+                void handleRejectConfirm().catch(error => {
+                  console.error('[Approbations] Reject failed:', error);
+                });
+              }}
               disabled={!rejectReason.trim() || rejectOrder.isPending}
             >
               {rejectOrder.isPending ? (
@@ -663,7 +668,9 @@ function ProduitsTab() {
       });
       setIsApproveDialogOpen(false);
       setSelectedProduct(null);
-      refetch();
+      void refetch().catch(error => {
+        console.error('[Approbations] Refetch failed:', error);
+      });
     } catch {
       alert("Erreur lors de l'approbation");
     }
@@ -685,7 +692,9 @@ function ProduitsTab() {
       });
       setIsRejectDialogOpen(false);
       setSelectedProduct(null);
-      refetch();
+      void refetch().catch(error => {
+        console.error('[Approbations] Refetch failed:', error);
+      });
     } catch {
       alert('Erreur lors du rejet');
     }
@@ -714,11 +723,13 @@ function ProduitsTab() {
         productId: selectedProduct.id,
         commissionRate: editCommissionRate,
         payoutHt: editPayoutHt,
-        changeReason: editChangeReason || undefined,
+        changeReason: editChangeReason ?? undefined,
       });
       setIsEditDialogOpen(false);
       setSelectedProduct(null);
-      refetch();
+      void refetch().catch(error => {
+        console.error('[Approbations] Refetch failed:', error);
+      });
     } catch (err) {
       alert(
         'Erreur lors de la modification: ' +
@@ -1032,7 +1043,14 @@ function ProduitsTab() {
               Annuler
             </Button>
             <Button
-              onClick={handleApproveConfirm}
+              onClick={() => {
+                void handleApproveConfirm().catch(error => {
+                  console.error(
+                    '[Approbations] Approve confirm failed:',
+                    error
+                  );
+                });
+              }}
               disabled={approveProduct.isPending}
               className="bg-green-600 hover:bg-green-700"
             >
@@ -1077,7 +1095,11 @@ function ProduitsTab() {
             </Button>
             <Button
               variant="destructive"
-              onClick={handleRejectConfirm}
+              onClick={() => {
+                void handleRejectConfirm().catch(error => {
+                  console.error('[Approbations] Reject failed:', error);
+                });
+              }}
               disabled={!rejectReason.trim() || rejectProduct.isPending}
             >
               {rejectProduct.isPending ? (
@@ -1344,7 +1366,11 @@ function ProduitsTab() {
               Annuler
             </Button>
             <Button
-              onClick={handleEditConfirm}
+              onClick={() => {
+                void handleEditConfirm().catch(error => {
+                  console.error('[Approbations] Edit confirm failed:', error);
+                });
+              }}
               disabled={updateProduct.isPending}
               className="bg-blue-600 hover:bg-blue-700"
             >
@@ -1456,7 +1482,9 @@ function OrganisationsTab() {
   const handleApprove = async (org: PendingOrganisation) => {
     try {
       await approveOrg.mutateAsync({ organisationId: org.id });
-      refetch();
+      void refetch().catch(error => {
+        console.error('[Approbations] Refetch failed:', error);
+      });
     } catch {
       alert("Erreur lors de l'approbation");
     }
@@ -1478,7 +1506,9 @@ function OrganisationsTab() {
       });
       setIsRejectDialogOpen(false);
       setSelectedOrg(null);
-      refetch();
+      void refetch().catch(error => {
+        console.error('[Approbations] Refetch failed:', error);
+      });
     } catch {
       alert('Erreur lors du rejet');
     }
@@ -1637,7 +1667,14 @@ function OrganisationsTab() {
                           </Button>
                           <Button
                             size="sm"
-                            onClick={() => handleApprove(org)}
+                            onClick={() => {
+                              void handleApprove(org).catch(error => {
+                                console.error(
+                                  '[Approbations] Approve org failed:',
+                                  error
+                                );
+                              });
+                            }}
                             disabled={approveOrg.isPending}
                             className="bg-green-600 hover:bg-green-700"
                           >
@@ -1763,7 +1800,11 @@ function OrganisationsTab() {
             </Button>
             <Button
               variant="destructive"
-              onClick={handleRejectConfirm}
+              onClick={() => {
+                void handleRejectConfirm().catch(error => {
+                  console.error('[Approbations] Reject failed:', error);
+                });
+              }}
               disabled={!rejectReason.trim() || rejectOrg.isPending}
             >
               {rejectOrg.isPending ? (

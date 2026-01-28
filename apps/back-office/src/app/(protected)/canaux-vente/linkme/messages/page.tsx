@@ -49,8 +49,6 @@ import {
   AlertTriangle,
   Info,
   Loader2,
-  CheckCircle,
-  History,
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -74,7 +72,7 @@ interface Affiliate {
   enseigne_name: string | null;
 }
 
-interface NotificationHistory {
+interface _NotificationHistory {
   id: string;
   title: string;
   message: string;
@@ -97,20 +95,28 @@ function useEnseignes() {
       const supabase = createClient();
       const { data, error } = await supabase
         .from('enseignes')
-        .select(`
+        .select(
+          `
           id,
           name,
           linkme_affiliates!inner(count)
-        `)
+        `
+        )
         .order('name');
 
       if (error) throw error;
 
-      return (data || []).map((e: { id: string; name: string; linkme_affiliates: { count: number }[] }) => ({
-        id: e.id,
-        name: e.name,
-        affiliate_count: e.linkme_affiliates?.[0]?.count || 0,
-      })) as Enseigne[];
+      return (data || []).map(
+        (e: {
+          id: string;
+          name: string;
+          linkme_affiliates: { count: number }[];
+        }) => ({
+          id: e.id,
+          name: e.name,
+          affiliate_count: e.linkme_affiliates?.[0]?.count || 0,
+        })
+      ) as Enseigne[];
     },
   });
 }
@@ -126,7 +132,9 @@ function useAffiliates(enseigneId?: string) {
       const supabase = createClient();
       let query = supabase
         .from('v_linkme_users')
-        .select('user_id, email, first_name, last_name, enseigne_id, enseigne_name')
+        .select(
+          'user_id, email, first_name, last_name, enseigne_id, enseigne_name'
+        )
         .eq('is_active', true)
         .not('user_id', 'is', null);
 
@@ -137,11 +145,12 @@ function useAffiliates(enseigneId?: string) {
       const { data, error } = await query.order('first_name');
       if (error) throw error;
 
-      return (data || []).map((u) => ({
+      return (data || []).map(u => ({
         id: u.user_id,
         user_id: u.user_id,
-        display_name: `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email,
-        enseigne_name: u.enseigne_name || null,
+        display_name:
+          `${u.first_name ?? ''} ${u.last_name ?? ''}`.trim() || u.email,
+        enseigne_name: u.enseigne_name ?? null,
       })) as Affiliate[];
     },
   });
@@ -182,7 +191,7 @@ function useSendNotification() {
           .select('user_id')
           .eq('is_active', true)
           .not('user_id', 'is', null);
-        userIds = (data || []).map((a) => a.user_id).filter(Boolean) as string[];
+        userIds = (data || []).map(a => a.user_id).filter(Boolean) as string[];
       } else if (targetType === 'enseigne' && targetId) {
         const { data } = await supabase
           .from('v_linkme_users')
@@ -190,7 +199,7 @@ function useSendNotification() {
           .eq('enseigne_id', targetId)
           .eq('is_active', true)
           .not('user_id', 'is', null);
-        userIds = (data || []).map((a) => a.user_id).filter(Boolean) as string[];
+        userIds = (data || []).map(a => a.user_id).filter(Boolean) as string[];
       } else if (targetType === 'affiliate' && targetId) {
         // targetId est déjà le user_id
         userIds = [targetId];
@@ -201,31 +210,37 @@ function useSendNotification() {
       }
 
       // Créer les notifications pour chaque utilisateur
-      const notifications = userIds.map((userId) => ({
+      const notifications = userIds.map(userId => ({
         user_id: userId,
         type: 'business' as const,
         severity,
         title,
         message,
-        action_url: actionUrl || null,
-        action_label: actionLabel || null,
+        action_url: actionUrl ?? null,
+        action_label: actionLabel ?? null,
         read: false,
         created_at: new Date().toISOString(),
       }));
 
-      const { error } = await supabase.from('notifications').insert(notifications);
+      const { error } = await supabase
+        .from('notifications')
+        .insert(notifications);
 
       if (error) throw error;
 
       return { recipientCount: userIds.length };
     },
-    onSuccess: (data) => {
-      toast.success(`Notification envoyée à ${data.recipientCount} destinataire(s)`);
-      queryClient.invalidateQueries({ queryKey: ['notification-history'] });
+    onSuccess: async data => {
+      toast.success(
+        `Notification envoyée à ${data.recipientCount} destinataire(s)`
+      );
+      await queryClient.invalidateQueries({
+        queryKey: ['notification-history'],
+      });
     },
-    onError: (error) => {
+    onError: error => {
       console.error('Erreur envoi notification:', error);
-      toast.error('Erreur lors de l\'envoi de la notification');
+      toast.error("Erreur lors de l'envoi de la notification");
     },
   });
 }
@@ -244,15 +259,35 @@ function SeveritySelector({
   value: NotificationSeverity;
   onChange: (value: NotificationSeverity) => void;
 }) {
-  const options: { value: NotificationSeverity; label: string; icon: typeof Info; color: string }[] = [
-    { value: 'info', label: 'Information', icon: Info, color: 'text-blue-600 bg-blue-100' },
-    { value: 'important', label: 'Important', icon: AlertTriangle, color: 'text-orange-600 bg-orange-100' },
-    { value: 'urgent', label: 'Urgent', icon: AlertCircle, color: 'text-red-600 bg-red-100' },
+  const options: {
+    value: NotificationSeverity;
+    label: string;
+    icon: typeof Info;
+    color: string;
+  }[] = [
+    {
+      value: 'info',
+      label: 'Information',
+      icon: Info,
+      color: 'text-blue-600 bg-blue-100',
+    },
+    {
+      value: 'important',
+      label: 'Important',
+      icon: AlertTriangle,
+      color: 'text-orange-600 bg-orange-100',
+    },
+    {
+      value: 'urgent',
+      label: 'Urgent',
+      icon: AlertCircle,
+      color: 'text-red-600 bg-red-100',
+    },
   ];
 
   return (
     <div className="grid grid-cols-3 gap-3">
-      {options.map((option) => {
+      {options.map(option => {
         const Icon = option.icon;
         return (
           <button
@@ -266,7 +301,12 @@ function SeveritySelector({
                 : 'border-gray-200 hover:border-gray-300'
             )}
           >
-            <div className={cn('w-10 h-10 rounded-full flex items-center justify-center', option.color)}>
+            <div
+              className={cn(
+                'w-10 h-10 rounded-full flex items-center justify-center',
+                option.color
+              )}
+            >
               <Icon className="h-5 w-5" />
             </div>
             <span className="text-sm font-medium">{option.label}</span>
@@ -282,7 +322,7 @@ function SeveritySelector({
 // =============================================================================
 
 export default function MessagesPage() {
-  const queryClient = useQueryClient();
+  const _queryClient = useQueryClient();
 
   // Form state
   const [targetType, setTargetType] = useState<TargetType>('all');
@@ -296,8 +336,8 @@ export default function MessagesPage() {
   const [includeAction, setIncludeAction] = useState(false);
 
   // Queries
-  const { data: enseignes, isLoading: enseignesLoading } = useEnseignes();
-  const { data: affiliates, isLoading: affiliatesLoading } = useAffiliates(
+  const { data: enseignes, isLoading: _enseignesLoading } = useEnseignes();
+  const { data: affiliates, isLoading: _affiliatesLoading } = useAffiliates(
     targetType === 'enseigne' ? selectedEnseigne : undefined
   );
 
@@ -316,7 +356,7 @@ export default function MessagesPage() {
       return affiliates?.length || 0;
     }
     if (targetType === 'enseigne' && selectedEnseigne) {
-      return affiliates?.filter((a) => a.enseigne_name).length || 0;
+      return affiliates?.filter(a => a.enseigne_name).length || 0;
     }
     if (targetType === 'affiliate' && selectedAffiliate) {
       return 1;
@@ -343,13 +383,18 @@ export default function MessagesPage() {
     }
 
     if (includeAction && (!actionUrl || !actionLabel)) {
-      toast.error('Veuillez remplir l\'URL et le libellé de l\'action');
+      toast.error("Veuillez remplir l'URL et le libellé de l'action");
       return;
     }
 
     sendNotification.mutate({
       targetType,
-      targetId: targetType === 'enseigne' ? selectedEnseigne : targetType === 'affiliate' ? selectedAffiliate : undefined,
+      targetId:
+        targetType === 'enseigne'
+          ? selectedEnseigne
+          : targetType === 'affiliate'
+            ? selectedAffiliate
+            : undefined,
       title: title.trim(),
       message: message.trim(),
       severity,
@@ -377,8 +422,12 @@ export default function MessagesPage() {
             <Bell className="h-5 w-5 text-blue-600" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Messages & Notifications</h1>
-            <p className="text-sm text-gray-500">Envoyer des notifications aux affiliés LinkMe</p>
+            <h1 className="text-2xl font-bold text-gray-900">
+              Messages & Notifications
+            </h1>
+            <p className="text-sm text-gray-500">
+              Envoyer des notifications aux affiliés LinkMe
+            </p>
           </div>
         </div>
       </div>
@@ -394,10 +443,19 @@ export default function MessagesPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form
+                onSubmit={e => {
+                  void handleSubmit(e).catch(error => {
+                    console.error('[MessagesPage] handleSubmit failed:', error);
+                  });
+                }}
+                className="space-y-6"
+              >
                 {/* Destinataires */}
                 <div className="space-y-4">
-                  <Label className="text-base font-semibold">Destinataires</Label>
+                  <Label className="text-base font-semibold">
+                    Destinataires
+                  </Label>
 
                   <div className="grid grid-cols-3 gap-3">
                     <button
@@ -411,8 +469,12 @@ export default function MessagesPage() {
                       )}
                     >
                       <Users className="h-6 w-6" />
-                      <span className="text-sm font-medium">Tous les affiliés</span>
-                      <Badge variant="secondary">{affiliates?.length || 0}</Badge>
+                      <span className="text-sm font-medium">
+                        Tous les affiliés
+                      </span>
+                      <Badge variant="secondary">
+                        {affiliates?.length || 0}
+                      </Badge>
                     </button>
 
                     <button
@@ -427,7 +489,9 @@ export default function MessagesPage() {
                     >
                       <Building2 className="h-6 w-6" />
                       <span className="text-sm font-medium">Par enseigne</span>
-                      <Badge variant="secondary">{enseignes?.length || 0}</Badge>
+                      <Badge variant="secondary">
+                        {enseignes?.length || 0}
+                      </Badge>
                     </button>
 
                     <button
@@ -447,14 +511,18 @@ export default function MessagesPage() {
 
                   {/* Sélection enseigne */}
                   {targetType === 'enseigne' && (
-                    <Select value={selectedEnseigne} onValueChange={setSelectedEnseigne}>
+                    <Select
+                      value={selectedEnseigne}
+                      onValueChange={setSelectedEnseigne}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Sélectionner une enseigne..." />
                       </SelectTrigger>
                       <SelectContent>
-                        {enseignes?.map((enseigne) => (
+                        {enseignes?.map(enseigne => (
                           <SelectItem key={enseigne.id} value={enseigne.id}>
-                            {enseigne.name} ({enseigne.affiliate_count} affilié(s))
+                            {enseigne.name} ({enseigne.affiliate_count}{' '}
+                            affilié(s))
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -463,16 +531,21 @@ export default function MessagesPage() {
 
                   {/* Sélection affilié */}
                   {targetType === 'affiliate' && (
-                    <Select value={selectedAffiliate} onValueChange={setSelectedAffiliate}>
+                    <Select
+                      value={selectedAffiliate}
+                      onValueChange={setSelectedAffiliate}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Sélectionner un affilié..." />
                       </SelectTrigger>
                       <SelectContent>
-                        {affiliates?.map((affiliate) => (
+                        {affiliates?.map(affiliate => (
                           <SelectItem key={affiliate.id} value={affiliate.id}>
                             {affiliate.display_name}
                             {affiliate.enseigne_name && (
-                              <span className="text-gray-500 ml-2">({affiliate.enseigne_name})</span>
+                              <span className="text-gray-500 ml-2">
+                                ({affiliate.enseigne_name})
+                              </span>
                             )}
                           </SelectItem>
                         ))}
@@ -483,7 +556,9 @@ export default function MessagesPage() {
 
                 {/* Sévérité */}
                 <div className="space-y-4">
-                  <Label className="text-base font-semibold">Type de notification</Label>
+                  <Label className="text-base font-semibold">
+                    Type de notification
+                  </Label>
                   <SeveritySelector value={severity} onChange={setSeverity} />
                 </div>
 
@@ -493,7 +568,7 @@ export default function MessagesPage() {
                   <Input
                     id="title"
                     value={title}
-                    onChange={(e) => setTitle(e.target.value)}
+                    onChange={e => setTitle(e.target.value)}
                     placeholder="Ex: Nouvelle fonctionnalité disponible"
                     maxLength={100}
                   />
@@ -505,12 +580,14 @@ export default function MessagesPage() {
                   <Textarea
                     id="message"
                     value={message}
-                    onChange={(e) => setMessage(e.target.value)}
+                    onChange={e => setMessage(e.target.value)}
                     placeholder="Décrivez votre message..."
                     rows={4}
                     maxLength={500}
                   />
-                  <p className="text-xs text-gray-500 text-right">{message.length}/500</p>
+                  <p className="text-xs text-gray-500 text-right">
+                    {message.length}/500
+                  </p>
                 </div>
 
                 {/* Action optionnelle */}
@@ -519,7 +596,7 @@ export default function MessagesPage() {
                     <Checkbox
                       id="includeAction"
                       checked={includeAction}
-                      onCheckedChange={(checked) => setIncludeAction(!!checked)}
+                      onCheckedChange={checked => setIncludeAction(!!checked)}
                     />
                     <Label htmlFor="includeAction" className="font-normal">
                       Ajouter un bouton d'action (optionnel)
@@ -533,7 +610,7 @@ export default function MessagesPage() {
                         <Input
                           id="actionLabel"
                           value={actionLabel}
-                          onChange={(e) => setActionLabel(e.target.value)}
+                          onChange={e => setActionLabel(e.target.value)}
                           placeholder="Ex: Voir les détails"
                         />
                       </div>
@@ -542,7 +619,7 @@ export default function MessagesPage() {
                         <Input
                           id="actionUrl"
                           value={actionUrl}
-                          onChange={(e) => setActionUrl(e.target.value)}
+                          onChange={e => setActionUrl(e.target.value)}
                           placeholder="Ex: /ma-selection"
                         />
                       </div>
@@ -559,13 +636,17 @@ export default function MessagesPage() {
                         {getRecipientCount()} destinataire(s)
                       </span>
                     ) : (
-                      <span className="text-amber-600">Sélectionnez des destinataires</span>
+                      <span className="text-amber-600">
+                        Sélectionnez des destinataires
+                      </span>
                     )}
                   </div>
 
                   <Button
                     type="submit"
-                    disabled={sendNotification.isPending || getRecipientCount() === 0}
+                    disabled={
+                      sendNotification.isPending || getRecipientCount() === 0
+                    }
                   >
                     {sendNotification.isPending ? (
                       <>
@@ -593,21 +674,31 @@ export default function MessagesPage() {
             </CardHeader>
             <CardContent>
               {title || message ? (
-                <div className={cn(
-                  'p-4 rounded-lg border-l-4',
-                  severity === 'urgent' && 'bg-red-50 border-red-500',
-                  severity === 'important' && 'bg-orange-50 border-orange-500',
-                  severity === 'info' && 'bg-blue-50 border-blue-500'
-                )}>
+                <div
+                  className={cn(
+                    'p-4 rounded-lg border-l-4',
+                    severity === 'urgent' && 'bg-red-50 border-red-500',
+                    severity === 'important' &&
+                      'bg-orange-50 border-orange-500',
+                    severity === 'info' && 'bg-blue-50 border-blue-500'
+                  )}
+                >
                   <div className="flex items-start gap-3">
-                    <div className={cn(
-                      'w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0',
-                      severity === 'urgent' && 'bg-red-100 text-red-600',
-                      severity === 'important' && 'bg-orange-100 text-orange-600',
-                      severity === 'info' && 'bg-blue-100 text-blue-600'
-                    )}>
-                      {severity === 'urgent' && <AlertCircle className="h-4 w-4" />}
-                      {severity === 'important' && <AlertTriangle className="h-4 w-4" />}
+                    <div
+                      className={cn(
+                        'w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0',
+                        severity === 'urgent' && 'bg-red-100 text-red-600',
+                        severity === 'important' &&
+                          'bg-orange-100 text-orange-600',
+                        severity === 'info' && 'bg-blue-100 text-blue-600'
+                      )}
+                    >
+                      {severity === 'urgent' && (
+                        <AlertCircle className="h-4 w-4" />
+                      )}
+                      {severity === 'important' && (
+                        <AlertTriangle className="h-4 w-4" />
+                      )}
                       {severity === 'info' && <Info className="h-4 w-4" />}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -628,7 +719,9 @@ export default function MessagesPage() {
               ) : (
                 <div className="text-center py-8 text-gray-400">
                   <Bell className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">Remplissez le formulaire pour voir l'aperçu</p>
+                  <p className="text-sm">
+                    Remplissez le formulaire pour voir l'aperçu
+                  </p>
                 </div>
               )}
             </CardContent>
@@ -642,15 +735,24 @@ export default function MessagesPage() {
             <CardContent className="space-y-3 text-sm text-gray-600">
               <div className="flex items-start gap-2">
                 <Info className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
-                <p><strong>Info</strong> : Pour les annonces générales, mises à jour mineures</p>
+                <p>
+                  <strong>Info</strong> : Pour les annonces générales, mises à
+                  jour mineures
+                </p>
               </div>
               <div className="flex items-start gap-2">
                 <AlertTriangle className="h-4 w-4 text-orange-500 mt-0.5 flex-shrink-0" />
-                <p><strong>Important</strong> : Pour les changements qui nécessitent attention</p>
+                <p>
+                  <strong>Important</strong> : Pour les changements qui
+                  nécessitent attention
+                </p>
               </div>
               <div className="flex items-start gap-2">
                 <AlertCircle className="h-4 w-4 text-red-500 mt-0.5 flex-shrink-0" />
-                <p><strong>Urgent</strong> : Pour les actions requises immédiatement</p>
+                <p>
+                  <strong>Urgent</strong> : Pour les actions requises
+                  immédiatement
+                </p>
               </div>
             </CardContent>
           </Card>

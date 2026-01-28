@@ -38,7 +38,7 @@ Tu es en **mode PLAN**.
 
 4. **Concevoir la solution** :
    - Mode "think hard" ou "ultrathink" si la tâche est complexe
-   - Identifier LA meilleure approche (pas d'options multiples selon CLAUDE.md règle ligne 180)
+   - Identifier LA meilleure approche (pas d'options multiples - voir CLAUDE.md section "Workflow de Développement")
    - Considérer les risques et impacts
 
 5. **Écrire le plan dans ACTIVE.md** :
@@ -86,7 +86,7 @@ Tu es en **mode PLAN**.
 
 ## Règles importantes
 
-- **Une seule approche** : Selon CLAUDE.md ligne 180, ne pas proposer plusieurs options. Recommander LA meilleure solution.
+- **Une seule approche** : Ne pas proposer plusieurs options. Recommander LA meilleure solution (voir CLAUDE.md section "Workflow de Développement").
 - **Actionnable** : Chaque étape doit être claire et exécutable par un agent WRITE sans ambiguïté.
 - **Scope strict** : Suivre le scope défini dans les observations, pas de scope creep.
 - **Patterns existants** : Respecter l'architecture et les patterns du codebase (lire CLAUDE.md, consulter docs/current/).

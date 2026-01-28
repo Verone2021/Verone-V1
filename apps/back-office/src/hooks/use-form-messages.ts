@@ -33,7 +33,11 @@ export interface UseFormMessagesReturn {
   messages: FormMessage[];
   loading: boolean;
   error: string | null;
-  addMessage: (message: string, isInternal: boolean, sendEmail: boolean) => Promise<boolean>;
+  addMessage: (
+    message: string,
+    isInternal: boolean,
+    sendEmail: boolean
+  ) => Promise<boolean>;
   refresh: () => Promise<void>;
 }
 
@@ -59,7 +63,8 @@ export function useFormMessages(submissionId: string): UseFormMessagesReturn {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const { data, error: fetchError } = await (supabase as any)
         .from('form_submission_messages')
-        .select(`
+        .select(
+          `
           id,
           submission_id,
           message,
@@ -69,7 +74,8 @@ export function useFormMessages(submissionId: string): UseFormMessagesReturn {
           created_at,
           created_by,
           user:created_by(id, full_name, email)
-        `)
+        `
+        )
         .eq('submission_id', submissionId)
         .order('created_at', { ascending: true });
 
@@ -92,7 +98,11 @@ export function useFormMessages(submissionId: string): UseFormMessagesReturn {
    * Ajouter un message (note interne ou email)
    */
   const addMessage = useCallback(
-    async (message: string, isInternal: boolean, sendEmail: boolean): Promise<boolean> => {
+    async (
+      message: string,
+      isInternal: boolean,
+      sendEmail: boolean
+    ): Promise<boolean> => {
       if (!message.trim()) {
         setError('Le message ne peut pas être vide');
         return false;
@@ -102,21 +112,26 @@ export function useFormMessages(submissionId: string): UseFormMessagesReturn {
         setError(null);
 
         // Appeler l'API route pour ajouter le message
-        const response = await fetch(`/api/form-submissions/${submissionId}/messages`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            message: message.trim(),
-            isInternal,
-            sendEmail: !isInternal && sendEmail, // Envoyer email uniquement si pas une note interne
-          }),
-        });
+        const response = await fetch(
+          `/api/form-submissions/${submissionId}/messages`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              message: message.trim(),
+              isInternal,
+              sendEmail: !isInternal && sendEmail, // Envoyer email uniquement si pas une note interne
+            }),
+          }
+        );
 
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.error || 'Erreur lors de l\'ajout du message');
+          throw new Error(
+            errorData.error || "Erreur lors de l'ajout du message"
+          );
         }
 
         // Recharger les messages pour afficher le nouveau
@@ -124,7 +139,11 @@ export function useFormMessages(submissionId: string): UseFormMessagesReturn {
         return true;
       } catch (err) {
         console.error('[useFormMessages] Error adding message:', err);
-        setError(err instanceof Error ? err.message : 'Erreur lors de l\'ajout du message');
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Erreur lors de l'ajout du message"
+        );
         return false;
       }
     },
@@ -140,7 +159,9 @@ export function useFormMessages(submissionId: string): UseFormMessagesReturn {
 
   // Charger les messages au montage et quand submissionId change
   useEffect(() => {
-    loadMessages();
+    void loadMessages().catch(error => {
+      console.error('[useFormMessages] useEffect loadMessages failed:', error);
+    });
   }, [loadMessages]);
 
   return {

@@ -11,13 +11,7 @@ import { useStockMovements } from '@verone/stock';
 import { useStockReservations } from '@verone/stock';
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@verone/ui';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@verone/ui';
 import { Input } from '@verone/ui';
 import {
   Select,
@@ -30,20 +24,15 @@ import { formatPrice } from '@verone/utils';
 import {
   Package,
   Search,
-  Filter,
   Plus,
   AlertTriangle,
   TrendingDown,
   TrendingUp,
-  Eye,
   Edit,
   History,
   BarChart3,
-  Settings,
   RefreshCw,
   Download,
-  Upload,
-  Calendar,
   ArrowUpDown,
   X,
   ArrowLeft,
@@ -107,7 +96,7 @@ function StockMovementModal({
       setQuantity('');
       setUnitCost('');
       setNotes('');
-    } catch (error) {
+    } catch (_error) {
       // L'erreur est déjà gérée dans le hook
     } finally {
       setLoading(false);
@@ -120,7 +109,14 @@ function StockMovementModal({
         <DialogHeader>
           <DialogTitle>Mouvement de stock - {product?.name}</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form
+          onSubmit={e => {
+            void handleSubmit(e).catch(error => {
+              console.error('[StockProduits] handleSubmit failed:', error);
+            });
+          }}
+          className="space-y-4"
+        >
           <div>
             <label className="block text-sm font-medium mb-2">
               Type de mouvement
@@ -229,7 +225,9 @@ function ProductHistoryModal({
 
   useEffect(() => {
     if (isOpen && product) {
-      loadHistory();
+      void loadHistory().catch(error => {
+        console.error('[StockProduits] loadHistory failed:', error);
+      });
     }
   }, [isOpen, product]);
 
@@ -238,7 +236,7 @@ function ProductHistoryModal({
     try {
       const history = await getProductHistory(product.id);
       setMovements(history as any);
-    } catch (error) {
+    } catch (_error) {
       // Erreur gérée dans le hook
     } finally {
       setLoading(false);
@@ -323,19 +321,24 @@ export default function StockInventairePage() {
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [isMovementModalOpen, setIsMovementModalOpen] = useState(false);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
-  const [reservations, setReservations] = useState<any[]>([]);
+  // Reserved for future reservations feature
+  const [_reservations, _setReservations] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
   const [productsLoading, setProductsLoading] = useState(true);
 
-  const { toast } = useToast();
+  const { toast: _toast } = useToast();
   const { fetchInventoryProducts } = useStock();
-  const { stats: movementStats, fetchStats } = useStockMovements();
-  const { fetchReservations, getAvailableStockForProduct } =
-    useStockReservations();
+  const { stats: _movementStats, fetchStats } = useStockMovements();
+  const {
+    fetchReservations,
+    getAvailableStockForProduct: _getAvailableStockForProduct,
+  } = useStockReservations();
 
   // Charger les données au montage
   useEffect(() => {
-    loadData();
+    void loadData().catch(error => {
+      console.error('[StockProduits] loadData failed:', error);
+    });
   }, []);
 
   const loadData = async () => {
@@ -476,7 +479,9 @@ export default function StockInventairePage() {
   };
 
   const handleMovementSuccess = () => {
-    loadData();
+    void loadData().catch(error => {
+      console.error('[StockProduits] loadData (movement) failed:', error);
+    });
   };
 
   const openMovementModal = (product: any) => {
@@ -519,7 +524,14 @@ export default function StockInventairePage() {
             <div className="flex gap-2">
               <ButtonV2
                 variant="outline"
-                onClick={loadData}
+                onClick={() => {
+                  void loadData().catch(error => {
+                    console.error(
+                      '[StockProduits] loadData (refresh) failed:',
+                      error
+                    );
+                  });
+                }}
                 disabled={productsLoading}
                 className="border-black text-black hover:bg-black hover:text-white"
               >

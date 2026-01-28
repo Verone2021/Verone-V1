@@ -27,8 +27,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@verone/ui';
-import { cn } from '@verone/utils';
-import { Edit, Save, X, User } from 'lucide-react';
+import { cn as _cn } from '@verone/utils';
+import { Edit, Save, X } from 'lucide-react';
 
 import type { UserWithProfile } from '@/app/(protected)/admin/users/page';
 import { updateUserProfile } from '@verone/admin/actions/user-management';
@@ -70,9 +70,9 @@ export function EditUserDialog({
       // Extraire nom temporaire depuis l'email (en attendant les colonnes DB)
       const tempName = user.email.split('@')[0].split('.') || ['', ''];
       setFormData({
-        first_name: user.profile?.first_name || tempName[0] || '',
-        last_name: user.profile?.last_name || tempName[1] || '',
-        job_title: user.profile?.job_title || '',
+        first_name: (user.profile?.first_name || tempName[0]) ?? '',
+        last_name: (user.profile?.last_name || tempName[1]) ?? '',
+        job_title: user.profile?.job_title ?? '',
         role: user.profile?.role || 'catalog_manager',
       });
     }
@@ -116,7 +116,7 @@ export function EditUserDialog({
       onUserUpdated?.();
 
       // Notification succès
-      console.log('Utilisateur mis à jour avec succès');
+      console.warn('Utilisateur mis à jour avec succès');
     } catch (error: any) {
       console.error('Erreur mise à jour utilisateur:', error);
       setError(error.message || "Une erreur inattendue s'est produite");
@@ -145,7 +145,14 @@ export function EditUserDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form
+          onSubmit={e => {
+            void handleSubmit(e).catch(error => {
+              console.error('[EditUserDialog] handleSubmit failed:', error);
+            });
+          }}
+          className="space-y-4"
+        >
           {/* Email (non modifiable) */}
           <div className="space-y-2">
             <Label htmlFor="email" className="text-sm font-medium text-black">

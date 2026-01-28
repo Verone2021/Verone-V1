@@ -308,7 +308,7 @@ export interface CollectionError {
   code: string;
   message: string;
   field?: string;
-  details?: Record<string, any>;
+  details?: Record<string, unknown>;
 }
 
 // ===== HOOKS RETURN TYPES =====
@@ -562,25 +562,48 @@ export const ROOM_TYPES = [
  * Calcule l'URL de l'image primaire depuis une liste d'images
  * Pattern utilisé par ProductSelectorModal - standardisé
  */
-export function getPrimaryImageUrl(
-  images: ProductImage[] | any[]
-): string | null {
+export function getPrimaryImageUrl(images: ProductImage[]): string | null {
   if (!images || images.length === 0) return null;
 
   // Chercher l'image primaire
-  const primaryImage = images.find((img: any) => img.is_primary);
+  const primaryImage = images.find(img => img.is_primary);
   if (primaryImage?.public_url) return primaryImage.public_url;
 
   // Fallback : première image disponible
   const firstImage = images[0];
-  return firstImage?.public_url || null;
+  return firstImage?.public_url ?? null;
+}
+
+/**
+ * Type pour les données produit brutes depuis Supabase
+ */
+interface RawProductData {
+  id: string;
+  name: string;
+  sku?: string;
+  status: string;
+  creation_mode?: string;
+  cost_price?: number;
+  position?: number;
+  added_at?: string;
+  product_images?: Array<{
+    id: string;
+    public_url: string;
+    storage_path?: string;
+    is_primary?: boolean;
+    display_order?: number;
+    image_type?: 'gallery' | 'thumbnail' | 'technical' | 'lifestyle';
+    alt_text?: string;
+  }>;
 }
 
 /**
  * Transforme les données produit brutes vers CollectionProduct
  * avec gestion correcte des images selon relations Supabase
  */
-export function formatCollectionProduct(rawProduct: any): CollectionProduct {
+export function formatCollectionProduct(
+  rawProduct: RawProductData
+): CollectionProduct {
   const productImages = rawProduct.product_images || [];
 
   return {
@@ -592,15 +615,25 @@ export function formatCollectionProduct(rawProduct: any): CollectionProduct {
     cost_price: rawProduct.cost_price,
     position: rawProduct.position || 0,
     added_at: rawProduct.added_at || new Date().toISOString(),
-    product_images: productImages.map((img: any) => ({
+    product_images: productImages.map(img => ({
       id: img.id,
       public_url: img.public_url,
-      storage_path: img.storage_path || '',
+      storage_path: img.storage_path ?? '',
       is_primary: img.is_primary || false,
       display_order: img.display_order || 0,
       image_type: img.image_type || 'gallery',
       alt_text: img.alt_text,
     })),
-    primary_image_url: getPrimaryImageUrl(productImages),
+    primary_image_url: getPrimaryImageUrl(
+      productImages.map(img => ({
+        id: img.id,
+        public_url: img.public_url,
+        storage_path: img.storage_path ?? '',
+        is_primary: img.is_primary || false,
+        display_order: img.display_order || 0,
+        image_type: img.image_type,
+        alt_text: img.alt_text,
+      }))
+    ),
   };
 }

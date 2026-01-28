@@ -8,14 +8,28 @@
  * - Top produits vendus
  * - Performance par sélection
  *
+ * Features (React Query):
+ * - Automatic caching (1 min stale, 10 min gc)
+ * - Deduplication of concurrent requests
+ * - Background refetch disabled (manual refresh)
+ *
  * @module use-affiliate-analytics
  * @since 2025-12-10
  */
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createClient } from '@verone/utils/supabase/client';
 
 const supabase = createClient();
+
+// Query keys factory for cache management
+export const affiliateAnalyticsKeys = {
+  all: ['affiliate-analytics'] as const,
+  analytics: (affiliateId: string | undefined, period: string) =>
+    [...affiliateAnalyticsKeys.all, affiliateId, period] as const,
+  selectionProducts: (selectionId: string | null) =>
+    [...affiliateAnalyticsKeys.all, 'selection-products', selectionId] as const,
+};
 
 import { useUserAffiliate } from './use-user-selection';
 import type {
@@ -73,7 +87,7 @@ export function useAffiliateAnalytics(period: AnalyticsPeriod = 'all') {
   const { data: affiliate } = useUserAffiliate();
 
   return useQuery({
-    queryKey: ['affiliate-analytics', affiliate?.id, period],
+    queryKey: affiliateAnalyticsKeys.analytics(affiliate?.id, period),
     queryFn: async (): Promise<AffiliateAnalyticsData | null> => {
       if (!affiliate) {
         console.error('❌ ALERTE KPI: Aucun affilié trouvé');
@@ -91,6 +105,7 @@ export function useAffiliateAnalytics(period: AnalyticsPeriod = 'all') {
       // ============================================
       const [allCommissionsResult, selectionsResult] = await Promise.all([
         // 1. Commissions (sans jointure sales_orders pour éviter erreurs RLS)
+        // PERF: Limiter à 500 dernières commissions pour éviter chargement 15+ secondes
         supabase
           .from('linkme_commissions')
           .select(
@@ -111,7 +126,8 @@ export function useAffiliateAnalytics(period: AnalyticsPeriod = 'all') {
           `
           )
           .eq('affiliate_id', affiliate.id)
-          .order('created_at', { ascending: true }),
+          .order('created_at', { ascending: false })
+          .limit(500),
 
         // 2. Sélections de l'affilié
         supabase
@@ -235,15 +251,15 @@ export function useAffiliateAnalytics(period: AnalyticsPeriod = 'all') {
       // ============================================
       const totalOrders = commissions.length;
       const totalRevenueHT = commissions.reduce(
-        (sum, c) => sum + (c.order_amount_ht || 0),
+        (sum, c) => sum + (c.order_amount_ht ?? 0),
         0
       );
       const totalCommissionsHT = commissions.reduce(
-        (sum, c) => sum + (c.affiliate_commission || 0),
+        (sum, c) => sum + (c.affiliate_commission ?? 0),
         0
       );
       const totalCommissionsTTC = commissions.reduce(
-        (sum, c) => sum + (c.affiliate_commission_ttc || 0),
+        (sum, c) => sum + (c.affiliate_commission_ttc ?? 0),
         0
       );
       const averageBasket = totalOrders > 0 ? totalRevenueHT / totalOrders : 0;
@@ -254,22 +270,22 @@ export function useAffiliateAnalytics(period: AnalyticsPeriod = 'all') {
         throw selectionsResult.error;
       }
 
-      const selections = selectionsResult.data || [];
+      const selections = selectionsResult.data ?? [];
 
       // Performance par sélection
       const selectionsPerformance: SelectionPerformance[] = selections.map(
         s => ({
           id: s.id,
           name: s.name,
-          slug: s.slug || '',
+          slug: s.slug ?? '',
           imageUrl: s.image_url,
-          productsCount: s.products_count || 0,
-          views: s.views_count || 0,
-          orders: s.orders_count || 0,
-          revenue: s.total_revenue || 0,
+          productsCount: s.products_count ?? 0,
+          views: s.views_count ?? 0,
+          orders: s.orders_count ?? 0,
+          revenue: s.total_revenue ?? 0,
           conversionRate:
-            (s.views_count || 0) > 0
-              ? ((s.orders_count || 0) / (s.views_count || 1)) * 100
+            (s.views_count ?? 0) > 0
+              ? ((s.orders_count ?? 0) / (s.views_count ?? 1)) * 100
               : 0,
           publishedAt: s.published_at,
         })
@@ -277,7 +293,7 @@ export function useAffiliateAnalytics(period: AnalyticsPeriod = 'all') {
 
       // Taux de conversion global
       const totalViews = selections.reduce(
-        (sum, s) => sum + (s.views_count || 0),
+        (sum, s) => sum + (s.views_count ?? 0),
         0
       );
       const conversionRate =
@@ -336,12 +352,13 @@ export function useAffiliateAnalytics(period: AnalyticsPeriod = 'all') {
         .filter((id): id is string => !!id);
 
       let topProducts: TopProductData[] = [];
-      // eslint-disable-next-line prefer-const -- modifié dans le bloc if
+
       let totalQuantitySoldAllTime = 0;
 
       if (orderIds.length > 0) {
         // Utiliser linkme_order_items_enriched qui calcule correctement affiliate_margin
         // à partir de linkme_selection_items.base_price_ht × margin_rate / 100 × quantity
+        // PERF: Limiter aux 100 dernières commandes pour top produits
         const { data: orderItemsData, error: orderItemsError } = await supabase
           .from('linkme_order_items_enriched')
           .select(
@@ -352,7 +369,7 @@ export function useAffiliateAnalytics(period: AnalyticsPeriod = 'all') {
             affiliate_margin
           `
           )
-          .in('sales_order_id', orderIds);
+          .in('sales_order_id', orderIds.slice(0, 100));
 
         if (orderItemsError) {
           // Erreur non bloquante - continuer avec tableau vide
@@ -368,7 +385,7 @@ export function useAffiliateAnalytics(period: AnalyticsPeriod = 'all') {
 
         orderItems.forEach(item => {
           const productId = item.product_id;
-          const qty = item.quantity || 0;
+          const qty = item.quantity ?? 0;
 
           // Ajouter à la somme totale des quantités
           totalQuantitySoldAllTime += qty;
@@ -385,9 +402,9 @@ export function useAffiliateAnalytics(period: AnalyticsPeriod = 'all') {
           }
           const entry = productMap.get(productId)!;
           entry.quantity += qty;
-          entry.revenue += item.total_ht || 0;
+          entry.revenue += item.total_ht ?? 0;
           // SOURCE DE VÉRITÉ: affiliate_margin depuis linkme_order_items_enriched
-          entry.commission += item.affiliate_margin || 0;
+          entry.commission += item.affiliate_margin ?? 0;
         });
 
         // Récupérer les infos produits
@@ -408,14 +425,14 @@ export function useAffiliateAnalytics(period: AnalyticsPeriod = 'all') {
           ]);
 
           const imageMap = new Map(
-            (imagesResult.data || []).map(img => [
+            (imagesResult.data ?? []).map(img => [
               img.product_id,
               img.public_url,
             ])
           );
 
           const productsInfo = new Map(
-            (productsResult.data || []).map(p => [
+            (productsResult.data ?? []).map(p => [
               p.id,
               {
                 name: p.name,
@@ -430,9 +447,9 @@ export function useAffiliateAnalytics(period: AnalyticsPeriod = 'all') {
               const info = productsInfo.get(productId);
               return {
                 productId,
-                productName: info?.name || 'Produit inconnu',
-                productSku: info?.sku || '',
-                productImageUrl: imageMap.get(productId) || null,
+                productName: info?.name ?? 'Produit inconnu',
+                productSku: info?.sku ?? '',
+                productImageUrl: imageMap.get(productId) ?? null,
                 quantitySold: data.quantity,
                 revenueHT: data.revenue,
                 commissionHT: data.commission,
@@ -475,8 +492,10 @@ export function useAffiliateAnalytics(period: AnalyticsPeriod = 'all') {
       };
     },
     enabled: !!affiliate,
-    staleTime: 60000, // 1 minute
+    staleTime: 60 * 1000, // 1 minute
+    gcTime: 10 * 60 * 1000, // 10 minutes
     refetchOnWindowFocus: false,
+    retry: 1,
   });
 }
 
@@ -487,7 +506,7 @@ export function useSelectionTopProducts(selectionId: string | null) {
   const { data: affiliate } = useUserAffiliate();
 
   return useQuery({
-    queryKey: ['selection-top-products', selectionId],
+    queryKey: affiliateAnalyticsKeys.selectionProducts(selectionId),
     queryFn: async (): Promise<TopProductData[]> => {
       if (!selectionId || !affiliate) return [];
 
@@ -498,7 +517,7 @@ export function useSelectionTopProducts(selectionId: string | null) {
         .eq('affiliate_id', affiliate.id)
         .eq('selection_id', selectionId);
 
-      const orderIds = (commissionsData || [])
+      const orderIds = (commissionsData ?? [])
         .map(c => c.order_id)
         .filter((id): id is string => !!id);
 
@@ -517,7 +536,7 @@ export function useSelectionTopProducts(selectionId: string | null) {
         )
         .in('sales_order_id', orderIds);
 
-      const orderItems = orderItemsData || [];
+      const orderItems = orderItemsData ?? [];
 
       // Agréger par produit
       const productMap = new Map<
@@ -532,9 +551,9 @@ export function useSelectionTopProducts(selectionId: string | null) {
           productMap.set(productId, { quantity: 0, revenue: 0, commission: 0 });
         }
         const entry = productMap.get(productId)!;
-        entry.quantity += item.quantity || 0;
-        entry.revenue += item.total_ht || 0;
-        entry.commission += item.affiliate_margin || 0;
+        entry.quantity += item.quantity ?? 0;
+        entry.revenue += item.total_ht ?? 0;
+        entry.commission += item.affiliate_margin ?? 0;
       });
 
       const productIds = Array.from(productMap.keys());
@@ -553,11 +572,11 @@ export function useSelectionTopProducts(selectionId: string | null) {
         .eq('is_primary', true);
 
       const imageMap = new Map(
-        (imagesData || []).map(img => [img.product_id, img.public_url])
+        (imagesData ?? []).map(img => [img.product_id, img.public_url])
       );
 
       const productsInfo = new Map(
-        (productsData || []).map(p => [p.id, { name: p.name, sku: p.sku }])
+        (productsData ?? []).map(p => [p.id, { name: p.name, sku: p.sku }])
       );
 
       return Array.from(productMap.entries())
@@ -565,9 +584,9 @@ export function useSelectionTopProducts(selectionId: string | null) {
           const info = productsInfo.get(productId);
           return {
             productId,
-            productName: info?.name || 'Produit inconnu',
-            productSku: info?.sku || '',
-            productImageUrl: imageMap.get(productId) || null,
+            productName: info?.name ?? 'Produit inconnu',
+            productSku: info?.sku ?? '',
+            productImageUrl: imageMap.get(productId) ?? null,
             quantitySold: data.quantity,
             revenueHT: data.revenue,
             commissionHT: data.commission,
@@ -578,6 +597,29 @@ export function useSelectionTopProducts(selectionId: string | null) {
         .slice(0, 5);
     },
     enabled: !!selectionId && !!affiliate,
-    staleTime: 60000,
+    staleTime: 60 * 1000, // 1 minute
+    gcTime: 10 * 60 * 1000, // 10 minutes
+    retry: 1,
   });
+}
+
+/**
+ * Hook to invalidate affiliate analytics cache
+ * Useful after placing orders or commission updates
+ */
+export function useInvalidateAffiliateAnalytics() {
+  const queryClient = useQueryClient();
+
+  return {
+    invalidateAll: () =>
+      queryClient.invalidateQueries({ queryKey: affiliateAnalyticsKeys.all }),
+    invalidateAnalytics: (affiliateId: string, period: string) =>
+      queryClient.invalidateQueries({
+        queryKey: affiliateAnalyticsKeys.analytics(affiliateId, period),
+      }),
+    invalidateSelectionProducts: (selectionId: string) =>
+      queryClient.invalidateQueries({
+        queryKey: affiliateAnalyticsKeys.selectionProducts(selectionId),
+      }),
+  };
 }

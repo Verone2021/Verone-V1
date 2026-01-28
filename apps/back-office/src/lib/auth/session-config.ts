@@ -92,7 +92,9 @@ export class SessionManager {
    */
   private startChecking() {
     this.checkInterval = setInterval(() => {
-      this.checkSession();
+      void this.checkSession().catch(error => {
+        console.error('[SessionManager] checkSession failed:', error);
+      });
     }, SESSION_CONFIG.CHECK_INTERVAL);
   }
 
@@ -110,8 +112,10 @@ export class SessionManager {
       return;
     }
 
-    this.refreshInterval = setInterval(async () => {
-      await this.refreshSession();
+    this.refreshInterval = setInterval(() => {
+      void this.refreshSession().catch(error => {
+        console.error('[SessionManager] refreshSession failed:', error);
+      });
     }, SESSION_CONFIG.REFRESH_INTERVAL);
   }
 
@@ -292,7 +296,12 @@ export class SessionManager {
    */
   public extendSession() {
     this.updateActivity();
-    this.refreshSession();
+    void this.refreshSession().catch(error => {
+      console.error(
+        '[SessionManager] extendSession refreshSession failed:',
+        error
+      );
+    });
 
     // Supprimer warning
     const warning = document.getElementById('session-warning');

@@ -99,9 +99,11 @@ export function useToggleProductPublication() {
         );
       }
     },
-    onSettled: () => {
+    onSettled: async () => {
       // 6. Refetch to sync with server
-      queryClient.invalidateQueries({ queryKey: ['site-internet-products'] });
+      await queryClient.invalidateQueries({
+        queryKey: ['site-internet-products'],
+      });
     },
   });
 }
@@ -151,9 +153,11 @@ export function useAddProductsToSiteInternet() {
 
       return productIds.length;
     },
-    onSuccess: count => {
-      queryClient.invalidateQueries({ queryKey: ['site-internet-products'] });
-      console.log(`✅ ${count} produits ajoutés au site internet`);
+    onSuccess: async count => {
+      await queryClient.invalidateQueries({
+        queryKey: ['site-internet-products'],
+      });
+      console.warn(`✅ ${count} produits ajoutés au site internet`);
     },
   });
 }
@@ -180,8 +184,10 @@ export function useRemoveProductFromSiteInternet() {
 
       // Note: On ne supprime PAS les métadonnées canal (historique)
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['site-internet-products'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ['site-internet-products'],
+      });
     },
   });
 }
@@ -226,8 +232,10 @@ export function useUpdateProductMetadata() {
 
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['site-internet-products'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ['site-internet-products'],
+      });
     },
   });
 }

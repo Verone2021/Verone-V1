@@ -77,7 +77,7 @@ export default function SourcingPage() {
     deleteSourcingProduct,
     refetch,
   } = useSourcingProducts({
-    search: debouncedSearchTerm || undefined,
+    search: debouncedSearchTerm ?? undefined,
     product_status: statusFilter === 'all' ? undefined : statusFilter,
     sourcing_type:
       sourcingTypeFilter === 'all'
@@ -114,7 +114,9 @@ export default function SourcingPage() {
         console.error('Erreur chargement produits complétés:', error);
       }
     };
-    fetchCompletedCount();
+    void fetchCompletedCount().catch(error => {
+      console.error('[Sourcing] fetchCompletedCount failed:', error);
+    });
   }, []);
 
   // KPIs calculés
@@ -219,7 +221,7 @@ export default function SourcingPage() {
     await validateSourcing(productId);
   };
 
-  const handleOrderSample = async (productId: string) => {
+  const _handleOrderSample = async (productId: string) => {
     await orderSample(productId);
   };
 
@@ -248,7 +250,9 @@ export default function SourcingPage() {
     if (!product.product_images || product.product_images.length === 0)
       return null;
     const primary = product.product_images.find((img: any) => img.is_primary);
-    return primary?.public_url || product.product_images[0]?.public_url || null;
+    return (
+      (primary?.public_url || product.product_images[0]?.public_url) ?? null
+    );
   };
 
   return (
@@ -626,7 +630,16 @@ export default function SourcingPage() {
                               size="sm"
                               icon={CheckCircle}
                               label="Valider et ajouter au catalogue"
-                              onClick={() => handleValidateSourcing(product.id)}
+                              onClick={() => {
+                                void handleValidateSourcing(product.id).catch(
+                                  error => {
+                                    console.error(
+                                      '[Sourcing] handleValidateSourcing failed:',
+                                      error
+                                    );
+                                  }
+                                );
+                              }}
                             />
                           )}
 
@@ -637,7 +650,16 @@ export default function SourcingPage() {
                             size="sm"
                             icon={Archive}
                             label="Archiver le produit"
-                            onClick={() => handleArchiveProduct(product.id)}
+                            onClick={() => {
+                              void handleArchiveProduct(product.id).catch(
+                                error => {
+                                  console.error(
+                                    '[Sourcing] handleArchiveProduct failed:',
+                                    error
+                                  );
+                                }
+                              );
+                            }}
                           />
                         )}
 
@@ -648,7 +670,16 @@ export default function SourcingPage() {
                             size="sm"
                             icon={Trash2}
                             label="Supprimer définitivement"
-                            onClick={() => handleDeleteProduct(product.id)}
+                            onClick={() => {
+                              void handleDeleteProduct(product.id).catch(
+                                error => {
+                                  console.error(
+                                    '[Sourcing] handleDeleteProduct failed:',
+                                    error
+                                  );
+                                }
+                              );
+                            }}
                           />
                         )}
                       </div>
@@ -682,7 +713,9 @@ export default function SourcingPage() {
         open={isQuickSourcingModalOpen}
         onClose={() => setIsQuickSourcingModalOpen(false)}
         onSuccess={() => {
-          refetch();
+          void refetch().catch(error => {
+            console.error('[Sourcing] refetch failed:', error);
+          });
           setIsQuickSourcingModalOpen(false);
         }}
       />
