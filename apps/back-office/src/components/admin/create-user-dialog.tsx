@@ -210,7 +210,20 @@ export function CreateUserDialog({ children }: CreateUserDialogProps) {
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form
+          onSubmit={(e) => {
+            void handleSubmit(e).catch((error: unknown) => {
+              console.error('[CreateUserDialog] Form submit failed:', error);
+              setErrors({
+                submit:
+                  error instanceof Error
+                    ? error.message
+                    : "Une erreur inattendue s'est produite",
+              });
+            });
+          }}
+          className="space-y-4"
+        >
           {/* Informations de connexion */}
           <div className="space-y-4">
             <h3 className="text-sm font-semibold text-black">
