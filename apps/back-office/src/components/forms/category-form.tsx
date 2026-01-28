@@ -263,7 +263,19 @@ export function CategoryForm({
           <DialogTitle className="text-black">{title}</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form
+          onSubmit={(e) => {
+            void handleSubmit(e).catch((error: unknown) => {
+              console.error('[CategoryForm] Submit failed:', error);
+              setError(
+                error instanceof Error
+                  ? error.message
+                  : "Une erreur inattendue s'est produite"
+              );
+            });
+          }}
+          className="space-y-6"
+        >
           {/* Famille parent */}
           <div className="space-y-2">
             <Label className="text-black">Famille parent*</Label>
@@ -373,10 +385,20 @@ export function CategoryForm({
                       type="file"
                       accept="image/*"
                       className="hidden"
-                      onChange={e => {
+                      onChange={(e) => {
                         const file = e.target.files?.[0];
                         if (file && file.size <= 5 * 1024 * 1024) {
-                          handleImageUpload(file);
+                          void handleImageUpload(file).catch((error: unknown) => {
+                            console.error('[CategoryForm] Image upload failed:', error);
+                            toast({
+                              title: '❌ Erreur upload image',
+                              description:
+                                error instanceof Error
+                                  ? error.message
+                                  : "Une erreur inattendue s'est produite",
+                              variant: 'destructive',
+                            });
+                          });
                         } else {
                           toast({
                             title: '❌ Fichier trop volumineux',
