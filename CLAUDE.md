@@ -318,6 +318,164 @@ gh pr create --title "[APP-DOMAIN-NNN] feat: description"
 
 ---
 
+## 🧱 RÈGLES UI & COMPOSANTS (STRICT)
+
+**INTERDICTION FORMELLE DE CRÉER DES DOUBLONS.**
+
+Avant de créer un fichier `.tsx` :
+
+### 1. SCANNER (Obligatoire)
+
+Chercher dans `packages/@verone/ui/**` et `components/**` :
+
+```bash
+# Rechercher composant existant
+find packages/@verone/ui -name "*Button*" -type f
+grep -r "export.*Button" packages/@verone/ui/src
+
+# Utiliser Glob tool pour recherche pattern
+# Utiliser Grep tool pour recherche dans contenu
+```
+
+### 2. RÉUTILISER (Si existe)
+
+```typescript
+// ✅ CORRECT - Réutiliser composant existant
+import { Button } from '@verone/ui';
+
+<Button variant="outline">Cliquer</Button>
+```
+
+### 3. ADAPTER (Si presque bon)
+
+**❌ NE PAS créer** `ButtonV2`, `MyButton`, `CustomButton`
+
+**✅ AJOUTER variant** au composant existant :
+
+```typescript
+import { cva, type VariantProps } from 'class-variance-authority';
+import { cn } from '@verone/ui/lib/utils';
+
+// Dans packages/@verone/ui/src/components/button.tsx
+const buttonVariants = cva(
+  'inline-flex items-center justify-center rounded-md',
+  {
+    variants: {
+      variant: {
+        default: 'bg-primary text-primary-foreground',
+        outline: 'border border-input bg-background',
+        // ✅ Ajouter nouveau variant ici
+        custom: 'bg-gradient-to-r from-blue-500 to-purple-600',
+      },
+      size: {
+        default: 'h-10 px-4 py-2',
+        sm: 'h-9 rounded-md px-3',
+        lg: 'h-11 rounded-md px-8',
+      },
+    },
+    defaultVariants: {
+      variant: 'default',
+      size: 'default',
+    },
+  }
+);
+
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
+  asChild?: boolean;
+}
+
+// Utilisation
+<Button variant="custom" size="lg">Mon Bouton</Button>
+```
+
+**Composition avec `cn()`** :
+
+```typescript
+import { Button } from '@verone/ui';
+import { cn } from '@verone/ui/lib/utils';
+
+// ✅ Surcharger classes sans créer nouveau composant
+<Button
+  variant="outline"
+  className={cn("hover:scale-105 transition-transform")}
+>
+  Hover Effect
+</Button>
+```
+
+### 4. CRÉER (Si vraiment nécessaire)
+
+**Process shadcn/ui** :
+
+1. Vérifier catalogue : https://ui.shadcn.com/docs/components
+2. Installer si existe : `npx shadcn-ui@latest add <component>`
+3. Adapter avec variants si besoin
+4. Centraliser dans `@verone/ui` si réutilisable entre apps
+
+**Pattern atomique obligatoire** :
+
+```typescript
+// Nouveau composant = Atomique + CVA + shadcn/ui base
+import * as React from 'react';
+import { cva, type VariantProps } from 'class-variance-authority';
+import { cn } from '@verone/ui/lib/utils';
+
+const myComponentVariants = cva(
+  'base-classes-here',
+  {
+    variants: {
+      variant: {
+        default: 'default-classes',
+        secondary: 'secondary-classes',
+      },
+    },
+  }
+);
+
+export interface MyComponentProps
+  extends React.HTMLAttributes<HTMLDivElement>,
+    VariantProps<typeof myComponentVariants> {
+  // Props spécifiques
+}
+
+export const MyComponent = React.forwardRef<HTMLDivElement, MyComponentProps>(
+  ({ className, variant, ...props }, ref) => {
+    return (
+      <div
+        ref={ref}
+        className={cn(myComponentVariants({ variant }), className)}
+        {...props}
+      />
+    );
+  }
+);
+MyComponent.displayName = 'MyComponent';
+```
+
+### Exemples Interdits
+
+- ❌ `ButtonV2.tsx`, `MyButton.tsx`, `CustomButton.tsx`
+- ❌ `components/ui/custom-dialog.tsx` (si Dialog shadcn existe)
+- ❌ Copier-coller composant shadcn modifié dans app locale
+- ❌ Créer variantes dans fichiers séparés (ex: `button-variants.tsx`)
+
+### Checklist Création Composant
+
+Avant de créer un `.tsx` :
+
+- [ ] Vérifié catalogue shadcn/ui : https://ui.shadcn.com/docs/components
+- [ ] Cherché dans `packages/@verone/ui` avec Glob/Grep
+- [ ] Cherché dans `components/` locaux
+- [ ] Si existe : réutiliser ou adapter avec variants
+- [ ] Si nouveau : atomique + CVA + shadcn base
+- [ ] Centralisé dans `@verone/ui` si réutilisable
+
+**Tout nouveau composant UI doit être atomique, dynamique et utiliser `shadcn/ui` comme base.**
+
+---
+
 ## 🔧 Mode de Travail
 
 **MODE MANUEL** : Claude ne crée ni ne merge de PR sans instruction explicite.
