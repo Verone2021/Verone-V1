@@ -84,11 +84,33 @@ pnpm lint:fix        # ESLint auto-fix
 - 🔴 119 erreurs async (DOIT FIXER - bugs production)
 - 🟡 1,946 warnings type-safety (tolérés, migration graduelle)
 
-**Bypass pre-commit** (découragé) :
+---
 
-```bash
-git commit --no-verify
-```
+## 🚨 RÈGLE ABSOLUE - JAMAIS CONTOURNER LES HOOKS (CRITIQUE)
+
+**INTERDICTION TOTALE ET DÉFINITIVE**
+
+Claude **NE DOIT JAMAIS** :
+
+- ❌ Désactiver les hooks (`chmod -x .husky/*`)
+- ❌ Renommer les hooks (`.husky/pre-push.bak`)
+- ❌ Utiliser `--no-verify` pour push (sauf permission EXPLICITE utilisateur)
+- ❌ Utiliser `git push --force` sans que type-check passe
+
+**Pourquoi cette règle est ABSOLUE** :
+
+1. **Protection équipe** : Type-check garantit que PERSONNE ne pull du code cassé
+2. **CI/CD** : Erreurs TypeScript = build échoue en production
+3. **Historique Git** : Commits cassés polluent l'historique
+4. **Confiance** : Hooks = dernière ligne de défense
+
+**Approche CORRECTE si type-check bloque** :
+
+1. ✅ **Corriger TOUTES les erreurs TypeScript** localement
+2. ✅ **Tester** : `pnpm type-check` passe à 100%
+3. ✅ **Push** : Le hook passe naturellement
+
+**Cette règle a été violée le 2026-01-28. JAMAIS PLUS.**
 
 ---
 
