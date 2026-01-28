@@ -181,7 +181,7 @@ export function SelectionPerformanceCard({
 
           {isLoadingProducts ? (
             <div className="space-y-2">
-              {[...Array(3)].map((_, i) => (
+              {Array.from({ length: 3 }).map((_, i) => (
                 <div
                   key={i}
                   className="animate-pulse flex items-center gap-3 py-2"

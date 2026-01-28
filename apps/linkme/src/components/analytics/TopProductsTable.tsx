@@ -34,7 +34,7 @@ export function TopProductsTable({
       <Card className="p-6">
         <div className="animate-pulse">
           <div className="h-6 bg-gray-200 rounded w-48 mb-4" />
-          {[...Array(5)].map((_, i) => (
+          {Array.from({ length: 5 }).map((_, i) => (
             <div key={i} className="flex items-center gap-4 py-3">
               <div className="h-12 w-12 bg-gray-200 rounded" />
               <div className="flex-1">
@@ -49,13 +49,13 @@ export function TopProductsTable({
     );
   }
 
-  const displayProducts = (products || []).slice(0, maxItems);
+  const displayProducts = (products ?? []).slice(0, maxItems);
 
   // Trouver le max pour la barre de progression
   const maxQuantity = Math.max(...displayProducts.map(p => p.quantitySold), 1);
 
   // Préparer données pour BarList
-  const barListData = displayProducts.map((product, index) => ({
+  const _barListData = displayProducts.map((product, index) => ({
     name: product.productName,
     value: product.quantitySold,
     icon: () => (

@@ -21,7 +21,7 @@ import type {
 } from '../../types/analytics';
 import {
   formatCurrency,
-  formatDateFR,
+  formatDateFR as _formatDateFR,
   VERONE_LEGAL_INFO,
 } from '../../types/analytics';
 
@@ -72,7 +72,7 @@ export function InvoiceTemplate({
       '',
       ...commissions.map(
         c =>
-          `• Commande #${c.orderNumber} - ${c.selectionName || 'Sélection'} : ${formatCurrency(c.affiliateCommission)}`
+          `• Commande #${c.orderNumber} - ${c.selectionName ?? 'Sélection'} : ${formatCurrency(c.affiliateCommission)}`
       ),
     ];
     try {
