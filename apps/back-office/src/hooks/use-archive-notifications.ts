@@ -127,7 +127,7 @@ export function useMarkNotificationReviewed() {
         .from('affiliate_archive_requests')
         .update({
           status,
-          admin_note: adminNote || null,
+          admin_note: adminNote ?? null,
           reviewed_at: new Date().toISOString(),
         })
         .eq('id', notificationId);

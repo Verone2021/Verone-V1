@@ -78,10 +78,10 @@ export function CategoryForm({
 
   // État du formulaire
   const [formData, setFormData] = useState<CategoryFormData>({
-    family_id: initialData?.family_id || '',
-    name: initialData?.name || '',
-    description: initialData?.description || '',
-    image_url: initialData?.image_url || '',
+    family_id: initialData?.family_id ?? '',
+    name: initialData?.name ?? '',
+    description: initialData?.description ?? '',
+    image_url: initialData?.image_url ?? '',
     display_order: initialData?.display_order || 1,
     is_active: initialData?.is_active ?? true,
   });
@@ -90,10 +90,10 @@ export function CategoryForm({
   useEffect(() => {
     if (isOpen) {
       setFormData({
-        family_id: initialData?.family_id || '',
-        name: initialData?.name || '',
-        description: initialData?.description || '',
-        image_url: initialData?.image_url || '',
+        family_id: initialData?.family_id ?? '',
+        name: initialData?.name ?? '',
+        description: initialData?.description ?? '',
+        image_url: initialData?.image_url ?? '',
         display_order: initialData?.display_order || 1,
         is_active: initialData?.is_active ?? true,
       });

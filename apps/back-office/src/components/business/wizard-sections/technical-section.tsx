@@ -93,7 +93,7 @@ export function TechnicalSection({
                     type="number"
                     step="0.1"
                     min="0"
-                    value={formData.dimensions.length || ''}
+                    value={formData.dimensions.length ?? ''}
                     onChange={e => updateDimension('length', e.target.value)}
                     placeholder="0"
                     className="rounded-r-none"
@@ -112,7 +112,7 @@ export function TechnicalSection({
                     type="number"
                     step="0.1"
                     min="0"
-                    value={formData.dimensions.width || ''}
+                    value={formData.dimensions.width ?? ''}
                     onChange={e => updateDimension('width', e.target.value)}
                     placeholder="0"
                     className="rounded-r-none"
@@ -131,7 +131,7 @@ export function TechnicalSection({
                     type="number"
                     step="0.1"
                     min="0"
-                    value={formData.dimensions.height || ''}
+                    value={formData.dimensions.height ?? ''}
                     onChange={e => updateDimension('height', e.target.value)}
                     placeholder="0"
                     className="rounded-r-none"

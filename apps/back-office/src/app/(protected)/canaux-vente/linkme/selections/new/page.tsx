@@ -441,7 +441,7 @@ export default function NewSelectionPage() {
         body: JSON.stringify({
           user_id: selectedUserId,
           name: selectionName,
-          description: selectionDescription || null,
+          description: selectionDescription ?? null,
           status,
           products: selectedProducts.map(p => ({
             product_id: p.product_id,

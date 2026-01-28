@@ -135,7 +135,7 @@ export async function POST(
     const resolvedParams = await params;
     const productId = resolvedParams.id;
 
-    console.log(`[API] Sync product request for ID: ${productId}`);
+    console.warn(`[API] Sync product request for ID: ${productId}`);
 
     // 1. Validation des paramètres
     if (!productId) {
@@ -196,7 +196,7 @@ export async function POST(
     }
 
     // 6. Log de succès
-    console.log(
+    console.warn(
       `[API] Product ${product.sku} synchronized successfully with Google Merchant Center`
     );
 
@@ -253,7 +253,7 @@ export async function GET(
     const resolvedParams = await params;
     const productId = resolvedParams.id;
 
-    console.log(`[API] Get sync status for product ID: ${productId}`);
+    console.warn(`[API] Get sync status for product ID: ${productId}`);
 
     // 1. Initialisation Supabase
     const supabase = await createServerClient();

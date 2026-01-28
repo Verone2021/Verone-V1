@@ -143,7 +143,7 @@ export function StockAdjustmentForm({
   // Mise à jour produit sélectionné
   const handleProductChange = (productId: string) => {
     const product = products.find(p => p.id === productId);
-    setSelectedProduct(product || null);
+    setSelectedProduct(product ?? null);
     setFormData({ ...formData, product_id: productId });
   };
 

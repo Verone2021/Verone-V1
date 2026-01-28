@@ -43,7 +43,7 @@ export async function POST(_request: NextRequest): Promise<NextResponse> {
     const qontoClient = new QontoClient();
 
     // 2. Télécharger l'attachment à garder
-    console.log(
+    console.warn(
       "[Cleanup] Étape 1: Téléchargement de l'attachment à garder..."
     );
     const attachmentUrl = await qontoClient.getAttachmentUrl(
@@ -60,21 +60,21 @@ export async function POST(_request: NextRequest): Promise<NextResponse> {
       attachmentResponse.headers.get('content-type') || 'application/pdf';
     const fileName = 'facture-free-mobile.pdf';
 
-    console.log(
+    console.warn(
       `[Cleanup] Téléchargé: ${attachmentBlob.size} bytes, type: ${contentType}`
     );
 
     // 3. Supprimer TOUS les attachments sur Qonto
-    console.log(
+    console.warn(
       '[Cleanup] Étape 2: Suppression de tous les attachments sur Qonto...'
     );
     await qontoClient.removeTransactionAttachments(
       FREE_MOBILE_CONFIG.qontoUUID
     );
-    console.log('[Cleanup] Suppression terminée');
+    console.warn('[Cleanup] Suppression terminée');
 
     // 4. Re-uploader l'attachment unique
-    console.log("[Cleanup] Étape 3: Re-upload de l'attachment unique...");
+    console.warn("[Cleanup] Étape 3: Re-upload de l'attachment unique...");
     const file = new File([attachmentBlob], fileName, { type: contentType });
     const idempotencyKey = crypto.randomUUID();
 
@@ -85,10 +85,10 @@ export async function POST(_request: NextRequest): Promise<NextResponse> {
       idempotencyKey
     );
 
-    console.log(`[Cleanup] Nouvel attachment ID: ${newAttachment.id}`);
+    console.warn(`[Cleanup] Nouvel attachment ID: ${newAttachment.id}`);
 
     // 5. Mettre à jour notre base
-    console.log('[Cleanup] Étape 4: Mise à jour de notre base...');
+    console.warn('[Cleanup] Étape 4: Mise à jour de notre base...');
     await supabase
       .from('bank_transactions')
       .update({
@@ -96,7 +96,7 @@ export async function POST(_request: NextRequest): Promise<NextResponse> {
       })
       .eq('id', FREE_MOBILE_CONFIG.dbId);
 
-    console.log('[Cleanup] Base mise à jour');
+    console.warn('[Cleanup] Base mise à jour');
 
     return NextResponse.json({
       success: true,

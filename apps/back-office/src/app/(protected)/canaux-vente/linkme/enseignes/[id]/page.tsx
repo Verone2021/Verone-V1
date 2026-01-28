@@ -202,7 +202,7 @@ function useEnseigneProducts(enseigneId: string | null) {
             supplier_reference: p.supplier_reference,
             created_at: p.created_at,
             created_by_affiliate: p.created_by_affiliate,
-            primary_image_url: primaryImg?.public_url || null,
+            primary_image_url: primaryImg?.public_url ?? null,
           };
         });
 
@@ -308,12 +308,12 @@ export default function EnseigneDetailPage() {
           {/* Tableau organisations membres */}
           <EnseigneOrganisationsTable
             organisations={stats?.organisationsWithRevenue || []}
-            parentOrganisation={stats?.parentOrganisation || null}
+            parentOrganisation={stats?.parentOrganisation ?? null}
             loading={statsLoading}
             enseigneId={id}
             onAddOrganisations={() => {
               // TODO: Modal ajout organisations
-              console.log('Add organisations to enseigne:', enseigne.id);
+              console.warn('Add organisations to enseigne:', enseigne.id);
             }}
           />
         </TabsContent>

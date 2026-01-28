@@ -434,11 +434,11 @@ export function useStockCore({
           channelId
         ) {
           finalChannelId = channelId;
-          console.log(
+          console.warn(
             `✅ [useStockCore] Auto-injection channel_id: ${channelId} (OUT sale)`
           );
         } else {
-          console.log(
+          console.warn(
             `ℹ️ [useStockCore] Pas de channel_id (type=${params.movement_type}, ref=${params.reference_type})`
           );
         }
@@ -451,11 +451,11 @@ export function useStockCore({
           quantity_before: quantityBefore,
           quantity_after: quantityAfter,
           reason_code: params.reason_code,
-          reference_type: params.reference_type || null,
-          reference_id: params.reference_id || null,
-          notes: params.notes || null,
+          reference_type: params.reference_type ?? null,
+          reference_id: params.reference_id ?? null,
+          notes: params.notes ?? null,
           affects_forecast: params.affects_forecast || false,
-          forecast_type: params.forecast_type || null,
+          forecast_type: params.forecast_type ?? null,
           performed_by: userId,
           performed_at: new Date().toISOString(),
           channel_id: finalChannelId, // 🆕 Auto-injecté si OUT sale
@@ -485,7 +485,7 @@ export function useStockCore({
         if (insertError) throw insertError;
         if (!data) throw new Error('Mouvement créé mais non retourné');
 
-        console.log(
+        console.warn(
           `✅ [useStockCore] Mouvement créé: ${data.id} (${params.movement_type}, channel=${finalChannelId || 'NULL'})`
         );
 

@@ -40,8 +40,8 @@ export const LINKME_MARGIN_DEFAULTS = {
  * );
  *
  * if (marginResult?.isProductSellable) {
- *   console.log('Max margin:', marginResult.maxRate * 100, '%');
- *   console.log('Suggested:', marginResult.suggestedRate * 100, '%');
+ *   console.warn('Max margin:', marginResult.maxRate * 100, '%');
+ *   console.warn('Suggested:', marginResult.suggestedRate * 100, '%');
  * }
  */
 export function useCalculateLinkMeMargins(

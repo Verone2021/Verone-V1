@@ -723,7 +723,7 @@ function ProduitsTab() {
         productId: selectedProduct.id,
         commissionRate: editCommissionRate,
         payoutHt: editPayoutHt,
-        changeReason: editChangeReason || undefined,
+        changeReason: editChangeReason ?? undefined,
       });
       setIsEditDialogOpen(false);
       setSelectedProduct(null);

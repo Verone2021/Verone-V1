@@ -29,7 +29,7 @@ export function SuppliersTab() {
   const filters = useMemo(
     () => ({
       is_active: true,
-      search: searchQuery || undefined,
+      search: searchQuery ?? undefined,
     }),
     [searchQuery]
   );

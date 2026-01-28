@@ -281,8 +281,8 @@ async function fetchSelectionById(
             weight_kg: rawProduct.weight,
             dimensions_cm: rawProduct.dimensions,
             subcategory_id:
-              rawProduct.subcategory_id || rawProduct.subcategory?.id || null,
-            category_name: rawProduct.subcategory?.name || null,
+              (rawProduct.subcategory_id || rawProduct.subcategory?.id) ?? null,
+            category_name: rawProduct.subcategory?.name ?? null,
             supplier_name:
               rawProduct.supplier?.trade_name ||
               rawProduct.supplier?.legal_name ||
@@ -294,7 +294,7 @@ async function fetchSelectionById(
             affiliate_payout_ht: rawProduct.affiliate_payout_ht ?? null,
           }
         : undefined,
-      product_image_url: imagesByProductId[item.product_id] || null,
+      product_image_url: imagesByProductId[item.product_id] ?? null,
       channel_pricing_id: channelPricingIdByProductId[item.product_id] ?? null,
       commission_rate: commissionByProductId[item.product_id] ?? null,
       catalog_price_ht: catalogPriceByProductId[item.product_id] ?? null,
@@ -747,7 +747,7 @@ async function fetchEnseigneSourcedProducts(
       sku: p.sku,
       selling_price_ht: Math.round(sellingPrice * 100) / 100, // Arrondi 2 décimales
       supplier_reference: p.supplier_reference,
-      primary_image_url: imagesByProductId[p.id] || null,
+      primary_image_url: imagesByProductId[p.id] ?? null,
     };
   });
 }
@@ -846,7 +846,7 @@ async function fetchSelectionsByEnseigne(
     archived_at: s.archived_at,
     products_count: s.products_count,
     affiliate_id: s.affiliate_id,
-    affiliate_name: affiliateNamesById[s.affiliate_id] || '',
+    affiliate_name: affiliateNamesById[s.affiliate_id] ?? '',
   }));
 }
 

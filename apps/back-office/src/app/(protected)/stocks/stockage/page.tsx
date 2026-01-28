@@ -118,7 +118,7 @@ export default function StockagePage() {
       // Search filter
       if (searchTerm) {
         const term = searchTerm.toLowerCase();
-        const name = (item.owner_name || '').toLowerCase();
+        const name = (item.owner_name ?? '').toLowerCase();
         if (!name.includes(term)) {
           return false;
         }
@@ -440,12 +440,12 @@ function OwnerStorageDetail({
 
   const { data: weightedAverage, isLoading: avgLoading } =
     useStorageWeightedAverage(
-      owner?.owner_type || null,
-      owner?.owner_id || null
+      owner?.owner_type ?? null,
+      owner?.owner_id ?? null
     );
 
   const { data: eventsHistory, isLoading: historyLoading } =
-    useStorageEventsHistory(owner?.owner_type || null, owner?.owner_id || null);
+    useStorageEventsHistory(owner?.owner_type ?? null, owner?.owner_id ?? null);
 
   const updateBillable = useUpdateAllocationBillable();
 

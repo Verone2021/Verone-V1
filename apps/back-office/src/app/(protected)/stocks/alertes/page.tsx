@@ -314,7 +314,7 @@ export default function StockAlertesPage() {
   // ✅ Écouter événements de changement de commandes pour rafraîchissement immédiat
   useEffect(() => {
     const handleStockAlertsRefresh = () => {
-      console.log(
+      console.warn(
         '📢 [ALERTES] Événement stock-alerts-refresh reçu, rafraîchissement...'
       );
       void fetchAlerts().catch(error => {
@@ -632,9 +632,9 @@ export default function StockAlertesPage() {
                         key={alert.id}
                         alert={{
                           id: alert.id,
-                          product_id: alert.productId || '',
-                          product_name: alert.productName || '',
-                          sku: alert.productSku || '',
+                          product_id: alert.productId ?? '',
+                          product_name: alert.productName ?? '',
+                          sku: alert.productSku ?? '',
                           stock_real: alert.currentStock || 0,
                           stock_forecasted_in: alert.stock_forecasted_in || 0,
                           stock_forecasted_out: alert.stock_forecasted_out || 0,
@@ -652,7 +652,7 @@ export default function StockAlertesPage() {
                           draft_order_id: alert.draft_order_id,
                           draft_order_number: alert.draft_order_number,
                           validated: alert.validated || false,
-                          validated_at: alert.validated_at || null,
+                          validated_at: alert.validated_at ?? null,
                         }}
                         onActionClick={clickedAlert => {
                           // Calculer le manque réel : min_stock - stock_previsionnel
@@ -733,9 +733,9 @@ export default function StockAlertesPage() {
                         key={alert.id}
                         alert={{
                           id: alert.id,
-                          product_id: alert.productId || '',
-                          product_name: alert.productName || '',
-                          sku: alert.productSku || '',
+                          product_id: alert.productId ?? '',
+                          product_name: alert.productName ?? '',
+                          sku: alert.productSku ?? '',
                           stock_real: alert.currentStock || 0,
                           stock_forecasted_in: alert.stock_forecasted_in || 0,
                           stock_forecasted_out: alert.stock_forecasted_out || 0,
@@ -753,7 +753,7 @@ export default function StockAlertesPage() {
                           draft_order_id: alert.draft_order_id,
                           draft_order_number: alert.draft_order_number,
                           validated: alert.validated || false,
-                          validated_at: alert.validated_at || null,
+                          validated_at: alert.validated_at ?? null,
                         }}
                         onActionClick={clickedAlert => {
                           // Calculer le manque réel : min_stock - stock_previsionnel

@@ -70,7 +70,7 @@ export async function POST(
 
     const { productIds, merchantId }: BatchAddRequest = validation.data;
 
-    console.log(
+    console.warn(
       `[API] Batch add request: ${productIds.length} products, merchant ${merchantId}`
     );
 
@@ -117,7 +117,7 @@ export async function POST(
         error: r.error || 'Unknown error',
       }));
 
-    console.log(
+    console.warn(
       `[API] Batch add completed: ${successCount} success, ${errorCount} errors`
     );
 

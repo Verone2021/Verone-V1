@@ -112,7 +112,7 @@ export async function GET(request: NextRequest): Promise<
             customer = indiv
               ? {
                   id: indiv.id,
-                  name: `${indiv.first_name || ''} ${indiv.last_name || ''}`.trim(),
+                  name: `${indiv.first_name ?? ''} ${indiv.last_name ?? ''}`.trim(),
                   email: indiv.email,
                   phone: indiv.phone,
                   type: 'individual',

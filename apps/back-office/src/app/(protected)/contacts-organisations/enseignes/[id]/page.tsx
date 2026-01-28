@@ -154,7 +154,7 @@ export default function EnseigneDetailPage() {
           primary_image_url:
             (
               p.product_images as { public_url: string; is_primary: boolean }[]
-            )?.find(img => img.is_primary)?.public_url || null,
+            )?.find(img => img.is_primary)?.public_url ?? null,
         }));
         setEnseigneProducts(mappedProducts);
       } catch (err) {
@@ -233,8 +233,8 @@ export default function EnseigneDetailPage() {
     if (enseigne) {
       setFormData({
         name: enseigne.name,
-        description: enseigne.description || '',
-        logo_url: enseigne.logo_url || '',
+        description: enseigne.description ?? '',
+        logo_url: enseigne.logo_url ?? '',
         is_active: enseigne.is_active,
       });
       setIsEditModalOpen(true);
@@ -537,7 +537,7 @@ export default function EnseigneDetailPage() {
           <TabsContent value="overview" className="mt-6">
             <EnseigneOrganisationsTable
               organisations={stats?.organisationsWithRevenue || []}
-              parentOrganisation={stats?.parentOrganisation || null}
+              parentOrganisation={stats?.parentOrganisation ?? null}
               onAddOrganisations={() => setIsOrganisationModalOpen(true)}
               onRemoveOrganisation={async orgId => {
                 try {

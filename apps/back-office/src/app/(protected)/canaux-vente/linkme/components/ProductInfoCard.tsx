@@ -187,7 +187,7 @@ export function ProductInfoCard({
             onChange={e => {
               setFormData(prev => ({
                 ...prev,
-                custom_title: e.target.value || null,
+                custom_title: e.target.value ?? null,
               }));
               setIsDirty(true);
             }}
@@ -249,7 +249,7 @@ export function ProductInfoCard({
             onChange={e => {
               setFormData(prev => ({
                 ...prev,
-                custom_description: e.target.value || null,
+                custom_description: e.target.value ?? null,
               }));
               setIsDirty(true);
             }}

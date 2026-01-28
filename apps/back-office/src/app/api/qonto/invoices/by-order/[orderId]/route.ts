@@ -99,7 +99,7 @@ export async function GET(
       );
     }
 
-    console.log(
+    console.warn(
       `[Invoices by order] Found ${invoices?.length ?? 0} invoices for order ${orderId}`
     );
 

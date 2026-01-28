@@ -206,14 +206,14 @@ async function approveOrder(
       details.billing_email &&
       details.billing_email !== details.owner_email
     ) {
-      const billingName = details.billing_name || '';
+      const billingName = details.billing_name ?? '';
       const billingNameParts = billingName.split(' ');
       const { error: billingContactError } = await supabase
         .from('contacts')
         .insert({
           organisation_id: newOrg.id,
-          first_name: billingNameParts[0] || '',
-          last_name: billingNameParts.slice(1).join(' ') || '',
+          first_name: billingNameParts[0] ?? '',
+          last_name: billingNameParts.slice(1).join(' ') ?? '',
           email: details.billing_email,
           phone: details.billing_phone,
           is_billing_contact: true,
@@ -834,7 +834,7 @@ export function usePendingOrders() {
           | undefined;
         const linkmeDetails = Array.isArray(linkmeDetailsRaw)
           ? (linkmeDetailsRaw[0] ?? null)
-          : linkmeDetailsRaw || null;
+          : (linkmeDetailsRaw ?? null);
 
         // Map items with proper typing and extract primary image
         const items: PendingOrderItem[] = (
@@ -886,9 +886,9 @@ export function usePendingOrders() {
           total_ht: order.total_ht,
           total_ttc: order.total_ttc,
           created_at: order.created_at,
-          requester_name: linkmeDetails?.requester_name || null,
-          requester_email: linkmeDetails?.requester_email || null,
-          requester_type: linkmeDetails?.requester_type || null,
+          requester_name: linkmeDetails?.requester_name ?? null,
+          requester_email: linkmeDetails?.requester_email ?? null,
+          requester_type: linkmeDetails?.requester_type ?? null,
           organisation_name: organisationName,
           enseigne_name: enseigneName,
           linkme_details: linkmeDetails
@@ -1051,8 +1051,8 @@ export function useAllLinkMeOrders(status?: OrderValidationStatus) {
               | null;
             const enseigneName = enseignes
               ? Array.isArray(enseignes)
-                ? enseignes[0]?.name || null
-                : enseignes.name || null
+                ? (enseignes[0]?.name ?? null)
+                : (enseignes.name ?? null)
               : null;
             organisationsMap.set(org.id as string, {
               trade_name: org.trade_name as string | null,
@@ -1093,8 +1093,8 @@ export function useAllLinkMeOrders(status?: OrderValidationStatus) {
               ? {
                   id: products.id as string,
                   name: products.name as string,
-                  sku: (products.sku as string) || '',
-                  primary_image_url: primaryImage?.public_url || null,
+                  sku: (products.sku as string) ?? '',
+                  primary_image_url: primaryImage?.public_url ?? null,
                 }
               : null,
           };
@@ -1107,8 +1107,9 @@ export function useAllLinkMeOrders(status?: OrderValidationStatus) {
           total_ht: order.total_ht,
           total_ttc: order.total_ttc,
           created_at: order.created_at,
-          organisation_name: orgData?.trade_name || orgData?.legal_name || null,
-          enseigne_name: orgData?.enseigne_name || null,
+          organisation_name:
+            (orgData?.trade_name || orgData?.legal_name) ?? null,
+          enseigne_name: orgData?.enseigne_name ?? null,
           requester_type: linkmeDetails?.requester_type as string | null,
           requester_name: linkmeDetails?.requester_name as string | null,
           requester_email: linkmeDetails?.requester_email as string | null,

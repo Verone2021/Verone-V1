@@ -283,14 +283,14 @@ export default function LinkMeOrderDetailPage() {
       // Extraire organisation de la jointure (peut être array ou objet)
       const orgRaw = orderData.organisations as any;
       const organisation = Array.isArray(orgRaw)
-        ? orgRaw[0] || null
-        : orgRaw || null;
+        ? (orgRaw[0] ?? null)
+        : (orgRaw ?? null);
 
       // Extraire linkme details de la jointure (peut être array ou objet)
       const linkmeDetailsRaw = orderData.sales_order_linkme_details as any;
       const linkmeData = Array.isArray(linkmeDetailsRaw)
-        ? linkmeDetailsRaw[0] || null
-        : linkmeDetailsRaw || null;
+        ? (linkmeDetailsRaw[0] ?? null)
+        : (linkmeDetailsRaw ?? null);
 
       setOrder({
         id: orderData.id,
@@ -302,8 +302,8 @@ export default function LinkMeOrderDetailPage() {
         notes: orderData.notes,
         customer_id: orderData.customer_id,
         expected_delivery_date: orderData.expected_delivery_date,
-        created_by_affiliate_id: orderData.created_by_affiliate_id || null,
-        linkme_selection_id: orderData.linkme_selection_id || null,
+        created_by_affiliate_id: orderData.created_by_affiliate_id ?? null,
+        linkme_selection_id: orderData.linkme_selection_id ?? null,
         organisation: organisation,
         items: (orderData.sales_order_items || []).map((item: any) => ({
           id: item.id,
@@ -351,7 +351,7 @@ export default function LinkMeOrderDetailPage() {
             commission_rate: item.commission_rate || 0,
             selling_price_ht: item.selling_price_ht || 0,
             affiliate_margin: item.affiliate_margin || 0,
-            created_by_affiliate: productMap.get(item.product_id) || null,
+            created_by_affiliate: productMap.get(item.product_id) ?? null,
           }))
         );
       }
@@ -1450,7 +1450,7 @@ export default function LinkMeOrderDetailPage() {
             <div className="space-y-2">
               <Label>Type de demandeur *</Label>
               <Select
-                value={editForm.requester_type || ''}
+                value={editForm.requester_type ?? ''}
                 onValueChange={v =>
                   setEditForm(prev => ({ ...prev, requester_type: v }))
                 }
@@ -1471,7 +1471,7 @@ export default function LinkMeOrderDetailPage() {
             <div className="space-y-2">
               <Label>Nom complet *</Label>
               <Input
-                value={editForm.requester_name || ''}
+                value={editForm.requester_name ?? ''}
                 onChange={e =>
                   setEditForm(prev => ({
                     ...prev,
@@ -1485,7 +1485,7 @@ export default function LinkMeOrderDetailPage() {
               <Label>Email *</Label>
               <Input
                 type="email"
-                value={editForm.requester_email || ''}
+                value={editForm.requester_email ?? ''}
                 onChange={e =>
                   setEditForm(prev => ({
                     ...prev,
@@ -1498,7 +1498,7 @@ export default function LinkMeOrderDetailPage() {
             <div className="space-y-2">
               <Label>Téléphone</Label>
               <Input
-                value={editForm.requester_phone || ''}
+                value={editForm.requester_phone ?? ''}
                 onChange={e =>
                   setEditForm(prev => ({
                     ...prev,
@@ -1511,7 +1511,7 @@ export default function LinkMeOrderDetailPage() {
             <div className="space-y-2">
               <Label>Poste / Fonction</Label>
               <Input
-                value={editForm.requester_position || ''}
+                value={editForm.requester_position ?? ''}
                 onChange={e =>
                   setEditForm(prev => ({
                     ...prev,
@@ -1592,7 +1592,7 @@ export default function LinkMeOrderDetailPage() {
                 <div className="space-y-2">
                   <Label>Type de propriétaire</Label>
                   <Select
-                    value={editForm.owner_type || ''}
+                    value={editForm.owner_type ?? ''}
                     onValueChange={v =>
                       setEditForm(prev => ({ ...prev, owner_type: v }))
                     }
@@ -1610,7 +1610,7 @@ export default function LinkMeOrderDetailPage() {
                 <div className="space-y-2">
                   <Label>Nom du propriétaire</Label>
                   <Input
-                    value={editForm.owner_name || ''}
+                    value={editForm.owner_name ?? ''}
                     onChange={e =>
                       setEditForm(prev => ({
                         ...prev,
@@ -1624,7 +1624,7 @@ export default function LinkMeOrderDetailPage() {
                   <Label>Email *</Label>
                   <Input
                     type="email"
-                    value={editForm.owner_email || ''}
+                    value={editForm.owner_email ?? ''}
                     onChange={e =>
                       setEditForm(prev => ({
                         ...prev,
@@ -1637,7 +1637,7 @@ export default function LinkMeOrderDetailPage() {
                 <div className="space-y-2">
                   <Label>Téléphone</Label>
                   <Input
-                    value={editForm.owner_phone || ''}
+                    value={editForm.owner_phone ?? ''}
                     onChange={e =>
                       setEditForm(prev => ({
                         ...prev,
@@ -1657,7 +1657,7 @@ export default function LinkMeOrderDetailPage() {
                     <div className="space-y-2">
                       <Label>Nom commercial</Label>
                       <Input
-                        value={editForm.owner_company_trade_name || ''}
+                        value={editForm.owner_company_trade_name ?? ''}
                         onChange={e =>
                           setEditForm(prev => ({
                             ...prev,
@@ -1670,7 +1670,7 @@ export default function LinkMeOrderDetailPage() {
                     <div className="space-y-2">
                       <Label>Raison sociale</Label>
                       <Input
-                        value={editForm.owner_company_legal_name || ''}
+                        value={editForm.owner_company_legal_name ?? ''}
                         onChange={e =>
                           setEditForm(prev => ({
                             ...prev,
@@ -1685,7 +1685,7 @@ export default function LinkMeOrderDetailPage() {
                       <Input
                         type="url"
                         placeholder="https://..."
-                        value={editForm.owner_kbis_url || ''}
+                        value={editForm.owner_kbis_url ?? ''}
                         onChange={e =>
                           setEditForm(prev => ({
                             ...prev,
@@ -1745,7 +1745,7 @@ export default function LinkMeOrderDetailPage() {
             <div className="space-y-2">
               <Label>Source du contact facturation</Label>
               <Select
-                value={editForm.billing_contact_source || ''}
+                value={editForm.billing_contact_source ?? ''}
                 onValueChange={v =>
                   setEditForm(prev => ({ ...prev, billing_contact_source: v }))
                 }
@@ -1766,7 +1766,7 @@ export default function LinkMeOrderDetailPage() {
             <div className="space-y-2">
               <Label>Nom contact facturation</Label>
               <Input
-                value={editForm.billing_name || ''}
+                value={editForm.billing_name ?? ''}
                 onChange={e =>
                   setEditForm(prev => ({
                     ...prev,
@@ -1779,7 +1779,7 @@ export default function LinkMeOrderDetailPage() {
               <Label>Email facturation</Label>
               <Input
                 type="email"
-                value={editForm.billing_email || ''}
+                value={editForm.billing_email ?? ''}
                 onChange={e =>
                   setEditForm(prev => ({
                     ...prev,
@@ -1791,7 +1791,7 @@ export default function LinkMeOrderDetailPage() {
             <div className="space-y-2">
               <Label>Téléphone facturation</Label>
               <Input
-                value={editForm.billing_phone || ''}
+                value={editForm.billing_phone ?? ''}
                 onChange={e =>
                   setEditForm(prev => ({
                     ...prev,
@@ -1824,7 +1824,7 @@ export default function LinkMeOrderDetailPage() {
               <Label>Date de livraison souhaitée</Label>
               <Input
                 type="date"
-                value={editForm.desired_delivery_date || ''}
+                value={editForm.desired_delivery_date ?? ''}
                 onChange={e =>
                   setEditForm(prev => ({
                     ...prev,
@@ -1857,7 +1857,7 @@ export default function LinkMeOrderDetailPage() {
                 <Label>Email direction centre commercial</Label>
                 <Input
                   type="email"
-                  value={editForm.mall_form_email || ''}
+                  value={editForm.mall_form_email ?? ''}
                   onChange={e =>
                     setEditForm(prev => ({
                       ...prev,
@@ -1903,7 +1903,7 @@ export default function LinkMeOrderDetailPage() {
             <div className="space-y-2">
               <Label>Nom du contact réception</Label>
               <Input
-                value={editForm.reception_contact_name || ''}
+                value={editForm.reception_contact_name ?? ''}
                 onChange={e =>
                   setEditForm(prev => ({
                     ...prev,
@@ -1917,7 +1917,7 @@ export default function LinkMeOrderDetailPage() {
               <Label>Email contact réception</Label>
               <Input
                 type="email"
-                value={editForm.reception_contact_email || ''}
+                value={editForm.reception_contact_email ?? ''}
                 onChange={e =>
                   setEditForm(prev => ({
                     ...prev,
@@ -1930,7 +1930,7 @@ export default function LinkMeOrderDetailPage() {
             <div className="space-y-2">
               <Label>Téléphone contact réception</Label>
               <Input
-                value={editForm.reception_contact_phone || ''}
+                value={editForm.reception_contact_phone ?? ''}
                 onChange={e =>
                   setEditForm(prev => ({
                     ...prev,
@@ -1944,7 +1944,7 @@ export default function LinkMeOrderDetailPage() {
               <Label>Date de livraison confirmée</Label>
               <Input
                 type="date"
-                value={editForm.confirmed_delivery_date || ''}
+                value={editForm.confirmed_delivery_date ?? ''}
                 onChange={e =>
                   setEditForm(prev => ({
                     ...prev,

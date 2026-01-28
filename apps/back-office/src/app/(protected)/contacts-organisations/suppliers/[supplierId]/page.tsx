@@ -225,7 +225,7 @@ export default function SupplierDetailPage() {
       // Archiver
       const success = await archiveOrganisation(supplier.id);
       if (success) {
-        console.log('✅ Fournisseur archivé avec succès');
+        console.warn('✅ Fournisseur archivé avec succès');
         void refetch().catch(error => {
           console.error(
             '[SupplierDetail] Refetch after archive failed:',
@@ -237,7 +237,7 @@ export default function SupplierDetailPage() {
       // Restaurer
       const success = await unarchiveOrganisation(supplier.id);
       if (success) {
-        console.log('✅ Fournisseur restauré avec succès');
+        console.warn('✅ Fournisseur restauré avec succès');
         void refetch().catch(error => {
           console.error(
             '[SupplierDetail] Refetch after unarchive failed:',

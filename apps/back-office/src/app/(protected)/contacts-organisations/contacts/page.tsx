@@ -134,10 +134,10 @@ export default function ContactsPage() {
     try {
       if (contact.is_active) {
         await deactivateContact(contact.id);
-        console.log('✅ Contact archivé avec succès');
+        console.warn('✅ Contact archivé avec succès');
       } else {
         await activateContact(contact.id);
-        console.log('✅ Contact restauré avec succès');
+        console.warn('✅ Contact restauré avec succès');
       }
     } catch (error) {
       console.error('❌ Erreur archivage contact:', error);
@@ -152,7 +152,7 @@ export default function ContactsPage() {
     if (confirmed) {
       try {
         await deleteContact(contact.id);
-        console.log('✅ Contact supprimé définitivement');
+        console.warn('✅ Contact supprimé définitivement');
       } catch (error) {
         console.error('❌ Erreur suppression contact:', error);
       }
@@ -395,7 +395,7 @@ export default function ContactsPage() {
                 <tbody className="divide-y divide-gray-200">
                   {filteredContacts.map(contact => {
                     const orgTypeInfo = getOrganisationTypeInfo(
-                      contact.organisation?.type || ''
+                      contact.organisation?.type ?? ''
                     );
 
                     return (

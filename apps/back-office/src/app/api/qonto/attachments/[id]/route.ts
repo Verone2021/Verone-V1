@@ -186,7 +186,7 @@ export async function DELETE(
       // L'attachment a été supprimé sur Qonto, on log l'erreur mais on retourne succès
     }
 
-    console.log(
+    console.warn(
       `[API] Attachment ${attachmentId} deleted from transaction ${transactionId}`
     );
 

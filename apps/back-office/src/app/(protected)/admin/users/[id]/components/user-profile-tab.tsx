@@ -61,13 +61,13 @@ export function UserProfileTab({ user }: UserProfileTabProps) {
   const getFirstName = (email: string, user_metadata: any = null) => {
     if (user_metadata?.first_name) return user_metadata.first_name;
     const tempName = email.split('@')[0].split('.') || [''];
-    return tempName[0] || '';
+    return tempName[0] ?? '';
   };
 
   const getLastName = (email: string, user_metadata: any = null) => {
     if (user_metadata?.last_name) return user_metadata.last_name;
     const tempName = email.split('@')[0].split('.') || [''];
-    return tempName[1] || '';
+    return tempName[1] ?? '';
   };
 
   const isEmailConfirmed = !!user.email_confirmed_at;

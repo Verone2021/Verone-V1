@@ -157,7 +157,7 @@ export function useAddProductsToSiteInternet() {
       await queryClient.invalidateQueries({
         queryKey: ['site-internet-products'],
       });
-      console.log(`✅ ${count} produits ajoutés au site internet`);
+      console.warn(`✅ ${count} produits ajoutés au site internet`);
     },
   });
 }

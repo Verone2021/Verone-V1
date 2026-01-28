@@ -255,7 +255,7 @@ function useOrganisationProducts(organisationId: string | null) {
               id: p.id,
               name: p.name,
               supplier_reference: p.supplier_reference,
-              primary_image_url: primaryImg?.public_url || null,
+              primary_image_url: primaryImg?.public_url ?? null,
             };
           })
         );
@@ -377,7 +377,7 @@ export default function OrganisationDetailPage() {
           <div className="h-12 w-12 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden border">
             {organisation.logo_url ? (
               <Image
-                src={getLogoUrl(organisation.logo_url) || ''}
+                src={getLogoUrl(organisation.logo_url) ?? ''}
                 alt={displayName}
                 width={48}
                 height={48}

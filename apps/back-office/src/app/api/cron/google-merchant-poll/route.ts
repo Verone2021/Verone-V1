@@ -44,7 +44,7 @@ export async function GET(
   const startTime = Date.now();
 
   try {
-    console.log('[CRON] Google Merchant polling started');
+    console.warn('[CRON] Google Merchant polling started');
 
     // 1. Vérifier autorisation Vercel Cron (sécurité)
     const authHeader = request.headers.get('authorization');
@@ -89,7 +89,7 @@ export async function GET(
     }
 
     if (!syncedProducts || syncedProducts.length === 0) {
-      console.log('[CRON] No synced products to poll');
+      console.warn('[CRON] No synced products to poll');
       return NextResponse.json({
         success: true,
         data: {
@@ -100,7 +100,7 @@ export async function GET(
       });
     }
 
-    console.log(
+    console.warn(
       `[CRON] Polling ${syncedProducts.length} products from Google API`
     );
 
@@ -145,7 +145,7 @@ export async function GET(
 
     const duration = Date.now() - startTime;
 
-    console.log(
+    console.warn(
       `[CRON] Polling completed: ${syncedProducts.length} checked, ${updatedCount} updated (${duration}ms)`
     );
 

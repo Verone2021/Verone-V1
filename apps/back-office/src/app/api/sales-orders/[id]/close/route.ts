@@ -85,7 +85,7 @@ export async function POST(
       );
     }
 
-    console.log(
+    console.warn(
       `[Close Order] Order ${order.order_number} closed successfully`,
       {
         units_released: unitsReleased,

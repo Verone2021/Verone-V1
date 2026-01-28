@@ -255,7 +255,7 @@ export default function LinkMeCommissionsPage() {
     return list.filter(c => {
       // Search by order number
       const orderNum =
-        c.order_number || c.sales_order?.order_number || c.order_id || '';
+        (c.order_number || c.sales_order?.order_number || c.order_id) ?? '';
       const matchesSearch = orderNum
         .toLowerCase()
         .includes(searchTerm.toLowerCase());
@@ -800,7 +800,7 @@ export default function LinkMeCommissionsPage() {
         );
         // Déterminer l'affilié (on prend le premier sélectionné)
         const firstSelected = selectedCommissions[0];
-        const affiliateId = firstSelected?.affiliate_id || '';
+        const affiliateId = firstSelected?.affiliate_id ?? '';
         const affiliateName =
           firstSelected?.affiliate?.display_name || 'Affilié';
 

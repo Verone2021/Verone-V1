@@ -94,7 +94,7 @@ export default function GoogleMerchantPage() {
     country: 'FR',
     currency: 'EUR',
     language: 'fr',
-    last_sync: stats?.last_sync_at || null,
+    last_sync: stats?.last_sync_at ?? null,
     auto_sync: false, // Pas encore implémenté
     sync_frequency: 'manual',
   };

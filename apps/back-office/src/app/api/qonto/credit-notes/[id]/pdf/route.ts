@@ -32,7 +32,7 @@ export async function GET(
     const creditNote = await client.getClientCreditNoteById(id);
 
     // DEBUG: Logger les champs disponibles pour le PDF
-    console.log('[API Qonto Credit Note PDF] Credit note data:', {
+    console.warn('[API Qonto Credit Note PDF] Credit note data:', {
       id: creditNote.id,
       credit_note_number: creditNote.credit_note_number,
       status: creditNote.status,
@@ -46,13 +46,13 @@ export async function GET(
 
     // Si pas de pdf_url, essayer avec attachment_id
     if (!pdfUrl && creditNote.attachment_id) {
-      console.log(
+      console.warn(
         '[API Qonto Credit Note PDF] No pdf_url, trying attachment_id:',
         creditNote.attachment_id
       );
       try {
         const attachment = await client.getAttachment(creditNote.attachment_id);
-        console.log(
+        console.warn(
           '[API Qonto Credit Note PDF] Attachment response:',
           attachment
         );
@@ -81,12 +81,12 @@ export async function GET(
       );
     }
 
-    console.log('[API Qonto Credit Note PDF] Fetching PDF from:', pdfUrl);
+    console.warn('[API Qonto Credit Note PDF] Fetching PDF from:', pdfUrl);
 
     // Télécharger le PDF depuis Qonto
     const pdfResponse = await fetch(pdfUrl);
 
-    console.log(
+    console.warn(
       '[API Qonto Credit Note PDF] PDF response status:',
       pdfResponse.status
     );
@@ -108,7 +108,7 @@ export async function GET(
 
     const pdfBuffer = await pdfResponse.arrayBuffer();
 
-    console.log(
+    console.warn(
       '[API Qonto Credit Note PDF] PDF buffer size:',
       pdfBuffer.byteLength
     );

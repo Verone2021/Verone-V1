@@ -77,7 +77,7 @@ export function CreateLinkMeOrderModal({
     null
   );
   const [selectedAffiliateId, setSelectedAffiliateId] = useState<string>(
-    preselectedAffiliateId || ''
+    preselectedAffiliateId ?? ''
   );
   const [selectedSelectionId, setSelectedSelectionId] = useState<string>('');
 
@@ -129,11 +129,11 @@ export function CreateLinkMeOrderModal({
 
   // Hooks data
   const { data: affiliates, isLoading: affiliatesLoading } =
-    useLinkMeAffiliates(affiliateType || undefined);
+    useLinkMeAffiliates(affiliateType ?? undefined);
   const { data: selections, isLoading: selectionsLoading } =
-    useLinkMeSelectionsByAffiliate(selectedAffiliateId || null);
+    useLinkMeSelectionsByAffiliate(selectedAffiliateId ?? null);
   const { data: selectionDetails, isLoading: selectionDetailsLoading } =
-    useLinkMeSelection(selectedSelectionId || null);
+    useLinkMeSelection(selectedSelectionId ?? null);
 
   // Preview sélection
   const { data: previewSelection, isLoading: previewLoading } =
@@ -164,7 +164,7 @@ export function CreateLinkMeOrderModal({
   useEffect(() => {
     if (isOpen) {
       setAffiliateType(null);
-      setSelectedAffiliateId(preselectedAffiliateId || '');
+      setSelectedAffiliateId(preselectedAffiliateId ?? '');
       setSelectedSelectionId('');
       setCustomerType('organization');
       setSelectedCustomerId('');
@@ -292,12 +292,12 @@ export function CreateLinkMeOrderModal({
       if (customerType === 'organization') {
         if (!newCustomerName.trim()) return;
         const result = await createOrganisation.mutateAsync({
-          enseigne_id: selectedAffiliate.enseigne_id || '',
+          enseigne_id: selectedAffiliate.enseigne_id ?? '',
           legal_name: newCustomerName.trim(),
-          email: newCustomerEmail.trim() || undefined,
-          phone: newCustomerPhone.trim() || undefined,
+          email: newCustomerEmail.trim() ?? undefined,
+          phone: newCustomerPhone.trim() ?? undefined,
           source_type: 'linkme',
-          source_affiliate_id: selectedAffiliateId || undefined,
+          source_affiliate_id: selectedAffiliateId ?? undefined,
         });
         setSelectedCustomerId(result.id);
         customers.refetch();
@@ -305,16 +305,16 @@ export function CreateLinkMeOrderModal({
         if (!newCustomerFirstName.trim() || !newCustomerLastName.trim()) return;
         // Pour les org indépendantes, on passe organisation_id au lieu de enseigne_id
         const result = await createIndividualCustomer.mutateAsync({
-          enseigne_id: selectedAffiliate.enseigne_id || null,
+          enseigne_id: selectedAffiliate.enseigne_id ?? null,
           organisation_id: hasEnseigne
             ? null
             : selectedAffiliate.organisation_id,
           first_name: newCustomerFirstName.trim(),
           last_name: newCustomerLastName.trim(),
-          email: newCustomerEmail.trim() || undefined,
-          phone: newCustomerPhone.trim() || undefined,
+          email: newCustomerEmail.trim() ?? undefined,
+          phone: newCustomerPhone.trim() ?? undefined,
           source_type: 'linkme',
-          source_affiliate_id: selectedAffiliateId || undefined,
+          source_affiliate_id: selectedAffiliateId ?? undefined,
         });
         setSelectedCustomerId(result.id);
         customers.refetch();
@@ -402,7 +402,7 @@ export function CreateLinkMeOrderModal({
       id: `${item.product_id}-${Date.now()}`,
       product_id: item.product_id,
       product_name: item.product?.name || 'Produit inconnu',
-      sku: item.product?.sku || '',
+      sku: item.product?.sku ?? '',
       quantity: 1,
       unit_price_ht: sellingPrice,
       tax_rate: 0.2, // TVA 20% par defaut
@@ -462,7 +462,7 @@ export function CreateLinkMeOrderModal({
         retrocession_rate: item.retrocession_rate,
         linkme_selection_item_id: item.linkme_selection_item_id,
       })),
-      internal_notes: internalNotes || undefined,
+      internal_notes: internalNotes ?? undefined,
       // Frais additionnels
       shipping_cost_ht: shippingCostHt || 0,
       handling_cost_ht: handlingCostHt || 0,
@@ -1082,7 +1082,7 @@ export function CreateLinkMeOrderModal({
                         type="number"
                         min="0"
                         step="0.01"
-                        value={shippingCostHt || ''}
+                        value={shippingCostHt ?? ''}
                         onChange={e =>
                           setShippingCostHt(
                             e.target.value ? parseFloat(e.target.value) : 0
@@ -1107,7 +1107,7 @@ export function CreateLinkMeOrderModal({
                         type="number"
                         min="0"
                         step="0.01"
-                        value={handlingCostHt || ''}
+                        value={handlingCostHt ?? ''}
                         onChange={e =>
                           setHandlingCostHt(
                             e.target.value ? parseFloat(e.target.value) : 0
@@ -1132,7 +1132,7 @@ export function CreateLinkMeOrderModal({
                         type="number"
                         min="0"
                         step="0.01"
-                        value={insuranceCostHt || ''}
+                        value={insuranceCostHt ?? ''}
                         onChange={e =>
                           setInsuranceCostHt(
                             e.target.value ? parseFloat(e.target.value) : 0
@@ -1271,7 +1271,7 @@ export function CreateLinkMeOrderModal({
                           {item.product_image_url ? (
                             <img
                               src={item.product_image_url}
-                              alt={item.product?.name || ''}
+                              alt={item.product?.name ?? ''}
                               className="w-10 h-10 object-cover rounded"
                             />
                           ) : (

@@ -37,7 +37,7 @@ export function UserViewModal({ isOpen, user, onClose }: UserViewModalProps) {
   const fullName =
     [user.first_name, user.last_name].filter(Boolean).join(' ') || 'Sans nom';
   const initials =
-    `${user.first_name?.[0] || ''}${user.last_name?.[0] || ''}`.toUpperCase() ||
+    `${user.first_name?.[0] ?? ''}${user.last_name?.[0] ?? ''}`.toUpperCase() ||
     '?';
 
   const RoleIcon =

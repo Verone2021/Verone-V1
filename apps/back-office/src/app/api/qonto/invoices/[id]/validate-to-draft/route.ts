@@ -100,7 +100,7 @@ export async function POST(
       );
     }
 
-    console.log(
+    console.warn(
       `[Validate to draft] Invoice ${invoiceId} validated to draft by user ${user.id}`
     );
 

@@ -76,9 +76,9 @@ export default function ProfilePage() {
 
       // Initialize edit data
       setEditData({
-        email: user.email || '',
+        email: user.email ?? '',
         raw_user_meta_data: {
-          name: user.user_metadata?.name || user.email?.split('@')[0] || '',
+          name: (user.user_metadata?.name || user.email?.split('@')[0]) ?? '',
         },
         first_name: '',
         last_name: '',
@@ -100,10 +100,10 @@ export default function ProfilePage() {
         // Update edit data with profile info
         setEditData(prevData => ({
           ...prevData,
-          first_name: profileData.first_name || '',
-          last_name: profileData.last_name || '',
-          phone: profileData.phone || '',
-          job_title: profileData.job_title || '',
+          first_name: profileData.first_name ?? '',
+          last_name: profileData.last_name ?? '',
+          phone: profileData.phone ?? '',
+          job_title: profileData.job_title ?? '',
         }));
       }
 
@@ -150,7 +150,7 @@ export default function ProfilePage() {
 
       // Update user profile with validated and sanitized data
       const sanitizedData = sanitizeProfileData(validationResult.formatted);
-      console.log('🔍 Diagnostic profile update:', {
+      console.warn('🔍 Diagnostic profile update:', {
         user_id: user.id,
         sanitizedData,
         originalFormData: validationResult.formatted,
@@ -165,7 +165,7 @@ export default function ProfilePage() {
 
       if (checkError) {
         console.error('❌ Erreur vérification profil existant:', checkError);
-        console.log('Profil inexistant - tentative de création');
+        console.warn('Profil inexistant - tentative de création');
 
         // Profil n'existe pas, le créer
         const { error: createError } = await supabase
@@ -184,9 +184,9 @@ export default function ProfilePage() {
           });
           return;
         }
-        console.log('✅ Profil créé avec succès');
+        console.warn('✅ Profil créé avec succès');
       } else {
-        console.log('✅ Profil existant trouvé, tentative update');
+        console.warn('✅ Profil existant trouvé, tentative update');
 
         const { error: profileError } = await supabase
           .from('user_profiles')
@@ -203,7 +203,7 @@ export default function ProfilePage() {
           });
           return;
         }
-        console.log('✅ Profil mis à jour avec succès');
+        console.warn('✅ Profil mis à jour avec succès');
       }
 
       // Refresh user data

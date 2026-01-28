@@ -83,7 +83,7 @@ export default function ConsultationDetailPage() {
       const foundConsultation = consultations.find(
         c => c.id === consultationId
       );
-      setConsultation(foundConsultation || null);
+      setConsultation(foundConsultation ?? null);
     }
   }, [consultations, consultationId]);
 
@@ -637,7 +637,7 @@ export default function ConsultationDetailPage() {
           consultationId={consultationId}
           onItemsChanged={() => {
             // Optionnel: recharger les données de consultation si nécessaire
-            console.log('Items changed for consultation:', consultationId);
+            console.warn('Items changed for consultation:', consultationId);
           }}
         />
       </div>

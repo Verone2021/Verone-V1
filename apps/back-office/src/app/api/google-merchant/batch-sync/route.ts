@@ -60,7 +60,9 @@ export async function POST(
     const searchParams = request.nextUrl.searchParams;
     const deleteExisting = searchParams.get('deleteExisting') === 'true';
 
-    console.log(`[API] Batch sync request - deleteExisting: ${deleteExisting}`);
+    console.warn(
+      `[API] Batch sync request - deleteExisting: ${deleteExisting}`
+    );
 
     // 1. Initialisation Supabase
     const supabase = await createServerClient();
@@ -106,7 +108,7 @@ export async function POST(
       );
     }
 
-    console.log(`[API] Found ${products?.length || 0} eligible products`);
+    console.warn(`[API] Found ${products?.length || 0} eligible products`);
 
     // 3. Filtrer les produits avec images et prix
     const eligibleProducts = (products || []).filter(product => {
@@ -115,7 +117,7 @@ export async function POST(
       return hasImages;
     });
 
-    console.log(
+    console.warn(
       `[API] ${eligibleProducts.length} products have required data (images)`
     );
 
@@ -145,7 +147,7 @@ export async function POST(
         error: r.error || 'Unknown error',
       }));
 
-    console.log(
+    console.warn(
       `[API] Batch sync completed: ${successCount} success, ${errorCount} errors`
     );
 

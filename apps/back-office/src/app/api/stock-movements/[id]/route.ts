@@ -35,7 +35,7 @@ export async function DELETE(
     const resolvedParams = await params;
     const movementId = resolvedParams.id;
 
-    console.log(`[API] Delete stock movement request for ID: ${movementId}`);
+    console.warn(`[API] Delete stock movement request for ID: ${movementId}`);
 
     // 1. Validation paramètre
     if (!movementId) {
@@ -130,7 +130,7 @@ export async function DELETE(
     }
 
     // 6. Log de succès
-    console.log(
+    console.warn(
       `[API] Movement ${movementId} deleted successfully. Stock recalculated automatically by triggers.`
     );
 

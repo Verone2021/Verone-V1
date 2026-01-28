@@ -88,7 +88,7 @@ export async function PUT(
 
     const { priceHtCents, tvaRate }: UpdatePriceRequest = validation.data;
 
-    console.log(
+    console.warn(
       `[API] Update price for product ${productId}: ${priceHtCents}¢ HT (TVA ${tvaRate}%)`
     );
 
@@ -132,7 +132,7 @@ export async function PUT(
     // 6. Calculer prix TTC
     const priceTtcCents = Math.round(priceHtCents * (1 + tvaRate / 100));
 
-    console.log(
+    console.warn(
       `[API] Price updated successfully: ${priceHtCents}¢ HT → ${priceTtcCents}¢ TTC`
     );
 

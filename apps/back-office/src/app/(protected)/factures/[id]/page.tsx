@@ -824,7 +824,7 @@ export default function DocumentDetailPage({
           {documentType === 'invoice' &&
             !isCancelled &&
             ['draft_validated', 'finalized', 'sent', 'paid'].includes(
-              (document as any)?.workflow_status || ''
+              (document as any)?.workflow_status ?? ''
             ) && (
               <Button
                 variant="outline"
@@ -975,7 +975,7 @@ export default function DocumentDetailPage({
                           </div>
                         </TableCell>
                         <TableCell className="text-right">
-                          {item.quantity} {item.unit || ''}
+                          {item.quantity} {item.unit ?? ''}
                         </TableCell>
                         <TableCell className="text-right">
                           {item.unit_price?.value} {item.unit_price?.currency}

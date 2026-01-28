@@ -104,7 +104,7 @@ async function fetchLinkMeAffiliates(
         : 'org_independante';
 
       // Nom de l'enseigne ou organisation
-      const enseigneName = affiliate.enseigne?.name || null;
+      const enseigneName = affiliate.enseigne?.name ?? null;
       const organisationName =
         affiliate.organisation?.trade_name ||
         affiliate.organisation?.legal_name ||
@@ -190,7 +190,7 @@ async function fetchLinkMeAffiliateById(
     type: affiliateType,
     enseigne_id: affiliate.enseigne_id,
     organisation_id: affiliate.organisation_id,
-    enseigne_name: affiliate.enseigne?.name || null,
+    enseigne_name: affiliate.enseigne?.name ?? null,
     organisation_name:
       affiliate.organisation?.trade_name ||
       affiliate.organisation?.legal_name ||

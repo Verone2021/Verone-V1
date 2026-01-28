@@ -318,7 +318,7 @@ export async function POST(
       }
     }
 
-    console.log(
+    console.warn(
       `[Sync-to-order] Successfully synced invoice ${invoiceId} to order ${typedInvoice.sales_order_id}`
     );
 

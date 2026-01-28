@@ -180,7 +180,7 @@ export async function POST(request: NextRequest): Promise<
     if (clientType === 'organisation') {
       const org = customer as Organisation;
       qontoAddress = {
-        streetAddress: org.billing_address_line1 || org.address_line1 || '',
+        streetAddress: (org.billing_address_line1 || org.address_line1) ?? '',
         city: org.billing_city || org.city || 'Paris',
         zipCode: org.billing_postal_code || org.postal_code || '75001',
         countryCode: normalizeCountryCode(org.billing_country || org.country),
@@ -188,7 +188,7 @@ export async function POST(request: NextRequest): Promise<
     } else {
       const indiv = customer as IndividualCustomer;
       qontoAddress = {
-        streetAddress: indiv.address_line1 || '',
+        streetAddress: indiv.address_line1 ?? '',
         city: indiv.city || 'Paris',
         zipCode: indiv.postal_code || '75001',
         countryCode: normalizeCountryCode(indiv.country),
@@ -204,7 +204,7 @@ export async function POST(request: NextRequest): Promise<
     if (clientType === 'organisation') {
       const org = customer as Organisation;
       // Priorité: vat_number (TVA intra), sinon siret
-      vatNumber = org.vat_number || org.siret || undefined;
+      vatNumber = (org.vat_number || org.siret) ?? undefined;
     }
 
     // Chercher ou créer le client Qonto

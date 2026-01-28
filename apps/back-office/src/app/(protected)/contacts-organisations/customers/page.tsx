@@ -160,8 +160,8 @@ export default function CustomersPage() {
   const filters = useMemo(
     () => ({
       is_active: true,
-      search: searchQuery || undefined,
-      customer_type: urlType || undefined,
+      search: searchQuery ?? undefined,
+      customer_type: urlType ?? undefined,
     }),
     [searchQuery, urlType]
   );

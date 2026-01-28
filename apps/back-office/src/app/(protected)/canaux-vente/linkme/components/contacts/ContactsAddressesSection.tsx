@@ -221,8 +221,8 @@ export function ContactsAddressesSection({
         firstName: formData.firstName,
         lastName: formData.lastName,
         email: formData.email,
-        phone: formData.phone || undefined,
-        title: formData.title || undefined,
+        phone: formData.phone ?? undefined,
+        title: formData.title ?? undefined,
         isBillingContact: true,
       });
 
@@ -296,15 +296,15 @@ export function ContactsAddressesSection({
         ownerId: organisationId,
         ownerType: 'organisation',
         addressType: 'billing',
-        label: formData.label || undefined,
+        label: formData.label ?? undefined,
         addressLine1: formData.addressLine1,
-        addressLine2: formData.addressLine2 || undefined,
+        addressLine2: formData.addressLine2 ?? undefined,
         postalCode: formData.postalCode,
         city: formData.city,
         country: formData.country,
-        legalName: formData.legalName || undefined,
-        siret: formData.siret || undefined,
-        vatNumber: formData.vatNumber || undefined,
+        legalName: formData.legalName ?? undefined,
+        siret: formData.siret ?? undefined,
+        vatNumber: formData.vatNumber ?? undefined,
       });
 
       onUpdate({
@@ -372,8 +372,8 @@ export function ContactsAddressesSection({
         firstName: formData.firstName,
         lastName: formData.lastName,
         email: formData.email,
-        phone: formData.phone || undefined,
-        title: formData.title || undefined,
+        phone: formData.phone ?? undefined,
+        title: formData.title ?? undefined,
         isDeliveryContact: true,
       });
 
@@ -432,9 +432,9 @@ export function ContactsAddressesSection({
         ownerId: organisationId,
         ownerType: 'organisation',
         addressType: 'shipping',
-        label: formData.label || undefined,
+        label: formData.label ?? undefined,
         addressLine1: formData.addressLine1,
-        addressLine2: formData.addressLine2 || undefined,
+        addressLine2: formData.addressLine2 ?? undefined,
         postalCode: formData.postalCode,
         city: formData.city,
         country: formData.country,

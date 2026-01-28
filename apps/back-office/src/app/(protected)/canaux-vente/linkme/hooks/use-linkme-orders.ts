@@ -423,7 +423,7 @@ async function createLinkMeOrder(
     total_ht: totalHt,
     total_ttc: totalTtc,
     tax_rate: 0, // TVA calculee par ligne, pas globale
-    notes: input.internal_notes || null,
+    notes: input.internal_notes ?? null,
     // Frais additionnels
     shipping_cost_ht: shippingCostHt,
     insurance_cost_ht: insuranceCostHt,
@@ -432,7 +432,7 @@ async function createLinkMeOrder(
     shipping_address: input.shipping_address
       ? JSON.stringify({
           address_line1: input.shipping_address.address_line1,
-          address_line2: input.shipping_address.address_line2 || '',
+          address_line2: input.shipping_address.address_line2 ?? '',
           city: input.shipping_address.city,
           postal_code: input.shipping_address.postal_code,
           country: input.shipping_address.country || 'FR',
@@ -468,7 +468,7 @@ async function createLinkMeOrder(
     // CORRECTION: utiliser base_price_ht (prix catalogue) et non unit_price_ht (prix vente)
     retrocession_amount:
       item.quantity * item.base_price_ht * item.retrocession_rate,
-    linkme_selection_item_id: item.linkme_selection_item_id || null,
+    linkme_selection_item_id: item.linkme_selection_item_id ?? null,
   }));
 
   const { error: itemsError } = await supabase

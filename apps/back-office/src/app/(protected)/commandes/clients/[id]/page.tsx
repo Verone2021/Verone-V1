@@ -200,8 +200,8 @@ export default async function OrderDetailPage({
 
     if (org) {
       customerName = org.trade_name || org.legal_name;
-      customerEmail = org.email || '';
-      customerPhone = org.phone || '';
+      customerEmail = org.email ?? '';
+      customerPhone = org.phone ?? '';
       isOrganisation = true;
     }
   } else if (order.customer_type === 'individual' && order.customer_id) {
@@ -213,8 +213,8 @@ export default async function OrderDetailPage({
 
     if (individual) {
       customerName = `${individual.first_name} ${individual.last_name}`;
-      customerEmail = individual.email || '';
-      customerPhone = individual.phone || '';
+      customerEmail = individual.email ?? '';
+      customerPhone = individual.phone ?? '';
     }
   }
 
@@ -242,7 +242,7 @@ export default async function OrderDetailPage({
 
   // 4. Récupérer canal de vente
   const salesChannel = order.sales_channels;
-  const channelName = salesChannel?.name || null;
+  const channelName = salesChannel?.name ?? null;
 
   // 5. Parser adresse
   const shippingAddr = order.shipping_address as
@@ -494,7 +494,7 @@ export default async function OrderDetailPage({
               paymentTerms="immediate"
               paymentStatus={order.payment_status || 'pending'}
               customerName={customerName}
-              customerEmail={customerEmail || null}
+              customerEmail={customerEmail ?? null}
               customerType={
                 order.customer_type === 'organization'
                   ? 'organization'

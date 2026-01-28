@@ -91,7 +91,7 @@ export async function POST(
 
         if (emailResponse.ok) {
           const emailData = await emailResponse.json();
-          emailId = emailData.emailId || null;
+          emailId = emailData.emailId ?? null;
         } else {
           console.warn(
             '[API Messages] Email sending failed, but message will be saved'

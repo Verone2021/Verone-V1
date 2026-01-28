@@ -32,7 +32,7 @@ export async function updatePurchaseOrderStatus(
     const supabase = createAdminClient();
 
     // Log pour debug
-    console.log(
+    console.warn(
       `🔍 [Server Action ADMIN] Tentative mise à jour PO ${orderId} vers ${newStatus} par user ${userId}`
     );
 
@@ -62,7 +62,7 @@ export async function updatePurchaseOrderStatus(
       };
     }
 
-    console.log(
+    console.warn(
       `📊 [Server Action] Commande trouvée: ${existingOrder.po_number}, statut actuel: ${existingOrder.status}`
     );
 
@@ -73,7 +73,7 @@ export async function updatePurchaseOrderStatus(
     // ✅ Workflow simplifié restauré : draft → confirmed → received → cancelled
     // Les triggers DB gèrent les mouvements de stock automatiquement
 
-    console.log(`🔧 [Server Action] Champs à mettre à jour:`, updateFields);
+    console.warn(`🔧 [Server Action] Champs à mettre à jour:`, updateFields);
 
     // Mettre à jour le statut de la commande
     const { data: updatedData, error: updateError } = await supabase
@@ -101,7 +101,7 @@ export async function updatePurchaseOrderStatus(
       };
     }
 
-    console.log(
+    console.warn(
       `✅ [Server Action] Commande ${existingOrder.po_number} mise à jour avec succès: ${existingOrder.status} → ${newStatus}`
     );
 

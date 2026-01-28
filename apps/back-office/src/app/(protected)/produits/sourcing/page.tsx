@@ -77,7 +77,7 @@ export default function SourcingPage() {
     deleteSourcingProduct,
     refetch,
   } = useSourcingProducts({
-    search: debouncedSearchTerm || undefined,
+    search: debouncedSearchTerm ?? undefined,
     product_status: statusFilter === 'all' ? undefined : statusFilter,
     sourcing_type:
       sourcingTypeFilter === 'all'
@@ -250,7 +250,9 @@ export default function SourcingPage() {
     if (!product.product_images || product.product_images.length === 0)
       return null;
     const primary = product.product_images.find((img: any) => img.is_primary);
-    return primary?.public_url || product.product_images[0]?.public_url || null;
+    return (
+      (primary?.public_url || product.product_images[0]?.public_url) ?? null
+    );
   };
 
   return (

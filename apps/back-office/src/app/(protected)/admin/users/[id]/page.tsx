@@ -73,7 +73,7 @@ async function getCurrentUserRole() {
     .eq('user_id', user.id)
     .single()) as { data: { role: string } | null };
 
-  return profile?.role || null;
+  return profile?.role ?? null;
 }
 
 async function getUserDetailData(
@@ -143,9 +143,9 @@ async function getUserDetailData(
           total_sessions: stats[0].total_sessions || 0,
           total_actions: stats[0].total_actions || 0,
           avg_session_duration: stats[0].avg_session_duration || 0,
-          most_used_module: stats[0].most_used_module || null,
+          most_used_module: stats[0].most_used_module ?? null,
           engagement_score: stats[0].engagement_score || 0,
-          last_activity: stats[0].last_activity || null,
+          last_activity: stats[0].last_activity ?? null,
         };
       } else if (statsError) {
         console.warn('Erreur RPC get_user_activity_stats:', statsError);
@@ -165,10 +165,10 @@ async function getUserDetailData(
 
     return {
       id: user.id,
-      email: user.email || '',
-      email_confirmed_at: user.email_confirmed_at || null,
+      email: user.email ?? '',
+      email_confirmed_at: user.email_confirmed_at ?? null,
       created_at: user.created_at,
-      last_sign_in_at: user.last_sign_in_at || null,
+      last_sign_in_at: user.last_sign_in_at ?? null,
       user_metadata: user.user_metadata || {},
       profile: {
         role: profile.role,
@@ -180,7 +180,7 @@ async function getUserDetailData(
         total_sessions: realAnalytics.total_sessions,
         avg_session_duration: realAnalytics.avg_session_duration || 0,
         last_activity:
-          realAnalytics.last_activity || user.last_sign_in_at || null,
+          (realAnalytics.last_activity || user.last_sign_in_at) ?? null,
         days_since_creation: daysSinceCreation,
         login_frequency: loginFrequency,
         engagement_score: realAnalytics.engagement_score,

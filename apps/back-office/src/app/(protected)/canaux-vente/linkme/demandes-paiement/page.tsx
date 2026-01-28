@@ -200,7 +200,7 @@ function usePaymentRequestsAdmin(statusFilter: PaymentRequestStatus | 'all') {
           requestNumber: item.request_number,
           affiliateId: item.affiliate_id,
           affiliateName: affiliate?.display_name || 'Affilié',
-          affiliateEmail: affiliate?.email || '',
+          affiliateEmail: affiliate?.email ?? '',
           totalAmountHT: item.total_amount_ht || 0,
           totalAmountTTC: item.total_amount_ttc || 0,
           status: item.status as PaymentRequestStatus,

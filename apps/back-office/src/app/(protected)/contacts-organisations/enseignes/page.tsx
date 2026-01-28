@@ -123,7 +123,7 @@ export default function EnseignesPage() {
 
   // Hook pour récupérer les organisations de l'enseigne sélectionnée (pour le modal d'attribution)
   const { enseigne: enseigneWithOrgs } = useEnseigne(
-    assignOrgsEnseigne?.id || ''
+    assignOrgsEnseigne?.id ?? ''
   );
 
   // Charger les enseignes archivées
@@ -236,8 +236,8 @@ export default function EnseignesPage() {
   const handleOpenEditModal = (enseigne: Enseigne) => {
     setFormData({
       name: enseigne.name,
-      description: enseigne.description || '',
-      logo_url: enseigne.logo_url || '',
+      description: enseigne.description ?? '',
+      logo_url: enseigne.logo_url ?? '',
       is_active: enseigne.is_active,
     });
     setEditingEnseigne(enseigne);

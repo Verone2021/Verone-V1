@@ -130,7 +130,7 @@ function AccountRow({
   const fullName =
     [user.first_name, user.last_name].filter(Boolean).join(' ') || 'Sans nom';
   const initials =
-    `${user.first_name?.[0] || ''}${user.last_name?.[0] || ''}`.toUpperCase() ||
+    `${user.first_name?.[0] ?? ''}${user.last_name?.[0] ?? ''}`.toUpperCase() ||
     '?';
 
   return (
@@ -269,10 +269,10 @@ export default function LinkMeUtilisateursPage() {
       const matchesSearch =
         !searchQuery ||
         user.email.toLowerCase().includes(searchLower) ||
-        (user.first_name?.toLowerCase() || '').includes(searchLower) ||
-        (user.last_name?.toLowerCase() || '').includes(searchLower) ||
-        (user.enseigne_name?.toLowerCase() || '').includes(searchLower) ||
-        (user.organisation_name?.toLowerCase() || '').includes(searchLower);
+        (user.first_name?.toLowerCase() ?? '').includes(searchLower) ||
+        (user.last_name?.toLowerCase() ?? '').includes(searchLower) ||
+        (user.enseigne_name?.toLowerCase() ?? '').includes(searchLower) ||
+        (user.organisation_name?.toLowerCase() ?? '').includes(searchLower);
 
       // Filtre rôle
       const matchesRole =

@@ -212,11 +212,11 @@ export function VariantGroupForm({
           base_sku: editingGroup.base_sku,
           subcategory_id: editingGroup.subcategory_id,
           variant_type: editingGroup.variant_type || 'color',
-          style: editingGroup.style || '',
+          style: editingGroup.style ?? '',
           suitable_rooms: (editingGroup.suitable_rooms || []) as RoomType[],
-          common_length: dimensions.length?.toString() || '',
-          common_width: dimensions.width?.toString() || '',
-          common_height: dimensions.height?.toString() || '',
+          common_length: dimensions.length?.toString() ?? '',
+          common_width: dimensions.width?.toString() ?? '',
+          common_height: dimensions.height?.toString() ?? '',
           common_dimensions_unit: dimensions.unit || 'cm',
         } as any);
       } else {
@@ -283,9 +283,9 @@ export function VariantGroupForm({
         formData.common_height;
       const common_dimensions = hasDimensions
         ? {
-            length: parseFloat(formData.common_length) || null,
-            width: parseFloat(formData.common_width) || null,
-            height: parseFloat(formData.common_height) || null,
+            length: parseFloat(formData.common_length) ?? null,
+            width: parseFloat(formData.common_width) ?? null,
+            height: parseFloat(formData.common_height) ?? null,
             unit: formData.common_dimensions_unit,
           }
         : null;
@@ -295,13 +295,13 @@ export function VariantGroupForm({
         base_sku: formData.base_sku.trim(),
         subcategory_id: formData.subcategory_id,
         variant_type: formData.variant_type,
-        style: formData.style || null,
+        style: formData.style ?? null,
         suitable_rooms:
           formData.suitable_rooms.length > 0 ? formData.suitable_rooms : null,
         common_dimensions,
         has_common_supplier: formData.has_common_supplier,
         supplier_id: formData.has_common_supplier
-          ? formData.supplier_id || null
+          ? (formData.supplier_id ?? null)
           : null,
       };
 

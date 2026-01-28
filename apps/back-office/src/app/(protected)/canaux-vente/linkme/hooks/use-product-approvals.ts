@@ -105,10 +105,10 @@ export function usePendingApprovals() {
       // Map data to flat structure
       return (data || []).map((product: Record<string, unknown>) => ({
         ...product,
-        enseigne_name: (product.enseigne as { name?: string })?.name || null,
+        enseigne_name: (product.enseigne as { name?: string })?.name ?? null,
         affiliate_display_name:
           (product.linkme_affiliates as { display_name?: string })
-            ?.display_name || null,
+            ?.display_name ?? null,
       })) as PendingProduct[];
     },
     staleTime: 30000,
@@ -186,10 +186,10 @@ export function useAllAffiliateProducts(
 
         return {
           ...product,
-          enseigne_name: (product.enseigne as { name?: string })?.name || null,
+          enseigne_name: (product.enseigne as { name?: string })?.name ?? null,
           affiliate_display_name:
             (product.linkme_affiliates as { display_name?: string })
-              ?.display_name || null,
+              ?.display_name ?? null,
           // Storage info: if there's an affiliate_product reception, it's stored at Vérone
           affiliate_storage_type: affiliateReception ? 'verone' : 'self',
           affiliate_stock_quantity:

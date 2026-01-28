@@ -74,7 +74,7 @@ export default function VariantesPage() {
   // Stabiliser les filtres avec useMemo pour éviter boucle infinie
   const stableFilters = useMemo(
     () => ({
-      search: filters.search || undefined,
+      search: filters.search ?? undefined,
       variant_type: filters.type === 'all' ? undefined : (filters.type as any),
       is_active:
         filters.status === 'all' ? undefined : filters.status === 'active',
@@ -663,7 +663,7 @@ export default function VariantesPage() {
             isOpen={showEditModal}
             onClose={() => setShowEditModal(false)}
             onSuccess={groupId => {
-              console.log('Groupe créé:', groupId);
+              console.warn('Groupe créé:', groupId);
               void refetch().catch(error => {
                 console.error(
                   '[Variants] Refetch after creation failed:',

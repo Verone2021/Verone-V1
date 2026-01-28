@@ -56,7 +56,7 @@ export default function SubcategoryDetailPage() {
   useEffect(() => {
     if (subcategories && subcategoryId) {
       const foundSubcategory = subcategories.find(s => s.id === subcategoryId);
-      setSubcategory(foundSubcategory || null);
+      setSubcategory(foundSubcategory ?? null);
     }
   }, [subcategories, subcategoryId]);
 
@@ -65,14 +65,14 @@ export default function SubcategoryDetailPage() {
       const foundCategory = allCategories.find(
         c => c.id === subcategory.category_id
       );
-      setCategory(foundCategory || null);
+      setCategory(foundCategory ?? null);
     }
   }, [allCategories, subcategory]);
 
   useEffect(() => {
     if (families && category?.family_id) {
       const foundFamily = families.find(f => f.id === category.family_id);
-      setFamily(foundFamily || null);
+      setFamily(foundFamily ?? null);
     }
   }, [families, category]);
 
@@ -347,10 +347,10 @@ export default function SubcategoryDetailPage() {
                 <VéroneCard
                   key={product.id}
                   title={product.name}
-                  description={product.description || undefined}
-                  imageUrl={product.primary_image_url || undefined}
+                  description={product.description ?? undefined}
+                  imageUrl={product.primary_image_url ?? undefined}
                   entityType="product"
-                  slug={product.sku || undefined}
+                  slug={product.sku ?? undefined}
                   isActive={product.status !== 'discontinued'}
                   iconPosition="top-right"
                   onClick={() => handleProductClick(product.id)}

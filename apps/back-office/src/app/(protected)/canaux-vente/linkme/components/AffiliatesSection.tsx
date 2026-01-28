@@ -246,7 +246,7 @@ export function AffiliatesSection() {
       const affiliatesWithNames = (data || []).map((a: any) => ({
         ...a,
         organisation_name:
-          a.organisations?.trade_name || a.organisations?.legal_name || null,
+          (a.organisations?.trade_name || a.organisations?.legal_name) ?? null,
         enseigne_name: null, // Sera peuplé via le mapping organisations->enseignes
       }));
 
@@ -314,7 +314,7 @@ export function AffiliatesSection() {
         display_name: formData.display_name,
         slug: formData.slug.toLowerCase().replace(/[^a-z0-9-]/g, '-'),
         affiliate_type: formData.affiliate_type,
-        bio: formData.bio || null,
+        bio: formData.bio ?? null,
         status: 'pending' as const,
         organisation_id:
           formData.entity_type === 'organisation' && formData.entity_id
@@ -366,7 +366,7 @@ export function AffiliatesSection() {
           display_name: formData.display_name,
           slug: formData.slug.toLowerCase().replace(/[^a-z0-9-]/g, '-'),
           affiliate_type: formData.affiliate_type,
-          bio: formData.bio || null,
+          bio: formData.bio ?? null,
         })
         .eq('id', selectedAffiliate.id);
 
@@ -523,11 +523,11 @@ export function AffiliatesSection() {
     setSelectedAffiliate(affiliate);
     setFormData({
       entity_type: affiliate.enseigne_id ? 'enseigne' : 'organisation',
-      entity_id: affiliate.enseigne_id || affiliate.organisation_id || '',
+      entity_id: (affiliate.enseigne_id || affiliate.organisation_id) ?? '',
       display_name: affiliate.display_name,
       slug: affiliate.slug,
       affiliate_type: (affiliate.affiliate_type || 'enseigne') as AffiliateType,
-      bio: affiliate.bio || '',
+      bio: affiliate.bio ?? '',
     });
     setIsEditModalOpen(true);
   }

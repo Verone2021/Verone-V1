@@ -84,10 +84,10 @@ export function UserConfigModal({
   // Initialiser le formulaire avec les valeurs de l'utilisateur
   useEffect(() => {
     if (isOpen && user) {
-      setFirstName(user.first_name || '');
-      setLastName(user.last_name || '');
-      setEmail(user.email || '');
-      setPhone(user.phone || '');
+      setFirstName(user.first_name ?? '');
+      setLastName(user.last_name ?? '');
+      setEmail(user.email ?? '');
+      setPhone(user.phone ?? '');
       setNewPassword('');
       setConfirmPassword('');
       setShowPassword(false);
@@ -218,7 +218,7 @@ export function UserConfigModal({
       const input: UpdateLinkMeUserInput = {
         first_name: firstName.trim(),
         last_name: lastName.trim(),
-        phone: phone.trim() || undefined,
+        phone: phone.trim() ?? undefined,
         role: user.linkme_role,
         enseigne_id: user.enseigne_id,
         organisation_id: user.organisation_id,

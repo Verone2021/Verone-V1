@@ -58,7 +58,7 @@ export function EditLinkMeOrderModal({
       setShippingCostHt(order.shipping_cost_ht || 0);
       setInsuranceCostHt(order.insurance_cost_ht || 0);
       setHandlingCostHt(order.handling_cost_ht || 0);
-      setInternalNotes(order.notes || '');
+      setInternalNotes(order.notes ?? '');
       setItems(
         (order.items || []).map(item => ({
           ...item,
@@ -107,7 +107,7 @@ export function EditLinkMeOrderModal({
     const shippingChanged = shippingCostHt !== (order.shipping_cost_ht || 0);
     const insuranceChanged = insuranceCostHt !== (order.insurance_cost_ht || 0);
     const handlingChanged = handlingCostHt !== (order.handling_cost_ht || 0);
-    const notesChanged = internalNotes !== (order.notes || '');
+    const notesChanged = internalNotes !== (order.notes ?? '');
     const itemsChanged = items.some(
       item => item.quantity !== item.originalQuantity
     );
@@ -250,7 +250,7 @@ export function EditLinkMeOrderModal({
                           type="number"
                           min="0"
                           step="0.01"
-                          value={shippingCostHt || ''}
+                          value={shippingCostHt ?? ''}
                           onChange={e =>
                             setShippingCostHt(
                               e.target.value ? parseFloat(e.target.value) : 0
@@ -275,7 +275,7 @@ export function EditLinkMeOrderModal({
                           type="number"
                           min="0"
                           step="0.01"
-                          value={handlingCostHt || ''}
+                          value={handlingCostHt ?? ''}
                           onChange={e =>
                             setHandlingCostHt(
                               e.target.value ? parseFloat(e.target.value) : 0
@@ -300,7 +300,7 @@ export function EditLinkMeOrderModal({
                           type="number"
                           min="0"
                           step="0.01"
-                          value={insuranceCostHt || ''}
+                          value={insuranceCostHt ?? ''}
                           onChange={e =>
                             setInsuranceCostHt(
                               e.target.value ? parseFloat(e.target.value) : 0

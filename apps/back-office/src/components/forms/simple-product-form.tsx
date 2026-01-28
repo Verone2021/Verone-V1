@@ -161,7 +161,7 @@ export function SimpleProductForm({
         }
       }
 
-      console.log('✅ Produit créé avec succès:', newProduct.sku);
+      console.warn('✅ Produit créé avec succès:', newProduct.sku);
 
       // Réinitialiser le formulaire
       setFormData({

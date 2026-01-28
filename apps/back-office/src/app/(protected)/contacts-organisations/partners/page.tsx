@@ -88,7 +88,7 @@ export default function PartnersPage() {
       type: 'supplier' as const,
       is_service_provider: true, // Prestataires uniquement
       is_active: true,
-      search: searchQuery || undefined,
+      search: searchQuery ?? undefined,
     }),
     [searchQuery]
   );

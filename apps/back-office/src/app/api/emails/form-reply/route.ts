@@ -207,7 +207,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log(
+    console.warn(
       `[API Form Reply] Email sent successfully to ${body.recipientEmail} (ID: ${data?.id})`
     );
 

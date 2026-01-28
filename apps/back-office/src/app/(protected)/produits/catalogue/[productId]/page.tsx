@@ -237,7 +237,7 @@ export default function ProductDetailPage() {
   // Hook pour récupérer les images du produit (table product_images)
   const { images: productImages, primaryImage: _primaryImage } =
     useProductImages({
-      productId: productId || '',
+      productId: productId ?? '',
       autoFetch: true,
     });
 
@@ -367,7 +367,7 @@ export default function ProductDetailPage() {
             console.error('[ProductDetail] Rollback fetch failed:', fetchError);
           }); // Rollback UI si erreur
         } else {
-          console.log('✅ Produit sauvegardé en DB:', updatedData);
+          console.warn('✅ Produit sauvegardé en DB:', updatedData);
           // 3. Recharger les données complètes si champs relationnels modifiés
           // (pour mettre à jour le breadcrumb et autres données jointes)
           if ('subcategory_id' in updatedData || 'supplier_id' in updatedData) {
@@ -461,7 +461,7 @@ export default function ProductDetailPage() {
           product.affiliate_creator?.organisation?.legal_name ||
           'Affilié inconnu',
         affiliateDisplayName:
-          product.affiliate_creator?.display_name || undefined,
+          product.affiliate_creator?.display_name ?? undefined,
       };
     }
     // PRIORITÉ 2: Sur mesure enseigne
@@ -880,12 +880,12 @@ export default function ProductDetailPage() {
           >
             <SupplierEditSection
               product={product as any}
-              variantGroup={(product.variant_group || undefined) as any}
+              variantGroup={(product.variant_group ?? undefined) as any}
               onUpdate={handleProductUpdate as any}
             />
             <WeightEditSection
               product={product as any}
-              variantGroup={(product.variant_group || undefined) as any}
+              variantGroup={(product.variant_group ?? undefined) as any}
               onUpdate={handleProductUpdate as any}
               className="mt-4"
             />
@@ -1012,7 +1012,7 @@ export default function ProductDetailPage() {
                   product.supplier?.trade_name) ??
                 undefined
               }
-              costPrice={product.cost_price || undefined}
+              costPrice={product.cost_price ?? undefined}
               disabled={(product.stock_quantity ?? 0) >= 1}
               onRequirementChange={requiresSample => {
                 void handleProductUpdate({
@@ -1188,7 +1188,7 @@ export default function ProductDetailPage() {
 
           <div className="py-4">
             <CategoryHierarchySelector
-              value={product.subcategory_id || ''}
+              value={product.subcategory_id ?? ''}
               onChange={(subcategoryId, hierarchyInfo) => {
                 if (subcategoryId && hierarchyInfo) {
                   void handleProductUpdate({

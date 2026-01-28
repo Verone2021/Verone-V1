@@ -80,7 +80,7 @@ export async function POST(
     }
 
     // 4. Log de l'action (audit trail)
-    console.log(
+    console.warn(
       `[API Financial Documents Unarchive] User ${user.id} unarchived document ${document.id} (${document.document_number})`
     );
 

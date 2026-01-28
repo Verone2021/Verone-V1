@@ -184,7 +184,7 @@ export default function PartnerDetailPage() {
       // Archiver
       const success = await archiveOrganisation(partner.id);
       if (success) {
-        console.log('✅ Partenaire archivé avec succès');
+        console.warn('✅ Partenaire archivé avec succès');
         void refetch().catch(error => {
           console.error('[PartnerDetail] Refetch after archive failed:', error);
         });
@@ -193,7 +193,7 @@ export default function PartnerDetailPage() {
       // Restaurer
       const success = await unarchiveOrganisation(partner.id);
       if (success) {
-        console.log('✅ Partenaire restauré avec succès');
+        console.warn('✅ Partenaire restauré avec succès');
         void refetch().catch(error => {
           console.error(
             '[PartnerDetail] Refetch after unarchive failed:',

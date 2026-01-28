@@ -238,7 +238,7 @@ export async function matchTransactionToOrder(
 
     // 10. Succès
     const paymentId = paymentResult?.id;
-    console.log('[Bank Matching] Match completed:', {
+    console.warn('[Bank Matching] Match completed:', {
       orderId: salesOrderId,
       orderNumber: typedOrder.order_number,
       transactionId: bankTransactionId,
@@ -454,7 +454,7 @@ export async function matchTransactionToMultipleOrders(
 
     result.success = result.matchedOrders > 0;
 
-    console.log('[Bank Multi-Match] Completed:', {
+    console.warn('[Bank Multi-Match] Completed:', {
       transactionId: bankTransactionId,
       matchedOrders: result.matchedOrders,
       createdDocuments: result.createdDocuments.length,

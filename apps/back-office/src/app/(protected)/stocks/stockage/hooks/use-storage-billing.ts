@@ -179,8 +179,8 @@ export function useStorageWeightedAverage(
           p_owner_enseigne_id: ownerType === 'enseigne' ? ownerId : null,
           p_owner_organisation_id:
             ownerType === 'organisation' ? ownerId : null,
-          p_start_date: startDate || null,
-          p_end_date: endDate || null,
+          p_start_date: startDate ?? null,
+          p_end_date: endDate ?? null,
         }
       );
 

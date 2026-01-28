@@ -143,7 +143,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log(
+    console.warn(
       `[API Approval Email] Sent for order ${orderNumber} to ${ownerEmail}`
     );
 

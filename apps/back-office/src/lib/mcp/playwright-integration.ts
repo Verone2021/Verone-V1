@@ -37,7 +37,7 @@ export class MCPPlaywrightIntegration {
   private async initialize() {
     try {
       this.isInitialized = true;
-      console.log('✅ [MCP Playwright] Système initialisé');
+      console.warn('✅ [MCP Playwright] Système initialisé');
     } catch (error) {
       console.error('❌ [MCP Playwright] Erreur initialisation:', error);
       throw error;
@@ -53,7 +53,7 @@ export class MCPPlaywrightIntegration {
     }
 
     const startTime = Date.now();
-    console.log(`🚀 [MCP] Exécution test: ${context.testTitle}`);
+    console.warn(`🚀 [MCP] Exécution test: ${context.testTitle}`);
 
     try {
       // Test simplifié focus sur erreurs console
@@ -80,7 +80,7 @@ export class MCPPlaywrightIntegration {
         });
       } else {
         // Success feedback in console
-        console.log(`✅ [MCP] Test réussi: ${context.testTitle}`, {
+        console.warn(`✅ [MCP] Test réussi: ${context.testTitle}`, {
           testId: context.testId,
           duration: result.duration,
         });
@@ -115,7 +115,7 @@ export class MCPPlaywrightIntegration {
   private async getConsoleErrors(): Promise<string[]> {
     try {
       // Pour détecter erreurs console, utiliser mcp__playwright-lane-1__browser_console_messages
-      console.log(
+      console.warn(
         '[MCP] getConsoleErrors: Utiliser browser_console_messages pour détection erreurs'
       );
       return [];

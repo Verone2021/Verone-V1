@@ -361,7 +361,7 @@ export function useLinkMeAnalytics(
           return {
             id: s.id,
             name: s.name,
-            slug: s.slug || '',
+            slug: s.slug ?? '',
             affiliateName:
               (s.affiliate as { display_name: string } | null)?.display_name ||
               'Inconnu',

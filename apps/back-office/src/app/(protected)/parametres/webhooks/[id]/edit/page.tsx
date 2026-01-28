@@ -85,7 +85,7 @@ export default function EditWebhookPage() {
       setWebhook(webhookData as WebhookConfig);
       setName(data.name);
       setUrl(data.url);
-      setDescription(data.description || '');
+      setDescription(data.description ?? '');
       setSecret(data.secret);
       setSelectedEvents(Array.isArray(data.events) ? data.events : []);
       setActive(data.active ?? true);
@@ -147,7 +147,7 @@ export default function EditWebhookPage() {
         .update({
           name,
           url,
-          description: description.trim() || null,
+          description: description.trim() ?? null,
           secret,
           events: selectedEvents,
           active,

@@ -91,7 +91,7 @@ export default function NewWebhookPage() {
         .insert({
           name,
           url,
-          description: description.trim() || null,
+          description: description.trim() ?? null,
           secret,
           events: selectedEvents,
           active,

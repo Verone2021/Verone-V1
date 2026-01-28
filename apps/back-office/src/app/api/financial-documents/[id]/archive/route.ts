@@ -72,7 +72,7 @@ export async function POST(
       'finalized',
       'sent',
       'paid',
-    ].includes(document.workflow_status || '');
+    ].includes(document.workflow_status ?? '');
 
     if (!canArchive) {
       return NextResponse.json(
@@ -100,7 +100,7 @@ export async function POST(
     }
 
     // 5. Log de l'action (audit trail)
-    console.log(
+    console.warn(
       `[API Financial Documents Archive] User ${user.id} archived document ${document.id} (${document.document_number}) with workflow_status=${document.workflow_status}`
     );
 

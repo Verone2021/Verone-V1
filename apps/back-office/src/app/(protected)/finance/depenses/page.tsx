@@ -365,7 +365,7 @@ export default function DepensesPage() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setFilters(prev => {
-        const newSearch = searchValue.trim() || undefined;
+        const newSearch = searchValue.trim() ?? undefined;
         // Ne mettre à jour que si la valeur a réellement changé
         if (prev.search === newSearch) return prev;
         return { ...prev, search: newSearch };
@@ -422,7 +422,7 @@ export default function DepensesPage() {
       try {
         const count = await autoClassifyAll();
         if (count > 0) {
-          console.log(
+          console.warn(
             `[DepensesPage] ${count} transaction(s) classée(s) automatiquement`
           );
           // Rafraîchir la liste des dépenses si des transactions ont été classées
@@ -484,7 +484,7 @@ export default function DepensesPage() {
 
   // SLICE 3: Trouver la règle sélectionnée
   const selectedRule = useMemo(
-    () => rules.find(r => r.id === selectedRuleId) || null,
+    () => rules.find(r => r.id === selectedRuleId) ?? null,
     [rules, selectedRuleId]
   );
 
@@ -845,7 +845,7 @@ export default function DepensesPage() {
             {/* Filtre année */}
             <select
               className="px-3 py-2 border border-slate-200 rounded-lg text-sm"
-              value={filters.year || ''}
+              value={filters.year ?? ''}
               onChange={e =>
                 setFilters(prev => ({
                   ...prev,
@@ -864,11 +864,11 @@ export default function DepensesPage() {
             {/* Filtre catégorie PCG (adapté selon le side) */}
             <select
               className="px-3 py-2 border border-slate-200 rounded-lg text-sm"
-              value={filters.category || ''}
+              value={filters.category ?? ''}
               onChange={e =>
                 setFilters(prev => ({
                   ...prev,
-                  category: e.target.value || undefined,
+                  category: e.target.value ?? undefined,
                 }))
               }
             >
@@ -1187,9 +1187,9 @@ export default function DepensesPage() {
         amount={selectedExpense?.amount || 0}
         transactionId={selectedExpense?.transaction_id}
         counterpartyName={
-          selectedExpense?.transaction_counterparty_name || undefined
+          selectedExpense?.transaction_counterparty_name ?? undefined
         }
-        currentCategory={selectedExpense?.category || undefined}
+        currentCategory={selectedExpense?.category ?? undefined}
         existingRuleId={
           selectedExpense
             ? suggestionsMap.get(selectedExpense.id)?.matchedRule?.id

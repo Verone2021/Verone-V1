@@ -131,7 +131,7 @@ export async function POST(
 
     if (finalizedInvoice.pdf_url) {
       try {
-        console.log('[Finalize workflow] Downloading PDF from Qonto...');
+        console.warn('[Finalize workflow] Downloading PDF from Qonto...');
 
         // Télécharger le PDF
         const pdfResponse = await fetch(finalizedInvoice.pdf_url);
@@ -143,7 +143,7 @@ export async function POST(
           const fileName = `${finalizedInvoice.invoice_number || invoiceId}.pdf`;
           localPdfPath = `customer/${year}/${fileName}`;
 
-          console.log(
+          console.warn(
             `[Finalize workflow] Uploading PDF to Storage: ${localPdfPath}`
           );
 
@@ -167,8 +167,8 @@ export async function POST(
               .from('invoices')
               .createSignedUrl(localPdfPath, 3600);
 
-            localPdfUrl = signedUrlData?.signedUrl || null;
-            console.log(
+            localPdfUrl = signedUrlData?.signedUrl ?? null;
+            console.warn(
               `[Finalize workflow] PDF stored locally: ${localPdfPath}`
             );
           }
@@ -190,8 +190,8 @@ export async function POST(
       workflow_status: 'finalized',
       finalized_at: new Date().toISOString(),
       finalized_by: user.id,
-      qonto_pdf_url: finalizedInvoice.pdf_url || null,
-      qonto_public_url: finalizedInvoice.public_url || null,
+      qonto_pdf_url: finalizedInvoice.pdf_url ?? null,
+      qonto_public_url: finalizedInvoice.public_url ?? null,
       status: 'sent', // Mapping Qonto "unpaid" → "sent" en local
       qonto_sync_status: 'synced',
       // Stockage local PDF (colonnes ajoutées par migration)
@@ -220,7 +220,7 @@ export async function POST(
       );
     }
 
-    console.log(
+    console.warn(
       `[Finalize workflow] Invoice ${invoiceId} finalized by user ${user.id}${localPdfPath ? ' (PDF stored locally)' : ''}`
     );
 

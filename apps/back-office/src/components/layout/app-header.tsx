@@ -40,7 +40,7 @@ export function AppHeader({ className }: AppHeaderProps) {
           .eq('user_id', user.id)
           .single();
 
-        setUserRole(profile?.role || null);
+        setUserRole(profile?.role ?? null);
       }
     };
 

@@ -107,13 +107,13 @@ export default function LinkMeOrdersPage() {
         const enriched: LinkMeEnrichedData = {};
         (ordersData || []).forEach((order: any) => {
           enriched[order.id] = {
-            affiliate_name: order.affiliate_name || null,
-            affiliate_type: order.affiliate_type || null,
-            selection_name: order.selection_name || null,
+            affiliate_name: order.affiliate_name ?? null,
+            affiliate_type: order.affiliate_type ?? null,
+            selection_name: order.selection_name ?? null,
             total_affiliate_margin: order.total_affiliate_margin || 0,
             pending_admin_validation: order.pending_admin_validation || false,
-            created_by_affiliate_id: order.created_by_affiliate_id || null,
-            linkme_selection_id: order.linkme_selection_id || null,
+            created_by_affiliate_id: order.created_by_affiliate_id ?? null,
+            linkme_selection_id: order.linkme_selection_id ?? null,
           };
         });
 
@@ -152,8 +152,8 @@ export default function LinkMeOrdersPage() {
             return <span className="text-gray-400 text-xs">...</span>;
           }
           const channel = getOrderChannel(
-            data?.created_by_affiliate_id || null,
-            data?.linkme_selection_id || null
+            data?.created_by_affiliate_id ?? null,
+            data?.linkme_selection_id ?? null
           );
           return (
             <span
@@ -250,15 +250,15 @@ export default function LinkMeOrdersPage() {
                   const enriched: LinkMeEnrichedData = {};
                   (data || []).forEach((order: any) => {
                     enriched[order.id] = {
-                      affiliate_name: order.affiliate_name || null,
-                      affiliate_type: order.affiliate_type || null,
-                      selection_name: order.selection_name || null,
+                      affiliate_name: order.affiliate_name ?? null,
+                      affiliate_type: order.affiliate_type ?? null,
+                      selection_name: order.selection_name ?? null,
                       total_affiliate_margin: order.total_affiliate_margin || 0,
                       pending_admin_validation:
                         order.pending_admin_validation || false,
                       created_by_affiliate_id:
-                        order.created_by_affiliate_id || null,
-                      linkme_selection_id: order.linkme_selection_id || null,
+                        order.created_by_affiliate_id ?? null,
+                      linkme_selection_id: order.linkme_selection_id ?? null,
                     };
                   });
                   setEnrichedData(enriched);

@@ -84,11 +84,11 @@ export function SubcategoryForm({
 
   // État du formulaire - CORRECTION: utiliser category_id au lieu de parent_id
   const [formData, setFormData] = useState<SubcategoryFormData>({
-    parent_id: initialData?.category_id || '', // Support mapping category_id -> parent_id
+    parent_id: initialData?.category_id ?? '', // Support mapping category_id -> parent_id
     family_id: '', // Sera récupéré depuis la catégorie
-    name: initialData?.name || '',
-    description: initialData?.description || '',
-    image_url: initialData?.image_url || '',
+    name: initialData?.name ?? '',
+    description: initialData?.description ?? '',
+    image_url: initialData?.image_url ?? '',
     display_order: initialData?.display_order || 1,
     is_active: initialData?.is_active ?? true,
   });
@@ -97,11 +97,11 @@ export function SubcategoryForm({
   useEffect(() => {
     if (isOpen) {
       setFormData({
-        parent_id: initialData?.category_id || '',
+        parent_id: initialData?.category_id ?? '',
         family_id: '', // Sera récupéré automatiquement
-        name: initialData?.name || '',
-        description: initialData?.description || '',
-        image_url: initialData?.image_url || '',
+        name: initialData?.name ?? '',
+        description: initialData?.description ?? '',
+        image_url: initialData?.image_url ?? '',
         display_order: initialData?.display_order || 1,
         is_active: initialData?.is_active ?? true,
       });

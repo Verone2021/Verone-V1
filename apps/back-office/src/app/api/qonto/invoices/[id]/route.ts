@@ -271,7 +271,7 @@ export async function PATCH(
         // Creer les nouvelles lignes
         const newItems = body.localItems.map((item, index) => ({
           document_id: typedLocalInvoice.id,
-          product_id: item.product_id || null,
+          product_id: item.product_id ?? null,
           description: item.description,
           quantity: item.quantity,
           unit_price_ht: item.unit_price_ht,
@@ -312,7 +312,7 @@ export async function PATCH(
 
           if (syncResponse.ok) {
             synced = true;
-            console.log(
+            console.warn(
               `[PATCH Invoice] Synced to order ${typedLocalInvoice.sales_order_id}`
             );
           } else {

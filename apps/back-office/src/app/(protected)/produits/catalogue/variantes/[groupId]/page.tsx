@@ -379,7 +379,7 @@ export default function VariantGroupDetailPage({
 
   // Édition inline du nom
   const handleStartEditName = useCallback(() => {
-    setEditedName(variantGroup?.name || '');
+    setEditedName(variantGroup?.name ?? '');
     setEditingName(true);
   }, [variantGroup?.name]);
 
@@ -519,7 +519,7 @@ export default function VariantGroupDetailPage({
           </ButtonV2>
           <div>
             <div className="flex items-center gap-3">
-              {getVariantTypeIcon(variantGroup.variant_type || '')}
+              {getVariantTypeIcon(variantGroup.variant_type ?? '')}
               {editingName ? (
                 <div className="flex items-center gap-2">
                   <Input
@@ -620,7 +620,7 @@ export default function VariantGroupDetailPage({
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Type</CardTitle>
-            {getVariantTypeIcon(variantGroup.variant_type || '')}
+            {getVariantTypeIcon(variantGroup.variant_type ?? '')}
           </CardHeader>
           <CardContent>
             <div className="text-sm font-medium">
@@ -720,7 +720,7 @@ export default function VariantGroupDetailPage({
               </div>
             ) : (
               <div className="flex items-center gap-2 group">
-                {getVariantTypeIcon(variantGroup.variant_type || '')}
+                {getVariantTypeIcon(variantGroup.variant_type ?? '')}
                 <span className="text-sm text-gray-900 font-medium">
                   {formatVariantType(variantGroup.variant_type)}
                 </span>
@@ -885,7 +885,7 @@ export default function VariantGroupDetailPage({
               <VariantProductCard
                 key={product.id}
                 product={product}
-                variantType={variantGroup.variant_type || ''}
+                variantType={variantGroup.variant_type ?? ''}
                 hasCommonSupplier={variantGroup.has_common_supplier || false}
                 groupDimensions={
                   variantGroup.dimensions_length

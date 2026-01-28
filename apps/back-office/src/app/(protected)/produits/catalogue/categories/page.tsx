@@ -274,13 +274,13 @@ export default function CategoriesPage() {
 
   // Changement de statut en lot
   const handleBulkStatusToggle = async () => {
-    console.log('Changement de statut en lot pour :', selectedItems);
+    console.warn('Changement de statut en lot pour :', selectedItems);
     // TODO: Implémenter le changement en lot avec les hooks
   };
 
   const handleDeleteItems = async () => {
     if (!confirm(`Supprimer ${selectedItems.length} élément(s) ?`)) return;
-    console.log('Suppression des éléments :', selectedItems);
+    console.warn('Suppression des éléments :', selectedItems);
     // TODO: Implémenter la suppression en lot avec les hooks
   };
 

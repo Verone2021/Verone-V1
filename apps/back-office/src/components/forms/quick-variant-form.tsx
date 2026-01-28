@@ -228,10 +228,10 @@ export function QuickVariantForm({
             cost_price: formData.cost_price,
             status: 'in_stock',
             variant_attributes: {
-              color: formData.color || null,
-              size: formData.size || null,
-              material: formData.material || null,
-              pattern: formData.pattern || null,
+              color: formData.color ?? null,
+              size: formData.size ?? null,
+              material: formData.material ?? null,
+              pattern: formData.pattern ?? null,
             },
             variant_group_id: variantGroupId,
             variant_position: nextPosition,
@@ -470,7 +470,7 @@ export function QuickVariantForm({
               type="number"
               step="0.01"
               min="0"
-              value={formData.cost_price || ''}
+              value={formData.cost_price ?? ''}
               onChange={e =>
                 setFormData(prev => ({
                   ...prev,

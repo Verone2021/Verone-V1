@@ -61,9 +61,9 @@ export default function ReglesPage() {
 
   // Pré-remplissage depuis classification (query params)
   const createFromClassification = searchParams.get('create') === 'true';
-  const prefillLabel = searchParams.get('label') || '';
-  const _prefillCategory = searchParams.get('category') || '';
-  const _prefillTva = searchParams.get('tva') || '';
+  const prefillLabel = searchParams.get('label') ?? '';
+  const _prefillCategory = searchParams.get('category') ?? '';
+  const _prefillTva = searchParams.get('tva') ?? '';
 
   // Hooks de données
   const {

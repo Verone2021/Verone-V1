@@ -149,8 +149,8 @@ function useAffiliates(enseigneId?: string) {
         id: u.user_id,
         user_id: u.user_id,
         display_name:
-          `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email,
-        enseigne_name: u.enseigne_name || null,
+          `${u.first_name ?? ''} ${u.last_name ?? ''}`.trim() || u.email,
+        enseigne_name: u.enseigne_name ?? null,
       })) as Affiliate[];
     },
   });
@@ -216,8 +216,8 @@ function useSendNotification() {
         severity,
         title,
         message,
-        action_url: actionUrl || null,
-        action_label: actionLabel || null,
+        action_url: actionUrl ?? null,
+        action_label: actionLabel ?? null,
         read: false,
         created_at: new Date().toISOString(),
       }));

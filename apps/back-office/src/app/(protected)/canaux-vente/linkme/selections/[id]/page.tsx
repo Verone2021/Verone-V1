@@ -148,9 +148,9 @@ export default function SelectionDetailPage({
   useEffect(() => {
     if (selection) {
       setFormData({
-        name: selection.name || '',
-        description: selection.description || '',
-        archived_at: selection.archived_at || null,
+        name: selection.name ?? '',
+        description: selection.description ?? '',
+        archived_at: selection.archived_at ?? null,
         price_display_mode: selection.price_display_mode || 'TTC',
       });
     }

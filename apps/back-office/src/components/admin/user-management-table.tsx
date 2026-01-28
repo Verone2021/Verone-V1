@@ -93,13 +93,13 @@ export function UserManagementTable({ users }: UserManagementTableProps) {
   const getFirstName = (email: string, user_metadata: any = null) => {
     if (user_metadata?.first_name) return user_metadata.first_name;
     const tempName = email.split('@')[0].split('.') || [''];
-    return tempName[0] || '';
+    return tempName[0] ?? '';
   };
 
   const getLastName = (email: string, user_metadata: any = null) => {
     if (user_metadata?.last_name) return user_metadata.last_name;
     const tempName = email.split('@')[0].split('.') || [''];
-    return tempName[1] || '';
+    return tempName[1] ?? '';
   };
 
   const getJobTitle = (user_metadata: any = null) => {
@@ -107,7 +107,7 @@ export function UserManagementTable({ users }: UserManagementTableProps) {
   };
 
   const handleViewUserDetails = (user: UserWithProfile) => {
-    console.log('Navigation vers les détails utilisateur:', user.id); // Debug log
+    console.warn('Navigation vers les détails utilisateur:', user.id); // Debug log
     router.push(`/admin/users/${user.id}`);
   };
 

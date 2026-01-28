@@ -638,7 +638,7 @@ export function CatalogueFilterPanel({
                 const isSelected = filters.statuses.includes(status);
                 const count = statusCounts.get(status) || 0;
                 const label = STATUS_LABELS[status] || status;
-                const icon = STATUS_ICONS[status] || '';
+                const icon = STATUS_ICONS[status] ?? '';
                 return (
                   <label
                     key={status}
@@ -748,7 +748,7 @@ export function CatalogueFilterPanel({
           {/* Statuts */}
           {filters.statuses.map(status => {
             const label = STATUS_LABELS[status] || status;
-            const icon = STATUS_ICONS[status] || '';
+            const icon = STATUS_ICONS[status] ?? '';
             return (
               <Badge
                 key={`status-${status}`}

@@ -127,7 +127,7 @@ export default function SubmissionDetailPage({
         setSubmission(sub);
         setNewStatus(sub.status);
         setNewPriority(sub.priority);
-        setNewNotes(sub.internal_notes || '');
+        setNewNotes(sub.internal_notes ?? '');
 
         // Fetch form type (using any to bypass type checking for new table)
         const { data: type, error: typeError } = await (supabase as any)
@@ -211,12 +211,12 @@ export default function SubmissionDetailPage({
 
       const { error } = await (supabase as any)
         .from('form_submissions')
-        .update({ internal_notes: newNotes || null })
+        .update({ internal_notes: newNotes ?? null })
         .eq('id', submission.id);
 
       if (error) throw error;
 
-      setSubmission({ ...submission, internal_notes: newNotes || null });
+      setSubmission({ ...submission, internal_notes: newNotes ?? null });
       setEditingNotes(false);
     } catch (error) {
       console.error('Error updating notes:', error);
@@ -615,7 +615,7 @@ export default function SubmissionDetailPage({
                       size="sm"
                       onClick={() => {
                         setEditingNotes(false);
-                        setNewNotes(submission.internal_notes || '');
+                        setNewNotes(submission.internal_notes ?? '');
                       }}
                     >
                       Annuler

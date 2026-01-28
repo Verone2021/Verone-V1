@@ -41,15 +41,15 @@ function mapMovementToCard(
       products: {
         name: movement.product_name || 'Produit inconnu',
         sku: movement.product_sku || 'SKU inconnu',
-        image_url: movement.product_image_url || null, // ✅ NOUVEAU - Image produit
+        image_url: movement.product_image_url ?? null, // ✅ NOUVEAU - Image produit
       },
 
       // 🆕 Phase 3.4.4: Mapping canal depuis JOIN
-      channel_id: movement.channel_id || null,
+      channel_id: movement.channel_id ?? null,
       sales_channels: movement.channel_name
         ? {
             name: movement.channel_name,
-            code: movement.channel_code || '',
+            code: movement.channel_code ?? '',
           }
         : null,
     },

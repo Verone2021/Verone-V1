@@ -16,7 +16,7 @@ export default function TestPurchaseOrderPage() {
   const supabase = createClient();
 
   const log = (msg: string) => {
-    console.log(msg);
+    console.warn(msg);
     setLogs(prev => [
       ...prev,
       `${new Date().toISOString().slice(11, 19)} - ${msg}`,

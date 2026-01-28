@@ -160,7 +160,7 @@ export function usePaymentRequestsAdmin(statusFilter?: string) {
       return (typedData || []).map(item => ({
         ...item,
         status: item.status as PaymentRequestAdmin['status'],
-        affiliate: item.linkme_affiliates || undefined,
+        affiliate: item.linkme_affiliates ?? undefined,
       }));
     },
     staleTime: 30000,
@@ -191,7 +191,7 @@ export function useMarkAsPaid() {
         .update({
           status: 'paid',
           paid_at: new Date().toISOString(),
-          paid_by: userData?.user?.id || null,
+          paid_by: userData?.user?.id ?? null,
           payment_reference: input.paymentReference,
         })
         .eq('id', input.requestId);
@@ -417,7 +417,7 @@ export function useRecentPaymentRequests(limit: number = 5) {
       return (typedData || []).map(item => ({
         ...item,
         status: item.status as PaymentRequestAdmin['status'],
-        affiliate: item.linkme_affiliates || undefined,
+        affiliate: item.linkme_affiliates ?? undefined,
       }));
     },
     staleTime: 30000,

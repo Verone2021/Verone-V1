@@ -74,7 +74,7 @@ export function ImageUploadV2({
     bucket,
     autoUpload,
     onUploadSuccess: result => {
-      console.log('🎉 Upload terminé:', result?.publicUrl);
+      console.warn('🎉 Upload terminé:', result?.publicUrl);
       onImageUpload(result?.publicUrl ?? '');
     },
     onUploadError: error => {
@@ -105,9 +105,9 @@ export function ImageUploadV2({
     const success = await uploadFile(file);
 
     if (success) {
-      console.log('✅ Upload réussi');
+      console.warn('✅ Upload réussi');
     } else {
-      console.log('❌ Upload échoué');
+      console.warn('❌ Upload échoué');
     }
   };
 

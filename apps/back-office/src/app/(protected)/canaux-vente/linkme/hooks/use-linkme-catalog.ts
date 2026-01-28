@@ -258,16 +258,16 @@ async function fetchLinkMeCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
 
   const hierarchyMap = new Map<string, CategoryHierarchy>();
   (subcategoriesWithHierarchy || []).forEach(sc => {
-    const familyName = sc.category?.family?.name || '';
-    const categoryName = sc.category?.name || '';
-    const subcategoryName = sc.name || '';
+    const familyName = sc.category?.family?.name ?? '';
+    const categoryName = sc.category?.name ?? '';
+    const subcategoryName = sc.name ?? '';
 
     hierarchyMap.set(sc.id, {
       subcategory_id: sc.id,
       subcategory_name: subcategoryName,
-      category_id: sc.category?.id || null,
+      category_id: sc.category?.id ?? null,
       category_name: categoryName,
-      family_id: sc.category?.family?.id || null,
+      family_id: sc.category?.family?.id ?? null,
       family_name: familyName,
       full_path: [familyName, categoryName, subcategoryName]
         .filter((id): id is string => !!id)
@@ -344,24 +344,24 @@ async function fetchLinkMeCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
           views_count: cp.views_count ?? 0,
           selections_count: cp.selections_count ?? 0,
           display_order: cp.display_order ?? 0,
-          product_name: cp.products?.name || '',
-          product_reference: cp.products?.sku || '',
+          product_name: cp.products?.name ?? '',
+          product_reference: cp.products?.sku ?? '',
           product_price_ht: cp.products?.cost_price ?? 0, // Toujours cost_price (prix d'achat réel)
           // Prix de vente HT = public_price_ht (prix catalogue LinkMe) - source de vérité
           // Fallback sur custom_price_ht si public_price_ht non défini
           product_selling_price_ht:
             cp.public_price_ht ?? cp.custom_price_ht ?? null,
-          product_image_url: imageMap.get(cp.product_id) || null,
+          product_image_url: imageMap.get(cp.product_id) ?? null,
           product_stock_real: cp.products?.stock_real ?? 0,
           product_is_active: cp.products?.product_status === 'active',
           product_status: cp.products?.product_status || 'draft',
           // Hiérarchie de catégorisation
-          subcategory_id: hierarchy?.subcategory_id || null,
-          subcategory_name: hierarchy?.subcategory_name || null,
-          category_id: hierarchy?.category_id || null,
-          category_name: hierarchy?.category_name || null,
-          family_id: hierarchy?.family_id || null,
-          family_name: hierarchy?.family_name || null,
+          subcategory_id: hierarchy?.subcategory_id ?? null,
+          subcategory_name: hierarchy?.subcategory_name ?? null,
+          category_id: hierarchy?.category_id ?? null,
+          category_name: hierarchy?.category_name ?? null,
+          family_id: hierarchy?.family_id ?? null,
+          family_name: hierarchy?.family_name ?? null,
           category_full_path: hierarchy?.full_path ?? null,
           product_supplier_name: cp.products?.supplier_id
             ? (supplierMap.get(cp.products.supplier_id) ?? null)
@@ -378,7 +378,7 @@ async function fetchLinkMeCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
           is_sourced: !!(
             cp.products?.enseigne_id || cp.products?.assigned_client_id
           ),
-          created_by_affiliate: cp.products?.created_by_affiliate || null,
+          created_by_affiliate: cp.products?.created_by_affiliate ?? null,
           affiliate_commission_rate:
             cp.products?.affiliate_commission_rate ?? null,
           affiliate_payout_ht: cp.products?.affiliate_payout_ht ?? null,
@@ -455,11 +455,11 @@ async function fetchEligibleProducts(): Promise<EligibleProduct[]> {
     name: p.name,
     reference: p.sku,
     price_ht: p.cost_price || 0,
-    primary_image_url: imageMap.get(p.id) || null,
+    primary_image_url: imageMap.get(p.id) ?? null,
     stock_real: p.stock_real ?? 0,
     is_active: p.product_status === 'active',
     family_name: null,
-    category_name: p.subcategories?.name || null,
+    category_name: p.subcategories?.name ?? null,
   }));
 }
 
@@ -515,7 +515,7 @@ export function useAddProductsToCatalog() {
       await queryClient.invalidateQueries({
         queryKey: ['linkme-catalog-products'],
       });
-      console.log(`✅ ${count} produits ajoutés au catalogue LinkMe`);
+      console.warn(`✅ ${count} produits ajoutés au catalogue LinkMe`);
     },
   });
 }
@@ -971,7 +971,7 @@ async function fetchLinkMeProductDetail(
     .eq('is_primary', true)
     .limit(1);
 
-  const primaryImageUrl = images?.[0]?.public_url || null;
+  const primaryImageUrl = images?.[0]?.public_url ?? null;
 
   // Récupérer la sous-catégorie
   let categoryName: string | null = null;
@@ -981,7 +981,7 @@ async function fetchLinkMeProductDetail(
       .select('name')
       .eq('id', product.subcategory_id)
       .single();
-    categoryName = subcat?.name || null;
+    categoryName = subcat?.name ?? null;
   }
 
   // Récupérer le fournisseur
@@ -992,7 +992,7 @@ async function fetchLinkMeProductDetail(
       .select('legal_name')
       .eq('id', product.supplier_id)
       .single();
-    supplierName = supplier?.legal_name || null;
+    supplierName = supplier?.legal_name ?? null;
   }
 
   // Récupérer l'enseigne (produit sur mesure)
@@ -1003,7 +1003,7 @@ async function fetchLinkMeProductDetail(
       .select('name')
       .eq('id', product.enseigne_id)
       .single();
-    enseigneName = enseigne?.name || null;
+    enseigneName = enseigne?.name ?? null;
   }
 
   // Récupérer l'organisation assignée (produit sur mesure)
@@ -1015,7 +1015,7 @@ async function fetchLinkMeProductDetail(
       .eq('id', product.assigned_client_id)
       .single();
     assignedClientName =
-      assignedOrg?.trade_name || assignedOrg?.legal_name || null;
+      (assignedOrg?.trade_name || assignedOrg?.legal_name) ?? null;
   }
 
   // Récupérer le nom de l'affilié créateur (produit affilié)
@@ -1026,7 +1026,7 @@ async function fetchLinkMeProductDetail(
       .select('display_name')
       .eq('id', product.created_by_affiliate)
       .single();
-    affiliateName = affiliate?.display_name || null;
+    affiliateName = affiliate?.display_name ?? null;
   }
 
   // Calcul du prix minimum de vente: (cost_price + eco_tax) * (1 + margin/100)
@@ -1058,7 +1058,7 @@ async function fetchLinkMeProductDetail(
     custom_description: cp.custom_description,
     custom_selling_points: cp.custom_selling_points,
     // Valeurs source depuis produit (pour système de validation "copier")
-    source_description: product.description || null,
+    source_description: product.description ?? null,
     source_selling_points: Array.isArray(product.selling_points)
       ? (product.selling_points as string[])
       : null,
@@ -1069,23 +1069,23 @@ async function fetchLinkMeProductDetail(
     product_category_name: categoryName,
     product_supplier_name: supplierName,
     // Produits sur mesure (sourcés)
-    enseigne_id: product.enseigne_id || null,
+    enseigne_id: product.enseigne_id ?? null,
     enseigne_name: enseigneName,
-    assigned_client_id: product.assigned_client_id || null,
+    assigned_client_id: product.assigned_client_id ?? null,
     assigned_client_name: assignedClientName,
     is_sourced: !!(product.enseigne_id || product.assigned_client_id),
     // Produits affiliés
-    created_by_affiliate: product.created_by_affiliate || null,
+    created_by_affiliate: product.created_by_affiliate ?? null,
     affiliate_name: affiliateName,
     affiliate_commission_rate: product.affiliate_commission_rate ?? null,
     affiliate_payout_ht: product.affiliate_payout_ht ?? null,
     affiliate_approval_status: product.affiliate_approval_status ?? null,
     subcategory_id: product.subcategory_id,
     supplier_id: product.supplier_id,
-    weight_kg: product.weight || null,
+    weight_kg: product.weight ?? null,
     dimensions_cm:
       (product.dimensions as Record<string, string | number>) ?? null,
-    room_types: product.suitable_rooms || null,
+    room_types: product.suitable_rooms ?? null,
     views_count: cp.views_count ?? 0,
     selections_count: cp.selections_count ?? 0,
     display_order: cp.display_order ?? 0,
@@ -1373,7 +1373,7 @@ export function useLinkMeProductVariants(productId: string | null) {
         > | null,
         stock_real: v.stock_real || 0,
         cost_price: v.cost_price,
-        image_url: imageMap.get(v.id) || null,
+        image_url: imageMap.get(v.id) ?? null,
       }));
     },
     enabled: !!productId,
@@ -1562,9 +1562,9 @@ async function fetchSourcingProducts(): Promise<SourcingProduct[]> {
 
     (subcategories || []).forEach(sc => {
       categoryMap.set(sc.id, {
-        subcategory_name: sc.name || '',
-        category_name: sc.category?.name || '',
-        family_name: sc.category?.family?.name || '',
+        subcategory_name: sc.name ?? '',
+        category_name: sc.category?.name ?? '',
+        family_name: sc.category?.family?.name ?? '',
       });
     });
   }
@@ -1607,15 +1607,15 @@ async function fetchSourcingProducts(): Promise<SourcingProduct[]> {
 
     return {
       id: p.id,
-      catalog_id: channelPricingMap.get(p.id) || null,
+      catalog_id: channelPricingMap.get(p.id) ?? null,
       name: p.name,
-      reference: p.sku || '',
-      description: p.description || null,
+      reference: p.sku ?? '',
+      description: p.description ?? null,
       cost_price: costPrice,
       margin_percentage: marginPct,
       selling_price_ht: sellingPrice,
       stock_real: p.stock_real || 0,
-      image_url: imageMap.get(p.id) || null,
+      image_url: imageMap.get(p.id) ?? null,
       created_at: p.created_at,
       // Attribution exclusive
       enseigne_id: p.enseigne_id ?? null,

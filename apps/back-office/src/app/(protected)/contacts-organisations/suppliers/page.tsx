@@ -88,7 +88,7 @@ export default function SuppliersPage() {
     () => ({
       is_active: true,
       is_service_provider: false, // Fournisseurs uniquement (pas les prestataires)
-      search: searchQuery || undefined,
+      search: searchQuery ?? undefined,
     }),
     [searchQuery]
   );

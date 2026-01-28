@@ -247,7 +247,7 @@ export function ActionCell({
       if (
         !isArchived &&
         ['draft_validated', 'finalized', 'sent', 'paid'].includes(
-          workflowStatus || ''
+          workflowStatus ?? ''
         ) &&
         onArchive
       ) {

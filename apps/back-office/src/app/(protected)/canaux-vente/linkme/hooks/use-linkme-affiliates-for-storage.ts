@@ -52,12 +52,12 @@ export function useLinkMeAffiliatesForStorage() {
       return ((data as any[]) || []).map((a: any) => ({
         id: a.id,
         display_name: a.display_name || 'Sans nom',
-        slug: a.slug || '',
+        slug: a.slug ?? '',
         affiliate_type: a.affiliate_type as AffiliateType,
-        enseigne_id: a.enseigne_id || null,
-        enseigne_name: a.enseigne_name || null,
-        organisation_id: a.organisation_id || null,
-        organisation_name: a.organisation_name || null,
+        enseigne_id: a.enseigne_id ?? null,
+        enseigne_name: a.enseigne_name ?? null,
+        organisation_id: a.organisation_id ?? null,
+        organisation_name: a.organisation_name ?? null,
       }));
     },
     staleTime: 60000,

@@ -55,7 +55,7 @@ export default function FamilyDetailPage() {
   useEffect(() => {
     if (families && familyId) {
       const foundFamily = families.find(f => f.id === familyId);
-      setFamily(foundFamily || null);
+      setFamily(foundFamily ?? null);
     }
   }, [families, familyId]);
 
@@ -324,7 +324,7 @@ export default function FamilyDetailPage() {
                 <VéroneCard
                   key={category.id}
                   title={category.name}
-                  imageUrl={category.image_url || undefined}
+                  imageUrl={category.image_url ?? undefined}
                   entityType="category"
                   slug={category.slug}
                   count={category.subcategory_count || 0}
@@ -362,10 +362,10 @@ export default function FamilyDetailPage() {
             ? {
                 id: family.id,
                 name: family.name,
-                description: family.description || '',
+                description: family.description ?? '',
                 is_active: family.is_active ?? true,
                 display_order: family.display_order || 1,
-                image_url: family.image_url || undefined,
+                image_url: family.image_url ?? undefined,
               }
             : undefined
         }
@@ -396,11 +396,11 @@ export default function FamilyDetailPage() {
             ? {
                 id: editingCategory.id,
                 name: editingCategory.name,
-                description: editingCategory.description || '',
+                description: editingCategory.description ?? '',
                 is_active: editingCategory.is_active ?? true,
                 display_order: editingCategory.display_order || 1,
                 parent_id: editingCategory.family_id ?? undefined,
-                image_url: editingCategory.image_url || undefined,
+                image_url: editingCategory.image_url ?? undefined,
               }
             : undefined
         }

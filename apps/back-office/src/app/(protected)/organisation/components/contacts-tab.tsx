@@ -355,7 +355,7 @@ export function ContactsTab() {
                 <tbody className="divide-y divide-gray-200">
                   {filteredContacts.map(contact => {
                     const orgTypeInfo = getOrganisationTypeInfo(
-                      contact.organisation?.type || ''
+                      contact.organisation?.type ?? ''
                     );
 
                     return (

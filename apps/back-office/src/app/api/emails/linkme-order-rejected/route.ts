@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log(
+    console.warn(
       `[API Rejection Email] Sent for order ${orderNumber} to ${requesterEmail}`
     );
 

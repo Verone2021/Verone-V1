@@ -85,23 +85,23 @@ export function ConfigurationSection() {
   useEffect(() => {
     if (config) {
       setIdentityForm({
-        domain_url: config.domain_url || '',
-        site_name: config.site_name || '',
+        domain_url: config.domain_url ?? '',
+        site_name: config.site_name ?? '',
       });
       setSeoForm({
-        default_meta_title: config.default_meta_title || '',
-        default_meta_description: config.default_meta_description || '',
+        default_meta_title: config.default_meta_title ?? '',
+        default_meta_description: config.default_meta_description ?? '',
         meta_keywords: (config.meta_keywords || []).join(', '),
       });
       setContactForm({
-        contact_email: config.contact_email || '',
-        contact_phone: config.contact_phone || '',
+        contact_email: config.contact_email ?? '',
+        contact_phone: config.contact_phone ?? '',
       });
       setAnalyticsForm({
         google_analytics_id:
-          config.config?.analytics?.google_analytics_id || '',
+          config.config?.analytics?.google_analytics_id ?? '',
         facebook_pixel_id: '', // Not in config schema, placeholder
-        gtm_id: config.config?.analytics?.google_tag_manager_id || '',
+        gtm_id: config.config?.analytics?.google_tag_manager_id ?? '',
       });
     }
   }, [config]);

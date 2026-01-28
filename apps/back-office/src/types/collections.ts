@@ -571,7 +571,7 @@ export function getPrimaryImageUrl(images: ProductImage[]): string | null {
 
   // Fallback : première image disponible
   const firstImage = images[0];
-  return firstImage?.public_url || null;
+  return firstImage?.public_url ?? null;
 }
 
 /**
@@ -618,7 +618,7 @@ export function formatCollectionProduct(
     product_images: productImages.map(img => ({
       id: img.id,
       public_url: img.public_url,
-      storage_path: img.storage_path || '',
+      storage_path: img.storage_path ?? '',
       is_primary: img.is_primary || false,
       display_order: img.display_order || 0,
       image_type: img.image_type || 'gallery',
@@ -628,7 +628,7 @@ export function formatCollectionProduct(
       productImages.map(img => ({
         id: img.id,
         public_url: img.public_url,
-        storage_path: img.storage_path || '',
+        storage_path: img.storage_path ?? '',
         is_primary: img.is_primary || false,
         display_order: img.display_order || 0,
         image_type: img.image_type,

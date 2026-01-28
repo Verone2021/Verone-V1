@@ -27,7 +27,7 @@ export function PartnersTab() {
     () => ({
       type: 'partner' as const,
       is_active: true,
-      search: searchQuery || undefined,
+      search: searchQuery ?? undefined,
     }),
     [searchQuery]
   );

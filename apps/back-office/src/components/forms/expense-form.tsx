@@ -585,7 +585,7 @@ export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
                     type="number"
                     step="0.01"
                     min="0"
-                    value={formData.vatLine10Ht || ''}
+                    value={formData.vatLine10Ht ?? ''}
                     onChange={e =>
                       setFormData({
                         ...formData,
@@ -606,7 +606,7 @@ export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
                     type="number"
                     step="0.01"
                     min="0"
-                    value={formData.vatLine20Ht || ''}
+                    value={formData.vatLine20Ht ?? ''}
                     onChange={e =>
                       setFormData({
                         ...formData,

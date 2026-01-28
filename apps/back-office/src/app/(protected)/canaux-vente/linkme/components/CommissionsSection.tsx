@@ -264,7 +264,7 @@ export function CommissionsSection() {
     const rows = filtered.map(c => [
       c.created_at ? new Date(c.created_at).toLocaleDateString('fr-FR') : '-',
       c.affiliate?.display_name || 'N/A',
-      (c.order_id || '').slice(0, 8),
+      (c.order_id ?? '').slice(0, 8),
       c.order_amount_ht.toFixed(2),
       c.affiliate_commission.toFixed(2),
       c.linkme_commission.toFixed(2),
@@ -306,7 +306,7 @@ export function CommissionsSection() {
 
   // Filter commissions
   const filteredCommissions = commissions.filter(commission => {
-    const matchesSearch = (commission.order_id || '')
+    const matchesSearch = (commission.order_id ?? '')
       .toLowerCase()
       .includes(searchTerm.toLowerCase());
     const matchesAffiliate =
@@ -562,7 +562,7 @@ export function CommissionsSection() {
                         {commission.affiliate?.display_name || 'N/A'}
                       </TableCell>
                       <TableCell className="font-mono text-sm">
-                        #{(commission.order_id || '').slice(0, 8)}
+                        #{(commission.order_id ?? '').slice(0, 8)}
                       </TableCell>
                       <TableCell className="text-right">
                         {commission.order_amount_ht.toLocaleString('fr-FR', {

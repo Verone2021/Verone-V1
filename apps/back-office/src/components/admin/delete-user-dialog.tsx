@@ -61,7 +61,7 @@ export function DeleteUserDialog({
 
       // Notification succès
       // TODO: Ajouter système de notifications toast
-      console.log('Utilisateur supprimé avec succès');
+      console.warn('Utilisateur supprimé avec succès');
     } catch (error: any) {
       console.error('Erreur suppression utilisateur:', error);
       setError(error.message || "Une erreur inattendue s'est produite");

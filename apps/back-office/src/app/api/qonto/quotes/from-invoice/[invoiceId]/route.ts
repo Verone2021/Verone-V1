@@ -236,9 +236,9 @@ export async function POST(
         email: customerEmail,
         currency: 'EUR',
         address: {
-          streetAddress: String(billingAddress?.street || ''),
-          city: String(billingAddress?.city || ''),
-          zipCode: String(billingAddress?.postal_code || ''),
+          streetAddress: String(billingAddress?.street ?? ''),
+          city: String(billingAddress?.city ?? ''),
+          zipCode: String(billingAddress?.postal_code ?? ''),
           countryCode: String(billingAddress?.country || 'FR'),
         },
       });
@@ -323,10 +323,10 @@ export async function POST(
       issueDate,
       expiryDate,
       items: quoteItems,
-      footer: typedInvoice.notes || undefined,
+      footer: typedInvoice.notes ?? undefined,
     });
 
-    console.log(
+    console.warn(
       `[Quote from invoice] Created quote ${quote.quote_number} for invoice ${typedInvoice.document_number}`
     );
 
@@ -334,7 +334,7 @@ export async function POST(
     // Note: La methode finalizeClientQuote appelle /send qui genere le PDF
     const finalizedQuote = await qontoClient.finalizeClientQuote(quote.id);
 
-    console.log(
+    console.warn(
       `[Quote from invoice] Finalized quote ${finalizedQuote.quote_number}, PDF URL: ${finalizedQuote.pdf_url ? 'available' : 'not available'}`
     );
 
@@ -343,10 +343,10 @@ export async function POST(
       quote: {
         id: finalizedQuote.id,
         quote_number: finalizedQuote.quote_number,
-        pdf_url: finalizedQuote.pdf_url || null,
+        pdf_url: finalizedQuote.pdf_url ?? null,
         status: finalizedQuote.status,
       },
-      pdf_url: finalizedQuote.pdf_url || null,
+      pdf_url: finalizedQuote.pdf_url ?? null,
       expires_in: '3 minutes',
       message:
         "Devis cree et finalise. L'URL du PDF expire dans environ 3 minutes.",

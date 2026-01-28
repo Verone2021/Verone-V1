@@ -569,8 +569,8 @@ function TransactionsPageLegacy() {
   // Toutes les transactions combinées
   const allTransactions = useMemo(() => {
     return [...creditTransactions, ...debitTransactions].sort((a, b) => {
-      const dateA = new Date(a.emitted_at || '').getTime();
-      const dateB = new Date(b.emitted_at || '').getTime();
+      const dateA = new Date(a.emitted_at ?? '').getTime();
+      const dateB = new Date(b.emitted_at ?? '').getTime();
       return dateB - dateA;
     });
   }, [creditTransactions, debitTransactions]);
@@ -662,11 +662,11 @@ function TransactionsPageLegacy() {
     return {
       id: selectedTransaction.id,
       transaction_id: selectedTransaction.transaction_id,
-      label: selectedTransaction.label || '',
+      label: selectedTransaction.label ?? '',
       counterparty_name: selectedTransaction.counterparty_name,
       amount: selectedTransaction.amount,
       currency: selectedTransaction.currency || 'EUR',
-      emitted_at: selectedTransaction.emitted_at || '',
+      emitted_at: selectedTransaction.emitted_at ?? '',
       has_attachment: Boolean(
         selectedTransaction.attachment_ids &&
           selectedTransaction.attachment_ids.length > 0
@@ -1025,7 +1025,7 @@ function TransactionsPageV2() {
     filters: {
       status: activeTab === 'all' ? 'all' : activeTab,
       side: sideFilter === 'all' ? 'all' : sideFilter,
-      search: search || undefined,
+      search: search ?? undefined,
       year: yearFilter,
     },
     pageSize: 20,
@@ -1069,7 +1069,7 @@ function TransactionsPageV2() {
     setFilters({
       status: tab === 'all' ? 'all' : tab,
       side: sideFilter === 'all' ? 'all' : sideFilter,
-      search: search || undefined,
+      search: search ?? undefined,
       year: yearFilter,
     });
   };
@@ -1081,7 +1081,7 @@ function TransactionsPageV2() {
     setFilters({
       status: activeTab === 'all' ? 'all' : activeTab,
       side: side === 'all' ? 'all' : side,
-      search: search || undefined,
+      search: search ?? undefined,
       year: yearFilter,
     });
   };
@@ -1093,7 +1093,7 @@ function TransactionsPageV2() {
     setFilters({
       status: activeTab === 'all' ? 'all' : activeTab,
       side: sideFilter === 'all' ? 'all' : sideFilter,
-      search: search || undefined,
+      search: search ?? undefined,
       year,
     });
   };
@@ -1104,7 +1104,7 @@ function TransactionsPageV2() {
     setFilters({
       status: activeTab === 'all' ? 'all' : activeTab,
       side: sideFilter === 'all' ? 'all' : sideFilter,
-      search: value || undefined,
+      search: value ?? undefined,
       year: yearFilter,
     });
   };
@@ -1286,11 +1286,11 @@ function TransactionsPageV2() {
     return {
       id: tx.id,
       transaction_id: tx.transaction_id,
-      label: tx.label || '',
+      label: tx.label ?? '',
       counterparty_name: tx.counterparty_name,
       amount: tx.amount,
       currency: 'EUR',
-      emitted_at: tx.emitted_at || '',
+      emitted_at: tx.emitted_at ?? '',
       has_attachment: tx.has_attachment,
       matched_document_id: tx.matched_document_id,
       order_number: null,
@@ -2341,8 +2341,8 @@ function TransactionsPageV2() {
         }
         amount={selectedTransaction?.amount}
         transactionId={selectedTransaction?.id}
-        counterpartyName={selectedTransaction?.counterparty_name || undefined}
-        currentCategory={selectedTransaction?.category_pcg || undefined}
+        counterpartyName={selectedTransaction?.counterparty_name ?? undefined}
+        currentCategory={selectedTransaction?.category_pcg ?? undefined}
         existingRuleId={
           selectedTransaction
             ? suggestionsMap.get(selectedTransaction.id)?.matchedRule?.id

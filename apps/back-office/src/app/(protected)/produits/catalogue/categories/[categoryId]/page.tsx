@@ -65,14 +65,14 @@ export default function CategoryDetailPage() {
   useEffect(() => {
     if (allCategories && categoryId) {
       const foundCategory = allCategories.find(c => c.id === categoryId);
-      setCategory(foundCategory || null);
+      setCategory(foundCategory ?? null);
     }
   }, [allCategories, categoryId]);
 
   useEffect(() => {
     if (families && category?.family_id) {
       const foundFamily = families.find(f => f.id === category.family_id);
-      setFamily(foundFamily || null);
+      setFamily(foundFamily ?? null);
     }
   }, [families, category]);
 
@@ -391,7 +391,7 @@ export default function CategoryDetailPage() {
                 <VéroneCard
                   key={subcategory.id}
                   title={subcategory.name}
-                  imageUrl={subcategory.image_url || undefined}
+                  imageUrl={subcategory.image_url ?? undefined}
                   entityType="subcategory"
                   slug={subcategory.slug}
                   count={subcategory.products_count || 0}
@@ -430,11 +430,11 @@ export default function CategoryDetailPage() {
             ? {
                 id: category.id,
                 name: category.name,
-                description: category.description || '',
+                description: category.description ?? '',
                 is_active: category.is_active ?? true,
                 display_order: category.display_order || 1,
                 parent_id: category.family_id ?? undefined,
-                image_url: category.image_url || undefined,
+                image_url: category.image_url ?? undefined,
               }
             : undefined
         }
@@ -451,7 +451,7 @@ export default function CategoryDetailPage() {
           allCategories?.map(c => ({
             id: c.id,
             name: c.name,
-            family_name: family?.name || '',
+            family_name: family?.name ?? '',
           })) || []
         }
         onSubmit={subcategory => {
@@ -485,11 +485,11 @@ export default function CategoryDetailPage() {
             ? ({
                 id: editingSubcategory.id,
                 parent_id: editingSubcategory.category_id,
-                family_id: category?.family_id || '',
+                family_id: category?.family_id ?? '',
                 name: editingSubcategory.name,
                 slug: editingSubcategory.slug,
-                description: editingSubcategory.description || '',
-                image_url: editingSubcategory.image_url || '',
+                description: editingSubcategory.description ?? '',
+                image_url: editingSubcategory.image_url ?? '',
                 display_order: editingSubcategory.display_order || 1,
                 is_active: editingSubcategory.is_active ?? true,
                 level: 2 as const,
@@ -500,7 +500,7 @@ export default function CategoryDetailPage() {
           allCategories?.map(c => ({
             id: c.id,
             name: c.name,
-            family_name: family?.name || '',
+            family_name: family?.name ?? '',
           })) || []
         }
         onSubmit={subcategory => {

@@ -305,8 +305,8 @@ export function useCreateEnseigne() {
         .from('enseignes')
         .insert({
           name: input.name,
-          description: input.description || null,
-          logo_url: input.logo_url || null,
+          description: input.description ?? null,
+          logo_url: input.logo_url ?? null,
           is_active: input.is_active ?? true,
           member_count: 0,
         })

@@ -448,7 +448,7 @@ function InvoicesTable({
                 </Button>
                 {!isArchived &&
                   ['draft_validated', 'finalized', 'sent', 'paid'].includes(
-                    invoice.workflow_status || ''
+                    invoice.workflow_status ?? ''
                   ) &&
                   onArchive && (
                     <Button
@@ -1015,7 +1015,7 @@ export default function FacturationPage() {
           transactionsResult.message
         );
       } else {
-        console.log('[Qonto Sync Transactions] Success:', transactionsResult);
+        console.warn('[Qonto Sync Transactions] Success:', transactionsResult);
       }
 
       // 2. Sync factures clients vers financial_documents
@@ -1027,7 +1027,7 @@ export default function FacturationPage() {
       if (!invoicesResult.success) {
         console.error('[Qonto Sync Invoices] Failed:', invoicesResult.message);
       } else {
-        console.log('[Qonto Sync Invoices] Success:', invoicesResult);
+        console.warn('[Qonto Sync Invoices] Success:', invoicesResult);
       }
 
       // Rafraîchir les données

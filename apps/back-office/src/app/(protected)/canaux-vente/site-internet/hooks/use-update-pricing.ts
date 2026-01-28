@@ -43,7 +43,7 @@ export function useUpdatePricing() {
         discount_rate: hasDiscount ? params.discount_rate : null,
         markup_rate: null, // Toujours null (mode non utilisé pour Site Internet)
         min_quantity: params.min_quantity || 1,
-        notes: params.notes || null,
+        notes: params.notes ?? null,
         is_active: params.is_active ?? true,
       };
 

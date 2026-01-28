@@ -117,7 +117,7 @@ export default function CustomerDetailPage() {
           created_at: p.created_at,
           primary_image_url:
             (p.product_images as any[])?.find((img: any) => img.is_primary)
-              ?.public_url || null,
+              ?.public_url ?? null,
         }));
         setCustomerProducts(mappedProducts);
       } catch (err) {
@@ -293,14 +293,14 @@ export default function CustomerDetailPage() {
       // Archiver
       const success = await archiveOrganisation(customer.id);
       if (success) {
-        console.log('✅ Client archivé avec succès');
+        console.warn('✅ Client archivé avec succès');
         await refetch();
       }
     } else {
       // Restaurer
       const success = await unarchiveOrganisation(customer.id);
       if (success) {
-        console.log('✅ Client restauré avec succès');
+        console.warn('✅ Client restauré avec succès');
         await refetch();
       }
     }

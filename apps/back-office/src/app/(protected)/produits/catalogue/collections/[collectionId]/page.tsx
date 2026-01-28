@@ -210,7 +210,7 @@ export default function CollectionDetailPage({
 
   // Handlers édition inline - Nom
   const handleStartEditName = useCallback(() => {
-    setEditedName(collection?.name || '');
+    setEditedName(collection?.name ?? '');
     setEditingName(true);
   }, [collection?.name]);
 
@@ -248,7 +248,7 @@ export default function CollectionDetailPage({
 
   // Handlers édition inline - Description
   const handleStartEditDescription = useCallback(() => {
-    setEditedDescription(collection?.description || '');
+    setEditedDescription(collection?.description ?? '');
     setEditingDescription(true);
   }, [collection?.description]);
 
@@ -261,7 +261,7 @@ export default function CollectionDetailPage({
     setSavingDescription(true);
     const success = await updateCollection({
       id: collectionId,
-      description: editedDescription || undefined,
+      description: editedDescription ?? undefined,
     });
 
     if (success) {
@@ -289,7 +289,7 @@ export default function CollectionDetailPage({
 
   // Handlers édition inline - Style
   const handleStartEditStyle = useCallback(() => {
-    setEditedStyle((collection?.style || null) as any);
+    setEditedStyle((collection?.style ?? null) as any);
     setEditingStyle(true);
   }, [collection?.style]);
 
@@ -398,7 +398,7 @@ export default function CollectionDetailPage({
 
   // Handlers édition inline - Meta Title
   const handleStartEditMetaTitle = useCallback(() => {
-    setEditedMetaTitle(collection?.meta_title || '');
+    setEditedMetaTitle(collection?.meta_title ?? '');
     setEditingMetaTitle(true);
   }, [collection?.meta_title]);
 
@@ -407,7 +407,7 @@ export default function CollectionDetailPage({
 
     const success = await updateCollection({
       id: collectionId,
-      description: editedMetaTitle || undefined,
+      description: editedMetaTitle ?? undefined,
     });
 
     if (success) {
@@ -428,7 +428,7 @@ export default function CollectionDetailPage({
 
   // Handlers édition inline - Meta Description
   const handleStartEditMetaDescription = useCallback(() => {
-    setEditedMetaDescription(collection?.meta_description || '');
+    setEditedMetaDescription(collection?.meta_description ?? '');
     setEditingMetaDescription(true);
   }, [collection?.meta_description]);
 
@@ -437,7 +437,7 @@ export default function CollectionDetailPage({
 
     const success = await updateCollection({
       id: collectionId,
-      description: editedMetaDescription || undefined,
+      description: editedMetaDescription ?? undefined,
     });
 
     if (success) {

@@ -209,7 +209,7 @@ export default function ExpeditionsPage() {
       });
     void loadSalesOrdersReadyForShipment({
       status: statusFilter !== 'all' ? statusFilter : undefined,
-      search: searchTerm || undefined,
+      search: searchTerm ?? undefined,
     })
       .then(setOrders)
       .catch(error => {

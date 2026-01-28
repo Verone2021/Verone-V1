@@ -86,7 +86,7 @@ export function ResetPasswordDialog({
       onPasswordReset?.();
 
       // Notification succès
-      console.log('Mot de passe réinitialisé avec succès');
+      console.warn('Mot de passe réinitialisé avec succès');
     } catch (error: any) {
       console.error('Erreur réinitialisation mot de passe:', error);
       setError(error.message || "Une erreur inattendue s'est produite");

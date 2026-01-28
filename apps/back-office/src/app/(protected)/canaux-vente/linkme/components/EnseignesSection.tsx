@@ -327,7 +327,7 @@ export function EnseignesSection() {
     setSelectedEnseigne(enseigne);
     setFormData({
       name: enseigne.name,
-      description: enseigne.description || '',
+      description: enseigne.description ?? '',
       logo_url: enseigne.logo_url,
       is_active: enseigne.is_active,
     });
@@ -617,7 +617,7 @@ export function EnseignesSection() {
                         <div className="h-16 w-16 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden border">
                           {enseigne.logo_url ? (
                             <Image
-                              src={getLogoUrl(enseigne.logo_url) || ''}
+                              src={getLogoUrl(enseigne.logo_url) ?? ''}
                               alt={enseigne.name}
                               width={64}
                               height={64}
@@ -783,7 +783,7 @@ export function EnseignesSection() {
                         <div className="h-16 w-16 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden border">
                           {org.logo_url ? (
                             <Image
-                              src={getLogoUrl(org.logo_url) || ''}
+                              src={getLogoUrl(org.logo_url) ?? ''}
                               alt={org.trade_name || org.legal_name}
                               width={64}
                               height={64}
@@ -996,7 +996,7 @@ export function EnseignesSection() {
               {selectedEnseigne?.logo_url && (
                 <div className="h-10 w-10 rounded-lg bg-gray-100 overflow-hidden border">
                   <Image
-                    src={getLogoUrl(selectedEnseigne.logo_url) || ''}
+                    src={getLogoUrl(selectedEnseigne.logo_url) ?? ''}
                     alt={selectedEnseigne.name}
                     width={40}
                     height={40}
@@ -1083,7 +1083,7 @@ export function EnseignesSection() {
                         <div className="flex items-center gap-3">
                           {org.logo_url ? (
                             <Image
-                              src={getLogoUrl(org.logo_url) || ''}
+                              src={getLogoUrl(org.logo_url) ?? ''}
                               alt={org.name}
                               width={32}
                               height={32}

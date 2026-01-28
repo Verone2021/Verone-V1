@@ -93,7 +93,9 @@ export async function POST(_request: NextRequest): Promise<
     const result = await qontoClient.getClientInvoices();
     const invoices = result.client_invoices as unknown as QontoInvoice[];
 
-    console.log(`[Sync Invoices] Found ${invoices.length} invoices from Qonto`);
+    console.warn(
+      `[Sync Invoices] Found ${invoices.length} invoices from Qonto`
+    );
 
     for (const invoice of invoices) {
       try {
@@ -101,7 +103,7 @@ export async function POST(_request: NextRequest): Promise<
         const invoiceNumber =
           invoice.number || invoice.invoice_number || invoice.id;
         // Obtenir la date d'echeance (peut etre 'due_date' ou 'payment_deadline')
-        const dueDate = invoice.due_date || invoice.payment_deadline || null;
+        const dueDate = (invoice.due_date || invoice.payment_deadline) ?? null;
 
         // Calculer les montants
         const totalTtc = invoice.total_amount_cents / 100;
@@ -158,7 +160,7 @@ export async function POST(_request: NextRequest): Promise<
             .insert({
               legal_name: invoice.client.name,
               trade_name: invoice.client.name,
-              email: invoice.client.email || null,
+              email: invoice.client.email ?? null,
               type: 'customer',
               status: 'active',
             })
@@ -167,7 +169,7 @@ export async function POST(_request: NextRequest): Promise<
 
           if (!createError && newOrg) {
             partnerId = newOrg.id;
-            console.log(
+            console.warn(
               `[Sync Invoices] Created placeholder org for ${invoice.client.name}`
             );
           }

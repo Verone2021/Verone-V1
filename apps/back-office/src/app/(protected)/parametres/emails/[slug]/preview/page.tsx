@@ -195,7 +195,7 @@ export default function PreviewEmailTemplatePage() {
                   </label>
                   <Input
                     type="text"
-                    value={variableValues[variable] || ''}
+                    value={variableValues[variable] ?? ''}
                     onChange={e =>
                       setVariableValues(prev => ({
                         ...prev,

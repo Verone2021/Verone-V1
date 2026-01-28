@@ -62,8 +62,8 @@ const IGNORED_VIOLATIONS = [
  * Check if a violation should be ignored
  */
 function shouldIgnoreViolation(report: CSPReport['csp-report']): boolean {
-  const blockedUri = report['blocked-uri'] || '';
-  const sourceFile = report['source-file'] || '';
+  const blockedUri = report['blocked-uri'] ?? '';
+  const sourceFile = report['source-file'] ?? '';
 
   return IGNORED_VIOLATIONS.some(
     pattern => blockedUri.includes(pattern) || sourceFile.includes(pattern)
@@ -79,7 +79,7 @@ function shouldIgnoreViolation(report: CSPReport['csp-report']): boolean {
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     // Parse the CSP report
-    const contentType = request.headers.get('content-type') || '';
+    const contentType = request.headers.get('content-type') ?? '';
     let report: CSPReport;
 
     if (contentType.includes('application/csp-report')) {

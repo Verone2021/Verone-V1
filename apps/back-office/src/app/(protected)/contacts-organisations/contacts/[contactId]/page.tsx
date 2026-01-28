@@ -240,7 +240,7 @@ export default function ContactDetailPage() {
                 )}{' '}
               •{' '}
               {getOrganisationTypeLabel(
-                currentContact.organisation?.type || ''
+                currentContact.organisation?.type ?? ''
               )}
             </span>
             {currentContact.title && (

@@ -276,7 +276,7 @@ export function useLinkMeOrganisationIndividualCustomers(
     queryFn: () =>
       fetchOrganisationIndividualCustomers(
         organisationId!,
-        affiliateId || undefined
+        affiliateId ?? undefined
       ),
     enabled: !!organisationId,
     staleTime: 30000,
@@ -382,18 +382,18 @@ export function useCreateEnseigneOrganisation() {
         .insert({
           enseigne_id: input.enseigne_id,
           legal_name: input.legal_name,
-          trade_name: input.trade_name || null,
-          email: input.email || null,
-          phone: input.phone || null,
-          address_line1: input.address_line1 || null,
-          address_line2: input.address_line2 || null,
-          city: input.city || null,
-          postal_code: input.postal_code || null,
+          trade_name: input.trade_name ?? null,
+          email: input.email ?? null,
+          phone: input.phone ?? null,
+          address_line1: input.address_line1 ?? null,
+          address_line2: input.address_line2 ?? null,
+          city: input.city ?? null,
+          postal_code: input.postal_code ?? null,
           country: input.country || 'FR',
           type: 'customer', // Toujours client
           is_active: true,
           source_type: input.source_type || 'linkme', // Par défaut depuis CMS LinkMe
-          source_affiliate_id: input.source_affiliate_id || null,
+          source_affiliate_id: input.source_affiliate_id ?? null,
         })
         .select()
         .single();
@@ -440,7 +440,7 @@ export function useCreateEnseigneIndividualCustomer() {
         organisation_id: input.organisation_id ?? undefined,
       };
 
-      console.log('📝 Création client particulier:', insertData);
+      console.warn('📝 Création client particulier:', insertData);
 
       const { data, error } = await supabase
         .from('individual_customers')
@@ -453,7 +453,7 @@ export function useCreateEnseigneIndividualCustomer() {
         throw error;
       }
 
-      console.log('✅ Client créé:', data);
+      console.warn('✅ Client créé:', data);
       return data;
     },
     onSuccess: async (_, variables) => {

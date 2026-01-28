@@ -170,7 +170,7 @@ export async function POST(request: NextRequest) {
       console.error('[API Step4 Confirmed] Some emails failed:', failures);
     }
 
-    console.log(
+    console.warn(
       `[API Step4 Confirmed] Sent for order ${orderNumber} - ${results.length} emails`
     );
 

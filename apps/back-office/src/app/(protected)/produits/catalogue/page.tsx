@@ -237,7 +237,7 @@ export default function CataloguePage() {
       id: product.id,
       type: 'product' as const,
       title: product.name,
-      subtitle: product.sku || undefined,
+      subtitle: product.sku ?? undefined,
       url: `/produits/${product.id}`,
     }));
   }, [products]);
@@ -278,12 +278,12 @@ export default function CataloguePage() {
     try {
       if (product.archived_at) {
         await unarchiveProduct(product.id);
-        console.log('✅ Produit restauré:', product.name);
+        console.warn('✅ Produit restauré:', product.name);
         // Rafraîchir la liste des archivés après restauration
         await loadArchivedProductsData();
       } else {
         await archiveProduct(product.id);
-        console.log('✅ Produit archivé:', product.name);
+        console.warn('✅ Produit archivé:', product.name);
         // Rafraîchir la liste des archivés après archivage
         await loadArchivedProductsData();
       }
@@ -300,7 +300,7 @@ export default function CataloguePage() {
     if (confirmed) {
       try {
         await deleteProduct(product.id);
-        console.log('✅ Produit supprimé définitivement:', product.name);
+        console.warn('✅ Produit supprimé définitivement:', product.name);
       } catch (error) {
         console.error('❌ Erreur suppression produit:', error);
       }

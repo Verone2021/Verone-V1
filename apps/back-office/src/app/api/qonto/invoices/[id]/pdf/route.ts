@@ -67,7 +67,7 @@ export async function GET(
 
     // Si PDF local disponible, le servir depuis Supabase Storage
     if (localPdfPath) {
-      console.log(
+      console.warn(
         '[API Invoice PDF] Serving from local storage:',
         localPdfPath
       );
@@ -108,7 +108,7 @@ export async function GET(
     const invoice = await client.getClientInvoiceById(qontoId);
 
     // DEBUG: Logger les champs disponibles pour le PDF
-    console.log('[API Invoice PDF] Fetching from Qonto:', {
+    console.warn('[API Invoice PDF] Fetching from Qonto:', {
       id: invoice.id,
       invoice_number: invoice.invoice_number,
       status: invoice.status,
@@ -121,7 +121,7 @@ export async function GET(
 
     // Si pas de pdf_url, essayer avec attachment_id
     if (!pdfUrl && invoice.attachment_id) {
-      console.log(
+      console.warn(
         '[API Invoice PDF] No pdf_url, trying attachment_id:',
         invoice.attachment_id
       );
@@ -149,7 +149,7 @@ export async function GET(
       );
     }
 
-    console.log('[API Invoice PDF] Fetching PDF from Qonto...');
+    console.warn('[API Invoice PDF] Fetching PDF from Qonto...');
 
     // Télécharger le PDF depuis Qonto
     const pdfResponse = await fetch(pdfUrl);
@@ -171,7 +171,7 @@ export async function GET(
 
     const pdfBuffer = await pdfResponse.arrayBuffer();
 
-    console.log('[API Invoice PDF] PDF buffer size:', pdfBuffer.byteLength);
+    console.warn('[API Invoice PDF] PDF buffer size:', pdfBuffer.byteLength);
 
     // Vérifier que le PDF n'est pas vide
     if (pdfBuffer.byteLength === 0) {

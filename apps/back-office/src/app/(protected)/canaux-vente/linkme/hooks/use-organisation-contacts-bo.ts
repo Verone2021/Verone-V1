@@ -105,8 +105,8 @@ export function useOrganisationContactsBO(organisationId: string | null) {
       }));
 
       // Identifier les contacts clés
-      const primaryContact = contacts.find(c => c.isPrimaryContact) || null;
-      const billingContact = contacts.find(c => c.isBillingContact) || null;
+      const primaryContact = contacts.find(c => c.isPrimaryContact) ?? null;
+      const billingContact = contacts.find(c => c.isBillingContact) ?? null;
 
       return {
         contacts,
@@ -136,8 +136,8 @@ export function useCreateContactBO() {
           first_name: input.firstName,
           last_name: input.lastName,
           email: input.email,
-          phone: input.phone || null,
-          title: input.title || null,
+          phone: input.phone ?? null,
+          title: input.title ?? null,
           is_billing_contact: input.isBillingContact || false,
           is_primary_contact: input.isPrimaryContact || false,
           is_active: true,

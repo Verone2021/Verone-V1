@@ -39,7 +39,7 @@ export default function ClientsParticuliersPage() {
   // Charger uniquement les clients particuliers (individual)
   const { customers, loading, error, refetch } = useCustomers({
     customerType: 'individual',
-    search: searchQuery || undefined,
+    search: searchQuery ?? undefined,
   });
 
   const handleDelete = async (customerId: string, customerName: string) => {

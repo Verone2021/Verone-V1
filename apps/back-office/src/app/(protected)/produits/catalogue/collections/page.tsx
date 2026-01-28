@@ -110,7 +110,7 @@ export default function CollectionsPage() {
     unarchiveCollection,
     addProductsToCollection,
   } = useCollections({
-    search: filters.search || undefined,
+    search: filters.search ?? undefined,
     status: filters.status,
     visibility: filters.visibility,
   });
@@ -259,7 +259,7 @@ export default function CollectionsPage() {
       try {
         if (collection.archived_at) {
           await unarchiveCollection(collection.id);
-          console.log('✅ Collection restaurée:', collection.name);
+          console.warn('✅ Collection restaurée:', collection.name);
           toast({
             title: 'Collection restaurée',
             description: 'La collection a été restaurée avec succès',
@@ -268,7 +268,7 @@ export default function CollectionsPage() {
           await loadArchivedCollectionsData();
         } else {
           await archiveCollection(collection.id);
-          console.log('✅ Collection archivée:', collection.name);
+          console.warn('✅ Collection archivée:', collection.name);
           toast({
             title: 'Collection archivée',
             description: 'La collection a été archivée avec succès',

@@ -95,9 +95,9 @@ export function NewAddressForm({
       postalCode: postalCode.trim(),
       city: city.trim(),
       country: country.trim() || 'FR',
-      legalName: legalName.trim() || undefined,
-      siret: siret.trim() || undefined,
-      vatNumber: vatNumber.trim() || undefined,
+      legalName: legalName.trim() ?? undefined,
+      siret: siret.trim() ?? undefined,
+      vatNumber: vatNumber.trim() ?? undefined,
     });
   };
 
