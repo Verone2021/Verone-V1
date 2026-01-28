@@ -140,7 +140,7 @@ function RestaurantAddressCard({
             )}
           </div>
           <p className="text-xs text-gray-500 mt-0.5">
-            {restaurantName || 'Utiliser adresse du restaurant'}
+            {restaurantName ?? 'Utiliser adresse du restaurant'}
           </p>
         </div>
       </div>

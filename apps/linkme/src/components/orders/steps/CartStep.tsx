@@ -68,7 +68,7 @@ function formatCurrency(value: number): string {
 
 export function CartStep({
   formData,
-  errors,
+  errors: _errors,
   cartTotals,
   onRemove,
   onUpdateQuantity,

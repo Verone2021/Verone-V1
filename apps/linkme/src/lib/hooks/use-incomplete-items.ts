@@ -59,7 +59,7 @@ export function useIncompleteItems() {
       items.push({
         id: `org-${org.id}`,
         type: 'organisation',
-        title: org.trade_name || org.legal_name || 'Organisation',
+        title: org.trade_name ?? org.legal_name ?? 'Organisation',
         description: 'Type de propriété manquant (Succursale/Franchise)',
         route: `/organisations?highlight=${org.id}`,
         priority: 'high',

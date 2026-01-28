@@ -44,7 +44,7 @@ export function AddressCard({
   badge,
 }: AddressCardProps) {
   // Build display label
-  const displayLabel = address.label || address.addressLine1;
+  const displayLabel = address.label ?? address.addressLine1;
   const displayCity = address.city
     ? `${address.postalCode} ${address.city}`
     : '';
