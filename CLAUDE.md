@@ -295,6 +295,27 @@ npm run build             # Build production réussit
 npm run e2e:smoke         # Tests UI si modification frontend
 ```
 
+#### 🔧 Correction ESLint (Si warnings détectés)
+
+**Workflow `/fix-warnings`** : Si ESLint détecte des warnings, utiliser le workflow intelligent :
+
+📖 **Documentation complète** : `.claude/commands/fix-warnings.md`
+
+**Approche 2026 (Documentation-First)** :
+
+1. **Discovery** : Consulter docs officielles (MCP Context7) pour pattern correct
+2. **Analysis** : Chercher patterns existants dans le projet
+3. **Planning** : Prioriser fichiers simples → complexes
+4. **Fix** : Un fichier à la fois, TOUS les warnings du fichier
+5. **Validate** : Ratchet Effect (--max-warnings=0) valide automatiquement
+
+**Règles strictes** :
+
+- ❌ Jamais de remplacement aveugle (`sed` global)
+- ❌ Jamais `--no-verify` pour contourner hooks
+- ✅ Pattern officiel (React, Next.js, TypeScript) d'abord
+- ✅ Boy Scout Rule : Fichier plus propre après modification
+
 ---
 
 ### Actions Git (après VERIFY réussi)

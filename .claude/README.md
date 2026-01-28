@@ -6,6 +6,7 @@
 ## Philosophie
 
 **Règle**: Tout le kit Claude perso vit **exclusivement dans `.claude/`** de ce repo.
+
 - Pas de dépendance à `~/.claude/` (portable, copiable entre repos)
 - Wrappers de compatibilité pour les hooks (jamais de casse)
 - Automatisation safe (moves only, no deletes)
@@ -24,9 +25,10 @@
 │   ├── frontend-architect.md
 │   ├── verone-debug-investigator.md
 │   └── verone-orchestrator.md
-└── commands/               # 5 commands core
+└── commands/               # 6 commands core
     ├── db.md
     ├── explore.md
+    ├── fix-warnings.md      # 🆕 ESLint fix workflow 2026
     ├── implement.md
     ├── plan.md
     └── pr.md
@@ -37,6 +39,7 @@
 Règles de comportement pour Claude Code, organisées par domaine.
 
 **Structure** :
+
 - `rules/general.md` - Règles cross-cutting
 - `rules/frontend/` - Next.js, React, UI
 - `rules/backend/` - API, middleware, auth
@@ -54,22 +57,28 @@ Le hook PreToolUse dans `settings.json` empêche les commits sur `main`:
 
 ```json
 {
-  "PreToolUse": [{
-    "matcher": "Bash(git commit*)",
-    "hooks": [{
-      "type": "command",
-      "command": "bash -c '...if [ \"$BRANCH\" = \"main\" ]...exit 1...'"
-    }]
-  }]
+  "PreToolUse": [
+    {
+      "matcher": "Bash(git commit*)",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "bash -c '...if [ \"$BRANCH\" = \"main\" ]...exit 1...'"
+        }
+      ]
+    }
+  ]
 }
 ```
 
 **Comportement:**
+
 - ❌ Bloque `git commit` sur `main` ou `master`
 - ❌ Bloque commits sans Task ID valide
 - ✅ Autorise commits sur feature branches avec format `[APP-XXX-NNN]` ou `[NO-TASK]`
 
 **Message d'erreur:**
+
 ```
 ❌ INTERDIT de commit sur main. Créer une feature branch: git checkout -b feat/XXX
 ```
@@ -80,19 +89,25 @@ Le hook Stop notifie quand une tâche Claude Code est terminée:
 
 ```json
 {
-  "Stop": [{
-    "hooks": [{
-      "type": "command",
-      "command": "$CLAUDE_PROJECT_DIR/.claude/scripts/task-completed.sh"
-    }]
-  }]
+  "Stop": [
+    {
+      "hooks": [
+        {
+          "type": "command",
+          "command": "$CLAUDE_PROJECT_DIR/.claude/scripts/task-completed.sh"
+        }
+      ]
+    }
+  ]
 }
 ```
 
 ## Règles "Expert"
 
 ### Wrappers de compatibilité
+
 Les scripts dans `.claude/scripts/` sont des **wrappers** qui:
+
 1. Cherchent le script réel dans `scripts/claude/`
 2. Si trouvé et exécutable → l'appellent
 3. Sinon → log "SKIP" et `exit 0`
@@ -100,27 +115,29 @@ Les scripts dans `.claude/scripts/` sont des **wrappers** qui:
 **Résultat**: Jamais de "hook error", même si le script cible n'existe pas.
 
 ### Portabilité
+
 - **Pas de chemins absolus** (`/Users/...`) dans les scripts
 - Utiliser `$SCRIPT_DIR`, `$PROJECT_ROOT`, `$CLAUDE_PROJECT_DIR`
 - Tester avec `bash -n script.sh` avant commit
 
 ### Safe by default
+
 - `set -euo pipefail` en haut de chaque script
 - Fallback `|| true` pour les opérations non critiques
 - `exit 0` si prérequis manquant (pas d'échec silencieux)
 
 ## Où les choses vivent
 
-| Item | Location |
-|------|----------|
-| Permissions MCP | `.claude/settings.json` |
-| Wrappers hooks | `.claude/scripts/` |
-| Agents core | `.claude/agents/` |
-| Commands core | `.claude/commands/` |
-| Scripts projet | `scripts/claude/` |
-| Workflow docs | `docs/claude/` |
-| Plans | `.claude/work/` |
-| Archives | `archive/YYYY-MM/claude/` |
+| Item            | Location                  |
+| --------------- | ------------------------- |
+| Permissions MCP | `.claude/settings.json`   |
+| Wrappers hooks  | `.claude/scripts/`        |
+| Agents core     | `.claude/agents/`         |
+| Commands core   | `.claude/commands/`       |
+| Scripts projet  | `scripts/claude/`         |
+| Workflow docs   | `docs/claude/`            |
+| Plans           | `.claude/work/`           |
+| Archives        | `archive/YYYY-MM/claude/` |
 
 ## Hygiène hebdomadaire
 
@@ -134,6 +151,7 @@ gh workflow run repo-hygiene-weekly --field dry_run=false
 ```
 
 **Script**: `scripts/maintenance/repo-hygiene.sh`
+
 - Moves only, no deletes
 - Skip si fichier absent
 - **Mode manuel uniquement** (workflow_dispatch)
@@ -141,11 +159,13 @@ gh workflow run repo-hygiene-weekly --field dry_run=false
 ## Règles de Génération de Fichiers
 
 **INTERDIT** d'écrire directement sous `.claude/`:
+
 - ❌ Rapports/audits temporels
 - ❌ Backups JSON
 - ❌ Logs de session
 
 **Destinations autorisées**:
+
 - ✅ Rapports sessions → `.claude/audits/generated/` (ignoré)
 - ✅ Backups JSON → `.claude/backups/` (ignoré)
 - ✅ Plans session → `.claude/plans/` (auto-ignorés `*-agent-*.md`)
@@ -153,9 +173,10 @@ gh workflow run repo-hygiene-weekly --field dry_run=false
 - ✅ Docs stables → `docs/claude/`
 
 **Fichiers trackés autorisés uniquement**:
+
 - README.md, MANUAL_MODE.md, settings.json
-- agents/*.md, commands/*.md, scripts/*.sh
-- plans/README.md, plans/*-template.md
+- agents/_.md, commands/_.md, scripts/\*.sh
+- plans/README.md, plans/\*-template.md
 - audits/README.md (doc règles uniquement)
 
 ## Copier ce kit vers un autre repo
@@ -188,6 +209,7 @@ curl -fsSL https://bun.sh/install | bash
 ```
 
 **Pourquoi bun x ccusage@17.2.1** :
+
 - Version stable pinnée (évite instabilité de 18.x)
 - Commande directe (pas de path resolution nécessaire)
 - Performance optimale avec caching bun
@@ -209,6 +231,7 @@ npm install -g ccusage@17.2.1
 ```
 
 **⚠️ Important** :
+
 - `$CLAUDE_PROJECT_DIR` ne fonctionne PAS dans `statusLine.command` (unsupported, GitHub #7925)
 - Toujours utiliser commande directe ou chemin absolu
 - Restart Claude Code requis après modification de `settings.json`
