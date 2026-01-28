@@ -133,6 +133,7 @@ export function useSubmitEnseigneOrder(): UseSubmitEnseigneOrderReturn {
         // Cette RPC bypass le RLS et permet aux clients anonymes de creer
         // des commandes en toute securite (validation cote serveur PostgreSQL)
 
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call
         const { data: result, error: rpcError } = await (supabase.rpc as any)(
           'create_public_linkme_order',
           {
@@ -148,7 +149,9 @@ export function useSubmitEnseigneOrder(): UseSubmitEnseigneOrderReturn {
 
         // Gerer les erreurs de l'appel RPC
         if (rpcError) {
-          throw new Error(`Erreur création commande: ${rpcError.message}`);
+          const errorMessage =
+            rpcError instanceof Error ? rpcError.message : 'Erreur inconnue';
+          throw new Error(`Erreur création commande: ${errorMessage}`);
         }
 
         // La RPC retourne un objet JSONB
@@ -156,7 +159,7 @@ export function useSubmitEnseigneOrder(): UseSubmitEnseigneOrderReturn {
 
         if (!rpcResult?.success) {
           throw new Error(
-            rpcResult?.error || 'Erreur inconnue lors de la création'
+            rpcResult?.error ?? 'Erreur inconnue lors de la création'
           );
         }
 
@@ -178,7 +181,7 @@ export function useSubmitEnseigneOrder(): UseSubmitEnseigneOrderReturn {
               .eq('id', data.existingOrganisationId)
               .single();
             organisationName =
-              orgData?.trade_name || orgData?.legal_name || null;
+              orgData?.trade_name ?? orgData?.legal_name ?? null;
           } else if (data.isNewRestaurant) {
             organisationName =
               data.newOrganisation.tradeName ||
@@ -206,6 +209,7 @@ export function useSubmitEnseigneOrder(): UseSubmitEnseigneOrderReturn {
               totalTtc: totalTtc,
               source: 'client',
 
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
               affiliateName: (selectionData?.linkme_affiliates as any)?.name,
               selectionName: selectionData?.name,
             }),
@@ -220,9 +224,9 @@ export function useSubmitEnseigneOrder(): UseSubmitEnseigneOrderReturn {
         // ---------------------------------------------------------------
         return {
           success: true,
-          orderNumber: orderNumber || undefined,
-          orderId: orderId || undefined,
-          customerId: customerId || undefined,
+          orderNumber: orderNumber ?? undefined,
+          orderId: orderId ?? undefined,
+          customerId: customerId ?? undefined,
         };
       } catch (err) {
         const errorMessage =

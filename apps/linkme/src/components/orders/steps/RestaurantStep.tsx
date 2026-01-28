@@ -81,7 +81,7 @@ function getOwnershipBadge(
 
 export function RestaurantStep({
   formData,
-  errors,
+  errors: _errors,
   onUpdate,
 }: RestaurantStepProps) {
   const [searchQuery, setSearchQuery] = useState('');
@@ -118,9 +118,9 @@ export function RestaurantStep({
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(
         org =>
-          (org.trade_name || '').toLowerCase().includes(query) ||
-          (org.legal_name || '').toLowerCase().includes(query) ||
-          (org.city || '').toLowerCase().includes(query)
+          (org.trade_name ?? '').toLowerCase().includes(query) ||
+          (org.legal_name ?? '').toLowerCase().includes(query) ||
+          (org.city ?? '').toLowerCase().includes(query)
       );
     }
 
@@ -172,7 +172,7 @@ export function RestaurantStep({
     onUpdate({
       mode: 'existing',
       existingId: org.id,
-      existingName: org.trade_name || org.legal_name,
+      existingName: org.trade_name ?? org.legal_name,
       existingCity: org.city ?? undefined,
       existingOwnershipType: org.ownership_type as
         | 'succursale'
@@ -362,7 +362,7 @@ export function RestaurantStep({
                 {paginatedOrganisations.map(org => {
                   const isSelected = formData.restaurant.existingId === org.id;
                   const badge = getOwnershipBadge(org.ownership_type);
-                  const displayName = org.trade_name || org.legal_name;
+                  const displayName = org.trade_name ?? org.legal_name;
 
                   return (
                     <Card
@@ -402,7 +402,7 @@ export function RestaurantStep({
                               <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0 ml-auto" />
                             )}
                           </div>
-                          {(org.city || org.shipping_city) && (
+                          {(org.city ?? org.shipping_city) && (
                             <div className="flex items-start gap-1 mt-1">
                               <MapPin className="h-3 w-3 flex-shrink-0 text-gray-400 mt-0.5" />
                               <div className="text-xs text-gray-500 leading-tight">
@@ -411,8 +411,8 @@ export function RestaurantStep({
                                 )}
                                 <div>
                                   {[
-                                    org.shipping_postal_code || org.postal_code,
-                                    org.shipping_city || org.city,
+                                    org.shipping_postal_code ?? org.postal_code,
+                                    org.shipping_city ?? org.city,
                                   ]
                                     .filter(Boolean)
                                     .join(' ')}
@@ -493,7 +493,7 @@ export function RestaurantStep({
                     </div>
                   </div>
                   <RadioGroup
-                    value={formData.restaurant.existingOwnershipType || ''}
+                    value={formData.restaurant.existingOwnershipType ?? ''}
                     onValueChange={value => {
                       const organisationId = formData.restaurant.existingId;
                       if (!organisationId) return;
@@ -587,7 +587,7 @@ export function RestaurantStep({
                 Type de restaurant <span className="text-red-500">*</span>
               </Label>
               <RadioGroup
-                value={formData.restaurant.newRestaurant?.ownershipType || ''}
+                value={formData.restaurant.newRestaurant?.ownershipType ?? ''}
                 onValueChange={value =>
                   handleNewRestaurantChange('ownershipType', value)
                 }
@@ -633,7 +633,7 @@ export function RestaurantStep({
                 id="tradeName"
                 type="text"
                 placeholder="Ex: Restaurant La Belle Vue"
-                value={formData.restaurant.newRestaurant?.tradeName || ''}
+                value={formData.restaurant.newRestaurant?.tradeName ?? ''}
                 onChange={e =>
                   handleNewRestaurantChange('tradeName', e.target.value)
                 }
@@ -645,7 +645,7 @@ export function RestaurantStep({
               label="Adresse du restaurant"
               placeholder="Rechercher une adresse..."
               onSelect={handleAddressSelect}
-              value={formData.restaurant.newRestaurant?.address || ''}
+              value={formData.restaurant.newRestaurant?.address ?? ''}
               onChange={value => handleNewRestaurantChange('address', value)}
             />
 
@@ -684,7 +684,7 @@ export function RestaurantStep({
                 id="city"
                 type="text"
                 placeholder="Paris"
-                value={formData.restaurant.newRestaurant?.city || ''}
+                value={formData.restaurant.newRestaurant?.city ?? ''}
                 onChange={e =>
                   handleNewRestaurantChange('city', e.target.value)
                 }

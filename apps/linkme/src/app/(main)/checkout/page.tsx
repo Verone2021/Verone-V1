@@ -271,8 +271,8 @@ export default function CheckoutPage() {
           unit_price_ht: item.selling_price_ht,
           total_price_ht: item.selling_price_ht * item.quantity,
         })),
-        affiliate_id: affiliateId || '',
-        selection_id: selectionId || '',
+        affiliate_id: affiliateId ?? '',
+        selection_id: selectionId ?? '',
         total_ht: totalHT,
         total_ttc: totalTTC,
         total_tva: totalTVA,
@@ -285,10 +285,15 @@ export default function CheckoutPage() {
         body: JSON.stringify(orderData),
       });
 
-      const result = await response.json();
+      const result = (await response.json()) as {
+        success: boolean;
+        token?: string;
+        order_ref?: string;
+        error?: string;
+      };
 
       if (!result.success || !result.token) {
-        throw new Error(result.error || 'Échec de création de la commande');
+        throw new Error(result.error ?? 'Échec de création de la commande');
       }
 
       // Déterminer le mode (sandbox ou prod) via variable d'environnement
