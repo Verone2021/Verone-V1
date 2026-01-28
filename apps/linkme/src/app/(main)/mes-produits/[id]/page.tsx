@@ -93,17 +93,17 @@ export default function EditProduitPage() {
 
       setFormData({
         name: product.name || '',
-        description: product.description || '',
+        description: product.description ?? '',
         affiliate_payout_ht: product.affiliate_payout_ht?.toString() || '',
         store_at_verone: !!hasAllDimensions,
-        length_cm: product.dimensions?.length_cm?.toString() || '',
-        width_cm: product.dimensions?.width_cm?.toString() || '',
-        height_cm: product.dimensions?.height_cm?.toString() || '',
+        length_cm: product.dimensions?.length_cm?.toString() ?? '',
+        width_cm: product.dimensions?.width_cm?.toString() ?? '',
+        height_cm: product.dimensions?.height_cm?.toString() ?? '',
       });
     }
   }, [product]);
 
-  const canEdit = linkMeRole && CAN_EDIT_ROLES.includes(linkMeRole.role);
+  const _canEdit = linkMeRole && CAN_EDIT_ROLES.includes(linkMeRole.role);
   const isDraft = product?.affiliate_approval_status === 'draft';
   const isRejected = product?.affiliate_approval_status === 'rejected';
   const isPending = product?.affiliate_approval_status === 'pending_approval';

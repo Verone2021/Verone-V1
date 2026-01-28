@@ -13,10 +13,10 @@ export default function PointsDeVentePage() {
   const mappedOrganisations = useMemo(() => {
     return organisations.map(org => ({
       id: org.id,
-      name: org.trade_name || org.legal_name,
+      name: org.trade_name ?? org.legal_name,
       address: org.shipping_address_line1,
-      city: org.shipping_city || org.city,
-      postalCode: org.shipping_postal_code || org.postal_code,
+      city: org.shipping_city ?? org.city,
+      postalCode: org.shipping_postal_code ?? org.postal_code,
       country: org.country,
       phone: null,
       email: null,

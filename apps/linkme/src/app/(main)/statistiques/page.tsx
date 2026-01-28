@@ -159,13 +159,13 @@ export default function StatistiquesPage() {
               </p>
             </div>
             <Badge color="gray" size="sm" className="text-xs">
-              {data?.selectionsPerformance?.length || 0} sélections
+              {data?.selectionsPerformance?.length ?? 0} sélections
             </Badge>
           </div>
 
           {isLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {[...Array(3)].map((_, i) => (
+              {Array.from({ length: 3 }).map((_, i) => (
                 <Card key={i} className="p-0 overflow-hidden">
                   <div className="animate-pulse">
                     <div className="h-24 bg-gray-200" />
