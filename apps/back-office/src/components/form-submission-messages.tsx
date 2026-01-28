@@ -198,7 +198,19 @@ export function FormSubmissionMessages({
       )}
 
       {/* Formulaire ajout message */}
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form
+        onSubmit={(e) => {
+          void handleSubmit(e).catch((error: unknown) => {
+            console.error('[FormSubmissionMessages] Submit failed:', error);
+            setSendError(
+              error instanceof Error
+                ? error.message
+                : "Une erreur inattendue s'est produite"
+            );
+          });
+        }}
+        className="space-y-4"
+      >
         {sendError && (
           <div
             className="p-3 rounded flex items-start gap-2"

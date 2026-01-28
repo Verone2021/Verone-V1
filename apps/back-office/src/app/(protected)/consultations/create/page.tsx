@@ -251,7 +251,19 @@ export default function CreateConsultationPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form
+                onSubmit={(e) => {
+                  void handleSubmit(e).catch((error: unknown) => {
+                    console.error('[CreateConsultationPage] Submit failed:', error);
+                    setError(
+                      error instanceof Error
+                        ? error.message
+                        : "Une erreur inattendue s'est produite"
+                    );
+                  });
+                }}
+                className="space-y-6"
+              >
                 {/* Informations client */}
                 <div className="space-y-4">
                   <h3 className="text-lg font-medium text-black">

@@ -212,7 +212,19 @@ export function FamilyCrudForm({
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form
+          onSubmit={(e) => {
+            void handleSubmit(e).catch((error: unknown) => {
+              console.error('[FamilyCrudForm] Submit failed:', error);
+              setError(
+                error instanceof Error
+                  ? error.message
+                  : "Une erreur inattendue s'est produite"
+              );
+            });
+          }}
+          className="space-y-6"
+        >
           {/* Sélection parent pour catégories et sous-catégories */}
           {(type === 'category' || type === 'subcategory') && (
             <div className="space-y-2">
