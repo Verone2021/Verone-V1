@@ -83,7 +83,10 @@ export function FAQSection({
     });
   };
 
-  const hasContact = contactInfo.name || contactInfo.email || contactInfo.phone;
+  const hasContact =
+    Boolean(contactInfo.name) ||
+    Boolean(contactInfo.email) ||
+    Boolean(contactInfo.phone);
 
   return (
     <section id="faq-section" className="bg-gray-50 py-12">

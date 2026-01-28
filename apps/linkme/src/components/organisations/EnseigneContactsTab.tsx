@@ -37,7 +37,7 @@ interface EnseigneContactsTabProps {
 
 export function EnseigneContactsTab({
   enseigneId,
-  parentOrgId,
+  parentOrgId: _parentOrgId,
 }: EnseigneContactsTabProps) {
   const [showCreateModal, setShowCreateModal] = useState(false);
 
@@ -49,7 +49,7 @@ export function EnseigneContactsTab({
     true // Include enseigne contacts
   );
 
-  const enseigneContacts = contactsData?.contacts || [];
+  const enseigneContacts = contactsData?.contacts ?? [];
 
   if (isLoading) {
     return (

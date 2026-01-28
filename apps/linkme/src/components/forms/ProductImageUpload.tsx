@@ -17,7 +17,7 @@ import {
   X,
   Loader2,
   Star,
-  StarOff,
+  StarOff as _StarOff,
   ImagePlus,
   AlertCircle,
 } from 'lucide-react';
@@ -176,7 +176,7 @@ export function ProductImageUpload({
               {image.public_url ? (
                 <Image
                   src={image.public_url}
-                  alt={image.alt_text || 'Image produit'}
+                  alt={image.alt_text ?? 'Image produit'}
                   fill
                   className="object-cover"
                   sizes="(max-width: 640px) 50vw, 33vw"
@@ -313,11 +313,11 @@ export function ProductImageUpload({
       )}
 
       {/* Erreur */}
-      {(localError || uploadImage.error) && (
+      {(Boolean(localError) || Boolean(uploadImage.error)) && (
         <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
           <AlertCircle className="h-4 w-4 text-red-500 flex-shrink-0" />
           <p className="text-sm text-red-600">
-            {localError ||
+            {localError ??
               (uploadImage.error instanceof Error
                 ? uploadImage.error.message
                 : "Erreur lors de l'upload")}

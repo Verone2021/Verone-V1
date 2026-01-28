@@ -11,7 +11,13 @@
  */
 
 import { Card, Badge } from '@verone/ui';
-import { User, Building2, Share2, Mail, Phone } from 'lucide-react';
+import {
+  User as _User,
+  Building2 as _Building2,
+  Share2,
+  Mail,
+  Phone,
+} from 'lucide-react';
 
 import type { OrganisationContact } from '@/lib/hooks/use-organisation-contacts';
 
@@ -79,13 +85,13 @@ export function ContactDisplayCard({
                 <Mail className="h-3.5 w-3.5 flex-shrink-0" />
                 <span className="truncate">{contact.email}</span>
               </a>
-              {(contact.phone || contact.mobile) && (
+              {(Boolean(contact.phone) || Boolean(contact.mobile)) && (
                 <a
-                  href={`tel:${contact.phone || contact.mobile}`}
+                  href={`tel:${contact.phone ?? contact.mobile}`}
                   className="text-sm text-gray-600 hover:underline flex items-center gap-1.5"
                 >
                   <Phone className="h-3.5 w-3.5 flex-shrink-0" />
-                  <span>{contact.phone || contact.mobile}</span>
+                  <span>{contact.phone ?? contact.mobile}</span>
                 </a>
               )}
             </div>
