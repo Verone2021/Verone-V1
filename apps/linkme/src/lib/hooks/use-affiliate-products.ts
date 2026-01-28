@@ -106,7 +106,7 @@ export function useAffiliateProducts() {
           throw error;
         }
 
-        return (data || []) as AffiliateProduct[];
+        return (data ?? []) as AffiliateProduct[];
       }
 
       // Pour enseigne_admin, utiliser la RPC existante
@@ -124,7 +124,7 @@ export function useAffiliateProducts() {
         throw error;
       }
 
-      return (data || []) as AffiliateProduct[];
+      return (data ?? []) as AffiliateProduct[];
     },
     enabled: !!enseigneId || (isOrgIndependante && !!organisationId),
     staleTime: 30000,
@@ -164,7 +164,7 @@ export function useAffiliateProduct(productId: string | undefined) {
 
       // RPC returns array, get first element
       const product = Array.isArray(data) ? data[0] : data;
-      return product || null;
+      return product ?? null;
     },
     enabled: !!productId && !!enseigneId,
   });
@@ -243,10 +243,10 @@ export function useCreateAffiliateProduct() {
       const insertData: Record<string, unknown> = {
         name: input.name,
         sku,
-        description: input.description || null,
+        description: input.description ?? null,
         affiliate_payout_ht: input.affiliate_payout_ht,
         affiliate_approval_status: 'draft',
-        dimensions: input.dimensions || null,
+        dimensions: input.dimensions ?? null,
         enseigne_id: targetEnseigneId,
         created_by_affiliate: affiliate.id,
         product_status: 'draft',
@@ -382,7 +382,7 @@ export function useAffiliateProductPrice(
         'calculate_affiliate_product_price',
         {
           p_product_id: productId,
-          p_margin_rate: marginRate || null,
+          p_margin_rate: marginRate ?? null,
         }
       );
 
