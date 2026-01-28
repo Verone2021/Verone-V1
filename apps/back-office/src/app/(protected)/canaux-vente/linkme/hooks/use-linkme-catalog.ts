@@ -14,8 +14,20 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createClient } from '@verone/utils/supabase/client';
+import type { Database } from '@verone/types';
 
 import type { LinkMeProductDetail } from '../types';
+
+// Types Supabase pour ce hook
+type ChannelPricing = Database['public']['Tables']['channel_pricing']['Row'];
+type Product = Database['public']['Tables']['products']['Row'];
+type LinkMeAffiliate = Database['public']['Tables']['linkme_affiliates']['Row'];
+type ProductImage = Database['public']['Tables']['product_images']['Row'];
+type Subcategory = Database['public']['Tables']['subcategories']['Row'];
+type Category = Database['public']['Tables']['categories']['Row'];
+type Family = Database['public']['Tables']['families']['Row'];
+type Organisation = Database['public']['Tables']['organisations']['Row'];
+type Enseigne = Database['public']['Tables']['enseignes']['Row'];
 
 // ID du canal LinkMe dans sales_channels
 const LINKME_CHANNEL_ID = '93c68db1-5a30-4168-89ec-6383152be405';
@@ -118,7 +130,7 @@ async function fetchLinkMeCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
 
   const affiliatedEnseigneIds = new Set<string>();
   const affiliatedOrgIds = new Set<string>();
-  (affiliates || []).forEach((a: any) => {
+  (affiliates || []).forEach(a => {
     if (a.enseigne_id) affiliatedEnseigneIds.add(a.enseigne_id);
     if (a.organisation_id) affiliatedOrgIds.add(a.organisation_id);
   });
@@ -178,7 +190,7 @@ async function fetchLinkMeCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
   if (!data || data.length === 0) return [];
 
   // Récupérer les images primaires pour ces produits
-  const productIds = data.map((cp: any) => cp.product_id);
+  const productIds = data.map(cp => cp.product_id);
   const { data: images } = await supabase
     .from('product_images')
     .select('product_id, public_url')
@@ -186,13 +198,13 @@ async function fetchLinkMeCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
     .eq('is_primary', true);
 
   const imageMap = new Map(
-    (images || []).map((img: any) => [img.product_id, img.public_url])
+    (images || []).map(img => [img.product_id, img.public_url])
   );
 
   // Récupérer les sous-catégories avec hiérarchie complète (catégorie + famille)
   const subcategoryIds = data
-    .map((cp: any) => cp.products?.subcategory_id)
-    .filter(Boolean);
+    .map(cp => cp.products?.subcategory_id)
+    .filter((id): id is string => !!id);
 
   const { data: subcategoriesWithHierarchy } = await supabase
     .from('subcategories')
@@ -216,15 +228,15 @@ async function fetchLinkMeCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
   interface CategoryHierarchy {
     subcategory_id: string;
     subcategory_name: string;
-    category_id: string;
+    category_id: string | null;
     category_name: string;
-    family_id: string;
+    family_id: string | null;
     family_name: string;
     full_path: string;
   }
 
   const hierarchyMap = new Map<string, CategoryHierarchy>();
-  (subcategoriesWithHierarchy || []).forEach((sc: any) => {
+  (subcategoriesWithHierarchy || []).forEach(sc => {
     const familyName = sc.category?.family?.name || '';
     const categoryName = sc.category?.name || '';
     const subcategoryName = sc.name || '';
@@ -237,48 +249,46 @@ async function fetchLinkMeCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
       family_id: sc.category?.family?.id || null,
       family_name: familyName,
       full_path: [familyName, categoryName, subcategoryName]
-        .filter(Boolean)
+        .filter((id): id is string => !!id)
         .join(' > '),
     });
   });
 
   // Récupérer les fournisseurs
   const supplierIds = data
-    .map((cp: any) => cp.products?.supplier_id)
-    .filter(Boolean);
+    .map(cp => cp.products?.supplier_id)
+    .filter((id): id is string => !!id);
   const { data: suppliers } = await supabase
     .from('organisations')
     .select('id, legal_name')
     .in('id', supplierIds);
 
-  const supplierMap = new Map(
-    (suppliers || []).map((s: any) => [s.id, s.legal_name])
-  );
+  const supplierMap = new Map((suppliers || []).map(s => [s.id, s.legal_name]));
 
   // Récupérer les enseignes (produits sur mesure)
   const enseigneIds = data
-    .map((cp: any) => cp.products?.enseigne_id)
-    .filter(Boolean);
+    .map(cp => cp.products?.enseigne_id)
+    .filter((id): id is string => !!id);
   const enseigneMap = new Map<string, string>();
   if (enseigneIds.length > 0) {
     const { data: enseignes } = await supabase
       .from('enseignes')
       .select('id, name')
       .in('id', enseigneIds);
-    (enseignes || []).forEach((e: any) => enseigneMap.set(e.id, e.name));
+    (enseignes || []).forEach(e => enseigneMap.set(e.id, e.name));
   }
 
   // Récupérer les organisations assignées (produits sur mesure)
   const assignedClientIds = data
-    .map((cp: any) => cp.products?.assigned_client_id)
-    .filter(Boolean);
+    .map(cp => cp.products?.assigned_client_id)
+    .filter((id): id is string => !!id);
   const assignedClientMap = new Map<string, string>();
   if (assignedClientIds.length > 0) {
     const { data: assignedOrgs } = await supabase
       .from('organisations')
       .select('id, trade_name, legal_name')
       .in('id', assignedClientIds);
-    (assignedOrgs || []).forEach((o: any) =>
+    (assignedOrgs || []).forEach(o =>
       assignedClientMap.set(o.id, o.trade_name || o.legal_name)
     );
   }
@@ -286,7 +296,7 @@ async function fetchLinkMeCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
   // Mapper les données avec hiérarchie complète
   return (
     data
-      .map((cp: any) => {
+      .map(cp => {
         const subcategoryId = cp.products?.subcategory_id;
         const hierarchy = subcategoryId
           ? hierarchyMap.get(subcategoryId)
@@ -403,7 +413,7 @@ async function fetchEligibleProducts(): Promise<EligibleProduct[]> {
   }
 
   // Récupérer les images primaires pour ces produits
-  const productIds = (data || []).map((p: any) => p.id);
+  const productIds = (data || []).map(p => p.id);
   const { data: images } = await supabase
     .from('product_images')
     .select('product_id, public_url')
@@ -411,11 +421,11 @@ async function fetchEligibleProducts(): Promise<EligibleProduct[]> {
     .eq('is_primary', true);
 
   const imageMap = new Map(
-    (images || []).map((img: any) => [img.product_id, img.public_url])
+    (images || []).map(img => [img.product_id, img.public_url])
   );
 
   // Mapper les données
-  return (data || []).map((p: any) => ({
+  return (data || []).map(p => ({
     id: p.id,
     name: p.name,
     reference: p.sku,
@@ -1296,7 +1306,7 @@ export function useLinkMeProductVariants(productId: string | null) {
       if (!allVariants || allVariants.length === 0) return [];
 
       // 3. Filtrer par présence dans channel_pricing (catalogue LinkMe)
-      const variantIds = allVariants.map((v: any) => v.id);
+      const variantIds = allVariants.map(v => v.id);
       const { data: catalogEntries } = await supabase
         .from('channel_pricing')
         .select('product_id')
@@ -1305,18 +1315,18 @@ export function useLinkMeProductVariants(productId: string | null) {
 
       // Set des product_id présents dans le catalogue LinkMe
       const catalogProductIds = new Set(
-        (catalogEntries || []).map((e: any) => e.product_id)
+        (catalogEntries || []).map(e => e.product_id)
       );
 
       // Filtrer les variantes pour ne garder que celles dans le catalogue
-      const variantsInCatalog = allVariants.filter((v: any) =>
+      const variantsInCatalog = allVariants.filter(v =>
         catalogProductIds.has(v.id)
       );
 
       if (variantsInCatalog.length === 0) return [];
 
       // 4. Récupérer les images primaires pour les variantes filtrées
-      const filteredIds = variantsInCatalog.map((v: any) => v.id);
+      const filteredIds = variantsInCatalog.map(v => v.id);
       const { data: images } = await supabase
         .from('product_images')
         .select('product_id, public_url')
@@ -1325,10 +1335,10 @@ export function useLinkMeProductVariants(productId: string | null) {
 
       // Map des images par product_id
       const imageMap = new Map(
-        (images || []).map((img: any) => [img.product_id, img.public_url])
+        (images || []).map(img => [img.product_id, img.public_url])
       );
 
-      return variantsInCatalog.map((v: any) => ({
+      return variantsInCatalog.map(v => ({
         id: v.id,
         sku: v.sku,
         name: v.name,
@@ -1398,7 +1408,7 @@ async function fetchSourcingProducts(): Promise<SourcingProduct[]> {
   const affiliatedEnseigneIds = new Set<string>();
   const affiliatedOrgIds = new Set<string>();
 
-  (affiliates || []).forEach((a: any) => {
+  (affiliates || []).forEach(a => {
     if (a.enseigne_id) affiliatedEnseigneIds.add(a.enseigne_id);
     if (a.organisation_id) affiliatedOrgIds.add(a.organisation_id);
   });
@@ -1440,7 +1450,7 @@ async function fetchSourcingProducts(): Promise<SourcingProduct[]> {
   if (!data || data.length === 0) return [];
 
   // 3. Filtrer pour ne garder que les produits des enseignes/organisations avec affiliés
-  const filteredData = data.filter((p: any) => {
+  const filteredData = data.filter(p => {
     // Produit avec enseigne_id → vérifier si l'enseigne a des affiliés
     if (p.enseigne_id && affiliatedEnseigneIds.has(p.enseigne_id)) {
       return true;
@@ -1455,19 +1465,19 @@ async function fetchSourcingProducts(): Promise<SourcingProduct[]> {
   if (filteredData.length === 0) return [];
 
   // Récupérer les IDs pour les jointures (depuis filteredData, pas data)
-  const productIds = filteredData.map((p: any) => p.id);
+  const productIds = filteredData.map(p => p.id);
   const enseigneIds = filteredData
-    .map((p: any) => p.enseigne_id)
-    .filter(Boolean);
+    .map(p => p.enseigne_id)
+    .filter((id): id is string => !!id);
   const assignedClientIds = filteredData
-    .map((p: any) => p.assigned_client_id)
-    .filter(Boolean);
+    .map(p => p.assigned_client_id)
+    .filter((id): id is string => !!id);
   const subcategoryIds = filteredData
-    .map((p: any) => p.subcategory_id)
-    .filter(Boolean);
+    .map(p => p.subcategory_id)
+    .filter((id): id is string => !!id);
   const supplierIds = filteredData
-    .map((p: any) => p.supplier_id)
-    .filter(Boolean);
+    .map(p => p.supplier_id)
+    .filter((id): id is string => !!id);
 
   // Fetch images primaires
   const { data: images } = await supabase
@@ -1477,7 +1487,7 @@ async function fetchSourcingProducts(): Promise<SourcingProduct[]> {
     .eq('is_primary', true);
 
   const imageMap = new Map(
-    (images || []).map((img: any) => [img.product_id, img.public_url])
+    (images || []).map(img => [img.product_id, img.public_url])
   );
 
   // Fetch enseignes
@@ -1487,7 +1497,7 @@ async function fetchSourcingProducts(): Promise<SourcingProduct[]> {
       .from('enseignes')
       .select('id, name')
       .in('id', enseigneIds);
-    (enseignes || []).forEach((e: any) => enseigneMap.set(e.id, e.name));
+    (enseignes || []).forEach(e => enseigneMap.set(e.id, e.name));
   }
 
   // Fetch organisations assignées
@@ -1497,7 +1507,7 @@ async function fetchSourcingProducts(): Promise<SourcingProduct[]> {
       .from('organisations')
       .select('id, trade_name, legal_name')
       .in('id', assignedClientIds);
-    (orgs || []).forEach((o: any) =>
+    (orgs || []).forEach(o =>
       assignedClientMap.set(o.id, o.trade_name || o.legal_name)
     );
   }
@@ -1522,7 +1532,7 @@ async function fetchSourcingProducts(): Promise<SourcingProduct[]> {
       )
       .in('id', subcategoryIds);
 
-    (subcategories || []).forEach((sc: any) => {
+    (subcategories || []).forEach(sc => {
       categoryMap.set(sc.id, {
         subcategory_name: sc.name || '',
         category_name: sc.category?.name || '',
@@ -1538,7 +1548,7 @@ async function fetchSourcingProducts(): Promise<SourcingProduct[]> {
       .from('organisations')
       .select('id, trade_name, legal_name')
       .in('id', supplierIds);
-    (suppliers || []).forEach((s: any) =>
+    (suppliers || []).forEach(s =>
       supplierMap.set(s.id, s.trade_name || s.legal_name)
     );
   }
@@ -1551,13 +1561,13 @@ async function fetchSourcingProducts(): Promise<SourcingProduct[]> {
       .select('id, product_id')
       .eq('channel_id', LINKME_CHANNEL_ID)
       .in('product_id', productIds);
-    (channelPricingData || []).forEach((cp: any) =>
+    (channelPricingData || []).forEach(cp =>
       channelPricingMap.set(cp.product_id, cp.id)
     );
   }
 
   // Mapper les données (filteredData = produits des enseignes/orgs avec affiliés)
-  return filteredData.map((p: any) => {
+  return filteredData.map(p => {
     const categoryData = p.subcategory_id
       ? categoryMap.get(p.subcategory_id)
       : null;
