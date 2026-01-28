@@ -345,9 +345,9 @@ export default function PaymentRequestsPage() {
     active:
       requests?.filter(
         r => r.status === 'pending' || r.status === 'invoice_received'
-      ) || [],
-    paid: requests?.filter(r => r.status === 'paid') || [],
-    cancelled: requests?.filter(r => r.status === 'cancelled') || [],
+      ) ?? [],
+    paid: requests?.filter(r => r.status === 'paid') ?? [],
+    cancelled: requests?.filter(r => r.status === 'cancelled') ?? [],
   };
 
   return (
