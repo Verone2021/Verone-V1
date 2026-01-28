@@ -64,14 +64,14 @@ export function useOrganisationStats(enseigneId: string | null) {
 
       // Transformer les données en map
       const statsMap: OrganisationStatsMap = {};
-      const rows = (data as RpcStatsRow[]) || [];
+      const rows = (data as RpcStatsRow[]) ?? [];
 
       rows.forEach(row => {
         statsMap[row.org_id] = {
           orgId: row.org_id,
-          totalRevenueHT: Number(row.total_revenue_ht) || 0,
-          totalCommissionsHT: Number(row.total_commissions_ht) || 0,
-          orderCount: row.order_count || 0,
+          totalRevenueHT: Number(row.total_revenue_ht) ?? 0,
+          totalCommissionsHT: Number(row.total_commissions_ht) ?? 0,
+          orderCount: row.order_count ?? 0,
         };
       });
 
