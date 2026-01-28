@@ -14,6 +14,7 @@
  */
 
 import { useState, useMemo, useEffect } from 'react';
+import Image from 'next/image';
 
 import { calculateMargin, LINKME_CONSTANTS } from '@verone/utils';
 import {
@@ -62,7 +63,7 @@ export function AddToSelectionModal({
 
   // Récupérer les détails du produit avec les taux de marge
   const { data: productDetails, isLoading: productLoading } = useCatalogProduct(
-    product?.id || null
+    product?.id ?? null
   );
 
   const [selectedSelectionId, setSelectedSelectionId] = useState<string | null>(
@@ -87,9 +88,9 @@ export function AddToSelectionModal({
       };
 
     const basePriceHt = product.selling_price_ht;
-    const publicPriceHt = product.public_price_ht || basePriceHt * 1.5;
+    const publicPriceHt = product.public_price_ht ?? basePriceHt * 1.5;
     const commissionRate =
-      affiliate?.linkme_commission_rate || PLATFORM_COMMISSION_RATE;
+      affiliate?.linkme_commission_rate ?? PLATFORM_COMMISSION_RATE;
 
     // Prix LinkMe = prix base × (1 + commission)
     const prixLinkMe = basePriceHt * (1 + commissionRate / 100);
@@ -109,11 +110,13 @@ export function AddToSelectionModal({
     const orangeEnd = Math.min(suggestedMargin * 2, maxMargin);
 
     // Utiliser les valeurs du channel_pricing si disponibles
-    const min = productDetails?.min_margin_rate ?? MIN_MARGIN;
-    const max =
-      productDetails?.max_margin_rate ?? Math.round(maxMargin * 10) / 10;
-    const suggested =
-      productDetails?.suggested_margin_rate ??
+    const min: number =
+      (productDetails?.min_margin_rate as number | undefined) ?? MIN_MARGIN;
+    const max: number =
+      (productDetails?.max_margin_rate as number | undefined) ??
+      Math.round(maxMargin * 10) / 10;
+    const suggested: number =
+      (productDetails?.suggested_margin_rate as number | undefined) ??
       Math.round(suggestedMargin * 10) / 10;
 
     return {
@@ -128,7 +131,7 @@ export function AddToSelectionModal({
   // Initialiser la marge avec la valeur suggérée ou par défaut de l'affilié
   useEffect(() => {
     if (marginLimits.suggested) {
-      setMarginRate(affiliate?.default_margin_rate || marginLimits.suggested);
+      setMarginRate(affiliate?.default_margin_rate ?? marginLimits.suggested);
     }
   }, [marginLimits.suggested, affiliate]);
 
@@ -149,7 +152,7 @@ export function AddToSelectionModal({
 
     const basePriceHt = product.selling_price_ht;
     const commissionRate =
-      affiliate?.linkme_commission_rate || PLATFORM_COMMISSION_RATE;
+      affiliate?.linkme_commission_rate ?? PLATFORM_COMMISSION_RATE;
 
     // Calcul avec la SSOT - formule TAUX DE MARQUE
     // selling_price = base_price / (1 - margin_rate/100)
@@ -206,9 +209,9 @@ export function AddToSelectionModal({
     setError(null);
 
     try {
-      const newSelection = await createSelection.mutateAsync({
+      const newSelection = (await createSelection.mutateAsync({
         name: newSelectionName.trim(),
-      });
+      })) as { id: string };
 
       // Sélectionner automatiquement la nouvelle sélection
       setSelectedSelectionId(newSelection.id);
@@ -259,7 +262,7 @@ export function AddToSelectionModal({
     setIsCreatingNew(false);
     setNewSelectionName('');
     setError(null);
-    setMarginRate(affiliate?.default_margin_rate || 15);
+    setMarginRate(affiliate?.default_margin_rate ?? 15);
     onClose();
   };
 
@@ -291,9 +294,11 @@ export function AddToSelectionModal({
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 bg-white rounded-lg overflow-hidden flex-shrink-0 border">
               {product.image_url ? (
-                <img
+                <Image
                   src={product.image_url}
                   alt={product.name}
+                  width={64}
+                  height={64}
                   className="w-full h-full object-cover"
                 />
               ) : (
@@ -304,7 +309,7 @@ export function AddToSelectionModal({
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-medium text-gray-900 truncate">
-                {product.custom_title || product.name}
+                {product.custom_title ?? product.name}
               </p>
               <p className="text-sm text-gray-500 font-mono">
                 {product.reference}

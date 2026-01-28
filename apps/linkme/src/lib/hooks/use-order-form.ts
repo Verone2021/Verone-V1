@@ -394,29 +394,31 @@ export function useOrderForm(): UseOrderFormReturn {
         // Créer une nouvelle organisation
         const newResto = formData.restaurant.newRestaurant;
 
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
         const { data: orgId, error: orgError } = await (supabase.rpc as any)(
           'create_customer_organisation_for_affiliate',
           {
             p_affiliate_id: affiliate.id,
             p_legal_name: newResto.tradeName,
             p_trade_name: newResto.tradeName,
-            p_email: formData.contacts.responsable.email || null,
-            p_phone: formData.contacts.responsable.phone || null,
-            p_address: newResto.address || formData.delivery.address || null,
+            p_email: formData.contacts.responsable.email ?? null,
+            p_phone: formData.contacts.responsable.phone ?? null,
+            p_address: newResto.address ?? formData.delivery.address ?? null,
             p_postal_code:
-              newResto.postalCode || formData.delivery.postalCode || null,
-            p_city: newResto.city || null,
+              newResto.postalCode ?? formData.delivery.postalCode ?? null,
+            p_city: newResto.city ?? null,
             // Données géolocalisation pour TVA dynamique
-            p_country: newResto.country || 'FR',
-            p_latitude: newResto.latitude || null,
-            p_longitude: newResto.longitude || null,
+            p_country: newResto.country ?? 'FR',
+            p_latitude: newResto.latitude ?? null,
+            p_longitude: newResto.longitude ?? null,
           }
         );
 
         if (orgError) {
           console.error('Erreur création organisation:', orgError);
+          const typedError = orgError as { message?: string };
           throw new Error(
-            orgError.message || 'Erreur lors de la création du restaurant'
+            typedError.message ?? 'Erreur lors de la création du restaurant'
           );
         }
 
@@ -434,14 +436,14 @@ export function useOrderForm(): UseOrderFormReturn {
 
       // Étape 2.5: Extraire les IDs de contacts
       const responsableContactId =
-        formData.contacts.existingResponsableId || null;
+        formData.contacts.existingResponsableId ?? null;
 
       let billingContactId: string | null = null;
       if (formData.contacts.billingContact.mode === 'same_as_responsable') {
         billingContactId = responsableContactId;
       } else if (formData.contacts.billingContact.mode === 'existing') {
         billingContactId =
-          formData.contacts.billingContact.existingContactId || null;
+          formData.contacts.billingContact.existingContactId ?? null;
       }
       // Si mode = 'new' : contact sera créé plus tard (inline), pour l'instant null
 
@@ -455,6 +457,7 @@ export function useOrderForm(): UseOrderFormReturn {
 
       // Étape 3: Créer la commande via RPC
 
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
       const { data: orderId, error: orderError } = await (supabase.rpc as any)(
         'create_affiliate_order',
         {
@@ -463,7 +466,7 @@ export function useOrderForm(): UseOrderFormReturn {
           p_customer_type: 'organization',
           p_selection_id: formData.selection.selectionId,
           p_items: orderItems,
-          p_notes: formData.delivery.notes || null,
+          p_notes: formData.delivery.notes ?? null,
           // NEW: Contact IDs
           p_responsable_contact_id: responsableContactId,
           p_billing_contact_id: billingContactId,
@@ -473,8 +476,9 @@ export function useOrderForm(): UseOrderFormReturn {
 
       if (orderError) {
         console.error('Erreur création commande:', orderError);
+        const typedError = orderError as { message?: string };
         throw new Error(
-          orderError.message || 'Erreur lors de la création de la commande'
+          typedError.message ?? 'Erreur lors de la création de la commande'
         );
       }
 
@@ -485,7 +489,7 @@ export function useOrderForm(): UseOrderFormReturn {
           shipping_address_line1: formData.delivery.address,
           shipping_postal_code: formData.delivery.postalCode,
           shipping_city: formData.delivery.city,
-          notes: formData.delivery.notes || null,
+          notes: formData.delivery.notes ?? null,
         };
 
         if (formData.delivery.desiredDate) {
@@ -495,7 +499,7 @@ export function useOrderForm(): UseOrderFormReturn {
 
         // Ajouter les infos de livraison supplémentaires si centre commercial
         if (formData.delivery.isMallDelivery && formData.delivery.mallEmail) {
-          const existingNotes = deliveryUpdate.notes || '';
+          const existingNotes = (deliveryUpdate.notes as string | null) ?? '';
           deliveryUpdate.notes =
             `${existingNotes}\n[Centre commercial: ${formData.delivery.mallEmail}]`.trim();
         }
@@ -503,7 +507,7 @@ export function useOrderForm(): UseOrderFormReturn {
         const { error: updateError } = await supabase
           .from('sales_orders')
           .update(deliveryUpdate)
-          .eq('id', orderId);
+          .eq('id', orderId as string);
 
         if (updateError) {
           console.warn('Warning: Could not update delivery info:', updateError);
