@@ -94,7 +94,7 @@ function getMarginIndicator(marginRate: number): {
 
 export function ProductsStep({
   formData,
-  errors,
+  errors: _errors,
   cartTotals,
   onAddToCart,
   onUpdateQuantity,
@@ -122,7 +122,7 @@ export function ProductsStep({
     const categoryMap = new Map<string, number>();
     selectionItems.forEach(item => {
       if (item.category_name) {
-        const count = categoryMap.get(item.category_name) || 0;
+        const count = categoryMap.get(item.category_name) ?? 0;
         categoryMap.set(item.category_name, count + 1);
       }
     });

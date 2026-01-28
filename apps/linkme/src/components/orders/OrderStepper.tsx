@@ -21,7 +21,7 @@ import {
   User,
   FileText,
   MapPin,
-  Truck,
+  Truck as _Truck,
   CheckCircle,
   ListChecks,
 } from 'lucide-react';
@@ -129,7 +129,7 @@ export function OrderStepper({
 
   return (
     <nav className={cn('flex flex-col gap-1', className)}>
-      {ORDER_STEPS.map((step, index) => {
+      {ORDER_STEPS.map((step, _index) => {
         const isActive = currentStep === step.id;
         const isCompleted = completedSteps.includes(step.id);
         const isClickable = canNavigateTo(step.id) && !!onStepClick;
