@@ -21,8 +21,8 @@ import {
 import { Input } from '@verone/ui';
 import { Label } from '@verone/ui';
 import { RoleBadge, type UserRole } from '@verone/ui';
-import { cn } from '@verone/utils';
-import { Key, Save, X, Eye, EyeOff } from 'lucide-react';
+import { cn as _cn } from '@verone/utils';
+import { Key, X, Eye, EyeOff } from 'lucide-react';
 
 import type { UserWithProfile } from '@/app/(protected)/admin/users/page';
 import { resetUserPassword } from '@verone/admin/actions/user-management';
@@ -86,7 +86,7 @@ export function ResetPasswordDialog({
       onPasswordReset?.();
 
       // Notification succès
-      console.log('Mot de passe réinitialisé avec succès');
+      console.warn('Mot de passe réinitialisé avec succès');
     } catch (error: any) {
       console.error('Erreur réinitialisation mot de passe:', error);
       setError(error.message || "Une erreur inattendue s'est produite");
@@ -138,14 +138,9 @@ export function ResetPasswordDialog({
         </div>
 
         <form
-          onSubmit={(e) => {
-            void handleReset(e).catch((error: unknown) => {
-              console.error('[ResetPasswordDialog] Form submit failed:', error);
-              setError(
-                error instanceof Error
-                  ? error.message
-                  : "Une erreur inattendue s'est produite"
-              );
+          onSubmit={e => {
+            void handleReset(e).catch(error => {
+              console.error('[ResetPasswordDialog] handleReset failed:', error);
             });
           }}
           className="space-y-4"
