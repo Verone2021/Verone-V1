@@ -180,18 +180,18 @@ async function approveOrder(
     }
 
     // c) Créer contact propriétaire
-    const ownerName = details.owner_name || '';
+    const ownerName = details.owner_name ?? '';
     const ownerNameParts = ownerName.split(' ');
-    const { error: ownerContactError } = await (supabase.from as any)(
-      'contacts'
-    ).insert({
-      organisation_id: newOrg.id,
-      first_name: ownerNameParts[0] || '',
-      last_name: ownerNameParts.slice(1).join(' ') || '',
-      email: details.owner_email,
-      phone: details.owner_phone,
-      is_primary_contact: true,
-    });
+    const { error: ownerContactError } = await supabase
+      .from('contacts')
+      .insert({
+        organisation_id: newOrg.id,
+        first_name: ownerNameParts[0] || '',
+        last_name: ownerNameParts.slice(1).join(' ') || '',
+        email: details.owner_email,
+        phone: details.owner_phone,
+        is_primary_contact: true,
+      });
 
     if (ownerContactError) {
       console.error('Erreur création contact propriétaire:', ownerContactError);
@@ -270,11 +270,11 @@ async function approveOrder(
     .single();
   const ownerName = details.owner_contact_same_as_requester
     ? details.requester_name
-    : details.owner_name || details.requester_name;
-  const organisationName =
-    (orderData?.organisations as any)?.trade_name ||
-    (orderData?.organisations as any)?.legal_name ||
-    null;
+    : (details.owner_name ?? details.requester_name);
+  const orgData = orderData?.organisations as
+    | { trade_name?: string | null; legal_name?: string | null }
+    | undefined;
+  const organisationName = orgData?.trade_name ?? orgData?.legal_name ?? null;
   try {
     await fetch('/api/emails/linkme-order-approved', {
       method: 'POST',
@@ -336,9 +336,12 @@ async function requestInfo(
   const order = orderResult.data;
 
   // Organisation récupérée via jointure (peut être array ou objet selon Supabase)
-  const orgRaw = order.organisations as any;
+  const orgRaw = order.organisations as
+    | { trade_name?: string | null; legal_name?: string | null }
+    | Array<{ trade_name?: string | null; legal_name?: string | null }>
+    | undefined;
   const orgData = Array.isArray(orgRaw) ? orgRaw[0] : orgRaw;
-  const organisationName = orgData?.trade_name || orgData?.legal_name || null;
+  const organisationName = orgData?.trade_name ?? orgData?.legal_name ?? null;
 
   const timestamp = new Date().toLocaleString('fr-FR');
   const newNote = `[${timestamp}] DEMANDE COMPLEMENTS: ${input.message}`;
@@ -417,9 +420,12 @@ async function rejectOrder(
   const order = orderResult.data;
 
   // Organisation récupérée via jointure (peut être array ou objet selon Supabase)
-  const orgRaw = order.organisations as any;
+  const orgRaw = order.organisations as
+    | { trade_name?: string | null; legal_name?: string | null }
+    | Array<{ trade_name?: string | null; legal_name?: string | null }>
+    | undefined;
   const orgData = Array.isArray(orgRaw) ? orgRaw[0] : orgRaw;
-  const organisationName = orgData?.trade_name || orgData?.legal_name || null;
+  const organisationName = orgData?.trade_name ?? orgData?.legal_name ?? null;
 
   const timestamp = new Date().toLocaleString('fr-FR');
   const newNote = `[${timestamp}] COMMANDE REFUSEE: ${input.reason}`;
@@ -790,7 +796,14 @@ export function usePendingOrders() {
             organisationsMap.set(org.id, {
               trade_name: org.trade_name,
               legal_name: org.legal_name,
-              enseigne_name: (org.enseigne as any)?.name || null,
+              enseigne_name: (org.enseigne as
+                | { name?: string | null }
+                | Array<{ name?: string | null }>
+                | undefined)
+                ? Array.isArray(org.enseigne)
+                  ? (org.enseigne[0]?.name ?? null)
+                  : ((org.enseigne as { name?: string | null }).name ?? null)
+                : null,
             });
           }
         }
@@ -813,15 +826,32 @@ export function usePendingOrders() {
         }
 
         // Extract linkme details (can be single object or array depending on Supabase query)
-        const linkmeDetailsRaw = order.sales_order_linkme_details as any;
+        const linkmeDetailsRaw = order.sales_order_linkme_details as
+          | LinkMeOrderDetails
+          | LinkMeOrderDetails[]
+          | undefined;
         const linkmeDetails = Array.isArray(linkmeDetailsRaw)
-          ? linkmeDetailsRaw[0] || null
+          ? (linkmeDetailsRaw[0] ?? null)
           : linkmeDetailsRaw || null;
 
         // Map items with proper typing and extract primary image
         const items: PendingOrderItem[] = (
-          (order.sales_order_items as any[]) ?? []
-        ).map((item: any) => {
+          (order.sales_order_items as unknown as Array<{
+            id: string;
+            quantity: number;
+            unit_price_ht: number | null;
+            total_ht: number | null;
+            products?: {
+              id: string;
+              name: string;
+              sku: string;
+              product_images?: Array<{
+                public_url: string;
+                is_primary: boolean;
+              }>;
+            };
+          }>) ?? []
+        ).map(item => {
           // Extract primary image from product_images array
           const productImages = item.products?.product_images as
             | Array<{ public_url: string; is_primary: boolean }>
@@ -832,15 +862,15 @@ export function usePendingOrders() {
             null;
 
           return {
-            id: item.id as string,
-            quantity: item.quantity as number,
+            id: item.id,
+            quantity: item.quantity,
             unit_price_ht: item.unit_price_ht as number,
             total_ht: item.total_ht as number,
             products: item.products
               ? {
-                  id: item.products.id as string,
-                  name: item.products.name as string,
-                  sku: item.products.sku as string,
+                  id: item.products.id,
+                  name: item.products.name,
+                  sku: item.products.sku,
                   primary_image_url: primaryImage,
                 }
               : null,
