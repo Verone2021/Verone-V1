@@ -137,7 +137,19 @@ export function ResetPasswordDialog({
           </div>
         </div>
 
-        <form onSubmit={handleReset} className="space-y-4">
+        <form
+          onSubmit={(e) => {
+            void handleReset(e).catch((error: unknown) => {
+              console.error('[ResetPasswordDialog] Form submit failed:', error);
+              setError(
+                error instanceof Error
+                  ? error.message
+                  : "Une erreur inattendue s'est produite"
+              );
+            });
+          }}
+          className="space-y-4"
+        >
           {/* Nouveau mot de passe */}
           <div className="space-y-2">
             <Label
