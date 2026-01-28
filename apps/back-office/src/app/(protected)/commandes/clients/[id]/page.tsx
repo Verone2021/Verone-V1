@@ -30,6 +30,43 @@ import { FeesSection } from './FeesSection';
 import { InvoicesSection } from './InvoicesSection';
 import { PaymentSection } from './PaymentSection';
 
+// Types pour order avec jointures
+interface OrderWithRelations {
+  id: string;
+  order_number: string;
+  status: string;
+  payment_status: string | null;
+  customer_id: string | null;
+  customer_type: string | null;
+  shipping_address: unknown;
+  total_ht: number | null;
+  total_ttc: number | null;
+  shipping_cost_ht: number | null;
+  handling_cost_ht: number | null;
+  insurance_cost_ht: number | null;
+  fees_vat_rate: number | null;
+  created_at: string | null;
+  created_by: string | null;
+  channel_id: string | null;
+  sales_channels?: {
+    id: string;
+    name: string;
+    code: string;
+  } | null;
+  sales_order_items?: Array<{
+    id: string;
+    product_id: string | null;
+    quantity: number;
+    quantity_shipped: number | null;
+    unit_price_ht: number | null;
+    products?: {
+      id: string;
+      name: string;
+      sku: string;
+    } | null;
+  }>;
+}
+
 interface OrderDetailPageProps {
   params: Promise<{ id: string }>;
 }
@@ -41,8 +78,7 @@ export default async function OrderDetailPage({
   const supabase = createClient();
 
   // 1. Récupérer commande de base
-  let order: any = null;
-  const _error: any = null;
+  let order: OrderWithRelations | null = null;
 
   // Essayer d'abord requête directe
   const { data: orderData, error: orderError } = await supabase
@@ -87,12 +123,13 @@ export default async function OrderDetailPage({
     order = orderData;
   } else {
     // FALLBACK: Essayer via RPC get_linkme_orders pour les commandes LinkMe
-    const { data: linkmeOrders, error: linkmeError } = await (
-      supabase.rpc as any
-    )('get_linkme_orders', {});
+    const { data: linkmeOrders, error: linkmeError } = await supabase.rpc(
+      'get_linkme_orders',
+      {}
+    );
 
     if (linkmeOrders && linkmeOrders.length > 0) {
-      const linkmeOrder = linkmeOrders.find((o: any) => o.id === id);
+      const linkmeOrder = linkmeOrders.find((o: { id: string }) => o.id === id);
       if (linkmeOrder) {
         // Transformer format RPC vers format attendu
         order = {
@@ -117,7 +154,16 @@ export default async function OrderDetailPage({
             name: 'LinkMe',
             code: 'linkme',
           },
-          sales_order_items: (linkmeOrder.items || []).map((item: any) => ({
+          sales_order_items: (
+            (linkmeOrder.items as Array<{
+              id: string;
+              product_id: string;
+              quantity: number;
+              unit_price_ht: number;
+              product_name: string;
+              product_sku: string;
+            }>) ?? []
+          ).map(item => ({
             id: item.id,
             product_id: item.product_id,
             quantity: item.quantity,
@@ -177,15 +223,20 @@ export default async function OrderDetailPage({
   let creatorEmail = '';
 
   if (order.created_by) {
-    const { data: creatorInfo } = await (supabase.rpc as any)('get_user_info', {
+    const { data: creatorInfo } = await supabase.rpc('get_user_info', {
       p_user_id: order.created_by,
     });
 
-    if (creatorInfo && creatorInfo.length > 0) {
-      const firstName = creatorInfo[0].first_name || 'Utilisateur';
-      const lastName = creatorInfo[0].last_name || '';
+    if (creatorInfo && Array.isArray(creatorInfo) && creatorInfo.length > 0) {
+      const creator = creatorInfo[0] as {
+        first_name?: string;
+        last_name?: string;
+        email?: string;
+      };
+      const firstName = creator.first_name ?? 'Utilisateur';
+      const lastName = creator.last_name ?? '';
       creatorName = `${firstName} ${lastName}`.trim();
-      creatorEmail = creatorInfo[0].email || '';
+      creatorEmail = creator.email ?? '';
     }
   }
 
@@ -200,7 +251,7 @@ export default async function OrderDetailPage({
       ? shippingAddr
       : shippingAddr?.address || 'Adresse non renseignée';
 
-  const items = order.sales_order_items as any[];
+  const items = order.sales_order_items ?? [];
 
   return (
     <div className="min-h-screen bg-background p-8">
@@ -306,11 +357,11 @@ export default async function OrderDetailPage({
               </div>
 
               <div className="space-y-3">
-                {items.map((item: any) => {
+                {items.map(item => {
                   const percentShipped =
                     item.quantity > 0
                       ? Math.round(
-                          (item.quantity_shipped / item.quantity) * 100
+                          ((item.quantity_shipped ?? 0) / item.quantity) * 100
                         )
                       : 0;
 
