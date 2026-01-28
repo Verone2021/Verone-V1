@@ -28,7 +28,7 @@ import {
   DialogHeader,
   DialogTitle,
   Input,
-  Label,
+  Label as _Label,
   Separator,
 } from '@verone/ui';
 import { calculateMargin, LINKME_CONSTANTS } from '@verone/utils';
@@ -110,7 +110,7 @@ export function EditOrderModal({
           _delete: false,
         }))
       );
-      setDesiredDeliveryDate(order.desired_delivery_date || '');
+      setDesiredDeliveryDate(order.desired_delivery_date ?? '');
     }
   }, [order]);
 
@@ -137,7 +137,7 @@ export function EditOrderModal({
       }
     }
 
-    const shippingHt = order?.shipping_cost_ht || 0;
+    const shippingHt = order?.shipping_cost_ht ?? 0;
     const totalHt = roundMoney(productsHt + shippingHt);
     const totalTtc = roundMoney(totalHt * 1.2); // TVA 20%
 
@@ -155,7 +155,7 @@ export function EditOrderModal({
     if (!order) return false;
 
     const dateChanged =
-      desiredDeliveryDate !== (order.desired_delivery_date || '');
+      desiredDeliveryDate !== (order.desired_delivery_date ?? '');
     const itemsChanged = items.some(
       item => item.quantity !== item.originalQuantity || item._delete
     );
@@ -213,7 +213,7 @@ export function EditOrderModal({
         onSuccess?.();
         onClose();
       } else {
-        toast.error(result.error || 'Erreur lors de la mise à jour');
+        toast.error(result.error ?? 'Erreur lors de la mise à jour');
       }
     } catch (error) {
       console.error('Erreur mise à jour:', error);

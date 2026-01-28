@@ -20,7 +20,7 @@ import {
   DialogTitle,
   DialogDescription,
   Badge,
-  Button,
+  Button as _Button,
 } from '@verone/ui';
 import {
   Building2,
@@ -79,7 +79,7 @@ export function OrganisationDetailModal({
 
   // Group contacts by role
   const groupedContacts = useMemo(() => {
-    const contacts = contactsData?.contacts || [];
+    const contacts = contactsData?.contacts ?? [];
     return {
       primary: contacts.filter(c => c.isPrimaryContact),
       billing: contacts.filter(c => c.isBillingContact && !c.isPrimaryContact),
@@ -102,7 +102,7 @@ export function OrganisationDetailModal({
   // Early return après les hooks
   if (!organisation) return null;
 
-  const displayName = organisation.trade_name || organisation.legal_name;
+  const displayName = organisation.trade_name ?? organisation.legal_name;
 
   // Construire l'adresse complète
   const shippingAddress = [
@@ -203,7 +203,7 @@ export function OrganisationDetailModal({
                 Contacts
               </h4>
               <Badge variant="outline">
-                {contactsData?.contacts.length || 0} contact(s)
+                {contactsData?.contacts.length ?? 0} contact(s)
               </Badge>
             </div>
 

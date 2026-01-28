@@ -28,7 +28,7 @@ function formatAddress(org: MapPopupCardProps['organisation']): {
   const line2 =
     org.shipping_postal_code && org.shipping_city
       ? `${org.shipping_postal_code} ${org.shipping_city}`
-      : org.shipping_city || org.city || null;
+      : (org.shipping_city ?? org.city ?? null);
   return { line1, line2 };
 }
 
@@ -37,7 +37,7 @@ export function MapPopupCard({
   onViewDetails,
   onClose,
 }: MapPopupCardProps): React.JSX.Element {
-  const displayName = organisation.trade_name || organisation.legal_name;
+  const displayName = organisation.trade_name ?? organisation.legal_name;
   const address = formatAddress(organisation);
   const isPropre = organisation.ownership_type === 'propre';
 
@@ -79,7 +79,7 @@ export function MapPopupCard({
       </div>
 
       {/* Address */}
-      {(address.line1 || address.line2) && (
+      {(Boolean(address.line1) || Boolean(address.line2)) && (
         <div className="flex items-start gap-2 text-gray-600 text-sm">
           <MapPin className="h-4 w-4 flex-shrink-0 mt-0.5" />
           <div className="flex-1">

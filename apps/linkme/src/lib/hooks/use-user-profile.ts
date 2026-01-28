@@ -91,8 +91,8 @@ export function useUpdateProfile() {
           p_email: user.email,
           p_first_name: data.first_name,
           p_last_name: data.last_name,
-          p_phone: data.phone || undefined,
-          p_title: data.title || undefined,
+          p_phone: data.phone ?? undefined,
+          p_title: data.title ?? undefined,
         }
       );
 
@@ -105,7 +105,7 @@ export function useUpdateProfile() {
       const result = rpcResult as { success: boolean; error?: string };
       if (!result?.success) {
         console.error('RPC échouée:', result?.error);
-        throw new Error(result?.error || 'Erreur lors de la mise à jour');
+        throw new Error(result?.error ?? 'Erreur lors de la mise à jour');
       }
 
       // 2. Update user_profiles (sync)
@@ -114,8 +114,8 @@ export function useUpdateProfile() {
         .update({
           first_name: data.first_name,
           last_name: data.last_name,
-          phone: data.phone || null,
-          job_title: data.title || null,
+          phone: data.phone ?? null,
+          job_title: data.title ?? null,
           updated_at: new Date().toISOString(),
         })
         .eq('user_id', user.id);

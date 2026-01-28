@@ -78,7 +78,7 @@ export function useParentOrganisationAddresses(
 
   // 2. Get addresses from addresses table
   const { data: addressesData, isLoading: addressesLoading } =
-    useEntityAddresses('organisation', parentOrg?.id || null, 'billing');
+    useEntityAddresses('organisation', parentOrg?.id ?? null, 'billing');
 
   // 3. Build primary address from organisation fields
   const primaryAddress = useMemo(() => {
@@ -99,9 +99,9 @@ export function useParentOrganisationAddresses(
 
   // 4. Combine results
   return {
-    parentOrg: parentOrg || null,
-    billingAddresses: addressesData?.billing || [],
-    defaultBillingAddress: addressesData?.defaults?.billing || null,
+    parentOrg: parentOrg ?? null,
+    billingAddresses: addressesData?.billing ?? [],
+    defaultBillingAddress: addressesData?.defaults?.billing ?? null,
     primaryAddress,
     isLoading: parentLoading || addressesLoading,
   };

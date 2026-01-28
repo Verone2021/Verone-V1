@@ -40,7 +40,7 @@ import {
   FileText,
   Calendar,
   Coins,
-  Loader2,
+  Loader2 as _Loader2,
 } from 'lucide-react';
 
 import type { OrderFormData } from '../schemas/order-form.schema';
@@ -92,10 +92,10 @@ function getOwnershipLabel(type: string | null): string {
 
 export function ValidationStep({
   formData,
-  errors,
+  errors: _errors,
   cartTotals,
-  onSubmit,
-  isSubmitting,
+  onSubmit: _onSubmit,
+  isSubmitting: _isSubmitting,
 }: ValidationStepProps) {
   const [openSections, setOpenSections] = useState<string[]>([
     'restaurant',
@@ -187,7 +187,7 @@ export function ValidationStep({
                       : 'bg-amber-100 text-amber-700'
                   )}
                 >
-                  {getOwnershipLabel(restaurantType || null)}
+                  {getOwnershipLabel(restaurantType ?? null)}
                 </span>
               </div>
               {restaurantCity && (

@@ -23,7 +23,7 @@ import {
   AlertTriangle,
   Loader2,
   Calendar,
-  Star,
+  Star as _Star,
 } from 'lucide-react';
 
 import {
@@ -52,11 +52,11 @@ interface SelectionStepProps {
 
 export function SelectionStep({
   formData,
-  errors,
+  errors: _errors,
   onUpdate,
   onClearCart,
 }: SelectionStepProps) {
-  const { data: affiliate, isLoading: affiliateLoading } = useUserAffiliate();
+  const { data: _affiliate, isLoading: affiliateLoading } = useUserAffiliate();
   const { data: selections, isLoading: selectionsLoading } =
     useUserSelections();
 
@@ -135,7 +135,7 @@ export function SelectionStep({
   // Une seule sélection : affichage simplifié
   if (availableSelections.length === 1) {
     const selection = availableSelections[0];
-    const isSelected = formData.selection.selectionId === selection.id;
+    const _isSelected = formData.selection.selectionId === selection.id;
 
     return (
       <div className="space-y-6">
