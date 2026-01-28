@@ -78,10 +78,10 @@ export function CategoryForm({
 
   // État du formulaire
   const [formData, setFormData] = useState<CategoryFormData>({
-    family_id: initialData?.family_id || '',
-    name: initialData?.name || '',
-    description: initialData?.description || '',
-    image_url: initialData?.image_url || '',
+    family_id: initialData?.family_id ?? '',
+    name: initialData?.name ?? '',
+    description: initialData?.description ?? '',
+    image_url: initialData?.image_url ?? '',
     display_order: initialData?.display_order || 1,
     is_active: initialData?.is_active ?? true,
   });
@@ -90,10 +90,10 @@ export function CategoryForm({
   useEffect(() => {
     if (isOpen) {
       setFormData({
-        family_id: initialData?.family_id || '',
-        name: initialData?.name || '',
-        description: initialData?.description || '',
-        image_url: initialData?.image_url || '',
+        family_id: initialData?.family_id ?? '',
+        name: initialData?.name ?? '',
+        description: initialData?.description ?? '',
+        image_url: initialData?.image_url ?? '',
         display_order: initialData?.display_order || 1,
         is_active: initialData?.is_active ?? true,
       });
@@ -264,14 +264,9 @@ export function CategoryForm({
         </DialogHeader>
 
         <form
-          onSubmit={(e) => {
-            void handleSubmit(e).catch((error: unknown) => {
-              console.error('[CategoryForm] Submit failed:', error);
-              setError(
-                error instanceof Error
-                  ? error.message
-                  : "Une erreur inattendue s'est produite"
-              );
+          onSubmit={e => {
+            void handleSubmit(e).catch(error => {
+              console.error('[CategoryForm] handleSubmit failed:', error);
             });
           }}
           className="space-y-6"
@@ -385,19 +380,14 @@ export function CategoryForm({
                       type="file"
                       accept="image/*"
                       className="hidden"
-                      onChange={(e) => {
+                      onChange={e => {
                         const file = e.target.files?.[0];
                         if (file && file.size <= 5 * 1024 * 1024) {
-                          void handleImageUpload(file).catch((error: unknown) => {
-                            console.error('[CategoryForm] Image upload failed:', error);
-                            toast({
-                              title: '❌ Erreur upload image',
-                              description:
-                                error instanceof Error
-                                  ? error.message
-                                  : "Une erreur inattendue s'est produite",
-                              variant: 'destructive',
-                            });
+                          void handleImageUpload(file).catch(error => {
+                            console.error(
+                              '[CategoryForm] handleImageUpload failed:',
+                              error
+                            );
                           });
                         } else {
                           toast({
