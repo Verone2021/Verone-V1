@@ -13,6 +13,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createClient } from '@verone/utils/supabase/client';
+import type { Database } from '@verone/types';
 
 // ============================================
 // TYPES
@@ -150,8 +151,8 @@ async function approveOrder(
           details.owner_company_trade_name ||
           'À compléter',
         trade_name: details.owner_company_trade_name,
-        email: details.owner_email,
-        phone: details.owner_phone,
+        email: details.owner_email ?? null,
+        phone: details.owner_phone ?? null,
         approval_status: 'approved',
         approved_at: new Date().toISOString(),
       })
@@ -182,16 +183,17 @@ async function approveOrder(
     // c) Créer contact propriétaire
     const ownerName = details.owner_name ?? '';
     const ownerNameParts = ownerName.split(' ');
+    const contactData: Database['public']['Tables']['contacts']['Insert'] = {
+      organisation_id: newOrg.id,
+      first_name: ownerNameParts[0] ?? '',
+      last_name: ownerNameParts.slice(1).join(' ') ?? '',
+      email: details.owner_email ?? '',
+      phone: details.owner_phone ?? null,
+      is_primary_contact: true,
+    };
     const { error: ownerContactError } = await supabase
       .from('contacts')
-      .insert({
-        organisation_id: newOrg.id,
-        first_name: ownerNameParts[0] || '',
-        last_name: ownerNameParts.slice(1).join(' ') || '',
-        email: details.owner_email,
-        phone: details.owner_phone,
-        is_primary_contact: true,
-      });
+      .insert(contactData);
 
     if (ownerContactError) {
       console.error('Erreur création contact propriétaire:', ownerContactError);

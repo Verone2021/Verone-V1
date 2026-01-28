@@ -246,7 +246,9 @@ export function SelectionProductDetailModal({
   if (!item) return null;
 
   const product = item.product;
-  const sellingPoints = product?.selling_points || [];
+  const sellingPoints = (
+    Array.isArray(product?.selling_points) ? product.selling_points : []
+  ) as string[];
   const isViewMode = mode === 'view';
 
   return (

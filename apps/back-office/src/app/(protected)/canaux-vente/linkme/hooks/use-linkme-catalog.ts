@@ -456,7 +456,7 @@ async function fetchEligibleProducts(): Promise<EligibleProduct[]> {
     reference: p.sku,
     price_ht: p.cost_price || 0,
     primary_image_url: imageMap.get(p.id) || null,
-    stock_real: p.stock_real,
+    stock_real: p.stock_real ?? 0,
     is_active: p.product_status === 'active',
     family_name: null,
     category_name: p.subcategories?.name || null,
@@ -1367,7 +1367,10 @@ export function useLinkMeProductVariants(productId: string | null) {
         id: v.id,
         sku: v.sku,
         name: v.name,
-        variant_attributes: v.variant_attributes,
+        variant_attributes: v.variant_attributes as Record<
+          string,
+          string
+        > | null,
         stock_real: v.stock_real || 0,
         cost_price: v.cost_price,
         image_url: imageMap.get(v.id) || null,

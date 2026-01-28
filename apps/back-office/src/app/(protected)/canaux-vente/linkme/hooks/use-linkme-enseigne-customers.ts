@@ -30,7 +30,7 @@ export interface EnseigneOrganisationCustomer {
   city: string | null;
   postal_code: string | null;
   is_active: boolean;
-  created_at: string;
+  created_at: string | null;
   source_type: 'internal' | 'linkme' | 'site-internet' | 'manual' | null;
   source_affiliate_id: string | null;
 }
@@ -45,7 +45,7 @@ export interface EnseigneIndividualCustomer {
   address_line1: string | null;
   city: string | null;
   postal_code: string | null;
-  created_at: string;
+  created_at: string | null;
   source_type: 'internal' | 'linkme' | 'site-internet' | 'manual' | null;
   source_affiliate_id: string | null;
 }
@@ -424,29 +424,21 @@ export function useCreateEnseigneIndividualCustomer() {
         throw new Error('Email requis pour créer un client particulier');
       }
 
-      const insertData: Record<string, unknown> = {
+      const insertData = {
         first_name: input.first_name,
         last_name: input.last_name,
         email: input.email.trim(), // NOT NULL - requis
-        phone: input.phone || null,
-        address_line1: input.address_line1 || null,
-        address_line2: input.address_line2 || null,
-        city: input.city || null,
-        postal_code: input.postal_code || null,
-        country: input.country || 'FR',
-        source_type: input.source_type || 'linkme',
-        source_affiliate_id: input.source_affiliate_id || null,
+        phone: input.phone ?? null,
+        address_line1: input.address_line1 ?? null,
+        address_line2: input.address_line2 ?? null,
+        city: input.city ?? null,
+        postal_code: input.postal_code ?? null,
+        country: input.country ?? 'FR',
+        source_type: input.source_type ?? 'linkme',
+        source_affiliate_id: input.source_affiliate_id ?? null,
+        enseigne_id: input.enseigne_id ?? undefined,
+        organisation_id: input.organisation_id ?? undefined,
       };
-
-      // enseigne_id pour les enseignes
-      if (input.enseigne_id) {
-        insertData.enseigne_id = input.enseigne_id;
-      }
-
-      // organisation_id pour les org_independante (NOUVEAU)
-      if (input.organisation_id) {
-        insertData.organisation_id = input.organisation_id;
-      }
 
       console.log('📝 Création client particulier:', insertData);
 

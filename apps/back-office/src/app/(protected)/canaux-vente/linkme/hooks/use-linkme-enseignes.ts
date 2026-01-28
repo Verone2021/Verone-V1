@@ -98,18 +98,24 @@ async function fetchEnseignesWithStats(): Promise<EnseigneWithStats[]> {
   // Compter organisations par enseigne
   const orgsCountMap = new Map<string, number>();
   (orgsResult.data || []).forEach(o => {
-    orgsCountMap.set(o.enseigne_id, (orgsCountMap.get(o.enseigne_id) || 0) + 1);
+    if (o.enseigne_id)
+      orgsCountMap.set(
+        o.enseigne_id,
+        (orgsCountMap.get(o.enseigne_id) || 0) + 1
+      );
   });
 
   // Compter affiliates par enseigne + créer map affiliate->enseigne
   const affiliatesCountMap = new Map<string, number>();
   const affiliateToEnseigneMap = new Map<string, string>();
-  (affiliatesResult.data || []).forEach(a => {
-    affiliatesCountMap.set(
-      a.enseigne_id,
-      (affiliatesCountMap.get(a.enseigne_id) || 0) + 1
-    );
-    affiliateToEnseigneMap.set(a.id, a.enseigne_id);
+  (affiliatesResult.data ?? []).forEach(a => {
+    if (a.enseigne_id) {
+      affiliatesCountMap.set(
+        a.enseigne_id,
+        (affiliatesCountMap.get(a.enseigne_id) ?? 0) + 1
+      );
+      affiliateToEnseigneMap.set(a.id, a.enseigne_id);
+    }
   });
 
   // Compter sélections par enseigne (via affiliate->enseigne mapping)
@@ -217,7 +223,7 @@ export interface EnseigneOrganisation {
   is_enseigne_parent: boolean;
   is_active: boolean;
   logo_url: string | null;
-  created_at: string;
+  created_at: string | null;
 }
 
 async function fetchEnseigneOrganisations(
@@ -227,23 +233,22 @@ async function fetchEnseigneOrganisations(
 
   const { data, error } = await supabase
     .from('organisations')
-    .select('id, name, is_enseigne_parent, is_active, logo_url, created_at')
+    .select('id, legal_name, trade_name')
     .eq('enseigne_id', enseigneId)
-    .order('is_enseigne_parent', { ascending: false })
-    .order('name');
+    .order('legal_name');
 
   if (error) {
     console.error('Erreur fetch organisations enseigne:', error);
     throw error;
   }
 
-  return (data || []).map(org => ({
+  return (data ?? []).map(org => ({
     id: org.id,
-    name: org.name,
-    is_enseigne_parent: org.is_enseigne_parent ?? false,
-    is_active: org.is_active ?? true,
-    logo_url: org.logo_url,
-    created_at: org.created_at,
+    name: org.trade_name ?? org.legal_name,
+    is_enseigne_parent: false,
+    is_active: true,
+    logo_url: null,
+    created_at: null,
   }));
 }
 

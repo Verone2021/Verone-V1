@@ -5,7 +5,7 @@ import { useToast } from '@verone/common';
 import { createClient } from '@verone/utils/supabase/client';
 
 const supabase = createClient();
-import type { Database } from '@verone/types';
+import type { Database, Json } from '@verone/types';
 
 // Types Supabase
 type LinkMeAffiliate = Database['public']['Tables']['linkme_affiliates']['Row'];
@@ -37,7 +37,7 @@ export interface SelectionItem {
     /** Description du produit (pour modal détail) */
     description?: string | null;
     /** Arguments de vente (pour modal détail) */
-    selling_points?: string[] | null;
+    selling_points?: Json;
     /** Poids en kg */
     weight_kg?: number | null;
     /** Dimensions en cm (jsonb) */
