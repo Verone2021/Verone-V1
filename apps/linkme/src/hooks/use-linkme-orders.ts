@@ -254,7 +254,7 @@ export function useLinkMeOrders(
       );
     },
     enabled: fetchAll || !!affiliateId,
-    // Optimisation: cache plus long, pas de refetch sur focus
+    // Optimisation: cache plus long, pas de refetch on focus
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes garbage collection
     refetchOnWindowFocus: false,
