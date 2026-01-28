@@ -68,9 +68,9 @@ export function FamilyForm({
 
   // État du formulaire
   const [formData, setFormData] = useState<FamilyFormData>({
-    name: initialData?.name ?? '',
-    description: initialData?.description ?? '',
-    image_url: initialData?.image_url ?? '',
+    name: initialData?.name || '',
+    description: initialData?.description || '',
+    image_url: initialData?.image_url || '',
     display_order: initialData?.display_order || 1,
     is_active: initialData?.is_active ?? true,
   });
@@ -227,9 +227,14 @@ export function FamilyForm({
         </DialogHeader>
 
         <form
-          onSubmit={e => {
-            void handleSubmit(e).catch(error => {
-              console.error('[FamilyForm] handleSubmit failed:', error);
+          onSubmit={(e) => {
+            void handleSubmit(e).catch((error: unknown) => {
+              console.error('[FamilyForm] Submit failed:', error);
+              setError(
+                error instanceof Error
+                  ? error.message
+                  : "Une erreur inattendue s'est produite"
+              );
             });
           }}
           className="space-y-6"
@@ -306,14 +311,19 @@ export function FamilyForm({
                       type="file"
                       accept="image/*"
                       className="hidden"
-                      onChange={e => {
+                      onChange={(e) => {
                         const file = e.target.files?.[0];
                         if (file && file.size <= 5 * 1024 * 1024) {
-                          void handleImageUpload(file).catch(error => {
-                            console.error(
-                              '[FamilyForm] handleImageUpload failed:',
-                              error
-                            );
+                          void handleImageUpload(file).catch((error: unknown) => {
+                            console.error('[FamilyForm] Image upload failed:', error);
+                            toast({
+                              title: '❌ Erreur upload image',
+                              description:
+                                error instanceof Error
+                                  ? error.message
+                                  : "Une erreur inattendue s'est produite",
+                              variant: 'destructive',
+                            });
                           });
                         } else {
                           toast({
