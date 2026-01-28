@@ -116,9 +116,7 @@ export default function SupplierDetailPage() {
   // Gestionnaire de mise à jour des données fournisseur
   const handleSupplierUpdate = (_updatedData: Partial<Organisation>) => {
     // Rafraîchir les données du fournisseur immédiatement
-    void refetchSupplier().catch(error => {
-      console.error('[SupplierDetail] Refetch supplier failed:', error);
-    });
+    refetchSupplier();
     // Rafraîchir la liste des organisations (cache)
     void refetch().catch(error => {
       console.error('[SupplierDetail] Refetch organisations failed:', error);

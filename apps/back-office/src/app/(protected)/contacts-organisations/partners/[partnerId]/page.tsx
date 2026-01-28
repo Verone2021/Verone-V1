@@ -109,9 +109,7 @@ export default function PartnerDetailPage() {
   // Gestionnaire de mise à jour des données partenaire
   const handlePartnerUpdate = (_updatedData: Partial<Organisation>) => {
     // Rafraîchir les données du partenaire immédiatement
-    void refetchPartner().catch(error => {
-      console.error('[PartnerDetail] Refetch partner failed:', error);
-    });
+    refetchPartner();
     // Rafraîchir la liste des organisations (cache)
     void refetch().catch(error => {
       console.error('[PartnerDetail] Refetch organisations failed:', error);

@@ -178,9 +178,7 @@ export default function CustomerDetailPage() {
   // Gestionnaire de mise à jour des données client
   const handleCustomerUpdate = (_updatedData: Partial<Organisation>) => {
     // Rafraîchir les données du customer immédiatement
-    void refetchCustomer().catch(error => {
-      console.error('[CustomerDetail] Refetch customer failed:', error);
-    });
+    refetchCustomer();
     // Rafraîchir la liste des organisations (cache)
     void refetch().catch(error => {
       console.error('[CustomerDetail] Refetch organisations failed:', error);

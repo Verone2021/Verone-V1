@@ -1,0 +1,17 @@
+#!/bin/sh
+
+echo "🏗️ Validation build avant push..."
+
+# Type-check
+if ! pnpm type-check; then
+  echo "❌ Type-check échoué. Push annulé."
+  exit 1
+fi
+
+# Build (rapide car déjà en cache si dev actif)
+if ! pnpm build; then
+  echo "❌ Build échoué. Push annulé."
+  exit 1
+fi
+
+echo "✅ Validation réussie, push autorisé"

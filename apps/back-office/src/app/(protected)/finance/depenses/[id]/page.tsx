@@ -172,12 +172,17 @@ export default function ExpenseDetailPage(props: PageProps) {
   // Handle payment success
   const handlePaymentSuccess = () => {
     setShowPaymentForm(false);
-    void fetchDocument().catch(error => {
+    // Refresh document (amount_paid updated)
+    fetchDocument().catch(error => {
       console.error('[Depenses] fetchDocument (payment) failed:', error);
-    }); // Refresh document (amount_paid updated)
-    void refreshPayments().catch(error => {
-      console.error('[Depenses] refreshPayments failed:', error);
-    }); // Refresh payments list
+    });
+    // Refresh payments list
+    const result = refreshPayments();
+    if (result instanceof Promise) {
+      result.catch(error => {
+        console.error('[Depenses] refreshPayments failed:', error);
+      });
+    }
   };
 
   if (loading) {
