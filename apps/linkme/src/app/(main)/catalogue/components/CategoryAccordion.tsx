@@ -43,9 +43,9 @@ export function CategoryAccordion({
     const categoryMap = new Map<string, CategoryWithSubcategories>();
 
     products.forEach(product => {
-      const categoryName = product.category_name || 'Autres';
+      const categoryName = product.category_name ?? 'Autres';
       const subcategoryId = product.subcategory_id;
-      const subcategoryName = product.subcategory_name || 'Autres';
+      const subcategoryName = product.subcategory_name ?? 'Autres';
 
       if (!categoryMap.has(categoryName)) {
         categoryMap.set(categoryName, {
