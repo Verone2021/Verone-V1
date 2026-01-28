@@ -7,6 +7,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createClient } from '@verone/utils/supabase/client';
 
+import type { Database } from '@verone/types';
+
+// Types Supabase
+type Organisation = Database['public']['Tables']['organisations']['Row'];
+type IndividualCustomer =
+  Database['public']['Tables']['individual_customers']['Row'];
 const supabase = createClient();
 
 // ============================================
@@ -87,7 +93,7 @@ export interface CreateIndividualCustomerInput {
 async function fetchEnseigneOrganisations(
   enseigneId: string
 ): Promise<EnseigneOrganisationCustomer[]> {
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from('organisations')
     .select(
       'id, legal_name, trade_name, email, phone, address_line1, city, postal_code, is_active, created_at, source_type, source_affiliate_id'
@@ -101,7 +107,7 @@ async function fetchEnseigneOrganisations(
     throw error;
   }
 
-  return (data || []).map((org: any) => ({
+  return (data || []).map(org => ({
     id: org.id,
     name: org.trade_name || org.legal_name,
     legal_name: org.legal_name,
@@ -124,7 +130,7 @@ async function fetchEnseigneOrganisations(
 async function fetchEnseigneIndividualCustomers(
   enseigneId: string
 ): Promise<EnseigneIndividualCustomer[]> {
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from('individual_customers')
     .select(
       'id, first_name, last_name, email, phone, address_line1, city, postal_code, created_at, source_type, source_affiliate_id'
@@ -137,7 +143,7 @@ async function fetchEnseigneIndividualCustomers(
     throw error;
   }
 
-  return (data || []).map((customer: any) => ({
+  return (data || []).map(customer => ({
     id: customer.id,
     first_name: customer.first_name,
     last_name: customer.last_name,
@@ -184,7 +190,7 @@ async function fetchOrganisationIndividualCustomers(
     throw error;
   }
 
-  return (data || []).map((customer: any) => ({
+  return (data || []).map(customer => ({
     id: customer.id,
     first_name: customer.first_name,
     last_name: customer.last_name,
@@ -371,7 +377,7 @@ export function useCreateEnseigneOrganisation() {
 
   return useMutation({
     mutationFn: async (input: CreateOrganisationInput) => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('organisations')
         .insert({
           enseigne_id: input.enseigne_id,
@@ -444,7 +450,7 @@ export function useCreateEnseigneIndividualCustomer() {
 
       console.log('📝 Création client particulier:', insertData);
 
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('individual_customers')
         .insert(insertData)
         .select()
