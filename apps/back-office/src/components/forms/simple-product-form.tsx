@@ -197,7 +197,19 @@ export function SimpleProductForm({
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form
+        onSubmit={(e) => {
+          void handleSubmit(e).catch((error: unknown) => {
+            console.error('[SimpleProductForm] Submit failed:', error);
+            setError(
+              error instanceof Error
+                ? error.message
+                : "Une erreur inattendue s'est produite"
+            );
+          });
+        }}
+        className="space-y-4"
+      >
         {/* Nom du produit */}
         <div>
           <Label htmlFor="name" className="text-sm font-medium text-black">

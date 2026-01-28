@@ -109,7 +109,19 @@ export default function LoginPage() {
           </CardHeader>
 
           <CardContent className="space-y-6 pb-8">
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form
+              onSubmit={(e) => {
+                void handleSubmit(e).catch((error: unknown) => {
+                  console.error('[LoginPage] Submit failed:', error);
+                  setError(
+                    error instanceof Error
+                      ? error.message
+                      : "Une erreur inattendue s'est produite"
+                  );
+                });
+              }}
+              className="space-y-5"
+            >
               {/* Email */}
               <div>
                 <label
