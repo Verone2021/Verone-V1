@@ -42,12 +42,9 @@ export default function LoginPage() {
       }
 
       if (data.user) {
-        // Attendre propagation des cookies (sécurité supplémentaire)
-        await new Promise(resolve => setTimeout(resolve, 100));
-
         // Succès - redirection vers dashboard
         const redirectUrl =
-          new URLSearchParams(window.location.search).get('redirect') ||
+          new URLSearchParams(window.location.search).get('redirect') ??
           '/dashboard';
         router.push(redirectUrl);
       }
@@ -114,8 +111,13 @@ export default function LoginPage() {
           <CardContent className="space-y-6 pb-8">
             <form
               onSubmit={e => {
-                void handleSubmit(e).catch(error => {
-                  console.error('[Login] handleSubmit failed:', error);
+                void handleSubmit(e).catch((error: unknown) => {
+                  console.error('[LoginPage] Submit failed:', error);
+                  setError(
+                    error instanceof Error
+                      ? error.message
+                      : "Une erreur inattendue s'est produite"
+                  );
                 });
               }}
               className="space-y-5"

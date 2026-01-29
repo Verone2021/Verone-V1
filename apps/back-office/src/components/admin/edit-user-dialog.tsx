@@ -27,7 +27,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@verone/ui';
-import { cn as _cn } from '@verone/utils';
 import { Edit, Save, X } from 'lucide-react';
 
 import type { UserWithProfile } from '@/app/(protected)/admin/users/page';
@@ -61,19 +60,19 @@ export function EditUserDialog({
     first_name: '', // Sera extrait de l'email temporairement
     last_name: '',
     job_title: '',
-    role: user?.profile?.role || 'catalog_manager',
+    role: user?.profile?.role ?? 'catalog_manager',
   });
 
   // Réinitialiser le formulaire quand l'utilisateur change
   React.useEffect(() => {
     if (user) {
       // Extraire nom temporaire depuis l'email (en attendant les colonnes DB)
-      const tempName = user.email.split('@')[0].split('.') || ['', ''];
+      const tempName = user.email.split('@')[0].split('.') ?? ['', ''];
       setFormData({
-        first_name: (user.profile?.first_name || tempName[0]) ?? '',
-        last_name: (user.profile?.last_name || tempName[1]) ?? '',
+        first_name: user.profile?.first_name ?? tempName[0] ?? '',
+        last_name: user.profile?.last_name ?? tempName[1] ?? '',
         job_title: user.profile?.job_title ?? '',
-        role: user.profile?.role || 'catalog_manager',
+        role: user.profile?.role ?? 'catalog_manager',
       });
     }
   }, [user]);
@@ -107,19 +106,20 @@ export function EditUserDialog({
       });
 
       if (!result.success) {
-        setError(result.error || 'Erreur lors de la mise à jour');
+        setError(result.error ?? 'Erreur lors de la mise à jour');
         return;
       }
 
       // Fermer le dialog et notifier le parent
       onOpenChange(false);
       onUserUpdated?.();
-
-      // Notification succès
-      console.warn('Utilisateur mis à jour avec succès');
-    } catch (error: any) {
-      console.error('Erreur mise à jour utilisateur:', error);
-      setError(error.message || "Une erreur inattendue s'est produite");
+    } catch (err: unknown) {
+      console.error('Erreur mise à jour utilisateur:', err);
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Une erreur inattendue s'est produite"
+      );
     } finally {
       setIsUpdating(false);
     }
@@ -147,8 +147,13 @@ export function EditUserDialog({
 
         <form
           onSubmit={e => {
-            void handleSubmit(e).catch(error => {
-              console.error('[EditUserDialog] handleSubmit failed:', error);
+            void handleSubmit(e).catch((submitErr: unknown) => {
+              console.error('[EditUserDialog] Form submit failed:', submitErr);
+              setError(
+                submitErr instanceof Error
+                  ? submitErr.message
+                  : "Une erreur inattendue s'est produite"
+              );
             });
           }}
           className="space-y-4"

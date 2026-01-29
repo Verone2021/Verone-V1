@@ -65,7 +65,10 @@ export default function CreateConsultationPage() {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const handleInputChange = (field: keyof ConsultationFormData, value: any) => {
+  const handleInputChange = (
+    field: keyof ConsultationFormData,
+    value: ConsultationFormData[keyof ConsultationFormData]
+  ) => {
     setFormData(prev => ({ ...prev, [field]: value }));
 
     // Clear error when user starts typing
@@ -163,8 +166,8 @@ export default function CreateConsultationPage() {
         organisation_id: formData.organisation_id ?? undefined,
         client_email: formData.client_email.trim(),
         descriptif: formData.descriptif.trim(),
-        priority_level: formData.priority_level || 2,
-        source_channel: formData.source_channel || 'website',
+        priority_level: formData.priority_level ?? 2,
+        source_channel: formData.source_channel ?? 'website',
       };
 
       // Ajouter les champs optionnels seulement s'ils ont une valeur
@@ -188,7 +191,7 @@ export default function CreateConsultationPage() {
       const result = await createConsultationAction(dataToSubmit, user.id);
 
       if (!result.success) {
-        throw new Error(result.error || 'Erreur lors de la création');
+        throw new Error(result.error ?? 'Erreur lors de la création');
       }
 
       toast({
@@ -253,11 +256,19 @@ export default function CreateConsultationPage() {
             <CardContent>
               <form
                 onSubmit={e => {
-                  void handleSubmit(e).catch(error => {
+                  void handleSubmit(e).catch((submitError: unknown) => {
                     console.error(
-                      '[CreateConsultationPage] handleSubmit failed:',
-                      error
+                      '[CreateConsultationPage] Submit failed:',
+                      submitError
                     );
+                    toast({
+                      title: 'Erreur',
+                      description:
+                        submitError instanceof Error
+                          ? submitError.message
+                          : "Une erreur inattendue s'est produite",
+                      variant: 'destructive',
+                    });
                   });
                 }}
                 className="space-y-6"

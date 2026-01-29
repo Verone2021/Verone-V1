@@ -119,15 +119,7 @@ export function CreateUserDialog({ children }: CreateUserDialogProps) {
       setIsLoading(true);
       setErrors({}); // Nettoyer les erreurs précédentes
 
-      console.warn('Début création utilisateur avec données:', {
-        email: formData.email,
-        role: formData.role,
-        hasPassword: !!formData.password,
-      });
-
       const result = await createUserWithRole(formData);
-
-      console.warn('Résultat création utilisateur:', result);
 
       // Validation stricte de la réponse du Server Action
       if (!result || typeof result !== 'object') {
@@ -135,8 +127,6 @@ export function CreateUserDialog({ children }: CreateUserDialogProps) {
       }
 
       if (result.success) {
-        console.warn('Utilisateur créé avec succès:', result.data);
-
         // Réinitialiser le formulaire
         setFormData(INITIAL_FORM_DATA);
         setErrors({});
@@ -145,28 +135,24 @@ export function CreateUserDialog({ children }: CreateUserDialogProps) {
         // Utiliser router.refresh() pour recharger les données sans reload complet
         // Note: En Next.js 15, router.refresh() est la méthode recommandée
         // Pour l'instant, on utilise window.location.reload() mais on pourrait améliorer
-        console.warn(
-          'Rechargement de la page pour afficher le nouvel utilisateur'
-        );
         window.location.reload();
       } else {
-        console.error('Échec création utilisateur:', result.error);
         setErrors({
           submit:
-            result.error ||
+            result.error ??
             "Erreur inconnue lors de la création de l'utilisateur",
         });
       }
-    } catch (error: any) {
-      console.error('Erreur handleSubmit:', error);
+    } catch (err: unknown) {
+      console.error('Erreur handleSubmit:', err);
 
       // Gestion d'erreurs plus robuste avec messages user-friendly
       let errorMessage = "Une erreur inattendue s'est produite";
 
-      if (error?.name === 'TypeError' && error?.message?.includes('fetch')) {
+      if (err instanceof TypeError && err.message?.includes('fetch')) {
         errorMessage = 'Erreur de connexion au serveur. Veuillez réessayer.';
-      } else if (error?.message) {
-        errorMessage = error.message;
+      } else if (err instanceof Error && err.message) {
+        errorMessage = err.message;
       }
 
       setErrors({ submit: errorMessage });
@@ -204,8 +190,14 @@ export function CreateUserDialog({ children }: CreateUserDialogProps) {
 
         <form
           onSubmit={e => {
-            void handleSubmit(e).catch(error => {
-              console.error('[CreateUserDialog] handleSubmit failed:', error);
+            void handleSubmit(e).catch((error: unknown) => {
+              console.error('[CreateUserDialog] Form submit failed:', error);
+              setErrors({
+                submit:
+                  error instanceof Error
+                    ? error.message
+                    : "Une erreur inattendue s'est produite",
+              });
             });
           }}
           className="space-y-4"

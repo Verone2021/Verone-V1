@@ -100,8 +100,8 @@ export function FamilyCrudForm({
   useEffect(() => {
     if (initialData) {
       setFormData({
-        name: initialData.name ?? '',
-        description: initialData.description ?? '',
+        name: initialData.name || '',
+        description: initialData.description || '',
         is_active: initialData.is_active ?? true,
         display_order: initialData.display_order || 1,
         parent_id: initialData.parent_id,
@@ -214,8 +214,14 @@ export function FamilyCrudForm({
 
         <form
           onSubmit={e => {
-            void handleSubmit(e).catch(error => {
-              console.error('[FamilyCrudForm] Submit failed:', error);
+            void handleSubmit(e).catch((submitErr: unknown) => {
+              console.error('[FamilyCrudForm] Submit failed:', submitErr);
+              setErrors({
+                name:
+                  submitErr instanceof Error
+                    ? submitErr.message
+                    : "Une erreur inattendue s'est produite",
+              });
             });
           }}
           className="space-y-6"
@@ -236,7 +242,7 @@ export function FamilyCrudForm({
                   <div className="w-full px-3 py-2 border border-gray-200 rounded-md bg-gray-50 text-gray-700">
                     {parentOptions.find(
                       option => option.id === formData.parent_id
-                    )?.name || 'Parent non trouvé'}
+                    )?.name ?? 'Parent non trouvé'}
                   </div>
                   <p className="text-xs text-gray-500">
                     La {type === 'category' ? 'famille' : 'catégorie'} parent ne
