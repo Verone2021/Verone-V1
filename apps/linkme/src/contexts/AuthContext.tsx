@@ -16,16 +16,41 @@ import {
   useEffect,
   useState,
   useCallback,
-  useRef,
   type ReactNode,
 } from 'react';
 
 import type { User, Session } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 // Client SSR-safe (singleton) - utilise cookies pour la session
 import { createClient } from '@verone/utils/supabase/client';
 
 const supabase = createClient();
+
+// Types pour les données Supabase
+interface ViewLinkMeUser {
+  user_id: string;
+  user_role_id: string;
+  linkme_role: string;
+  enseigne_id: string | null;
+  organisation_id: string | null;
+  permissions: string[] | null;
+  is_active: boolean | null;
+  enseigne_name: string | null;
+  organisation_name: string | null;
+}
+
+interface UserAppRole {
+  id: string;
+  user_id: string;
+  role: string;
+  enseigne_id: string | null;
+  organisation_id: string | null;
+  permissions: string[] | null;
+  is_active: boolean;
+  enseignes: { name: string } | null;
+  organisations: { legal_name: string; trade_name: string } | null;
+}
 
 // Types
 export type LinkMeRole =
@@ -68,18 +93,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [session, setSession] = useState<Session | null>(null);
   const [linkMeRole, setLinkMeRole] = useState<LinkMeUserRole | null>(null);
   const [initializing, setInitializing] = useState(true); // Verification initiale
-  const [loading, setLoading] = useState(false); // Actions explicites
+  const [_loading, _setLoading] = useState(false); // Actions explicites (unused for now)
 
   // Fonction pour récupérer le rôle LinkMe (ne dépend pas de supabase car c'est un singleton)
   const fetchLinkMeRole = useCallback(
     async (userId: string) => {
       const DEBUG = process.env.NEXT_PUBLIC_DEBUG_AUTH === '1';
-      if (DEBUG) console.log('[AuthContext] fetchLinkMeRole START', { userId });
+      if (DEBUG)
+        console.error('[AuthContext] fetchLinkMeRole START', { userId });
 
       try {
         // Utiliser la vue v_linkme_users qui join user_app_roles + user_profiles + enseignes + organisations
-        if (DEBUG) console.log('[AuthContext] Fetching from v_linkme_users...');
-        const { data, error } = await (supabase as any)
+        if (DEBUG)
+          console.error('[AuthContext] Fetching from v_linkme_users...');
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        const { data, error } = await (supabase as SupabaseClient)
           .from('v_linkme_users')
           .select('*')
           .eq('user_id', userId)
@@ -97,8 +125,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
           // Si la vue n'existe pas, essayer directement la table user_app_roles
           if (error.code === 'PGRST116' || error.code === '42P01') {
             if (DEBUG)
-              console.log('[AuthContext] Fallback to user_app_roles table...');
-            const { data: roleData, error: roleError } = await (supabase as any)
+              console.error(
+                '[AuthContext] Fallback to user_app_roles table...'
+              );
+            const { data: roleData, error: roleError } = await (
+              supabase as SupabaseClient
+            )
               .from('user_app_roles')
               .select(
                 `
@@ -118,33 +150,37 @@ export function AuthProvider({ children }: AuthProviderProps) {
               .eq('is_active', true)
               .single();
 
-            if (roleError || !roleData) {
+            if (roleError ?? !roleData) {
               console.error('[AuthContext] user_app_roles FALLBACK ERROR', {
                 code: roleError?.code,
                 message: roleError?.message,
-                status: roleError?.status,
+                details: roleError?.details,
               });
               setLinkMeRole(null);
               return;
             }
 
-            console.log('[AuthContext] user_app_roles SUCCESS', {
-              roleId: roleData.id,
-              role: roleData.role,
-            });
+            const typedRoleData = roleData as unknown as UserAppRole;
+
+            if (DEBUG) {
+              console.error('[AuthContext] user_app_roles SUCCESS', {
+                roleId: typedRoleData.id,
+                role: typedRoleData.role,
+              });
+            }
 
             setLinkMeRole({
-              id: roleData.id,
-              user_id: roleData.user_id,
-              role: roleData.role as LinkMeRole,
-              enseigne_id: roleData.enseigne_id,
-              organisation_id: roleData.organisation_id,
-              permissions: roleData.permissions || [],
-              is_active: roleData.is_active,
-              enseigne_name: roleData.enseignes?.name || null,
+              id: typedRoleData.id,
+              user_id: typedRoleData.user_id,
+              role: typedRoleData.role as LinkMeRole,
+              enseigne_id: typedRoleData.enseigne_id,
+              organisation_id: typedRoleData.organisation_id,
+              permissions: typedRoleData.permissions ?? [],
+              is_active: typedRoleData.is_active,
+              enseigne_name: typedRoleData.enseignes?.name ?? null,
               organisation_name:
-                roleData.organisations?.trade_name ||
-                roleData.organisations?.legal_name ||
+                typedRoleData.organisations?.trade_name ??
+                typedRoleData.organisations?.legal_name ??
                 null,
             });
             return;
@@ -158,23 +194,27 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
 
         if (data) {
-          console.log('[AuthContext] v_linkme_users SUCCESS', {
-            userId: data.user_id,
-            userRoleId: data.user_role_id,
-            role: data.linkme_role,
-          });
+          const typedData = data as unknown as ViewLinkMeUser;
+
+          if (DEBUG) {
+            console.error('[AuthContext] v_linkme_users SUCCESS', {
+              userId: typedData.user_id,
+              userRoleId: typedData.user_role_id,
+              role: typedData.linkme_role,
+            });
+          }
 
           setLinkMeRole({
             // FIX: Use user_role_id (from user_app_roles.id) instead of undefined data.id
-            id: data.user_role_id || data.user_id,
-            user_id: data.user_id,
-            role: data.linkme_role as LinkMeRole,
-            enseigne_id: data.enseigne_id,
-            organisation_id: data.organisation_id,
-            permissions: data.permissions || [],
-            is_active: data.is_active ?? true,
-            enseigne_name: data.enseigne_name,
-            organisation_name: data.organisation_name,
+            id: typedData.user_role_id ?? typedData.user_id,
+            user_id: typedData.user_id,
+            role: typedData.linkme_role as LinkMeRole,
+            enseigne_id: typedData.enseigne_id,
+            organisation_id: typedData.organisation_id,
+            permissions: typedData.permissions ?? [],
+            is_active: typedData.is_active ?? true,
+            enseigne_name: typedData.enseigne_name,
+            organisation_name: typedData.organisation_name,
           });
         } else {
           console.warn('[AuthContext] No data returned from v_linkme_users');
@@ -184,7 +224,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         console.error('[AuthContext] fetchLinkMeRole EXCEPTION', err);
         setLinkMeRole(null);
       } finally {
-        console.log('[AuthContext] fetchLinkMeRole END');
+        if (DEBUG) console.error('[AuthContext] fetchLinkMeRole END');
       }
     },
     [] // Pas de dépendance car supabase est un singleton
@@ -204,7 +244,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // Récupérer la session initiale
     const initSession = async () => {
       const DEBUG = process.env.NEXT_PUBLIC_DEBUG_AUTH === '1';
-      if (DEBUG) console.log('[AuthContext] initSession START');
+      if (DEBUG) console.error('[AuthContext] initSession START');
+
+      // TIMEOUT DE SÉCURITÉ (8 secondes)
+      const timeoutId = setTimeout(() => {
+        if (!cancelled) {
+          console.error('[AuthContext] TIMEOUT - getSession() suspendu > 8s');
+          setInitializing(false);
+        }
+      }, 8000);
 
       try {
         const {
@@ -212,14 +260,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
         } = await supabase.auth.getSession();
 
         if (DEBUG)
-          console.log('[AuthContext] getSession result:', {
+          console.error('[AuthContext] getSession result:', {
             hasSession: !!currentSession,
             userId: currentSession?.user?.id,
+            expired: currentSession?.expires_at
+              ? new Date(currentSession.expires_at * 1000)
+              : null,
           });
 
         // Vérifier cancelled AVANT setState pour éviter les fuites mémoire
         if (cancelled) {
-          if (DEBUG) console.log('[AuthContext] initSession CANCELLED');
+          if (DEBUG) console.error('[AuthContext] initSession CANCELLED');
           return;
         }
 
@@ -232,9 +283,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
       } catch (error) {
         console.error('[AuthContext] initSession ERROR:', error);
       } finally {
+        clearTimeout(timeoutId); // Nettoyer le timeout
         // TOUJOURS setInitializing(false) - critical pour sortir du loading
         if (DEBUG)
-          console.log(
+          console.error(
             '[AuthContext] initSession DONE - setInitializing(false)'
           );
         setInitializing(false);
@@ -243,6 +295,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     void initSession().catch(error => {
       console.error('[AuthContext] initSession failed:', error);
+      setInitializing(false); // CRITIQUE - forcer initializing=false même en cas d'erreur
     });
 
     // Écouter les changements d'auth
@@ -267,7 +320,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // Cleanup: marquer comme cancelled et unsub
     return () => {
       const DEBUG = process.env.NEXT_PUBLIC_DEBUG_AUTH === '1';
-      if (DEBUG) console.log('[AuthContext] useEffect CLEANUP');
+      if (DEBUG) console.error('[AuthContext] useEffect CLEANUP');
       cancelled = true;
       subscription.unsubscribe();
     };
@@ -295,7 +348,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
 
       // Vérifier que l'utilisateur a accès à LinkMe
-      const { data: roleData, error: roleError } = await (supabase as any)
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const { data: roleData, error: roleError } = await (
+        supabase as SupabaseClient
+      )
         .from('user_app_roles')
         .select('*')
         .eq('user_id', data.user.id)
@@ -303,7 +359,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         .eq('is_active', true)
         .single();
 
-      if (roleError || !roleData) {
+      if (roleError ?? !roleData) {
         // L'utilisateur n'a pas accès à LinkMe - déconnecter
         await supabase.auth.signOut();
         return {
@@ -335,7 +391,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setLinkMeRole(null);
     // Rediriger vers la page d'accueil apres deconnexion
     if (typeof window !== 'undefined') {
-      window.location.href = redirectTo || '/';
+      window.location.href = redirectTo ?? '/';
     }
   };
 
@@ -344,7 +400,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     session,
     linkMeRole,
     initializing,
-    loading,
+    loading: _loading,
     signIn,
     signOut,
     refreshLinkMeRole,
