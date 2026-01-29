@@ -1,17 +1,65 @@
+/**
+ * 🔐 Layout Protégé - Pages INTERNES LinkMe
+ *
+ * Vérifie l'authentification côté serveur AVANT de render les pages enfants.
+ * Design e-commerce moderne avec sidebar + header minimaliste.
+ *
+ * IMPORTANT (Best Practices 2025):
+ * ================================
+ * - Utilise getUser() PAS getSession() pour la sécurité
+ * - getUser() valide le JWT avec le serveur Supabase
+ * - getSession() lit seulement le cookie (peut être falsifié)
+ *
+ * @updated 2026-01-29 - Ajout protection server-side (post-suppression middleware)
+ */
+
+import { redirect } from 'next/navigation';
+
+import { createServerClient } from '@/lib/supabase-server';
+
 import { AppSidebar } from '../../components/layout/AppSidebar';
 import { MinimalHeader } from '../../components/layout/MinimalHeader';
 import { SidebarProvider } from '../../components/layout/SidebarProvider';
 import { Providers } from '../../components/providers/Providers';
 
-/**
- * Layout pour les pages INTERNES LinkMe
- * Design e-commerce moderne avec sidebar + header minimaliste
- */
-export default function MainLayout({
+// Force dynamic rendering for all protected routes
+// Prevents build-time errors when auth check fails (no session at build time)
+export const dynamic = 'force-dynamic';
+
+export default async function MainLayout({
   children,
 }: {
   children: React.ReactNode;
-}): React.ReactElement {
+}) {
+  const supabase = await createServerClient();
+
+  // IMPORTANT: Utiliser getUser() pas getSession()
+  // getUser() valide le JWT avec le serveur Supabase
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
+
+  // Pas d'utilisateur ou erreur = redirection vers login
+  if (error || !user) {
+    redirect('/login');
+  }
+
+  // Vérifier que l'utilisateur a un rôle LinkMe actif
+  const { data: linkmeRole } = await supabase
+    .from('user_app_roles')
+    .select('id')
+    .eq('user_id', user.id)
+    .eq('app', 'linkme')
+    .eq('is_active', true)
+    .maybeSingle();
+
+  // Pas de rôle LinkMe = redirection vers login
+  if (!linkmeRole) {
+    redirect('/login?error=no_linkme_access');
+  }
+
+  // Utilisateur authentifié avec rôle LinkMe = render la page
   return (
     <Providers>
       <SidebarProvider>
