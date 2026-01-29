@@ -63,7 +63,7 @@ export default function LoginPage(): JSX.Element {
 function LoginContent(): JSX.Element {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { signIn, user, initializing } = useAuth();
+  const { signIn, initializing } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -157,12 +157,9 @@ function LoginContent(): JSX.Element {
     void loadSphereImages();
   }, []);
 
-  // Rediriger si connecte
-  useEffect(() => {
-    if (!initializing && user) {
-      router.push(redirectUrl);
-    }
-  }, [user, initializing, router, redirectUrl]);
+  // NOTE: Pas de redirect automatique ici
+  // La protection est gérée server-side dans (main)/layout.tsx
+  // Evite conflit getSession() (client) vs getUser() (server)
 
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
@@ -178,8 +175,8 @@ function LoginContent(): JSX.Element {
         return;
       }
 
-      // Succes : reset loading, le useEffect redirigera automatiquement
-      setLoading(false);
+      // Succes : rediriger vers dashboard
+      router.push(redirectUrl);
     } catch {
       setError('Une erreur est survenue. Veuillez reessayer.');
       setLoading(false);
