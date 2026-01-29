@@ -1,33 +1,23 @@
 /**
- * 🔐 Middleware Back Office - Token Refresh + Redirections
+ * Middleware Back Office - SANS Supabase (Edge Runtime Safe)
  *
- * ARCHITECTURE AUTH (Best Practices 2025):
- * =========================================
+ * ❌ INTERDIT: import de @supabase/*, createServerClient, updateSession
+ * ✅ SEULEMENT: NextRequest, NextResponse, redirections simples
  *
- * 1. MIDDLEWARE (ici):
- *    - Rafraîchir les tokens Supabase (getUser)
- *    - Redirections basiques (/, anciennes URLs)
- *    - ❌ NE PAS bloquer les routes non-auth
+ * POURQUOI:
+ * - @supabase/ssr utilise `process.version` (API Node.js)
+ * - Edge Runtime de Vercel ne supporte PAS `process.version`
+ * - Résultat: MIDDLEWARE_INVOCATION_FAILED en production
  *
- * 2. DATA ACCESS LAYER (dal.ts):
- *    - Vérifier l'auth avec verifySession()
- *    - C'est LA vraie protection
+ * ARCHITECTURE AUTH:
+ * - L'auth est vérifiée dans: apps/back-office/src/app/(protected)/layout.tsx
+ * - Le layout utilise supabase.auth.getUser() (sécurisé)
+ * - RLS Supabase protège les données
  *
- * 3. RLS SUPABASE:
- *    - Protection au niveau données
- *    - Dernière ligne de défense
- *
- * Ref: https://nextjs.org/docs/app/guides/authentication
- * Ref: https://supabase.com/docs/guides/auth/server-side/nextjs
- *
- * @since 2025-12-12
- * @updated 2026-01-29 - Refonte selon best practices
+ * @since 2026-01-29 - Suppression Supabase pour Edge Runtime
  */
-
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-
-import { updateSession } from '@verone/utils/supabase/middleware';
 
 // Redirections backward-compatibility (anciennes URLs)
 const URL_REDIRECTS: Record<string, string> = {
@@ -38,11 +28,11 @@ const URL_REDIRECTS: Record<string, string> = {
   '/tresorerie': '/finance/tresorerie',
 };
 
-export async function middleware(request: NextRequest) {
+export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
   // ─────────────────────────────────────────────────────────────
-  // 1. REDIRECTIONS (avant le token refresh)
+  // REDIRECTIONS SIMPLES (pas d'async, pas de Supabase)
   // ─────────────────────────────────────────────────────────────
 
   // Route racine "/" → redirect vers /login
@@ -64,13 +54,7 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // 2. TOKEN REFRESH (Supabase)
-  // ─────────────────────────────────────────────────────────────
-  // Rafraîchit le token et synchronise les cookies.
-  // NE bloque PAS les routes - la protection est dans le DAL.
-
-  return await updateSession(request);
+  return NextResponse.next();
 }
 
 export const config = {

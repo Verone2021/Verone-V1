@@ -1,40 +1,26 @@
 /**
- * 🔐 Middleware LinkMe - Token Refresh
+ * Middleware LinkMe - SANS Supabase (Edge Runtime Safe)
  *
- * ARCHITECTURE AUTH (Best Practices 2025):
- * =========================================
+ * ❌ INTERDIT: import de @supabase/*, createServerClient, updateSession
+ * ✅ SEULEMENT: NextRequest, NextResponse
  *
- * 1. MIDDLEWARE (ici):
- *    - Rafraîchir les tokens Supabase (getUser)
- *    - ❌ NE PAS bloquer les routes
+ * POURQUOI:
+ * - @supabase/ssr utilise `process.version` (API Node.js)
+ * - Edge Runtime de Vercel ne supporte PAS `process.version`
+ * - Résultat: MIDDLEWARE_INVOCATION_FAILED en production
  *
- * 2. AUTH CONTEXT (client-side):
- *    - Vérifier l'auth avec useAuth()
- *    - Gérer les rôles LinkMe
+ * ARCHITECTURE AUTH:
+ * - L'auth est vérifiée dans AuthContext côté client
+ * - RLS Supabase protège les données
  *
- * 3. RLS SUPABASE:
- *    - Protection au niveau données
- *    - Dernière ligne de défense
- *
- * Ref: https://nextjs.org/docs/app/guides/authentication
- * Ref: https://supabase.com/docs/guides/auth/server-side/nextjs
- *
- * @since 2025-12-01
- * @updated 2026-01-29 - Refonte selon best practices
+ * @since 2026-01-29 - Suppression Supabase pour Edge Runtime
  */
-
 import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 
-import { updateSession } from '@verone/utils/supabase/middleware';
-
-export async function middleware(request: NextRequest) {
-  // ─────────────────────────────────────────────────────────────
-  // TOKEN REFRESH (Supabase)
-  // ─────────────────────────────────────────────────────────────
-  // Rafraîchit le token et synchronise les cookies.
-  // NE bloque PAS les routes - la protection est dans AuthContext.
-
-  return await updateSession(request);
+export function middleware(_request: NextRequest) {
+  // Pas de logique nécessaire - auth gérée par AuthContext
+  return NextResponse.next();
 }
 
 export const config = {
