@@ -347,6 +347,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
         return { error: new Error('Utilisateur non trouvé') };
       }
 
+      // Force refresh pour obtenir token avec policies RLS à jour
+      await supabase.auth.refreshSession();
+
       // Vérifier que l'utilisateur a accès à LinkMe
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const { data: roleData, error: roleError } = await (
