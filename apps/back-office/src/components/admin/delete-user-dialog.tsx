@@ -19,7 +19,6 @@ import {
   DialogTitle,
 } from '@verone/ui';
 import { RoleBadge, type UserRole } from '@verone/ui';
-import { cn as _cn } from '@verone/utils';
 import { AlertTriangle, Trash2, X } from 'lucide-react';
 
 import type { UserWithProfile } from '@/app/(protected)/admin/users/page';
@@ -51,20 +50,20 @@ export function DeleteUserDialog({
       const result = await deleteUser(user.id);
 
       if (!result.success) {
-        setError(result.error || 'Erreur lors de la suppression');
+        setError(result.error ?? 'Erreur lors de la suppression');
         return;
       }
 
       // Fermer le dialog et notifier le parent
       onOpenChange(false);
       onUserDeleted?.();
-
-      // Notification succès
-      // TODO: Ajouter système de notifications toast
-      console.warn('Utilisateur supprimé avec succès');
-    } catch (error: any) {
-      console.error('Erreur suppression utilisateur:', error);
-      setError(error.message || "Une erreur inattendue s'est produite");
+    } catch (err: unknown) {
+      console.error('Erreur suppression utilisateur:', err);
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Une erreur inattendue s'est produite"
+      );
     } finally {
       setIsDeleting(false);
     }
@@ -159,8 +158,13 @@ export function DeleteUserDialog({
             variant="destructive"
             icon={Trash2}
             onClick={() => {
-              void handleDelete().catch(error => {
-                console.error('[DeleteUserDialog] handleDelete failed:', error);
+              void handleDelete().catch((error: unknown) => {
+                console.error('[DeleteUserDialog] Delete failed:', error);
+                setError(
+                  error instanceof Error
+                    ? error.message
+                    : "Une erreur inattendue s'est produite"
+                );
               });
             }}
             loading={isDeleting}

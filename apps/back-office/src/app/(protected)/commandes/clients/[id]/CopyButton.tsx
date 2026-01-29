@@ -25,8 +25,8 @@ export function CopyButton({ text, label = 'Copier' }: CopyButtonProps) {
   return (
     <button
       onClick={() => {
-        void handleCopy().catch(error => {
-          console.error('[CopyButton] handleCopy failed:', error);
+        void handleCopy().catch((error: unknown) => {
+          console.error('[CopyButton] Copy failed:', error);
         });
       }}
       className="text-xs text-muted-foreground hover:text-foreground underline flex items-center gap-1"

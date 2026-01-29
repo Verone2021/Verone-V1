@@ -182,7 +182,7 @@ export function FormSubmissionMessages({
                     className="text-xs"
                     style={{ color: colors.text.muted }}
                   >
-                    par {msg.user?.full_name || 'Utilisateur'}
+                    par {msg.user?.full_name ?? 'Utilisateur'}
                   </span>
                 </div>
                 <span className="text-xs" style={{ color: colors.text.muted }}>
@@ -213,10 +213,12 @@ export function FormSubmissionMessages({
       {/* Formulaire ajout message */}
       <form
         onSubmit={e => {
-          void handleSubmit(e).catch(error => {
-            console.error(
-              '[FormSubmissionMessages] handleSubmit failed:',
-              error
+          void handleSubmit(e).catch((error: unknown) => {
+            console.error('[FormSubmissionMessages] Submit failed:', error);
+            setSendError(
+              error instanceof Error
+                ? error.message
+                : "Une erreur inattendue s'est produite"
             );
           });
         }}
