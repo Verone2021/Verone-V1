@@ -48,6 +48,23 @@
       ]
     }
   ],
+  "redirects": [
+    {
+      "source": "/comptabilite",
+      "destination": "/finance",
+      "permanent": true
+    },
+    {
+      "source": "/comptabilite/:path*",
+      "destination": "/finance/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/tresorerie",
+      "destination": "/finance/tresorerie",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     {
       "source": "/feeds/:path*",
