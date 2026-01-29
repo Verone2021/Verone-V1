@@ -40,13 +40,22 @@ export default async function MainLayout({
     error,
   } = await supabase.auth.getUser();
 
+  // Debug logs pour production (Vercel Function Logs)
+  console.log('[MainLayout] Auth check:', {
+    hasUser: !!user,
+    userId: user?.id,
+    email: user?.email,
+    error: error?.message,
+  });
+
   // Pas d'utilisateur ou erreur = redirection vers login
   if (error || !user) {
+    console.error('[MainLayout] No user found, redirecting to login');
     redirect('/login');
   }
 
   // Vérifier que l'utilisateur a un rôle LinkMe actif
-  const { data: linkmeRole } = await supabase
+  const { data: linkmeRole, error: roleError } = await supabase
     .from('user_app_roles')
     .select('id')
     .eq('user_id', user.id)
@@ -54,10 +63,23 @@ export default async function MainLayout({
     .eq('is_active', true)
     .maybeSingle();
 
+  // Debug logs pour RLS check
+  console.log('[MainLayout] LinkMe role check:', {
+    hasRole: !!linkmeRole,
+    roleId: linkmeRole?.id,
+    userId: user.id,
+    error: roleError?.message,
+    errorDetails: roleError?.details,
+    errorHint: roleError?.hint,
+  });
+
   // Pas de rôle LinkMe = redirection vers login
   if (!linkmeRole) {
+    console.error('[MainLayout] No LinkMe role found, redirecting to login');
     redirect('/login?error=no_linkme_access');
   }
+
+  console.log('[MainLayout] Auth successful, rendering dashboard');
 
   // Utilisateur authentifié avec rôle LinkMe = render la page
   return (
