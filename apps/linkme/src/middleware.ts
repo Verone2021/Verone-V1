@@ -1,30 +1,52 @@
 /**
- * 🔐 Middleware Minimal - Edge Runtime Safe
+ * 🔐 Middleware LinkMe - Token Refresh
  *
- * Zéro dépendance Supabase. L'auth est gérée dans AuthContext.
+ * ARCHITECTURE AUTH (Best Practices 2025):
+ * =========================================
  *
- * POURQUOI CE DESIGN:
- * - @supabase/ssr + Edge Runtime Vercel = Incompatibilité connue
- * - Issues GitHub: #1552, #107, #24194
- * - CVE-2025-29927: "Middleware alone is insufficient"
+ * 1. MIDDLEWARE (ici):
+ *    - Rafraîchir les tokens Supabase (getUser)
+ *    - ❌ NE PAS bloquer les routes
  *
- * L'AUTH EST VÉRIFIÉE DANS:
- * - AuthContext (client-side)
- * - RLS Supabase (Data Access Layer)
+ * 2. AUTH CONTEXT (client-side):
+ *    - Vérifier l'auth avec useAuth()
+ *    - Gérer les rôles LinkMe
  *
- * @since 2026-01-29
+ * 3. RLS SUPABASE:
+ *    - Protection au niveau données
+ *    - Dernière ligne de défense
+ *
+ * Ref: https://nextjs.org/docs/app/guides/authentication
+ * Ref: https://supabase.com/docs/guides/auth/server-side/nextjs
+ *
+ * @since 2025-12-01
+ * @updated 2026-01-29 - Refonte selon best practices
  */
 
 import type { NextRequest } from 'next/server';
-import { NextResponse } from 'next/server';
 
-export function middleware(_request: NextRequest) {
-  // Tout passe → l'auth est gérée dans AuthContext côté client
-  return NextResponse.next();
+import { updateSession } from '@verone/utils/supabase/middleware';
+
+export async function middleware(request: NextRequest) {
+  // ─────────────────────────────────────────────────────────────
+  // TOKEN REFRESH (Supabase)
+  // ─────────────────────────────────────────────────────────────
+  // Rafraîchit le token et synchronise les cookies.
+  // NE bloque PAS les routes - la protection est dans AuthContext.
+
+  return await updateSession(request);
 }
 
 export const config = {
   matcher: [
+    /*
+     * Match tous les chemins SAUF :
+     * - api (routes API - ont leur propre auth)
+     * - _next/static (fichiers statiques Next.js)
+     * - _next/image (optimisation images)
+     * - favicon.ico
+     * - Assets statiques (images, fonts, etc.)
+     */
     '/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)',
   ],
 };

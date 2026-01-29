@@ -1,26 +1,35 @@
 /**
- * 🔐 Middleware Minimal - Edge Runtime Safe
+ * 🔐 Middleware Back Office - Token Refresh + Redirections
  *
- * Zéro dépendance Supabase. L'auth est gérée dans les layouts.
- * Version stable restaurée de décembre 2025.
+ * ARCHITECTURE AUTH (Best Practices 2025):
+ * =========================================
  *
- * POURQUOI CE DESIGN:
- * - @supabase/ssr + Edge Runtime Vercel = Incompatibilité connue
- * - Issues GitHub: #1552, #107, #24194
- * - CVE-2025-29927: "Middleware alone is insufficient"
+ * 1. MIDDLEWARE (ici):
+ *    - Rafraîchir les tokens Supabase (getUser)
+ *    - Redirections basiques (/, anciennes URLs)
+ *    - ❌ NE PAS bloquer les routes non-auth
  *
- * L'AUTH EST VÉRIFIÉE DANS:
- * - apps/back-office/src/app/(protected)/layout.tsx (getUser())
- * - RLS Supabase (Data Access Layer)
+ * 2. DATA ACCESS LAYER (dal.ts):
+ *    - Vérifier l'auth avec verifySession()
+ *    - C'est LA vraie protection
+ *
+ * 3. RLS SUPABASE:
+ *    - Protection au niveau données
+ *    - Dernière ligne de défense
+ *
+ * Ref: https://nextjs.org/docs/app/guides/authentication
+ * Ref: https://supabase.com/docs/guides/auth/server-side/nextjs
  *
  * @since 2025-12-12
- * @restored 2026-01-29
+ * @updated 2026-01-29 - Refonte selon best practices
  */
 
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
-// Redirections backward-compatibility
+import { updateSession } from '@verone/utils/supabase/middleware';
+
+// Redirections backward-compatibility (anciennes URLs)
 const URL_REDIRECTS: Record<string, string> = {
   '/comptabilite': '/finance',
   '/comptabilite/transactions': '/finance/transactions',
@@ -29,20 +38,24 @@ const URL_REDIRECTS: Record<string, string> = {
   '/tresorerie': '/finance/tresorerie',
 };
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
+
+  // ─────────────────────────────────────────────────────────────
+  // 1. REDIRECTIONS (avant le token refresh)
+  // ─────────────────────────────────────────────────────────────
 
   // Route racine "/" → redirect vers /login
   if (pathname === '/') {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  // Redirections backward-compatibility
+  // Redirections backward-compatibility (exactes)
   if (URL_REDIRECTS[pathname]) {
     return NextResponse.redirect(new URL(URL_REDIRECTS[pathname], request.url));
   }
 
-  // Redirections par préfixe
+  // Redirections backward-compatibility (préfixes)
   for (const [oldPath, newPath] of Object.entries(URL_REDIRECTS)) {
     if (pathname.startsWith(oldPath + '/')) {
       return NextResponse.redirect(
@@ -51,12 +64,25 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  // Tout le reste passe → auth gérée dans layout.tsx
-  return NextResponse.next();
+  // ─────────────────────────────────────────────────────────────
+  // 2. TOKEN REFRESH (Supabase)
+  // ─────────────────────────────────────────────────────────────
+  // Rafraîchit le token et synchronise les cookies.
+  // NE bloque PAS les routes - la protection est dans le DAL.
+
+  return await updateSession(request);
 }
 
 export const config = {
   matcher: [
+    /*
+     * Match tous les chemins SAUF :
+     * - api (routes API - ont leur propre auth)
+     * - _next/static (fichiers statiques Next.js)
+     * - _next/image (optimisation images)
+     * - favicon.ico
+     * - Assets statiques (images, fonts, etc.)
+     */
     '/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)',
   ],
 };

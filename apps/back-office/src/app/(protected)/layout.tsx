@@ -4,24 +4,21 @@
  * Route group layout qui vérifie l'authentification côté serveur
  * AVANT de render les pages enfants.
  *
- * Pattern Next.js 15 App Router recommandé pour sécuriser des routes.
+ * IMPORTANT (Best Practices 2025):
+ * ================================
+ * - Utilise getUser() PAS getSession() pour la sécurité
+ * - getUser() valide le JWT avec le serveur Supabase
+ * - getSession() lit seulement le cookie (peut être falsifié)
  *
- * Fonctionnement:
- * - Toutes les routes dans (protected)/ nécessitent une session valide
- * - Vérification serveur = pas de flash de contenu non-authentifié
- * - Redirection automatique vers /login si pas de session
+ * ⚠️ LIMITATION: Les layouts ne re-render pas sur navigation client-side
+ * Pour une protection complète, utiliser aussi:
+ * - Le Data Access Layer (dal.ts) dans les pages
+ * - RLS Supabase pour la protection des données
  *
- * Routes protégées:
- * - /dashboard
- * - /ventes
- * - /consultations
- * - /factures
- * - /tresorerie
- * - /livraisons
- * - etc.
- *
- * Ref: https://nextjs.org/docs/app/building-your-application/routing/route-groups
+ * Ref: https://nextjs.org/docs/app/guides/authentication
  * Ref: https://supabase.com/docs/guides/auth/server-side/nextjs
+ *
+ * @updated 2026-01-29 - Migration getSession → getUser
  */
 
 import { redirect } from 'next/navigation';
@@ -38,15 +35,20 @@ export default async function ProtectedLayout({
   children: React.ReactNode;
 }) {
   const supabase = await createServerClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
 
-  // Pas de session = redirection vers login
-  if (!session) {
+  // IMPORTANT: Utiliser getUser() pas getSession()
+  // getUser() valide le JWT avec le serveur Supabase
+  // getSession() lit seulement le cookie (peut être falsifié)
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
+
+  // Pas d'utilisateur ou erreur = redirection vers login
+  if (error || !user) {
     redirect('/login');
   }
 
-  // Session valide = render la page demandée
+  // Utilisateur authentifié = render la page demandée
   return <>{children}</>;
 }
