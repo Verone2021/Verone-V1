@@ -19,34 +19,27 @@ CRM/ERP modulaire pour décoration et mobilier d'intérieur haut de gamme.
 
 ---
 
-## 🌐 MCP Browsers (Playwright + Chrome DevTools)
+## 🌐 MCP Browser (Playwright)
 
-**Configuration** : Les deux MCP sont ACTIFS simultanément.
+**Configuration**: Playwright MCP actif avec 2 lanes parallèles.
 
-**⚠️ IMPORTANT** : Toujours préciser QUEL MCP utiliser pour éviter confusion.
+### Commandes Disponibles
 
-### Quand Utiliser Quel MCP ?
+| Action                   | Commande                                             |
+| ------------------------ | ---------------------------------------------------- |
+| Vérifier erreurs console | `browser_console_messages({ onlyErrors: true })`     |
+| Screenshot rapide        | `browser_take_screenshot({ filename: "nom.png" })`   |
+| Snapshot UI              | `browser_snapshot()` (préférer au screenshot)        |
+| Naviguer                 | `browser_navigate({ url: "http://localhost:3002" })` |
+| Cliquer élément          | `browser_click({ selector: "#btn-submit" })`         |
 
-| Tâche                        | MCP à Utiliser      | Raison                                |
-| ---------------------------- | ------------------- | ------------------------------------- |
-| Tests E2E automatisés        | **PLAYWRIGHT**      | Cross-browser, accessibility tree     |
-| Debug bugs critiques (500s)  | **CHROME DEVTOOLS** | Network tab, console errors détaillés |
-| Performance audit (LCP, CLS) | **CHROME DEVTOOLS** | Performance profiler                  |
-| Automation workflows         | **PLAYWRIGHT**      | Multi-étapes fiable                   |
-| Scraping données             | **PLAYWRIGHT**      | Structured data via accessibility     |
+### Bonnes Pratiques
 
-### Gestion des Conflits
+1. **Logs DEBUG**: Utiliser `LOG_LEVEL=debug pnpm dev` pour activer
+2. **Screenshots**: Nettoyage auto `.playwright-mcp/` (fichiers > 1 jour)
+3. **Console**: Utiliser `onlyErrors: true` pour vérifications rapides (éviter 25000+ tokens)
 
-**Si confusion détectée** : Désactiver temporairement un MCP dans `.claude/settings.json` (commenter la ligne), puis redémarrer Claude Code.
-
-**Documentation complète** : `.serena/memories/mcp-chrome-devtools-playwright-cohabitation.md`
-
-### Prérequis Chrome DevTools
-
-```bash
-# Lancer Chrome avec remote debugging (obligatoire)
-/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --remote-debugging-port=9222
-```
+**Documentation**: `docs/current/serena/mcp-browser-revolution-2025.md`
 
 ---
 
