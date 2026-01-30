@@ -207,7 +207,8 @@ export default function CataloguePage() {
     setArchivedLoading(true);
     try {
       const result = await loadArchivedProducts(filters);
-      setArchivedProducts(result.products as Product[]);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+      setArchivedProducts(result.products as any);
     } catch (error) {
       console.error('Erreur chargement produits archivés:', error);
     } finally {

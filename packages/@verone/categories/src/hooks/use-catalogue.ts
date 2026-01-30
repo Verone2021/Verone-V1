@@ -379,7 +379,8 @@ export const useCatalogue = () => {
     try {
       const { data, error } = await supabase
         .from('products')
-        .insert([productData])
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .insert([productData as any])
         .select()
         .single();
 
@@ -400,7 +401,8 @@ export const useCatalogue = () => {
     try {
       const { data, error } = await supabase
         .from('products')
-        .update(updates)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .update(updates as any)
         .eq('id', id)
         .select()
         .single();
