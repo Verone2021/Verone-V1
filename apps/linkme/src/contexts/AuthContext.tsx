@@ -244,20 +244,37 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // Récupérer la session initiale
     const initSession = async () => {
       const DEBUG = process.env.NEXT_PUBLIC_DEBUG_AUTH === '1';
+      const startTime = Date.now();
+      console.warn('[initSession] START', {
+        timestamp: new Date().toISOString(),
+      });
       if (DEBUG) console.error('[AuthContext] initSession START');
 
       // TIMEOUT DE SÉCURITÉ (8 secondes)
       const timeoutId = setTimeout(() => {
         if (!cancelled) {
-          console.error('[AuthContext] TIMEOUT - getSession() suspendu > 8s');
+          const elapsed = Date.now() - startTime;
+          console.error('[initSession] TIMEOUT - getSession() suspendu > 8s', {
+            elapsed,
+          });
           setInitializing(false);
         }
       }, 8000);
 
       try {
+        const beforeGetSession = Date.now();
         const {
           data: { session: currentSession },
         } = await supabase.auth.getSession();
+        const afterGetSession = Date.now();
+        console.warn('[initSession] getSession completed', {
+          duration: afterGetSession - beforeGetSession,
+          hasSession: !!currentSession,
+          userId: currentSession?.user?.id,
+          expired: currentSession?.expires_at
+            ? new Date(currentSession.expires_at * 1000)
+            : null,
+        });
 
         if (DEBUG)
           console.error('[AuthContext] getSession result:', {
@@ -271,6 +288,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
         // Vérifier cancelled AVANT setState pour éviter les fuites mémoire
         if (cancelled) {
           if (DEBUG) console.error('[AuthContext] initSession CANCELLED');
+          console.warn('[initSession] CANCELLED', {
+            totalElapsed: Date.now() - startTime,
+          });
           return;
         }
 
@@ -278,13 +298,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setUser(currentSession?.user ?? null);
 
         if (currentSession?.user) {
+          const beforeFetch = Date.now();
           await fetchLinkMeRole(currentSession.user.id);
+          console.warn('[initSession] fetchLinkMeRole completed', {
+            duration: Date.now() - beforeFetch,
+          });
         }
       } catch (error) {
-        console.error('[AuthContext] initSession ERROR:', error);
+        console.error('[initSession] ERROR:', error);
       } finally {
         clearTimeout(timeoutId); // Nettoyer le timeout
         // TOUJOURS setInitializing(false) - critical pour sortir du loading
+        const totalElapsed = Date.now() - startTime;
+        console.warn('[initSession] END', { totalElapsed });
         if (DEBUG)
           console.error(
             '[AuthContext] initSession DONE - setInitializing(false)'
@@ -332,25 +358,40 @@ export function AuthProvider({ children }: AuthProviderProps) {
     password: string
   ): Promise<{ error: Error | null }> => {
     try {
+      const startTime = Date.now();
+      console.warn('[signIn] START', { timestamp: new Date().toISOString() });
+
+      const beforePassword = Date.now();
       const { data, error: authError } = await supabase.auth.signInWithPassword(
         {
           email,
           password,
         }
       );
+      const afterPassword = Date.now();
+      console.warn('[signIn] signInWithPassword completed', {
+        duration: afterPassword - beforePassword,
+        hasUser: !!data.user,
+        error: authError?.message,
+      });
 
       if (authError) {
+        console.warn('[signIn] END - authError', {
+          totalElapsed: Date.now() - startTime,
+        });
         return { error: authError };
       }
 
       if (!data.user) {
+        console.warn('[signIn] END - no user', {
+          totalElapsed: Date.now() - startTime,
+        });
         return { error: new Error('Utilisateur non trouvé') };
       }
 
-      // Force refresh pour obtenir token avec policies RLS à jour
-      await supabase.auth.refreshSession();
-
       // Vérifier que l'utilisateur a accès à LinkMe
+      console.warn('[signIn] AVANT query user_app_roles');
+      const beforeQuery = Date.now();
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const { data: roleData, error: roleError } = await (
         supabase as SupabaseClient
@@ -361,10 +402,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
         .eq('app', 'linkme')
         .eq('is_active', true)
         .single();
+      const afterQuery = Date.now();
+      console.warn('[signIn] query user_app_roles completed', {
+        duration: afterQuery - beforeQuery,
+        hasRole: !!roleData,
+        error: roleError?.message,
+      });
 
       if (roleError ?? !roleData) {
         // L'utilisateur n'a pas accès à LinkMe - déconnecter
+        console.warn('[signIn] AVANT signOut (no access)');
         await supabase.auth.signOut();
+        console.warn('[signIn] END - no access', {
+          totalElapsed: Date.now() - startTime,
+        });
         return {
           error: new Error(
             "Vous n'avez pas accès à LinkMe. Contactez votre administrateur."
@@ -374,12 +425,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       // Mettre a jour les states IMMEDIATEMENT avec les donnees retournees
       // (ne pas attendre onAuthStateChange qui peut etre lent)
+      console.warn('[signIn] AVANT setState + fetchLinkMeRole');
       setSession(data.session);
       setUser(data.user);
+      const beforeFetch = Date.now();
       await fetchLinkMeRole(data.user.id);
+      const afterFetch = Date.now();
+      console.warn('[signIn] fetchLinkMeRole completed', {
+        duration: afterFetch - beforeFetch,
+      });
 
+      const totalElapsed = Date.now() - startTime;
+      console.warn('[signIn] END - SUCCESS', { totalElapsed });
       return { error: null };
     } catch (err) {
+      console.error('[signIn] EXCEPTION:', err);
       return {
         error: err instanceof Error ? err : new Error('Erreur de connexion'),
       };
