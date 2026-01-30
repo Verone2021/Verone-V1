@@ -13,11 +13,13 @@ commits: []
 ## Context
 
 Les endpoints `/api/qonto/*` retournent une erreur 500 en production:
+
 - `/api/qonto/invoices` → 500 (retry 4x failed)
 - `/api/qonto/quotes` → 500
 - `/api/qonto/credit-notes` → 500
 
 **Message d'erreur**:
+
 ```
 OAuth mode requires QONTO_ACCESS_TOKEN.
 Set QONTO_AUTH_MODE=api_key if using API Key authentication.
@@ -31,6 +33,7 @@ En production, `.env.local` n'est pas déployé → variables `undefined` → fa
 ## Solution
 
 Ajouter les 3 variables d'environnement Qonto dans Vercel Dashboard:
+
 1. `QONTO_AUTH_MODE=api_key`
 2. `QONTO_ORGANIZATION_ID=verone-4819`
 3. `QONTO_API_KEY=3d3f67599a1aec7c4379ba13fae6f5d9`
@@ -52,18 +55,23 @@ Ajouter les 3 variables d'environnement Qonto dans Vercel Dashboard:
 ### Après configuration Vercel & redéploiement:
 
 **Test 1: Health Check**
+
 ```bash
 curl https://verone-back-office.vercel.app/api/qonto/health
 ```
+
 Attendu: `{"status":"healthy","authMode":"api_key"}`
 
 **Test 2: Endpoints API**
+
 ```bash
 curl https://verone-back-office.vercel.app/api/qonto/quotes
 ```
+
 Attendu: Status 200 avec `{"success": true, ...}`
 
 **Test 3: Interface /factures**
+
 - Ouvrir https://verone-back-office.vercel.app/factures
 - Cliquer onglet "Devis" → Ne doit PAS afficher erreur OAuth
 - Cliquer onglet "Avoirs" → Ne doit PAS afficher erreur OAuth

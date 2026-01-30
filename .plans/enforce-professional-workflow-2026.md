@@ -9,18 +9,21 @@
 ## 🎯 Problèmes Identifiés
 
 ### 1. Claude Code créait des PRs anarchiques
+
 - ❌ PRs créées AVANT les commits/push
 - ❌ Plusieurs PRs pour une seule feature (ex: PR #56 ESLint, #57 docs, #55 Qonto)
 - ❌ PRs créées sans plan ni workflow structuré
 - ❌ Pas de commits intermédiaires (save points manquants)
 
 ### 2. Non-respect du workflow professionnel
+
 - ❌ Pas de phase Research (code direct sans lire l'existant)
 - ❌ Pas de phase Plan (EnterPlanMode jamais utilisé pour tasks complexes)
 - ❌ Pas de TDD (tests après le code, pas avant)
 - ❌ Commits rares ou absents (perte de travail possible)
 
 ### 3. Conséquences
+
 - 🔴 Historique Git pollué
 - 🔴 Difficulté à suivre le travail en cours
 - 🔴 Pas de backup continu (risque de perte)
@@ -31,6 +34,7 @@
 ## 📋 Nouveau Workflow à Imposer (CLAUDE.md v9.0.0)
 
 ### Phase 1: RESEARCH (Obligatoire pour toute task)
+
 ```bash
 # AVANT DE CODER: Explorer et comprendre
 - Lire fichiers pertinents (Read, Glob, Grep, Serena)
@@ -44,6 +48,7 @@
 ```
 
 ### Phase 2: PLAN (EnterPlanMode pour tasks complexes)
+
 ```bash
 # Créer plan détaillé AVANT de coder
 - EnterPlanMode pour tasks multi-fichiers ou complexes
@@ -57,6 +62,7 @@
 ```
 
 ### Phase 3: TEST (TDD - Tests AVANT code)
+
 ```bash
 # Écrire tests qui échouent d'abord (RED)
 npm run test:e2e          # Tests E2E Playwright
@@ -69,6 +75,7 @@ npm run type-check        # Validation TypeScript
 ```
 
 ### Phase 4: EXECUTE (Implémentation par étapes)
+
 ```bash
 # Coder solution minimale pour passer les tests (GREEN)
 - Suivre patterns existants
@@ -80,6 +87,7 @@ npm run type-check        # Validation TypeScript
 ```
 
 ### Phase 5: VERIFY (Validation qualité)
+
 ```bash
 # À CHAQUE étape logique
 npm run type-check        # TypeScript OK
@@ -91,6 +99,7 @@ npm run e2e:smoke         # Tests UI OK (si frontend modifié)
 ```
 
 ### Phase 6: COMMIT (Save points fréquents)
+
 ```bash
 # RÈGLE D'OR: Commit + Push à CHAQUE étape logique (toutes les 10-20 min max)
 
@@ -116,6 +125,7 @@ git push
 ```
 
 ### Phase 7: PR (UNE SEULE, à la fin)
+
 ```bash
 # UNIQUEMENT quand feature 100% complète
 
@@ -172,6 +182,7 @@ gh pr close 56 --comment "Commits consolidés dans PR #XXX"
 ```
 
 **Critères de nettoyage**:
+
 - ❌ PR sans commits: FERMER immédiatement
 - ❌ PR créée avant d'avoir fini le travail: FERMER et consolider
 - ❌ Plusieurs PRs pour même feature: CONSOLIDER en une seule
@@ -184,6 +195,7 @@ gh pr close 56 --comment "Commits consolidés dans PR #XXX"
 **Objectif**: Bloquer les anti-patterns automatiquement
 
 #### Hook 1: Pre-Push (Valider commits fréquents)
+
 ```bash
 # Créer .git/hooks/pre-push
 cat > .git/hooks/pre-push << 'EOF'
@@ -208,6 +220,7 @@ chmod +x .git/hooks/pre-push
 ```
 
 #### Hook 2: Validation Format Commit (Déjà existant)
+
 ```bash
 # S'assurer que le hook PreToolUse existe et valide le format
 # Format requis: [APP-DOMAIN-NNN] type: description
@@ -217,6 +230,7 @@ chmod +x .git/hooks/pre-push
 ```
 
 #### Hook 3: Bloquer PR prématurées (Script custom)
+
 ```bash
 # Créer script .claude/scripts/validate-pr-ready.sh
 mkdir -p .claude/scripts
@@ -257,6 +271,7 @@ chmod +x .claude/scripts/validate-pr-ready.sh
 ```
 
 **Utilisation**:
+
 ```bash
 # Avant de créer une PR, exécuter:
 ./.claude/scripts/validate-pr-ready.sh && gh pr create
@@ -268,7 +283,7 @@ chmod +x .claude/scripts/validate-pr-ready.sh
 
 **Objectif**: Aide-mémoire visuel pour Claude
 
-```bash
+````bash
 # Créer .claude/WORKFLOW-CHECKLIST.md
 cat > .claude/WORKFLOW-CHECKLIST.md << 'EOF'
 # Workflow Checklist - À Suivre Pour CHAQUE Feature
@@ -300,7 +315,8 @@ Pour CHAQUE étape logique (toutes les 10-20 min):
   npm run type-check
   npm run build
   npm run e2e:smoke  # Si UI modifiée
-  ```
+````
+
 - [ ] Commit atomique + push:
   ```bash
   git add .
@@ -341,8 +357,9 @@ Répéter jusqu'à feature complète.
 
 - CLAUDE.md v9.0.0 (sections "Workflow" et "Git/PR")
 - Mémoire: workflow-professionnel-2026
-EOF
-```
+  EOF
+
+````
 
 ---
 
@@ -354,39 +371,46 @@ EOF
 # Cette mémoire sera ajoutée via Serena write_memory
 # Contenu déjà créé dans workflow-professionnel-2026
 # Mais ajouter un rappel spécifique anti-patterns
-```
+````
 
 **Contenu mémoire supplémentaire** (à créer):
-```markdown
+
+````markdown
 # workflow-enforcement-rules (mémoire Serena)
 
 ## 🚨 RÈGLES ABSOLUES (Ne JAMAIS violer)
 
 ### 1. Commits Fréquents OBLIGATOIRES
+
 - ⏰ Commit + push toutes les 10-20 minutes MAX
 - 📦 Chaque étape logique = 1 commit
 - ☁️ Chaque commit DOIT être pushé (backup GitHub)
 
 ### 2. UNE SEULE PR par Feature
+
 - ❌ INTERDIT: Créer PR avant d'avoir fini
 - ❌ INTERDIT: Créer plusieurs PRs pour même feature
 - ✅ CORRECT: Feature 100% complète → 1 PR avec tous les commits
 
 ### 3. Workflow Obligatoire
+
 - Research → Plan → Test → Execute → Verify → Commit → (Répéter) → PR
 - EnterPlanMode pour tasks complexes (multi-fichiers, architecture)
 - TDD: Tests AVANT code
 
 ### 4. Validation Avant PR
+
 ```bash
 npm run type-check  # DOIT passer
 npm run build       # DOIT passer
 ./.claude/scripts/validate-pr-ready.sh  # DOIT passer
 ```
+````
 
 ## 🔴 Si Claude viole ces règles
 
 L'utilisateur DOIT:
+
 1. Stopper immédiatement
 2. Rappeler CLAUDE.md v9.0.0
 3. Demander à Claude de lire workflow-professionnel-2026
@@ -438,6 +462,7 @@ gh pr create --title "[BO-NOTIF-001] feat: add notification system" \
 
 # Total: ~60 min, 4 commits, 1 PR ✅
 ```
+
 ```
 
 ---
@@ -555,3 +580,4 @@ Avant de considérer ce plan comme implémenté:
 **Basé sur**: CLAUDE.md v9.0.0
 **Statut**: ✅ Implémenté (hooks créés, scripts testés, docs complètes)
 **Transférable**: Oui (autonome, complet)
+```
