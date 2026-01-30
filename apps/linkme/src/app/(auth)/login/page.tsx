@@ -10,11 +10,10 @@
  *
  * @module LoginPage
  * @since 2025-12-01
- * @updated 2026-01-30 - React 19 Server Actions with useActionState
+ * @updated 2026-01-30 - React 18 Server Actions with useTransition
  */
 
-import { useState, useEffect, useRef, Suspense, useActionState } from 'react';
-import { useFormStatus } from 'react-dom';
+import { useState, useEffect, useRef, Suspense, useTransition } from 'react';
 
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
@@ -46,37 +45,6 @@ const DEMO_SPHERE_IMAGES: SphereImageData[] = Array.from(
   })
 );
 
-// Types pour Server Action state
-type LoginState =
-  | { ok: true; redirectTo: string }
-  | { ok: false; error: string }
-  | null;
-
-// Composant SubmitButton avec useFormStatus (doit être dans un composant séparé)
-function SubmitButton(): JSX.Element {
-  const { pending } = useFormStatus();
-
-  return (
-    <button
-      type="submit"
-      disabled={pending}
-      className="w-full bg-gradient-to-r from-[#5DBEBB] to-[#5DBEBB]/60 text-white py-3.5 rounded-xl font-semibold hover:from-[#4CA9A6] hover:to-[#4CA9A6]/60 hover:scale-[1.02] hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2 disabled:from-[#3976BB]/80 disabled:to-[#3976BB]/50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-none shadow-md"
-    >
-      {pending ? (
-        <>
-          <Loader2 className="h-5 w-5 animate-spin" />
-          Connexion en cours...
-        </>
-      ) : (
-        <>
-          <LogIn className="h-5 w-5" />
-          Se connecter
-        </>
-      )}
-    </button>
-  );
-}
-
 // Wrapper pour Suspense
 export default function LoginPage(): JSX.Element {
   return (
@@ -94,21 +62,32 @@ export default function LoginPage(): JSX.Element {
 
 function LoginContent(): JSX.Element {
   const searchParams = useSearchParams();
-  const [state, formAction] = useActionState<LoginState, FormData>(
-    loginAction,
-    null
-  );
-
+  const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showTestAccounts, setShowTestAccounts] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
 
-  // Hard redirect après succès
-  useEffect(() => {
-    if (state && 'ok' in state && state.ok) {
-      window.location.assign(state.redirectTo);
-    }
-  }, [state]);
+  // Handle form submission avec Server Action
+  async function handleSubmit(
+    e: React.FormEvent<HTMLFormElement>
+  ): Promise<void> {
+    e.preventDefault();
+    setError(null);
+    const formData = new FormData(e.currentTarget);
+
+    startTransition(async () => {
+      const result = await loginAction(null, formData);
+      if (result && 'ok' in result) {
+        if (result.ok) {
+          // Hard redirect après succès
+          window.location.assign(result.redirectTo);
+        } else {
+          setError(result.error);
+        }
+      }
+    });
+  }
 
   const [sphereImages, setSphereImages] =
     useState<SphereImageData[]>(DEMO_SPHERE_IMAGES);
@@ -304,15 +283,24 @@ function LoginContent(): JSX.Element {
             )}
 
             {/* Erreur */}
-            {state && 'ok' in state && !state.ok && (
+            {error && (
               <div className="mb-5 p-4 bg-red-50 border border-red-100 rounded-xl flex items-start gap-3">
                 <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
-                <div className="text-sm text-red-700">{state.error}</div>
+                <div className="text-sm text-red-700">{error}</div>
               </div>
             )}
 
             {/* Formulaire */}
-            <form ref={formRef} action={formAction} className="space-y-5">
+            <form
+              ref={formRef}
+              onSubmit={e => {
+                void handleSubmit(e).catch(error => {
+                  console.error('[Login] Submit failed:', error);
+                  setError('Une erreur est survenue');
+                });
+              }}
+              className="space-y-5"
+            >
               {/* Redirect URL (hidden) */}
               <input type="hidden" name="redirect" value={redirectUrl} />
 
@@ -367,7 +355,23 @@ function LoginContent(): JSX.Element {
               </div>
 
               {/* Bouton connexion */}
-              <SubmitButton />
+              <button
+                type="submit"
+                disabled={isPending}
+                className="w-full bg-gradient-to-r from-[#5DBEBB] to-[#5DBEBB]/60 text-white py-3.5 rounded-xl font-semibold hover:from-[#4CA9A6] hover:to-[#4CA9A6]/60 hover:scale-[1.02] hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2 disabled:from-[#3976BB]/80 disabled:to-[#3976BB]/50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-none shadow-md"
+              >
+                {isPending ? (
+                  <>
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    Connexion en cours...
+                  </>
+                ) : (
+                  <>
+                    <LogIn className="h-5 w-5" />
+                    Se connecter
+                  </>
+                )}
+              </button>
             </form>
 
             {/* Liens */}
