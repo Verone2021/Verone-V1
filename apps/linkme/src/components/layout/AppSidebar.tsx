@@ -19,7 +19,8 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth, type LinkMeRole } from '@/contexts/AuthContext';
+import { ROUTE_PERMISSIONS } from '@/config/route-permissions';
 import { cn } from '@/lib/utils';
 
 import { useSidebar } from './SidebarProvider';
@@ -28,22 +29,36 @@ interface SidebarLink {
   icon: LucideIcon;
   label: string;
   href: string;
-  /** Si défini, le lien n'est visible que pour ces rôles */
-  roles?: string[];
+  /** Si défini, le lien n'est visible que pour ces rôles (utilise ROUTE_PERMISSIONS comme source de vérité) */
+  roles?: LinkMeRole[];
 }
 
+/**
+ * Configuration des liens sidebar avec permissions synchronisées depuis ROUTE_PERMISSIONS
+ * Les rôles sont extraits automatiquement de la config centralisée
+ */
 const sidebarLinks: SidebarLink[] = [
   { icon: LayoutDashboard, label: 'Dashboard', href: '/dashboard' },
   { icon: ShoppingBag, label: 'Catalogue', href: '/catalogue' },
-  { icon: Star, label: 'Ma Sélection', href: '/ma-selection' },
-  { icon: Package, label: 'Mes Produits', href: '/mes-produits' },
+  {
+    icon: Star,
+    label: 'Ma Sélection',
+    href: '/ma-selection',
+    roles: ROUTE_PERMISSIONS['/ma-selection']?.roles,
+  },
+  {
+    icon: Package,
+    label: 'Mes Produits',
+    href: '/mes-produits',
+    roles: ROUTE_PERMISSIONS['/mes-produits']?.roles,
+  },
   { icon: ShoppingCart, label: 'Commandes', href: '/commandes' },
   { icon: Coins, label: 'Commissions', href: '/commissions' },
   {
     icon: Building2,
     label: 'Organisations',
     href: '/organisations',
-    roles: ['enseigne_admin', 'organisation_admin'],
+    roles: ROUTE_PERMISSIONS['/organisations']?.roles,
   },
   { icon: Settings, label: 'Paramètres', href: '/parametres' },
 ];

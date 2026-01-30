@@ -47,6 +47,12 @@
     "validate:pr": "npm run format:check && npm run lint && npm run type-check && npm run build",
     "handoff:show": "cat ~/.claude/handoff/LATEST.md 2>/dev/null || echo 'No handoff file'",
     "handoff:open": "ls -la ~/.claude/handoff 2>/dev/null && echo '---' && sed -n '1,120p' ~/.claude/handoff/LATEST.md 2>/dev/null || echo 'No handoff'",
+    "turbo:clean": "./scripts/turbo-cleanup.sh",
+    "turbo:status": "turbo daemon status",
+    "turbo:restart": "turbo daemon stop && turbo daemon start",
+    "monitor:start": "nohup ./scripts/monitor-health.sh 60 > /tmp/verone-monitor.log 2>&1 & echo $! > /tmp/verone-monitor.pid",
+    "monitor:stop": "kill $(cat /tmp/verone-monitor.pid 2>/dev/null) 2>/dev/null || echo 'Monitor not running'",
+    "monitor:logs": "tail -f /tmp/verone-monitor.log",
     "prepare": "husky"
   },
   "dependencies": {
