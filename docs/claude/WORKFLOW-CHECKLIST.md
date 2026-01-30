@@ -1,38 +1,41 @@
 # Workflow Checklist - À Suivre Pour CHAQUE Feature
 
-## ✅ Phase 1: RESEARCH (2-5 min)
+## ✅ Phase 1: RESEARCH
+
 - [ ] Lire fichiers pertinents (Read, Glob, Grep)
 - [ ] Comprendre architecture actuelle
 - [ ] Identifier patterns existants
 - [ ] Documenter dépendances
 
-## ✅ Phase 2: PLAN (3-10 min)
-- [ ] EnterPlanMode si task complexe (multi-fichiers)
-- [ ] Identifier 2+ approches possibles
-- [ ] Lister edge cases
-- [ ] Obtenir approbation utilisateur
+## ✅ Phase 2: PLAN
 
-## ✅ Phase 3: TEST (5-15 min)
+- [ ] EnterPlanMode si task complexe (multi-fichiers)
+- [ ] Recommander LA meilleure solution (pas d'options multiples)
+- [ ] Lister edge cases et risques
+- [ ] Obtenir approbation utilisateur si nécessaire
+
+## ✅ Phase 3: TEST
+
 - [ ] Écrire tests qui échouent (RED)
 - [ ] Valider que tests capturent bien le comportement attendu
 
 ## ✅ Phase 4-6: EXECUTE + VERIFY + COMMIT (Boucle)
 
-Pour CHAQUE étape logique (toutes les 10-20 min):
+Pour CHAQUE étape logique (commits fréquents = save points) :
 
 - [ ] Écrire code minimal pour passer tests (GREEN)
 - [ ] Refactorer si nécessaire (REFACTOR)
 - [ ] Vérifier qualité:
   ```bash
-  npm run type-check
-  npm run build
-  npm run e2e:smoke  # Si UI modifiée
+  pnpm type-check
+  pnpm build
+  pnpm e2e:smoke  # Si UI modifiée
   ```
 - [ ] Commit atomique + push:
   ```bash
   git add .
   git commit -m "[APP-DOMAIN-NNN] step N: description"
-  git push  # ← OBLIGATOIRE
+  git push  # ← OBLIGATOIRE (backup + CI check)
   ```
 - [ ] CI passe (vérifier GitHub Actions)
 
@@ -58,6 +61,7 @@ Répéter jusqu'à feature complète.
 ## ❌ Anti-Patterns à ÉVITER
 
 - ❌ Coder sans avoir lu l'existant (skip RESEARCH)
+- ❌ Modifier configuration sans lire documentation existante
 - ❌ Pas de plan pour task complexe (skip PLAN)
 - ❌ Tests après le code (pas de TDD)
 - ❌ Commits rares ou absents (pas de backup)
