@@ -389,15 +389,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
         return { error: new Error('Utilisateur non trouvé') };
       }
 
-      // Force refresh pour obtenir token avec policies RLS à jour
-      console.warn('[signIn] AVANT refreshSession');
-      const beforeRefresh = Date.now();
-      await supabase.auth.refreshSession();
-      const afterRefresh = Date.now();
-      console.warn('[signIn] APRÈS refreshSession', {
-        duration: afterRefresh - beforeRefresh,
-      });
-
       // Vérifier que l'utilisateur a accès à LinkMe
       console.warn('[signIn] AVANT query user_app_roles');
       const beforeQuery = Date.now();
