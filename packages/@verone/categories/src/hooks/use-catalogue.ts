@@ -305,14 +305,14 @@ export const useCatalogue = () => {
   };
 
   const loadArchivedProducts = async (filters: CatalogueFilters = {}) => {
+    // 🚀 PERF FIX 2026-01-30: Supprimer LEFT JOIN product_images (chargé séparément en batch)
     let query = supabase.from('products').select(`
         id, sku, name, slug,
         stock_status, product_status, condition,
         subcategory_id, supplier_id, brand,
         archived_at, created_at, updated_at,
         supplier:organisations!supplier_id(id, legal_name, trade_name),
-        subcategories!subcategory_id(id, name),
-        product_images!left(public_url, is_primary)
+        subcategories!subcategory_id(id, name)
       `);
 
     // IMPORTANT : Inclure SEULEMENT les produits archivés
