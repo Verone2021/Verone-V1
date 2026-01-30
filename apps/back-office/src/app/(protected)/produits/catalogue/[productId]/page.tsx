@@ -318,7 +318,7 @@ export default function ProductDetailPage() {
             id,
             display_name,
             enseigne:enseignes(id, name),
-            organisation:organisations(id, legal_name, trade_name)
+            organisation:organisations!linkme_affiliates_organisation_id_fkey(id, legal_name, trade_name)
           )
         `
         )
