@@ -237,6 +237,8 @@ cat packages/e2e-linkme/QUICKSTART.md
 
 **TOUJOURS suivre cet ordre** :
 
+📋 **Checklist détaillée** : `docs/claude/WORKFLOW-CHECKLIST.md`
+
 #### 1. 🔍 RESEARCH (Comprendre l'existant)
 
 Lire fichiers pertinents SANS coder :
