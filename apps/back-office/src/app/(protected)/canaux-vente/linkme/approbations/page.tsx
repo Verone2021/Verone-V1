@@ -14,6 +14,7 @@
 
 import { Fragment, useState } from 'react';
 
+import Image from 'next/image';
 import Link from 'next/link';
 
 import {
@@ -277,7 +278,7 @@ function CommandesTab() {
       architecte: 'Architecte',
       franchise: 'Franchise',
     };
-    return types[type] || type;
+    return types[type] ?? type;
   };
 
   return (
@@ -392,20 +393,20 @@ function CommandesTab() {
                       <td className="px-6 py-4">
                         <div>
                           <p className="text-gray-900">
-                            {order.requester_name || '-'}
+                            {order.requester_name ?? '-'}
                           </p>
                           <p className="text-sm text-gray-500">
-                            {order.requester_email || '-'}
+                            {order.requester_email ?? '-'}
                           </p>
                         </div>
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex flex-col gap-1">
                           <p className="text-gray-900">
-                            {order.organisation_name || '-'}
+                            {order.organisation_name ?? '-'}
                           </p>
                           <p className="text-sm text-gray-500">
-                            {order.enseigne_name || '-'}
+                            {order.enseigne_name ?? '-'}
                           </p>
                           {/* Badge Nouveau / Existant */}
                           {isNewRestaurant ? (
@@ -490,12 +491,13 @@ function CommandesTab() {
                                 className="flex items-center gap-4 text-sm py-2"
                               >
                                 {/* Thumbnail */}
-                                <div className="w-10 h-10 bg-gray-100 rounded overflow-hidden flex-shrink-0">
+                                <div className="w-10 h-10 bg-gray-100 rounded overflow-hidden flex-shrink-0 relative">
                                   {item.products?.primary_image_url ? (
-                                    <img
+                                    <Image
                                       src={item.products.primary_image_url}
                                       alt=""
-                                      className="w-full h-full object-cover"
+                                      fill
+                                      className="object-cover"
                                     />
                                   ) : (
                                     <Package className="w-full h-full p-2 text-gray-400" />
@@ -504,10 +506,10 @@ function CommandesTab() {
                                 {/* Nom */}
                                 <div className="flex-1 min-w-0">
                                   <p className="font-medium truncate">
-                                    {item.products?.name || 'Produit inconnu'}
+                                    {item.products?.name ?? 'Produit inconnu'}
                                   </p>
                                   <p className="text-xs text-gray-500">
-                                    {item.products?.sku || '-'}
+                                    {item.products?.sku ?? '-'}
                                   </p>
                                 </div>
                                 {/* Quantite */}
@@ -708,8 +710,8 @@ function ProduitsTab() {
   // Ouvrir dialogue edition (produits approuves uniquement)
   const handleEditClick = (product: PendingProduct) => {
     setSelectedProduct(product);
-    setEditCommissionRate(product.affiliate_commission_rate || 0);
-    setEditPayoutHt(product.affiliate_payout_ht || 0);
+    setEditCommissionRate(product.affiliate_commission_rate ?? 0);
+    setEditPayoutHt(product.affiliate_payout_ht ?? 0);
     setEditChangeReason('');
     setIsEditDialogOpen(true);
   };
@@ -837,10 +839,10 @@ function ProduitsTab() {
                   <td className="px-6 py-4">
                     <div>
                       <p className="text-gray-900">
-                        {product.affiliate_display_name || '-'}
+                        {product.affiliate_display_name ?? '-'}
                       </p>
                       <p className="text-sm text-gray-500">
-                        {product.enseigne_name || '-'}
+                        {product.enseigne_name ?? '-'}
                       </p>
                     </div>
                   </td>
@@ -850,10 +852,10 @@ function ProduitsTab() {
                         {product.affiliate_payout_ht?.toFixed(2)} EUR
                       </p>
                       <p className="text-xs text-gray-500">
-                        Commission: {product.affiliate_commission_rate || 0}% ={' '}
+                        Commission: {product.affiliate_commission_rate ?? 0}% ={' '}
                         {getCommissionAmount(
-                          product.affiliate_payout_ht || 0,
-                          product.affiliate_commission_rate || 0
+                          product.affiliate_payout_ht ?? 0,
+                          product.affiliate_commission_rate ?? 0
                         ).toFixed(2)}{' '}
                         EUR
                       </p>
@@ -1014,7 +1016,7 @@ function ProduitsTab() {
                     <span className="font-medium">
                       -
                       {getCommissionAmount(
-                        selectedProduct.affiliate_payout_ht || 0,
+                        selectedProduct.affiliate_payout_ht ?? 0,
                         selectedCommission
                       ).toFixed(2)}{' '}
                       EUR
@@ -1025,7 +1027,7 @@ function ProduitsTab() {
                     <span className="font-medium">Affilie recoit:</span>
                     <span className="text-lg font-bold">
                       {getAffiliateEarning(
-                        selectedProduct.affiliate_payout_ht || 0,
+                        selectedProduct.affiliate_payout_ht ?? 0,
                         selectedCommission
                       ).toFixed(2)}{' '}
                       EUR
@@ -1152,14 +1154,14 @@ function ProduitsTab() {
                     <Percent className="h-4 w-4" />
                     <span>
                       Commission Verone (
-                      {selectedProduct.affiliate_commission_rate || 0}%)
+                      {selectedProduct.affiliate_commission_rate ?? 0}%)
                     </span>
                   </div>
                   <span className="font-medium">
                     -
                     {getCommissionAmount(
-                      selectedProduct.affiliate_payout_ht || 0,
-                      selectedProduct.affiliate_commission_rate || 0
+                      selectedProduct.affiliate_payout_ht ?? 0,
+                      selectedProduct.affiliate_commission_rate ?? 0
                     ).toFixed(2)}{' '}
                     EUR
                   </span>
@@ -1172,8 +1174,8 @@ function ProduitsTab() {
                   </div>
                   <span className="font-bold text-lg">
                     {getAffiliateEarning(
-                      selectedProduct.affiliate_payout_ht || 0,
-                      selectedProduct.affiliate_commission_rate || 0
+                      selectedProduct.affiliate_payout_ht ?? 0,
+                      selectedProduct.affiliate_commission_rate ?? 0
                     ).toFixed(2)}{' '}
                     EUR
                   </span>
@@ -1225,9 +1227,9 @@ function ProduitsTab() {
                     Dimensions
                   </p>
                   <p className="text-gray-700">
-                    {selectedProduct.dimensions.length_cm || '-'} x{' '}
-                    {selectedProduct.dimensions.width_cm || '-'} x{' '}
-                    {selectedProduct.dimensions.height_cm || '-'} cm
+                    {selectedProduct.dimensions.length_cm ?? '-'} x{' '}
+                    {selectedProduct.dimensions.width_cm ?? '-'} x{' '}
+                    {selectedProduct.dimensions.height_cm ?? '-'} cm
                   </p>
                 </div>
               )}
@@ -1236,13 +1238,13 @@ function ProduitsTab() {
                 <div>
                   <p className="text-sm text-gray-500">Affilie</p>
                   <p className="font-medium">
-                    {selectedProduct.affiliate_display_name || '-'}
+                    {selectedProduct.affiliate_display_name ?? '-'}
                   </p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Enseigne</p>
                   <p className="font-medium">
-                    {selectedProduct.enseigne_name || '-'}
+                    {selectedProduct.enseigne_name ?? '-'}
                   </p>
                 </div>
               </div>
@@ -1283,7 +1285,7 @@ function ProduitsTab() {
                   step="0.5"
                   value={editCommissionRate}
                   onChange={e =>
-                    setEditCommissionRate(parseFloat(e.target.value) || 0)
+                    setEditCommissionRate(parseFloat(e.target.value) ?? 0)
                   }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
@@ -1300,7 +1302,7 @@ function ProduitsTab() {
                   step="0.01"
                   value={editPayoutHt}
                   onChange={e =>
-                    setEditPayoutHt(parseFloat(e.target.value) || 0)
+                    setEditPayoutHt(parseFloat(e.target.value) ?? 0)
                   }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
@@ -1602,7 +1604,7 @@ function OrganisationsTab() {
                   <td className="px-6 py-4">
                     <div>
                       <p className="font-medium text-gray-900">
-                        {org.trade_name || org.legal_name}
+                        {org.trade_name ?? org.legal_name}
                       </p>
                       {org.trade_name && (
                         <p className="text-sm text-gray-500">
@@ -1617,7 +1619,7 @@ function OrganisationsTab() {
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <p className="text-gray-900">{org.enseigne_name || '-'}</p>
+                    <p className="text-gray-900">{org.enseigne_name ?? '-'}</p>
                   </td>
                   <td className="px-6 py-4">
                     <div className="space-y-1">
@@ -1638,7 +1640,7 @@ function OrganisationsTab() {
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-1 text-sm text-gray-600">
                       <MapPin className="h-3 w-3" />
-                      {org.city || '-'}
+                      {org.city ?? '-'}
                       {org.postal_code && ` (${org.postal_code})`}
                     </div>
                   </td>
@@ -1706,7 +1708,7 @@ function OrganisationsTab() {
             <div className="space-y-4">
               <div className="p-4 bg-gray-50 rounded-lg">
                 <h3 className="font-semibold text-gray-900 mb-2">
-                  {selectedOrg.trade_name || selectedOrg.legal_name}
+                  {selectedOrg.trade_name ?? selectedOrg.legal_name}
                 </h3>
                 {selectedOrg.trade_name && (
                   <p className="text-sm text-gray-600">
@@ -1730,11 +1732,11 @@ function OrganisationsTab() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-gray-500 mb-1">Email</p>
-                  <p className="font-medium">{selectedOrg.email || '-'}</p>
+                  <p className="font-medium">{selectedOrg.email ?? '-'}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500 mb-1">Telephone</p>
-                  <p className="font-medium">{selectedOrg.phone || '-'}</p>
+                  <p className="font-medium">{selectedOrg.phone ?? '-'}</p>
                 </div>
               </div>
 
