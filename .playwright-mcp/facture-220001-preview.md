@@ -1,0 +1,318 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - text: 󰘎 
+    - generic:  
+    - generic [ref=e3]:
+      - generic [ref=e7]:
+        - navigation [ref=e8]:
+          - generic [ref=e9]:
+            - generic [ref=e10]:
+              - generic [ref=e94] [cursor=pointer]: arrow_back_ios
+              - img "Logo" [ref=e14] [cursor=pointer]
+              - generic [ref=e17]: AUDAMEX
+              - separator [ref=e18]
+              - generic [ref=e19]: Verone
+              - separator [ref=e20]
+              - generic [ref=e21]: Documents
+            - generic [ref=e22]:
+              - generic [ref=e23]:
+                - button [ref=e24] [cursor=pointer]:
+                  - generic [ref=e26]: upload_file
+                - button [ref=e27] [cursor=pointer]:
+                  - generic [ref=e29]: list_alt
+              - generic [ref=e30]:
+                - button [ref=e31] [cursor=pointer]:
+                  - generic [ref=e33]: settings
+                - button [ref=e34] [cursor=pointer]:
+                  - generic [ref=e36]: support_agent
+              - generic [ref=e39] [cursor=pointer]: RD
+        - main [ref=e44]:
+          - generic [ref=e96]:
+            - generic [ref=e98]:
+              - generic [ref=e100]:
+                - list [ref=e102]:
+                  - generic [ref=e105] [cursor=pointer]: home
+                  - listitem [ref=e286]: /
+                  - generic [ref=e1023] [cursor=pointer]: ...
+                  - listitem [ref=e454]: /
+                  - generic [ref=e455]: Exercice 2023
+                  - listitem [ref=e637]: /
+                  - generic [ref=e638]: Ventes
+                  - listitem [ref=e1024]: /
+                  - generic [ref=e1025]: Août 2022
+                - generic [ref=e112]:
+                  - generic [ref=e115]: search
+                  - generic [ref=e118]:
+                    - generic: Rechercher
+                    - textbox "Rechercher" [ref=e119]
+              - generic [ref=e123]:
+                - button [ref=e124] [cursor=pointer]:
+                  - generic [ref=e126]: list
+                - button [ref=e128] [cursor=pointer]:
+                  - generic [ref=e130]: sort
+                - generic [ref=e1035]:
+                  - button [ref=e1036] [cursor=pointer]:
+                    - generic [ref=e1038]: rotate_left
+                  - button [ref=e1039] [cursor=pointer]:
+                    - generic [ref=e1041]: rotate_right
+                - button [ref=e141] [cursor=pointer]:
+                  - generic [ref=e143]: get_app
+                - button [ref=e1044] [cursor=pointer]:
+                  - generic [ref=e1046]: 󰌹
+                - button [ref=e145] [cursor=pointer]:
+                  - generic [ref=e147]: 
+                - button [ref=e1049] [cursor=pointer]:
+                  - generic [ref=e1051]: delete
+            - separator [ref=e148]
+            - generic [ref=e150]:
+              - generic [ref=e154]:
+                - generic [ref=e160] [cursor=pointer]:
+                  - generic [ref=e165]: 
+                  - generic [ref=e170]: A classer
+                - generic [ref=e172]:
+                  - generic [ref=e173] [cursor=pointer]: arrow_drop_down
+                  - generic [ref=e177] [cursor=pointer]:
+                    - generic [ref=e182]: 
+                    - generic [ref=e187]: Dossier permanent
+                - generic [ref=e188]:
+                  - generic [ref=e189]:
+                    - generic [ref=e190] [cursor=pointer]: arrow_drop_down
+                    - generic [ref=e194] [cursor=pointer]:
+                      - generic [ref=e197]:
+                        - generic [ref=e199]: 
+                        - generic [ref=e461]: "18"
+                      - generic [ref=e206]: Dossiers comptables annuels
+                  - generic [ref=e292]:
+                    - generic [ref=e293]:
+                      - generic [ref=e294]:
+                        - generic [ref=e295] [cursor=pointer]: arrow_drop_down
+                        - generic [ref=e299] [cursor=pointer]:
+                          - generic [ref=e302]:
+                            - generic [ref=e304]: 
+                            - generic [ref=e308]: "3"
+                          - generic [ref=e311]: Exercice 2023
+                      - generic [ref=e462]:
+                        - generic [ref=e464]:
+                          - generic [ref=e465] [cursor=pointer]: arrow_drop_down
+                          - generic [ref=e469] [cursor=pointer]:
+                            - generic [ref=e474]: 
+                            - generic [ref=e479]: Achats
+                        - generic [ref=e480]:
+                          - generic [ref=e481]:
+                            - generic [ref=e482] [cursor=pointer]: arrow_drop_down
+                            - generic [ref=e486] [cursor=pointer]:
+                              - generic [ref=e491]: 
+                              - generic [ref=e496]: Ventes
+                          - generic [ref=e639]:
+                            - generic [ref=e645] [cursor=pointer]:
+                              - generic [ref=e650]: 
+                              - generic [ref=e655]: Juin 2022
+                            - generic [ref=e661] [cursor=pointer]:
+                              - generic [ref=e666]: 
+                              - generic [ref=e671]: Juillet 2022
+                            - generic [ref=e677] [cursor=pointer]:
+                              - generic [ref=e682]: 
+                              - generic [ref=e687]: Août 2022
+                            - generic [ref=e693] [cursor=pointer]:
+                              - generic [ref=e698]: 
+                              - generic [ref=e703]: Septembre 2022
+                            - generic [ref=e709] [cursor=pointer]:
+                              - generic [ref=e714]: 
+                              - generic [ref=e719]: Octobre 2022
+                            - generic [ref=e725] [cursor=pointer]:
+                              - generic [ref=e730]: 
+                              - generic [ref=e735]: Novembre 2022
+                            - generic [ref=e741] [cursor=pointer]:
+                              - generic [ref=e746]: 
+                              - generic [ref=e751]: Décembre 2022
+                            - generic [ref=e757] [cursor=pointer]:
+                              - generic [ref=e762]: 
+                              - generic [ref=e767]: Janvier 2023
+                            - generic [ref=e773] [cursor=pointer]:
+                              - generic [ref=e778]: 
+                              - generic [ref=e783]: Février 2023
+                            - generic [ref=e789] [cursor=pointer]:
+                              - generic [ref=e794]: 
+                              - generic [ref=e799]: Mars 2023
+                            - generic [ref=e805] [cursor=pointer]:
+                              - generic [ref=e810]: 
+                              - generic [ref=e815]: Avril 2023
+                            - generic [ref=e821] [cursor=pointer]:
+                              - generic [ref=e826]: 
+                              - generic [ref=e831]: Mai 2023
+                            - generic [ref=e837] [cursor=pointer]:
+                              - generic [ref=e842]: 
+                              - generic [ref=e847]: Juin 2023
+                        - generic [ref=e498]:
+                          - generic [ref=e499] [cursor=pointer]: arrow_drop_down
+                          - generic [ref=e503] [cursor=pointer]:
+                            - generic [ref=e508]: 
+                            - generic [ref=e513]: Banque
+                        - generic [ref=e515]:
+                          - generic [ref=e516] [cursor=pointer]: arrow_drop_down
+                          - generic [ref=e520] [cursor=pointer]:
+                            - generic [ref=e525]: 
+                            - generic [ref=e530]: Fiscal
+                        - generic [ref=e532]:
+                          - generic [ref=e533] [cursor=pointer]: arrow_drop_down
+                          - generic [ref=e537] [cursor=pointer]:
+                            - generic [ref=e542]: 
+                            - generic [ref=e547]: Social
+                        - generic [ref=e553] [cursor=pointer]:
+                          - generic [ref=e556]:
+                            - generic [ref=e558]: 
+                            - generic [ref=e562]: "2"
+                          - generic [ref=e565]: frais kilometrique
+                        - generic [ref=e571] [cursor=pointer]:
+                          - generic [ref=e574]:
+                            - generic [ref=e576]: 
+                            - generic [ref=e580]: "1"
+                          - generic [ref=e583]: inventaire
+                    - generic [ref=e313]:
+                      - generic [ref=e314] [cursor=pointer]: arrow_drop_down
+                      - generic [ref=e318] [cursor=pointer]:
+                        - generic [ref=e321]:
+                          - generic [ref=e323]: 
+                          - generic [ref=e327]: "7"
+                        - generic [ref=e330]: Exercice 2024
+                    - generic [ref=e332]:
+                      - generic [ref=e333] [cursor=pointer]: arrow_drop_down
+                      - generic [ref=e337] [cursor=pointer]:
+                        - generic [ref=e340]:
+                          - generic [ref=e342]: 
+                          - generic [ref=e346]: "8"
+                        - generic [ref=e349]: Exercice 2025
+                    - generic [ref=e351]:
+                      - generic [ref=e352] [cursor=pointer]: arrow_drop_down
+                      - generic [ref=e356] [cursor=pointer]:
+                        - generic [ref=e361]: 
+                        - generic [ref=e366]: Exercice 2026
+                - generic [ref=e212] [cursor=pointer]:
+                  - generic [ref=e217]: delete
+                  - generic [ref=e222]: Corbeille
+              - generic [ref=e226]:
+                - generic [ref=e230]: Répertoires
+                - generic [ref=e234] [cursor=pointer]:
+                  - generic [ref=e239]: subdirectory_arrow_left
+                  - generic [ref=e244]: Retour
+                - generic [ref=e1027]: Documents
+                - generic [ref=e890] [cursor=pointer]:
+                  - generic [ref=e1059]: 
+                  - generic [ref=e900]: Facture 220001.pdf
+              - generic [ref=e389]:
+                - button [ref=e392] [cursor=pointer]:
+                  - generic [ref=e394]: close
+                - generic [ref=e1068] [cursor=pointer]: 
+                - generic [ref=e408]:
+                  - button [ref=e1071] [cursor=pointer]:
+                    - generic [ref=e1073]: open_in_new
+                  - button [ref=e411] [cursor=pointer]:
+                    - generic [ref=e413]: get_app
+                  - button [ref=e415] [cursor=pointer]:
+                    - generic [ref=e417]: 
+                  - button [ref=e1076] [cursor=pointer]:
+                    - generic [ref=e1078]: print
+                  - button [ref=e1081] [cursor=pointer]:
+                    - generic [ref=e1083]: delete
+                - separator [ref=e418]
+                - generic [ref=e419]:
+                  - list [ref=e420]:
+                    - listitem [ref=e422]:
+                      - generic [ref=e423]:
+                        - generic [ref=e424]:
+                          - generic [ref=e425]: Nom
+                          - generic [ref=e426]: Facture 220001.pdf
+                        - button [ref=e1085] [cursor=pointer]:
+                          - generic [ref=e1087]: edit
+                    - listitem [ref=e428]:
+                      - generic [ref=e429]:
+                        - generic [ref=e431]: Description
+                        - button [ref=e433] [cursor=pointer]:
+                          - generic [ref=e435]: edit
+                    - listitem [ref=e1089]:
+                      - generic [ref=e1092]: Numéro de pièce
+                  - list [ref=e436]:
+                    - listitem [ref=e437]:
+                      - combobox [ref=e440]:
+                        - generic [ref=e443] [cursor=pointer]:
+                          - generic: Thèmes
+                          - generic [ref=e1096]: Comptable
+                          - generic [ref=e450]: arrow_drop_down
+                  - list [ref=e453]:
+                    - list [ref=e1097]:
+                      - listitem [ref=e1098]:
+                        - generic [ref=e1099] [cursor=pointer]:
+                          - generic [ref=e1100]: Historique
+                          - generic [ref=e1102]: keyboard_arrow_down
+                    - listitem [ref=e1103]:
+                      - generic [ref=e1105]:
+                        - generic [ref=e1106]: Date de dépôt
+                        - generic [ref=e1107]:
+                          - text: Créé le 30 avr. 2024, 17:31
+                          - text: par Roméo DOS SANTOS
+                    - listitem [ref=e1108]:
+                      - generic [ref=e1110]:
+                        - generic [ref=e1111]: Dernière modification
+                        - generic [ref=e1112]: 30 avr. 2024, 17:31
+                    - listitem [ref=e1113]:
+                      - generic [ref=e1115]:
+                        - generic [ref=e1116]: Taille
+                        - generic [ref=e1117]: 51,66 Ko
+      - generic [ref=e6]: v1.60.12
+  - iframe [ref=e93]:
+    - generic [ref=f5e4]:
+      - generic [ref=f5e5]:
+        - heading "Latest changes" [level=3] [ref=f5e7]
+        - generic [ref=f5e8]:
+          - link "Nouveauté Des nouveautés sous le sapin ! 🎄🎁 Vous l'avez peut-être remarqué, nous avons apporté quelques modifications sur votre page d'accuei..." [ref=f5e9] [cursor=pointer]:
+            - /url: "#"
+            - generic [ref=f5e10]: Nouveauté
+            - strong [ref=f5e11]: Des nouveautés sous le sapin ! 🎄🎁
+            - text: Vous l'avez peut-être remarqué, nous avons apporté quelques modifications sur votre page d'accuei...
+          - link "Filtrage des portails visibles sur le lecteur réseau. 📢 Chaque utilisateur peut désormais, dans les paramètres du lecteur réseau de son profil, désélec..." [ref=f5e12] [cursor=pointer]:
+            - /url: "#"
+            - strong [ref=f5e13]: Filtrage des portails visibles sur le lecteur réseau.
+            - text: 📢 Chaque utilisateur peut désormais, dans les paramètres du lecteur réseau de son profil, désélec...
+          - link "Tri intelligent des répertoires. 📢 Les répertoires dans le menu Documents peuvent maintenant être triés par défaut de façon pertin..." [ref=f5e14] [cursor=pointer]:
+            - /url: "#"
+            - strong [ref=f5e15]: Tri intelligent des répertoires.
+            - text: 📢 Les répertoires dans le menu Documents peuvent maintenant être triés par défaut de façon pertin...
+          - 'link "Nouvelle rubrique sur le centre d''aide : les tutos vidéo ! Pour vous accompagner dans la prise en main de la plateforme, nous avons réalisé des vidéos pas à..." [ref=f5e16] [cursor=pointer]':
+            - /url: "#"
+            - strong [ref=f5e17]: "Nouvelle rubrique sur le centre d'aide : les tutos vidéo !"
+            - text: Pour vous accompagner dans la prise en main de la plateforme, nous avons réalisé des vidéos pas à...
+        - generic [ref=f5e18]:
+          - link "Plateforme updates" [ref=f5e19] [cursor=pointer]:
+            - /url: https://headwayapp.co/plateforme-updates?utm_medium=widget
+          - text: powered by
+          - link "Headway" [ref=f5e20] [cursor=pointer]:
+            - /url: https://headwayapp.co?utm_medium=widget&utm_source=plateforme
+      - generic [ref=f5e21]:
+        - generic [ref=f5e22]:
+          - generic [ref=f5e23]:
+            - link [ref=f5e24] [cursor=pointer]:
+              - /url: "#back"
+            - heading "Des nouveautés sous le sapin ! 🎄🎁" [level=3] [ref=f5e25]
+          - generic [ref=f5e26]:
+            - paragraph
+        - generic [ref=f5e28]:
+          - generic [ref=f5e29]:
+            - link [ref=f5e30] [cursor=pointer]:
+              - /url: "#back"
+            - heading "Filtrage des portails visibles sur le lecteur réseau" [level=3] [ref=f5e31]
+          - generic [ref=f5e32]:
+            - paragraph
+        - generic [ref=f5e34]:
+          - generic [ref=f5e35]:
+            - link [ref=f5e36] [cursor=pointer]:
+              - /url: "#back"
+            - heading "Tri intelligent des répertoires" [level=3] [ref=f5e37]
+          - generic [ref=f5e38]:
+            - paragraph
+        - generic [ref=f5e40]:
+          - generic [ref=f5e41]:
+            - link [ref=f5e42] [cursor=pointer]:
+              - /url: "#back"
+            - 'heading "Nouvelle rubrique sur le centre d''aide : les tutos vidéo !" [level=3] [ref=f5e43]'
+          - generic [ref=f5e44]:
+            - paragraph

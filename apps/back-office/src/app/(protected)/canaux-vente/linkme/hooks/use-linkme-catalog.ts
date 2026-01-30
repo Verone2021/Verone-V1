@@ -151,7 +151,7 @@ async function fetchLinkMeCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
 
   const affiliatedEnseigneIds = new Set<string>();
   const affiliatedOrgIds = new Set<string>();
-  (affiliates || []).forEach(a => {
+  (affiliates ?? []).forEach(a => {
     if (a.enseigne_id) affiliatedEnseigneIds.add(a.enseigne_id);
     if (a.organisation_id) affiliatedOrgIds.add(a.organisation_id);
   });
@@ -208,7 +208,7 @@ async function fetchLinkMeCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
     throw error;
   }
 
-  if (!data || data.length === 0) return [];
+  if (!data || data.length === 0) return []; // Keep || for null check logic
 
   // Récupérer les images primaires pour ces produits
   const productIds = data.map(cp => cp.product_id);
@@ -219,7 +219,7 @@ async function fetchLinkMeCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
     .eq('is_primary', true);
 
   const imageMap = new Map(
-    (images || []).map(img => [img.product_id, img.public_url])
+    (images ?? []).map(img => [img.product_id, img.public_url])
   );
 
   // Récupérer les sous-catégories avec hiérarchie complète (catégorie + famille)
@@ -257,7 +257,7 @@ async function fetchLinkMeCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
   }
 
   const hierarchyMap = new Map<string, CategoryHierarchy>();
-  (subcategoriesWithHierarchy || []).forEach(sc => {
+  (subcategoriesWithHierarchy ?? []).forEach(sc => {
     const familyName = sc.category?.family?.name ?? '';
     const categoryName = sc.category?.name ?? '';
     const subcategoryName = sc.name ?? '';
@@ -284,7 +284,7 @@ async function fetchLinkMeCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
     .select('id, legal_name')
     .in('id', supplierIds);
 
-  const supplierMap = new Map((suppliers || []).map(s => [s.id, s.legal_name]));
+  const supplierMap = new Map((suppliers ?? []).map(s => [s.id, s.legal_name]));
 
   // Récupérer les enseignes (produits sur mesure)
   const enseigneIds = data
@@ -296,7 +296,7 @@ async function fetchLinkMeCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
       .from('enseignes')
       .select('id, name')
       .in('id', enseigneIds);
-    (enseignes || []).forEach(e => enseigneMap.set(e.id, e.name));
+    (enseignes ?? []).forEach(e => enseigneMap.set(e.id, e.name));
   }
 
   // Récupérer les organisations assignées (produits sur mesure)
@@ -309,8 +309,8 @@ async function fetchLinkMeCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
       .from('organisations')
       .select('id, trade_name, legal_name')
       .in('id', assignedClientIds);
-    (assignedOrgs || []).forEach(o =>
-      assignedClientMap.set(o.id, o.trade_name || o.legal_name)
+    (assignedOrgs ?? []).forEach(o =>
+      assignedClientMap.set(o.id, o.trade_name ?? o.legal_name)
     );
   }
 
@@ -354,7 +354,7 @@ async function fetchLinkMeCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
           product_image_url: imageMap.get(cp.product_id) ?? null,
           product_stock_real: cp.products?.stock_real ?? 0,
           product_is_active: cp.products?.product_status === 'active',
-          product_status: cp.products?.product_status || 'draft',
+          product_status: cp.products?.product_status ?? 'draft',
           // Hiérarchie de catégorisation
           subcategory_id: hierarchy?.subcategory_id ?? null,
           subcategory_name: hierarchy?.subcategory_name ?? null,
@@ -376,7 +376,7 @@ async function fetchLinkMeCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
             ? (assignedClientMap.get(cp.products.assigned_client_id) ?? null)
             : null,
           is_sourced: !!(
-            cp.products?.enseigne_id || cp.products?.assigned_client_id
+            cp.products?.enseigne_id ?? cp.products?.assigned_client_id
           ),
           created_by_affiliate: cp.products?.created_by_affiliate ?? null,
           affiliate_commission_rate:
@@ -438,7 +438,7 @@ async function fetchEligibleProducts(): Promise<EligibleProduct[]> {
   }
 
   // Récupérer les images primaires pour ces produits
-  const productIds = (data || []).map(p => p.id);
+  const productIds = (data ?? []).map(p => p.id);
   const { data: images } = await supabase
     .from('product_images')
     .select('product_id, public_url')
@@ -446,15 +446,15 @@ async function fetchEligibleProducts(): Promise<EligibleProduct[]> {
     .eq('is_primary', true);
 
   const imageMap = new Map(
-    (images || []).map(img => [img.product_id, img.public_url])
+    (images ?? []).map(img => [img.product_id, img.public_url])
   );
 
   // Mapper les données
-  return (data || []).map(p => ({
+  return (data ?? []).map(p => ({
     id: p.id,
     name: p.name,
     reference: p.sku,
-    price_ht: p.cost_price || 0,
+    price_ht: p.cost_price ?? 0,
     primary_image_url: imageMap.get(p.id) ?? null,
     stock_real: p.stock_real ?? 0,
     is_active: p.product_status === 'active',
@@ -1015,7 +1015,7 @@ async function fetchLinkMeProductDetail(
       .eq('id', product.assigned_client_id)
       .single();
     assignedClientName =
-      (assignedOrg?.trade_name || assignedOrg?.legal_name) ?? null;
+      assignedOrg?.trade_name ?? assignedOrg?.legal_name ?? null;
   }
 
   // Récupérer le nom de l'affilié créateur (produit affilié)
@@ -1030,8 +1030,8 @@ async function fetchLinkMeProductDetail(
   }
 
   // Calcul du prix minimum de vente: (cost_price + eco_tax) * (1 + margin/100)
-  const costPrice = product.cost_price || 0;
-  const ecoTax = product.eco_tax_default || 0;
+  const costPrice = product.cost_price ?? 0;
+  const ecoTax = product.eco_tax_default ?? 0;
   const marginPct = product.margin_percentage ?? 25; // Défaut 25%
   const minSellingPriceHt =
     costPrice > 0 ? (costPrice + ecoTax) * (1 + marginPct / 100) : null;
@@ -1043,7 +1043,7 @@ async function fetchLinkMeProductDetail(
     name: product.name,
     selling_price_ht: cp.custom_price_ht ?? minSellingPriceHt, // custom_price_ht ou prix minimum calculé
     public_price_ht: cp.public_price_ht ?? null, // Tarif public (éditable)
-    cost_price: product.cost_price || 0,
+    cost_price: product.cost_price ?? 0,
     min_selling_price_ht: minSellingPriceHt, // Prix minimum calculé (lecture seule)
     is_enabled: cp.is_active ?? true, // Map is_active → is_enabled
     is_public_showcase: cp.is_public_showcase ?? false,
@@ -1063,7 +1063,7 @@ async function fetchLinkMeProductDetail(
       ? (product.selling_points as string[])
       : null,
     primary_image_url: primaryImageUrl,
-    stock_real: product.stock_real || 0,
+    stock_real: product.stock_real ?? 0,
     product_is_active: product.product_status === 'active',
     product_family_name: null,
     product_category_name: categoryName,
@@ -1073,7 +1073,7 @@ async function fetchLinkMeProductDetail(
     enseigne_name: enseigneName,
     assigned_client_id: product.assigned_client_id ?? null,
     assigned_client_name: assignedClientName,
-    is_sourced: !!(product.enseigne_id || product.assigned_client_id),
+    is_sourced: !!(product.enseigne_id ?? product.assigned_client_id),
     // Produits affiliés
     created_by_affiliate: product.created_by_affiliate ?? null,
     affiliate_name: affiliateName,
@@ -1328,7 +1328,7 @@ export function useLinkMeProductVariants(productId: string | null) {
         return [];
       }
 
-      if (!allVariants || allVariants.length === 0) return [];
+      if (!allVariants || allVariants.length === 0) return []; // Keep || for null check logic
 
       // 3. Filtrer par présence dans channel_pricing (catalogue LinkMe)
       const variantIds = allVariants.map(v => v.id);
@@ -1340,7 +1340,7 @@ export function useLinkMeProductVariants(productId: string | null) {
 
       // Set des product_id présents dans le catalogue LinkMe
       const catalogProductIds = new Set(
-        (catalogEntries || []).map(e => e.product_id)
+        (catalogEntries ?? []).map(e => e.product_id)
       );
 
       // Filtrer les variantes pour ne garder que celles dans le catalogue
@@ -1360,7 +1360,7 @@ export function useLinkMeProductVariants(productId: string | null) {
 
       // Map des images par product_id
       const imageMap = new Map(
-        (images || []).map(img => [img.product_id, img.public_url])
+        (images ?? []).map(img => [img.product_id, img.public_url])
       );
 
       return variantsInCatalog.map(v => ({
@@ -1371,7 +1371,7 @@ export function useLinkMeProductVariants(productId: string | null) {
           string,
           string
         > | null,
-        stock_real: v.stock_real || 0,
+        stock_real: v.stock_real ?? 0,
         cost_price: v.cost_price,
         image_url: imageMap.get(v.id) ?? null,
       }));
@@ -1436,7 +1436,7 @@ async function fetchSourcingProducts(): Promise<SourcingProduct[]> {
   const affiliatedEnseigneIds = new Set<string>();
   const affiliatedOrgIds = new Set<string>();
 
-  (affiliates || []).forEach(a => {
+  (affiliates ?? []).forEach(a => {
     if (a.enseigne_id) affiliatedEnseigneIds.add(a.enseigne_id);
     if (a.organisation_id) affiliatedOrgIds.add(a.organisation_id);
   });
@@ -1475,7 +1475,7 @@ async function fetchSourcingProducts(): Promise<SourcingProduct[]> {
     throw error;
   }
 
-  if (!data || data.length === 0) return [];
+  if (!data || data.length === 0) return []; // Keep || for null check logic
 
   // 3. Filtrer pour ne garder que les produits des enseignes/organisations avec affiliés
   const filteredData = data.filter(p => {
@@ -1515,7 +1515,7 @@ async function fetchSourcingProducts(): Promise<SourcingProduct[]> {
     .eq('is_primary', true);
 
   const imageMap = new Map(
-    (images || []).map(img => [img.product_id, img.public_url])
+    (images ?? []).map(img => [img.product_id, img.public_url])
   );
 
   // Fetch enseignes
@@ -1525,7 +1525,7 @@ async function fetchSourcingProducts(): Promise<SourcingProduct[]> {
       .from('enseignes')
       .select('id, name')
       .in('id', enseigneIds);
-    (enseignes || []).forEach(e => enseigneMap.set(e.id, e.name));
+    (enseignes ?? []).forEach(e => enseigneMap.set(e.id, e.name));
   }
 
   // Fetch organisations assignées
@@ -1535,8 +1535,8 @@ async function fetchSourcingProducts(): Promise<SourcingProduct[]> {
       .from('organisations')
       .select('id, trade_name, legal_name')
       .in('id', assignedClientIds);
-    (orgs || []).forEach(o =>
-      assignedClientMap.set(o.id, o.trade_name || o.legal_name)
+    (orgs ?? []).forEach(o =>
+      assignedClientMap.set(o.id, o.trade_name ?? o.legal_name)
     );
   }
 
@@ -1560,7 +1560,7 @@ async function fetchSourcingProducts(): Promise<SourcingProduct[]> {
       )
       .in('id', subcategoryIds);
 
-    (subcategories || []).forEach(sc => {
+    (subcategories ?? []).forEach(sc => {
       categoryMap.set(sc.id, {
         subcategory_name: sc.name ?? '',
         category_name: sc.category?.name ?? '',
@@ -1576,8 +1576,8 @@ async function fetchSourcingProducts(): Promise<SourcingProduct[]> {
       .from('organisations')
       .select('id, trade_name, legal_name')
       .in('id', supplierIds);
-    (suppliers || []).forEach(s =>
-      supplierMap.set(s.id, s.trade_name || s.legal_name)
+    (suppliers ?? []).forEach(s =>
+      supplierMap.set(s.id, s.trade_name ?? s.legal_name)
     );
   }
 
@@ -1589,7 +1589,7 @@ async function fetchSourcingProducts(): Promise<SourcingProduct[]> {
       .select('id, product_id')
       .eq('channel_id', LINKME_CHANNEL_ID)
       .in('product_id', productIds);
-    (channelPricingData || []).forEach(cp =>
+    (channelPricingData ?? []).forEach(cp =>
       channelPricingMap.set(cp.product_id, cp.id)
     );
   }
@@ -1599,8 +1599,8 @@ async function fetchSourcingProducts(): Promise<SourcingProduct[]> {
     const categoryData = p.subcategory_id
       ? categoryMap.get(p.subcategory_id)
       : null;
-    const costPrice = p.cost_price || 0;
-    const ecoTax = p.eco_tax_default || 0;
+    const costPrice = p.cost_price ?? 0;
+    const ecoTax = p.eco_tax_default ?? 0;
     const marginPct = p.margin_percentage ?? 25;
     const sellingPrice =
       costPrice > 0 ? (costPrice + ecoTax) * (1 + marginPct / 100) : 0;
@@ -1614,7 +1614,7 @@ async function fetchSourcingProducts(): Promise<SourcingProduct[]> {
       cost_price: costPrice,
       margin_percentage: marginPct,
       selling_price_ht: sellingPrice,
-      stock_real: p.stock_real || 0,
+      stock_real: p.stock_real ?? 0,
       image_url: imageMap.get(p.id) ?? null,
       created_at: p.created_at,
       // Attribution exclusive

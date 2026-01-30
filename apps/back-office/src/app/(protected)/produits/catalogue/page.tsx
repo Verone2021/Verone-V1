@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
 import type { Product } from '@verone/categories';
@@ -11,7 +12,7 @@ import { useCategories } from '@verone/categories';
 import { useSubcategories } from '@verone/categories';
 import { useOrganisations } from '@verone/organisations';
 import { ProductCardV2 as ProductCard } from '@verone/products';
-import { useProductImages } from '@verone/products';
+import { useProductImages, useProductImagesBatch } from '@verone/products';
 import { ViewModeToggle } from '@verone/ui';
 import { ButtonUnified } from '@verone/ui';
 import { Badge } from '@verone/ui';
@@ -86,6 +87,10 @@ export default function CataloguePage() {
     type: 'supplier',
     is_active: true,
   });
+
+  // 🚀 PERF FIX 2026-01-30: Batch fetch images pour TOUS les produits actifs
+  const productIds = products.map(p => p.id);
+  const { getPrimaryImage } = useProductImagesBatch(productIds);
 
   // État local
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -198,17 +203,18 @@ export default function CataloguePage() {
     filters.statuses.length > 0;
 
   // Fonction pour charger les produits archivés
-  const loadArchivedProductsData = async () => {
+  const loadArchivedProductsData = useCallback(async () => {
     setArchivedLoading(true);
     try {
       const result = await loadArchivedProducts(filters);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
       setArchivedProducts(result.products as any);
     } catch (error) {
       console.error('Erreur chargement produits archivés:', error);
     } finally {
       setArchivedLoading(false);
     }
-  };
+  }, [filters, loadArchivedProducts]);
 
   // Charger les produits archivés quand on change d'onglet
   useEffect(() => {
@@ -217,7 +223,7 @@ export default function CataloguePage() {
         console.error('[Catalogue] loadArchivedProductsData failed:', error);
       });
     }
-  }, [activeTab, filters]);
+  }, [activeTab, filters, loadArchivedProductsData]);
 
   // Listener global ⌘K pour CommandPalette
   useEffect(() => {
@@ -516,46 +522,55 @@ export default function CataloguePage() {
 
                 return viewMode === 'grid' ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {currentProducts.map((product, index) => (
-                      <ProductCard
-                        key={product.id}
-                        product={
-                          {
-                            ...product,
-                            supplier: product.supplier
-                              ? {
-                                  ...product.supplier,
-                                  slug: (
-                                    product.supplier.trade_name ||
-                                    product.supplier.legal_name
-                                  )
-                                    .toLowerCase()
-                                    .replace(/\s+/g, '-'),
-                                  is_active: true,
-                                }
-                              : undefined,
-                          } as any
-                        }
-                        index={index}
-                        onArchive={product => {
-                          void handleArchiveProduct(product).catch(error => {
-                            console.error(
-                              '[Catalogue] handleArchiveProduct failed:',
-                              error
-                            );
-                          });
-                        }}
-                        onDelete={product => {
-                          void handleDeleteProduct(product).catch(error => {
-                            console.error(
-                              '[Catalogue] handleDeleteProduct failed:',
-                              error
-                            );
-                          });
-                        }}
-                        archived={!!product.archived_at}
-                      />
-                    ))}
+                    {currentProducts.map((product, index) => {
+                      // 🚀 PERF FIX 2026-01-30: Utiliser batch image si dispo
+                      const preloadedImage =
+                        activeTab === 'active'
+                          ? getPrimaryImage(product.id)
+                          : null;
+
+                      return (
+                        <ProductCard
+                          key={product.id}
+                          product={
+                            {
+                              ...product,
+                              supplier: product.supplier
+                                ? {
+                                    ...product.supplier,
+                                    slug: (
+                                      product.supplier.trade_name ??
+                                      product.supplier.legal_name
+                                    )
+                                      .toLowerCase()
+                                      .replace(/\s+/g, '-'),
+                                    is_active: true,
+                                  }
+                                : undefined,
+                            } as Product
+                          }
+                          index={index}
+                          preloadedImage={preloadedImage}
+                          onArchive={product => {
+                            void handleArchiveProduct(product).catch(error => {
+                              console.error(
+                                '[Catalogue] handleArchiveProduct failed:',
+                                error
+                              );
+                            });
+                          }}
+                          onDelete={product => {
+                            void handleDeleteProduct(product).catch(error => {
+                              console.error(
+                                '[Catalogue] handleDeleteProduct failed:',
+                                error
+                              );
+                            });
+                          }}
+                          archived={!!product.archived_at}
+                        />
+                      );
+                    })}
                   </div>
                 ) : (
                   // Vue liste avec images - COMPACT
@@ -581,10 +596,12 @@ export default function CataloguePage() {
                               {/* Image produit */}
                               <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded border border-gray-200 bg-gray-100 flex items-center justify-center">
                                 {primaryImage?.public_url && !imageLoading ? (
-                                  <img
+                                  <Image
                                     src={primaryImage.public_url}
                                     alt={product.name}
-                                    className="w-full h-full object-contain"
+                                    width={48}
+                                    height={48}
+                                    className="object-contain"
                                   />
                                 ) : (
                                   <Package className="h-5 w-5 text-gray-400" />

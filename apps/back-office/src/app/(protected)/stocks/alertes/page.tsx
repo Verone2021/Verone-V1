@@ -183,7 +183,7 @@ export default function StockAlertesPage() {
           }
         : undefined,
     }));
-  }, [alerts]);
+  }, [alerts, setSelectedProductForOrder, setShowQuickPurchaseModal]);
 
   // Statistiques des alertes
   const alertStats = useMemo(() => {
@@ -219,7 +219,12 @@ export default function StockAlertesPage() {
         // router.replace('/stocks/alertes', { scroll: false });
       }
     }
-  }, [searchParams, alerts]);
+  }, [
+    searchParams,
+    alerts,
+    setSelectedProductForOrder,
+    setShowQuickPurchaseModal,
+  ]);
 
   // Handler pour ouvrir modal détail commande
   const handleOpenOrderDetail = async (orderId: string) => {
@@ -293,8 +298,8 @@ export default function StockAlertesPage() {
       return (
         alert.title.toLowerCase().includes(search) ||
         alert.message.toLowerCase().includes(search) ||
-        alert.productName?.toLowerCase().includes(search) ||
-        alert.productSku?.toLowerCase().includes(search)
+        (alert.productName?.toLowerCase().includes(search) ?? false) ||
+        (alert.productSku?.toLowerCase().includes(search) ?? false)
       );
     }
     return true;
@@ -635,11 +640,11 @@ export default function StockAlertesPage() {
                           product_id: alert.productId ?? '',
                           product_name: alert.productName ?? '',
                           sku: alert.productSku ?? '',
-                          stock_real: alert.currentStock || 0,
-                          stock_forecasted_in: alert.stock_forecasted_in || 0,
-                          stock_forecasted_out: alert.stock_forecasted_out || 0,
-                          min_stock: alert.minStock || 0,
-                          shortage_quantity: alert.shortage_quantity || 0,
+                          stock_real: alert.currentStock ?? 0,
+                          stock_forecasted_in: alert.stock_forecasted_in ?? 0,
+                          stock_forecasted_out: alert.stock_forecasted_out ?? 0,
+                          min_stock: alert.minStock ?? 0,
+                          shortage_quantity: alert.shortage_quantity ?? 0,
                           alert_type:
                             alert.title === 'Rupture de stock'
                               ? 'out_of_stock'
@@ -651,15 +656,15 @@ export default function StockAlertesPage() {
                           quantity_in_draft: alert.quantity_in_draft,
                           draft_order_id: alert.draft_order_id,
                           draft_order_number: alert.draft_order_number,
-                          validated: alert.validated || false,
+                          validated: alert.validated ?? false,
                           validated_at: alert.validated_at ?? null,
                         }}
                         onActionClick={clickedAlert => {
                           // Calculer le manque réel : min_stock - stock_previsionnel
                           const stockPrevisionnel =
                             clickedAlert.stock_real +
-                            (clickedAlert.stock_forecasted_in || 0) -
-                            (clickedAlert.stock_forecasted_out || 0);
+                            (clickedAlert.stock_forecasted_in ?? 0) -
+                            (clickedAlert.stock_forecasted_out ?? 0);
                           const manqueReel = Math.max(
                             0,
                             clickedAlert.min_stock - stockPrevisionnel
@@ -736,11 +741,11 @@ export default function StockAlertesPage() {
                           product_id: alert.productId ?? '',
                           product_name: alert.productName ?? '',
                           sku: alert.productSku ?? '',
-                          stock_real: alert.currentStock || 0,
-                          stock_forecasted_in: alert.stock_forecasted_in || 0,
-                          stock_forecasted_out: alert.stock_forecasted_out || 0,
-                          min_stock: alert.minStock || 0,
-                          shortage_quantity: alert.shortage_quantity || 0,
+                          stock_real: alert.currentStock ?? 0,
+                          stock_forecasted_in: alert.stock_forecasted_in ?? 0,
+                          stock_forecasted_out: alert.stock_forecasted_out ?? 0,
+                          min_stock: alert.minStock ?? 0,
+                          shortage_quantity: alert.shortage_quantity ?? 0,
                           alert_type:
                             alert.title === 'Rupture de stock'
                               ? 'out_of_stock'
@@ -752,15 +757,15 @@ export default function StockAlertesPage() {
                           quantity_in_draft: alert.quantity_in_draft,
                           draft_order_id: alert.draft_order_id,
                           draft_order_number: alert.draft_order_number,
-                          validated: alert.validated || false,
+                          validated: alert.validated ?? false,
                           validated_at: alert.validated_at ?? null,
                         }}
                         onActionClick={clickedAlert => {
                           // Calculer le manque réel : min_stock - stock_previsionnel
                           const stockPrevisionnel =
                             clickedAlert.stock_real +
-                            (clickedAlert.stock_forecasted_in || 0) -
-                            (clickedAlert.stock_forecasted_out || 0);
+                            (clickedAlert.stock_forecasted_in ?? 0) -
+                            (clickedAlert.stock_forecasted_out ?? 0);
                           const manqueReel = Math.max(
                             0,
                             clickedAlert.min_stock - stockPrevisionnel
