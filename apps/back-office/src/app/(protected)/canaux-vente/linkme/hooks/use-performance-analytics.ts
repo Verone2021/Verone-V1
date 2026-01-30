@@ -136,8 +136,8 @@ export function usePerformanceAnalytics(filters: PerformanceFilters) {
       'performance-analytics',
       filters.dateRange.startDate.toISOString(),
       filters.dateRange.endDate.toISOString(),
-      filters.affiliateId || 'all',
-      filters.selectionId || 'all',
+      filters.affiliateId ?? 'all',
+      filters.selectionId ?? 'all',
     ],
     queryFn: async (): Promise<PerformanceData> => {
       const startISO = filters.dateRange.startDate.toISOString();
@@ -187,18 +187,18 @@ export function usePerformanceAnalytics(filters: PerformanceFilters) {
 
       if (commissionsError) throw commissionsError;
 
-      const commissions = commissionsData || [];
+      const commissions = commissionsData ?? [];
 
       // ========================================
       // 2. Calculs KPIs
       // ========================================
       const totalOrders = commissions.length;
       const totalRevenueHT = commissions.reduce(
-        (sum, c) => sum + (c.order_amount_ht || 0),
+        (sum, c) => sum + (c.order_amount_ht ?? 0),
         0
       );
       const totalCommissionsTTC = commissions.reduce(
-        (sum, c) => sum + (c.affiliate_commission_ttc || 0),
+        (sum, c) => sum + (c.affiliate_commission_ttc ?? 0),
         0
       );
       const averageBasket = totalOrders > 0 ? totalRevenueHT / totalOrders : 0;
@@ -233,7 +233,7 @@ export function usePerformanceAnalytics(filters: PerformanceFilters) {
         // Récupérer les images primaires des produits
         const productIds = [
           ...new Set(
-            (orderItemsData || [])
+            (orderItemsData ?? [])
               .map(item => {
                 const product = item.product as { id: string } | null;
                 return product?.id;
@@ -250,7 +250,7 @@ export function usePerformanceAnalytics(filters: PerformanceFilters) {
             .in('product_id', productIds)
             .eq('is_primary', true);
 
-          (imagesData || []).forEach(img => {
+          (imagesData ?? []).forEach(img => {
             if (img.public_url) {
               productImages.set(img.product_id, img.public_url);
             }
@@ -271,7 +271,7 @@ export function usePerformanceAnalytics(filters: PerformanceFilters) {
           }
         >();
 
-        (orderItemsData || []).forEach(item => {
+        (orderItemsData ?? []).forEach(item => {
           const product = item.product as {
             id: string;
             name: string;
@@ -281,17 +281,17 @@ export function usePerformanceAnalytics(filters: PerformanceFilters) {
 
           const existing = productMap.get(product.id);
           if (existing) {
-            existing.quantitySold += item.quantity || 0;
-            existing.totalRevenueHT += item.total_ht || 0;
+            existing.quantitySold += item.quantity ?? 0;
+            existing.totalRevenueHT += item.total_ht ?? 0;
             existing.orderIds.add(item.sales_order_id);
           } else {
             productMap.set(product.id, {
               id: product.id,
               name: product.name,
-              sku: product.sku || '-',
+              sku: product.sku ?? '-',
               imageUrl: productImages.get(product.id) ?? null,
-              quantitySold: item.quantity || 0,
-              totalRevenueHT: item.total_ht || 0,
+              quantitySold: item.quantity ?? 0,
+              totalRevenueHT: item.total_ht ?? 0,
               orderIds: new Set([item.sales_order_id]),
             });
           }
@@ -338,16 +338,16 @@ export function usePerformanceAnalytics(filters: PerformanceFilters) {
         const existing = affiliateMap.get(affiliate.id);
         if (existing) {
           existing.ordersCount += 1;
-          existing.totalRevenueHT += c.order_amount_ht || 0;
-          existing.totalCommissionsTTC += c.affiliate_commission_ttc || 0;
+          existing.totalRevenueHT += c.order_amount_ht ?? 0;
+          existing.totalCommissionsTTC += c.affiliate_commission_ttc ?? 0;
         } else {
           affiliateMap.set(affiliate.id, {
             id: affiliate.id,
             displayName: affiliate.display_name,
             slug: affiliate.slug ?? '',
             ordersCount: 1,
-            totalRevenueHT: c.order_amount_ht || 0,
-            totalCommissionsTTC: c.affiliate_commission_ttc || 0,
+            totalRevenueHT: c.order_amount_ht ?? 0,
+            totalCommissionsTTC: c.affiliate_commission_ttc ?? 0,
           });
         }
       });
@@ -390,19 +390,19 @@ export function usePerformanceAnalytics(filters: PerformanceFilters) {
         const existing = selectionMap.get(selection.id);
         if (existing) {
           existing.ordersCount += 1;
-          existing.totalRevenueHT += c.order_amount_ht || 0;
-          existing.totalCommissionsTTC += c.affiliate_commission_ttc || 0;
+          existing.totalRevenueHT += c.order_amount_ht ?? 0;
+          existing.totalCommissionsTTC += c.affiliate_commission_ttc ?? 0;
         } else {
           selectionMap.set(selection.id, {
             id: selection.id,
             name: selection.name,
             slug: selection.slug ?? '',
             affiliateId: affiliate?.id ?? '',
-            affiliateName: affiliate?.display_name || 'Inconnu',
+            affiliateName: affiliate?.display_name ?? 'Inconnu',
             ordersCount: 1,
-            totalRevenueHT: c.order_amount_ht || 0,
-            totalCommissionsTTC: c.affiliate_commission_ttc || 0,
-            productsCount: selection.products_count || 0,
+            totalRevenueHT: c.order_amount_ht ?? 0,
+            totalCommissionsTTC: c.affiliate_commission_ttc ?? 0,
+            productsCount: selection.products_count ?? 0,
           });
         }
       });
@@ -469,7 +469,7 @@ export function useAffiliatesList() {
 
       if (error) throw error;
 
-      return (data || []).map(a => ({
+      return (data ?? []).map(a => ({
         id: a.id,
         displayName: a.display_name,
         slug: a.slug ?? '',
@@ -502,11 +502,11 @@ export function useAffiliateSelections(affiliateId: string | null) {
 
       if (error) throw error;
 
-      return (data || []).map(s => ({
+      return (data ?? []).map(s => ({
         id: s.id,
         name: s.name,
         slug: s.slug ?? '',
-        productsCount: s.products_count || 0,
+        productsCount: s.products_count ?? 0,
       }));
     },
     enabled: !!affiliateId,
