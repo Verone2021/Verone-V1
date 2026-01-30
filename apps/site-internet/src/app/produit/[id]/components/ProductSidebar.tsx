@@ -67,9 +67,9 @@ export function ProductSidebar({
   // Prix calculé avec éco-participation
   const hasDiscount =
     product.discount_rate != null && product.discount_rate > 0;
-  const priceTTC = product.price_ttc || 0;
-  const ecoParticipation = product.eco_participation_amount || 0;
-  const assemblyPrice = includeAssembly ? product.assembly_price || 0 : 0;
+  const priceTTC = product.price_ttc ?? 0;
+  const ecoParticipation = product.eco_participation_amount ?? 0;
+  const assemblyPrice = includeAssembly ? (product.assembly_price ?? 0) : 0;
   const totalPrice = priceTTC + ecoParticipation + assemblyPrice;
 
   // Délai livraison
@@ -266,7 +266,7 @@ export function ProductSidebar({
           className="w-full"
           onClick={() => {
             // TODO: Implémenter ajout panier
-            console.log('Ajout panier:', {
+            console.warn('[ProductSidebar] Ajout panier:', {
               product_id: product.product_id,
               quantity,
               includeAssembly,

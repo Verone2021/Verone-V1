@@ -29,8 +29,8 @@ export async function middleware(request: NextRequest) {
     appName: 'site-internet',
     redirects: {
       'back-office':
-        process.env.NEXT_PUBLIC_BACK_OFFICE_URL || 'http://localhost:3000',
-      linkme: process.env.NEXT_PUBLIC_LINKME_URL || 'http://localhost:3002',
+        process.env.NEXT_PUBLIC_BACK_OFFICE_URL ?? 'http://localhost:3000',
+      linkme: process.env.NEXT_PUBLIC_LINKME_URL ?? 'http://localhost:3002',
     },
     defaultRedirect: '/',
     excludePaths: [
