@@ -101,17 +101,17 @@ export default function StockPrevisionnelPage() {
   }
 
   const overview = metrics?.overview;
-  const incomingOrders = metrics?.incoming_orders || [];
-  const outgoingOrders = metrics?.outgoing_orders || [];
+  const incomingOrders = metrics?.incoming_orders ?? [];
+  const outgoingOrders = metrics?.outgoing_orders ?? [];
 
   // ✅ Phase 3.7: 6 KPIs séparés Entrées/Sorties (Best Practice ERP)
   // Source: ClicData & EazyStock recommandent de séparer inbound/outbound metrics
-  const forecastIn = overview?.total_forecasted_in || 0;
-  const forecastOut = Math.abs(overview?.total_forecasted_out || 0);
-  const poTotalHt = overview?.po_total_ht || 0;
-  const soTotalHt = overview?.so_total_ht || 0;
-  const poCount = overview?.po_count || 0;
-  const soCount = overview?.so_count || 0;
+  const forecastIn = overview?.total_forecasted_in ?? 0;
+  const forecastOut = Math.abs(overview?.total_forecasted_out ?? 0);
+  const poTotalHt = overview?.po_total_ht ?? 0;
+  const soTotalHt = overview?.so_total_ht ?? 0;
+  const poCount = overview?.po_count ?? 0;
+  const soCount = overview?.so_count ?? 0;
 
   // Formateur monétaire
   const formatCurrency = (value: number) => {
@@ -257,11 +257,11 @@ export default function StockPrevisionnelPage() {
                               <Truck className="h-5 w-5 text-green-600" />
                               <div className="text-left">
                                 <p className="font-semibold text-black">
-                                  {order.order_number ||
+                                  {order.order_number ??
                                     `Commande #${order.id.slice(0, 8)}`}
                                 </p>
                                 <p className="text-xs text-gray-500">
-                                  {order.supplier_name || 'Fournisseur'}
+                                  {order.supplier_name ?? 'Fournisseur'}
                                 </p>
                               </div>
                             </div>
@@ -305,11 +305,11 @@ export default function StockPrevisionnelPage() {
                               <ShoppingCart className="h-5 w-5 text-red-600" />
                               <div className="text-left">
                                 <p className="font-semibold text-black">
-                                  {order.order_number ||
+                                  {order.order_number ??
                                     `Commande #${order.id.slice(0, 8)}`}
                                 </p>
                                 <p className="text-xs text-gray-500">
-                                  {order.client_name || 'Client'}
+                                  {order.client_name ?? 'Client'}
                                 </p>
                               </div>
                             </div>
