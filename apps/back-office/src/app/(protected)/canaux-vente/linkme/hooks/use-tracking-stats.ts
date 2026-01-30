@@ -76,24 +76,24 @@ export function useTrackingStats() {
 
       if (error) throw error;
 
-      return (data || []).map(selection => ({
+      return (data ?? []).map(selection => ({
         id: selection.id,
         name: selection.name,
         slug: selection.slug,
-        affiliate_name: selection.affiliate?.display_name || 'Inconnu',
+        affiliate_name: selection.affiliate?.display_name ?? 'Inconnu',
         affiliate_slug: selection.affiliate?.slug ?? '',
-        views_count: selection.views_count || 0,
-        orders_count: selection.orders_count || 0,
-        total_revenue: selection.total_revenue || 0,
-        products_count: selection.products_count || 0,
+        views_count: selection.views_count ?? 0,
+        orders_count: selection.orders_count ?? 0,
+        total_revenue: selection.total_revenue ?? 0,
+        products_count: selection.products_count ?? 0,
         conversion_rate:
           selection.views_count && selection.views_count > 0
             ? Math.round(
-                ((selection.orders_count || 0) / selection.views_count) * 10000
+                ((selection.orders_count ?? 0) / selection.views_count) * 10000
               ) / 100
             : 0,
-        created_at: selection.created_at || new Date().toISOString(),
-        updated_at: selection.updated_at || new Date().toISOString(),
+        created_at: selection.created_at ?? new Date().toISOString(),
+        updated_at: selection.updated_at ?? new Date().toISOString(),
       }));
     },
     staleTime: 30000, // 30 seconds cache
@@ -119,11 +119,11 @@ export function useTrackingKPIs() {
 
       if (error) throw error;
 
-      const totals = (data || []).reduce(
+      const totals = (data ?? []).reduce(
         (acc, sel) => ({
-          total_views: acc.total_views + (sel.views_count || 0),
-          total_orders: acc.total_orders + (sel.orders_count || 0),
-          total_revenue: acc.total_revenue + (sel.total_revenue || 0),
+          total_views: acc.total_views + (sel.views_count ?? 0),
+          total_orders: acc.total_orders + (sel.orders_count ?? 0),
+          total_revenue: acc.total_revenue + (sel.total_revenue ?? 0),
         }),
         { total_views: 0, total_orders: 0, total_revenue: 0 }
       );
@@ -169,14 +169,14 @@ export function useRecentConversions(limit = 10) {
 
       if (error) throw error;
 
-      return (data || []).map(commission => ({
+      return (data ?? []).map(commission => ({
         id: commission.id,
-        order_number: commission.order_number || 'N/A',
-        selection_name: commission.selection?.name || 'Sélection inconnue',
-        affiliate_name: commission.affiliate?.display_name || 'Affilié inconnu',
+        order_number: commission.order_number ?? 'N/A',
+        selection_name: commission.selection?.name ?? 'Sélection inconnue',
+        affiliate_name: commission.affiliate?.display_name ?? 'Affilié inconnu',
         order_amount_ht: commission.order_amount_ht,
         affiliate_commission: commission.affiliate_commission,
-        created_at: commission.created_at || new Date().toISOString(),
+        created_at: commission.created_at ?? new Date().toISOString(),
       }));
     },
     staleTime: 30000,
