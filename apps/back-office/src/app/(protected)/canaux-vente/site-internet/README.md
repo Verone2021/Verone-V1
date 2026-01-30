@@ -311,11 +311,11 @@ supabase migration list
 ### Étape 2: Générer Types TypeScript
 
 ```bash
-# Depuis racine projet
-supabase gen types typescript --local > apps/back-office/src/types/supabase.ts
+# Depuis racine projet (utiliser package centralisé)
+supabase gen types typescript --linked > packages/@verone/types/src/supabase.ts
 
 # Vérifier types générés
-cat apps/back-office/src/types/supabase.ts | grep "site_internet"
+cat packages/@verone/types/src/supabase.ts | grep "site_internet"
 ```
 
 ### Étape 3: Installer Dépendances (si nécessaire)
@@ -482,8 +482,8 @@ supabase db push
 **Solution :**
 
 ```bash
-# Régénérer types
-supabase gen types typescript --local > apps/back-office/src/types/supabase.ts
+# Régénérer types (utiliser package centralisé)
+supabase gen types typescript --linked > packages/@verone/types/src/supabase.ts
 
 # Redémarrer dev server
 npm run dev

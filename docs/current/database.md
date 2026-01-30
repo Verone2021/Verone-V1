@@ -117,8 +117,11 @@ Exemple: `20260109_001_fix_commission_workflow.sql`
 # Appliquer migrations
 supabase db push
 
-# Generer types TypeScript
-supabase gen types typescript --local > packages/@verone/types/src/supabase.ts
+# Generer types TypeScript (cloud)
+supabase gen types typescript --linked > packages/@verone/types/src/supabase.ts
+
+# Alternative : Via MCP Supabase (recommandé)
+# Utiliser Claude Code : mcp__supabase__generate_typescript_types
 
 # Voir diff
 supabase db diff

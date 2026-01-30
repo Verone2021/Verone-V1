@@ -35,15 +35,18 @@ Implémentation d'un workflow de validation de factures en 3 étapes :
 ## Fichiers implémentés
 
 ### Database
+
 - ✅ `supabase/migrations/20260122_003_invoice_workflow_statuses.sql`
 
 ### API Backend
+
 - ✅ `apps/back-office/src/app/api/qonto/invoices/[id]/validate-to-draft/route.ts`
 - ✅ `apps/back-office/src/app/api/qonto/invoices/[id]/finalize-workflow/route.ts`
 - ✅ `apps/back-office/src/app/api/qonto/invoices/by-order/[orderId]/route.ts`
 - ✅ `apps/back-office/src/app/api/qonto/invoices/[id]/route.ts` (PATCH modifié)
 
 ### UI Frontend
+
 - ✅ `apps/back-office/src/app/(protected)/commandes/clients/[id]/InvoicesSection.tsx`
 - ✅ `apps/back-office/src/app/(protected)/commandes/clients/[id]/page.tsx` (intégré)
 
@@ -81,11 +84,11 @@ supabase db push
 ### 3. Régénérer les types TypeScript
 
 ```bash
-# Générer types depuis DB locale
-supabase gen types typescript --local > packages/@verone/types/src/database.types.ts
+# Générer types depuis Supabase Cloud
+supabase gen types typescript --linked > packages/@verone/types/src/supabase.ts
 
-# OU depuis cloud
-supabase gen types typescript --project-id <PROJECT_ID> > packages/@verone/types/src/database.types.ts
+# Alternative via MCP Claude Code (recommandé)
+# mcp__supabase__generate_typescript_types
 ```
 
 ### 4. Vérifier TypeScript
@@ -126,6 +129,7 @@ pnpm build
 ### Migration database
 
 **Colonnes ajoutées** :
+
 - `workflow_status` TEXT CHECK (enum)
 - `synchronized_at` TIMESTAMPTZ
 - `validated_to_draft_at` TIMESTAMPTZ
@@ -135,6 +139,7 @@ pnpm build
 - `finalized_by` UUID
 
 **Trigger** : `trg_update_workflow_timestamps`
+
 - Auto-update timestamps lors des changements de statut
 
 **Index** : `idx_financial_documents_workflow_status`
@@ -142,28 +147,33 @@ pnpm build
 ### Endpoints API
 
 #### POST /api/qonto/invoices/[id]/validate-to-draft
+
 - Transition : synchronized → draft_validated
 - Auth : Utilisateur connecté
 - Tracking : validated_by, validated_to_draft_at
 
 #### POST /api/qonto/invoices/[id]/finalize-workflow
+
 - Transition : draft_validated → finalized
 - Appelle Qonto /finalize
 - Génère PDF
 - Tracking : finalized_by, finalized_at, qonto_pdf_url
 
 #### GET /api/qonto/invoices/by-order/[orderId]
+
 - Liste factures d'une commande
 - Filtre : document_type = 'customer_invoice', deleted_at IS NULL
 - Tri : created_at DESC
 
 #### PATCH /api/qonto/invoices/[id]
+
 - Bloque si workflow_status = finalized
 - Vérifie Qonto status = draft ET workflow_status IN (synchronized, draft_validated)
 
 ### Composant InvoicesSection
 
 **Features** :
+
 - Liste factures avec statut coloré
 - Bouton "Valider brouillon" si synchronized
 - Bouton "Finaliser (PDF)" si draft_validated
@@ -172,6 +182,7 @@ pnpm build
 - React Query pour cache et invalidation
 
 **Props** :
+
 - `orderId: string` - UUID de la commande
 
 ---
@@ -208,7 +219,7 @@ test('Invoice workflow 3 statuses', async ({ page }) => {
 ### Types Supabase obsolètes
 
 **Cause** : Types non regénérés après migration
-**Solution** : `supabase gen types typescript --local > packages/@verone/types/src/database.types.ts`
+**Solution** : `supabase gen types typescript --linked > packages/@verone/types/src/supabase.ts`
 
 ### PDF non disponible après finalisation
 
