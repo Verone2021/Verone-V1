@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 
 import {
   useInlineEdit,
@@ -16,6 +16,7 @@ import {
   Clock,
   DollarSign,
   Package,
+  Info,
 } from 'lucide-react';
 
 interface Organisation {
@@ -25,6 +26,11 @@ interface Organisation {
   minimum_order_amount?: number | null;
   currency?: string | null;
   prepayment_required?: boolean | null;
+  ownership_type?: 'succursale' | 'franchise' | null;
+  enseigne_id?: string | null;
+  enseigne?: {
+    legal_name?: string;
+  } | null;
 }
 
 interface CommercialEditSectionProps {
@@ -40,6 +46,18 @@ export function CommercialEditSection({
   className,
   organisationType,
 }: CommercialEditSectionProps) {
+  // Déterminer si les conditions commerciales sont éditables
+  const isEditableCommercial = useMemo(() => {
+    // Clients professionnels succursales (restaurant propre)
+    if (
+      organisationType === 'customer' &&
+      organisation.ownership_type === 'succursale'
+    ) {
+      return false; // ❌ Read-only : hérite de l'enseigne
+    }
+    return true; // ✅ Éditable : franchise ou autre type
+  }, [organisationType, organisation.ownership_type]);
+
   const {
     isEditing,
     isSaving,
@@ -129,7 +147,7 @@ export function CommercialEditSection({
     { value: 'NET_90', label: '90 jours net', days: 90 },
   ];
 
-  if (isEditing(section)) {
+  if (isEditing(section) && isEditableCommercial) {
     return (
       <div className={cn('card-verone p-4', className)}>
         <div className="flex items-center justify-between mb-3">
@@ -327,13 +345,45 @@ export function CommercialEditSection({
           <CreditCard className="h-5 w-5 mr-2" />
           Conditions Commerciales
         </h3>
-        <Button variant="outline" size="sm" onClick={handleStartEdit}>
-          <Edit className="h-3 w-3 mr-1" />
-          Modifier
-        </Button>
+        <div className="flex items-center gap-3">
+          {!isEditableCommercial && (
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <Info className="h-4 w-4" />
+              <span>Héritées de l'enseigne parent</span>
+            </div>
+          )}
+          {isEditableCommercial && (
+            <Button variant="outline" size="sm" onClick={handleStartEdit}>
+              <Edit className="h-3 w-3 mr-1" />
+              Modifier
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="space-y-3">
+        {!isEditableCommercial &&
+          organisation.ownership_type === 'succursale' &&
+          organisation.enseigne_id && (
+            <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg">
+              <div className="flex items-start gap-2">
+                <Info className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                <div className="text-sm text-blue-800">
+                  <p className="font-medium mb-1">
+                    Restaurant appartenant à l'enseigne{' '}
+                    {organisation.enseigne?.legal_name
+                      ? `"${organisation.enseigne.legal_name}"`
+                      : 'parent'}
+                  </p>
+                  <p className="text-xs">
+                    Les conditions commerciales sont définies au niveau de
+                    l'enseigne et ne peuvent pas être modifiées individuellement.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
         {hasCommercialInfo ? (
           <div className="space-y-3">
             {organisation.payment_terms && (

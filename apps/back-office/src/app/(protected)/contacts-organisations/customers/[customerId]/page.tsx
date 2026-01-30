@@ -71,6 +71,20 @@ interface OrganisationChannel {
   isActive: boolean;
 }
 
+// Helper pour générer le badge ownership_type
+function getOwnershipBadge(
+  type: string | null
+): { label: string; className: string } | null {
+  switch (type) {
+    case 'succursale':
+      return { label: 'Propre', className: 'bg-blue-100 text-blue-700' };
+    case 'franchise':
+      return { label: 'Franchise', className: 'bg-amber-100 text-amber-700' };
+    default:
+      return null;
+  }
+}
+
 export default function CustomerDetailPage() {
   const { customerId } = useParams();
   const searchParams = useSearchParams();
@@ -364,6 +378,17 @@ export default function CustomerDetailPage() {
                     : 'Client Particulier'}
                 </Badge>
               )}
+              {customer.ownership_type && (() => {
+                const badge = getOwnershipBadge(customer.ownership_type);
+                return badge ? (
+                  <Badge
+                    variant="outline"
+                    className={cn("border-gray-200", badge.className)}
+                  >
+                    {badge.label}
+                  </Badge>
+                ) : null;
+              })()}
             </div>
           </div>
           <p className="text-sm text-gray-600">
