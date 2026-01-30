@@ -13,10 +13,10 @@
  * @updated 2026-01-06 - Split plein ecran
  */
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, useTransition } from 'react';
 
 import Image from 'next/image';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 
 import {
   LogIn,
@@ -33,7 +33,7 @@ import {
   SphereImageGrid,
   type SphereImageData,
 } from '@/components/ui/SphereImageGrid';
-import { useAuth } from '@/contexts/AuthContext';
+import { loginAction } from './actions';
 
 // Images de demonstration pour la sphere
 const DEMO_SPHERE_IMAGES: SphereImageData[] = Array.from(
@@ -61,15 +61,13 @@ export default function LoginPage(): JSX.Element {
 }
 
 function LoginContent(): JSX.Element {
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const { signIn, initializing } = useAuth();
+  const [isPending, startTransition] = useTransition();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
   const [showTestAccounts, setShowTestAccounts] = useState(false);
   const [sphereImages, setSphereImages] =
     useState<SphereImageData[]>(DEMO_SPHERE_IMAGES);
@@ -161,36 +159,27 @@ function LoginContent(): JSX.Element {
   // La protection est gérée server-side dans (main)/layout.tsx
   // Evite conflit getSession() (client) vs getUser() (server)
 
-  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
+  const handleSubmit = async (
+    e: React.FormEvent<HTMLFormElement>
+  ): Promise<void> => {
     e.preventDefault();
     setError(null);
-    setLoading(true);
 
-    try {
-      const { error: signInError } = await signIn(email, password);
+    startTransition(async () => {
+      try {
+        const formData = new FormData(e.currentTarget);
+        const result = await loginAction(formData);
 
-      if (signInError) {
-        setError(signInError.message);
-        setLoading(false);
-        return;
+        if (result?.error) {
+          setError(result.error);
+        }
+        // Si pas d'erreur, la Server Action fait le redirect
+      } catch (err) {
+        setError('Une erreur est survenue. Veuillez réessayer.');
+        console.error('[LoginPage] Unexpected error:', err);
       }
-
-      // Succes : rediriger vers dashboard
-      router.push(redirectUrl);
-    } catch {
-      setError('Une erreur est survenue. Veuillez reessayer.');
-      setLoading(false);
-    }
+    });
   };
-
-  // Loader initial
-  if (initializing) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#5DBEBB]/30 via-white to-white">
-        <Loader2 className="h-8 w-8 animate-spin text-[#5DBEBB]" />
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -304,6 +293,9 @@ function LoginContent(): JSX.Element {
               }}
               className="space-y-5"
             >
+              {/* Redirect URL (hidden) */}
+              <input type="hidden" name="redirect" value={redirectUrl} />
+
               {/* Email */}
               <div>
                 <label
@@ -314,12 +306,13 @@ function LoginContent(): JSX.Element {
                 </label>
                 <input
                   id="email"
+                  name="email"
                   type="email"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   placeholder="vous@exemple.com"
                   required
-                  disabled={loading}
+                  disabled={isPending}
                   className="w-full border border-gray-200 rounded-xl px-4 py-3 bg-white focus:ring-2 focus:ring-[#5DBEBB]/30 focus:border-[#5DBEBB] outline-none transition-all duration-200 disabled:bg-gray-100 disabled:cursor-not-allowed"
                 />
               </div>
@@ -335,12 +328,13 @@ function LoginContent(): JSX.Element {
                 <div className="relative">
                   <input
                     id="password"
+                    name="password"
                     type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={e => setPassword(e.target.value)}
                     placeholder="••••••••"
                     required
-                    disabled={loading}
+                    disabled={isPending}
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 pr-12 bg-white focus:ring-2 focus:ring-[#5DBEBB]/30 focus:border-[#5DBEBB] outline-none transition-all duration-200 disabled:bg-gray-100 disabled:cursor-not-allowed"
                   />
                   <button
@@ -361,10 +355,10 @@ function LoginContent(): JSX.Element {
               {/* Bouton connexion */}
               <button
                 type="submit"
-                disabled={loading || !email || !password}
+                disabled={isPending || !email || !password}
                 className="w-full bg-gradient-to-r from-[#5DBEBB] to-[#5DBEBB]/60 text-white py-3.5 rounded-xl font-semibold hover:from-[#4CA9A6] hover:to-[#4CA9A6]/60 hover:scale-[1.02] hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2 disabled:from-[#3976BB]/80 disabled:to-[#3976BB]/50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-none shadow-md"
               >
-                {loading ? (
+                {isPending ? (
                   <>
                     <Loader2 className="h-5 w-5 animate-spin" />
                     Connexion en cours...
