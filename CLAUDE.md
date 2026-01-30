@@ -292,6 +292,39 @@ npm run build             # Build production réussit
 npm run e2e:smoke         # Tests UI si modification frontend
 ```
 
+##### 🎯 Build Sélectif (OBLIGATOIRE)
+
+**❌ INTERDIT** : `pnpm build` (build tout le monorepo = 3-5 minutes)
+
+**✅ OBLIGATOIRE** : Build avec filtre Turborepo (30-60 secondes)
+
+```bash
+# Identifier le package actuel (ex: back-office)
+pnpm --filter @verone/back-office build
+pnpm --filter @verone/back-office type-check
+
+# LinkMe
+pnpm --filter @verone/linkme build
+
+# Site Internet
+pnpm --filter @verone/site-internet build
+```
+
+**Packages disponibles** :
+
+- `@verone/back-office` (port 3000)
+- `@verone/linkme` (port 3002)
+- `@verone/site-internet` (port 3001)
+- `@verone/ui`, `@verone/types`, etc.
+
+**Exception** : Build complet UNIQUEMENT si :
+
+- Changement dans `@verone/types` ou `@verone/ui`
+- PR finale (vérification complète)
+- Demande explicite utilisateur
+
+📖 **Règle complète** : `.claude/rules/dev/build-commands.md`
+
 #### 🔧 Correction ESLint (Si warnings détectés)
 
 **Workflow `/fix-warnings`** : Si ESLint détecte des warnings, utiliser le workflow intelligent :
