@@ -61,7 +61,7 @@ export function useLinkmePendingCount(options?: {
   enableRealtime?: boolean;
   refetchInterval?: number;
 }): LinkmePendingCountHook {
-  const { enableRealtime = true, refetchInterval = 30000 } = options || {};
+  const { enableRealtime = true, refetchInterval = 30000 } = options ?? {};
 
   const [count, setCount] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
@@ -96,8 +96,9 @@ export function useLinkmePendingCount(options?: {
       // Query commandes LinkMe nécessitant action
       // Actionnables = draft (à valider), validated (à préparer)
       // Exclut partially_shipped/shipped (en cours logistique)
+      // Note: linkme_orders_enriched est une vue, cast nécessaire
       const { count: totalCount, error: countError } = await supabase
-        .from('linkme_orders_enriched' as any)
+        .from('linkme_orders_enriched' as 'sales_orders')
         .select('*', { count: 'exact', head: true })
         .in('status', ['draft', 'validated']);
 
@@ -113,7 +114,7 @@ export function useLinkmePendingCount(options?: {
         return; // Sortie anticipée sans exception
       }
 
-      setCount(totalCount || 0);
+      setCount(totalCount ?? 0);
       setLastUpdated(new Date());
     } catch (err) {
       const errorObj =
@@ -145,7 +146,9 @@ export function useLinkmePendingCount(options?: {
       }
 
       // Initial fetch (authentifié)
-      fetchCount();
+      void fetchCount().catch(err => {
+        console.error('[useLinkmePendingCount] Initial fetch failed:', err);
+      });
 
       // Setup Realtime si activé ET authentifié
       // NOTE: Realtime sur sales_orders (table source, pas la vue)
@@ -163,17 +166,22 @@ export function useLinkmePendingCount(options?: {
               filter: `channel_id=eq.${LINKME_CHANNEL_ID}`,
             },
             payload => {
-              console.log(
-                '[useLinkmePendingCount] Realtime change detected:',
-                payload
-              );
               // Refetch seulement si changement impact statuts actionnables
               const eventType = payload.eventType;
-              const newRow = payload.new as any;
-              const oldRow = payload.old as any;
+              const newRow = payload.new as Record<string, unknown> | null;
+              const oldRow = payload.old as Record<string, unknown> | null;
 
               // Statuts actionnables (nécessitant action)
               const actionableStatuses = ['draft', 'validated'];
+
+              // Helper safe pour extraire status
+              const getStatus = (
+                row: Record<string, unknown> | null
+              ): string | null =>
+                row && typeof row.status === 'string' ? row.status : null;
+
+              const newStatus = getStatus(newRow);
+              const oldStatus = getStatus(oldRow);
 
               // Refetch si:
               // - INSERT avec status actionnable
@@ -181,24 +189,44 @@ export function useLinkmePendingCount(options?: {
               // - DELETE d'une commande actionnable
               const shouldRefetch =
                 (eventType === 'INSERT' &&
-                  actionableStatuses.includes(newRow?.status)) ||
+                  newStatus !== null &&
+                  actionableStatuses.includes(newStatus)) ||
                 (eventType === 'UPDATE' &&
-                  (actionableStatuses.includes(newRow?.status) ||
-                    actionableStatuses.includes(oldRow?.status))) ||
+                  ((newStatus !== null &&
+                    actionableStatuses.includes(newStatus)) ||
+                    (oldStatus !== null &&
+                      actionableStatuses.includes(oldStatus)))) ||
                 (eventType === 'DELETE' &&
-                  actionableStatuses.includes(oldRow?.status));
+                  oldStatus !== null &&
+                  actionableStatuses.includes(oldStatus));
 
               if (shouldRefetch) {
-                fetchCount();
+                void fetchCount().catch(err => {
+                  console.error(
+                    '[useLinkmePendingCount] Realtime refetch failed:',
+                    err
+                  );
+                });
               }
             }
           )
           .subscribe(status => {
             if (status === 'SUBSCRIBED') {
-              console.log('[useLinkmePendingCount] Realtime subscribed ✓');
+              // Realtime subscribed successfully
             } else if (status === 'CHANNEL_ERROR') {
-              console.error('[useLinkmePendingCount] Realtime error');
-              // Ne pas setError pour éviter bruit sur page login
+              console.error(
+                '[useLinkmePendingCount] Realtime error - falling back to polling'
+              );
+              // Fallback : activer polling si Realtime fail
+              if (!intervalRef.current && refetchInterval > 0) {
+                intervalRef.current = setInterval(() => {
+                  void fetchCount().catch(console.error);
+                }, refetchInterval);
+              }
+            } else if (status === 'CLOSED') {
+              console.warn(
+                '[useLinkmePendingCount] Channel closed, will reconnect on next mount'
+              );
             }
           });
       }
@@ -206,19 +234,31 @@ export function useLinkmePendingCount(options?: {
       // Polling fallback (seulement si authentifié)
       if (!enableRealtime || refetchInterval > 0) {
         intervalRef.current = setInterval(() => {
-          fetchCount();
+          void fetchCount().catch(err => {
+            console.error('[useLinkmePendingCount] Polling failed:', err);
+          });
         }, refetchInterval);
       }
     };
 
-    setupSubscriptions();
+    void setupSubscriptions().catch(err => {
+      console.error('[useLinkmePendingCount] Setup subscriptions failed:', err);
+    });
 
     // Cleanup
     return () => {
       isMounted = false;
       if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
-        channelRef.current = null;
+        // Void la promise mais attendre fin avant reset ref
+        void supabase
+          .removeChannel(channelRef.current)
+          .then(() => {
+            channelRef.current = null;
+          })
+          .catch(err => {
+            console.warn('[useLinkmePendingCount] Channel cleanup error:', err);
+            channelRef.current = null; // Reset même en cas d'erreur
+          });
       }
       if (intervalRef.current) {
         clearInterval(intervalRef.current);

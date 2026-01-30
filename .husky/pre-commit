@@ -1,11 +1,9 @@
 #!/bin/sh
 
-# 1. Vérifier si migrations Supabase modifiées
-if git diff --cached --name-only | grep -q "supabase/migrations/"; then
-  echo "🔄 Migrations Supabase détectées, régénération types..."
-  pnpm generate:types
-  git add packages/@verone/types/src/supabase.ts
-fi
+# 1. Génération types désactivée (manuel via MCP recommandé)
+# Raison : Types générés uniquement APRÈS apply_migration (MCP workflow)
+# Pour régénérer manuellement : pnpm generate:types
+# Ou via MCP : mcp__supabase__generate_typescript_types
 
 # 2. Lint-staged (ESLint + Prettier)
 npx lint-staged

@@ -11,6 +11,9 @@ import { cn } from '@verone/utils';
 import { Package, Archive, Trash2, ArchiveRestore, Eye } from 'lucide-react';
 
 import { useProductImages } from '@verone/products/hooks';
+import type { Database } from '@verone/utils/supabase/types';
+
+type ProductImage = Database['public']['Tables']['product_images']['Row'];
 
 interface ProductCardProps {
   product: Product;
@@ -22,31 +25,8 @@ interface ProductCardProps {
   onArchive?: (product: Product) => void;
   onDelete?: (product: Product) => void;
   archived?: boolean;
+  preloadedImage?: ProductImage | null; // PERF FIX 2026-01-30: Skip useProductImages si fourni
 }
-
-// Configuration statuts avec couleurs Design System V2
-const statusConfig = {
-  in_stock: {
-    label: 'En stock',
-    className: 'bg-green-600 text-white',
-  },
-  out_of_stock: {
-    label: 'Rupture',
-    className: 'bg-red-600 text-white',
-  },
-  preorder: {
-    label: 'Précommande',
-    className: 'bg-blue-600 text-white',
-  },
-  coming_soon: {
-    label: 'Bientôt',
-    className: 'bg-blue-600 text-white', // ✅ Bleu au lieu de noir
-  },
-  discontinued: {
-    label: 'Arrêté',
-    className: 'bg-gray-600 text-white',
-  },
-};
 
 export const ProductCardV2 = memo(function ProductCardV2({
   product,
@@ -58,19 +38,19 @@ export const ProductCardV2 = memo(function ProductCardV2({
   onArchive,
   onDelete,
   archived = false,
+  preloadedImage,
 }: ProductCardProps) {
   const router = useRouter();
   const [isHovered, setIsHovered] = useState(false);
 
-  const status = statusConfig[product.stock_status] || {
-    label: product.stock_status || 'Statut inconnu',
-    className: 'bg-gray-600 text-white',
-  };
+  // PERF FIX 2026-01-30: Skip useProductImages si preloadedImage fourni (batch loading)
+  const { primaryImage: fetchedImage, loading: imageLoading } =
+    useProductImages({
+      productId: product.id,
+      autoFetch: !preloadedImage, // Skip fetch si preloaded
+    });
 
-  const { primaryImage, loading: imageLoading } = useProductImages({
-    productId: product.id,
-    autoFetch: true,
-  });
+  const primaryImage = preloadedImage ?? fetchedImage;
 
   const handleClick = useCallback(() => {
     if (onClick) {
@@ -128,7 +108,7 @@ export const ProductCardV2 = memo(function ProductCardV2({
         {primaryImage?.public_url && !imageLoading ? (
           <Image
             src={primaryImage.public_url}
-            alt={primaryImage?.alt_text || product.name}
+            alt={primaryImage?.alt_text ?? product.name}
             fill
             priority={priority || (index !== undefined && index < 6)}
             loading={
