@@ -41,6 +41,7 @@ git push
 ```
 
 **Avantages** :
+
 - Backup continu sur GitHub
 - CI valide chaque etape
 - Facile de revenir en arriere
@@ -84,6 +85,7 @@ Details optionnels...
 ```
 
 **Exemples** :
+
 - `[LM-ORD-009] feat: refonte workflow order form`
 - `[BO-DASH-001] fix: cache invalidation`
 - `[NO-TASK] chore: update dependencies`
@@ -97,12 +99,14 @@ Details optionnels...
 **Delai cible** : < 1 heure (idealement quelques minutes)
 
 **Checklist automatique** :
+
 - [ ] CI passe (tests, build, type-check)
 - [ ] Pas de conflits
 - [ ] Format commits respecte
 - [ ] Tests ajoutes si nouvelle feature
 
 **Checklist humaine** :
+
 - [ ] Code review (logique, securite)
 - [ ] Validation fonctionnelle
 - [ ] Approbation deploiement si prod
@@ -125,11 +129,11 @@ gh pr merge 124 --merge --admin  # Preserve commits
 
 ## Branches
 
-| Branche | Usage |
-|---------|-------|
-| `main` | Production |
-| `feat/*` | Features |
-| `fix/*` | Bug fixes |
+| Branche  | Usage         |
+| -------- | ------------- |
+| `main`   | Production    |
+| `feat/*` | Features      |
+| `fix/*`  | Bug fixes     |
 | `docs/*` | Documentation |
 
 ---

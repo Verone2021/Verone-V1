@@ -17,6 +17,8 @@ CRM/ERP modulaire pour décoration et mobilier d'intérieur haut de gamme.
 
 **Regle d'or:** JAMAIS inventer credentials. TOUJOURS chercher dans `.serena/memories/`.
 
+**📚 Documentation Scripts & Commandes**: `docs/claude/SCRIPTS-AND-COMMANDS.md` → Liste COMPLETE de tous les scripts npm, scripts shell, commandes slash, et agents disponibles.
+
 ---
 
 ## 🌐 MCP Browser (Playwright)
@@ -237,6 +239,8 @@ cat packages/e2e-linkme/QUICKSTART.md
 
 **TOUJOURS suivre cet ordre** :
 
+📋 **Checklist détaillée** : `docs/claude/WORKFLOW-CHECKLIST.md`
+
 #### 1. 🔍 RESEARCH (Comprendre l'existant)
 
 Lire fichiers pertinents SANS coder :
@@ -287,6 +291,39 @@ npm run type-check        # TypeScript sans erreurs
 npm run build             # Build production réussit
 npm run e2e:smoke         # Tests UI si modification frontend
 ```
+
+##### 🎯 Build Sélectif (OBLIGATOIRE)
+
+**❌ INTERDIT** : `pnpm build` (build tout le monorepo = 3-5 minutes)
+
+**✅ OBLIGATOIRE** : Build avec filtre Turborepo (30-60 secondes)
+
+```bash
+# Identifier le package actuel (ex: back-office)
+pnpm --filter @verone/back-office build
+pnpm --filter @verone/back-office type-check
+
+# LinkMe
+pnpm --filter @verone/linkme build
+
+# Site Internet
+pnpm --filter @verone/site-internet build
+```
+
+**Packages disponibles** :
+
+- `@verone/back-office` (port 3000)
+- `@verone/linkme` (port 3002)
+- `@verone/site-internet` (port 3001)
+- `@verone/ui`, `@verone/types`, etc.
+
+**Exception** : Build complet UNIQUEMENT si :
+
+- Changement dans `@verone/types` ou `@verone/ui`
+- PR finale (vérification complète)
+- Demande explicite utilisateur
+
+📖 **Règle complète** : `.claude/rules/dev/build-commands.md`
 
 #### 🔧 Correction ESLint (Si warnings détectés)
 
@@ -628,32 +665,18 @@ gh pr merge 124 --merge --admin  # Preserve commits
 
 ---
 
-## Task Management (.tasks/)
+## Plans de Projet (.plans/)
 
-### Structure
+**Structure** : Plans de projet pour features complexes.
 
 ```
-.tasks/
-├── LM-ORD-009.md        # 1 fichier = 1 task
-├── BO-DASH-001.md
-├── INDEX.md             # Généré auto (gitignored)
-└── TEMPLATE.md          # Template
+.plans/
+├── README.md                                   # Documentation structure
+├── batch1-linkme-hooks-checklist.md           # Plan exemple
+└── enforce-professional-workflow-2026.md      # Plan exemple
 ```
 
-### Créer nouvelle task
-
-```bash
-cp .tasks/TEMPLATE.md .tasks/LM-ORD-XXX.md
-# Éditer frontmatter YAML
-# git add .tasks/LM-ORD-XXX.md
-```
-
-### Générer index
-
-```bash
-.tasks/generate-index.sh
-cat .tasks/INDEX.md
-```
+**Utilisation** : Créer plan avec `/plan` ou `EnterPlanMode` pour features nécessitant architecture détaillée.
 
 ---
 
@@ -686,9 +709,11 @@ cat .tasks/INDEX.md
 ### ❌ À NE PAS METTRE dans `.claude/`
 
 - **Mémoires** → `.serena/memories/` (MCP Serena)
-- **Plans** → `.tasks/plans/` (Task management)
+- **Plans** → `.plans/` (Plans projet à la racine)
 - **Documentation** → `docs/` (canonique) ou `docs/claude/` (spécifique)
 - **Archives** → `docs/archive/YYYY-MM/`
+- **Travail actif** → Pas de `.claude/work/` (non standard Anthropic 2026)
+- **Plans internes** → Pas de `.claude/plans/` (utiliser `.plans/` racine)
 
 ### Portabilité
 
@@ -710,4 +735,13 @@ Cette structure `.claude/` est portable entre repos :
 
 ---
 
-**Version**: 9.1.0 (Audit Conformité 2026-01-21)
+**Version**: 10.0.0 (Restructuration Complète 2026-01-30)
+
+**Changements v10.0.0** :
+
+- ✅ Structure `.claude/` conforme standards Anthropic 2026
+- ✅ Suppression dossiers non-standard (`.claude/docs/`, `.claude/plans/`, `.claude/work/`)
+- ✅ Migration `.tasks/` → `.plans/` (plans) + `docs/archive/tasks-2026-01/` (archives)
+- ✅ Suppression 14 fichiers temporaires racine (PNG, TXT)
+- ✅ Suppression scripts Python obsolètes
+- ✅ Documentation complète scripts/commandes : `docs/claude/SCRIPTS-AND-COMMANDS.md`

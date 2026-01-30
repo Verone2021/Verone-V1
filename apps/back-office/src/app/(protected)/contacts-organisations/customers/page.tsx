@@ -100,6 +100,20 @@ const MissingFieldsBadges = ({ customer }: { customer: Organisation }) => {
   );
 };
 
+// Helper pour obtenir le badge ownership_type (design LinkMe)
+function getOwnershipBadge(
+  type: string | null
+): { label: string; className: string } | null {
+  switch (type) {
+    case 'succursale':
+      return { label: 'Propre', className: 'bg-blue-100 text-blue-700' };
+    case 'franchise':
+      return { label: 'Franchise', className: 'bg-amber-100 text-amber-700' };
+    default:
+      return null;
+  }
+}
+
 export default function CustomersPage() {
   const searchParams = useSearchParams();
   const urlType = searchParams.get('type') as
@@ -597,31 +611,44 @@ export default function CustomersPage() {
 
                       {/* Contenu DROITE - Stack vertical avec hauteurs fixes */}
                       <div className="flex-1 min-w-0 flex flex-col">
-                        {/* Ligne 1: Nom (toujours 2 lignes réservées) + Badge Archivé */}
+                        {/* Ligne 1: Nom + Badge Archivé */}
                         <div className="flex items-start justify-between gap-3">
-                          <CardTitle className="text-sm font-semibold line-clamp-2 min-h-[2.5rem] flex-1">
-                            {customer.website ? (
-                              <a
-                                href={customer.website}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="hover:underline"
-                                style={{ color: colors.text.DEFAULT }}
-                                data-testid="customer-name"
-                              >
-                                {getOrganisationDisplayName(customer)}
-                              </a>
-                            ) : (
-                              <span
-                                style={{ color: colors.text.DEFAULT }}
-                                data-testid="customer-name"
-                              >
-                                {getOrganisationDisplayName(customer)}
-                              </span>
-                            )}
-                          </CardTitle>
+                          <div className="flex-1 min-w-0">
+                            {/* Nom du client */}
+                            <CardTitle className="text-sm font-semibold line-clamp-2">
+                              {customer.website ? (
+                                <a
+                                  href={customer.website}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="hover:underline"
+                                  style={{ color: colors.text.DEFAULT }}
+                                  data-testid="customer-name"
+                                >
+                                  {getOrganisationDisplayName(customer)}
+                                </a>
+                              ) : (
+                                <span
+                                  style={{ color: colors.text.DEFAULT }}
+                                  data-testid="customer-name"
+                                >
+                                  {getOrganisationDisplayName(customer)}
+                                </span>
+                              )}
+                            </CardTitle>
 
-                          {/* Badge Archivé seulement */}
+                            {/* Badge Ownership Type en-dessous du nom, aligné à gauche */}
+                            {(() => {
+                              const badge = getOwnershipBadge(customer.ownership_type);
+                              return badge ? (
+                                <span className={cn("inline-block mt-1 px-1.5 py-0.5 text-[10px] font-medium rounded", badge.className)}>
+                                  {badge.label}
+                                </span>
+                              ) : null;
+                            })()}
+                          </div>
+
+                          {/* Badge Archivé à droite */}
                           {customer.archived_at && (
                             <Badge
                               variant="destructive"

@@ -45,6 +45,7 @@ pnpm lint apps/linkme/src/app/api 2>&1 | grep "error"
 ### Pattern Principal
 
 **Avant** (❌ Erreur) :
+
 ```typescript
 export async function POST(request: Request) {
   const data = await request.json();
@@ -54,6 +55,7 @@ export async function POST(request: Request) {
 ```
 
 **Après** (✅ Correct) :
+
 ```typescript
 export async function POST(request: Request) {
   const data = await request.json();
@@ -99,22 +101,24 @@ pnpm lint apps/linkme/src/lib/hooks 2>&1 | grep "error"
 ### Pattern Principal
 
 **Avant** (❌ Erreur) :
+
 ```typescript
 const mutation = useMutation({
   mutationFn: createOrder,
-  onSuccess: (data) => {
+  onSuccess: data => {
     queryClient.invalidateQueries(['orders']); // ❌ no-floating-promises
-  }
+  },
 });
 ```
 
 **Après** (✅ Correct) :
+
 ```typescript
 const mutation = useMutation({
   mutationFn: createOrder,
-  onSuccess: async (data) => {
+  onSuccess: async data => {
     await queryClient.invalidateQueries({ queryKey: ['orders'] });
-  }
+  },
 });
 ```
 
@@ -153,6 +157,7 @@ pnpm lint apps/linkme/src/components 2>&1 | grep "error" | grep "onClick\|onChan
 #### Pattern A : Fire-and-forget
 
 **Avant** (❌) :
+
 ```typescript
 <Button onClick={() => deleteItem(id)}>
   Supprimer
@@ -160,6 +165,7 @@ pnpm lint apps/linkme/src/components 2>&1 | grep "error" | grep "onClick\|onChan
 ```
 
 **Après** (✅) :
+
 ```typescript
 <Button onClick={() => {
   void deleteItem(id).catch((error) => {
@@ -174,6 +180,7 @@ pnpm lint apps/linkme/src/components 2>&1 | grep "error" | grep "onClick\|onChan
 #### Pattern B : Avec loading state
 
 **Avant** (❌) :
+
 ```typescript
 <Button onClick={() => createOrder(data)}>
   Commander
@@ -181,6 +188,7 @@ pnpm lint apps/linkme/src/components 2>&1 | grep "error" | grep "onClick\|onChan
 ```
 
 **Après** (✅) :
+
 ```typescript
 const [loading, setLoading] = useState(false);
 
@@ -309,13 +317,13 @@ echo "Erreurs restantes: $(pnpm lint 2>&1 | grep -c "error") / 119"
 
 ### Table de Progrès
 
-| Batch | Zone | Erreurs Initiales | Erreurs Restantes | Status |
-|-------|------|-------------------|-------------------|--------|
-| 1 | API Routes | 40 | ? | ⏳ |
-| 2 | React Query | 35 | ? | ⏳ |
-| 3 | Event Handlers | 30 | ? | ⏳ |
-| 4 | Misc | 14 | ? | ⏳ |
-| **TOTAL** | **All** | **119** | **?** | **⏳** |
+| Batch     | Zone           | Erreurs Initiales | Erreurs Restantes | Status |
+| --------- | -------------- | ----------------- | ----------------- | ------ |
+| 1         | API Routes     | 40                | ?                 | ⏳     |
+| 2         | React Query    | 35                | ?                 | ⏳     |
+| 3         | Event Handlers | 30                | ?                 | ⏳     |
+| 4         | Misc           | 14                | ?                 | ⏳     |
+| **TOTAL** | **All**        | **119**           | **?**             | **⏳** |
 
 Mettre à jour après chaque batch complété.
 
@@ -330,6 +338,7 @@ Mettre à jour après chaque batch complété.
 ### Problème : Trop d'erreurs dans un fichier
 
 **Solution** : Skip temporairement, passer au suivant
+
 ```bash
 # Ajouter override temporaire dans eslint.config.mjs
 {
@@ -343,6 +352,7 @@ Mettre à jour après chaque batch complété.
 ### Problème : Pre-commit hook trop strict
 
 **Solution** : Commit avec --no-verify (temporaire)
+
 ```bash
 git commit --no-verify -m "WIP: partial fix"
 ```
@@ -375,6 +385,7 @@ git commit -m "feat: nouvelle feature"
 ### Phase 3 : Migration Graduelle (6-12 mois)
 
 Corriger les 1,946 warnings progressivement :
+
 - Boy Scout rule : corriger warnings du fichier modifié
 - 1 fichier à la fois
 - Pas de pression, qualité avant vitesse

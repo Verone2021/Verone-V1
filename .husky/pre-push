@@ -1,17 +1,12 @@
 #!/bin/sh
 
-echo "🏗️ Validation build avant push..."
+echo "🔍 Type-check avant push..."
 
-# Type-check
+# Type-check (rapide : 30-60s)
 if ! pnpm type-check; then
   echo "❌ Type-check échoué. Push annulé."
   exit 1
 fi
 
-# Build (rapide car déjà en cache si dev actif)
-if ! pnpm build; then
-  echo "❌ Build échoué. Push annulé."
-  exit 1
-fi
-
-echo "✅ Validation réussie, push autorisé"
+echo "✅ Type-check réussi, push autorisé"
+echo "ℹ️  Le build complet sera validé par GitHub Actions"

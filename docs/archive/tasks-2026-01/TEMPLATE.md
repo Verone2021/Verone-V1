@@ -11,14 +11,18 @@ commits: []
 # APP-DOMAIN-NNN — Titre de la Task
 
 ## Context
+
 [Pourquoi cette task existe]
 
 ## Solution
+
 [Comment la résoudre]
 
 ## Implementation
+
 - [ ] Step 1
 - [ ] Step 2
 
 ## Verification
+
 [Comment tester]

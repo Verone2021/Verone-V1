@@ -61,10 +61,10 @@ Guide de prevention des incidents bases sur l'historique du projet.
 
 ## Historique des Incidents (Reference)
 
-| Date | Commit | Erreur | Prevention |
-|------|--------|--------|------------|
-| 21 Jan | e17346bf | Hooks supprimes "remove friction" | Checklist "Avant de Supprimer Code" |
-| 24 Jan | f14e009a | Middleware recree sans audit | Checklist "Avant Modification Middleware" |
+| Date   | Commit   | Erreur                            | Prevention                                |
+| ------ | -------- | --------------------------------- | ----------------------------------------- |
+| 21 Jan | e17346bf | Hooks supprimes "remove friction" | Checklist "Avant de Supprimer Code"       |
+| 24 Jan | f14e009a | Middleware recree sans audit      | Checklist "Avant Modification Middleware" |
 
 ---
 
