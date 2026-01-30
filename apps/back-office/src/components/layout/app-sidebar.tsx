@@ -500,7 +500,7 @@ function SidebarContent() {
   ]);
 
   // Fonction récursive pour rendre les enfants (support multi-niveaux) - Reserved
-  const renderChildNavItem = (
+  const _renderChildNavItem = (
     child: NavItem,
     idx: number,
     isParentExpanded: boolean
@@ -514,7 +514,7 @@ function SidebarContent() {
       // Sous-menu avec enfants (ex: Sourcing)
       return (
         <li
-          key={child.href || child.title}
+          key={child.href ?? child.title}
           style={{
             animationDelay: `${idx * 50}ms`,
             animation: isParentExpanded
@@ -559,7 +559,7 @@ function SidebarContent() {
             <CollapsibleContent className="overflow-hidden transition-all duration-200">
               <ul className="mt-1 space-y-1 ml-4">
                 {child.children.map((subChild, subIdx) =>
-                  renderChildNavItem(subChild, subIdx, isChildExpanded)
+                  _renderChildNavItem(subChild, subIdx, isChildExpanded)
                 )}
               </ul>
             </CollapsibleContent>
@@ -733,7 +733,7 @@ function SidebarContent() {
   const renderNavItem = (item: NavItem) => {
     const moduleName = getModuleName(item.title);
     const moduleStatus = getModuleDeploymentStatus(moduleName);
-    const isItemExpanded = expandedItems.includes(item.title);
+    const _isItemExpanded = expandedItems.includes(item.title);
     const isActiveItem = isActiveOrHasActiveChild(item);
 
     // Mode compact avec Popover pour sous-menus ou Tooltip pour items simples
@@ -869,7 +869,7 @@ function SidebarContent() {
     <aside
       className={cn(
         'flex h-screen flex-col border-r border-black bg-white',
-        'transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]',
+        'transition-all duration-200 ease-in-out',
         isExpanded ? 'w-60' : 'w-16'
       )}
       onMouseEnter={onMouseEnter}
