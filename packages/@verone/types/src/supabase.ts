@@ -4135,20 +4135,6 @@ export type Database = {
             foreignKeyName: 'linkme_commissions_selection_id_fkey';
             columns: ['selection_id'];
             isOneToOne: false;
-            referencedRelation: 'linkme_orders_enriched';
-            referencedColumns: ['selection_id'];
-          },
-          {
-            foreignKeyName: 'linkme_commissions_selection_id_fkey';
-            columns: ['selection_id'];
-            isOneToOne: false;
-            referencedRelation: 'linkme_orders_with_margins';
-            referencedColumns: ['selection_id'];
-          },
-          {
-            foreignKeyName: 'linkme_commissions_selection_id_fkey';
-            columns: ['selection_id'];
-            isOneToOne: false;
             referencedRelation: 'linkme_selections';
             referencedColumns: ['id'];
           },
@@ -4348,20 +4334,6 @@ export type Database = {
             foreignKeyName: 'linkme_selection_items_selection_id_fkey';
             columns: ['selection_id'];
             isOneToOne: false;
-            referencedRelation: 'linkme_orders_enriched';
-            referencedColumns: ['selection_id'];
-          },
-          {
-            foreignKeyName: 'linkme_selection_items_selection_id_fkey';
-            columns: ['selection_id'];
-            isOneToOne: false;
-            referencedRelation: 'linkme_orders_with_margins';
-            referencedColumns: ['selection_id'];
-          },
-          {
-            foreignKeyName: 'linkme_selection_items_selection_id_fkey';
-            columns: ['selection_id'];
-            isOneToOne: false;
             referencedRelation: 'linkme_selections';
             referencedColumns: ['id'];
           },
@@ -4529,20 +4501,6 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'v_transactions_missing_invoice';
             referencedColumns: ['sales_order_id'];
-          },
-          {
-            foreignKeyName: 'linkme_tracking_selection_id_fkey';
-            columns: ['selection_id'];
-            isOneToOne: false;
-            referencedRelation: 'linkme_orders_enriched';
-            referencedColumns: ['selection_id'];
-          },
-          {
-            foreignKeyName: 'linkme_tracking_selection_id_fkey';
-            columns: ['selection_id'];
-            isOneToOne: false;
-            referencedRelation: 'linkme_orders_with_margins';
-            referencedColumns: ['selection_id'];
           },
           {
             foreignKeyName: 'linkme_tracking_selection_id_fkey';
@@ -7542,20 +7500,6 @@ export type Database = {
             foreignKeyName: 'sales_orders_linkme_selection_id_fkey';
             columns: ['linkme_selection_id'];
             isOneToOne: false;
-            referencedRelation: 'linkme_orders_enriched';
-            referencedColumns: ['selection_id'];
-          },
-          {
-            foreignKeyName: 'sales_orders_linkme_selection_id_fkey';
-            columns: ['linkme_selection_id'];
-            isOneToOne: false;
-            referencedRelation: 'linkme_orders_with_margins';
-            referencedColumns: ['selection_id'];
-          },
-          {
-            foreignKeyName: 'sales_orders_linkme_selection_id_fkey';
-            columns: ['linkme_selection_id'];
-            isOneToOne: false;
             referencedRelation: 'linkme_selections';
             referencedColumns: ['id'];
           },
@@ -9243,20 +9187,6 @@ export type Database = {
             foreignKeyName: 'sales_orders_linkme_selection_id_fkey';
             columns: ['linkme_selection_id'];
             isOneToOne: false;
-            referencedRelation: 'linkme_orders_enriched';
-            referencedColumns: ['selection_id'];
-          },
-          {
-            foreignKeyName: 'sales_orders_linkme_selection_id_fkey';
-            columns: ['linkme_selection_id'];
-            isOneToOne: false;
-            referencedRelation: 'linkme_orders_with_margins';
-            referencedColumns: ['selection_id'];
-          },
-          {
-            foreignKeyName: 'sales_orders_linkme_selection_id_fkey';
-            columns: ['linkme_selection_id'];
-            isOneToOne: false;
             referencedRelation: 'linkme_selections';
             referencedColumns: ['id'];
           },
@@ -9694,6 +9624,13 @@ export type Database = {
         };
         Relationships: [
           {
+            foreignKeyName: 'linkme_selection_items_selection_id_fkey';
+            columns: ['selection_id'];
+            isOneToOne: false;
+            referencedRelation: 'linkme_selections';
+            referencedColumns: ['id'];
+          },
+          {
             foreignKeyName: 'sales_orders_channel_id_fkey';
             columns: ['channel_id'];
             isOneToOne: false;
@@ -9729,6 +9666,13 @@ export type Database = {
           updated_at: string | null;
         };
         Relationships: [
+          {
+            foreignKeyName: 'linkme_selection_items_selection_id_fkey';
+            columns: ['selection_id'];
+            isOneToOne: false;
+            referencedRelation: 'linkme_selections';
+            referencedColumns: ['id'];
+          },
           {
             foreignKeyName: 'sales_orders_channel_id_fkey';
             columns: ['channel_id'];
@@ -9935,6 +9879,7 @@ export type Database = {
           phone: string | null;
           role_created_at: string | null;
           user_id: string | null;
+          user_role_id: string | null;
         };
         Relationships: [
           {
@@ -10716,6 +10661,20 @@ export type Database = {
         Returns: Json;
       };
       count_owners: { Args: never; Returns: number };
+      create_affiliate_order: {
+        Args: {
+          p_affiliate_id: string;
+          p_billing_contact_id?: string;
+          p_customer_id: string;
+          p_customer_type: string;
+          p_delivery_contact_id?: string;
+          p_items: Json;
+          p_notes?: string;
+          p_responsable_contact_id?: string;
+          p_selection_id: string;
+        };
+        Returns: string;
+      };
       create_color_if_not_exists: {
         Args: { color_hex?: string; color_name: string };
         Returns: string;
@@ -11145,6 +11104,10 @@ export type Database = {
       get_activity_stats:
         | { Args: { days_ago?: number }; Returns: Json }
         | { Args: { p_days_back?: number; p_user_id: string }; Returns: Json };
+      get_affiliate_dashboard_data: {
+        Args: { p_affiliate_id: string };
+        Returns: Json;
+      };
       get_affiliate_product_by_id: {
         Args: { p_enseigne_id: string; p_product_id: string };
         Returns: {
@@ -11598,6 +11561,19 @@ export type Database = {
           updated_at: string;
         }[];
       };
+      get_linkme_products_by_year: {
+        Args: { target_year: number };
+        Returns: {
+          product_id: string;
+          product_name: string;
+          product_sku: string;
+          total_ht: number;
+          total_quantity: number;
+          total_ttc: number;
+          total_tva: number;
+        }[];
+      };
+      get_linkme_public_stats: { Args: never; Returns: Json };
       get_low_stock_products: {
         Args: { limit_count?: number };
         Returns: {
