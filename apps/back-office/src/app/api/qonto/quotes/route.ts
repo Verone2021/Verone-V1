@@ -312,7 +312,8 @@ export async function POST(request: NextRequest): Promise<
     // Mapper les lignes de commande vers items devis
     const items = (typedOrder.sales_order_items ?? []).map(item => ({
       title: item.products?.name ?? 'Article',
-      description: item.notes ?? undefined,
+      // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- Empty notes must become undefined (omitted in API payload)
+      description: item.notes || undefined,
       quantity: String(item.quantity ?? 1),
       unit: 'pièce',
       unitPrice: {
@@ -405,7 +406,8 @@ export async function POST(request: NextRequest): Promise<
       currency: 'EUR',
       issueDate,
       expiryDate,
-      purchaseOrderNumber: typedOrder.order_number ?? undefined,
+      // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- Empty order_number must become undefined
+      purchaseOrderNumber: typedOrder.order_number || undefined,
       items,
     };
 
