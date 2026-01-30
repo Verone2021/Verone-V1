@@ -843,7 +843,11 @@ export function useOrganisation(id: string) {
             rating,
             certification_labels,
             preferred_supplier,
-            notes
+            notes,
+            ownership_type,
+            enseigne_id,
+            is_enseigne_parent,
+            enseigne:enseignes(legal_name)
           `
           )
           .eq('id', id)
