@@ -50,7 +50,7 @@ export function useProductsIncompleteCount(options?: {
   enableRealtime?: boolean;
   refetchInterval?: number;
 }): ProductsIncompleteCountHook {
-  const { enableRealtime = true, refetchInterval = 60000 } = options || {};
+  const { enableRealtime = true, refetchInterval = 60000 } = options ?? {};
 
   const [count, setCount] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
@@ -96,7 +96,7 @@ export function useProductsIncompleteCount(options?: {
         return; // Sortie anticipée sans exception
       }
 
-      setCount(totalCount || 0);
+      setCount(totalCount ?? 0);
       setLastUpdated(new Date());
     } catch (err) {
       const errorObj =
@@ -128,7 +128,12 @@ export function useProductsIncompleteCount(options?: {
       }
 
       // Initial fetch (authentifié)
-      fetchCount();
+      void fetchCount().catch(err => {
+        console.error(
+          '[useProductsIncompleteCount] Initial fetch failed:',
+          err
+        );
+      });
 
       // Setup Realtime si activé ET authentifié
       if (enableRealtime) {
@@ -142,21 +147,31 @@ export function useProductsIncompleteCount(options?: {
               table: 'products',
               filter: 'product_status=eq.active',
             },
-            payload => {
-              console.log(
-                '[useProductsIncompleteCount] Realtime change detected:',
-                payload
-              );
-              fetchCount();
+            _payload => {
+              void fetchCount().catch(err => {
+                console.error(
+                  '[useProductsIncompleteCount] Realtime refetch failed:',
+                  err
+                );
+              });
             }
           )
           .subscribe(status => {
             if (status === 'SUBSCRIBED') {
-              console.log('[useProductsIncompleteCount] Realtime subscribed');
+              // Realtime subscribed successfully
             } else if (status === 'CHANNEL_ERROR') {
-              // Log silencieux, pas setError pour éviter bruit sur page login
+              console.error(
+                '[useProductsIncompleteCount] Realtime error - falling back to polling'
+              );
+              // Fallback : activer polling si Realtime fail
+              if (!intervalRef.current && refetchInterval > 0) {
+                intervalRef.current = setInterval(() => {
+                  void fetchCount().catch(console.error);
+                }, refetchInterval);
+              }
+            } else if (status === 'CLOSED') {
               console.warn(
-                '[useProductsIncompleteCount] Realtime subscription failed'
+                '[useProductsIncompleteCount] Channel closed, will reconnect on next mount'
               );
             }
           });
@@ -165,19 +180,37 @@ export function useProductsIncompleteCount(options?: {
       // Polling fallback (seulement si authentifié)
       if (!enableRealtime || refetchInterval > 0) {
         intervalRef.current = setInterval(() => {
-          fetchCount();
+          void fetchCount().catch(err => {
+            console.error('[useProductsIncompleteCount] Polling failed:', err);
+          });
         }, refetchInterval);
       }
     };
 
-    setupSubscriptions();
+    void setupSubscriptions().catch(err => {
+      console.error(
+        '[useProductsIncompleteCount] Setup subscriptions failed:',
+        err
+      );
+    });
 
     // Cleanup
     return () => {
       isMounted = false;
       if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
-        channelRef.current = null;
+        // Void la promise mais attendre fin avant reset ref
+        void supabase
+          .removeChannel(channelRef.current)
+          .then(() => {
+            channelRef.current = null;
+          })
+          .catch(err => {
+            console.warn(
+              '[useProductsIncompleteCount] Channel cleanup error:',
+              err
+            );
+            channelRef.current = null; // Reset même en cas d'erreur
+          });
       }
       if (intervalRef.current) {
         clearInterval(intervalRef.current);

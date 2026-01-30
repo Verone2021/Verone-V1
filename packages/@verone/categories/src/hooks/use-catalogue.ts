@@ -34,8 +34,8 @@ export interface Product {
   stock_status: 'in_stock' | 'out_of_stock' | 'coming_soon';
   product_status: 'active' | 'preorder' | 'discontinued' | 'draft';
   condition: 'new' | 'refurbished' | 'used';
-  variant_attributes: Record<string, any>;
-  dimensions?: Record<string, any>;
+  variant_attributes: Record<string, unknown>;
+  dimensions?: Record<string, unknown>;
   weight?: number;
   primary_image_url: string;
   gallery_images: string[];
@@ -148,7 +148,7 @@ export const useCatalogue = () => {
       setState(prev => ({
         ...prev,
         categories: categoriesResult,
-        products: productsResult.products as any,
+        products: productsResult.products as Product[],
         total: productsResult.total,
         loading: false,
       }));
@@ -160,11 +160,14 @@ export const useCatalogue = () => {
         loading: false,
       }));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- loadCategories and loadProducts are stable async functions
   }, [filters]); // ✅ FIX P0-2: Dependency sur filters séparé (pas de circular)
 
   // ✅ FIX P0-2: useEffect trigger sur filters change
   useEffect(() => {
-    loadCatalogueData();
+    void loadCatalogueData().catch(err => {
+      console.error('[useCatalogue] loadCatalogueData failed:', err);
+    });
   }, [loadCatalogueData]);
 
   const loadCategories = async (): Promise<Category[]> => {
@@ -176,7 +179,7 @@ export const useCatalogue = () => {
       .order('display_order', { ascending: true });
 
     if (error) throw error;
-    return (data || []) as any;
+    return (data || []) as Category[];
   };
 
   // ✅ NOUVEAU: Fonction helper pour résoudre les subcategory_ids depuis families/categories
@@ -224,6 +227,7 @@ export const useCatalogue = () => {
 
   const loadProducts = async (filters: CatalogueFilters = {}) => {
     // ✅ FIX PAGINATION: Utiliser count: 'exact' pour le total réel
+    // 🚀 PERF FIX 2026-01-30: Supprimer LEFT JOIN product_images (chargé séparément en batch)
     let query = supabase.from('products').select(
       `
         id, sku, name, slug,
@@ -231,8 +235,7 @@ export const useCatalogue = () => {
         subcategory_id, supplier_id, brand,
         archived_at, created_at, updated_at,
         supplier:organisations!supplier_id(id, legal_name, trade_name),
-        subcategories!subcategory_id(id, name),
-        product_images!left(public_url, is_primary)
+        subcategories!subcategory_id(id, name)
       `,
       { count: 'exact' }
     );
@@ -251,7 +254,12 @@ export const useCatalogue = () => {
     }
 
     if (filters.statuses && filters.statuses.length > 0) {
-      query = query.in('product_status', filters.statuses as any);
+      query = query.in(
+        'product_status',
+        filters.statuses as Array<
+          'active' | 'preorder' | 'discontinued' | 'draft'
+        >
+      );
     }
 
     // ✅ NOUVEAU: Filtre hiérarchique (families → categories → subcategories)
@@ -276,8 +284,8 @@ export const useCatalogue = () => {
     }
 
     // Pagination - Calcul basé sur page (1-indexed) ou offset
-    const limit = filters.limit || ITEMS_PER_PAGE;
-    const page = filters.page || 1;
+    const limit = filters.limit ?? ITEMS_PER_PAGE;
+    const page = filters.page ?? 1;
     const offset = filters.offset ?? (page - 1) * limit;
     query = query.range(offset, offset + limit - 1);
 
@@ -288,19 +296,11 @@ export const useCatalogue = () => {
 
     if (error) throw error;
 
-    // ✅ BR-TECH-002: Enrichir avec primary_image_url depuis product_images
-    const enrichedProducts = (data || []).map(product => ({
-      ...product,
-      primary_image_url:
-        product.product_images?.find((img: any) => img.is_primary)
-          ?.public_url ||
-        product.product_images?.[0]?.public_url ||
-        null,
-    }));
-
+    // 🚀 PERF FIX 2026-01-30: Images chargées séparément en batch (useProductImagesBatch)
+    // Plus besoin d'enrichir avec primary_image_url ici
     return {
-      products: enrichedProducts,
-      total: count || 0, // ✅ Utiliser le count exact de Supabase
+      products: data ?? [],
+      total: count ?? 0, // ✅ Utiliser le count exact de Supabase
     };
   };
 
@@ -326,7 +326,12 @@ export const useCatalogue = () => {
     }
 
     if (filters.statuses && filters.statuses.length > 0) {
-      query = query.in('product_status', filters.statuses as any);
+      query = query.in(
+        'product_status',
+        filters.statuses as Array<
+          'active' | 'preorder' | 'discontinued' | 'draft'
+        >
+      );
     }
 
     // ✅ Filtre hiérarchique (families → categories → subcategories)
@@ -350,8 +355,8 @@ export const useCatalogue = () => {
     }
 
     // Pagination - Optimisé
-    const limit = filters.limit || 50;
-    const offset = filters.offset || 0;
+    const limit = filters.limit ?? 50;
+    const offset = filters.offset ?? 0;
     query = query.range(offset, offset + limit - 1);
 
     // Tri par date d'archivage (plus récent en premier)
@@ -361,19 +366,11 @@ export const useCatalogue = () => {
 
     if (error) throw error;
 
-    // ✅ BR-TECH-002: Enrichir avec primary_image_url depuis product_images
-    const enrichedProducts = (data || []).map(product => ({
-      ...product,
-      primary_image_url:
-        product.product_images?.find((img: any) => img.is_primary)
-          ?.public_url ||
-        product.product_images?.[0]?.public_url ||
-        null,
-    }));
-
+    // 🚀 PERF FIX 2026-01-30: Images chargées séparément en batch (useProductImagesBatch)
+    // Plus besoin d'enrichir avec primary_image_url ici
     return {
-      products: enrichedProducts,
-      total: enrichedProducts.length,
+      products: data || [],
+      total: (data || []).length,
     };
   };
 
@@ -382,14 +379,16 @@ export const useCatalogue = () => {
     try {
       const { data, error } = await supabase
         .from('products')
-        .insert([productData] as any)
+        .insert([productData])
         .select()
         .single();
 
       if (error) throw error;
 
       // Rafraîchir la liste
-      loadCatalogueData();
+      void loadCatalogueData().catch(err => {
+        console.error('[useCatalogue] Refresh after create failed:', err);
+      });
       return data;
     } catch (error) {
       console.error('Erreur création produit:', error);
@@ -472,7 +471,7 @@ export const useCatalogue = () => {
 
   const deleteProduct = async (id: string) => {
     try {
-      const { data, error } = await supabase
+      const { data: _data, error } = await supabase
         .from('products')
         .delete()
         .eq('id', id);
@@ -494,7 +493,7 @@ export const useCatalogue = () => {
         total: prev.total - 1,
       }));
 
-      console.log('✅ Produit supprimé avec succès:', id);
+      console.warn('✅ Produit supprimé avec succès:', id);
       return true;
     } catch (error) {
       console.error('❌ Erreur suppression produit:', error);
@@ -519,7 +518,7 @@ export const useCatalogue = () => {
   };
 
   // ✅ PAGINATION: Calculs de pagination
-  const currentPage = filters.page || 1;
+  const currentPage = filters.page ?? 1;
   const totalPages = Math.ceil(state.total / ITEMS_PER_PAGE);
   const hasNextPage = currentPage < totalPages;
   const hasPreviousPage = currentPage > 1;
