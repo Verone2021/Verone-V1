@@ -49,7 +49,19 @@ const customerSchema = z.object({
   // Champs spécifiques clients professionnels
   customer_type: z.literal('professional'),
   legal_form: z.string().optional(),
-  siret: z.string().optional(),
+  // NOUVEAU : Nom commercial (optionnel, différent de legal_name)
+  business_name: z.string().max(100).optional().nullable(),
+  // NOUVEAU : SIREN (9 chiffres, optionnel)
+  siren: z
+    .string()
+    .regex(/^\d{9}$/, 'Le SIREN doit contenir exactement 9 chiffres')
+    .optional()
+    .or(z.literal('')),
+  siret: z
+    .string()
+    .regex(/^\d{14}$/, 'Le SIRET doit contenir exactement 14 chiffres')
+    .optional()
+    .or(z.literal('')),
   vat_number: z.string().optional(),
   payment_terms: z.enum(['0', '30', '60', '90']).optional(),
   prepayment_required: z.boolean().default(false),
@@ -92,12 +104,17 @@ interface Customer {
   is_active: boolean;
   customer_type?: 'professional' | 'individual';
   legal_form?: string;
+  business_name?: string;
+  siren?: string;
   siret?: string;
   vat_number?: string;
   payment_terms?: string;
   prepayment_required?: boolean;
   currency?: string;
   notes?: string;
+  enseigne_id?: string | null;
+  is_enseigne_parent?: boolean;
+  ownership_type?: 'succursale' | 'franchise' | null;
 }
 
 interface CustomerFormModalProps {
@@ -133,6 +150,8 @@ export function CustomerFormModal({
       is_active: true,
       customer_type: 'professional',
       legal_form: '',
+      business_name: '',
+      siren: '',
       siret: '',
       vat_number: '',
       payment_terms: '30',
@@ -157,15 +176,17 @@ export function CustomerFormModal({
         is_active: customer.is_active ?? true,
         customer_type: 'professional',
         legal_form: customer.legal_form || '',
+        business_name: customer.business_name || '',
+        siren: customer.siren || '',
         siret: customer.siret || '',
         vat_number: customer.vat_number || '',
         payment_terms:
           (customer.payment_terms as '0' | '30' | '60' | '90') || '30',
         prepayment_required: customer.prepayment_required || false,
         currency: customer.currency || 'EUR',
-        enseigne_id: (customer as any).enseigne_id || null,
-        is_enseigne_parent: (customer as any).is_enseigne_parent || false,
-        ownership_type: (customer as any).ownership_type || null,
+        enseigne_id: customer.enseigne_id || null,
+        is_enseigne_parent: customer.is_enseigne_parent || false,
+        ownership_type: customer.ownership_type || null,
       });
     }
   }, [mode, customer, form]);
@@ -184,6 +205,8 @@ export function CustomerFormModal({
         is_active: data.is_active,
         customer_type: data.customer_type,
         legal_form: data.legal_form || null,
+        business_name: data.business_name || null,
+        siren: data.siren || null,
         siret: data.siret || null,
         vat_number: data.vat_number || null,
         payment_terms: data.payment_terms || null,
@@ -511,13 +534,59 @@ export function CustomerFormModal({
               </div>
 
               <div>
+                <Label htmlFor="siren">SIREN</Label>
+                <Input
+                  id="siren"
+                  {...form.register('siren')}
+                  placeholder="123456789"
+                  maxLength={9}
+                  className="mt-1"
+                />
+                {form.formState.errors.siren && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {form.formState.errors.siren.message}
+                  </p>
+                )}
+                <p className="text-xs text-gray-500 mt-1">
+                  Numéro SIREN à 9 chiffres (identifiant unique de l'entreprise)
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
                 <Label htmlFor="siret">SIRET</Label>
                 <Input
                   id="siret"
                   {...form.register('siret')}
                   placeholder="12345678901234"
+                  maxLength={14}
                   className="mt-1"
                 />
+                {form.formState.errors.siret && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {form.formState.errors.siret.message}
+                  </p>
+                )}
+                <p className="text-xs text-gray-500 mt-1">
+                  Numéro SIRET à 14 chiffres (SIREN + NIC de l'établissement)
+                </p>
+              </div>
+
+              <div>
+                <Label htmlFor="business_name">
+                  Nom commercial
+                  <span className="text-gray-500 ml-1">(si différent)</span>
+                </Label>
+                <Input
+                  id="business_name"
+                  {...form.register('business_name')}
+                  placeholder="Ex: Pokawa Paris 1"
+                  className="mt-1"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Nom sous lequel l'entreprise exerce son activité
+                </p>
               </div>
             </div>
 
