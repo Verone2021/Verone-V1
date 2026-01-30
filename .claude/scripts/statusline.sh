@@ -1,13 +1,10 @@
 #!/bin/bash
-# Script wrapper robuste pour statusline
-# Utilise ccusage si disponible, sinon fallback statique
+# Statusline statique léger (< 10ms)
+# Évite memory leak ccusage
 
-# Tente d'exécuter ccusage statusline (version globale)
-result=$(ccusage statusline 2>/dev/null)
+# Calculs système natifs macOS
+CPU=$(top -l 1 | grep "CPU usage" | awk '{print $3}' | sed 's/%//')
+RAM=$(vm_stat | perl -ne '/Pages active.*?(\d+)/ and $a=$1; /page size of (\d+)/ and printf "%.1f", $a * $2 / 1073741824; END{print}')
 
-# Si résultat vide ou erreur, utilise un fallback
-if [ -z "$result" ]; then
-  echo "⚡ Claude Code"
-else
-  echo "$result"
-fi
+# Affichage compact
+echo "⚡ Claude | CPU: ${CPU}% | RAM: ${RAM}GB/16GB"
