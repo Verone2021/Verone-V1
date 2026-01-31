@@ -104,7 +104,7 @@ export function PaymentRequestModalAdmin({
   // Calculs des totaux
   const totals = useMemo(() => {
     const totalHT = selectedCommissions.reduce(
-      (sum, c) => sum + (c.affiliate_commission || 0),
+      (sum, c) => sum + (c.affiliate_commission ?? 0),
       0
     );
     const totalTTC = selectedCommissions.reduce(

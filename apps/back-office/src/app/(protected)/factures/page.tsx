@@ -987,7 +987,7 @@ export default function FacturationPage() {
     const totalPaye =
       invoices
         .filter(inv => inv.status === 'paid')
-        .reduce((sum, inv) => sum + (inv.total_amount_cents || 0), 0) / 100;
+        .reduce((sum, inv) => sum + (inv.total_amount_cents ?? 0), 0) / 100;
     const enRetard = invoices.filter(
       inv =>
         inv.due_date &&
@@ -1008,11 +1008,11 @@ export default function FacturationPage() {
       nombreFacturesActives: facturesActives.length,
       enAttente: enAttente.length,
       montantEnAttente:
-        enAttente.reduce((sum, inv) => sum + (inv.total_amount_cents || 0), 0) /
+        enAttente.reduce((sum, inv) => sum + (inv.total_amount_cents ?? 0), 0) /
         100,
       enRetard: enRetard.length,
       montantEnRetard:
-        enRetard.reduce((sum, inv) => sum + (inv.total_amount_cents || 0), 0) /
+        enRetard.reduce((sum, inv) => sum + (inv.total_amount_cents ?? 0), 0) /
         100,
     };
   }, [invoices]);

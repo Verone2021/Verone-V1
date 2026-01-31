@@ -607,7 +607,7 @@ function CompteResultatTab({
     return pcgStructure.produits
       .map(p => ({
         ...p,
-        total: classes[p.code] || 0,
+        total: classes[p.code] ?? 0,
       }))
       .filter(p => p.total > 0);
   }, [creditTransactions, selectedYear]);
@@ -638,7 +638,7 @@ function CompteResultatTab({
     return pcgStructure.charges
       .map(c => ({
         ...c,
-        total: classes[c.code] || 0,
+        total: classes[c.code] ?? 0,
       }))
       .filter(c => c.total > 0);
   }, [debitTransactions, selectedYear]);

@@ -793,14 +793,14 @@ export default function VariantGroupDetailPage({
                     €
                   </p>
                   <p className="text-sm text-gray-700">
-                    🌿 Éco-taxe: {(variantGroup.common_eco_tax || 0).toFixed(2)}{' '}
+                    🌿 Éco-taxe: {(variantGroup.common_eco_tax ?? 0).toFixed(2)}{' '}
                     €
                   </p>
                   <p className="text-sm text-gray-900 font-semibold">
                     Total:{' '}
                     {(
                       variantGroup.common_cost_price +
-                      (variantGroup.common_eco_tax || 0)
+                      (variantGroup.common_eco_tax ?? 0)
                     ).toFixed(2)}{' '}
                     €
                   </p>

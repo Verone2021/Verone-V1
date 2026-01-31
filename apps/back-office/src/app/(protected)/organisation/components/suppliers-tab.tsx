@@ -66,7 +66,7 @@ export function SuppliersTab() {
         return {
           ...rest,
           _count: {
-            products: products?.[0]?.count || 0,
+            products: products?.[0]?.count ?? 0,
           },
         };
       });

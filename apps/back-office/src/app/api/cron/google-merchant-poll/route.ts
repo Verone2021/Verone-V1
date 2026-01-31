@@ -141,7 +141,7 @@ export async function GET(
       error: string | null;
     }>;
 
-    const updatedCount = result?.[0]?.updated_count || 0;
+    const updatedCount = result?.[0]?.updated_count ?? 0;
 
     const duration = Date.now() - startTime;
 

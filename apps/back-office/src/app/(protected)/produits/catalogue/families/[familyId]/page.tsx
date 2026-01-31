@@ -274,7 +274,7 @@ export default function FamilyDetailPage() {
                 <div>
                   <p className="text-2xl font-bold text-black">
                     {familyCategories.reduce(
-                      (sum, cat) => sum + (cat.subcategory_count || 0),
+                      (sum, cat) => sum + (cat.subcategory_count ?? 0),
                       0
                     )}
                   </p>

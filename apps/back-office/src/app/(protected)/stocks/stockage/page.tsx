@@ -159,14 +159,14 @@ export default function StockagePage() {
         <KPICard
           icon={Box}
           label="Volume total"
-          value={formatVolumeM3(totals?.total_volume_m3 || 0)}
+          value={formatVolumeM3(totals?.total_volume_m3 ?? 0)}
           color="blue"
           isLoading={totalsLoading}
         />
         <KPICard
           icon={TrendingUp}
           label="Volume facturable"
-          value={formatVolumeM3(totals?.billable_volume_m3 || 0)}
+          value={formatVolumeM3(totals?.billable_volume_m3 ?? 0)}
           color="green"
           isLoading={totalsLoading}
         />

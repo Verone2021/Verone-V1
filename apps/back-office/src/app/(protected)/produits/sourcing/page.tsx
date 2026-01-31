@@ -109,7 +109,7 @@ export default function SourcingPage() {
           .gte('created_at', startOfMonth.toISOString())
           .lte('created_at', endOfMonth.toISOString());
 
-        setCompletedThisMonth(count || 0);
+        setCompletedThisMonth(count ?? 0);
       } catch (error) {
         console.error('Erreur chargement produits complétés:', error);
       }
@@ -122,15 +122,15 @@ export default function SourcingPage() {
   // KPIs calculés
   const stats = {
     totalDrafts:
-      sourcingProducts?.filter(p => p.product_status === 'draft').length || 0,
+      sourcingProducts?.filter(p => p.product_status === 'draft').length ?? 0,
     pendingValidation:
       sourcingProducts?.filter(
         p => p.product_status === 'preorder' || p.requires_sample
-      ).length || 0,
+      ).length ?? 0,
     samplesOrdered:
       sourcingProducts?.filter(
         p => p.requires_sample && p.product_status === 'preorder'
-      ).length || 0,
+      ).length ?? 0,
     completedThisMonth,
   };
 

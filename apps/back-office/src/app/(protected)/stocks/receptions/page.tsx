@@ -916,13 +916,13 @@ export default function ReceptionsPage() {
                           order.purchase_order_items?.reduce(
                             (sum: number, item: any) => sum + item.quantity,
                             0
-                          ) || 0;
+                          ) ?? 0;
                         const totalReceived =
                           order.purchase_order_items?.reduce(
                             (sum: number, item: any) =>
-                              sum + (item.quantity_received || 0),
+                              sum + (item.quantity_received ?? 0),
                             0
-                          ) || 0;
+                          ) ?? 0;
                         const isComplete = totalReceived >= totalOrdered;
 
                         const isExpanded = expandedHistoryRows.has(order.id);
@@ -1049,13 +1049,13 @@ export default function ReceptionsPage() {
                                             <div className="text-right">
                                               <p className="text-sm font-medium">
                                                 {formatCurrency(
-                                                  (item.unit_price_ht || 0) *
+                                                  (item.unit_price_ht ?? 0) *
                                                     item.quantity
                                                 )}
                                               </p>
                                               <p className="text-xs text-gray-500">
                                                 {formatCurrency(
-                                                  item.unit_price_ht || 0
+                                                  item.unit_price_ht ?? 0
                                                 )}{' '}
                                                 /u
                                               </p>

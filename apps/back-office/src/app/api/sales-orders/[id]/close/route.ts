@@ -63,8 +63,8 @@ export async function POST(
 
     const unitsReleased =
       items?.reduce((sum, item) => {
-        return sum + (item.quantity - (item.quantity_shipped || 0));
-      }, 0) || 0;
+        return sum + (item.quantity - (item.quantity_shipped ?? 0));
+      }, 0) ?? 0;
 
     // Close order - Trigger CAS 5 will release forecasted_out automatically
     const { error: updateError } = await supabase

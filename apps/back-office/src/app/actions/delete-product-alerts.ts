@@ -28,7 +28,7 @@ export async function deleteProductAlerts(productId: string) {
 
     console.warn(
       `📊 Alertes à supprimer pour produit ${productId}:`,
-      initialCount || 0
+      initialCount ?? 0
     );
 
     // Supprimer toutes les alertes du produit
@@ -48,7 +48,7 @@ export async function deleteProductAlerts(productId: string) {
 
     return {
       success: true,
-      deletedCount: initialCount || 0,
+      deletedCount: initialCount ?? 0,
     };
   } catch (error) {
     console.error(

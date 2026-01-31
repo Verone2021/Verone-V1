@@ -327,7 +327,7 @@ export default function CategoryDetailPage() {
                 <div>
                   <p className="text-2xl font-bold text-black">
                     {categorySubcategories.reduce(
-                      (sum, sub) => sum + (sub.products_count || 0),
+                      (sum, sub) => sum + (sub.products_count ?? 0),
                       0
                     )}
                   </p>

@@ -132,7 +132,7 @@ export default function CategoriesPage() {
     if (!allCategories) return [];
     return allCategories
       .filter(cat => cat.family_id === familyId)
-      .map(cat => ({ ...cat, children: [], level: cat.level || 0 }));
+      .map(cat => ({ ...cat, children: [], level: cat.level ?? 0 }));
   };
 
   // 🔍 FONCTION POUR OBTENIR LES SOUS-CATÉGORIES D'UNE CATÉGORIE

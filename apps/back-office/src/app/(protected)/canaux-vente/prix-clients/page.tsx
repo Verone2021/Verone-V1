@@ -148,10 +148,10 @@ export default function PrixClientsPage() {
     const uniqueCustomers = new Set(data.map(r => r.customer_id)).size;
     const avgDiscount =
       data.length > 0
-        ? data.reduce((sum, r) => sum + (r.discount_rate || 0), 0) / data.length
+        ? data.reduce((sum, r) => sum + (r.discount_rate ?? 0), 0) / data.length
         : 0;
     const totalRetrocession = data.reduce(
-      (sum, r) => sum + (r.retrocession_rate || 0),
+      (sum, r) => sum + (r.retrocession_rate ?? 0),
       0
     );
 

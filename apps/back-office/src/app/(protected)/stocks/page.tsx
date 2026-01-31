@@ -83,7 +83,7 @@ export default function StocksDashboardPage() {
   // Vraies alertes actives depuis useStockAlerts (filtrées: stock_real < min_stock)
   const realAlertsCount = activeAlerts.length;
   const criticalCount =
-    criticalAlerts?.filter(a => a.stock_real < a.min_stock).length || 0;
+    criticalAlerts?.filter(a => a.stock_real < a.min_stock).length ?? 0;
 
   // Rotation 7 jours = entrées + sorties
   const rotation7j =
@@ -166,7 +166,7 @@ export default function StocksDashboardPage() {
               style: 'currency',
               currency: 'EUR',
               maximumFractionDigits: 0,
-            }).format(overview.total_value || 0)}
+            }).format(overview.total_value ?? 0)}
             icon={BarChart3}
             variant="default"
             subtitle="HT"
@@ -275,10 +275,10 @@ export default function StocksDashboardPage() {
                     {activeAlerts.slice(0, 10).map(alert => {
                       const stockPrevisionnel =
                         alert.stock_real +
-                        (alert.stock_forecasted_in || 0) -
-                        (alert.stock_forecasted_out || 0);
+                        (alert.stock_forecasted_in ?? 0) -
+                        (alert.stock_forecasted_out ?? 0);
                       const seuilAtteint =
-                        stockPrevisionnel >= (alert.min_stock || 0);
+                        stockPrevisionnel >= (alert.min_stock ?? 0);
 
                       // Couleur indicateur vertical
                       const indicatorColor =

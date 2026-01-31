@@ -474,7 +474,7 @@ export function VercelAnalyticsDashboard() {
               <div>
                 <p className="text-sm text-muted-foreground">Durée Moyenne</p>
                 <p className="text-3xl font-bold mt-2">
-                  {formatDuration(analytics?.avgSessionDuration || 0)}
+                  {formatDuration(analytics?.avgSessionDuration ?? 0)}
                 </p>
               </div>
               <Clock className="h-8 w-8 text-muted-foreground" />
