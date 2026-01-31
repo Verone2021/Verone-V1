@@ -539,13 +539,13 @@ export default function ExpenseDetailPage(props: PageProps) {
                       {payment.amount_paid.toFixed(2)} €
                     </TableCell>
                     <TableCell className="capitalize">
-                      {payment.payment_method || '-'}
+                      {payment.payment_method ?? '-'}
                     </TableCell>
                     <TableCell className="text-sm text-gray-500">
-                      {payment.transaction_reference || '-'}
+                      {payment.transaction_reference ?? '-'}
                     </TableCell>
                     <TableCell className="text-sm text-gray-500">
-                      {payment.notes || '-'}
+                      {payment.notes ?? '-'}
                     </TableCell>
                   </TableRow>
                 ))}

@@ -288,7 +288,7 @@ export default function DeliveryNoteDetailPage(): React.ReactNode {
                     {item.quantity_shipped}
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
-                    {item.notes || '-'}
+                    {item.notes ?? '-'}
                   </TableCell>
                 </TableRow>
               ))}

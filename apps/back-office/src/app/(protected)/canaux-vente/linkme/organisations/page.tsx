@@ -283,7 +283,7 @@ export default function OrganisationsPage() {
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <p className="text-gray-900">{org.enseigne_name || '-'}</p>
+                    <p className="text-gray-900">{org.enseigne_name ?? '-'}</p>
                   </td>
                   <td className="px-6 py-4">
                     <p className="text-gray-600">
@@ -454,7 +454,7 @@ export default function OrganisationsPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-gray-500">Nom commercial</p>
-                  <p className="font-medium">{selectedOrg.trade_name || '-'}</p>
+                  <p className="font-medium">{selectedOrg.trade_name ?? '-'}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Raison sociale</p>
@@ -465,12 +465,12 @@ export default function OrganisationsPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-gray-500">SIRET</p>
-                  <p className="font-medium">{selectedOrg.siret || '-'}</p>
+                  <p className="font-medium">{selectedOrg.siret ?? '-'}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Enseigne</p>
                   <p className="font-medium">
-                    {selectedOrg.enseigne_name || '-'}
+                    {selectedOrg.enseigne_name ?? '-'}
                   </p>
                 </div>
               </div>

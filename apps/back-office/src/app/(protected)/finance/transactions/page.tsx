@@ -1557,7 +1557,7 @@ function TransactionsPageV2() {
                         </p>
                         <div className="flex items-center gap-2 text-sm">
                           <span className="text-muted-foreground truncate">
-                            {tx.counterparty_name || '-'}
+                            {tx.counterparty_name ?? '-'}
                           </span>
                           {tx.organisation_name && (
                             <span className="text-blue-600 truncate">
@@ -1857,7 +1857,7 @@ function TransactionsPageV2() {
                           Contrepartie
                         </p>
                         <p className="text-xs font-medium">
-                          {selectedTransaction.counterparty_name || '-'}
+                          {selectedTransaction.counterparty_name ?? '-'}
                         </p>
                       </div>
                       <div>
