@@ -57,7 +57,7 @@ export default function ActiviteUtilisateursPage() {
       const data: ApiResponse = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Erreur lors du chargement');
+        throw new Error(data.error ?? 'Erreur lors du chargement');
       }
 
       setUsers(data.users);
@@ -360,7 +360,7 @@ export default function ActiviteUtilisateursPage() {
                       </div>
                       <div className="ml-4">
                         <div className="text-sm font-medium text-neutral-900">
-                          {user.full_name || 'Sans nom'}
+                          {user.full_name ?? 'Sans nom'}
                         </div>
                         <div className="text-sm text-neutral-500">
                           {user.email}
@@ -407,7 +407,7 @@ export default function ActiviteUtilisateursPage() {
                         {getModuleIcon(user.most_used_module)}
                       </span>
                       <span className="capitalize">
-                        {user.most_used_module || '—'}
+                        {user.most_used_module ?? '—'}
                       </span>
                     </div>
                   </td>

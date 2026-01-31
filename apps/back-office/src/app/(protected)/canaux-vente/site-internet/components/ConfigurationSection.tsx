@@ -92,7 +92,7 @@ export function ConfigurationSection() {
       setSeoForm({
         default_meta_title: config.default_meta_title ?? '',
         default_meta_description: config.default_meta_description ?? '',
-        meta_keywords: (config.meta_keywords || []).join(', '),
+        meta_keywords: (config.meta_keywords ?? []).join(', '),
       });
       setContactForm({
         contact_email: config.contact_email ?? '',

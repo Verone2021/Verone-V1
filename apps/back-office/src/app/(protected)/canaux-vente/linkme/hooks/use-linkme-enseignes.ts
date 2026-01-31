@@ -136,7 +136,7 @@ async function fetchEnseignesWithStats(): Promise<EnseigneWithStats[]> {
     name: enseigne.name,
     description: enseigne.description,
     logo_url: enseigne.logo_url,
-    member_count: enseigne.member_count || 0,
+    member_count: enseigne.member_count ?? 0,
     is_active: enseigne.is_active ?? true,
     created_at: enseigne.created_at,
     updated_at: enseigne.updated_at,
@@ -185,7 +185,7 @@ async function fetchEnseigneById(
       .eq('enseigne_id', enseigneId),
   ]);
 
-  const affiliateIds = (affiliatesResult.data || []).map(a => a.id);
+  const affiliateIds = (affiliatesResult.data ?? []).map(a => a.id);
 
   const { count: selectionsCount } =
     affiliateIds.length > 0
@@ -200,7 +200,7 @@ async function fetchEnseigneById(
     name: enseigne.name,
     description: enseigne.description,
     logo_url: enseigne.logo_url,
-    member_count: enseigne.member_count || 0,
+    member_count: enseigne.member_count ?? 0,
     is_active: enseigne.is_active ?? true,
     created_at: enseigne.created_at,
     updated_at: enseigne.updated_at,

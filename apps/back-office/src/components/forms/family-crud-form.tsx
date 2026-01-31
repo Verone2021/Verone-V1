@@ -100,8 +100,8 @@ export function FamilyCrudForm({
   useEffect(() => {
     if (initialData) {
       setFormData({
-        name: initialData.name || '',
-        description: initialData.description || '',
+        name: initialData.name ?? '',
+        description: initialData.description ?? '',
         is_active: initialData.is_active ?? true,
         display_order: initialData.display_order || 1,
         parent_id: initialData.parent_id,

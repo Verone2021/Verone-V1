@@ -198,7 +198,7 @@ export function QuickVariantForm({
         .order('variant_position', { ascending: false })
         .limit(1);
 
-      const nextPosition = (maxPositionData?.[0]?.variant_position || 0) + 1;
+      const nextPosition = (maxPositionData?.[0]?.variant_position ?? 0) + 1;
 
       // Générer un SKU unique basé sur le SKU de base
       const variantSuffix = [

@@ -171,7 +171,7 @@ export async function DELETE(
     await qontoClient.removeSingleAttachment(qontoTransactionId, attachmentId);
 
     // 5. Mettre à jour attachment_ids dans la DB
-    const currentIds = (transaction.attachment_ids as string[]) || [];
+    const currentIds = (transaction.attachment_ids as string[]) ?? [];
     const newIds = currentIds.filter(id => id !== attachmentId);
 
     const { error: updateError } = await supabase

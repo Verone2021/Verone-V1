@@ -738,7 +738,7 @@ async function fetchEnseigneSourcedProducts(
       sellingPrice = channelPrice.public_price_ht;
     } else {
       // Calcul par défaut: cost_price × 1.30 (marge 30%)
-      sellingPrice = (p.cost_price || 0) * 1.3;
+      sellingPrice = (p.cost_price ?? 0) * 1.3;
     }
 
     return {

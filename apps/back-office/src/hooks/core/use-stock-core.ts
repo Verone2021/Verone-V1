@@ -454,7 +454,7 @@ export function useStockCore({
           reference_type: params.reference_type ?? null,
           reference_id: params.reference_id ?? null,
           notes: params.notes ?? null,
-          affects_forecast: params.affects_forecast || false,
+          affects_forecast: params.affects_forecast ?? false,
           forecast_type: params.forecast_type ?? null,
           performed_by: userId,
           performed_at: new Date().toISOString(),

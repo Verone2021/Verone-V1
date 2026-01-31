@@ -550,7 +550,7 @@ export default function DepensesPage() {
       const categoryData: Record<string, { total: number; count: number }> = {};
       let totalExpenses = 0;
 
-      (data || []).forEach(
+      (data ?? []).forEach(
         (exp: { category: string | null; amount: number | null }) => {
           const cat = exp.category ?? 'other';
           const amount = exp.amount ?? 0;

@@ -111,7 +111,7 @@ export default function LinkMeOrdersPage() {
             affiliate_type: order.affiliate_type ?? null,
             selection_name: order.selection_name ?? null,
             total_affiliate_margin: order.total_affiliate_margin || 0,
-            pending_admin_validation: order.pending_admin_validation || false,
+            pending_admin_validation: order.pending_admin_validation ?? false,
             created_by_affiliate_id: order.created_by_affiliate_id ?? null,
             linkme_selection_id: order.linkme_selection_id ?? null,
           };

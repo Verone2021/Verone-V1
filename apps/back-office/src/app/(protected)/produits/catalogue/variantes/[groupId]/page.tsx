@@ -886,7 +886,7 @@ export default function VariantGroupDetailPage({
                 key={product.id}
                 product={product}
                 variantType={variantGroup.variant_type ?? ''}
-                hasCommonSupplier={variantGroup.has_common_supplier || false}
+                hasCommonSupplier={variantGroup.has_common_supplier ?? false}
                 groupDimensions={
                   variantGroup.dimensions_length
                     ? ({

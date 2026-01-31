@@ -380,7 +380,7 @@ async function createLinkMeOrder(
 
   for (const item of input.items) {
     const lineTotal = item.quantity * item.unit_price_ht;
-    const lineTva = lineTotal * (item.tax_rate || 0.2);
+    const lineTva = lineTotal * (item.tax_rate ?? 0.2);
     productsHt += lineTotal;
     totalTva += lineTva;
     // Commission calculee sur base_price_ht (135EUR), pas sur unit_price_ht (168.75EUR)
@@ -389,9 +389,9 @@ async function createLinkMeOrder(
   }
 
   // Frais additionnels avec TVA configurable
-  const shippingCostHt = input.shipping_cost_ht || 0;
-  const insuranceCostHt = input.insurance_cost_ht || 0;
-  const handlingCostHt = input.handling_cost_ht || 0;
+  const shippingCostHt = input.shipping_cost_ht ?? 0;
+  const insuranceCostHt = input.insurance_cost_ht ?? 0;
+  const handlingCostHt = input.handling_cost_ht ?? 0;
   const fraisTaxRate = input.frais_tax_rate ?? 0.2; // Defaut 20%
   const totalFrais = shippingCostHt + insuranceCostHt + handlingCostHt;
   const totalHt = productsHt + totalFrais;
@@ -463,7 +463,7 @@ async function createLinkMeOrder(
     quantity: item.quantity,
     unit_price_ht: item.unit_price_ht,
     // total_ht est GENERATED - ne pas l'inserer
-    tax_rate: item.tax_rate || 0.2, // TVA par ligne (defaut 20%)
+    tax_rate: item.tax_rate ?? 0.2, // TVA par ligne (defaut 20%)
     retrocession_rate: item.retrocession_rate,
     // CORRECTION: utiliser base_price_ht (prix catalogue) et non unit_price_ht (prix vente)
     retrocession_amount:

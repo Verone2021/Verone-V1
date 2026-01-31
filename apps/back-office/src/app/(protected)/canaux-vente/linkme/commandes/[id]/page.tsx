@@ -307,7 +307,7 @@ export default function LinkMeOrderDetailPage() {
         created_by_affiliate_id: orderData.created_by_affiliate_id ?? null,
         linkme_selection_id: orderData.linkme_selection_id ?? null,
         organisation: organisation,
-        items: (orderData.sales_order_items || []).map((item: any) => ({
+        items: (orderData.sales_order_items ?? []).map((item: any) => ({
           id: item.id,
           product_id: item.product_id,
           quantity: item.quantity,
@@ -725,7 +725,7 @@ export default function LinkMeOrderDetailPage() {
                   {enrichedItems.map(item => {
                     const isRevendeur = !!item.created_by_affiliate;
                     // Calcul de la marge/commission en €
-                    const marginCommissionEuros = item.affiliate_margin || 0;
+                    const marginCommissionEuros = item.affiliate_margin ?? 0;
                     // Payout affilié = prix vente - commission LinkMe (pour revendeur)
                     // Pour catalogue: payout = marge gagnée
                     const payoutAffilie = isRevendeur
@@ -776,8 +776,8 @@ export default function LinkMeOrderDetailPage() {
                             }
                           >
                             {isRevendeur
-                              ? `${item.commission_rate || 0}%`
-                              : `${item.margin_rate || 0}%`}
+                              ? `${item.commission_rate ?? 0}%`
+                              : `${item.margin_rate ?? 0}%`}
                           </span>
                           <p className="text-[10px] text-gray-400">
                             {isRevendeur ? 'Comm. LinkMe' : 'Marge affilié'}
@@ -1977,4 +1977,4 @@ export default function LinkMeOrderDetailPage() {
   );
 }
 
-/* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return, @typescript-eslint/prefer-nullish-coalescing */
+/* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return, @typescript-eslint/prefer-nullish-coalescing */

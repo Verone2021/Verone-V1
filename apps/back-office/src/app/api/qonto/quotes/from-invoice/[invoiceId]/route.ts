@@ -258,9 +258,9 @@ export async function POST(
     }));
 
     // Ajouter les frais
-    const feesVatRate = typedInvoice.fees_vat_rate || 0.2;
+    const feesVatRate = typedInvoice.fees_vat_rate ?? 0.2;
 
-    if ((typedInvoice.shipping_cost_ht || 0) > 0) {
+    if ((typedInvoice.shipping_cost_ht ?? 0) > 0) {
       quoteItems.push({
         title: 'Frais de livraison',
         quantity: '1',
@@ -273,7 +273,7 @@ export async function POST(
       });
     }
 
-    if ((typedInvoice.handling_cost_ht || 0) > 0) {
+    if ((typedInvoice.handling_cost_ht ?? 0) > 0) {
       quoteItems.push({
         title: 'Frais de manutention',
         quantity: '1',
@@ -286,7 +286,7 @@ export async function POST(
       });
     }
 
-    if ((typedInvoice.insurance_cost_ht || 0) > 0) {
+    if ((typedInvoice.insurance_cost_ht ?? 0) > 0) {
       quoteItems.push({
         title: "Frais d'assurance",
         quantity: '1',

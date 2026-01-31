@@ -66,9 +66,9 @@ export default function CommandesOverviewPage() {
 
   // Statistiques combinées
   const totalOrders =
-    (salesStats?.total_orders || 0) + (purchaseStats?.total_orders || 0);
+    (salesStats?.total_orders ?? 0) + (purchaseStats?.total_orders ?? 0);
   const totalValue =
-    (salesStats?.total_value || 0) + (purchaseStats?.total_value || 0);
+    (salesStats?.total_value ?? 0) + (purchaseStats?.total_value ?? 0);
 
   return (
     <div className="space-y-6 p-6">
@@ -150,10 +150,10 @@ export default function CommandesOverviewPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-green-600">
-                  {formatCurrency(salesStats?.total_value || 0)}
+                  {formatCurrency(salesStats?.total_value ?? 0)}
                 </div>
                 <p className="text-xs text-gray-500">
-                  {salesStats?.total_orders || 0} commandes clients
+                  {salesStats?.total_orders ?? 0} commandes clients
                 </p>
               </CardContent>
             </Card>
@@ -167,10 +167,10 @@ export default function CommandesOverviewPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-blue-600">
-                  {formatCurrency(purchaseStats?.total_value || 0)}
+                  {formatCurrency(purchaseStats?.total_value ?? 0)}
                 </div>
                 <p className="text-xs text-gray-500">
-                  {purchaseStats?.total_orders || 0} commandes fournisseurs
+                  {purchaseStats?.total_orders ?? 0} commandes fournisseurs
                 </p>
               </CardContent>
             </Card>

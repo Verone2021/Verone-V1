@@ -619,7 +619,7 @@ export default function ProductDetailPage() {
               icon={ImageIcon}
               iconPosition="left"
             >
-              Gérer photos ({product.images?.length || 0})
+              Gérer photos ({product.images?.length ?? 0})
             </ButtonUnified>
             <ButtonUnified
               variant="outline"

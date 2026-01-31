@@ -201,7 +201,7 @@ export function EditSiteInternetProductModal({
       id: img.id,
       public_url: img.public_url ?? '',
       alt_text: img.alt_text || `${product.name}`,
-      is_primary: img.is_primary || false,
+      is_primary: img.is_primary ?? false,
     }));
   }, [catalogueImages, product.name]);
 

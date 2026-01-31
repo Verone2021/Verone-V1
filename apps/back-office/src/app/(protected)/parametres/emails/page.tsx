@@ -54,7 +54,7 @@ export default function EmailTemplatesPage() {
         .order('name', { ascending: true });
 
       if (error) throw error;
-      const templates = (data || []).map(item => ({
+      const templates = (data ?? []).map(item => ({
         ...item,
         variables: Array.isArray(item.variables) ? item.variables : [],
       }));

@@ -64,7 +64,7 @@ export default function WebhooksPage() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      const webhooks = (data || []).map(item => ({
+      const webhooks = (data ?? []).map(item => ({
         ...item,
         events: Array.isArray(item.events) ? item.events : [],
       }));
@@ -93,7 +93,7 @@ export default function WebhooksPage() {
         .limit(5);
 
       if (error) throw error;
-      setLogs(prev => ({ ...prev, [webhookId]: data || [] }));
+      setLogs(prev => ({ ...prev, [webhookId]: data ?? [] }));
     } catch (error) {
       console.error('Error loading logs:', error);
     }
@@ -243,7 +243,7 @@ export default function WebhooksPage() {
       ) : (
         <div className="grid grid-cols-1 gap-4">
           {filteredWebhooks.map(webhook => {
-            const recentLogs = logs[webhook.id] || [];
+            const recentLogs = logs[webhook.id] ?? [];
             const lastLog = recentLogs[0];
             const successRate =
               recentLogs.length > 0

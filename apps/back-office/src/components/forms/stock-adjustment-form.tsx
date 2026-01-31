@@ -123,7 +123,7 @@ export function StockAdjustmentForm({
 
         if (error) throw error;
 
-        setProducts((data as any) || []);
+        setProducts((data as any) ?? []);
       } catch (err) {
         console.error('Erreur chargement produits:', err);
         setError('Impossible de charger la liste des produits');
@@ -213,7 +213,7 @@ export function StockAdjustmentForm({
 
     try {
       const quantityChange = calculateQuantityChange();
-      const quantityBefore = selectedProduct?.stock_quantity || 0;
+      const quantityBefore = selectedProduct?.stock_quantity ?? 0;
       const quantityAfter = quantityBefore + quantityChange;
 
       // Récupérer user ID

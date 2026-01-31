@@ -123,7 +123,7 @@ export default function CustomerDetailPage() {
           .order('created_at', { ascending: false });
 
         // Mapper les données avec l'image primaire
-        const mappedProducts: CustomerProduct[] = (data || []).map(p => ({
+        const mappedProducts: CustomerProduct[] = (data ?? []).map(p => ({
           id: p.id,
           name: p.name,
           sku: p.sku,

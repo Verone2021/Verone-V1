@@ -925,7 +925,7 @@ function TransactionsPageLegacy() {
           selectedTransaction?.counterparty_name ||
           ''
         }
-        amount={selectedTransaction?.amount || 0}
+        amount={selectedTransaction?.amount ?? 0}
         counterpartyName={selectedTransaction?.counterparty_name}
         onSuccess={() => {
           toast.success('Transaction rapprochée');
@@ -1424,13 +1424,13 @@ function TransactionsPageV2() {
                   <TabsTrigger value="all" className="gap-2">
                     Toutes
                     <Badge variant="secondary" className="ml-1">
-                      {stats?.total_count || 0}
+                      {stats?.total_count ?? 0}
                     </Badge>
                   </TabsTrigger>
                   <TabsTrigger value="to_process" className="gap-2">
                     <Clock className="h-4 w-4 text-amber-600" />A traiter
                     <Badge variant="warning" className="ml-1">
-                      {stats?.to_process_count || 0}
+                      {stats?.to_process_count ?? 0}
                     </Badge>
                   </TabsTrigger>
                   <TabsTrigger value="matched" className="gap-2">
@@ -2390,7 +2390,7 @@ function TransactionsPageV2() {
           selectedTransaction?.counterparty_name ||
           ''
         }
-        amount={selectedTransaction?.amount || 0}
+        amount={selectedTransaction?.amount ?? 0}
         counterpartyName={selectedTransaction?.counterparty_name}
         onSuccess={() => {
           toast.success('Transaction rapprochee');

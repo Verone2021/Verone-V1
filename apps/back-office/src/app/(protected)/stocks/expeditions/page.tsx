@@ -220,7 +220,7 @@ export default function ExpeditionsPage() {
   const handleViewHistory = async (order: any) => {
     setSelectedOrder(order);
     const history = await loadShipmentHistory(order.id);
-    setShipmentHistory(history || []);
+    setShipmentHistory(history ?? []);
     setShowHistoryModal(true);
   };
 
@@ -427,13 +427,13 @@ export default function ExpeditionsPage() {
                           order.sales_order_items?.reduce(
                             (sum: number, item: any) => sum + item.quantity,
                             0
-                          ) || 0;
+                          ) ?? 0;
                         const shippedItems =
                           order.sales_order_items?.reduce(
                             (sum: number, item: any) =>
-                              sum + (item.quantity_shipped || 0),
+                              sum + (item.quantity_shipped ?? 0),
                             0
-                          ) || 0;
+                          ) ?? 0;
                         const progressPercent =
                           totalItems > 0
                             ? Math.round((shippedItems / totalItems) * 100)
@@ -546,7 +546,7 @@ export default function ExpeditionsPage() {
                                   <div className="p-4">
                                     <h4 className="font-medium text-sm mb-3 text-gray-700">
                                       Produits de la commande (
-                                      {order.sales_order_items?.length || 0})
+                                      {order.sales_order_items?.length ?? 0})
                                     </h4>
                                     <div className="space-y-2">
                                       {order.sales_order_items?.map(
@@ -581,7 +581,7 @@ export default function ExpeditionsPage() {
                                             </div>
                                             <div className="text-right">
                                               <p className="text-sm font-medium">
-                                                {item.quantity_shipped || 0} /{' '}
+                                                {item.quantity_shipped ?? 0} /{' '}
                                                 {item.quantity} expédié(s)
                                               </p>
                                               <p className="text-xs text-gray-500">
@@ -709,7 +709,7 @@ export default function ExpeditionsPage() {
                           order.sales_order_items?.reduce(
                             (sum: number, item: any) => sum + item.quantity,
                             0
-                          ) || 0;
+                          ) ?? 0;
 
                         const isExpanded = expandedHistoryRows.has(order.id);
 
@@ -789,7 +789,7 @@ export default function ExpeditionsPage() {
                                   <div className="p-4">
                                     <h4 className="font-medium text-sm mb-3 text-gray-700">
                                       Produits de la commande (
-                                      {order.sales_order_items?.length || 0})
+                                      {order.sales_order_items?.length ?? 0})
                                     </h4>
                                     <div className="space-y-2">
                                       {order.sales_order_items?.map(
@@ -824,7 +824,7 @@ export default function ExpeditionsPage() {
                                             </div>
                                             <div className="text-right">
                                               <p className="text-sm font-medium">
-                                                {item.quantity_shipped || 0} /{' '}
+                                                {item.quantity_shipped ?? 0} /{' '}
                                                 {item.quantity} expédié(s)
                                               </p>
                                               <p className="text-xs text-gray-500">

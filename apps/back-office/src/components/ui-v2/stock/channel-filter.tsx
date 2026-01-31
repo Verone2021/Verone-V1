@@ -113,7 +113,7 @@ export function ChannelFilter({
           throw fetchError;
         }
 
-        setChannels(data || []);
+        setChannels(data ?? []);
       } catch (err) {
         const errorMessage =
           err instanceof Error ? err.message : 'Erreur inconnue';

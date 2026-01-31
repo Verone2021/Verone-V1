@@ -341,7 +341,7 @@ export function CreateLinkMeOrderModal({
 
     for (const item of cart) {
       const lineHt = roundMoney(item.quantity * item.unit_price_ht);
-      const lineTva = roundMoney(lineHt * (item.tax_rate || 0.2));
+      const lineTva = roundMoney(lineHt * (item.tax_rate ?? 0.2));
       productsHt = roundMoney(productsHt + lineHt);
       totalTva = roundMoney(totalTva + lineTva);
       // Commission calculee sur base_price_ht (135EUR), pas sur unit_price_ht (168.75EUR)
@@ -391,7 +391,7 @@ export function CreateLinkMeOrderModal({
     // - commission_rate: ex 10% (channel_pricing.channel_commission_rate)
     // - margin_rate: ex 15% (taux de marque affilié)
     // Exemple: (55.50 / 0.85) × 1.10 = 65.29 × 1.10 = 71.82€
-    const commissionRate = (item.commission_rate || 0) / 100;
+    const commissionRate = (item.commission_rate ?? 0) / 100;
     const marginRate = item.margin_rate / 100;
     const sellingPrice = roundMoney(
       (item.base_price_ht / (1 - marginRate)) * (1 + commissionRate)
@@ -457,16 +457,16 @@ export function CreateLinkMeOrderModal({
         sku: item.sku,
         quantity: item.quantity,
         unit_price_ht: item.unit_price_ht,
-        tax_rate: item.tax_rate || 0.2, // TVA par ligne
+        tax_rate: item.tax_rate ?? 0.2, // TVA par ligne
         base_price_ht: item.base_price_ht,
         retrocession_rate: item.retrocession_rate,
         linkme_selection_item_id: item.linkme_selection_item_id,
       })),
       internal_notes: internalNotes ?? undefined,
       // Frais additionnels
-      shipping_cost_ht: shippingCostHt || 0,
-      handling_cost_ht: handlingCostHt || 0,
-      insurance_cost_ht: insuranceCostHt || 0,
+      shipping_cost_ht: shippingCostHt ?? 0,
+      handling_cost_ht: handlingCostHt ?? 0,
+      insurance_cost_ht: insuranceCostHt ?? 0,
       frais_tax_rate: fraisTaxRate,
     };
 
@@ -700,8 +700,8 @@ export function CreateLinkMeOrderModal({
                           <div className="flex-1">
                             <p className="font-medium">{selection.name}</p>
                             <p className="text-xs text-gray-500">
-                              {selection.products_count || 0} produit
-                              {(selection.products_count || 0) > 1 ? 's' : ''}
+                              {selection.products_count ?? 0} produit
+                              {(selection.products_count ?? 0) > 1 ? 's' : ''}
                             </p>
                           </div>
                           {selectedSelectionId === selection.id && (
@@ -1182,7 +1182,7 @@ export function CreateLinkMeOrderModal({
               <div className="space-y-3 border-t pt-6">
                 <label className="block text-sm font-medium text-gray-700">
                   <Package className="h-4 w-4 inline mr-1" />
-                  Produits disponibles ({selectionDetails?.items?.length || 0})
+                  Produits disponibles ({selectionDetails?.items?.length ?? 0})
                 </label>
 
                 {/* Barre de recherche produits + Filtre catégorie */}
@@ -1252,7 +1252,7 @@ export function CreateLinkMeOrderModal({
                       );
                       // margin_rate et commission_rate sont en POURCENTAGE
                       // Taux de marque: Prix = base / (1 - tauxMarque) × (1 + commission)
-                      const commissionRate = (item.commission_rate || 0) / 100;
+                      const commissionRate = (item.commission_rate ?? 0) / 100;
                       const marginRate = item.margin_rate / 100;
                       const sellingPrice =
                         (item.base_price_ht / (1 - marginRate)) *
@@ -1609,8 +1609,8 @@ export function CreateLinkMeOrderModal({
                 <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
                   {previewSelection.items.map(item => {
                     // Taux de marque: Prix = base / (1 - tauxMarque) × (1 + commission)
-                    const commissionRate = (item.commission_rate || 0) / 100;
-                    const marginRate = (item.margin_rate || 0) / 100;
+                    const commissionRate = (item.commission_rate ?? 0) / 100;
+                    const marginRate = (item.margin_rate ?? 0) / 100;
                     const sellingPrice =
                       (item.base_price_ht / (1 - marginRate)) *
                       (1 + commissionRate);

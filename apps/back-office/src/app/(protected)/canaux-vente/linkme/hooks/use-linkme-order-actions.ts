@@ -1116,7 +1116,7 @@ export function useAllLinkMeOrders(status?: OrderValidationStatus) {
           linkme_details: linkmeDetails
             ? {
                 is_new_restaurant:
-                  (linkmeDetails.is_new_restaurant as boolean) || false,
+                  (linkmeDetails.is_new_restaurant as boolean) ?? false,
                 requester_type: linkmeDetails.requester_type as string | null,
                 requester_name: linkmeDetails.requester_name as string | null,
                 requester_email: linkmeDetails.requester_email as string | null,

@@ -137,7 +137,7 @@ export function formatFiltersLabel(filters: AnalyticsFilters): string {
 
   if (filters.months.length === 1) {
     const month = MONTHS.find(m => m.value === filters.months[0]);
-    return `${month?.fullLabel} ${filters.year}`;
+    return `${month?.fullLabel ?? ''} ${filters.year}`;
   }
 
   if (filters.months.length === 12) {
@@ -147,7 +147,7 @@ export function formatFiltersLabel(filters: AnalyticsFilters): string {
   // Plusieurs mois
   const sortedMonths = [...filters.months].sort((a, b) => a - b);
   const monthLabels = sortedMonths.map(
-    m => MONTHS.find(mo => mo.value === m)?.label
+    m => MONTHS.find(mo => mo.value === m)?.label ?? ''
   );
   return `${monthLabels.join(', ')} ${filters.year}`;
 }

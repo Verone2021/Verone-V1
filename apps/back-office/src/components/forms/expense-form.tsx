@@ -123,7 +123,7 @@ export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
           .order('name');
 
         if (suppliersError) throw suppliersError;
-        setSuppliers((suppliersData as any) || []);
+        setSuppliers((suppliersData as any) ?? []);
       } catch (err) {
         console.error('Erreur chargement données:', err);
         setError('Impossible de charger les fournisseurs');
@@ -155,7 +155,7 @@ export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
             `${year}-${String(parseInt(month) + 1).padStart(2, '0')}-01`
           );
 
-        const nextNumber = String((count || 0) + 1).padStart(3, '0');
+        const nextNumber = String((count ?? 0) + 1).padStart(3, '0');
         const documentNumber = `DEP-${year}-${month}-${nextNumber}`;
 
         setFormData(prev => ({ ...prev, document_number: documentNumber }));

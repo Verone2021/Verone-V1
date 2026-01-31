@@ -327,7 +327,7 @@ export default function PurchaseOrdersPage() {
             break;
           }
           case 'amount':
-            comparison = (a.total_ttc || 0) - (b.total_ttc || 0);
+            comparison = (a.total_ttc ?? 0) - (b.total_ttc ?? 0);
             break;
         }
         return sortDirection === 'asc' ? comparison : -comparison;
@@ -350,9 +350,9 @@ export default function PurchaseOrdersPage() {
     const stats = filteredOrders.reduce(
       (acc, order) => {
         acc.total_orders++;
-        acc.total_ht += order.total_ht || 0;
-        acc.eco_tax_total += order.eco_tax_total || 0;
-        acc.total_ttc += order.total_ttc || 0;
+        acc.total_ht += order.total_ht ?? 0;
+        acc.eco_tax_total += order.eco_tax_total ?? 0;
+        acc.total_ttc += order.total_ttc ?? 0;
 
         if (
           ['draft', 'validated', 'validated', 'partially_received'].includes(
@@ -1331,7 +1331,7 @@ export default function PurchaseOrdersPage() {
                                       x{item.quantity}
                                     </span>
                                     <span className="font-medium w-24 text-right">
-                                      {formatCurrency(item.total_ht || 0)}
+                                      {formatCurrency(item.total_ht ?? 0)}
                                     </span>
                                     {item.sample_type && (
                                       <Badge

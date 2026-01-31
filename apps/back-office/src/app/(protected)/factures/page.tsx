@@ -981,7 +981,7 @@ export default function FacturationPage() {
     // Utiliser total_amount_cents (en centimes) et convertir en euros
     const totalFacture =
       facturesActives.reduce(
-        (sum, inv) => sum + (inv.total_amount_cents || 0),
+        (sum, inv) => sum + (inv.total_amount_cents ?? 0),
         0
       ) / 100;
     const totalPaye =
