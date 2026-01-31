@@ -76,7 +76,7 @@ export default function StorageDetailPage() {
           .eq('id', ownerId)
           .single();
         if (data)
-          setOwnerName(data.trade_name || data.legal_name || 'Organisation');
+          setOwnerName(data.trade_name ?? data.legal_name ?? 'Organisation');
       }
     }
     void fetchOwnerName().catch(error => {

@@ -261,7 +261,7 @@ function TransactionRow({
       {/* Libellé & Contrepartie */}
       <div className="flex-1 min-w-0">
         <p className="font-medium truncate">
-          {transaction.label || transaction.note || 'Sans libellé'}
+          {transaction.label ?? transaction.note ?? 'Sans libellé'}
         </p>
         <div className="text-sm text-muted-foreground truncate">
           <SupplierCell
@@ -391,7 +391,7 @@ function TransactionDetailPanel({
             <div>
               <p className="text-sm text-muted-foreground">Libellé</p>
               <p className="font-medium">
-                {transaction.label || transaction.note || 'Sans libellé'}
+                {transaction.label ?? transaction.note ?? 'Sans libellé'}
               </p>
             </div>
 

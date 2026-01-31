@@ -68,5 +68,5 @@ export function useLinkMeAffiliatesForStorage() {
  * Get display name for affiliate (enseigne or organisation name)
  */
 export function getAffiliateEntityName(affiliate: AffiliateForStorage): string {
-  return affiliate.enseigne_name || affiliate.organisation_name || 'Inconnu';
+  return affiliate.enseigne_name ?? affiliate.organisation_name ?? 'Inconnu';
 }

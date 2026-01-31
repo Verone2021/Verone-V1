@@ -91,7 +91,7 @@ export function ProductVariantsCard({
               <div className="mb-2 flex justify-center">
                 <ProductThumbnail
                   src={variant.image_url}
-                  alt={variant.name || variant.sku || 'Variante'}
+                  alt={variant.name ?? variant.sku ?? 'Variante'}
                   size="lg"
                 />
               </div>

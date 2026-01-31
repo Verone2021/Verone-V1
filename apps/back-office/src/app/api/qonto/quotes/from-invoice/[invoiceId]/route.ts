@@ -197,7 +197,7 @@ export async function POST(
     let qontoClientId: string;
     const customerEmail = typedPartner.email;
     const customerName =
-      typedPartner.trade_name || typedPartner.legal_name || 'Client';
+      typedPartner.trade_name ?? typedPartner.legal_name ?? 'Client';
 
     if (!customerEmail) {
       return NextResponse.json(

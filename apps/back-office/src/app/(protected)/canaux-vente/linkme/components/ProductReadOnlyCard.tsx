@@ -184,7 +184,7 @@ export function ProductReadOnlyCard({
                   >
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">
-                        {variant.name || variant.sku || 'Variante'}
+                        {variant.name ?? variant.sku ?? 'Variante'}
                       </p>
                       {variant.variant_attributes && (
                         <div className="flex flex-wrap gap-1 mt-0.5">

@@ -101,7 +101,7 @@ export async function POST(_request: NextRequest): Promise<
       try {
         // Obtenir le numero de facture (peut etre 'number' ou 'invoice_number')
         const invoiceNumber =
-          invoice.number || invoice.invoice_number || invoice.id;
+          invoice.number ?? invoice.invoice_number ?? invoice.id;
         // Obtenir la date d'echeance (peut etre 'due_date' ou 'payment_deadline')
         const dueDate = (invoice.due_date || invoice.payment_deadline) ?? null;
 
@@ -243,7 +243,7 @@ export async function POST(_request: NextRequest): Promise<
           }
         }
       } catch (invoiceError) {
-        const num = invoice.number || invoice.invoice_number || invoice.id;
+        const num = invoice.number ?? invoice.invoice_number ?? invoice.id;
         errors.push(
           `Invoice ${num}: ${invoiceError instanceof Error ? invoiceError.message : 'Unknown error'}`
         );
