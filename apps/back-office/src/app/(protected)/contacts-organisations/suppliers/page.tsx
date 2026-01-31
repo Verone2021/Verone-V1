@@ -135,7 +135,7 @@ export default function SuppliersPage() {
       // Comptage des produits pour chaque fournisseur (même approche que useOrganisations)
       let organisationsWithCounts = data || [];
 
-      if ((data || []).length > 0) {
+      if ((data ?? []).length > 0) {
         const supplierIds = data.map(s => s.id);
 
         // Requête groupée pour compter les produits par supplier_id
@@ -153,7 +153,7 @@ export default function SuppliersPage() {
         });
 
         // Merger les comptes avec les organisations
-        organisationsWithCounts = (data || []).map(org => ({
+        organisationsWithCounts = (data ?? []).map(org => ({
           ...org,
           _count: {
             products: countsMap.get(org.id) ?? 0,
