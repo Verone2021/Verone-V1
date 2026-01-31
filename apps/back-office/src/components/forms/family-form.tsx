@@ -201,7 +201,7 @@ export function FamilyForm({
       );
 
       // Gestion spécifique des erreurs de contrainte unique
-      let errorMessage = error.message || 'Une erreur est survenue';
+      let errorMessage = error.message ?? 'Une erreur est survenue';
       if (error.code === '23505') {
         errorMessage =
           'Une famille avec ce nom existe déjà. Veuillez choisir un nom différent.';

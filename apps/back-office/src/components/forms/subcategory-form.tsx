@@ -281,7 +281,7 @@ export function SubcategoryForm({
       );
 
       // Gestion spécifique des erreurs de contrainte unique
-      let errorMessage = error.message || 'Une erreur est survenue';
+      let errorMessage = error.message ?? 'Une erreur est survenue';
       if (error.code === '23505') {
         errorMessage =
           'Une sous-catégorie avec ce nom existe déjà dans cette catégorie. Veuillez choisir un nom différent.';
