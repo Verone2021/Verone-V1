@@ -1012,7 +1012,7 @@ export function EnseignesSection() {
               </Badge>
             </DialogTitle>
             <DialogDescription>
-              {selectedEnseigne?.description || 'Aucune description'}
+              {selectedEnseigne?.description ?? 'Aucune description'}
             </DialogDescription>
           </DialogHeader>
 

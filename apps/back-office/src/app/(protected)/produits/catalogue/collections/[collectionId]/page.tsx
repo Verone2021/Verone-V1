@@ -516,7 +516,7 @@ export default function CollectionDetailPage({
               {collection.name}
             </h1>
             <p className="text-gray-600 text-sm">
-              {collection.description || 'Aucune description'}
+              {collection.description ?? 'Aucune description'}
             </p>
           </div>
         </div>

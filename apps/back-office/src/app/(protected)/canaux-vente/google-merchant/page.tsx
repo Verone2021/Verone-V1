@@ -399,7 +399,7 @@ export default function GoogleMerchantPage() {
             </AlertTitle>
             <AlertDescription className="text-red-700">
               <p>
-                {error || 'Une erreur est survenue lors de la synchronisation'}
+                {error ?? 'Une erreur est survenue lors de la synchronisation'}
               </p>
               {failed > 0 && (
                 <div className="mt-2 space-y-1">
