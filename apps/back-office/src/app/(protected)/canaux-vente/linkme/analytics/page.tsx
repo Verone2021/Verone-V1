@@ -279,7 +279,7 @@ export default function LinkMeAnalyticsPage() {
         <div className="grid grid-cols-4 gap-4">
           <KpiCard
             title="Affiliés actifs"
-            value={formatNumber(data?.activeAffiliates || 0)}
+            value={formatNumber(data?.activeAffiliates ?? 0)}
             icon={Users}
             iconBgColor="bg-blue-100"
             iconColor="text-blue-600"
@@ -287,7 +287,7 @@ export default function LinkMeAnalyticsPage() {
           />
           <KpiCard
             title="Commandes"
-            value={formatNumber(data?.totalOrders || 0)}
+            value={formatNumber(data?.totalOrders ?? 0)}
             icon={ShoppingCart}
             iconBgColor="bg-purple-100"
             iconColor="text-purple-600"
@@ -295,7 +295,7 @@ export default function LinkMeAnalyticsPage() {
           />
           <KpiCard
             title="CA HT"
-            value={formatCurrency(data?.totalRevenue || 0)}
+            value={formatCurrency(data?.totalRevenue ?? 0)}
             icon={DollarSign}
             iconBgColor="bg-green-100"
             iconColor="text-green-600"
@@ -303,7 +303,7 @@ export default function LinkMeAnalyticsPage() {
           />
           <KpiCard
             title="Panier moyen"
-            value={formatCurrency(data?.averageBasket || 0)}
+            value={formatCurrency(data?.averageBasket ?? 0)}
             icon={ShoppingBag}
             iconBgColor="bg-orange-100"
             iconColor="text-orange-600"

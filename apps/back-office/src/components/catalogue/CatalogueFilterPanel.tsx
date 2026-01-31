@@ -214,8 +214,8 @@ export function CatalogueFilterPanel({
   // Fournisseurs avec produits
   const suppliersWithProducts = useMemo(() => {
     return suppliers
-      .filter(s => (s._count?.products || 0) > 0)
-      .sort((a, b) => (b._count?.products || 0) - (a._count?.products || 0));
+      .filter(s => (s._count?.products ?? 0) > 0)
+      .sort((a, b) => (b._count?.products ?? 0) - (a._count?.products || 0));
   }, [suppliers]);
 
   // Handlers
@@ -575,7 +575,7 @@ export function CatalogueFilterPanel({
               <div className="p-2 space-y-1">
                 {suppliersWithProducts.map(supplier => {
                   const isSelected = filters.suppliers.includes(supplier.id);
-                  const count = supplier._count?.products || 0;
+                  const count = supplier._count?.products ?? 0;
                   return (
                     <label
                       key={supplier.id}

@@ -30,7 +30,7 @@ export default function VentesDashboardPage() {
   const { metrics, loading, error } = useSalesDashboard();
 
   // Extraction avec fallbacks si pas de données
-  const stats = metrics?.stats || {
+  const stats = metrics?.stats ?? {
     consultationsActives: 0,
     commandesEnCours: 0,
     chiffreAffaireMois: 0,

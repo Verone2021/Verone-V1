@@ -371,7 +371,7 @@ export default function LinkMeUtilisateursPage() {
         />
         <StatCard
           title="Rôles Uniques"
-          value={Object.values(stats?.byRole || {}).filter(v => v > 0).length}
+          value={Object.values(stats?.byRole ?? {}).filter(v => v > 0).length}
           icon={Shield}
           color="bg-purple-500"
         />

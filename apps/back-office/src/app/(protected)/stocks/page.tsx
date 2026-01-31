@@ -60,7 +60,7 @@ export default function StocksDashboardPage() {
   }, [fetchAlerts]);
 
   // Extraction des métriques avec fallbacks
-  const overview = metrics?.overview || {
+  const overview = metrics?.overview ?? {
     total_value: 0,
     products_in_stock: 0,
     products_out_of_stock: 0,
@@ -70,7 +70,7 @@ export default function StocksDashboardPage() {
     total_available: 0,
   };
 
-  const movements = metrics?.movements || {
+  const movements = metrics?.movements ?? {
     last_7_days: {
       entries: { count: 0, quantity: 0 },
       exits: { count: 0, quantity: 0 },
@@ -87,8 +87,8 @@ export default function StocksDashboardPage() {
 
   // Rotation 7 jours = entrées + sorties
   const rotation7j =
-    (movements.last_7_days?.entries?.quantity || 0) +
-    (movements.last_7_days?.exits?.quantity || 0);
+    (movements.last_7_days?.entries?.quantity ?? 0) +
+    (movements.last_7_days?.exits?.quantity ?? 0);
 
   return (
     <div className="min-h-screen bg-gray-50">
