@@ -180,7 +180,7 @@ export default async function OrderDetailPage({
     }
 
     if (!order) {
-      console.error('[Order Detail] Error:', orderError || linkmeError);
+      console.error('[Order Detail] Error:', orderError ?? linkmeError);
       notFound();
     }
   }
@@ -199,7 +199,7 @@ export default async function OrderDetailPage({
       .single();
 
     if (org) {
-      customerName = org.trade_name || org.legal_name;
+      customerName = org.trade_name ?? org.legal_name;
       customerEmail = org.email ?? '';
       customerPhone = org.phone ?? '';
       isOrganisation = true;
@@ -375,7 +375,7 @@ export default async function OrderDetailPage({
                       <div className="flex justify-between items-start mb-2">
                         <div>
                           <p className="font-medium">
-                            {item.products?.name || 'Produit inconnu'}
+                            {item.products?.name ?? 'Produit inconnu'}
                           </p>
                           <p className="text-xs text-muted-foreground">
                             SKU: {item.products?.sku ?? 'N/A'}
@@ -492,7 +492,7 @@ export default async function OrderDetailPage({
               taxRate={20}
               currency="EUR"
               paymentTerms="immediate"
-              paymentStatus={order.payment_status || 'pending'}
+              paymentStatus={order.payment_status ?? 'pending'}
               customerName={customerName}
               customerEmail={customerEmail ?? null}
               customerType={
