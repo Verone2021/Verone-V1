@@ -25,7 +25,7 @@ export function useSupabaseCRUD<T>(options: CRUDOptions<T>) {
     // Query state
     data: query.data,
     loading: query.loading || mutation.loading,
-    error: query.error || mutation.error,
+    error: query.error ?? mutation.error,
 
     // Query actions
     fetch: query.fetch,

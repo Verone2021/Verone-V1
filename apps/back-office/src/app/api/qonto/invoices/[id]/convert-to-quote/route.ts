@@ -38,7 +38,7 @@ export async function POST(
 > {
   try {
     const { id } = await params;
-    const body = await request.json().catch(() => ({}));
+    const body: unknown = await request.json().catch(() => ({}));
     const { deleteOriginal = false } = body as IPostRequestBody;
 
     const client = getQontoClient();

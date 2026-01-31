@@ -68,7 +68,7 @@ export async function updatePurchaseOrderStatus(
 
     // Préparer les champs à mettre à jour - UNIQUEMENT le status
     // Les timestamps (validated_at, cancelled_at, etc.) seront gérés plus tard si nécessaire
-    const updateFields: { status: string } = { status: newStatus };
+    const updateFields = { status: newStatus };
 
     // ✅ Workflow simplifié restauré : draft → confirmed → received → cancelled
     // Les triggers DB gèrent les mouvements de stock automatiquement

@@ -155,7 +155,7 @@ export function ChannelFilter({
       </label>
 
       <Select
-        value={selectedChannel || 'all'}
+        value={selectedChannel ?? 'all'}
         onValueChange={value => onChannelChange(value === 'all' ? null : value)}
         disabled={disabled || isLoading}
       >
