@@ -69,7 +69,7 @@ function ProductStatusBadge({
 }: {
   status: 'active' | 'preorder' | 'discontinued' | 'draft';
 }) {
-  const config = PRODUCT_STATUS_CONFIG[status] || PRODUCT_STATUS_CONFIG.draft;
+  const config = PRODUCT_STATUS_CONFIG[status] ?? PRODUCT_STATUS_CONFIG.draft;
   return (
     <Badge variant="outline" className={`text-xs ${config.className}`}>
       {config.label}
@@ -971,7 +971,7 @@ export default function LinkMeCataloguePage() {
                             className="text-xs border-amber-500 text-amber-700 bg-amber-50"
                           >
                             <Users className="h-3 w-3 mr-1" />
-                            {product.enseigne_name ||
+                            {product.enseigne_name ??
                               product.assigned_client_name}
                           </Badge>
                         </div>
@@ -1090,7 +1090,7 @@ export default function LinkMeCataloguePage() {
                             className="text-xs border-amber-500 text-amber-700 bg-amber-50"
                           >
                             <Users className="h-3 w-3 mr-1" />
-                            {product.enseigne_name ||
+                            {product.enseigne_name ??
                               product.assigned_client_name}
                           </Badge>
                         </div>
