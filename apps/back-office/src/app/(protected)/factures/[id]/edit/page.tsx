@@ -285,7 +285,7 @@ export default function EditDraftPage({ params }: IPageProps) {
                     id: generateId(),
                     title: item.title ?? '',
                     description: item.description ?? '',
-                    quantity: item.quantity || '1',
+                    quantity: item.quantity ?? '1',
                     unit: item.unit || 'unit',
                     unitPrice: item.unit_price?.value || '0',
                     vatRate: item.vat_rate || '0.20',

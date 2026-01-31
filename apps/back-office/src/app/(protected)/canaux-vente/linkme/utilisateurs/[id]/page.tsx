@@ -442,7 +442,7 @@ export default function UserDetailPage() {
                     <Phone className="h-3.5 w-3.5" />
                     Téléphone
                   </p>
-                  <p className="font-medium">{user.phone || '-'}</p>
+                  <p className="font-medium">{user.phone ?? '-'}</p>
                 </div>
               </CardContent>
             </Card>

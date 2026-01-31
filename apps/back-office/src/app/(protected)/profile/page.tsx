@@ -442,7 +442,7 @@ export default function ProfilePage() {
                   />
                 ) : (
                   <p className="font-medium text-xs text-neutral-900">
-                    {profile?.phone || 'Non renseigné'}
+                    {profile?.phone ?? 'Non renseigné'}
                   </p>
                 )}
                 {isEditing && (
