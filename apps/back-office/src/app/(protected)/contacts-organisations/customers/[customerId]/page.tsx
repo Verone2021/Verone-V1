@@ -246,7 +246,7 @@ export default function CustomerDetailPage() {
             id: 'samples',
             label: 'Échantillons',
             icon: <FlaskConical className="h-4 w-4" />,
-            badge: counts.samples?.toString() || '0',
+            badge: counts.samples?.toString() ?? '0',
             disabled: !isModuleDeployed('sales_orders'),
             disabledBadge: getModulePhase('sales_orders'),
           },

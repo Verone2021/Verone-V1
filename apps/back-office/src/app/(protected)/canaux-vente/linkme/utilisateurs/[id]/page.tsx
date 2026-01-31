@@ -583,7 +583,7 @@ export default function UserDetailPage() {
                           Organisation liée
                         </p>
                         <p className="font-medium">
-                          {user.organisation_name || 'Organisation'}
+                          {user.organisation_name ?? 'Organisation'}
                         </p>
                       </div>
                     </div>

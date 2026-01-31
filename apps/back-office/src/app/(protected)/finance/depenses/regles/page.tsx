@@ -558,7 +558,7 @@ export default function ReglesPage() {
                             <div className="mt-1 flex items-center gap-2">
                               <Building2 size={14} className="text-slate-400" />
                               <span className="truncate text-sm text-slate-600">
-                                {rule.organisation_name || 'Non assigné'}
+                                {rule.organisation_name ?? 'Non assigné'}
                               </span>
                             </div>
                             <div className="mt-1 flex flex-wrap items-center gap-2">
