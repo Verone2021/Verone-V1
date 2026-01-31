@@ -81,7 +81,7 @@ export function CustomersTab() {
         .order('archived_at', { ascending: false });
 
       if (error) throw error;
-      setArchivedCustomers((data || []) as unknown as Organisation[]);
+      setArchivedCustomers((data ?? []) as unknown as Organisation[]);
     } catch (err) {
       console.error('Erreur chargement clients archivés:', err);
     } finally {

@@ -915,7 +915,7 @@ function AddAllocationDialog({
                       {ownersLoading ? 'Chargement...' : 'Aucun client trouve'}
                     </CommandEmpty>
                     <CommandGroup>
-                      {(owners || []).map(owner => (
+                      {(owners ?? []).map(owner => (
                         <CommandItem
                           key={`${owner.type}-${owner.id}`}
                           value={`${owner.type}-${owner.id}`}

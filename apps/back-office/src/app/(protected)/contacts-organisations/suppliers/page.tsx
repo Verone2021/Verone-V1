@@ -133,7 +133,7 @@ export default function SuppliersPage() {
       if (error) throw error;
 
       // Comptage des produits pour chaque fournisseur (même approche que useOrganisations)
-      let organisationsWithCounts = data || [];
+      let organisationsWithCounts = data ?? [];
 
       if ((data ?? []).length > 0) {
         const supplierIds = data.map(s => s.id);

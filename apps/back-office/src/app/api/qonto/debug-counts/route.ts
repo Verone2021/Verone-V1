@@ -137,7 +137,7 @@ export async function GET() {
       debits: dbDebits ?? 0,
       credits: dbCredits ?? 0,
       expenses_created: expensesCreated ?? 0,
-      expenses_by_status: expensesByStatus || [],
+      expenses_by_status: expensesByStatus ?? [],
       byYear: dbByYear,
     };
 

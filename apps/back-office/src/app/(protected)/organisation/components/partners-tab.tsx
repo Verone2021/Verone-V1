@@ -53,7 +53,7 @@ export function PartnersTab() {
         .order('archived_at', { ascending: false });
 
       if (error) throw error;
-      setArchivedPartners((data || []) as any[]);
+      setArchivedPartners((data ?? []) as any[]);
     } catch (err) {
       console.error('Erreur chargement partenaires archivés:', err);
     } finally {

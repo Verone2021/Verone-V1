@@ -1145,7 +1145,7 @@ function TransactionsPageV2() {
 
       if (fetchError) throw fetchError;
 
-      const eligibleIds = txs?.map(t => t.id) || [];
+      const eligibleIds = txs?.map(t => t.id) ?? [];
 
       if (eligibleIds.length === 0) {
         toast.info('Aucune transaction à catégoriser');
@@ -2090,7 +2090,7 @@ function TransactionsPageV2() {
                       {(() => {
                         // Source de vérité UNIQUE : attachment_ids
                         const attachmentIds =
-                          selectedTransaction.attachment_ids || [];
+                          selectedTransaction.attachment_ids ?? [];
                         const attachments = attachmentIds.map((id, idx) => ({
                           id,
                           file_name: `Pièce jointe ${idx + 1}`,

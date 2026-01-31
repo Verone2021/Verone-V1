@@ -197,7 +197,7 @@ export function ImagesSection({
                 accept="image/*"
                 className="hidden"
                 onChange={e => {
-                  const files = Array.from(e.target.files || []);
+                  const files = Array.from(e.target.files ?? []);
                   if (files.length > 0) {
                     handleFileSelect(files);
                   }

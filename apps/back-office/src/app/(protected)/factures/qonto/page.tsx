@@ -161,7 +161,7 @@ export default function QontoDocumentsPage(): React.ReactNode {
         throw new Error(data.error ?? 'Erreur chargement factures');
       }
 
-      setInvoices(data.invoices || []);
+      setInvoices(data.invoices ?? []);
     } catch (err) {
       setErrorInvoices(err instanceof Error ? err.message : 'Erreur inconnue');
     } finally {
@@ -181,7 +181,7 @@ export default function QontoDocumentsPage(): React.ReactNode {
         throw new Error(data.error ?? 'Erreur chargement devis');
       }
 
-      setQuotes(data.quotes || []);
+      setQuotes(data.quotes ?? []);
     } catch (err) {
       setErrorQuotes(err instanceof Error ? err.message : 'Erreur inconnue');
     } finally {
@@ -201,7 +201,7 @@ export default function QontoDocumentsPage(): React.ReactNode {
         throw new Error(data.error ?? 'Erreur chargement avoirs');
       }
 
-      setCreditNotes(data.credit_notes || []);
+      setCreditNotes(data.credit_notes ?? []);
     } catch (err) {
       setErrorCreditNotes(
         err instanceof Error ? err.message : 'Erreur inconnue'

@@ -38,7 +38,7 @@ export default function TestPurchaseOrderPage() {
       log(`❌ Erreur: ${error.message}`);
     } else {
       log(`✅ ${data?.length ?? 0} fournisseurs chargés`);
-      setSuppliers(data || []);
+      setSuppliers(data ?? []);
     }
   };
 
@@ -62,7 +62,7 @@ export default function TestPurchaseOrderPage() {
       log(`❌ Erreur produits: ${error.message}`);
     } else {
       log(`✅ ${data?.length ?? 0} produits chargés`);
-      setProducts(data || []);
+      setProducts(data ?? []);
     }
   };
 

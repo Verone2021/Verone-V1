@@ -147,7 +147,7 @@ export default function EnseignesPage() {
       if (error) throw error;
 
       // Transformer les données pour avoir member_count
-      const transformedData = (data || []).map(e => ({
+      const transformedData = (data ?? []).map(e => ({
         ...e,
         member_count: e.enseigne_organisations?.length ?? 0,
       }));
@@ -1006,7 +1006,7 @@ export default function EnseignesPage() {
           if (!open) setAssignOrgsEnseigne(null);
         }}
         enseigne={assignOrgsEnseigne}
-        currentOrganisations={enseigneWithOrgs?.organisations || []}
+        currentOrganisations={enseigneWithOrgs?.organisations ?? []}
         onAssign={async (organisationId, isParent) => {
           if (!assignOrgsEnseigne) return false;
           return await linkOrganisationToEnseigne(

@@ -93,7 +93,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
     return NextResponse.json(
       {
-        recent_actions: recentActions || [],
+        recent_actions: recentActions ?? [],
         statistics: stats?.[0] || {
           total_sessions: 0,
           total_actions: 0,
@@ -102,7 +102,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
           engagement_score: 0,
           last_activity: null,
         },
-        active_sessions: activeSessions || [],
+        active_sessions: activeSessions ?? [],
       },
       { status: 200 }
     );

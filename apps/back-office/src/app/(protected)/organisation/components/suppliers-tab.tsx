@@ -61,7 +61,7 @@ export function SuppliersTab() {
 
       if (error) throw error;
 
-      const organisationsWithCounts = (data || []).map((org: any) => {
+      const organisationsWithCounts = (data ?? []).map((org: any) => {
         const { products, ...rest } = org;
         return {
           ...rest,
