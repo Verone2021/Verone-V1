@@ -637,8 +637,8 @@ export function CreateLinkMeOrderModal({
                             {affiliate.display_name}
                           </p>
                           <p className="text-xs text-gray-500">
-                            {affiliate.enseigne_name ||
-                              affiliate.organisation_name ||
+                            {affiliate.enseigne_name ??
+                              affiliate.organisation_name ??
                               'Affilié LinkMe'}{' '}
                             • {affiliate.selections_count} sélection
                             {affiliate.selections_count > 1 ? 's' : ''}
@@ -980,8 +980,8 @@ export function CreateLinkMeOrderModal({
                             {individual.full_name}
                           </p>
                           <p className="text-xs text-gray-500 truncate">
-                            {individual.email ||
-                              individual.city ||
+                            {individual.email ??
+                              individual.city ??
                               "Pas d'email"}
                           </p>
                         </div>
