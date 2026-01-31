@@ -283,7 +283,7 @@ export default function LinkMePricingConfigPage() {
 
       // Calcul marge: (vente - achat) / achat
       const costPrice = p.product_price_ht ?? 0;
-      const sellingPrice = p.product_selling_price_ht || p.public_price_ht ?? 0;
+      const sellingPrice = (p.product_selling_price_ht ?? p.public_price_ht) ?? 0;
       if (costPrice > 0 && sellingPrice > 0) {
         totalMargin += (sellingPrice - costPrice) / costPrice;
         marginCount++;
