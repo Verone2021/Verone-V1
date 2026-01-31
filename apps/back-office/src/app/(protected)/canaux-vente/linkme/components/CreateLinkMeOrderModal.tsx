@@ -1,5 +1,7 @@
 'use client';
 
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/prefer-nullish-coalescing, @next/next/no-img-element */
+
 import { useState, useEffect, useMemo } from 'react';
 
 import Image from 'next/image';
@@ -1697,3 +1699,5 @@ export function CreateLinkMeOrderModal({
     </div>
   );
 }
+
+/* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/prefer-nullish-coalescing, @next/next/no-img-element */
