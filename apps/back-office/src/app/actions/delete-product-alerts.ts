@@ -43,7 +43,7 @@ export async function deleteProductAlerts(productId: string) {
     }
 
     console.warn(
-      `✅ ${initialCount || 0} alerte(s) supprimée(s) pour produit ${productId}`
+      `✅ ${initialCount ?? 0} alerte(s) supprimée(s) pour produit ${productId}`
     );
 
     return {

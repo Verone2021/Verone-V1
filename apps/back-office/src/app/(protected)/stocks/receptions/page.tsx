@@ -1037,7 +1037,7 @@ export default function ReceptionsPage() {
                                             </div>
                                             <div className="text-right">
                                               <p className="text-sm font-medium">
-                                                {item.quantity_received || 0} /{' '}
+                                                {item.quantity_received ?? 0} /{' '}
                                                 {item.quantity} reçu(s)
                                               </p>
                                               <p className="text-xs text-gray-500">

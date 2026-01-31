@@ -327,7 +327,7 @@ export default function FamilyDetailPage() {
                   imageUrl={category.image_url ?? undefined}
                   entityType="category"
                   slug={category.slug}
-                  count={category.subcategory_count || 0}
+                  count={category.subcategory_count ?? 0}
                   countLabel="sous-catégorie"
                   isActive={category.is_active ?? undefined}
                   iconPosition="top-right"

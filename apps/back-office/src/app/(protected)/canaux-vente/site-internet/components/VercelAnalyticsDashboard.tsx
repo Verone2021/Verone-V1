@@ -197,14 +197,14 @@ export function VercelAnalyticsDashboard() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <KPICard
           title="Produits Publiés"
-          value={productsStats?.published || 0}
+          value={productsStats?.published ?? 0}
           subtitle={`sur ${productsStats?.total ?? 0} total`}
           icon={Package}
           color="blue"
         />
         <KPICard
           title="Produits Éligibles"
-          value={productsStats?.eligible || 0}
+          value={productsStats?.eligible ?? 0}
           subtitle={`${productsStats?.publishedPercentage.toFixed(0)}% publiés`}
           icon={CheckCircle}
           color="green"
@@ -244,19 +244,19 @@ export function VercelAnalyticsDashboard() {
           <div className="grid gap-4 md:grid-cols-5">
             <WebVitalBadge
               label="LCP"
-              value={analytics?.lcp || 0}
+              value={analytics?.lcp ?? 0}
               unit="s"
               metric="lcp"
             />
             <WebVitalBadge
               label="FID"
-              value={analytics?.fid || 0}
+              value={analytics?.fid ?? 0}
               unit="ms"
               metric="fid"
             />
             <WebVitalBadge
               label="CLS"
-              value={analytics?.cls || 0}
+              value={analytics?.cls ?? 0}
               unit=""
               metric="cls"
             />
@@ -264,7 +264,7 @@ export function VercelAnalyticsDashboard() {
               <p className="text-xs text-muted-foreground uppercase">TTFB</p>
               <div className="flex items-baseline gap-1">
                 <span className="text-2xl font-bold">
-                  {analytics?.ttfb || 0}
+                  {analytics?.ttfb ?? 0}
                 </span>
                 <span className="text-sm text-muted-foreground">ms</span>
               </div>
@@ -274,7 +274,7 @@ export function VercelAnalyticsDashboard() {
               <p className="text-xs text-muted-foreground uppercase">FCP</p>
               <div className="flex items-baseline gap-1">
                 <span className="text-2xl font-bold">
-                  {analytics?.fcp || 0}
+                  {analytics?.fcp ?? 0}
                 </span>
                 <span className="text-sm text-muted-foreground">s</span>
               </div>
@@ -490,7 +490,7 @@ export function VercelAnalyticsDashboard() {
                   Produits avec Variantes
                 </p>
                 <p className="text-3xl font-bold mt-2">
-                  {productsStats?.withVariants || 0}
+                  {productsStats?.withVariants ?? 0}
                 </p>
               </div>
               <Package className="h-8 w-8 text-muted-foreground" />

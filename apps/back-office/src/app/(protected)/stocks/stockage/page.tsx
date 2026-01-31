@@ -173,21 +173,21 @@ export default function StockagePage() {
         <KPICard
           icon={Package}
           label="Unites stockees"
-          value={`${totals?.total_units || 0}`}
+          value={`${totals?.total_units ?? 0}`}
           color="purple"
           isLoading={totalsLoading}
         />
         <KPICard
           icon={Users}
           label="Owners actifs"
-          value={`${totals?.active_owners || 0}`}
+          value={`${totals?.active_owners ?? 0}`}
           color="orange"
           isLoading={totalsLoading}
         />
         <KPICard
           icon={Building2}
           label="Produits"
-          value={`${totals?.products_count || 0}`}
+          value={`${totals?.products_count ?? 0}`}
           color="gray"
           isLoading={totalsLoading}
         />

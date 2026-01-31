@@ -554,7 +554,7 @@ export default function CollectionDetailPage({
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {collection.product_count || 0}
+              {collection.product_count ?? 0}
             </div>
           </CardContent>
         </Card>
@@ -566,7 +566,7 @@ export default function CollectionDetailPage({
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {collection.shared_count || 0}
+              {collection.shared_count ?? 0}
             </div>
           </CardContent>
         </Card>
@@ -1168,7 +1168,7 @@ export default function CollectionDetailPage({
                 Nombre de partages
               </div>
               <div className="text-2xl font-bold text-black mt-1">
-                {collection.shared_count || 0}
+                {collection.shared_count ?? 0}
               </div>
             </div>
           </div>
@@ -1244,7 +1244,7 @@ export default function CollectionDetailPage({
               <CollectionProductCard
                 key={product.id}
                 product={product}
-                position={(product as any).position || 0}
+                position={(product as any).position ?? 0}
                 onRemove={() => {
                   void handleRemoveProduct(product.id, product.name).catch(
                     error => {

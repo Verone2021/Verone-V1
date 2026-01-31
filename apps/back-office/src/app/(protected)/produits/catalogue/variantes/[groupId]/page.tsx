@@ -612,7 +612,7 @@ export default function VariantGroupDetailPage({
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {variantGroup.product_count || 0}
+              {variantGroup.product_count ?? 0}
             </div>
           </CardContent>
         </Card>

@@ -265,7 +265,7 @@ export default function SubcategoryDetailPage() {
                 <Grid3X3 className="w-8 h-8 text-black" />
                 <div>
                   <p className="text-lg font-bold text-black">
-                    Ordre {subcategory.display_order || 0}
+                    Ordre {subcategory.display_order ?? 0}
                   </p>
                   <p className="text-gray-600">Position</p>
                 </div>

@@ -394,7 +394,7 @@ export default function CategoryDetailPage() {
                   imageUrl={subcategory.image_url ?? undefined}
                   entityType="subcategory"
                   slug={subcategory.slug}
-                  count={subcategory.products_count || 0}
+                  count={subcategory.products_count ?? 0}
                   countLabel="produit"
                   isActive={subcategory.is_active ?? undefined}
                   iconPosition="top-right"
