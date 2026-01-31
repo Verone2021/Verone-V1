@@ -99,7 +99,7 @@ export default function DemoStockUIPage() {
             />
 
             <div className="text-sm text-gray-600">
-              Canal sélectionné: {selectedChannel || 'Tous les canaux'}
+              Canal sélectionné: {selectedChannel ?? 'Tous les canaux'}
             </div>
           </div>
         </div>

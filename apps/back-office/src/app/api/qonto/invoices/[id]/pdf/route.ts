@@ -102,7 +102,7 @@ export async function GET(
     const client = getQontoClient();
 
     // Utiliser qonto_invoice_id si disponible, sinon utiliser l'ID passé en paramètre
-    const qontoId = qontoInvoiceId || id;
+    const qontoId = qontoInvoiceId ?? id;
 
     // Récupérer la facture pour obtenir le pdf_url
     const invoice = await client.getClientInvoiceById(qontoId);

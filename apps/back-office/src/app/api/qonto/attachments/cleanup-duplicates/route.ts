@@ -57,7 +57,7 @@ export async function POST(_request: NextRequest): Promise<NextResponse> {
 
     const attachmentBlob = await attachmentResponse.blob();
     const contentType =
-      attachmentResponse.headers.get('content-type') || 'application/pdf';
+      attachmentResponse.headers.get('content-type') ?? 'application/pdf';
     const fileName = 'facture-free-mobile.pdf';
 
     console.warn(

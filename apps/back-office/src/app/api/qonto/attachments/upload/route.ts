@@ -144,7 +144,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // 7. Mettre à jour UNIQUEMENT attachment_ids (source de vérité unique)
     // Note: has_attachment est une colonne GENERATED qui se recalcule automatiquement
     const txDataWithIds = txData as { attachment_ids?: string[] };
-    const existingIds = txDataWithIds.attachment_ids || [];
+    const existingIds = txDataWithIds.attachment_ids ?? [];
 
     await supabase
       .from('bank_transactions')

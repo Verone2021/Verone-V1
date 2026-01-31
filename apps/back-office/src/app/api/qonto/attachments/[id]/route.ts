@@ -70,7 +70,7 @@ export async function GET(
 
     const blob = await fileResponse.blob();
     const contentType =
-      fileResponse.headers.get('Content-Type') || 'application/pdf';
+      fileResponse.headers.get('Content-Type') ?? 'application/pdf';
 
     // Retourner le fichier avec les bons headers
     return new NextResponse(blob, {
