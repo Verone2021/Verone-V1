@@ -160,8 +160,8 @@ export function getDateRangeForYearAndPeriod(
   const filters: AnalyticsFilters = { year, months: [] };
   const range = getDateRangeForFilters(filters);
   return {
-    startDate: range.startDate || new Date(2024, 0, 1),
-    endDate: range.endDate || new Date(),
+    startDate: range.startDate ?? new Date(2024, 0, 1),
+    endDate: range.endDate ?? new Date(),
   };
 }
 
