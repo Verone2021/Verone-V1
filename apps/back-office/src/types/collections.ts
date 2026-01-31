@@ -614,7 +614,7 @@ export function formatCollectionProduct(
     creation_mode: rawProduct.creation_mode,
     cost_price: rawProduct.cost_price,
     position: rawProduct.position ?? 0,
-    added_at: rawProduct.added_at || new Date().toISOString(),
+    added_at: rawProduct.added_at ?? new Date().toISOString(),
     product_images: productImages.map(img => ({
       id: img.id,
       public_url: img.public_url,

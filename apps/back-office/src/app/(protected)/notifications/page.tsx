@@ -48,7 +48,7 @@ function groupNotificationsByDate(notifications: DatabaseNotification[]) {
   };
 
   notifications.forEach(notif => {
-    const date = new Date(notif.created_at || new Date());
+    const date = new Date(notif.created_at ?? new Date());
 
     if (isToday(date)) {
       groups.today.push(notif);
@@ -137,7 +137,7 @@ const NotificationCard = ({
   onDelete,
 }: NotificationCardProps) => {
   const timeAgo = formatDistanceToNow(
-    new Date(notification.created_at || new Date()),
+    new Date(notification.created_at ?? new Date()),
     {
       addSuffix: true,
       locale: fr,
