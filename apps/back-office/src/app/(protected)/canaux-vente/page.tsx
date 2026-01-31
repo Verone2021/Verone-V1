@@ -41,10 +41,10 @@ export default function CanauxVentePage() {
   // Calculate total stats from REAL data
   const stats = {
     totalRevenue:
-      (linkmeData?.revenue.current || 0) + (googleData?.total_revenue_ht || 0),
+      (linkmeData?.revenue.current ?? 0) + (googleData?.total_revenue_ht ?? 0),
     totalOrders:
-      (linkmeData?.orders.current || 0) + (googleData?.total_conversions || 0),
-    totalProducts: googleData?.total_products || 0, // Total products from Google Merchant
+      (linkmeData?.orders.current ?? 0) + (googleData?.total_conversions ?? 0),
+    totalProducts: googleData?.total_products ?? 0, // Total products from Google Merchant
     activeChannels: 2, // LinkMe + Google Merchant
   };
 
@@ -169,12 +169,12 @@ export default function CanauxVentePage() {
                 gradient="bg-blue-500"
                 manageHref="/canaux-vente/linkme"
                 metrics={{
-                  revenue: linkmeData?.revenue.current || 0,
+                  revenue: linkmeData?.revenue.current ?? 0,
                   revenueGrowth: linkmeData?.revenue.growth,
-                  orders: linkmeData?.orders.current || 0,
+                  orders: linkmeData?.orders.current ?? 0,
                   ordersGrowth: linkmeData?.orders.growth,
-                  commissions: linkmeData?.pendingCommissions.amount || 0,
-                  products: linkmeData?.affiliates.active || 0, // Show active affiliates as "products"
+                  commissions: linkmeData?.pendingCommissions.amount ?? 0,
+                  products: linkmeData?.affiliates.active ?? 0, // Show active affiliates as "products"
                 }}
               />
 
@@ -187,9 +187,9 @@ export default function CanauxVentePage() {
                 gradient="bg-green-500"
                 manageHref="/canaux-vente/google-merchant"
                 metrics={{
-                  revenue: googleData?.total_revenue_ht || 0,
-                  orders: googleData?.total_conversions || 0,
-                  products: googleData?.total_products || 0,
+                  revenue: googleData?.total_revenue_ht ?? 0,
+                  orders: googleData?.total_conversions ?? 0,
+                  products: googleData?.total_products ?? 0,
                 }}
               />
 

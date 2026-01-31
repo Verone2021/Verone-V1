@@ -99,7 +99,7 @@ function calculateMonthlyAverage(
       monthlyData[monthKey] = { revenue: 0, count: 0 };
     }
 
-    monthlyData[monthKey].revenue += Number(order.total_ht || 0);
+    monthlyData[monthKey].revenue += Number(order.total_ht ?? 0);
     monthlyData[monthKey].count += 1;
   });
 
@@ -137,14 +137,15 @@ export function useLinkMeDashboard() {
       // KPI 1 & 4: CA + Orders count
       // Récupère TOUTES les commandes pour calculer la moyenne mensuelle
       // ========================================
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */
       const { data: allOrders } = await (supabase as any)
         .from('linkme_orders_with_margins')
         .select('id, total_ht, total_affiliate_margin, created_at')
         .order('created_at', { ascending: true });
+      /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */
 
       // Filtrer les commandes du mois courant
-      const ordersCurrentMonth = (allOrders || []).filter(
+      const ordersCurrentMonth = (allOrders ?? []).filter(
         (o: { created_at: string }) => {
           const orderDate = new Date(o.created_at);
           return (
@@ -156,46 +157,48 @@ export function useLinkMeDashboard() {
 
       // Calculer le CA et le nombre de commandes du mois courant
       const currentRevenue = ordersCurrentMonth.reduce(
-        (sum: number, o: { total_ht: number }) => sum + Number(o.total_ht || 0),
+        (sum: number, o: { total_ht: number }) => sum + Number(o.total_ht ?? 0),
         0
       );
       const currentOrdersCount = ordersCurrentMonth.length;
 
       // Calculer la moyenne mensuelle (tous les mois précédents)
       const { avgRevenue, avgCount } = calculateMonthlyAverage(
-        allOrders || [],
+        allOrders ?? [],
         currentMonthStart
       );
 
       // ========================================
       // KPI 2: Commissions en attente (pending + invoice_received)
       // ========================================
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */
       const { data: pendingRequests } = await (supabase as any)
         .from('linkme_payment_requests')
         .select('id, total_amount_ttc, status')
         .in('status', ['pending', 'invoice_received']);
+      /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */
 
-      const pendingAmount = (pendingRequests || []).reduce(
+      const pendingAmount = (pendingRequests ?? []).reduce(
         (sum: number, r: { total_amount_ttc: number }) =>
-          sum + Number(r.total_amount_ttc || 0),
+          sum + Number(r.total_amount_ttc ?? 0),
         0
       );
-      const pendingCount = (pendingRequests || []).length;
+      const pendingCount = (pendingRequests ?? []).length;
 
       // ========================================
       // KPI 3: Affiliés actifs + nouveaux ce mois
       // ========================================
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */
       const { data: affiliates } = await (supabase as any)
         .from('linkme_affiliates')
         .select('id, status, created_at');
+      /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */
 
-      const activeAffiliates = (affiliates || []).filter(
+      const activeAffiliates = (affiliates ?? []).filter(
         (a: { status: string }) => a.status === 'active'
       ).length;
 
-      const newAffiliatesThisMonth = (affiliates || []).filter(
+      const newAffiliatesThisMonth = (affiliates ?? []).filter(
         (a: { created_at: string }) => {
           const createdAt = new Date(a.created_at);
           return (
@@ -245,7 +248,7 @@ export function useRecentActivity(limit: number = 5) {
       const activities: RecentActivity[] = [];
 
       // Récupérer les dernières commissions
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */
       const { data: recentCommissions } = await (supabase as any)
         .from('linkme_commissions')
         .select(
@@ -259,8 +262,9 @@ export function useRecentActivity(limit: number = 5) {
         )
         .order('created_at', { ascending: false })
         .limit(limit);
+      /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */
 
-      (recentCommissions || []).forEach(
+      (recentCommissions ?? []).forEach(
         (c: {
           id: string;
           order_number: string;
@@ -272,7 +276,7 @@ export function useRecentActivity(limit: number = 5) {
             id: `order-${c.id}`,
             type: 'order',
             title: `Commande #${c.order_number}`,
-            description: c.linkme_affiliates?.display_name || 'Affilié',
+            description: c.linkme_affiliates?.display_name ?? 'Affilié',
             timestamp: c.created_at,
             amount: c.order_amount_ht,
           });
@@ -280,14 +284,15 @@ export function useRecentActivity(limit: number = 5) {
       );
 
       // Récupérer les derniers affiliés
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */
       const { data: recentAffiliates } = await (supabase as any)
         .from('linkme_affiliates')
         .select('id, display_name, status, created_at')
         .order('created_at', { ascending: false })
         .limit(limit);
+      /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */
 
-      (recentAffiliates || []).forEach(
+      (recentAffiliates ?? []).forEach(
         (a: {
           id: string;
           display_name: string;
@@ -308,7 +313,7 @@ export function useRecentActivity(limit: number = 5) {
       );
 
       // Récupérer les dernières demandes de paiement
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */
       const { data: recentPayments } = await (supabase as any)
         .from('linkme_payment_requests')
         .select(
@@ -323,8 +328,9 @@ export function useRecentActivity(limit: number = 5) {
         )
         .order('created_at', { ascending: false })
         .limit(limit);
+      /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */
 
-      (recentPayments || []).forEach(
+      (recentPayments ?? []).forEach(
         (p: {
           id: string;
           request_number: string;
@@ -345,7 +351,7 @@ export function useRecentActivity(limit: number = 5) {
           activities.push({
             id: `payment-${p.id}`,
             type: 'payment',
-            title: `${p.linkme_affiliates?.display_name || 'Affilié'}`,
+            title: `${p.linkme_affiliates?.display_name ?? 'Affilié'}`,
             description: statusLabel,
             timestamp: p.created_at,
             amount: p.total_amount_ttc,

@@ -205,17 +205,17 @@ export async function POST(
     }
 
     // 6. Filtrer les lignes produits (exclure frais de service)
-    const productItems = (invoiceItems || []).filter(
+    const productItems = (invoiceItems ?? []).filter(
       item => item.product_id !== null
     );
 
     // Calculer totaux produits uniquement (hors frais)
     const productTotalHt = productItems.reduce(
-      (sum, item) => sum + (item.total_ht || 0),
+      (sum, item) => sum + (item.total_ht ?? 0),
       0
     );
     const productTotalVat = productItems.reduce(
-      (sum, item) => sum + (item.tva_amount || 0),
+      (sum, item) => sum + (item.tva_amount ?? 0),
       0
     );
 
@@ -225,35 +225,36 @@ export async function POST(
     const orderUpdateData: Record<string, any> = {
       billing_address: typedInvoice.billing_address,
       shipping_address: typedInvoice.shipping_address,
-      shipping_cost_ht: typedInvoice.shipping_cost_ht || 0,
-      handling_cost_ht: typedInvoice.handling_cost_ht || 0,
-      insurance_cost_ht: typedInvoice.insurance_cost_ht || 0,
-      fees_vat_rate: typedInvoice.fees_vat_rate || 0.2,
+      shipping_cost_ht: typedInvoice.shipping_cost_ht ?? 0,
+      handling_cost_ht: typedInvoice.handling_cost_ht ?? 0,
+      insurance_cost_ht: typedInvoice.insurance_cost_ht ?? 0,
+      fees_vat_rate: typedInvoice.fees_vat_rate ?? 0.2,
       billing_contact_id: typedInvoice.billing_contact_id,
       delivery_contact_id: typedInvoice.delivery_contact_id,
       responsable_contact_id: typedInvoice.responsable_contact_id,
       // Recalculer les totaux de la commande
       total_ht:
         productTotalHt +
-        (typedInvoice.shipping_cost_ht || 0) +
-        (typedInvoice.handling_cost_ht || 0) +
-        (typedInvoice.insurance_cost_ht || 0),
+        (typedInvoice.shipping_cost_ht ?? 0) +
+        (typedInvoice.handling_cost_ht ?? 0) +
+        (typedInvoice.insurance_cost_ht ?? 0),
       total_ttc: typedInvoice.total_ttc,
       total_vat:
         productTotalVat +
-        ((typedInvoice.shipping_cost_ht || 0) +
-          (typedInvoice.handling_cost_ht || 0) +
-          (typedInvoice.insurance_cost_ht || 0)) *
-          (typedInvoice.fees_vat_rate || 0.2),
+        ((typedInvoice.shipping_cost_ht ?? 0) +
+          (typedInvoice.handling_cost_ht ?? 0) +
+          (typedInvoice.insurance_cost_ht ?? 0)) *
+          (typedInvoice.fees_vat_rate ?? 0.2),
       notes: typedInvoice.notes,
       updated_at: new Date().toISOString(),
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
     const { error: updateOrderError } = await (supabase as any)
       .from('sales_orders')
       .update(orderUpdateData)
       .eq('id', typedInvoice.sales_order_id);
+    /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
 
     if (updateOrderError) {
       console.error('[Sync-to-order] Order update error:', updateOrderError);
@@ -301,10 +302,11 @@ export async function POST(
           sort_order: index,
         }));
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
       const { error: insertItemsError } = await (supabase as any)
         .from('sales_order_items')
         .insert(newOrderItems);
+      /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
 
       if (insertItemsError) {
         console.error('[Sync-to-order] Insert items error:', insertItemsError);

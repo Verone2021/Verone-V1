@@ -27,9 +27,17 @@ type ClientsCache = Partial<
   Record<AppName, ReturnType<typeof createBrowserClient<Database>>>
 >;
 
+// Type pour globalThis avec notre cache
+interface GlobalWithCache {
+  [key: string]: ClientsCache | undefined;
+}
+
 // Initialiser le cache global s'il n'existe pas
-if (typeof globalThis !== 'undefined' && !(globalThis as any)[globalKey]) {
-  (globalThis as any)[globalKey] = {};
+if (
+  typeof globalThis !== 'undefined' &&
+  !(globalThis as unknown as GlobalWithCache)[globalKey]
+) {
+  (globalThis as unknown as GlobalWithCache)[globalKey] = {};
 }
 
 // ✅ FIX: Mock SSR unique (même instance à chaque appel)
@@ -49,7 +57,16 @@ const ssrMockClient: any = {
   },
   from: () => ({
     select: () => ({
-      eq: () => ({ single: async () => ({ data: null, error: null }) }),
+      eq: () => ({
+        order: () => ({
+          single: async () => ({ data: null, error: null }),
+        }),
+        single: async () => ({ data: null, error: null }),
+      }),
+      order: () => ({
+        single: async () => ({ data: null, error: null }),
+      }),
+      single: async () => ({ data: null, error: null }),
     }),
   }),
   rpc: async () => ({ data: null, error: null }),
@@ -92,14 +109,15 @@ export const createClient = (
   // During Next.js static generation, window is not defined
   // Return the SAME mock client (not a new object) for SSR stability
   if (typeof window === 'undefined') {
-    return ssrMockClient;
+    return ssrMockClient as ReturnType<typeof createBrowserClient<Database>>;
   }
 
   // Auto-détection de l'app (pour debug/logging uniquement)
   const resolvedAppName = appName ?? detectApp();
 
   // Utiliser le cache global pour résister au HMR
-  const clients: ClientsCache = (globalThis as any)[globalKey] || {};
+  const clients: ClientsCache =
+    (globalThis as unknown as GlobalWithCache)[globalKey] ?? {};
 
   if (!clients[resolvedAppName]) {
     // Toutes les apps utilisent le cookie par défaut: sb-{PROJECT_ID}-auth-token
@@ -110,7 +128,7 @@ export const createClient = (
     );
 
     // Persister dans le cache global
-    (globalThis as any)[globalKey] = clients;
+    (globalThis as unknown as GlobalWithCache)[globalKey] = clients;
   }
 
   return clients[resolvedAppName];

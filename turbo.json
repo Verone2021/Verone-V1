@@ -7,6 +7,14 @@
     "turbo.json"
   ],
   "globalPassThroughEnv": ["TURBO_TOKEN", "TURBO_TEAM", "VERCEL_URL"],
+  "globalEnv": [
+    "NEXT_PUBLIC_SUPABASE_URL",
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+    "DATABASE_URL",
+    "QONTO_AUTH_MODE",
+    "QONTO_ORGANIZATION_ID",
+    "QONTO_API_KEY"
+  ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
