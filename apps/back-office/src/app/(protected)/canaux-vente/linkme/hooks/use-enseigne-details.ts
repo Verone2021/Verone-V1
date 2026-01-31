@@ -124,11 +124,11 @@ export function useOrganisationWithEnseigne(organisationId: string | null) {
         logoUrl: data.logo_url,
         ownershipType: data.ownership_type,
         address: {
-          line1: data.shipping_address_line1 || data.billing_address_line1,
+          line1: data.shipping_address_line1 ?? data.billing_address_line1,
           line2: data.billing_address_line2,
-          postalCode: data.shipping_postal_code || data.billing_postal_code,
-          city: data.shipping_city || data.billing_city,
-          country: data.shipping_country || data.billing_country,
+          postalCode: data.shipping_postal_code ?? data.billing_postal_code,
+          city: data.shipping_city ?? data.billing_city,
+          country: data.shipping_country ?? data.billing_country,
         },
         enseigne: enseigneData
           ? {
