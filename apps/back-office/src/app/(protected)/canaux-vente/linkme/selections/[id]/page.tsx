@@ -98,8 +98,8 @@ export default function SelectionDetailPage({
   const { data: catalogProducts } = useLinkMeCatalogProducts();
   // Récupérer enseigne_id: d'abord directement, sinon via l'organisation de l'affilié
   const enseigneId =
-    selection?.affiliate?.enseigne_id ||
-    selection?.affiliate?.organisation?.enseigne_id ||
+    selection?.affiliate?.enseigne_id ??
+    selection?.affiliate?.organisation?.enseigne_id ??
     null;
   const { data: sourcedProducts } = useEnseigneSourcedProducts(enseigneId);
   const updateSelection = useUpdateSelection();
@@ -151,7 +151,7 @@ export default function SelectionDetailPage({
         name: selection.name ?? '',
         description: selection.description ?? '',
         archived_at: selection.archived_at ?? null,
-        price_display_mode: selection.price_display_mode || 'TTC',
+        price_display_mode: selection.price_display_mode ?? 'TTC',
       });
     }
   }, [selection]);
@@ -168,12 +168,12 @@ export default function SelectionDetailPage({
 
   // Produits filtrés (catalogue sans les produits déjà dans la sélection)
   const existingProductIds = new Set(
-    selection?.items?.map(i => i.product_id) || []
+    selection?.items?.map(i => i.product_id) ?? []
   );
   const availableCatalogProducts =
     catalogProducts?.filter(
       (p: CatalogProduct) => !existingProductIds.has(p.product_id)
-    ) || [];
+    ) ?? [];
 
   const filteredCatalogProducts = availableCatalogProducts.filter(
     (p: CatalogProduct) =>
@@ -185,18 +185,17 @@ export default function SelectionDetailPage({
   const availableSourcedProducts =
     sourcedProducts?.filter(
       (p: SourcedProduct) => !existingProductIds.has(p.id)
-    ) || [];
+    ) ?? [];
 
   const filteredSourcedProducts = availableSourcedProducts.filter(
     (p: SourcedProduct) =>
       p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (p.sku && p.sku.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (p.supplier_reference &&
-        p.supplier_reference.toLowerCase().includes(searchQuery.toLowerCase()))
+      p.sku?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.supplier_reference?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   // Nombre de produits sourcés disponibles (pour afficher/masquer l'onglet)
-  const hasSourcedProducts = (sourcedProducts?.length || 0) > 0;
+  const hasSourcedProducts = (sourcedProducts?.length ?? 0) > 0;
 
   // Ajouter un produit (catalogue ou sourcé)
   const handleAddProduct = async () => {
@@ -357,7 +356,7 @@ export default function SelectionDetailPage({
           <div>
             <h1 className="text-2xl font-bold">{selection.name}</h1>
             <p className="text-muted-foreground">
-              Par {selection.affiliate?.display_name || 'Affilié inconnu'}
+              Par {selection.affiliate?.display_name ?? 'Affilié inconnu'}
             </p>
           </div>
         </div>
@@ -474,7 +473,7 @@ export default function SelectionDetailPage({
               <Package className="h-5 w-5 text-primary" />
               <div>
                 <p className="text-2xl font-bold">
-                  {selection.products_count || 0}
+                  {selection.products_count ?? 0}
                 </p>
                 <p className="text-sm text-muted-foreground">Produits</p>
               </div>
@@ -483,7 +482,7 @@ export default function SelectionDetailPage({
               <Eye className="h-5 w-5 text-blue-500" />
               <div>
                 <p className="text-2xl font-bold">
-                  {selection.views_count || 0}
+                  {selection.views_count ?? 0}
                 </p>
                 <p className="text-sm text-muted-foreground">Vues</p>
               </div>
@@ -492,7 +491,7 @@ export default function SelectionDetailPage({
               <ShoppingCart className="h-5 w-5 text-green-500" />
               <div>
                 <p className="text-2xl font-bold">
-                  {selection.orders_count || 0}
+                  {selection.orders_count ?? 0}
                 </p>
                 <p className="text-sm text-muted-foreground">Commandes</p>
               </div>
@@ -623,7 +622,7 @@ export default function SelectionDetailPage({
 
                     // Prix Catalogue HT = prix du catalogue LinkMe (référence)
                     const catalogPriceHT =
-                      item.catalog_price_ht || item.base_price_ht;
+                      item.catalog_price_ht ?? item.base_price_ht;
                     // Prix de vente LinkMe HT = prix de base de la sélection
                     const selectionPriceHT = item.base_price_ht;
 
@@ -681,7 +680,7 @@ export default function SelectionDetailPage({
                         <TableCell>
                           <ProductThumbnail
                             src={item.product_image_url}
-                            alt={item.product?.name || 'Produit'}
+                            alt={item.product?.name ?? 'Produit'}
                             size="sm"
                           />
                         </TableCell>
@@ -950,7 +949,7 @@ export default function SelectionDetailPage({
                         }`}
                         onClick={() => {
                           setSelectedProductId(product.product_id);
-                          setNewMarginRate(product.suggested_margin_rate || 10);
+                          setNewMarginRate(product.suggested_margin_rate ?? 10);
                         }}
                       >
                         <ProductThumbnail
@@ -1023,8 +1022,8 @@ export default function SelectionDetailPage({
                             </Badge>
                           </div>
                           <p className="text-sm text-muted-foreground">
-                            {product.sku ||
-                              product.supplier_reference ||
+                            {product.sku ??
+                              product.supplier_reference ??
                               'Sans référence'}{' '}
                             - {product.selling_price_ht.toFixed(2)} € HT
                           </p>
