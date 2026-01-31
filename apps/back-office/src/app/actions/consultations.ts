@@ -68,7 +68,7 @@ export async function createConsultation(
       image_url: consultationData.image_url,
       tarif_maximum: consultationData.tarif_maximum,
       priority_level: consultationData.priority_level || 2,
-      source_channel: consultationData.source_channel || 'website',
+      source_channel: consultationData.source_channel ?? 'website',
       estimated_response_date: consultationData.estimated_response_date,
       status: 'en_attente' as const,
       created_by: userId,

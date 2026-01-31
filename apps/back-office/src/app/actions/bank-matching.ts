@@ -494,7 +494,7 @@ export async function ignoreTransaction(
       .from('bank_transactions')
       .update({
         matching_status: 'ignored',
-        match_reason: reason || 'Ignoré manuellement',
+        match_reason: reason ?? 'Ignoré manuellement',
         updated_at: new Date().toISOString(),
       })
       .eq('id', bankTransactionId);
