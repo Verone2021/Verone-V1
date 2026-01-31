@@ -1227,7 +1227,7 @@ export default function CollectionDetailPage({
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold text-gray-900">
-            Produits de la collection ({collection.products?.length || 0})
+            Produits de la collection ({collection.products?.length ?? 0})
           </h2>
           <ButtonV2
             onClick={handleManageProducts}

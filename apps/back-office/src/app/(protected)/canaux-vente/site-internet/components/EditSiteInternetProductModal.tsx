@@ -539,14 +539,14 @@ export function EditSiteInternetProductModal({
                       <Label>Titre SEO custom (priorité 1)</Label>
                       <span
                         className={`text-sm ${
-                          (formData.custom_title?.length || 0) < 30
+                          (formData.custom_title?.length ?? 0) < 30
                             ? 'text-red-600'
-                            : (formData.custom_title?.length || 0) <= 60
+                            : (formData.custom_title?.length ?? 0) <= 60
                               ? 'text-green-600'
                               : 'text-gray-600'
                         }`}
                       >
-                        {formData.custom_title?.length || 0} / 60
+                        {formData.custom_title?.length ?? 0} / 60
                       </span>
                     </div>
                     <Input
@@ -573,14 +573,14 @@ export function EditSiteInternetProductModal({
                       <Label>Description SEO custom (priorité 1)</Label>
                       <span
                         className={`text-sm ${
-                          (formData.custom_description?.length || 0) < 80
+                          (formData.custom_description?.length ?? 0) < 80
                             ? 'text-red-600'
-                            : (formData.custom_description?.length || 0) <= 160
+                            : (formData.custom_description?.length ?? 0) <= 160
                               ? 'text-green-600'
                               : 'text-gray-600'
                         }`}
                       >
-                        {formData.custom_description?.length || 0} / 160
+                        {formData.custom_description?.length ?? 0} / 160
                       </span>
                     </div>
                     <Textarea
@@ -1061,7 +1061,7 @@ export function EditSiteInternetProductModal({
                       <div className="flex items-center justify-between">
                         <Label>Description complète</Label>
                         <span className="text-sm text-gray-500">
-                          {formData.custom_description_long?.length || 0} / 5000
+                          {formData.custom_description_long?.length ?? 0} / 5000
                         </span>
                       </div>
                       <Textarea
@@ -1093,7 +1093,7 @@ export function EditSiteInternetProductModal({
                       <div className="flex items-center justify-between">
                         <Label>Description technique</Label>
                         <span className="text-sm text-gray-500">
-                          {formData.custom_technical_description?.length || 0} /
+                          {formData.custom_technical_description?.length ?? 0} /
                           2000
                         </span>
                       </div>

@@ -681,7 +681,7 @@ export default function CategoriesPage() {
             Gestion des familles, catégories et sous-catégories
             {!isLoading && (
               <span className="ml-2 text-sm">
-                ({families?.length || 0} familles • Chargé en {loadTime}ms)
+                ({families?.length ?? 0} familles • Chargé en {loadTime}ms)
               </span>
             )}
           </p>

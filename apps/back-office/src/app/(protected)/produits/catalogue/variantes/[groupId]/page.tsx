@@ -876,7 +876,7 @@ export default function VariantGroupDetailPage({
       {/* Liste des produits */}
       <div className="space-y-6">
         <h2 className="text-xl font-semibold text-gray-900">
-          Produits du groupe ({variantGroup.products?.length || 0})
+          Produits du groupe ({variantGroup.products?.length ?? 0})
         </h2>
 
         {variantGroup.products && variantGroup.products.length > 0 ? (

@@ -353,7 +353,7 @@ export default function MessagesPage() {
   // Calculate recipient count
   const getRecipientCount = (): number => {
     if (targetType === 'all') {
-      return affiliates?.length || 0;
+      return affiliates?.length ?? 0;
     }
     if (targetType === 'enseigne' && selectedEnseigne) {
       return affiliates?.filter(a => a.enseigne_name).length || 0;
@@ -473,7 +473,7 @@ export default function MessagesPage() {
                         Tous les affiliés
                       </span>
                       <Badge variant="secondary">
-                        {affiliates?.length || 0}
+                        {affiliates?.length ?? 0}
                       </Badge>
                     </button>
 
@@ -490,7 +490,7 @@ export default function MessagesPage() {
                       <Building2 className="h-6 w-6" />
                       <span className="text-sm font-medium">Par enseigne</span>
                       <Badge variant="secondary">
-                        {enseignes?.length || 0}
+                        {enseignes?.length ?? 0}
                       </Badge>
                     </button>
 

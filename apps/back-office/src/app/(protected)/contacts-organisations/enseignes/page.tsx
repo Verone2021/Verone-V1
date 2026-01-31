@@ -149,7 +149,7 @@ export default function EnseignesPage() {
       // Transformer les données pour avoir member_count
       const transformedData = (data || []).map(e => ({
         ...e,
-        member_count: e.enseigne_organisations?.length || 0,
+        member_count: e.enseigne_organisations?.length ?? 0,
       }));
 
       setArchivedEnseignes(transformedData as unknown as Enseigne[]);

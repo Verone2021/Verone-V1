@@ -486,7 +486,7 @@ export function UsersSection() {
       {filteredUsers.length > 0 && (
         <p className="text-sm text-gray-500">
           Affichage de {filteredUsers.length} utilisateur
-          {filteredUsers.length > 1 ? 's' : ''} sur {users?.length || 0}
+          {filteredUsers.length > 1 ? 's' : ''} sur {users?.length ?? 0}
         </p>
       )}
 

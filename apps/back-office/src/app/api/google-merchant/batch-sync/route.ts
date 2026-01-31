@@ -108,7 +108,7 @@ export async function POST(
       );
     }
 
-    console.warn(`[API] Found ${products?.length || 0} eligible products`);
+    console.warn(`[API] Found ${products?.length ?? 0} eligible products`);
 
     // 3. Filtrer les produits avec images et prix
     const eligibleProducts = (products || []).filter(product => {

@@ -400,7 +400,7 @@ export default function PaymentRequestsAdminPage() {
 
   // Stats rapides
   const stats = {
-    total: requests?.length || 0,
+    total: requests?.length ?? 0,
     pending: requests?.filter(r => r.status === 'pending').length || 0,
     invoiceReceived:
       requests?.filter(r => r.status === 'invoice_received').length || 0,

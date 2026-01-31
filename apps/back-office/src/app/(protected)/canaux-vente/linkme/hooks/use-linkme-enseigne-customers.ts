@@ -245,8 +245,8 @@ export function useLinkMeEnseigneCustomers(enseigneId: string | null) {
   const individualsQuery = useLinkMeEnseigneIndividualCustomers(enseigneId);
 
   return {
-    organisations: orgsQuery.data || [],
-    individuals: individualsQuery.data || [],
+    organisations: orgsQuery.data ?? [],
+    individuals: individualsQuery.data ?? [],
     isLoading: orgsQuery.isLoading || individualsQuery.isLoading,
     isError: orgsQuery.isError || individualsQuery.isError,
     error: orgsQuery.error || individualsQuery.error,
