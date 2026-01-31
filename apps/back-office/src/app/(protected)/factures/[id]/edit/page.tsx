@@ -534,7 +534,7 @@ export default function EditDraftPage({ params }: IPageProps) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="font-medium">{document.client?.name || 'Client'}</p>
+          <p className="font-medium">{document.client?.name ?? 'Client'}</p>
           {document.client?.email && (
             <p className="text-sm text-muted-foreground">
               {document.client.email}

@@ -100,7 +100,7 @@ function parseQontoAmount(
     return amount;
   }
   if (typeof amount === 'object' && 'value' in amount) {
-    return parseFloat(amount.value) || 0;
+    return parseFloat(amount.value) ?? 0;
   }
   return 0;
 }
@@ -739,7 +739,7 @@ export default function QuoteDetailPage(): React.ReactNode {
             <AlertDialogTitle>Envoyer le devis au client ?</AlertDialogTitle>
             <AlertDialogDescription>
               Le devis sera envoyé par email à{' '}
-              {quote.client?.email || "l'adresse du client"}. Une fois envoyé,
+              {quote.client?.email ?? "l'adresse du client"}. Une fois envoyé,
               le PDF sera disponible au téléchargement et vous pourrez le
               convertir en facture.
             </AlertDialogDescription>

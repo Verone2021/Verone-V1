@@ -85,7 +85,7 @@ export default function StorageDetailPage() {
   }, [ownerType, ownerId]);
 
   const isEnseigne = ownerType === 'enseigne';
-  const totalVolume = data?.summary.total_volume_m3 || 0;
+  const totalVolume = data?.summary.total_volume_m3 ?? 0;
   const estimatedPrice = pricingTiers
     ? calculateStoragePrice(totalVolume, pricingTiers)
     : 0;
@@ -145,7 +145,7 @@ export default function StorageDetailPage() {
         <SummaryCard
           icon={Package}
           label="Unites stockees"
-          value={`${data?.summary.total_units || 0}`}
+          value={`${data?.summary.total_units ?? 0}`}
           color="purple"
         />
         <SummaryCard
@@ -172,7 +172,7 @@ export default function StorageDetailPage() {
       <div className="mb-4">
         <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
           <Package className="h-5 w-5" />
-          Produits en stockage ({data?.allocations.length || 0})
+          Produits en stockage ({data?.allocations.length ?? 0})
         </h2>
       </div>
 
@@ -238,7 +238,7 @@ function SummaryCard({
 
 function ProductStorageCard({ allocation }: { allocation: StorageAllocation }) {
   const totalVolume =
-    allocation.stock_quantity * (allocation.unit_volume_m3 || 0);
+    allocation.stock_quantity * (allocation.unit_volume_m3 ?? 0);
 
   return (
     <Card className="hover:shadow-lg transition-shadow overflow-hidden">

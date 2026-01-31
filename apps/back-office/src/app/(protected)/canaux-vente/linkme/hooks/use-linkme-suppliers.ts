@@ -68,7 +68,7 @@ async function fetchLinkMeSuppliers(): Promise<LinkMeSupplier[]> {
     for (const item of productCounts) {
       const supplierId = item.products?.supplier_id;
       if (supplierId) {
-        countBySupplier[supplierId] = (countBySupplier[supplierId] || 0) + 1;
+        countBySupplier[supplierId] = (countBySupplier[supplierId] ?? 0) + 1;
       }
     }
   }
@@ -76,7 +76,7 @@ async function fetchLinkMeSuppliers(): Promise<LinkMeSupplier[]> {
   // Ajouter le compte aux fournisseurs - cast explicite pour retour typé
   return suppliers.map(s => ({
     ...s,
-    products_count: countBySupplier[s.supplier_id] || 0,
+    products_count: countBySupplier[s.supplier_id] ?? 0,
   })) as LinkMeSupplier[];
 }
 

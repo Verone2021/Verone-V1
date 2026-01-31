@@ -139,28 +139,28 @@ export function CollectionsSection() {
         <KPICardUnified
           variant="elegant"
           title="Collections Total"
-          value={stats?.total || 0}
+          value={stats?.total ?? 0}
           icon={Palette}
         />
 
         <KPICardUnified
           variant="elegant"
           title="Actives"
-          value={stats?.active || 0}
+          value={stats?.active ?? 0}
           icon={Eye}
         />
 
         <KPICardUnified
           variant="elegant"
           title="Visibles Site Internet"
-          value={stats?.visible || 0}
+          value={stats?.visible ?? 0}
           icon={Package}
         />
 
         <KPICardUnified
           variant="elegant"
           title="À la Une"
-          value={stats?.featured || 0}
+          value={stats?.featured ?? 0}
           icon={Star}
         />
       </div>
@@ -172,7 +172,7 @@ export function CollectionsSection() {
             <div>
               <CardTitle>Collections Site Internet</CardTitle>
               <CardDescription>
-                {filteredCollections.length} collections ({stats?.visible || 0}{' '}
+                {filteredCollections.length} collections ({stats?.visible ?? 0}{' '}
                 visibles sur le site)
               </CardDescription>
             </div>

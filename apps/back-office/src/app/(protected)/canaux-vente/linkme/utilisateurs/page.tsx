@@ -325,8 +325,8 @@ export default function LinkMeUtilisateursPage() {
   }
 
   // Stats calculées
-  const activeCount = users?.filter(u => u.is_active).length || 0;
-  const suspendedCount = users?.filter(u => !u.is_active).length || 0;
+  const activeCount = users?.filter(u => u.is_active).length ?? 0;
+  const suspendedCount = users?.filter(u => !u.is_active).length ?? 0;
 
   return (
     <div className="space-y-6">
@@ -353,7 +353,7 @@ export default function LinkMeUtilisateursPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Total Comptes"
-          value={stats?.total || 0}
+          value={stats?.total ?? 0}
           icon={Users}
           color="bg-blue-500"
         />

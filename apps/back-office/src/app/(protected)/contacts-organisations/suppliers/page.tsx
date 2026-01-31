@@ -148,7 +148,7 @@ export default function SuppliersPage() {
         const countsMap = new Map<string, number>();
         productCounts?.forEach(p => {
           if (!p.supplier_id) return;
-          const count = countsMap.get(p.supplier_id) || 0;
+          const count = countsMap.get(p.supplier_id) ?? 0;
           countsMap.set(p.supplier_id, count + 1);
         });
 
@@ -156,7 +156,7 @@ export default function SuppliersPage() {
         organisationsWithCounts = (data || []).map(org => ({
           ...org,
           _count: {
-            products: countsMap.get(org.id) || 0,
+            products: countsMap.get(org.id) ?? 0,
           },
         }));
       }

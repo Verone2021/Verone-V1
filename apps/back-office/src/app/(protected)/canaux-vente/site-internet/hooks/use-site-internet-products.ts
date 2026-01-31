@@ -23,7 +23,7 @@ async function fetchSiteInternetProducts(): Promise<SiteInternetProduct[]> {
     throw error;
   }
 
-  return (data as unknown as SiteInternetProduct[]) || [];
+  return (data as unknown as SiteInternetProduct[]) ?? [];
 }
 
 /**

@@ -222,7 +222,7 @@ export function EditSiteInternetProductModal({
     custom_description_long: product.description ?? '',
     custom_technical_description: product.technical_description ?? '',
     custom_brand: product.brand ?? '',
-    custom_selling_points: product.selling_points || [],
+    custom_selling_points: product.selling_points ?? [],
   });
 
   // Mutation update
@@ -284,7 +284,7 @@ export function EditSiteInternetProductModal({
               custom_description_long: data.custom_description_long,
               custom_technical_description: data.custom_technical_description,
               custom_brand: data.custom_brand,
-              custom_selling_points: data.custom_selling_points || [],
+              custom_selling_points: data.custom_selling_points ?? [],
             },
             { onConflict: 'product_id,channel_id' }
           )
@@ -1151,7 +1151,7 @@ export function EditSiteInternetProductModal({
                     <div>
                       <Label>Points de vente (Selling Points)</Label>
                       <div className="space-y-2 mt-2">
-                        {(formData.custom_selling_points || []).map(
+                        {(formData.custom_selling_points ?? []).map(
                           (point, index) => (
                             <div
                               key={index}
@@ -1161,7 +1161,7 @@ export function EditSiteInternetProductModal({
                                 value={point}
                                 onChange={e => {
                                   const newPoints = [
-                                    ...(formData.custom_selling_points || []),
+                                    ...(formData.custom_selling_points ?? []),
                                   ];
                                   newPoints[index] = e.target.value;
                                   setFormData({
@@ -1177,7 +1177,7 @@ export function EditSiteInternetProductModal({
                                 size="sm"
                                 onClick={() => {
                                   const newPoints = (
-                                    formData.custom_selling_points || []
+                                    formData.custom_selling_points ?? []
                                   ).filter((_, i) => i !== index);
                                   setFormData({
                                     ...formData,
@@ -1198,7 +1198,7 @@ export function EditSiteInternetProductModal({
                             setFormData({
                               ...formData,
                               custom_selling_points: [
-                                ...(formData.custom_selling_points || []),
+                                ...(formData.custom_selling_points ?? []),
                                 '',
                               ],
                             });

@@ -188,7 +188,7 @@ function useOrganisationSelections(organisationId: string | null) {
         console.error('Erreur chargement sélections:', error);
         setSelections([]);
       } else {
-        setSelections((data || []) as OrganisationSelection[]);
+        setSelections((data ?? []) as OrganisationSelection[]);
       }
       setLoading(false);
     };
@@ -243,12 +243,12 @@ function useOrganisationProducts(organisationId: string | null) {
           .limit(50);
 
         setProducts(
-          (dataNoImg || []).map(p => ({ ...p, primary_image_url: null }))
+          (dataNoImg ?? []).map(p => ({ ...p, primary_image_url: null }))
         );
       } else {
         setProducts(
-          (data || []).map((p: any) => {
-            const primaryImg = (p.product_images || []).find(
+          (data ?? []).map((p: any) => {
+            const primaryImg = (p.product_images ?? []).find(
               (img: any) => img.is_primary
             );
             return {

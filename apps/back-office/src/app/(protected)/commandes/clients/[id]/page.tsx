@@ -142,9 +142,9 @@ export default async function OrderDetailPage({
           shipping_address: linkmeOrder.shipping_address,
           total_ht: linkmeOrder.total_ht,
           total_ttc: linkmeOrder.total_ttc,
-          shipping_cost_ht: linkmeOrder.shipping_cost_ht || 0,
-          handling_cost_ht: linkmeOrder.handling_cost_ht || 0,
-          insurance_cost_ht: linkmeOrder.insurance_cost_ht || 0,
+          shipping_cost_ht: linkmeOrder.shipping_cost_ht ?? 0,
+          handling_cost_ht: linkmeOrder.handling_cost_ht ?? 0,
+          insurance_cost_ht: linkmeOrder.insurance_cost_ht ?? 0,
           fees_vat_rate: 20, // Défaut
           created_at: linkmeOrder.created_at,
           created_by: linkmeOrder.created_by_affiliate_id,
@@ -487,8 +487,8 @@ export default async function OrderDetailPage({
               orderId={order.id}
               orderNumber={order.order_number}
               orderStatus={order.status}
-              totalHt={order.total_ht || 0}
-              totalTtc={order.total_ttc || 0}
+              totalHt={order.total_ht ?? 0}
+              totalTtc={order.total_ttc ?? 0}
               taxRate={20}
               currency="EUR"
               paymentTerms="immediate"

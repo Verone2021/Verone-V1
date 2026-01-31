@@ -67,7 +67,7 @@ export function useUpdateMetadata() {
       toast({
         title: 'Erreur lors de la sauvegarde',
         description:
-          error.message || 'Impossible de sauvegarder les métadonnées',
+          error.message ?? 'Impossible de sauvegarder les métadonnées',
         variant: 'destructive',
       });
     },

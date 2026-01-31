@@ -111,8 +111,8 @@ export default function PrixClientsPage() {
         .in('id', productIds);
 
       // Créer des maps pour lookup rapide
-      const orgsMap = new Map(orgsData?.map(o => [o.id, o]) || []);
-      const productsMap = new Map(productsData?.map(p => [p.id, p]) || []);
+      const orgsMap = new Map(orgsData?.map(o => [o.id, o]) ?? []);
+      const productsMap = new Map(productsData?.map(p => [p.id, p]) ?? []);
 
       // Transformer les données avec les noms
       const transformedData: CustomerPricing[] = pricingData.map(item => {

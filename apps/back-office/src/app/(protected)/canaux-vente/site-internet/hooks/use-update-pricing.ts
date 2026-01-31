@@ -79,7 +79,7 @@ export function useUpdatePricing() {
       console.error('❌ Mutation ERROR pricing:', error);
       toast({
         title: 'Erreur lors de la sauvegarde',
-        description: error.message || 'Impossible de sauvegarder le pricing',
+        description: error.message ?? 'Impossible de sauvegarder le pricing',
         variant: 'destructive',
       });
     },

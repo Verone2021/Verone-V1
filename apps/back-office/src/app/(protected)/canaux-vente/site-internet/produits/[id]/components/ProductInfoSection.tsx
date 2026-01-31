@@ -28,7 +28,7 @@ export default function ProductInfoSection({
     custom_description_long: '',
     custom_technical_description: product.technical_description ?? '',
     custom_brand: product.brand ?? '',
-    custom_selling_points: product.selling_points || [],
+    custom_selling_points: product.selling_points ?? [],
   });
 
   const updateMetadata = useUpdateMetadata();

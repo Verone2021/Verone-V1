@@ -213,8 +213,8 @@ function QuoteStatusBadge({ status }: { status: string }): React.ReactNode {
   };
 
   return (
-    <Badge variant={variants[status] || 'outline'}>
-      {labels[status] || status}
+    <Badge variant={variants[status] ?? 'outline'}>
+      {labels[status] ?? status}
     </Badge>
   );
 }
@@ -238,8 +238,8 @@ function CreditNoteStatusBadge({
   };
 
   return (
-    <Badge variant={variants[status] || 'outline'}>
-      {labels[status] || status}
+    <Badge variant={variants[status] ?? 'outline'}>
+      {labels[status] ?? status}
     </Badge>
   );
 }
@@ -269,8 +269,8 @@ function InvoiceStatusBadge({ status }: { status: string }): React.ReactNode {
   };
 
   return (
-    <Badge variant={variants[status] || 'outline'}>
-      {labels[status] || status}
+    <Badge variant={variants[status] ?? 'outline'}>
+      {labels[status] ?? status}
     </Badge>
   );
 }
@@ -556,7 +556,7 @@ function MissingInvoicesTable({
                 <div className="flex items-center gap-2">
                   <AlertTriangle className="h-4 w-4 text-amber-500" />
                   <span className="text-sm font-medium truncate max-w-[200px]">
-                    {tx.label || 'Sans libellé'}
+                    {tx.label ?? 'Sans libellé'}
                   </span>
                 </div>
               </td>

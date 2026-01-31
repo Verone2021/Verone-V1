@@ -119,7 +119,7 @@ function useUserSelections(
         console.error('Erreur chargement sélections utilisateur:', error);
         setSelections([]);
       } else {
-        setSelections((data || []) as UserSelection[]);
+        setSelections((data ?? []) as UserSelection[]);
       }
       setLoading(false);
     };
@@ -195,7 +195,7 @@ function useUserStats(
       // TODO: Calculer ordersCount et totalCaHT quand les commandes LinkMe seront implémentées
 
       setStats({
-        selectionsCount: selectionsCount || 0,
+        selectionsCount: selectionsCount ?? 0,
         ordersCount: 0,
         totalCaHT: 0,
       });
@@ -276,7 +276,7 @@ export default function UserDetailPage() {
   const roleLabel = LINKME_ROLE_LABELS[user.linkme_role] || user.linkme_role;
   const roleColor =
     LINKME_ROLE_COLORS[user.linkme_role] || 'bg-gray-100 text-gray-800';
-  const rolePermissions = LINKME_ROLE_PERMISSIONS[user.linkme_role] || [];
+  const rolePermissions = LINKME_ROLE_PERMISSIONS[user.linkme_role] ?? [];
 
   return (
     <div className="space-y-6">

@@ -481,7 +481,7 @@ export default function PurchaseOrdersPage() {
     }
 
     // Pour chaque item, vérifier si la quantité commandée atteint le seuil
-    const shortages = (orderItems || [])
+    const shortages = (orderItems ?? [])
       .map(item => {
         const product = item.products as {
           name: string;
