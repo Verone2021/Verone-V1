@@ -665,7 +665,7 @@ function TransactionsPageLegacy() {
       label: selectedTransaction.label ?? '',
       counterparty_name: selectedTransaction.counterparty_name,
       amount: selectedTransaction.amount,
-      currency: selectedTransaction.currency || 'EUR',
+      currency: selectedTransaction.currency ?? 'EUR',
       emitted_at: selectedTransaction.emitted_at ?? '',
       has_attachment: Boolean(
         selectedTransaction.attachment_ids &&

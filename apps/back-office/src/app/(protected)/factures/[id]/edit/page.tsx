@@ -385,7 +385,7 @@ export default function EditDraftPage({ params }: IPageProps) {
           unit: item.unit,
           unitPrice: {
             value: item.unitPrice,
-            currency: document?.currency || 'EUR',
+            currency: document?.currency ?? 'EUR',
           },
           vatRate: item.vatRate,
         })),

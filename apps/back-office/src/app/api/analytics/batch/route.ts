@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
       record_id: event.record_id ?? null,
       old_data: event.old_data ?? null,
       new_data: event.new_data ?? null,
-      severity: event.severity || 'info',
+      severity: event.severity ?? 'info',
       metadata: event.metadata || {},
       session_id: session_id,
       page_url: event.metadata?.page_url ?? null,
