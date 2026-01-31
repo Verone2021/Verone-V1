@@ -99,7 +99,7 @@ export function ProductVariantsCard({
               {/* Infos variante */}
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">
-                  {variant.name || 'Variante'}
+                  {variant.name ?? 'Variante'}
                 </p>
                 <p className="text-xs text-muted-foreground font-mono truncate">
                   {variant.sku}
