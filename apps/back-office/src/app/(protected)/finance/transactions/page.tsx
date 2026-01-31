@@ -1553,7 +1553,7 @@ function TransactionsPageV2() {
                       {/* Libellé + Organisation en bleu */}
                       <div className="flex-1 min-w-0">
                         <p className="font-medium truncate">
-                          {tx.label || 'Sans libellé'}
+                          {tx.label ?? 'Sans libellé'}
                         </p>
                         <div className="flex items-center gap-2 text-sm">
                           <span className="text-muted-foreground truncate">

@@ -75,7 +75,7 @@ export function useLinkMeOwners(searchTerm?: string) {
           for (const e of enseignes) {
             owners.push({
               id: e.id,
-              name: e.name || 'Sans nom',
+              name: e.name ?? 'Sans nom',
               type: 'enseigne',
             });
           }
