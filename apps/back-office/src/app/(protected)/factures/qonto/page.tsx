@@ -158,7 +158,7 @@ export default function QontoDocumentsPage(): React.ReactNode {
       const data = await response.json();
 
       if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Erreur chargement factures');
+        throw new Error(data.error ?? 'Erreur chargement factures');
       }
 
       setInvoices(data.invoices || []);
@@ -178,7 +178,7 @@ export default function QontoDocumentsPage(): React.ReactNode {
       const data = await response.json();
 
       if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Erreur chargement devis');
+        throw new Error(data.error ?? 'Erreur chargement devis');
       }
 
       setQuotes(data.quotes || []);
@@ -198,7 +198,7 @@ export default function QontoDocumentsPage(): React.ReactNode {
       const data = await response.json();
 
       if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Erreur chargement avoirs');
+        throw new Error(data.error ?? 'Erreur chargement avoirs');
       }
 
       setCreditNotes(data.credit_notes || []);

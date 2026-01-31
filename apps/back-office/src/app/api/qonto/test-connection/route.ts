@@ -142,7 +142,7 @@ export async function GET() {
       {
         success: false,
         error: 'Erreur de connexion Qonto',
-        message: error.message || 'Une erreur inattendue s\'est produite',
+        message: error.message ?? 'Une erreur inattendue s\'est produite',
         code: error.code ?? 'UNKNOWN_ERROR',
         details: error.details,
       },

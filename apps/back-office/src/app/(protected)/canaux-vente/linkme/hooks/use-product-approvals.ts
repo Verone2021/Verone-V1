@@ -366,7 +366,7 @@ export function useUpdateAffiliateProduct() {
       const result = data as unknown as UpdateAffiliateProductResult;
 
       if (!result.success) {
-        throw new Error(result.error || 'Erreur lors de la mise a jour');
+        throw new Error(result.error ?? 'Erreur lors de la mise a jour');
       }
 
       return result;

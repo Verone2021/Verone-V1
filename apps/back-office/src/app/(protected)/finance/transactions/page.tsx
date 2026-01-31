@@ -2116,7 +2116,7 @@ function TransactionsPageV2() {
                               if (!res.ok) {
                                 const err = await res.json();
                                 throw new Error(
-                                  err.error || 'Erreur lors de la suppression'
+                                  err.error ?? 'Erreur lors de la suppression'
                                 );
                               }
                               toast.success('Justificatif supprimé');

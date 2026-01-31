@@ -37,7 +37,7 @@ export async function getNextSKU(subcategoryId: string): Promise<{
     if (subcategoryError || !subcategory) {
       return {
         success: false,
-        error: `Sous-catégorie non trouvée: ${subcategoryError?.message || 'ID invalide'}`,
+        error: `Sous-catégorie non trouvée: ${subcategoryError?.message ?? 'ID invalide'}`,
       };
     }
 

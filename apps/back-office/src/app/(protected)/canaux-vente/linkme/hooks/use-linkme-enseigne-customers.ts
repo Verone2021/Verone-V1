@@ -249,7 +249,7 @@ export function useLinkMeEnseigneCustomers(enseigneId: string | null) {
     individuals: individualsQuery.data ?? [],
     isLoading: orgsQuery.isLoading || individualsQuery.isLoading,
     isError: orgsQuery.isError || individualsQuery.isError,
-    error: orgsQuery.error || individualsQuery.error,
+    error: orgsQuery.error ?? individualsQuery.error,
     refetch: () => {
       void Promise.all([orgsQuery.refetch(), individualsQuery.refetch()]).catch(
         error => {
@@ -341,7 +341,7 @@ export function useLinkMeAffiliateCustomers(
       : orgIndividualsQuery.isError,
 
     error: isEnseigne
-      ? enseigneOrgsQuery.error || enseigneIndividualsQuery.error
+      ? enseigneOrgsQuery.error ?? enseigneIndividualsQuery.error
       : orgIndividualsQuery.error,
 
     refetch: () => {

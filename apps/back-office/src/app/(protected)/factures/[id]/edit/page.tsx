@@ -415,7 +415,7 @@ export default function EditDraftPage({ params }: IPageProps) {
       const data = await response.json();
 
       if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Erreur lors de la sauvegarde');
+        throw new Error(data.error ?? 'Erreur lors de la sauvegarde');
       }
 
       toast.success('Modifications enregistrées');

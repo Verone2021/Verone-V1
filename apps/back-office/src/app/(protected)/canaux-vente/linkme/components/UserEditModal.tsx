@@ -645,7 +645,7 @@ export function UserEditModal({ isOpen, user, onClose }: UserEditModalProps) {
             </div>
 
             {/* Error global */}
-            {(updateUser.error || errors.submit) && (
+            {(updateUser.error ?? errors.submit) && (
               <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
                 <AlertCircle className="h-4 w-4 text-red-600 mt-0.5" />
                 <p className="text-sm text-red-700">

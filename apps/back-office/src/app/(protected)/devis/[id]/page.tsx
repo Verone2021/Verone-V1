@@ -288,7 +288,7 @@ export default function QuoteDetailPage(): React.ReactNode {
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(
-          errorData.error || `Erreur ${response.status}: ${response.statusText}`
+          errorData.error ?? `Erreur ${response.status}: ${response.statusText}`
         );
       }
 

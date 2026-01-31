@@ -157,7 +157,7 @@ export function PasswordChangeDialog({
       }, 2000);
     } catch (error: any) {
       console.error('Erreur changement mot de passe:', error);
-      setError(error.message || 'Erreur lors du changement de mot de passe');
+      setError(error.message ?? 'Erreur lors du changement de mot de passe');
     } finally {
       setLoading(false);
     }

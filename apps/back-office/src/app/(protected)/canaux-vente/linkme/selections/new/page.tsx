@@ -454,7 +454,7 @@ export default function NewSelectionPage() {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.message || 'Erreur lors de la création');
+        throw new Error(error.message ?? 'Erreur lors de la création');
       }
 
       const { selection } = await response.json();
@@ -470,7 +470,7 @@ export default function NewSelectionPage() {
       console.error('Erreur création sélection:', error);
       toast({
         title: 'Erreur',
-        description: error.message || 'Impossible de créer la sélection.',
+        description: error.message ?? 'Impossible de créer la sélection.',
         variant: 'destructive',
       });
     } finally {
