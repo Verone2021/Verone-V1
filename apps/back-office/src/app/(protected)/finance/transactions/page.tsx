@@ -2139,7 +2139,7 @@ function TransactionsPageV2() {
                             <div className="space-y-0.5">
                               {attachments.map((att, idx) => (
                                 <div
-                                  key={att.id || idx}
+                                  key={att.id ?? idx}
                                   className="flex items-center gap-1.5 group"
                                 >
                                   <button
