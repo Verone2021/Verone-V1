@@ -206,18 +206,18 @@ export function VariantGroupForm({
     if (isOpen) {
       if (editingGroup) {
         // Mode édition
-        const dimensions = (editingGroup.common_dimensions as any) || {};
+        const dimensions = (editingGroup.common_dimensions as any) ?? {};
         setFormData({
           name: editingGroup.name,
           base_sku: editingGroup.base_sku,
           subcategory_id: editingGroup.subcategory_id,
-          variant_type: editingGroup.variant_type || 'color',
+          variant_type: editingGroup.variant_type ?? 'color',
           style: editingGroup.style ?? '',
-          suitable_rooms: (editingGroup.suitable_rooms || []) as RoomType[],
+          suitable_rooms: (editingGroup.suitable_rooms ?? []) as RoomType[],
           common_length: dimensions.length?.toString() ?? '',
           common_width: dimensions.width?.toString() ?? '',
           common_height: dimensions.height?.toString() ?? '',
-          common_dimensions_unit: dimensions.unit || 'cm',
+          common_dimensions_unit: dimensions.unit ?? 'cm',
         } as any);
       } else {
         // Mode création
