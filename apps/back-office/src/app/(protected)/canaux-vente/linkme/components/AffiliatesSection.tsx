@@ -523,7 +523,7 @@ export function AffiliatesSection() {
     setSelectedAffiliate(affiliate);
     setFormData({
       entity_type: affiliate.enseigne_id ? 'enseigne' : 'organisation',
-      entity_id: (affiliate.enseigne_id || affiliate.organisation_id) ?? '',
+      entity_id: (affiliate.enseigne_id ?? affiliate.organisation_id) ?? '',
       display_name: affiliate.display_name,
       slug: affiliate.slug,
       affiliate_type: (affiliate.affiliate_type ?? 'enseigne') as AffiliateType,
@@ -699,7 +699,7 @@ export function AffiliatesSection() {
                     ];
                   const statusInfo =
                     statusConfig[
-                      (affiliate.status ||
+                      (affiliate.status ??
                         'pending') as keyof typeof statusConfig
                     ];
                   const linkedEntityName =
@@ -961,7 +961,7 @@ export function AffiliatesSection() {
                       .map(entity => {
                         const isOrg = formData.entity_type === 'organisation';
                         const name = isOrg
-                          ? (entity as Organisation).trade_name ||
+                          ? (entity as Organisation).trade_name ??
                             (entity as Organisation).legal_name
                           : (entity as Enseigne).name;
                         const isSelected = formData.entity_id === entity.id;
