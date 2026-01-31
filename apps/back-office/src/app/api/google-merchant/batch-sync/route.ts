@@ -144,7 +144,7 @@ export async function POST(
       .map((r, index) => ({
         productId: eligibleProducts[index].id,
         sku: eligibleProducts[index].sku,
-        error: r.error || 'Unknown error',
+        error: r.error ?? 'Unknown error',
       }));
 
     console.warn(

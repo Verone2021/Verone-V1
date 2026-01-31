@@ -119,7 +119,7 @@ export async function POST(
     }>;
 
     if (!result || result.length === 0 || !result[0].success) {
-      const errorMsg = result?.[0]?.error || 'Unknown error';
+      const errorMsg = result?.[0]?.error ?? 'Unknown error';
       return NextResponse.json(
         {
           success: false,
