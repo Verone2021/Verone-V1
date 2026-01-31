@@ -75,7 +75,7 @@ const getVariantTypeIcon = (type: string) => {
 const formatStyle = (style?: string): string => {
   if (!style) return '';
   const styleOption = COLLECTION_STYLE_OPTIONS.find(s => s.value === style);
-  return styleOption?.label || style;
+  return styleOption?.label ?? style;
 };
 
 // Composant pour carte produit COMPACTE (style catalogue)

@@ -586,7 +586,7 @@ export function ContactsAddressesSection({
                     <OrganisationAddressCard
                       key={address.id}
                       id={address.id}
-                      name={address.label || address.addressLine1}
+                      name={address.label ?? address.addressLine1}
                       address={{
                         line1: address.addressLine1,
                         line2: address.addressLine2,

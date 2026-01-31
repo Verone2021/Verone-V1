@@ -1810,7 +1810,7 @@ function TransactionsPageV2() {
                     <div>
                       <p className="text-xs text-muted-foreground">Libelle</p>
                       <p className="text-xs font-medium">
-                        {selectedTransaction.label || '-'}
+                        {selectedTransaction.label ?? '-'}
                       </p>
                     </div>
                     {(() => {
@@ -1885,7 +1885,7 @@ function TransactionsPageV2() {
                             />
                             <span className="text-xs font-medium">
                               {getPcgCategory(selectedTransaction.category_pcg)
-                                ?.label || selectedTransaction.category_pcg}
+                                ?.label ?? selectedTransaction.category_pcg}
                             </span>
                             <Badge variant="outline" className="text-[10px]">
                               {selectedTransaction.category_pcg}

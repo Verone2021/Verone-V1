@@ -568,7 +568,7 @@ export default function ReglesPage() {
                               >
                                 {missingCategory
                                   ? '⚠️ Catégorie manquante'
-                                  : pcgCategory?.label || rule.default_category}
+                                  : pcgCategory?.label ?? rule.default_category}
                               </Badge>
                               <Badge
                                 variant="default"

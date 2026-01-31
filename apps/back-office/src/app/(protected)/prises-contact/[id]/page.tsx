@@ -301,7 +301,7 @@ export default function SubmissionDetailPage({
               {submission.first_name} {submission.last_name}
             </h1>
             <p className="text-sm" style={{ color: colors.text.subtle }}>
-              {formType?.label || submission.form_type} • {createdDate}
+              {formType?.label ?? submission.form_type} • {createdDate}
             </p>
           </div>
 
@@ -356,7 +356,7 @@ export default function SubmissionDetailPage({
               >
                 <Edit className="h-4 w-4 mr-1" />
                 {statusOptions.find(s => s.value === submission.status)
-                  ?.label || submission.status}
+                  ?.label ?? submission.status}
               </ButtonUnified>
             )}
 
@@ -410,7 +410,7 @@ export default function SubmissionDetailPage({
               >
                 <AlertCircle className="h-4 w-4 mr-1" />
                 {priorityOptions.find(p => p.value === submission.priority)
-                  ?.label || submission.priority}
+                  ?.label ?? submission.priority}
               </ButtonUnified>
             )}
           </div>

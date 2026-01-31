@@ -121,7 +121,7 @@ export async function POST(
         label: transaction.label,
         emitted_at: transaction.emitted_at,
       },
-      message: `Facture rapprochée avec la transaction ${transaction.label || transaction.transaction_id}`,
+      message: `Facture rapprochée avec la transaction ${transaction.label ?? transaction.transaction_id}`,
     });
   } catch (error) {
     console.error('[API Qonto Invoice Reconcile] POST error:', error);

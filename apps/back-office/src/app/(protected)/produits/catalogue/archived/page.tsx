@@ -100,7 +100,7 @@ export default function ArchivedProductsPage() {
                       }
                     >
                       {statusConfig[product.status as keyof typeof statusConfig]
-                        ?.label || '📦 Archivé'}
+                        ?.label ?? '📦 Archivé'}
                     </Badge>
                   </div>
 

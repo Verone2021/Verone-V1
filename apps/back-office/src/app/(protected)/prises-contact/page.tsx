@@ -425,7 +425,7 @@ export default function PrisesContactPage() {
   // Get form type label
   const getFormTypeLabel = (code: string): string => {
     const type = formTypes.find(t => t.code === code);
-    return type?.label || code;
+    return type?.label ?? code;
   };
 
   if (loading) {
