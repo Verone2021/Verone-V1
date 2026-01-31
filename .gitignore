@@ -97,6 +97,9 @@ next-env.d.ts
 .claude/*.log
 .claude/work/
 
+# ESLint baseline (local uniquement, régénéré dynamiquement)
+.eslint-baseline.json
+
 # Husky
 .husky/_
 
