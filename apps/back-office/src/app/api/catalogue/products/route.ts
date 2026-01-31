@@ -220,9 +220,9 @@ async function createProduct(req: NextRequest) {
       id: crypto.randomUUID(),
       ...body,
       price_ttc: body.price_ht * 1.2, // 20% VAT
-      status: body.status || 'draft',
-      stock_status: body.stock_status || 'out_of_stock',
-      product_status: body.product_status || 'draft',
+      status: body.status ?? 'draft',
+      stock_status: body.stock_status ?? 'out_of_stock',
+      product_status: body.product_status ?? 'draft',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };

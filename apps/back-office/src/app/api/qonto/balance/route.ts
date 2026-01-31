@@ -66,7 +66,7 @@ export async function GET(): Promise<NextResponse<BalanceResponse>> {
     // Transformer en format simplifié (forcer les nombres car Qonto peut retourner des strings)
     const accounts: BankAccountBalance[] = activeAccounts.map(account => ({
       id: account.id,
-      name: account.name || 'Compte Principal',
+      name: account.name ?? 'Compte Principal',
       iban: account.iban,
       ibanMasked: maskIban(account.iban),
       balance: Number(account.balance) || 0,
