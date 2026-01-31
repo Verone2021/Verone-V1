@@ -389,7 +389,7 @@ export function useCreateEnseigneOrganisation() {
           address_line2: input.address_line2 ?? null,
           city: input.city ?? null,
           postal_code: input.postal_code ?? null,
-          country: input.country || 'FR',
+          country: input.country ?? 'FR',
           type: 'customer', // Toujours client
           is_active: true,
           source_type: input.source_type || 'linkme', // Par défaut depuis CMS LinkMe

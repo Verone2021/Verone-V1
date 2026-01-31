@@ -239,7 +239,7 @@ export async function POST(
           streetAddress: String(billingAddress?.street ?? ''),
           city: String(billingAddress?.city ?? ''),
           zipCode: String(billingAddress?.postal_code ?? ''),
-          countryCode: String(billingAddress?.country || 'FR'),
+          countryCode: String(billingAddress?.country ?? 'FR'),
         },
       });
       qontoClientId = newClient.id;

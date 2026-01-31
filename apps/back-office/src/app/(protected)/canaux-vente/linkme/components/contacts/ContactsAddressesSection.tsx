@@ -620,7 +620,7 @@ export function ContactsAddressesSection({
                     isSubmitting={createAddress.isPending}
                     sectionLabel="Nouvelle adresse de facturation"
                     showLegalFields
-                    defaultCountry={orgWithEnseigne?.address?.country || 'FR'}
+                    defaultCountry={orgWithEnseigne?.address?.country ?? 'FR'}
                   />
                 )}
               </div>
@@ -771,7 +771,7 @@ export function ContactsAddressesSection({
                         isSubmitting={createAddress.isPending}
                         sectionLabel="Nouvelle adresse de livraison"
                         defaultCountry={
-                          orgWithEnseigne?.address?.country || 'FR'
+                          orgWithEnseigne?.address?.country ?? 'FR'
                         }
                       />
                     )}
