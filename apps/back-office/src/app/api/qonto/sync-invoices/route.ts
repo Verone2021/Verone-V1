@@ -208,7 +208,7 @@ export async function POST(_request: NextRequest): Promise<
           abby_invoice_id: invoice.id,
           abby_invoice_number: invoiceNumber,
           description: `Facture Qonto ${invoiceNumber}`,
-          notes: `Client: ${invoice.client?.name || 'N/A'}`,
+          notes: `Client: ${invoice.client?.name ?? 'N/A'}`,
           updated_at: new Date().toISOString(),
         };
 

@@ -37,8 +37,8 @@ export function PricingSection({
 
   // Calcul du prix minimum de vente selon la logique Vérone
   const calculateMinimumSellingPrice = () => {
-    const costPrice = parseFloat(formData.cost_price || '0');
-    const targetMargin = parseFloat(formData.target_margin_percentage || '0');
+    const costPrice = parseFloat(formData.cost_price ?? '0');
+    const targetMargin = parseFloat(formData.target_margin_percentage ?? '0');
 
     if (costPrice > 0 && targetMargin >= 0) {
       // Formule: Prix d'achat × (1 + marge_cible/100)
@@ -49,7 +49,7 @@ export function PricingSection({
   };
 
   const calculateGrossProfit = () => {
-    const costPrice = parseFloat(formData.cost_price || '0');
+    const costPrice = parseFloat(formData.cost_price ?? '0');
     const minimumPrice = parseFloat(calculateMinimumSellingPrice());
 
     if (costPrice > 0 && minimumPrice > 0) {
@@ -166,13 +166,13 @@ export function PricingSection({
                     <div>
                       <div className="text-gray-600">Prix d'achat</div>
                       <div className="font-semibold">
-                        {formData.cost_price || '0'}€ HT
+                        {formData.cost_price ?? '0'}€ HT
                       </div>
                     </div>
                     <div>
                       <div className="text-gray-600">Marge cible</div>
                       <div className="font-semibold text-black">
-                        {formData.target_margin_percentage || '0'}%
+                        {formData.target_margin_percentage ?? '0'}%
                       </div>
                     </div>
                     <div>

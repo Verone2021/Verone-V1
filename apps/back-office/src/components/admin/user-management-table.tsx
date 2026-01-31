@@ -103,7 +103,7 @@ export function UserManagementTable({ users }: UserManagementTableProps) {
   };
 
   const getJobTitle = (user_metadata: any = null) => {
-    return user_metadata?.job_title || 'Non renseigné';
+    return user_metadata?.job_title ?? 'Non renseigné';
   };
 
   const handleViewUserDetails = (user: UserWithProfile) => {

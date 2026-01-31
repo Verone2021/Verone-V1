@@ -137,7 +137,7 @@ export function GeneralInfoSection({
             <div className="space-y-2">
               <Label htmlFor="availability_type">Type de disponibilité</Label>
               <Select
-                value={formData.availability_type || 'normal'}
+                value={formData.availability_type ?? 'normal'}
                 onValueChange={value => updateField('availability_type', value)}
               >
                 <SelectTrigger>

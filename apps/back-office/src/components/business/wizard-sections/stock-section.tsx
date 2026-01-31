@@ -39,11 +39,11 @@ export function StockSection({
   };
 
   // Calculs de statut stock basés sur min_stock uniquement
-  const stockReal = parseInt(formData.stock_real || '0');
-  const stockMin = parseInt(formData.min_stock || '0');
-  const reorderPoint = parseInt(formData.reorder_point || '0');
-  const stockForecastedIn = parseInt(formData.stock_forecasted_in || '0');
-  const stockForecastedOut = parseInt(formData.stock_forecasted_out || '0');
+  const stockReal = parseInt(formData.stock_real ?? '0');
+  const stockMin = parseInt(formData.min_stock ?? '0');
+  const reorderPoint = parseInt(formData.reorder_point ?? '0');
+  const stockForecastedIn = parseInt(formData.stock_forecasted_in ?? '0');
+  const stockForecastedOut = parseInt(formData.stock_forecasted_out ?? '0');
 
   const getStockStatus = () => {
     if (stockReal <= 0)
@@ -117,7 +117,7 @@ export function StockSection({
                 <div className="relative">
                   <Input
                     type="text"
-                    value={`${formData.stock_real || '0'} unités`}
+                    value={`${formData.stock_real ?? '0'} unités`}
                     disabled
                     className="bg-gray-100 text-gray-700 cursor-not-allowed"
                   />
@@ -135,7 +135,7 @@ export function StockSection({
                 <div className="relative">
                   <Input
                     type="text"
-                    value={`${formData.stock_quantity || '0'} unités`}
+                    value={`${formData.stock_quantity ?? '0'} unités`}
                     disabled
                     className="bg-gray-100 text-gray-700 cursor-not-allowed"
                   />
@@ -155,7 +155,7 @@ export function StockSection({
                 <div className="relative">
                   <Input
                     type="text"
-                    value={`${formData.stock_forecasted_in || '0'} unités`}
+                    value={`${formData.stock_forecasted_in ?? '0'} unités`}
                     disabled
                     className="bg-gray-100 text-gray-700 cursor-not-allowed"
                   />
@@ -173,7 +173,7 @@ export function StockSection({
                 <div className="relative">
                   <Input
                     type="text"
-                    value={`${formData.stock_forecasted_out || '0'} unités`}
+                    value={`${formData.stock_forecasted_out ?? '0'} unités`}
                     disabled
                     className="bg-gray-100 text-gray-700 cursor-not-allowed"
                   />

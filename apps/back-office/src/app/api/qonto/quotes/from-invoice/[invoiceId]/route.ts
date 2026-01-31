@@ -246,7 +246,7 @@ export async function POST(
     }
 
     // 6. Construire les lignes du devis
-    const quoteItems = (items || []).map(item => ({
+    const quoteItems = (items ?? []).map(item => ({
       title: item.description,
       quantity: String(item.quantity),
       unit: 'piece',

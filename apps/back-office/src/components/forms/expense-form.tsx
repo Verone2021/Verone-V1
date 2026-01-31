@@ -513,7 +513,7 @@ export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
                   onChange={e =>
                     setFormData({
                       ...formData,
-                      total_ht: parseFloat(e.target.value) || 0,
+                      total_ht: parseFloat(e.target.value) ?? 0,
                     })
                   }
                   disabled={loading}
@@ -589,7 +589,7 @@ export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
                     onChange={e =>
                       setFormData({
                         ...formData,
-                        vatLine10Ht: parseFloat(e.target.value) || 0,
+                        vatLine10Ht: parseFloat(e.target.value) ?? 0,
                       })
                     }
                     disabled={loading}
@@ -610,7 +610,7 @@ export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
                     onChange={e =>
                       setFormData({
                         ...formData,
-                        vatLine20Ht: parseFloat(e.target.value) || 0,
+                        vatLine20Ht: parseFloat(e.target.value) ?? 0,
                       })
                     }
                     disabled={loading}

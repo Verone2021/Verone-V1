@@ -407,7 +407,7 @@ export async function POST(request: NextRequest): Promise<
       issueDate,
       expiryDate,
 
-      purchaseOrderNumber: typedOrder.order_number || undefined,
+      purchaseOrderNumber: typedOrder.order_number ?? undefined,
       items,
     };
 

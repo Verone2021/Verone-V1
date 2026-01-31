@@ -604,7 +604,7 @@ interface RawProductData {
 export function formatCollectionProduct(
   rawProduct: RawProductData
 ): CollectionProduct {
-  const productImages = rawProduct.product_images || [];
+  const productImages = rawProduct.product_images ?? [];
 
   return {
     id: rawProduct.id,

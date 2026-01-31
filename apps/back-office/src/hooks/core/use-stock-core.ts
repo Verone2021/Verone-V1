@@ -486,7 +486,7 @@ export function useStockCore({
         if (!data) throw new Error('Mouvement créé mais non retourné');
 
         console.warn(
-          `✅ [useStockCore] Mouvement créé: ${data.id} (${params.movement_type}, channel=${finalChannelId || 'NULL'})`
+          `✅ [useStockCore] Mouvement créé: ${data.id} (${params.movement_type}, channel=${finalChannelId ?? 'NULL'})`
         );
 
         // Trigger refetch automatique (mouvements sont mis à jour via DB triggers)

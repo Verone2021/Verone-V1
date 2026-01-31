@@ -272,7 +272,7 @@ export function QuickVariantForm({
       console.error('Form submission error:', error);
       toast({
         title: '❌ Erreur',
-        description: error.message || 'Une erreur est survenue',
+        description: error.message ?? 'Une erreur est survenue',
         variant: 'destructive',
       });
     } finally {
@@ -474,7 +474,7 @@ export function QuickVariantForm({
               onChange={e =>
                 setFormData(prev => ({
                   ...prev,
-                  cost_price: parseFloat(e.target.value) || 0,
+                  cost_price: parseFloat(e.target.value) ?? 0,
                 }))
               }
               placeholder="0.00"

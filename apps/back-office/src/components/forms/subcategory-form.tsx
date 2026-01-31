@@ -127,7 +127,7 @@ export function SubcategoryForm({
     } catch (error: any) {
       console.error(
         'Erreur récupération family_id catégorie:',
-        error?.message || JSON.stringify(error)
+        error?.message ?? JSON.stringify(error)
       );
     }
   };
@@ -172,7 +172,7 @@ export function SubcategoryForm({
     } catch (error: any) {
       console.error(
         'Erreur upload image sous-catégorie:',
-        error?.message || JSON.stringify(error)
+        error?.message ?? JSON.stringify(error)
       );
       toast({
         title: '❌ Erreur upload',
@@ -277,7 +277,7 @@ export function SubcategoryForm({
     } catch (error: any) {
       console.error(
         'Erreur soumission formulaire sous-catégorie:',
-        error?.message || JSON.stringify(error)
+        error?.message ?? JSON.stringify(error)
       );
 
       // Gestion spécifique des erreurs de contrainte unique

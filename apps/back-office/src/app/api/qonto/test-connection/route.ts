@@ -146,7 +146,7 @@ export async function GET() {
         code: error.code || 'UNKNOWN_ERROR',
         details: error.details,
       },
-      { status: error.statusCode || 500 }
+      { status: error.statusCode ?? 500 }
     );
   }
   */

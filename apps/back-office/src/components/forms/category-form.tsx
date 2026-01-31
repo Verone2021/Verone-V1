@@ -140,7 +140,7 @@ export function CategoryForm({
     } catch (error: any) {
       console.error(
         'Erreur upload image catégorie:',
-        error?.message || JSON.stringify(error)
+        error?.message ?? JSON.stringify(error)
       );
       toast({
         title: '❌ Erreur upload',
@@ -232,7 +232,7 @@ export function CategoryForm({
     } catch (error: any) {
       console.error(
         'Erreur soumission formulaire catégorie:',
-        error?.message || JSON.stringify(error)
+        error?.message ?? JSON.stringify(error)
       );
 
       // Gestion spécifique des erreurs de contrainte unique

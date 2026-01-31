@@ -130,7 +130,7 @@ export function useFormMessages(submissionId: string): UseFormMessagesReturn {
         if (!response.ok) {
           const errorData = await response.json();
           throw new Error(
-            errorData.error || "Erreur lors de l'ajout du message"
+            errorData.error ?? "Erreur lors de l'ajout du message"
           );
         }
 

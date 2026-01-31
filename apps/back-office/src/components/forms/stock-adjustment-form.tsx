@@ -368,7 +368,7 @@ export function StockAdjustmentForm({
               onChange={e =>
                 setFormData({
                   ...formData,
-                  quantity: parseInt(e.target.value) || 0,
+                  quantity: parseInt(e.target.value) ?? 0,
                 })
               }
               disabled={loading}

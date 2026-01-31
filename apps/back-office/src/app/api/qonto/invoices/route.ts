@@ -552,7 +552,7 @@ export async function POST(request: NextRequest): Promise<
         iban: mainAccount.iban,
       },
 
-      purchaseOrderNumber: typedOrder.order_number || undefined,
+      purchaseOrderNumber: typedOrder.order_number ?? undefined,
       items,
     };
 

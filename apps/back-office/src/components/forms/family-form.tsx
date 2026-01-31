@@ -115,7 +115,7 @@ export function FamilyForm({
     } catch (error: any) {
       console.error(
         'Erreur upload image famille:',
-        error?.message || JSON.stringify(error)
+        error?.message ?? JSON.stringify(error)
       );
       toast({
         title: '❌ Erreur upload',
@@ -197,7 +197,7 @@ export function FamilyForm({
     } catch (error: any) {
       console.error(
         'Erreur soumission formulaire famille:',
-        error?.message || JSON.stringify(error)
+        error?.message ?? JSON.stringify(error)
       );
 
       // Gestion spécifique des erreurs de contrainte unique

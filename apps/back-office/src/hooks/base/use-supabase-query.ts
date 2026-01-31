@@ -43,7 +43,7 @@ export function useSupabaseQuery<T>(options: QueryOptions<T>): QueryState<T> {
 
       let query: any = supabase
         .from(options.tableName as any)
-        .select(options.select || '*');
+        .select(options.select ?? '*');
 
       // Apply filters
       if (options.filters) {
