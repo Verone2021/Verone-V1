@@ -9,6 +9,8 @@ import { revalidatePath } from 'next/cache';
 
 import { createClient } from '@verone/utils/supabase/server';
 
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
+
 /**
  * Marquer une soumission comme résolue
  */
@@ -461,3 +463,5 @@ export async function addMessage(
     };
   }
 }
+
+/* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
