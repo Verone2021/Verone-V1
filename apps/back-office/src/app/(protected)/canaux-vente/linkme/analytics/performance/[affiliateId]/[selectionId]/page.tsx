@@ -211,7 +211,7 @@ export default function SelectionPerformancePage() {
             >
               <Button variant="ghost" size="sm" className="gap-1 px-2">
                 <ChevronLeft className="h-4 w-4" />
-                {data?.affiliateName || 'Affilié'}
+                {data?.affiliateName ?? 'Affilié'}
               </Button>
             </Link>
 
@@ -229,10 +229,10 @@ export default function SelectionPerformancePage() {
               ) : (
                 <>
                   <h1 className="text-xl font-semibold">
-                    {data?.selectionName || 'Sélection'}
+                    {data?.selectionName ?? 'Sélection'}
                   </h1>
                   <p className="text-sm text-gray-500">
-                    {data?.affiliateName || 'Affilié'}
+                    {data?.affiliateName ?? 'Affilié'}
                   </p>
                 </>
               )}
@@ -369,11 +369,11 @@ export default function SelectionPerformancePage() {
             href={`/canaux-vente/linkme/analytics/performance/${affiliateId}`}
             className="hover:text-gray-700"
           >
-            {data?.affiliateName || 'Affilié'}
+            {data?.affiliateName ?? 'Affilié'}
           </Link>
           <ChevronRight className="h-3 w-3" />
           <span className="text-gray-900 font-medium">
-            {data?.selectionName || 'Sélection'}
+            {data?.selectionName ?? 'Sélection'}
           </span>
         </div>
       </div>

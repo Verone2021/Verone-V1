@@ -143,7 +143,7 @@ async function fetchEnseigneIndividualCustomers(
     throw error;
   }
 
-  return (data || []).map(customer => ({
+  return (data ?? []).map(customer => ({
     id: customer.id,
     first_name: customer.first_name,
     last_name: customer.last_name,
@@ -190,7 +190,7 @@ async function fetchOrganisationIndividualCustomers(
     throw error;
   }
 
-  return (data || []).map(customer => ({
+  return (data ?? []).map(customer => ({
     id: customer.id,
     first_name: customer.first_name,
     last_name: customer.last_name,
@@ -325,12 +325,12 @@ export function useLinkMeAffiliateCustomers(
   return {
     // Pour enseignes: organisations liées
     // Pour org_independante: liste vide (normal, pas d'orgs liées)
-    organisations: isEnseigne ? enseigneOrgsQuery.data || [] : [],
+    organisations: isEnseigne ? enseigneOrgsQuery.data ?? [] : [],
 
     // Clients particuliers selon le type
     individuals: isEnseigne
-      ? enseigneIndividualsQuery.data || []
-      : orgIndividualsQuery.data || [],
+      ? enseigneIndividualsQuery.data ?? []
+      : orgIndividualsQuery.data ?? [],
 
     isLoading: isEnseigne
       ? enseigneOrgsQuery.isLoading || enseigneIndividualsQuery.isLoading

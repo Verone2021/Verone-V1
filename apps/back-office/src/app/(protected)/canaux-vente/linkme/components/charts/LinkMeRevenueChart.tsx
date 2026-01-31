@@ -39,7 +39,7 @@ function CustomTooltip({
 }) {
   if (!active || !payload?.length) return null;
 
-  const revenue = payload[0].value || 0;
+  const revenue = payload[0].value ?? 0;
   const dataPoint = payload[0].payload;
 
   return (

@@ -164,7 +164,7 @@ export function EnseignesSection() {
 
         // Mapper les résultats
         const organisationsMapped: OrganisationIndependante[] = (
-          orgs || []
+          orgs ?? []
         ).map((org: any) => ({
           id: org.id,
           legal_name: org.legal_name,
@@ -256,7 +256,7 @@ export function EnseignesSection() {
     } catch (error: any) {
       toast({
         title: 'Erreur',
-        description: error?.message || 'Erreur lors de la création',
+        description: error?.message ?? 'Erreur lors de la création',
         variant: 'destructive',
       });
     }
@@ -279,7 +279,7 @@ export function EnseignesSection() {
     } catch (error: any) {
       toast({
         title: 'Erreur',
-        description: error?.message || 'Erreur lors de la mise à jour',
+        description: error?.message ?? 'Erreur lors de la mise à jour',
         variant: 'destructive',
       });
     }
@@ -298,7 +298,7 @@ export function EnseignesSection() {
     } catch (error: any) {
       toast({
         title: 'Erreur',
-        description: error?.message || 'Erreur lors de la suppression',
+        description: error?.message ?? 'Erreur lors de la suppression',
         variant: 'destructive',
       });
     }
@@ -317,7 +317,7 @@ export function EnseignesSection() {
     } catch (error: any) {
       toast({
         title: 'Erreur',
-        description: error?.message || 'Erreur lors du changement de statut',
+        description: error?.message ?? 'Erreur lors du changement de statut',
         variant: 'destructive',
       });
     }

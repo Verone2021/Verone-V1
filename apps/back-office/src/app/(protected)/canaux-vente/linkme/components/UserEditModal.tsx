@@ -571,7 +571,7 @@ export function UserEditModal({ isOpen, user, onClose }: UserEditModalProps) {
                     enseignes?.map(e => ({
                       value: e.id,
                       label: e.name,
-                    })) || []
+                    })) ?? []
                   }
                   value={enseigneId}
                   onValueChange={value => {
@@ -601,7 +601,7 @@ export function UserEditModal({ isOpen, user, onClose }: UserEditModalProps) {
                     organisations?.map(o => ({
                       value: o.id,
                       label: o.name,
-                    })) || []
+                    })) ?? []
                   }
                   value={organisationId}
                   onValueChange={setOrganisationId}

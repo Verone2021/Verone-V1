@@ -415,7 +415,7 @@ export function useAddProductToSelection() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Erreur ajout produit');
+        throw new Error(data.message ?? 'Erreur ajout produit');
       }
 
       return data.item?.id; // Retourne l'ID du nouvel item
@@ -436,7 +436,7 @@ export function useAddProductToSelection() {
       console.error('Error adding product:', error);
       toast({
         title: 'Erreur',
-        description: error.message || "Impossible d'ajouter le produit.",
+        description: error.message ?? "Impossible d'ajouter le produit.",
         variant: 'destructive',
       });
     },

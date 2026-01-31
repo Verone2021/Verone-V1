@@ -287,7 +287,7 @@ async function approveOrder(
         ownerName,
         step4Token,
         organisationName,
-        totalTtc: orderData?.total_ttc || 0,
+        totalTtc: orderData?.total_ttc ?? 0,
       }),
     });
   } catch (emailError) {
@@ -699,7 +699,7 @@ export function usePendingOrdersCount() {
         throw error;
       }
 
-      return count || 0;
+      return count ?? 0;
     },
     staleTime: 120000, // 2 minutes
     refetchInterval: 60000,
@@ -774,7 +774,7 @@ export function usePendingOrders() {
       }
 
       // BATCH: Récupérer toutes les organisations en UNE SEULE requête (fix N+1)
-      const organisationIds = (orders || [])
+      const organisationIds = (orders ?? [])
         .filter(o => o.customer_type === 'organization' && o.customer_id)
         .map(o => o.customer_id);
 
@@ -814,7 +814,7 @@ export function usePendingOrders() {
       // Map orders with organisation data from the batch
       const enrichedOrders: PendingOrder[] = [];
 
-      for (const order of orders || []) {
+      for (const order of orders ?? []) {
         // Get organisation name from cached map (no additional query)
         let organisationName: string | null = null;
         let enseigneName: string | null = null;
@@ -1017,7 +1017,7 @@ export function useAllLinkMeOrders(status?: OrderValidationStatus) {
       }
 
       // BATCH: Récupérer toutes les organisations en UNE SEULE requête
-      const organisationIds = (orders || [])
+      const organisationIds = (orders ?? [])
         .filter(o => o.customer_type === 'organization' && o.customer_id)
         .map(o => o.customer_id);
 
@@ -1066,7 +1066,7 @@ export function useAllLinkMeOrders(status?: OrderValidationStatus) {
       // Enrichir les commandes
       const enrichedOrders: PendingOrder[] = [];
 
-      for (const order of orders || []) {
+      for (const order of orders ?? []) {
         const linkmeDetails = order.sales_order_linkme_details as Record<
           string,
           unknown
@@ -1077,7 +1077,7 @@ export function useAllLinkMeOrders(status?: OrderValidationStatus) {
           ? organisationsMap.get(order.customer_id)
           : null;
 
-        const items: PendingOrderItem[] = (rawItems || []).map(item => {
+        const items: PendingOrderItem[] = (rawItems ?? []).map(item => {
           const products = item.products as Record<string, unknown> | null;
           const productImages = products?.product_images as
             | { public_url: string; is_primary: boolean }[]

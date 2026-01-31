@@ -243,10 +243,10 @@ export function AffiliatesSection() {
       if (error) throw error;
 
       // Mapper les données avec les noms des entités liées
-      const affiliatesWithNames = (data || []).map((a: any) => ({
+      const affiliatesWithNames = (data ?? []).map((a: any) => ({
         ...a,
         organisation_name:
-          (a.organisations?.trade_name || a.organisations?.legal_name) ?? null,
+          a.organisations?.trade_name ?? a.organisations?.legal_name ?? null,
         enseigne_name: null, // Sera peuplé via le mapping organisations->enseignes
       }));
 
@@ -273,7 +273,7 @@ export function AffiliatesSection() {
         .order('legal_name');
 
       if (error) throw error;
-      setOrganisations(data || []);
+      setOrganisations(data ?? []);
     } catch (error) {
       console.error('Error fetching organisations:', error);
     }
@@ -293,7 +293,7 @@ export function AffiliatesSection() {
 
       if (error) throw error;
       // Mapper vers interface Enseigne pour compatibilité
-      const mappedData = (data || []).map(org => ({
+      const mappedData = (data ?? []).map(org => ({
         id: org.id,
         name: org.trade_name || org.legal_name,
         logo_url: org.logo_url,

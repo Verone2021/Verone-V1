@@ -177,8 +177,8 @@ export function ContactsAddressesSection({
   const createAddress = useCreateAddressBO();
 
   // Computed values
-  const contacts = contactsData?.contacts || [];
-  const billingAddresses = addressesData?.billing || [];
+  const contacts = contactsData?.contacts ?? [];
+  const billingAddresses = addressesData?.billing ?? [];
   const hasEnseigne = !!orgWithEnseigne?.enseigne;
 
   // Completion status

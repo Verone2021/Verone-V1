@@ -273,7 +273,7 @@ export default function AffiliatePerformancePage() {
               ) : (
                 <>
                   <h1 className="text-xl font-semibold">
-                    {data?.affiliateName || 'Affilié'}
+                    {data?.affiliateName ?? 'Affilié'}
                   </h1>
                   <p className="text-sm text-gray-500">Performance détaillée</p>
                 </>
@@ -442,7 +442,7 @@ export default function AffiliatePerformancePage() {
           </Link>
           <ChevronRight className="h-3 w-3" />
           <span className="text-gray-900 font-medium">
-            {data?.affiliateName || 'Affilié'}
+            {data?.affiliateName ?? 'Affilié'}
           </span>
         </div>
       </div>

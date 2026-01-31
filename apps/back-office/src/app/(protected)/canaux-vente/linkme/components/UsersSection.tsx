@@ -344,25 +344,25 @@ export function UsersSection() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Total Utilisateurs"
-          value={stats?.total || 0}
+          value={stats?.total ?? 0}
           icon={Users}
           color="bg-blue-500"
         />
         <StatCard
           title="Admins Enseigne"
-          value={stats?.byRole.enseigne_admin || 0}
+          value={stats?.byRole.enseigne_admin ?? 0}
           icon={Building2}
           color="bg-purple-500"
         />
         <StatCard
           title="Admins Organisation"
-          value={stats?.byRole.organisation_admin || 0}
+          value={stats?.byRole.organisation_admin ?? 0}
           icon={Store}
           color="bg-indigo-500"
         />
         <StatCard
           title="Clients"
-          value={stats?.byRole.client || 0}
+          value={stats?.byRole.client ?? 0}
           icon={ShoppingCart}
           color="bg-green-500"
         />

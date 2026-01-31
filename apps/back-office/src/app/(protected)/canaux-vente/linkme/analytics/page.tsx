@@ -324,7 +324,7 @@ export default function LinkMeAnalyticsPage() {
             </CardHeader>
             <CardContent>
               <LinkMeRevenueChart
-                data={data?.revenueByPeriod || []}
+                data={data?.revenueByPeriod ?? []}
                 period="year"
                 isLoading={isLoading}
               />
@@ -342,7 +342,7 @@ export default function LinkMeAnalyticsPage() {
             </CardHeader>
             <CardContent>
               <TopAffiliatesChart
-                data={data?.topAffiliates || []}
+                data={data?.topAffiliates ?? []}
                 isLoading={isLoading}
               />
             </CardContent>
@@ -351,9 +351,9 @@ export default function LinkMeAnalyticsPage() {
 
         {/* Commissions Status */}
         <CommissionStatusCard
-          pendingHT={data?.commissionsByStatus?.pendingHT || 0}
-          validatedHT={data?.commissionsByStatus?.validatedHT || 0}
-          paidHT={data?.commissionsByStatus?.paidHT || 0}
+          pendingHT={data?.commissionsByStatus?.pendingHT ?? 0}
+          validatedHT={data?.commissionsByStatus?.validatedHT ?? 0}
+          paidHT={data?.commissionsByStatus?.paidHT ?? 0}
           isLoading={isLoading}
         />
       </div>

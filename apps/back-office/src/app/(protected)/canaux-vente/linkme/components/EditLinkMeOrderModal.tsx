@@ -176,7 +176,7 @@ export function EditLinkMeOrderModal({
               <div>
                 <h2 className="text-lg font-semibold">Modifier la commande</h2>
                 <p className="text-sm text-gray-500">
-                  {order?.order_number || 'Chargement...'}
+                  {order?.order_number ?? 'Chargement...'}
                 </p>
               </div>
             </div>

@@ -243,7 +243,7 @@ async function fetchLinkMeOrderById(orderId: string): Promise<LinkMeOrder> {
       id: item.id,
       sales_order_id: orderId,
       product_id: item.product_id,
-      product_name: item.products?.name || 'Produit inconnu',
+      product_name: item.products?.name ?? 'Produit inconnu',
       quantity: item.quantity,
       unit_price_ht: item.unit_price_ht,
       total_ht: item.total_ht,
@@ -435,7 +435,7 @@ async function createLinkMeOrder(
           address_line2: input.shipping_address.address_line2 ?? '',
           city: input.shipping_address.city,
           postal_code: input.shipping_address.postal_code,
-          country: input.shipping_address.country || 'FR',
+          country: input.shipping_address.country ?? 'FR',
         })
       : null,
   };
@@ -449,7 +449,7 @@ async function createLinkMeOrder(
   if (orderError) {
     console.error('Erreur création commande:', orderError);
     throw new Error(
-      `Erreur création commande: ${orderError.message || 'Erreur inconnue'}`
+      `Erreur création commande: ${orderError.message ?? 'Erreur inconnue'}`
     );
   }
 

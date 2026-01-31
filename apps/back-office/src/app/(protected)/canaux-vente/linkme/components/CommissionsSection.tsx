@@ -148,8 +148,8 @@ export function CommissionsSection() {
 
       if (affiliatesError) throw affiliatesError;
 
-      setCommissions(commissionsData || []);
-      setAffiliates(affiliatesData || []);
+      setCommissions(commissionsData ?? []);
+      setAffiliates(affiliatesData ?? []);
     } catch (error) {
       console.error('Error fetching commissions:', error);
       toast({
@@ -268,7 +268,7 @@ export function CommissionsSection() {
       c.order_amount_ht.toFixed(2),
       c.affiliate_commission.toFixed(2),
       c.linkme_commission.toFixed(2),
-      statusConfig[(c.status || 'pending') as keyof typeof statusConfig].label,
+      statusConfig[(c.status ?? 'pending') as keyof typeof statusConfig].label,
     ]);
 
     const csv = [headers.join(';'), ...rows.map(r => r.join(';'))].join('\n');

@@ -105,12 +105,12 @@ export default function LinkMeOrdersPage() {
 
         // Construire un map des donnees enrichies par order_id
         const enriched: LinkMeEnrichedData = {};
-        (ordersData || []).forEach((order: any) => {
+        (ordersData ?? []).forEach((order: any) => {
           enriched[order.id] = {
             affiliate_name: order.affiliate_name ?? null,
             affiliate_type: order.affiliate_type ?? null,
             selection_name: order.selection_name ?? null,
-            total_affiliate_margin: order.total_affiliate_margin || 0,
+            total_affiliate_margin: order.total_affiliate_margin ?? 0,
             pending_admin_validation: order.pending_admin_validation ?? false,
             created_by_affiliate_id: order.created_by_affiliate_id ?? null,
             linkme_selection_id: order.linkme_selection_id ?? null,
@@ -248,14 +248,14 @@ export default function LinkMeOrdersPage() {
                 .rpc('get_linkme_orders', { p_affiliate_id: undefined })
                 .then(({ data }) => {
                   const enriched: LinkMeEnrichedData = {};
-                  (data || []).forEach((order: any) => {
+                  (data ?? []).forEach((order: any) => {
                     enriched[order.id] = {
                       affiliate_name: order.affiliate_name ?? null,
                       affiliate_type: order.affiliate_type ?? null,
                       selection_name: order.selection_name ?? null,
-                      total_affiliate_margin: order.total_affiliate_margin || 0,
+                      total_affiliate_margin: order.total_affiliate_margin ?? 0,
                       pending_admin_validation:
-                        order.pending_admin_validation || false,
+                        order.pending_admin_validation ?? false,
                       created_by_affiliate_id:
                         order.created_by_affiliate_id ?? null,
                       linkme_selection_id: order.linkme_selection_id ?? null,
