@@ -145,7 +145,7 @@ export default function EnseigneDetailPage() {
           .order('created_at', { ascending: false });
 
         // Mapper les données avec l'image primaire
-        const mappedProducts: EnseigneProduct[] = (data || []).map(p => ({
+        const mappedProducts: EnseigneProduct[] = (data ?? []).map(p => ({
           id: p.id,
           name: p.name,
           sku: p.sku,
@@ -282,7 +282,7 @@ export default function EnseigneDetailPage() {
 
     try {
       // 1. Récupérer les IDs actuels
-      const currentIds = new Set(enseigne.organisations?.map(o => o.id) || []);
+      const currentIds = new Set(enseigne.organisations?.map(o => o.id) ?? []);
       const newIds = new Set(organisationIds);
 
       // 2. Organisations à ajouter
@@ -536,7 +536,7 @@ export default function EnseigneDetailPage() {
           {/* Onglet Vue d'ensemble */}
           <TabsContent value="overview" className="mt-6">
             <EnseigneOrganisationsTable
-              organisations={stats?.organisationsWithRevenue || []}
+              organisations={stats?.organisationsWithRevenue ?? []}
               parentOrganisation={stats?.parentOrganisation ?? null}
               onAddOrganisations={() => setIsOrganisationModalOpen(true)}
               onRemoveOrganisation={async orgId => {
@@ -556,7 +556,7 @@ export default function EnseigneDetailPage() {
           {/* Onglet Geographie */}
           <TabsContent value="geography" className="mt-6">
             <EnseigneGeographySection
-              citiesDistribution={stats?.citiesDistribution || []}
+              citiesDistribution={stats?.citiesDistribution ?? []}
               loading={statsLoading}
               className="max-w-none"
             />
@@ -628,7 +628,7 @@ export default function EnseigneDetailPage() {
         open={isOrganisationModalOpen}
         onOpenChange={setIsOrganisationModalOpen}
         enseigne={enseigne}
-        currentOrganisations={enseigne.organisations || []}
+        currentOrganisations={enseigne.organisations ?? []}
         onSave={handleSaveOrganisations}
         onSuccess={handleRefresh}
       />
