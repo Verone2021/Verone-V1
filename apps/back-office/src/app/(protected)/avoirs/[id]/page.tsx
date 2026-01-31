@@ -90,7 +90,7 @@ export default function CreditNoteDetailPage(): React.ReactNode {
       const data = await response.json();
 
       if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Failed to fetch credit note');
+        throw new Error(data.error ?? 'Failed to fetch credit note');
       }
 
       setCreditNote(data.credit_note);
@@ -118,7 +118,7 @@ export default function CreditNoteDetailPage(): React.ReactNode {
       const data = await response.json();
 
       if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Failed to finalize');
+        throw new Error(data.error ?? 'Failed to finalize');
       }
 
       setCreditNote(data.credit_note);
@@ -148,7 +148,7 @@ export default function CreditNoteDetailPage(): React.ReactNode {
       const data = await response.json();
 
       if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Failed to delete');
+        throw new Error(data.error ?? 'Failed to delete');
       }
 
       toast({

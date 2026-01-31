@@ -103,7 +103,7 @@ export default function DeliveryNoteDetailPage(): React.ReactNode {
       const data = await response.json();
 
       if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Failed to fetch delivery note');
+        throw new Error(data.error ?? 'Failed to fetch delivery note');
       }
 
       setDeliveryNote(data.delivery_note);

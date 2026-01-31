@@ -168,7 +168,7 @@ export default function QuoteDetailPage(): React.ReactNode {
       const data = await response.json();
 
       if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Failed to fetch quote');
+        throw new Error(data.error ?? 'Failed to fetch quote');
       }
 
       setQuote(data.quote);
@@ -196,7 +196,7 @@ export default function QuoteDetailPage(): React.ReactNode {
       const data = await response.json();
 
       if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Failed to finalize');
+        throw new Error(data.error ?? 'Failed to finalize');
       }
 
       setQuote(data.quote);
@@ -226,7 +226,7 @@ export default function QuoteDetailPage(): React.ReactNode {
       const data = await response.json();
 
       if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Failed to delete');
+        throw new Error(data.error ?? 'Failed to delete');
       }
 
       toast({
@@ -256,7 +256,7 @@ export default function QuoteDetailPage(): React.ReactNode {
       const data = await response.json();
 
       if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Failed to convert');
+        throw new Error(data.error ?? 'Failed to convert');
       }
 
       toast({

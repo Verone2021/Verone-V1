@@ -71,7 +71,7 @@ export default function LivraisonsPage(): React.ReactNode {
       const data = await response.json();
 
       if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Failed to fetch delivery notes');
+        throw new Error(data.error ?? 'Failed to fetch delivery notes');
       }
 
       setDeliveryNotes(data.delivery_notes || []);
