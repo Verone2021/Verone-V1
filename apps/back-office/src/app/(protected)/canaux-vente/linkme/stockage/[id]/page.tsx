@@ -124,7 +124,7 @@ export default function StorageDetailPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold text-gray-900">
-              {ownerName || 'Chargement...'}
+              {ownerName ?? 'Chargement...'}
             </h1>
             <Badge
               variant="outline"
