@@ -199,7 +199,7 @@ function usePaymentRequestsAdmin(statusFilter: PaymentRequestStatus | 'all') {
           id: item.id,
           requestNumber: item.request_number,
           affiliateId: item.affiliate_id,
-          affiliateName: affiliate?.display_name || 'Affilié',
+          affiliateName: affiliate?.display_name ?? 'Affilié',
           affiliateEmail: affiliate?.email ?? '',
           totalAmountHT: item.total_amount_ht ?? 0,
           totalAmountTTC: item.total_amount_ttc ?? 0,
@@ -252,7 +252,7 @@ function useMarkAsPaid() {
 
 // Badge statut
 function StatusBadge({ status }: { status: PaymentRequestStatus }) {
-  const config = STATUS_CONFIG[status] || STATUS_CONFIG.pending;
+  const config = STATUS_CONFIG[status] ?? STATUS_CONFIG.pending;
   const Icon = config.icon;
 
   return (
