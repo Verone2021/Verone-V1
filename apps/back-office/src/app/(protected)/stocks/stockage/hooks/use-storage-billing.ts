@@ -287,5 +287,5 @@ export function getSourceColor(
     billable_toggle: 'amber',
     manual_adjustment: 'gray',
   };
-  return colors[source] || 'gray';
+  return colors[source] ?? 'gray';
 }

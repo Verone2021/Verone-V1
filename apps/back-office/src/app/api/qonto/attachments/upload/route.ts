@@ -123,7 +123,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const attachment = await qontoClient.uploadAttachmentToTransaction(
       qontoUUID,
       file,
-      file.name || 'facture.pdf',
+      file.name ?? 'facture.pdf',
       idempotencyKey
     );
 
