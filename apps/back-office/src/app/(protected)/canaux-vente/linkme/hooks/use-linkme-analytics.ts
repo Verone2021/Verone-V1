@@ -180,7 +180,7 @@ export function useLinkMeAnalytics(
         .eq('status', 'active');
 
       if (affiliatesError) throw affiliatesError;
-      const activeAffiliates = affiliatesData?.length || 0;
+      const activeAffiliates = affiliatesData?.length ?? 0;
 
       // ============================================
       // 2. Commissions (filtrées par période/année OU toutes si isAllTime)
@@ -212,10 +212,10 @@ export function useLinkMeAnalytics(
       if (commissionsError) throw commissionsError;
 
       // Calculs agrégés
-      const commissions = commissionsData || [];
+      const commissions = commissionsData ?? [];
       const totalOrders = commissions.length;
       const totalRevenue = commissions.reduce(
-        (sum, c) => sum + (c.order_amount_ht || 0),
+        (sum, c) => sum + (c.order_amount_ht ?? 0),
         0
       );
       const averageBasket = totalOrders > 0 ? totalRevenue / totalOrders : 0;
@@ -227,23 +227,23 @@ export function useLinkMeAnalytics(
         // Montants HT
         pendingHT: commissions
           .filter(c => c.status === 'pending')
-          .reduce((sum, c) => sum + (c.affiliate_commission || 0), 0),
+          .reduce((sum, c) => sum + (c.affiliate_commission ?? 0), 0),
         validatedHT: commissions
           .filter(c => c.status === 'validated')
-          .reduce((sum, c) => sum + (c.affiliate_commission || 0), 0),
+          .reduce((sum, c) => sum + (c.affiliate_commission ?? 0), 0),
         paidHT: commissions
           .filter(c => c.status === 'paid')
-          .reduce((sum, c) => sum + (c.affiliate_commission || 0), 0),
+          .reduce((sum, c) => sum + (c.affiliate_commission ?? 0), 0),
         // Montants TTC
         pendingTTC: commissions
           .filter(c => c.status === 'pending')
-          .reduce((sum, c) => sum + (c.affiliate_commission_ttc || 0), 0),
+          .reduce((sum, c) => sum + (c.affiliate_commission_ttc ?? 0), 0),
         validatedTTC: commissions
           .filter(c => c.status === 'validated')
-          .reduce((sum, c) => sum + (c.affiliate_commission_ttc || 0), 0),
+          .reduce((sum, c) => sum + (c.affiliate_commission_ttc ?? 0), 0),
         paidTTC: commissions
           .filter(c => c.status === 'paid')
-          .reduce((sum, c) => sum + (c.affiliate_commission_ttc || 0), 0),
+          .reduce((sum, c) => sum + (c.affiliate_commission_ttc ?? 0), 0),
       };
 
       const totalPaidCommissionsHT = commissionsByStatus.paidHT;
@@ -259,7 +259,7 @@ export function useLinkMeAnalytics(
           const label = formatDateLabel(date, period);
           revenueMap.set(
             label,
-            (revenueMap.get(label) || 0) + (c.order_amount_ht || 0)
+            (revenueMap.get(label) ?? 0) + (c.order_amount_ht ?? 0)
           );
         }
       });
@@ -279,7 +279,7 @@ export function useLinkMeAnalytics(
       commissions.forEach(c => {
         const affiliateId = c.affiliate_id;
         const affiliateName =
-          (c.affiliate as { display_name: string } | null)?.display_name ||
+          (c.affiliate as { display_name: string } | null)?.display_name ??
           'Inconnu';
 
         if (!affiliateMap.has(affiliateId)) {
@@ -292,9 +292,9 @@ export function useLinkMeAnalytics(
         }
 
         const aff = affiliateMap.get(affiliateId)!;
-        aff.revenue += c.order_amount_ht || 0;
+        aff.revenue += c.order_amount_ht ?? 0;
         aff.orders += 1;
-        aff.commissions += c.affiliate_commission_ttc || 0;
+        aff.commissions += c.affiliate_commission_ttc ?? 0;
       });
 
       const topAffiliates: TopAffiliateData[] = Array.from(
@@ -311,17 +311,17 @@ export function useLinkMeAnalytics(
         .filter(c => c.status === 'pending' || c.status === 'validated')
         .sort(
           (a, b) =>
-            (b.affiliate_commission_ttc || 0) -
-            (a.affiliate_commission_ttc || 0)
+            (b.affiliate_commission_ttc ?? 0) -
+            (a.affiliate_commission_ttc ?? 0)
         )
         .slice(0, 5)
         .map((c, index) => ({
           id: String(index),
           affiliateName:
-            (c.affiliate as { display_name: string } | null)?.display_name ||
+            (c.affiliate as { display_name: string } | null)?.display_name ??
             'Affilié',
-          amount: c.affiliate_commission_ttc || 0,
-          orderNumber: c.order_number || '-',
+          amount: c.affiliate_commission_ttc ?? 0,
+          orderNumber: c.order_number ?? '-',
           date: c.created_at
             ? new Date(c.created_at).toLocaleDateString('fr-FR')
             : '-',
@@ -349,26 +349,26 @@ export function useLinkMeAnalytics(
 
       if (selectionsError) throw selectionsError;
 
-      const selections = selectionsData || [];
+      const selections = selectionsData ?? [];
       const totalSelections = selections.length;
 
       // Performance par sélection
       const selectionsPerformance: SelectionPerformance[] = selections.map(
         s => {
-          const views = s.views_count || 0;
-          const orders = s.orders_count || 0;
+          const views = s.views_count ?? 0;
+          const orders = s.orders_count ?? 0;
 
           return {
             id: s.id,
             name: s.name,
             slug: s.slug ?? '',
             affiliateName:
-              (s.affiliate as { display_name: string } | null)?.display_name ||
+              (s.affiliate as { display_name: string } | null)?.display_name ??
               'Inconnu',
-            productsCount: s.products_count || 0,
+            productsCount: s.products_count ?? 0,
             views,
             orders,
-            revenue: s.total_revenue || 0,
+            revenue: s.total_revenue ?? 0,
             conversionRate: views > 0 ? (orders / views) * 100 : 0,
           };
         }
@@ -376,7 +376,7 @@ export function useLinkMeAnalytics(
 
       // Taux de conversion global (approximatif)
       const totalViews = selections.reduce(
-        (sum, s) => sum + (s.views_count || 0),
+        (sum, s) => sum + (s.views_count ?? 0),
         0
       );
       const conversionRate =

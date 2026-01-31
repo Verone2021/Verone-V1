@@ -277,7 +277,7 @@ function ExpenseRow({
               style={{ backgroundColor: getPcgColor(expense.category) }}
             />
             <span className="truncate">
-              {categoryLabel || expense.category}
+              {categoryLabel ?? expense.category}
             </span>
           </div>
         ) : (
@@ -322,7 +322,7 @@ function ExpenseRow({
                   size="sm"
                   onClick={() => onViewRule(expense.applied_rule_id!)}
                   className="gap-1 text-blue-600 hover:text-blue-800"
-                  title={`Règle: ${expense.rule_display_label || expense.rule_match_value}`}
+                  title={`Règle: ${expense.rule_display_label ?? expense.rule_match_value}`}
                 >
                   <Settings size={14} />
                 </Button>
@@ -373,7 +373,7 @@ export default function DepensesPage() {
     }, 400);
 
     return () => clearTimeout(timer);
-  }, [searchValue]);
+  }, [searchValue, setFilters]);
   const { toast } = useToast();
 
   // Dashboard stats pour les graphiques
@@ -552,7 +552,7 @@ export default function DepensesPage() {
 
       (data || []).forEach(
         (exp: { category: string | null; amount: number | null }) => {
-          const cat = exp.category || 'other';
+          const cat = exp.category ?? 'other';
           const amount = exp.amount ?? 0;
           if (!categoryData[cat]) {
             categoryData[cat] = { total: 0, count: 0 };
@@ -565,7 +565,7 @@ export default function DepensesPage() {
 
       const breakdownArray: ExpenseBreakdown[] = Object.entries(categoryData)
         .map(([code, catData]) => ({
-          category_name: getPcgCategory(code)?.label || code,
+          category_name: getPcgCategory(code)?.label ?? code,
           category_code: code,
           total_amount: catData.total,
           count: catData.count,
@@ -800,7 +800,7 @@ export default function DepensesPage() {
         {/* Onglets de statut */}
         <TabsNavigation
           tabs={statusTabs}
-          defaultTab={filters.status || 'all'}
+          defaultTab={filters.status ?? 'all'}
           onTabChange={handleStatusTabChange}
           className="bg-white rounded-xl border border-slate-200 px-4"
         />
@@ -828,7 +828,7 @@ export default function DepensesPage() {
             {/* Filtre Dépenses/Entrées */}
             <select
               className="px-3 py-2 border border-slate-200 rounded-lg text-sm font-medium"
-              value={filters.side || 'all'}
+              value={filters.side ?? 'all'}
               onChange={e =>
                 setFilters(prev => ({
                   ...prev,
@@ -873,7 +873,7 @@ export default function DepensesPage() {
               }
             >
               <option value="">Toutes catégories</option>
-              {getPcgCategoriesByType(filters.side || 'all').map(cat => (
+              {getPcgCategoriesByType(filters.side ?? 'all').map(cat => (
                 <option key={cat.code} value={cat.code}>
                   {cat.code} - {cat.label}
                 </option>
@@ -1049,7 +1049,7 @@ export default function DepensesPage() {
                                     {formatDate(expense.emitted_at)}
                                   </td>
                                   <td className="px-4 py-2 text-sm text-slate-700">
-                                    {expense.transaction_counterparty_name ||
+                                    {expense.transaction_counterparty_name ??
                                       expense.label}
                                   </td>
                                   <td className="px-4 py-2 text-sm text-right font-medium text-red-600">
@@ -1180,11 +1180,11 @@ export default function DepensesPage() {
         open={classifyModalOpen}
         onOpenChange={setClassifyModalOpen}
         label={
-          selectedExpense?.label ||
-          selectedExpense?.transaction_counterparty_name ||
+          selectedExpense?.label ??
+          selectedExpense?.transaction_counterparty_name ??
           ''
         }
-        amount={selectedExpense?.amount || 0}
+        amount={selectedExpense?.amount ?? 0}
         transactionId={selectedExpense?.transaction_id}
         counterpartyName={
           selectedExpense?.transaction_counterparty_name ?? undefined
@@ -1195,7 +1195,7 @@ export default function DepensesPage() {
             ? suggestionsMap.get(selectedExpense.id)?.matchedRule?.id
             : undefined
         }
-        transactionSide={selectedExpense?.side || 'debit'}
+        transactionSide={selectedExpense?.side ?? 'debit'}
         // TVA Qonto OCR - pré-remplit le formulaire si disponible
         currentVatRate={selectedExpense?.vat_rate ?? undefined}
         currentVatSource={selectedExpense?.vat_source ?? undefined}

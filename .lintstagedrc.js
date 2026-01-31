@@ -3,22 +3,23 @@
  *
  * Runs linting and formatting on staged files before commit.
  *
- * Strategy (Ratchet Effect):
+ * Strategy (Ratchet Effect Progressif - Migration Mode):
  * - ESLint auto-fixes what it can
- * - BLOCKS commit if ANY warnings remain on modified files (--max-warnings=0)
- * - Forces "Boy Scout Rule": modified files MUST be cleaner after edit
- * - Prevents technical debt from EVER increasing
- * - Prettier formats all files
+ * - Progressive Ratchet: ALLOWS commit if warnings DECREASE or STABLE (not forced to 0)
+ * - Baseline tracking: .eslint-baseline.json stores current warnings per file
+ * - BLOCKS commit if warnings INCREASE (regression protection)
+ * - Forces gradual improvement: can't make it worse, encouraged to make it better
+ * - Post-migration: Will revert to strict --max-warnings=0 once 0 warnings achieved
  *
- * @see https://github.com/lint-staged/lint-staged
- * @see https://eslint.org/docs/latest/use/command-line-interface#--max-warnings
+ * @see scripts/eslint-ratchet-progressive.sh
+ * @see docs/current/eslint-progressive-ratchet.md
  * @see https://martinfowler.com/articles/qa-in-production.html#ratcheting
  */
 const config = {
-  // TypeScript/JavaScript files - RATCHET EFFECT ENABLED
+  // TypeScript/JavaScript files - PROGRESSIVE RATCHET EFFECT (MIGRATION MODE)
   '**/*.{ts,tsx,js,jsx}': [
     'eslint --fix', // Fix what can be fixed automatically
-    'eslint --max-warnings=0', // BLOCK if warnings remain (Ratchet Effect)
+    'bash scripts/eslint-ratchet-progressive.sh', // Progressive validation (allows reduction, blocks increase)
     'prettier --write',
   ],
   // JSON/Markdown

@@ -149,7 +149,7 @@ export function useOrganisationContacts(
         throw error;
       }
 
-      const contacts: OrganisationContact[] = (data || []).map(c => ({
+      const contacts: OrganisationContact[] = (data ?? []).map(c => ({
         id: c.id,
         firstName: c.first_name,
         lastName: c.last_name,
@@ -157,23 +157,22 @@ export function useOrganisationContacts(
         phone: c.phone,
         mobile: c.mobile,
         title: c.title,
-        isPrimaryContact: c.is_primary_contact || false,
-        isBillingContact: c.is_billing_contact || false,
-        isCommercialContact: c.is_commercial_contact || false,
-        isTechnicalContact: c.is_technical_contact || false,
+        isPrimaryContact: c.is_primary_contact ?? false,
+        isBillingContact: c.is_billing_contact ?? false,
+        isCommercialContact: c.is_commercial_contact ?? false,
+        isTechnicalContact: c.is_technical_contact ?? false,
         // Détecter si c'est un utilisateur (créé par auto-sync ou backfill)
         isUser:
-          c.notes?.includes('auto-sync') ||
-          c.notes?.includes('backfill') ||
-          false,
+          (c.notes?.includes('auto-sync') ?? false) ||
+          (c.notes?.includes('backfill') ?? false),
         // IDs pour filtrage UI (Phase 8.1 - franchises)
         organisationId: c.organisation_id,
         enseigneId: c.enseigne_id,
       }));
 
       // Identifier les contacts clés
-      const primaryContact = contacts.find(c => c.isPrimaryContact) || null;
-      const billingContact = contacts.find(c => c.isBillingContact) || null;
+      const primaryContact = contacts.find(c => c.isPrimaryContact) ?? null;
+      const billingContact = contacts.find(c => c.isBillingContact) ?? null;
       const otherContacts = contacts.filter(
         c => !c.isPrimaryContact && !c.isBillingContact
       );
@@ -259,8 +258,8 @@ export function useUpdateOrganisationContacts() {
             first_name: primaryContact.firstName,
             last_name: primaryContact.lastName,
             email: primaryContact.email,
-            phone: primaryContact.phone || null,
-            title: primaryContact.title || null,
+            phone: primaryContact.phone ?? null,
+            title: primaryContact.title ?? null,
             is_billing_contact: billingContact === null, // Si pas de billing distinct, primary = billing
             updated_at: new Date().toISOString(),
           })
@@ -274,8 +273,8 @@ export function useUpdateOrganisationContacts() {
           first_name: primaryContact.firstName,
           last_name: primaryContact.lastName,
           email: primaryContact.email,
-          phone: primaryContact.phone || null,
-          title: primaryContact.title || null,
+          phone: primaryContact.phone ?? null,
+          title: primaryContact.title ?? null,
           is_primary_contact: true,
           is_billing_contact: billingContact === null, // Si pas de billing distinct
           is_active: true,
@@ -294,8 +293,8 @@ export function useUpdateOrganisationContacts() {
               first_name: billingContact.firstName,
               last_name: billingContact.lastName,
               email: billingContact.email,
-              phone: billingContact.phone || null,
-              title: billingContact.title || null,
+              phone: billingContact.phone ?? null,
+              title: billingContact.title ?? null,
               updated_at: new Date().toISOString(),
             })
             .eq('id', existingBilling.id);
@@ -310,8 +309,8 @@ export function useUpdateOrganisationContacts() {
               first_name: billingContact.firstName,
               last_name: billingContact.lastName,
               email: billingContact.email,
-              phone: billingContact.phone || null,
-              title: billingContact.title || null,
+              phone: billingContact.phone ?? null,
+              title: billingContact.title ?? null,
               is_primary_contact: false,
               is_billing_contact: true,
               is_active: true,
@@ -378,7 +377,7 @@ export function useCreateOrganisationContacts() {
         last_name: primaryContact.lastName,
         email: primaryContact.email,
         phone: primaryContact.phone || null,
-        title: primaryContact.title || 'Propriétaire',
+        title: primaryContact.title ?? 'Propriétaire',
         is_primary_contact: true,
         is_billing_contact: billingContact === null,
         is_active: true,
@@ -394,7 +393,7 @@ export function useCreateOrganisationContacts() {
           last_name: billingContact.lastName,
           email: billingContact.email,
           phone: billingContact.phone || null,
-          title: billingContact.title || 'Responsable facturation',
+          title: billingContact.title ?? 'Responsable facturation',
           is_primary_contact: false,
           is_billing_contact: true,
           is_active: true,

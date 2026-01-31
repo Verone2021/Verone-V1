@@ -54,7 +54,7 @@ const CONFIG = {
   // Supabase CLI commands
   supabaseCli: {
     diff: 'supabase db diff',
-    types: 'supabase gen types typescript --local',
+    types: 'supabase gen types typescript --linked',
     verify: 'supabase db verify',
   },
 
@@ -269,7 +269,9 @@ async function generateTypes() {
 
   try {
     console.log('⚙️  Génération types depuis schema Supabase...');
-    const { stdout } = await execAsync('supabase gen types typescript --local');
+    const { stdout } = await execAsync(
+      'supabase gen types typescript --linked'
+    );
 
     // Sauvegarder types
     fs.writeFileSync(CONFIG.typesOutput, stdout, 'utf-8');

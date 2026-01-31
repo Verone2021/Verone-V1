@@ -1,6 +1,6 @@
 # Documentation Verone - Source de Verite
 
-**Derniere mise a jour:** 2026-01-10
+**Derniere mise a jour:** 2026-01-30
 
 Cette documentation est la **source unique de verite** pour le projet Verone.
 Toute autre documentation doit etre consideree comme archive.
@@ -19,6 +19,7 @@ Toute autre documentation doit etre consideree comme archive.
 | [integrations.md](./integrations.md)                   | Qonto, Google OAuth, Supabase    | APIs externes       |
 | [deploy-runbooks.md](./deploy-runbooks.md)             | Vercel, GitHub CI/CD, rollback   | Deploiement         |
 | [business-rules-linkme.md](./business-rules-linkme.md) | Workflows LinkMe B2B             | Business logic      |
+| [linkme/routes-index.md](./linkme/routes-index.md)     | Index routes LinkMe + audit 404  | Debugging LinkMe    |
 
 ### Serena Memories (CRITICAL)
 

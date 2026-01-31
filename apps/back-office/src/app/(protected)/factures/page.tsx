@@ -90,6 +90,27 @@ import {
 
 type TabType = 'factures' | 'devis' | 'avoirs' | 'manquantes';
 
+// Types pour réponses API
+interface ApiResponse<T> {
+  success: boolean;
+  error?: string;
+  message?: string;
+  data?: T;
+}
+
+interface InvoicesResponse extends ApiResponse<{ invoices: Invoice[] }> {
+  invoices?: Invoice[];
+}
+
+interface QuotesResponse extends ApiResponse<{ quotes: Quote[] }> {
+  quotes?: Quote[];
+}
+
+interface CreditNotesResponse
+  extends ApiResponse<{ credit_notes: CreditNote[] }> {
+  credit_notes?: CreditNote[];
+}
+
 interface Quote {
   id: string;
   quote_number: string;
@@ -384,7 +405,7 @@ function InvoicesTable({
         {invoices.map(invoice => (
           <TableRow key={invoice.id}>
             <TableCell className="font-mono">{invoice.number}</TableCell>
-            <TableCell>{invoice.client?.name || '-'}</TableCell>
+            <TableCell>{invoice.client?.name ?? '-'}</TableCell>
             <TableCell>{formatDate(invoice.issue_date)}</TableCell>
             <TableCell>
               <span
@@ -659,13 +680,13 @@ export default function FacturationPage() {
 
     try {
       const response = await fetch('/api/qonto/invoices');
-      const data = await response.json();
+      const data = (await response.json()) as InvoicesResponse;
 
       if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Failed to fetch invoices');
+        throw new Error(data.error ?? 'Failed to fetch invoices');
       }
 
-      setInvoices(data.invoices || []);
+      setInvoices(data.invoices ?? []);
     } catch (err) {
       setErrorInvoices(err instanceof Error ? err.message : 'Erreur inconnue');
     } finally {
@@ -680,13 +701,13 @@ export default function FacturationPage() {
 
     try {
       const response = await fetch('/api/qonto/quotes');
-      const data = await response.json();
+      const data = (await response.json()) as QuotesResponse;
 
       if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Failed to fetch quotes');
+        throw new Error(data.error ?? 'Failed to fetch quotes');
       }
 
-      setQuotes(data.quotes || []);
+      setQuotes(data.quotes ?? []);
     } catch (err) {
       setErrorQuotes(err instanceof Error ? err.message : 'Erreur inconnue');
     } finally {
@@ -701,13 +722,13 @@ export default function FacturationPage() {
 
     try {
       const response = await fetch('/api/qonto/credit-notes');
-      const data = await response.json();
+      const data = (await response.json()) as CreditNotesResponse;
 
       if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Failed to fetch credit notes');
+        throw new Error(data.error ?? 'Failed to fetch credit notes');
       }
 
-      setCreditNotes(data.credit_notes || []);
+      setCreditNotes(data.credit_notes ?? []);
     } catch (err) {
       setErrorCreditNotes(
         err instanceof Error ? err.message : 'Erreur inconnue'
@@ -731,7 +752,7 @@ export default function FacturationPage() {
     } else if (activeTab === 'avoirs' && creditNotes.length === 0) {
       void fetchCreditNotes();
     }
-  }, [activeTab]);
+  }, [activeTab, invoices.length, quotes.length, creditNotes.length]);
 
   // Convertir TransactionMissingInvoice en TransactionForUpload
   const transactionForUpload: TransactionForUpload | null = useMemo(() => {
@@ -780,9 +801,11 @@ export default function FacturationPage() {
       const response = await fetch(`/api/qonto/invoices/${invoice.id}/pdf`);
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+        const errorData = (await response.json().catch(() => ({}))) as {
+          error?: string;
+        };
         throw new Error(
-          errorData.error || `Erreur ${response.status}: ${response.statusText}`
+          errorData.error ?? `Erreur ${response.status}: ${response.statusText}`
         );
       }
 
@@ -830,9 +853,11 @@ export default function FacturationPage() {
       const response = await fetch(`/api/qonto/quotes/${quote.id}/pdf`);
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+        const errorData = (await response.json().catch(() => ({}))) as {
+          error?: string;
+        };
         throw new Error(
-          errorData.error || `Erreur ${response.status}: ${response.statusText}`
+          errorData.error ?? `Erreur ${response.status}: ${response.statusText}`
         );
       }
 
@@ -872,8 +897,8 @@ export default function FacturationPage() {
       });
 
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Erreur lors de la suppression');
+        const data = (await response.json()) as ApiResponse<unknown>;
+        throw new Error(data.error ?? 'Erreur lors de la suppression');
       }
 
       void fetchQuotes();
@@ -896,8 +921,8 @@ export default function FacturationPage() {
       });
 
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Erreur lors de la finalisation');
+        const data = (await response.json()) as ApiResponse<unknown>;
+        throw new Error(data.error ?? 'Erreur lors de la finalisation');
       }
 
       void fetchQuotes();
@@ -1007,7 +1032,8 @@ export default function FacturationPage() {
       const transactionsResponse = await fetch('/api/qonto/sync', {
         method: 'POST',
       });
-      const transactionsResult = await transactionsResponse.json();
+      const transactionsResult =
+        (await transactionsResponse.json()) as ApiResponse<unknown>;
 
       if (!transactionsResult.success) {
         console.error(
@@ -1022,7 +1048,8 @@ export default function FacturationPage() {
       const invoicesResponse = await fetch('/api/qonto/sync-invoices', {
         method: 'POST',
       });
-      const invoicesResult = await invoicesResponse.json();
+      const invoicesResult =
+        (await invoicesResponse.json()) as ApiResponse<unknown>;
 
       if (!invoicesResult.success) {
         console.error('[Qonto Sync Invoices] Failed:', invoicesResult.message);
@@ -1299,7 +1326,8 @@ export default function FacturationPage() {
                       `/api/financial-documents/${invoice.id}/archive`,
                       { method: 'POST' }
                     );
-                    const data = await response.json();
+                    const data =
+                      (await response.json()) as ApiResponse<unknown>;
                     if (!data.success) throw new Error(data.error);
                     void fetchInvoices();
                   } catch (error) {
@@ -1329,7 +1357,8 @@ export default function FacturationPage() {
                       `/api/financial-documents/${invoice.id}/unarchive`,
                       { method: 'POST' }
                     );
-                    const data = await response.json();
+                    const data =
+                      (await response.json()) as ApiResponse<unknown>;
                     if (!data.success) throw new Error(data.error);
                     void fetchInvoices();
                   } catch (error) {
@@ -1406,7 +1435,7 @@ export default function FacturationPage() {
                         <TableCell className="font-mono">
                           {quote.quote_number}
                         </TableCell>
-                        <TableCell>{quote.client?.name || '-'}</TableCell>
+                        <TableCell>{quote.client?.name ?? '-'}</TableCell>
                         <TableCell>{formatDate(quote.issue_date)}</TableCell>
                         <TableCell>{formatDate(quote.expiry_date)}</TableCell>
                         <TableCell>

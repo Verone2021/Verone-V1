@@ -49,7 +49,7 @@ export function useOrdersPendingCount(options?: {
   enableRealtime?: boolean;
   refetchInterval?: number;
 }): OrdersPendingCountHook {
-  const { enableRealtime = true, refetchInterval = 30000 } = options || {};
+  const { enableRealtime = true, refetchInterval = 30000 } = options ?? {};
 
   const [count, setCount] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
@@ -93,7 +93,7 @@ export function useOrdersPendingCount(options?: {
         return; // Sortie anticipée sans exception
       }
 
-      setCount(totalCount || 0);
+      setCount(totalCount ?? 0);
       setLastUpdated(new Date());
     } catch (err) {
       const errorObj =
@@ -125,7 +125,9 @@ export function useOrdersPendingCount(options?: {
       }
 
       // Initial fetch (authentifié)
-      fetchCount();
+      void fetchCount().catch(err => {
+        console.error('[useOrdersPendingCount] Initial fetch failed:', err);
+      });
 
       // Setup Realtime si activé ET authentifié
       if (enableRealtime) {
@@ -139,32 +141,51 @@ export function useOrdersPendingCount(options?: {
               table: 'sales_orders',
             },
             payload => {
-              const newRow = payload.new as any;
-              const oldRow = payload.old as any;
+              const newRow = payload.new as Record<string, unknown> | null;
+              const oldRow = payload.old as Record<string, unknown> | null;
+
+              // Helper safe pour extraire status
+              const getStatus = (
+                row: Record<string, unknown> | null
+              ): string | null =>
+                row && typeof row.status === 'string' ? row.status : null;
+
+              const newStatus = getStatus(newRow);
+              const oldStatus = getStatus(oldRow);
 
               // Refetch si changement impacte le statut draft
               const shouldRefetch =
                 payload.eventType === 'INSERT' ||
                 payload.eventType === 'DELETE' ||
                 (payload.eventType === 'UPDATE' &&
-                  (newRow?.status === 'draft' || oldRow?.status === 'draft'));
+                  (newStatus === 'draft' || oldStatus === 'draft'));
 
               if (shouldRefetch) {
-                console.log(
-                  '[useOrdersPendingCount] Realtime change detected:',
-                  payload.eventType
-                );
-                fetchCount();
+                void fetchCount().catch(err => {
+                  console.error(
+                    '[useOrdersPendingCount] Realtime refetch failed:',
+                    err
+                  );
+                });
               }
             }
           )
           .subscribe(status => {
             if (status === 'SUBSCRIBED') {
-              console.log('[useOrdersPendingCount] Realtime subscribed');
+              // Realtime subscribed successfully
             } else if (status === 'CHANNEL_ERROR') {
-              // Log silencieux, pas setError pour éviter bruit sur page login
+              console.error(
+                '[useOrdersPendingCount] Realtime error - falling back to polling'
+              );
+              // Fallback : activer polling si Realtime fail
+              if (!intervalRef.current && refetchInterval > 0) {
+                intervalRef.current = setInterval(() => {
+                  void fetchCount().catch(console.error);
+                }, refetchInterval);
+              }
+            } else if (status === 'CLOSED') {
               console.warn(
-                '[useOrdersPendingCount] Realtime subscription failed'
+                '[useOrdersPendingCount] Channel closed, will reconnect on next mount'
               );
             }
           });
@@ -173,19 +194,31 @@ export function useOrdersPendingCount(options?: {
       // Polling fallback (seulement si authentifié)
       if (!enableRealtime || refetchInterval > 0) {
         intervalRef.current = setInterval(() => {
-          fetchCount();
+          void fetchCount().catch(err => {
+            console.error('[useOrdersPendingCount] Polling failed:', err);
+          });
         }, refetchInterval);
       }
     };
 
-    setupSubscriptions();
+    void setupSubscriptions().catch(err => {
+      console.error('[useOrdersPendingCount] Setup subscriptions failed:', err);
+    });
 
     // Cleanup
     return () => {
       isMounted = false;
       if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
-        channelRef.current = null;
+        // Void la promise mais attendre fin avant reset ref
+        void supabase
+          .removeChannel(channelRef.current)
+          .then(() => {
+            channelRef.current = null;
+          })
+          .catch(err => {
+            console.warn('[useOrdersPendingCount] Channel cleanup error:', err);
+            channelRef.current = null; // Reset même en cas d'erreur
+          });
       }
       if (intervalRef.current) {
         clearInterval(intervalRef.current);

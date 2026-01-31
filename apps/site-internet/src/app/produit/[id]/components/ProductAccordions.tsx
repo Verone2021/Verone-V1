@@ -64,7 +64,7 @@ export function ProductAccordions({ product }: ProductAccordionsProps) {
   return (
     <Accordion type="multiple" className="border rounded-lg">
       {/* Dimensions */}
-      {(dimensionsFormatted || product.weight) && (
+      {(dimensionsFormatted ?? product.weight) && (
         <AccordionItem value="dimensions">
           <AccordionTrigger className="px-4">
             <div className="flex items-center gap-2">

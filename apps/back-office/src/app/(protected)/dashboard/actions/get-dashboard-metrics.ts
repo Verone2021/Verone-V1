@@ -214,61 +214,61 @@ export const getDashboardMetrics = cache(
       const productsNewMonth =
         products.data?.filter(
           p => p.created_at && new Date(p.created_at) > thirtyDaysAgo
-        ).length || 0;
+        ).length ?? 0;
 
       const organisationsNewMonth =
         organisations.data?.filter(
           o => o.created_at && new Date(o.created_at) > thirtyDaysAgo
-        ).length || 0;
+        ).length ?? 0;
 
       // Calculate revenue 30 days (sum of delivered orders)
       const revenueSum =
         revenue30Days.data?.reduce(
-          (sum, order) => sum + (order.total_ttc || 0),
+          (sum, order) => sum + (order.total_ttc ?? 0),
           0
-        ) || 0;
+        ) ?? 0;
 
       // Format stock alerts
-      const stockAlertsFormatted = (alertsDetails.data || [])
+      const stockAlertsFormatted = (alertsDetails.data ?? [])
         .filter(alert => alert.product_id && alert.product_name)
         .map(alert => ({
           product_id: alert.product_id!,
           product_name: alert.product_name!,
-          severity: alert.severity || 'critical',
-          min_stock: alert.min_stock || 0,
-          stock_real: alert.stock_real || 0,
+          severity: alert.severity ?? 'critical',
+          min_stock: alert.min_stock ?? 0,
+          stock_real: alert.stock_real ?? 0,
         }));
 
       // Format recent orders
-      const recentOrdersFormatted = (recentOrders.data || [])
+      const recentOrdersFormatted = (recentOrders.data ?? [])
         .filter(order => order.id && order.order_number)
         .map(order => ({
           id: order.id,
           order_number: order.order_number,
           created_at: order.created_at,
-          total_ttc: order.total_ttc || 0,
-          customer_type: order.customer_type || 'organization',
+          total_ttc: order.total_ttc ?? 0,
+          customer_type: order.customer_type ?? 'organization',
           status: order.status,
         }));
 
       return {
         // NEW: Structured sections
         hero: {
-          ordersPending: ordersPending.count || 0,
-          stockAlerts: alertsStock.count || 0,
+          ordersPending: ordersPending.count ?? 0,
+          stockAlerts: alertsStock.count ?? 0,
           revenue30Days: revenueSum,
-          consultations: consultations.count || 0,
+          consultations: consultations.count ?? 0,
         },
         sales: {
-          ordersLinkme: ordersLinkme.count || 0,
-          commissions: commissions.count || 0,
+          ordersLinkme: ordersLinkme.count ?? 0,
+          commissions: commissions.count ?? 0,
         },
         stock: {
           products: {
-            total: products.count || 0,
+            total: products.count ?? 0,
             new_month: productsNewMonth,
           },
-          outOfStock: outOfStock.count || 0,
+          outOfStock: outOfStock.count ?? 0,
           alerts: stockAlertsFormatted,
         },
         finance: {
@@ -280,21 +280,21 @@ export const getDashboardMetrics = cache(
 
         // LEGACY: Backward compatibility
         kpis: {
-          alertsStock: alertsStock.count || 0,
-          ordersPending: ordersPending.count || 0,
-          ordersLinkme: ordersLinkme.count || 0,
+          alertsStock: alertsStock.count ?? 0,
+          ordersPending: ordersPending.count ?? 0,
+          ordersLinkme: ordersLinkme.count ?? 0,
           products: {
-            total: products.count || 0,
+            total: products.count ?? 0,
             new_month: productsNewMonth,
           },
-          consultations: consultations.count || 0,
-          customers: customers.count || 0,
+          consultations: consultations.count ?? 0,
+          customers: customers.count ?? 0,
           organisations: {
-            total: organisations.count || 0,
+            total: organisations.count ?? 0,
             new_month: organisationsNewMonth,
           },
-          commissions: commissions.count || 0,
-          outOfStock: outOfStock.count || 0,
+          commissions: commissions.count ?? 0,
+          outOfStock: outOfStock.count ?? 0,
         },
         widgets: {
           stockAlerts: stockAlertsFormatted,

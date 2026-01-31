@@ -176,7 +176,7 @@ export default function ProductPage({
         <div className="space-y-8">
           {/* Galerie photos avec lightbox */}
           <ProductGallery
-            images={product.image_urls || []}
+            images={product.image_urls ?? []}
             productName={product.name}
           />
 

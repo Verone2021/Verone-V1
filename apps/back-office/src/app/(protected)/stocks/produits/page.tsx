@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -38,6 +38,32 @@ import {
   ArrowLeft,
 } from 'lucide-react';
 
+// Types pour les produits et mouvements de stock
+interface Product {
+  id: string;
+  name: string;
+  sku: string;
+  stock_quantity: number | null;
+  min_stock: number | null;
+  product_image_url: string | null;
+  cost_price: number;
+  updated_at: string;
+}
+
+interface StockMovement {
+  id: string;
+  movement_type: 'IN' | 'OUT' | 'ADJUST';
+  quantity_change: number;
+  quantity_before: number;
+  quantity_after: number;
+  performed_at: string;
+  notes: string | null;
+  user_profiles: {
+    first_name: string;
+    last_name: string;
+  } | null;
+}
+
 interface StockFilters {
   search: string;
   status: 'all' | 'in_stock' | 'low_stock' | 'out_of_stock';
@@ -47,7 +73,7 @@ interface StockFilters {
 }
 
 interface StockMovementModalProps {
-  product: any;
+  product: Product | null;
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
@@ -71,6 +97,8 @@ function StockMovementModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!product) return;
+
     if (!quantity || parseInt(quantity) <= 0) {
       toast({
         title: 'Erreur',
@@ -123,7 +151,9 @@ function StockMovementModal({
             </label>
             <Select
               value={movementType}
-              onValueChange={(value: any) => setMovementType(value)}
+              onValueChange={(value: string) =>
+                setMovementType(value as 'IN' | 'OUT' | 'ADJUST')
+              }
             >
               <SelectTrigger>
                 <SelectValue />
@@ -154,7 +184,7 @@ function StockMovementModal({
             />
             {product && (
               <p className="text-xs text-gray-500 mt-1">
-                Stock actuel: {product.stock_quantity || 0} unités
+                Stock actuel: {product.stock_quantity ?? 0} unités
               </p>
             )}
           </div>
@@ -215,13 +245,27 @@ function ProductHistoryModal({
   isOpen,
   onClose,
 }: {
-  product: any;
+  product: Product | null;
   isOpen: boolean;
   onClose: () => void;
 }) {
-  const [movements, setMovements] = useState([]);
+  const [movements, setMovements] = useState<StockMovement[]>([]);
   const [loading, setLoading] = useState(false);
   const { getProductHistory } = useStockMovements();
+
+  const loadHistory = useCallback(async () => {
+    if (!product) return;
+
+    setLoading(true);
+    try {
+      const history = await getProductHistory(product.id);
+      setMovements(history as StockMovement[]);
+    } catch (_error) {
+      // Erreur gérée dans le hook
+    } finally {
+      setLoading(false);
+    }
+  }, [product, getProductHistory]);
 
   useEffect(() => {
     if (isOpen && product) {
@@ -229,19 +273,7 @@ function ProductHistoryModal({
         console.error('[StockProduits] loadHistory failed:', error);
       });
     }
-  }, [isOpen, product]);
-
-  const loadHistory = async () => {
-    setLoading(true);
-    try {
-      const history = await getProductHistory(product.id);
-      setMovements(history as any);
-    } catch (_error) {
-      // Erreur gérée dans le hook
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [isOpen, product, loadHistory]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -260,7 +292,7 @@ function ProductHistoryModal({
             </p>
           ) : (
             <div className="space-y-3">
-              {movements.map((movement: any) => (
+              {movements.map(movement => (
                 <div key={movement.id} className="border rounded-lg p-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -318,12 +350,12 @@ export default function StockInventairePage() {
     sortBy: 'name',
     sortOrder: 'asc',
   });
-  const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isMovementModalOpen, setIsMovementModalOpen] = useState(false);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   // Reserved for future reservations feature
-  const [_reservations, _setReservations] = useState<any[]>([]);
-  const [products, setProducts] = useState<any[]>([]);
+  const [_reservations, _setReservations] = useState<unknown[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [productsLoading, setProductsLoading] = useState(true);
 
   const { toast: _toast } = useToast();
@@ -334,14 +366,7 @@ export default function StockInventairePage() {
     getAvailableStockForProduct: _getAvailableStockForProduct,
   } = useStockReservations();
 
-  // Charger les données au montage
-  useEffect(() => {
-    void loadData().catch(error => {
-      console.error('[StockProduits] loadData failed:', error);
-    });
-  }, []);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setProductsLoading(true);
     try {
       const [inventoryProducts] = await Promise.all([
@@ -352,11 +377,18 @@ export default function StockInventairePage() {
         // RLS policies activées sur stock_reservations (pattern products: authenticated users)
         fetchReservations(),
       ]);
-      setProducts(inventoryProducts);
+      setProducts(inventoryProducts as Product[]);
     } finally {
       setProductsLoading(false);
     }
-  };
+  }, [fetchInventoryProducts, fetchStats, fetchReservations]);
+
+  // Charger les données au montage
+  useEffect(() => {
+    void loadData().catch(error => {
+      console.error('[StockProduits] loadData failed:', error);
+    });
+  }, [loadData]);
 
   // Calculer les statistiques de stock
   const stockStats = useMemo(() => {
@@ -365,8 +397,8 @@ export default function StockInventairePage() {
     return products.reduce(
       (stats, product) => {
         stats.total++;
-        const stock = product.stock_quantity || 0;
-        const minStock = product.min_stock || 5;
+        const stock = product.stock_quantity ?? 0;
+        const minStock = product.min_stock ?? 5;
 
         if (stock === 0) {
           stats.outOfStock++;
@@ -398,8 +430,8 @@ export default function StockInventairePage() {
 
       // Filtre de statut
       if (filters.status !== 'all') {
-        const stock = product.stock_quantity || 0;
-        const minStock = product.min_stock || 5;
+        const stock = product.stock_quantity ?? 0;
+        const minStock = product.min_stock ?? 5;
 
         switch (filters.status) {
           case 'out_of_stock':
@@ -419,8 +451,8 @@ export default function StockInventairePage() {
 
     // Trier
     filtered.sort((a, b) => {
-      let aValue: any;
-      let bValue: any;
+      let aValue: string | number | Date;
+      let bValue: string | number | Date;
 
       switch (filters.sortBy) {
         case 'name':
@@ -432,8 +464,8 @@ export default function StockInventairePage() {
           bValue = b.sku;
           break;
         case 'stock':
-          aValue = a.stock_quantity || 0;
-          bValue = b.stock_quantity || 0;
+          aValue = a.stock_quantity ?? 0;
+          bValue = b.stock_quantity ?? 0;
           break;
         case 'updated_at':
           aValue = new Date(a.updated_at);
@@ -453,9 +485,9 @@ export default function StockInventairePage() {
     return filtered;
   }, [products, filters]);
 
-  const getStockStatus = (product: any) => {
-    const stock = product.stock_quantity || 0;
-    const minStock = product.min_stock || 5;
+  const getStockStatus = (product: Product) => {
+    const stock = product.stock_quantity ?? 0;
+    const minStock = product.min_stock ?? 5;
 
     if (stock === 0) {
       return {
@@ -484,12 +516,12 @@ export default function StockInventairePage() {
     });
   };
 
-  const openMovementModal = (product: any) => {
+  const openMovementModal = (product: Product) => {
     setSelectedProduct(product);
     setIsMovementModalOpen(true);
   };
 
-  const openHistoryModal = (product: any) => {
+  const openHistoryModal = (product: Product) => {
     setSelectedProduct(product);
     setIsHistoryModalOpen(true);
   };
@@ -628,8 +660,11 @@ export default function StockInventairePage() {
 
             <Select
               value={filters.status}
-              onValueChange={(value: any) =>
-                setFilters(prev => ({ ...prev, status: value }))
+              onValueChange={(value: string) =>
+                setFilters(prev => ({
+                  ...prev,
+                  status: value as StockFilters['status'],
+                }))
               }
             >
               <SelectTrigger className="w-[180px]">
@@ -645,8 +680,11 @@ export default function StockInventairePage() {
 
             <Select
               value={filters.sortBy}
-              onValueChange={(value: any) =>
-                setFilters(prev => ({ ...prev, sortBy: value }))
+              onValueChange={(value: string) =>
+                setFilters(prev => ({
+                  ...prev,
+                  sortBy: value as StockFilters['sortBy'],
+                }))
               }
             >
               <SelectTrigger className="w-[160px]">
@@ -786,13 +824,13 @@ export default function StockInventairePage() {
                           <div className="flex items-center">
                             <StatusIcon className="h-4 w-4 mr-1" />
                             <span className="font-medium text-black">
-                              {product.stock_quantity || 0}
+                              {product.stock_quantity ?? 0}
                             </span>
                           </div>
                         </td>
                         <td className="py-3 px-4">
                           <span className="text-gray-500">
-                            {product.min_stock || 5}
+                            {product.min_stock ?? 5}
                           </span>
                         </td>
                         <td className="py-3 px-4">

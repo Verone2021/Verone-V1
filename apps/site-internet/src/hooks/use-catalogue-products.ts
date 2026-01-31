@@ -123,8 +123,8 @@ export function useCatalogueProducts(
         products = products.filter(
           p =>
             p.name.toLowerCase().includes(query) ||
-            p.seo_meta_description?.toLowerCase().includes(query) ||
-            p.sku?.toLowerCase().includes(query)
+            (p.seo_meta_description?.toLowerCase().includes(query) ?? false) ||
+            (p.sku?.toLowerCase().includes(query) ?? false)
         );
       }
 

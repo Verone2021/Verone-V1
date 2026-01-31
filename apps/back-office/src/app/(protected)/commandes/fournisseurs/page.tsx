@@ -16,6 +16,15 @@ import { usePurchaseOrders } from '@verone/orders';
 import { useOrganisations } from '@verone/organisations';
 import { ProductThumbnail } from '@verone/products';
 import type { Database } from '@verone/types';
+
+// Type étendu pour les champs payment V2 et rapprochement (non encore dans schema DB)
+type PurchaseOrderExtended = PurchaseOrder & {
+  payment_status_v2?: 'paid' | 'pending' | 'failed' | null;
+  manual_payment_type?: string | null;
+  is_matched?: boolean | null;
+  matched_transaction_label?: string | null;
+};
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -273,7 +282,7 @@ export default function PurchaseOrdersPage() {
               return false;
             }
             break;
-          case 'quarter':
+          case 'quarter': {
             // Ce trimestre
             const currentQuarter = Math.floor(now.getMonth() / 3);
             const orderQuarter = Math.floor(orderDate.getMonth() / 3);
@@ -284,6 +293,7 @@ export default function PurchaseOrdersPage() {
               return false;
             }
             break;
+          }
           case 'year':
             // Cette année
             if (orderDate.getFullYear() !== now.getFullYear()) {
@@ -306,7 +316,7 @@ export default function PurchaseOrdersPage() {
               new Date(a.created_at).getTime() -
               new Date(b.created_at).getTime();
             break;
-          case 'supplier':
+          case 'supplier': {
             const nameA = a.organisations
               ? getOrganisationDisplayName(a.organisations)
               : '';
@@ -315,6 +325,7 @@ export default function PurchaseOrdersPage() {
               : '';
             comparison = nameA.localeCompare(nameB);
             break;
+          }
           case 'amount':
             comparison = (a.total_ttc || 0) - (b.total_ttc || 0);
             break;
@@ -483,7 +494,7 @@ export default function PurchaseOrdersPage() {
         if (!product?.min_stock || product.min_stock === 0) return null;
 
         // Besoin = ce qu'il manque pour atteindre le seuil
-        const stockReal = product.stock_real || 0;
+        const stockReal = product.stock_real ?? 0;
         const besoin = Math.max(0, product.min_stock - stockReal);
 
         // Si la quantité commandée >= besoin, le seuil est atteint
@@ -564,7 +575,7 @@ export default function PurchaseOrdersPage() {
       );
 
       if (!result.success) {
-        throw new Error(result.error || 'Erreur lors de la mise à jour');
+        throw new Error(result.error ?? 'Erreur lors de la mise à jour');
       }
 
       toast({
@@ -614,7 +625,7 @@ export default function PurchaseOrdersPage() {
       );
 
       if (!result.success) {
-        throw new Error(result.error || 'Erreur lors de la confirmation');
+        throw new Error(result.error ?? 'Erreur lors de la confirmation');
       }
 
       toast({
@@ -676,7 +687,7 @@ export default function PurchaseOrdersPage() {
         );
 
         if (!result.success) {
-          throw new Error(result.error || "Erreur lors de l'annulation");
+          throw new Error(result.error ?? "Erreur lors de l'annulation");
         }
 
         toast({
@@ -718,18 +729,18 @@ export default function PurchaseOrdersPage() {
   // Ouvrir modal annulation reliquat
   const openCancelRemainderModal = (order: PurchaseOrder) => {
     // Calculer les items avec reliquat
-    const items = order.purchase_order_items || [];
+    const items = order.purchase_order_items ?? [];
     const remainderItems = items
       .filter(item => {
-        const quantityOrdered = item.quantity || 0;
-        const quantityReceived = item.quantity_received || 0;
+        const quantityOrdered = item.quantity ?? 0;
+        const quantityReceived = item.quantity_received ?? 0;
         return quantityOrdered > quantityReceived;
       })
       .map(item => ({
-        product_name: item.products?.name || 'Produit inconnu',
-        product_sku: item.products?.sku || 'N/A',
+        product_name: item.products?.name ?? 'Produit inconnu',
+        product_sku: item.products?.sku ?? 'N/A',
         quantity_remaining:
-          (item.quantity || 0) - (item.quantity_received || 0),
+          (item.quantity ?? 0) - (item.quantity_received ?? 0),
       }));
 
     setCancelRemainderOrder(order);
@@ -972,7 +983,7 @@ export default function PurchaseOrdersPage() {
                 </TableHeader>
                 <TableBody>
                   {filteredOrders.map(order => {
-                    const items = order.purchase_order_items || [];
+                    const items = order.purchase_order_items ?? [];
                     const hasSamples = items.some(item => item.sample_type);
                     const isExpanded = expandedRows.has(order.id);
 
@@ -1018,10 +1029,12 @@ export default function PurchaseOrdersPage() {
                           {/* Colonne Paiement V2 */}
                           <TableCell>
                             <div className="flex items-center gap-2">
-                              {(order as any).payment_status_v2 === 'paid' ? (
+                              {(order as PurchaseOrderExtended)
+                                .payment_status_v2 === 'paid' ? (
                                 <Badge className="bg-green-100 text-green-800">
                                   Payé
-                                  {(order as any).manual_payment_type && (
+                                  {(order as PurchaseOrderExtended)
+                                    .manual_payment_type && (
                                     <span className="ml-1 opacity-70">
                                       (manuel)
                                     </span>
@@ -1268,11 +1281,12 @@ export default function PurchaseOrdersPage() {
                                 order.status === 'partially_received' ||
                                 order.status === 'received') && (
                                 <>
-                                  {(order as any).is_matched ? (
+                                  {(order as PurchaseOrderExtended)
+                                    .is_matched ? (
                                     <Badge
                                       variant="outline"
                                       className="text-xs bg-green-50 text-green-700 border-green-300 cursor-help"
-                                      title={`Rapprochée: ${(order as any).matched_transaction_label || 'Transaction'} (${formatCurrency(Math.abs((order as any).matched_transaction_amount || 0))})`}
+                                      title={`Rapprochée: ${(order as PurchaseOrderExtended).matched_transaction_label ?? 'Transaction'} (${formatCurrency(Math.abs((order as PurchaseOrderExtended).matched_transaction_amount ?? 0))})`}
                                     >
                                       <Link2 className="h-3 w-3 mr-1 text-green-600" />
                                       Rapprochée
@@ -1307,11 +1321,11 @@ export default function PurchaseOrdersPage() {
                                   >
                                     <ProductThumbnail
                                       src={item.products?.primary_image_url}
-                                      alt={item.products?.name || 'Produit'}
+                                      alt={item.products?.name ?? 'Produit'}
                                       size="xs"
                                     />
                                     <span className="flex-1 font-medium">
-                                      {item.products?.name || 'Produit inconnu'}
+                                      {item.products?.name ?? 'Produit inconnu'}
                                     </span>
                                     <span className="text-muted-foreground">
                                       x{item.quantity}
@@ -1549,8 +1563,8 @@ export default function PurchaseOrdersPage() {
             id: rapprochementOrder.id,
             order_number: rapprochementOrder.po_number,
             customer_name:
-              rapprochementOrder.organisations?.trade_name ||
-              rapprochementOrder.organisations?.legal_name ||
+              rapprochementOrder.organisations?.trade_name ??
+              rapprochementOrder.organisations?.legal_name ??
               null,
             total_ttc: rapprochementOrder.total_ttc,
             created_at: rapprochementOrder.created_at,
