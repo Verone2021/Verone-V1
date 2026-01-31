@@ -380,7 +380,7 @@ export default function EditDraftPage({ params }: IPageProps) {
         items: validItems.map(item => ({
           title: item.title,
 
-          description: item.description || undefined,
+          description: item.description ?? undefined,
           quantity: item.quantity,
           unit: item.unit,
           unitPrice: {
