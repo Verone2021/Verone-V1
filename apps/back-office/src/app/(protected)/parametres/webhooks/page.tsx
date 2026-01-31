@@ -53,7 +53,7 @@ export default function WebhooksPage() {
     void loadWebhooks().catch(error => {
       console.error('[WebhooksPage] loadWebhooks failed:', error);
     });
-  }, []);
+  }, [loadWebhooks]);
 
   async function loadWebhooks() {
     try {

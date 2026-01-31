@@ -76,7 +76,7 @@ export default function ConsultationDetailPage() {
     void fetchConsultations().catch(error => {
       console.error('[ConsultationDetail] Fetch failed:', error);
     });
-  }, []);
+  }, [fetchConsultations]);
 
   useEffect(() => {
     if (consultations && consultations.length > 0) {

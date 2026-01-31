@@ -42,7 +42,7 @@ export default function EmailTemplatesPage() {
     void loadTemplates().catch(error => {
       console.error('[EmailsPage] loadTemplates failed:', error);
     });
-  }, []);
+  }, [loadTemplates]);
 
   async function loadTemplates() {
     try {

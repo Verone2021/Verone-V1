@@ -21,7 +21,7 @@ export default function OrganisationsAllPage() {
   const tabParam = searchParams.get('tab') as TabValue | null;
 
   // Onglet actif basé sur URL searchParams (défaut: suppliers)
-  const [activeTab, setActiveTab] = useState<TabValue>(tabParam || 'suppliers');
+  const [activeTab, setActiveTab] = useState<TabValue>(tabParam ?? 'suppliers');
 
   // Sync avec URL quand searchParams change
   useEffect(() => {
