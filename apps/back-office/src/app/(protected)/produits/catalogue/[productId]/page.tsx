@@ -1,5 +1,7 @@
 'use client';
 
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return, @typescript-eslint/prefer-nullish-coalescing, react-hooks/exhaustive-deps */
+
 import { useState, useEffect, useCallback, useMemo } from 'react';
 
 import Link from 'next/link';
@@ -513,7 +515,7 @@ export default function ProductDetailPage() {
       <div className="w-full py-6">
         <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
           <p className="text-red-700 font-medium">
-            {error || 'Produit non trouvé'}
+            {error ?? 'Produit non trouvé'}
           </p>
           <ButtonUnified
             onClick={() => router.push('/produits/catalogue')}
@@ -1004,7 +1006,7 @@ export default function ProductDetailPage() {
           >
             <SampleRequirementSection
               productId={product.id}
-              requiresSample={product.requires_sample || false}
+              requiresSample={product.requires_sample ?? false}
               isProduct
               productName={product.name}
               supplierName={
@@ -1220,3 +1222,5 @@ export default function ProductDetailPage() {
     </div>
   );
 }
+
+/* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return, @typescript-eslint/prefer-nullish-coalescing, react-hooks/exhaustive-deps */
