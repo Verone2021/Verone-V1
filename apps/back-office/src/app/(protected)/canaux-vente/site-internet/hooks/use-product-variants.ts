@@ -20,7 +20,7 @@ async function fetchProductDetail(
   productId: string
 ): Promise<SiteInternetProductDetail | null> {
   const { data, error } = await supabase.rpc(
-    'get_site_internet_product_detail' as any,
+    'get_site_internet_product_detail',
     {
       p_product_id: productId,
     }
