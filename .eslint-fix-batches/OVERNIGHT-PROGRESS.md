@@ -1,128 +1,96 @@
-# Overnight Autonomous Fix Progress
+# Session Longue Supervisée - ESLint Migration Complète
 
-**Start:** 2026-01-31 20:00 (Execution Started)
-**Target:** 3,463 warnings → 0
-**Strategy:** TIER 1 → TIER 5 (Sequential)
-**Branch:** feat/BO-LINT-005-batch5-products-linkme
-**Mode:** Autonomous Overnight Execution
+**Start:** 2026-01-31 (heure de début)
+**Target:** 3,446 warnings → 0 warnings
+**Strategy:** TIER 1 → TIER 5 (aucun eslint-disable autorisé)
+**Session:** Longue supervisée (terminal reste ouvert)
+
+---
+
+## 🎯 Objectif
+
+Fixer **TOUS les 3,446 warnings** sans AUCUN `eslint-disable`.
+
+**RÈGLE ABSOLUE** : ❌ INTERDICTION TOTALE de `eslint-disable`, `eslint-disable-next-line`, ou toute forme de suppression de warnings.
 
 ---
 
 ## 📊 Progress Tracker
 
-### TIER 1: Simple Files (37 files, ~37 warnings)
+### État Actuel
 
-- [ ] **Target**: 1 warning each
-- [ ] **Status**: Not started
-- [ ] **Commits**: 0
-- [ ] **Warnings Fixed**: 0/37
+- **Warnings totaux** : 3,446
+- **Warnings fixés** : 0
+- **Pourcentage** : 0%
 
-### TIER 2: Light Files (87 files, ~250-300 warnings)
+### Distribution par TIER
 
-- [ ] **Target**: 2-7 warnings each
-- [ ] **Status**: Not started
-- [ ] **Commits**: 0
-- [ ] **Warnings Fixed**: 0/~280
-
-### TIER 3: Medium Files (88 files, ~900 warnings)
-
-- [ ] **Target**: 8-25 warnings each
-- [ ] **Status**: Not started
-- [ ] **Commits**: 0
-- [ ] **Warnings Fixed**: 0/900
-
-### TIER 4: Complex Files (35 files, ~1,300 warnings)
-
-- [ ] **Target**: 27-66 warnings each
-- [ ] **Status**: Not started
-- [ ] **Commits**: 0
-- [ ] **Warnings Fixed**: 0/1,300
-
-### TIER 5: Monster Files (3 files, ~492 warnings)
-
-- [ ] **Target**: 67-221 warnings each
-- [ ] **Status**: Not started
-- [ ] **Strategy**: eslint-disable acceptable
-- [ ] **Commits**: 0
-- [ ] **Warnings Fixed**: 0/492
+- [ ] **TIER 1** : 37 fichiers (~37 warnings) - QUICK WINS
+- [ ] **TIER 2** : 87 fichiers (~250-300 warnings) - FACILES
+- [ ] **TIER 3** : 88 fichiers (~900 warnings) - MOYENS
+- [ ] **TIER 4** : 35 fichiers (~1,300 warnings) - DIFFICILES
+- [ ] **TIER 5** : 3 fichiers (~492 warnings) - MONSTRES (TOUS les warnings fixés proprement)
 
 ---
 
 ## 📝 Commits Log
 
-_Auto-updated by Claude during execution_
+_Auto-updated après chaque commit_
 
-**Total Commits**: 0
-**Total Push Operations**: 0
+### Batch 0 : Baseline
 
----
-
-## 🔧 Current Work
-
-**Current File**: None
-**Current Tier**: Not started
-**Last Successful Commit**: Baseline
-**Last Type-Check**: ✅ Passing (baseline)
+- **Commit** : `[BO-LINT-006] prep: baseline (3,446 warnings)`
+- **Status** : En cours...
 
 ---
 
-## ⚠️ Issues & Blockers
+## 🚨 Issues & Blocages
 
-_Auto-updated if Claude encounters blocages_
-
-### Auto-Recovery Protocol
-
-- 3 consecutive failures → SKIP file
-- Type-check fails 3x → STOP and document
-- Same file fails 2x → SKIP and flag for manual review
-
-**Issues Encountered**: 0
+_Aucun pour l'instant_
 
 ---
 
-## 📈 Statistics
+## ⏱️ Temps Estimé par TIER
 
-### Baseline
-
-- **Total Warnings**: 3,463
-- **Total Files**: ~250
-- **Type Errors**: 0
-
-### Current
-
-- **Warnings Remaining**: 3,463
-- **Warnings Fixed**: 0
-- **Success Rate**: 0%
-- **Type Errors**: 0
-
-### Estimated Completion
-
-- **Start Time**: TBD
-- **Current Time**: TBD
-- **Estimated End**: TBD
-- **Warnings/Hour**: TBD
+| TIER      | Fichiers | Warnings  | Temps Estimé         | Status        |
+| --------- | -------- | --------- | -------------------- | ------------- |
+| 1         | 37       | ~37       | 30-45 min            | ⏳ En attente |
+| 2         | 87       | ~250-300  | 1-2h                 | ⏳ En attente |
+| 3         | 88       | ~900      | 2-3h                 | ⏳ En attente |
+| 4         | 35       | ~1,300    | 3-4h                 | ⏳ En attente |
+| 5         | 3        | ~492      | 3-5h (AUCUN DISABLE) | ⏳ En attente |
+| **TOTAL** | **250**  | **3,446** | **10-15h**           | ⏳ En attente |
 
 ---
 
-## ✅ Safety Checks (Per Commit)
+## 📚 Workflow par Fichier
 
-- [ ] Type-check passes
-- [ ] ESLint shows improvement
-- [ ] No new errors introduced
-- [ ] Git commit successful
-- [ ] Push every 5 commits
-
----
-
-## 🎯 Final Validation (Pre-PR)
-
-- [ ] Total warnings: 0
-- [ ] Type-check: 0 errors
-- [ ] Build: Success
-- [ ] All tiers completed
-- [ ] Documentation updated
+1. **Read** : Lire le fichier complet
+2. **Analyze** : Identifier patterns de warnings
+3. **Research** : Consulter docs (MCP Context7) + patterns projet
+4. **Fix** : Corriger TOUS les warnings proprement
+5. **Validate** : `pnpm eslint <file> --quiet` → 0 warnings
+6. **Type-check** : `pnpm type-check` → 0 errors
+7. **Commit** : Format `[BO-LINT-006] fix: batch N - X warnings in Y files (tier Z)`
 
 ---
 
-**Last Updated**: 2026-01-31 (Baseline creation)
-**Status**: 🟡 Ready for overnight execution
+## 🎯 Stratégie TIER 5 (Monster Files)
+
+**NOUVELLE STRATÉGIE** (pas d'eslint-disable) :
+
+1. **CreateLinkMeOrderModal.tsx** (vérifier si déjà fixé dans PR #119)
+2. **stocks/expeditions/page.tsx** (180 warnings) → Fixer UN PAR UN
+3. **stocks/receptions/page.tsx** (230 warnings) → Fixer UN PAR UN
+
+**Approche** :
+
+- Grouper warnings par type (`no-unsafe-member-access`, `no-explicit-any`, etc.)
+- Consulter docs TypeScript/React Query pour patterns corrects
+- Chercher patterns similaires déjà corrigés dans le projet
+- Appliquer corrections par groupe logique
+- Valider après chaque groupe (type-check + ESLint)
+
+---
+
+**DÉMARRAGE IMMINENT** 🚀
