@@ -198,7 +198,7 @@ export function VercelAnalyticsDashboard() {
         <KPICard
           title="Produits Publiés"
           value={productsStats?.published || 0}
-          subtitle={`sur ${productsStats?.total || 0} total`}
+          subtitle={`sur ${productsStats?.total ?? 0} total`}
           icon={Package}
           color="blue"
         />
