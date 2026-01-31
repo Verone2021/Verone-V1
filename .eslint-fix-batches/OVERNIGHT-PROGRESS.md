@@ -19,28 +19,33 @@ Fixer **TOUS les 3,446 warnings** sans AUCUN `eslint-disable`.
 
 ### État Actuel
 
-- **Warnings totaux** : 3,446
-- **Warnings fixés** : 0
-- **Pourcentage** : 0%
+- **Warnings totaux** : 3,420 (baseline: 3,446)
+- **Warnings fixés** : 26 ✅
+- **Pourcentage** : 0.75%
+- **Temps écoulé** : ~2h
+- **Tokens utilisés** : 120k / 200k (60%)
 
 ### Distribution par TIER
 
-- [ ] **TIER 1** : 37 fichiers (~37 warnings) - QUICK WINS
-- [ ] **TIER 2** : 87 fichiers (~250-300 warnings) - FACILES
-- [ ] **TIER 3** : 88 fichiers (~900 warnings) - MOYENS
-- [ ] **TIER 4** : 35 fichiers (~1,300 warnings) - DIFFICILES
-- [ ] **TIER 5** : 3 fichiers (~492 warnings) - MONSTRES (TOUS les warnings fixés proprement)
+- [x] **TIER 1** : 37 fichiers (~26 warnings fixés) - ✅ **COMPLET**
+- [ ] **TIER 2** : 87 fichiers (~250-300 warnings) - EN ATTENTE
+- [ ] **TIER 3** : 88 fichiers (~900 warnings) - EN ATTENTE
+- [ ] **TIER 4** : 35 fichiers (~1,300 warnings) - EN ATTENTE
+- [ ] **TIER 5** : 3 fichiers (492 warnings confirmés) - EN ATTENTE (AUCUN eslint-disable)
 
 ---
 
 ## 📝 Commits Log
 
-_Auto-updated après chaque commit_
+### TIER 1 Completed ✅
 
-### Batch 0 : Baseline
+- **c06e85af** : Baseline (3,446 warnings)
+- **6e70eda2** : Batch 1 - 9 warnings in 9 files (TIER 1, 1/4)
+- **bd40fd41** : Batch 2 - 6 warnings in 6 files (TIER 1, 2/4)
+- **c34c2008** : Batch 3 - 8 warnings in 8 files (TIER 1, 3/4)
+- **d0a804c3** : Batch 4 - 7 warnings in 7 files (TIER 1, 4/4 - COMPLETE)
 
-- **Commit** : `[BO-LINT-006] prep: baseline (3,446 warnings)`
-- **Status** : En cours...
+**Total TIER 1** : 29 fichiers modifiés, 26 warnings fixés
 
 ---
 
