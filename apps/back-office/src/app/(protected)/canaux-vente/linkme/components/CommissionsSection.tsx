@@ -263,7 +263,7 @@ export function CommissionsSection() {
 
     const rows = filtered.map(c => [
       c.created_at ? new Date(c.created_at).toLocaleDateString('fr-FR') : '-',
-      c.affiliate?.display_name || 'N/A',
+      c.affiliate?.display_name ?? 'N/A',
       (c.order_id ?? '').slice(0, 8),
       c.order_amount_ht.toFixed(2),
       c.affiliate_commission.toFixed(2),
@@ -559,7 +559,7 @@ export function CommissionsSection() {
                           : '-'}
                       </TableCell>
                       <TableCell>
-                        {commission.affiliate?.display_name || 'N/A'}
+                        {commission.affiliate?.display_name ?? 'N/A'}
                       </TableCell>
                       <TableCell className="font-mono text-sm">
                         #{(commission.order_id ?? '').slice(0, 8)}
