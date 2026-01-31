@@ -282,7 +282,7 @@ export default function DeliveryNoteDetailPage(): React.ReactNode {
                     {item.product?.name ?? 'Produit'}
                   </TableCell>
                   <TableCell className="font-mono text-sm text-muted-foreground">
-                    {item.product?.sku || '-'}
+                    {item.product?.sku ?? '-'}
                   </TableCell>
                   <TableCell className="text-center font-medium">
                     {item.quantity_shipped}

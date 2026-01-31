@@ -155,7 +155,7 @@ function RecettesTable({ transactions }: { transactions: BankTransaction[] }) {
                 {formatDate(tx.settled_at || tx.emitted_at)}
               </div>
               <div className="col-span-1 text-xs text-muted-foreground">
-                {tx.reference || '-'}
+                {tx.reference ?? '-'}
               </div>
               <div className="col-span-3">
                 <div className="font-medium truncate text-sm">

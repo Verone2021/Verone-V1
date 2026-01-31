@@ -378,7 +378,7 @@ export default async function OrderDetailPage({
                             {item.products?.name || 'Produit inconnu'}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            SKU: {item.products?.sku || 'N/A'}
+                            SKU: {item.products?.sku ?? 'N/A'}
                           </p>
                         </div>
                         <p className="text-sm font-medium">
