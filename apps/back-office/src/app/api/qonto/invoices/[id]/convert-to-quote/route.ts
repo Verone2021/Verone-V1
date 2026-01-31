@@ -68,7 +68,7 @@ export async function POST(
       title: item.title,
       description: item.description,
       quantity: String(item.quantity),
-      unit: item.unit || 'unit',
+      unit: item.unit ?? 'unit',
       unitPrice: {
         value: String(item.unit_price),
         currency: invoice.currency,
