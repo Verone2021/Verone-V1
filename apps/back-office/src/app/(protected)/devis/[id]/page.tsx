@@ -300,7 +300,7 @@ export default function QuoteDetailPage(): React.ReactNode {
       }
 
       // Utiliser le numéro de devis ou l'ID si non disponible
-      const filename = quote.quote_number || quote.number || id;
+      const filename = quote.quote_number ?? quote.number ?? id;
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
