@@ -80,11 +80,11 @@ export function usePaymentRequestsCounts() {
   return useQuery({
     queryKey: ['payment-requests-counts'],
     queryFn: async (): Promise<PaymentRequestCounts> => {
-      // Cast temporaire en attendant la régénération des types Supabase
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */
       const { data, error } = await (supabase as any)
         .from('linkme_payment_requests')
         .select('status');
+      /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */
 
       if (error) {
         console.error('Erreur fetch payment requests counts:', error);
@@ -99,8 +99,7 @@ export function usePaymentRequestsCounts() {
         cancelled: 0,
       };
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ((data as any[]) || []).forEach((item: { status: string }) => {
+      ((data as any[]) ?? []).forEach((item: { status: string }) => {
         if (item.status === 'pending') counts.pending++;
         if (item.status === 'invoice_received') counts.invoice_received++;
         if (item.status === 'paid') counts.paid++;
@@ -127,8 +126,7 @@ export function usePaymentRequestsAdmin(statusFilter?: string) {
   return useQuery({
     queryKey: ['payment-requests-admin', statusFilter],
     queryFn: async (): Promise<PaymentRequestAdmin[]> => {
-      // Cast temporaire en attendant la régénération des types Supabase
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */
       let query = (supabase as any)
         .from('linkme_payment_requests')
         .select(
@@ -149,6 +147,7 @@ export function usePaymentRequestsAdmin(statusFilter?: string) {
       }
 
       const { data, error } = await query;
+      /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */
 
       if (error) {
         console.error('Erreur fetch payment requests admin:', error);
@@ -157,7 +156,7 @@ export function usePaymentRequestsAdmin(statusFilter?: string) {
 
       const typedData = data as PaymentRequestRaw[];
 
-      return (typedData || []).map(item => ({
+      return (typedData ?? []).map(item => ({
         ...item,
         status: item.status as PaymentRequestAdmin['status'],
         affiliate: item.linkme_affiliates ?? undefined,
@@ -184,8 +183,7 @@ export function useMarkAsPaid() {
     mutationFn: async (input: MarkAsPaidInput): Promise<void> => {
       const { data: userData } = await supabase.auth.getUser();
 
-      // Cast temporaire en attendant la régénération des types Supabase
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */
       const { error } = await (supabase as any)
         .from('linkme_payment_requests')
         .update({
@@ -195,6 +193,7 @@ export function useMarkAsPaid() {
           payment_reference: input.paymentReference,
         })
         .eq('id', input.requestId);
+      /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */
 
       if (error) {
         console.error('Erreur marking as paid:', error);
@@ -222,13 +221,13 @@ export function useCancelPaymentRequestAdmin() {
 
   return useMutation({
     mutationFn: async (requestId: string): Promise<void> => {
-      // Cast temporaire en attendant la régénération des types Supabase
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */
       const { error } = await (supabase as any)
         .from('linkme_payment_requests')
         .update({ status: 'cancelled' })
         .eq('id', requestId)
         .in('status', ['pending', 'invoice_received']);
+      /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */
 
       if (error) {
         console.error('Erreur cancelling request:', error);
@@ -265,14 +264,15 @@ export function useCreatePaymentRequestAdmin() {
     ): Promise<PaymentRequestAdmin> => {
       const { affiliateId, commissionIds } = input;
 
+      /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */
       // 1. Récupérer les commissions sélectionnées pour calculer le total
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: commissions, error: commError } = await (supabase as any)
         .from('linkme_commissions')
         .select('id, affiliate_commission_ttc, affiliate_commission, status')
         .in('id', commissionIds)
         .eq('affiliate_id', affiliateId)
         .eq('status', 'validated'); // Seulement les validées
+      /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */
 
       if (commError) {
         console.error('Erreur récupération commissions:', commError);
@@ -297,17 +297,17 @@ export function useCreatePaymentRequestAdmin() {
       // Calculer les totaux
       const totalTTC = commissions.reduce(
         (sum: number, c: { affiliate_commission_ttc: number }) =>
-          sum + (c.affiliate_commission_ttc || 0),
+          sum + (c.affiliate_commission_ttc ?? 0),
         0
       );
       const totalHT = commissions.reduce(
         (sum: number, c: { affiliate_commission: number }) =>
-          sum + (c.affiliate_commission || 0),
+          sum + (c.affiliate_commission ?? 0),
         0
       );
 
+      /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */
       // 2. Créer la demande
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: request, error: createError } = await (supabase as any)
         .from('linkme_payment_requests')
         .insert({
@@ -318,6 +318,7 @@ export function useCreatePaymentRequestAdmin() {
         })
         .select()
         .single();
+      /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */
 
       if (createError) {
         console.error('Erreur création demande:', createError);
@@ -331,11 +332,11 @@ export function useCreatePaymentRequestAdmin() {
         (c: { id: string; affiliate_commission_ttc: number }) => ({
           payment_request_id: request.id,
           commission_id: c.id,
-          commission_amount_ttc: c.affiliate_commission_ttc || 0,
+          commission_amount_ttc: c.affiliate_commission_ttc ?? 0,
         })
       );
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */
       const { error: itemsError } = await (supabase as any)
         .from('linkme_payment_request_items')
         .insert(items);
@@ -343,7 +344,6 @@ export function useCreatePaymentRequestAdmin() {
       if (itemsError) {
         console.error('Erreur création items:', itemsError);
         // Rollback: supprimer la demande
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await (supabase as any)
           .from('linkme_payment_requests')
           .delete()
@@ -354,11 +354,11 @@ export function useCreatePaymentRequestAdmin() {
       }
 
       // 4. Mettre à jour les commissions avec le statut 'requested'
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await (supabase as any)
         .from('linkme_commissions')
         .update({ status: 'requested' })
         .in('id', commissionIds);
+      /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */
 
       return {
         ...request,
@@ -388,8 +388,7 @@ export function useRecentPaymentRequests(limit: number = 5) {
   return useQuery({
     queryKey: ['payment-requests-recent', limit],
     queryFn: async (): Promise<PaymentRequestAdmin[]> => {
-      // Cast temporaire en attendant la régénération des types Supabase
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */
       const { data, error } = await (supabase as any)
         .from('linkme_payment_requests')
         .select(
@@ -406,6 +405,7 @@ export function useRecentPaymentRequests(limit: number = 5) {
         .in('status', ['pending', 'invoice_received'])
         .order('created_at', { ascending: false })
         .limit(limit);
+      /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */
 
       if (error) {
         console.error('Erreur fetch recent payment requests:', error);
@@ -414,7 +414,7 @@ export function useRecentPaymentRequests(limit: number = 5) {
 
       const typedData = data as PaymentRequestRaw[];
 
-      return (typedData || []).map(item => ({
+      return (typedData ?? []).map(item => ({
         ...item,
         status: item.status as PaymentRequestAdmin['status'],
         affiliate: item.linkme_affiliates ?? undefined,
