@@ -50,8 +50,8 @@ export async function GET(request: NextRequest, context: RouteContext) {
     // Récupérer params
     const { id: targetUserId } = await context.params;
     const { searchParams } = new URL(request.url);
-    const limit = parseInt(searchParams.get('limit') || '50');
-    const days = parseInt(searchParams.get('days') || '30');
+    const limit = parseInt(searchParams.get('limit') ?? '50');
+    const days = parseInt(searchParams.get('days') ?? '30');
 
     // Récupérer activité récente via fonction SQL
     const { data: recentActions, error: actionsError } = await (

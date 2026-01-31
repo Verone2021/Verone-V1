@@ -378,7 +378,7 @@ export default function FamilyDetailPage() {
         onClose={() => setIsNewCategoryOpen(false)}
         type="category"
         mode="create"
-        parentOptions={families?.map(f => ({ id: f.id, name: f.name })) || []}
+        parentOptions={families?.map(f => ({ id: f.id, name: f.name })) ?? []}
         onSubmit={handleSubmitNewCategory}
       />
 
@@ -404,7 +404,7 @@ export default function FamilyDetailPage() {
               }
             : undefined
         }
-        parentOptions={families?.map(f => ({ id: f.id, name: f.name })) || []}
+        parentOptions={families?.map(f => ({ id: f.id, name: f.name })) ?? []}
         onSubmit={handleSubmitEditCategory}
       />
     </div>

@@ -177,7 +177,7 @@ export default function LivraisonsPage(): React.ReactNode {
                       )}
                     </TableCell>
                     <TableCell>
-                      {note.customer?.name || '-'}
+                      {note.customer?.name ?? '-'}
                       {note.customer?.type === 'organisation' && (
                         <Badge variant="outline" className="ml-2">
                           Entreprise
@@ -187,7 +187,7 @@ export default function LivraisonsPage(): React.ReactNode {
                     <TableCell>
                       <div>
                         <p className="font-medium">
-                          {note.product?.name || 'Produit'}
+                          {note.product?.name ?? 'Produit'}
                         </p>
                         {note.product?.sku && (
                           <p className="text-xs text-muted-foreground">

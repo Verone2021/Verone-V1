@@ -310,7 +310,7 @@ export default function SourcingEchantillonsPage() {
           purchase_order_id: newPO.id,
           product_id: selectedProductId,
           quantity,
-          unit_price_ht: product?.cost_price || 0.01,
+          unit_price_ht: product?.cost_price ?? 0.01,
           sample_type: 'customer',
           customer_organisation_id:
             selectedCustomer.type === 'professional'
@@ -1105,7 +1105,7 @@ export default function SourcingEchantillonsPage() {
                 min="1"
                 max="10"
                 value={quantity}
-                onChange={e => setQuantity(parseInt(e.target.value) || 1)}
+                onChange={e => setQuantity(parseInt(e.target.value) ?? 1)}
                 disabled={submitting}
               />
               <p className="text-sm text-gray-500 mt-1">

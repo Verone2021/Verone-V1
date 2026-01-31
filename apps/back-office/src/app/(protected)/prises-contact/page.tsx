@@ -356,8 +356,8 @@ export default function PrisesContactPage() {
 
         if (typesError) throw typesError;
 
-        setSubmissions(subs || []);
-        setFormTypes(types || []);
+        setSubmissions(subs ?? []);
+        setFormTypes(types ?? []);
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {

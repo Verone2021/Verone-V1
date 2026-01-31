@@ -78,7 +78,7 @@ export default function ProfilePage() {
       setEditData({
         email: user.email ?? '',
         raw_user_meta_data: {
-          name: (user.user_metadata?.name || user.email?.split('@')[0]) ?? '',
+          name: (user.user_metadata?.name ?? user.email?.split('@')[0]) ?? '',
         },
         first_name: '',
         last_name: '',
@@ -340,8 +340,8 @@ export default function ProfilePage() {
                   />
                 ) : (
                   <p className="font-medium text-xs text-neutral-900">
-                    {user?.user_metadata?.name ||
-                      user?.email?.split('@')[0] ||
+                    {user?.user_metadata?.name ??
+                      user?.email?.split('@')[0] ??
                       'Non défini'}
                   </p>
                 )}

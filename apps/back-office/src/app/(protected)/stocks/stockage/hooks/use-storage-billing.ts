@@ -136,7 +136,7 @@ export function useGlobalStorageOverview() {
         return [];
       }
 
-      return (data || []) as GlobalStorageOverviewItem[];
+      return (data ?? []) as GlobalStorageOverviewItem[];
     },
     staleTime: 60000,
   });
@@ -253,7 +253,7 @@ export function useStorageEventsHistory(
         return [];
       }
 
-      return (data || []) as StorageEvent[];
+      return (data ?? []) as StorageEvent[];
     },
     enabled: !!ownerId && !!ownerType,
     staleTime: 30000,

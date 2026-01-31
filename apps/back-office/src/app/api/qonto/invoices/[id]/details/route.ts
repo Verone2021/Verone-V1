@@ -378,7 +378,7 @@ export async function GET(
       sales_order_id: rawInvoice.sales_order_id,
       partner: rawInvoice.partner,
       sales_order: rawInvoice.sales_order,
-      items: (items || []).map(item => ({
+      items: (items ?? []).map(item => ({
         id: item.id,
         description: item.description,
         quantity: item.quantity,

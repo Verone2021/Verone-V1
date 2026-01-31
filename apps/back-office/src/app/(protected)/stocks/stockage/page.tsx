@@ -988,7 +988,7 @@ function AddAllocationDialog({
                           : 'Aucun produit trouve'}
                     </CommandEmpty>
                     <CommandGroup>
-                      {(products || []).map(product => (
+                      {(products ?? []).map(product => (
                         <CommandItem
                           key={product.id}
                           value={product.id}
@@ -1028,7 +1028,7 @@ function AddAllocationDialog({
               min={1}
               value={quantity}
               onChange={e =>
-                setQuantity(Math.max(1, parseInt(e.target.value) || 1))
+                setQuantity(Math.max(1, parseInt(e.target.value) ?? 1))
               }
             />
           </div>

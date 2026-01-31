@@ -73,8 +73,8 @@ async function getProducts(req: NextRequest) {
 
   // Parse query parameters
   const params = {
-    page: parseInt(url.searchParams.get('page') || '1'),
-    limit: Math.min(parseInt(url.searchParams.get('limit') || '20'), 100),
+    page: parseInt(url.searchParams.get('page') ?? '1'),
+    limit: Math.min(parseInt(url.searchParams.get('limit') ?? '20'), 100),
     category: url.searchParams.get('category'),
     status: url.searchParams.get('status') || 'active',
     search: url.searchParams.get('search'),

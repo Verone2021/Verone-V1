@@ -111,7 +111,7 @@ export async function POST(
     console.warn(`[API] Found ${products?.length ?? 0} eligible products`);
 
     // 3. Filtrer les produits avec images et prix
-    const eligibleProducts = (products || []).filter(product => {
+    const eligibleProducts = (products ?? []).filter(product => {
       const hasImages = product.images && product.images.length > 0;
       // Le prix sera récupéré par le transformer via price_list_items
       return hasImages;

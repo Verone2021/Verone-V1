@@ -333,7 +333,7 @@ export default function VariantGroupDetailPage({
   // Handler pour ajout multiple produits
   // Mémoiser excludeProductIds pour éviter re-renders
   const excludeProductIds = useMemo(
-    () => variantGroup?.products?.map(p => p.id) || [],
+    () => variantGroup?.products?.map(p => p.id) ?? [],
     [variantGroup?.products]
   );
 

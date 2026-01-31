@@ -323,7 +323,7 @@ export default function CollectionDetailPage({
 
   // Handlers édition inline - Pièces compatibles
   const handleStartEditRooms = useCallback(() => {
-    setEditedRooms(collection?.suitable_rooms || []);
+    setEditedRooms(collection?.suitable_rooms ?? []);
     setEditingRooms(true);
   }, [collection?.suitable_rooms]);
 
@@ -353,7 +353,7 @@ export default function CollectionDetailPage({
 
   // Handlers édition inline - Tags
   const handleStartEditTags = useCallback(() => {
-    setEditedTags(collection?.theme_tags || []);
+    setEditedTags(collection?.theme_tags ?? []);
     setEditingTags(true);
   }, [collection?.theme_tags]);
 
@@ -823,7 +823,7 @@ export default function CollectionDetailPage({
             {editingRooms ? (
               <div className="space-y-3">
                 <RoomMultiSelect
-                  value={(editedRooms || []) as RoomType[]}
+                  value={(editedRooms ?? []) as RoomType[]}
                   onChange={rooms => setEditedRooms(rooms)}
                   placeholder="Sélectionner les pièces compatibles..."
                   className="w-full"

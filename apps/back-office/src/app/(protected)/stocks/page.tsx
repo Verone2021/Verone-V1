@@ -397,12 +397,12 @@ export default function StocksDashboardPage() {
 
                           <ProductThumbnail
                             src={movement.product_image_url}
-                            alt={movement.product_name || 'Produit'}
+                            alt={movement.product_name ?? 'Produit'}
                             size="xs"
                           />
                           <div className="flex-1 min-w-0">
                             <p className="text-xs font-medium text-black truncate">
-                              {movement.product_name || 'Produit'}
+                              {movement.product_name ?? 'Produit'}
                             </p>
                             <p className="text-[10px] text-gray-500">
                               {new Date(movement.performed_at).toLocaleString(

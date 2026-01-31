@@ -837,7 +837,7 @@ export default function CategoriesPage() {
               : formState.data
           }
           mode={formState.mode}
-          families={families?.map(f => ({ id: f.id, name: f.name })) || []}
+          families={families?.map(f => ({ id: f.id, name: f.name })) ?? []}
         />
       )}
 
@@ -873,7 +873,7 @@ export default function CategoriesPage() {
               family_name:
                 families?.find(f => f.id === c.family_id)?.name ||
                 'Famille inconnue',
-            })) || []
+            })) ?? []
           }
         />
       )}

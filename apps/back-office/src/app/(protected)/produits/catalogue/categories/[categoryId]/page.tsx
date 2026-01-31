@@ -438,7 +438,7 @@ export default function CategoryDetailPage() {
               }
             : undefined
         }
-        parentOptions={families?.map(f => ({ id: f.id, name: f.name })) || []}
+        parentOptions={families?.map(f => ({ id: f.id, name: f.name })) ?? []}
         onSubmit={handleSubmitCategory}
       />
 
@@ -452,7 +452,7 @@ export default function CategoryDetailPage() {
             id: c.id,
             name: c.name,
             family_name: family?.name ?? '',
-          })) || []
+          })) ?? []
         }
         onSubmit={subcategory => {
           // Adapter la réponse pour le hook useSubcategories
@@ -501,7 +501,7 @@ export default function CategoryDetailPage() {
             id: c.id,
             name: c.name,
             family_name: family?.name ?? '',
-          })) || []
+          })) ?? []
         }
         onSubmit={subcategory => {
           // Adapter la réponse pour le hook useSubcategories

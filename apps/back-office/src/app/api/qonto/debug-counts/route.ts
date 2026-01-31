@@ -111,7 +111,7 @@ export async function GET() {
       if (expenseData && Array.isArray(expenseData)) {
         const statusCounts: Record<string, number> = {};
         for (const e of expenseData as Array<{ status: string }>) {
-          statusCounts[e.status] = (statusCounts[e.status] || 0) + 1;
+          statusCounts[e.status] = (statusCounts[e.status] ?? 0) + 1;
         }
         expensesByStatus = Object.entries(statusCounts).map(
           ([status, count]) => ({
@@ -133,10 +133,10 @@ export async function GET() {
     };
 
     const dbResult = {
-      total: dbTotal || 0,
-      debits: dbDebits || 0,
-      credits: dbCredits || 0,
-      expenses_created: expensesCreated || 0,
+      total: dbTotal ?? 0,
+      debits: dbDebits ?? 0,
+      credits: dbCredits ?? 0,
+      expenses_created: expensesCreated ?? 0,
       expenses_by_status: expensesByStatus || [],
       byYear: dbByYear,
     };

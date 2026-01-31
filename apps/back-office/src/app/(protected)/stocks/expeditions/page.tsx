@@ -565,7 +565,7 @@ export default function ExpeditionsPage() {
                                                   ?.public_url
                                               }
                                               alt={
-                                                item.products?.name || 'Produit'
+                                                item.products?.name ?? 'Produit'
                                               }
                                               size="sm"
                                             />
@@ -576,7 +576,7 @@ export default function ExpeditionsPage() {
                                               </p>
                                               <p className="text-xs text-gray-500 font-mono">
                                                 SKU:{' '}
-                                                {item.products?.sku || 'N/A'}
+                                                {item.products?.sku ?? 'N/A'}
                                               </p>
                                             </div>
                                             <div className="text-right">
@@ -808,7 +808,7 @@ export default function ExpeditionsPage() {
                                                   ?.public_url
                                               }
                                               alt={
-                                                item.products?.name || 'Produit'
+                                                item.products?.name ?? 'Produit'
                                               }
                                               size="sm"
                                             />
@@ -819,7 +819,7 @@ export default function ExpeditionsPage() {
                                               </p>
                                               <p className="text-xs text-gray-500 font-mono">
                                                 SKU:{' '}
-                                                {item.products?.sku || 'N/A'}
+                                                {item.products?.sku ?? 'N/A'}
                                               </p>
                                             </div>
                                             <div className="text-right">

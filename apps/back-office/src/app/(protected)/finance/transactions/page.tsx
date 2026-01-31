@@ -1301,7 +1301,7 @@ function TransactionsPageV2() {
   const progressPercent = stats
     ? Math.round(
         ((stats.total_count - stats.to_process_count) / stats.total_count) * 100
-      ) || 0
+      ) ?? 0
     : 0;
 
   return (

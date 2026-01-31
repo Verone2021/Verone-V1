@@ -364,7 +364,7 @@ export default function QontoDocumentsPage(): React.ReactNode {
                     <div className="flex items-center justify-between">
                       <div className="space-y-1">
                         <p className="text-sm text-muted-foreground">
-                          Client: {invoice.client?.name || 'N/A'}
+                          Client: {invoice.client?.name ?? 'N/A'}
                         </p>
                         <p className="text-sm text-muted-foreground">
                           Date: {invoice.issue_date} | Echeance:{' '}
@@ -443,7 +443,7 @@ export default function QontoDocumentsPage(): React.ReactNode {
                     <div className="flex items-center justify-between">
                       <div className="space-y-1">
                         <p className="text-sm text-muted-foreground">
-                          Client: {quote.client?.name || 'N/A'}
+                          Client: {quote.client?.name ?? 'N/A'}
                         </p>
                         <p className="text-sm text-muted-foreground">
                           Date: {quote.issue_date} | Expire: {quote.expiry_date}
@@ -519,7 +519,7 @@ export default function QontoDocumentsPage(): React.ReactNode {
                     <div className="flex items-center justify-between">
                       <div className="space-y-1">
                         <p className="text-sm text-muted-foreground">
-                          Client: {creditNote.client?.name || 'N/A'}
+                          Client: {creditNote.client?.name ?? 'N/A'}
                         </p>
                         <p className="text-sm text-muted-foreground">
                           Date: {creditNote.issue_date}

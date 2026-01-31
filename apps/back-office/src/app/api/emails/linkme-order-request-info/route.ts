@@ -88,11 +88,11 @@ export async function POST(request: NextRequest) {
 
     const resendClient = getResendClient();
     const { data, error } = await resendClient.emails.send({
-      from: process.env.RESEND_FROM_EMAIL || 'commandes@verone.fr',
+      from: process.env.RESEND_FROM_EMAIL ?? 'commandes@verone.fr',
       to: requesterEmail,
       subject: emailSubject,
       html: emailHtml,
-      replyTo: process.env.RESEND_REPLY_TO || 'commandes@verone.fr',
+      replyTo: process.env.RESEND_REPLY_TO ?? 'commandes@verone.fr',
     });
 
     if (error) {

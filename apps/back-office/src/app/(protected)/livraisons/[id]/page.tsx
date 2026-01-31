@@ -203,7 +203,7 @@ export default function DeliveryNoteDetailPage(): React.ReactNode {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            <p className="font-medium">{deliveryNote.customer?.name || '-'}</p>
+            <p className="font-medium">{deliveryNote.customer?.name ?? '-'}</p>
             {deliveryNote.customer?.email && (
               <p className="text-sm text-muted-foreground">
                 {deliveryNote.customer.email}
@@ -279,7 +279,7 @@ export default function DeliveryNoteDetailPage(): React.ReactNode {
               {deliveryNote.items.map(item => (
                 <TableRow key={item.id}>
                   <TableCell className="font-medium">
-                    {item.product?.name || 'Produit'}
+                    {item.product?.name ?? 'Produit'}
                   </TableCell>
                   <TableCell className="font-mono text-sm text-muted-foreground">
                     {item.product?.sku || '-'}

@@ -37,8 +37,8 @@ export default function VentesDashboardPage() {
     tauxConversion: 0,
   };
 
-  const recentConsultations = metrics?.recentConsultations || [];
-  const recentOrders = metrics?.recentOrders || [];
+  const recentConsultations = metrics?.recentConsultations ?? [];
+  const recentOrders = metrics?.recentOrders ?? [];
 
   return (
     <div className="min-h-screen bg-gray-50">
