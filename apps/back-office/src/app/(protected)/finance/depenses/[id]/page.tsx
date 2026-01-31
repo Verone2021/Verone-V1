@@ -296,7 +296,7 @@ export default function ExpenseDetailPage(props: PageProps) {
               <div>
                 <p className="font-medium">
                   {/* Catégorie extraite de la description [PCG xxx] */}
-                  {document.description?.match(/\[([^\]]+)\]/)?.[1] || 'N/A'}
+                  {document.description?.match(/\[([^\]]+)\]/)?.[1] ?? 'N/A'}
                 </p>
               </div>
             </div>
