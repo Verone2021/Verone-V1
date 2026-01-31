@@ -436,7 +436,7 @@ function OwnerStorageDetail({
   >('allocations');
 
   const { data: detailData, isLoading: detailLoading } =
-    useAffiliateStorageDetail(owner?.owner_type || 'enseigne', owner?.owner_id);
+    useAffiliateStorageDetail(owner?.owner_type ?? 'enseigne', owner?.owner_id);
 
   const { data: weightedAverage, isLoading: avgLoading } =
     useStorageWeightedAverage(
