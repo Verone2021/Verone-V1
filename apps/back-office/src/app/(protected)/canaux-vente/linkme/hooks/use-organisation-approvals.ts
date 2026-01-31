@@ -85,7 +85,7 @@ export function usePendingOrganisationsCount() {
         throw error;
       }
 
-      return count || 0;
+      return count ?? 0;
     },
     staleTime: 120000, // 2 minutes
     refetchInterval: 60000,
