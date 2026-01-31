@@ -207,7 +207,7 @@ export function UserConfigModal({
 
         if (!emailResponse.ok) {
           const data = await emailResponse.json();
-          setErrors({ email: data.message || 'Erreur modification email' });
+          setErrors({ email: data.message ?? 'Erreur modification email' });
           setIsUpdatingEmail(false);
           return;
         }
@@ -259,7 +259,7 @@ export function UserConfigModal({
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Erreur lors de la réinitialisation');
+        throw new Error(data.message ?? 'Erreur lors de la réinitialisation');
       }
 
       setPasswordSuccess(true);

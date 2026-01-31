@@ -160,7 +160,7 @@ export function UserEditModal({ isOpen, user, onClose }: UserEditModalProps) {
         if (!emailResponse.ok) {
           const errorData = await emailResponse.json();
           throw new Error(
-            errorData.message || "Erreur lors de la modification de l'email"
+            errorData.message ?? "Erreur lors de la modification de l'email"
           );
         }
         setIsUpdatingEmail(false);
