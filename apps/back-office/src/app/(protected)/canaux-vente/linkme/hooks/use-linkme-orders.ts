@@ -171,7 +171,7 @@ async function fetchLinkMeOrders(): Promise<LinkMeOrder[]> {
   }
 
   // Mapper les données pour compatibilité avec l'interface LinkMeOrder
-  return (data || []).map((order: any) => ({
+  return (data ?? []).map((order: any) => ({
     ...order,
     // Pour compatibilité avec l'ancienne interface
     customer_organisation_id:
@@ -239,7 +239,7 @@ async function fetchLinkMeOrderById(orderId: string): Promise<LinkMeOrder> {
       order.customer_type === 'organization' ? order.customer_id : null,
     individual_customer_id:
       order.customer_type === 'individual' ? order.customer_id : null,
-    items: (order.sales_order_items || []).map((item: any) => ({
+    items: (order.sales_order_items ?? []).map((item: any) => ({
       id: item.id,
       sales_order_id: orderId,
       product_id: item.product_id,
@@ -290,7 +290,7 @@ async function updateLinkMeOrder(
     }
   } else {
     // Garder le total existant des produits
-    for (const item of currentOrder.sales_order_items || []) {
+    for (const item of currentOrder.sales_order_items ?? []) {
       productsHt += (item as any).quantity * (item as any).unit_price_ht;
     }
   }

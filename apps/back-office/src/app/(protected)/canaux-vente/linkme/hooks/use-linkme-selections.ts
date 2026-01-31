@@ -198,7 +198,7 @@ async function fetchSelectionById(
   }
 
   // 3. Récupérer les images des produits
-  const productIds = items?.map((item: SelectionItem) => item.product_id) || [];
+  const productIds = items?.map((item: SelectionItem) => item.product_id) ?? [];
   let imagesByProductId: Record<string, string> = {};
   const commissionByProductId: Record<string, number | null> = {};
   const catalogPriceByProductId: Record<string, number | null> = {};
@@ -262,7 +262,7 @@ async function fetchSelectionById(
   }
 
   // 5. Combiner les données (y compris données étendues pour modal)
-  const itemsWithImages = (items || []).map(item => {
+  const itemsWithImages = (items ?? []).map(item => {
     const channelData = channelPricingDataByProductId[item.product_id];
 
     const rawProduct = item.product;
@@ -839,7 +839,7 @@ async function fetchSelectionsByEnseigne(
     throw selError;
   }
 
-  return (selections || []).map(s => ({
+  return (selections ?? []).map(s => ({
     id: s.id,
     name: s.name,
     slug: s.slug,

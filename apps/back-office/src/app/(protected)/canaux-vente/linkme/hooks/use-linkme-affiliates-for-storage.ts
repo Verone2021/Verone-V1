@@ -49,7 +49,7 @@ export function useLinkMeAffiliatesForStorage() {
       }
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return ((data as any[]) || []).map((a: any) => ({
+      return ((data as any[]) ?? []).map((a: any) => ({
         id: a.id,
         display_name: a.display_name || 'Sans nom',
         slug: a.slug ?? '',

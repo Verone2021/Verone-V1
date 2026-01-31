@@ -55,7 +55,7 @@ export function usePendingApprovalsCount() {
         throw error;
       }
 
-      return data || 0;
+      return data ?? 0;
     },
     staleTime: 120000, // 2 minutes
     refetchInterval: 60000, // Refresh every minute
@@ -103,7 +103,7 @@ export function usePendingApprovals() {
       }
 
       // Map data to flat structure
-      return (data || []).map((product: Record<string, unknown>) => ({
+      return (data ?? []).map((product: Record<string, unknown>) => ({
         ...product,
         enseigne_name: (product.enseigne as { name?: string })?.name ?? null,
         affiliate_display_name:
@@ -170,14 +170,14 @@ export function useAllAffiliateProducts(
       }
 
       // Map data and determine storage type from receptions
-      return (data || []).map((product: Record<string, unknown>) => {
+      return (data ?? []).map((product: Record<string, unknown>) => {
         const receptions =
           (product.purchase_order_receptions as Array<{
             id: string;
             quantity_expected: number;
             status: string;
             reference_type: string;
-          }>) || [];
+          }>) ?? [];
 
         // Find affiliate reception (indicates storage by Vérone)
         const affiliateReception = receptions.find(
@@ -422,7 +422,7 @@ export function useProductCommissionHistory(productId: string | undefined) {
         throw error;
       }
 
-      return (data || []) as unknown as CommissionHistoryEntry[];
+      return (data ?? []) as unknown as CommissionHistoryEntry[];
     },
     enabled: !!productId,
     staleTime: 30000,

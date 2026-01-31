@@ -88,7 +88,7 @@ async function fetchLinkMeAffiliates(
 
   // Compter les sélections par affilié
   const selectionsCountMap = new Map<string, number>();
-  (selections || []).forEach(s => {
+  (selections ?? []).forEach(s => {
     selectionsCountMap.set(
       s.affiliate_id,
       (selectionsCountMap.get(s.affiliate_id) || 0) + 1

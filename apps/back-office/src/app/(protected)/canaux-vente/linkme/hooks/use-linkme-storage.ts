@@ -58,7 +58,7 @@ export function useStorageOverview() {
       }
 
       // Filter out entries with no storage
-      return ((data || []) as StorageOverviewItem[]).filter(
+      return ((data ?? []) as StorageOverviewItem[]).filter(
         item => item.total_units > 0 || item.products_count > 0
       );
     },
@@ -72,12 +72,12 @@ export function useStorageOverview() {
 export function useStorageTotals() {
   const { data: overview, ...rest } = useStorageOverview();
 
-  const totals = (overview || []).reduce(
+  const totals = (overview ?? []).reduce(
     (acc, item) => ({
-      total_units: acc.total_units + (item.total_units || 0),
-      total_volume_m3: acc.total_volume_m3 + (item.total_volume_m3 || 0),
+      total_units: acc.total_units + (item.total_units ?? 0),
+      total_volume_m3: acc.total_volume_m3 + (item.total_volume_m3 ?? 0),
       billable_volume_m3:
-        acc.billable_volume_m3 + (item.billable_volume_m3 || 0),
+        acc.billable_volume_m3 + (item.billable_volume_m3 ?? 0),
       affiliates_count: acc.affiliates_count + 1,
     }),
     {
@@ -166,7 +166,7 @@ export function useAffiliateStorageDetail(
           products_count: 0,
           billable_products_count: 0,
         },
-        allocations: (detailsData || []) as StorageAllocation[],
+        allocations: (detailsData ?? []) as StorageAllocation[],
       };
     },
     enabled: !!ownerId,
@@ -348,7 +348,7 @@ export function useStoragePricingTiers() {
         return [];
       }
 
-      return data || [];
+      return data ?? [];
     },
     staleTime: 300000, // 5 minutes
   });

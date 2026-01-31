@@ -107,7 +107,7 @@ async function fetchEnseigneOrganisations(
     throw error;
   }
 
-  return (data || []).map(org => ({
+  return (data ?? []).map(org => ({
     id: org.id,
     name: org.trade_name || org.legal_name,
     legal_name: org.legal_name,
