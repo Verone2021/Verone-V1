@@ -1182,7 +1182,7 @@ function TransactionsPageV2() {
       await refresh();
       setShowClassificationModal(false);
     } else {
-      toast.error(result.error || 'Erreur');
+      toast.error(result.error ?? 'Erreur');
     }
   };
 
@@ -1198,7 +1198,7 @@ function TransactionsPageV2() {
       await refresh();
       setShowOrganisationModal(false);
     } else {
-      toast.error(result.error || 'Erreur');
+      toast.error(result.error ?? 'Erreur');
     }
   };
 
@@ -1219,7 +1219,7 @@ function TransactionsPageV2() {
           description: 'Cette transaction ne peut pas être modifiée.',
         });
       } else {
-        toast.error(result.error || 'Erreur');
+        toast.error(result.error ?? 'Erreur');
       }
     }
   };
@@ -1257,7 +1257,7 @@ function TransactionsPageV2() {
       await refresh();
       setSelectedTransaction(null);
     } else {
-      toast.error(result.error || 'Erreur');
+      toast.error(result.error ?? 'Erreur');
     }
   };
 
