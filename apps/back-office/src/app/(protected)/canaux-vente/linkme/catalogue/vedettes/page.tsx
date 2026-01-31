@@ -32,7 +32,7 @@ export default function VedettesPage() {
 
   // Filtrer uniquement les vedettes
   const featuredProducts = useMemo(() => {
-    return (catalogProducts || []).filter(p => p.is_featured);
+    return (catalogProducts ?? []).filter(p => p.is_featured);
   }, [catalogProducts]);
 
   // Handler pour retirer des vedettes

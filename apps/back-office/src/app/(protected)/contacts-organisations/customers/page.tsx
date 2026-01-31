@@ -639,9 +639,16 @@ export default function CustomersPage() {
 
                             {/* Badge Ownership Type en-dessous du nom, aligné à gauche */}
                             {(() => {
-                              const badge = getOwnershipBadge(customer.ownership_type);
+                              const badge = getOwnershipBadge(
+                                customer.ownership_type
+                              );
                               return badge ? (
-                                <span className={cn("inline-block mt-1 px-1.5 py-0.5 text-[10px] font-medium rounded", badge.className)}>
+                                <span
+                                  className={cn(
+                                    'inline-block mt-1 px-1.5 py-0.5 text-[10px] font-medium rounded',
+                                    badge.className
+                                  )}
+                                >
                                   {badge.label}
                                 </span>
                               ) : null;

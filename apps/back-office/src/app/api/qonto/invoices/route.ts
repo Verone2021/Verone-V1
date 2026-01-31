@@ -551,7 +551,7 @@ export async function POST(request: NextRequest): Promise<
       paymentMethods: {
         iban: mainAccount.iban,
       },
-      // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- Empty order_number must become undefined
+
       purchaseOrderNumber: typedOrder.order_number || undefined,
       items,
     };

@@ -379,7 +379,7 @@ export default function EditDraftPage({ params }: IPageProps) {
       const body: Record<string, unknown> = {
         items: validItems.map(item => ({
           title: item.title,
-          // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- Empty string must become undefined (omitted in JSON), not preserved
+
           description: item.description || undefined,
           quantity: item.quantity,
           unit: item.unit,
