@@ -34,7 +34,7 @@ function mapMovementToCard(
       id: movement.id,
       movement_type: movement.movement_type,
       quantity_change: movement.quantity_change,
-      reason_code: movement.reason_code || 'unknown',
+      reason_code: movement.reason_code ?? 'unknown',
       performed_at: movement.performed_at,
 
       // Mapping produit

@@ -84,7 +84,7 @@ export async function GET() {
             currency: tx.currency,
             side: tx.side,
             label: tx.label,
-            counterparty: tx.counterparty?.name || 'N/A',
+            counterparty: tx.counterparty?.name ?? 'N/A',
             settled_at: tx.settled_at,
             status: tx.status,
           })),
@@ -143,7 +143,7 @@ export async function GET() {
         success: false,
         error: 'Erreur de connexion Qonto',
         message: error.message || 'Une erreur inattendue s\'est produite',
-        code: error.code || 'UNKNOWN_ERROR',
+        code: error.code ?? 'UNKNOWN_ERROR',
         details: error.details,
       },
       { status: error.statusCode ?? 500 }
