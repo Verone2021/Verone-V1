@@ -189,8 +189,8 @@ export async function POST(request: NextRequest): Promise<
       const indiv = customer as IndividualCustomer;
       qontoAddress = {
         streetAddress: indiv.address_line1 ?? '',
-        city: indiv.city || 'Paris',
-        zipCode: indiv.postal_code || '75001',
+        city: indiv.city ?? 'Paris',
+        zipCode: indiv.postal_code ?? '75001',
         countryCode: normalizeCountryCode(indiv.country),
       };
     }

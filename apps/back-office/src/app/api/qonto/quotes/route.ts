@@ -300,7 +300,7 @@ export async function POST(request: NextRequest): Promise<
       qontoClientId = existingClient.id;
     } else {
       const newClient = await qontoClient.createClient({
-        name: customerName || 'Client',
+        name: customerName ?? 'Client',
         type: qontoClientType,
         email: customerEmail,
         currency: 'EUR',
