@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
       old_data: event.old_data ?? null,
       new_data: event.new_data ?? null,
       severity: event.severity ?? 'info',
-      metadata: event.metadata || {},
+      metadata: event.metadata ?? {},
       session_id: event.metadata?.session_duration?.toString() ?? null, // Utiliser comme proxy session
       page_url:
         (event.metadata?.page_url || request.headers.get('referer')) ?? null,

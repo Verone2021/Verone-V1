@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
       old_data: event.old_data ?? null,
       new_data: event.new_data ?? null,
       severity: event.severity ?? 'info',
-      metadata: event.metadata || {},
+      metadata: event.metadata ?? {},
       session_id: session_id,
       page_url: event.metadata?.page_url ?? null,
       user_agent: simplifyUserAgent(event.metadata?.user_agent || rawUA), // ✅ Anonymisé production
