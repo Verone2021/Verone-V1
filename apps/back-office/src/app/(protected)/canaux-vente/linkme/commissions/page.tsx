@@ -378,7 +378,7 @@ export default function LinkMeCommissionsPage() {
       c.affiliate_commission.toFixed(2),
       (c.affiliate_commission_ttc ?? c.affiliate_commission * 1.2).toFixed(2),
       statusConfig[(c.status ?? 'pending') as keyof typeof statusConfig]
-        ?.label || c.status,
+        ?.label ?? c.status,
     ]);
 
     const csv = [headers.join(';'), ...rows.map(r => r.join(';'))].join('\n');
@@ -420,7 +420,7 @@ export default function LinkMeCommissionsPage() {
       count: getCommissionsByTab('en_attente').length,
       total: getCommissionsByTab('en_attente').reduce(
         (sum, c) =>
-          sum + (c.affiliate_commission_ttc || c.affiliate_commission * 1.2),
+          sum + (c.affiliate_commission_ttc ?? c.affiliate_commission * 1.2),
         0
       ),
     },
@@ -428,7 +428,7 @@ export default function LinkMeCommissionsPage() {
       count: getCommissionsByTab('payables').length,
       total: getCommissionsByTab('payables').reduce(
         (sum, c) =>
-          sum + (c.affiliate_commission_ttc || c.affiliate_commission * 1.2),
+          sum + (c.affiliate_commission_ttc ?? c.affiliate_commission * 1.2),
         0
       ),
     },
@@ -436,7 +436,7 @@ export default function LinkMeCommissionsPage() {
       count: getCommissionsByTab('en_cours').length,
       total: getCommissionsByTab('en_cours').reduce(
         (sum, c) =>
-          sum + (c.affiliate_commission_ttc || c.affiliate_commission * 1.2),
+          sum + (c.affiliate_commission_ttc ?? c.affiliate_commission * 1.2),
         0
       ),
     },
@@ -444,7 +444,7 @@ export default function LinkMeCommissionsPage() {
       count: getCommissionsByTab('payees').length,
       total: getCommissionsByTab('payees').reduce(
         (sum, c) =>
-          sum + (c.affiliate_commission_ttc || c.affiliate_commission * 1.2),
+          sum + (c.affiliate_commission_ttc ?? c.affiliate_commission * 1.2),
         0
       ),
     },
@@ -721,7 +721,7 @@ export default function LinkMeCommissionsPage() {
                                 {orderNumber}
                               </TableCell>
                               <TableCell>
-                                {commission.affiliate?.display_name || 'N/A'}
+                                {commission.affiliate?.display_name ?? 'N/A'}
                               </TableCell>
                               <TableCell>
                                 <Badge
@@ -802,7 +802,7 @@ export default function LinkMeCommissionsPage() {
         const firstSelected = selectedCommissions[0];
         const affiliateId = firstSelected?.affiliate_id ?? '';
         const affiliateName =
-          firstSelected?.affiliate?.display_name || 'Affilié';
+          firstSelected?.affiliate?.display_name ?? 'Affilié';
 
         return (
           <PaymentRequestModalAdmin
