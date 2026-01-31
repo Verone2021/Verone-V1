@@ -401,7 +401,7 @@ export function CreateLinkMeOrderModal({
     const newItem: CartItem = {
       id: `${item.product_id}-${Date.now()}`,
       product_id: item.product_id,
-      product_name: item.product?.name || 'Produit inconnu',
+      product_name: item.product?.name ?? 'Produit inconnu',
       sku: item.product?.sku ?? '',
       quantity: 1,
       unit_price_ht: sellingPrice,
@@ -949,7 +949,7 @@ export function CreateLinkMeOrderModal({
                           <div className="flex-1 min-w-0">
                             <p className="font-medium truncate">{org.name}</p>
                             <p className="text-xs text-gray-500 truncate">
-                              {org.email || org.city || "Pas d'email"}
+                              {org.email ?? org.city ?? "Pas d'email"}
                             </p>
                           </div>
                           {selectedCustomerId === org.id && (
@@ -1281,7 +1281,7 @@ export function CreateLinkMeOrderModal({
                           )}
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium truncate">
-                              {item.product?.name || 'Produit'}
+                              {item.product?.name ?? 'Produit'}
                             </p>
                             <p className="text-xs text-gray-500">
                               {sellingPrice.toFixed(2)}€ HT • Marge{' '}
@@ -1585,7 +1585,7 @@ export function CreateLinkMeOrderModal({
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b">
               <h3 className="font-semibold text-lg">
-                Aperçu : {previewSelection?.name || 'Chargement...'}
+                Aperçu : {previewSelection?.name ?? 'Chargement...'}
               </h3>
               <button
                 onClick={() => setPreviewSelectionId(null)}
@@ -1624,7 +1624,7 @@ export function CreateLinkMeOrderModal({
                           {item.product_image_url ? (
                             <img
                               src={item.product_image_url}
-                              alt={item.product?.name || 'Produit'}
+                              alt={item.product?.name ?? 'Produit'}
                               className="w-full h-full object-cover"
                             />
                           ) : (
@@ -1635,7 +1635,7 @@ export function CreateLinkMeOrderModal({
                         </div>
                         {/* Nom tronqué */}
                         <p className="text-xs font-medium text-center truncate">
-                          {item.product?.name || 'Produit'}
+                          {item.product?.name ?? 'Produit'}
                         </p>
                         {/* Prix */}
                         <p className="text-xs text-gray-500 text-center">
