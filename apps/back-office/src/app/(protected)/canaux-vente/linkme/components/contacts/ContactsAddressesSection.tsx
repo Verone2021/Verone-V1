@@ -540,7 +540,7 @@ export function ContactsAddressesSection({
                 data.billingAddress?.mode === 'enseigne'
                   ? `Enseigne: ${orgWithEnseigne?.enseigne?.name}`
                   : data.billingAddress?.mode === 'restaurant'
-                    ? `Restaurant: ${orgWithEnseigne?.tradeName || orgWithEnseigne?.legalName}`
+                    ? `Restaurant: ${orgWithEnseigne?.tradeName ?? orgWithEnseigne?.legalName}`
                     : data.billingAddress?.customAddress
                       ? data.billingAddress.customAddress.city
                       : 'Sélectionnez une adresse'
@@ -706,7 +706,7 @@ export function ContactsAddressesSection({
                 data.deliverySameAsBillingAddress
                   ? 'Identique à la facturation'
                   : data.deliveryAddress?.mode === 'restaurant'
-                    ? `Restaurant: ${orgWithEnseigne?.tradeName || orgWithEnseigne?.legalName}`
+                    ? `Restaurant: ${orgWithEnseigne?.tradeName ?? orgWithEnseigne?.legalName}`
                     : data.deliveryAddress?.customAddress
                       ? data.deliveryAddress.customAddress.city
                       : 'Sélectionnez une adresse'

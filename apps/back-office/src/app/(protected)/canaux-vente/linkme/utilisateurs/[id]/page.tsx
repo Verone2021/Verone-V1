@@ -552,7 +552,7 @@ export default function UserDetailPage() {
                           Enseigne liée
                         </p>
                         <p className="font-medium">
-                          {user.enseigne_name || 'Enseigne'}
+                          {user.enseigne_name ?? 'Enseigne'}
                         </p>
                       </div>
                     </div>

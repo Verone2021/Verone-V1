@@ -257,7 +257,7 @@ export default function OrganisationsPage() {
                   <td className="px-6 py-4">
                     <div>
                       <p className="font-medium text-gray-900">
-                        {org.trade_name || org.legal_name}
+                        {org.trade_name ?? org.legal_name}
                       </p>
                       {org.trade_name && (
                         <p className="text-sm text-gray-500">
@@ -349,7 +349,7 @@ export default function OrganisationsPage() {
             <div className="py-4">
               <div className="p-4 bg-gray-50 rounded-lg space-y-2">
                 <p className="font-medium">
-                  {selectedOrg.trade_name || selectedOrg.legal_name}
+                  {selectedOrg.trade_name ?? selectedOrg.legal_name}
                 </p>
                 {selectedOrg.trade_name && (
                   <p className="text-sm text-gray-500">
