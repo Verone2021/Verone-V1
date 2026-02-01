@@ -184,7 +184,7 @@ export function UserEditModal({ isOpen, user, onClose }: UserEditModalProps) {
         if (!passwordResponse.ok) {
           const errorData = await passwordResponse.json();
           throw new Error(
-            errorData.message ||
+            errorData.message ??
               'Erreur lors de la modification du mot de passe'
           );
         }

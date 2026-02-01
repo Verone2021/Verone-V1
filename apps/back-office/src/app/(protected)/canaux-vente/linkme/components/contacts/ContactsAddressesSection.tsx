@@ -742,7 +742,7 @@ export function ContactsAddressesSection({
                         <OrganisationAddressCard
                           id={orgWithEnseigne.id}
                           name={
-                            orgWithEnseigne.tradeName ||
+                            orgWithEnseigne.tradeName ??
                             orgWithEnseigne.legalName
                           }
                           logoUrl={orgWithEnseigne.logoUrl}

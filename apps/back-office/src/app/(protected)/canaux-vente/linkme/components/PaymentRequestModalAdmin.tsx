@@ -315,7 +315,7 @@ export function PaymentRequestModalAdmin({
                       </div>
                       <span className="text-sm font-semibold text-emerald-600">
                         {formatPrice(
-                          c.affiliate_commission_ttc ||
+                          c.affiliate_commission_ttc ??
                             c.affiliate_commission * 1.2
                         )}
                       </span>
