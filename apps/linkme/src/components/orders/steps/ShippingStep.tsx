@@ -137,7 +137,7 @@ function ContactForm({ contact, onChange }: ContactFormProps) {
         <Input
           id="delivery-phone"
           type="tel"
-          value={contact.phone || ''}
+          value={contact.phone ?? ''}
           onChange={e => onChange('phone', e.target.value)}
           placeholder="06 12 34 56 78"
         />
@@ -215,15 +215,15 @@ export function ShippingStep({
   // Fetch organisation contacts
   const organisationId =
     formData.restaurant.mode === 'existing'
-      ? formData.restaurant.existingId || null
+      ? (formData.restaurant.existingId ?? null)
       : null;
 
   // Determine ownership type
   const ownershipType = useMemo(() => {
     if (formData.restaurant.mode === 'new') {
-      return formData.restaurant.newRestaurant?.ownershipType || null;
+      return formData.restaurant.newRestaurant?.ownershipType ?? null;
     }
-    return formData.restaurant.existingOwnershipType || null;
+    return formData.restaurant.existingOwnershipType ?? null;
   }, [formData.restaurant]);
 
   // Is franchise?
@@ -232,7 +232,7 @@ export function ShippingStep({
   // Fetch contacts - SANS contacts enseigne pour livraison
   const { data: contactsData, isLoading } = useOrganisationContacts(
     organisationId,
-    enseigneId || null,
+    enseigneId ?? null,
     ownershipType,
     false // PAS de contacts enseigne pour livraison
   );
@@ -249,7 +249,7 @@ export function ShippingStep({
   } = useParentOrganisationAddresses(!isFranchise ? enseigneId : null);
 
   // Shipping addresses
-  const shippingAddresses = addressesData?.shipping || [];
+  const shippingAddresses = addressesData?.shipping ?? [];
 
   // Restaurant info (enrichi avec adresse complète)
   const restaurantInfo = useMemo(() => {
@@ -258,7 +258,7 @@ export function ShippingStep({
       return {
         id: 'new',
         tradeName: resto.newRestaurant.tradeName || null,
-        addressLine1: resto.newRestaurant.address || null,
+        addressLine1: resto.newRestaurant.address ?? null,
         postalCode: resto.newRestaurant.postalCode || null,
         city: resto.newRestaurant.city || null,
         country: resto.newRestaurant.country || 'FR',

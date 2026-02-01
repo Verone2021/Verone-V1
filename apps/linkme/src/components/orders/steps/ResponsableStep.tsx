@@ -99,7 +99,7 @@ function ContactForm({
         <Input
           id="responsable-phone"
           type="tel"
-          value={contact.phone || ''}
+          value={contact.phone ?? ''}
           onChange={e => onChange('phone', e.target.value)}
           placeholder="06 12 34 56 78"
         />
@@ -110,7 +110,7 @@ function ContactForm({
         <Input
           id="responsable-position"
           type="text"
-          value={contact.position || ''}
+          value={contact.position ?? ''}
           onChange={e => onChange('position', e.target.value)}
           placeholder="Directeur, Gerant..."
         />
@@ -122,7 +122,7 @@ function ContactForm({
           <Input
             id="responsable-company"
             type="text"
-            value={contact.company || ''}
+            value={contact.company ?? ''}
             onChange={e => onChange('company', e.target.value)}
             placeholder="Nom de la societe"
           />
@@ -191,7 +191,7 @@ export function ResponsableStep({
   // Get organisation ID (restaurant selectionne)
   const organisationId =
     formData.restaurant.mode === 'existing'
-      ? formData.restaurant.existingId || null
+      ? (formData.restaurant.existingId ?? null)
       : null;
 
   // Determine ownership type
