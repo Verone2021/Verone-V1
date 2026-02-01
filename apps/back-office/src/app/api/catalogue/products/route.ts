@@ -76,10 +76,10 @@ async function getProducts(req: NextRequest) {
     page: parseInt(url.searchParams.get('page') ?? '1'),
     limit: Math.min(parseInt(url.searchParams.get('limit') ?? '20'), 100),
     category: url.searchParams.get('category'),
-    status: url.searchParams.get('status') || 'active',
+    status: url.searchParams.get('status') ?? 'active',
     search: url.searchParams.get('search'),
-    sort: url.searchParams.get('sort') || 'updated_at',
-    order: url.searchParams.get('order') || 'desc',
+    sort: url.searchParams.get('sort') ?? 'updated_at',
+    order: url.searchParams.get('order') ?? 'desc',
   };
 
   // Log début traitement avec paramètres
