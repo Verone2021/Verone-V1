@@ -313,7 +313,7 @@ export async function POST(request: NextRequest): Promise<
     const items = (typedOrder.sales_order_items ?? []).map(item => ({
       title: item.products?.name ?? 'Article',
       // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- Empty notes must become undefined (omitted in API payload)
-      description: item.notes || undefined,
+      description: item.notes ?? undefined,
       quantity: String(item.quantity ?? 1),
       unit: 'pièce',
       unitPrice: {

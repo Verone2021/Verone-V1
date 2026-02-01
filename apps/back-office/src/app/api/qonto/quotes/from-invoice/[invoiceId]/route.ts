@@ -324,7 +324,7 @@ export async function POST(
       expiryDate,
       items: quoteItems,
       // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- Empty notes must become undefined (omitted in API payload)
-      footer: typedInvoice.notes || undefined,
+      footer: typedInvoice.notes ?? undefined,
     });
 
     console.warn(
