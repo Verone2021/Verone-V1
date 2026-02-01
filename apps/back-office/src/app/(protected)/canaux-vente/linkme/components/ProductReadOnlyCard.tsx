@@ -79,7 +79,7 @@ export function ProductReadOnlyCard({
               Sous-catégorie
             </p>
             <p className="text-sm">
-              {product.product_category_name || (
+              {product.product_category_name ?? (
                 <span className="text-muted-foreground italic">
                   Non définie
                 </span>
@@ -96,7 +96,7 @@ export function ProductReadOnlyCard({
               Fournisseur
             </p>
             <p className="text-sm">
-              {product.product_supplier_name || (
+              {product.product_supplier_name ?? (
                 <span className="text-muted-foreground italic">Non défini</span>
               )}
             </p>
