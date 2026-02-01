@@ -273,7 +273,7 @@ export default function UserDetailPage() {
       .toUpperCase() || user.email[0].toUpperCase();
 
   // Config du badge rôle
-  const roleLabel = LINKME_ROLE_LABELS[user.linkme_role] || user.linkme_role;
+  const roleLabel = LINKME_ROLE_LABELS[user.linkme_role] ?? user.linkme_role;
   const roleColor =
     LINKME_ROLE_COLORS[user.linkme_role] || 'bg-gray-100 text-gray-800';
   const rolePermissions = LINKME_ROLE_PERMISSIONS[user.linkme_role] ?? [];

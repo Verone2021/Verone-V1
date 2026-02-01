@@ -747,7 +747,7 @@ export function CatalogueFilterPanel({
           })}
           {/* Statuts */}
           {filters.statuses.map(status => {
-            const label = STATUS_LABELS[status] || status;
+            const label = STATUS_LABELS[status] ?? status;
             const icon = STATUS_ICONS[status] ?? '';
             return (
               <Badge
