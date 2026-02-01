@@ -257,20 +257,20 @@ export function ShippingStep({
     if (resto.mode === 'new' && resto.newRestaurant) {
       return {
         id: 'new',
-        tradeName: resto.newRestaurant.tradeName || null,
+        tradeName: resto.newRestaurant.tradeName ?? null,
         addressLine1: resto.newRestaurant.address ?? null,
-        postalCode: resto.newRestaurant.postalCode || null,
-        city: resto.newRestaurant.city || null,
-        country: resto.newRestaurant.country || 'FR',
+        postalCode: resto.newRestaurant.postalCode ?? null,
+        city: resto.newRestaurant.city ?? null,
+        country: resto.newRestaurant.country ?? 'FR',
       };
     } else if (resto.mode === 'existing' && resto.existingId) {
       return {
         id: resto.existingId,
-        tradeName: resto.existingName || null,
+        tradeName: resto.existingName ?? null,
         addressLine1: null, // Non disponible pour restaurant existant
         postalCode: null, // Non disponible pour restaurant existant
-        city: resto.existingCity || null,
-        country: resto.existingCountry || 'FR',
+        city: resto.existingCity ?? null,
+        country: resto.existingCountry ?? 'FR',
       };
     }
     return null;
@@ -288,7 +288,7 @@ export function ShippingStep({
     return {
       id: 'restaurant',
       ownerType: 'organisation' as const,
-      ownerId: organisationId || 'unknown',
+      ownerId: organisationId ?? 'unknown',
       addressType: 'shipping' as const,
       sourceApp: 'linkme',
       label: 'Adresse du restaurant',
@@ -296,9 +296,9 @@ export function ShippingStep({
       tradeName: restaurantInfo.tradeName,
       siret: null,
       vatNumber: null,
-      addressLine1: restaurantInfo.addressLine1 || '',
+      addressLine1: restaurantInfo.addressLine1 ?? '',
       addressLine2: null,
-      postalCode: restaurantInfo.postalCode || '',
+      postalCode: restaurantInfo.postalCode ?? '',
       city: restaurantInfo.city,
       region: null,
       country: restaurantInfo.country,
@@ -332,10 +332,10 @@ export function ShippingStep({
       tradeName: parentPrimaryAddress.tradeName,
       siret: parentPrimaryAddress.siret,
       vatNumber: null,
-      addressLine1: parentPrimaryAddress.addressLine1 || '',
+      addressLine1: parentPrimaryAddress.addressLine1 ?? '',
       addressLine2: null,
-      postalCode: parentPrimaryAddress.postalCode || '',
-      city: parentPrimaryAddress.city || '',
+      postalCode: parentPrimaryAddress.postalCode ?? '',
+      city: parentPrimaryAddress.city ?? '',
       region: null,
       country: 'FR',
       latitude: null,
@@ -353,7 +353,7 @@ export function ShippingStep({
 
   // Contacts disponibles (locaux uniquement - ceux qui sont SUR PLACE)
   const localContacts = useMemo(() => {
-    const allContacts = contactsData?.allContacts || [];
+    const allContacts = contactsData?.allContacts ?? [];
     // Pour tous les types, on ne montre que les contacts locaux du restaurant
     return allContacts.filter(c => c.organisationId === organisationId);
   }, [contactsData?.allContacts, organisationId]);
@@ -369,8 +369,8 @@ export function ShippingStep({
       const newResto = formData.restaurant.newRestaurant;
       if (newResto.city) {
         onUpdateDelivery({
-          address: newResto.address || '',
-          postalCode: newResto.postalCode || '',
+          address: newResto.address ?? '',
+          postalCode: newResto.postalCode ?? '',
           city: newResto.city,
         });
       }
@@ -416,7 +416,7 @@ export function ShippingStep({
 
   const isContactComplete = useMemo(() => {
     const hasContact =
-      formData.contacts.delivery.existingContactId ||
+      formData.contacts.delivery.existingContactId ??
       (formData.contacts.delivery.contact?.firstName &&
         formData.contacts.delivery.contact?.lastName &&
         formData.contacts.delivery.contact?.email);
@@ -425,7 +425,7 @@ export function ShippingStep({
 
   // Determine if contact form is in edit mode
   const isContactEditMode = useMemo(() => {
-    return formData.contacts.delivery.existingContactId || showContactForm;
+    return formData.contacts.delivery.existingContactId ?? showContactForm;
   }, [
     formData.contacts.delivery.sameAsResponsable,
     formData.contacts.delivery.existingContactId,
@@ -441,9 +441,9 @@ export function ShippingStep({
       setAddressFormData(newAddress);
       // Sync with delivery data
       onUpdateDelivery({
-        address: newAddress.addressLine1 || '',
-        postalCode: newAddress.postalCode || '',
-        city: newAddress.city || '',
+        address: newAddress.addressLine1 ?? '',
+        postalCode: newAddress.postalCode ?? '',
+        city: newAddress.city ?? '',
       });
     },
     [onUpdateDelivery]
@@ -491,15 +491,15 @@ export function ShippingStep({
       setSelectedAddressId('parent');
       setShowAddressForm(false);
       setAddressFormData({
-        addressLine1: parentPrimaryAddress.addressLine1 || '',
-        postalCode: parentPrimaryAddress.postalCode || '',
-        city: parentPrimaryAddress.city || '',
+        addressLine1: parentPrimaryAddress.addressLine1 ?? '',
+        postalCode: parentPrimaryAddress.postalCode ?? '',
+        city: parentPrimaryAddress.city ?? '',
         country: 'FR',
       });
       onUpdateDelivery({
-        address: parentPrimaryAddress.addressLine1 || '',
-        postalCode: parentPrimaryAddress.postalCode || '',
-        city: parentPrimaryAddress.city || '',
+        address: parentPrimaryAddress.addressLine1 ?? '',
+        postalCode: parentPrimaryAddress.postalCode ?? '',
+        city: parentPrimaryAddress.city ?? '',
       });
     }
   }, [parentPrimaryAddress, onUpdateDelivery]);
@@ -545,8 +545,8 @@ export function ShippingStep({
           firstName: contact.firstName,
           lastName: contact.lastName,
           email: contact.email,
-          phone: contact.phone || contact.mobile || '',
-          position: contact.title || '',
+          phone: contact.phone ?? contact.mobile ?? '',
+          position: contact.title ?? '',
         },
       });
       setShowContactForm(false);
@@ -567,7 +567,7 @@ export function ShippingStep({
     (field: keyof ContactBase, value: string) => {
       handleDeliveryContactUpdate({
         contact: {
-          ...(formData.contacts.delivery.contact || defaultContact),
+          ...(formData.contacts.delivery.contact ?? defaultContact),
           [field]: value,
         },
       });
@@ -844,25 +844,25 @@ export function ShippingStep({
                   <div className="space-y-1">
                     <Label className="text-xs text-gray-500">Prenom</Label>
                     <p className="text-sm font-medium">
-                      {formData.contacts.delivery.contact?.firstName || '-'}
+                      {formData.contacts.delivery.contact?.firstName ?? '-'}
                     </p>
                   </div>
                   <div className="space-y-1">
                     <Label className="text-xs text-gray-500">Nom</Label>
                     <p className="text-sm font-medium">
-                      {formData.contacts.delivery.contact?.lastName || '-'}
+                      {formData.contacts.delivery.contact?.lastName ?? '-'}
                     </p>
                   </div>
                   <div className="space-y-1">
                     <Label className="text-xs text-gray-500">Email</Label>
                     <p className="text-sm font-medium">
-                      {formData.contacts.delivery.contact?.email || '-'}
+                      {formData.contacts.delivery.contact?.email ?? '-'}
                     </p>
                   </div>
                   <div className="space-y-1">
                     <Label className="text-xs text-gray-500">Telephone</Label>
                     <p className="text-sm font-medium">
-                      {formData.contacts.delivery.contact?.phone || '-'}
+                      {formData.contacts.delivery.contact?.phone ?? '-'}
                     </p>
                   </div>
                 </div>
@@ -878,7 +878,7 @@ export function ShippingStep({
                   </h5>
                   <ContactForm
                     contact={
-                      formData.contacts.delivery.contact || defaultContact
+                      formData.contacts.delivery.contact ?? defaultContact
                     }
                     onChange={handleContactChange}
                   />
@@ -1009,7 +1009,7 @@ export function ShippingStep({
                   <Input
                     id="mallEmail"
                     type="email"
-                    value={delivery.mallEmail || ''}
+                    value={delivery.mallEmail ?? ''}
                     onChange={e =>
                       handleDeliveryChange('mallEmail', e.target.value)
                     }
@@ -1175,7 +1175,7 @@ export function ShippingStep({
 
         <Textarea
           id="notes"
-          value={delivery.notes || ''}
+          value={delivery.notes ?? ''}
           onChange={e => handleDeliveryChange('notes', e.target.value)}
           placeholder="Ex: Livraison par l'entree de service, interphone code 1234..."
           rows={4}
