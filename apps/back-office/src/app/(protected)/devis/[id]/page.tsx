@@ -140,7 +140,7 @@ function StatusBadge({ status }: { status: string }): React.ReactNode {
 
   return (
     <Badge variant={variants[status] ?? 'outline'}>
-      {labels[status] || status}
+      {labels[status] ?? status}
     </Badge>
   );
 }

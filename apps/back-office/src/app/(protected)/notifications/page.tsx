@@ -339,7 +339,7 @@ export default function NotificationsPage() {
         performance: 'Performance',
         maintenance: 'Maintenance',
       };
-      return labels[key] || key;
+      return labels[key] ?? key;
     }
 
     const labels: Record<string, string> = {
@@ -348,7 +348,7 @@ export default function NotificationsPage() {
       thisWeek: 'Cette semaine',
       older: 'Plus ancien',
     };
-    return labels[key] || key;
+    return labels[key] ?? key;
   };
 
   if (loading) {

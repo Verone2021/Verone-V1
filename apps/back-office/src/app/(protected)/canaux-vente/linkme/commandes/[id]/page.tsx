@@ -530,7 +530,7 @@ export default function LinkMeOrderDetailPage() {
     };
     return (
       <Badge variant={variants[status] ?? 'outline'}>
-        {labels[status] || status}
+        {labels[status] ?? status}
       </Badge>
     );
   };

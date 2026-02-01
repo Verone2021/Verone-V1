@@ -184,7 +184,7 @@ function getDocumentTypeLabel(type: DocumentType): string {
     quote: 'Devis',
     credit_note: 'Avoir',
   };
-  return labels[type] || type;
+  return labels[type] ?? type;
 }
 
 function getDocumentNumber(doc: QontoDocument, type: DocumentType): string {

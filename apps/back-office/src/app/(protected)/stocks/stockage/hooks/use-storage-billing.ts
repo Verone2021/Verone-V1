@@ -271,7 +271,7 @@ export function getSourceLabel(source: string): string {
     billable_toggle: 'Statut facturable modifie',
     manual_adjustment: 'Ajustement manuel',
   };
-  return labels[source] || source;
+  return labels[source] ?? source;
 }
 
 /**

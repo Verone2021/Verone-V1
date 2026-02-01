@@ -151,7 +151,7 @@ export function UserActivityTab({ user }: UserActivityTabProps) {
       organisation: 'Organisation',
       admin: 'Administration',
     };
-    return labels[module] || module;
+    return labels[module] ?? module;
   };
 
   if (isLoading) {
