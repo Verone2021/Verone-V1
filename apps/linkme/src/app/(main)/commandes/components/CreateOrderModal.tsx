@@ -245,10 +245,10 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
     if (user) {
       setRequester({
         type: 'responsable_enseigne',
-        name: user.user_metadata?.full_name || user.email || '',
-        email: user.email || '',
-        phone: user.user_metadata?.phone || '',
-        position: user.user_metadata?.position || null,
+        name: user.user_metadata?.full_name ?? user.email ?? '',
+        email: user.email ?? '',
+        phone: user.user_metadata?.phone ?? '',
+        position: user.user_metadata?.position ?? null,
       });
     }
   }, [user]);
@@ -265,10 +265,10 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
       if (primaryContact) {
         setNewRestaurantForm(prev => ({
           ...prev,
-          ownerFirstName: primaryContact.firstName || '',
-          ownerLastName: primaryContact.lastName || '',
-          ownerEmail: primaryContact.email || '',
-          ownerPhone: primaryContact.phone || '',
+          ownerFirstName: primaryContact.firstName ?? '',
+          ownerLastName: primaryContact.lastName ?? '',
+          ownerEmail: primaryContact.email ?? '',
+          ownerPhone: primaryContact.phone ?? '',
         }));
       }
     }
@@ -321,7 +321,7 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(
         (p: any) =>
-          p.productName.toLowerCase().includes(query) ||
+          p.productName.toLowerCase().includes(query) ??
           p.productSku.toLowerCase().includes(query)
       );
     }
@@ -372,7 +372,7 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
       const tvaAmount = lineHt * item.taxRate;
       tvaByRate.set(
         item.taxRate,
-        (tvaByRate.get(item.taxRate) || 0) + tvaAmount
+        (tvaByRate.get(item.taxRate) ?? 0) + tvaAmount
       );
     });
 
@@ -430,10 +430,10 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
 
       setNewRestaurantForm(prev => ({
         ...prev,
-        ownerFirstName: primary.firstName || '',
-        ownerLastName: primary.lastName || '',
-        ownerEmail: primary.email || '',
-        ownerPhone: primary.phone || primary.mobile || '',
+        ownerFirstName: primary.firstName ?? '',
+        ownerLastName: primary.lastName ?? '',
+        ownerEmail: primary.email ?? '',
+        ownerPhone: primary.phone ?? primary.mobile ?? '',
       }));
     }
   }, [selectedCustomerContacts, isNewRestaurant]);
@@ -658,7 +658,7 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
 
       if (!rpcResult?.success) {
         throw new Error(
-          rpcResult?.error || 'Erreur inconnue lors de la création'
+          rpcResult?.error ?? 'Erreur inconnue lors de la création'
         );
       }
 
@@ -940,8 +940,8 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
                                   {customer.name}
                                 </p>
                                 <p className="text-xs text-gray-500">
-                                  {customer.city ||
-                                    customer.email ||
+                                  {customer.city ??
+                                    customer.email ??
                                     'Pas de détails'}
                                 </p>
                               </div>
