@@ -784,7 +784,7 @@ export function EnseignesSection() {
                           {org.logo_url ? (
                             <Image
                               src={getLogoUrl(org.logo_url) ?? ''}
-                              alt={org.trade_name || org.legal_name}
+                              alt={org.trade_name ?? org.legal_name}
                               width={64}
                               height={64}
                               className="object-contain"
@@ -806,7 +806,7 @@ export function EnseignesSection() {
                       {/* Name + Location */}
                       <div className="mb-4">
                         <h3 className="font-semibold text-lg">
-                          {org.trade_name || org.legal_name}
+                          {org.trade_name ?? org.legal_name}
                         </h3>
                         {org.city && (
                           <span className="text-sm text-muted-foreground">

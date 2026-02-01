@@ -684,11 +684,11 @@ export default function LinkMeCommissionsPage() {
                             ? 'Enseigne'
                             : 'Organisation';
                           const orderNumber =
-                            commission.order_number ||
-                            commission.sales_order?.order_number ||
+                            commission.order_number ??
+                            commission.sales_order?.order_number ??
                             `#${commission.order_id.slice(0, 8)}`;
                           const commissionTTC =
-                            commission.affiliate_commission_ttc ||
+                            commission.affiliate_commission_ttc ??
                             commission.affiliate_commission *
                               (1 + (commission.tax_rate ?? 0.2));
 
@@ -760,7 +760,7 @@ export default function LinkMeCommissionsPage() {
                               </TableCell>
                               <TableCell className="text-right">
                                 {formatPrice(
-                                  commission.sales_order?.total_ttc ||
+                                  commission.sales_order?.total_ttc ??
                                     commission.order_amount_ht * 1.2
                                 )}
                               </TableCell>

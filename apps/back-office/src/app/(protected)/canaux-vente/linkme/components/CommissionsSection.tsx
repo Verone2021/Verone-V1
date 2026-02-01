@@ -535,7 +535,7 @@ export function CommissionsSection() {
                 {filteredCommissions.map(commission => {
                   const statusInfo =
                     statusConfig[
-                      (commission.status ||
+                      (commission.status ??
                         'pending') as keyof typeof statusConfig
                     ];
                   const canSelect =
