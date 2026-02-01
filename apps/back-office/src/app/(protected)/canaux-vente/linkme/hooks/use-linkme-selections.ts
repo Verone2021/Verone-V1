@@ -284,8 +284,8 @@ async function fetchSelectionById(
               (rawProduct.subcategory_id ?? rawProduct.subcategory?.id) ?? null,
             category_name: rawProduct.subcategory?.name ?? null,
             supplier_name:
-              rawProduct.supplier?.trade_name ||
-              rawProduct.supplier?.legal_name ||
+              rawProduct.supplier?.trade_name ??
+              rawProduct.supplier?.legal_name ??
               null,
             // PRODUITS AFFILIÉ (modèle inversé)
             created_by_affiliate: rawProduct.created_by_affiliate ?? null,

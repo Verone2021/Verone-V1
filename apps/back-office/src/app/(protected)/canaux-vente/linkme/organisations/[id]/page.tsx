@@ -361,7 +361,7 @@ export default function OrganisationDetailPage() {
     );
   }
 
-  const displayName = organisation.trade_name || organisation.legal_name;
+  const displayName = organisation.trade_name ?? organisation.legal_name;
 
   return (
     <div className="space-y-6">

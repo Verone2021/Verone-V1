@@ -109,7 +109,7 @@ async function fetchEnseigneOrganisations(
 
   return (data ?? []).map(org => ({
     id: org.id,
-    name: org.trade_name || org.legal_name,
+    name: org.trade_name ?? org.legal_name,
     legal_name: org.legal_name,
     trade_name: org.trade_name,
     email: org.email,
@@ -392,7 +392,7 @@ export function useCreateEnseigneOrganisation() {
           country: input.country ?? 'FR',
           type: 'customer', // Toujours client
           is_active: true,
-          source_type: input.source_type || 'linkme', // Par défaut depuis CMS LinkMe
+          source_type: input.source_type ?? 'linkme', // Par défaut depuis CMS LinkMe
           source_affiliate_id: input.source_affiliate_id ?? null,
         })
         .select()
