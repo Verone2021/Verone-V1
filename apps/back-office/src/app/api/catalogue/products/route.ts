@@ -128,7 +128,7 @@ async function getProducts(req: NextRequest) {
 
   // Log business metrics
   catalogueLogger.productViewed(
-    `products-list-${params.category || 'all'}`,
+    `products-list-${params.category ?? 'all'}`,
     'system'
   );
 

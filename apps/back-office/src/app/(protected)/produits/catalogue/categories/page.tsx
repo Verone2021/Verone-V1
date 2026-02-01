@@ -860,7 +860,7 @@ export default function CategoriesPage() {
                 ? {
                     ...formState.data,
                     parent_id:
-                      formState.data.category_id || formState.data.parent_id,
+                      formState.data.category_id ?? formState.data.parent_id,
                     family_id: formState.data.family_id,
                   }
                 : null
