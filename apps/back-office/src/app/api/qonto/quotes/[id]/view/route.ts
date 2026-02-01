@@ -153,7 +153,7 @@ export async function GET(
     return new NextResponse(pdfBuffer, {
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `inline; filename="devis-${quote.quote_number || quote.id}.pdf"`,
+        'Content-Disposition': `inline; filename="devis-${quote.quote_number ?? quote.id}.pdf"`,
         'Content-Length': String(pdfBuffer.byteLength),
         'Cache-Control': 'private, max-age=300', // Cache 5 min
       },
