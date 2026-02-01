@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useCallback, useEffect } from 'react';
 
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
 import { getRoomLabel, type RoomType } from '@verone/types';
@@ -418,9 +419,11 @@ export default function CollectionsPage() {
                     className="relative flex-shrink-0 w-14 h-14 rounded bg-gray-100 overflow-hidden"
                   >
                     {product.image_url ? (
-                      <img
+                      <Image
                         src={product.image_url}
                         alt={product.name}
+                        width={56}
+                        height={56}
                         className="w-full h-full object-contain"
                       />
                     ) : (
