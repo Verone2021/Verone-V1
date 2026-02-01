@@ -1,5 +1,7 @@
 'use client';
 
+import Image from 'next/image';
+
 import { cn } from '@verone/utils';
 import {
   X,
@@ -81,9 +83,11 @@ export function UserViewModal({ isOpen, user, onClose }: UserViewModalProps) {
             {/* Avatar et nom */}
             <div className="flex items-center gap-4">
               {user.avatar_url ? (
-                <img
+                <Image
                   src={user.avatar_url}
                   alt={fullName}
+                  width={64}
+                  height={64}
                   className="h-16 w-16 rounded-full object-cover"
                 />
               ) : (

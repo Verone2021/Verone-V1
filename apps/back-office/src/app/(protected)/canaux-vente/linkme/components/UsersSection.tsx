@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
 import { cn } from '@verone/utils';
@@ -137,9 +138,11 @@ function UserRow({
       <td className="px-4 py-3">
         <div className="flex items-center gap-3">
           {user.avatar_url ? (
-            <img
+            <Image
               src={user.avatar_url}
               alt={fullName}
+              width={40}
+              height={40}
               className="h-10 w-10 rounded-full object-cover"
             />
           ) : (

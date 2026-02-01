@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useMemo } from 'react';
 
+import Image from 'next/image';
+
 import { CategoryFilterCombobox } from '@verone/categories';
 import { cn } from '@verone/utils';
 import {
@@ -622,9 +624,11 @@ export function CreateLinkMeOrderModal({
                         )}
                       >
                         {affiliate.logo_url ? (
-                          <img
+                          <Image
                             src={affiliate.logo_url}
                             alt={affiliate.display_name}
+                            width={40}
+                            height={40}
                             className="w-10 h-10 object-cover rounded"
                           />
                         ) : (
@@ -1269,9 +1273,11 @@ export function CreateLinkMeOrderModal({
                           )}
                         >
                           {item.product_image_url ? (
-                            <img
+                            <Image
                               src={item.product_image_url}
                               alt={item.product?.name ?? ''}
+                              width={40}
+                              height={40}
                               className="w-10 h-10 object-cover rounded"
                             />
                           ) : (
@@ -1622,9 +1628,11 @@ export function CreateLinkMeOrderModal({
                         {/* Image petite 64x64 */}
                         <div className="w-16 h-16 mx-auto mb-2 overflow-hidden rounded">
                           {item.product_image_url ? (
-                            <img
+                            <Image
                               src={item.product_image_url}
                               alt={item.product?.name ?? 'Produit'}
+                              width={64}
+                              height={64}
                               className="w-full h-full object-cover"
                             />
                           ) : (
