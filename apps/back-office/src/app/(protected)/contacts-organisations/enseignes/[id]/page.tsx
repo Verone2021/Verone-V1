@@ -474,20 +474,20 @@ export default function EnseigneDetailPage() {
                 <div className="flex items-center gap-2">
                   <Building2 className="h-4 w-4 text-amber-600" />
                   <span className="font-medium text-amber-900">
-                    {stats.parentOrganisation.trade_name ||
+                    {stats.parentOrganisation.trade_name ??
                       stats.parentOrganisation.legal_name}
                   </span>
                   <span className="text-xs text-amber-600 bg-amber-100 px-2 py-0.5 rounded">
                     Siege
                   </span>
                 </div>
-                {(stats.parentOrganisation.siret ||
+                {(stats.parentOrganisation.siret ??
                   stats.parentOrganisation.siren) && (
                   <div className="text-sm text-amber-800">
                     <span className="font-medium">
                       {stats.parentOrganisation.siret ? 'SIRET' : 'SIREN'}:
                     </span>{' '}
-                    {stats.parentOrganisation.siret ||
+                    {stats.parentOrganisation.siret ??
                       stats.parentOrganisation.siren}
                   </div>
                 )}

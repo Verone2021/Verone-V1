@@ -91,7 +91,7 @@ function ConsultationRow({
               title="Cliquer pour voir toutes les photos"
             >
               <Image
-                src={primaryImage.public_url || '/placeholder-consultation.svg'}
+                src={primaryImage.public_url ?? '/placeholder-consultation.svg'}
                 alt={`Photo ${getClientName(consultation)}`}
                 fill
                 className="object-cover group-hover:scale-110 transition-transform"

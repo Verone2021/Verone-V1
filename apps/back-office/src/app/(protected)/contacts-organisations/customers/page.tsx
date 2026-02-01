@@ -530,7 +530,7 @@ export default function CustomersPage() {
         <div className="flex items-center gap-2">
           <Filter className="h-4 w-4" style={{ color: colors.text.muted }} />
           <Select
-            value={enseigneFilter || 'all'}
+            value={enseigneFilter ?? 'all'}
             onValueChange={value =>
               setEnseigneFilter(value === 'all' ? null : value)
             }

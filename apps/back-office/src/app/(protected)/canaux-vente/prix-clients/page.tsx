@@ -122,8 +122,8 @@ export default function PrixClientsPage() {
         return {
           ...item,
           customer_name:
-            org?.trade_name ||
-            org?.legal_name ||
+            org?.trade_name ??
+            org?.legal_name ??
             `Client ${item.customer_id?.slice(0, 8)}`,
           product_name:
             product?.name ?? `Produit ${item.product_id?.slice(0, 8)}`,
