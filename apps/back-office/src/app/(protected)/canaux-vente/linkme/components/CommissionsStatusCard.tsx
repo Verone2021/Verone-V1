@@ -59,7 +59,7 @@ export function CommissionsStatusCard({
 
   // Calculs basés sur HT (montants principaux)
   const totalHT =
-    statusData.pendingHT + statusData.validatedHT + statusData.paidHT ?? 1;
+    statusData.pendingHT + statusData.validatedHT + statusData.paidHT || 1;
   const pendingPercent = (statusData.pendingHT / totalHT) * 100;
   const validatedPercent = (statusData.validatedHT / totalHT) * 100;
   const paidPercent = (statusData.paidHT / totalHT) * 100;
