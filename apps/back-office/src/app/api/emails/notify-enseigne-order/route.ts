@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
           <td style="padding: 10px 0; color: #666; border-bottom: 1px solid #eee;">Demandeur</td>
           <td style="padding: 10px 0; text-align: right; border-bottom: 1px solid #eee;">
             ${requesterName}<br>
-            <span style="color: #888; font-size: 13px;">${requesterTypeLabels[requesterType] || requesterType}</span>
+            <span style="color: #888; font-size: 13px;">${requesterTypeLabels[requesterType] ?? requesterType}</span>
           </td>
         </tr>
         <tr>
