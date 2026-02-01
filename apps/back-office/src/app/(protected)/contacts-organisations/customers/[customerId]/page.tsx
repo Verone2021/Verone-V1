@@ -123,7 +123,7 @@ export default function CustomerDetailPage() {
           .order('created_at', { ascending: false });
 
         // Mapper les données avec l'image primaire
-        const mappedProducts: CustomerProduct[] = (data || []).map(p => ({
+        const mappedProducts: CustomerProduct[] = (data ?? []).map(p => ({
           id: p.id,
           name: p.name,
           sku: p.sku,
@@ -246,7 +246,7 @@ export default function CustomerDetailPage() {
             id: 'samples',
             label: 'Échantillons',
             icon: <FlaskConical className="h-4 w-4" />,
-            badge: counts.samples?.toString() || '0',
+            badge: counts.samples?.toString() ?? '0',
             disabled: !isModuleDeployed('sales_orders'),
             disabledBadge: getModulePhase('sales_orders'),
           },
@@ -378,17 +378,18 @@ export default function CustomerDetailPage() {
                     : 'Client Particulier'}
                 </Badge>
               )}
-              {customer.ownership_type && (() => {
-                const badge = getOwnershipBadge(customer.ownership_type);
-                return badge ? (
-                  <Badge
-                    variant="outline"
-                    className={cn("border-gray-200", badge.className)}
-                  >
-                    {badge.label}
-                  </Badge>
-                ) : null;
-              })()}
+              {customer.ownership_type &&
+                (() => {
+                  const badge = getOwnershipBadge(customer.ownership_type);
+                  return badge ? (
+                    <Badge
+                      variant="outline"
+                      className={cn('border-gray-200', badge.className)}
+                    >
+                      {badge.label}
+                    </Badge>
+                  ) : null;
+                })()}
             </div>
           </div>
           <p className="text-sm text-gray-600">

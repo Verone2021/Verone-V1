@@ -140,7 +140,7 @@ export async function POST(
 
           // Générer le chemin de stockage : invoices/customer/{year}/{document_number}.pdf
           const year = new Date().getFullYear();
-          const fileName = `${finalizedInvoice.invoice_number || invoiceId}.pdf`;
+          const fileName = `${finalizedInvoice.invoice_number ?? invoiceId}.pdf`;
           localPdfPath = `customer/${year}/${fileName}`;
 
           console.warn(

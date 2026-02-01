@@ -177,8 +177,8 @@ export function ContactsAddressesSection({
   const createAddress = useCreateAddressBO();
 
   // Computed values
-  const contacts = contactsData?.contacts || [];
-  const billingAddresses = addressesData?.billing || [];
+  const contacts = contactsData?.contacts ?? [];
+  const billingAddresses = addressesData?.billing ?? [];
   const hasEnseigne = !!orgWithEnseigne?.enseigne;
 
   // Completion status
@@ -540,7 +540,7 @@ export function ContactsAddressesSection({
                 data.billingAddress?.mode === 'enseigne'
                   ? `Enseigne: ${orgWithEnseigne?.enseigne?.name}`
                   : data.billingAddress?.mode === 'restaurant'
-                    ? `Restaurant: ${orgWithEnseigne?.tradeName || orgWithEnseigne?.legalName}`
+                    ? `Restaurant: ${orgWithEnseigne?.tradeName ?? orgWithEnseigne?.legalName}`
                     : data.billingAddress?.customAddress
                       ? data.billingAddress.customAddress.city
                       : 'Sélectionnez une adresse'
@@ -570,7 +570,7 @@ export function ContactsAddressesSection({
                     <OrganisationAddressCard
                       id={orgWithEnseigne.id}
                       name={
-                        orgWithEnseigne.tradeName || orgWithEnseigne.legalName
+                        orgWithEnseigne.tradeName ?? orgWithEnseigne.legalName
                       }
                       logoUrl={orgWithEnseigne.logoUrl}
                       ownershipType={orgWithEnseigne.ownershipType}
@@ -586,7 +586,7 @@ export function ContactsAddressesSection({
                     <OrganisationAddressCard
                       key={address.id}
                       id={address.id}
-                      name={address.label || address.addressLine1}
+                      name={address.label ?? address.addressLine1}
                       address={{
                         line1: address.addressLine1,
                         line2: address.addressLine2,
@@ -620,7 +620,7 @@ export function ContactsAddressesSection({
                     isSubmitting={createAddress.isPending}
                     sectionLabel="Nouvelle adresse de facturation"
                     showLegalFields
-                    defaultCountry={orgWithEnseigne?.address?.country || 'FR'}
+                    defaultCountry={orgWithEnseigne?.address?.country ?? 'FR'}
                   />
                 )}
               </div>
@@ -706,7 +706,7 @@ export function ContactsAddressesSection({
                 data.deliverySameAsBillingAddress
                   ? 'Identique à la facturation'
                   : data.deliveryAddress?.mode === 'restaurant'
-                    ? `Restaurant: ${orgWithEnseigne?.tradeName || orgWithEnseigne?.legalName}`
+                    ? `Restaurant: ${orgWithEnseigne?.tradeName ?? orgWithEnseigne?.legalName}`
                     : data.deliveryAddress?.customAddress
                       ? data.deliveryAddress.customAddress.city
                       : 'Sélectionnez une adresse'
@@ -742,7 +742,7 @@ export function ContactsAddressesSection({
                         <OrganisationAddressCard
                           id={orgWithEnseigne.id}
                           name={
-                            orgWithEnseigne.tradeName ||
+                            orgWithEnseigne.tradeName ??
                             orgWithEnseigne.legalName
                           }
                           logoUrl={orgWithEnseigne.logoUrl}
@@ -771,7 +771,7 @@ export function ContactsAddressesSection({
                         isSubmitting={createAddress.isPending}
                         sectionLabel="Nouvelle adresse de livraison"
                         defaultCountry={
-                          orgWithEnseigne?.address?.country || 'FR'
+                          orgWithEnseigne?.address?.country ?? 'FR'
                         }
                       />
                     )}

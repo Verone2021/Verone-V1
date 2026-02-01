@@ -50,8 +50,8 @@ export async function GET(request: NextRequest, context: RouteContext) {
     // Récupérer params
     const { id: targetUserId } = await context.params;
     const { searchParams } = new URL(request.url);
-    const limit = parseInt(searchParams.get('limit') || '50');
-    const days = parseInt(searchParams.get('days') || '30');
+    const limit = parseInt(searchParams.get('limit') ?? '50');
+    const days = parseInt(searchParams.get('days') ?? '30');
 
     // Récupérer activité récente via fonction SQL
     const { data: recentActions, error: actionsError } = await (
@@ -93,8 +93,8 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
     return NextResponse.json(
       {
-        recent_actions: recentActions || [],
-        statistics: stats?.[0] || {
+        recent_actions: recentActions ?? [],
+        statistics: stats?.[0] ?? {
           total_sessions: 0,
           total_actions: 0,
           avg_session_duration: null,
@@ -102,7 +102,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
           engagement_score: 0,
           last_activity: null,
         },
-        active_sessions: activeSessions || [],
+        active_sessions: activeSessions ?? [],
       },
       { status: 200 }
     );

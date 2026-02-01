@@ -129,7 +129,7 @@ export function useUpdateSiteInternetConfigJSON() {
 
       // Merge avec updates
       const newConfig = {
-        ...(configData.config || {}),
+        ...(configData.config ?? {}),
         ...configUpdates,
       };
 

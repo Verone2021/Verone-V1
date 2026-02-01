@@ -133,9 +133,9 @@ export default function SuppliersPage() {
       if (error) throw error;
 
       // Comptage des produits pour chaque fournisseur (même approche que useOrganisations)
-      let organisationsWithCounts = data || [];
+      let organisationsWithCounts = data ?? [];
 
-      if ((data || []).length > 0) {
+      if ((data ?? []).length > 0) {
         const supplierIds = data.map(s => s.id);
 
         // Requête groupée pour compter les produits par supplier_id
@@ -148,15 +148,15 @@ export default function SuppliersPage() {
         const countsMap = new Map<string, number>();
         productCounts?.forEach(p => {
           if (!p.supplier_id) return;
-          const count = countsMap.get(p.supplier_id) || 0;
+          const count = countsMap.get(p.supplier_id) ?? 0;
           countsMap.set(p.supplier_id, count + 1);
         });
 
         // Merger les comptes avec les organisations
-        organisationsWithCounts = (data || []).map(org => ({
+        organisationsWithCounts = (data ?? []).map(org => ({
           ...org,
           _count: {
-            products: countsMap.get(org.id) || 0,
+            products: countsMap.get(org.id) ?? 0,
           },
         }));
       }

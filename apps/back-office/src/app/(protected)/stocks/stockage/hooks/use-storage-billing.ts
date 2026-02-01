@@ -99,7 +99,7 @@ export function useGlobalStorageTotals() {
         };
       }
 
-      const result = data?.[0] || {
+      const result = data?.[0] ?? {
         total_volume_m3: 0,
         billable_volume_m3: 0,
         total_units: 0,
@@ -136,7 +136,7 @@ export function useGlobalStorageOverview() {
         return [];
       }
 
-      return (data || []) as GlobalStorageOverviewItem[];
+      return (data ?? []) as GlobalStorageOverviewItem[];
     },
     staleTime: 60000,
   });
@@ -199,7 +199,7 @@ export function useStorageWeightedAverage(
         };
       }
 
-      const result = data?.[0] || {
+      const result = data?.[0] ?? {
         total_m3_days: 0,
         days_in_period: 0,
         average_m3: 0,
@@ -253,7 +253,7 @@ export function useStorageEventsHistory(
         return [];
       }
 
-      return (data || []) as StorageEvent[];
+      return (data ?? []) as StorageEvent[];
     },
     enabled: !!ownerId && !!ownerType,
     staleTime: 30000,
@@ -271,7 +271,7 @@ export function getSourceLabel(source: string): string {
     billable_toggle: 'Statut facturable modifie',
     manual_adjustment: 'Ajustement manuel',
   };
-  return labels[source] || source;
+  return labels[source] ?? source;
 }
 
 /**
@@ -287,5 +287,5 @@ export function getSourceColor(
     billable_toggle: 'amber',
     manual_adjustment: 'gray',
   };
-  return colors[source] || 'gray';
+  return colors[source] ?? 'gray';
 }

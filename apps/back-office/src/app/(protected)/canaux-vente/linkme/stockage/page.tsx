@@ -414,7 +414,7 @@ function PricingGridTab(): React.ReactElement {
       min_volume_m3: min,
       max_volume_m3: max,
       price_per_m3: price,
-      label: newTier.label || `${min} à ${max ?? '∞'} m³`,
+      label: newTier.label ?? `${min} à ${max ?? '∞'} m³`,
     });
 
     setShowAddForm(false);

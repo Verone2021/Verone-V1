@@ -80,7 +80,7 @@ export default function EditEmailTemplatePage() {
       setName(data.name);
       setSubject(data.subject);
       setHtmlBody(data.html_body);
-      setCategory(data.category || 'general');
+      setCategory(data.category ?? 'general');
       setActive(data.active ?? true);
       setVariablesInput(
         Array.isArray(data.variables) ? data.variables.join(', ') : ''

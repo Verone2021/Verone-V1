@@ -160,8 +160,8 @@ function calculateTotalsFromItems(items: QontoInvoiceItem[]): {
 
   for (const item of items) {
     const quantity = parseFloat(item.quantity) || 0;
-    const unitPrice = parseFloat(item.unit_price?.value || '0');
-    const vatRate = parseFloat(item.vat_rate || '0');
+    const unitPrice = parseFloat(item.unit_price?.value ?? '0');
+    const vatRate = parseFloat(item.vat_rate ?? '0');
 
     const itemSubtotal = quantity * unitPrice;
     // vatRate is decimal (0.20 for 20%)
@@ -184,17 +184,17 @@ function getDocumentTypeLabel(type: DocumentType): string {
     quote: 'Devis',
     credit_note: 'Avoir',
   };
-  return labels[type] || type;
+  return labels[type] ?? type;
 }
 
 function getDocumentNumber(doc: QontoDocument, type: DocumentType): string {
   switch (type) {
     case 'invoice':
-      return doc.invoice_number || doc.id;
+      return doc.invoice_number ?? doc.id;
     case 'quote':
-      return doc.quote_number || doc.id;
+      return doc.quote_number ?? doc.id;
     case 'credit_note':
-      return doc.credit_note_number || doc.id;
+      return doc.credit_note_number ?? doc.id;
     default:
       return doc.id;
   }
@@ -237,7 +237,7 @@ export default function DocumentDetailPage({
 
   const [document, setDocument] = useState<QontoDocument | null>(null);
   const [documentType, setDocumentType] = useState<DocumentType>(
-    typeParam || 'invoice'
+    typeParam ?? 'invoice'
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -641,7 +641,7 @@ export default function DocumentDetailPage({
           <CardContent className="pt-6">
             <div className="flex items-center gap-2 text-red-700">
               <AlertTriangle className="h-5 w-5" />
-              <p>{error || 'Document non trouvé'}</p>
+              <p>{error ?? 'Document non trouvé'}</p>
             </div>
           </CardContent>
         </Card>
@@ -1341,7 +1341,7 @@ export default function DocumentDetailPage({
           open={showPaymentModal}
           onOpenChange={setShowPaymentModal}
           invoiceId={id}
-          invoiceNumber={document.invoice_number || docNumber}
+          invoiceNumber={document.invoice_number ?? docNumber}
           totalAmount={computedTotals.totalCents / 100}
           currency={document.currency}
           onSuccess={() => window.location.reload()}
@@ -1354,7 +1354,7 @@ export default function DocumentDetailPage({
           open={showReconcileModal}
           onOpenChange={setShowReconcileModal}
           invoiceId={id}
-          invoiceNumber={document.invoice_number || docNumber}
+          invoiceNumber={document.invoice_number ?? docNumber}
           invoiceAmount={computedTotals.totalCents}
           currency={document.currency}
           onSuccess={() => window.location.reload()}

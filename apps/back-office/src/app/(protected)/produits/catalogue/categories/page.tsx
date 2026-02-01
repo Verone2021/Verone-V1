@@ -132,7 +132,7 @@ export default function CategoriesPage() {
     if (!allCategories) return [];
     return allCategories
       .filter(cat => cat.family_id === familyId)
-      .map(cat => ({ ...cat, children: [], level: cat.level || 0 }));
+      .map(cat => ({ ...cat, children: [], level: cat.level ?? 0 }));
   };
 
   // 🔍 FONCTION POUR OBTENIR LES SOUS-CATÉGORIES D'UNE CATÉGORIE
@@ -681,7 +681,7 @@ export default function CategoriesPage() {
             Gestion des familles, catégories et sous-catégories
             {!isLoading && (
               <span className="ml-2 text-sm">
-                ({families?.length || 0} familles • Chargé en {loadTime}ms)
+                ({families?.length ?? 0} familles • Chargé en {loadTime}ms)
               </span>
             )}
           </p>
@@ -837,7 +837,7 @@ export default function CategoriesPage() {
               : formState.data
           }
           mode={formState.mode}
-          families={families?.map(f => ({ id: f.id, name: f.name })) || []}
+          families={families?.map(f => ({ id: f.id, name: f.name })) ?? []}
         />
       )}
 
@@ -860,7 +860,7 @@ export default function CategoriesPage() {
                 ? {
                     ...formState.data,
                     parent_id:
-                      formState.data.category_id || formState.data.parent_id,
+                      formState.data.category_id ?? formState.data.parent_id,
                     family_id: formState.data.family_id,
                   }
                 : null
@@ -873,7 +873,7 @@ export default function CategoriesPage() {
               family_name:
                 families?.find(f => f.id === c.family_id)?.name ||
                 'Famille inconnue',
-            })) || []
+            })) ?? []
           }
         />
       )}

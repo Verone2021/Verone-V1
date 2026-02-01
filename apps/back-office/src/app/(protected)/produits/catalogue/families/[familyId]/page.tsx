@@ -274,7 +274,7 @@ export default function FamilyDetailPage() {
                 <div>
                   <p className="text-2xl font-bold text-black">
                     {familyCategories.reduce(
-                      (sum, cat) => sum + (cat.subcategory_count || 0),
+                      (sum, cat) => sum + (cat.subcategory_count ?? 0),
                       0
                     )}
                   </p>
@@ -327,7 +327,7 @@ export default function FamilyDetailPage() {
                   imageUrl={category.image_url ?? undefined}
                   entityType="category"
                   slug={category.slug}
-                  count={category.subcategory_count || 0}
+                  count={category.subcategory_count ?? 0}
                   countLabel="sous-catégorie"
                   isActive={category.is_active ?? undefined}
                   iconPosition="top-right"
@@ -364,7 +364,7 @@ export default function FamilyDetailPage() {
                 name: family.name,
                 description: family.description ?? '',
                 is_active: family.is_active ?? true,
-                display_order: family.display_order || 1,
+                display_order: family.display_order ?? 1,
                 image_url: family.image_url ?? undefined,
               }
             : undefined
@@ -378,7 +378,7 @@ export default function FamilyDetailPage() {
         onClose={() => setIsNewCategoryOpen(false)}
         type="category"
         mode="create"
-        parentOptions={families?.map(f => ({ id: f.id, name: f.name })) || []}
+        parentOptions={families?.map(f => ({ id: f.id, name: f.name })) ?? []}
         onSubmit={handleSubmitNewCategory}
       />
 
@@ -398,13 +398,13 @@ export default function FamilyDetailPage() {
                 name: editingCategory.name,
                 description: editingCategory.description ?? '',
                 is_active: editingCategory.is_active ?? true,
-                display_order: editingCategory.display_order || 1,
+                display_order: editingCategory.display_order ?? 1,
                 parent_id: editingCategory.family_id ?? undefined,
                 image_url: editingCategory.image_url ?? undefined,
               }
             : undefined
         }
-        parentOptions={families?.map(f => ({ id: f.id, name: f.name })) || []}
+        parentOptions={families?.map(f => ({ id: f.id, name: f.name })) ?? []}
         onSubmit={handleSubmitEditCategory}
       />
     </div>

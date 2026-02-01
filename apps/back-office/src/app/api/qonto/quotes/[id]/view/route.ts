@@ -13,7 +13,7 @@ import { QontoClient } from '@verone/integrations/qonto';
 
 function getQontoClient(): QontoClient {
   return new QontoClient({
-    authMode: (process.env.QONTO_AUTH_MODE as 'oauth' | 'api_key') || 'oauth',
+    authMode: (process.env.QONTO_AUTH_MODE as 'oauth' | 'api_key') ?? 'oauth',
     organizationId: process.env.QONTO_ORGANIZATION_ID,
     apiKey: process.env.QONTO_API_KEY,
     accessToken: process.env.QONTO_ACCESS_TOKEN,
@@ -153,7 +153,7 @@ export async function GET(
     return new NextResponse(pdfBuffer, {
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `inline; filename="devis-${quote.quote_number || quote.id}.pdf"`,
+        'Content-Disposition': `inline; filename="devis-${quote.quote_number ?? quote.id}.pdf"`,
         'Content-Length': String(pdfBuffer.byteLength),
         'Cache-Control': 'private, max-age=300', // Cache 5 min
       },

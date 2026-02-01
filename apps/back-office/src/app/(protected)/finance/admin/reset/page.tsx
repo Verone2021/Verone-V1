@@ -65,7 +65,7 @@ export default function FinanceResetPage() {
         { p_dry_run: true }
       );
 
-      if (error) throw new Error(error.message || String(error));
+      if (error) throw new Error(error.message ?? String(error));
 
       const result = data as {
         dry_run?: boolean;
@@ -116,7 +116,7 @@ export default function FinanceResetPage() {
         { p_dry_run: false }
       );
 
-      if (error) throw new Error(error.message || String(error));
+      if (error) throw new Error(error.message ?? String(error));
 
       const result = data as {
         dry_run?: boolean;

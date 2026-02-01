@@ -126,7 +126,7 @@ const SubmissionCard = ({ submission, formTypeLabel }: SubmissionCardProps) => {
       className: 'bg-blue-500/10 text-blue-700 border border-blue-200',
       label: '🔵 Basse',
     },
-  }[submission.priority] || {
+  }[submission.priority] ?? {
     className: 'bg-gray-500/10 text-gray-700 border border-gray-200',
     label: 'Normal',
   };
@@ -158,7 +158,7 @@ const SubmissionCard = ({ submission, formTypeLabel }: SubmissionCardProps) => {
       label: '🔒 Fermé',
       icon: CheckCircle,
     },
-  }[submission.status] || {
+  }[submission.status] ?? {
     className: 'bg-gray-500/10 text-gray-700',
     label: submission.status,
     icon: AlertCircle,
@@ -356,8 +356,8 @@ export default function PrisesContactPage() {
 
         if (typesError) throw typesError;
 
-        setSubmissions(subs || []);
-        setFormTypes(types || []);
+        setSubmissions(subs ?? []);
+        setFormTypes(types ?? []);
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
@@ -419,13 +419,13 @@ export default function PrisesContactPage() {
       thisWeek: 'Cette semaine',
       older: 'Plus ancien',
     };
-    return labels[key] || key;
+    return labels[key] ?? key;
   };
 
   // Get form type label
   const getFormTypeLabel = (code: string): string => {
     const type = formTypes.find(t => t.code === code);
-    return type?.label || code;
+    return type?.label ?? code;
   };
 
   if (loading) {

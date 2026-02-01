@@ -255,13 +255,13 @@ function TransactionRow({
 
       {/* Date */}
       <div className="w-24 text-sm text-muted-foreground">
-        {formatDate(transaction.settled_at || transaction.emitted_at)}
+        {formatDate(transaction.settled_at ?? transaction.emitted_at)}
       </div>
 
       {/* Libellé & Contrepartie */}
       <div className="flex-1 min-w-0">
         <p className="font-medium truncate">
-          {transaction.label || transaction.note || 'Sans libellé'}
+          {transaction.label ?? transaction.note ?? 'Sans libellé'}
         </p>
         <div className="text-sm text-muted-foreground truncate">
           <SupplierCell
@@ -381,7 +381,7 @@ function TransactionDetailPanel({
             </span>
           </p>
           <p className="text-muted-foreground mt-1">
-            {formatDate(transaction.settled_at || transaction.emitted_at)}
+            {formatDate(transaction.settled_at ?? transaction.emitted_at)}
           </p>
         </div>
 
@@ -391,7 +391,7 @@ function TransactionDetailPanel({
             <div>
               <p className="text-sm text-muted-foreground">Libellé</p>
               <p className="font-medium">
-                {transaction.label || transaction.note || 'Sans libellé'}
+                {transaction.label ?? transaction.note ?? 'Sans libellé'}
               </p>
             </div>
 
@@ -418,7 +418,7 @@ function TransactionDetailPanel({
               <div>
                 <p className="text-muted-foreground">Type</p>
                 <p className="font-medium">
-                  {transaction.operation_type || 'Virement'}
+                  {transaction.operation_type ?? 'Virement'}
                 </p>
               </div>
             </div>
@@ -665,7 +665,7 @@ function TransactionsPageLegacy() {
       label: selectedTransaction.label ?? '',
       counterparty_name: selectedTransaction.counterparty_name,
       amount: selectedTransaction.amount,
-      currency: selectedTransaction.currency || 'EUR',
+      currency: selectedTransaction.currency ?? 'EUR',
       emitted_at: selectedTransaction.emitted_at ?? '',
       has_attachment: Boolean(
         selectedTransaction.attachment_ids &&
@@ -925,7 +925,7 @@ function TransactionsPageLegacy() {
           selectedTransaction?.counterparty_name ||
           ''
         }
-        amount={selectedTransaction?.amount || 0}
+        amount={selectedTransaction?.amount ?? 0}
         counterpartyName={selectedTransaction?.counterparty_name}
         onSuccess={() => {
           toast.success('Transaction rapprochée');
@@ -1145,7 +1145,7 @@ function TransactionsPageV2() {
 
       if (fetchError) throw fetchError;
 
-      const eligibleIds = txs?.map(t => t.id) || [];
+      const eligibleIds = txs?.map(t => t.id) ?? [];
 
       if (eligibleIds.length === 0) {
         toast.info('Aucune transaction à catégoriser');
@@ -1182,7 +1182,7 @@ function TransactionsPageV2() {
       await refresh();
       setShowClassificationModal(false);
     } else {
-      toast.error(result.error || 'Erreur');
+      toast.error(result.error ?? 'Erreur');
     }
   };
 
@@ -1198,7 +1198,7 @@ function TransactionsPageV2() {
       await refresh();
       setShowOrganisationModal(false);
     } else {
-      toast.error(result.error || 'Erreur');
+      toast.error(result.error ?? 'Erreur');
     }
   };
 
@@ -1219,7 +1219,7 @@ function TransactionsPageV2() {
           description: 'Cette transaction ne peut pas être modifiée.',
         });
       } else {
-        toast.error(result.error || 'Erreur');
+        toast.error(result.error ?? 'Erreur');
       }
     }
   };
@@ -1257,7 +1257,7 @@ function TransactionsPageV2() {
       await refresh();
       setSelectedTransaction(null);
     } else {
-      toast.error(result.error || 'Erreur');
+      toast.error(result.error ?? 'Erreur');
     }
   };
 
@@ -1281,7 +1281,7 @@ function TransactionsPageV2() {
   // Convert for upload modal
   // Utilise uploadTransaction (depuis le bouton liste) ou selectedTransaction (depuis le panneau)
   const transactionForUpload: TransactionForUpload | null = useMemo(() => {
-    const tx = uploadTransaction || selectedTransaction;
+    const tx = uploadTransaction ?? selectedTransaction;
     if (!tx) return null;
     return {
       id: tx.id,
@@ -1301,7 +1301,7 @@ function TransactionsPageV2() {
   const progressPercent = stats
     ? Math.round(
         ((stats.total_count - stats.to_process_count) / stats.total_count) * 100
-      ) || 0
+      ) ?? 0
     : 0;
 
   return (
@@ -1424,13 +1424,13 @@ function TransactionsPageV2() {
                   <TabsTrigger value="all" className="gap-2">
                     Toutes
                     <Badge variant="secondary" className="ml-1">
-                      {stats?.total_count || 0}
+                      {stats?.total_count ?? 0}
                     </Badge>
                   </TabsTrigger>
                   <TabsTrigger value="to_process" className="gap-2">
                     <Clock className="h-4 w-4 text-amber-600" />A traiter
                     <Badge variant="warning" className="ml-1">
-                      {stats?.to_process_count || 0}
+                      {stats?.to_process_count ?? 0}
                     </Badge>
                   </TabsTrigger>
                   <TabsTrigger value="matched" className="gap-2">
@@ -1547,17 +1547,17 @@ function TransactionsPageV2() {
 
                       {/* Date */}
                       <div className="w-20 text-sm text-muted-foreground">
-                        {formatDate(tx.settled_at || tx.emitted_at)}
+                        {formatDate(tx.settled_at ?? tx.emitted_at)}
                       </div>
 
                       {/* Libellé + Organisation en bleu */}
                       <div className="flex-1 min-w-0">
                         <p className="font-medium truncate">
-                          {tx.label || 'Sans libellé'}
+                          {tx.label ?? 'Sans libellé'}
                         </p>
                         <div className="flex items-center gap-2 text-sm">
                           <span className="text-muted-foreground truncate">
-                            {tx.counterparty_name || '-'}
+                            {tx.counterparty_name ?? '-'}
                           </span>
                           {tx.organisation_name && (
                             <span className="text-blue-600 truncate">
@@ -1810,7 +1810,7 @@ function TransactionsPageV2() {
                     <div>
                       <p className="text-xs text-muted-foreground">Libelle</p>
                       <p className="text-xs font-medium">
-                        {selectedTransaction.label || '-'}
+                        {selectedTransaction.label ?? '-'}
                       </p>
                     </div>
                     {(() => {
@@ -1857,13 +1857,13 @@ function TransactionsPageV2() {
                           Contrepartie
                         </p>
                         <p className="text-xs font-medium">
-                          {selectedTransaction.counterparty_name || '-'}
+                          {selectedTransaction.counterparty_name ?? '-'}
                         </p>
                       </div>
                       <div>
                         <p className="text-xs text-muted-foreground">Type</p>
                         <p className="text-xs font-medium">
-                          {selectedTransaction.operation_type || 'Virement'}
+                          {selectedTransaction.operation_type ?? 'Virement'}
                         </p>
                       </div>
                     </div>
@@ -1885,7 +1885,7 @@ function TransactionsPageV2() {
                             />
                             <span className="text-xs font-medium">
                               {getPcgCategory(selectedTransaction.category_pcg)
-                                ?.label || selectedTransaction.category_pcg}
+                                ?.label ?? selectedTransaction.category_pcg}
                             </span>
                             <Badge variant="outline" className="text-[10px]">
                               {selectedTransaction.category_pcg}
@@ -2090,7 +2090,7 @@ function TransactionsPageV2() {
                       {(() => {
                         // Source de vérité UNIQUE : attachment_ids
                         const attachmentIds =
-                          selectedTransaction.attachment_ids || [];
+                          selectedTransaction.attachment_ids ?? [];
                         const attachments = attachmentIds.map((id, idx) => ({
                           id,
                           file_name: `Pièce jointe ${idx + 1}`,
@@ -2116,7 +2116,7 @@ function TransactionsPageV2() {
                               if (!res.ok) {
                                 const err = await res.json();
                                 throw new Error(
-                                  err.error || 'Erreur lors de la suppression'
+                                  err.error ?? 'Erreur lors de la suppression'
                                 );
                               }
                               toast.success('Justificatif supprimé');
@@ -2139,7 +2139,7 @@ function TransactionsPageV2() {
                             <div className="space-y-0.5">
                               {attachments.map((att, idx) => (
                                 <div
-                                  key={att.id || idx}
+                                  key={att.id ?? idx}
                                   className="flex items-center gap-1.5 group"
                                 >
                                   <button
@@ -2390,7 +2390,7 @@ function TransactionsPageV2() {
           selectedTransaction?.counterparty_name ||
           ''
         }
-        amount={selectedTransaction?.amount || 0}
+        amount={selectedTransaction?.amount ?? 0}
         counterpartyName={selectedTransaction?.counterparty_name}
         onSuccess={() => {
           toast.success('Transaction rapprochee');

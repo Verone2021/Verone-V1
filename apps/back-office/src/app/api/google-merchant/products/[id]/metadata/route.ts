@@ -130,7 +130,7 @@ export async function PATCH(
     // 5. Vérifier résultat RPC
     const result = data as Array<{ success: boolean; error: string | null }>;
     if (!result || result.length === 0 || !result[0].success) {
-      const errorMsg = result?.[0]?.error || 'Unknown error';
+      const errorMsg = result?.[0]?.error ?? 'Unknown error';
       return NextResponse.json(
         {
           success: false,

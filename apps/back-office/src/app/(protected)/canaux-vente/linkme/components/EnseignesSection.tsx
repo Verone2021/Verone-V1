@@ -164,7 +164,7 @@ export function EnseignesSection() {
 
         // Mapper les résultats
         const organisationsMapped: OrganisationIndependante[] = (
-          orgs || []
+          orgs ?? []
         ).map((org: any) => ({
           id: org.id,
           legal_name: org.legal_name,
@@ -256,7 +256,7 @@ export function EnseignesSection() {
     } catch (error: any) {
       toast({
         title: 'Erreur',
-        description: error?.message || 'Erreur lors de la création',
+        description: error?.message ?? 'Erreur lors de la création',
         variant: 'destructive',
       });
     }
@@ -279,7 +279,7 @@ export function EnseignesSection() {
     } catch (error: any) {
       toast({
         title: 'Erreur',
-        description: error?.message || 'Erreur lors de la mise à jour',
+        description: error?.message ?? 'Erreur lors de la mise à jour',
         variant: 'destructive',
       });
     }
@@ -298,7 +298,7 @@ export function EnseignesSection() {
     } catch (error: any) {
       toast({
         title: 'Erreur',
-        description: error?.message || 'Erreur lors de la suppression',
+        description: error?.message ?? 'Erreur lors de la suppression',
         variant: 'destructive',
       });
     }
@@ -317,7 +317,7 @@ export function EnseignesSection() {
     } catch (error: any) {
       toast({
         title: 'Erreur',
-        description: error?.message || 'Erreur lors du changement de statut',
+        description: error?.message ?? 'Erreur lors du changement de statut',
         variant: 'destructive',
       });
     }
@@ -784,7 +784,7 @@ export function EnseignesSection() {
                           {org.logo_url ? (
                             <Image
                               src={getLogoUrl(org.logo_url) ?? ''}
-                              alt={org.trade_name || org.legal_name}
+                              alt={org.trade_name ?? org.legal_name}
                               width={64}
                               height={64}
                               className="object-contain"
@@ -806,7 +806,7 @@ export function EnseignesSection() {
                       {/* Name + Location */}
                       <div className="mb-4">
                         <h3 className="font-semibold text-lg">
-                          {org.trade_name || org.legal_name}
+                          {org.trade_name ?? org.legal_name}
                         </h3>
                         {org.city && (
                           <span className="text-sm text-muted-foreground">
@@ -1012,7 +1012,7 @@ export function EnseignesSection() {
               </Badge>
             </DialogTitle>
             <DialogDescription>
-              {selectedEnseigne?.description || 'Aucune description'}
+              {selectedEnseigne?.description ?? 'Aucune description'}
             </DialogDescription>
           </DialogHeader>
 

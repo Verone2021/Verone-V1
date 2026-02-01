@@ -18,7 +18,7 @@ import { QontoClient } from '@verone/integrations/qonto';
 
 function getQontoClient(): QontoClient {
   return new QontoClient({
-    authMode: (process.env.QONTO_AUTH_MODE as 'oauth' | 'api_key') || 'oauth',
+    authMode: (process.env.QONTO_AUTH_MODE as 'oauth' | 'api_key') ?? 'oauth',
     organizationId: process.env.QONTO_ORGANIZATION_ID,
     apiKey: process.env.QONTO_API_KEY,
     accessToken: process.env.QONTO_ACCESS_TOKEN,
@@ -121,7 +121,7 @@ export async function POST(
         label: transaction.label,
         emitted_at: transaction.emitted_at,
       },
-      message: `Facture rapprochée avec la transaction ${transaction.label || transaction.transaction_id}`,
+      message: `Facture rapprochée avec la transaction ${transaction.label ?? transaction.transaction_id}`,
     });
   } catch (error) {
     console.error('[API Qonto Invoice Reconcile] POST error:', error);

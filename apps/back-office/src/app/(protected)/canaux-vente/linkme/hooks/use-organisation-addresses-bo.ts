@@ -179,9 +179,7 @@ export function useCreateAddressBO() {
         postal_code: input.postalCode,
         city: input.city,
         region: input.region,
-        // NOTE: Using || intentionally - empty string should default to 'FR'
-        // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
-        country: input.country || 'FR',
+        country: input.country ?? 'FR',
         latitude: input.latitude,
         longitude: input.longitude,
       };

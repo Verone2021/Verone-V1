@@ -465,7 +465,7 @@ function SidebarContent() {
       Trésorerie: 'tresorerie',
       Organisation: 'contacts',
     };
-    return moduleMap[title] || title.toLowerCase();
+    return moduleMap[title] ?? title.toLowerCase();
   };
 
   // Nav items (avec count dynamique pour badges)

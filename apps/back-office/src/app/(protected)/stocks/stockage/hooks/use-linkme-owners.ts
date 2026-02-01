@@ -75,7 +75,7 @@ export function useLinkMeOwners(searchTerm?: string) {
           for (const e of enseignes) {
             owners.push({
               id: e.id,
-              name: e.name || 'Sans nom',
+              name: e.name ?? 'Sans nom',
               type: 'enseigne',
             });
           }
@@ -101,7 +101,7 @@ export function useLinkMeOwners(searchTerm?: string) {
           for (const o of orgs) {
             owners.push({
               id: o.id,
-              name: o.trade_name || o.legal_name || 'Sans nom',
+              name: o.trade_name ?? o.legal_name ?? 'Sans nom',
               type: 'organisation',
             });
           }

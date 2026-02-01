@@ -49,9 +49,9 @@ export function useLinkMeAffiliatesForStorage() {
       }
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return ((data as any[]) || []).map((a: any) => ({
+      return ((data as any[]) ?? []).map((a: any) => ({
         id: a.id,
-        display_name: a.display_name || 'Sans nom',
+        display_name: a.display_name ?? 'Sans nom',
         slug: a.slug ?? '',
         affiliate_type: a.affiliate_type as AffiliateType,
         enseigne_id: a.enseigne_id ?? null,
@@ -68,5 +68,5 @@ export function useLinkMeAffiliatesForStorage() {
  * Get display name for affiliate (enseigne or organisation name)
  */
 export function getAffiliateEntityName(affiliate: AffiliateForStorage): string {
-  return affiliate.enseigne_name || affiliate.organisation_name || 'Inconnu';
+  return affiliate.enseigne_name ?? affiliate.organisation_name ?? 'Inconnu';
 }

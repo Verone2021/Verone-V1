@@ -258,8 +258,8 @@ export default function ReceptionsPage() {
       loadReceptionHistory(order.id),
       loadCancellationHistory(order.id),
     ]);
-    setReceptionHistory(history || []);
-    setCancellationHistory(cancellations || []);
+    setReceptionHistory(history ?? []);
+    setCancellationHistory(cancellations ?? []);
     setShowHistoryModal(true);
   };
 
@@ -533,13 +533,13 @@ export default function ReceptionsPage() {
                             order.purchase_order_items?.reduce(
                               (sum: number, item: any) => sum + item.quantity,
                               0
-                            ) || 0;
+                            ) ?? 0;
                           const receivedItems =
                             order.purchase_order_items?.reduce(
                               (sum: number, item: any) =>
-                                sum + (item.quantity_received || 0),
+                                sum + (item.quantity_received ?? 0),
                               0
-                            ) || 0;
+                            ) ?? 0;
                           const progressPercent =
                             totalItems > 0
                               ? Math.round((receivedItems / totalItems) * 100)
@@ -596,7 +596,7 @@ export default function ReceptionsPage() {
                                   )}
                                 </TableCell>
                                 <TableCell>
-                                  {order.supplier_name || 'Fournisseur inconnu'}
+                                  {order.supplier_name ?? 'Fournisseur inconnu'}
                                 </TableCell>
                                 <TableCell>
                                   <Badge
@@ -689,12 +689,12 @@ export default function ReceptionsPage() {
                                                 </p>
                                                 <p className="text-xs text-gray-500 font-mono">
                                                   SKU:{' '}
-                                                  {item.products?.sku || 'N/A'}
+                                                  {item.products?.sku ?? 'N/A'}
                                                 </p>
                                               </div>
                                               <div className="text-right">
                                                 <p className="text-sm font-medium">
-                                                  {item.quantity_received || 0}{' '}
+                                                  {item.quantity_received ?? 0}{' '}
                                                   / {item.quantity} reçu(s)
                                                 </p>
                                                 <p className="text-xs text-gray-500">
@@ -706,13 +706,13 @@ export default function ReceptionsPage() {
                                               <div className="text-right">
                                                 <p className="text-sm font-medium">
                                                   {formatCurrency(
-                                                    (item.unit_price_ht || 0) *
+                                                    (item.unit_price_ht ?? 0) *
                                                       item.quantity
                                                   )}
                                                 </p>
                                                 <p className="text-xs text-gray-500">
                                                   {formatCurrency(
-                                                    item.unit_price_ht || 0
+                                                    item.unit_price_ht ?? 0
                                                   )}{' '}
                                                   /u
                                                 </p>
@@ -916,13 +916,13 @@ export default function ReceptionsPage() {
                           order.purchase_order_items?.reduce(
                             (sum: number, item: any) => sum + item.quantity,
                             0
-                          ) || 0;
+                          ) ?? 0;
                         const totalReceived =
                           order.purchase_order_items?.reduce(
                             (sum: number, item: any) =>
-                              sum + (item.quantity_received || 0),
+                              sum + (item.quantity_received ?? 0),
                             0
-                          ) || 0;
+                          ) ?? 0;
                         const isComplete = totalReceived >= totalOrdered;
 
                         const isExpanded = expandedHistoryRows.has(order.id);
@@ -946,7 +946,7 @@ export default function ReceptionsPage() {
                                 {order.po_number}
                               </TableCell>
                               <TableCell>
-                                {order.supplier_name || 'Fournisseur inconnu'}
+                                {order.supplier_name ?? 'Fournisseur inconnu'}
                               </TableCell>
                               <TableCell>
                                 {isComplete ? (
@@ -999,7 +999,7 @@ export default function ReceptionsPage() {
                                   <div className="p-4">
                                     <h4 className="font-medium text-sm mb-3 text-gray-700">
                                       Produits de la commande (
-                                      {order.purchase_order_items?.length || 0})
+                                      {order.purchase_order_items?.length ?? 0})
                                     </h4>
                                     <div className="space-y-2">
                                       {order.purchase_order_items?.map(
@@ -1021,7 +1021,7 @@ export default function ReceptionsPage() {
                                                   ?.public_url
                                               }
                                               alt={
-                                                item.products?.name || 'Produit'
+                                                item.products?.name ?? 'Produit'
                                               }
                                               size="sm"
                                             />
@@ -1032,12 +1032,12 @@ export default function ReceptionsPage() {
                                               </p>
                                               <p className="text-xs text-gray-500 font-mono">
                                                 SKU:{' '}
-                                                {item.products?.sku || 'N/A'}
+                                                {item.products?.sku ?? 'N/A'}
                                               </p>
                                             </div>
                                             <div className="text-right">
                                               <p className="text-sm font-medium">
-                                                {item.quantity_received || 0} /{' '}
+                                                {item.quantity_received ?? 0} /{' '}
                                                 {item.quantity} reçu(s)
                                               </p>
                                               <p className="text-xs text-gray-500">
@@ -1049,13 +1049,13 @@ export default function ReceptionsPage() {
                                             <div className="text-right">
                                               <p className="text-sm font-medium">
                                                 {formatCurrency(
-                                                  (item.unit_price_ht || 0) *
+                                                  (item.unit_price_ht ?? 0) *
                                                     item.quantity
                                                 )}
                                               </p>
                                               <p className="text-xs text-gray-500">
                                                 {formatCurrency(
-                                                  item.unit_price_ht || 0
+                                                  item.unit_price_ht ?? 0
                                                 )}{' '}
                                                 /u
                                               </p>
@@ -1137,7 +1137,7 @@ export default function ReceptionsPage() {
                           <TableCell>{reception.affiliate_name}</TableCell>
                           <TableCell>{reception.enseigne_name}</TableCell>
                           <TableCell className="font-medium">
-                            {reception.quantity_received || 0} /{' '}
+                            {reception.quantity_received ?? 0} /{' '}
                             {reception.quantity_expected} unité(s)
                           </TableCell>
                           <TableCell>
@@ -1205,7 +1205,7 @@ export default function ReceptionsPage() {
                 </ButtonV2>
               </div>
               <CardDescription>
-                Fournisseur: {selectedOrder.supplier_name || 'Non renseigné'}
+                Fournisseur: {selectedOrder.supplier_name ?? 'Non renseigné'}
               </CardDescription>
             </CardHeader>
             <CardContent>

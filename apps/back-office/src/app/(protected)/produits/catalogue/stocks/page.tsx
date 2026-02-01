@@ -113,11 +113,11 @@ export default function CatalogueStocksPage() {
       const stock = stockData.find(s => s.product_id === product.id);
       return {
         ...product,
-        stock_real: stock?.stock_real || 0,
-        stock_forecasted_in: stock?.stock_forecasted_in || 0,
-        stock_forecasted_out: stock?.stock_forecasted_out || 0,
-        stock_available: stock?.stock_available || 0,
-        stock_total_forecasted: stock?.stock_total_forecasted || 0,
+        stock_real: stock?.stock_real ?? 0,
+        stock_forecasted_in: stock?.stock_forecasted_in ?? 0,
+        stock_forecasted_out: stock?.stock_forecasted_out ?? 0,
+        stock_available: stock?.stock_available ?? 0,
+        stock_total_forecasted: stock?.stock_total_forecasted ?? 0,
         last_movement_at: stock?.last_movement_at,
       };
     });

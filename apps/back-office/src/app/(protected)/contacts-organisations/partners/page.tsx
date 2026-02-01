@@ -176,7 +176,7 @@ export default function PartnersPage() {
         .order('archived_at', { ascending: false });
 
       if (error) throw error;
-      setArchivedPartners((data || []) as unknown as Organisation[]);
+      setArchivedPartners((data ?? []) as unknown as Organisation[]);
     } catch (err) {
       console.error('Erreur chargement partenaires archivés:', err);
     } finally {

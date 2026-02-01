@@ -60,14 +60,14 @@ export function UserProfileTab({ user }: UserProfileTabProps) {
 
   const getFirstName = (email: string, user_metadata: any = null) => {
     if (user_metadata?.first_name) return user_metadata.first_name;
-    const tempName = email.split('@')[0].split('.') || [''];
-    return tempName[0] ?? '';
+    const tempName = email.split('@')[0].split('.') ?? [''];
+    return tempName[0] ?? null;
   };
 
   const getLastName = (email: string, user_metadata: any = null) => {
     if (user_metadata?.last_name) return user_metadata.last_name;
-    const tempName = email.split('@')[0].split('.') || [''];
-    return tempName[1] ?? '';
+    const tempName = email.split('@')[0].split('.') ?? [''];
+    return tempName[1] ?? null;
   };
 
   const isEmailConfirmed = !!user.email_confirmed_at;
@@ -89,7 +89,7 @@ export function UserProfileTab({ user }: UserProfileTabProps) {
             </label>
             <div className="p-1.5 bg-neutral-50 border border-neutral-200 rounded">
               <span className="text-neutral-900">
-                {getFirstName(user.email, user.user_metadata) ||
+                {getFirstName(user.email, user.user_metadata) ??
                   'Non renseigné'}
               </span>
             </div>
@@ -100,7 +100,7 @@ export function UserProfileTab({ user }: UserProfileTabProps) {
             <label className="text-xs font-medium text-neutral-600">Nom</label>
             <div className="p-1.5 bg-neutral-50 border border-neutral-200 rounded">
               <span className="text-neutral-900">
-                {getLastName(user.email, user.user_metadata) || 'Non renseigné'}
+                {getLastName(user.email, user.user_metadata) ?? 'Non renseigné'}
               </span>
             </div>
           </div>
@@ -137,7 +137,7 @@ export function UserProfileTab({ user }: UserProfileTabProps) {
             <div className="p-1.5 bg-neutral-50 border border-neutral-200 rounded flex items-center space-x-2">
               <Phone className="h-3 w-3 text-neutral-500" />
               <span className="text-neutral-900">
-                {user.user_metadata?.phone || 'Non renseigné'}
+                {user.user_metadata?.phone ?? 'Non renseigné'}
               </span>
             </div>
           </div>
@@ -150,7 +150,7 @@ export function UserProfileTab({ user }: UserProfileTabProps) {
             <div className="p-1.5 bg-neutral-50 border border-neutral-200 rounded flex items-center space-x-2">
               <Briefcase className="h-3 w-3 text-neutral-500" />
               <span className="text-neutral-900">
-                {user.user_metadata?.job_title || 'Non renseigné'}
+                {user.user_metadata?.job_title ?? 'Non renseigné'}
               </span>
             </div>
           </div>

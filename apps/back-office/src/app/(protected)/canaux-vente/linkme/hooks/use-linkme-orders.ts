@@ -171,7 +171,7 @@ async function fetchLinkMeOrders(): Promise<LinkMeOrder[]> {
   }
 
   // Mapper les données pour compatibilité avec l'interface LinkMeOrder
-  return (data || []).map((order: any) => ({
+  return (data ?? []).map((order: any) => ({
     ...order,
     // Pour compatibilité avec l'ancienne interface
     customer_organisation_id:
@@ -239,11 +239,11 @@ async function fetchLinkMeOrderById(orderId: string): Promise<LinkMeOrder> {
       order.customer_type === 'organization' ? order.customer_id : null,
     individual_customer_id:
       order.customer_type === 'individual' ? order.customer_id : null,
-    items: (order.sales_order_items || []).map((item: any) => ({
+    items: (order.sales_order_items ?? []).map((item: any) => ({
       id: item.id,
       sales_order_id: orderId,
       product_id: item.product_id,
-      product_name: item.products?.name || 'Produit inconnu',
+      product_name: item.products?.name ?? 'Produit inconnu',
       quantity: item.quantity,
       unit_price_ht: item.unit_price_ht,
       total_ht: item.total_ht,
@@ -290,7 +290,7 @@ async function updateLinkMeOrder(
     }
   } else {
     // Garder le total existant des produits
-    for (const item of currentOrder.sales_order_items || []) {
+    for (const item of currentOrder.sales_order_items ?? []) {
       productsHt += (item as any).quantity * (item as any).unit_price_ht;
     }
   }
@@ -380,7 +380,7 @@ async function createLinkMeOrder(
 
   for (const item of input.items) {
     const lineTotal = item.quantity * item.unit_price_ht;
-    const lineTva = lineTotal * (item.tax_rate || 0.2);
+    const lineTva = lineTotal * (item.tax_rate ?? 0.2);
     productsHt += lineTotal;
     totalTva += lineTva;
     // Commission calculee sur base_price_ht (135EUR), pas sur unit_price_ht (168.75EUR)
@@ -389,9 +389,9 @@ async function createLinkMeOrder(
   }
 
   // Frais additionnels avec TVA configurable
-  const shippingCostHt = input.shipping_cost_ht || 0;
-  const insuranceCostHt = input.insurance_cost_ht || 0;
-  const handlingCostHt = input.handling_cost_ht || 0;
+  const shippingCostHt = input.shipping_cost_ht ?? 0;
+  const insuranceCostHt = input.insurance_cost_ht ?? 0;
+  const handlingCostHt = input.handling_cost_ht ?? 0;
   const fraisTaxRate = input.frais_tax_rate ?? 0.2; // Defaut 20%
   const totalFrais = shippingCostHt + insuranceCostHt + handlingCostHt;
   const totalHt = productsHt + totalFrais;
@@ -435,7 +435,7 @@ async function createLinkMeOrder(
           address_line2: input.shipping_address.address_line2 ?? '',
           city: input.shipping_address.city,
           postal_code: input.shipping_address.postal_code,
-          country: input.shipping_address.country || 'FR',
+          country: input.shipping_address.country ?? 'FR',
         })
       : null,
   };
@@ -449,7 +449,7 @@ async function createLinkMeOrder(
   if (orderError) {
     console.error('Erreur création commande:', orderError);
     throw new Error(
-      `Erreur création commande: ${orderError.message || 'Erreur inconnue'}`
+      `Erreur création commande: ${orderError.message ?? 'Erreur inconnue'}`
     );
   }
 
@@ -463,7 +463,7 @@ async function createLinkMeOrder(
     quantity: item.quantity,
     unit_price_ht: item.unit_price_ht,
     // total_ht est GENERATED - ne pas l'inserer
-    tax_rate: item.tax_rate || 0.2, // TVA par ligne (defaut 20%)
+    tax_rate: item.tax_rate ?? 0.2, // TVA par ligne (defaut 20%)
     retrocession_rate: item.retrocession_rate,
     // CORRECTION: utiliser base_price_ht (prix catalogue) et non unit_price_ht (prix vente)
     retrocession_amount:

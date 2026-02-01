@@ -54,7 +54,7 @@ const formatVariantType = (type?: string): string => {
     material: 'Matériau',
     pattern: 'Motif',
   };
-  return typeMap[type] || type;
+  return typeMap[type] ?? type;
 };
 
 const getVariantTypeIcon = (type: string) => {
@@ -75,7 +75,7 @@ const getVariantTypeIcon = (type: string) => {
 const formatStyle = (style?: string): string => {
   if (!style) return '';
   const styleOption = COLLECTION_STYLE_OPTIONS.find(s => s.value === style);
-  return styleOption?.label || style;
+  return styleOption?.label ?? style;
 };
 
 // Composant pour carte produit COMPACTE (style catalogue)
@@ -295,7 +295,7 @@ export default function VariantGroupDetailPage({
       return await createProductInGroup(
         groupId,
         variantValue,
-        variantGroup.variant_type || 'color'
+        variantGroup.variant_type ?? 'color'
       );
     },
     [groupId, variantGroup, createProductInGroup]
@@ -333,7 +333,7 @@ export default function VariantGroupDetailPage({
   // Handler pour ajout multiple produits
   // Mémoiser excludeProductIds pour éviter re-renders
   const excludeProductIds = useMemo(
-    () => variantGroup?.products?.map(p => p.id) || [],
+    () => variantGroup?.products?.map(p => p.id) ?? [],
     [variantGroup?.products]
   );
 
@@ -407,7 +407,7 @@ export default function VariantGroupDetailPage({
 
   // Édition inline du type
   const handleStartEditType = useCallback(() => {
-    setEditedType(variantGroup?.variant_type || 'color');
+    setEditedType(variantGroup?.variant_type ?? 'color');
     setEditingType(true);
   }, [variantGroup?.variant_type]);
 
@@ -612,7 +612,7 @@ export default function VariantGroupDetailPage({
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {variantGroup.product_count || 0}
+              {variantGroup.product_count ?? 0}
             </div>
           </CardContent>
         </Card>
@@ -793,14 +793,14 @@ export default function VariantGroupDetailPage({
                     €
                   </p>
                   <p className="text-sm text-gray-700">
-                    🌿 Éco-taxe: {(variantGroup.common_eco_tax || 0).toFixed(2)}{' '}
+                    🌿 Éco-taxe: {(variantGroup.common_eco_tax ?? 0).toFixed(2)}{' '}
                     €
                   </p>
                   <p className="text-sm text-gray-900 font-semibold">
                     Total:{' '}
                     {(
                       variantGroup.common_cost_price +
-                      (variantGroup.common_eco_tax || 0)
+                      (variantGroup.common_eco_tax ?? 0)
                     ).toFixed(2)}{' '}
                     €
                   </p>
@@ -876,7 +876,7 @@ export default function VariantGroupDetailPage({
       {/* Liste des produits */}
       <div className="space-y-6">
         <h2 className="text-xl font-semibold text-gray-900">
-          Produits du groupe ({variantGroup.products?.length || 0})
+          Produits du groupe ({variantGroup.products?.length ?? 0})
         </h2>
 
         {variantGroup.products && variantGroup.products.length > 0 ? (
@@ -886,7 +886,7 @@ export default function VariantGroupDetailPage({
                 key={product.id}
                 product={product}
                 variantType={variantGroup.variant_type ?? ''}
-                hasCommonSupplier={variantGroup.has_common_supplier || false}
+                hasCommonSupplier={variantGroup.has_common_supplier ?? false}
                 groupDimensions={
                   variantGroup.dimensions_length
                     ? ({

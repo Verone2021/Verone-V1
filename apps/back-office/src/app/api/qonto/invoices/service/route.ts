@@ -174,7 +174,7 @@ export async function POST(request: NextRequest): Promise<
         'UNITED KINGDOM': 'GB',
         UK: 'GB',
       };
-      return countryMap[upper] || 'FR';
+      return countryMap[upper] ?? 'FR';
     };
 
     // Construire adresse pour Qonto

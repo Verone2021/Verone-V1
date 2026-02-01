@@ -142,7 +142,7 @@ export function CatalogueFilterPanel({
       products.forEach(product => {
         if (product.subcategory_id) {
           const count =
-            subcategoryProductCounts.get(product.subcategory_id) || 0;
+            subcategoryProductCounts.get(product.subcategory_id) ?? 0;
           subcategoryProductCounts.set(product.subcategory_id, count + 1);
         }
       });
@@ -150,7 +150,7 @@ export function CatalogueFilterPanel({
 
     const enrichedSubcategories = subcategories.map(sub => ({
       ...sub,
-      productCount: subcategoryProductCounts.get(sub.id) || 0,
+      productCount: subcategoryProductCounts.get(sub.id) ?? 0,
     }));
 
     const categoriesMap = new Map<string, EnrichedCategory>();
@@ -200,7 +200,7 @@ export function CatalogueFilterPanel({
       if (product.product_status) {
         counts.set(
           product.product_status,
-          (counts.get(product.product_status) || 0) + 1
+          (counts.get(product.product_status) ?? 0) + 1
         );
       }
     });
@@ -214,8 +214,8 @@ export function CatalogueFilterPanel({
   // Fournisseurs avec produits
   const suppliersWithProducts = useMemo(() => {
     return suppliers
-      .filter(s => (s._count?.products || 0) > 0)
-      .sort((a, b) => (b._count?.products || 0) - (a._count?.products || 0));
+      .filter(s => (s._count?.products ?? 0) > 0)
+      .sort((a, b) => (b._count?.products ?? 0) - (a._count?.products ?? 0));
   }, [suppliers]);
 
   // Handlers
@@ -575,7 +575,7 @@ export function CatalogueFilterPanel({
               <div className="p-2 space-y-1">
                 {suppliersWithProducts.map(supplier => {
                   const isSelected = filters.suppliers.includes(supplier.id);
-                  const count = supplier._count?.products || 0;
+                  const count = supplier._count?.products ?? 0;
                   return (
                     <label
                       key={supplier.id}
@@ -636,8 +636,8 @@ export function CatalogueFilterPanel({
             <div className="p-2 space-y-1">
               {availableStatuses.map(status => {
                 const isSelected = filters.statuses.includes(status);
-                const count = statusCounts.get(status) || 0;
-                const label = STATUS_LABELS[status] || status;
+                const count = statusCounts.get(status) ?? 0;
+                const label = STATUS_LABELS[status] ?? status;
                 const icon = STATUS_ICONS[status] ?? '';
                 return (
                   <label
@@ -747,7 +747,7 @@ export function CatalogueFilterPanel({
           })}
           {/* Statuts */}
           {filters.statuses.map(status => {
-            const label = STATUS_LABELS[status] || status;
+            const label = STATUS_LABELS[status] ?? status;
             const icon = STATUS_ICONS[status] ?? '';
             return (
               <Badge

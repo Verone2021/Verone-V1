@@ -36,7 +36,7 @@ export async function getNotificationEmails(): Promise<ActionResult> {
       throw error;
     }
 
-    const emails = data?.setting_value?.form_submissions || [];
+    const emails = data?.setting_value?.form_submissions ?? [];
 
     return {
       success: true,
@@ -67,7 +67,7 @@ export async function addNotificationEmail(
       .eq('setting_key', 'notification_emails')
       .single();
 
-    const currentEmails = currentData?.setting_value?.form_submissions || [];
+    const currentEmails = currentData?.setting_value?.form_submissions ?? [];
 
     // Vérifier si l'email existe déjà
     if (currentEmails.includes(email)) {
@@ -129,7 +129,7 @@ export async function removeNotificationEmail(
       .eq('setting_key', 'notification_emails')
       .single();
 
-    const currentEmails = currentData?.setting_value?.form_submissions || [];
+    const currentEmails = currentData?.setting_value?.form_submissions ?? [];
 
     // Filtrer l'email à supprimer
     const updatedEmails = currentEmails.filter((e: string) => e !== email);

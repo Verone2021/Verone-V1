@@ -119,7 +119,7 @@ function useUserSelections(
         console.error('Erreur chargement sélections utilisateur:', error);
         setSelections([]);
       } else {
-        setSelections((data || []) as UserSelection[]);
+        setSelections((data ?? []) as UserSelection[]);
       }
       setLoading(false);
     };
@@ -195,7 +195,7 @@ function useUserStats(
       // TODO: Calculer ordersCount et totalCaHT quand les commandes LinkMe seront implémentées
 
       setStats({
-        selectionsCount: selectionsCount || 0,
+        selectionsCount: selectionsCount ?? 0,
         ordersCount: 0,
         totalCaHT: 0,
       });
@@ -273,10 +273,10 @@ export default function UserDetailPage() {
       .toUpperCase() || user.email[0].toUpperCase();
 
   // Config du badge rôle
-  const roleLabel = LINKME_ROLE_LABELS[user.linkme_role] || user.linkme_role;
+  const roleLabel = LINKME_ROLE_LABELS[user.linkme_role] ?? user.linkme_role;
   const roleColor =
-    LINKME_ROLE_COLORS[user.linkme_role] || 'bg-gray-100 text-gray-800';
-  const rolePermissions = LINKME_ROLE_PERMISSIONS[user.linkme_role] || [];
+    LINKME_ROLE_COLORS[user.linkme_role] ?? 'bg-gray-100 text-gray-800';
+  const rolePermissions = LINKME_ROLE_PERMISSIONS[user.linkme_role] ?? [];
 
   return (
     <div className="space-y-6">
@@ -430,11 +430,11 @@ export default function UserDetailPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-muted-foreground">Prénom</p>
-                    <p className="font-medium">{user.first_name || '-'}</p>
+                    <p className="font-medium">{user.first_name ?? '-'}</p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Nom</p>
-                    <p className="font-medium">{user.last_name || '-'}</p>
+                    <p className="font-medium">{user.last_name ?? '-'}</p>
                   </div>
                 </div>
                 <div>
@@ -442,7 +442,7 @@ export default function UserDetailPage() {
                     <Phone className="h-3.5 w-3.5" />
                     Téléphone
                   </p>
-                  <p className="font-medium">{user.phone || '-'}</p>
+                  <p className="font-medium">{user.phone ?? '-'}</p>
                 </div>
               </CardContent>
             </Card>
@@ -552,7 +552,7 @@ export default function UserDetailPage() {
                           Enseigne liée
                         </p>
                         <p className="font-medium">
-                          {user.enseigne_name || 'Enseigne'}
+                          {user.enseigne_name ?? 'Enseigne'}
                         </p>
                       </div>
                     </div>
@@ -583,7 +583,7 @@ export default function UserDetailPage() {
                           Organisation liée
                         </p>
                         <p className="font-medium">
-                          {user.organisation_name || 'Organisation'}
+                          {user.organisation_name ?? 'Organisation'}
                         </p>
                       </div>
                     </div>

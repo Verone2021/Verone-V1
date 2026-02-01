@@ -37,8 +37,8 @@ export default function TestPurchaseOrderPage() {
     if (error) {
       log(`❌ Erreur: ${error.message}`);
     } else {
-      log(`✅ ${data?.length || 0} fournisseurs chargés`);
-      setSuppliers(data || []);
+      log(`✅ ${data?.length ?? 0} fournisseurs chargés`);
+      setSuppliers(data ?? []);
     }
   };
 
@@ -61,8 +61,8 @@ export default function TestPurchaseOrderPage() {
     if (error) {
       log(`❌ Erreur produits: ${error.message}`);
     } else {
-      log(`✅ ${data?.length || 0} produits chargés`);
-      setProducts(data || []);
+      log(`✅ ${data?.length ?? 0} produits chargés`);
+      setProducts(data ?? []);
     }
   };
 
@@ -132,7 +132,7 @@ export default function TestPurchaseOrderPage() {
           ))}
         </select>
         <span className="ml-2 text-sm text-gray-500">
-          ID: {supplierId || 'aucun'}
+          ID: {supplierId ?? 'aucun'}
         </span>
       </div>
 

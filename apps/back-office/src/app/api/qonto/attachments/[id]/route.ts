@@ -70,7 +70,7 @@ export async function GET(
 
     const blob = await fileResponse.blob();
     const contentType =
-      fileResponse.headers.get('Content-Type') || 'application/pdf';
+      fileResponse.headers.get('Content-Type') ?? 'application/pdf';
 
     // Retourner le fichier avec les bons headers
     return new NextResponse(blob, {
@@ -171,7 +171,7 @@ export async function DELETE(
     await qontoClient.removeSingleAttachment(qontoTransactionId, attachmentId);
 
     // 5. Mettre à jour attachment_ids dans la DB
-    const currentIds = (transaction.attachment_ids as string[]) || [];
+    const currentIds = (transaction.attachment_ids as string[]) ?? [];
     const newIds = currentIds.filter(id => id !== attachmentId);
 
     const { error: updateError } = await supabase

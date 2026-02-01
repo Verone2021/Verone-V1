@@ -111,7 +111,7 @@ async function getUsersWithProfiles(): Promise<UserWithProfile[]> {
         email: user.email ?? '',
         email_confirmed_at: user.email_confirmed_at ?? null,
         created_at: user.created_at,
-        user_metadata: user.user_metadata || {},
+        user_metadata: user.user_metadata ?? {},
         profile: {
           role: profile.role,
           user_type: profile.user_type,

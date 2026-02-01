@@ -106,7 +106,7 @@ function useEnseignes() {
 
       if (error) throw error;
 
-      return (data || []).map(
+      return (data ?? []).map(
         (e: {
           id: string;
           name: string;
@@ -114,7 +114,7 @@ function useEnseignes() {
         }) => ({
           id: e.id,
           name: e.name,
-          affiliate_count: e.linkme_affiliates?.[0]?.count || 0,
+          affiliate_count: e.linkme_affiliates?.[0]?.count ?? 0,
         })
       ) as Enseigne[];
     },
@@ -145,7 +145,7 @@ function useAffiliates(enseigneId?: string) {
       const { data, error } = await query.order('first_name');
       if (error) throw error;
 
-      return (data || []).map(u => ({
+      return (data ?? []).map(u => ({
         id: u.user_id,
         user_id: u.user_id,
         display_name:
@@ -191,7 +191,7 @@ function useSendNotification() {
           .select('user_id')
           .eq('is_active', true)
           .not('user_id', 'is', null);
-        userIds = (data || []).map(a => a.user_id).filter(Boolean) as string[];
+        userIds = (data ?? []).map(a => a.user_id).filter(Boolean) as string[];
       } else if (targetType === 'enseigne' && targetId) {
         const { data } = await supabase
           .from('v_linkme_users')
@@ -199,7 +199,7 @@ function useSendNotification() {
           .eq('enseigne_id', targetId)
           .eq('is_active', true)
           .not('user_id', 'is', null);
-        userIds = (data || []).map(a => a.user_id).filter(Boolean) as string[];
+        userIds = (data ?? []).map(a => a.user_id).filter(Boolean) as string[];
       } else if (targetType === 'affiliate' && targetId) {
         // targetId est déjà le user_id
         userIds = [targetId];
@@ -353,10 +353,10 @@ export default function MessagesPage() {
   // Calculate recipient count
   const getRecipientCount = (): number => {
     if (targetType === 'all') {
-      return affiliates?.length || 0;
+      return affiliates?.length ?? 0;
     }
     if (targetType === 'enseigne' && selectedEnseigne) {
-      return affiliates?.filter(a => a.enseigne_name).length || 0;
+      return affiliates?.filter(a => a.enseigne_name).length ?? 0;
     }
     if (targetType === 'affiliate' && selectedAffiliate) {
       return 1;
@@ -473,7 +473,7 @@ export default function MessagesPage() {
                         Tous les affiliés
                       </span>
                       <Badge variant="secondary">
-                        {affiliates?.length || 0}
+                        {affiliates?.length ?? 0}
                       </Badge>
                     </button>
 
@@ -490,7 +490,7 @@ export default function MessagesPage() {
                       <Building2 className="h-6 w-6" />
                       <span className="text-sm font-medium">Par enseigne</span>
                       <Badge variant="secondary">
-                        {enseignes?.length || 0}
+                        {enseignes?.length ?? 0}
                       </Badge>
                     </button>
 

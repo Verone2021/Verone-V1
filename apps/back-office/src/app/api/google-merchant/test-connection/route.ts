@@ -254,7 +254,7 @@ export async function POST(
 
         extendedDetails.productListTest = {
           success: listResult.success,
-          productCount: listResult.data?.products?.length || 0,
+          productCount: listResult.data?.products?.length ?? 0,
           data: listResult.data,
           error: listResult.error,
         };

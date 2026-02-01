@@ -125,13 +125,13 @@ export function LinkMeOrderDetailModal({
 }: LinkMeOrderDetailModalProps) {
   if (!order) return null;
 
-  const statusInfo = STATUS_LABELS[order.status] || {
+  const statusInfo = STATUS_LABELS[order.status] ?? {
     label: order.status,
     variant: 'secondary' as const,
   };
 
   const paymentInfo = order.payment_status
-    ? PAYMENT_STATUS_LABELS[order.payment_status] || {
+    ? PAYMENT_STATUS_LABELS[order.payment_status] ?? {
         label: order.payment_status,
         variant: 'secondary' as const,
       }
@@ -225,7 +225,7 @@ export function LinkMeOrderDetailModal({
                     {item.quantity}
                   </TableCell>
                   <TableCell className="text-right text-slate-700">
-                    {formatPrice(item.selling_price_ht || item.unit_price_ht)}
+                    {formatPrice(item.selling_price_ht ?? item.unit_price_ht)}
                   </TableCell>
                   <TableCell className="text-right font-medium text-slate-900">
                     {formatPrice(item.total_ht)}

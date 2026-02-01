@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
 
     // Nouveaux paramètres
     const scope = searchParams.get('scope') as 'all' | 'incremental' | null;
-    const fromDate = searchParams.get('from') || '2022-01-01';
+    const fromDate = searchParams.get('from') ?? '2022-01-01';
 
     // Legacy params (rétro-compatibilité)
     const fullSync = searchParams.get('fullSync') === 'true';

@@ -39,7 +39,7 @@ export function EcoTaxVatInput({
     }
   };
 
-  const displayValue = value !== null ? value : '';
+  const displayValue = value ?? '';
 
   return (
     <div className={className}>

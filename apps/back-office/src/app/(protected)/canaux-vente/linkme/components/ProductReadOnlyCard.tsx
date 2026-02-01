@@ -79,7 +79,7 @@ export function ProductReadOnlyCard({
               Sous-catégorie
             </p>
             <p className="text-sm">
-              {product.product_category_name || (
+              {product.product_category_name ?? (
                 <span className="text-muted-foreground italic">
                   Non définie
                 </span>
@@ -96,7 +96,7 @@ export function ProductReadOnlyCard({
               Fournisseur
             </p>
             <p className="text-sm">
-              {product.product_supplier_name || (
+              {product.product_supplier_name ?? (
                 <span className="text-muted-foreground italic">Non défini</span>
               )}
             </p>
@@ -184,7 +184,7 @@ export function ProductReadOnlyCard({
                   >
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">
-                        {variant.name || variant.sku || 'Variante'}
+                        {variant.name ?? variant.sku ?? 'Variante'}
                       </p>
                       {variant.variant_attributes && (
                         <div className="flex flex-wrap gap-1 mt-0.5">

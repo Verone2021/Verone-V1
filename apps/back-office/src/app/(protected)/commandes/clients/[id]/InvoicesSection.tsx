@@ -90,7 +90,7 @@ export function InvoicesSection({ orderId }: { orderId: string }) {
       );
       if (!res.ok) {
         const error = await res.json();
-        throw new Error(error.error || 'Validation failed');
+        throw new Error(error.error ?? 'Validation failed');
       }
       return res.json();
     },
@@ -120,7 +120,7 @@ export function InvoicesSection({ orderId }: { orderId: string }) {
       );
       if (!res.ok) {
         const error = await res.json();
-        throw new Error(error.error || 'Finalization failed');
+        throw new Error(error.error ?? 'Finalization failed');
       }
       return res.json();
     },

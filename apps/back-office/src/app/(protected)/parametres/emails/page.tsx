@@ -42,7 +42,7 @@ export default function EmailTemplatesPage() {
     void loadTemplates().catch(error => {
       console.error('[EmailsPage] loadTemplates failed:', error);
     });
-  }, []);
+  }, [loadTemplates]);
 
   async function loadTemplates() {
     try {
@@ -54,7 +54,7 @@ export default function EmailTemplatesPage() {
         .order('name', { ascending: true });
 
       if (error) throw error;
-      const templates = (data || []).map(item => ({
+      const templates = (data ?? []).map(item => ({
         ...item,
         variables: Array.isArray(item.variables) ? item.variables : [],
       }));

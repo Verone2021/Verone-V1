@@ -61,12 +61,12 @@ export function SuppliersTab() {
 
       if (error) throw error;
 
-      const organisationsWithCounts = (data || []).map((org: any) => {
+      const organisationsWithCounts = (data ?? []).map((org: any) => {
         const { products, ...rest } = org;
         return {
           ...rest,
           _count: {
-            products: products?.[0]?.count || 0,
+            products: products?.[0]?.count ?? 0,
           },
         };
       });
@@ -110,7 +110,7 @@ export function SuppliersTab() {
 
   const handleDelete = async (supplier: Organisation) => {
     const confirmed = confirm(
-      `Êtes-vous sûr de vouloir supprimer définitivement "${supplier.trade_name || supplier.legal_name}" ?\n\nCette action est irréversible !`
+      `Êtes-vous sûr de vouloir supprimer définitivement "${supplier.trade_name ?? supplier.legal_name}" ?\n\nCette action est irréversible !`
     );
 
     if (confirmed) {

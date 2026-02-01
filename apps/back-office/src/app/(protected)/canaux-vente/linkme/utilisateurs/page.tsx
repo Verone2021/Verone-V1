@@ -325,8 +325,8 @@ export default function LinkMeUtilisateursPage() {
   }
 
   // Stats calculées
-  const activeCount = users?.filter(u => u.is_active).length || 0;
-  const suspendedCount = users?.filter(u => !u.is_active).length || 0;
+  const activeCount = users?.filter(u => u.is_active).length ?? 0;
+  const suspendedCount = users?.filter(u => !u.is_active).length ?? 0;
 
   return (
     <div className="space-y-6">
@@ -353,7 +353,7 @@ export default function LinkMeUtilisateursPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Total Comptes"
-          value={stats?.total || 0}
+          value={stats?.total ?? 0}
           icon={Users}
           color="bg-blue-500"
         />
@@ -371,7 +371,7 @@ export default function LinkMeUtilisateursPage() {
         />
         <StatCard
           title="Rôles Uniques"
-          value={Object.values(stats?.byRole || {}).filter(v => v > 0).length}
+          value={Object.values(stats?.byRole ?? {}).filter(v => v > 0).length}
           icon={Shield}
           color="bg-purple-500"
         />
@@ -494,7 +494,7 @@ export default function LinkMeUtilisateursPage() {
       {filteredUsers.length > 0 && (
         <p className="text-sm text-gray-500">
           Affichage de {filteredUsers.length} compte
-          {filteredUsers.length > 1 ? 's' : ''} sur {users?.length || 0}
+          {filteredUsers.length > 1 ? 's' : ''} sur {users?.length ?? 0}
         </p>
       )}
 

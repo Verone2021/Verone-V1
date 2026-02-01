@@ -245,7 +245,7 @@ export function DashboardSection() {
         {/* KPI 1: CA Généré */}
         <KPICard
           title="CA Généré"
-          value={formatCurrency(kpis?.revenue.current || 0)}
+          value={formatCurrency(kpis?.revenue.current ?? 0)}
           subtext="vs moyenne"
           growth={kpis?.revenue.growth}
           icon={<TrendingUp className="h-4 w-4 text-emerald-600" />}
@@ -255,8 +255,8 @@ export function DashboardSection() {
         {/* KPI 2: Commissions à payer */}
         <KPICard
           title="Commissions à payer"
-          value={formatCurrency(kpis?.pendingCommissions.amount || 0)}
-          subtext={`${kpis?.pendingCommissions.count || 0} demande${(kpis?.pendingCommissions.count || 0) > 1 ? 's' : ''}`}
+          value={formatCurrency(kpis?.pendingCommissions.amount ?? 0)}
+          subtext={`${kpis?.pendingCommissions.count ?? 0} demande${(kpis?.pendingCommissions.count ?? 0) > 1 ? 's' : ''}`}
           icon={<Banknote className="h-4 w-4 text-amber-600" />}
           iconBgColor="bg-amber-100"
         />
@@ -264,8 +264,8 @@ export function DashboardSection() {
         {/* KPI 3: Affiliés actifs */}
         <KPICard
           title="Affiliés actifs"
-          value={String(kpis?.affiliates.active || 0)}
-          subtext={`+${kpis?.affiliates.newThisMonth || 0} ce mois`}
+          value={String(kpis?.affiliates.active ?? 0)}
+          subtext={`+${kpis?.affiliates.newThisMonth ?? 0} ce mois`}
           icon={<Users className="h-4 w-4 text-blue-600" />}
           iconBgColor="bg-blue-100"
         />
@@ -273,7 +273,7 @@ export function DashboardSection() {
         {/* KPI 4: Commandes ce mois */}
         <KPICard
           title="Commandes ce mois"
-          value={String(kpis?.orders.current || 0)}
+          value={String(kpis?.orders.current ?? 0)}
           subtext="vs moyenne"
           growth={kpis?.orders.growth}
           icon={<ShoppingCart className="h-4 w-4 text-purple-600" />}

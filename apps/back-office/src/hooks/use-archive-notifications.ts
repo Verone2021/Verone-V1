@@ -70,7 +70,7 @@ export function useArchiveNotifications() {
         throw error;
       }
 
-      return (data || []) as ArchiveNotification[];
+      return (data ?? []) as ArchiveNotification[];
     },
     staleTime: 120 * 1000, // 2 minutes
     refetchInterval: 5 * 60 * 1000, // Refresh toutes les 5 minutes
@@ -97,7 +97,7 @@ export function useArchiveNotificationsCount() {
         return 0;
       }
 
-      return count || 0;
+      return count ?? 0;
     },
     staleTime: 120 * 1000, // 2 minutes
     refetchInterval: 5 * 60 * 1000,

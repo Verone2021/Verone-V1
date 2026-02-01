@@ -109,7 +109,7 @@ export default function SourcingPage() {
           .gte('created_at', startOfMonth.toISOString())
           .lte('created_at', endOfMonth.toISOString());
 
-        setCompletedThisMonth(count || 0);
+        setCompletedThisMonth(count ?? 0);
       } catch (error) {
         console.error('Erreur chargement produits complétés:', error);
       }
@@ -122,15 +122,15 @@ export default function SourcingPage() {
   // KPIs calculés
   const stats = {
     totalDrafts:
-      sourcingProducts?.filter(p => p.product_status === 'draft').length || 0,
+      sourcingProducts?.filter(p => p.product_status === 'draft').length ?? 0,
     pendingValidation:
       sourcingProducts?.filter(
         p => p.product_status === 'preorder' || p.requires_sample
-      ).length || 0,
+      ).length ?? 0,
     samplesOrdered:
       sourcingProducts?.filter(
         p => p.requires_sample && p.product_status === 'preorder'
-      ).length || 0,
+      ).length ?? 0,
     completedThisMonth,
   };
 
@@ -167,7 +167,7 @@ export default function SourcingPage() {
       default:
         return (
           <Badge variant="outline" className="border-gray-300 text-gray-600">
-            {productStatus || 'Inconnu'}
+            {productStatus ?? 'Inconnu'}
           </Badge>
         );
     }
@@ -251,7 +251,7 @@ export default function SourcingPage() {
       return null;
     const primary = product.product_images.find((img: any) => img.is_primary);
     return (
-      (primary?.public_url || product.product_images[0]?.public_url) ?? null
+      (primary?.public_url ?? product.product_images[0]?.public_url) ?? null
     );
   };
 

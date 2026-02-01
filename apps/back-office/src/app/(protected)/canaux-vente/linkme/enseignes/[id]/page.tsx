@@ -121,7 +121,7 @@ function useEnseigneSelections(enseigneId: string | null) {
         setSelections([]);
       } else {
         // Cast to EnseigneSelection[] - status type comes as string from DB
-        setSelections((data || []) as EnseigneSelection[]);
+        setSelections((data ?? []) as EnseigneSelection[]);
       }
       setLoading(false);
     };
@@ -191,8 +191,8 @@ function useEnseigneProducts(enseigneId: string | null) {
         setAffilies([]);
       } else {
         // Transform and separate products
-        const allProducts = (data || []).map((p: any) => {
-          const primaryImg = (p.product_images || []).find(
+        const allProducts = (data ?? []).map((p: any) => {
+          const primaryImg = (p.product_images ?? []).find(
             (img: any) => img.is_primary
           );
           return {
@@ -307,7 +307,7 @@ export default function EnseigneDetailPage() {
         <TabsContent value="organisations" className="mt-6">
           {/* Tableau organisations membres */}
           <EnseigneOrganisationsTable
-            organisations={stats?.organisationsWithRevenue || []}
+            organisations={stats?.organisationsWithRevenue ?? []}
             parentOrganisation={stats?.parentOrganisation ?? null}
             loading={statsLoading}
             enseigneId={id}
@@ -374,8 +374,8 @@ export default function EnseigneDetailPage() {
                         Raison sociale
                       </p>
                       <p className="font-medium">
-                        {stats.parentOrganisation.legal_name ||
-                          stats.parentOrganisation.trade_name ||
+                        {stats.parentOrganisation.legal_name ??
+                          stats.parentOrganisation.trade_name ??
                           '-'}
                       </p>
                     </div>
@@ -391,14 +391,14 @@ export default function EnseigneDetailPage() {
                           </p>
                         </div>
                       )}
-                    {(stats.parentOrganisation.siret ||
+                    {(stats.parentOrganisation.siret ??
                       stats.parentOrganisation.siren) && (
                       <div>
                         <p className="text-sm text-muted-foreground">
                           {stats.parentOrganisation.siret ? 'SIRET' : 'SIREN'}
                         </p>
                         <p className="font-medium">
-                          {stats.parentOrganisation.siret ||
+                          {stats.parentOrganisation.siret ??
                             stats.parentOrganisation.siren}
                         </p>
                       </div>
@@ -414,7 +414,7 @@ export default function EnseigneDetailPage() {
                           {[
                             stats.parentOrganisation.billing_address_line1,
                             stats.parentOrganisation.billing_postal_code,
-                            stats.parentOrganisation.billing_city ||
+                            stats.parentOrganisation.billing_city ??
                               stats.parentOrganisation.city,
                           ]
                             .filter(Boolean)
@@ -432,7 +432,7 @@ export default function EnseigneDetailPage() {
         {/* Onglet Géographie */}
         <TabsContent value="geography" className="mt-6">
           <EnseigneGeographySection
-            citiesDistribution={stats?.citiesDistribution || []}
+            citiesDistribution={stats?.citiesDistribution ?? []}
             loading={statsLoading}
             className="max-w-none"
           />

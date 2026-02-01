@@ -34,7 +34,7 @@ export default function ProductStockSection({
             Type de produit
           </span>
           <p className="text-sm text-gray-700">
-            {product.product_type || (
+            {product.product_type ?? (
               <span className="text-gray-400 italic">Non défini</span>
             )}
           </p>

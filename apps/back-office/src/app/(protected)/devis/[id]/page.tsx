@@ -100,7 +100,7 @@ function parseQontoAmount(
     return amount;
   }
   if (typeof amount === 'object' && 'value' in amount) {
-    return parseFloat(amount.value) || 0;
+    return parseFloat(amount.value) ?? 0;
   }
   return 0;
 }
@@ -139,8 +139,8 @@ function StatusBadge({ status }: { status: string }): React.ReactNode {
   };
 
   return (
-    <Badge variant={variants[status] || 'outline'}>
-      {labels[status] || status}
+    <Badge variant={variants[status] ?? 'outline'}>
+      {labels[status] ?? status}
     </Badge>
   );
 }
@@ -168,7 +168,7 @@ export default function QuoteDetailPage(): React.ReactNode {
       const data = await response.json();
 
       if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Failed to fetch quote');
+        throw new Error(data.error ?? 'Failed to fetch quote');
       }
 
       setQuote(data.quote);
@@ -196,7 +196,7 @@ export default function QuoteDetailPage(): React.ReactNode {
       const data = await response.json();
 
       if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Failed to finalize');
+        throw new Error(data.error ?? 'Failed to finalize');
       }
 
       setQuote(data.quote);
@@ -226,7 +226,7 @@ export default function QuoteDetailPage(): React.ReactNode {
       const data = await response.json();
 
       if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Failed to delete');
+        throw new Error(data.error ?? 'Failed to delete');
       }
 
       toast({
@@ -256,7 +256,7 @@ export default function QuoteDetailPage(): React.ReactNode {
       const data = await response.json();
 
       if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Failed to convert');
+        throw new Error(data.error ?? 'Failed to convert');
       }
 
       toast({
@@ -288,7 +288,7 @@ export default function QuoteDetailPage(): React.ReactNode {
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(
-          errorData.error || `Erreur ${response.status}: ${response.statusText}`
+          errorData.error ?? `Erreur ${response.status}: ${response.statusText}`
         );
       }
 
@@ -300,7 +300,7 @@ export default function QuoteDetailPage(): React.ReactNode {
       }
 
       // Utiliser le numéro de devis ou l'ID si non disponible
-      const filename = quote.quote_number || quote.number || id;
+      const filename = quote.quote_number ?? quote.number ?? id;
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -339,7 +339,7 @@ export default function QuoteDetailPage(): React.ReactNode {
     return (
       <div className="container mx-auto py-6">
         <div className="rounded-lg border border-destructive/20 bg-destructive/10 p-4 text-destructive">
-          {error || 'Devis non trouvé'}
+          {error ?? 'Devis non trouvé'}
         </div>
       </div>
     );
@@ -739,7 +739,7 @@ export default function QuoteDetailPage(): React.ReactNode {
             <AlertDialogTitle>Envoyer le devis au client ?</AlertDialogTitle>
             <AlertDialogDescription>
               Le devis sera envoyé par email à{' '}
-              {quote.client?.email || "l'adresse du client"}. Une fois envoyé,
+              {quote.client?.email ?? "l'adresse du client"}. Une fois envoyé,
               le PDF sera disponible au téléchargement et vous pourrez le
               convertir en facture.
             </AlertDialogDescription>

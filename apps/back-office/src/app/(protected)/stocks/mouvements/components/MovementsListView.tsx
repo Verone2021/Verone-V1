@@ -34,13 +34,13 @@ function mapMovementToCard(
       id: movement.id,
       movement_type: movement.movement_type,
       quantity_change: movement.quantity_change,
-      reason_code: movement.reason_code || 'unknown',
+      reason_code: movement.reason_code ?? 'unknown',
       performed_at: movement.performed_at,
 
       // Mapping produit
       products: {
-        name: movement.product_name || 'Produit inconnu',
-        sku: movement.product_sku || 'SKU inconnu',
+        name: movement.product_name ?? 'Produit inconnu',
+        sku: movement.product_sku ?? 'SKU inconnu',
         image_url: movement.product_image_url ?? null, // ✅ NOUVEAU - Image produit
       },
 

@@ -41,7 +41,7 @@ export function TechnicalSection({
   const updateDimension = (key: string, value: string) => {
     const dimensions = { ...formData.dimensions };
     if (value) {
-      dimensions[key] = parseFloat(value) || 0;
+      dimensions[key] = parseFloat(value) ?? 0;
     } else {
       delete dimensions[key];
     }

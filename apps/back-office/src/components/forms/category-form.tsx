@@ -82,7 +82,7 @@ export function CategoryForm({
     name: initialData?.name ?? '',
     description: initialData?.description ?? '',
     image_url: initialData?.image_url ?? '',
-    display_order: initialData?.display_order || 1,
+    display_order: initialData?.display_order ?? 1,
     is_active: initialData?.is_active ?? true,
   });
 
@@ -94,7 +94,7 @@ export function CategoryForm({
         name: initialData?.name ?? '',
         description: initialData?.description ?? '',
         image_url: initialData?.image_url ?? '',
-        display_order: initialData?.display_order || 1,
+        display_order: initialData?.display_order ?? 1,
         is_active: initialData?.is_active ?? true,
       });
     }
@@ -140,7 +140,7 @@ export function CategoryForm({
     } catch (error: any) {
       console.error(
         'Erreur upload image catégorie:',
-        error?.message || JSON.stringify(error)
+        error?.message ?? JSON.stringify(error)
       );
       toast({
         title: '❌ Erreur upload',
@@ -232,11 +232,11 @@ export function CategoryForm({
     } catch (error: any) {
       console.error(
         'Erreur soumission formulaire catégorie:',
-        error?.message || JSON.stringify(error)
+        error?.message ?? JSON.stringify(error)
       );
 
       // Gestion spécifique des erreurs de contrainte unique
-      let errorMessage = error.message || 'Une erreur est survenue';
+      let errorMessage = error.message ?? 'Une erreur est survenue';
       if (error.code === '23505') {
         errorMessage =
           'Une catégorie avec ce nom existe déjà dans cette famille. Veuillez choisir un nom différent.';

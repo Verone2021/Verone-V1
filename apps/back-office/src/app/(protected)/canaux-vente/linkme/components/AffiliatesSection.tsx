@@ -243,10 +243,10 @@ export function AffiliatesSection() {
       if (error) throw error;
 
       // Mapper les données avec les noms des entités liées
-      const affiliatesWithNames = (data || []).map((a: any) => ({
+      const affiliatesWithNames = (data ?? []).map((a: any) => ({
         ...a,
         organisation_name:
-          (a.organisations?.trade_name || a.organisations?.legal_name) ?? null,
+          a.organisations?.trade_name ?? a.organisations?.legal_name ?? null,
         enseigne_name: null, // Sera peuplé via le mapping organisations->enseignes
       }));
 
@@ -273,7 +273,7 @@ export function AffiliatesSection() {
         .order('legal_name');
 
       if (error) throw error;
-      setOrganisations(data || []);
+      setOrganisations(data ?? []);
     } catch (error) {
       console.error('Error fetching organisations:', error);
     }
@@ -293,9 +293,9 @@ export function AffiliatesSection() {
 
       if (error) throw error;
       // Mapper vers interface Enseigne pour compatibilité
-      const mappedData = (data || []).map(org => ({
+      const mappedData = (data ?? []).map(org => ({
         id: org.id,
-        name: org.trade_name || org.legal_name,
+        name: org.trade_name ?? org.legal_name,
         logo_url: org.logo_url,
       }));
       setEnseignes(mappedData);
@@ -484,7 +484,7 @@ export function AffiliatesSection() {
     if (formData.entity_type === 'organisation') {
       const org = organisations.find(o => o.id === entityId);
       if (org) {
-        const displayName = org.trade_name || org.legal_name;
+        const displayName = org.trade_name ?? org.legal_name;
         const slug = displayName
           .toLowerCase()
           .normalize('NFD')
@@ -523,10 +523,10 @@ export function AffiliatesSection() {
     setSelectedAffiliate(affiliate);
     setFormData({
       entity_type: affiliate.enseigne_id ? 'enseigne' : 'organisation',
-      entity_id: (affiliate.enseigne_id || affiliate.organisation_id) ?? '',
+      entity_id: (affiliate.enseigne_id ?? affiliate.organisation_id) ?? '',
       display_name: affiliate.display_name,
       slug: affiliate.slug,
-      affiliate_type: (affiliate.affiliate_type || 'enseigne') as AffiliateType,
+      affiliate_type: (affiliate.affiliate_type ?? 'enseigne') as AffiliateType,
       bio: affiliate.bio ?? '',
     });
     setIsEditModalOpen(true);
@@ -652,7 +652,7 @@ export function AffiliatesSection() {
                 <SelectItem value="all">Toutes les organisations</SelectItem>
                 {organisations.map(org => (
                   <SelectItem key={org.id} value={org.id}>
-                    {org.trade_name || org.legal_name}
+                    {org.trade_name ?? org.legal_name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -699,11 +699,11 @@ export function AffiliatesSection() {
                     ];
                   const statusInfo =
                     statusConfig[
-                      (affiliate.status ||
+                      (affiliate.status ??
                         'pending') as keyof typeof statusConfig
                     ];
                   const linkedEntityName =
-                    affiliate.organisation_name || affiliate.enseigne_name;
+                    affiliate.organisation_name ?? affiliate.enseigne_name;
                   const linkedEntityType = affiliate.enseigne_id
                     ? 'enseigne'
                     : affiliate.organisation_id
@@ -961,7 +961,7 @@ export function AffiliatesSection() {
                       .map(entity => {
                         const isOrg = formData.entity_type === 'organisation';
                         const name = isOrg
-                          ? (entity as Organisation).trade_name ||
+                          ? (entity as Organisation).trade_name ??
                             (entity as Organisation).legal_name
                           : (entity as Enseigne).name;
                         const isSelected = formData.entity_id === entity.id;
@@ -1028,7 +1028,7 @@ export function AffiliatesSection() {
                     }
                   />
                   <p className="text-xs text-muted-foreground">
-                    URL: linkme.verone.fr/s/{formData.slug || 'votre-slug'}
+                    URL: linkme.verone.fr/s/{formData.slug ?? 'votre-slug'}
                   </p>
                 </div>
                 <div className="grid gap-2">

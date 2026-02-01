@@ -37,7 +37,7 @@ export function useUpdateMetadata() {
             custom_description_long: params.custom_description_long,
             custom_technical_description: params.custom_technical_description,
             custom_brand: params.custom_brand,
-            custom_selling_points: params.custom_selling_points || [],
+            custom_selling_points: params.custom_selling_points ?? [],
           },
           { onConflict: 'product_id,channel_id' }
         )
@@ -67,7 +67,7 @@ export function useUpdateMetadata() {
       toast({
         title: 'Erreur lors de la sauvegarde',
         description:
-          error.message || 'Impossible de sauvegarder les métadonnées',
+          error.message ?? 'Impossible de sauvegarder les métadonnées',
         variant: 'destructive',
       });
     },

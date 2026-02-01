@@ -59,7 +59,7 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [supabase.auth]);
 
   // Pendant le chargement, affichage minimal
   if (isLoading) {

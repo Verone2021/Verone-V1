@@ -210,8 +210,8 @@ export default function LinkMeCommissionsPage() {
 
       if (affiliatesError) throw affiliatesError;
 
-      setCommissions((commissionsData as unknown as Commission[]) || []);
-      setAffiliates((affiliatesData as unknown as Affiliate[]) || []);
+      setCommissions((commissionsData as unknown as Commission[]) ?? []);
+      setAffiliates((affiliatesData as unknown as Affiliate[]) ?? []);
     } catch (error) {
       console.error('Error fetching commissions:', error);
       toast({
@@ -230,7 +230,7 @@ export default function LinkMeCommissionsPage() {
 
   function getCommissionsByTab(tab: TabType): Commission[] {
     return commissions.filter(c => {
-      const commissionStatus = c.status || 'pending';
+      const commissionStatus = c.status ?? 'pending';
 
       switch (tab) {
         case 'en_attente':
@@ -255,7 +255,7 @@ export default function LinkMeCommissionsPage() {
     return list.filter(c => {
       // Search by order number
       const orderNum =
-        (c.order_number || c.sales_order?.order_number || c.order_id) ?? '';
+        (c.order_number ?? c.sales_order?.order_number ?? c.order_id) ?? '';
       const matchesSearch = orderNum
         .toLowerCase()
         .includes(searchTerm.toLowerCase());
@@ -370,15 +370,15 @@ export default function LinkMeCommissionsPage() {
 
     const rows = filtered.map(c => [
       c.created_at ? new Date(c.created_at).toLocaleDateString('fr-FR') : '-',
-      c.order_number || c.sales_order?.order_number || '-',
-      c.affiliate?.display_name || 'N/A',
+      c.order_number ?? c.sales_order?.order_number ?? '-',
+      c.affiliate?.display_name ?? 'N/A',
       c.affiliate?.enseigne_id ? 'Enseigne' : 'Organisation',
       c.sales_order?.payment_status === 'paid' ? 'Payé' : 'En attente',
       c.order_amount_ht.toFixed(2),
       c.affiliate_commission.toFixed(2),
-      (c.affiliate_commission_ttc || c.affiliate_commission * 1.2).toFixed(2),
-      statusConfig[(c.status || 'pending') as keyof typeof statusConfig]
-        ?.label || c.status,
+      (c.affiliate_commission_ttc ?? c.affiliate_commission * 1.2).toFixed(2),
+      statusConfig[(c.status ?? 'pending') as keyof typeof statusConfig]
+        ?.label ?? c.status,
     ]);
 
     const csv = [headers.join(';'), ...rows.map(r => r.join(';'))].join('\n');
@@ -420,7 +420,7 @@ export default function LinkMeCommissionsPage() {
       count: getCommissionsByTab('en_attente').length,
       total: getCommissionsByTab('en_attente').reduce(
         (sum, c) =>
-          sum + (c.affiliate_commission_ttc || c.affiliate_commission * 1.2),
+          sum + (c.affiliate_commission_ttc ?? c.affiliate_commission * 1.2),
         0
       ),
     },
@@ -428,7 +428,7 @@ export default function LinkMeCommissionsPage() {
       count: getCommissionsByTab('payables').length,
       total: getCommissionsByTab('payables').reduce(
         (sum, c) =>
-          sum + (c.affiliate_commission_ttc || c.affiliate_commission * 1.2),
+          sum + (c.affiliate_commission_ttc ?? c.affiliate_commission * 1.2),
         0
       ),
     },
@@ -436,7 +436,7 @@ export default function LinkMeCommissionsPage() {
       count: getCommissionsByTab('en_cours').length,
       total: getCommissionsByTab('en_cours').reduce(
         (sum, c) =>
-          sum + (c.affiliate_commission_ttc || c.affiliate_commission * 1.2),
+          sum + (c.affiliate_commission_ttc ?? c.affiliate_commission * 1.2),
         0
       ),
     },
@@ -444,7 +444,7 @@ export default function LinkMeCommissionsPage() {
       count: getCommissionsByTab('payees').length,
       total: getCommissionsByTab('payees').reduce(
         (sum, c) =>
-          sum + (c.affiliate_commission_ttc || c.affiliate_commission * 1.2),
+          sum + (c.affiliate_commission_ttc ?? c.affiliate_commission * 1.2),
         0
       ),
     },
@@ -684,13 +684,13 @@ export default function LinkMeCommissionsPage() {
                             ? 'Enseigne'
                             : 'Organisation';
                           const orderNumber =
-                            commission.order_number ||
-                            commission.sales_order?.order_number ||
+                            commission.order_number ??
+                            commission.sales_order?.order_number ??
                             `#${commission.order_id.slice(0, 8)}`;
                           const commissionTTC =
-                            commission.affiliate_commission_ttc ||
+                            commission.affiliate_commission_ttc ??
                             commission.affiliate_commission *
-                              (1 + (commission.tax_rate || 0.2));
+                              (1 + (commission.tax_rate ?? 0.2));
 
                           return (
                             <TableRow key={commission.id}>
@@ -721,7 +721,7 @@ export default function LinkMeCommissionsPage() {
                                 {orderNumber}
                               </TableCell>
                               <TableCell>
-                                {commission.affiliate?.display_name || 'N/A'}
+                                {commission.affiliate?.display_name ?? 'N/A'}
                               </TableCell>
                               <TableCell>
                                 <Badge
@@ -760,7 +760,7 @@ export default function LinkMeCommissionsPage() {
                               </TableCell>
                               <TableCell className="text-right">
                                 {formatPrice(
-                                  commission.sales_order?.total_ttc ||
+                                  commission.sales_order?.total_ttc ??
                                     commission.order_amount_ht * 1.2
                                 )}
                               </TableCell>
@@ -802,7 +802,7 @@ export default function LinkMeCommissionsPage() {
         const firstSelected = selectedCommissions[0];
         const affiliateId = firstSelected?.affiliate_id ?? '';
         const affiliateName =
-          firstSelected?.affiliate?.display_name || 'Affilié';
+          firstSelected?.affiliate?.display_name ?? 'Affilié';
 
         return (
           <PaymentRequestModalAdmin

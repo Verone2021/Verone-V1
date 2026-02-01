@@ -256,7 +256,7 @@ export default function CustomersPage() {
         .order('archived_at', { ascending: false });
 
       if (error) throw error;
-      setArchivedCustomers((data || []) as unknown as Organisation[]);
+      setArchivedCustomers((data ?? []) as unknown as Organisation[]);
     } catch (err) {
       console.error('Erreur chargement clients archivés:', err);
     } finally {
@@ -530,7 +530,7 @@ export default function CustomersPage() {
         <div className="flex items-center gap-2">
           <Filter className="h-4 w-4" style={{ color: colors.text.muted }} />
           <Select
-            value={enseigneFilter || 'all'}
+            value={enseigneFilter ?? 'all'}
             onValueChange={value =>
               setEnseigneFilter(value === 'all' ? null : value)
             }
@@ -639,9 +639,16 @@ export default function CustomersPage() {
 
                             {/* Badge Ownership Type en-dessous du nom, aligné à gauche */}
                             {(() => {
-                              const badge = getOwnershipBadge(customer.ownership_type);
+                              const badge = getOwnershipBadge(
+                                customer.ownership_type
+                              );
                               return badge ? (
-                                <span className={cn("inline-block mt-1 px-1.5 py-0.5 text-[10px] font-medium rounded", badge.className)}>
+                                <span
+                                  className={cn(
+                                    'inline-block mt-1 px-1.5 py-0.5 text-[10px] font-medium rounded',
+                                    badge.className
+                                  )}
+                                >
                                   {badge.label}
                                 </span>
                               ) : null;

@@ -167,7 +167,7 @@ export function getTestUrlForTest(test: any): string {
   };
 
   const moduleKey = test.id?.substring(0, test.id.indexOf('-'));
-  return moduleUrlMap[moduleKey] || '/dashboard';
+  return moduleUrlMap[moduleKey] ?? '/dashboard';
 }
 
 export function getExpectedElementsForTest(_test: any): string[] {

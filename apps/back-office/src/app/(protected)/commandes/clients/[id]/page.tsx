@@ -142,9 +142,9 @@ export default async function OrderDetailPage({
           shipping_address: linkmeOrder.shipping_address,
           total_ht: linkmeOrder.total_ht,
           total_ttc: linkmeOrder.total_ttc,
-          shipping_cost_ht: linkmeOrder.shipping_cost_ht || 0,
-          handling_cost_ht: linkmeOrder.handling_cost_ht || 0,
-          insurance_cost_ht: linkmeOrder.insurance_cost_ht || 0,
+          shipping_cost_ht: linkmeOrder.shipping_cost_ht ?? 0,
+          handling_cost_ht: linkmeOrder.handling_cost_ht ?? 0,
+          insurance_cost_ht: linkmeOrder.insurance_cost_ht ?? 0,
           fees_vat_rate: 20, // Défaut
           created_at: linkmeOrder.created_at,
           created_by: linkmeOrder.created_by_affiliate_id,
@@ -180,7 +180,7 @@ export default async function OrderDetailPage({
     }
 
     if (!order) {
-      console.error('[Order Detail] Error:', orderError || linkmeError);
+      console.error('[Order Detail] Error:', orderError ?? linkmeError);
       notFound();
     }
   }
@@ -199,7 +199,7 @@ export default async function OrderDetailPage({
       .single();
 
     if (org) {
-      customerName = org.trade_name || org.legal_name;
+      customerName = org.trade_name ?? org.legal_name;
       customerEmail = org.email ?? '';
       customerPhone = org.phone ?? '';
       isOrganisation = true;
@@ -375,10 +375,10 @@ export default async function OrderDetailPage({
                       <div className="flex justify-between items-start mb-2">
                         <div>
                           <p className="font-medium">
-                            {item.products?.name || 'Produit inconnu'}
+                            {item.products?.name ?? 'Produit inconnu'}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            SKU: {item.products?.sku || 'N/A'}
+                            SKU: {item.products?.sku ?? 'N/A'}
                           </p>
                         </div>
                         <p className="text-sm font-medium">
@@ -487,12 +487,12 @@ export default async function OrderDetailPage({
               orderId={order.id}
               orderNumber={order.order_number}
               orderStatus={order.status}
-              totalHt={order.total_ht || 0}
-              totalTtc={order.total_ttc || 0}
+              totalHt={order.total_ht ?? 0}
+              totalTtc={order.total_ttc ?? 0}
               taxRate={20}
               currency="EUR"
               paymentTerms="immediate"
-              paymentStatus={order.payment_status || 'pending'}
+              paymentStatus={order.payment_status ?? 'pending'}
               customerName={customerName}
               customerEmail={customerEmail ?? null}
               customerType={

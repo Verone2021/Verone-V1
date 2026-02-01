@@ -156,7 +156,7 @@ export const KPIS_BY_TAB: Record<DashboardTab, string[]> = {
  * Récupère les définitions de KPIs pour un onglet donné
  */
 export function getKPIsForTab(tab: DashboardTab): StaticKPIDefinition[] {
-  const kpiIds = KPIS_BY_TAB[tab] || [];
+  const kpiIds = KPIS_BY_TAB[tab] ?? [];
   return kpiIds
     .map(id => STATIC_KPI_CATALOG[id])
     .filter((kpi): kpi is StaticKPIDefinition => kpi !== undefined);

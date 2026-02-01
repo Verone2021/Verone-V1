@@ -6,6 +6,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import Image from 'next/image';
 
 import { useToast } from '@verone/common/hooks';
 import {
@@ -91,7 +92,7 @@ export function ConfigurationSection() {
       setSeoForm({
         default_meta_title: config.default_meta_title ?? '',
         default_meta_description: config.default_meta_description ?? '',
-        meta_keywords: (config.meta_keywords || []).join(', '),
+        meta_keywords: (config.meta_keywords ?? []).join(', '),
       });
       setContactForm({
         contact_email: config.contact_email ?? '',
@@ -304,9 +305,11 @@ export function ConfigurationSection() {
             <div className="flex items-start gap-4">
               {config?.site_logo_url ? (
                 <div className="relative h-20 w-20 overflow-hidden rounded-md border bg-muted">
-                  <img
+                  <Image
                     src={config.site_logo_url}
                     alt="Logo site"
+                    width={80}
+                    height={80}
                     className="h-full w-full object-cover"
                   />
                 </div>

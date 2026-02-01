@@ -77,7 +77,7 @@ export async function GET(
         street1: org.address_line1 ?? '',
         city: org.city ?? '',
         zip_code: org.postal_code ?? '',
-        country: org.country || 'FR',
+        country: org.country ?? 'FR',
         company: org.legal_name, // Champ company
       };
     }
@@ -107,7 +107,7 @@ export async function GET(
         street1: customer.address_line1 ?? '',
         city: customer.city ?? '',
         zip_code: customer.postal_code ?? '',
-        country: customer.country || 'FR',
+        country: customer.country ?? 'FR',
       };
     }
     // 4. Type client non supporté

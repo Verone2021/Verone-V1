@@ -1058,7 +1058,7 @@ export default function SelectionDetailPage({
                     type="number"
                     value={newMarginRate}
                     onChange={e =>
-                      setNewMarginRate(parseFloat(e.target.value) || 0)
+                      setNewMarginRate(parseFloat(e.target.value) ?? 0)
                     }
                     className="w-20 text-center font-mono"
                     min={0}

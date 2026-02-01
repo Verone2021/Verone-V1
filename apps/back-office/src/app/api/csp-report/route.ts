@@ -123,7 +123,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       blockedUri: cspReport['blocked-uri'],
       violatedDirective: cspReport['violated-directive'],
       effectiveDirective: cspReport['effective-directive'],
-      disposition: cspReport.disposition || 'enforce',
+      disposition: cspReport.disposition ?? 'enforce',
       sourceFile: cspReport['source-file'],
       lineNumber: cspReport['line-number'],
       referrer: cspReport.referrer,

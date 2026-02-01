@@ -148,8 +148,8 @@ export function CommissionsSection() {
 
       if (affiliatesError) throw affiliatesError;
 
-      setCommissions(commissionsData || []);
-      setAffiliates(affiliatesData || []);
+      setCommissions(commissionsData ?? []);
+      setAffiliates(affiliatesData ?? []);
     } catch (error) {
       console.error('Error fetching commissions:', error);
       toast({
@@ -263,12 +263,12 @@ export function CommissionsSection() {
 
     const rows = filtered.map(c => [
       c.created_at ? new Date(c.created_at).toLocaleDateString('fr-FR') : '-',
-      c.affiliate?.display_name || 'N/A',
+      c.affiliate?.display_name ?? 'N/A',
       (c.order_id ?? '').slice(0, 8),
       c.order_amount_ht.toFixed(2),
       c.affiliate_commission.toFixed(2),
       c.linkme_commission.toFixed(2),
-      statusConfig[(c.status || 'pending') as keyof typeof statusConfig].label,
+      statusConfig[(c.status ?? 'pending') as keyof typeof statusConfig].label,
     ]);
 
     const csv = [headers.join(';'), ...rows.map(r => r.join(';'))].join('\n');
@@ -535,7 +535,7 @@ export function CommissionsSection() {
                 {filteredCommissions.map(commission => {
                   const statusInfo =
                     statusConfig[
-                      (commission.status ||
+                      (commission.status ??
                         'pending') as keyof typeof statusConfig
                     ];
                   const canSelect =
@@ -559,7 +559,7 @@ export function CommissionsSection() {
                           : '-'}
                       </TableCell>
                       <TableCell>
-                        {commission.affiliate?.display_name || 'N/A'}
+                        {commission.affiliate?.display_name ?? 'N/A'}
                       </TableCell>
                       <TableCell className="font-mono text-sm">
                         #{(commission.order_id ?? '').slice(0, 8)}

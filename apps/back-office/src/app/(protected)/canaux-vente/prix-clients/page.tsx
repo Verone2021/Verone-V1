@@ -111,8 +111,8 @@ export default function PrixClientsPage() {
         .in('id', productIds);
 
       // Créer des maps pour lookup rapide
-      const orgsMap = new Map(orgsData?.map(o => [o.id, o]) || []);
-      const productsMap = new Map(productsData?.map(p => [p.id, p]) || []);
+      const orgsMap = new Map(orgsData?.map(o => [o.id, o]) ?? []);
+      const productsMap = new Map(productsData?.map(p => [p.id, p]) ?? []);
 
       // Transformer les données avec les noms
       const transformedData: CustomerPricing[] = pricingData.map(item => {
@@ -122,11 +122,11 @@ export default function PrixClientsPage() {
         return {
           ...item,
           customer_name:
-            org?.trade_name ||
-            org?.legal_name ||
+            org?.trade_name ??
+            org?.legal_name ??
             `Client ${item.customer_id?.slice(0, 8)}`,
           product_name:
-            product?.name || `Produit ${item.product_id?.slice(0, 8)}`,
+            product?.name ?? `Produit ${item.product_id?.slice(0, 8)}`,
         } as CustomerPricing;
       });
 
@@ -148,10 +148,10 @@ export default function PrixClientsPage() {
     const uniqueCustomers = new Set(data.map(r => r.customer_id)).size;
     const avgDiscount =
       data.length > 0
-        ? data.reduce((sum, r) => sum + (r.discount_rate || 0), 0) / data.length
+        ? data.reduce((sum, r) => sum + (r.discount_rate ?? 0), 0) / data.length
         : 0;
     const totalRetrocession = data.reduce(
-      (sum, r) => sum + (r.retrocession_rate || 0),
+      (sum, r) => sum + (r.retrocession_rate ?? 0),
       0
     );
 
@@ -511,7 +511,7 @@ export default function PrixClientsPage() {
                             : '0%'}
                         </td>
                         <td className="px-4 py-3 text-sm text-right text-gray-700">
-                          {rule.min_quantity || 1}
+                          {rule.min_quantity ?? 1}
                         </td>
                         <td className="px-4 py-3 text-sm">
                           {getStatusBadge(rule)}

@@ -25,7 +25,7 @@ export async function GET(request: NextRequest): Promise<
   try {
     const { searchParams } = new URL(request.url);
     const orderId = searchParams.get('order_id');
-    const limit = searchParams.get('limit') || '50';
+    const limit = searchParams.get('limit') ?? '50';
 
     const supabase = createAdminClient();
 
@@ -69,7 +69,7 @@ export async function GET(request: NextRequest): Promise<
 
     // Enrichir avec les infos client (fetch manuel pour relation polymorphique)
     const enrichedShipments = await Promise.all(
-      (shipments || []).map(async shipment => {
+      (shipments ?? []).map(async shipment => {
         const order = shipment.sales_orders as {
           id: string;
           order_number: string;
@@ -97,7 +97,7 @@ export async function GET(request: NextRequest): Promise<
             customer = org
               ? {
                   id: org.id,
-                  name: org.trade_name || org.legal_name,
+                  name: org.trade_name ?? org.legal_name,
                   email: org.email,
                   phone: org.phone,
                   type: 'organisation',

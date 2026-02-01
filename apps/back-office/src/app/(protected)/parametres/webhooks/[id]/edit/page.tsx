@@ -64,7 +64,7 @@ export default function EditWebhookPage() {
     void loadWebhook().catch(error => {
       console.error('[WebhookEditPage] loadWebhook failed:', error);
     });
-  }, [webhookId]);
+  }, [webhookId, loadWebhook]);
 
   async function loadWebhook() {
     try {

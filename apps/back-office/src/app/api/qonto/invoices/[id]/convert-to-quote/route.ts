@@ -14,7 +14,7 @@ import type { CreateClientQuoteParams } from '@verone/integrations/qonto';
 
 function getQontoClient(): QontoClient {
   return new QontoClient({
-    authMode: (process.env.QONTO_AUTH_MODE as 'oauth' | 'api_key') || 'oauth',
+    authMode: (process.env.QONTO_AUTH_MODE as 'oauth' | 'api_key') ?? 'oauth',
     organizationId: process.env.QONTO_ORGANIZATION_ID,
     apiKey: process.env.QONTO_API_KEY,
     accessToken: process.env.QONTO_ACCESS_TOKEN,
@@ -38,7 +38,7 @@ export async function POST(
 > {
   try {
     const { id } = await params;
-    const body = await request.json().catch(() => ({}));
+    const body: unknown = await request.json().catch(() => ({}));
     const { deleteOriginal = false } = body as IPostRequestBody;
 
     const client = getQontoClient();
@@ -68,7 +68,7 @@ export async function POST(
       title: item.title,
       description: item.description,
       quantity: String(item.quantity),
-      unit: item.unit || 'unit',
+      unit: item.unit ?? 'unit',
       unitPrice: {
         value: String(item.unit_price),
         currency: invoice.currency,

@@ -323,7 +323,7 @@ export default function CollectionDetailPage({
 
   // Handlers édition inline - Pièces compatibles
   const handleStartEditRooms = useCallback(() => {
-    setEditedRooms(collection?.suitable_rooms || []);
+    setEditedRooms(collection?.suitable_rooms ?? []);
     setEditingRooms(true);
   }, [collection?.suitable_rooms]);
 
@@ -353,7 +353,7 @@ export default function CollectionDetailPage({
 
   // Handlers édition inline - Tags
   const handleStartEditTags = useCallback(() => {
-    setEditedTags(collection?.theme_tags || []);
+    setEditedTags(collection?.theme_tags ?? []);
     setEditingTags(true);
   }, [collection?.theme_tags]);
 
@@ -516,7 +516,7 @@ export default function CollectionDetailPage({
               {collection.name}
             </h1>
             <p className="text-gray-600 text-sm">
-              {collection.description || 'Aucune description'}
+              {collection.description ?? 'Aucune description'}
             </p>
           </div>
         </div>
@@ -554,7 +554,7 @@ export default function CollectionDetailPage({
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {collection.product_count || 0}
+              {collection.product_count ?? 0}
             </div>
           </CardContent>
         </Card>
@@ -566,7 +566,7 @@ export default function CollectionDetailPage({
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {collection.shared_count || 0}
+              {collection.shared_count ?? 0}
             </div>
           </CardContent>
         </Card>
@@ -686,7 +686,7 @@ export default function CollectionDetailPage({
             ) : (
               <div className="flex items-start gap-2 group">
                 <p className="text-sm text-gray-600 flex-1">
-                  {collection.description || (
+                  {collection.description ?? (
                     <span className="text-gray-400 italic">
                       Aucune description
                     </span>
@@ -823,7 +823,7 @@ export default function CollectionDetailPage({
             {editingRooms ? (
               <div className="space-y-3">
                 <RoomMultiSelect
-                  value={(editedRooms || []) as RoomType[]}
+                  value={(editedRooms ?? []) as RoomType[]}
                   onChange={rooms => setEditedRooms(rooms)}
                   placeholder="Sélectionner les pièces compatibles..."
                   className="w-full"
@@ -1168,7 +1168,7 @@ export default function CollectionDetailPage({
                 Nombre de partages
               </div>
               <div className="text-2xl font-bold text-black mt-1">
-                {collection.shared_count || 0}
+                {collection.shared_count ?? 0}
               </div>
             </div>
           </div>
@@ -1227,7 +1227,7 @@ export default function CollectionDetailPage({
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold text-gray-900">
-            Produits de la collection ({collection.products?.length || 0})
+            Produits de la collection ({collection.products?.length ?? 0})
           </h2>
           <ButtonV2
             onClick={handleManageProducts}
@@ -1244,7 +1244,7 @@ export default function CollectionDetailPage({
               <CollectionProductCard
                 key={product.id}
                 product={product}
-                position={(product as any).position || 0}
+                position={(product as any).position ?? 0}
                 onRemove={() => {
                   void handleRemoveProduct(product.id, product.name).catch(
                     error => {

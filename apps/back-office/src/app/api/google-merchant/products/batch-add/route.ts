@@ -114,7 +114,7 @@ export async function POST(
       .filter(r => !r.success)
       .map(r => ({
         productId: r.product_id,
-        error: r.error || 'Unknown error',
+        error: r.error ?? 'Unknown error',
       }));
 
     console.warn(

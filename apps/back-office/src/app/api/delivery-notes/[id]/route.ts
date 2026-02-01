@@ -116,7 +116,7 @@ export async function GET(
         customer = org
           ? {
               id: org.id,
-              name: org.trade_name || org.legal_name,
+              name: org.trade_name ?? org.legal_name,
               email: org.email,
               phone: org.phone,
               address: {
@@ -170,7 +170,7 @@ export async function GET(
           }
         : null,
       customer,
-      items: (allShipments || [shipment]).map(s => ({
+      items: (allShipments ?? [shipment]).map(s => ({
         id: s.id,
         product: s.products,
         quantity_shipped: s.quantity_shipped,

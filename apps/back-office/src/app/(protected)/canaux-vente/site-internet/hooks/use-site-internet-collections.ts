@@ -24,7 +24,7 @@ async function fetchCollections() {
     throw error;
   }
 
-  return (data || []) as Collection[];
+  return (data ?? []) as Collection[];
 }
 
 /**

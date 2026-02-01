@@ -43,7 +43,7 @@ import { MovementsListView } from './components/MovementsListView';
 export default function StockMovementsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const initialDirection = (searchParams?.get('tab') || 'all') as
+  const initialDirection = (searchParams?.get('tab') ?? 'all') as
     | 'in'
     | 'out'
     | 'all';

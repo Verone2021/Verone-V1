@@ -107,7 +107,7 @@ const CategoryRow = memo(function CategoryRow({
 
         {/* Slug */}
         <TableCell className="text-sm text-muted-foreground">
-          {category.slug || '—'}
+          {category.slug ?? '—'}
         </TableCell>
 
         {/* Level */}
@@ -264,28 +264,28 @@ export function CategoriesSection() {
         <KPICardUnified
           variant="elegant"
           title="Catégories Total"
-          value={stats?.total || 0}
+          value={stats?.total ?? 0}
           icon={FolderTree}
         />
 
         <KPICardUnified
           variant="elegant"
           title="Actives"
-          value={stats?.active || 0}
+          value={stats?.active ?? 0}
           icon={Eye}
         />
 
         <KPICardUnified
           variant="elegant"
           title="Visibles Menu"
-          value={stats?.visibleMenu || 0}
+          value={stats?.visibleMenu ?? 0}
           icon={Folder}
         />
 
         <KPICardUnified
           variant="elegant"
           title="Racines"
-          value={stats?.rootCategories || 0}
+          value={stats?.rootCategories ?? 0}
           icon={FolderTree}
         />
       </div>
@@ -298,7 +298,7 @@ export function CategoriesSection() {
               <CardTitle>Catégories Site Internet</CardTitle>
               <CardDescription>
                 {filteredCategories.length} catégories (
-                {stats?.visibleMenu || 0} visibles dans le menu)
+                {stats?.visibleMenu ?? 0} visibles dans le menu)
               </CardDescription>
             </div>
           </div>

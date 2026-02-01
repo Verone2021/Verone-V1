@@ -84,7 +84,7 @@ export function LinkMeResetPasswordDialog({
 
       if (!response.ok) {
         const data = await response.json();
-        setError(data.message || 'Erreur lors de la réinitialisation');
+        setError(data.message ?? 'Erreur lors de la réinitialisation');
         return;
       }
 
@@ -97,7 +97,7 @@ export function LinkMeResetPasswordDialog({
       console.warn('Mot de passe réinitialisé avec succès');
     } catch (error: any) {
       console.error('Erreur réinitialisation mot de passe:', error);
-      setError(error.message || "Une erreur inattendue s'est produite");
+      setError(error.message ?? "Une erreur inattendue s'est produite");
     } finally {
       setIsResetting(false);
     }
