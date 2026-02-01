@@ -108,7 +108,7 @@ export default function ProductInfoSection({
             />
           ) : (
             <p className="text-sm text-gray-700">
-              {product.description || (
+              {product.description ?? (
                 <span className="text-gray-400 italic">Non renseigné</span>
               )}
             </p>
@@ -137,7 +137,7 @@ export default function ProductInfoSection({
             />
           ) : (
             <p className="text-sm text-gray-700 whitespace-pre-wrap">
-              {product.technical_description || (
+              {product.technical_description ?? (
                 <span className="text-gray-400 italic">Non renseigné</span>
               )}
             </p>
@@ -149,7 +149,7 @@ export default function ProductInfoSection({
           <div className="flex items-center gap-2 mb-2">
             <Label>Marque</Label>
             <Badge variant="outline" className="text-xs">
-              Waterfall: {product.brand || 'Vide'}
+              Waterfall: {product.brand ?? 'Vide'}
             </Badge>
           </div>
           {isEditing ? (
@@ -162,7 +162,7 @@ export default function ProductInfoSection({
             />
           ) : (
             <p className="text-sm text-gray-700">
-              {product.brand || (
+              {product.brand ?? (
                 <span className="text-gray-400 italic">Non renseigné</span>
               )}
             </p>
