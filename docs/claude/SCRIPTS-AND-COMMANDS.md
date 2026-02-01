@@ -211,4 +211,49 @@ Ces scripts ont été supprimés lors du nettoyage 2026-01-30 :
 
 ---
 
-**Dernière mise à jour** : 2026-01-30 (Audit conformité Anthropic 2026)
+## 🧪 Documentation Tests & Validation
+
+### Test Workflow ESLint (NOUVEAU 2026-02-01)
+
+**Objectif** : Valider que Claude suit le workflow fix-warnings.md avant correction massive des 2666 warnings.
+
+| Fichier                              | Usage                                 | Temps  |
+| ------------------------------------ | ------------------------------------- | ------ |
+| `INDEX-ESLINT-TEST.md`               | ⭐ Navigation complète                | 2 min  |
+| `QUICKSTART-TEST-ESLINT.md`          | Guide rapide démarrage                | 2 min  |
+| `PROMPT-TEST-ESLINT.txt`             | Prompt copier-coller (test 1 fichier) | 30 sec |
+| `PROMPT-CONTINUE-ESLINT.txt`         | Prompt après test validé              | 30 sec |
+| `REPONSES-7-QUESTIONS-ESLINT.md`     | FAQ rapide                            | 5 min  |
+| `eslint-test-workflow-validation.md` | Documentation complète                | 15 min |
+
+**Démarrage rapide** :
+
+```bash
+# Lire guide
+cat docs/claude/QUICKSTART-TEST-ESLINT.md
+
+# Copier prompt
+cat docs/claude/PROMPT-TEST-ESLINT.txt
+# → Coller dans Claude
+
+# Vérifier résultat (après 20-30 min)
+pnpm --filter @verone/back-office eslint --quiet <file.tsx>
+```
+
+**Questions couvertes** :
+
+1. ✅ Quel prompt exact ?
+2. ✅ Claude va établir un plan ?
+3. ✅ Claude va consulter MCP Context7 ?
+4. ✅ Claude va utiliser MCP Serena ?
+5. ✅ Claude va lire CLAUDE.md ?
+6. ✅ Claude va suivre le workflow (1 fichier complet) ?
+7. ✅ Peut-on tester avant 2666 warnings ?
+
+**Garanties** : Workflow 5 phases (Discovery → Analysis → Planning → Implementation → Validation)
+
+**Temps attendu** : 1-2 jours (50 fichiers × 20 min) vs 4-5 jours (approche ad-hoc)
+
+---
+
+**Dernière mise à jour** : 2026-02-01 (Ajout documentation test ESLint)
