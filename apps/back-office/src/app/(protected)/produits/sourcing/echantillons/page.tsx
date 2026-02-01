@@ -215,9 +215,9 @@ export default function SourcingEchantillonsPage() {
       if (customer.type === 'professional') {
         const address = [
           customer.name,
-          customer.shipping_address_line1 || customer.billing_address_line1,
-          customer.shipping_city || customer.billing_city,
-          customer.shipping_postal_code || customer.billing_postal_code,
+          customer.shipping_address_line1 ?? customer.billing_address_line1,
+          customer.shipping_city ?? customer.billing_city,
+          customer.shipping_postal_code ?? customer.billing_postal_code,
         ]
           .filter(Boolean)
           .join(', ');
