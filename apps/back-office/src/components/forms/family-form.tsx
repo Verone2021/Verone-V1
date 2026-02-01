@@ -71,7 +71,7 @@ export function FamilyForm({
     name: initialData?.name ?? '',
     description: initialData?.description ?? '',
     image_url: initialData?.image_url ?? '',
-    display_order: initialData?.display_order || 1,
+    display_order: initialData?.display_order ?? 1,
     is_active: initialData?.is_active ?? true,
   });
 
