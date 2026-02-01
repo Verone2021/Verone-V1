@@ -54,7 +54,7 @@ const formatVariantType = (type?: string): string => {
     material: 'Matériau',
     pattern: 'Motif',
   };
-  return typeMap[type] || type;
+  return typeMap[type] ?? type;
 };
 
 const getVariantTypeIcon = (type: string) => {

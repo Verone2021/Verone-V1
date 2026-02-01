@@ -49,7 +49,7 @@ const formatVariantType = (type?: string): string => {
     color: 'Couleur',
     material: 'Matériau',
   };
-  return typeMap[type] || type;
+  return typeMap[type] ?? type;
 };
 
 export default function VariantesPage() {

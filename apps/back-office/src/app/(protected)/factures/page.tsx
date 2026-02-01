@@ -318,7 +318,7 @@ function WorkflowStatusBadge({
     },
   };
 
-  const currentConfig = config[status] || {
+  const currentConfig = config[status] ?? {
     label: status,
     className: 'bg-gray-100 text-gray-700',
     icon: null,

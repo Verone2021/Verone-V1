@@ -252,7 +252,7 @@ export function useStockCore({
 
         if (fetchError) throw fetchError;
 
-        const items = (data || []) as StockItem[];
+        const items = (data ?? []) as StockItem[];
         setStockItems(items);
         return items;
       } catch (err) {
@@ -382,7 +382,7 @@ export function useStockCore({
 
         if (fetchError) throw fetchError;
 
-        const movementsData = (data || []) as StockMovement[];
+        const movementsData = (data ?? []) as StockMovement[];
         setMovements(movementsData);
         return movementsData;
       } catch (err) {

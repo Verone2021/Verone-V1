@@ -215,7 +215,7 @@ export default function PreviewEmailTemplatePage() {
             <p className="text-sm text-black">
               {template.subject.replace(
                 /{{(\w+)}}/g,
-                (match, varName) => variableValues[varName] || match
+                (match, varName) => variableValues[varName] ?? match
               )}
             </p>
           </div>

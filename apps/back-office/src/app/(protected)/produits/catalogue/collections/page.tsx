@@ -50,7 +50,7 @@ const formatCollectionStyle = (style?: string): string => {
     boheme: 'Bohème',
     art_deco: 'Art Déco',
   };
-  return styleMap[style] || style;
+  return styleMap[style] ?? style;
 };
 
 // Helper pour formater la catégorie de pièce
@@ -68,7 +68,7 @@ const _formatRoomCategory = (roomCategory?: string): string => {
     exterieur_balcon: 'Balcon',
     exterieur_jardin: 'Jardin',
   };
-  return roomMap[roomCategory] || roomCategory;
+  return roomMap[roomCategory] ?? roomCategory;
 };
 
 export default function CollectionsPage() {

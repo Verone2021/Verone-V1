@@ -126,7 +126,7 @@ export default function PrixClientsPage() {
             org?.legal_name ||
             `Client ${item.customer_id?.slice(0, 8)}`,
           product_name:
-            product?.name || `Produit ${item.product_id?.slice(0, 8)}`,
+            product?.name ?? `Produit ${item.product_id?.slice(0, 8)}`,
         } as CustomerPricing;
       });
 

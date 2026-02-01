@@ -99,7 +99,7 @@ export function useGlobalStorageTotals() {
         };
       }
 
-      const result = data?.[0] || {
+      const result = data?.[0] ?? {
         total_volume_m3: 0,
         billable_volume_m3: 0,
         total_units: 0,
@@ -199,7 +199,7 @@ export function useStorageWeightedAverage(
         };
       }
 
-      const result = data?.[0] || {
+      const result = data?.[0] ?? {
         total_m3_days: 0,
         days_in_period: 0,
         average_m3: 0,

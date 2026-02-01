@@ -94,7 +94,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
     return NextResponse.json(
       {
         recent_actions: recentActions ?? [],
-        statistics: stats?.[0] || {
+        statistics: stats?.[0] ?? {
           total_sessions: 0,
           total_actions: 0,
           avg_session_duration: null,

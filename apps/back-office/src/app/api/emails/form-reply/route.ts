@@ -46,7 +46,7 @@ function generateEmailHtml(
     general_inquiry: 'Demande Générale',
   };
 
-  const formTypeLabel = formTypeLabels[formType] || formType;
+  const formTypeLabel = formTypeLabels[formType] ?? formType;
 
   return `
 <!DOCTYPE html>
@@ -105,7 +105,7 @@ function generateEmailText(
     general_inquiry: 'Demande Générale',
   };
 
-  const formTypeLabel = formTypeLabels[formType] || formType;
+  const formTypeLabel = formTypeLabels[formType] ?? formType;
 
   return `
 Bonjour ${recipientName},
