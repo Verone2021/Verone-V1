@@ -167,7 +167,7 @@ export default function SourcingPage() {
       default:
         return (
           <Badge variant="outline" className="border-gray-300 text-gray-600">
-            {productStatus || 'Inconnu'}
+            {productStatus ?? 'Inconnu'}
           </Badge>
         );
     }
@@ -251,7 +251,7 @@ export default function SourcingPage() {
       return null;
     const primary = product.product_images.find((img: any) => img.is_primary);
     return (
-      (primary?.public_url || product.product_images[0]?.public_url) ?? null
+      (primary?.public_url ?? product.product_images[0]?.public_url) ?? null
     );
   };
 
