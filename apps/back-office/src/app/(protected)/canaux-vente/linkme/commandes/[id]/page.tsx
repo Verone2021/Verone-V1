@@ -529,7 +529,7 @@ export default function LinkMeOrderDetailPage() {
       delivered: 'Livrée',
     };
     return (
-      <Badge variant={variants[status] || 'outline'}>
+      <Badge variant={variants[status] ?? 'outline'}>
         {labels[status] || status}
       </Badge>
     );

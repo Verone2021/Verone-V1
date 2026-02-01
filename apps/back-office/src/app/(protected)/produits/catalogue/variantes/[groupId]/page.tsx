@@ -295,7 +295,7 @@ export default function VariantGroupDetailPage({
       return await createProductInGroup(
         groupId,
         variantValue,
-        variantGroup.variant_type || 'color'
+        variantGroup.variant_type ?? 'color'
       );
     },
     [groupId, variantGroup, createProductInGroup]
@@ -407,7 +407,7 @@ export default function VariantGroupDetailPage({
 
   // Édition inline du type
   const handleStartEditType = useCallback(() => {
-    setEditedType(variantGroup?.variant_type || 'color');
+    setEditedType(variantGroup?.variant_type ?? 'color');
     setEditingType(true);
   }, [variantGroup?.variant_type]);
 

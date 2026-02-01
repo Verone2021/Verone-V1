@@ -119,7 +119,7 @@ function StatusBadge({
   };
 
   return (
-    <Badge variant={variants[status] || 'outline'}>
+    <Badge variant={variants[status] ?? 'outline'}>
       {labels[status] || status}
     </Badge>
   );
