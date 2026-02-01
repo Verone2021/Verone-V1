@@ -39,10 +39,10 @@ npm run lint:fix     # ESLint auto-fix
 
 ### 1. Credentials (OBLIGATOIRE)
 
-| App | File |
-|-----|------|
+| App         | File                                                        |
+| ----------- | ----------------------------------------------------------- |
 | Back-Office | `.serena/memories/back-office-login-credentials-2026-01.md` |
-| LinkMe | `.serena/memories/linkme-test-credentials-2026-01.md` |
+| LinkMe      | `.serena/memories/linkme-test-credentials-2026-01.md`       |
 
 **JAMAIS inventer. TOUJOURS chercher dans `.serena/memories/`.**
 
@@ -50,34 +50,35 @@ npm run lint:fix     # ESLint auto-fix
 
 Versionnees dans `docs/current/serena/`:
 
-| # | Memory | Role |
-|---|--------|------|
-| 1 | `project-overview.md` | Vue ensemble projet |
-| 2 | `business-context.md` | Contexte metier deco/mobilier |
-| 3 | `database-schema-mappings.md` | Anti-hallucination colonnes |
-| 4 | `database-implementation.md` | 91 tables, RLS policies |
-| 5 | `linkme-architecture.md` | Roles, triggers affiliation |
-| 6 | `linkme-commissions.md` | Formules calcul commissions |
-| 7 | `products-architecture.md` | Architecture produits centrale |
-| 8 | `stock-orders-logic.md` | Logique stock et alertes |
-| 9 | `migrations-workflow.md` | Workflow Supabase |
-| 10 | `claude-code-workflow.md` | Workflow 5 etapes |
-| 11 | `project-decisions.md` | Decisions non-negociables |
-| 12 | `turborepo-paths.md` | Chemins corrects monorepo |
-| 13 | `vercel-no-docker.md` | JAMAIS Docker |
-| 14 | `qonto-never-finalize.md` | JAMAIS finaliser factures |
-| 15 | `user-expectations.md` | Pas d'options, resoudre |
+| #   | Memory                                    | Role                           |
+| --- | ----------------------------------------- | ------------------------------ |
+| 1   | `project-overview.md`                     | Vue ensemble projet            |
+| 2   | `business-context.md`                     | Contexte metier deco/mobilier  |
+| 3   | `database-schema-mappings.md`             | Anti-hallucination colonnes    |
+| 4   | `database-implementation.md`              | 91 tables, RLS policies        |
+| 5   | `linkme-architecture.md`                  | Roles, triggers affiliation    |
+| 6   | `linkme-commissions.md`                   | Formules calcul commissions    |
+| 7   | `products-architecture.md`                | Architecture produits centrale |
+| 8   | `stock-orders-logic.md`                   | Logique stock et alertes       |
+| 9   | `migrations-workflow.md`                  | Workflow Supabase              |
+| 10  | `claude-code-workflow.md`                 | Workflow 5 etapes              |
+| 11  | `project-decisions.md`                    | Decisions non-negociables      |
+| 12  | `turborepo-paths.md`                      | Chemins corrects monorepo      |
+| 13  | `vercel-deployment-manuel-obligatoire.md` | Déploiement Vercel (main only) |
+| 14  | `qonto-never-finalize.md`                 | JAMAIS finaliser factures      |
+| 15  | `user-expectations.md`                    | Pas d'options, resoudre        |
 
 ### 3. Database
 
-| Element | Location |
-|---------|----------|
-| Connection | `.mcp.env` → `DATABASE_URL` |
-| Types | `packages/@verone/types/src/supabase.ts` |
-| Migrations | `supabase/migrations/` (313 fichiers) |
-| Tables | 91 tables avec RLS |
+| Element    | Location                                 |
+| ---------- | ---------------------------------------- |
+| Connection | `.mcp.env` → `DATABASE_URL`              |
+| Types      | `packages/@verone/types/src/supabase.ts` |
+| Migrations | `supabase/migrations/` (313 fichiers)    |
+| Tables     | 91 tables avec RLS                       |
 
 **Workflow migrations:**
+
 ```bash
 supabase migration new nom
 # Edit supabase/migrations/YYYYMMDDHHMMSS_nom.sql
@@ -90,11 +91,11 @@ supabase db push
 
 ### Apps
 
-| App | Port | Role | Imports @verone/ |
-|-----|------|------|------------------|
-| back-office | 3000 | CRM/ERP central (22 modules) | 832 |
-| linkme | 3002 | Affiliation (commissions) | 105 |
-| site-internet | 3001 | E-commerce B2C | 11 |
+| App           | Port | Role                         | Imports @verone/ |
+| ------------- | ---- | ---------------------------- | ---------------- |
+| back-office   | 3000 | CRM/ERP central (22 modules) | 832              |
+| linkme        | 3002 | Affiliation (commissions)    | 105              |
+| site-internet | 3001 | E-commerce B2C               | 11               |
 
 ### Packages Hierarchy
 
@@ -188,33 +189,33 @@ fix/BO-DASH-001-cache-issue
 
 ### Specialized Agents
 
-| Agent | Role | When to Use |
-|-------|------|-------------|
-| `verone-orchestrator` | Lead Tech Orchestrator | Tasks complexes multi-fichiers |
-| `database-architect` | SQL migrations | Schema changes, RLS policies |
-| `frontend-architect` | UI components | Next.js 15, shadcn/ui |
-| `verone-debug-investigator` | Investigation | Bugs, errors, behavior |
+| Agent                       | Role                   | When to Use                    |
+| --------------------------- | ---------------------- | ------------------------------ |
+| `verone-orchestrator`       | Lead Tech Orchestrator | Tasks complexes multi-fichiers |
+| `database-architect`        | SQL migrations         | Schema changes, RLS policies   |
+| `frontend-architect`        | UI components          | Next.js 15, shadcn/ui          |
+| `verone-debug-investigator` | Investigation          | Bugs, errors, behavior         |
 
 ### Slash Commands
 
-| Command | Purpose | Usage |
-|---------|---------|-------|
-| `/plan` | Enter plan mode | Avant implementation complexe |
-| `/implement` | Explore → Plan → Code → Verify | Feature complete |
-| `/explore` | Codebase discovery | Comprendre architecture |
-| `/db` | Supabase operations | Migrations, queries |
-| `/pr` | PR automation | Creation PR |
+| Command      | Purpose                        | Usage                         |
+| ------------ | ------------------------------ | ----------------------------- |
+| `/plan`      | Enter plan mode                | Avant implementation complexe |
+| `/implement` | Explore → Plan → Code → Verify | Feature complete              |
+| `/explore`   | Codebase discovery             | Comprendre architecture       |
+| `/db`        | Supabase operations            | Migrations, queries           |
+| `/pr`        | PR automation                  | Creation PR                   |
 
 ### MCP Servers
 
-| Server | Purpose |
-|--------|---------|
-| serena | Memories + symbolic search |
-| playwright-mcp | Browser automation back-office |
-| playwright-linkme | Browser automation linkme |
-| context7 | Documentation fetching |
-| magic | UI component generation |
-| supabase | Database operations |
+| Server            | Purpose                        |
+| ----------------- | ------------------------------ |
+| serena            | Memories + symbolic search     |
+| playwright-mcp    | Browser automation back-office |
+| playwright-linkme | Browser automation linkme      |
+| context7          | Documentation fetching         |
+| magic             | UI component generation        |
+| supabase          | Database operations            |
 
 ---
 
@@ -254,7 +255,7 @@ fix/BO-DASH-001-cache-issue
 ### Checklist (OBLIGATOIRE)
 
 ```markdown
-- [ ] Branch: feat/APP-DOMAIN-NNN-* (pas main)
+- [ ] Branch: feat/APP-DOMAIN-NNN-\* (pas main)
 - [ ] Commits: Format [APP-DOMAIN-NNN] type: description
 - [ ] type-check: 0 errors
 - [ ] build: succeeded
@@ -274,21 +275,25 @@ fix/BO-DASH-001-cache-issue
 
 ```markdown
 ## Summary
+
 - [Bullet point 1]
 - [Bullet point 2]
 - [Bullet point 3]
 
 ## Test Plan
+
 - [x] type-check passes
 - [x] build succeeds
 - [x] E2E tests pass (critical paths)
 - [x] Manual testing completed
 
 ## Files Changed
+
 - `path/to/file1.ts` - Description
 - `path/to/file2.tsx` - Description
 
 ---
+
 Generated with [Claude Code](https://claude.com/claude-code)
 ```
 
@@ -296,29 +301,29 @@ Generated with [Claude Code](https://claude.com/claude-code)
 
 ## Tech Stack
 
-| Category | Technologies |
-|----------|--------------|
-| Framework | Next.js 15.5.7, React 18.3.1, TypeScript 5.3.3 |
-| UI | shadcn/ui, Radix UI, Tailwind CSS 3.4.1 |
-| Database | Supabase (PostgreSQL), @supabase/ssr |
-| Validation | Zod 4.1.12, React Hook Form |
-| State | TanStack Query 5.20.1, SWR 2.3.6 |
-| Monorepo | Turborepo 2.6.0, pnpm 10.13.1 |
-| Testing | Playwright 1.55.0 |
-| Deploy | Vercel (JAMAIS Docker) |
+| Category   | Technologies                                   |
+| ---------- | ---------------------------------------------- |
+| Framework  | Next.js 15.5.7, React 18.3.1, TypeScript 5.3.3 |
+| UI         | shadcn/ui, Radix UI, Tailwind CSS 3.4.1        |
+| Database   | Supabase (PostgreSQL), @supabase/ssr           |
+| Validation | Zod 4.1.12, React Hook Form                    |
+| State      | TanStack Query 5.20.1, SWR 2.3.6               |
+| Monorepo   | Turborepo 2.6.0, pnpm 10.13.1                  |
+| Testing    | Playwright 1.55.0                              |
+| Deploy     | Vercel (JAMAIS Docker)                         |
 
 ---
 
 ## Quick Troubleshooting
 
-| Problem | Solution |
-|---------|----------|
-| Type errors | `npm run type-check` puis fix |
-| Build fails | Check imports, types generation |
-| E2E fails | Check credentials in memories |
-| DB connection | Verify `.mcp.env` DATABASE_URL |
-| Missing types | `npm run generate:types` |
-| Package not found | `pnpm install` at root |
+| Problem           | Solution                        |
+| ----------------- | ------------------------------- |
+| Type errors       | `npm run type-check` puis fix   |
+| Build fails       | Check imports, types generation |
+| E2E fails         | Check credentials in memories   |
+| DB connection     | Verify `.mcp.env` DATABASE_URL  |
+| Missing types     | `npm run generate:types`        |
+| Package not found | `pnpm install` at root          |
 
 ---
 

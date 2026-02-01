@@ -1,9 +1,23 @@
 #!/bin/bash
 # Script: Corriger prefer-nullish-coalescing warnings
 # Remplace || par ?? dans les cas sûrs (strings, null, numbers, arrays, objects vides)
+#
+# ⚠️ WARNING: Ce script effectue des remplacements massifs avec sed.
+#    Toujours commit avant d'exécuter et vérifier le diff après.
 
 set -e
 
+echo "⚠️  WARNING: Ce script modifie massivement les fichiers TS/TSX"
+echo "   Assurez-vous d'avoir commit vos changements avant d'exécuter."
+echo ""
+read -p "Continuer? [y/N] " -n 1 -r
+echo
+if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+  echo "Annulé."
+  exit 0
+fi
+
+echo ""
 echo "🔧 Correction automatique: prefer-nullish-coalescing"
 echo "Patterns sûrs: || '' → ?? '', || null → ?? null, etc."
 echo ""

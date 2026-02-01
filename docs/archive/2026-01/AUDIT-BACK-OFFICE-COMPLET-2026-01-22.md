@@ -13,15 +13,15 @@ Le back office Vérone est un CRM/ERP modulaire pour la décoration et le mobili
 
 ### Métriques Clés
 
-| Métrique | Valeur | Statut |
-|----------|--------|--------|
-| **Modules** | 16 | ✅ Actif |
-| **Pages** | 129 | ✅ Compilées |
-| **Structure sidebar** | 14 items, max 2 niveaux | ✅ Optimisé |
-| **Dashboard KPIs** | 9 | ✅ Temps réel |
-| **Quick Actions** | 8 | ✅ Cliquables |
-| **Type-check** | 0 errors | ✅ |
-| **Build** | Success | ✅ |
+| Métrique              | Valeur                  | Statut        |
+| --------------------- | ----------------------- | ------------- |
+| **Modules**           | 16                      | ✅ Actif      |
+| **Pages**             | 129                     | ✅ Compilées  |
+| **Structure sidebar** | 14 items, max 2 niveaux | ✅ Optimisé   |
+| **Dashboard KPIs**    | 9                       | ✅ Temps réel |
+| **Quick Actions**     | 8                       | ✅ Cliquables |
+| **Type-check**        | 0 errors                | ✅            |
+| **Build**             | Success                 | ✅            |
 
 ---
 
@@ -49,15 +49,15 @@ verone-back-office-V1/
 
 ### Stack Technique
 
-| Composant | Technologie | Version |
-|-----------|-------------|---------|
-| **Frontend** | Next.js App Router | 15.x |
-| **UI Framework** | shadcn/ui + Tailwind | Latest |
-| **Database** | Supabase PostgreSQL | Cloud |
-| **Auth** | Supabase Auth | Multi-canal |
-| **Build System** | Turborepo + pnpm | 2.6.0 + 9.x |
-| **TypeScript** | Strict mode | 5.x |
-| **Testing** | Playwright | Latest |
+| Composant        | Technologie          | Version     |
+| ---------------- | -------------------- | ----------- |
+| **Frontend**     | Next.js App Router   | 15.x        |
+| **UI Framework** | shadcn/ui + Tailwind | Latest      |
+| **Database**     | Supabase PostgreSQL  | Cloud       |
+| **Auth**         | Supabase Auth        | Multi-canal |
+| **Build System** | Turborepo + pnpm     | 2.6.0 + 9.x |
+| **TypeScript**   | Strict mode          | 5.x         |
+| **Testing**      | Playwright           | Latest      |
 
 ---
 
@@ -120,19 +120,20 @@ verone-back-office-V1/
 
 ### KPIs Disponibles
 
-| KPI | Source | Calcul | Refresh |
-|-----|--------|--------|---------|
-| **Revenus du mois** | `commandes_clients_internal` | SUM(montant_total_ttc) WHERE status = 'validated' | Temps réel |
-| **CA annuel** | `commandes_clients_internal` | SUM(montant_total_ttc) YTD | Temps réel |
-| **Commandes en cours** | `commandes_clients_internal` | COUNT WHERE status IN ('pending', 'processing') | Temps réel |
-| **Taux remplissage** | `locations_stockage_unified_view` | COUNT(occupied) / COUNT(total) | Temps réel |
-| **Alertes stock** | `stock_alerts_unified_view` | COUNT WHERE severity = 'critical' | Temps réel |
-| **Consultations actives** | `consultations` | COUNT WHERE status IN ('pending', 'in_progress') | Temps réel |
-| **Clients actifs** | `organisations` | COUNT WHERE type = 'client' | Temps réel |
-| **LinkMe orders** | `linkme_commandes` | COUNT WHERE status = 'pending_validation' | Temps réel |
-| **Fournisseurs** | `organisations` | COUNT WHERE type = 'fournisseur' | Temps réel |
+| KPI                       | Source                            | Calcul                                            | Refresh    |
+| ------------------------- | --------------------------------- | ------------------------------------------------- | ---------- |
+| **Revenus du mois**       | `commandes_clients_internal`      | SUM(montant_total_ttc) WHERE status = 'validated' | Temps réel |
+| **CA annuel**             | `commandes_clients_internal`      | SUM(montant_total_ttc) YTD                        | Temps réel |
+| **Commandes en cours**    | `commandes_clients_internal`      | COUNT WHERE status IN ('pending', 'processing')   | Temps réel |
+| **Taux remplissage**      | `locations_stockage_unified_view` | COUNT(occupied) / COUNT(total)                    | Temps réel |
+| **Alertes stock**         | `stock_alerts_unified_view`       | COUNT WHERE severity = 'critical'                 | Temps réel |
+| **Consultations actives** | `consultations`                   | COUNT WHERE status IN ('pending', 'in_progress')  | Temps réel |
+| **Clients actifs**        | `organisations`                   | COUNT WHERE type = 'client'                       | Temps réel |
+| **LinkMe orders**         | `linkme_commandes`                | COUNT WHERE status = 'pending_validation'         | Temps réel |
+| **Fournisseurs**          | `organisations`                   | COUNT WHERE type = 'fournisseur'                  | Temps réel |
 
 **Performance** :
+
 - ✅ 11 queries exécutées en parallèle
 - ✅ Cache Supabase 5min par défaut
 - ✅ Temps réponse < 500ms (optimisé RLS)
@@ -144,21 +145,25 @@ verone-back-office-V1/
 ### Best Practice Linear/Vercel Pattern
 
 **Comportement** :
+
 - **Par défaut** : Compact 64px (icônes uniquement)
 - **Au hover** : Expand 240px après 150ms delay
 - **Au leave** : Collapse immédiat (0ms)
 - **Keyboard focus** : Expand automatique (accessibilité)
 
 **Navigation** :
+
 - **Mode compact** : Popover pour sous-menus (1 click)
 - **Mode expanded** : Accordion inline (hiérarchie visible)
 
 **Animations** :
+
 - **Width transition** : 200ms cubic-bezier(0.4, 0, 0.2, 1) - GPU accelerated
 - **Hover micro-interaction** : translateX(0.5px) + shadow
 - **Badge pulse** : 2s ease-in-out infinite (urgence)
 
 **Accessibilité WCAG 2.1 AA** :
+
 - ✅ prefers-reduced-motion respecté
 - ✅ ARIA labels sur badges (`aria-label="3 notifications"`)
 - ✅ Keyboard navigation (Tab, Escape, Arrows)
@@ -206,6 +211,7 @@ verone-back-office-V1/
 ```
 
 **Optimisations vs v1** :
+
 - ✅ Max 2 niveaux (vs 3 avant)
 - ✅ LinkMe promu top-level (plus de 3e niveau)
 - ✅ Finance fusionné (Compta + Facturation + Trésorerie)
@@ -222,11 +228,13 @@ const linkmePendingCount = 0; // TODO Phase 2: useLinkmePendingCount()
 ```
 
 **Pourquoi statiques ?**
+
 - ✅ Zero risk déploiement (pas de hooks React)
 - ✅ Dashboard montre déjà les KPIs (suffisant Phase 1)
 - ✅ Progressive enhancement (activable Phase 2+)
 
 **Phase 2+ (optionnelle)** :
+
 - Option A: Server Component fetch (1 fois au load)
 - Option B: Hooks React + polling (temps réel, plus complexe)
 - Option C: WebSockets (avancé, Phase 3+)
@@ -281,17 +289,20 @@ apps/back-office/src/
 ### Supabase Auth Multi-Canal
 
 **Canaux supportés** :
+
 1. **Email/Password** : Utilisateurs back-office
 2. **Magic Link** : Connexion passwordless
 3. **JWT SSO** : Intégration future entreprises
 
 **RLS (Row Level Security)** :
+
 - ✅ TOUJOURS activé sur nouvelles tables
 - ✅ 1 policy par action (SELECT, INSERT, UPDATE, DELETE)
 - ✅ Pattern standard (voir `.claude/rules/database/supabase.md`)
 - ✅ Tests RLS avec `/db rls-test <table> <role>`
 
 **Middleware** :
+
 - ✅ Refresh session automatique
 - ✅ Redirect `/login` si non authentifié
 - ✅ Whitelist routes publiques (login, assets)
@@ -302,13 +313,13 @@ apps/back-office/src/
 
 ### Métriques Dashboard
 
-| Métrique | Valeur | Cible | Statut |
-|----------|--------|-------|--------|
-| **LCP** (Largest Contentful Paint) | < 1.2s | < 2.5s | ✅ |
-| **CLS** (Cumulative Layout Shift) | 0 | < 0.1 | ✅ |
-| **FID** (First Input Delay) | < 50ms | < 100ms | ✅ |
-| **Server Response** | < 500ms | < 1s | ✅ |
-| **11 queries parallèles** | ~300ms | < 500ms | ✅ |
+| Métrique                           | Valeur  | Cible   | Statut |
+| ---------------------------------- | ------- | ------- | ------ |
+| **LCP** (Largest Contentful Paint) | < 1.2s  | < 2.5s  | ✅     |
+| **CLS** (Cumulative Layout Shift)  | 0       | < 0.1   | ✅     |
+| **FID** (First Input Delay)        | < 50ms  | < 100ms | ✅     |
+| **Server Response**                | < 500ms | < 1s    | ✅     |
+| **11 queries parallèles**          | ~300ms  | < 500ms | ✅     |
 
 ### Optimisations Appliquées
 
@@ -325,6 +336,7 @@ apps/back-office/src/
 ### Coverage Playwright
 
 **Tests existants** :
+
 - ✅ Login flow (back-office + LinkMe)
 - ✅ Navigation sidebar
 - ✅ Dashboard KPIs affichage
@@ -332,6 +344,7 @@ apps/back-office/src/
 - ⚠️ Sidebar hover expansion (TODO Phase 2)
 
 **Commandes** :
+
 ```bash
 cd packages/e2e-linkme
 pnpm test:e2e          # Headless
@@ -401,6 +414,7 @@ gh pr create --title "[APP-DOMAIN-NNN] feat: description"
 **Format** : `[APP-DOMAIN-NNN] type: description`
 
 **Types** :
+
 - `feat`: Nouvelle feature
 - `fix`: Bug fix
 - `refactor`: Refactoring
@@ -409,6 +423,7 @@ gh pr create --title "[APP-DOMAIN-NNN] feat: description"
 - `test`: Tests
 
 **Exemples** :
+
 - `[BO-DASH-001] feat: implement modern dashboard with 9 KPIs`
 - `[BO-SIDEBAR-002] feat: add expand on hover UX 2026`
 - `[NO-TASK] chore: update dependencies`

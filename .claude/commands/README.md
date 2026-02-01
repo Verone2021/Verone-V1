@@ -6,13 +6,14 @@ Les commandes slash permettent d'invoquer des workflows specialises.
 
 ## Commandes Disponibles
 
-| Commande | Quand Utiliser | Sortie |
-|----------|----------------|--------|
-| `/explore` | "Ou est X?" "Comment fonctionne Y?" | Fichiers + patterns + architecture |
-| `/plan` | "Comment faire Y?" (tache complexe) | Plan detaille avec etapes |
-| `/implement` | "Executer le plan" | Code + commits |
-| `/db` | "Migration DB" | SQL appliquee via psql |
-| `/pr` | "Creer PR" | PR creee avec description |
+| Commande     | Quand Utiliser                      | Sortie                             |
+| ------------ | ----------------------------------- | ---------------------------------- |
+| `/explore`   | "Ou est X?" "Comment fonctionne Y?" | Fichiers + patterns + architecture |
+| `/plan`      | "Comment faire Y?" (tache complexe) | Plan detaille avec etapes          |
+| `/implement` | "Executer le plan"                  | Code + commits                     |
+| `/db`        | "Migration DB"                      | SQL appliquee via psql             |
+| `/pr`        | "Creer PR"                          | PR creee avec description          |
+| `/teach`     | "Explique-moi X" (mode pedagogique) | Explication + alternatives         |
 
 ---
 
@@ -97,6 +98,17 @@ Les commandes slash permettent d'invoquer des workflows specialises.
 
 **Exemple**: "Creer PR pour cette feature"
 
+### /teach
+
+**Usage**: Mode pedagogique expert
+
+- Explication concept (pourquoi, comment)
+- Pieges a eviter
+- Alternatives avec trade-offs
+- Questions clarification
+
+**Exemple**: "/teach React Query mutations"
+
 ---
 
 ## Regles
@@ -108,4 +120,4 @@ Les commandes slash permettent d'invoquer des workflows specialises.
 
 ---
 
-**Derniere mise a jour**: 2026-01-26
+**Derniere mise a jour**: 2026-02-01

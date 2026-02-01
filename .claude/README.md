@@ -1,7 +1,7 @@
 # Claude Code Configuration - Verone Back Office
 
-**Version**: 4.1.0 (Kit Perso Exclusif)
-**Date**: 2026-01-19
+**Version**: 11.0.0 (Transformation Mentor Expert)
+**Date**: 2026-02-01
 
 ## Philosophie
 
@@ -20,18 +20,20 @@
 ├── scripts/                # Wrappers de compatibilité
 │   ├── task-completed.sh   # Stop hook wrapper
 │   └── session-token-report.sh
-├── agents/                 # 4 agents core
+├── agents/                 # 5 agents core
+│   ├── code-reviewer.md
 │   ├── database-architect.md
 │   ├── frontend-architect.md
 │   ├── verone-debug-investigator.md
 │   └── verone-orchestrator.md
-└── commands/               # 6 commands core
+└── commands/               # 7 commands core
     ├── db.md
     ├── explore.md
-    ├── fix-warnings.md      # 🆕 ESLint fix workflow 2026
+    ├── fix-warnings.md
     ├── implement.md
     ├── plan.md
-    └── pr.md
+    ├── pr.md
+    └── teach.md
 ```
 
 ## Dossier `rules/` (Standards 2026)
