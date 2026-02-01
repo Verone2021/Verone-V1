@@ -103,7 +103,7 @@ export async function POST(_request: NextRequest): Promise<
         const invoiceNumber =
           invoice.number ?? invoice.invoice_number ?? invoice.id;
         // Obtenir la date d'echeance (peut etre 'due_date' ou 'payment_deadline')
-        const dueDate = (invoice.due_date || invoice.payment_deadline) ?? null;
+        const dueDate = (invoice.due_date ?? invoice.payment_deadline) ?? null;
 
         // Calculer les montants
         const totalTtc = invoice.total_amount_cents / 100;
