@@ -8,9 +8,10 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 import { useRouter } from 'next/navigation';
+import type { Database } from '@verone/types';
 
 import { PCG_SUGGESTED_CATEGORIES } from '@verone/finance';
 import { ButtonV2 } from '@verone/ui';
@@ -37,8 +38,8 @@ import { Loader2, Save, AlertCircle } from 'lucide-react';
 
 interface Organisation {
   id: string;
-  name: string;
-  type: string;
+  legal_name: string;
+  type: string | null;
 }
 
 interface ExpenseFormData {
@@ -110,64 +111,66 @@ export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
   const [hasUploadedFile, setHasUploadedFile] = useState(false);
 
   // Charger fournisseurs (catégories via constante PCG_SUGGESTED_CATEGORIES)
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        setLoadingData(true);
+  const fetchData = useCallback(async () => {
+    try {
+      setLoadingData(true);
 
-        // Fournisseurs (organisations type supplier)
-        const { data: suppliersData, error: suppliersError } = await supabase
-          .from('organisations')
-          .select('id, name, type')
-          .eq('type', 'supplier')
-          .order('name');
+      // Fournisseurs (organisations type supplier)
+      const { data: suppliersData, error: suppliersError } = await supabase
+        .from('organisations')
+        .select('id, legal_name, type')
+        .eq('type', 'supplier')
+        .order('legal_name');
 
-        if (suppliersError) throw suppliersError;
-        setSuppliers((suppliersData as any) ?? []);
-      } catch (err) {
-        console.error('Erreur chargement données:', err);
-        setError('Impossible de charger les fournisseurs');
-      } finally {
-        setLoadingData(false);
-      }
+      if (suppliersError) throw suppliersError;
+
+      // Type safe: suppliersData is Organisation[] or null
+      setSuppliers(suppliersData ?? []);
+    } catch (err) {
+      console.error('Erreur chargement données:', err);
+      setError('Impossible de charger les fournisseurs');
+    } finally {
+      setLoadingData(false);
     }
+  }, [supabase]);
 
+  useEffect(() => {
     void fetchData().catch(error => {
       console.error('[ExpenseForm] fetchData failed:', error);
     });
-  }, []);
+  }, [fetchData]);
 
   // Auto-générer numéro dépense
-  useEffect(() => {
-    async function generateDocumentNumber() {
-      try {
-        const year = new Date().getFullYear();
-        const month = String(new Date().getMonth() + 1).padStart(2, '0');
+  const generateDocumentNumber = useCallback(async () => {
+    try {
+      const year = new Date().getFullYear();
+      const month = String(new Date().getMonth() + 1).padStart(2, '0');
 
-        // Compter dépenses du mois en cours
-        const { count } = await supabase
-          .from('financial_documents')
-          .select('*', { count: 'exact', head: true })
-          .eq('document_type', 'expense')
-          .gte('created_at', `${year}-${month}-01`)
-          .lt(
-            'created_at',
-            `${year}-${String(parseInt(month) + 1).padStart(2, '0')}-01`
-          );
+      // Compter dépenses du mois en cours
+      const { count } = await supabase
+        .from('financial_documents')
+        .select('*', { count: 'exact', head: true })
+        .eq('document_type', 'expense')
+        .gte('created_at', `${year}-${month}-01`)
+        .lt(
+          'created_at',
+          `${year}-${String(parseInt(month) + 1).padStart(2, '0')}-01`
+        );
 
-        const nextNumber = String((count ?? 0) + 1).padStart(3, '0');
-        const documentNumber = `DEP-${year}-${month}-${nextNumber}`;
+      const nextNumber = String((count ?? 0) + 1).padStart(3, '0');
+      const documentNumber = `DEP-${year}-${month}-${nextNumber}`;
 
-        setFormData(prev => ({ ...prev, document_number: documentNumber }));
-      } catch (err) {
-        console.error('Erreur génération numéro:', err);
-      }
+      setFormData(prev => ({ ...prev, document_number: documentNumber }));
+    } catch (err) {
+      console.error('Erreur génération numéro:', err);
     }
+  }, [supabase]);
 
+  useEffect(() => {
     void generateDocumentNumber().catch(error => {
       console.error('[ExpenseForm] generateDocumentNumber failed:', error);
     });
-  }, []);
+  }, [generateDocumentNumber]);
 
   // Calcul automatique TVA et TTC
   useEffect(() => {
@@ -260,6 +263,16 @@ export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
     setLoading(true);
 
     try {
+      // Récupérer l'utilisateur connecté (requis pour created_by)
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      if (userError || !user) {
+        throw new Error('Utilisateur non connecté');
+      }
+
       // Trouver le label de la catégorie PCG sélectionnée
       const selectedCategory = PCG_SUGGESTED_CATEGORIES.find(
         cat => cat.code === formData.pcg_code
@@ -286,7 +299,8 @@ export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
           description: `[${categoryLabel}] ${formData.description}`,
           notes: formData.notes,
           uploaded_file_url: formData.uploaded_file_url,
-        } as any)
+          created_by: user.id,
+        })
         .select('id')
         .single();
 
@@ -295,17 +309,8 @@ export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
       // Créer les lignes TVA dans financial_document_items (source de vérité)
       if (insertedDoc?.id) {
         // Construire les items TVA
-        const items: Array<{
-          document_id: string;
-          description: string;
-          quantity: number;
-          unit_price_ht: number;
-          total_ht: number;
-          tva_rate: number;
-          tva_amount: number;
-          total_ttc: number;
-          sort_order: number;
-        }> = [];
+        const items: Database['public']['Tables']['financial_document_lines']['Insert'][] =
+          [];
 
         if (formData.isVentilated) {
           // Mode ventilé: 2 lignes (10% et 20%)
@@ -313,6 +318,7 @@ export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
             items.push({
               document_id: insertedDoc.id,
               description: 'Ligne TVA 10%',
+              line_number: 1,
               quantity: 1,
               unit_price_ht: formData.vatLine10Ht,
               total_ht: formData.vatLine10Ht,
@@ -328,6 +334,7 @@ export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
             items.push({
               document_id: insertedDoc.id,
               description: 'Ligne TVA 20%',
+              line_number: 2,
               quantity: 1,
               unit_price_ht: formData.vatLine20Ht,
               total_ht: formData.vatLine20Ht,
@@ -344,6 +351,7 @@ export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
           items.push({
             document_id: insertedDoc.id,
             description: formData.description,
+            line_number: 1,
             quantity: 1,
             unit_price_ht: formData.total_ht,
             total_ht: formData.total_ht,
@@ -356,7 +364,7 @@ export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
 
         if (items.length > 0) {
           // Note: utilise financial_document_lines (table existante)
-          const { error: itemsError } = await (supabase as any)
+          const { error: itemsError } = await supabase
             .from('financial_document_lines')
             .insert(items);
 
@@ -471,7 +479,7 @@ export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
                 <SelectContent>
                   {suppliers.map(supplier => (
                     <SelectItem key={supplier.id} value={supplier.id}>
-                      {supplier.name}
+                      {supplier.legal_name}
                     </SelectItem>
                   ))}
                 </SelectContent>
