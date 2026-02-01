@@ -12,7 +12,56 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+
+import type { Database } from '@verone/types';
 import { createClient } from '@verone/utils/supabase/client';
+
+// Types Supabase
+type SalesOrderRow = Database['public']['Tables']['sales_orders']['Row'];
+type SalesOrderItemRow =
+  Database['public']['Tables']['sales_order_items']['Row'];
+
+// Type pour les orders retournés par fetchLinkMeOrders (avec customer_id polymorphique)
+type SalesOrderWithCustomer = Pick<
+  SalesOrderRow,
+  | 'id'
+  | 'order_number'
+  | 'channel_id'
+  | 'customer_id'
+  | 'customer_type'
+  | 'status'
+  | 'payment_status'
+  | 'total_ht'
+  | 'total_ttc'
+  | 'created_at'
+  | 'updated_at'
+>;
+
+// Type pour fetchLinkMeOrderById avec relations
+type SalesOrderItemWithProduct = {
+  id: string;
+  product_id: string;
+  quantity: number;
+  unit_price_ht: number;
+  total_ht: number;
+  retrocession_rate: number;
+  retrocession_amount: number;
+  linkme_selection_item_id: string | null;
+  products: {
+    id: string;
+    name: string;
+    sku: string;
+  } | null;
+};
+
+type SalesOrderWithItems = SalesOrderWithCustomer & {
+  tax_rate: number;
+  shipping_cost_ht: number;
+  insurance_cost_ht: number;
+  handling_cost_ht: number;
+  notes: string | null;
+  sales_order_items: SalesOrderItemWithProduct[];
+};
 
 // ID du canal LinkMe (récupéré depuis les sales_channels)
 export const LINKME_CHANNEL_ID = '93c68db1-5a30-4168-89ec-6383152be405';
@@ -71,12 +120,12 @@ export interface CreateLinkMeOrderInput {
 export interface LinkMeOrder {
   id: string;
   order_number: string;
-  channel_id: string;
-  customer_type: 'organization' | 'individual';
+  channel_id: string | null;
+  customer_type: string;
   customer_organisation_id: string | null;
   individual_customer_id: string | null;
-  status: string;
-  payment_status: string;
+  status: string | null;
+  payment_status: string | null;
   total_ht: number;
   total_ttc: number;
   tax_rate: number;
@@ -171,14 +220,22 @@ async function fetchLinkMeOrders(): Promise<LinkMeOrder[]> {
   }
 
   // Mapper les données pour compatibilité avec l'interface LinkMeOrder
-  return (data ?? []).map((order: any) => ({
-    ...order,
-    // Pour compatibilité avec l'ancienne interface
-    customer_organisation_id:
-      order.customer_type === 'organization' ? order.customer_id : null,
-    individual_customer_id:
-      order.customer_type === 'individual' ? order.customer_id : null,
-  }));
+  return (data ?? []).map(
+    (order: SalesOrderWithCustomer): LinkMeOrder => ({
+      ...order,
+      // Champs manquants de l'interface LinkMeOrder (non retournés par cette query)
+      tax_rate: 0,
+      shipping_cost_ht: 0,
+      insurance_cost_ht: 0,
+      handling_cost_ht: 0,
+      notes: null,
+      // Pour compatibilité avec l'ancienne interface
+      customer_organisation_id:
+        order.customer_type === 'organization' ? order.customer_id : null,
+      individual_customer_id:
+        order.customer_type === 'individual' ? order.customer_id : null,
+    })
+  );
 }
 
 /**
@@ -232,25 +289,27 @@ async function fetchLinkMeOrderById(orderId: string): Promise<LinkMeOrder> {
   }
 
   // Mapper les données
-  const order = data as any;
+  const order = data as unknown as SalesOrderWithItems;
   return {
     ...order,
     customer_organisation_id:
       order.customer_type === 'organization' ? order.customer_id : null,
     individual_customer_id:
       order.customer_type === 'individual' ? order.customer_id : null,
-    items: (order.sales_order_items ?? []).map((item: any) => ({
-      id: item.id,
-      sales_order_id: orderId,
-      product_id: item.product_id,
-      product_name: item.products?.name ?? 'Produit inconnu',
-      quantity: item.quantity,
-      unit_price_ht: item.unit_price_ht,
-      total_ht: item.total_ht,
-      retrocession_rate: item.retrocession_rate,
-      retrocession_amount: item.retrocession_amount,
-      linkme_selection_item_id: item.linkme_selection_item_id,
-    })),
+    items: (order.sales_order_items ?? []).map(
+      (item: SalesOrderItemWithProduct): LinkMeOrderItem => ({
+        id: item.id,
+        sales_order_id: orderId,
+        product_id: item.product_id,
+        product_name: item.products?.name ?? 'Produit inconnu',
+        quantity: item.quantity,
+        unit_price_ht: item.unit_price_ht,
+        total_ht: item.total_ht,
+        retrocession_rate: item.retrocession_rate,
+        retrocession_amount: item.retrocession_amount,
+        linkme_selection_item_id: item.linkme_selection_item_id,
+      })
+    ),
   };
 }
 
@@ -290,8 +349,9 @@ async function updateLinkMeOrder(
     }
   } else {
     // Garder le total existant des produits
-    for (const item of currentOrder.sales_order_items ?? []) {
-      productsHt += (item as any).quantity * (item as any).unit_price_ht;
+    const items = currentOrder.sales_order_items as SalesOrderItemRow[] | null;
+    for (const item of items ?? []) {
+      productsHt += item.quantity * item.unit_price_ht;
     }
   }
 

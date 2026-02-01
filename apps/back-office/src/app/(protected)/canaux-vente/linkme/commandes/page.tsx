@@ -33,6 +33,18 @@ import { EditLinkMeOrderModal } from '../components/EditLinkMeOrderModal';
 // ID du canal LinkMe
 const LINKME_CHANNEL_ID = '93c68db1-5a30-4168-89ec-6383152be405';
 
+// Type pour la réponse de la fonction RPC get_linkme_orders
+type LinkMeOrderRpcResult = {
+  id: string;
+  affiliate_name: string | null;
+  affiliate_type: 'enseigne' | 'organisation' | null;
+  selection_name: string | null;
+  total_affiliate_margin: number;
+  pending_admin_validation: boolean;
+  created_by_affiliate_id: string | null;
+  linkme_selection_id: string | null;
+};
+
 // Type pour les donnees enrichies LinkMe
 interface LinkMeEnrichedData {
   [orderId: string]: {
@@ -93,10 +105,9 @@ export default function LinkMeOrdersPage() {
       setIsLoadingEnriched(true);
       try {
         // Utiliser la RPC existante pour avoir les donnees enrichies
-        const { data: ordersData, error } = await (supabase as any).rpc(
-          'get_linkme_orders',
-          { p_affiliate_id: null }
-        );
+        const { data: ordersData, error } = await supabase
+          .rpc('get_linkme_orders', { p_affiliate_id: undefined })
+          .returns<LinkMeOrderRpcResult[]>();
 
         if (error) {
           console.error('Erreur fetch LinkMe enriched data:', error);
@@ -105,7 +116,7 @@ export default function LinkMeOrdersPage() {
 
         // Construire un map des donnees enrichies par order_id
         const enriched: LinkMeEnrichedData = {};
-        (ordersData ?? []).forEach((order: any) => {
+        (ordersData ?? []).forEach((order: LinkMeOrderRpcResult) => {
           enriched[order.id] = {
             affiliate_name: order.affiliate_name ?? null,
             affiliate_type: order.affiliate_type ?? null,
@@ -246,9 +257,10 @@ export default function LinkMeOrdersPage() {
               setIsLoadingEnriched(true);
               supabase
                 .rpc('get_linkme_orders', { p_affiliate_id: undefined })
+                .returns<LinkMeOrderRpcResult[]>()
                 .then(({ data }) => {
                   const enriched: LinkMeEnrichedData = {};
-                  (data ?? []).forEach((order: any) => {
+                  (data ?? []).forEach((order: LinkMeOrderRpcResult) => {
                     enriched[order.id] = {
                       affiliate_name: order.affiliate_name ?? null,
                       affiliate_type: order.affiliate_type ?? null,
