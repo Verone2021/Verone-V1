@@ -229,7 +229,7 @@ export async function PATCH(
           (body.shipping_cost_ht ?? 0) +
           (body.handling_cost_ht ?? 0) +
           (body.insurance_cost_ht ?? 0);
-        const feesVat = feesHt * (body.fees_vat_rate || 0.2);
+        const feesVat = feesHt * (body.fees_vat_rate ?? 0.2);
         totalHt += feesHt;
         totalVat += feesVat;
 

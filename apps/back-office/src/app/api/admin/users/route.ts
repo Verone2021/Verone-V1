@@ -84,7 +84,7 @@ export async function GET() {
           p_days: 30,
         });
 
-        const userStats = stats?.[0] || {
+        const userStats = stats?.[0] ?? {
           total_sessions: 0,
           total_actions: 0,
           avg_session_duration: null,
