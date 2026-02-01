@@ -33,6 +33,8 @@ import {
   useLinkMeAffiliateCustomers,
   useCreateEnseigneOrganisation,
   useCreateEnseigneIndividualCustomer,
+  type EnseigneOrganisationCustomer,
+  type EnseigneIndividualCustomer,
 } from '../hooks/use-linkme-enseigne-customers';
 import {
   useCreateLinkMeOrder,
@@ -56,6 +58,15 @@ interface CreateLinkMeOrderModalProps {
 }
 
 type CustomerType = 'organization' | 'individual';
+
+// Type pour les sélections retournées par useLinkMeSelectionsByAffiliate
+type AffiliateSelection = {
+  id: string;
+  name: string;
+  slug: string;
+  products_count: number | null;
+  archived_at: string | null;
+};
 
 interface CartItem extends LinkMeOrderItemInput {
   id: string;
@@ -260,13 +271,15 @@ export function CreateLinkMeOrderModal({
     return selectionDetails.items.filter(item => {
       // Filtre par recherche texte (nom ou SKU)
       const matchesSearch =
-        !productSearchQuery.trim() ||
-        item.product?.name
+        productSearchQuery.trim() === '' ||
+        (item.product?.name
           ?.toLowerCase()
-          .includes(productSearchQuery.toLowerCase()) ||
-        item.product?.sku
+          .includes(productSearchQuery.toLowerCase()) ??
+          false) ||
+        (item.product?.sku
           ?.toLowerCase()
-          .includes(productSearchQuery.toLowerCase());
+          .includes(productSearchQuery.toLowerCase()) ??
+          false);
 
       // Filtre par sous-catégorie (si sélectionnée)
       const matchesCategory =
@@ -679,7 +692,7 @@ export function CreateLinkMeOrderModal({
                   </div>
                 ) : selections && selections.length > 0 ? (
                   <div className="grid gap-2 max-h-40 overflow-y-auto">
-                    {selections.map((selection: any) => (
+                    {selections.map((selection: AffiliateSelection) => (
                       <div
                         key={selection.id}
                         className="flex items-center gap-2"
@@ -1018,33 +1031,39 @@ export function CreateLinkMeOrderModal({
                     <div className="space-y-1">
                       <p className="font-semibold text-purple-900">
                         {customerType === 'organization'
-                          ? ((selectedCustomer as any).name ??
-                            (selectedCustomer as any).legal_name)
-                          : (selectedCustomer as any).full_name}
+                          ? ((selectedCustomer as EnseigneOrganisationCustomer)
+                              .name ??
+                            (selectedCustomer as EnseigneOrganisationCustomer)
+                              .legal_name)
+                          : (selectedCustomer as EnseigneIndividualCustomer)
+                              .full_name}
                       </p>
-                      {(selectedCustomer as any).email && (
-                        <p className="text-sm text-purple-700">
-                          📧 {(selectedCustomer as any).email}
-                        </p>
-                      )}
-                      {(selectedCustomer as any).phone && (
-                        <p className="text-sm text-purple-700">
-                          📞 {(selectedCustomer as any).phone}
-                        </p>
-                      )}
-                      {((selectedCustomer as any).address_line1 ||
-                        (selectedCustomer as any).city) && (
-                        <p className="text-sm text-purple-700">
-                          📍{' '}
-                          {[
-                            (selectedCustomer as any).address_line1,
-                            (selectedCustomer as any).postal_code,
-                            (selectedCustomer as any).city,
-                          ]
-                            .filter(Boolean)
-                            .join(', ')}
-                        </p>
-                      )}
+                      {'email' in selectedCustomer &&
+                        selectedCustomer.email && (
+                          <p className="text-sm text-purple-700">
+                            📧 {selectedCustomer.email}
+                          </p>
+                        )}
+                      {'phone' in selectedCustomer &&
+                        selectedCustomer.phone && (
+                          <p className="text-sm text-purple-700">
+                            📞 {selectedCustomer.phone}
+                          </p>
+                        )}
+                      {'address_line1' in selectedCustomer &&
+                        (selectedCustomer.address_line1 ??
+                          selectedCustomer.city) && (
+                          <p className="text-sm text-purple-700">
+                            📍{' '}
+                            {[
+                              selectedCustomer.address_line1,
+                              selectedCustomer.postal_code,
+                              selectedCustomer.city,
+                            ]
+                              .filter(Boolean)
+                              .join(', ')}
+                          </p>
+                        )}
                     </div>
                   </div>
                   <button
@@ -1435,27 +1454,34 @@ export function CreateLinkMeOrderModal({
                     </div>
                     <p className="font-medium text-slate-900">
                       {customerType === 'organization'
-                        ? ((selectedCustomer as any)?.name ??
-                          (selectedCustomer as any)?.legal_name)
-                        : (selectedCustomer as any)?.full_name}
+                        ? ((selectedCustomer as EnseigneOrganisationCustomer)
+                            ?.name ??
+                          (selectedCustomer as EnseigneOrganisationCustomer)
+                            ?.legal_name)
+                        : (selectedCustomer as EnseigneIndividualCustomer)
+                            ?.full_name}
                     </p>
-                    {(selectedCustomer as any)?.email && (
-                      <p className="text-sm text-slate-600 mt-1">
-                        {(selectedCustomer as any).email}
-                      </p>
-                    )}
-                    {((selectedCustomer as any)?.address_line1 ||
-                      (selectedCustomer as any)?.city) && (
-                      <p className="text-sm text-slate-500 mt-1">
-                        {[
-                          (selectedCustomer as any).address_line1,
-                          (selectedCustomer as any).postal_code,
-                          (selectedCustomer as any).city,
-                        ]
-                          .filter(Boolean)
-                          .join(', ')}
-                      </p>
-                    )}
+                    {selectedCustomer &&
+                      'email' in selectedCustomer &&
+                      selectedCustomer.email && (
+                        <p className="text-sm text-slate-600 mt-1">
+                          {selectedCustomer.email}
+                        </p>
+                      )}
+                    {selectedCustomer &&
+                      'address_line1' in selectedCustomer &&
+                      (selectedCustomer.address_line1 ??
+                        selectedCustomer.city) && (
+                        <p className="text-sm text-slate-500 mt-1">
+                          {[
+                            selectedCustomer.address_line1,
+                            selectedCustomer.postal_code,
+                            selectedCustomer.city,
+                          ]
+                            .filter(Boolean)
+                            .join(', ')}
+                        </p>
+                      )}
                   </div>
 
                   {/* Card Affilié */}
