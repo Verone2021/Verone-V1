@@ -293,7 +293,7 @@ export async function POST(request: NextRequest): Promise<
     const existingClient = await qontoClient.findClientByEmail(customerEmail);
     if (existingClient) {
       await qontoClient.updateClient(existingClient.id, {
-        name: customerName || existingClient.name,
+        name: customerName ?? existingClient.name,
         type: qontoClientType,
         address: qontoAddress,
       });

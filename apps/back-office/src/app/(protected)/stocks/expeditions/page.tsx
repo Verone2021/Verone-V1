@@ -489,7 +489,7 @@ export default function ExpeditionsPage() {
                                 )}
                               </TableCell>
                               <TableCell>
-                                {order.customer_name || 'Client inconnu'}
+                                {order.customer_name ?? 'Client inconnu'}
                               </TableCell>
                               <TableCell>
                                 <Badge
@@ -732,7 +732,7 @@ export default function ExpeditionsPage() {
                                 {order.order_number}
                               </TableCell>
                               <TableCell>
-                                {order.customer_name || 'Client inconnu'}
+                                {order.customer_name ?? 'Client inconnu'}
                               </TableCell>
                               <TableCell>
                                 <Badge
@@ -902,7 +902,7 @@ export default function ExpeditionsPage() {
                 </ButtonV2>
               </div>
               <CardDescription>
-                Client: {selectedOrder.customer_name || 'Non renseigné'}
+                Client: {selectedOrder.customer_name ?? 'Non renseigné'}
               </CardDescription>
             </CardHeader>
             <CardContent>

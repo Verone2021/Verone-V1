@@ -362,7 +362,7 @@ export async function POST(request: NextRequest): Promise<
         // Client existant - mettre à jour son adresse pour s'assurer qu'elle est présente
         // (Qonto requiert billing_address pour la facturation)
         await qontoClient.updateClient(existingClient.id, {
-          name: customerName || existingClient.name,
+          name: customerName ?? existingClient.name,
           type: qontoClientType,
           address: qontoAddress,
         });

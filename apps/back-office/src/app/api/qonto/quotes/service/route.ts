@@ -136,7 +136,7 @@ export async function POST(request: NextRequest): Promise<
     // Cela permet de créer le devis, mais l'envoi automatique sera désactivé
     const hasRealEmail = !!customerEmail;
     const emailForQonto =
-      customerEmail || `noreply+${clientId.slice(0, 8)}@verone.app`;
+      customerEmail ?? `noreply+${clientId.slice(0, 8)}@verone.app`;
 
     const qontoClient = getQontoClient();
 
