@@ -184,7 +184,7 @@ export async function matchTransactionToOrder(
         document_number: invoiceNumber,
         partner_id: typedOrder.customer_id,
         partner_type: 'customer',
-        document_date: (typedOrder.shipped_at || typedOrder.created_at).split(
+        document_date: (typedOrder.shipped_at ?? typedOrder.created_at).split(
           'T'
         )[0],
         total_ht: typedOrder.total_ht,
@@ -209,7 +209,7 @@ export async function matchTransactionToOrder(
     }
 
     // 9. Appeler record_payment() via RPC
-    const paymentDate = (typedTx.settled_at || typedTx.emitted_at).split(
+    const paymentDate = (typedTx.settled_at ?? typedTx.emitted_at).split(
       'T'
     )[0];
     const paymentAmount = Math.abs(typedTx.amount);
@@ -221,7 +221,7 @@ export async function matchTransactionToOrder(
         p_amount_paid: paymentAmount,
         p_payment_date: paymentDate,
         p_payment_method: 'bank_transfer',
-        p_transaction_reference: typedTx.reference || typedTx.transaction_id,
+        p_transaction_reference: typedTx.reference ?? typedTx.transaction_id,
         p_bank_transaction_id: bankTransactionId,
         p_notes: `Rapprochement automatique - Transaction Qonto ${typedTx.transaction_id}`,
       }
@@ -393,7 +393,7 @@ export async function matchTransactionToMultipleOrders(
             partner_id: typedOrder.customer_id,
             partner_type: 'customer',
             document_date: (
-              typedOrder.shipped_at || typedOrder.created_at
+              typedOrder.shipped_at ?? typedOrder.created_at
             ).split('T')[0],
             total_ht: typedOrder.total_ht,
             total_ttc: typedOrder.total_ttc,
