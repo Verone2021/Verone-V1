@@ -596,7 +596,7 @@ export default function ReceptionsPage() {
                                   )}
                                 </TableCell>
                                 <TableCell>
-                                  {order.supplier_name || 'Fournisseur inconnu'}
+                                  {order.supplier_name ?? 'Fournisseur inconnu'}
                                 </TableCell>
                                 <TableCell>
                                   <Badge
@@ -946,7 +946,7 @@ export default function ReceptionsPage() {
                                 {order.po_number}
                               </TableCell>
                               <TableCell>
-                                {order.supplier_name || 'Fournisseur inconnu'}
+                                {order.supplier_name ?? 'Fournisseur inconnu'}
                               </TableCell>
                               <TableCell>
                                 {isComplete ? (
@@ -1205,7 +1205,7 @@ export default function ReceptionsPage() {
                 </ButtonV2>
               </div>
               <CardDescription>
-                Fournisseur: {selectedOrder.supplier_name || 'Non renseigné'}
+                Fournisseur: {selectedOrder.supplier_name ?? 'Non renseigné'}
               </CardDescription>
             </CardHeader>
             <CardContent>

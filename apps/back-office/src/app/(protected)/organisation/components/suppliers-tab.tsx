@@ -110,7 +110,7 @@ export function SuppliersTab() {
 
   const handleDelete = async (supplier: Organisation) => {
     const confirmed = confirm(
-      `Êtes-vous sûr de vouloir supprimer définitivement "${supplier.trade_name || supplier.legal_name}" ?\n\nCette action est irréversible !`
+      `Êtes-vous sûr de vouloir supprimer définitivement "${supplier.trade_name ?? supplier.legal_name}" ?\n\nCette action est irréversible !`
     );
 
     if (confirmed) {

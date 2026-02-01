@@ -132,7 +132,7 @@ export default function TestPurchaseOrderPage() {
           ))}
         </select>
         <span className="ml-2 text-sm text-gray-500">
-          ID: {supplierId || 'aucun'}
+          ID: {supplierId ?? 'aucun'}
         </span>
       </div>
 
