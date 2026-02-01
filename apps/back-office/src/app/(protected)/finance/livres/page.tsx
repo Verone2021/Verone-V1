@@ -141,7 +141,7 @@ function RecettesTable({ transactions }: { transactions: BankTransaction[] }) {
       </div>
       <ScrollArea className="h-[400px]">
         {transactions.map(tx => {
-          const vatRate = (tx as any).vat_rate || 20;
+          const vatRate = (tx as any).vat_rate ?? 20;
           const ttc = Math.abs(tx.amount);
           const ht = Math.round((ttc / (1 + vatRate / 100)) * 100) / 100;
           const tva = ttc - ht;
@@ -223,7 +223,7 @@ function AchatsTable({ transactions }: { transactions: BankTransaction[] }) {
             (tx as any).category_pcg ||
             (tx as any).ignore_reason?.match(/PCG (\d+)/)?.[1];
           const pcgInfo = pcgCode ? getPcgCategory(pcgCode) : null;
-          const vatRate = (tx as any).vat_rate || 20;
+          const vatRate = (tx as any).vat_rate ?? 20;
           const ttc = Math.abs(tx.amount);
           const ht = Math.round((ttc / (1 + vatRate / 100)) * 100) / 100;
           const tva = ttc - ht;
