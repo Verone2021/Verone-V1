@@ -429,7 +429,7 @@ export async function matchTransactionToMultipleOrders(
           p_payment_date: paymentDate,
           p_payment_method: 'bank_transfer',
           p_transaction_reference:
-            transaction.reference || transaction.transaction_id,
+            transaction.reference ?? transaction.transaction_id,
           p_bank_transaction_id: bankTransactionId,
           p_notes: `Multi-match - Transaction Qonto ${transaction.transaction_id}`,
         });
