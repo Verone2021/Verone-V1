@@ -331,7 +331,7 @@ function RestaurantAddressCard({
           {addressLine1 && (
             <p className="text-xs text-gray-500 truncate">{addressLine1}</p>
           )}
-          {(postalCode || city) && (
+          {(postalCode ?? city) && (
             <p className="text-xs text-gray-500 truncate">
               {[postalCode, city].filter(Boolean).join(' ')}
             </p>
@@ -426,7 +426,7 @@ function ParentAddressCard({
           {addressLine1 && (
             <p className="text-xs text-gray-500 truncate">{addressLine1}</p>
           )}
-          {(postalCode || city) && (
+          {(postalCode ?? city) && (
             <p className="text-xs text-gray-500 truncate">
               {[postalCode, city].filter(Boolean).join(' ')}
             </p>
@@ -460,7 +460,7 @@ export function BillingStep({ formData, errors, onUpdate }: BillingStepProps) {
   // Get organisation ID (restaurant selectionne)
   const organisationId =
     formData.restaurant.mode === 'existing'
-      ? formData.restaurant.existingId || null
+      ? (formData.restaurant.existingId ?? null)
       : null;
 
   // Determine ownership type
@@ -478,7 +478,7 @@ export function BillingStep({ formData, errors, onUpdate }: BillingStepProps) {
   const { data: contactsData, isLoading: contactsLoading } =
     useOrganisationContacts(
       organisationId,
-      enseigneId || null,
+      enseigneId ?? null,
       ownershipType,
       true // Inclure contacts enseigne
     );
@@ -668,7 +668,7 @@ export function BillingStep({ formData, errors, onUpdate }: BillingStepProps) {
     (field: keyof ContactBase, value: string) => {
       handleBillingContactUpdate({
         contact: {
-          ...(formData.contacts.billingContact.contact || defaultContact),
+          ...(formData.contacts.billingContact.contact ?? defaultContact),
           [field]: value,
         },
       });
@@ -721,7 +721,7 @@ export function BillingStep({ formData, errors, onUpdate }: BillingStepProps) {
       mode: 'restaurant_address',
       existingAddressId: null,
       customAddress: newAddress,
-      sourceOrganisationId: restaurantInfo?.id || null,
+      sourceOrganisationId: restaurantInfo?.id ?? null,
     });
   }, [handleBillingAddressUpdate, restaurantInfo]);
 
@@ -754,7 +754,7 @@ export function BillingStep({ formData, errors, onUpdate }: BillingStepProps) {
       mode: 'parent_address',
       existingAddressId: null,
       customAddress: newAddress,
-      sourceOrganisationId: parentOrg?.id || null,
+      sourceOrganisationId: parentOrg?.id ?? null,
     });
   }, [handleBillingAddressUpdate, parentOrg, parentPrimaryAddress]);
 
@@ -1237,7 +1237,7 @@ export function BillingStep({ formData, errors, onUpdate }: BillingStepProps) {
                   </h5>
                   <ContactForm
                     contact={
-                      formData.contacts.billingContact.contact || defaultContact
+                      formData.contacts.billingContact.contact ?? defaultContact
                     }
                     onChange={handleBillingContactChange}
                   />
