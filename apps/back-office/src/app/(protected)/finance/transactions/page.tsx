@@ -255,7 +255,7 @@ function TransactionRow({
 
       {/* Date */}
       <div className="w-24 text-sm text-muted-foreground">
-        {formatDate(transaction.settled_at || transaction.emitted_at)}
+        {formatDate(transaction.settled_at ?? transaction.emitted_at)}
       </div>
 
       {/* Libellé & Contrepartie */}
@@ -381,7 +381,7 @@ function TransactionDetailPanel({
             </span>
           </p>
           <p className="text-muted-foreground mt-1">
-            {formatDate(transaction.settled_at || transaction.emitted_at)}
+            {formatDate(transaction.settled_at ?? transaction.emitted_at)}
           </p>
         </div>
 
@@ -1547,7 +1547,7 @@ function TransactionsPageV2() {
 
                       {/* Date */}
                       <div className="w-20 text-sm text-muted-foreground">
-                        {formatDate(tx.settled_at || tx.emitted_at)}
+                        {formatDate(tx.settled_at ?? tx.emitted_at)}
                       </div>
 
                       {/* Libellé + Organisation en bleu */}

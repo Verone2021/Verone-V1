@@ -152,7 +152,7 @@ function RecettesTable({ transactions }: { transactions: BankTransaction[] }) {
               className="grid grid-cols-12 gap-2 px-4 py-3 border-b hover:bg-muted/30 transition-colors items-center"
             >
               <div className="col-span-2 text-sm text-muted-foreground">
-                {formatDate(tx.settled_at || tx.emitted_at)}
+                {formatDate(tx.settled_at ?? tx.emitted_at)}
               </div>
               <div className="col-span-1 text-xs text-muted-foreground">
                 {tx.reference ?? '-'}
@@ -235,7 +235,7 @@ function AchatsTable({ transactions }: { transactions: BankTransaction[] }) {
               className="grid grid-cols-12 gap-2 px-4 py-3 border-b hover:bg-muted/30 transition-colors items-center"
             >
               <div className="col-span-1 text-xs text-muted-foreground">
-                {formatDate(tx.settled_at || tx.emitted_at)}
+                {formatDate(tx.settled_at ?? tx.emitted_at)}
               </div>
               <div className="col-span-3">
                 <div className="font-medium truncate text-sm">
@@ -314,7 +314,7 @@ function ResultatsTab({
     > = {};
 
     creditTransactions.forEach(tx => {
-      const date = tx.settled_at || tx.emitted_at;
+      const date = tx.settled_at ?? tx.emitted_at;
       if (!date?.startsWith(selectedYear)) return;
       const key = getMonthKey(date);
       if (!months[key])
@@ -324,7 +324,7 @@ function ResultatsTab({
     });
 
     debitTransactions.forEach(tx => {
-      const date = tx.settled_at || tx.emitted_at;
+      const date = tx.settled_at ?? tx.emitted_at;
       if (!date?.startsWith(selectedYear)) return;
       const key = getMonthKey(date);
       if (!months[key])
@@ -467,7 +467,7 @@ function ResultatsTab({
                                 className="flex justify-between text-sm py-1 px-2 bg-white rounded"
                               >
                                 <span className="text-muted-foreground">
-                                  {formatDate(tx.settled_at || tx.emitted_at)} -{' '}
+                                  {formatDate(tx.settled_at ?? tx.emitted_at)} -{' '}
                                   {tx.counterparty_name || tx.label}
                                 </span>
                                 <Money
@@ -501,7 +501,7 @@ function ResultatsTab({
                                 className="flex justify-between text-sm py-1 px-2 bg-white rounded"
                               >
                                 <span className="text-muted-foreground">
-                                  {formatDate(tx.settled_at || tx.emitted_at)} -{' '}
+                                  {formatDate(tx.settled_at ?? tx.emitted_at)} -{' '}
                                   {tx.counterparty_name || tx.label}
                                 </span>
                                 <Money
@@ -589,7 +589,7 @@ function CompteResultatTab({
     pcgStructure.produits.forEach(p => (classes[p.code] = 0));
 
     creditTransactions.forEach(tx => {
-      const date = tx.settled_at || tx.emitted_at;
+      const date = tx.settled_at ?? tx.emitted_at;
       if (!date?.startsWith(selectedYear)) return;
 
       const pcgCode = (tx as any).category_pcg;
@@ -618,7 +618,7 @@ function CompteResultatTab({
     pcgStructure.charges.forEach(c => (classes[c.code] = 0));
 
     debitTransactions.forEach(tx => {
-      const date = tx.settled_at || tx.emitted_at;
+      const date = tx.settled_at ?? tx.emitted_at;
       if (!date?.startsWith(selectedYear)) return;
 
       const pcgCode =
@@ -779,14 +779,14 @@ export default function LivresComptablesPage() {
   // Filtrer par année sélectionnée
   const filteredCredits = useMemo(() => {
     return creditTransactions.filter(tx => {
-      const date = tx.settled_at || tx.emitted_at;
+      const date = tx.settled_at ?? tx.emitted_at;
       return date?.startsWith(selectedYear);
     });
   }, [creditTransactions, selectedYear]);
 
   const filteredDebits = useMemo(() => {
     return debitTransactions.filter(tx => {
-      const date = tx.settled_at || tx.emitted_at;
+      const date = tx.settled_at ?? tx.emitted_at;
       return date?.startsWith(selectedYear);
     });
   }, [debitTransactions, selectedYear]);
