@@ -19,6 +19,8 @@
 
 import React, { useState, useEffect } from 'react';
 
+import type { Database } from '@verone/types';
+
 import {
   PurchaseOrderReceptionModal,
   AffiliateReceptionModal,
