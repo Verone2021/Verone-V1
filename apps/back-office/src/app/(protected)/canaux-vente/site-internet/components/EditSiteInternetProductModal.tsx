@@ -200,7 +200,7 @@ export function EditSiteInternetProductModal({
     return catalogueImages.map(img => ({
       id: img.id,
       public_url: img.public_url ?? '',
-      alt_text: img.alt_text || `${product.name}`,
+      alt_text: img.alt_text ?? `${product.name}`,
       is_primary: img.is_primary ?? false,
     }));
   }, [catalogueImages, product.name]);
@@ -526,7 +526,7 @@ export function EditSiteInternetProductModal({
                       </p>
                     )}
                     <p className="text-sm text-gray-500 mt-1">
-                      URL: https://verone.fr/produit/{formData.slug || 'slug'}
+                      URL: https://verone.fr/produit/{formData.slug ?? 'slug'}
                     </p>
                   </div>
                 </TabsContent>
@@ -612,13 +612,13 @@ export function EditSiteInternetProductModal({
                         <span className="text-blue-700 font-medium">
                           Titre:
                         </span>{' '}
-                        {formData.custom_title || product.seo_title}
+                        {formData.custom_title ?? product.seo_title}
                       </div>
                       <div>
                         <span className="text-blue-700 font-medium">
                           Description:
                         </span>{' '}
-                        {formData.custom_description ||
+                        {formData.custom_description ??
                           product.seo_meta_description}
                       </div>
                     </div>
@@ -894,7 +894,7 @@ export function EditSiteInternetProductModal({
                             <div className="aspect-square relative bg-gray-100">
                               <Image
                                 src={image.public_url ?? ''}
-                                alt={image.alt_text || `Photo ${index + 1}`}
+                                alt={image.alt_text ?? `Photo ${index + 1}`}
                                 fill
                                 className="object-cover"
                                 sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
@@ -1143,7 +1143,7 @@ export function EditSiteInternetProductModal({
                         </p>
                       )}
                       <p className="text-sm text-gray-500 mt-1">
-                        Waterfall: Custom canal → {product.brand || 'Vide'}
+                        Waterfall: Custom canal → {product.brand ?? 'Vide'}
                       </p>
                     </div>
 

@@ -263,7 +263,7 @@ export default function EditDraftPage({ params }: IPageProps) {
 
           if (response.ok && data.success) {
             const doc =
-              data.invoice || data.quote || data.credit_note || data.creditNote;
+              data.invoice ?? data.quote ?? data.credit_note ?? data.creditNote;
 
             if (doc) {
               // Check if draft
