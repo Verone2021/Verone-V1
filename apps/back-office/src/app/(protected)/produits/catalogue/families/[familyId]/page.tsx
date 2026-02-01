@@ -364,7 +364,7 @@ export default function FamilyDetailPage() {
                 name: family.name,
                 description: family.description ?? '',
                 is_active: family.is_active ?? true,
-                display_order: family.display_order || 1,
+                display_order: family.display_order ?? 1,
                 image_url: family.image_url ?? undefined,
               }
             : undefined
@@ -398,7 +398,7 @@ export default function FamilyDetailPage() {
                 name: editingCategory.name,
                 description: editingCategory.description ?? '',
                 is_active: editingCategory.is_active ?? true,
-                display_order: editingCategory.display_order || 1,
+                display_order: editingCategory.display_order ?? 1,
                 parent_id: editingCategory.family_id ?? undefined,
                 image_url: editingCategory.image_url ?? undefined,
               }

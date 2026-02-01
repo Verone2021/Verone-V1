@@ -432,7 +432,7 @@ export default function CategoryDetailPage() {
                 name: category.name,
                 description: category.description ?? '',
                 is_active: category.is_active ?? true,
-                display_order: category.display_order || 1,
+                display_order: category.display_order ?? 1,
                 parent_id: category.family_id ?? undefined,
                 image_url: category.image_url ?? undefined,
               }
@@ -490,7 +490,7 @@ export default function CategoryDetailPage() {
                 slug: editingSubcategory.slug,
                 description: editingSubcategory.description ?? '',
                 image_url: editingSubcategory.image_url ?? '',
-                display_order: editingSubcategory.display_order || 1,
+                display_order: editingSubcategory.display_order ?? 1,
                 is_active: editingSubcategory.is_active ?? true,
                 level: 2 as const,
               } as any)
