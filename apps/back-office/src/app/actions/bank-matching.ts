@@ -61,7 +61,7 @@ async function generateInvoiceNumber(
     .gte('created_at', `${year}-01-01`)
     .lt('created_at', `${year + 1}-01-01`);
 
-  const nextNumber = (count || 0) + 1;
+  const nextNumber = (count ?? 0) + 1;
   return `INV-${year}-${String(nextNumber).padStart(5, '0')}`;
 }
 
@@ -420,7 +420,7 @@ export async function matchTransactionToMultipleOrders(
 
         // Enregistrer le paiement
         const paymentDate = (
-          transaction.settled_at || transaction.emitted_at
+          transaction.settled_at ?? transaction.emitted_at
         ).split('T')[0];
 
         const { error: paymentError } = await supabase.rpc('record_payment', {
