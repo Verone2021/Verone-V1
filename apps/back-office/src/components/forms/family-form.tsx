@@ -7,6 +7,8 @@
 
 'use client';
 
+import Image from 'next/image';
+
 import { useState } from 'react';
 
 import { ButtonV2 } from '@verone/ui';
@@ -274,10 +276,12 @@ export function FamilyForm({
             <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
               {formData.image_url ? (
                 <div className="relative">
-                  <img
+                  <Image
                     src={formData.image_url}
                     alt="Preview"
                     className="w-full h-32 object-cover rounded-lg"
+                    width={400}
+                    height={128}
                   />
                   <ButtonV2
                     type="button"
