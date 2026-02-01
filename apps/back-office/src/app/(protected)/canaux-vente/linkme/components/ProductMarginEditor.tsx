@@ -52,7 +52,7 @@ interface ProductMarginEditorProps {
  */
 function buildMarginResult(product: SelectedProduct): MarginCalculationResult {
   // Conversion % → décimal
-  const minRate = (product.min_margin_rate || 1) / 100;
+  const minRate = (product.min_margin_rate ?? 1) / 100;
   const maxRate = (product.max_margin_rate || 50) / 100;
   const suggestedRate =
     (product.suggested_margin_rate || (maxRate / 3) * 100) / 100;

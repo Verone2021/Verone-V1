@@ -308,7 +308,7 @@ export function EditSiteInternetProductModal({
               custom_price_ht: data.custom_price_ht,
               discount_rate: data.discount_rate ?? null,
               markup_rate: null, // Toujours null (mode custom_price uniquement)
-              min_quantity: data.min_quantity || 1,
+              min_quantity: data.min_quantity ?? 1,
               notes: data.notes ?? null,
               is_active: data.is_active ?? true,
             },

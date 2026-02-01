@@ -343,7 +343,7 @@ export default function CategoryDetailPage() {
                 <Tag className="w-8 h-8 text-black" />
                 <div>
                   <p className="text-lg font-bold text-black">
-                    Niveau {category.level || 1}
+                    Niveau {category.level ?? 1}
                   </p>
                   <p className="text-gray-600">Hiérarchie</p>
                 </div>

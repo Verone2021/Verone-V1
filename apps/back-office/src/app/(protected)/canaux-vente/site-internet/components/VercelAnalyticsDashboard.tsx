@@ -308,7 +308,7 @@ export function VercelAnalyticsDashboard() {
                   <Progress
                     value={
                       (page.pageviews /
-                        (analytics.topPages[0]?.pageviews || 1)) *
+                        (analytics.topPages[0]?.pageviews ?? 1)) *
                       100
                     }
                     className="h-2"
