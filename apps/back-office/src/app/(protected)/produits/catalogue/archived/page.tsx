@@ -120,7 +120,7 @@ export default function ArchivedProductsPage() {
                     </div>
                     <div>
                       <span className="font-medium">Raison:</span>{' '}
-                      {product.archived_reason || 'Non spécifiée'}
+                      {product.archived_reason ?? 'Non spécifiée'}
                     </div>
                   </div>
                 </div>

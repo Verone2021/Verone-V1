@@ -133,7 +133,7 @@ export default function DeliveryNoteDetailPage(): React.ReactNode {
     return (
       <div className="container mx-auto py-6">
         <div className="rounded-lg border border-destructive/20 bg-destructive/10 p-4 text-destructive">
-          {error || 'Bon de livraison non trouvé'}
+          {error ?? 'Bon de livraison non trouvé'}
         </div>
       </div>
     );

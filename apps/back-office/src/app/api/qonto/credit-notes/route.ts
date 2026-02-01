@@ -136,7 +136,7 @@ export async function POST(request: NextRequest): Promise<
       currency: invoice.currency,
       issueDate: new Date().toISOString().split('T')[0],
       invoiceId: invoice.id,
-      reason: reason || `Avoir sur facture ${invoice.invoice_number}`,
+      reason: reason ?? `Avoir sur facture ${invoice.invoice_number}`,
       items: creditNoteItems,
     };
 

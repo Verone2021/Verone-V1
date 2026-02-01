@@ -237,7 +237,7 @@ export default function DocumentDetailPage({
 
   const [document, setDocument] = useState<QontoDocument | null>(null);
   const [documentType, setDocumentType] = useState<DocumentType>(
-    typeParam || 'invoice'
+    typeParam ?? 'invoice'
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -641,7 +641,7 @@ export default function DocumentDetailPage({
           <CardContent className="pt-6">
             <div className="flex items-center gap-2 text-red-700">
               <AlertTriangle className="h-5 w-5" />
-              <p>{error || 'Document non trouvé'}</p>
+              <p>{error ?? 'Document non trouvé'}</p>
             </div>
           </CardContent>
         </Card>
