@@ -570,7 +570,7 @@ export function ContactsAddressesSection({
                     <OrganisationAddressCard
                       id={orgWithEnseigne.id}
                       name={
-                        orgWithEnseigne.tradeName || orgWithEnseigne.legalName
+                        orgWithEnseigne.tradeName ?? orgWithEnseigne.legalName
                       }
                       logoUrl={orgWithEnseigne.logoUrl}
                       ownershipType={orgWithEnseigne.ownershipType}

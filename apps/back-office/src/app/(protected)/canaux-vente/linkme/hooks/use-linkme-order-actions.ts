@@ -147,8 +147,8 @@ async function approveOrder(
       .from('organisations')
       .insert({
         legal_name:
-          details.owner_company_legal_name ||
-          details.owner_company_trade_name ||
+          details.owner_company_legal_name ??
+          details.owner_company_trade_name ??
           'À compléter',
         trade_name: details.owner_company_trade_name,
         email: details.owner_email ?? null,
