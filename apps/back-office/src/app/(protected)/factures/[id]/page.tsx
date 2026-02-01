@@ -160,8 +160,8 @@ function calculateTotalsFromItems(items: QontoInvoiceItem[]): {
 
   for (const item of items) {
     const quantity = parseFloat(item.quantity) || 0;
-    const unitPrice = parseFloat(item.unit_price?.value || '0');
-    const vatRate = parseFloat(item.vat_rate || '0');
+    const unitPrice = parseFloat(item.unit_price?.value ?? '0');
+    const vatRate = parseFloat(item.vat_rate ?? '0');
 
     const itemSubtotal = quantity * unitPrice;
     // vatRate is decimal (0.20 for 20%)
