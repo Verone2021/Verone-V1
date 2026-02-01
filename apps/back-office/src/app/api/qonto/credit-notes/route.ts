@@ -117,7 +117,7 @@ export async function POST(request: NextRequest): Promise<
     // Préparer les items de l'avoir
     // Si items fournis, les utiliser, sinon copier de la facture
     const creditNoteItems =
-      items ||
+      items ??
       invoice.items.map(item => ({
         title: item.title,
         description: item.description,
