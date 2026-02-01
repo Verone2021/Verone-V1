@@ -1107,8 +1107,7 @@ export function useAllLinkMeOrders(status?: OrderValidationStatus) {
           total_ht: order.total_ht,
           total_ttc: order.total_ttc,
           created_at: order.created_at,
-          organisation_name:
-            (orgData?.trade_name ?? orgData?.legal_name) ?? null,
+          organisation_name: orgData?.trade_name ?? orgData?.legal_name ?? null,
           enseigne_name: orgData?.enseigne_name ?? null,
           requester_type: linkmeDetails?.requester_type as string | null,
           requester_name: linkmeDetails?.requester_name as string | null,

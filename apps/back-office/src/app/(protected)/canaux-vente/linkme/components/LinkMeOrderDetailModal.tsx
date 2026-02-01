@@ -131,10 +131,10 @@ export function LinkMeOrderDetailModal({
   };
 
   const paymentInfo = order.payment_status
-    ? PAYMENT_STATUS_LABELS[order.payment_status] ?? {
+    ? (PAYMENT_STATUS_LABELS[order.payment_status] ?? {
         label: order.payment_status,
         variant: 'secondary' as const,
-      }
+      })
     : null;
 
   // Calculer TVA (défaut 20% si non spécifié)

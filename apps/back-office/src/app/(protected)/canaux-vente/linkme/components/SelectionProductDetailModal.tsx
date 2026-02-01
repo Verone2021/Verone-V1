@@ -105,7 +105,7 @@ export function SelectionProductDetailModal({
 
   // Calcul des prix
   const basePrice =
-    mode === 'edit' ? localCustomPriceHT : item?.base_price_ht ?? 0;
+    mode === 'edit' ? localCustomPriceHT : (item?.base_price_ht ?? 0);
   const commissionRate = (item?.commission_rate ?? 0) / 100; // Conversion % → décimal (5.00 → 0.05)
 
   // Prix de vente avec taux de marque

@@ -325,12 +325,12 @@ export function useLinkMeAffiliateCustomers(
   return {
     // Pour enseignes: organisations liées
     // Pour org_independante: liste vide (normal, pas d'orgs liées)
-    organisations: isEnseigne ? enseigneOrgsQuery.data ?? [] : [],
+    organisations: isEnseigne ? (enseigneOrgsQuery.data ?? []) : [],
 
     // Clients particuliers selon le type
     individuals: isEnseigne
-      ? enseigneIndividualsQuery.data ?? []
-      : orgIndividualsQuery.data ?? [],
+      ? (enseigneIndividualsQuery.data ?? [])
+      : (orgIndividualsQuery.data ?? []),
 
     isLoading: isEnseigne
       ? enseigneOrgsQuery.isLoading || enseigneIndividualsQuery.isLoading
@@ -341,7 +341,7 @@ export function useLinkMeAffiliateCustomers(
       : orgIndividualsQuery.isError,
 
     error: isEnseigne
-      ? enseigneOrgsQuery.error ?? enseigneIndividualsQuery.error
+      ? (enseigneOrgsQuery.error ?? enseigneIndividualsQuery.error)
       : orgIndividualsQuery.error,
 
     refetch: () => {

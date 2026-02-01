@@ -171,7 +171,7 @@ export default function ActiviteUtilisateursPage() {
       organisation: '🏢',
       admin: '⚙️',
     };
-    return module ? icons[module] ?? '📄' : '—';
+    return module ? (icons[module] ?? '📄') : '—';
   };
 
   if (isLoading && users.length === 0) {

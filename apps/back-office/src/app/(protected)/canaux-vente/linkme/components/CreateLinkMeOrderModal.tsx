@@ -1014,8 +1014,8 @@ export function CreateLinkMeOrderModal({
                     <div className="space-y-1">
                       <p className="font-semibold text-purple-900">
                         {customerType === 'organization'
-                          ? (selectedCustomer as any).name ??
-                            (selectedCustomer as any).legal_name
+                          ? ((selectedCustomer as any).name ??
+                            (selectedCustomer as any).legal_name)
                           : (selectedCustomer as any).full_name}
                       </p>
                       {(selectedCustomer as any).email && (
@@ -1429,8 +1429,8 @@ export function CreateLinkMeOrderModal({
                     </div>
                     <p className="font-medium text-slate-900">
                       {customerType === 'organization'
-                        ? (selectedCustomer as any)?.name ??
-                          (selectedCustomer as any)?.legal_name
+                        ? ((selectedCustomer as any)?.name ??
+                          (selectedCustomer as any)?.legal_name)
                         : (selectedCustomer as any)?.full_name}
                     </p>
                     {(selectedCustomer as any)?.email && (

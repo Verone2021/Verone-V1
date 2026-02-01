@@ -281,7 +281,7 @@ async function fetchSelectionById(
             weight_kg: rawProduct.weight,
             dimensions_cm: rawProduct.dimensions,
             subcategory_id:
-              (rawProduct.subcategory_id ?? rawProduct.subcategory?.id) ?? null,
+              rawProduct.subcategory_id ?? rawProduct.subcategory?.id ?? null,
             category_name: rawProduct.subcategory?.name ?? null,
             supplier_name:
               rawProduct.supplier?.trade_name ??
