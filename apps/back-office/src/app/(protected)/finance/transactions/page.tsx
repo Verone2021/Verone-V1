@@ -418,7 +418,7 @@ function TransactionDetailPanel({
               <div>
                 <p className="text-muted-foreground">Type</p>
                 <p className="font-medium">
-                  {transaction.operation_type || 'Virement'}
+                  {transaction.operation_type ?? 'Virement'}
                 </p>
               </div>
             </div>
@@ -1281,7 +1281,7 @@ function TransactionsPageV2() {
   // Convert for upload modal
   // Utilise uploadTransaction (depuis le bouton liste) ou selectedTransaction (depuis le panneau)
   const transactionForUpload: TransactionForUpload | null = useMemo(() => {
-    const tx = uploadTransaction || selectedTransaction;
+    const tx = uploadTransaction ?? selectedTransaction;
     if (!tx) return null;
     return {
       id: tx.id,
@@ -1863,7 +1863,7 @@ function TransactionsPageV2() {
                       <div>
                         <p className="text-xs text-muted-foreground">Type</p>
                         <p className="text-xs font-medium">
-                          {selectedTransaction.operation_type || 'Virement'}
+                          {selectedTransaction.operation_type ?? 'Virement'}
                         </p>
                       </div>
                     </div>

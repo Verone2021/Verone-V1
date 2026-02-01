@@ -158,7 +158,7 @@ const NotificationCard = ({
       className: 'bg-blue-500/10 text-blue-700 border border-blue-200',
       label: 'Info',
     },
-  }[notification.severity] || {
+  }[notification.severity] ?? {
     className: 'bg-blue-500/10 text-blue-700 border border-blue-200',
     label: 'Info',
   }; // Fallback vers 'info' si severity inconnue
