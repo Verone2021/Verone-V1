@@ -237,12 +237,12 @@ export function SelectionsSection() {
           product_id: item.product_id,
           product_name: item.products?.name ?? 'Produit inconnu',
           product_reference: item.products?.sku ?? '',
-          product_price_ht: Number(item.public_price_ht) || 0,
+          product_price_ht: Number(item.public_price_ht ?? 0),
           product_image_url: imageMap.get(item.product_id) ?? null,
-          max_margin_rate: Number(item.max_margin_rate) || 30,
-          min_margin_rate: Number(item.min_margin_rate) || 5,
-          suggested_margin_rate: Number(item.suggested_margin_rate) || 15,
-          linkme_commission_rate: Number(item.channel_commission_rate) || 5,
+          max_margin_rate: Number(item.max_margin_rate ?? 30),
+          min_margin_rate: Number(item.min_margin_rate ?? 5),
+          suggested_margin_rate: Number(item.suggested_margin_rate ?? 15),
+          linkme_commission_rate: Number(item.channel_commission_rate ?? 5),
         })
       );
 
