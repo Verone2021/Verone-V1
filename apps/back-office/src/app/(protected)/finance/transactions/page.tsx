@@ -1243,7 +1243,7 @@ function TransactionsPageV2() {
         optional ? 'Justificatif marqué facultatif' : 'Justificatif requis'
       );
       await refresh();
-    } catch (err) {
+    } catch (_err) {
       toast.error('Erreur lors de la mise à jour');
     }
   };
