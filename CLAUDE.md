@@ -327,24 +327,43 @@ pnpm --filter @verone/site-internet build
 
 #### 🔧 Correction ESLint (Si warnings détectés)
 
-**Workflow `/fix-warnings`** : Si ESLint détecte des warnings, utiliser le workflow intelligent :
+**⚠️ RÈGLE ABSOLUE : LIRE `.claude/commands/fix-warnings.md` AVANT TOUTE CORRECTION**
 
-📖 **Documentation complète** : `.claude/commands/fix-warnings.md`
+**Workflow `/fix-warnings`** : Si ESLint détecte des warnings :
 
-**Approche 2026 (Documentation-First)** :
+📖 **OBLIGATOIRE** : Consulter `.claude/commands/fix-warnings.md` (434 lignes de workflow expert)
 
-1. **Discovery** : Consulter docs officielles (MCP Context7) pour pattern correct
-2. **Analysis** : Chercher patterns existants dans le projet
-3. **Planning** : Prioriser fichiers simples → complexes
-4. **Fix** : Un fichier à la fois, TOUS les warnings du fichier
-5. **Validate** : Ratchet Effect (--max-warnings=0) valide automatiquement
+**Workflow 5 Phases (Documentation-First)** :
 
-**Règles strictes** :
+1. **DISCOVERY** : Consulter MCP Context7 pour pattern officiel (React/Next.js/TypeScript)
+2. **ANALYSIS** : Chercher patterns existants dans le projet (Grep, Read)
+3. **PLANNING** : Lister TOUS fichiers, prioriser simple → complexe
+4. **IMPLEMENTATION** : **UN fichier → TOUS warnings du fichier → Self-verify → Commit**
+5. **VALIDATION** : Laisser hooks valider (ratchet effect automatique)
 
-- ❌ Jamais de remplacement aveugle (`sed` global)
-- ❌ Jamais `--no-verify` pour contourner hooks
-- ✅ Pattern officiel (React, Next.js, TypeScript) d'abord
-- ✅ Boy Scout Rule : Fichier plus propre après modification
+**Règles STRICTES (NON NÉGOCIABLES)** :
+
+- ❌ **JAMAIS** de remplacement aveugle (`sed` global, batch par règle)
+- ❌ **JAMAIS** `--no-verify` pour contourner hooks
+- ❌ **JAMAIS** corriger UNE règle sur 87 fichiers (commits trop gros)
+- ❌ **JAMAIS** corriger UN fichier partiellement (incomplet)
+- ✅ **TOUJOURS** pattern officiel documentation (MCP Context7 d'abord)
+- ✅ **TOUJOURS** self-verify AVANT commit : `pnpm eslint --quiet file.tsx`
+- ✅ **TOUJOURS** Boy Scout Rule : Fichier PLUS propre après modification
+
+**Pattern Correct** :
+
+```bash
+# 1. Fixer UN fichier COMPLÈTEMENT (tous warnings)
+pnpm eslint --quiet path/to/file.tsx  # → 0 warnings ✅
+
+# 2. UN commit pour ce fichier
+git commit -m "[BO-LINT-XXX] fix: N warnings in file (type1 + type2)"
+```
+
+**Temps attendu** : 1-2 jours (50 fichiers × 20 min) vs 4-5 jours (approche ad-hoc)
+
+**Référence** : [Addy Osmani - AI-assisted coding 2026](https://medium.com/@addyosmani/my-llm-coding-workflow-going-into-2026-52fe1681325e) (193 fichiers en minutes)
 
 ---
 

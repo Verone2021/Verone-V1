@@ -6,6 +6,38 @@
 
 ---
 
+## ⚠️ AVANT DE COMMENCER (CHECKLIST OBLIGATOIRE)
+
+**CETTE CHECKLIST DOIT ÊTRE VALIDÉE À 100% AVANT TOUTE CORRECTION.**
+
+### Engagement Lecture Complète
+
+- [ ] J'ai LU ce fichier en ENTIER (434 lignes)
+- [ ] Je comprends le workflow 5 phases (Discovery → Analysis → Planning → Implementation → Validation)
+- [ ] Je m'engage à suivre EXACTEMENT ce workflow (pas d'improvisation)
+- [ ] Je NE vais PAS inventer mon propre workflow (batch par règle, commits multiples, etc.)
+- [ ] Je comprends que l'approche documentation-first est 2-3x plus rapide que trial-and-error
+
+### Règles Absolues Comprises
+
+- [ ] ✅ **UN fichier à la fois, TOUS les warnings du fichier** (pas de correction partielle)
+- [ ] ✅ **Self-verify AVANT commit** : `pnpm eslint --quiet file.tsx` → 0 warnings
+- [ ] ✅ **Pattern officiel D'ABORD** (MCP Context7 OBLIGATOIRE)
+- [ ] ✅ **Boy Scout Rule** : Fichier PLUS propre après modification
+- [ ] ❌ **JAMAIS** de remplacement aveugle (`sed` global, batch par règle)
+- [ ] ❌ **JAMAIS** `--no-verify` pour contourner hooks
+- [ ] ❌ **JAMAIS** corriger UNE règle sur 87 fichiers (commits trop gros)
+
+### Temps Attendu
+
+- [ ] Je comprends que cette approche prend **1-2 jours** (50 fichiers × 20 min)
+- [ ] Je comprends que l'approche ad-hoc prend **4-5 jours** (2.5-3x plus lent)
+- [ ] Je comprends que l'approche AI-assisted optimisée permet **193 fichiers en minutes** (source : Addy Osmani)
+
+**SI UNE SEULE CASE ❌ : RE-LIRE CE FICHIER COMPLÈTEMENT.**
+
+---
+
 ## 🎯 Objectif
 
 Corriger les warnings ESLint de manière **intelligente et durable** en suivant les meilleures pratiques 2026 :
