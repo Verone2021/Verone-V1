@@ -192,8 +192,8 @@ async function fetchLinkMeAffiliateById(
     organisation_id: affiliate.organisation_id,
     enseigne_name: affiliate.enseigne?.name ?? null,
     organisation_name:
-      affiliate.organisation?.trade_name ||
-      affiliate.organisation?.legal_name ||
+      affiliate.organisation?.trade_name ??
+      affiliate.organisation?.legal_name ??
       null,
     logo_url: affiliate.logo_url,
     default_margin_rate: affiliate.default_margin_rate,

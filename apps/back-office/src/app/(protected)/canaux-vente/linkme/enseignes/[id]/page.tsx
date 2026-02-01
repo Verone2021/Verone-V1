@@ -374,8 +374,8 @@ export default function EnseigneDetailPage() {
                         Raison sociale
                       </p>
                       <p className="font-medium">
-                        {stats.parentOrganisation.legal_name ||
-                          stats.parentOrganisation.trade_name ||
+                        {stats.parentOrganisation.legal_name ??
+                          stats.parentOrganisation.trade_name ??
                           '-'}
                       </p>
                     </div>
@@ -391,14 +391,14 @@ export default function EnseigneDetailPage() {
                           </p>
                         </div>
                       )}
-                    {(stats.parentOrganisation.siret ||
+                    {(stats.parentOrganisation.siret ??
                       stats.parentOrganisation.siren) && (
                       <div>
                         <p className="text-sm text-muted-foreground">
                           {stats.parentOrganisation.siret ? 'SIRET' : 'SIREN'}
                         </p>
                         <p className="font-medium">
-                          {stats.parentOrganisation.siret ||
+                          {stats.parentOrganisation.siret ??
                             stats.parentOrganisation.siren}
                         </p>
                       </div>
@@ -414,7 +414,7 @@ export default function EnseigneDetailPage() {
                           {[
                             stats.parentOrganisation.billing_address_line1,
                             stats.parentOrganisation.billing_postal_code,
-                            stats.parentOrganisation.billing_city ||
+                            stats.parentOrganisation.billing_city ??
                               stats.parentOrganisation.city,
                           ]
                             .filter(Boolean)
