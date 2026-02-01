@@ -39,8 +39,8 @@ function mapMovementToCard(
 
       // Mapping produit
       products: {
-        name: movement.product_name || 'Produit inconnu',
-        sku: movement.product_sku || 'SKU inconnu',
+        name: movement.product_name ?? 'Produit inconnu',
+        sku: movement.product_sku ?? 'SKU inconnu',
         image_url: movement.product_image_url ?? null, // ✅ NOUVEAU - Image produit
       },
 
