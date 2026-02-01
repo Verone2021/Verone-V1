@@ -686,7 +686,7 @@ export default function CollectionDetailPage({
             ) : (
               <div className="flex items-start gap-2 group">
                 <p className="text-sm text-gray-600 flex-1">
-                  {collection.description || (
+                  {collection.description ?? (
                     <span className="text-gray-400 italic">
                       Aucune description
                     </span>

@@ -375,7 +375,7 @@ export default function ProfilePage() {
                   />
                 ) : (
                   <p className="font-medium text-xs text-neutral-900">
-                    {profile?.first_name || 'Non renseigné'}
+                    {profile?.first_name ?? 'Non renseigné'}
                   </p>
                 )}
                 {validationErrors.firstName && (
@@ -409,7 +409,7 @@ export default function ProfilePage() {
                   />
                 ) : (
                   <p className="font-medium text-xs text-neutral-900">
-                    {profile?.last_name || 'Non renseigné'}
+                    {profile?.last_name ?? 'Non renseigné'}
                   </p>
                 )}
                 {validationErrors.lastName && (
