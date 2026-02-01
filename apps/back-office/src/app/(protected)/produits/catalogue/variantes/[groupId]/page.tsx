@@ -188,7 +188,7 @@ function VariantProductCard({
                 🏢 {product.supplier.name}
               </Badge>
             )}
-            {groupDimensions && groupDimensions.length && (
+            {groupDimensions?.length && (
               <Badge
                 variant="outline"
                 className="text-[10px] px-1.5 py-0.5 bg-green-50 text-green-700 border-green-200"

@@ -120,10 +120,9 @@ export default function ReglesPage() {
   const searchFilteredRules = rules.filter(
     rule =>
       rule.match_value.toLowerCase().includes(rulesSearch.toLowerCase()) ||
-      (rule.organisation_name &&
-        rule.organisation_name
-          .toLowerCase()
-          .includes(rulesSearch.toLowerCase()))
+      rule.organisation_name
+        ?.toLowerCase()
+        .includes(rulesSearch.toLowerCase())
   );
 
   // Séparation règles complètes / incomplètes

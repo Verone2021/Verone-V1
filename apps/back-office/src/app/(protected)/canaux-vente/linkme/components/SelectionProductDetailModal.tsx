@@ -449,7 +449,7 @@ export function SelectionProductDetailModal({
                 </Badge>
               </div>
 
-              {marginResult && marginResult.isProductSellable ? (
+              {marginResult?.isProductSellable ? (
                 <MarginSlider
                   marginResult={marginResult}
                   value={localMarginRate}

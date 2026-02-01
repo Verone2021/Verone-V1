@@ -399,7 +399,7 @@ export default function PrisesContactPage() {
           s.last_name.toLowerCase().includes(query) ||
           s.email.toLowerCase().includes(query) ||
           s.message.toLowerCase().includes(query) ||
-          (s.company_name && s.company_name.toLowerCase().includes(query))
+          s.company_name?.toLowerCase().includes(query)
       );
     }
 

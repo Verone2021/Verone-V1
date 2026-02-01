@@ -209,7 +209,7 @@ export function AffiliatesSection() {
       return availableOrganisations.filter(
         org =>
           org.legal_name.toLowerCase().includes(searchLower) ||
-          (org.trade_name && org.trade_name.toLowerCase().includes(searchLower))
+          org.trade_name?.toLowerCase().includes(searchLower)
       );
     } else {
       return availableEnseignes.filter(ens =>
