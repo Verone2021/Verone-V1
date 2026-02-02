@@ -34,6 +34,7 @@
  */
 
 import { useState, useMemo, useCallback, useEffect } from 'react';
+import Image from 'next/image';
 
 import { useQueryClient } from '@tanstack/react-query';
 import { AddressAutocomplete, type AddressResult } from '@verone/ui';
@@ -53,7 +54,6 @@ import {
   AlertCircle,
   Check,
   Trash2,
-  Search,
   ArrowLeft,
   ArrowRight,
   Store,
@@ -73,6 +73,7 @@ import {
   useCreateAffiliateOrder,
   useAffiliateCustomers,
   useSelectionProducts,
+  type SelectionProduct,
 } from '../../../../lib/hooks/use-affiliate-orders';
 import {
   useOrganisationContacts,
@@ -282,7 +283,7 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
     [selections, selectedSelectionId]
   );
 
-  const selectedCustomer = useMemo(
+  const _selectedCustomer = useMemo(
     () => customers?.find(c => c.id === selectedCustomerId),
     [customers, selectedCustomerId]
   );
@@ -294,7 +295,7 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
     const categoryMap = new Map<string, { count: number }>();
 
     for (const product of products) {
-      const cat = (product as any).category ?? 'Autres';
+      const cat = product.category ?? 'Autres';
       const existing = categoryMap.get(cat);
       if (existing) {
         existing.count++;
@@ -320,8 +321,8 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(
-        (p: any) =>
-          p.productName.toLowerCase().includes(query) ??
+        (p: SelectionProduct) =>
+          p.productName.toLowerCase().includes(query) ||
           p.productSku.toLowerCase().includes(query)
       );
     }
@@ -333,7 +334,7 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
       )?.name;
       if (categoryName) {
         filtered = filtered.filter(
-          (p: any) => (p.category ?? 'Autres') === categoryName
+          (p: SelectionProduct) => (p.category ?? 'Autres') === categoryName
         );
       }
     }
@@ -470,7 +471,7 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
     []
   );
 
-  const handleAddToCart = useCallback((product: any) => {
+  const handleAddToCart = useCallback((product: SelectionProduct) => {
     setCart(prev => {
       const existing = prev.find(item => item.selectionItemId === product.id);
       if (existing) {
@@ -491,7 +492,7 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
           unitPriceHt: product.sellingPriceHt,
           marginRate: product.marginRate,
           basePriceHt: product.basePriceHt,
-          taxRate: product.taxRate ?? 0.2,
+          taxRate: product.taxRate,
         },
       ];
     });
@@ -1070,84 +1071,97 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
                           </div>
                         ) : paginatedProducts.length > 0 ? (
                           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                            {paginatedProducts.map((product: any) => {
-                              const inCart = cart.find(
-                                item => item.selectionItemId === product.id
-                              );
-                              return (
-                                <div
-                                  key={product.id}
-                                  className={`p-4 border rounded-xl transition-all ${
-                                    inCart
-                                      ? 'border-blue-500 bg-blue-50'
-                                      : 'border-gray-200 hover:border-gray-300'
-                                  }`}
-                                >
-                                  <div className="flex items-start gap-3">
-                                    <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
-                                      {product.productImage ? (
-                                        <img
-                                          src={product.productImage}
-                                          alt={product.productName}
-                                          className="w-full h-full object-cover"
-                                        />
-                                      ) : (
-                                        <Package className="h-8 w-8 text-gray-400" />
-                                      )}
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                      <p className="font-medium text-gray-900 line-clamp-2 text-sm">
-                                        {product.productName}
-                                      </p>
-                                      <p className="text-xs text-gray-500 mt-0.5">
-                                        {product.productSku}
-                                      </p>
-                                      <div className="flex items-center gap-2 mt-2">
-                                        <span className="text-sm font-semibold text-gray-900">
-                                          {product.sellingPriceHt.toFixed(2)} €
-                                        </span>
-                                        <span className="text-xs px-1.5 py-0.5 bg-orange-100 text-orange-700 rounded">
-                                          {product.marginRate.toFixed(0)}%
-                                        </span>
+                            {paginatedProducts.map(
+                              (product: SelectionProduct) => {
+                                const inCart = cart.find(
+                                  item => item.selectionItemId === product.id
+                                );
+                                return (
+                                  <div
+                                    key={product.id}
+                                    className={`p-4 border rounded-xl transition-all ${
+                                      inCart
+                                        ? 'border-blue-500 bg-blue-50'
+                                        : 'border-gray-200 hover:border-gray-300'
+                                    }`}
+                                  >
+                                    <div className="flex items-start gap-3">
+                                      <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
+                                        {product.productImage ? (
+                                          <Image
+                                            src={product.productImage}
+                                            alt={product.productName}
+                                            width={64}
+                                            height={64}
+                                            className="w-full h-full object-cover"
+                                          />
+                                        ) : (
+                                          <Package className="h-8 w-8 text-gray-400" />
+                                        )}
+                                      </div>
+                                      <div className="flex-1 min-w-0">
+                                        <p className="font-medium text-gray-900 line-clamp-2 text-sm">
+                                          {product.productName}
+                                        </p>
+                                        <p className="text-xs text-gray-500 mt-0.5">
+                                          {product.productSku}
+                                        </p>
+                                        <div className="flex items-center gap-2 mt-2">
+                                          <span className="text-sm font-semibold text-gray-900">
+                                            {product.sellingPriceHt.toFixed(2)}{' '}
+                                            €
+                                          </span>
+                                          <span className="text-xs px-1.5 py-0.5 bg-orange-100 text-orange-700 rounded">
+                                            {product.marginRate.toFixed(0)}%
+                                          </span>
+                                        </div>
                                       </div>
                                     </div>
-                                  </div>
-                                  <div className="mt-3 flex items-center justify-end">
-                                    {inCart ? (
-                                      <div className="flex items-center gap-2">
+                                    <div className="mt-3 flex items-center justify-end">
+                                      {inCart ? (
+                                        <div className="flex items-center gap-2">
+                                          <button
+                                            onClick={() =>
+                                              handleUpdateQuantity(
+                                                product.id,
+                                                -1
+                                              )
+                                            }
+                                            className="p-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
+                                          >
+                                            <Minus className="h-4 w-4" />
+                                          </button>
+                                          <span className="w-8 text-center font-semibold text-sm">
+                                            {inCart.quantity}
+                                          </span>
+                                          <button
+                                            onClick={() =>
+                                              handleUpdateQuantity(
+                                                product.id,
+                                                1
+                                              )
+                                            }
+                                            className="p-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
+                                          >
+                                            <Plus className="h-4 w-4" />
+                                          </button>
+                                        </div>
+                                      ) : (
                                         <button
                                           onClick={() =>
-                                            handleUpdateQuantity(product.id, -1)
+                                            handleAddToCart(product)
                                           }
-                                          className="p-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
-                                        >
-                                          <Minus className="h-4 w-4" />
-                                        </button>
-                                        <span className="w-8 text-center font-semibold text-sm">
-                                          {inCart.quantity}
-                                        </span>
-                                        <button
-                                          onClick={() =>
-                                            handleUpdateQuantity(product.id, 1)
-                                          }
-                                          className="p-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
+                                          className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors"
                                         >
                                           <Plus className="h-4 w-4" />
+                                          Ajouter
                                         </button>
-                                      </div>
-                                    ) : (
-                                      <button
-                                        onClick={() => handleAddToCart(product)}
-                                        className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors"
-                                      >
-                                        <Plus className="h-4 w-4" />
-                                        Ajouter
-                                      </button>
-                                    )}
+                                      )}
+                                    </div>
                                   </div>
-                                </div>
-                              );
-                            })}
+                                );
+                              }
+                            )}
                           </div>
                         ) : (
                           <div className="text-center py-12">
@@ -2208,84 +2222,88 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
                         </div>
                       ) : paginatedProducts.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                          {paginatedProducts.map((product: any) => {
-                            const inCart = cart.find(
-                              item => item.selectionItemId === product.id
-                            );
-                            return (
-                              <div
-                                key={product.id}
-                                className={`p-4 border rounded-xl transition-all ${
-                                  inCart
-                                    ? 'border-green-500 bg-green-50'
-                                    : 'border-gray-200 hover:border-gray-300'
-                                }`}
-                              >
-                                <div className="flex items-start gap-3">
-                                  <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
-                                    {product.productImage ? (
-                                      <img
-                                        src={product.productImage}
-                                        alt={product.productName}
-                                        className="w-full h-full object-cover"
-                                      />
-                                    ) : (
-                                      <Package className="h-8 w-8 text-gray-400" />
-                                    )}
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <p className="font-medium text-gray-900 line-clamp-2 text-sm">
-                                      {product.productName}
-                                    </p>
-                                    <p className="text-xs text-gray-500 mt-0.5">
-                                      {product.productSku}
-                                    </p>
-                                    <div className="flex items-center gap-2 mt-2">
-                                      <span className="text-sm font-semibold text-gray-900">
-                                        {product.sellingPriceHt.toFixed(2)} €
-                                      </span>
-                                      <span className="text-xs px-1.5 py-0.5 bg-orange-100 text-orange-700 rounded">
-                                        {product.marginRate.toFixed(0)}%
-                                      </span>
+                          {paginatedProducts.map(
+                            (product: SelectionProduct) => {
+                              const inCart = cart.find(
+                                item => item.selectionItemId === product.id
+                              );
+                              return (
+                                <div
+                                  key={product.id}
+                                  className={`p-4 border rounded-xl transition-all ${
+                                    inCart
+                                      ? 'border-green-500 bg-green-50'
+                                      : 'border-gray-200 hover:border-gray-300'
+                                  }`}
+                                >
+                                  <div className="flex items-start gap-3">
+                                    <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
+                                      {product.productImage ? (
+                                        <Image
+                                          src={product.productImage}
+                                          alt={product.productName}
+                                          width={64}
+                                          height={64}
+                                          className="w-full h-full object-cover"
+                                        />
+                                      ) : (
+                                        <Package className="h-8 w-8 text-gray-400" />
+                                      )}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <p className="font-medium text-gray-900 line-clamp-2 text-sm">
+                                        {product.productName}
+                                      </p>
+                                      <p className="text-xs text-gray-500 mt-0.5">
+                                        {product.productSku}
+                                      </p>
+                                      <div className="flex items-center gap-2 mt-2">
+                                        <span className="text-sm font-semibold text-gray-900">
+                                          {product.sellingPriceHt.toFixed(2)} €
+                                        </span>
+                                        <span className="text-xs px-1.5 py-0.5 bg-orange-100 text-orange-700 rounded">
+                                          {product.marginRate.toFixed(0)}%
+                                        </span>
+                                      </div>
                                     </div>
                                   </div>
-                                </div>
-                                <div className="mt-3 flex items-center justify-end">
-                                  {inCart ? (
-                                    <div className="flex items-center gap-2">
+                                  <div className="mt-3 flex items-center justify-end">
+                                    {inCart ? (
+                                      <div className="flex items-center gap-2">
+                                        <button
+                                          onClick={() =>
+                                            handleUpdateQuantity(product.id, -1)
+                                          }
+                                          className="p-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
+                                        >
+                                          <Minus className="h-4 w-4" />
+                                        </button>
+                                        <span className="w-8 text-center font-semibold text-sm">
+                                          {inCart.quantity}
+                                        </span>
+                                        <button
+                                          onClick={() =>
+                                            handleUpdateQuantity(product.id, 1)
+                                          }
+                                          className="p-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
+                                        >
+                                          <Plus className="h-4 w-4" />
+                                        </button>
+                                      </div>
+                                    ) : (
                                       <button
-                                        onClick={() =>
-                                          handleUpdateQuantity(product.id, -1)
-                                        }
-                                        className="p-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
-                                      >
-                                        <Minus className="h-4 w-4" />
-                                      </button>
-                                      <span className="w-8 text-center font-semibold text-sm">
-                                        {inCart.quantity}
-                                      </span>
-                                      <button
-                                        onClick={() =>
-                                          handleUpdateQuantity(product.id, 1)
-                                        }
-                                        className="p-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
+                                        onClick={() => handleAddToCart(product)}
+                                        className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium transition-colors"
                                       >
                                         <Plus className="h-4 w-4" />
+                                        Ajouter
                                       </button>
-                                    </div>
-                                  ) : (
-                                    <button
-                                      onClick={() => handleAddToCart(product)}
-                                      className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium transition-colors"
-                                    >
-                                      <Plus className="h-4 w-4" />
-                                      Ajouter
-                                    </button>
-                                  )}
+                                    )}
+                                  </div>
                                 </div>
-                              </div>
-                            );
-                          })}
+                              );
+                            }
+                          )}
                         </div>
                       ) : (
                         <div className="text-center py-12">
