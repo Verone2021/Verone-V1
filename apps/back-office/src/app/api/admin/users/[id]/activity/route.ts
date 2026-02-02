@@ -75,7 +75,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
     const days = parseInt(searchParams.get('days') ?? '30');
 
     // Récupérer activité récente via fonction SQL
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const { data: recentActions, error: actionsError } = (await (
       supabase as any
     ).rpc('get_user_recent_actions', {

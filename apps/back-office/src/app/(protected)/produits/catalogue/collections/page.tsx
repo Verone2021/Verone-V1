@@ -436,12 +436,12 @@ export default function CollectionsPage() {
                           className="w-full h-full object-contain"
                         />
                       ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <Package className="h-6 w-6 text-gray-400" />
-                      </div>
-                    )}
-                  </div>
-                ))}
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Package className="h-6 w-6 text-gray-400" />
+                        </div>
+                      )}
+                    </div>
+                  ))}
                 {collection.product_count > 5 && (
                   <div className="flex-shrink-0 w-14 h-14 rounded bg-gray-100 flex items-center justify-center text-[10px] text-gray-500 font-medium">
                     +{collection.product_count - 5}
@@ -665,10 +665,7 @@ export default function CollectionsPage() {
             onChange={e =>
               setFilters(prev => ({
                 ...prev,
-                status: e.target.value as
-                  | 'all'
-                  | 'active'
-                  | 'inactive',
+                status: e.target.value as 'all' | 'active' | 'inactive',
               }))
             }
             className="border border-gray-300 rounded-md px-3 py-2"
@@ -683,10 +680,7 @@ export default function CollectionsPage() {
             onChange={e =>
               setFilters(prev => ({
                 ...prev,
-                visibility: e.target.value as
-                  | 'all'
-                  | 'public'
-                  | 'private',
+                visibility: e.target.value as 'all' | 'public' | 'private',
               }))
             }
             className="border border-gray-300 rounded-md px-3 py-2"
