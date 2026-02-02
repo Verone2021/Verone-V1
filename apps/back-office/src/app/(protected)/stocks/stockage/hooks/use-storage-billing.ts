@@ -11,14 +11,17 @@ import { useQuery } from '@tanstack/react-query';
 import { createClient } from '@verone/utils/supabase/client';
 
 // Helper pour appeler des RPC non encore dans les types generes
+interface RpcResult<T> {
+  data: T | null;
+  error: { message: string } | null;
+}
 
-const callRpc = (
-  supabase: SupabaseClient<any>,
+const callRpc = <T = unknown>(
+  supabase: SupabaseClient,
   name: string,
   params?: Record<string, unknown>
-) => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (supabase.rpc as any)(name, params);
+): Promise<RpcResult<T>> => {
+  return supabase.rpc(name, params) as Promise<RpcResult<T>>;
 };
 
 // Re-export hooks from LinkMe storage for reuse
@@ -85,7 +88,10 @@ export function useGlobalStorageTotals() {
     queryFn: async (): Promise<GlobalStorageTotals> => {
       const supabase = createClient();
 
-      const { data, error } = await callRpc(supabase, 'get_storage_totals');
+      const { data, error } = await callRpc<GlobalStorageTotals[]>(
+        supabase,
+        'get_storage_totals'
+      );
 
       if (error) {
         // RPC may not exist yet - graceful fallback
@@ -107,7 +113,7 @@ export function useGlobalStorageTotals() {
         products_count: 0,
       };
 
-      return result as GlobalStorageTotals;
+      return result;
     },
     staleTime: 60000,
   });
@@ -122,7 +128,7 @@ export function useGlobalStorageOverview() {
     queryFn: async (): Promise<GlobalStorageOverviewItem[]> => {
       const supabase = createClient();
 
-      const { data, error } = await callRpc(
+      const { data, error } = await callRpc<GlobalStorageOverviewItem[]>(
         supabase,
         'get_global_storage_overview'
       );
@@ -136,7 +142,7 @@ export function useGlobalStorageOverview() {
         return [];
       }
 
-      return (data ?? []) as GlobalStorageOverviewItem[];
+      return data ?? [];
     },
     staleTime: 60000,
   });
@@ -172,7 +178,7 @@ export function useStorageWeightedAverage(
 
       const supabase = createClient();
 
-      const { data, error } = await callRpc(
+      const { data, error } = await callRpc<WeightedAverageResult[]>(
         supabase,
         'get_storage_weighted_average',
         {
@@ -207,7 +213,7 @@ export function useStorageWeightedAverage(
         billable_average_m3: 0,
       };
 
-      return result as WeightedAverageResult;
+      return result;
     },
     enabled: !!ownerId && !!ownerType,
     staleTime: 60000,
@@ -232,7 +238,7 @@ export function useStorageEventsHistory(
 
       const supabase = createClient();
 
-      const { data, error } = await callRpc(
+      const { data, error } = await callRpc<StorageEvent[]>(
         supabase,
         'get_storage_events_history',
         {
@@ -253,7 +259,7 @@ export function useStorageEventsHistory(
         return [];
       }
 
-      return (data ?? []) as StorageEvent[];
+      return data ?? [];
     },
     enabled: !!ownerId && !!ownerType,
     staleTime: 30000,

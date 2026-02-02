@@ -26,6 +26,18 @@ export interface ProductForStorage {
   product_type: 'sur_mesure' | 'affiliate';
 }
 
+// Supabase query return type
+interface ProductStorageRow {
+  id: string;
+  name: string | null;
+  sku: string | null;
+  dimensions: ProductForStorage['dimensions'];
+  enseigne_id: string | null;
+  assigned_client_id: string | null;
+  created_by_affiliate: string | null;
+  product_images: { public_url: string; display_order: number | null }[] | null;
+}
+
 /**
  * Calcule le volume en m3 depuis les dimensions
  */
@@ -83,21 +95,16 @@ export function useProductsForStorage(
         );
       }
 
-      const { data, error } = await query;
+      const { data, error } = await query.returns<ProductStorageRow[]>();
 
       if (error) {
         console.warn('Error fetching products:', error.message);
         return [];
       }
 
-      return (data ?? []).map(p => {
+      return (data ?? []).map(productData => {
         // Get first image URL (ordered by display_order)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const productData = p as any;
-        const images =
-          (productData.product_images as
-            | { public_url: string; display_order: number }[]
-            | null) ?? [];
+        const images = productData.product_images ?? [];
         const sortedImages = [...images].sort(
           (a, b) => (a.display_order ?? 0) - (b.display_order ?? 0)
         );
@@ -113,10 +120,8 @@ export function useProductsForStorage(
           id: productData.id,
           name: productData.name ?? 'Sans nom',
           sku: productData.sku ?? '-',
-          dimensions: productData.dimensions as ProductForStorage['dimensions'],
-          volume_m3: calcVolumeM3(
-            productData.dimensions as ProductForStorage['dimensions']
-          ),
+          dimensions: productData.dimensions,
+          volume_m3: calcVolumeM3(productData.dimensions),
           image_url: imageUrl,
           product_type: productType,
         };

@@ -7,10 +7,10 @@
 'use client';
 import type { Database } from '@verone/types';
 
-// Types Supabase
-type LinkMeAffiliateRow =
+// Types Supabase (reserved for future use)
+type _LinkMeAffiliateRow =
   Database['public']['Tables']['linkme_affiliates']['Row'];
-type Organisation = Database['public']['Tables']['organisations']['Row'];
+type _Organisation = Database['public']['Tables']['organisations']['Row'];
 
 import { useQuery } from '@tanstack/react-query';
 import { createClient } from '@verone/utils/supabase/client';

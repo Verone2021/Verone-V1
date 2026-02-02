@@ -20,7 +20,7 @@ import { Users, Plus, Shield } from 'lucide-react';
 import { CreateUserDialog } from '@/components/admin/create-user-dialog';
 import { UserManagementTable } from '@/components/admin/user-management-table';
 
-type UserProfile = Database['public']['Tables']['user_profiles']['Row'];
+type _UserProfile = Database['public']['Tables']['user_profiles']['Row'];
 
 // Types pour les utilisateurs
 export interface UserWithProfile {

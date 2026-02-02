@@ -14,16 +14,19 @@ const supabase = createClient();
  * Fetch produits site internet
  */
 async function fetchSiteInternetProducts(): Promise<SiteInternetProduct[]> {
-  const { data, error } = await supabase.rpc(
-    'get_site_internet_products' as any
-  );
+  // Type assertion needed for RPC not yet in generated types
+  const rpcCall = supabase.rpc as (
+    name: string
+  ) => Promise<{ data: SiteInternetProduct[] | null; error: Error | null }>;
+
+  const { data, error } = await rpcCall('get_site_internet_products');
 
   if (error) {
     console.error('Erreur fetch produits site internet:', error);
     throw error;
   }
 
-  return (data as unknown as SiteInternetProduct[]) ?? [];
+  return data ?? [];
 }
 
 /**
@@ -207,7 +210,7 @@ export function useUpdateProductMetadata() {
       metadata: {
         custom_title?: string;
         custom_description?: string;
-        metadata?: Record<string, any>;
+        metadata?: Record<string, unknown>;
       };
     }) => {
       // Récupérer canal site_internet id
@@ -247,8 +250,13 @@ export function useSiteInternetProductsStats() {
   return useQuery({
     queryKey: ['site-internet-products-stats'],
     queryFn: async () => {
-      const { data } = await supabase.rpc('get_site_internet_products' as any);
-      const products = data as unknown as SiteInternetProduct[];
+      // Type assertion needed for RPC not yet in generated types
+      const rpcCall = supabase.rpc as (
+        name: string
+      ) => Promise<{ data: SiteInternetProduct[] | null; error: Error | null }>;
+
+      const { data } = await rpcCall('get_site_internet_products');
+      const products = data;
 
       if (!products) return null;
 
