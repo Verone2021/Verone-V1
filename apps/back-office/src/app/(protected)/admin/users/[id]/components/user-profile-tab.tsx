@@ -42,7 +42,18 @@ export function UserProfileTab({ user }: UserProfileTabProps) {
     });
   };
 
-  const formatUserName = (email: string, user_metadata: any = null) => {
+  type UserMetadata = {
+    name?: string;
+    first_name?: string;
+    last_name?: string;
+    job_title?: string;
+    phone?: string;
+  } | null;
+
+  const formatUserName = (
+    email: string,
+    user_metadata: UserMetadata = null
+  ) => {
     if (user_metadata?.name) {
       return user_metadata.name;
     }
@@ -58,13 +69,13 @@ export function UserProfileTab({ user }: UserProfileTabProps) {
     return tempName.length > 1 ? tempName.join(' ') : tempName[0];
   };
 
-  const getFirstName = (email: string, user_metadata: any = null) => {
+  const getFirstName = (email: string, user_metadata: UserMetadata = null) => {
     if (user_metadata?.first_name) return user_metadata.first_name;
     const tempName = email.split('@')[0].split('.') ?? [''];
     return tempName[0] ?? null;
   };
 
-  const getLastName = (email: string, user_metadata: any = null) => {
+  const getLastName = (email: string, user_metadata: UserMetadata = null) => {
     if (user_metadata?.last_name) return user_metadata.last_name;
     const tempName = email.split('@')[0].split('.') ?? [''];
     return tempName[1] ?? null;
