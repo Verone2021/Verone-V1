@@ -128,7 +128,8 @@ export default function SuppliersPage() {
         .select('*')
         .eq('type', 'supplier')
         .not('archived_at', 'is', null)
-        .order('archived_at', { ascending: false });
+        .order('archived_at', { ascending: false })
+        .returns<Organisation[]>();
 
       if (error) throw error;
 
@@ -142,7 +143,8 @@ export default function SuppliersPage() {
         const { data: productCounts } = await supabase
           .from('products')
           .select('supplier_id')
-          .in('supplier_id', supplierIds);
+          .in('supplier_id', supplierIds)
+          .returns<{ supplier_id: string | null }[]>();
 
         // Créer un Map de comptage
         const countsMap = new Map<string, number>();
@@ -164,8 +166,12 @@ export default function SuppliersPage() {
       setArchivedSuppliers(
         organisationsWithCounts as unknown as Organisation[]
       );
-    } catch (err) {
-      console.error('Erreur chargement fournisseurs archivés:', err);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      console.error(
+        '[Suppliers] Erreur chargement fournisseurs archivés:',
+        message
+      );
     } finally {
       setArchivedLoading(false);
     }

@@ -253,12 +253,14 @@ export default function CustomersPage() {
         .select('*')
         .eq('type', 'customer')
         .not('archived_at', 'is', null)
-        .order('archived_at', { ascending: false });
+        .order('archived_at', { ascending: false })
+        .returns<Organisation[]>();
 
       if (error) throw error;
-      setArchivedCustomers((data ?? []) as unknown as Organisation[]);
-    } catch (err) {
-      console.error('Erreur chargement clients archivés:', err);
+      setArchivedCustomers(data ?? []);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      console.error('[Customers] Erreur chargement clients archivés:', message);
     } finally {
       setArchivedLoading(false);
     }

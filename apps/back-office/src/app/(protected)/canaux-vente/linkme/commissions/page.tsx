@@ -336,8 +336,9 @@ export default function LinkMeCommissionsPage() {
           error
         );
       });
-    } catch (error) {
-      console.error('Error marking paid:', error);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      console.error('[CommissionsPage] Error marking paid:', message);
       toast({
         title: 'Erreur',
         description: 'Impossible de marquer comme payé',

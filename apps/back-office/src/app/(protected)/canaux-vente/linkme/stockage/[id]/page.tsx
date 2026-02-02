@@ -63,18 +63,27 @@ export default function StorageDetailPage() {
       const supabase = createClient();
 
       if (ownerType === 'enseigne') {
+        type EnseigneName = { name: string };
+
         const { data } = await supabase
           .from('enseignes')
           .select('name')
           .eq('id', ownerId)
-          .single();
+          .single()
+          .returns<EnseigneName>();
         if (data) setOwnerName(data.name);
       } else {
+        type OrganisationName = {
+          trade_name: string | null;
+          legal_name: string;
+        };
+
         const { data } = await supabase
           .from('organisations')
           .select('trade_name, legal_name')
           .eq('id', ownerId)
-          .single();
+          .single()
+          .returns<OrganisationName>();
         if (data)
           setOwnerName(data.trade_name ?? data.legal_name ?? 'Organisation');
       }

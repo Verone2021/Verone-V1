@@ -131,6 +131,20 @@ export default function EnseignesPage() {
     setArchivedLoading(true);
     try {
       const supabase = createClient();
+
+      type EnseigneWithOrgs = {
+        id: string;
+        name: string;
+        description: string | null;
+        logo_url: string | null;
+        is_active: boolean;
+        created_at: string;
+        updated_at: string;
+        enseigne_organisations: Array<{
+          organisation_id: string;
+        }> | null;
+      };
+
       const { data, error } = await supabase
         .from('enseignes')
         .select(
@@ -142,7 +156,8 @@ export default function EnseignesPage() {
         `
         )
         .eq('is_active', false)
-        .order('updated_at', { ascending: false });
+        .order('updated_at', { ascending: false })
+        .returns<EnseigneWithOrgs[]>();
 
       if (error) throw error;
 
@@ -150,11 +165,16 @@ export default function EnseignesPage() {
       const transformedData = (data ?? []).map(e => ({
         ...e,
         member_count: e.enseigne_organisations?.length ?? 0,
+        created_by: null, // Ajout du champ requis par Enseigne
       }));
 
-      setArchivedEnseignes(transformedData as unknown as Enseigne[]);
-    } catch (err) {
-      console.error('Erreur chargement enseignes archivées:', err);
+      setArchivedEnseignes(transformedData as Enseigne[]);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      console.error(
+        '[Enseignes] Erreur chargement enseignes archivées:',
+        message
+      );
     } finally {
       setArchivedLoading(false);
     }

@@ -173,12 +173,17 @@ export default function PartnersPage() {
         .select('*')
         .eq('type', 'partner')
         .not('archived_at', 'is', null)
-        .order('archived_at', { ascending: false });
+        .order('archived_at', { ascending: false })
+        .returns<Organisation[]>();
 
       if (error) throw error;
-      setArchivedPartners((data ?? []) as unknown as Organisation[]);
-    } catch (err) {
-      console.error('Erreur chargement partenaires archivés:', err);
+      setArchivedPartners(data ?? []);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      console.error(
+        '[Partners] Erreur chargement partenaires archivés:',
+        message
+      );
     } finally {
       setArchivedLoading(false);
     }

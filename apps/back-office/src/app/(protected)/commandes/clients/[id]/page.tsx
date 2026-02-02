@@ -117,16 +117,37 @@ export default async function OrderDetailPage({
     `
     )
     .eq('id', id)
-    .single();
+    .single()
+    .returns<OrderWithRelations>();
 
   if (orderData) {
     order = orderData;
   } else {
     // FALLBACK: Essayer via RPC get_linkme_orders pour les commandes LinkMe
-    const { data: linkmeOrders, error: linkmeError } = await supabase.rpc(
-      'get_linkme_orders',
-      {}
-    );
+    type LinkMeOrder = {
+      id: string;
+      order_number: string;
+      status: string;
+      payment_status: string | null;
+      customer_id: string | null;
+      customer_type: string | null;
+      shipping_address: unknown;
+      total_ht: number | null;
+      total_ttc: number | null;
+      shipping_cost_ht: number | null;
+      handling_cost_ht: number | null;
+      insurance_cost_ht: number | null;
+      created_at: string | null;
+      created_by_affiliate_id: string | null;
+      items: unknown;
+    };
+
+    const result = await supabase.rpc('get_linkme_orders', {});
+
+    const { data: linkmeOrders, error: linkmeError } = result as {
+      data: LinkMeOrder[] | null;
+      error: Error | null;
+    };
 
     if (linkmeOrders && linkmeOrders.length > 0) {
       const linkmeOrder = linkmeOrders.find((o: { id: string }) => o.id === id);
@@ -192,11 +213,20 @@ export default async function OrderDetailPage({
   let isOrganisation = false;
 
   if (order.customer_type === 'organization' && order.customer_id) {
+    type OrganisationData = {
+      id: string;
+      legal_name: string;
+      trade_name: string | null;
+      email: string | null;
+      phone: string | null;
+    };
+
     const { data: org } = await supabase
       .from('organisations')
       .select('id, legal_name, trade_name, email, phone')
       .eq('id', order.customer_id)
-      .single();
+      .single()
+      .returns<OrganisationData>();
 
     if (org) {
       customerName = org.trade_name ?? org.legal_name;
@@ -205,11 +235,20 @@ export default async function OrderDetailPage({
       isOrganisation = true;
     }
   } else if (order.customer_type === 'individual' && order.customer_id) {
+    type IndividualCustomerData = {
+      id: string;
+      first_name: string;
+      last_name: string;
+      email: string | null;
+      phone: string | null;
+    };
+
     const { data: individual } = await supabase
       .from('individual_customers')
       .select('id, first_name, last_name, email, phone')
       .eq('id', order.customer_id)
-      .single();
+      .single()
+      .returns<IndividualCustomerData>();
 
     if (individual) {
       customerName = `${individual.first_name} ${individual.last_name}`;
@@ -223,9 +262,20 @@ export default async function OrderDetailPage({
   let creatorEmail = '';
 
   if (order.created_by) {
-    const { data: creatorInfo } = await supabase.rpc('get_user_info', {
+    type UserInfo = {
+      first_name?: string;
+      last_name?: string;
+      email?: string;
+    };
+
+    const result = await supabase.rpc('get_user_info', {
       p_user_id: order.created_by,
     });
+
+    const { data: creatorInfo } = result as {
+      data: UserInfo[] | null;
+      error: Error | null;
+    };
 
     if (creatorInfo && Array.isArray(creatorInfo) && creatorInfo.length > 0) {
       const creator = creatorInfo[0] as {

@@ -459,6 +459,17 @@ export default function PurchaseOrdersPage() {
     const supabase = createClient();
 
     // Récupérer les items de la commande avec les infos produits
+    type OrderItemWithProduct = {
+      id: string;
+      quantity: number;
+      products: {
+        name: string;
+        sku: string;
+        min_stock: number | null;
+        stock_real: number | null;
+      } | null;
+    };
+
     const { data: orderItems, error } = await supabase
       .from('purchase_order_items')
       .select(
@@ -473,7 +484,8 @@ export default function PurchaseOrdersPage() {
         )
       `
       )
-      .eq('purchase_order_id', orderId);
+      .eq('purchase_order_id', orderId)
+      .returns<OrderItemWithProduct[]>();
 
     if (error) {
       console.error('Erreur vérification shortages:', error);

@@ -529,6 +529,11 @@ export default function DepensesPage() {
         endDate = `${chartYear}-12-31`;
       }
 
+      type ExpenseData = {
+        category: string | null;
+        amount: number | null;
+      };
+
       // Requête pour les dépenses par catégorie
       let query = supabase
         .from('v_expenses_with_details')
@@ -539,10 +544,10 @@ export default function DepensesPage() {
         query = query.gte('emitted_at', startDate).lte('emitted_at', endDate);
       }
 
-      const { data, error: queryError } = await query;
+      const { data, error: queryError } = await query.returns<ExpenseData[]>();
 
       if (queryError) {
-        console.warn('Error fetching chart data:', queryError);
+        console.warn('[Depenses] Error fetching chart data:', queryError);
         return;
       }
 
@@ -550,18 +555,16 @@ export default function DepensesPage() {
       const categoryData: Record<string, { total: number; count: number }> = {};
       let totalExpenses = 0;
 
-      (data ?? []).forEach(
-        (exp: { category: string | null; amount: number | null }) => {
-          const cat = exp.category ?? 'other';
-          const amount = exp.amount ?? 0;
-          if (!categoryData[cat]) {
-            categoryData[cat] = { total: 0, count: 0 };
-          }
-          categoryData[cat].total += Math.abs(amount);
-          categoryData[cat].count += 1;
-          totalExpenses += Math.abs(amount);
+      (data ?? []).forEach(exp => {
+        const cat = exp.category ?? 'other';
+        const amount = exp.amount ?? 0;
+        if (!categoryData[cat]) {
+          categoryData[cat] = { total: 0, count: 0 };
         }
-      );
+        categoryData[cat].total += Math.abs(amount);
+        categoryData[cat].count += 1;
+        totalExpenses += Math.abs(amount);
+      });
 
       const breakdownArray: ExpenseBreakdown[] = Object.entries(categoryData)
         .map(([code, catData]) => ({
@@ -575,8 +578,9 @@ export default function DepensesPage() {
         .sort((a, b) => b.total_amount - a.total_amount);
 
       setChartExpenseBreakdown(breakdownArray);
-    } catch (err) {
-      console.error('Error fetching chart data:', err);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      console.error('[Depenses] Error fetching chart data:', message);
     } finally {
       setChartLoading(false);
     }

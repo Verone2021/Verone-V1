@@ -110,8 +110,13 @@ export default function SourcingPage() {
           .lte('created_at', endOfMonth.toISOString());
 
         setCompletedThisMonth(count ?? 0);
-      } catch (error) {
-        console.error('Erreur chargement produits complétés:', error);
+      } catch (error: unknown) {
+        const message =
+          error instanceof Error ? error.message : 'Unknown error';
+        console.error(
+          '[Sourcing] Erreur chargement produits complétés:',
+          message
+        );
       }
     };
     void fetchCompletedCount().catch(error => {

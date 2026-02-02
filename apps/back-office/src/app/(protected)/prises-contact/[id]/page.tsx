@@ -112,11 +112,12 @@ export default function SubmissionDetailPage({
         const supabase = createClient();
 
         // Fetch submission
-        const { data: sub, error: subError } = (await supabase
+        const { data: sub, error: subError } = await supabase
           .from('form_submissions')
           .select('*')
           .eq('id', id)
-          .single()) as { data: FormSubmission | null; error: unknown };
+          .single()
+          .returns<FormSubmission>();
 
         if (subError) throw subError;
         if (!sub) {
@@ -130,17 +131,20 @@ export default function SubmissionDetailPage({
         setNewNotes(sub.internal_notes ?? '');
 
         // Fetch form type
-        const { data: type, error: typeError } = (await supabase
+        const { data: type, error: typeError } = await supabase
           .from('form_types')
           .select('*')
           .eq('code', sub.form_type)
-          .single()) as { data: FormType | null; error: unknown };
+          .single()
+          .returns<FormType>();
 
         if (!typeError && type) {
           setFormType(type);
         }
-      } catch (error) {
-        console.error('Error fetching submission:', error);
+      } catch (error: unknown) {
+        const message =
+          error instanceof Error ? error.message : 'Unknown error';
+        console.error('[ContactDetail] Error fetching submission:', message);
       } finally {
         setLoading(false);
       }
@@ -168,8 +172,9 @@ export default function SubmissionDetailPage({
 
       setSubmission({ ...submission, status: newStatus });
       setEditingStatus(false);
-    } catch (error) {
-      console.error('Error updating status:', error);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      console.error('[ContactDetail] Error updating status:', message);
       alert('Erreur lors de la mise à jour du statut');
     } finally {
       setSaving(false);
@@ -193,8 +198,9 @@ export default function SubmissionDetailPage({
 
       setSubmission({ ...submission, priority: newPriority });
       setEditingPriority(false);
-    } catch (error) {
-      console.error('Error updating priority:', error);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      console.error('[ContactDetail] Error updating priority:', message);
       alert('Erreur lors de la mise à jour de la priorité');
     } finally {
       setSaving(false);
@@ -218,8 +224,9 @@ export default function SubmissionDetailPage({
 
       setSubmission({ ...submission, internal_notes: newNotes ?? null });
       setEditingNotes(false);
-    } catch (error) {
-      console.error('Error updating notes:', error);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      console.error('[ContactDetail] Error updating notes:', message);
       alert('Erreur lors de la mise à jour des notes');
     } finally {
       setSaving(false);

@@ -52,6 +52,18 @@ async function getUsersWithProfiles(): Promise<UserWithProfile[]> {
 
   // Pour récupérer les utilisateurs, nous utilisons une approche simplifiée
   // En récupérant les profils selon la structure DB réelle
+  type UserProfileData = {
+    user_id: string;
+    role: string;
+    user_type: string | null;
+    first_name: string | null;
+    last_name: string | null;
+    phone: string | null;
+    job_title: string | null;
+    created_at: string;
+    updated_at: string;
+  };
+
   const { data: profiles, error } = await supabase
     .from('user_profiles')
     .select(
@@ -67,7 +79,8 @@ async function getUsersWithProfiles(): Promise<UserWithProfile[]> {
       updated_at
     `
     )
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
+    .returns<UserProfileData[]>();
 
   if (error) {
     console.error('Erreur lors de la récupération des profils:', error);
@@ -152,7 +165,8 @@ async function getCurrentUserRole() {
     .from('user_profiles')
     .select('role')
     .eq('user_id', user.id)
-    .single();
+    .single()
+    .returns<{ role: string }>();
 
   return profile?.role ?? null;
 }
