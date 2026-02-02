@@ -310,14 +310,14 @@ export default function EnseigneDetailPage() {
       if (currentParent?.id !== parentId) {
         // Reset ancien parent
         if (currentParent && newIds.has(currentParent.id)) {
-          await (supabase as any)
+          await supabase
             .from('organisations')
             .update({ is_enseigne_parent: false })
             .eq('id', currentParent.id);
         }
         // Set nouveau parent
         if (parentId && newIds.has(parentId)) {
-          await (supabase as any)
+          await supabase
             .from('organisations')
             .update({ is_enseigne_parent: true })
             .eq('id', parentId);
@@ -491,8 +491,8 @@ export default function EnseigneDetailPage() {
                       stats.parentOrganisation.siren}
                   </div>
                 )}
-                {(stats.parentOrganisation.billing_address_line1 ||
-                  stats.parentOrganisation.billing_postal_code ||
+                {(stats.parentOrganisation.billing_address_line1 ??
+                  stats.parentOrganisation.billing_postal_code ??
                   stats.parentOrganisation.billing_city) && (
                   <div className="flex items-center gap-1.5 text-sm text-amber-800">
                     <MapPin className="h-3.5 w-3.5" />
