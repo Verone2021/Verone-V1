@@ -12,6 +12,8 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import type { Database } from '@verone/types';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { createClient } from '@verone/utils/supabase/client';
 
 import { useAuth } from '../../contexts/AuthContext';
@@ -76,31 +78,33 @@ export function useAffiliateProducts() {
   return useQuery({
     queryKey: ['affiliate-products', enseigneId, organisationId],
     queryFn: async (): Promise<AffiliateProduct[]> => {
-      const supabase = createClient();
+      const supabase: SupabaseClient<Database> = createClient();
 
       // Pour org_independante, chercher par organisation_id
       if (isOrgIndependante && organisationId) {
-        const { data: affiliate } = await (supabase as any)
+        const { data: affiliate } = await supabase
           .from('linkme_affiliates')
           .select('id')
           .eq('organisation_id', organisationId)
-          .maybeSingle();
+          .maybeSingle<{ id: string }>();
 
         if (!affiliate) return [];
 
-        const { data, error } = await (supabase.from('products') as any)
+        const { data, error } = await supabase
+          .from('products')
           .select(
             'id, name, sku, description, affiliate_payout_ht, affiliate_commission_rate, affiliate_approval_status, affiliate_rejection_reason, dimensions, created_at, updated_at'
           )
           .eq('created_by_affiliate', affiliate.id)
-          .order('created_at', { ascending: false });
+          .order('created_at', { ascending: false })
+          .returns<AffiliateProduct[]>();
 
         if (error) {
           console.error('Error fetching affiliate products:', error);
           throw error;
         }
 
-        return (data ?? []) as AffiliateProduct[];
+        return data ?? [];
       }
 
       // Pour enseigne_admin, utiliser la RPC existante
@@ -108,7 +112,7 @@ export function useAffiliateProducts() {
         return [];
       }
 
-      const { data, error } = await (supabase.rpc as any)(
+      const { data, error } = await supabase.rpc(
         'get_affiliate_products_for_enseigne',
         { p_enseigne_id: enseigneId }
       );
@@ -140,10 +144,10 @@ export function useAffiliateProduct(productId: string | undefined) {
         return null;
       }
 
-      const supabase = createClient();
+      const supabase: SupabaseClient<Database> = createClient();
 
       // Use RPC to bypass RLS (LinkMe users don't have SELECT policy on products)
-      const { data, error } = await (supabase.rpc as any)(
+      const { data, error } = await supabase.rpc(
         'get_affiliate_product_by_id',
         {
           p_product_id: productId,
@@ -158,7 +162,7 @@ export function useAffiliateProduct(productId: string | undefined) {
 
       // RPC returns array, get first element
       const product = Array.isArray(data) ? data[0] : data;
-      return product ?? null;
+      return (product as AffiliateProduct | undefined) ?? null;
     },
     enabled: !!productId && !!enseigneId,
   });
@@ -178,18 +182,18 @@ export function useCreateAffiliateProduct() {
     mutationFn: async (
       input: CreateAffiliateProductInput
     ): Promise<AffiliateProduct> => {
-      const supabase = createClient();
+      const supabase: SupabaseClient<Database> = createClient();
 
       let affiliate: { id: string } | null = null;
       let targetEnseigneId: string | null = null;
 
       // Pour org_independante, chercher l'affiliate par organisation_id
       if (isOrgIndependante && organisationId) {
-        const { data: affData, error: affError } = await (supabase as any)
+        const { data: affData, error: affError } = await supabase
           .from('linkme_affiliates')
           .select('id, enseigne_id')
           .eq('organisation_id', organisationId)
-          .maybeSingle();
+          .maybeSingle<{ id: string; enseigne_id: string | null }>();
 
         if (affError) {
           console.error('Error fetching affiliate:', affError);
@@ -202,11 +206,11 @@ export function useCreateAffiliateProduct() {
         targetEnseigneId = affData.enseigne_id; // Can be null for org_independante
       } else if (enseigneId) {
         // Pour enseigne_admin
-        const { data: affData, error: affError } = await (supabase as any)
+        const { data: affData, error: affError } = await supabase
           .from('linkme_affiliates')
           .select('id')
           .eq('enseigne_id', enseigneId)
-          .maybeSingle();
+          .maybeSingle<{ id: string }>();
 
         if (affError) {
           console.error('Error fetching affiliate:', affError);
@@ -254,17 +258,19 @@ export function useCreateAffiliateProduct() {
         }
       }
 
-      const { data, error } = await (supabase.from('products') as any)
-        .insert(insertData)
+      const { data, error } = await supabase
+        .from('products')
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .insert(insertData as any)
         .select()
-        .single();
+        .single<AffiliateProduct>();
 
       if (error) {
         console.error('Error creating affiliate product:', error);
         throw error;
       }
 
-      return data as AffiliateProduct;
+      return data;
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['affiliate-products'] });
@@ -292,7 +298,7 @@ export function useUpdateAffiliateProduct() {
         throw new Error('Enseigne ID required');
       }
 
-      const supabase = createClient();
+      const supabase: SupabaseClient<Database> = createClient();
 
       // Build update object (commission_rate gere par back-office uniquement)
       const updateData: Record<string, unknown> = {};
@@ -304,20 +310,21 @@ export function useUpdateAffiliateProduct() {
       if (updates.dimensions !== undefined)
         updateData.dimensions = updates.dimensions;
 
-      const { data, error } = await (supabase.from('products') as any)
+      const { data, error } = await supabase
+        .from('products')
         .update(updateData)
         .eq('id', productId)
         .eq('enseigne_id', enseigneId)
         .eq('affiliate_approval_status', 'draft')
         .select()
-        .single();
+        .single<AffiliateProduct>();
 
       if (error) {
         console.error('Error updating affiliate product:', error);
         throw error;
       }
 
-      return data as AffiliateProduct;
+      return data;
     },
     onSuccess: async (_, variables) => {
       await queryClient.invalidateQueries({ queryKey: ['affiliate-products'] });
@@ -336,9 +343,9 @@ export function useSubmitForApproval() {
 
   return useMutation({
     mutationFn: async (productId: string): Promise<boolean> => {
-      const supabase = createClient();
+      const supabase: SupabaseClient<Database> = createClient();
 
-      const { data, error } = await (supabase.rpc as any)(
+      const { data, error } = await supabase.rpc(
         'submit_affiliate_product_for_approval',
         { p_product_id: productId }
       );
@@ -348,7 +355,7 @@ export function useSubmitForApproval() {
         throw error;
       }
 
-      return data as boolean;
+      return data;
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['affiliate-products'] });
@@ -370,13 +377,13 @@ export function useAffiliateProductPrice(
         return null;
       }
 
-      const supabase = createClient();
+      const supabase: SupabaseClient<Database> = createClient();
 
-      const { data, error } = await (supabase.rpc as any)(
+      const { data, error } = await supabase.rpc(
         'calculate_affiliate_product_price',
         {
           p_product_id: productId,
-          p_margin_rate: marginRate ?? null,
+          p_margin_rate: marginRate,
         }
       );
 
@@ -410,9 +417,10 @@ export function useRevertToDraft() {
         throw new Error('Enseigne ID required');
       }
 
-      const supabase = createClient();
+      const supabase: SupabaseClient<Database> = createClient();
 
-      const { error } = await (supabase.from('products') as any)
+      const { error } = await supabase
+        .from('products')
         .update({
           affiliate_approval_status: 'draft',
           affiliate_rejection_reason: null,
