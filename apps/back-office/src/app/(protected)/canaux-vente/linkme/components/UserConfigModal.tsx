@@ -96,48 +96,48 @@ export function UserConfigModal({
       setErrors({});
       setActiveTab('profile');
 
+      // Récupérer les données de l'affilié
+      async function fetchAffiliateData() {
+        if (!user.enseigne_id && !user.organisation_id) {
+          setAffiliateData(null);
+          return;
+        }
+
+        setIsLoadingAffiliate(true);
+        const supabase = createClient();
+
+        try {
+          let query = supabase
+            .from('linkme_affiliates')
+            .select('id, default_margin_rate, linkme_commission_rate');
+
+          if (user.enseigne_id) {
+            query = query.eq('enseigne_id', user.enseigne_id);
+          } else if (user.organisation_id) {
+            query = query.eq('organisation_id', user.organisation_id);
+          }
+
+          const { data, error } = await query.single();
+
+          if (error) {
+            console.error('Erreur fetch affiliate:', error);
+            setAffiliateData(null);
+          } else if (data) {
+            setAffiliateData(data as AffiliateData);
+          }
+        } catch (err) {
+          console.error('Erreur fetch affiliate:', err);
+        } finally {
+          setIsLoadingAffiliate(false);
+        }
+      }
+
       // Charger les données affilié pour l'onglet Rémunération
       void fetchAffiliateData().catch(error => {
         console.error('[UserConfigModal] fetchAffiliateData failed:', error);
       });
     }
   }, [isOpen, user]);
-
-  // Récupérer les données de l'affilié
-  async function fetchAffiliateData() {
-    if (!user.enseigne_id && !user.organisation_id) {
-      setAffiliateData(null);
-      return;
-    }
-
-    setIsLoadingAffiliate(true);
-    const supabase = createClient();
-
-    try {
-      let query = supabase
-        .from('linkme_affiliates')
-        .select('id, default_margin_rate, linkme_commission_rate');
-
-      if (user.enseigne_id) {
-        query = query.eq('enseigne_id', user.enseigne_id);
-      } else if (user.organisation_id) {
-        query = query.eq('organisation_id', user.organisation_id);
-      }
-
-      const { data, error } = await query.single();
-
-      if (error) {
-        console.error('Erreur fetch affiliate:', error);
-        setAffiliateData(null);
-      } else if (data) {
-        setAffiliateData(data as AffiliateData);
-      }
-    } catch (err) {
-      console.error('Erreur fetch affiliate:', err);
-    } finally {
-      setIsLoadingAffiliate(false);
-    }
-  }
 
   // Validation profil
   const validateProfile = (): boolean => {

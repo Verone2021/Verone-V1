@@ -55,43 +55,43 @@ export default function EditEmailTemplatePage() {
   const [variablesInput, setVariablesInput] = useState('');
 
   useEffect(() => {
+    async function loadTemplate() {
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from('email_templates')
+          .select('*')
+          .eq('slug', slug)
+          .single();
+
+        if (error) throw error;
+
+        const templateData = {
+          ...data,
+          variables: Array.isArray(data.variables) ? data.variables : [],
+        };
+
+        setTemplate(templateData as EmailTemplate);
+        setName(data.name);
+        setSubject(data.subject);
+        setHtmlBody(data.html_body);
+        setCategory(data.category ?? 'general');
+        setActive(data.active ?? true);
+        setVariablesInput(
+          Array.isArray(data.variables) ? data.variables.join(', ') : ''
+        );
+      } catch (error) {
+        console.error('Error loading template:', error);
+        setError('Impossible de charger le template');
+      } finally {
+        setLoading(false);
+      }
+    }
+
     void loadTemplate().catch(error => {
       console.error('[EmailEditPage] loadTemplate failed:', error);
     });
   }, [slug]);
-
-  async function loadTemplate() {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('email_templates')
-        .select('*')
-        .eq('slug', slug)
-        .single();
-
-      if (error) throw error;
-
-      const templateData = {
-        ...data,
-        variables: Array.isArray(data.variables) ? data.variables : [],
-      };
-
-      setTemplate(templateData as EmailTemplate);
-      setName(data.name);
-      setSubject(data.subject);
-      setHtmlBody(data.html_body);
-      setCategory(data.category ?? 'general');
-      setActive(data.active ?? true);
-      setVariablesInput(
-        Array.isArray(data.variables) ? data.variables.join(', ') : ''
-      );
-    } catch (error) {
-      console.error('Error loading template:', error);
-      setError('Impossible de charger le template');
-    } finally {
-      setLoading(false);
-    }
-  }
 
   async function handleSave() {
     try {

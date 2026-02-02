@@ -41,6 +41,41 @@ export default function PreviewEmailTemplatePage() {
   const [showRawHtml, setShowRawHtml] = useState(false);
 
   useEffect(() => {
+    async function loadTemplate() {
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from('email_templates')
+          .select('*')
+          .eq('slug', slug)
+          .single();
+
+        if (error) throw error;
+
+        const variables = Array.isArray(data.variables)
+          ? data.variables.filter(v => typeof v === 'string')
+          : [];
+
+        const templateData = {
+          ...data,
+          variables,
+        };
+
+        setTemplate(templateData as EmailTemplate);
+
+        // Initialize variable values with placeholders
+        const initialValues: Record<string, string> = {};
+        variables.forEach((variable: string) => {
+          initialValues[variable] = `{{${variable}}}`;
+        });
+        setVariableValues(initialValues);
+      } catch (error) {
+        console.error('Error loading template:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
     void loadTemplate().catch(error => {
       console.error('[EmailPreviewPage] loadTemplate failed:', error);
     });
@@ -48,72 +83,37 @@ export default function PreviewEmailTemplatePage() {
 
   useEffect(() => {
     if (template) {
+      function renderTemplate() {
+        if (!template) return;
+
+        let html = template.html_body;
+        let subject = template.subject;
+
+        // Simple variable replacement (basic Handlebars-like)
+        Object.entries(variableValues).forEach(([key, value]) => {
+          const regex = new RegExp(`{{${key}}}`, 'g');
+          html = html.replace(regex, value);
+          subject = subject.replace(regex, value);
+        });
+
+        // Handle basic conditionals {{#if variable}}...{{/if}}
+        // This is a simplified version - real Handlebars would be better
+        html = html.replace(
+          /{{#if\s+(\w+)}}([\s\S]*?){{\/if}}/g,
+          (match, varName, content) => {
+            return variableValues[varName] &&
+              variableValues[varName] !== `{{${varName}}}`
+              ? content
+              : '';
+          }
+        );
+
+        setRenderedHtml(html);
+      }
+
       renderTemplate();
     }
   }, [template, variableValues]);
-
-  async function loadTemplate() {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('email_templates')
-        .select('*')
-        .eq('slug', slug)
-        .single();
-
-      if (error) throw error;
-
-      const variables = Array.isArray(data.variables)
-        ? data.variables.filter(v => typeof v === 'string')
-        : [];
-
-      const templateData = {
-        ...data,
-        variables,
-      };
-
-      setTemplate(templateData as EmailTemplate);
-
-      // Initialize variable values with placeholders
-      const initialValues: Record<string, string> = {};
-      variables.forEach((variable: string) => {
-        initialValues[variable] = `{{${variable}}}`;
-      });
-      setVariableValues(initialValues);
-    } catch (error) {
-      console.error('Error loading template:', error);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  function renderTemplate() {
-    if (!template) return;
-
-    let html = template.html_body;
-    let subject = template.subject;
-
-    // Simple variable replacement (basic Handlebars-like)
-    Object.entries(variableValues).forEach(([key, value]) => {
-      const regex = new RegExp(`{{${key}}}`, 'g');
-      html = html.replace(regex, value);
-      subject = subject.replace(regex, value);
-    });
-
-    // Handle basic conditionals {{#if variable}}...{{/if}}
-    // This is a simplified version - real Handlebars would be better
-    html = html.replace(
-      /{{#if\s+(\w+)}}([\s\S]*?){{\/if}}/g,
-      (match, varName, content) => {
-        return variableValues[varName] &&
-          variableValues[varName] !== `{{${varName}}}`
-          ? content
-          : '';
-      }
-    );
-
-    setRenderedHtml(html);
-  }
 
   if (loading) {
     return (

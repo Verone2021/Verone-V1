@@ -181,28 +181,28 @@ export default function QuoteDetailPage(): React.ReactNode {
   const [showConvertWarning, setShowConvertWarning] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
 
-  const fetchQuote = async (): Promise<void> => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const response = await fetch(`/api/qonto/quotes/${id}`);
-      const data = (await response.json()) as QuoteApiResponse;
-
-      if (!response.ok || !data.success) {
-        throw new Error(data.error ?? 'Failed to fetch quote');
-      }
-
-      setQuote(data.quote);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Erreur inconnue');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
     if (id) {
+      const fetchQuote = async (): Promise<void> => {
+        setLoading(true);
+        setError(null);
+
+        try {
+          const response = await fetch(`/api/qonto/quotes/${id}`);
+          const data = (await response.json()) as QuoteApiResponse;
+
+          if (!response.ok || !data.success) {
+            throw new Error(data.error ?? 'Failed to fetch quote');
+          }
+
+          setQuote(data.quote);
+        } catch (err: unknown) {
+          setError(err instanceof Error ? err.message : 'Erreur inconnue');
+        } finally {
+          setLoading(false);
+        }
+      };
+
       void fetchQuote();
     }
   }, [id]);

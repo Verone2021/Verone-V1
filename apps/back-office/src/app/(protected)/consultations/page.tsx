@@ -246,7 +246,7 @@ export default function ConsultationsPage() {
         error
       );
     });
-  }, []);
+  }, [fetchConsultations]);
 
   // Filtrer les consultations
   const filteredConsultations = consultations.filter(consultation => {

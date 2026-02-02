@@ -67,86 +67,86 @@ export default function PrixClientsPage() {
 
   // Charger les prix clients
   useEffect(() => {
+    const loadPricingRules = async () => {
+      setIsLoading(true);
+      try {
+        // Requête customer_pricing seul (sans jointures pour MVP)
+        const { data: pricingData, error } = await supabase
+          .from('customer_pricing')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        if (!pricingData || pricingData.length === 0) {
+          setPricingRules([]);
+          setFilteredRules([]);
+          calculateStats([]);
+          return;
+        }
+
+        // Récupérer les organisations et produits séparément
+        const customerIds = [
+          ...new Set(pricingData.map(p => p.customer_id).filter(Boolean)),
+        ];
+        const productIds = [
+          ...new Set(pricingData.map(p => p.product_id).filter(Boolean)),
+        ];
+
+        // Fetch organisations
+        const { data: orgsData } = await supabase
+          .from('organisations')
+          .select('id, trade_name, legal_name')
+          .in('id', customerIds)
+          .returns<{ id: string; trade_name: string; legal_name: string }[]>();
+
+        // Fetch products
+        const { data: productsData } = await supabase
+          .from('products')
+          .select('id, name')
+          .in('id', productIds)
+          .returns<{ id: string; name: string }[]>();
+
+        // Créer des maps pour lookup rapide
+        const orgsMap = new Map(orgsData?.map(o => [o.id, o]) ?? []);
+        const productsMap = new Map(productsData?.map(p => [p.id, p]) ?? []);
+
+        // Transformer les données avec les noms
+        const transformedData: CustomerPricing[] = pricingData.map(item => {
+          const org = orgsMap.get(item.customer_id);
+          const product = productsMap.get(item.product_id);
+
+          return {
+            ...item,
+            customer_name:
+              org?.trade_name ??
+              org?.legal_name ??
+              `Client ${item.customer_id?.slice(0, 8)}`,
+            product_name:
+              product?.name ?? `Produit ${item.product_id?.slice(0, 8)}`,
+          } as CustomerPricing;
+        });
+
+        setPricingRules(transformedData);
+        setFilteredRules(transformedData);
+        calculateStats(transformedData);
+      } catch (error: unknown) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : 'Erreur chargement prix clients';
+        console.error('[PrixClientsPage]:', message);
+        setPricingRules([]);
+        setFilteredRules([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
     void loadPricingRules().catch(error => {
       console.error('[PrixClientsPage] loadPricingRules failed:', error);
     });
-  }, []);
-
-  const loadPricingRules = async () => {
-    setIsLoading(true);
-    try {
-      // Requête customer_pricing seul (sans jointures pour MVP)
-      const { data: pricingData, error } = await supabase
-        .from('customer_pricing')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      if (!pricingData || pricingData.length === 0) {
-        setPricingRules([]);
-        setFilteredRules([]);
-        calculateStats([]);
-        return;
-      }
-
-      // Récupérer les organisations et produits séparément
-      const customerIds = [
-        ...new Set(pricingData.map(p => p.customer_id).filter(Boolean)),
-      ];
-      const productIds = [
-        ...new Set(pricingData.map(p => p.product_id).filter(Boolean)),
-      ];
-
-      // Fetch organisations
-      const { data: orgsData } = await supabase
-        .from('organisations')
-        .select('id, trade_name, legal_name')
-        .in('id', customerIds)
-        .returns<{ id: string; trade_name: string; legal_name: string }[]>();
-
-      // Fetch products
-      const { data: productsData } = await supabase
-        .from('products')
-        .select('id, name')
-        .in('id', productIds)
-        .returns<{ id: string; name: string }[]>();
-
-      // Créer des maps pour lookup rapide
-      const orgsMap = new Map(orgsData?.map(o => [o.id, o]) ?? []);
-      const productsMap = new Map(productsData?.map(p => [p.id, p]) ?? []);
-
-      // Transformer les données avec les noms
-      const transformedData: CustomerPricing[] = pricingData.map(item => {
-        const org = orgsMap.get(item.customer_id);
-        const product = productsMap.get(item.product_id);
-
-        return {
-          ...item,
-          customer_name:
-            org?.trade_name ??
-            org?.legal_name ??
-            `Client ${item.customer_id?.slice(0, 8)}`,
-          product_name:
-            product?.name ?? `Produit ${item.product_id?.slice(0, 8)}`,
-        } as CustomerPricing;
-      });
-
-      setPricingRules(transformedData);
-      setFilteredRules(transformedData);
-      calculateStats(transformedData);
-    } catch (error: unknown) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : 'Erreur chargement prix clients';
-      console.error('[PrixClientsPage]:', message);
-      setPricingRules([]);
-      setFilteredRules([]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  }, [calculateStats]);
 
   // Calculer les statistiques
   const calculateStats = (data: CustomerPricing[]) => {

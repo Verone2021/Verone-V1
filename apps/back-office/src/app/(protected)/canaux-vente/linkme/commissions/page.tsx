@@ -179,53 +179,53 @@ export default function LinkMeCommissionsPage() {
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
   useEffect(() => {
+    async function fetchData() {
+      const supabase = createClient();
+      setLoading(true);
+
+      try {
+        // Fetch commissions with joins
+        const { data: commissionsData, error: commissionsError } = await supabase
+          .from('linkme_commissions')
+          .select(
+            `
+            *,
+            affiliate:linkme_affiliates(display_name, enseigne_id, organisation_id),
+            sales_order:sales_orders(order_number, payment_status, customer_type, total_ttc)
+          `
+          )
+          .order('created_at', { ascending: false })
+          .returns<Commission[]>();
+
+        if (commissionsError) throw commissionsError;
+
+        // Fetch affiliates for filter
+        const { data: affiliatesData, error: affiliatesError } = await supabase
+          .from('linkme_affiliates')
+          .select('id, display_name, enseigne_id, organisation_id')
+          .returns<Affiliate[]>();
+
+        if (affiliatesError) throw affiliatesError;
+
+        setCommissions(commissionsData ?? []);
+        setAffiliates(affiliatesData ?? []);
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        console.error('[CommissionsPage] Error fetching commissions:', message);
+        toast({
+          title: 'Erreur',
+          description: 'Impossible de charger les commissions',
+          variant: 'destructive',
+        });
+      } finally {
+        setLoading(false);
+      }
+    }
+
     void fetchData().catch(error => {
       console.error('[CommissionsPage] fetchData failed:', error);
     });
-  }, []);
-
-  async function fetchData() {
-    const supabase = createClient();
-    setLoading(true);
-
-    try {
-      // Fetch commissions with joins
-      const { data: commissionsData, error: commissionsError } = await supabase
-        .from('linkme_commissions')
-        .select(
-          `
-          *,
-          affiliate:linkme_affiliates(display_name, enseigne_id, organisation_id),
-          sales_order:sales_orders(order_number, payment_status, customer_type, total_ttc)
-        `
-        )
-        .order('created_at', { ascending: false })
-        .returns<Commission[]>();
-
-      if (commissionsError) throw commissionsError;
-
-      // Fetch affiliates for filter
-      const { data: affiliatesData, error: affiliatesError } = await supabase
-        .from('linkme_affiliates')
-        .select('id, display_name, enseigne_id, organisation_id')
-        .returns<Affiliate[]>();
-
-      if (affiliatesError) throw affiliatesError;
-
-      setCommissions(commissionsData ?? []);
-      setAffiliates(affiliatesData ?? []);
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      console.error('[CommissionsPage] Error fetching commissions:', message);
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de charger les commissions',
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
-    }
-  }
+  }, [toast]);
 
   // ============================================
   // FILTER BY TAB

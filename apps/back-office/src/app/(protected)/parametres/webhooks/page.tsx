@@ -50,38 +50,38 @@ export default function WebhooksPage() {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
   useEffect(() => {
+    async function loadWebhooks() {
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from('webhook_configs')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        const webhooks = (data ?? []).map(item => ({
+          ...item,
+          events: Array.isArray(item.events) ? item.events : [],
+        }));
+        setWebhooks(webhooks as WebhookConfig[]);
+
+        // Load recent logs for each webhook
+        if (data && data.length > 0) {
+          for (const webhook of data) {
+            await loadRecentLogs(webhook.id);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading webhooks:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
     void loadWebhooks().catch(error => {
       console.error('[WebhooksPage] loadWebhooks failed:', error);
     });
-  }, [loadWebhooks]);
-
-  async function loadWebhooks() {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('webhook_configs')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      const webhooks = (data ?? []).map(item => ({
-        ...item,
-        events: Array.isArray(item.events) ? item.events : [],
-      }));
-      setWebhooks(webhooks as WebhookConfig[]);
-
-      // Load recent logs for each webhook
-      if (data && data.length > 0) {
-        for (const webhook of data) {
-          await loadRecentLogs(webhook.id);
-        }
-      }
-    } catch (error) {
-      console.error('Error loading webhooks:', error);
-    } finally {
-      setLoading(false);
-    }
-  }
+  }, [loadRecentLogs]);
 
   async function loadRecentLogs(webhookId: string) {
     try {

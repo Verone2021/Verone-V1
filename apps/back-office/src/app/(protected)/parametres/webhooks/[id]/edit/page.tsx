@@ -61,41 +61,41 @@ export default function EditWebhookPage() {
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
+    async function loadWebhook() {
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from('webhook_configs')
+          .select('*')
+          .eq('id', webhookId)
+          .single();
+
+        if (error) throw error;
+
+        const webhookData = {
+          ...data,
+          events: Array.isArray(data.events) ? data.events : [],
+        };
+
+        setWebhook(webhookData as WebhookConfig);
+        setName(data.name);
+        setUrl(data.url);
+        setDescription(data.description ?? '');
+        setSecret(data.secret);
+        setSelectedEvents(Array.isArray(data.events) ? data.events : []);
+        setActive(data.active ?? true);
+      } catch (error) {
+        console.error('Error loading webhook:', error);
+        setError('Impossible de charger le webhook');
+      } finally {
+        setLoading(false);
+      }
+    }
+
     void loadWebhook().catch(error => {
       console.error('[WebhookEditPage] loadWebhook failed:', error);
     });
-  }, [webhookId, loadWebhook]);
-
-  async function loadWebhook() {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('webhook_configs')
-        .select('*')
-        .eq('id', webhookId)
-        .single();
-
-      if (error) throw error;
-
-      const webhookData = {
-        ...data,
-        events: Array.isArray(data.events) ? data.events : [],
-      };
-
-      setWebhook(webhookData as WebhookConfig);
-      setName(data.name);
-      setUrl(data.url);
-      setDescription(data.description ?? '');
-      setSecret(data.secret);
-      setSelectedEvents(Array.isArray(data.events) ? data.events : []);
-      setActive(data.active ?? true);
-    } catch (error) {
-      console.error('Error loading webhook:', error);
-      setError('Impossible de charger le webhook');
-    } finally {
-      setLoading(false);
-    }
-  }
+  }, [webhookId]);
 
   function generateSecret() {
     const chars =
