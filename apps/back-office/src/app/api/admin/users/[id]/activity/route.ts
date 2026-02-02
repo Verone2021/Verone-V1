@@ -19,6 +19,26 @@ interface RouteContext {
   }>;
 }
 
+interface UserProfile {
+  role: string;
+}
+
+interface UserAction {
+  action_type: string;
+  module: string;
+  created_at: string;
+  details: Record<string, unknown>;
+}
+
+interface UserStats {
+  total_sessions: number;
+  total_actions: number;
+  avg_session_duration: number | null;
+  most_used_module: string | null;
+  engagement_score: number;
+  last_activity: string | null;
+}
+
 export async function GET(request: NextRequest, context: RouteContext) {
   try {
     const supabase = await createServerClient();
@@ -34,11 +54,12 @@ export async function GET(request: NextRequest, context: RouteContext) {
     }
 
     // Vérifier rôle owner
-    const { data: profile } = (await supabase
+    const { data: profile } = await supabase
       .from('user_profiles')
       .select('role')
       .eq('user_id', user.id)
-      .single()) as { data: any };
+      .single()
+      .returns<UserProfile>();
 
     if (profile?.role !== 'owner') {
       return NextResponse.json(
@@ -54,25 +75,27 @@ export async function GET(request: NextRequest, context: RouteContext) {
     const days = parseInt(searchParams.get('days') ?? '30');
 
     // Récupérer activité récente via fonction SQL
-    const { data: recentActions, error: actionsError } = await (
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: recentActions, error: actionsError } = (await (
       supabase as any
     ).rpc('get_user_recent_actions', {
       p_user_id: targetUserId,
       p_limit: limit,
-    });
+    })) as { data: UserAction[] | null; error: unknown };
 
     if (actionsError) {
       console.error('[Admin Activity] Actions error:', actionsError);
     }
 
     // Récupérer statistiques via fonction SQL
-    const { data: stats, error: statsError } = await (supabase as any).rpc(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: stats, error: statsError } = (await (supabase as any).rpc(
       'get_user_activity_stats',
       {
         p_user_id: targetUserId,
         p_days: days,
       }
-    );
+    )) as { data: UserStats[] | null; error: unknown };
 
     if (statsError) {
       console.error('[Admin Activity] Stats error:', statsError);
