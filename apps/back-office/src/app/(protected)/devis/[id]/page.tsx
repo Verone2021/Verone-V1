@@ -88,6 +88,28 @@ interface Quote {
   items?: QuoteItem[];
 }
 
+// API Response types
+interface QuoteApiResponse {
+  success: boolean;
+  quote: Quote;
+  error?: string;
+}
+
+interface DeleteApiResponse {
+  success: boolean;
+  error?: string;
+}
+
+interface ConvertApiResponse {
+  success: boolean;
+  invoice?: { id: string };
+  error?: string;
+}
+
+interface ErrorResponse {
+  error?: string;
+}
+
 // Parse Qonto amount - handles both number and object formats
 function parseQontoAmount(
   amount: QontoAmount | undefined,
@@ -165,14 +187,14 @@ export default function QuoteDetailPage(): React.ReactNode {
 
     try {
       const response = await fetch(`/api/qonto/quotes/${id}`);
-      const data = await response.json();
+      const data = (await response.json()) as QuoteApiResponse;
 
       if (!response.ok || !data.success) {
         throw new Error(data.error ?? 'Failed to fetch quote');
       }
 
       setQuote(data.quote);
-    } catch (err) {
+    } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Erreur inconnue');
     } finally {
       setLoading(false);
@@ -193,7 +215,7 @@ export default function QuoteDetailPage(): React.ReactNode {
       const response = await fetch(`/api/qonto/quotes/${id}/finalize`, {
         method: 'POST',
       });
-      const data = await response.json();
+      const data = (await response.json()) as QuoteApiResponse;
 
       if (!response.ok || !data.success) {
         throw new Error(data.error ?? 'Failed to finalize');
@@ -204,7 +226,7 @@ export default function QuoteDetailPage(): React.ReactNode {
         title: 'Devis finalisé',
         description: 'Devis finalisé avec succès',
       });
-    } catch (err) {
+    } catch (err: unknown) {
       toast({
         title: 'Erreur',
         description: err instanceof Error ? err.message : 'Erreur',
@@ -223,7 +245,7 @@ export default function QuoteDetailPage(): React.ReactNode {
       const response = await fetch(`/api/qonto/quotes/${id}`, {
         method: 'DELETE',
       });
-      const data = await response.json();
+      const data = (await response.json()) as DeleteApiResponse;
 
       if (!response.ok || !data.success) {
         throw new Error(data.error ?? 'Failed to delete');
@@ -234,7 +256,7 @@ export default function QuoteDetailPage(): React.ReactNode {
         description: 'Devis supprimé avec succès',
       });
       router.push('/devis');
-    } catch (err) {
+    } catch (err: unknown) {
       toast({
         title: 'Erreur',
         description: err instanceof Error ? err.message : 'Erreur',
@@ -253,7 +275,7 @@ export default function QuoteDetailPage(): React.ReactNode {
       const response = await fetch(`/api/qonto/quotes/${id}/convert`, {
         method: 'POST',
       });
-      const data = await response.json();
+      const data = (await response.json()) as ConvertApiResponse;
 
       if (!response.ok || !data.success) {
         throw new Error(data.error ?? 'Failed to convert');
@@ -268,7 +290,7 @@ export default function QuoteDetailPage(): React.ReactNode {
       if (data.invoice?.id) {
         router.push(`/factures/${data.invoice.id}`);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       toast({
         title: 'Erreur',
         description: err instanceof Error ? err.message : 'Erreur',
@@ -286,7 +308,9 @@ export default function QuoteDetailPage(): React.ReactNode {
       const response = await fetch(`/api/qonto/quotes/${id}/pdf`);
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+        const errorData = (await response
+          .json()
+          .catch(() => ({}))) as ErrorResponse;
         throw new Error(
           errorData.error ?? `Erreur ${response.status}: ${response.statusText}`
         );
@@ -314,7 +338,7 @@ export default function QuoteDetailPage(): React.ReactNode {
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
       }, 1000);
-    } catch (err) {
+    } catch (err: unknown) {
       toast({
         title: 'Erreur',
         description:
