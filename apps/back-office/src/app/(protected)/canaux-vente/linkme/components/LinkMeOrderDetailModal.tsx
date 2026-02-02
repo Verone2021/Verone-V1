@@ -314,7 +314,7 @@ export function LinkMeOrderDetailModal({
                 {order.customer_address}
               </p>
             )}
-            {(order.customer_postal_code || order.customer_city) && (
+            {(order.customer_postal_code ?? order.customer_city) && (
               <p className="text-sm text-slate-600">
                 {[order.customer_postal_code, order.customer_city]
                   .filter(Boolean)
