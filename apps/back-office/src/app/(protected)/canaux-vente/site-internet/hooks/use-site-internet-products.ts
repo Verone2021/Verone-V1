@@ -5,6 +5,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createClient } from '@verone/utils/supabase/client';
+import type { Json } from '@verone/types';
 
 import type { SiteInternetProduct } from '../types';
 
@@ -14,12 +15,11 @@ const supabase = createClient();
  * Fetch produits site internet
  */
 async function fetchSiteInternetProducts(): Promise<SiteInternetProduct[]> {
-  // Type assertion needed for RPC not yet in generated types
-  const rpcCall = supabase.rpc as (
-    name: string
-  ) => Promise<{ data: SiteInternetProduct[] | null; error: Error | null }>;
-
-  const { data, error } = await rpcCall('get_site_internet_products');
+  const result = await supabase.rpc('get_site_internet_products');
+  const { data, error } = result as {
+    data: SiteInternetProduct[] | null;
+    error: Error | null;
+  };
 
   if (error) {
     console.error('Erreur fetch produits site internet:', error);
@@ -210,7 +210,7 @@ export function useUpdateProductMetadata() {
       metadata: {
         custom_title?: string;
         custom_description?: string;
-        metadata?: Record<string, unknown>;
+        metadata?: Json;
       };
     }) => {
       // Récupérer canal site_internet id
@@ -250,12 +250,11 @@ export function useSiteInternetProductsStats() {
   return useQuery({
     queryKey: ['site-internet-products-stats'],
     queryFn: async () => {
-      // Type assertion needed for RPC not yet in generated types
-      const rpcCall = supabase.rpc as (
-        name: string
-      ) => Promise<{ data: SiteInternetProduct[] | null; error: Error | null }>;
-
-      const { data } = await rpcCall('get_site_internet_products');
+      const result = await supabase.rpc('get_site_internet_products');
+      const { data } = result as {
+        data: SiteInternetProduct[] | null;
+        error: Error | null;
+      };
       const products = data;
 
       if (!products) return null;

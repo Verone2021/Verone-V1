@@ -476,12 +476,7 @@ export function useRemoveProductFromSelection() {
       if (error) throw error;
 
       // Mettre à jour le compteur de produits
-      const rpcCall = supabase.rpc as (
-        name: string,
-        params: { p_selection_id: string }
-      ) => Promise<{ data: unknown; error: Error | null }>;
-
-      await rpcCall('decrement_selection_products_count', {
+      await supabase.rpc('decrement_selection_products_count', {
         p_selection_id: selectionId,
       });
     },

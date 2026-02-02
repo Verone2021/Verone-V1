@@ -16,12 +16,13 @@ interface RpcResult<T> {
   error: { message: string } | null;
 }
 
-const callRpc = <T = unknown>(
+const callRpc = async <T = unknown>(
   supabase: SupabaseClient,
   name: string,
   params?: Record<string, unknown>
 ): Promise<RpcResult<T>> => {
-  return supabase.rpc(name, params) as Promise<RpcResult<T>>;
+  const result = await supabase.rpc(name, params);
+  return result as RpcResult<T>;
 };
 
 // Re-export hooks from LinkMe storage for reuse
