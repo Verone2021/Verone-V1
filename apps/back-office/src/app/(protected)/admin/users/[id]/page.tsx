@@ -25,7 +25,7 @@ import { UserProfileTab } from './components/user-profile-tab';
 import { UserSecurityTab } from './components/user-security-tab';
 import { UserStatsCards } from './components/user-stats-cards';
 
-type UserProfile = Database['public']['Tables']['user_profiles']['Row'];
+type _UserProfile = Database['public']['Tables']['user_profiles']['Row'];
 
 interface ActivityStats {
   total_sessions: number;
