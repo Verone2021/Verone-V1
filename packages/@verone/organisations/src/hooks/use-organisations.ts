@@ -73,6 +73,10 @@ export interface Organisation {
   // Classification client (B2B/B2C)
   customer_type: 'professional' | 'individual' | null;
 
+  // Enseigne (franchise/groupe) - LinkMe
+  enseigne_id: string | null;
+  is_enseigne_parent: boolean;
+
   // Champs spécifiques clients particuliers
   first_name: string | null;
   mobile_phone: string | null;
@@ -373,8 +377,9 @@ export function useOrganisations(filters?: OrganisationFilters) {
         // Créer un Map de comptage
         const countsMap = new Map<string, number>();
         productCounts?.forEach(p => {
-          const count = countsMap.get(p.supplier_id as any) || 0;
-          countsMap.set(p.supplier_id as any, count + 1);
+          const supplierId = String(p.supplier_id);
+          const count = countsMap.get(supplierId) ?? 0;
+          countsMap.set(supplierId, count + 1);
         });
 
         // Merger les comptes avec les organisations
@@ -383,7 +388,7 @@ export function useOrganisations(filters?: OrganisationFilters) {
             return {
               ...org,
               _count: {
-                products: countsMap.get(org.id) || 0,
+                products: countsMap.get(org.id) ?? 0,
               },
             };
           }
@@ -391,7 +396,7 @@ export function useOrganisations(filters?: OrganisationFilters) {
         });
       }
 
-      setOrganisations(organisationsWithCounts as any);
+      setOrganisations(organisationsWithCounts);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur inconnue');
     } finally {
@@ -400,7 +405,9 @@ export function useOrganisations(filters?: OrganisationFilters) {
   };
 
   useEffect(() => {
-    fetchOrganisations();
+    void fetchOrganisations().catch((error: unknown) => {
+      console.error('[useOrganisations] Fetch failed:', error);
+    });
   }, [
     filters?.type,
     filters?.is_active,
@@ -493,7 +500,7 @@ export function useOrganisations(filters?: OrganisationFilters) {
   ): Promise<Organisation | null> => {
     try {
       // Filtrer uniquement les colonnes valides existantes en BD
-      const validData: any = {};
+      const validData: Partial<UpdateOrganisationData> = {};
 
       // Colonnes de base autorisées
       const allowedFields = [
@@ -534,8 +541,9 @@ export function useOrganisations(filters?: OrganisationFilters) {
 
       // Copier uniquement les champs autorisés
       allowedFields.forEach(field => {
-        if (field in data) {
-          validData[field] = data[field as keyof UpdateOrganisationData];
+        const key = field as keyof UpdateOrganisationData;
+        if (key in data) {
+          validData[key] = data[key];
         }
       });
 
@@ -693,14 +701,15 @@ export function useOrganisations(filters?: OrganisationFilters) {
     try {
       // Use RPC to safely delete/archive organisation
       // This handles unlinking transactions and disabling rules
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any -- Supabase RPC not well typed
       const { data, error } = await (supabase as any).rpc(
         'delete_organisation_safe',
         { p_org_id: id }
       );
 
       if (error) {
-        setError(error.message || String(error));
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access -- Supabase error type not well typed
+        setError(error.message ?? String(error));
         return false;
       }
 
@@ -858,25 +867,22 @@ export function useOrganisation(id: string) {
           return;
         }
 
-        // ✅ Cast data pour contourner type SelectQueryError incorrect
-        const orgData = data as any;
-
         // ✅ Ajouter le champ 'name' calculé
-        const orgWithName = {
-          ...orgData,
-          name: orgData.trade_name || orgData.legal_name,
+        const orgWithName: Organisation = {
+          ...data,
+          name: data.trade_name ?? data.legal_name,
         };
 
         // Add product counts if supplier
-        if (orgData.type === 'supplier') {
+        if (data.type === 'supplier') {
           // Compter les produits individuels directement par supplier_id
           const { count: productsCount } = await supabase
             .from('products')
             .select('*', { count: 'exact', head: true })
-            .eq('supplier_id', orgData.id);
+            .eq('supplier_id', data.id);
 
           orgWithName._count = {
-            products: productsCount || 0,
+            products: productsCount ?? 0,
           };
         }
 
@@ -888,7 +894,9 @@ export function useOrganisation(id: string) {
       }
     };
 
-    fetchOrganisation();
+    void fetchOrganisation().catch((error: unknown) => {
+      console.error('[useOrganisationById] Fetch failed:', error);
+    });
   }, [id, refreshKey]);
 
   return { organisation, loading, error, refetch };
