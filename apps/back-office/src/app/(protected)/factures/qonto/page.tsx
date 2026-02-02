@@ -78,6 +78,25 @@ interface QontoCreditNote {
 
 type DocumentType = 'invoice' | 'quote' | 'credit_note';
 
+// API Response Interfaces
+interface QontoInvoicesResponse {
+  success: boolean;
+  invoices?: QontoInvoice[];
+  error?: string;
+}
+
+interface QontoQuotesResponse {
+  success: boolean;
+  quotes?: QontoQuote[];
+  error?: string;
+}
+
+interface QontoCreditNotesResponse {
+  success: boolean;
+  credit_notes?: QontoCreditNote[];
+  error?: string;
+}
+
 // ============================================================
 // STATUS BADGE COMPONENT
 // ============================================================
@@ -155,14 +174,14 @@ export default function QontoDocumentsPage(): React.ReactNode {
 
     try {
       const response = await fetch('/api/qonto/invoices');
-      const data = await response.json();
+      const data = (await response.json()) as QontoInvoicesResponse;
 
       if (!response.ok || !data.success) {
         throw new Error(data.error ?? 'Erreur chargement factures');
       }
 
       setInvoices(data.invoices ?? []);
-    } catch (err) {
+    } catch (err: unknown) {
       setErrorInvoices(err instanceof Error ? err.message : 'Erreur inconnue');
     } finally {
       setLoadingInvoices(false);
@@ -175,14 +194,14 @@ export default function QontoDocumentsPage(): React.ReactNode {
 
     try {
       const response = await fetch('/api/qonto/quotes');
-      const data = await response.json();
+      const data = (await response.json()) as QontoQuotesResponse;
 
       if (!response.ok || !data.success) {
         throw new Error(data.error ?? 'Erreur chargement devis');
       }
 
       setQuotes(data.quotes ?? []);
-    } catch (err) {
+    } catch (err: unknown) {
       setErrorQuotes(err instanceof Error ? err.message : 'Erreur inconnue');
     } finally {
       setLoadingQuotes(false);
@@ -195,14 +214,14 @@ export default function QontoDocumentsPage(): React.ReactNode {
 
     try {
       const response = await fetch('/api/qonto/credit-notes');
-      const data = await response.json();
+      const data = (await response.json()) as QontoCreditNotesResponse;
 
       if (!response.ok || !data.success) {
         throw new Error(data.error ?? 'Erreur chargement avoirs');
       }
 
       setCreditNotes(data.credit_notes ?? []);
-    } catch (err) {
+    } catch (err: unknown) {
       setErrorCreditNotes(
         err instanceof Error ? err.message : 'Erreur inconnue'
       );
