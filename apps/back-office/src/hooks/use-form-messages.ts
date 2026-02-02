@@ -60,9 +60,10 @@ export function useFormMessages(submissionId: string): UseFormMessagesReturn {
       setError(null);
 
       const supabase = createClient();
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const { data, error: fetchError } = await (supabase as any)
-        .from('form_submission_messages')
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error: fetchError } = await supabase
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .from('form_submission_messages' as any)
         .select(
           `
           id,
@@ -85,7 +86,7 @@ export function useFormMessages(submissionId: string): UseFormMessagesReturn {
         return;
       }
 
-      setMessages((data as FormMessage[]) ?? []);
+      setMessages((data as unknown as FormMessage[]) ?? []);
     } catch (err) {
       console.error('[useFormMessages] Unexpected error:', err);
       setError('Erreur inattendue');

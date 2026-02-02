@@ -152,8 +152,14 @@ export class MCPPlaywrightIntegration {
 // 🌟 Instance globale MCP Playwright allégée
 export const mcpPlaywright = new MCPPlaywrightIntegration();
 
+// 🛠️ Interface pour tests
+interface TestInfo {
+  id?: string;
+  title?: string;
+}
+
 // 🛠️ Fonctions utilitaires pour tests-manuels
-export function getTestUrlForTest(test: any): string {
+export function getTestUrlForTest(test: TestInfo): string {
   const moduleUrlMap: Record<string, string> = {
     dashboard: '/dashboard',
     catalogue: '/produits/catalogue',
@@ -166,18 +172,18 @@ export function getTestUrlForTest(test: any): string {
     parametre: '/settings',
   };
 
-  const moduleKey = test.id?.substring(0, test.id.indexOf('-'));
+  const moduleKey = test.id?.substring(0, test.id.indexOf('-')) ?? '';
   return moduleUrlMap[moduleKey] ?? '/dashboard';
 }
 
-export function getExpectedElementsForTest(_test: any): string[] {
+export function getExpectedElementsForTest(_test: TestInfo): string[] {
   // Elements de base attendus selon le module
   const baseElements = ['.main-content', 'nav', 'header'];
   return baseElements;
 }
 
-export function determineModuleType(test: any): MCPTestContext['moduleType'] {
-  const moduleType = test.id?.substring(0, test.id.indexOf('-'));
+export function determineModuleType(test: TestInfo): MCPTestContext['moduleType'] {
+  const moduleType = test.id?.substring(0, test.id.indexOf('-')) ?? '';
 
   switch (moduleType) {
     case 'dashboard':
