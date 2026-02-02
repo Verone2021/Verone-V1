@@ -292,10 +292,13 @@ export function PartnersTab() {
         <Card>
           <CardContent style={{ padding: spacing[3] }}>
             <OrganisationListView
-              organisations={displayedPartners.map(p => ({
-                ...p,
-                type: 'partner' as const,
-              }))}
+              organisations={displayedPartners.map(
+                p =>
+                  ({
+                    ...(p as unknown as Organisation),
+                    type: 'partner' as const,
+                  }) as any
+              )}
               activeTab={activeTab}
               onArchive={id => {
                 const partner = displayedPartners.find(p => p.id === id);
