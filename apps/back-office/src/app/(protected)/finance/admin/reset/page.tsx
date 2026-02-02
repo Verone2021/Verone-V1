@@ -59,12 +59,12 @@ export default function FinanceResetPage() {
 
     try {
       // Use standard Supabase RPC call pattern
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
       const { data, error } = await (supabase as any).rpc(
         'reset_finance_auto_data',
         { p_dry_run: true }
       );
-
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
       if (error) throw new Error(error.message ?? String(error));
 
       const result = data as {
@@ -110,12 +110,12 @@ export default function FinanceResetPage() {
 
     try {
       // Use standard Supabase RPC call pattern
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
       const { data, error } = await (supabase as any).rpc(
         'reset_finance_auto_data',
         { p_dry_run: false }
       );
-
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
       if (error) throw new Error(error.message ?? String(error));
 
       const result = data as {
