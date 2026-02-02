@@ -17,12 +17,24 @@ import {
   createServerClient,
   createAdminClient,
 } from '@verone/utils/supabase/server';
+import type { Database } from '@verone/types';
 
 import { UserActivityTab } from './components/user-activity-tab';
 import { UserHeader } from './components/user-header';
 import { UserProfileTab } from './components/user-profile-tab';
 import { UserSecurityTab } from './components/user-security-tab';
 import { UserStatsCards } from './components/user-stats-cards';
+
+type UserProfile = Database['public']['Tables']['user_profiles']['Row'];
+
+interface ActivityStats {
+  total_sessions: number;
+  total_actions: number;
+  avg_session_duration: number;
+  most_used_module: string | null;
+  engagement_score: number;
+  last_activity: string | null;
+}
 
 // Extended user interface with analytics data
 export interface UserDetailData {
@@ -83,11 +95,11 @@ async function getUserDetailData(
   const adminClient = createAdminClient();
 
   // Récupérer le profil depuis la DB
-  const { data: profile, error: profileError } = (await supabase
+  const { data: profile, error: profileError } = await supabase
     .from('user_profiles')
     .select('*')
     .eq('user_id', userId)
-    .single()) as { data: any; error: any };
+    .single();
 
   if (profileError || !profile) {
     console.error('Erreur récupération profil:', profileError);
@@ -119,7 +131,7 @@ async function getUserDetailData(
     );
 
     // ✅ Récupérer VRAIES analytics directement depuis Supabase RPC
-    let realAnalytics = {
+    let realAnalytics: ActivityStats = {
       total_sessions: 0,
       total_actions: 0,
       avg_session_duration: 0,
@@ -130,13 +142,13 @@ async function getUserDetailData(
 
     try {
       // Appel direct RPC Supabase (pas de fetch HTTP)
-      const { data: stats, error: statsError } = await (supabase as any).rpc(
+      const { data: stats, error: statsError } = (await supabase.rpc(
         'get_user_activity_stats',
         {
           p_user_id: userId,
           p_days: 30,
         }
-      );
+      )) as { data: ActivityStats[] | null; error: unknown };
 
       if (!statsError && stats && stats.length > 0) {
         realAnalytics = {
@@ -171,10 +183,10 @@ async function getUserDetailData(
       last_sign_in_at: user.last_sign_in_at ?? null,
       user_metadata: user.user_metadata ?? {},
       profile: {
-        role: profile.role,
-        user_type: profile.user_type,
-        created_at: profile.created_at,
-        updated_at: profile.updated_at,
+        role: profile.role ?? 'employee',
+        user_type: profile.user_type ?? 'standard',
+        created_at: profile.created_at ?? user.created_at,
+        updated_at: profile.updated_at ?? user.created_at,
       },
       analytics: {
         total_sessions: realAnalytics.total_sessions,

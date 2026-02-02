@@ -54,7 +54,7 @@ export default function ActiviteUtilisateursPage() {
       setError(null);
 
       const response = await fetch('/api/admin/users');
-      const data: ApiResponse = await response.json();
+      const data = (await response.json()) as ApiResponse;
 
       if (!response.ok) {
         throw new Error(data.error ?? 'Erreur lors du chargement');

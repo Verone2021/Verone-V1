@@ -18,8 +18,19 @@ interface UserHeaderProps {
   user: UserDetailData;
 }
 
+type UserMetadata = {
+  name?: string;
+  first_name?: string;
+  last_name?: string;
+  job_title?: string;
+  phone?: string;
+} | null;
+
 export function UserHeader({ user }: UserHeaderProps) {
-  const formatUserName = (email: string, user_metadata: any = null) => {
+  const formatUserName = (
+    email: string,
+    user_metadata: UserMetadata = null
+  ) => {
     if (user_metadata?.name) {
       return user_metadata.name;
     }

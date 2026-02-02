@@ -57,6 +57,12 @@ interface CreditNote {
   }>;
 }
 
+interface CreditNoteApiResponse {
+  success: boolean;
+  credit_note?: CreditNote;
+  error?: string;
+}
+
 function formatAmount(amount: number, currency = 'EUR'): string {
   return new Intl.NumberFormat('fr-FR', {
     style: 'currency',
@@ -87,13 +93,13 @@ export default function CreditNoteDetailPage(): React.ReactNode {
 
     try {
       const response = await fetch(`/api/qonto/credit-notes/${id}`);
-      const data = await response.json();
+      const data = (await response.json()) as CreditNoteApiResponse;
 
       if (!response.ok || !data.success) {
         throw new Error(data.error ?? 'Failed to fetch credit note');
       }
 
-      setCreditNote(data.credit_note);
+      setCreditNote(data.credit_note ?? null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur inconnue');
     } finally {
@@ -105,6 +111,7 @@ export default function CreditNoteDetailPage(): React.ReactNode {
     if (id) {
       void fetchCreditNote();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const handleFinalize = async (): Promise<void> => {
@@ -115,13 +122,13 @@ export default function CreditNoteDetailPage(): React.ReactNode {
       const response = await fetch(`/api/qonto/credit-notes/${id}/finalize`, {
         method: 'POST',
       });
-      const data = await response.json();
+      const data = (await response.json()) as CreditNoteApiResponse;
 
       if (!response.ok || !data.success) {
         throw new Error(data.error ?? 'Failed to finalize');
       }
 
-      setCreditNote(data.credit_note);
+      setCreditNote(data.credit_note ?? null);
       toast({
         title: 'Avoir finalisé',
         description: 'Avoir finalisé avec succès (IRRÉVERSIBLE)',
@@ -145,7 +152,7 @@ export default function CreditNoteDetailPage(): React.ReactNode {
       const response = await fetch(`/api/qonto/credit-notes/${id}`, {
         method: 'DELETE',
       });
-      const data = await response.json();
+      const data = (await response.json()) as CreditNoteApiResponse;
 
       if (!response.ok || !data.success) {
         throw new Error(data.error ?? 'Failed to delete');

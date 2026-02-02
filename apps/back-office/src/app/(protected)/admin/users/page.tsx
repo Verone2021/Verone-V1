@@ -14,10 +14,13 @@ import {
   createServerClient,
   createAdminClient,
 } from '@verone/utils/supabase/server';
+import type { Database } from '@verone/types';
 import { Users, Plus, Shield } from 'lucide-react';
 
 import { CreateUserDialog } from '@/components/admin/create-user-dialog';
 import { UserManagementTable } from '@/components/admin/user-management-table';
+
+type UserProfile = Database['public']['Tables']['user_profiles']['Row'];
 
 // Types pour les utilisateurs
 export interface UserWithProfile {
@@ -49,7 +52,7 @@ async function getUsersWithProfiles(): Promise<UserWithProfile[]> {
 
   // Pour récupérer les utilisateurs, nous utilisons une approche simplifiée
   // En récupérant les profils selon la structure DB réelle
-  const { data: profiles, error } = (await supabase
+  const { data: profiles, error } = await supabase
     .from('user_profiles')
     .select(
       `
@@ -64,7 +67,7 @@ async function getUsersWithProfiles(): Promise<UserWithProfile[]> {
       updated_at
     `
     )
-    .order('created_at', { ascending: false })) as { data: any[]; error: any };
+    .order('created_at', { ascending: false });
 
   if (error) {
     console.error('Erreur lors de la récupération des profils:', error);
@@ -91,11 +94,17 @@ async function getUsersWithProfiles(): Promise<UserWithProfile[]> {
     email: string;
     email_confirmed_at: string | null;
     created_at: string;
-    user_metadata?: Record<string, any>;
+    user_metadata?: {
+      name?: string;
+      first_name?: string;
+      last_name?: string;
+      job_title?: string;
+      phone?: string;
+    };
   };
 
   const userMap = new Map<string, AuthUser>(
-    users.map((u: any) => [u.id, u] as [string, AuthUser])
+    users.map(u => [u.id, u as AuthUser] as const)
   );
 
   // Construire la liste des utilisateurs avec leurs profils
@@ -114,13 +123,13 @@ async function getUsersWithProfiles(): Promise<UserWithProfile[]> {
         user_metadata: user.user_metadata ?? {},
         profile: {
           role: profile.role,
-          user_type: profile.user_type,
+          user_type: profile.user_type ?? 'standard',
           first_name: profile.first_name,
           last_name: profile.last_name,
           phone: profile.phone,
           job_title: profile.job_title,
-          created_at: profile.created_at,
-          updated_at: profile.updated_at,
+          created_at: profile.created_at ?? user.created_at,
+          updated_at: profile.updated_at ?? user.created_at,
         },
       });
     } else {
@@ -139,11 +148,11 @@ async function getCurrentUserRole() {
   } = await supabase.auth.getUser();
   if (!user) return null;
 
-  const { data: profile } = (await supabase
+  const { data: profile } = await supabase
     .from('user_profiles')
     .select('role')
     .eq('user_id', user.id)
-    .single()) as { data: any };
+    .single();
 
   return profile?.role ?? null;
 }
