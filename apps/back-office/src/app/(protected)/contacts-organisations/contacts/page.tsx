@@ -28,6 +28,25 @@ import {
   ArrowLeft,
 } from 'lucide-react';
 
+interface Contact {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone?: string | null;
+  title?: string | null;
+  department?: string | null;
+  is_primary_contact: boolean | null;
+  is_commercial_contact: boolean | null;
+  is_technical_contact: boolean | null;
+  is_billing_contact: boolean | null;
+  is_active: boolean | null;
+  organisation?: {
+    type?: string | null;
+    [key: string]: unknown;
+  } | null;
+}
+
 interface ContactStats {
   totalContacts: number;
   supplierContacts: number;
@@ -98,13 +117,13 @@ export default function ContactsPage() {
     activeContacts: contacts.filter(c => c.is_active).length,
   };
 
-  const getContactRoles = (contact: any) => {
+  const getContactRoles = (contact: Contact) => {
     const roles: string[] = [];
     if (contact.is_primary_contact) roles.push('Principal');
     if (contact.is_commercial_contact) roles.push('Commercial');
     if (contact.is_billing_contact) roles.push('Facturation');
     if (contact.is_technical_contact) roles.push('Technique');
-    return roles.join(', ') || 'Aucun rôle';
+    return roles.join(', ') ?? 'Aucun rôle';
   };
 
   const getOrganisationTypeInfo = (type: string) => {
@@ -130,7 +149,7 @@ export default function ContactsPage() {
     }
   };
 
-  const handleArchive = async (contact: any) => {
+  const handleArchive = async (contact: Contact) => {
     try {
       if (contact.is_active) {
         await deactivateContact(contact.id);
@@ -139,12 +158,12 @@ export default function ContactsPage() {
         await activateContact(contact.id);
         console.warn('✅ Contact restauré avec succès');
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('❌ Erreur archivage contact:', error);
     }
   };
 
-  const handleDelete = async (contact: any) => {
+  const handleDelete = async (contact: Contact) => {
     const confirmed = confirm(
       `Êtes-vous sûr de vouloir supprimer définitivement "${contact.first_name} ${contact.last_name}" ?\n\nCette action est irréversible !`
     );
@@ -153,7 +172,7 @@ export default function ContactsPage() {
       try {
         await deleteContact(contact.id);
         console.warn('✅ Contact supprimé définitivement');
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('❌ Erreur suppression contact:', error);
       }
     }
