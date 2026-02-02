@@ -183,17 +183,14 @@ function usePaymentRequestsAdmin(statusFilter: PaymentRequestStatus | 'all') {
           ? baseQuery.eq('status', statusFilter)
           : baseQuery;
 
-      const { data, error } = await query;
+      const { data, error } = await query.returns<PaymentRequestRaw[]>();
 
       if (error) {
         console.error('Erreur fetch payment requests admin:', error);
         throw error;
       }
 
-      // Cast des données avec le type attendu
-      const typedData = data as unknown as PaymentRequestRaw[];
-
-      return (typedData ?? []).map(item => {
+      return (data ?? []).map(item => {
         const affiliate = item.linkme_affiliates;
         return {
           id: item.id,
@@ -295,7 +292,12 @@ function MarkAsPaidModal({
       });
       onSuccess();
       handleClose();
-    } catch {
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Erreur lors de la mise à jour';
+      console.error('[MarkAsPaidModal] Error:', message);
       setError('Erreur lors de la mise à jour');
     }
   };

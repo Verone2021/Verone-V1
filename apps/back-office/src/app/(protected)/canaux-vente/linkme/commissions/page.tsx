@@ -199,21 +199,24 @@ export default function LinkMeCommissionsPage() {
           sales_order:sales_orders(order_number, payment_status, customer_type, total_ttc)
         `
         )
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .returns<Commission[]>();
 
       if (commissionsError) throw commissionsError;
 
       // Fetch affiliates for filter
       const { data: affiliatesData, error: affiliatesError } = await supabase
         .from('linkme_affiliates')
-        .select('id, display_name, enseigne_id, organisation_id');
+        .select('id, display_name, enseigne_id, organisation_id')
+        .returns<Affiliate[]>();
 
       if (affiliatesError) throw affiliatesError;
 
-      setCommissions((commissionsData as unknown as Commission[]) ?? []);
-      setAffiliates((affiliatesData as unknown as Affiliate[]) ?? []);
-    } catch (error) {
-      console.error('Error fetching commissions:', error);
+      setCommissions(commissionsData ?? []);
+      setAffiliates(affiliatesData ?? []);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      console.error('[CommissionsPage] Error fetching commissions:', message);
       toast({
         title: 'Erreur',
         description: 'Impossible de charger les commissions',
