@@ -427,9 +427,55 @@
 
 ### 748E1D85E2258257D7E244D3C4E5667C - Zentrada - 11/11/2025 - 2 926,94 € HT
 
-| Fournisseur | Produit                                            | Qté | PU HT | Total HT   |
-| ----------- | -------------------------------------------------- | --- | ----- | ---------- |
-| Zentrada    | Articles décoratifs divers (détail non disponible) | -   | -     | 2 926,94 € |
+<<<<<<< Updated upstream
+| Fournisseur | Produit                                   | Qté | PU HT   | Total HT |
+| ----------- | ----------------------------------------- | --- | ------- | -------- |
+| Zentrada    | Cadre photo naturel eva 30x40             | 12  | 5,83 €  | 69,96 €  |
+| Zentrada    | Suspension papier etel naturel d37,5      | 2   | 46,66 € | 93,32 €  |
+| Zentrada    | Miroir raphia tropi 43x29                 | 6   | 12,05 € | 72,30 €  |
+| Zentrada    | Déco mural raphia alba 91x64              | 2   | 33,53 € | 67,06 €  |
+| Zentrada    | Miroir raphia alba x3                     | 4   | 30,78 € | 123,12 € |
+| Zentrada    | Déco mural raphia alaina d64              | 4   | 19,05 € | 76,20 €  |
+| Zentrada    | Déco mural raphia oasis x2                | 6   | 19,44 € | 116,64 € |
+| Zentrada    | Miroir tresse d68 celia                   | 6   | 21,06 € | 126,36 € |
+| Zentrada    | Miroir roseau ael d80                     | 4   | 19,04 € | 76,16 €  |
+| Zentrada    | Miroir déco contour doré losange h60cm    | 6   | 12,72 € | 76,32 €  |
+| Zentrada    | Miroir déco contour déco doré losange     | 6   | 8,75 €  | 52,50 €  |
+| Zentrada    | Lampe champignon lito beige h24.5         | 4   | 10,66 € | 42,64 €  |
+| Zentrada    | Table métal D31H46cm caramel              | 1   | 30,98 € | 30,98 €  |
+| Zentrada    | Lampe champignon lito noir h24.5          | 4   | 10,66 € | 42,64 €  |
+| Zentrada    | Table basse aeris                         | 1   | 218,70 € | 218,70 € |
+| Zentrada    | Miroir metal warren or d24 x3             | 6   | 11,34 € | 68,04 €  |
+| Zentrada    | Miroir plast orga roman 30x39             | 8   | 4,57 €  | 36,56 €  |
+| Zentrada    | Organisateur coulissant PM bambou         | 156 | 3,05 €  | 475,80 € |
+| Zentrada    | Organisateur coulissant MM bambou         | 156 | 5,35 €  | 834,60 € |
+| Zentrada    | Miroir rotin raphia safari d38            | 12  | 7,61 €  | 91,32 €  |
+| Zentrada    | Miroir raphia alba d57                    | 6   | 22,62 € | 135,72 € |
+=======
+| Fournisseur | Produit                                | Qté | PU HT    | Total HT |
+| ----------- | -------------------------------------- | --- | -------- | -------- |
+| Zentrada    | Cadre photo naturel eva 30x40          | 12  | 5,83 €   | 69,96 €  |
+| Zentrada    | Suspension papier etel naturel d37,5   | 2   | 46,66 €  | 93,32 €  |
+| Zentrada    | Miroir raphia tropi 43x29              | 6   | 12,05 €  | 72,30 €  |
+| Zentrada    | Déco mural raphia alba 91x64           | 2   | 33,53 €  | 67,06 €  |
+| Zentrada    | Miroir raphia alba x3                  | 4   | 30,78 €  | 123,12 € |
+| Zentrada    | Déco mural raphia alaina d64           | 4   | 19,05 €  | 76,20 €  |
+| Zentrada    | Déco mural raphia oasis x2             | 6   | 19,44 €  | 116,64 € |
+| Zentrada    | Miroir tresse d68 celia                | 6   | 21,06 €  | 126,36 € |
+| Zentrada    | Miroir roseau ael d80                  | 4   | 19,04 €  | 76,16 €  |
+| Zentrada    | Miroir déco contour doré losange h60cm | 6   | 12,72 €  | 76,32 €  |
+| Zentrada    | Miroir déco contour déco doré losange  | 6   | 8,75 €   | 52,50 €  |
+| Zentrada    | Lampe champignon lito beige h24.5      | 4   | 10,66 €  | 42,64 €  |
+| Zentrada    | Table métal D31H46cm caramel           | 1   | 30,98 €  | 30,98 €  |
+| Zentrada    | Lampe champignon lito noir h24.5       | 4   | 10,66 €  | 42,64 €  |
+| Zentrada    | Table basse aeris                      | 1   | 218,70 € | 218,70 € |
+| Zentrada    | Miroir metal warren or d24 x3          | 6   | 11,34 €  | 68,04 €  |
+| Zentrada    | Miroir plast orga roman 30x39          | 8   | 4,57 €   | 36,56 €  |
+| Zentrada    | Organisateur coulissant PM bambou      | 156 | 3,05 €   | 475,80 € |
+| Zentrada    | Organisateur coulissant MM bambou      | 156 | 5,35 €   | 834,60 € |
+| Zentrada    | Miroir rotin raphia safari d38         | 12  | 7,61 €   | 91,32 €  |
+| Zentrada    | Miroir raphia alba d57                 | 6   | 22,62 €  | 135,72 € |
+>>>>>>> Stashed changes
 
 **Total facture :** 2 926,94 € HT (TVA 0%)
 
@@ -649,9 +695,64 @@
 | Affect Building Consulting | Panier n°1 doum - 20 cm              | 2               | 10,50 €       | 21,00 €    | 20% |
 | Affect Building Consulting | Panier n°1 doum - 30 cm              | 2               | 12,60 €       | 25,20 €    | 20% |
 | Affect Building Consulting | Panier n°1 doum - 40 cm              | 2               | 19,95 €       | 39,90 €    | 20% |
-| Zentrada                   | Articles décoratifs divers           | -               | -             | 2 926,94 € | 0%  |
 
-**Sous-total Accessoires : 7 535,49 €**
+**Sous-total Accessoires : 4 608,55 €**
+
+---
+
+#### ZENTRADA (Allemagne)
+
+<<<<<<< Updated upstream
+| Fournisseur | Produit                               | Quantité Totale | Prix Moyen HT | CA HT      | TVA |
+| ----------- | ------------------------------------- | --------------- | ------------- | ---------- | --- |
+| Zentrada    | Cadre photo naturel eva 30x40         | 12              | 5,83 €        | 69,96 €    | 0%  |
+| Zentrada    | Suspension papier etel naturel d37,5  | 2               | 46,66 €       | 93,32 €    | 0%  |
+| Zentrada    | Miroir raphia tropi 43x29             | 6               | 12,05 €       | 72,30 €    | 0%  |
+| Zentrada    | Déco mural raphia alba 91x64          | 2               | 33,53 €       | 67,06 €    | 0%  |
+| Zentrada    | Miroir raphia alba x3                 | 4               | 30,78 €       | 123,12 €   | 0%  |
+| Zentrada    | Déco mural raphia alaina d64          | 4               | 19,05 €       | 76,20 €    | 0%  |
+| Zentrada    | Déco mural raphia oasis x2            | 6               | 19,44 €       | 116,64 €   | 0%  |
+| Zentrada    | Miroir tresse d68 celia               | 6               | 21,06 €       | 126,36 €   | 0%  |
+| Zentrada    | Miroir roseau ael d80                 | 4               | 19,04 €       | 76,16 €    | 0%  |
+| Zentrada    | Miroir déco contour doré losange h60cm| 6               | 12,72 €       | 76,32 €    | 0%  |
+| Zentrada    | Miroir déco contour déco doré losange | 6               | 8,75 €        | 52,50 €    | 0%  |
+| Zentrada    | Lampe champignon lito beige h24.5     | 4               | 10,66 €       | 42,64 €    | 0%  |
+| Zentrada    | Table métal D31H46cm caramel          | 1               | 30,98 €       | 30,98 €    | 0%  |
+| Zentrada    | Lampe champignon lito noir h24.5      | 4               | 10,66 €       | 42,64 €    | 0%  |
+| Zentrada    | Table basse aeris                     | 1               | 218,70 €      | 218,70 €   | 0%  |
+| Zentrada    | Miroir metal warren or d24 x3         | 6               | 11,34 €       | 68,04 €    | 0%  |
+| Zentrada    | Miroir plast orga roman 30x39         | 8               | 4,57 €        | 36,56 €    | 0%  |
+| Zentrada    | Organisateur coulissant PM bambou     | 156             | 3,05 €        | 475,80 €   | 0%  |
+| Zentrada    | Organisateur coulissant MM bambou     | 156             | 5,35 €        | 834,60 €   | 0%  |
+| Zentrada    | Miroir rotin raphia safari d38        | 12              | 7,61 €        | 91,32 €    | 0%  |
+| Zentrada    | Miroir raphia alba d57                | 6               | 22,62 €       | 135,72 €   | 0%  |
+=======
+| Fournisseur | Produit                                | Quantité Totale | Prix Moyen HT | CA HT    | TVA |
+| ----------- | -------------------------------------- | --------------- | ------------- | -------- | --- |
+| Zentrada    | Cadre photo naturel eva 30x40          | 12              | 5,83 €        | 69,96 €  | 0%  |
+| Zentrada    | Suspension papier etel naturel d37,5   | 2               | 46,66 €       | 93,32 €  | 0%  |
+| Zentrada    | Miroir raphia tropi 43x29              | 6               | 12,05 €       | 72,30 €  | 0%  |
+| Zentrada    | Déco mural raphia alba 91x64           | 2               | 33,53 €       | 67,06 €  | 0%  |
+| Zentrada    | Miroir raphia alba x3                  | 4               | 30,78 €       | 123,12 € | 0%  |
+| Zentrada    | Déco mural raphia alaina d64           | 4               | 19,05 €       | 76,20 €  | 0%  |
+| Zentrada    | Déco mural raphia oasis x2             | 6               | 19,44 €       | 116,64 € | 0%  |
+| Zentrada    | Miroir tresse d68 celia                | 6               | 21,06 €       | 126,36 € | 0%  |
+| Zentrada    | Miroir roseau ael d80                  | 4               | 19,04 €       | 76,16 €  | 0%  |
+| Zentrada    | Miroir déco contour doré losange h60cm | 6               | 12,72 €       | 76,32 €  | 0%  |
+| Zentrada    | Miroir déco contour déco doré losange  | 6               | 8,75 €        | 52,50 €  | 0%  |
+| Zentrada    | Lampe champignon lito beige h24.5      | 4               | 10,66 €       | 42,64 €  | 0%  |
+| Zentrada    | Table métal D31H46cm caramel           | 1               | 30,98 €       | 30,98 €  | 0%  |
+| Zentrada    | Lampe champignon lito noir h24.5       | 4               | 10,66 €       | 42,64 €  | 0%  |
+| Zentrada    | Table basse aeris                      | 1               | 218,70 €      | 218,70 € | 0%  |
+| Zentrada    | Miroir metal warren or d24 x3          | 6               | 11,34 €       | 68,04 €  | 0%  |
+| Zentrada    | Miroir plast orga roman 30x39          | 8               | 4,57 €        | 36,56 €  | 0%  |
+| Zentrada    | Organisateur coulissant PM bambou      | 156             | 3,05 €        | 475,80 € | 0%  |
+| Zentrada    | Organisateur coulissant MM bambou      | 156             | 5,35 €        | 834,60 € | 0%  |
+| Zentrada    | Miroir rotin raphia safari d38         | 12              | 7,61 €        | 91,32 €  | 0%  |
+| Zentrada    | Miroir raphia alba d57                 | 6               | 22,62 €       | 135,72 € | 0%  |
+>>>>>>> Stashed changes
+
+**Sous-total Zentrada : 2 926,94 €**
 
 ---
 
@@ -663,15 +764,15 @@
 | ------------------ | --------------- | ----------- |
 | Plateaux           | 14 918,30 €     | 1,4%        |
 | Coussins           | 5 605,81 €      | 20%         |
-| Suspensions        | 33 666,43 €     | 20%         |
+| Suspensions        | 33 759,75 €     | 20%         |
 | Vases              | 4 837,58 €      | 20%         |
 | Mobilier Bambou    | 8 425,25 €      | 20%         |
-| Miroirs            | 5 535,63 €      | 20%         |
-| Luminaires         | 3 430,62 €      | 20%         |
+| Miroirs            | 6 810,01 €      | 16%         |
+| Luminaires         | 3 515,90 €      | 19%         |
 | Bancs et Tabourets | 2 621,13 €      | 20%         |
 | Ronds de Paille    | 1 096,20 €      | 20%         |
-| Accessoires Divers | 7 535,49 €      | 13%         |
-| **TOTAL EUR**      | **87 672,44 €** | -           |
+| Accessoires Divers | 5 883,35 €      | 19%         |
+| **TOTAL EUR**      | **87 473,28 €** | -           |
 
 ### Montants en USD (non convertis)
 

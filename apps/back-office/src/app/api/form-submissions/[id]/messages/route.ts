@@ -16,8 +16,8 @@ import { NextResponse } from 'next/server';
 import type { Database } from '@verone/types';
 import { createClient } from '@verone/utils/supabase/server';
 
-type FormSubmission = Database['public']['Tables']['form_submissions']['Row'];
-type FormSubmissionMessage =
+type _FormSubmission = Database['public']['Tables']['form_submissions']['Row'];
+type _FormSubmissionMessage =
   Database['public']['Tables']['form_submission_messages']['Row'];
 
 interface AddMessageRequest {

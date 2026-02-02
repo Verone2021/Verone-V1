@@ -193,7 +193,7 @@ export default function CreditNoteDetailPage(): React.ReactNode {
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-    } catch (err) {
+    } catch (_err) {
       toast({
         title: 'Erreur',
         description: 'Impossible de télécharger le PDF',
