@@ -10,7 +10,10 @@ import { createClient } from '@verone/utils/supabase/client';
 import { Check, ShoppingCart } from 'lucide-react';
 
 import { OrderFormUnified } from '@/components/OrderFormUnified';
-import type { CartItem as UnifiedCartItem } from '@/components/OrderFormUnified';
+import type {
+  CartItem as UnifiedCartItem,
+  OrderFormUnifiedData,
+} from '@/components/OrderFormUnified';
 import { SelectionHero } from '@/components/public-selection';
 import { useEnseigneOrganisations } from '@/lib/hooks/use-enseigne-organisations';
 import { useSubmitUnifiedOrder } from '@/lib/hooks/use-submit-unified-order';
@@ -121,23 +124,46 @@ export default function SelectionLayout({
           });
         }
 
-        // Fetch items
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data: itemsData, error: itemsError } = await (supabase as any)
-          .from('linkme_selection_items_with_pricing')
+        /**
+         * Type pour la view linkme_selection_items_with_pricing
+         * Cette view JOIN selection_items + products + pricing
+         * Note: View non présente dans les types Supabase générés
+         */
+        interface SelectionItemWithPricing {
+          id: string;
+          selection_id: string;
+          product_id: string;
+          product_name: string;
+          product_sku: string;
+          product_image: string | null;
+          selling_price_ht: number;
+          selling_price_ttc: number;
+          margin_rate: number;
+          category_name: string | null;
+          subcategory_id: string | null;
+          subcategory_name: string | null;
+          display_order: number;
+        }
+
+        // Fetch items (view non typée dans Database, utiliser cast)
+        const { data: itemsData, error: itemsError } = await supabase
+          .from('linkme_selection_items_with_pricing' as 'products')
           .select('*')
-          .eq('selection_id', id);
+          .eq('selection_id', id)
+          .returns<SelectionItemWithPricing[]>();
 
         if (itemsError) {
           console.error('Error fetching items:', itemsError);
         } else {
-          setItems((itemsData ?? []) as ISelectionItem[]);
+          setItems((itemsData ?? []) as unknown as ISelectionItem[]);
         }
 
         /**
-         * Type pour branding
+         * Type pour table linkme_affiliate_branding
+         * Note: Table non présente dans les types Supabase générés
          */
-        interface BrandingRow {
+        interface AffiliateBrandingRow {
+          affiliate_id: string;
           primary_color: string | null;
           secondary_color: string | null;
           accent_color: string | null;
@@ -146,13 +172,12 @@ export default function SelectionLayout({
           logo_url: string | null;
         }
 
-        // Fetch branding
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data: brandingData } = await (supabase as any)
-          .from('linkme_affiliate_branding')
+        // Fetch branding (table non typée dans Database, utiliser cast)
+        const { data: brandingData } = await supabase
+          .from('linkme_affiliate_branding' as 'products')
           .select('*')
           .eq('affiliate_id', selectionData.affiliate_id)
-          .single();
+          .single<AffiliateBrandingRow>();
 
         if (brandingData) {
           setBranding({
@@ -237,7 +262,7 @@ export default function SelectionLayout({
             if (subcat) {
               subcat.count += 1;
             } else {
-              existing.subcategories = existing.subcategories || [];
+              existing.subcategories = existing.subcategories ?? [];
               existing.subcategories.push({
                 id: item.subcategory_id,
                 name: item.subcategory_name,
@@ -269,8 +294,7 @@ export default function SelectionLayout({
   }, [items]);
 
   const handleOrderSubmit = useCallback(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    async (data: any, cartItems: UnifiedCartItem[]) => {
+    async (data: OrderFormUnifiedData, cartItems: UnifiedCartItem[]) => {
       if (!selection) return;
 
       const result = await submitOrder({
@@ -319,7 +343,7 @@ export default function SelectionLayout({
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            {error || 'Selection non trouvee'}
+            {error ?? 'Selection non trouvee'}
           </h1>
           <p className="text-gray-600">Verifiez l'URL et reessayez.</p>
         </div>
@@ -468,8 +492,7 @@ export default function SelectionLayout({
                       quantity: item.quantity,
                     })
                   )}
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  organisations={organisations as any}
+                  organisations={organisations}
                   onSubmit={handleOrderSubmit}
                   onClose={() => setIsOrderFormOpen(false)}
                   isSubmitting={isSubmitting}
