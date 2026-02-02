@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
+import Image from 'next/image';
 
 import Link from 'next/link';
 
@@ -538,11 +539,14 @@ export default function EnseignesPage() {
                     <div className="flex items-start justify-between mb-4">
                       <div className="h-16 w-16 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden border">
                         {enseigne.logo_url ? (
-                          <img
-                            src={enseigne.logo_url}
-                            alt={enseigne.name}
-                            className="w-full h-full object-contain"
-                          />
+                          <div className="relative w-full h-full">
+                            <Image
+                              src={enseigne.logo_url}
+                              alt={enseigne.name}
+                              fill
+                              className="object-contain"
+                            />
+                          </div>
                         ) : (
                           <Building className="h-8 w-8 text-gray-400" />
                         )}
@@ -715,17 +719,18 @@ export default function EnseignesPage() {
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <div
-                          className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                          className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 relative overflow-hidden"
                           style={{
                             backgroundColor: colors.primary[100],
                             color: colors.primary[600],
                           }}
                         >
                           {enseigne.logo_url ? (
-                            <img
+                            <Image
                               src={enseigne.logo_url}
                               alt={enseigne.name}
-                              className="w-full h-full object-cover rounded-lg"
+                              fill
+                              className="object-cover"
                             />
                           ) : (
                             <Building className="w-5 h-5" />

@@ -6,6 +6,7 @@
 'use client';
 
 import { useState, useMemo, useCallback } from 'react';
+import Image from 'next/image';
 
 import { useToast } from '@verone/common/hooks';
 import { useDebounce } from '@verone/hooks';
@@ -230,10 +231,11 @@ export function CollectionsSection() {
                       <TableCell>
                         {collection.image_url ? (
                           <div className="relative h-12 w-12 overflow-hidden rounded-md border bg-muted">
-                            <img
+                            <Image
                               src={collection.image_url}
                               alt={collection.name}
-                              className="h-full w-full object-cover"
+                              fill
+                              className="object-cover"
                             />
                           </div>
                         ) : (
