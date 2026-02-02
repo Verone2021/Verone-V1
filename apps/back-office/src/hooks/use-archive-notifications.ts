@@ -38,6 +38,31 @@ export interface ArchiveNotification {
   };
 }
 
+// Supabase query return types
+interface ArchiveNotificationWithRelations {
+  id: string;
+  organisation_id: string;
+  affiliate_id: string;
+  action: 'archive' | 'restore';
+  status: 'pending' | 'reviewed' | 'processed';
+  affiliate_note: string | null;
+  admin_note: string | null;
+  created_at: string;
+  reviewed_at: string | null;
+  reviewed_by: string | null;
+  organisations: {
+    id: string;
+    legal_name: string;
+    trade_name: string | null;
+    email: string | null;
+    city: string | null;
+  } | null;
+  linkme_affiliates: {
+    id: string;
+    display_name: string | null;
+  } | null;
+}
+
 // ============================================
 // HOOKS
 // ============================================
@@ -52,8 +77,7 @@ export function useArchiveNotifications() {
       const supabase = createClient();
 
       // Note: Table affiliate_archive_requests créée par migration
-      // Les types seront générés après application de la migration
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('affiliate_archive_requests')
         .select(
           `
@@ -63,14 +87,15 @@ export function useArchiveNotifications() {
         `
         )
         .eq('status', 'pending')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .returns<ArchiveNotificationWithRelations[]>();
 
       if (error) {
-        console.error('Erreur récupération notifications:', error);
+        console.error('[ArchiveNotifications] Fetch failed:', error);
         throw error;
       }
 
-      return (data ?? []) as ArchiveNotification[];
+      return data ?? [];
     },
     staleTime: 120 * 1000, // 2 minutes
     refetchInterval: 5 * 60 * 1000, // Refresh toutes les 5 minutes
@@ -87,13 +112,13 @@ export function useArchiveNotificationsCount() {
     queryFn: async () => {
       const supabase = createClient();
 
-      const { count, error } = await (supabase as any)
+      const { count, error } = await supabase
         .from('affiliate_archive_requests')
         .select('*', { count: 'exact', head: true })
         .eq('status', 'pending');
 
       if (error) {
-        console.error('Erreur comptage notifications:', error);
+        console.error('[ArchiveNotifications] Count failed:', error);
         return 0;
       }
 
@@ -123,7 +148,7 @@ export function useMarkNotificationReviewed() {
     }) => {
       const supabase = createClient();
 
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from('affiliate_archive_requests')
         .update({
           status,
