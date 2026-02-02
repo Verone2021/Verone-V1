@@ -178,7 +178,7 @@ function CreateNewCard({ onClick, isActive }: CreateNewCardProps) {
 
 export function ResponsableStep({
   formData,
-  errors,
+  errors: _errors,
   onUpdate,
 }: ResponsableStepProps) {
   const [showForm, setShowForm] = useState(
@@ -197,9 +197,9 @@ export function ResponsableStep({
   // Determine ownership type
   const ownershipType = useMemo(() => {
     if (formData.restaurant.mode === 'new') {
-      return formData.restaurant.newRestaurant?.ownershipType || null;
+      return formData.restaurant.newRestaurant?.ownershipType ?? null;
     }
-    return formData.restaurant.existingOwnershipType || null;
+    return formData.restaurant.existingOwnershipType ?? null;
   }, [formData.restaurant]);
 
   // Is franchise?
@@ -208,13 +208,15 @@ export function ResponsableStep({
   // Fetch organisation contacts (toujours avec enseigne pour cette etape)
   const { data: contactsData, isLoading } = useOrganisationContacts(
     organisationId,
-    enseigneId || null,
+    enseigneId ?? null,
     ownershipType,
     true // Toujours inclure les contacts enseigne pour l'etape responsable
   );
 
   // Separate local and enseigne contacts
-  const allContacts = contactsData?.allContacts || [];
+  const allContacts = useMemo(() => {
+    return contactsData?.allContacts ?? [];
+  }, [contactsData]);
 
   const localContacts = useMemo(() => {
     return allContacts.filter(c => c.organisationId === organisationId);
@@ -256,8 +258,8 @@ export function ResponsableStep({
           firstName: contact.firstName,
           lastName: contact.lastName,
           email: contact.email,
-          phone: contact.phone || contact.mobile || '',
-          position: contact.title || '',
+          phone: contact.phone ?? contact.mobile ?? '',
+          position: contact.title ?? '',
         },
       });
       setShowForm(false);
