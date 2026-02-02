@@ -47,6 +47,19 @@ import {
   ImageIcon,
 } from 'lucide-react';
 
+// Interface pour images produit
+interface ProductImage {
+  public_url: string | null;
+  is_primary: boolean;
+}
+
+// Interface pour produit avec images
+interface ProductWithImages {
+  id: string;
+  name: string;
+  product_images?: ProductImage[];
+}
+
 export default function SourcingPage() {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
@@ -251,10 +264,10 @@ export default function SourcingPage() {
   };
 
   // Helper pour récupérer l'image principale
-  const getPrimaryImage = (product: any) => {
+  const getPrimaryImage = (product: ProductWithImages): string | null => {
     if (!product.product_images || product.product_images.length === 0)
       return null;
-    const primary = product.product_images.find((img: any) => img.is_primary);
+    const primary = product.product_images.find(img => img.is_primary);
     return primary?.public_url ?? product.product_images[0]?.public_url ?? null;
   };
 
