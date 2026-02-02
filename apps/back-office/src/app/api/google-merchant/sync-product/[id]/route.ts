@@ -13,19 +13,31 @@ import { NextResponse } from 'next/server';
 
 import { createServerClient } from '@verone/utils/supabase/server';
 
+type SupabaseClient = Awaited<ReturnType<typeof createServerClient>>;
+
+interface GoogleMerchantResult {
+  success: boolean;
+  error?: string;
+  details?: unknown;
+  data?: unknown;
+}
+
 interface SyncResponse {
   success: boolean;
   disabled?: boolean;
   message?: string;
-  data?: any;
+  data?: unknown;
   error?: string;
-  details?: any;
+  details?: unknown;
 }
 
 /**
  * Récupère un produit complet depuis Supabase avec ses relations
  */
-async function getProductWithRelations(supabase: any, productId: string) {
+async function getProductWithRelations(
+  supabase: SupabaseClient,
+  productId: string
+) {
   const { data: product, error: productError } = await supabase
     .from('products')
     .select(
@@ -43,19 +55,6 @@ async function getProductWithRelations(supabase: any, productId: string) {
     .eq('id', productId)
     .single();
 
-  // Fetch supplier separately if needed
-  if (!productError && product?.supplier_id) {
-    const { data: supplier } = await supabase
-      .from('organisations')
-      .select('id, legal_name, trade_name')
-      .eq('id', product.supplier_id)
-      .single();
-
-    if (supplier) {
-      product.supplier = supplier;
-    }
-  }
-
   if (productError) {
     throw new Error(`Erreur récupération produit: ${productError.message}`);
   }
@@ -64,13 +63,27 @@ async function getProductWithRelations(supabase: any, productId: string) {
     throw new Error('Produit non trouvé');
   }
 
-  return product;
+  // Fetch supplier separately if needed
+  let productWithSupplier: Record<string, unknown> = product;
+  if (product.supplier_id) {
+    const { data: supplier } = await supabase
+      .from('organisations')
+      .select('id, legal_name, trade_name')
+      .eq('id', product.supplier_id)
+      .single();
+
+    if (supplier) {
+      productWithSupplier = { ...product, supplier };
+    }
+  }
+
+  return productWithSupplier;
 }
 
 /**
  * Valide les prérequis pour la synchronisation
  */
-function validateProductForSync(product: any): {
+function validateProductForSync(product: Record<string, unknown>): {
   valid: boolean;
   errors: string[];
 } {
@@ -97,7 +110,11 @@ function validateProductForSync(product: any): {
     console.warn(`[Sync Product] Description manquante pour ${product.sku}`);
   }
 
-  if (!product.images || product.images.length === 0) {
+  if (
+    !product.images ||
+    !Array.isArray(product.images) ||
+    product.images.length === 0
+  ) {
     console.warn(`[Sync Product] Aucune image pour ${product.sku}`);
   }
 
@@ -152,15 +169,15 @@ export async function POST(
     const supabase = await createServerClient();
 
     // 3. Récupération du produit avec relations
-    let product;
+    let product: Record<string, unknown>;
     try {
       product = await getProductWithRelations(supabase, productId);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[API] Erreur récupération produit:', error);
       return NextResponse.json(
         {
           success: false,
-          error: error.message,
+          error: error instanceof Error ? error.message : 'Unknown error',
         },
         { status: 404 }
       );
@@ -181,14 +198,16 @@ export async function POST(
 
     // 5. Synchronisation avec Google Merchant Center
     const googleClient = getGoogleMerchantClient();
-    const syncResult = await googleClient.insertProduct(product);
+    const syncResult = (await googleClient.insertProduct(
+      product
+    )) as GoogleMerchantResult;
 
     if (!syncResult.success) {
       console.error('[API] Erreur synchronisation Google:', syncResult);
       return NextResponse.json(
         {
           success: false,
-          error: `Erreur synchronisation Google: ${syncResult.error}`,
+          error: `Erreur synchronisation Google: ${syncResult.error ?? 'Unknown'}`,
           details: syncResult.details,
         },
         { status: 500 }
@@ -197,28 +216,28 @@ export async function POST(
 
     // 6. Log de succès
     console.warn(
-      `[API] Product ${product.sku} synchronized successfully with Google Merchant Center`
+      `[API] Product ${product.sku as string} synchronized successfully with Google Merchant Center`
     );
 
     // 7. Réponse de succès
     return NextResponse.json({
       success: true,
       data: {
-        productId: product.id,
-        sku: product.sku,
-        name: product.name,
+        productId: product.id as string,
+        sku: product.sku as string,
+        name: product.name as string,
         googleResponse: syncResult.data,
         syncedAt: new Date().toISOString(),
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[API] Sync product failed:', error);
 
     return NextResponse.json(
       {
         success: false,
         error: 'Erreur interne du serveur',
-        details: error.message,
+        details: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     );
@@ -277,7 +296,9 @@ export async function GET(
 
     // 3. Vérification du statut Google Merchant
     const googleClient = getGoogleMerchantClient();
-    const googleStatus = await googleClient.getProduct(product.sku);
+    const googleStatus = (await googleClient.getProduct(
+      product.sku
+    )) as GoogleMerchantResult;
 
     // Type assertion pour les nouveaux champs (migration database en attente)
     const productWithNewFields = product as typeof product & {
@@ -303,14 +324,14 @@ export async function GET(
         },
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[API] Get sync status failed:', error);
 
     return NextResponse.json(
       {
         success: false,
         error: 'Erreur interne du serveur',
-        details: error.message,
+        details: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     );
