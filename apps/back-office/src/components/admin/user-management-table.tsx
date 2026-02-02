@@ -34,6 +34,14 @@ import { Edit, Trash2, Shield, Mail, Calendar, Key, Eye } from 'lucide-react';
 import type { UserWithProfile } from '@/app/(protected)/admin/users/page';
 
 import { DeleteUserDialog } from './delete-user-dialog';
+
+// Type pour les métadonnées utilisateur Supabase Auth
+interface UserMetadata {
+  name?: string;
+  first_name?: string;
+  last_name?: string;
+  job_title?: string;
+}
 import { EditUserDialog } from './edit-user-dialog';
 import { ResetPasswordDialog } from './reset-password-dialog';
 
@@ -72,7 +80,10 @@ export function UserManagementTable({ users }: UserManagementTableProps) {
     });
   };
 
-  const _formatUserName = (email: string, user_metadata: any = null) => {
+  const _formatUserName = (
+    email: string,
+    user_metadata: UserMetadata | null = null
+  ) => {
     // Essayer d'obtenir le nom depuis les métadonnées
     if (user_metadata?.name) {
       return user_metadata.name;
@@ -90,19 +101,25 @@ export function UserManagementTable({ users }: UserManagementTableProps) {
     return tempName.length > 1 ? tempName.join(' ') : tempName[0];
   };
 
-  const getFirstName = (email: string, user_metadata: any = null) => {
+  const getFirstName = (
+    email: string,
+    user_metadata: UserMetadata | null = null
+  ) => {
     if (user_metadata?.first_name) return user_metadata.first_name;
     const tempName = email.split('@')[0].split('.') || [''];
     return tempName[0] ?? '';
   };
 
-  const getLastName = (email: string, user_metadata: any = null) => {
+  const getLastName = (
+    email: string,
+    user_metadata: UserMetadata | null = null
+  ) => {
     if (user_metadata?.last_name) return user_metadata.last_name;
     const tempName = email.split('@')[0].split('.') || [''];
     return tempName[1] ?? '';
   };
 
-  const getJobTitle = (user_metadata: any = null) => {
+  const getJobTitle = (user_metadata: UserMetadata | null = null) => {
     return user_metadata?.job_title ?? 'Non renseigné';
   };
 
