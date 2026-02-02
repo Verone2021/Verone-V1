@@ -105,13 +105,11 @@ export default function ArchivedProductsPage() {
                     </h3>
                     <Badge
                       className={
-                        statusConfig[
-                          product.status as keyof typeof statusConfig
-                        ]?.className || 'bg-gray-600 text-white'
+                        statusConfig[product.status]?.className ||
+                        'bg-gray-600 text-white'
                       }
                     >
-                      {statusConfig[product.status as keyof typeof statusConfig]
-                        ?.label ?? '📦 Archivé'}
+                      {statusConfig[product.status]?.label ?? '📦 Archivé'}
                     </Badge>
                   </div>
 
