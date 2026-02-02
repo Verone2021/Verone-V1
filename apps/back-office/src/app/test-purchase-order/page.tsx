@@ -4,11 +4,30 @@ import { useState } from 'react';
 
 import { createClient } from '@verone/utils/supabase/client';
 
+// Interfaces basées sur schémas Supabase réels
+interface Supplier {
+  id: string;
+  legal_name: string;
+}
+
+interface Product {
+  id: string;
+  name: string;
+  sku: string;
+  cost_price: number | null;
+}
+
+interface SelectedProduct extends Product {
+  quantity: number;
+}
+
 export default function TestPurchaseOrderPage() {
   const [supplierId, setSupplierId] = useState<string>('');
-  const [suppliers, setSuppliers] = useState<any[]>([]);
-  const [products, setProducts] = useState<any[]>([]);
-  const [selectedProducts, setSelectedProducts] = useState<any[]>([]);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [selectedProducts, setSelectedProducts] = useState<SelectedProduct[]>(
+    []
+  );
   const [showProducts, setShowProducts] = useState(false);
   const [loading, setLoading] = useState(false);
   const [logs, setLogs] = useState<string[]>([]);
@@ -32,7 +51,8 @@ export default function TestPurchaseOrderPage() {
       .eq('type', 'supplier')
       .eq('is_active', true)
       .order('legal_name')
-      .limit(50);
+      .limit(50)
+      .returns<Supplier[]>();
 
     if (error) {
       log(`❌ Erreur: ${error.message}`);
@@ -55,7 +75,8 @@ export default function TestPurchaseOrderPage() {
       .from('products')
       .select('id, name, sku, cost_price')
       .eq('supplier_id', supplierId)
-      .limit(20);
+      .limit(20)
+      .returns<Product[]>();
 
     setLoading(false);
     if (error) {
@@ -78,7 +99,7 @@ export default function TestPurchaseOrderPage() {
   };
 
   // Ajouter produit
-  const addProduct = (product: any) => {
+  const addProduct = (product: Product) => {
     log(`➕ Ajout produit: ${product.name}`);
     setSelectedProducts(prev => [...prev, { ...product, quantity: 1 }]);
   };
