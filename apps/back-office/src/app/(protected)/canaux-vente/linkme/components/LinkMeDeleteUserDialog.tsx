@@ -57,7 +57,10 @@ export function LinkMeDeleteUserDialog({
       console.warn('Utilisateur LinkMe désactivé avec succès');
     } catch (error: unknown) {
       console.error('Erreur suppression utilisateur:', error);
-      const message = error instanceof Error ? error.message : "Une erreur inattendue s'est produite";
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Une erreur inattendue s'est produite";
       setError(message);
     }
   };

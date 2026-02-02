@@ -182,7 +182,9 @@ export function getExpectedElementsForTest(_test: TestInfo): string[] {
   return baseElements;
 }
 
-export function determineModuleType(test: TestInfo): MCPTestContext['moduleType'] {
+export function determineModuleType(
+  test: TestInfo
+): MCPTestContext['moduleType'] {
   const moduleType = test.id?.substring(0, test.id.indexOf('-')) ?? '';
 
   switch (moduleType) {

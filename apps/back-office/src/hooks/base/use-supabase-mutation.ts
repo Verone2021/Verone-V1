@@ -40,7 +40,6 @@ export function useSupabaseMutation<T>(
       setLoading(true);
       setError(null);
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: result, error: createError } = await supabase
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .from(options.tableName as any)
@@ -87,7 +86,6 @@ export function useSupabaseMutation<T>(
       setLoading(true);
       setError(null);
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: result, error: updateError } = await supabase
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .from(options.tableName as any)
@@ -130,7 +128,6 @@ export function useSupabaseMutation<T>(
       setLoading(true);
       setError(null);
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { error: deleteError } = await supabase
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .from(options.tableName as any)
