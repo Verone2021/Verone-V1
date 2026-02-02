@@ -129,7 +129,7 @@ export async function POST(request: NextRequest) {
         <tr>
           <td style="padding: 10px 0; color: #666; border-bottom: 1px solid #eee;">Restaurant</td>
           <td style="padding: 10px 0; text-align: right; border-bottom: 1px solid #eee;">
-            ${organisationName || '<em style="color: #888;">Non défini</em>'}
+            ${organisationName ?? '<em style="color: #888;">Non défini</em>'}
             ${isNewRestaurant ? '<br><span style="background: #dbeafe; color: #1e40af; padding: 2px 8px; border-radius: 4px; font-size: 12px;">Nouveau restaurant</span>' : ''}
           </td>
         </tr>
@@ -163,7 +163,7 @@ export async function POST(request: NextRequest) {
     </div>
 
     <div style="text-align: center; margin-top: 25px;">
-      <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://app.verone.fr'}/canaux-vente/linkme/commandes/${orderId}"
+      <a href="${process.env.NEXT_PUBLIC_APP_URL ?? 'https://app.verone.fr'}/canaux-vente/linkme/commandes/${orderId}"
          style="display: inline-block; background-color: #f59e0b; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold;">
         Voir la commande
       </a>
@@ -182,7 +182,7 @@ export async function POST(request: NextRequest) {
     // Envoyer l'email via Resend
     const resendClient = getResendClient();
     const { data, error } = await resendClient.emails.send({
-      from: process.env.RESEND_FROM_EMAIL || 'notifications@verone.fr',
+      from: process.env.RESEND_FROM_EMAIL ?? 'notifications@verone.fr',
       to: recipients,
       subject: emailSubject,
       html: emailHtml,

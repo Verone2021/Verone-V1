@@ -1,6 +1,6 @@
 'use client';
 
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return, @typescript-eslint/prefer-nullish-coalescing */
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return */
 
 /**
  * Page: Détail Commande Enseigne LinkMe
@@ -849,7 +849,7 @@ export default function LinkMeOrderDetailPage() {
                 <span className="text-sm">
                   Client:{' '}
                   <strong>
-                    {order.organisation.trade_name ||
+                    {order.organisation.trade_name ??
                       order.organisation.legal_name}
                   </strong>
                 </span>
@@ -1977,4 +1977,4 @@ export default function LinkMeOrderDetailPage() {
   );
 }
 
-/* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return, @typescript-eslint/prefer-nullish-coalescing */
+/* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return */

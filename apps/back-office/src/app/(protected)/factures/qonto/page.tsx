@@ -524,8 +524,8 @@ export default function QontoDocumentsPage(): React.ReactNode {
                   <CardHeader className="pb-2">
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-lg">
-                        {creditNote.credit_note_number ||
-                          creditNote.number ||
+                        {creditNote.credit_note_number ??
+                          creditNote.number ??
                           'N/A'}
                       </CardTitle>
                       <StatusBadge

@@ -151,7 +151,7 @@ export async function POST(request: NextRequest) {
     // Envoyer l'email via Resend
     const resendClient = getResendClient();
     const { data, error } = await resendClient.emails.send({
-      from: process.env.RESEND_FROM_EMAIL || 'factures@verone.fr',
+      from: process.env.RESEND_FROM_EMAIL ?? 'factures@verone.fr',
       to: Array.isArray(to) ? to : [to],
       subject: emailSubject,
       html: emailHtml,

@@ -567,8 +567,8 @@ export default function NewSelectionPage() {
                 <div className="mt-2 p-3 bg-blue-50 rounded-lg text-sm">
                   <div className="flex items-center gap-2">
                     <span className="text-blue-600 font-medium">
-                      {selectedUser.organisation_name ||
-                        selectedUser.enseigne_name ||
+                      {selectedUser.organisation_name ??
+                        selectedUser.enseigne_name ??
                         "Pas d'organisation"}
                     </span>
                     {selectedUser.enseigne_name &&

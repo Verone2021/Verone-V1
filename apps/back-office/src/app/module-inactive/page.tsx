@@ -57,8 +57,8 @@ function ModuleInactiveContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const moduleName = searchParams.get('module') || 'inconnu';
-  const requestedPath = searchParams.get('path') || '/';
+  const moduleName = searchParams.get('module') ?? 'inconnu';
+  const requestedPath = searchParams.get('path') ?? '/';
 
   const displayName = MODULE_NAMES[moduleName] ?? moduleName;
   const plannedPhase = MODULE_PHASES[moduleName] ?? 'Prochainement';

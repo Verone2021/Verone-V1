@@ -1,6 +1,6 @@
 'use client';
 
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return, @typescript-eslint/prefer-nullish-coalescing, react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return, react-hooks/exhaustive-deps */
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 
@@ -458,9 +458,9 @@ export default function ProductDetailPage() {
       return {
         type: 'affiliate',
         affiliateName:
-          product.affiliate_creator?.enseigne?.name ||
-          product.affiliate_creator?.organisation?.trade_name ||
-          product.affiliate_creator?.organisation?.legal_name ||
+          product.affiliate_creator?.enseigne?.name ??
+          product.affiliate_creator?.organisation?.trade_name ??
+          product.affiliate_creator?.organisation?.legal_name ??
           'Affilié inconnu',
         affiliateDisplayName:
           product.affiliate_creator?.display_name ?? undefined,
@@ -481,7 +481,7 @@ export default function ProductDetailPage() {
         type: 'client',
         clientType: 'organisation',
         clientName:
-          product.assigned_client.trade_name ||
+          product.assigned_client.trade_name ??
           product.assigned_client.legal_name,
         clientId: product.assigned_client.id,
       };
@@ -708,8 +708,8 @@ export default function ProductDetailPage() {
                       </p>
                       <p className="text-xs text-purple-700">
                         Créé par:{' '}
-                        {product.affiliate_creator?.display_name ||
-                          sourcing.affiliateName ||
+                        {product.affiliate_creator?.display_name ??
+                          sourcing.affiliateName ??
                           'Affilié inconnu'}
                       </p>
                       <p className="text-xs text-purple-600 mt-1">
@@ -1010,8 +1010,8 @@ export default function ProductDetailPage() {
               isProduct
               productName={product.name}
               supplierName={
-                (product.supplier?.legal_name ||
-                  product.supplier?.trade_name) ??
+                product.supplier?.legal_name ??
+                product.supplier?.trade_name ??
                 undefined
               }
               costPrice={product.cost_price ?? undefined}
@@ -1223,4 +1223,4 @@ export default function ProductDetailPage() {
   );
 }
 
-/* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return, @typescript-eslint/prefer-nullish-coalescing, react-hooks/exhaustive-deps */
+/* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return, react-hooks/exhaustive-deps */

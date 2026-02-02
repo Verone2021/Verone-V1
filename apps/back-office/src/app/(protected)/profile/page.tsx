@@ -481,7 +481,7 @@ export default function ProfilePage() {
                   />
                 ) : (
                   <p className="font-medium text-xs text-neutral-900">
-                    {profile?.job_title || 'Non renseigné'}
+                    {profile?.job_title ?? 'Non renseigné'}
                   </p>
                 )}
                 {validationErrors.jobTitle && (

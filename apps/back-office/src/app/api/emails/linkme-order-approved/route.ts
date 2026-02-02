@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
     }
 
     const linkmeUrl =
-      process.env.LINKME_PUBLIC_URL || 'https://linkme.verone.fr';
+      process.env.LINKME_PUBLIC_URL ?? 'https://linkme.verone.fr';
     const step4Url = `${linkmeUrl}/delivery-info/${step4Token}`;
 
     const emailSubject = `Votre commande ${orderNumber} a été approuvée - Action requise`;
@@ -129,7 +129,7 @@ export async function POST(request: NextRequest) {
 
     const resendClient = getResendClient();
     const { data, error } = await resendClient.emails.send({
-      from: process.env.RESEND_FROM_EMAIL || 'commandes@verone.fr',
+      from: process.env.RESEND_FROM_EMAIL ?? 'commandes@verone.fr',
       to: ownerEmail,
       subject: emailSubject,
       html: emailHtml,

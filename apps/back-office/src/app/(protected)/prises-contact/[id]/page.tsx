@@ -553,7 +553,7 @@ export default function SubmissionDetailPage({
                 className="text-lg font-semibold mb-2"
                 style={{ color: colors.text.DEFAULT }}
               >
-                {submission.subject || 'Message'}
+                {submission.subject ?? 'Message'}
               </h2>
               <p
                 className="text-sm leading-relaxed whitespace-pre-wrap"
@@ -634,7 +634,7 @@ export default function SubmissionDetailPage({
                   className="text-sm leading-relaxed whitespace-pre-wrap"
                   style={{ color: colors.text.subtle }}
                 >
-                  {submission.internal_notes || 'Aucune note'}
+                  {submission.internal_notes ?? 'Aucune note'}
                 </p>
               )}
             </div>
