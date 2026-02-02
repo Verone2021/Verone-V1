@@ -427,31 +427,6 @@
 
 ### 748E1D85E2258257D7E244D3C4E5667C - Zentrada - 11/11/2025 - 2 926,94 € HT
 
-<<<<<<< Updated upstream
-| Fournisseur | Produit                                   | Qté | PU HT   | Total HT |
-| ----------- | ----------------------------------------- | --- | ------- | -------- |
-| Zentrada    | Cadre photo naturel eva 30x40             | 12  | 5,83 €  | 69,96 €  |
-| Zentrada    | Suspension papier etel naturel d37,5      | 2   | 46,66 € | 93,32 €  |
-| Zentrada    | Miroir raphia tropi 43x29                 | 6   | 12,05 € | 72,30 €  |
-| Zentrada    | Déco mural raphia alba 91x64              | 2   | 33,53 € | 67,06 €  |
-| Zentrada    | Miroir raphia alba x3                     | 4   | 30,78 € | 123,12 € |
-| Zentrada    | Déco mural raphia alaina d64              | 4   | 19,05 € | 76,20 €  |
-| Zentrada    | Déco mural raphia oasis x2                | 6   | 19,44 € | 116,64 € |
-| Zentrada    | Miroir tresse d68 celia                   | 6   | 21,06 € | 126,36 € |
-| Zentrada    | Miroir roseau ael d80                     | 4   | 19,04 € | 76,16 €  |
-| Zentrada    | Miroir déco contour doré losange h60cm    | 6   | 12,72 € | 76,32 €  |
-| Zentrada    | Miroir déco contour déco doré losange     | 6   | 8,75 €  | 52,50 €  |
-| Zentrada    | Lampe champignon lito beige h24.5         | 4   | 10,66 € | 42,64 €  |
-| Zentrada    | Table métal D31H46cm caramel              | 1   | 30,98 € | 30,98 €  |
-| Zentrada    | Lampe champignon lito noir h24.5          | 4   | 10,66 € | 42,64 €  |
-| Zentrada    | Table basse aeris                         | 1   | 218,70 € | 218,70 € |
-| Zentrada    | Miroir metal warren or d24 x3             | 6   | 11,34 € | 68,04 €  |
-| Zentrada    | Miroir plast orga roman 30x39             | 8   | 4,57 €  | 36,56 €  |
-| Zentrada    | Organisateur coulissant PM bambou         | 156 | 3,05 €  | 475,80 € |
-| Zentrada    | Organisateur coulissant MM bambou         | 156 | 5,35 €  | 834,60 € |
-| Zentrada    | Miroir rotin raphia safari d38            | 12  | 7,61 €  | 91,32 €  |
-| Zentrada    | Miroir raphia alba d57                    | 6   | 22,62 € | 135,72 € |
-=======
 | Fournisseur | Produit                                | Qté | PU HT    | Total HT |
 | ----------- | -------------------------------------- | --- | -------- | -------- |
 | Zentrada    | Cadre photo naturel eva 30x40          | 12  | 5,83 €   | 69,96 €  |
@@ -475,7 +450,6 @@
 | Zentrada    | Organisateur coulissant MM bambou      | 156 | 5,35 €   | 834,60 € |
 | Zentrada    | Miroir rotin raphia safari d38         | 12  | 7,61 €   | 91,32 €  |
 | Zentrada    | Miroir raphia alba d57                 | 6   | 22,62 €  | 135,72 € |
->>>>>>> Stashed changes
 
 **Total facture :** 2 926,94 € HT (TVA 0%)
 
@@ -547,6 +521,8 @@
 | Affect Building Consulting | SFA4 Suspension frange 4                          | 29              | 40,95 €       | 1 187,55 € | 20% |
 
 **Sous-total Suspensions : 33 666,43 €**
+
+**Note :** La suspension papier etel naturel d37,5 (2 unités, 93,32 €) de Zentrada a été retirée de cette catégorie.
 
 ---
 
@@ -633,6 +609,8 @@
 
 **Sous-total Miroirs : 5 535,63 €**
 
+**Note :** Les 10 miroirs Zentrada (1 274,38 €) ont été retirés de cette catégorie et placés dans la catégorie dédiée "Zentrada (Allemagne)". Cela corrige la TVA moyenne qui était à 16% (moyenne pondérée incluant Zentrada à 0%) et est maintenant à 20% (TVA française uniquement).
+
 ---
 
 #### LUMINAIRES
@@ -648,6 +626,8 @@
 | OPJET       | Ampoule E27 10W     | 72              | 2,90 €        | 208,80 €   | 20% |
 
 **Sous-total Luminaires : 3 430,62 €**
+
+**Note :** Les 2 lampes champignon Zentrada (8 unités, 85,28 €) ont été retirées de cette catégorie.
 
 ---
 
@@ -696,37 +676,14 @@
 | Affect Building Consulting | Panier n°1 doum - 30 cm              | 2               | 12,60 €       | 25,20 €    | 20% |
 | Affect Building Consulting | Panier n°1 doum - 40 cm              | 2               | 19,95 €       | 39,90 €    | 20% |
 
-**Sous-total Accessoires : 4 608,55 €**
+**Sous-total Accessoires Divers : 4 608,55 €**
+
+**Note :** Les produits Zentrada (cadres, lampes, tables, organisateurs) ont été retirés de cette catégorie et placés dans une catégorie dédiée "Zentrada (Allemagne)".
 
 ---
 
 #### ZENTRADA (Allemagne)
 
-<<<<<<< Updated upstream
-| Fournisseur | Produit                               | Quantité Totale | Prix Moyen HT | CA HT      | TVA |
-| ----------- | ------------------------------------- | --------------- | ------------- | ---------- | --- |
-| Zentrada    | Cadre photo naturel eva 30x40         | 12              | 5,83 €        | 69,96 €    | 0%  |
-| Zentrada    | Suspension papier etel naturel d37,5  | 2               | 46,66 €       | 93,32 €    | 0%  |
-| Zentrada    | Miroir raphia tropi 43x29             | 6               | 12,05 €       | 72,30 €    | 0%  |
-| Zentrada    | Déco mural raphia alba 91x64          | 2               | 33,53 €       | 67,06 €    | 0%  |
-| Zentrada    | Miroir raphia alba x3                 | 4               | 30,78 €       | 123,12 €   | 0%  |
-| Zentrada    | Déco mural raphia alaina d64          | 4               | 19,05 €       | 76,20 €    | 0%  |
-| Zentrada    | Déco mural raphia oasis x2            | 6               | 19,44 €       | 116,64 €   | 0%  |
-| Zentrada    | Miroir tresse d68 celia               | 6               | 21,06 €       | 126,36 €   | 0%  |
-| Zentrada    | Miroir roseau ael d80                 | 4               | 19,04 €       | 76,16 €    | 0%  |
-| Zentrada    | Miroir déco contour doré losange h60cm| 6               | 12,72 €       | 76,32 €    | 0%  |
-| Zentrada    | Miroir déco contour déco doré losange | 6               | 8,75 €        | 52,50 €    | 0%  |
-| Zentrada    | Lampe champignon lito beige h24.5     | 4               | 10,66 €       | 42,64 €    | 0%  |
-| Zentrada    | Table métal D31H46cm caramel          | 1               | 30,98 €       | 30,98 €    | 0%  |
-| Zentrada    | Lampe champignon lito noir h24.5      | 4               | 10,66 €       | 42,64 €    | 0%  |
-| Zentrada    | Table basse aeris                     | 1               | 218,70 €      | 218,70 €   | 0%  |
-| Zentrada    | Miroir metal warren or d24 x3         | 6               | 11,34 €       | 68,04 €    | 0%  |
-| Zentrada    | Miroir plast orga roman 30x39         | 8               | 4,57 €        | 36,56 €    | 0%  |
-| Zentrada    | Organisateur coulissant PM bambou     | 156             | 3,05 €        | 475,80 €   | 0%  |
-| Zentrada    | Organisateur coulissant MM bambou     | 156             | 5,35 €        | 834,60 €   | 0%  |
-| Zentrada    | Miroir rotin raphia safari d38        | 12              | 7,61 €        | 91,32 €    | 0%  |
-| Zentrada    | Miroir raphia alba d57                | 6               | 22,62 €       | 135,72 €   | 0%  |
-=======
 | Fournisseur | Produit                                | Quantité Totale | Prix Moyen HT | CA HT    | TVA |
 | ----------- | -------------------------------------- | --------------- | ------------- | -------- | --- |
 | Zentrada    | Cadre photo naturel eva 30x40          | 12              | 5,83 €        | 69,96 €  | 0%  |
@@ -750,7 +707,6 @@
 | Zentrada    | Organisateur coulissant MM bambou      | 156             | 5,35 €        | 834,60 € | 0%  |
 | Zentrada    | Miroir rotin raphia safari d38         | 12              | 7,61 €        | 91,32 €  | 0%  |
 | Zentrada    | Miroir raphia alba d57                 | 6               | 22,62 €       | 135,72 € | 0%  |
->>>>>>> Stashed changes
 
 **Sous-total Zentrada : 2 926,94 €**
 
@@ -764,15 +720,23 @@
 | ------------------ | --------------- | ----------- |
 | Plateaux           | 14 918,30 €     | 1,4%        |
 | Coussins           | 5 605,81 €      | 20%         |
-| Suspensions        | 33 759,75 €     | 20%         |
+| Suspensions        | 33 666,43 €     | 20%         |
 | Vases              | 4 837,58 €      | 20%         |
 | Mobilier Bambou    | 8 425,25 €      | 20%         |
-| Miroirs            | 6 810,01 €      | 16%         |
-| Luminaires         | 3 515,90 €      | 19%         |
+| Miroirs            | 5 535,63 €      | 20%         |
+| Zentrada           | 2 926,94 €      | 0%          |
+| Luminaires         | 3 430,62 €      | 20%         |
 | Bancs et Tabourets | 2 621,13 €      | 20%         |
 | Ronds de Paille    | 1 096,20 €      | 20%         |
-| Accessoires Divers | 5 883,35 €      | 19%         |
-| **TOTAL EUR**      | **87 473,28 €** | -           |
+| Accessoires Divers | 4 608,55 €      | 20%         |
+| **TOTAL EUR**      | **87 692,15 €** | -           |
+
+**Note importante :** La catégorie **Zentrada** (2 926,94 €) a été séparée des autres catégories car ce fournisseur allemand a une TVA de 0% (export UE). Auparavant, les produits Zentrada étaient répartis dans les catégories Suspensions (+93,32 €), Miroirs (+1 274,38 €) et Accessoires Divers (+1 559,24 €), ce qui faussait les calculs de TVA moyenne. Après cette correction :
+
+- **Suspensions** : 33 759,75 € → **33 666,43 €** (retrait suspension papier Zentrada)
+- **Miroirs** : 6 810,01 € → **5 535,63 €** (retrait 10 miroirs Zentrada)
+- **Accessoires Divers** : 5 883,35 € → **4 608,55 €** (retrait cadres, lampes, tables, organisateurs Zentrada)
+- **Luminaires** : 3 515,90 € → **3 430,62 €** (retrait 2 lampes champignon Zentrada = 85,28 €)
 
 ### Montants en USD (non convertis)
 
@@ -826,8 +790,21 @@
    - **Plateaux** = catégorie #2 (17,0% du CA)
    - **Mobilier Bambou** = catégorie #3 (9,6% du CA)
 
+5. **Corrections Appliquées (28/01/2026)** :
+   - ✅ Résolution des marqueurs de conflit Git (2 sections doublons Zentrada)
+   - ✅ Séparation de la catégorie **Zentrada** (2 926,94 €) pour isoler la TVA 0%
+   - ✅ Correction du **TOTAL EUR** : 87 473,28 € → **87 692,15 €** (écart de +218,87 € corrigé)
+   - ✅ Recalcul des sous-totaux :
+     - Suspensions : 33 759,75 € → **33 666,43 €** (-93,32 €)
+     - Miroirs : 6 810,01 € → **5 535,63 €** (-1 274,38 €)
+     - Luminaires : 3 515,90 € → **3 430,62 €** (-85,28 €)
+     - Accessoires Divers : 5 883,35 € → **4 608,55 €** (-1 274,80 €)
+   - ✅ TVA Miroirs corrigée : 16% → **20%** (retrait des miroirs Zentrada à 0%)
+   - ✅ Cohérence totale : **Somme par catégories = Somme par fournisseurs = 87 692,15 €**
+
 ---
 
 **Rapport généré le 28/01/2026**
+**Dernière mise à jour : 02/02/2026 (corrections incohérences)**
 **Source : 29 factures PDF extraites manuellement**
 **Période : 11/08/2022 → 15/09/2025**

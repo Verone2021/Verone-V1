@@ -207,6 +207,15 @@ async function getUserDetailData(
   }
 }
 
+// Type for user metadata
+type UserMetadata = {
+  name?: string;
+  first_name?: string;
+  last_name?: string;
+  job_title?: string;
+  phone?: string;
+};
+
 // ✅ Cache Next.js : revalide toutes les 5 minutes
 export const revalidate = 300;
 
@@ -226,19 +235,22 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
     notFound();
   }
 
-  const formatUserName = (email: string, user_metadata: any = null) => {
+  const formatUserName = (
+    email: string,
+    user_metadata: UserMetadata | null = null
+  ) => {
     if (user_metadata?.name) {
       return user_metadata.name;
     }
 
-    if (user_metadata?.first_name || user_metadata?.last_name) {
+    if (user_metadata?.first_name ?? user_metadata?.last_name) {
       return [user_metadata.first_name, user_metadata.last_name]
         .filter(Boolean)
         .join(' ')
         .trim();
     }
 
-    const tempName = email.split('@')[0].split('.') || [''];
+    const tempName = email.split('@')[0].split('.') ?? [''];
     return tempName.length > 1 ? tempName.join(' ') : tempName[0];
   };
 

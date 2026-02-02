@@ -3,15 +3,18 @@
  *
  * Hook base pour queries Supabase read-only
  * Usage : Dashboard widgets, analytics, listes avec filtres
+ *
+ * Note: Ce hook est intentionnellement générique et utilise `any` pour
+ * le query builder afin de supporter n'importe quelle table dynamiquement.
  */
 
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 
 import { createClient } from '@verone/utils/supabase/client';
 
-export interface QueryOptions<T> {
+export interface QueryOptions<_T> {
   tableName: string;
   select?: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -37,7 +40,7 @@ export function useSupabaseQuery<T>(options: QueryOptions<T>): QueryState<T> {
   // ✅ FIX: useMemo garantit createClient() appelé une seule fois par instance
   const supabase = useMemo(() => createClient(), []);
 
-  const fetch = async () => {
+  const fetch = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -80,7 +83,14 @@ export function useSupabaseQuery<T>(options: QueryOptions<T>): QueryState<T> {
     } finally {
       setLoading(false);
     }
-  };
+  }, [
+    supabase,
+    options.tableName,
+    options.select,
+    options.filters,
+    options.orderBy,
+    options.limit,
+  ]);
 
   useEffect(() => {
     if (options.autoFetch !== false) {
@@ -88,7 +98,7 @@ export function useSupabaseQuery<T>(options: QueryOptions<T>): QueryState<T> {
         console.error('[useSupabaseQuery] useEffect fetch failed:', error);
       });
     }
-  }, [options.tableName]);
+  }, [fetch, options.autoFetch]);
 
   return {
     data,

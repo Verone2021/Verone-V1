@@ -62,6 +62,7 @@ import {
   useToggleProductPublication,
   useRemoveProductFromSiteInternet,
 } from '../hooks/use-site-internet-products';
+import type { SiteInternetProduct } from '../types';
 
 /**
  * Section Produits Principale
@@ -76,9 +77,11 @@ export function ProductsSection() {
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [productToRemove, setProductToRemove] = useState<string | null>(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const [selectedProduct, setSelectedProduct] =
+    useState<SiteInternetProduct | null>(null);
   const [previewModalOpen, setPreviewModalOpen] = useState(false);
-  const [previewProduct, setPreviewProduct] = useState<any>(null);
+  const [previewProduct, setPreviewProduct] =
+    useState<SiteInternetProduct | null>(null);
 
   // Hooks
   const {
@@ -229,7 +232,9 @@ export function ProductsSection() {
             </div>
             <Select
               value={statusFilter}
-              onValueChange={(value: any) => setStatusFilter(value)}
+              onValueChange={(value: 'all' | 'published' | 'draft') =>
+                setStatusFilter(value)
+              }
             >
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Statut" />

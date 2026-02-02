@@ -453,11 +453,15 @@ export default function NewSelectionPage() {
       });
 
       if (!response.ok) {
-        const error = await response.json();
+        const error = (await response.json().catch(() => ({}))) as {
+          message?: string;
+        };
         throw new Error(error.message ?? 'Erreur lors de la création');
       }
 
-      const { selection } = await response.json();
+      const result = (await response.json()) as {
+        selection: { id: string };
+      };
 
       toast({
         title: 'Sélection créée',
@@ -465,12 +469,16 @@ export default function NewSelectionPage() {
       });
 
       // Rediriger vers la page de détail
-      router.push(`/canaux-vente/linkme/selections/${selection.id}`);
-    } catch (error: any) {
+      router.push(`/canaux-vente/linkme/selections/${result.selection.id}`);
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Impossible de créer la sélection.';
       console.error('Erreur création sélection:', error);
       toast({
         title: 'Erreur',
-        description: error.message ?? 'Impossible de créer la sélection.',
+        description: message,
         variant: 'destructive',
       });
     } finally {

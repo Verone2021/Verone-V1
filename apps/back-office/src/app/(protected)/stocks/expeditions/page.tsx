@@ -247,7 +247,7 @@ export default function ExpeditionsPage() {
   ]);
 
   // Handler pour ouvrir le modal d'expédition
-  const handleOpenShipmentModal = (order: any) => {
+  const handleOpenShipmentModal = (order: SalesOrder) => {
     setOrderToShip(order);
     setShowShipmentModal(true);
   };
@@ -272,7 +272,7 @@ export default function ExpeditionsPage() {
       });
   };
 
-  const handleViewHistory = async (order: any) => {
+  const handleViewHistory = async (order: SalesOrder) => {
     setSelectedOrder(order);
     const history = await loadShipmentHistory(order.id);
     setShipmentHistory(history ?? []);
@@ -628,7 +628,7 @@ export default function ExpeditionsPage() {
                                             />
                                             <div className="flex-1 min-w-0">
                                               <p className="font-medium text-sm truncate">
-                                                {item.products?.name ||
+                                                {item.products?.name ??
                                                   'Produit inconnu'}
                                               </p>
                                               <p className="text-xs text-gray-500 font-mono">
@@ -873,7 +873,7 @@ export default function ExpeditionsPage() {
                                             />
                                             <div className="flex-1 min-w-0">
                                               <p className="font-medium text-sm truncate">
-                                                {item.products?.name ||
+                                                {item.products?.name ??
                                                   'Produit inconnu'}
                                               </p>
                                               <p className="text-xs text-gray-500 font-mono">
@@ -1048,6 +1048,7 @@ export default function ExpeditionsPage() {
                           </Table>
 
                           {/* Coûts */}
+                          {/* eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing */}
                           {(shipment.cost_paid_eur ||
                             shipment.cost_charged_eur) && (
                             <div className="mt-4 pt-4 border-t space-y-1">
