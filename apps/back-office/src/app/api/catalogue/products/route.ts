@@ -12,6 +12,22 @@ import { logger, catalogueLogger } from '@verone/utils/logger';
 import { withApiSecurity } from '@verone/utils/middleware/api-security';
 import { withLogging } from '@verone/utils/middleware/logging';
 
+// Interface basée sur schéma products (consulté via MCP Supabase)
+interface CreateProductBody {
+  name: string;
+  sku: string;
+  description?: string;
+  price_ht: number;
+  price_ttc?: number;
+  brand?: string;
+  status?: string;
+  stock_status?: string;
+  product_status?: string;
+  category?: string;
+  images?: string[];
+  [key: string]: unknown;
+}
+
 // Mock data pour démonstration
 const MOCK_PRODUCTS = [
   {
@@ -186,7 +202,7 @@ async function createProduct(req: NextRequest) {
   const timer = logger.startTimer();
 
   try {
-    const body = await req.json();
+    const body = (await req.json()) as CreateProductBody;
 
     // Validation simple
     if (!body.name || !body.sku || !body.price_ht) {
@@ -205,7 +221,7 @@ async function createProduct(req: NextRequest) {
       return NextResponse.json(
         {
           error: 'Validation failed',
-          missing_fields: ['name', 'sku', 'price_ht'].filter(
+          missing_fields: (['name', 'sku', 'price_ht'] as const).filter(
             field => !body[field]
           ),
         },
