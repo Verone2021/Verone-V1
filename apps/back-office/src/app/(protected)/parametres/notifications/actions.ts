@@ -15,6 +15,19 @@ interface ActionResult {
   emails?: string[];
 }
 
+interface AppSetting {
+  setting_key: string;
+  setting_value: {
+    form_submissions?: string[];
+  };
+  updated_at?: string;
+}
+
+type AppSettingQueryResult = {
+  data: AppSetting | null;
+  error: { code?: string; message?: string } | null;
+};
+
 /**
  * Récupérer la liste des emails de notification
  */
@@ -22,11 +35,11 @@ export async function getNotificationEmails(): Promise<ActionResult> {
   try {
     const supabase = createClient();
 
-    const { data, error } = await (supabase as any)
+    const { data, error } = (await supabase
       .from('app_settings')
       .select('setting_value')
       .eq('setting_key', 'notification_emails')
-      .single();
+      .single()) as AppSettingQueryResult;
 
     if (error) {
       // Si la clé n'existe pas encore, retourner un tableau vide
@@ -61,11 +74,11 @@ export async function addNotificationEmail(
     const supabase = createClient();
 
     // Récupérer la configuration actuelle
-    const { data: currentData } = await (supabase as any)
+    const { data: currentData } = (await supabase
       .from('app_settings')
       .select('setting_value')
       .eq('setting_key', 'notification_emails')
-      .single();
+      .single()) as AppSettingQueryResult;
 
     const currentEmails = currentData?.setting_value?.form_submissions ?? [];
 
@@ -81,20 +94,18 @@ export async function addNotificationEmail(
     const updatedEmails = [...currentEmails, email];
 
     // Upsert dans app_settings
-    const { error: upsertError } = await (supabase as any)
-      .from('app_settings')
-      .upsert(
-        {
-          setting_key: 'notification_emails',
-          setting_value: {
-            form_submissions: updatedEmails,
-          },
-          updated_at: new Date().toISOString(),
+    const { error: upsertError } = (await supabase.from('app_settings').upsert(
+      {
+        setting_key: 'notification_emails',
+        setting_value: {
+          form_submissions: updatedEmails,
         },
-        {
-          onConflict: 'setting_key',
-        }
-      );
+        updated_at: new Date().toISOString(),
+      },
+      {
+        onConflict: 'setting_key',
+      }
+    )) as { error: { message?: string } | null };
 
     if (upsertError) throw upsertError;
 
@@ -123,11 +134,11 @@ export async function removeNotificationEmail(
     const supabase = createClient();
 
     // Récupérer la configuration actuelle
-    const { data: currentData } = await (supabase as any)
+    const { data: currentData } = (await supabase
       .from('app_settings')
       .select('setting_value')
       .eq('setting_key', 'notification_emails')
-      .single();
+      .single()) as AppSettingQueryResult;
 
     const currentEmails = currentData?.setting_value?.form_submissions ?? [];
 
@@ -135,7 +146,7 @@ export async function removeNotificationEmail(
     const updatedEmails = currentEmails.filter((e: string) => e !== email);
 
     // Mettre à jour app_settings
-    const { error: updateError } = await (supabase as any)
+    const { error: updateError } = (await supabase
       .from('app_settings')
       .update({
         setting_value: {
@@ -143,7 +154,9 @@ export async function removeNotificationEmail(
         },
         updated_at: new Date().toISOString(),
       })
-      .eq('setting_key', 'notification_emails');
+      .eq('setting_key', 'notification_emails')) as {
+      error: { message?: string } | null;
+    };
 
     if (updateError) throw updateError;
 
