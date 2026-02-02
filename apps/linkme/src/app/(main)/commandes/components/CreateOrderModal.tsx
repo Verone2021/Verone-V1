@@ -85,6 +85,36 @@ import {
   useUserAffiliate,
 } from '../../../../lib/hooks/use-user-selection';
 
+/**
+ * Type pour user_metadata de Supabase Auth
+ */
+interface UserMetadata {
+  full_name?: string;
+  phone?: string;
+  position?: string;
+}
+
+/**
+ * Type pour le résultat de la RPC create_public_linkme_order
+ */
+interface CreatePublicLinkmeOrderResult {
+  success: boolean;
+  error?: string;
+  order_id?: string;
+  order_number?: string;
+  total_ttc?: number;
+}
+
+/**
+ * Type pour les données de sélection avec affiliate
+ */
+interface SelectionDataWithAffiliate {
+  name: string;
+  linkme_affiliates: {
+    name: string;
+  } | null;
+}
+
 interface CreateOrderModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -208,7 +238,7 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
     name: '',
     email: '',
     phone: '',
-    position: null,
+    position: null as string | null,
   });
 
   // ============================================
@@ -244,12 +274,13 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
   // Initialiser le demandeur depuis l'utilisateur authentifié
   useEffect(() => {
     if (user) {
+      const metadata = user.user_metadata as UserMetadata | undefined;
       setRequester({
         type: 'responsable_enseigne',
-        name: user.user_metadata?.full_name ?? user.email ?? '',
+        name: metadata?.full_name ?? user.email ?? '',
         email: user.email ?? '',
-        phone: user.user_metadata?.phone ?? '',
-        position: user.user_metadata?.position ?? null,
+        phone: metadata?.phone ?? '',
+        position: metadata?.position ?? null,
       });
     }
   }, [user]);
@@ -637,8 +668,7 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
       };
 
       // Appel RPC
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: result, error: rpcError } = await (supabase.rpc as any)(
+      const { data: result, error: rpcError } = (await supabase.rpc(
         'create_public_linkme_order',
         {
           p_affiliate_id: affiliate.id,
@@ -649,7 +679,7 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
           p_owner: p_owner,
           p_billing: p_billing,
         }
-      );
+      )) as { data: CreatePublicLinkmeOrderResult | null; error: Error | null };
 
       if (rpcError) {
         throw new Error(`Erreur création commande: ${rpcError.message}`);
@@ -669,11 +699,11 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
 
       // Envoyer notification email
       try {
-        const { data: selectionData } = await supabase
+        const { data: selectionData } = (await supabase
           .from('linkme_selections')
           .select('name, linkme_affiliates(name)')
           .eq('id', selectedSelectionId)
-          .single();
+          .single()) as { data: SelectionDataWithAffiliate | null };
 
         await fetch('/api/emails/notify-enseigne-order', {
           method: 'POST',
@@ -688,8 +718,7 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
             isNewRestaurant: true,
             totalTtc: totalTtc,
             source: 'create_order_modal',
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            affiliateName: (selectionData?.linkme_affiliates as any)?.name,
+            affiliateName: selectionData?.linkme_affiliates?.name,
             selectionName: selectionData?.name,
             notes: notes || null,
           }),
