@@ -235,7 +235,7 @@ export function useOrganisations(filters?: OrganisationFilters) {
         });
       }
 
-      setOrganisations(organisationsWithCounts);
+      setOrganisations(organisationsWithCounts as unknown as Organisation[]);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur inconnue');
     } finally {
@@ -647,10 +647,10 @@ export function useOrganisation(id: string) {
         }
 
         // ✅ Ajouter le champ 'name' calculé
-        const orgWithName: Organisation = {
+        const orgWithName = {
           ...data,
           name: data.trade_name ?? data.legal_name,
-        };
+        } as unknown as Organisation;
 
         // Add product counts if supplier
         if (data.type === 'supplier') {
