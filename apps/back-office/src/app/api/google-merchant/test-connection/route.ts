@@ -29,6 +29,21 @@ interface TestConnectionResponse {
   details?: unknown;
 }
 
+interface ExtendedTestRequestBody {
+  includeProductList?: boolean;
+  testProduct?: string | null;
+}
+
+interface GoogleMerchantApiResult<T = unknown> {
+  success: boolean;
+  data?: T;
+  error?: string;
+}
+
+interface ProductListData {
+  products?: unknown[];
+}
+
 /**
  * GET - Teste la connexion complète à Google Merchant Center
  */
@@ -243,19 +258,23 @@ export async function POST(
     });
 
     // Récupérer les données de la requête pour des tests spécifiques
-    const body = await request.json().catch(() => ({}));
+    const body = (await request
+      .json()
+      .catch(() => ({}))) as ExtendedTestRequestBody;
     const { includeProductList = false, testProduct = null } = body;
 
     // Effectuer le test de base
     const baseTestResponse = await GET(request);
-    const baseTest = await baseTestResponse.json();
+    const baseTest = (await baseTestResponse.json()) as TestConnectionResponse;
 
     if (!baseTest.success) {
       return baseTestResponse;
     }
 
     // Tests étendus
-    const extendedDetails = { ...baseTest.data!.details };
+    const extendedDetails: Record<string, unknown> = {
+      ...baseTest.data?.details,
+    };
 
     // Test listage des produits
     if (includeProductList) {
@@ -264,7 +283,9 @@ export async function POST(
       });
       try {
         const client = getGoogleMerchantClient();
-        const listResult = await client.listProducts(5); // Liste 5 produits max
+        const listResult = (await client.listProducts(
+          5
+        )) as GoogleMerchantApiResult<ProductListData>; // Liste 5 produits max
 
         extendedDetails.productListTest = {
           success: listResult.success,
@@ -288,7 +309,9 @@ export async function POST(
       });
       try {
         const client = getGoogleMerchantClient();
-        const productResult = await client.getProduct(testProduct);
+        const productResult = (await client.getProduct(
+          testProduct
+        )) as GoogleMerchantApiResult;
 
         extendedDetails.specificProductTest = {
           sku: testProduct,
@@ -306,12 +329,12 @@ export async function POST(
       }
     }
 
-    return NextResponse.json({
+    return NextResponse.json<TestConnectionResponse>({
       success: true,
       data: {
-        ...baseTest.data!,
+        ...(baseTest.data ?? {}),
         details: extendedDetails,
-      },
+      } as TestConnectionResponse['data'],
     });
   } catch (error: unknown) {
     logger.error(
