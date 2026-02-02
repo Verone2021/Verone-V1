@@ -102,13 +102,15 @@ export default function PrixClientsPage() {
       const { data: orgsData } = await supabase
         .from('organisations')
         .select('id, trade_name, legal_name')
-        .in('id', customerIds);
+        .in('id', customerIds)
+        .returns<{ id: string; trade_name: string; legal_name: string }[]>();
 
       // Fetch products
       const { data: productsData } = await supabase
         .from('products')
         .select('id, name')
-        .in('id', productIds);
+        .in('id', productIds)
+        .returns<{ id: string; name: string }[]>();
 
       // Créer des maps pour lookup rapide
       const orgsMap = new Map(orgsData?.map(o => [o.id, o]) ?? []);
@@ -133,8 +135,12 @@ export default function PrixClientsPage() {
       setPricingRules(transformedData);
       setFilteredRules(transformedData);
       calculateStats(transformedData);
-    } catch (error) {
-      console.error('Erreur chargement prix clients:', error);
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Erreur chargement prix clients';
+      console.error('[PrixClientsPage]:', message);
       setPricingRules([]);
       setFilteredRules([]);
     } finally {

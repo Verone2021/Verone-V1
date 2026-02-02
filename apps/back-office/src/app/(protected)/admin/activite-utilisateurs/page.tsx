@@ -82,11 +82,12 @@ export default function ActiviteUtilisateursPage() {
         return;
       }
 
-      const { data: profile } = (await supabase
+      const { data: profile } = await supabase
         .from('user_profiles')
         .select('role')
         .eq('user_id', user.id)
-        .single()) as { data: { role: string } | null };
+        .single()
+        .returns<{ role: string }>();
 
       if (profile?.role !== 'owner') {
         router.push('/dashboard');

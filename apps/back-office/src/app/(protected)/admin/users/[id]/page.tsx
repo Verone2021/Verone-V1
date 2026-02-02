@@ -79,11 +79,12 @@ async function getCurrentUserRole() {
   } = await supabase.auth.getUser();
   if (!user) return null;
 
-  const { data: profile } = (await supabase
+  const { data: profile } = await supabase
     .from('user_profiles')
     .select('role')
     .eq('user_id', user.id)
-    .single()) as { data: { role: string } | null };
+    .single()
+    .returns<{ role: string }>();
 
   return profile?.role ?? null;
 }
@@ -142,13 +143,15 @@ async function getUserDetailData(
 
     try {
       // Appel direct RPC Supabase (pas de fetch HTTP)
-      const { data: stats, error: statsError } = (await supabase.rpc(
-        'get_user_activity_stats',
-        {
-          p_user_id: userId,
-          p_days: 30,
-        }
-      )) as { data: ActivityStats[] | null; error: unknown };
+      const result = await supabase.rpc('get_user_activity_stats', {
+        p_user_id: userId,
+        p_days: 30,
+      });
+
+      const { data: stats, error: statsError } = result as {
+        data: ActivityStats[] | null;
+        error: Error | null;
+      };
 
       if (!statsError && stats && stats.length > 0) {
         realAnalytics = {
