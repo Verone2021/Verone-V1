@@ -105,6 +105,10 @@ export function useSupabaseMutation<T>(
         throw new Error('Aucune donnée retournée après création');
       }
 
+      if (!result) {
+        throw new Error('Aucune donnée retournée après création');
+      }
+
       toast.success('Créé avec succès');
 
       if (options.onSuccess) {
@@ -140,6 +144,10 @@ export function useSupabaseMutation<T>(
         .single();
 
       if (updateError) throw new Error(updateError.message);
+
+      if (!result) {
+        throw new Error('Aucune donnée retournée après modification');
+      }
 
       if (!result) {
         throw new Error('Aucune donnée retournée après modification');
