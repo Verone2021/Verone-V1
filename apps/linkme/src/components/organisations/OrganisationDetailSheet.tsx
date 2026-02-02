@@ -38,7 +38,6 @@ import {
   type AddressResult,
   RadioGroup,
   RadioGroupItem,
-  Textarea,
 } from '@verone/ui';
 import { cn } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
@@ -55,7 +54,6 @@ import {
   FileText,
   User,
   Smartphone,
-  ExternalLink,
   Save,
   X,
   Loader2,
@@ -451,7 +449,7 @@ export function OrganisationDetailSheet({
 
   // Mutation générique pour mettre à jour n'importe quel champ
   const updateMutation = useMutation({
-    mutationFn: async (updates: Record<string, any>) => {
+    mutationFn: async (updates: Record<string, unknown>) => {
       if (!organisationId) throw new Error('No organisation ID');
 
       const { error } = await supabase
