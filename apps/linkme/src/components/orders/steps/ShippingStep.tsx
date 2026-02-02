@@ -32,7 +32,7 @@
 
 import { useEffect, useMemo, useCallback, useState } from 'react';
 
-import { Card, Input, Label, Textarea, Switch, Badge, cn } from '@verone/ui';
+import { Card, Input, Label, Textarea, Switch, cn } from '@verone/ui';
 import {
   Truck,
   MapPin,
@@ -197,7 +197,7 @@ function CreateNewCard({
 
 export function ShippingStep({
   formData,
-  errors,
+  errors: _errors,
   onUpdate,
   onUpdateDelivery,
 }: ShippingStepProps) {
@@ -245,7 +245,7 @@ export function ShippingStep({
   const {
     parentOrg,
     primaryAddress: parentPrimaryAddress,
-    isLoading: parentLoading,
+    isLoading: _parentLoading,
   } = useParentOrganisationAddresses(!isFranchise ? enseigneId : null);
 
   // Shipping addresses
@@ -426,11 +426,7 @@ export function ShippingStep({
   // Determine if contact form is in edit mode
   const isContactEditMode = useMemo(() => {
     return formData.contacts.delivery.existingContactId ?? showContactForm;
-  }, [
-    formData.contacts.delivery.sameAsResponsable,
-    formData.contacts.delivery.existingContactId,
-    showContactForm,
-  ]);
+  }, [formData.contacts.delivery.existingContactId, showContactForm]);
 
   // ========================================
   // ADDRESS HANDLERS
