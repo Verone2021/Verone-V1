@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 
+import type { Database } from '@verone/types';
 import { createClient } from '@verone/utils/supabase/client';
 
 export interface Organisation {
@@ -76,15 +77,6 @@ export interface Organisation {
   // Enseigne (franchise/groupe) - LinkMe
   enseigne_id: string | null;
   is_enseigne_parent: boolean;
-
-  // Champs spécifiques clients particuliers
-  first_name: string | null;
-  mobile_phone: string | null;
-  date_of_birth: string | null;
-  nationality: string | null;
-  preferred_language: string | null;
-  communication_preference: 'email' | 'phone' | 'mail' | null;
-  marketing_consent: boolean | null;
 
   // Performance et qualité
   rating: number | null;
@@ -169,15 +161,6 @@ export interface CreateOrganisationData {
 
   // Classification client (B2B/B2C)
   customer_type?: 'professional' | 'individual';
-
-  // Champs spécifiques clients particuliers
-  first_name?: string;
-  mobile_phone?: string;
-  date_of_birth?: string;
-  nationality?: string;
-  preferred_language?: string;
-  communication_preference?: 'email' | 'phone' | 'mail';
-  marketing_consent?: boolean;
 
   // Performance
   rating?: number;
@@ -396,7 +379,7 @@ export function useOrganisations(filters?: OrganisationFilters) {
         });
       }
 
-      setOrganisations(organisationsWithCounts);
+      setOrganisations(organisationsWithCounts as unknown as Organisation[]);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur inconnue');
     } finally {
@@ -500,7 +483,8 @@ export function useOrganisations(filters?: OrganisationFilters) {
   ): Promise<Organisation | null> => {
     try {
       // Filtrer uniquement les colonnes valides existantes en BD
-      const validData: Partial<UpdateOrganisationData> = {};
+      const validData: Database['public']['Tables']['organisations']['Update'] =
+        {};
 
       // Colonnes de base autorisées
       const allowedFields = [
@@ -530,20 +514,15 @@ export function useOrganisations(filters?: OrganisationFilters) {
         'has_different_shipping_address',
         'customer_type',
         'prepayment_required',
-        'first_name',
-        'mobile_phone',
-        'date_of_birth',
-        'nationality',
-        'preferred_language',
-        'communication_preference',
-        'marketing_consent',
       ];
 
       // Copier uniquement les champs autorisés
       allowedFields.forEach(field => {
         const key = field as keyof UpdateOrganisationData;
-        if (key in data) {
-          validData[key] = data[key];
+        if (key in data && data[key] !== undefined) {
+          // Type assertion needed because UpdateOrganisationData uses broader types
+          // than Supabase's generated types (e.g., string vs literal union)
+          (validData as Record<string, unknown>)[key] = data[key];
         }
       });
 
@@ -868,10 +847,10 @@ export function useOrganisation(id: string) {
         }
 
         // ✅ Ajouter le champ 'name' calculé
-        const orgWithName: Organisation = {
+        const orgWithName = {
           ...data,
           name: data.trade_name ?? data.legal_name,
-        };
+        } as unknown as Organisation;
 
         // Add product counts if supplier
         if (data.type === 'supplier') {
