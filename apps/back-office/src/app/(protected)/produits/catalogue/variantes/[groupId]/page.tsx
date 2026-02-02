@@ -15,6 +15,10 @@ import { UniversalProductSelectorV2 } from '@verone/products';
 import { useVariantGroups } from '@verone/products';
 import { useVariantGroup, useProductVariantEditing } from '@verone/products';
 import type { VariantProduct } from '@verone/types';
+
+type VariantProductWithSupplier = VariantProduct & {
+  supplier?: { name?: string };
+};
 import {
   formatAttributesForDisplay,
   type VariantAttributes,
@@ -24,7 +28,6 @@ import { Input } from '@verone/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import { Badge } from '@verone/ui';
-import { getOrganisationDisplayName } from '@verone/utils/utils/organisation-helpers';
 import {
   ChevronLeft,
   Package,
@@ -80,7 +83,7 @@ const formatStyle = (style?: string): string => {
 
 // Composant pour carte produit COMPACTE (style catalogue)
 interface VariantProductCardProps {
-  product: any;
+  product: VariantProductWithSupplier;
   variantType: string;
   hasCommonSupplier: boolean;
   groupDimensions: {
@@ -90,8 +93,8 @@ interface VariantProductCardProps {
     unit: string;
   } | null;
   onRemove: (id: string, name: string) => void;
-  onEdit: (product: any) => void;
-  router: any;
+  onEdit: (product: VariantProductWithSupplier) => void;
+  router: ReturnType<typeof useRouter>;
 }
 
 function VariantProductCard({
@@ -156,7 +159,9 @@ function VariantProductCard({
         {/* Prix compact */}
         <div className="flex-none mb-2">
           <div className="text-sm font-semibold text-black">
-            {product.cost_price ? `${product.cost_price.toFixed(2)} €` : 'N/A'}
+            {product.cost_price
+              ? `${Number(product.cost_price).toFixed(2)} €`
+              : 'N/A'}
           </div>
         </div>
 
@@ -374,7 +379,7 @@ export default function VariantGroupDetailPage({
         });
       }
     },
-    [variantGroup?.id, variantGroup?.name, addProductsToGroup, refetch, toast]
+    [variantGroup, addProductsToGroup, refetch, toast]
   );
 
   // Édition inline du nom
@@ -470,7 +475,7 @@ export default function VariantGroupDetailPage({
           <div className="space-y-4">
             <div className="h-32 bg-gray-200 rounded" />
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {[...Array(6)].map((_, i) => (
+              {Array.from({ length: 6 }).map((_, i) => (
                 <div key={i} className="h-48 bg-gray-200 rounded" />
               ))}
             </div>
@@ -497,7 +502,7 @@ export default function VariantGroupDetailPage({
             Groupe de variantes introuvable
           </h2>
           <p className="text-gray-600">
-            {error || "Ce groupe n'existe pas ou a été supprimé."}
+            {error ?? "Ce groupe n'existe pas ou a été supprimé."}
           </p>
         </div>
       </div>
@@ -859,8 +864,7 @@ export default function VariantGroupDetailPage({
                     variant="outline"
                     className="bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 cursor-pointer transition-colors flex items-center gap-1.5"
                   >
-                    🏢{' '}
-                    {getOrganisationDisplayName(variantGroup.supplier as any)}
+                    🏢 {variantGroup.supplier.name}
                     <ExternalLink className="h-3 w-3 opacity-60" />
                   </Badge>
                 </Link>
@@ -889,12 +893,12 @@ export default function VariantGroupDetailPage({
                 hasCommonSupplier={variantGroup.has_common_supplier ?? false}
                 groupDimensions={
                   variantGroup.dimensions_length
-                    ? ({
+                    ? {
                         length: variantGroup.dimensions_length,
                         width: variantGroup.dimensions_width ?? null,
                         height: variantGroup.dimensions_height ?? null,
-                        unit: variantGroup.dimensions_unit ?? null,
-                      } as any)
+                        unit: variantGroup.dimensions_unit ?? 'cm',
+                      }
                     : null
                 }
                 onRemove={(id, name) => {
