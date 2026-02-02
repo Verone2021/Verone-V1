@@ -35,6 +35,23 @@ interface CronResponse {
   error?: string;
 }
 
+interface GoogleMerchantSync {
+  product_id: string;
+  google_product_id: string;
+}
+
+interface ProductStatusData {
+  product_id: string;
+  google_status: string;
+  google_status_detail: string | null;
+}
+
+interface PollResult {
+  success: boolean;
+  updated_count: number;
+  error: string | null;
+}
+
 /**
  * GET - Cron job polling statuts Google Merchant
  */
@@ -71,11 +88,12 @@ export async function GET(
     const supabase = await createServerClient();
 
     // 3. Récupérer produits synchronisés (sync_status = 'success')
-    const { data: syncedProducts, error: fetchError } = await (supabase as any)
+    const { data: syncedProducts, error: fetchError } = await supabase
       .from('google_merchant_syncs')
       .select('product_id, google_product_id')
       .eq('sync_status', 'success')
-      .limit(1000); // Batch max 1000 produits
+      .limit(1000) // Batch max 1000 produits
+      .returns<GoogleMerchantSync[]>();
 
     if (fetchError) {
       console.error('[CRON] Error fetching synced products:', fetchError);
@@ -106,20 +124,20 @@ export async function GET(
 
     // 4. TODO: Interroger Google Merchant Content API pour statuts réels
     // Pour MVP, simuler statuts (à remplacer par vraie API Google)
-    const statusesData = syncedProducts.map((p: any) => ({
+    const statusesData: ProductStatusData[] = syncedProducts.map(p => ({
       product_id: p.product_id,
       google_status: 'approved', // TODO: Vraie valeur depuis Google API
       google_status_detail: null,
     }));
 
     // 5. Appeler RPC poll_google_merchant_statuses
-    const { data: pollResult, error: pollError } = await (supabase as any).rpc(
-      'poll_google_merchant_statuses',
-      {
-        product_ids: syncedProducts.map((p: any) => p.product_id),
-        statuses_data: statusesData,
-      }
-    );
+    const { data: pollResult, error: pollError } = await supabase
+      .rpc('poll_google_merchant_statuses', {
+        product_ids: syncedProducts.map(p => p.product_id),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        statuses_data: statusesData as any,
+      })
+      .returns<PollResult[]>();
 
     if (pollError) {
       console.error(
@@ -135,13 +153,7 @@ export async function GET(
       );
     }
 
-    const result = pollResult as Array<{
-      success: boolean;
-      updated_count: number;
-      error: string | null;
-    }>;
-
-    const updatedCount = result?.[0]?.updated_count ?? 0;
+    const updatedCount = pollResult?.[0]?.updated_count ?? 0;
 
     const duration = Date.now() - startTime;
 
@@ -157,10 +169,12 @@ export async function GET(
         duration,
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     const _duration = Date.now() - startTime;
+    const errorMessage =
+      error instanceof Error ? error.message : 'Unknown error';
 
-    console.error('[CRON] Polling failed:', error);
+    console.error('[CRON] Polling failed:', errorMessage);
 
     return NextResponse.json(
       {
