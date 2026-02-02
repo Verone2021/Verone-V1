@@ -61,7 +61,7 @@ type FormSubmission = {
   created_at: string;
   updated_at: string;
   sla_deadline: string | null;
-  metadata: any;
+  metadata: Record<string, unknown>;
   internal_notes: string | null;
 };
 
@@ -111,12 +111,12 @@ export default function SubmissionDetailPage({
       try {
         const supabase = createClient();
 
-        // Fetch submission (using any to bypass type checking for new table)
-        const { data: sub, error: subError } = await (supabase as any)
+        // Fetch submission
+        const { data: sub, error: subError } = (await supabase
           .from('form_submissions')
           .select('*')
           .eq('id', id)
-          .single();
+          .single()) as { data: FormSubmission | null; error: unknown };
 
         if (subError) throw subError;
         if (!sub) {
@@ -129,12 +129,12 @@ export default function SubmissionDetailPage({
         setNewPriority(sub.priority);
         setNewNotes(sub.internal_notes ?? '');
 
-        // Fetch form type (using any to bypass type checking for new table)
-        const { data: type, error: typeError } = await (supabase as any)
+        // Fetch form type
+        const { data: type, error: typeError } = (await supabase
           .from('form_types')
           .select('*')
           .eq('code', sub.form_type)
-          .single();
+          .single()) as { data: FormType | null; error: unknown };
 
         if (!typeError && type) {
           setFormType(type);
@@ -159,10 +159,10 @@ export default function SubmissionDetailPage({
     try {
       const supabase = createClient();
 
-      const { error } = await (supabase as any)
+      const { error } = (await supabase
         .from('form_submissions')
         .update({ status: newStatus })
-        .eq('id', submission.id);
+        .eq('id', submission.id)) as { error: unknown };
 
       if (error) throw error;
 
@@ -184,10 +184,10 @@ export default function SubmissionDetailPage({
     try {
       const supabase = createClient();
 
-      const { error } = await (supabase as any)
+      const { error } = (await supabase
         .from('form_submissions')
         .update({ priority: newPriority })
-        .eq('id', submission.id);
+        .eq('id', submission.id)) as { error: unknown };
 
       if (error) throw error;
 
@@ -209,10 +209,10 @@ export default function SubmissionDetailPage({
     try {
       const supabase = createClient();
 
-      const { error } = await (supabase as any)
+      const { error } = (await supabase
         .from('form_submissions')
         .update({ internal_notes: newNotes ?? null })
-        .eq('id', submission.id);
+        .eq('id', submission.id)) as { error: unknown };
 
       if (error) throw error;
 
