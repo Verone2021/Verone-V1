@@ -7,10 +7,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createClient } from '@verone/utils/supabase/client';
 import type { Database } from '@verone/types';
 
-// Types Supabase
-type Enseigne = Database['public']['Tables']['enseignes']['Row'];
-type Organisation = Database['public']['Tables']['organisations']['Row'];
-type LinkMeAffiliate = Database['public']['Tables']['linkme_affiliates']['Row'];
+// Types Supabase (reserved for future use)
+type _Enseigne = Database['public']['Tables']['enseignes']['Row'];
+type _Organisation = Database['public']['Tables']['organisations']['Row'];
+type _LinkMeAffiliate =
+  Database['public']['Tables']['linkme_affiliates']['Row'];
 
 /**
  * Interface Enseigne avec statistiques

@@ -791,21 +791,22 @@ export function usePendingOrders() {
         const { data: orgsData } = await supabase
           .from('organisations')
           .select('id, trade_name, legal_name, enseigne:enseigne_id(name)')
-          .in('id', organisationIds);
+          .in('id', organisationIds)
+          .returns<
+            {
+              id: string;
+              trade_name: string | null;
+              legal_name: string;
+              enseigne: { name: string | null } | null;
+            }[]
+          >();
 
         if (orgsData) {
           for (const org of orgsData) {
             organisationsMap.set(org.id, {
               trade_name: org.trade_name,
               legal_name: org.legal_name,
-              enseigne_name: (org.enseigne as
-                | { name?: string | null }
-                | Array<{ name?: string | null }>
-                | undefined)
-                ? Array.isArray(org.enseigne)
-                  ? (org.enseigne[0]?.name ?? null)
-                  : ((org.enseigne as { name?: string | null }).name ?? null)
-                : null,
+              enseigne_name: org.enseigne?.name ?? null,
             });
           }
         }

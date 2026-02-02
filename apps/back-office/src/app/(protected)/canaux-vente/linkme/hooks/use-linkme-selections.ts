@@ -7,9 +7,10 @@ import { createClient } from '@verone/utils/supabase/client';
 const supabase = createClient();
 import type { Database, Json } from '@verone/types';
 
-// Types Supabase
-type LinkMeAffiliate = Database['public']['Tables']['linkme_affiliates']['Row'];
-type Organisation = Database['public']['Tables']['organisations']['Row'];
+// Types Supabase (reserved for future use)
+type _LinkMeAffiliate =
+  Database['public']['Tables']['linkme_affiliates']['Row'];
+type _Organisation = Database['public']['Tables']['organisations']['Row'];
 
 // ID du canal LinkMe
 const LINKME_CHANNEL_ID = '93c68db1-5a30-4168-89ec-6383152be405';
@@ -379,6 +380,12 @@ export function useUpdateSelection() {
   });
 }
 
+// API response types
+interface AddItemApiResponse {
+  item?: { id: string };
+  message?: string;
+}
+
 /**
  * Hook: Ajouter un produit à la sélection
  * Utilise l'API Route avec supabaseAdmin pour bypass RLS
@@ -412,7 +419,7 @@ export function useAddProductToSelection() {
         }),
       });
 
-      const data = await response.json();
+      const data = (await response.json()) as AddItemApiResponse;
 
       if (!response.ok) {
         throw new Error(data.message ?? 'Erreur ajout produit');
@@ -469,7 +476,12 @@ export function useRemoveProductFromSelection() {
       if (error) throw error;
 
       // Mettre à jour le compteur de produits
-      await supabase.rpc('decrement_selection_products_count' as any, {
+      const rpcCall = supabase.rpc as (
+        name: string,
+        params: { p_selection_id: string }
+      ) => Promise<{ data: unknown; error: Error | null }>;
+
+      await rpcCall('decrement_selection_products_count', {
         p_selection_id: selectionId,
       });
     },

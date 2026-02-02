@@ -9,9 +9,9 @@ import { createClient } from '@verone/utils/supabase/client';
 
 import type { Database } from '@verone/types';
 
-// Types Supabase
-type Organisation = Database['public']['Tables']['organisations']['Row'];
-type IndividualCustomer =
+// Types Supabase (reserved for future use)
+type _Organisation = Database['public']['Tables']['organisations']['Row'];
+type _IndividualCustomer =
   Database['public']['Tables']['individual_customers']['Row'];
 const supabase = createClient();
 
