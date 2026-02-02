@@ -340,25 +340,27 @@ export default function PrisesContactPage() {
       try {
         const supabase = createClient();
 
-        // Fetch submissions (using any to bypass type checking for new table)
-        const { data: subs, error: subsError } = await (supabase as any)
+        // Fetch submissions
+        const { data: subs, error: subsError } = await supabase
           .from('form_submissions')
           .select('*')
-          .order('created_at', { ascending: false });
+          .order('created_at', { ascending: false })
+          .returns<FormSubmission[]>();
 
         if (subsError) throw subsError;
 
-        // Fetch form types (using any to bypass type checking for new table)
-        const { data: types, error: typesError } = await (supabase as any)
+        // Fetch form types
+        const { data: types, error: typesError } = await supabase
           .from('form_types')
           .select('code, label, icon')
-          .eq('enabled', true);
+          .eq('enabled', true)
+          .returns<FormType[]>();
 
         if (typesError) throw typesError;
 
         setSubmissions(subs ?? []);
         setFormTypes(types ?? []);
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('Error fetching data:', error);
       } finally {
         setLoading(false);
