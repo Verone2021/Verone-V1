@@ -550,19 +550,51 @@
 
 **Total achats** : 2 926,94 € HT (1 facture, 11/11/2025)
 
-### Articles Décoratifs Zentrada (À DÉFINIR)
+### Miroirs Zentrada (À DÉFINIR)
 
-**Détail produits** : Articles décoratifs divers (détail non disponible dans les factures)
+**Détail produits** : Miroir raphia (tropi 43x29, alba x3, alba d57, safari d38, roseau ael d80), Miroir tresse celia d68, Miroir déco contour doré losange (h60cm, standard), Miroir metal warren or d24 x3, Miroir plast orga roman 30x39
 
 | Période    | Stock Début | Entrées (Achats) | Sorties (Ventes) | Stock Fin |
 | ---------- | ----------- | ---------------- | ---------------- | --------- |
 | 31/12/2022 | 0           | 0                | 0                | 0         |
 | 31/12/2023 | 0           | 0                | 0                | 0         |
 | 31/12/2024 | 0           | 0                | 0                | 0         |
-| 31/12/2025 | 0           | 0                | 0                | **0**     |
-| **TOTAL**  | **0**       | **0**            | **0**            | **0**     |
+| 31/12/2025 | 0           | 64               | 0                | **+64**   |
+| **TOTAL**  | **0**       | **64**           | **0**            | **+64**   |
 
-**Note** : Détail produits non disponible dans facture Zentrada (PDF manquant). Achat enregistré mais quantités non comptabilisées en attente de détail facture.
+**Note** : Sorties = 0 (données ventes non disponibles). Quantité totale = 64 unités (miroirs raphia, métal, plastique).
+
+---
+
+### Décorations Murales Zentrada (À DÉFINIR)
+
+**Détail produits** : Déco mural raphia (alba 91x64, alaina d64, oasis x2), Suspension papier etel naturel d37,5
+
+| Période    | Stock Début | Entrées (Achats) | Sorties (Ventes) | Stock Fin |
+| ---------- | ----------- | ---------------- | ---------------- | --------- |
+| 31/12/2022 | 0           | 0                | 0                | 0         |
+| 31/12/2023 | 0           | 0                | 0                | 0         |
+| 31/12/2024 | 0           | 0                | 0                | 0         |
+| 31/12/2025 | 0           | 14               | 0                | **+14**   |
+| **TOTAL**  | **0**       | **14**           | **0**            | **+14**   |
+
+**Note** : Sorties = 0 (données ventes non disponibles). Quantité totale = 14 unités (décorations murales raphia + suspension).
+
+---
+
+### Mobilier & Accessoires Zentrada (À DÉFINIR)
+
+**Détail produits** : Table basse aeris, Table métal D31H46cm caramel, Organisateur coulissant bambou (PM/MM), Cadre photo naturel eva 30x40, Lampe champignon lito (beige/noir h24.5)
+
+| Période    | Stock Début | Entrées (Achats) | Sorties (Ventes) | Stock Fin |
+| ---------- | ----------- | ---------------- | ---------------- | --------- |
+| 31/12/2022 | 0           | 0                | 0                | 0         |
+| 31/12/2023 | 0           | 0                | 0                | 0         |
+| 31/12/2024 | 0           | 0                | 0                | 0         |
+| 31/12/2025 | 0           | 334              | 0                | **+334**  |
+| **TOTAL**  | **0**       | **334**          | **0**            | **+334**  |
+
+**Note** : Sorties = 0 (données ventes non disponibles). Quantité totale = 334 unités (312 organisateurs bambou + 12 cadres photo + 8 lampes + 2 tables).
 
 ---
 
@@ -602,7 +634,10 @@
 | Suspensions Maisons Nomades       | SUS-0011/12/13 | +124             |
 | Bancs & Miroirs Maisons Nomades   | À DÉFINIR      | +27              |
 | Coussins Linhai (Chine)           | PRD-0050/54/55 | +522             |
-| **TOTAL STOCKS POSITIFS**         |                | **+2 900**       |
+| Miroirs Zentrada                  | À DÉFINIR      | +64              |
+| Décorations Murales Zentrada      | À DÉFINIR      | +14              |
+| Mobilier & Accessoires Zentrada   | À DÉFINIR      | +334             |
+| **TOTAL STOCKS POSITIFS**         |                | **+3 312**       |
 
 ---
 
@@ -626,11 +661,11 @@
 | Indicateur                          | Valeur            |
 | ----------------------------------- | ----------------- |
 | Total stocks positifs (existants)   | +823 unités       |
-| Total stocks positifs (nouveaux)    | +2 077 unités     |
-| **Total stocks positifs**           | **+2 900 unités** |
+| Total stocks positifs (nouveaux)    | +2 489 unités     |
+| **Total stocks positifs**           | **+3 312 unités** |
 | Total stocks négatifs               | -726 unités       |
-| **SOLDE NET**                       | **+2 174 unités** |
-| Produits en surstock (>50 unités)   | 21 produits       |
+| **SOLDE NET**                       | **+2 586 unités** |
+| Produits en surstock (>50 unités)   | 24 produits       |
 | Produits en rupture (stock négatif) | 7 produits        |
 
 ---
@@ -658,17 +693,19 @@
 9. **Suspensions Maisons Nomades** : 124 unités (rotation à surveiller)
 10. **Coussin Rose** : 113 unités (rotation lente)
 11. **Coussins Maisons Nomades** : 101 unités (rotation à surveiller)
-12. **Mobilier Bambou OPJET** : 93 unités (rotation à surveiller)
-13. **Coussin Évasion** : 86 unités (rotation lente)
-14. **Coussins Affect** : 67 unités (rotation à surveiller)
-15. **Suspension paille** : 45 unités (rotation très lente)
-16. **Miroirs OPJET** : 38 unités (rotation à surveiller)
-17. **Ronds paille** (S/M/L) : 58 unités total (rotation très lente)
+12. **Mobilier & Accessoires Zentrada** : 334 unités (rotation à surveiller - dont 312 organisateurs bambou)
+13. **Mobilier Bambou OPJET** : 93 unités (rotation à surveiller)
+14. **Coussin Évasion** : 86 unités (rotation lente)
+15. **Coussins Affect** : 67 unités (rotation à surveiller)
+16. **Miroirs Zentrada** : 64 unités (rotation à surveiller)
+17. **Suspension paille** : 45 unités (rotation très lente)
+18. **Miroirs OPJET** : 38 unités (rotation à surveiller)
+19. **Ronds paille** (S/M/L) : 58 unités total (rotation très lente)
+20. **Décorations Murales Zentrada** : 14 unités (rotation à surveiller)
 
 ### Données Manquantes
 
-1. **Zentrada (Allemagne)** : Détail produits manquant (2 926,94 € HT non comptabilisés en quantités)
-2. **Sorties ventes** : Aucune donnée de ventes pour produits ajoutés (2023-2025)
+1. **Sorties ventes** : Aucune donnée de ventes pour produits ajoutés (2023-2025)
 
 ---
 
