@@ -196,7 +196,7 @@ export default function CustomersPage() {
     // Filtrer par enseigne si un filtre est actif
     if (enseigneFilter) {
       result = result.filter(
-        customer => (customer as any).enseigne_id === enseigneFilter
+        customer => customer.enseigne_id === enseigneFilter
       );
     }
 
@@ -685,6 +685,7 @@ export default function CustomersPage() {
                               </span>
                             </div>
                           )}
+                          {/* eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- Logique booléenne intentionnelle: vérifie au moins un champ non-vide */}
                           {(customer.billing_postal_code ||
                             customer.billing_city) && (
                             <div
@@ -949,6 +950,7 @@ export default function CustomersPage() {
                           {customer.billing_address_line1 && (
                             <div>{customer.billing_address_line1}</div>
                           )}
+                          {/* eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- Logique booléenne intentionnelle: vérifie au moins un champ non-vide */}
                           {(customer.billing_postal_code ||
                             customer.billing_city) && (
                             <div>
@@ -1180,14 +1182,14 @@ export default function CustomersPage() {
         onClose={handleCloseModal}
         onCustomerCreated={handleCustomerSuccess}
         onCustomerUpdated={handleCustomerSuccess}
-        customer={selectedCustomer as any}
+        customer={selectedCustomer ?? undefined}
         mode={selectedCustomer ? 'edit' : 'create'}
       />
 
       <ConfirmDeleteOrganisationModal
         open={!!deleteModalCustomer}
         onOpenChange={open => !open && setDeleteModalCustomer(null)}
-        organisation={deleteModalCustomer as any}
+        organisation={deleteModalCustomer}
         organisationType="customer"
         onConfirm={handleConfirmDelete}
         isDeleting={isDeleting}

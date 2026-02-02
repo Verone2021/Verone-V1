@@ -220,8 +220,8 @@ export default function ClientsParticuliersPage() {
               {
                 customers.filter(c =>
                   activeTab === 'active'
-                    ? (c as any).is_active !== false
-                    : (c as any).is_active === false
+                    ? c.is_active !== false
+                    : c.is_active === false
                 ).length
               }
             </span>{' '}
@@ -277,8 +277,8 @@ export default function ClientsParticuliersPage() {
                 {customers
                   .filter(c =>
                     activeTab === 'active'
-                      ? (c as any).is_active !== false
-                      : (c as any).is_active === false
+                      ? c.is_active !== false
+                      : c.is_active === false
                   )
                   .map(customer => (
                     <TableRow key={customer.id}>

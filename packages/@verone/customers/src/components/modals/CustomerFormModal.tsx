@@ -7,6 +7,7 @@ import { AddressSelector } from '@verone/common/components/address/AddressSelect
 import {
   useOrganisations,
   useActiveEnseignes,
+  type Organisation,
 } from '@verone/organisations/hooks';
 import { Button } from '@verone/ui';
 import {
@@ -27,7 +28,7 @@ import {
 } from '@verone/ui';
 import { Switch } from '@verone/ui';
 import { Textarea } from '@verone/ui';
-import { Loader2, Building2, Users } from 'lucide-react';
+import { Loader2, Building2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -94,35 +95,12 @@ const customerSchema = z.object({
 
 type CustomerFormData = z.infer<typeof customerSchema>;
 
-interface Customer {
-  id: string;
-  name: string;
-  email?: string;
-  country?: string;
-  phone?: string;
-  website?: string;
-  is_active: boolean;
-  customer_type?: 'professional' | 'individual';
-  legal_form?: string;
-  business_name?: string;
-  siren?: string;
-  siret?: string;
-  vat_number?: string;
-  payment_terms?: string;
-  prepayment_required?: boolean;
-  currency?: string;
-  notes?: string;
-  enseigne_id?: string | null;
-  is_enseigne_parent?: boolean;
-  ownership_type?: 'succursale' | 'franchise' | null;
-}
-
 interface CustomerFormModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCustomerCreated?: (customer: Customer) => void;
-  onCustomerUpdated?: (customer: Customer) => void;
-  customer?: Customer; // Pour l'édition
+  onCustomerCreated?: (customer: Organisation) => void;
+  onCustomerUpdated?: (customer: Organisation) => void;
+  customer?: Organisation; // Pour l'édition
   mode?: 'create' | 'edit';
 }
 
@@ -139,6 +117,7 @@ export function CustomerFormModal({
   const { enseignes } = useActiveEnseignes();
 
   const form = useForm<CustomerFormData>({
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any -- Type mismatch react-hook-form optionals vs Zod schema
     resolver: zodResolver(customerSchema) as any,
     defaultValues: {
       name: '',
@@ -167,26 +146,26 @@ export function CustomerFormModal({
   useEffect(() => {
     if (mode === 'edit' && customer) {
       form.reset({
-        name: customer.name || '',
-        email: customer.email || '',
-        country: customer.country || 'FR',
-        description: customer.notes || '',
-        phone: customer.phone || '',
-        website: customer.website || '',
+        name: customer.name ?? '',
+        email: customer.email ?? '',
+        country: customer.country ?? 'FR',
+        description: customer.notes ?? '',
+        phone: customer.phone ?? '',
+        website: customer.website ?? '',
         is_active: customer.is_active ?? true,
         customer_type: 'professional',
-        legal_form: customer.legal_form || '',
-        business_name: customer.business_name || '',
-        siren: customer.siren || '',
-        siret: customer.siret || '',
-        vat_number: customer.vat_number || '',
+        legal_form: customer.legal_form ?? '',
+        business_name: customer.trade_name ?? '', // Mapper trade_name (DB) → business_name (UI)
+        siren: customer.siren ?? '',
+        siret: customer.siret ?? '',
+        vat_number: customer.vat_number ?? '',
         payment_terms:
-          (customer.payment_terms as '0' | '30' | '60' | '90') || '30',
-        prepayment_required: customer.prepayment_required || false,
-        currency: customer.currency || 'EUR',
-        enseigne_id: customer.enseigne_id || null,
-        is_enseigne_parent: customer.is_enseigne_parent || false,
-        ownership_type: customer.ownership_type || null,
+          (customer.payment_terms as '0' | '30' | '60' | '90') ?? '30',
+        prepayment_required: customer.prepayment_required ?? false,
+        currency: customer.currency ?? 'EUR',
+        enseigne_id: customer.enseigne_id ?? null,
+        is_enseigne_parent: customer.is_enseigne_parent ?? false,
+        ownership_type: customer.ownership_type ?? null,
       });
     }
   }, [mode, customer, form]);
@@ -196,40 +175,40 @@ export function CustomerFormModal({
 
     try {
       const customerData = {
-        name: data.name,
+        legal_name: data.name, // Nom légal requis en DB
+        trade_name: data.business_name ?? undefined, // Nom commercial (alias UI: business_name)
         type: 'customer' as const,
-        email: data.email || null,
+        email: data.email ?? undefined,
         country: data.country,
-        phone: data.phone || null,
-        website: data.website || null,
+        phone: data.phone ?? undefined,
+        website: data.website ?? undefined,
         is_active: data.is_active,
         customer_type: data.customer_type,
-        legal_form: data.legal_form || null,
-        business_name: data.business_name || null,
-        siren: data.siren || null,
-        siret: data.siret || null,
-        vat_number: data.vat_number || null,
-        payment_terms: data.payment_terms || null,
+        legal_form: data.legal_form ?? undefined,
+        siren: data.siren ?? undefined,
+        siret: data.siret ?? undefined,
+        vat_number: data.vat_number ?? undefined,
+        payment_terms: data.payment_terms ?? undefined,
         prepayment_required: data.prepayment_required,
         currency: data.currency,
-        notes: data.description || null,
-        enseigne_id: data.enseigne_id || null,
+        notes: data.description ?? undefined,
+        enseigne_id: data.enseigne_id ?? undefined,
         is_enseigne_parent: data.is_enseigne_parent,
-        ownership_type: data.ownership_type || null,
+        ownership_type: data.ownership_type ?? undefined,
       };
 
       if (mode === 'edit' && customer) {
         const updated = await updateOrganisation({
           id: customer.id,
           ...customerData,
-        } as any);
+        });
         if (updated && onCustomerUpdated) {
-          onCustomerUpdated(updated as Customer);
+          onCustomerUpdated(updated);
         }
       } else {
-        const created = await createOrganisation(customerData as any);
+        const created = await createOrganisation(customerData);
         if (created && onCustomerCreated) {
-          onCustomerCreated(created as Customer);
+          onCustomerCreated(created);
         }
       }
 
@@ -301,7 +280,13 @@ export function CustomerFormModal({
         </DialogHeader>
 
         <form
-          onSubmit={form.handleSubmit(handleSubmit as any)}
+          onSubmit={e => {
+            void form
+              .handleSubmit(handleSubmit)(e)
+              .catch((error: unknown) => {
+                console.error('[CustomerFormModal] Submit failed:', error);
+              });
+          }}
           className="space-y-6"
         >
           {/* Informations de base */}
@@ -369,7 +354,7 @@ export function CustomerFormModal({
                 <div>
                   <Label htmlFor="enseigne_id">Enseigne</Label>
                   <Select
-                    value={form.watch('enseigne_id') || '__none__'}
+                    value={form.watch('enseigne_id') ?? '__none__'}
                     onValueChange={value =>
                       form.setValue(
                         'enseigne_id',
@@ -426,7 +411,7 @@ export function CustomerFormModal({
                 <div>
                   <Label htmlFor="ownership_type">Type de propriété</Label>
                   <Select
-                    value={form.watch('ownership_type') || '__none__'}
+                    value={form.watch('ownership_type') ?? '__none__'}
                     onValueChange={value =>
                       form.setValue(
                         'ownership_type',
