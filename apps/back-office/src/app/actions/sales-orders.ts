@@ -17,6 +17,16 @@ interface UpdateStatusResult {
   error?: string;
 }
 
+interface SalesOrderUpdateFields {
+  status: SalesOrderStatus;
+  confirmed_at?: string;
+  confirmed_by?: string;
+  shipped_at?: string;
+  delivered_at?: string;
+  cancelled_at?: string;
+  cancelled_by?: string;
+}
+
 /**
  * Server Action pour mettre à jour le statut d'une commande client
  * Utilisé pour contourner les problèmes RLS 403 lors des mises à jour
@@ -73,7 +83,7 @@ export async function updateSalesOrderStatus(
     );
 
     // Préparer les champs à mettre à jour selon le workflow
-    const updateFields: any = { status: newStatus };
+    const updateFields: SalesOrderUpdateFields = { status: newStatus };
 
     // Gérer les timestamps selon les contraintes PostgreSQL
     if (newStatus === 'validated') {
