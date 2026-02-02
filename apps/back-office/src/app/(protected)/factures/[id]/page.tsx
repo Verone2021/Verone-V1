@@ -61,6 +61,14 @@ import { toast } from 'sonner';
 
 type DocumentType = 'invoice' | 'quote' | 'credit_note';
 
+interface QontoApiResponse {
+  success: boolean;
+  error?: string;
+  invoice?: QontoDocument;
+  quote?: QontoDocument;
+  credit_note?: QontoDocument;
+}
+
 interface QontoClient {
   id: string;
   name: string;
@@ -275,10 +283,10 @@ export default function DocumentDetailPage({
                 : `/api/qonto/credit-notes/${id}`;
 
           const response = await fetch(endpoint);
-          const data = await response.json();
+          const data = (await response.json()) as QontoApiResponse;
 
           if (data.success) {
-            const doc = data.invoice || data.quote || data.credit_note;
+            const doc = data.invoice ?? data.quote ?? data.credit_note ?? null;
             setDocument(doc);
             setDocumentType(type);
             setLoading(false);
@@ -314,7 +322,7 @@ export default function DocumentDetailPage({
             : `/api/qonto/credit-notes/${id}/finalize`;
 
       const response = await fetch(endpoint, { method: 'POST' });
-      const data = await response.json();
+      const data = (await response.json()) as QontoApiResponse;
 
       if (!data.success) throw new Error(data.error);
 
@@ -478,7 +486,7 @@ export default function DocumentDetailPage({
             : `/api/qonto/credit-notes/${id}/send`;
 
       const response = await fetch(endpoint, { method: 'POST' });
-      const data = await response.json();
+      const data = (await response.json()) as QontoApiResponse;
 
       if (!data.success) throw new Error(data.error);
 
