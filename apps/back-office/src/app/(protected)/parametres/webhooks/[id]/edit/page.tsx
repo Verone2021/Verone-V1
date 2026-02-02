@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import { useParams, useRouter } from 'next/navigation';
 
@@ -60,42 +60,42 @@ export default function EditWebhookPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  useEffect(() => {
-    async function loadWebhook() {
-      try {
-        setLoading(true);
-        const { data, error } = await supabase
-          .from('webhook_configs')
-          .select('*')
-          .eq('id', webhookId)
-          .single();
+  const loadWebhook = useCallback(async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('webhook_configs')
+        .select('*')
+        .eq('id', webhookId)
+        .single();
 
-        if (error) throw error;
+      if (error) throw error;
 
-        const webhookData = {
-          ...data,
-          events: Array.isArray(data.events) ? data.events : [],
-        };
+      const webhookData = {
+        ...data,
+        events: Array.isArray(data.events) ? data.events : [],
+      };
 
-        setWebhook(webhookData as WebhookConfig);
-        setName(data.name);
-        setUrl(data.url);
-        setDescription(data.description ?? '');
-        setSecret(data.secret);
-        setSelectedEvents(Array.isArray(data.events) ? data.events : []);
-        setActive(data.active ?? true);
-      } catch (error) {
-        console.error('Error loading webhook:', error);
-        setError('Impossible de charger le webhook');
-      } finally {
-        setLoading(false);
-      }
+      setWebhook(webhookData as WebhookConfig);
+      setName(data.name);
+      setUrl(data.url);
+      setDescription(data.description ?? '');
+      setSecret(data.secret);
+      setSelectedEvents(Array.isArray(data.events) ? data.events : []);
+      setActive(data.active ?? true);
+    } catch (error) {
+      console.error('Error loading webhook:', error);
+      setError('Impossible de charger le webhook');
+    } finally {
+      setLoading(false);
     }
+  }, [webhookId]);
 
+  useEffect(() => {
     void loadWebhook().catch(error => {
       console.error('[WebhookEditPage] loadWebhook failed:', error);
     });
-  }, [webhookId]);
+  }, [loadWebhook]);
 
   function generateSecret() {
     const chars =

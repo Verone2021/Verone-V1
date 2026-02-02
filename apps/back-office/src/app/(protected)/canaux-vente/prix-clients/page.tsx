@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 import { useRouter } from 'next/navigation';
 
@@ -64,6 +64,28 @@ export default function PrixClientsPage() {
     avg_discount: 0,
     total_retrocession: 0,
   });
+
+  // Calculer les statistiques
+  const calculateStats = useCallback((data: CustomerPricing[]) => {
+    const activeRules = data.filter(r => r.is_active);
+    const uniqueCustomers = new Set(data.map(r => r.customer_id)).size;
+    const avgDiscount =
+      data.length > 0
+        ? data.reduce((sum, r) => sum + (r.discount_rate ?? 0), 0) / data.length
+        : 0;
+    const totalRetrocession = data.reduce(
+      (sum, r) => sum + (r.retrocession_rate ?? 0),
+      0
+    );
+
+    setStats({
+      total_pricing_rules: data.length,
+      active_rules: activeRules.length,
+      customers_with_pricing: uniqueCustomers,
+      avg_discount: avgDiscount,
+      total_retrocession: totalRetrocession,
+    });
+  }, []);
 
   // Charger les prix clients
   useEffect(() => {
@@ -146,29 +168,7 @@ export default function PrixClientsPage() {
     void loadPricingRules().catch(error => {
       console.error('[PrixClientsPage] loadPricingRules failed:', error);
     });
-  }, [calculateStats]);
-
-  // Calculer les statistiques
-  const calculateStats = (data: CustomerPricing[]) => {
-    const activeRules = data.filter(r => r.is_active);
-    const uniqueCustomers = new Set(data.map(r => r.customer_id)).size;
-    const avgDiscount =
-      data.length > 0
-        ? data.reduce((sum, r) => sum + (r.discount_rate ?? 0), 0) / data.length
-        : 0;
-    const totalRetrocession = data.reduce(
-      (sum, r) => sum + (r.retrocession_rate ?? 0),
-      0
-    );
-
-    setStats({
-      total_pricing_rules: data.length,
-      active_rules: activeRules.length,
-      customers_with_pricing: uniqueCustomers,
-      avg_discount: avgDiscount,
-      total_retrocession: totalRetrocession,
-    });
-  };
+  }, []);
 
   // Filtrer les prix clients
   useEffect(() => {

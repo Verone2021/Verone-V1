@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import { useParams, useRouter } from 'next/navigation';
 
@@ -54,44 +54,44 @@ export default function EditEmailTemplatePage() {
   const [active, setActive] = useState(true);
   const [variablesInput, setVariablesInput] = useState('');
 
-  useEffect(() => {
-    async function loadTemplate() {
-      try {
-        setLoading(true);
-        const { data, error } = await supabase
-          .from('email_templates')
-          .select('*')
-          .eq('slug', slug)
-          .single();
+  const loadTemplate = useCallback(async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('email_templates')
+        .select('*')
+        .eq('slug', slug)
+        .single();
 
-        if (error) throw error;
+      if (error) throw error;
 
-        const templateData = {
-          ...data,
-          variables: Array.isArray(data.variables) ? data.variables : [],
-        };
+      const templateData = {
+        ...data,
+        variables: Array.isArray(data.variables) ? data.variables : [],
+      };
 
-        setTemplate(templateData as EmailTemplate);
-        setName(data.name);
-        setSubject(data.subject);
-        setHtmlBody(data.html_body);
-        setCategory(data.category ?? 'general');
-        setActive(data.active ?? true);
-        setVariablesInput(
-          Array.isArray(data.variables) ? data.variables.join(', ') : ''
-        );
-      } catch (error) {
-        console.error('Error loading template:', error);
-        setError('Impossible de charger le template');
-      } finally {
-        setLoading(false);
-      }
+      setTemplate(templateData as EmailTemplate);
+      setName(data.name);
+      setSubject(data.subject);
+      setHtmlBody(data.html_body);
+      setCategory(data.category ?? 'general');
+      setActive(data.active ?? true);
+      setVariablesInput(
+        Array.isArray(data.variables) ? data.variables.join(', ') : ''
+      );
+    } catch (error) {
+      console.error('Error loading template:', error);
+      setError('Impossible de charger le template');
+    } finally {
+      setLoading(false);
     }
+  }, [slug]);
 
+  useEffect(() => {
     void loadTemplate().catch(error => {
       console.error('[EmailEditPage] loadTemplate failed:', error);
     });
-  }, [slug]);
+  }, [loadTemplate]);
 
   async function handleSave() {
     try {

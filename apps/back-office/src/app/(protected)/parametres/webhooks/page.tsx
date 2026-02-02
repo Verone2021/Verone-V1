@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import Link from 'next/link';
 
@@ -49,41 +49,7 @@ export default function WebhooksPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function loadWebhooks() {
-      try {
-        setLoading(true);
-        const { data, error } = await supabase
-          .from('webhook_configs')
-          .select('*')
-          .order('created_at', { ascending: false });
-
-        if (error) throw error;
-        const webhooks = (data ?? []).map(item => ({
-          ...item,
-          events: Array.isArray(item.events) ? item.events : [],
-        }));
-        setWebhooks(webhooks as WebhookConfig[]);
-
-        // Load recent logs for each webhook
-        if (data && data.length > 0) {
-          for (const webhook of data) {
-            await loadRecentLogs(webhook.id);
-          }
-        }
-      } catch (error) {
-        console.error('Error loading webhooks:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    void loadWebhooks().catch(error => {
-      console.error('[WebhooksPage] loadWebhooks failed:', error);
-    });
-  }, [loadRecentLogs]);
-
-  async function loadRecentLogs(webhookId: string) {
+  const loadRecentLogs = useCallback(async (webhookId: string) => {
     try {
       const { data, error } = await supabase
         .from('webhook_logs')
@@ -97,7 +63,41 @@ export default function WebhooksPage() {
     } catch (error) {
       console.error('Error loading logs:', error);
     }
-  }
+  }, []);
+
+  const loadWebhooks = useCallback(async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('webhook_configs')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      const webhooks = (data ?? []).map(item => ({
+        ...item,
+        events: Array.isArray(item.events) ? item.events : [],
+      }));
+      setWebhooks(webhooks as WebhookConfig[]);
+
+      // Load recent logs for each webhook
+      if (data && data.length > 0) {
+        for (const webhook of data) {
+          await loadRecentLogs(webhook.id);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading webhooks:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [loadRecentLogs]);
+
+  useEffect(() => {
+    void loadWebhooks().catch(error => {
+      console.error('[WebhooksPage] loadWebhooks failed:', error);
+    });
+  }, [loadWebhooks]);
 
   async function toggleWebhook(id: string, currentStatus: boolean) {
     try {
