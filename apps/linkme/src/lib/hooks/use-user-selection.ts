@@ -11,9 +11,9 @@
  * @since 2025-12-04
  */
 
-/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import type { Database } from '@verone/types';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { calculateMargin } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
 
@@ -89,6 +89,26 @@ export interface SelectionItem {
 }
 
 /**
+ * Type pour le résultat de la query linkme_affiliates
+ */
+interface LinkMeAffiliateRow {
+  id: string;
+  user_id: string | null;
+  enseigne_id: string | null;
+  organisation_id: string | null;
+  display_name: string;
+  slug: string;
+  email: string | null;
+  phone: string | null;
+  logo_url: string | null;
+  bio: string | null;
+  status: string | null;
+  default_margin_rate: number | null;
+  max_margin_rate: number | null;
+  linkme_commission_rate: number | null;
+}
+
+/**
  * Hook: récupère l'affilié de l'utilisateur connecté
  */
 export function useUserAffiliate() {
@@ -110,8 +130,8 @@ export function useUserAffiliate() {
       }
 
       // Construire la requête selon le rôle
-      const supabase = createClient();
-      let query = (supabase as any).from('linkme_affiliates').select('*');
+      const supabase: SupabaseClient<Database> = createClient();
+      let query = supabase.from('linkme_affiliates').select('*');
       let queryDescription = '';
 
       // Chercher par enseigne_id pour enseigne_admin
@@ -138,7 +158,7 @@ export function useUserAffiliate() {
         `🔍 useUserAffiliate: Recherche affiliate (${queryDescription})`
       );
 
-      const { data, error } = await query.maybeSingle();
+      const { data, error } = await query.maybeSingle<LinkMeAffiliateRow>();
 
       if (error) {
         console.error('❌ Erreur fetch affiliate:', error);
@@ -163,22 +183,44 @@ export function useUserAffiliate() {
         user_id: data.user_id,
         enseigne_id: data.enseigne_id,
         organisation_id: data.organisation_id,
-        display_name: data.display_name || '',
-        slug: data.slug || '',
+        display_name: data.display_name ?? '',
+        slug: data.slug ?? '',
         email: data.email,
         phone: data.phone,
         logo_url: data.logo_url,
         bio: data.bio,
-        status: data.status || 'active',
-        default_margin_rate: data.default_margin_rate || 20,
-        max_margin_rate: data.max_margin_rate || 50,
-        linkme_commission_rate: data.linkme_commission_rate || 5,
+        status: data.status ?? 'active',
+        default_margin_rate: data.default_margin_rate ?? 20,
+        max_margin_rate: data.max_margin_rate ?? 50,
+        linkme_commission_rate: data.linkme_commission_rate ?? 5,
       };
     },
     enabled: !!user && !!linkMeRole,
     // PERF: Increased cache time from 60s to 5min (affiliate data rarely changes)
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
+}
+
+/**
+ * Type pour le résultat de la query linkme_selections
+ */
+interface LinkMeSelectionRow {
+  id: string;
+  affiliate_id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  image_url: string | null;
+  share_token: string | null;
+  products_count: number | null;
+  views_count: number | null;
+  view_count: number | null; // Ancien nom de colonne (legacy)
+  orders_count: number | null;
+  total_revenue: number | null;
+  published_at: string | null;
+  price_display_mode: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 /**
@@ -192,19 +234,20 @@ export function useUserSelections() {
     queryFn: async (): Promise<UserSelection[]> => {
       if (!affiliate) return [];
 
-      const supabase = createClient();
-      const { data, error } = await (supabase as any)
+      const supabase: SupabaseClient<Database> = createClient();
+      const { data, error } = await supabase
         .from('linkme_selections')
         .select('*')
         .eq('affiliate_id', affiliate.id)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .returns<LinkMeSelectionRow[]>();
 
       if (error) {
         console.error('Erreur fetch selections:', error);
         throw error;
       }
 
-      return (data || []).map((s: any) => ({
+      return (data ?? []).map(s => ({
         id: s.id,
         affiliate_id: s.affiliate_id,
         name: s.name,
@@ -214,12 +257,12 @@ export function useUserSelections() {
         // is_public est dérivé de published_at (colonne is_public supprimée en DB)
         is_public: s.published_at !== null,
         share_token: s.share_token,
-        products_count: s.products_count || 0,
-        views_count: s.views_count || s.view_count || 0,
-        orders_count: s.orders_count || 0,
-        total_revenue: s.total_revenue || 0,
+        products_count: s.products_count ?? 0,
+        views_count: s.views_count ?? s.view_count ?? 0,
+        orders_count: s.orders_count ?? 0,
+        total_revenue: s.total_revenue ?? 0,
         published_at: s.published_at,
-        price_display_mode: s.price_display_mode || 'TTC',
+        price_display_mode: (s.price_display_mode ?? 'TTC') as 'HT' | 'TTC',
         created_at: s.created_at,
         updated_at: s.updated_at,
       }));
@@ -228,6 +271,54 @@ export function useUserSelections() {
     // PERF: Increased cache time from 30s to 2min
     staleTime: 2 * 60 * 1000, // 2 minutes
   });
+}
+
+/**
+ * Type pour le résultat de la query linkme_selection_items avec JOIN products
+ */
+interface SelectionItemWithProduct {
+  id: string;
+  selection_id: string;
+  product_id: string;
+  base_price_ht: number | null;
+  margin_rate: number | null;
+  selling_price_ht: number | null;
+  custom_description: string | null;
+  is_featured: boolean | null;
+  display_order: number | null;
+  product: {
+    name: string;
+    sku: string;
+    stock_real: number | null;
+    subcategory: {
+      name: string;
+    } | null;
+    created_by_affiliate: string | null;
+    affiliate_commission_rate: number | null;
+  } | null;
+}
+
+/**
+ * Type pour product_images
+ */
+interface ProductImageRow {
+  product_id: string;
+  public_url: string | null;
+}
+
+/**
+ * Type pour channel_pricing avec products JOIN
+ */
+interface ChannelPricingWithProducts {
+  custom_price_ht: number | null;
+  min_margin_rate: number | null;
+  max_margin_rate: number | null;
+  suggested_margin_rate: number | null;
+  products: {
+    cost_price: number | null;
+    eco_tax_default: number | null;
+    margin_percentage: number | null;
+  } | null;
 }
 
 /**
@@ -241,8 +332,8 @@ export function useSelectionItems(selectionId: string | null) {
 
       // Utilise la syntaxe alias "product:products(...)" au lieu de "products!inner(...)"
       // car cette dernière échoue silencieusement avec linkme_selection_items
-      const supabase = createClient();
-      const { data, error } = await (supabase as any)
+      const supabase: SupabaseClient<Database> = createClient();
+      const { data, error } = await supabase
         .from('linkme_selection_items')
         .select(
           `
@@ -266,7 +357,8 @@ export function useSelectionItems(selectionId: string | null) {
         `
         )
         .eq('selection_id', selectionId)
-        .order('display_order', { ascending: true });
+        .order('display_order', { ascending: true })
+        .returns<SelectionItemWithProduct[]>();
 
       if (error) {
         console.error('Erreur fetch selection items:', error);
@@ -274,35 +366,36 @@ export function useSelectionItems(selectionId: string | null) {
       }
 
       // Récupérer les images
-      const productIds = (data || []).map((item: any) => item.product_id);
-      let imageMap = new Map<string, string>();
+      const productIds = (data ?? []).map(item => item.product_id);
+      let imageMap = new Map<string, string | null>();
 
       if (productIds.length > 0) {
         const { data: images } = await supabase
           .from('product_images')
           .select('product_id, public_url')
           .in('product_id', productIds)
-          .eq('is_primary', true);
+          .eq('is_primary', true)
+          .returns<ProductImageRow[]>();
 
         imageMap = new Map(
-          (images || []).map((img: any) => [img.product_id, img.public_url])
+          (images ?? []).map(img => [img.product_id, img.public_url])
         );
       }
 
-      return (data || []).map((item: any) => ({
+      return (data ?? []).map(item => ({
         id: item.id,
         selection_id: item.selection_id,
         product_id: item.product_id,
-        base_price_ht: item.base_price_ht || 0,
-        margin_rate: item.margin_rate || 20,
-        selling_price_ht: item.selling_price_ht || 0,
+        base_price_ht: item.base_price_ht ?? 0,
+        margin_rate: item.margin_rate ?? 20,
+        selling_price_ht: item.selling_price_ht ?? 0,
         custom_description: item.custom_description,
         is_featured: item.is_featured ?? false,
-        display_order: item.display_order || 0,
-        product_name: item.product?.name || '',
-        product_reference: item.product?.sku || '',
-        product_image_url: imageMap.get(item.product_id) || null,
-        product_stock_real: item.product?.stock_real || 0,
+        display_order: item.display_order ?? 0,
+        product_name: item.product?.name ?? '',
+        product_reference: item.product?.sku ?? '',
+        product_image_url: imageMap.get(item.product_id) ?? null,
+        product_stock_real: item.product?.stock_real ?? 0,
         // Données pour produits affiliés
         category_name: item.product?.subcategory?.name ?? null,
         is_affiliate_product: !!item.product?.created_by_affiliate,
@@ -329,7 +422,7 @@ export function useCreateSelection() {
         throw new Error('Aucun compte affilié trouvé');
       }
 
-      const supabase = createClient();
+      const supabase: SupabaseClient<Database> = createClient();
 
       // Générer un slug unique
       const baseSlug = input.name
@@ -340,13 +433,13 @@ export function useCreateSelection() {
         .replace(/(^-|-$)/g, '');
       const uniqueSlug = `${baseSlug}-${Date.now().toString(36)}`;
 
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('linkme_selections')
         .insert({
           affiliate_id: affiliate.id,
           name: input.name,
           slug: uniqueSlug,
-          description: input.description || null,
+          description: input.description ?? null,
           // published_at = null signifie brouillon (non publié)
           published_at: null,
           products_count: 0,
@@ -355,7 +448,7 @@ export function useCreateSelection() {
           total_revenue: 0,
         })
         .select()
-        .single();
+        .single<LinkMeSelectionRow>();
 
       if (error) throw error;
       return data;
@@ -383,10 +476,10 @@ export function useAddToSelection() {
         throw new Error('Aucun compte affilié trouvé');
       }
 
-      const supabase = createClient();
+      const supabase: SupabaseClient<Database> = createClient();
 
       // Récupérer les infos du produit depuis channel_pricing
-      const { data: catalogProduct, error: cpError } = await (supabase as any)
+      const { data: catalogProduct, error: cpError } = await supabase
         .from('channel_pricing')
         .select(
           `
@@ -402,7 +495,7 @@ export function useAddToSelection() {
         `
         )
         .eq('id', input.catalogProductId)
-        .single();
+        .single<ChannelPricingWithProducts>();
 
       if (cpError) {
         console.error('Erreur fetch channel_pricing:', cpError);
@@ -411,8 +504,8 @@ export function useAddToSelection() {
 
       // Calcul du prix de base (cost + eco_tax) * (1 + margin%)
       const product = catalogProduct.products;
-      const costPrice = product?.cost_price || 0;
-      const ecoTax = product?.eco_tax_default || 0;
+      const costPrice = product?.cost_price ?? 0;
+      const ecoTax = product?.eco_tax_default ?? 0;
       const marginPct = product?.margin_percentage ?? 25;
       const calculatedPrice =
         costPrice > 0 ? (costPrice + ecoTax) * (1 + marginPct / 100) : 0;
@@ -490,10 +583,10 @@ export function useAddToSelectionWithMargin() {
         throw new Error('Aucun compte affilié trouvé');
       }
 
-      const supabase = createClient();
+      const supabase: SupabaseClient<Database> = createClient();
 
       // Récupérer les infos du produit depuis channel_pricing
-      const { data: catalogProduct, error: cpError } = await (supabase as any)
+      const { data: catalogProduct, error: cpError } = await supabase
         .from('channel_pricing')
         .select(
           `
@@ -508,7 +601,7 @@ export function useAddToSelectionWithMargin() {
         `
         )
         .eq('id', input.catalogProductId)
-        .single();
+        .single<ChannelPricingWithProducts>();
 
       if (cpError) {
         console.error('Erreur fetch channel_pricing:', cpError);
@@ -527,8 +620,8 @@ export function useAddToSelectionWithMargin() {
 
       // Calcul du prix de base
       const product = catalogProduct.products;
-      const costPrice = product?.cost_price || 0;
-      const ecoTax = product?.eco_tax_default || 0;
+      const costPrice = product?.cost_price ?? 0;
+      const ecoTax = product?.eco_tax_default ?? 0;
       const marginPct = product?.margin_percentage ?? 25;
       const calculatedPrice =
         costPrice > 0 ? (costPrice + ecoTax) * (1 + marginPct / 100) : 0;
@@ -593,8 +686,8 @@ export function useRemoveFromSelection() {
 
   return useMutation({
     mutationFn: async (input: { itemId: string; selectionId: string }) => {
-      const supabase = createClient();
-      const { error } = await (supabase as any)
+      const supabase: SupabaseClient<Database> = createClient();
+      const { error } = await supabase
         .from('linkme_selection_items')
         .delete()
         .eq('id', input.itemId);
@@ -602,15 +695,15 @@ export function useRemoveFromSelection() {
       if (error) throw error;
 
       // Recalculer le compteur
-      const { count } = await (supabase as any)
+      const { count } = await supabase
         .from('linkme_selection_items')
         .select('*', { count: 'exact', head: true })
         .eq('selection_id', input.selectionId);
 
-      await (supabase as any)
+      await supabase
         .from('linkme_selections')
         .update({
-          products_count: count || 0,
+          products_count: count ?? 0,
           updated_at: new Date().toISOString(),
         })
         .eq('id', input.selectionId);
@@ -636,13 +729,13 @@ export function useUpdateItemMargin() {
       selectionId: string;
       marginRate: number;
     }) => {
-      const supabase = createClient();
+      const supabase: SupabaseClient<Database> = createClient();
 
       // Note: selling_price_ht est une colonne GENERATED en DB
       // Elle est calculée automatiquement avec la formule taux de marque:
       // selling_price_ht = base_price_ht / (1 - margin_rate / 100)
       // On ne met à jour que margin_rate, le reste est calculé automatiquement
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from('linkme_selection_items')
         .update({
           margin_rate: input.marginRate,
@@ -671,7 +764,7 @@ export function useToggleSelectionPublished() {
 
   return useMutation({
     mutationFn: async (input: { selectionId: string; isPublic: boolean }) => {
-      const supabase = createClient();
+      const supabase: SupabaseClient<Database> = createClient();
 
       // Publier = définir published_at, Dépublier = mettre à null
       const updateData = {
@@ -679,7 +772,7 @@ export function useToggleSelectionPublished() {
         updated_at: new Date().toISOString(),
       };
 
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from('linkme_selections')
         .update(updateData)
         .eq('id', input.selectionId);
@@ -704,9 +797,9 @@ export function useUpdateSelectionPriceDisplayMode() {
       selectionId: string;
       priceDisplayMode: 'HT' | 'TTC';
     }) => {
-      const supabase = createClient();
+      const supabase: SupabaseClient<Database> = createClient();
 
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from('linkme_selections')
         .update({
           price_display_mode: input.priceDisplayMode,
@@ -732,20 +825,19 @@ export function useSelectionProductIds(selectionId: string | null) {
     queryFn: async (): Promise<string[]> => {
       if (!selectionId) return [];
 
-      const supabase = createClient();
-      const { data, error } = await (supabase as any)
+      const supabase: SupabaseClient<Database> = createClient();
+      const { data, error } = await supabase
         .from('linkme_selection_items')
         .select('product_id')
-        .eq('selection_id', selectionId);
+        .eq('selection_id', selectionId)
+        .returns<{ product_id: string }[]>();
 
       if (error) {
         console.error('Erreur fetch selection product ids:', error);
         return [];
       }
 
-      return (data || []).map(
-        (item: { product_id: string }) => item.product_id
-      );
+      return (data ?? []).map(item => item.product_id);
     },
     enabled: !!selectionId,
     // PERF: Increased cache time from 30s to 2min
@@ -764,10 +856,10 @@ export function useReorderProducts() {
       selectionId: string;
       orderedItemIds: string[];
     }) => {
-      const supabase = createClient();
+      const supabase: SupabaseClient<Database> = createClient();
       // Mettre à jour l'ordre de chaque item
       const updates = input.orderedItemIds.map((itemId, index) =>
-        (supabase as any)
+        supabase
           .from('linkme_selection_items')
           .update({
             display_order: index,
@@ -805,8 +897,8 @@ export function useUpdateAffiliateProductPrice() {
       selectionId: string;
       newPriceHt: number;
     }) => {
-      const supabase = createClient();
-      const { error } = await (supabase as any)
+      const supabase: SupabaseClient<Database> = createClient();
+      const { error } = await supabase
         .from('linkme_selection_items')
         .update({
           selling_price_ht: input.newPriceHt,
