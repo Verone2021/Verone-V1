@@ -14,14 +14,19 @@ const supabase = createClient();
  * Fetch configuration canal site internet
  */
 async function fetchSiteInternetConfig(): Promise<SiteInternetConfig | null> {
-  const { data, error } = await supabase.rpc('get_site_internet_config' as any);
+  // Type assertion needed for RPC not yet in generated types
+  const rpcCall = supabase.rpc as (
+    name: string
+  ) => Promise<{ data: SiteInternetConfig | null; error: Error | null }>;
+
+  const { data, error } = await rpcCall('get_site_internet_config');
 
   if (error) {
     console.error('Erreur fetch config site internet:', error);
     throw error;
   }
 
-  return data as unknown as SiteInternetConfig | null;
+  return data;
 }
 
 /**
@@ -114,22 +119,20 @@ export function useUpdateSiteInternetConfigJSON() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (configUpdates: Record<string, any>) => {
+    mutationFn: async (configUpdates: Record<string, unknown>) => {
       // Fetch config actuelle
       const { data: currentConfig } = await supabase
         .from('sales_channels')
         .select('config')
         .eq('code', 'site_internet')
-        .single();
+        .single()
+        .returns<{ config: Record<string, unknown> | null }>();
 
       if (!currentConfig) throw new Error('Config non trouvée');
 
-      // Cast to any to access config column (added via migration)
-      const configData = currentConfig as any;
-
       // Merge avec updates
       const newConfig = {
-        ...(configData.config ?? {}),
+        ...(currentConfig.config ?? {}),
         ...configUpdates,
       };
 

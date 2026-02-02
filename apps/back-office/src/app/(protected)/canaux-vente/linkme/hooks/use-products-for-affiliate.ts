@@ -14,6 +14,22 @@
 import { useQuery } from '@tanstack/react-query';
 import { createClient } from '@verone/utils/supabase/client';
 
+// Supabase query return type
+interface ProductAffiliateRow {
+  id: string;
+  name: string | null;
+  sku: string | null;
+  dimensions: {
+    length?: number;
+    width?: number;
+    height?: number;
+    unit?: string;
+  } | null;
+  stock_real: number | null;
+  created_by_affiliate: string | null;
+  product_images: { public_url: string; display_order: number | null }[] | null;
+}
+
 export interface ProductForAffiliate {
   id: string;
   name: string;
@@ -105,19 +121,16 @@ export function useProductsForAffiliate(
         );
       }
 
-      const { data, error } = await query;
+      const { data, error } = await query.returns<ProductAffiliateRow[]>();
 
       if (error) {
         console.warn('Error fetching products for affiliate:', error.message);
         return [];
       }
 
-      return (data ?? []).map((p: any) => {
+      return (data ?? []).map(p => {
         // Get first image URL
-        const images =
-          (p.product_images as
-            | { public_url: string; display_order: number }[]
-            | null) ?? [];
+        const images = p.product_images ?? [];
         const sortedImages = [...images].sort(
           (a, b) => (a.display_order ?? 0) - (b.display_order ?? 0)
         );
@@ -131,10 +144,8 @@ export function useProductsForAffiliate(
           id: p.id,
           name: p.name ?? 'Sans nom',
           sku: p.sku ?? '-',
-          dimensions: p.dimensions as ProductForAffiliate['dimensions'],
-          volume_m3: calcVolumeM3(
-            p.dimensions as ProductForAffiliate['dimensions']
-          ),
+          dimensions: p.dimensions,
+          volume_m3: calcVolumeM3(p.dimensions),
           stock_real: p.stock_real ?? 0,
           image_url: imageUrl,
           product_type: productType,
