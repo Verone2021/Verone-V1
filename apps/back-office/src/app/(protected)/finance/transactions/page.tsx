@@ -83,6 +83,20 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
+// =====================================================================
+// TYPES
+// =====================================================================
+
+interface SyncApiResponse {
+  success: boolean;
+  itemsCreated?: number;
+  itemsUpdated?: number;
+}
+
+interface ApiErrorResponse {
+  error?: string;
+}
+
 // Feature flag removed - v2 is now the only version
 
 // =====================================================================
@@ -551,7 +565,7 @@ type TabFilter = 'all' | 'credits' | 'debits' | 'unclassified';
 // PAGE LEGACY (V1)
 // =====================================================================
 
-function TransactionsPageLegacy() {
+export function TransactionsPageLegacy() {
   const [activeTab, setActiveTab] = useState<TabFilter>('all');
   const [selectedTransaction, setSelectedTransaction] =
     useState<BankTransaction | null>(null);
@@ -618,6 +632,8 @@ function TransactionsPageLegacy() {
       filtered = filtered.filter(
         tx =>
           tx.label?.toLowerCase().includes(s) ||
+          // Boolean OR is correct here, not nullish coalescing
+          // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
           tx.counterparty_name?.toLowerCase().includes(s) ||
           tx.reference?.toLowerCase().includes(s)
       );
@@ -680,10 +696,10 @@ function TransactionsPageLegacy() {
   const handleSync = async () => {
     try {
       const response = await fetch('/api/qonto/sync', { method: 'POST' });
-      const result = await response.json();
+      const result = (await response.json()) as SyncApiResponse;
       if (result.success) {
         toast.success('Synchronisation terminée', {
-          description: `${result.itemsCreated} nouvelles, ${result.itemsUpdated} mises à jour`,
+          description: `${result.itemsCreated ?? 0} nouvelles, ${result.itemsUpdated ?? 0} mises à jour`,
         });
       }
       await refresh();
@@ -921,8 +937,8 @@ function TransactionsPageLegacy() {
         onOpenChange={setShowRapprochementModal}
         transactionId={selectedTransaction?.id}
         label={
-          selectedTransaction?.label ||
-          selectedTransaction?.counterparty_name ||
+          selectedTransaction?.label ??
+          selectedTransaction?.counterparty_name ??
           ''
         }
         amount={selectedTransaction?.amount ?? 0}
@@ -1113,10 +1129,10 @@ function TransactionsPageV2() {
   const handleSync = async () => {
     try {
       const response = await fetch('/api/qonto/sync', { method: 'POST' });
-      const result = await response.json();
+      const result = (await response.json()) as SyncApiResponse;
       if (result.success) {
         toast.success('Synchronisation terminee', {
-          description: `${result.itemsCreated} nouvelles, ${result.itemsUpdated} mises a jour`,
+          description: `${result.itemsCreated ?? 0} nouvelles, ${result.itemsUpdated ?? 0} mises a jour`,
         });
       }
       await refresh();
@@ -1579,7 +1595,7 @@ function TransactionsPageV2() {
                             />
                             <div className="min-w-0">
                               <p className="text-slate-700 truncate">
-                                {getPcgCategory(tx.category_pcg)?.label ||
+                                {getPcgCategory(tx.category_pcg)?.label ??
                                   tx.category_pcg}
                               </p>
                               <p className="text-xs text-slate-400">
@@ -1775,7 +1791,7 @@ function TransactionsPageV2() {
                   </p>
                   <p className="text-xs text-muted-foreground mt-0.5">
                     {formatDate(
-                      selectedTransaction.settled_at ||
+                      selectedTransaction.settled_at ??
                         selectedTransaction.emitted_at
                     )}
                   </p>
@@ -2024,7 +2040,7 @@ function TransactionsPageV2() {
                               {/* Sélecteur TVA compact */}
                               <Select
                                 value={
-                                  selectedTransaction.vat_rate?.toString() ||
+                                  selectedTransaction.vat_rate?.toString() ??
                                   'none'
                                 }
                                 onValueChange={value => {
@@ -2114,7 +2130,8 @@ function TransactionsPageV2() {
                                 { method: 'DELETE' }
                               );
                               if (!res.ok) {
-                                const err = await res.json();
+                                const err =
+                                  (await res.json()) as ApiErrorResponse;
                                 throw new Error(
                                   err.error ?? 'Erreur lors de la suppression'
                                 );
@@ -2335,8 +2352,8 @@ function TransactionsPageV2() {
         open={showClassificationModal}
         onOpenChange={setShowClassificationModal}
         label={
-          selectedTransaction?.label ||
-          selectedTransaction?.counterparty_name ||
+          selectedTransaction?.label ??
+          selectedTransaction?.counterparty_name ??
           ''
         }
         amount={selectedTransaction?.amount}
@@ -2363,8 +2380,8 @@ function TransactionsPageV2() {
         open={showOrganisationModal}
         onOpenChange={setShowOrganisationModal}
         label={
-          selectedTransaction?.counterparty_name ||
-          selectedTransaction?.label ||
+          selectedTransaction?.counterparty_name ??
+          selectedTransaction?.label ??
           ''
         }
         transactionCount={1}
@@ -2386,8 +2403,8 @@ function TransactionsPageV2() {
         onOpenChange={setShowRapprochementModal}
         transactionId={selectedTransaction?.id}
         label={
-          selectedTransaction?.label ||
-          selectedTransaction?.counterparty_name ||
+          selectedTransaction?.label ??
+          selectedTransaction?.counterparty_name ??
           ''
         }
         amount={selectedTransaction?.amount ?? 0}
