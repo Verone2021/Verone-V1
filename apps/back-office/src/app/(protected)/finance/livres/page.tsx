@@ -18,6 +18,12 @@ import {
   CollapsibleTrigger,
 } from '@radix-ui/react-collapsible';
 import { useBankReconciliation, type BankTransaction } from '@verone/finance';
+
+type TransactionWithExtras = BankTransaction & {
+  vat_rate?: number;
+  category_pcg?: string;
+  ignore_reason?: string;
+};
 import {
   getPcgCategory,
   formatBankPaymentMethod,
@@ -140,8 +146,8 @@ function RecettesTable({ transactions }: { transactions: BankTransaction[] }) {
         <div className="col-span-2 text-right">TTC</div>
       </div>
       <ScrollArea className="h-[400px]">
-        {transactions.map(tx => {
-          const vatRate = (tx as any).vat_rate ?? 20;
+        {(transactions as TransactionWithExtras[]).map(tx => {
+          const vatRate = tx.vat_rate ?? 20;
           const ttc = Math.abs(tx.amount);
           const ht = Math.round((ttc / (1 + vatRate / 100)) * 100) / 100;
           const tva = ttc - ht;
@@ -218,12 +224,11 @@ function AchatsTable({ transactions }: { transactions: BankTransaction[] }) {
         <div className="col-span-1 text-center">Just.</div>
       </div>
       <ScrollArea className="h-[400px]">
-        {transactions.map(tx => {
+        {(transactions as TransactionWithExtras[]).map(tx => {
           const pcgCode =
-            (tx as any).category_pcg ||
-            (tx as any).ignore_reason?.match(/PCG (\d+)/)?.[1];
+            tx.category_pcg || tx.ignore_reason?.match(/PCG (\d+)/)?.[1];
           const pcgInfo = pcgCode ? getPcgCategory(pcgCode) : null;
-          const vatRate = (tx as any).vat_rate ?? 20;
+          const vatRate = tx.vat_rate ?? 20;
           const ttc = Math.abs(tx.amount);
           const ht = Math.round((ttc / (1 + vatRate / 100)) * 100) / 100;
           const tva = ttc - ht;
@@ -323,7 +328,7 @@ function ResultatsTab({
       months[key].creditTx.push(tx);
     });
 
-    debitTransactions.forEach(tx => {
+    (debitTransactions as TransactionWithExtras[]).forEach(tx => {
       const date = tx.settled_at ?? tx.emitted_at;
       if (!date?.startsWith(selectedYear)) return;
       const key = getMonthKey(date);
@@ -468,7 +473,7 @@ function ResultatsTab({
                               >
                                 <span className="text-muted-foreground">
                                   {formatDate(tx.settled_at ?? tx.emitted_at)} -{' '}
-                                  {tx.counterparty_name || tx.label}
+                                  {tx.counterparty_name ?? tx.label}
                                 </span>
                                 <Money
                                   amount={Math.abs(tx.amount)}
@@ -502,7 +507,7 @@ function ResultatsTab({
                               >
                                 <span className="text-muted-foreground">
                                   {formatDate(tx.settled_at ?? tx.emitted_at)} -{' '}
-                                  {tx.counterparty_name || tx.label}
+                                  {tx.counterparty_name ?? tx.label}
                                 </span>
                                 <Money
                                   amount={-Math.abs(tx.amount)}
@@ -592,7 +597,7 @@ function CompteResultatTab({
       const date = tx.settled_at ?? tx.emitted_at;
       if (!date?.startsWith(selectedYear)) return;
 
-      const pcgCode = (tx as any).category_pcg;
+      const pcgCode = tx.category_pcg;
       if (pcgCode) {
         const classCode = pcgCode.substring(0, 2);
         if (classes[classCode] !== undefined) {
@@ -610,20 +615,19 @@ function CompteResultatTab({
         total: classes[p.code] ?? 0,
       }))
       .filter(p => p.total > 0);
-  }, [creditTransactions, selectedYear]);
+  }, [creditTransactions, selectedYear, pcgStructure.produits]);
 
   // Calculer les charges par classe
   const chargesParClasse = useMemo(() => {
     const classes: Record<string, number> = {};
     pcgStructure.charges.forEach(c => (classes[c.code] = 0));
 
-    debitTransactions.forEach(tx => {
+    (debitTransactions as TransactionWithExtras[]).forEach(tx => {
       const date = tx.settled_at ?? tx.emitted_at;
       if (!date?.startsWith(selectedYear)) return;
 
       const pcgCode =
-        (tx as any).category_pcg ||
-        (tx as any).ignore_reason?.match(/PCG (\d+)/)?.[1];
+        tx.category_pcg || tx.ignore_reason?.match(/PCG (\d+)/)?.[1];
       if (pcgCode) {
         const classCode = pcgCode.substring(0, 2);
         if (classes[classCode] !== undefined) {
@@ -641,7 +645,7 @@ function CompteResultatTab({
         total: classes[c.code] ?? 0,
       }))
       .filter(c => c.total > 0);
-  }, [debitTransactions, selectedYear]);
+  }, [debitTransactions, selectedYear, pcgStructure.charges]);
 
   // Totaux
   const totalProduits = produitsParClasse.reduce((sum, p) => sum + p.total, 0);
