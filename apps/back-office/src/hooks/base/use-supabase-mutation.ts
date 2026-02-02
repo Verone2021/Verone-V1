@@ -40,11 +40,13 @@ export function useSupabaseMutation<T>(
       setLoading(true);
       setError(null);
 
-      const { data: result, error: createError } = await (supabase
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: result, error: createError } = await supabase
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .from(options.tableName as any)
         .insert([data])
         .select()
-        .single() as any);
+        .single();
 
       if (createError) {
         // Handle duplicate constraint
@@ -54,13 +56,17 @@ export function useSupabaseMutation<T>(
         throw createError;
       }
 
+      if (!result) {
+        throw new Error('Aucune donnée retournée après création');
+      }
+
       toast.success('Créé avec succès');
 
       if (options.onSuccess) {
-        await options.onSuccess(result);
+        await options.onSuccess(result as T);
       }
 
-      return result;
+      return result as T;
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erreur création';
       setError(message);
@@ -81,22 +87,28 @@ export function useSupabaseMutation<T>(
       setLoading(true);
       setError(null);
 
-      const { data: result, error: updateError } = await (supabase
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: result, error: updateError } = await supabase
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .from(options.tableName as any)
         .update(data)
         .eq('id', id)
         .select()
-        .single() as any);
+        .single();
 
       if (updateError) throw updateError;
+
+      if (!result) {
+        throw new Error('Aucune donnée retournée après modification');
+      }
 
       toast.success('Modifié avec succès');
 
       if (options.onSuccess) {
-        await options.onSuccess(result);
+        await options.onSuccess(result as T);
       }
 
-      return result;
+      return result as T;
     } catch (err) {
       const message =
         err instanceof Error ? err.message : 'Erreur modification';
@@ -118,10 +130,12 @@ export function useSupabaseMutation<T>(
       setLoading(true);
       setError(null);
 
-      const { error: deleteError } = await (supabase
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error: deleteError } = await supabase
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .from(options.tableName as any)
         .delete()
-        .eq('id', id) as any);
+        .eq('id', id);
 
       if (deleteError) throw deleteError;
 
