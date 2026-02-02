@@ -27,6 +27,19 @@ import {
   AlertCircle,
 } from 'lucide-react';
 
+// Interfaces basées sur schéma products et product_images (consulté via MCP Supabase)
+interface ProductImage {
+  public_url: string | null;
+  is_primary: boolean | null;
+}
+
+interface ProductWithImages {
+  id: string;
+  name: string;
+  supplier_reference: string | null;
+  product_images?: ProductImage[];
+}
+
 /**
  * Type pour l'organisation
  */
@@ -230,7 +243,8 @@ function useOrganisationProducts(organisationId: string | null) {
         .eq('supplier_id', organisationId)
         .is('archived_at', null)
         .order('created_at', { ascending: false })
-        .limit(50);
+        .limit(50)
+        .returns<ProductWithImages[]>();
 
       if (error) {
         // Fallback sans images
@@ -240,16 +254,17 @@ function useOrganisationProducts(organisationId: string | null) {
           .eq('supplier_id', organisationId)
           .is('archived_at', null)
           .order('created_at', { ascending: false })
-          .limit(50);
+          .limit(50)
+          .returns<Omit<ProductWithImages, 'product_images'>[]>();
 
         setProducts(
           (dataNoImg ?? []).map(p => ({ ...p, primary_image_url: null }))
         );
       } else {
         setProducts(
-          (data ?? []).map((p: any) => {
+          (data ?? []).map(p => {
             const primaryImg = (p.product_images ?? []).find(
-              (img: any) => img.is_primary
+              img => img.is_primary
             );
             return {
               id: p.id,
@@ -494,19 +509,19 @@ export default function OrganisationDetailPage() {
                         <p className="font-medium">{organisation.trade_name}</p>
                       </div>
                     )}
-                  {(organisation.siret || organisation.siren) && (
+                  {(organisation.siret ?? organisation.siren) && (
                     <div>
                       <p className="text-sm text-muted-foreground">
                         {organisation.siret ? 'SIRET' : 'SIREN'}
                       </p>
                       <p className="font-medium">
-                        {organisation.siret || organisation.siren}
+                        {organisation.siret ?? organisation.siren}
                       </p>
                     </div>
                   )}
                 </div>
                 <div className="space-y-4 border-l pl-6">
-                  {(organisation.address_line1 || organisation.city) && (
+                  {(organisation.address_line1 ?? organisation.city) && (
                     <div>
                       <p className="text-sm text-muted-foreground flex items-center gap-1">
                         <MapPin className="h-3.5 w-3.5" />
