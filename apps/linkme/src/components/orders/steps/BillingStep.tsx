@@ -175,7 +175,7 @@ function CreateNewCard({
   onClick,
   isActive,
   label = 'Nouveau',
-  icon = 'contact',
+  icon: _icon = 'contact',
 }: CreateNewCardProps) {
   return (
     <Card
@@ -446,7 +446,11 @@ function ParentAddressCard({
 // MAIN COMPONENT
 // ============================================================================
 
-export function BillingStep({ formData, errors, onUpdate }: BillingStepProps) {
+export function BillingStep({
+  formData,
+  errors: _errors,
+  onUpdate,
+}: BillingStepProps) {
   const [showContactForm, setShowContactForm] = useState(
     formData.contacts.billingContact.mode === 'new'
   );
@@ -503,7 +507,9 @@ export function BillingStep({ formData, errors, onUpdate }: BillingStepProps) {
     useUpdateOrganisationAddress();
 
   // Contacts disponibles - Séparés en locaux et enseigne
-  const allContacts = contactsData?.allContacts ?? [];
+  const allContacts = useMemo(() => {
+    return contactsData?.allContacts ?? [];
+  }, [contactsData]);
 
   const localContacts = useMemo(() => {
     return allContacts.filter(c => c.organisationId === organisationId);
