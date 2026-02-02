@@ -12,9 +12,11 @@
 import * as React from 'react';
 
 import { useQuery } from '@tanstack/react-query';
+import type { Database } from '@verone/types';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { createClient } from '@verone/utils/supabase/client';
 
-const supabase = createClient();
+const supabase: SupabaseClient<Database> = createClient();
 
 // ID du canal LinkMe dans sales_channels (même que back-office)
 const LINKME_CHANNEL_ID = '93c68db1-5a30-4168-89ec-6383152be405';
@@ -73,12 +75,45 @@ export interface CatalogFilters {
 }
 
 /**
+ * Type pour le résultat de la query channel_pricing avec JOIN products
+ */
+interface ChannelPricingWithProduct {
+  id: string;
+  product_id: string;
+  is_featured: boolean | null;
+  custom_title: string | null;
+  custom_description: string | null;
+  custom_selling_points: string[] | null;
+  custom_price_ht: number | null;
+  public_price_ht: number | null;
+  channel_commission_rate: number | null;
+  products: {
+    id: string;
+    sku: string;
+    name: string;
+    description: string | null;
+    cost_price: number | null;
+    eco_tax_default: number | null;
+    margin_percentage: number | null;
+    stock_real: number | null;
+    product_status: string | null;
+    subcategory_id: string | null;
+    supplier_id: string | null;
+    enseigne_id: string | null;
+    assigned_client_id: string | null;
+    created_by_affiliate: string | null;
+    style: string | null;
+    suitable_rooms: string[] | null;
+  } | null;
+}
+
+/**
  * Fetch les produits du catalogue LinkMe
  * Uniquement les produits actifs (is_active = true)
  */
 async function fetchCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
   // Requête channel_pricing avec JOIN products
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from('channel_pricing')
     .select(
       `
@@ -113,7 +148,8 @@ async function fetchCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
     )
     .eq('channel_id', LINKME_CHANNEL_ID)
     .eq('is_active', true)
-    .order('display_order', { ascending: true });
+    .order('display_order', { ascending: true })
+    .returns<ChannelPricingWithProduct[]>();
 
   if (error) {
     console.error('Erreur fetch catalogue LinkMe:', error);
@@ -123,26 +159,60 @@ async function fetchCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
   if (!data || data.length === 0) return [];
 
   // Récupérer les IDs pour les jointures
-  const productIds = data.map((cp: any) => cp.product_id);
+  const productIds = data.map(cp => cp.product_id);
   const subcategoryIds = data
-    .map((cp: any) => cp.products?.subcategory_id)
-    .filter(Boolean);
+    .map(cp => cp.products?.subcategory_id)
+    .filter((id): id is string => id !== null && id !== undefined);
   const supplierIds = data
-    .map((cp: any) => cp.products?.supplier_id)
-    .filter(Boolean);
+    .map(cp => cp.products?.supplier_id)
+    .filter((id): id is string => id !== null && id !== undefined);
+
+  /**
+   * Type pour le résultat de la query product_images
+   */
+  interface ProductImage {
+    product_id: string;
+    public_url: string | null;
+  }
+
+  /**
+   * Type pour le résultat de la query subcategories avec hiérarchie
+   */
+  interface SubcategoryWithHierarchy {
+    id: string;
+    name: string;
+    category: {
+      id: string;
+      name: string;
+      family: {
+        id: string;
+        name: string;
+      } | null;
+    } | null;
+  }
+
+  /**
+   * Type pour le résultat de la query organisations
+   */
+  interface SupplierOrganisation {
+    id: string;
+    legal_name: string | null;
+    trade_name: string | null;
+  }
 
   // Fetch parallele: images, sous-categories, fournisseurs
   const [imagesResult, subcategoriesResult, suppliersResult] =
     await Promise.all([
       // Images primaires
-      (supabase as any)
+      supabase
         .from('product_images')
         .select('product_id, public_url')
         .in('product_id', productIds)
-        .eq('is_primary', true),
+        .eq('is_primary', true)
+        .returns<ProductImage[]>(),
 
       // Sous-catégories avec hiérarchie
-      (supabase as any)
+      supabase
         .from('subcategories')
         .select(
           `
@@ -158,20 +228,19 @@ async function fetchCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
         )
       `
         )
-        .in('id', subcategoryIds),
+        .in('id', subcategoryIds)
+        .returns<SubcategoryWithHierarchy[]>(),
 
       // Fournisseurs
-      (supabase as any)
+      supabase
         .from('organisations')
         .select('id, legal_name, trade_name')
-        .in('id', supplierIds),
+        .in('id', supplierIds)
+        .returns<SupplierOrganisation[]>(),
     ]);
 
-  const imageMap = new Map(
-    (imagesResult.data || []).map((img: any) => [
-      img.product_id,
-      img.public_url,
-    ])
+  const imageMap = new Map<string, string | null>(
+    (imagesResult.data ?? []).map(img => [img.product_id, img.public_url])
   );
 
   interface CategoryData {
@@ -181,63 +250,63 @@ async function fetchCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
   }
 
   const categoryMap = new Map<string, CategoryData>();
-  (subcategoriesResult.data || []).forEach((sc: any) => {
+  (subcategoriesResult.data ?? []).forEach(sc => {
     categoryMap.set(sc.id, {
-      subcategory_name: sc.name || '',
-      category_name: sc.category?.name || '',
-      family_name: sc.category?.family?.name || '',
+      subcategory_name: sc.name ?? '',
+      category_name: sc.category?.name ?? '',
+      family_name: sc.category?.family?.name ?? '',
     });
   });
 
-  const supplierMap = new Map(
-    (suppliersResult.data || []).map((s: any) => [
-      s.id,
-      s.trade_name || s.legal_name,
-    ])
+  const supplierMap = new Map<string, string | null>(
+    (suppliersResult.data ?? []).map(s => [s.id, s.trade_name ?? s.legal_name])
   );
 
   // Mapper les données
-  return data.map((cp: any) => {
+  return data.map(cp => {
     const product = cp.products;
-    const subcategoryId = product?.subcategory_id;
+    const subcategoryId = product?.subcategory_id ?? null;
     const categoryData = subcategoryId ? categoryMap.get(subcategoryId) : null;
 
     // Calcul prix de vente: custom_price_ht ou (cost + eco_tax) * (1 + margin%)
-    const costPrice = product?.cost_price || 0;
-    const ecoTax = product?.eco_tax_default || 0;
+    const costPrice = product?.cost_price ?? 0;
+    const ecoTax = product?.eco_tax_default ?? 0;
     const marginPct = product?.margin_percentage ?? 25;
     const calculatedPrice =
       costPrice > 0 ? (costPrice + ecoTax) * (1 + marginPct / 100) : 0;
     const sellingPrice = cp.custom_price_ht ?? calculatedPrice;
 
-    const enseigneId = product?.enseigne_id || null;
-    const assignedClientId = product?.assigned_client_id || null;
-    const createdByAffiliate = product?.created_by_affiliate || null;
+    const enseigneId = product?.enseigne_id ?? null;
+    const assignedClientId = product?.assigned_client_id ?? null;
+    const createdByAffiliate = product?.created_by_affiliate ?? null;
     // is_sourced = produit exclusif à une enseigne/organisation (sourcé par Verone)
-    const isSourced = !!(enseigneId || assignedClientId);
+    const isSourced = !!(enseigneId ?? assignedClientId);
     // is_custom = produit sur mesure (sourcé par Verone, PAS créé par affilié)
     const isCustom = isSourced && !createdByAffiliate;
+
+    const supplierId = product?.supplier_id ?? null;
+    const supplierName = supplierId ? supplierMap.get(supplierId) : null;
 
     return {
       id: cp.id,
       product_id: cp.product_id,
-      name: product?.name || '',
-      reference: product?.sku || '',
-      description: product?.description || null,
+      name: product?.name ?? '',
+      reference: product?.sku ?? '',
+      description: product?.description ?? null,
       custom_title: cp.custom_title,
       custom_description: cp.custom_description,
       custom_selling_points: cp.custom_selling_points,
       selling_price_ht: sellingPrice,
       public_price_ht: cp.public_price_ht,
       channel_commission_rate: cp.channel_commission_rate ?? null,
-      image_url: imageMap.get(cp.product_id) || null,
+      image_url: imageMap.get(cp.product_id) ?? null,
       is_featured: cp.is_featured ?? false,
       subcategory_id: subcategoryId,
-      subcategory_name: categoryData?.subcategory_name || null,
-      category_name: categoryData?.category_name || null,
-      family_name: categoryData?.family_name || null,
-      supplier_name: supplierMap.get(product?.supplier_id) || null,
-      stock_real: product?.stock_real || 0,
+      subcategory_name: categoryData?.subcategory_name ?? null,
+      category_name: categoryData?.category_name ?? null,
+      family_name: categoryData?.family_name ?? null,
+      supplier_name: supplierName ?? null,
+      stock_real: product?.stock_real ?? 0,
       // Produits sur mesure (sourcés par Verone)
       enseigne_id: enseigneId,
       assigned_client_id: assignedClientId,
@@ -245,8 +314,8 @@ async function fetchCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
       is_sourced: isSourced,
       created_by_affiliate: createdByAffiliate,
       // Style et pièces
-      style: product?.style || null,
-      suitable_rooms: product?.suitable_rooms || null,
+      style: product?.style ?? null,
+      suitable_rooms: product?.suitable_rooms ?? null,
     };
   });
 }
@@ -280,6 +349,46 @@ export function useFeaturedCatalogProducts() {
 }
 
 /**
+ * Type pour le résultat single product query
+ */
+interface ChannelPricingWithProductDetail {
+  id: string;
+  product_id: string;
+  is_featured: boolean | null;
+  custom_title: string | null;
+  custom_description: string | null;
+  custom_selling_points: string[] | null;
+  custom_price_ht: number | null;
+  public_price_ht: number | null;
+  min_margin_rate: number | null;
+  max_margin_rate: number | null;
+  suggested_margin_rate: number | null;
+  products: {
+    id: string;
+    sku: string;
+    name: string;
+    description: string | null;
+    selling_points: string[] | null;
+    cost_price: number | null;
+    eco_tax_default: number | null;
+    margin_percentage: number | null;
+    stock_real: number | null;
+    product_status: string | null;
+    subcategory_id: string | null;
+    supplier_id: string | null;
+    weight: number | null;
+    dimensions: string | null;
+  } | null;
+}
+
+/**
+ * Type pour le résultat de la query product_images
+ */
+interface ProductImageWithUrl {
+  public_url: string | null;
+}
+
+/**
  * Hook: récupère un produit par ID
  */
 export function useCatalogProduct(catalogId: string | null) {
@@ -288,7 +397,7 @@ export function useCatalogProduct(catalogId: string | null) {
     queryFn: async () => {
       if (!catalogId) return null;
 
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('channel_pricing')
         .select(
           `
@@ -323,7 +432,7 @@ export function useCatalogProduct(catalogId: string | null) {
         )
         .eq('id', catalogId)
         .eq('channel_id', LINKME_CHANNEL_ID)
-        .single();
+        .single<ChannelPricingWithProductDetail>();
 
       if (error) {
         console.error('Erreur fetch produit:', error);
@@ -335,16 +444,17 @@ export function useCatalogProduct(catalogId: string | null) {
       const product = data.products;
 
       // Fetch image primaire
-      const { data: images } = await (supabase as any)
+      const { data: images } = await supabase
         .from('product_images')
         .select('public_url')
         .eq('product_id', data.product_id)
         .eq('is_primary', true)
-        .limit(1);
+        .limit(1)
+        .returns<ProductImageWithUrl[]>();
 
       // Calcul prix de vente
-      const costPrice = product?.cost_price || 0;
-      const ecoTax = product?.eco_tax_default || 0;
+      const costPrice = product?.cost_price ?? 0;
+      const ecoTax = product?.eco_tax_default ?? 0;
       const marginPct = product?.margin_percentage ?? 25;
       const calculatedPrice =
         costPrice > 0 ? (costPrice + ecoTax) * (1 + marginPct / 100) : 0;
@@ -352,16 +462,16 @@ export function useCatalogProduct(catalogId: string | null) {
       return {
         id: data.id,
         product_id: data.product_id,
-        name: product?.name || '',
-        reference: product?.sku || '',
-        description: data.custom_description || product?.description || null,
+        name: product?.name ?? '',
+        reference: product?.sku ?? '',
+        description: data.custom_description ?? product?.description ?? null,
         selling_points:
-          data.custom_selling_points || product?.selling_points || null,
+          data.custom_selling_points ?? product?.selling_points ?? null,
         selling_price_ht: data.custom_price_ht ?? calculatedPrice,
         public_price_ht: data.public_price_ht,
-        image_url: images?.[0]?.public_url || null,
+        image_url: images?.[0]?.public_url ?? null,
         is_featured: data.is_featured ?? false,
-        stock_real: product?.stock_real || 0,
+        stock_real: product?.stock_real ?? 0,
         min_margin_rate: data.min_margin_rate,
         max_margin_rate: data.max_margin_rate,
         suggested_margin_rate: data.suggested_margin_rate,
@@ -477,7 +587,7 @@ export function useCategorizedCatalogProducts(
   return {
     customProducts: categorized.customProducts,
     generalProducts: categorized.generalProducts,
-    allProducts: products || [],
+    allProducts: products ?? [],
     isLoading,
     error,
   };
