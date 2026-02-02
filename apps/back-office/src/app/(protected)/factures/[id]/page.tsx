@@ -124,6 +124,8 @@ interface QontoDocument {
   credit_note_number?: string;
   invoice_id?: string;
   reason?: string;
+  // Workflow
+  workflow_status?: string;
 }
 
 // =====================================================================
@@ -351,7 +353,7 @@ export default function DocumentDetailPage({
             : `/api/qonto/credit-notes/${id}`;
 
       const response = await fetch(endpoint, { method: 'DELETE' });
-      const data = await response.json();
+      const data = (await response.json()) as QontoApiResponse;
 
       if (!data.success) throw new Error(data.error);
 
@@ -375,7 +377,7 @@ export default function DocumentDetailPage({
       const response = await fetch(`/api/qonto/quotes/${id}/convert`, {
         method: 'POST',
       });
-      const data = await response.json();
+      const data = (await response.json()) as QontoApiResponse;
 
       if (!data.success) throw new Error(data.error);
 
@@ -408,13 +410,13 @@ export default function DocumentDetailPage({
           reason: `Avoir sur facture ${document.invoice_number}`,
         }),
       });
-      const data = await response.json();
+      const data = (await response.json()) as QontoApiResponse;
 
       if (!data.success) throw new Error(data.error);
 
       toast.success('Avoir créé en brouillon');
-      if (data.creditNote?.id) {
-        router.push(`/factures/${data.creditNote.id}?type=credit_note`);
+      if (data.credit_note?.id) {
+        router.push(`/factures/${data.credit_note.id}?type=credit_note`);
       }
     } catch (err) {
       toast.error(
@@ -434,7 +436,7 @@ export default function DocumentDetailPage({
       const response = await fetch(`/api/qonto/quotes/${id}/accept`, {
         method: 'POST',
       });
-      const data = await response.json();
+      const data = (await response.json()) as QontoApiResponse;
 
       if (!data.success) throw new Error(data.error);
 
@@ -458,7 +460,7 @@ export default function DocumentDetailPage({
       const response = await fetch(`/api/qonto/quotes/${id}/decline`, {
         method: 'POST',
       });
-      const data = await response.json();
+      const data = (await response.json()) as QontoApiResponse;
 
       if (!data.success) throw new Error(data.error);
 
@@ -519,7 +521,7 @@ export default function DocumentDetailPage({
       const response = await fetch(`/api/qonto/invoices/${id}/mark-paid`, {
         method: 'POST',
       });
-      const data = await response.json();
+      const data = (await response.json()) as QontoApiResponse;
 
       if (!data.success) throw new Error(data.error);
 
@@ -543,7 +545,7 @@ export default function DocumentDetailPage({
       const response = await fetch(`/api/financial-documents/${id}/archive`, {
         method: 'POST',
       });
-      const data = await response.json();
+      const data = (await response.json()) as QontoApiResponse;
 
       if (!data.success) throw new Error(data.error);
 
@@ -832,7 +834,7 @@ export default function DocumentDetailPage({
           {documentType === 'invoice' &&
             !isCancelled &&
             ['draft_validated', 'finalized', 'sent', 'paid'].includes(
-              (document as any)?.workflow_status ?? ''
+              document?.workflow_status ?? ''
             ) && (
               <Button
                 variant="outline"
