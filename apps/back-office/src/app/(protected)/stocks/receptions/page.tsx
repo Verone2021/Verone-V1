@@ -1141,7 +1141,7 @@ export default function ReceptionsPage() {
                                                     public_url: string;
                                                     is_primary: boolean;
                                                   }) => img.is_primary
-                                                )?.public_url ||
+                                                )?.public_url ??
                                                 item.products
                                                   ?.product_images?.[0]
                                                   ?.public_url

@@ -1071,7 +1071,7 @@ export default function SourcingEchantillonsPage() {
                           src={
                             selectedProduct.product_images.find(
                               (img: any) => img.is_primary
-                            )?.public_url ||
+                            )?.public_url ??
                             selectedProduct.product_images[0].public_url
                           }
                           alt={selectedProduct.name}

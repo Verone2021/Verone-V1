@@ -616,7 +616,7 @@ export default function ExpeditionsPage() {
                                                 item.products?.product_images?.find(
                                                   (img: ProductImage) =>
                                                     img.is_primary
-                                                )?.public_url ||
+                                                )?.public_url ??
                                                 item.products
                                                   ?.product_images?.[0]
                                                   ?.public_url
@@ -861,7 +861,7 @@ export default function ExpeditionsPage() {
                                                 item.products?.product_images?.find(
                                                   (img: ProductImage) =>
                                                     img.is_primary
-                                                )?.public_url ||
+                                                )?.public_url ??
                                                 item.products
                                                   ?.product_images?.[0]
                                                   ?.public_url

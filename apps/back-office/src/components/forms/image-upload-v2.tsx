@@ -227,7 +227,7 @@ export function ImageUploadV2({
    * 🚨 Rendu des erreurs
    */
   const renderError = () => {
-    const errorMessage = validationError || error?.message;
+    const errorMessage = validationError ?? error?.message;
 
     if (!errorMessage) return null;
 
