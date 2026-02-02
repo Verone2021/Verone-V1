@@ -191,9 +191,9 @@ function useEnseigneProducts(enseigneId: string | null) {
         setAffilies([]);
       } else {
         // Transform and separate products
-        const allProducts = (data ?? []).map((p: any) => {
+        const allProducts = (data ?? []).map(p => {
           const primaryImg = (p.product_images ?? []).find(
-            (img: any) => img.is_primary
+            img => img.is_primary
           );
           return {
             id: p.id,

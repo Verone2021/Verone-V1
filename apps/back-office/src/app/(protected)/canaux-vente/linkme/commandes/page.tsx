@@ -105,9 +105,10 @@ export default function LinkMeOrdersPage() {
       setIsLoadingEnriched(true);
       try {
         // Utiliser la RPC existante pour avoir les donnees enrichies
-        const { data: ordersData, error } = await supabase
-          .rpc('get_linkme_orders', { p_affiliate_id: undefined })
-          .returns<LinkMeOrderRpcResult[]>();
+        const { data: ordersData, error } = (await supabase.rpc(
+          'get_linkme_orders',
+          { p_affiliate_id: undefined }
+        )) as { data: LinkMeOrderRpcResult[] | null; error: unknown };
 
         if (error) {
           console.error('Erreur fetch LinkMe enriched data:', error);
@@ -116,7 +117,7 @@ export default function LinkMeOrdersPage() {
 
         // Construire un map des donnees enrichies par order_id
         const enriched: LinkMeEnrichedData = {};
-        (ordersData ?? []).forEach((order: LinkMeOrderRpcResult) => {
+        (ordersData ?? []).forEach(order => {
           enriched[order.id] = {
             affiliate_name: order.affiliate_name ?? null,
             affiliate_type: order.affiliate_type ?? null,
