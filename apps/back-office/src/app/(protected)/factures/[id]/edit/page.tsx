@@ -75,6 +75,16 @@ interface QontoDocument {
   terms_and_conditions?: string;
 }
 
+// API Response types
+interface QontoApiResponse {
+  success: boolean;
+  invoice?: QontoDocument;
+  quote?: QontoDocument;
+  credit_note?: QontoDocument;
+  creditNote?: QontoDocument;
+  error?: string;
+}
+
 interface IEditableItem {
   id: string;
   title: string;
@@ -259,7 +269,7 @@ export default function EditDraftPage({ params }: IPageProps) {
         try {
           const endpoint = getApiEndpoint(type, id);
           const response = await fetch(endpoint);
-          const data = await response.json();
+          const data = (await response.json()) as QontoApiResponse;
 
           if (response.ok && data.success) {
             const doc =
@@ -281,7 +291,7 @@ export default function EditDraftPage({ params }: IPageProps) {
               // Initialize form fields
               if (doc.items && doc.items.length > 0) {
                 setItems(
-                  doc.items.map((item: QontoInvoiceItem) => ({
+                  doc.items.map(item => ({
                     id: generateId(),
                     title: item.title ?? '',
                     description: item.description ?? '',
@@ -317,8 +327,12 @@ export default function EditDraftPage({ params }: IPageProps) {
               return;
             }
           }
-        } catch {
-          // Try next type
+        } catch (error: unknown) {
+          // Try next type (error logged if all fail)
+          console.error(
+            `[FacturesEdit] Failed to load ${type}:`,
+            error instanceof Error ? error.message : 'Unknown error'
+          );
         }
       }
 
@@ -412,7 +426,7 @@ export default function EditDraftPage({ params }: IPageProps) {
         body: JSON.stringify(body),
       });
 
-      const data = await response.json();
+      const data = (await response.json()) as QontoApiResponse;
 
       if (!response.ok || !data.success) {
         throw new Error(data.error ?? 'Erreur lors de la sauvegarde');
