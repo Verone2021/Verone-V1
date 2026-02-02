@@ -4,6 +4,8 @@ import { use, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { usePathname, useRouter } from 'next/navigation';
 
+import type { Database } from '@verone/types';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { createClient } from '@verone/utils/supabase/client';
 import { Check, ShoppingCart } from 'lucide-react';
 
@@ -25,7 +27,7 @@ import {
   type SelectionContextValue,
 } from './selection-context';
 
-const supabase = createClient();
+const supabase: SupabaseClient<Database> = createClient();
 
 function formatPrice(price: number): string {
   return new Intl.NumberFormat('fr-FR', {
@@ -73,13 +75,11 @@ export default function SelectionLayout({
       setError(null);
 
       try {
-        const { data: selectionData, error: selectionError } = await (
-          supabase as any
-        )
+        const { data: selectionData, error: selectionError } = await supabase
           .from('linkme_selections')
           .select('*')
           .eq('id', id)
-          .single();
+          .single<ISelection>();
 
         if (selectionError || !selectionData) {
           setError('Selection non trouvee');
@@ -93,15 +93,25 @@ export default function SelectionLayout({
           return;
         }
 
-        setSelection(selectionData as ISelection);
+        setSelection(selectionData);
+
+        /**
+         * Type pour affiliate avec JOIN enseignes
+         */
+        interface AffiliateWithEnseigne {
+          display_name: string;
+          enseigne_id: string | null;
+          enseignes: {
+            name: string;
+          } | null;
+        }
 
         // Fetch affiliate info
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data: affiliateData } = await (supabase as any)
+        const { data: affiliateData } = await supabase
           .from('linkme_affiliates')
           .select('display_name, enseigne_id, enseignes(name)')
           .eq('id', selectionData.affiliate_id)
-          .single();
+          .single<AffiliateWithEnseigne>();
 
         if (affiliateData) {
           setAffiliateInfo({
@@ -121,7 +131,19 @@ export default function SelectionLayout({
         if (itemsError) {
           console.error('Error fetching items:', itemsError);
         } else {
-          setItems((itemsData || []) as ISelectionItem[]);
+          setItems((itemsData ?? []) as ISelectionItem[]);
+        }
+
+        /**
+         * Type pour branding
+         */
+        interface BrandingRow {
+          primary_color: string | null;
+          secondary_color: string | null;
+          accent_color: string | null;
+          text_color: string | null;
+          background_color: string | null;
+          logo_url: string | null;
         }
 
         // Fetch branding
@@ -135,14 +157,14 @@ export default function SelectionLayout({
         if (brandingData) {
           setBranding({
             primary_color:
-              brandingData.primary_color || DEFAULT_BRANDING.primary_color,
+              brandingData.primary_color ?? DEFAULT_BRANDING.primary_color,
             secondary_color:
-              brandingData.secondary_color || DEFAULT_BRANDING.secondary_color,
+              brandingData.secondary_color ?? DEFAULT_BRANDING.secondary_color,
             accent_color:
-              brandingData.accent_color || DEFAULT_BRANDING.accent_color,
-            text_color: brandingData.text_color || DEFAULT_BRANDING.text_color,
+              brandingData.accent_color ?? DEFAULT_BRANDING.accent_color,
+            text_color: brandingData.text_color ?? DEFAULT_BRANDING.text_color,
             background_color:
-              brandingData.background_color ||
+              brandingData.background_color ??
               DEFAULT_BRANDING.background_color,
             logo_url: brandingData.logo_url,
           });
@@ -247,6 +269,7 @@ export default function SelectionLayout({
   }, [items]);
 
   const handleOrderSubmit = useCallback(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     async (data: any, cartItems: UnifiedCartItem[]) => {
       if (!selection) return;
 
@@ -445,6 +468,7 @@ export default function SelectionLayout({
                       quantity: item.quantity,
                     })
                   )}
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   organisations={organisations as any}
                   onSubmit={handleOrderSubmit}
                   onClose={() => setIsOrderFormOpen(false)}
