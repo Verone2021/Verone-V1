@@ -30,6 +30,19 @@ import { SubcategoryForm } from '@/components/forms/subcategory-form';
 type Family = Database['public']['Tables']['families']['Row'];
 type Category = Database['public']['Tables']['categories']['Row'];
 
+interface CategoryFormData {
+  name: string;
+  description?: string;
+  is_active: boolean;
+  display_order?: number;
+  image_url?: string;
+}
+
+interface SubcategoryFormData extends CategoryFormData {
+  category_id?: string;
+  slug?: string;
+}
+
 export default function CategoryDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -143,7 +156,7 @@ export default function CategoryDetailPage() {
     setIsEditCategoryOpen(true);
   };
 
-  const handleSubmitCategory = async (formData: any) => {
+  const handleSubmitCategory = async (formData: CategoryFormData) => {
     try {
       await updateCategory(categoryId, {
         name: formData.name,
@@ -163,16 +176,17 @@ export default function CategoryDetailPage() {
     setIsNewSubcategoryOpen(true);
   };
 
-  const handleSubmitNewSubcategory = async (formData: any) => {
+  const handleSubmitNewSubcategory = async (formData: SubcategoryFormData) => {
     try {
       await createSubcategory({
         name: formData.name,
+        slug: formData.slug ?? formData.name.toLowerCase().replace(/\s+/g, '-'),
         description: formData.description,
         category_id: categoryId,
         is_active: formData.is_active,
         display_order: formData.display_order,
         image_url: formData.image_url,
-      } as any);
+      });
       setIsNewSubcategoryOpen(false);
     } catch (error) {
       console.error('Erreur lors de la création de la sous-catégorie:', error);
@@ -184,7 +198,7 @@ export default function CategoryDetailPage() {
     setIsEditSubcategoryOpen(true);
   };
 
-  const handleSubmitEditSubcategory = async (formData: any) => {
+  const handleSubmitEditSubcategory = async (formData: SubcategoryFormData) => {
     if (!editingSubcategory) return;
 
     try {
@@ -508,6 +522,7 @@ export default function CategoryDetailPage() {
           void handleSubmitEditSubcategory({
             name: subcategory.name,
             description: subcategory.description,
+            category_id: categoryId,
             is_active: subcategory.is_active,
             display_order: subcategory.display_order,
             image_url: subcategory.image_url,
