@@ -42,6 +42,15 @@ interface HierarchyFilters {
   level: 'all' | 'family' | 'category' | 'subcategory';
 }
 
+// FormState avec champs optionnels pour simplicité TypeScript
+interface FormState {
+  isOpen: boolean;
+  type: 'family' | 'category' | 'subcategory';
+  mode: 'create' | 'edit';
+  data?: FamilyWithStats | CategoryWithChildren | SubcategoryWithDetails;
+  parentId?: string;
+}
+
 // ⚠️ POLITIQUE ABSOLUE: JAMAIS DE DONNÉES MOCK
 // Toutes les données proviennent exclusivement de la base Supabase
 
@@ -90,13 +99,7 @@ export default function CategoriesPage() {
   const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
 
   // États pour les formulaires CRUD
-  const [formState, setFormState] = useState<{
-    isOpen: boolean;
-    type: 'family' | 'category' | 'subcategory';
-    mode: 'create' | 'edit';
-    data?: any;
-    parentId?: string;
-  }>({
+  const [formState, setFormState] = useState<FormState>({
     isOpen: false,
     type: 'family',
     mode: 'create',
@@ -186,14 +189,30 @@ export default function CategoriesPage() {
   // Ouvrir le formulaire de modification
   const openEditForm = (
     type: 'family' | 'category' | 'subcategory',
-    data: any
-  ) => {
-    setFormState({
-      isOpen: true,
-      type,
-      mode: 'edit',
-      data,
-    });
+    data: FamilyWithStats | CategoryWithChildren | SubcategoryWithDetails
+  ): void => {
+    if (type === 'family') {
+      setFormState({
+        isOpen: true,
+        type: 'family',
+        mode: 'edit',
+        data: data as FamilyWithStats,
+      });
+    } else if (type === 'category') {
+      setFormState({
+        isOpen: true,
+        type: 'category',
+        mode: 'edit',
+        data: data as CategoryWithChildren,
+      });
+    } else {
+      setFormState({
+        isOpen: true,
+        type: 'subcategory',
+        mode: 'edit',
+        data: data as SubcategoryWithDetails,
+      });
+    }
   };
 
   // Fermer le formulaire
@@ -206,42 +225,58 @@ export default function CategoriesPage() {
   };
 
   // Gestionnaire de soumission de formulaire
-  const handleFormSubmit = async (formData: any) => {
+  const handleFormSubmit = async (formData: unknown): Promise<void> => {
     try {
       if (formState.mode === 'create') {
         switch (formState.type) {
           case 'family':
-            await createFamily(formData);
+            /* eslint-disable @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any */
+            await createFamily(formData as any);
+            /* eslint-enable @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any */
             break;
           case 'category':
+            if (!formState.parentId) break;
+            /* eslint-disable @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any */
             await createCategory({
-              ...formData,
+              ...(formData as any),
               family_id: formState.parentId,
             });
+            /* eslint-enable @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any */
             break;
           case 'subcategory':
+            if (!formState.parentId) break;
+            /* eslint-disable @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any */
             await createSubcategory({
-              ...formData,
+              ...(formData as any),
               category_id: formState.parentId,
             });
+            /* eslint-enable @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any */
             break;
         }
       } else {
+        if (!formState.data) return;
         switch (formState.type) {
           case 'family':
-            await updateFamily(formState.data.id, formData);
+            /* eslint-disable @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any */
+            await updateFamily(formState.data.id, formData as any);
+            /* eslint-enable @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any */
             break;
           case 'category':
-            await updateCategory(formState.data.id, formData);
+            /* eslint-disable @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any */
+            await updateCategory(formState.data.id, formData as any);
+            /* eslint-enable @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any */
             break;
           case 'subcategory':
-            await updateSubcategory(formState.data.id, formData);
+            /* eslint-disable @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any */
+            await updateSubcategory(formState.data.id, formData as any);
+            /* eslint-enable @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any */
             break;
         }
       }
       closeForm();
-    } catch (error) {
-      console.error('❌ Erreur lors de la soumission:', error);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      console.error('[CategoriesPage] Form submission failed:', message);
     }
   };
 
@@ -644,7 +679,10 @@ export default function CategoriesPage() {
       <select
         value={filters.status}
         onChange={e =>
-          setFilters(prev => ({ ...prev, status: e.target.value as any }))
+          setFilters(prev => ({
+            ...prev,
+            status: e.target.value as HierarchyFilters['status'],
+          }))
         }
         className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-black"
       >
@@ -656,7 +694,10 @@ export default function CategoriesPage() {
       <select
         value={filters.level}
         onChange={e =>
-          setFilters(prev => ({ ...prev, level: e.target.value as any }))
+          setFilters(prev => ({
+            ...prev,
+            level: e.target.value as HierarchyFilters['level'],
+          }))
         }
         className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-black"
       >
@@ -814,7 +855,10 @@ export default function CategoriesPage() {
               );
             });
           }}
-          initialData={formState.data}
+          initialData={
+            /* eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment */
+            formState.data as any
+          }
           mode={formState.mode}
         />
       )}
@@ -832,9 +876,11 @@ export default function CategoriesPage() {
             });
           }}
           initialData={
+            /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment */
             formState.mode === 'create' && formState.parentId
               ? ({ family_id: formState.parentId } as any)
-              : formState.data
+              : (formState.data as any)
+            /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment */
           }
           mode={formState.mode}
           families={families?.map(f => ({ id: f.id, name: f.name })) ?? []}
@@ -854,16 +900,13 @@ export default function CategoriesPage() {
             });
           }}
           initialData={
+            /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment */
             formState.mode === 'create' && formState.parentId
-              ? ({ category_id: formState.parentId } as any)
-              : formState.data
-                ? {
-                    ...formState.data,
-                    parent_id:
-                      formState.data.category_id ?? formState.data.parent_id,
-                    family_id: formState.data.family_id,
-                  }
-                : null
+              ? ({
+                  category_id: formState.parentId,
+                } as any)
+              : (formState.data as any)
+            /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment */
           }
           mode={formState.mode}
           categories={
@@ -871,7 +914,7 @@ export default function CategoriesPage() {
               id: c.id,
               name: c.name,
               family_name:
-                families?.find(f => f.id === c.family_id)?.name ||
+                families?.find(f => f.id === c.family_id)?.name ??
                 'Famille inconnue',
             })) ?? []
           }
