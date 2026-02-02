@@ -67,6 +67,9 @@ interface OrderWithRelations {
   }>;
 }
 
+// Type alias pour les items de commande
+type OrderItem = NonNullable<OrderWithRelations['sales_order_items']>[number];
+
 interface OrderDetailPageProps {
   params: Promise<{ id: string }>;
 }
@@ -550,10 +553,10 @@ export default async function OrderDetailPage({
                   ? 'organization'
                   : 'individual'
               }
-              orderItems={items.map((item: any) => ({
+              orderItems={items.map((item: OrderItem) => ({
                 id: item.id,
                 quantity: item.quantity,
-                unit_price_ht: item.unit_price_ht,
+                unit_price_ht: item.unit_price_ht ?? 0,
                 tax_rate: 20,
                 products: item.products ? { name: item.products.name } : null,
               }))}

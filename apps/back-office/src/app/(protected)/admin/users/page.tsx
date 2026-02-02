@@ -104,8 +104,8 @@ async function getUsersWithProfiles(): Promise<UserWithProfile[]> {
   // ✅ FIX PERFORMANCE: Créer Map pour lookup O(1) au lieu de find() O(n)
   type AuthUser = {
     id: string;
-    email: string;
-    email_confirmed_at: string | null;
+    email?: string;
+    email_confirmed_at?: string | null;
     created_at: string;
     user_metadata?: {
       name?: string;
@@ -117,7 +117,7 @@ async function getUsersWithProfiles(): Promise<UserWithProfile[]> {
   };
 
   const userMap = new Map<string, AuthUser>(
-    users.map(u => [u.id, u as AuthUser] as const)
+    users.map((u: AuthUser) => [u.id, u] as const)
   );
 
   // Construire la liste des utilisateurs avec leurs profils

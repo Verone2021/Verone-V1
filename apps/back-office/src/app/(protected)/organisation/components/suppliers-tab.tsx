@@ -49,29 +49,20 @@ export function SuppliersTab() {
       const supabase = createClient();
       const { data, error } = await supabase
         .from('organisations')
-        .select(
-          `
-          *,
-          products:products(count)
-        `
-        )
+        .select('*')
         .eq('type', 'supplier')
         .not('archived_at', 'is', null)
         .order('archived_at', { ascending: false });
 
       if (error) throw error;
 
-      const organisationsWithCounts = (data ?? []).map((org: any) => {
-        const { products, ...rest } = org;
-        return {
-          ...rest,
-          _count: {
-            products: products?.[0]?.count ?? 0,
-          },
-        };
-      });
+      // Ajouter le champ name calculé comme dans useOrganisations
+      const mappedData = (data ?? []).map(org => ({
+        ...org,
+        name: org.trade_name ?? org.legal_name,
+      }));
 
-      setArchivedSuppliers(organisationsWithCounts as Organisation[]);
+      setArchivedSuppliers(mappedData as unknown as Organisation[]);
     } catch (err) {
       console.error('Erreur chargement fournisseurs archivés:', err);
     } finally {
@@ -276,12 +267,8 @@ export function SuppliersTab() {
           {displayedSuppliers.map(supplier => (
             <OrganisationCard
               key={supplier.id}
-              organisation={
-                {
-                  ...supplier,
-                  type: 'supplier',
-                } as any
-              }
+              // @ts-expect-error - Organisation type includes 'internal' but OrganisationCard expects only 'supplier'|'customer'|'partner'
+              organisation={supplier}
               activeTab={activeTab}
               onArchive={() => {
                 void handleArchive(supplier).catch(error => {
@@ -300,12 +287,8 @@ export function SuppliersTab() {
         <Card>
           <CardContent style={{ padding: spacing[3] }}>
             <OrganisationListView
-              organisations={
-                displayedSuppliers.map(s => ({
-                  ...s,
-                  type: 'supplier' as const,
-                })) as any
-              }
+              // @ts-expect-error - Organisation type includes 'internal' but OrganisationListView expects only 'supplier'|'customer'|'partner'
+              organisations={displayedSuppliers}
               activeTab={activeTab}
               onArchive={id => {
                 const supplier = displayedSuppliers.find(s => s.id === id);
@@ -331,7 +314,7 @@ export function SuppliersTab() {
       <SupplierFormModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        supplier={selectedSupplier as any}
+        supplier={selectedSupplier}
         onSuccess={() => {
           void refetch().catch(error => {
             console.error(

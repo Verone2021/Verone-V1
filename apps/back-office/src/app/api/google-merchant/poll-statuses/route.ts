@@ -45,6 +45,19 @@ const PollStatusesSchema = z.object({
 
 type PollStatusesRequest = z.infer<typeof PollStatusesSchema>;
 
+// Type for RPC response
+interface RpcError {
+  message: string;
+  details?: string;
+  hint?: string;
+  code?: string;
+}
+
+interface RpcResponse<T> {
+  data: T | null;
+  error: RpcError | null;
+}
+
 interface PollStatusesResponse {
   success: boolean;
   data?: {
@@ -61,14 +74,14 @@ export async function POST(
 ): Promise<NextResponse<PollStatusesResponse>> {
   try {
     // 1. Parse et valider body
-    const body = await request.json();
+    const body: unknown = await request.json();
 
     const validation = PollStatusesSchema.safeParse(body);
     if (!validation.success) {
       return NextResponse.json(
         {
           success: false,
-          error: `Validation error: ${validation.error.issues.map((e: any) => e.message).join(', ')}`,
+          error: `Validation error: ${validation.error.issues.map(e => e.message).join(', ')}`,
         },
         { status: 400 }
       );
@@ -92,13 +105,23 @@ export async function POST(
     }));
 
     // 4. Appeler RPC poll_google_merchant_statuses
-    const { data, error } = await (supabase as any).rpc(
-      'poll_google_merchant_statuses',
-      {
-        product_ids: productIds,
-        statuses_data: statusesJsonb,
+    type RpcResultRow = {
+      success: boolean;
+      updated_count: number;
+      error: string | null;
+    };
+
+    const { data, error } = await (
+      supabase as unknown as {
+        rpc: (
+          name: string,
+          params: { product_ids: string[]; statuses_data: unknown[] }
+        ) => Promise<RpcResponse<RpcResultRow[]>>;
       }
-    );
+    ).rpc('poll_google_merchant_statuses', {
+      product_ids: productIds,
+      statuses_data: statusesJsonb,
+    });
 
     if (error) {
       console.error('[API] RPC poll_google_merchant_statuses failed:', error);
@@ -112,11 +135,7 @@ export async function POST(
     }
 
     // 5. Extraire résultats RPC
-    const result = data as Array<{
-      success: boolean;
-      updated_count: number;
-      error: string | null;
-    }>;
+    const result = data;
 
     if (!result || result.length === 0 || !result[0].success) {
       const errorMsg = result?.[0]?.error ?? 'Unknown error';
@@ -141,7 +160,7 @@ export async function POST(
         updatedCount,
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[API] Poll statuses failed:', error);
 
     return NextResponse.json(
