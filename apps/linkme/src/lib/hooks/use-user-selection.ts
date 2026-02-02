@@ -14,7 +14,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { Database } from '@verone/types';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { calculateMargin } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
 
 import { useAuth } from '../../contexts/AuthContext';
@@ -524,12 +523,12 @@ export function useAddToSelection() {
         .order('display_order', { ascending: false })
         .limit(1);
 
-      const nextOrder = (existingItems?.[0]?.display_order ?? 0) + 1;
+      const _nextOrder = (existingItems?.[0]?.display_order ?? 0) + 1;
 
       // Appeler l'API back-office pour bypasser RLS
       // Note: selling_price_ht est une colonne GENERATED - ne pas l'inclure
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BACK_OFFICE_URL || 'http://localhost:3000'}/api/linkme/selections/add-item`,
+        `${process.env.NEXT_PUBLIC_BACK_OFFICE_URL ?? 'http://localhost:3000'}/api/linkme/selections/add-item`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -542,18 +541,21 @@ export function useAddToSelection() {
         }
       );
 
-      const result = await response.json();
+      const result = (await response.json()) as {
+        message?: string;
+        item?: unknown;
+      };
 
       if (!response.ok) {
         // Vérifier si c'est une erreur de doublon
         if (response.status === 409) {
           throw new Error('Ce produit est déjà dans votre sélection');
         }
-        throw new Error(result.message || "Erreur lors de l'ajout du produit");
+        throw new Error(result.message ?? "Erreur lors de l'ajout du produit");
       }
 
       // L'API gère déjà le products_count
-      return result.item;
+      return result.item as SelectionItem;
     },
     onSuccess: async (_, variables) => {
       await queryClient.invalidateQueries({
@@ -639,12 +641,12 @@ export function useAddToSelectionWithMargin() {
         .order('display_order', { ascending: false })
         .limit(1);
 
-      const nextOrder = (existingItems?.[0]?.display_order ?? 0) + 1;
+      const _nextOrder = (existingItems?.[0]?.display_order ?? 0) + 1;
 
       // Appeler l'API back-office pour bypasser RLS
       // Note: selling_price_ht est une colonne GENERATED - calculée automatiquement
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BACK_OFFICE_URL || 'http://localhost:3000'}/api/linkme/selections/add-item`,
+        `${process.env.NEXT_PUBLIC_BACK_OFFICE_URL ?? 'http://localhost:3000'}/api/linkme/selections/add-item`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -657,17 +659,20 @@ export function useAddToSelectionWithMargin() {
         }
       );
 
-      const result = await response.json();
+      const result = (await response.json()) as {
+        message?: string;
+        item?: unknown;
+      };
 
       if (!response.ok) {
         if (response.status === 409) {
           throw new Error('Ce produit est déjà dans votre sélection');
         }
-        throw new Error(result.message || "Erreur lors de l'ajout du produit");
+        throw new Error(result.message ?? "Erreur lors de l'ajout du produit");
       }
 
       // L'API gère déjà le products_count
-      return result.item;
+      return result.item as SelectionItem;
     },
     onSuccess: async (_, variables) => {
       await queryClient.invalidateQueries({
