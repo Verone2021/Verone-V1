@@ -22,11 +22,11 @@ interface TestConnectionResponse {
     accountId: string;
     dataSourceId: string;
     timestamp: string;
-    details?: any;
+    details?: Record<string, unknown>;
   };
   error?: string;
   message?: string;
-  details?: any;
+  details?: unknown;
 }
 
 /**
@@ -72,7 +72,7 @@ export async function GET(
       accountId: GOOGLE_MERCHANT_CONFIG.accountId,
       dataSourceId: GOOGLE_MERCHANT_CONFIG.dataSourceId,
       timestamp: new Date().toISOString(),
-      details: {} as any,
+      details: {} as Record<string, unknown>,
     };
 
     // 1. Test d'authentification
@@ -86,11 +86,16 @@ export async function GET(
           success: testResults.authentication,
         }
       );
-    } catch (error: any) {
-      logger.error('Authentication test failed', error, {
-        operation: 'auth_test_failed',
-      });
-      testResults.details.authError = error.message;
+    } catch (error: unknown) {
+      logger.error(
+        'Authentication test failed',
+        error instanceof Error ? error : undefined,
+        {
+          operation: 'auth_test_failed',
+        }
+      );
+      testResults.details.authError =
+        error instanceof Error ? error.message : 'Unknown error';
     }
 
     // 2. Test de connexion API
@@ -116,11 +121,16 @@ export async function GET(
             success: testResults.apiConnection,
           }
         );
-      } catch (error: any) {
-        logger.error('API connection test failed', error, {
-          operation: 'api_connection_test_failed',
-        });
-        testResults.details.apiError = error.message;
+      } catch (error: unknown) {
+        logger.error(
+          'API connection test failed',
+          error instanceof Error ? error : undefined,
+          {
+            operation: 'api_connection_test_failed',
+          }
+        );
+        testResults.details.apiError =
+          error instanceof Error ? error.message : 'Unknown error';
       }
     } else {
       logger.warn('Skipping API connection test - auth failed', {
@@ -180,18 +190,22 @@ export async function GET(
         { status: 500 }
       );
     }
-  } catch (error: any) {
-    logger.error('Connection test crashed', error, {
-      operation: 'google_merchant_test_crash',
-    });
+  } catch (error: unknown) {
+    logger.error(
+      'Connection test crashed',
+      error instanceof Error ? error : undefined,
+      {
+        operation: 'google_merchant_test_crash',
+      }
+    );
 
     return NextResponse.json(
       {
         success: false,
         error: 'Test de connexion échoué',
         details: {
-          message: error.message,
-          stack: error.stack,
+          message: error instanceof Error ? error.message : 'Unknown error',
+          stack: error instanceof Error ? error.stack : undefined,
           timestamp: new Date().toISOString(),
         },
       },
@@ -258,10 +272,10 @@ export async function POST(
           data: listResult.data,
           error: listResult.error,
         };
-      } catch (error: any) {
+      } catch (error: unknown) {
         extendedDetails.productListTest = {
           success: false,
-          error: error.message,
+          error: error instanceof Error ? error.message : 'Unknown error',
         };
       }
     }
@@ -283,11 +297,11 @@ export async function POST(
           data: productResult.data,
           error: productResult.error,
         };
-      } catch (error: any) {
+      } catch (error: unknown) {
         extendedDetails.specificProductTest = {
           sku: testProduct,
           success: false,
-          error: error.message,
+          error: error instanceof Error ? error.message : 'Unknown error',
         };
       }
     }
@@ -299,16 +313,20 @@ export async function POST(
         details: extendedDetails,
       },
     });
-  } catch (error: any) {
-    logger.error('Extended connection test failed', error, {
-      operation: 'google_merchant_extended_test_failed',
-    });
+  } catch (error: unknown) {
+    logger.error(
+      'Extended connection test failed',
+      error instanceof Error ? error : undefined,
+      {
+        operation: 'google_merchant_extended_test_failed',
+      }
+    );
 
     return NextResponse.json(
       {
         success: false,
         error: 'Test de connexion étendu échoué',
-        details: error.message,
+        details: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     );

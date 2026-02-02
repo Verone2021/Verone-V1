@@ -13,7 +13,12 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
+import type { Database } from '@verone/types';
 import { createClient } from '@verone/utils/supabase/server';
+
+type FormSubmission = Database['public']['Tables']['form_submissions']['Row'];
+type FormSubmissionMessage =
+  Database['public']['Tables']['form_submission_messages']['Row'];
 
 interface AddMessageRequest {
   message: string;
@@ -53,8 +58,7 @@ export async function POST(
     }
 
     // Vérifier que le formulaire existe
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    const { data: submission, error: submissionError } = await (supabase as any)
+    const { data: submission, error: submissionError } = await supabase
       .from('form_submissions')
       .select('id, first_name, last_name, email, form_type, first_reply_at')
       .eq('id', submissionId)
@@ -104,16 +108,16 @@ export async function POST(
     }
 
     // Insérer le message dans form_submission_messages
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    const { data: newMessage, error: insertError } = await (supabase as any)
+    const { data: newMessage, error: insertError } = await supabase
       .from('form_submission_messages')
       .insert({
-        submission_id: submissionId,
-        message: body.message.trim(),
-        is_internal: body.isInternal,
+        form_submission_id: submissionId,
+        message_body: body.message.trim(),
+        message_type: body.isInternal ? 'internal' : 'reply',
         sent_via: body.sendEmail && !body.isInternal ? 'email' : 'internal',
         email_id: emailId,
-        created_by: user.id,
+        author_type: 'staff',
+        author_user_id: user.id,
       })
       .select('id')
       .single();
@@ -128,7 +132,7 @@ export async function POST(
 
     // Si c'est la première réponse (non interne), mettre à jour first_reply_at
     if (!body.isInternal && !submission.first_reply_at) {
-      await (supabase as any)
+      await supabase
         .from('form_submissions')
         .update({ first_reply_at: new Date().toISOString() })
         .eq('id', submissionId);
