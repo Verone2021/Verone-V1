@@ -8,6 +8,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 
 import { useToast } from '@verone/common';
 import { ButtonV2 } from '@verone/ui';
@@ -495,11 +496,14 @@ export function QuickVariantForm({
             <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
               {formData.image_url ? (
                 <div className="relative">
-                  <img
-                    src={formData.image_url}
-                    alt="Preview"
-                    className="w-full h-32 object-cover rounded-lg"
-                  />
+                  <div className="relative w-full h-32 rounded-lg overflow-hidden">
+                    <Image
+                      src={formData.image_url}
+                      alt="Preview"
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
                   <ButtonV2
                     type="button"
                     variant="destructive"

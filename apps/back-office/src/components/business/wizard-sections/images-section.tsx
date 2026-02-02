@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import Image from 'next/image';
 
 import {
   Upload,
@@ -230,11 +231,14 @@ export function ImagesSection({
                     key={index}
                     className="relative group border rounded-lg overflow-hidden"
                   >
-                    <img
-                      src={item.preview}
-                      alt={`Aperçu ${index + 1}`}
-                      className="w-full h-32 object-cover"
-                    />
+                    <div className="relative w-full h-32">
+                      <Image
+                        src={item.preview}
+                        alt={`Aperçu ${index + 1}`}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
 
                     {/* Badge image principale */}
                     {index === 0 && (

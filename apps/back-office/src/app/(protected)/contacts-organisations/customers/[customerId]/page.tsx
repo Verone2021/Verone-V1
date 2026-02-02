@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 
 import Link from 'next/link';
 import { useParams, useSearchParams } from 'next/navigation';
@@ -581,10 +582,12 @@ export default function CustomerDetailPage() {
                       <CardContent className="p-4">
                         <div className="flex items-start gap-3">
                           {product.primary_image_url ? (
-                            <img
+                            <Image
                               src={product.primary_image_url}
                               alt={product.name}
-                              className="w-12 h-12 object-cover rounded"
+                              width={48}
+                              height={48}
+                              className="object-cover rounded"
                             />
                           ) : (
                             <div className="w-12 h-12 bg-gray-100 rounded flex items-center justify-center">

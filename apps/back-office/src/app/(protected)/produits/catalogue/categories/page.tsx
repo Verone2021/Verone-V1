@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import Image from 'next/image';
 
 import { useRouter } from 'next/navigation';
 
@@ -373,12 +374,13 @@ export default function CategoriesPage() {
           />
 
           {/* Image thumbnail */}
-          <div className="w-16 h-16 mr-3 flex-shrink-0">
+          <div className="w-16 h-16 mr-3 flex-shrink-0 relative overflow-hidden rounded-md border border-gray-200">
             {family.image_url ? (
-              <img
+              <Image
                 src={family.image_url}
                 alt={family.name}
-                className="w-full h-full object-cover rounded-md border border-gray-200"
+                fill
+                className="object-cover"
                 onError={e => {
                   const target = e.target as HTMLImageElement;
                   target.style.display = 'none';
@@ -490,12 +492,13 @@ export default function CategoriesPage() {
           />
 
           {/* Image thumbnail */}
-          <div className="w-12 h-12 mr-3 flex-shrink-0">
+          <div className="w-12 h-12 mr-3 flex-shrink-0 relative overflow-hidden rounded-md border border-gray-200">
             {category.image_url ? (
-              <img
+              <Image
                 src={category.image_url}
                 alt={category.name}
-                className="w-full h-full object-cover rounded-md border border-gray-200"
+                fill
+                className="object-cover"
                 onError={e => {
                   const target = e.target as HTMLImageElement;
                   target.style.display = 'none';
@@ -585,12 +588,13 @@ export default function CategoriesPage() {
                 />
 
                 {/* Image thumbnail for subcategory */}
-                <div className="w-10 h-10 mr-3 flex-shrink-0">
+                <div className="w-10 h-10 mr-3 flex-shrink-0 relative overflow-hidden rounded-md border border-gray-200">
                   {subcategory.image_url ? (
-                    <img
+                    <Image
                       src={subcategory.image_url}
                       alt={subcategory.name}
-                      className="w-full h-full object-cover rounded-md border border-gray-200"
+                      fill
+                      className="object-cover"
                       onError={e => {
                         const target = e.target as HTMLImageElement;
                         target.style.display = 'none';
