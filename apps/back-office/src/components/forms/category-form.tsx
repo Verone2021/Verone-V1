@@ -139,11 +139,10 @@ export function CategoryForm({
         title: '✅ Image téléchargée',
         description: "L'image a été uploadée avec succès",
       });
-    } catch (error: any) {
-      console.error(
-        'Erreur upload image catégorie:',
-        error?.message ?? JSON.stringify(error)
-      );
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Erreur inconnue';
+      console.error('Erreur upload image catégorie:', errorMessage);
       toast({
         title: '❌ Erreur upload',
         description: "Impossible de télécharger l'image",
@@ -231,22 +230,26 @@ export function CategoryForm({
 
       onSubmit(result as unknown as Category);
       onClose();
-    } catch (error: any) {
-      console.error(
-        'Erreur soumission formulaire catégorie:',
-        error?.message ?? JSON.stringify(error)
-      );
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Erreur inconnue';
+      console.error('Erreur soumission formulaire catégorie:', errorMessage);
 
-      // Gestion spécifique des erreurs de contrainte unique
-      let errorMessage = error.message ?? 'Une erreur est survenue';
-      if (error.code === '23505') {
-        errorMessage =
+      // Gestion spécifique des erreurs de contrainte unique Postgres
+      let displayMessage = errorMessage;
+      if (
+        error &&
+        typeof error === 'object' &&
+        'code' in error &&
+        error.code === '23505'
+      ) {
+        displayMessage =
           'Une catégorie avec ce nom existe déjà dans cette famille. Veuillez choisir un nom différent.';
       }
 
       toast({
         title: '❌ Erreur',
-        description: errorMessage,
+        description: displayMessage,
         variant: 'destructive',
       });
     } finally {

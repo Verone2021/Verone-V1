@@ -31,7 +31,10 @@ export function TechnicalSection({
   const [newAttributeKey, setNewAttributeKey] = useState('');
   const [newAttributeValue, setNewAttributeValue] = useState('');
 
-  const updateField = (field: keyof WizardFormData, value: any) => {
+  const updateField = (
+    field: keyof WizardFormData,
+    value: WizardFormData[keyof WizardFormData]
+  ) => {
     setFormData({
       ...formData,
       [field]: value,
@@ -163,6 +166,7 @@ export function TechnicalSection({
             </div>
 
             {/* Résumé dimensions */}
+            {/* eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- Intentional boolean OR to check if any dimension is truthy */}
             {(formData.dimensions.length ||
               formData.dimensions.width ||
               formData.dimensions.height ||
