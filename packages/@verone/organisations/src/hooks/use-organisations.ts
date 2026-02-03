@@ -2,92 +2,11 @@
 
 import { useState, useEffect, useCallback } from 'react';
 
-import type { Database } from '@verone/types';
+import type { Database, Organisation, OrganisationInsert } from '@verone/types';
 import { createClient } from '@verone/utils/supabase/client';
 
-export interface Organisation {
-  id: string;
-  name: string; // Nom d'affichage (trade_name si défini, sinon legal_name)
-  legal_name: string; // Dénomination sociale officielle (ex-name)
-  trade_name: string | null; // Nom commercial (si différent)
-  has_different_trade_name: boolean | null; // Indicateur nom commercial
-  type: 'supplier' | 'customer' | 'partner' | 'internal';
-  email: string | null;
-  country: string | null;
-  is_active: boolean;
-  archived_at: string | null;
-  created_at: string;
-  updated_at: string;
-  created_by: string | null;
-  logo_url: string | null;
-
-  // Nouveaux champs de contact
-  phone: string | null;
-  website: string | null;
-  secondary_email: string | null;
-
-  // Adresse complète (DEPRECATED - à garder pour compatibilité)
-  address_line1: string | null;
-  address_line2: string | null;
-  postal_code: string | null;
-  city: string | null;
-  region: string | null;
-
-  // Adresse de facturation (nouvelle structure)
-  billing_address_line1: string | null;
-  billing_address_line2: string | null;
-  billing_postal_code: string | null;
-  billing_city: string | null;
-  billing_region: string | null;
-  billing_country: string | null;
-
-  // Adresse de livraison (si différente de facturation)
-  shipping_address_line1: string | null;
-  shipping_address_line2: string | null;
-  shipping_postal_code: string | null;
-  shipping_city: string | null;
-  shipping_region: string | null;
-  shipping_country: string | null;
-
-  // Indicateur si adresses différentes
-  has_different_shipping_address: boolean | null;
-
-  // Identifiants légaux
-  siren: string | null; // SIREN (9 chiffres) - obligatoire factures depuis juillet 2024
-  siret: string | null; // SIRET (14 chiffres)
-  vat_number: string | null;
-  legal_form: string | null;
-
-  // Classification business
-  industry_sector: string | null;
-  supplier_segment: string | null;
-  is_service_provider: boolean | null; // true = prestataire, false = fournisseur de biens
-  ownership_type: 'succursale' | 'franchise' | null; // Type de propriété (clients uniquement)
-
-  // Informations commerciales
-  payment_terms: string | null;
-  delivery_time_days: number | null;
-  minimum_order_amount: number | null;
-  currency: string | null;
-  prepayment_required: boolean | null;
-
-  // Classification client (B2B/B2C)
-  customer_type: 'professional' | 'individual' | null;
-
-  // Enseigne (franchise/groupe) - LinkMe
-  enseigne_id: string | null;
-  is_enseigne_parent: boolean;
-
-  // Performance et qualité
-  rating: number | null;
-  certification_labels: string[] | null;
-  preferred_supplier: boolean | null;
-  notes: string | null;
-
-  _count?: {
-    products: number; // Comptage des produits individuels liés au fournisseur
-  };
-}
+// Re-export Organisation pour backward compatibility
+export type { Organisation };
 
 export interface OrganisationFilters {
   type?: 'supplier' | 'customer' | 'partner' | 'internal';
@@ -102,77 +21,13 @@ export interface OrganisationFilters {
   exclude_with_enseigne?: boolean;
 }
 
-export interface CreateOrganisationData {
-  legal_name: string; // Dénomination sociale OBLIGATOIRE
-  trade_name?: string; // Nom commercial OPTIONNEL
-  has_different_trade_name?: boolean; // Indicateur nom commercial
-  type: 'supplier' | 'customer' | 'partner' | 'internal';
-  email?: string;
-  country?: string;
-  is_active?: boolean;
+// Type pour création d'organisation (basé sur Supabase Insert)
+export type CreateOrganisationData = OrganisationInsert;
 
-  // Nouveaux champs optionnels
-  phone?: string;
-  website?: string;
-  secondary_email?: string;
-
-  // Adresse (DEPRECATED - garder pour compatibilité)
-  address_line1?: string;
-  address_line2?: string;
-  postal_code?: string;
-  city?: string;
-  region?: string;
-
-  // Adresse de facturation
-  billing_address_line1?: string;
-  billing_address_line2?: string;
-  billing_postal_code?: string;
-  billing_city?: string;
-  billing_region?: string;
-  billing_country?: string;
-
-  // Adresse de livraison
-  shipping_address_line1?: string;
-  shipping_address_line2?: string;
-  shipping_postal_code?: string;
-  shipping_city?: string;
-  shipping_region?: string;
-  shipping_country?: string;
-
-  // Indicateur
-  has_different_shipping_address?: boolean;
-
-  // Identifiants légaux
-  siren?: string; // SIREN (9 chiffres)
-  siret?: string; // SIRET (14 chiffres)
-  vat_number?: string;
-  legal_form?: string;
-
-  // Classification
-  industry_sector?: string;
-  supplier_segment?: string;
-
-  // Commercial
-  payment_terms?: string;
-  delivery_time_days?: number;
-  minimum_order_amount?: number;
-  currency?: string;
-  prepayment_required?: boolean;
-
-  // Classification client (B2B/B2C)
-  customer_type?: 'professional' | 'individual';
-
-  // Performance
-  rating?: number;
-  certification_labels?: string[];
-  preferred_supplier?: boolean;
-  notes?: string;
-}
-
-export interface UpdateOrganisationData
-  extends Partial<CreateOrganisationData> {
+// Type pour mise à jour d'organisation
+export type UpdateOrganisationData = Partial<OrganisationInsert> & {
   id: string;
-}
+};
 
 export function useOrganisations(filters?: OrganisationFilters) {
   const [organisations, setOrganisations] = useState<Organisation[]>([]);
@@ -206,13 +61,14 @@ export function useOrganisations(filters?: OrganisationFilters) {
 
       // ✅ Ajouter le champ 'name' calculé
       if (data) {
-        return {
+        const orgWithName: Organisation = {
           ...data,
           name: data.trade_name || data.legal_name,
-        } as unknown as Organisation;
+        };
+        return orgWithName;
       }
 
-      return data;
+      return null;
     } catch (error) {
       // Cast pour accéder aux propriétés
       const pgError = error as {
@@ -379,7 +235,7 @@ export function useOrganisations(filters?: OrganisationFilters) {
         });
       }
 
-      setOrganisations(organisationsWithCounts as unknown as Organisation[]);
+      setOrganisations(organisationsWithCounts);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur inconnue');
     } finally {
@@ -463,13 +319,14 @@ export function useOrganisations(filters?: OrganisationFilters) {
 
       // ✅ Ajouter le champ 'name' calculé
       if (newOrg) {
-        return {
+        const orgWithName: Organisation = {
           ...newOrg,
           name: newOrg.trade_name || newOrg.legal_name,
-        } as unknown as Organisation;
+        };
+        return orgWithName;
       }
 
-      return newOrg;
+      return null;
     } catch (err) {
       setError(
         err instanceof Error ? err.message : 'Erreur lors de la création'
@@ -542,13 +399,14 @@ export function useOrganisations(filters?: OrganisationFilters) {
 
       // ✅ Ajouter le champ 'name' calculé
       if (updatedOrg) {
-        return {
+        const orgWithName: Organisation = {
           ...updatedOrg,
           name: updatedOrg.trade_name || updatedOrg.legal_name,
-        } as unknown as Organisation;
+        };
+        return orgWithName;
       }
 
-      return updatedOrg;
+      return null;
     } catch (err) {
       setError(
         err instanceof Error ? err.message : 'Erreur lors de la mise à jour'
@@ -779,65 +637,7 @@ export function useOrganisation(id: string) {
       try {
         const { data, error: fetchError } = await supabase
           .from('organisations')
-          .select(
-            `
-            id,
-            legal_name,
-            trade_name,
-            has_different_trade_name,
-            type,
-            email,
-            country,
-            is_active,
-            archived_at,
-            created_at,
-            updated_at,
-            created_by,
-            logo_url,
-            phone,
-            website,
-            secondary_email,
-            address_line1,
-            address_line2,
-            postal_code,
-            city,
-            region,
-            billing_address_line1,
-            billing_address_line2,
-            billing_postal_code,
-            billing_city,
-            billing_region,
-            billing_country,
-            shipping_address_line1,
-            shipping_address_line2,
-            shipping_postal_code,
-            shipping_city,
-            shipping_region,
-            shipping_country,
-            has_different_shipping_address,
-            siren,
-            siret,
-            vat_number,
-            legal_form,
-            industry_sector,
-            supplier_segment,
-            is_service_provider,
-            payment_terms,
-            delivery_time_days,
-            minimum_order_amount,
-            currency,
-            prepayment_required,
-            customer_type,
-            rating,
-            certification_labels,
-            preferred_supplier,
-            notes,
-            ownership_type,
-            enseigne_id,
-            is_enseigne_parent,
-            enseigne:enseignes(legal_name)
-          `
-          )
+          .select('*, enseigne:enseignes(name)')
           .eq('id', id)
           .single();
 
@@ -847,10 +647,10 @@ export function useOrganisation(id: string) {
         }
 
         // ✅ Ajouter le champ 'name' calculé
-        const orgWithName = {
+        const orgWithName: Organisation = {
           ...data,
           name: data.trade_name ?? data.legal_name,
-        } as unknown as Organisation;
+        };
 
         // Add product counts if supplier
         if (data.type === 'supplier') {
