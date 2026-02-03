@@ -20,6 +20,38 @@ import { createClient } from '@verone/utils/supabase/client';
 // Types
 // ============================================================================
 
+// Database Types (verified via MCP Supabase 2026-02-02)
+interface LinkMeOrderWithMargins {
+  id: string;
+  total_ht: number;
+  total_affiliate_margin: number | null;
+  created_at: string;
+}
+
+interface LinkMePaymentRequest {
+  id: string;
+  total_amount_ttc: number;
+  status: string;
+  request_number: string;
+  created_at: string;
+  linkme_affiliates: { display_name: string } | null;
+}
+
+interface LinkMeAffiliate {
+  id: string;
+  status: string;
+  created_at: string;
+  display_name: string;
+}
+
+interface LinkMeCommission {
+  id: string;
+  order_number: string;
+  order_amount_ht: number;
+  created_at: string;
+  linkme_affiliates: { display_name: string } | null;
+}
+
 export interface DashboardKPIs {
   // KPI 1: CA Généré
   revenue: {
@@ -137,27 +169,24 @@ export function useLinkMeDashboard() {
       // KPI 1 & 4: CA + Orders count
       // Récupère TOUTES les commandes pour calculer la moyenne mensuelle
       // ========================================
-      /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */
-      const { data: allOrders } = await (supabase as any)
+      const { data: allOrders } = await supabase
         .from('linkme_orders_with_margins')
         .select('id, total_ht, total_affiliate_margin, created_at')
-        .order('created_at', { ascending: true });
-      /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */
+        .order('created_at', { ascending: true })
+        .returns<LinkMeOrderWithMargins[]>();
 
       // Filtrer les commandes du mois courant
-      const ordersCurrentMonth = (allOrders ?? []).filter(
-        (o: { created_at: string }) => {
-          const orderDate = new Date(o.created_at);
-          return (
-            orderDate >= new Date(currentMonth.start) &&
-            orderDate <= new Date(currentMonth.end)
-          );
-        }
-      );
+      const ordersCurrentMonth = (allOrders ?? []).filter(o => {
+        const orderDate = new Date(o.created_at);
+        return (
+          orderDate >= new Date(currentMonth.start) &&
+          orderDate <= new Date(currentMonth.end)
+        );
+      });
 
       // Calculer le CA et le nombre de commandes du mois courant
       const currentRevenue = ordersCurrentMonth.reduce(
-        (sum: number, o: { total_ht: number }) => sum + Number(o.total_ht ?? 0),
+        (sum, o) => sum + Number(o.total_ht ?? 0),
         0
       );
       const currentOrdersCount = ordersCurrentMonth.length;
@@ -171,16 +200,18 @@ export function useLinkMeDashboard() {
       // ========================================
       // KPI 2: Commissions en attente (pending + invoice_received)
       // ========================================
-      /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */
-      const { data: pendingRequests } = await (supabase as any)
+      const { data: pendingRequests } = await supabase
         .from('linkme_payment_requests')
         .select('id, total_amount_ttc, status')
-        .in('status', ['pending', 'invoice_received']);
-      /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */
+        .in('status', ['pending', 'invoice_received'])
+        .returns<
+          Array<
+            Pick<LinkMePaymentRequest, 'id' | 'total_amount_ttc' | 'status'>
+          >
+        >();
 
       const pendingAmount = (pendingRequests ?? []).reduce(
-        (sum: number, r: { total_amount_ttc: number }) =>
-          sum + Number(r.total_amount_ttc ?? 0),
+        (sum, r) => sum + Number(r.total_amount_ttc ?? 0),
         0
       );
       const pendingCount = (pendingRequests ?? []).length;
@@ -188,25 +219,24 @@ export function useLinkMeDashboard() {
       // ========================================
       // KPI 3: Affiliés actifs + nouveaux ce mois
       // ========================================
-      /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */
-      const { data: affiliates } = await (supabase as any)
+      const { data: affiliates } = await supabase
         .from('linkme_affiliates')
-        .select('id, status, created_at');
-      /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */
+        .select('id, status, created_at')
+        .returns<
+          Array<Pick<LinkMeAffiliate, 'id' | 'status' | 'created_at'>>
+        >();
 
       const activeAffiliates = (affiliates ?? []).filter(
-        (a: { status: string }) => a.status === 'active'
+        a => a.status === 'active'
       ).length;
 
-      const newAffiliatesThisMonth = (affiliates ?? []).filter(
-        (a: { created_at: string }) => {
-          const createdAt = new Date(a.created_at);
-          return (
-            createdAt >= new Date(currentMonth.start) &&
-            createdAt <= new Date(currentMonth.end)
-          );
-        }
-      ).length;
+      const newAffiliatesThisMonth = (affiliates ?? []).filter(a => {
+        const createdAt = new Date(a.created_at);
+        return (
+          createdAt >= new Date(currentMonth.start) &&
+          createdAt <= new Date(currentMonth.end)
+        );
+      }).length;
 
       return {
         revenue: {
@@ -248,8 +278,7 @@ export function useRecentActivity(limit: number = 5) {
       const activities: RecentActivity[] = [];
 
       // Récupérer les dernières commissions
-      /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */
-      const { data: recentCommissions } = await (supabase as any)
+      const { data: recentCommissions } = await supabase
         .from('linkme_commissions')
         .select(
           `
@@ -261,60 +290,43 @@ export function useRecentActivity(limit: number = 5) {
         `
         )
         .order('created_at', { ascending: false })
-        .limit(limit);
-      /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */
+        .limit(limit)
+        .returns<LinkMeCommission[]>();
 
-      (recentCommissions ?? []).forEach(
-        (c: {
-          id: string;
-          order_number: string;
-          order_amount_ht: number;
-          created_at: string;
-          linkme_affiliates: { display_name: string } | null;
-        }) => {
-          activities.push({
-            id: `order-${c.id}`,
-            type: 'order',
-            title: `Commande #${c.order_number}`,
-            description: c.linkme_affiliates?.display_name ?? 'Affilié',
-            timestamp: c.created_at,
-            amount: c.order_amount_ht,
-          });
-        }
-      );
+      (recentCommissions ?? []).forEach(c => {
+        activities.push({
+          id: `order-${c.id}`,
+          type: 'order',
+          title: `Commande #${c.order_number}`,
+          description: c.linkme_affiliates?.display_name ?? 'Affilié',
+          timestamp: c.created_at,
+          amount: c.order_amount_ht,
+        });
+      });
 
       // Récupérer les derniers affiliés
-      /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */
-      const { data: recentAffiliates } = await (supabase as any)
+      const { data: recentAffiliates } = await supabase
         .from('linkme_affiliates')
         .select('id, display_name, status, created_at')
         .order('created_at', { ascending: false })
-        .limit(limit);
-      /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */
+        .limit(limit)
+        .returns<LinkMeAffiliate[]>();
 
-      (recentAffiliates ?? []).forEach(
-        (a: {
-          id: string;
-          display_name: string;
-          status: string;
-          created_at: string;
-        }) => {
-          activities.push({
-            id: `affiliate-${a.id}`,
-            type: 'affiliate',
-            title: a.display_name,
-            description:
-              a.status === 'active'
-                ? 'Nouvel affilié actif'
-                : 'Inscription en attente',
-            timestamp: a.created_at,
-          });
-        }
-      );
+      (recentAffiliates ?? []).forEach(a => {
+        activities.push({
+          id: `affiliate-${a.id}`,
+          type: 'affiliate',
+          title: a.display_name,
+          description:
+            a.status === 'active'
+              ? 'Nouvel affilié actif'
+              : 'Inscription en attente',
+          timestamp: a.created_at,
+        });
+      });
 
       // Récupérer les dernières demandes de paiement
-      /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */
-      const { data: recentPayments } = await (supabase as any)
+      const { data: recentPayments } = await supabase
         .from('linkme_payment_requests')
         .select(
           `
@@ -327,37 +339,28 @@ export function useRecentActivity(limit: number = 5) {
         `
         )
         .order('created_at', { ascending: false })
-        .limit(limit);
-      /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */
+        .limit(limit)
+        .returns<LinkMePaymentRequest[]>();
 
-      (recentPayments ?? []).forEach(
-        (p: {
-          id: string;
-          request_number: string;
-          total_amount_ttc: number;
-          status: string;
-          created_at: string;
-          linkme_affiliates: { display_name: string } | null;
-        }) => {
-          const statusLabel =
-            p.status === 'paid'
-              ? 'Paiement effectué'
-              : p.status === 'pending'
-                ? 'En attente'
-                : p.status === 'invoice_received'
-                  ? 'Facture reçue'
-                  : p.status;
+      (recentPayments ?? []).forEach(p => {
+        const statusLabel =
+          p.status === 'paid'
+            ? 'Paiement effectué'
+            : p.status === 'pending'
+              ? 'En attente'
+              : p.status === 'invoice_received'
+                ? 'Facture reçue'
+                : p.status;
 
-          activities.push({
-            id: `payment-${p.id}`,
-            type: 'payment',
-            title: `${p.linkme_affiliates?.display_name ?? 'Affilié'}`,
-            description: statusLabel,
-            timestamp: p.created_at,
-            amount: p.total_amount_ttc,
-          });
-        }
-      );
+        activities.push({
+          id: `payment-${p.id}`,
+          type: 'payment',
+          title: `${p.linkme_affiliates?.display_name ?? 'Affilié'}`,
+          description: statusLabel,
+          timestamp: p.created_at,
+          amount: p.total_amount_ttc,
+        });
+      });
 
       // Trier par date et limiter
       return activities

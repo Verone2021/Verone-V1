@@ -359,7 +359,7 @@ export async function GET(
       document_type: rawInvoice.document_type,
       document_date: rawInvoice.document_date,
       due_date: rawInvoice.due_date,
-      workflow_status: (rawInvoice.workflow_status ||
+      workflow_status: (rawInvoice.workflow_status ??
         'synchronized') as InvoiceDetail['workflow_status'],
       status: rawInvoice.status,
       total_ht: rawInvoice.total_ht,
@@ -378,7 +378,7 @@ export async function GET(
       sales_order_id: rawInvoice.sales_order_id,
       partner: rawInvoice.partner,
       sales_order: rawInvoice.sales_order,
-      items: (items || []).map(item => ({
+      items: (items ?? []).map(item => ({
         id: item.id,
         description: item.description,
         quantity: item.quantity,

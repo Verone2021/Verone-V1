@@ -88,7 +88,7 @@ export function SelectionProductDetailModal({
     if (item) {
       // margin_rate est stocké en % (ex: 11 = 11%), on convertit en décimal (0.11)
       setLocalMarginRate(item.margin_rate / 100);
-      setLocalCustomPriceHT(item.base_price_ht || 0);
+      setLocalCustomPriceHT(item.base_price_ht ?? 0);
       setHasChanges(false);
     }
   }, [item]);
@@ -105,8 +105,8 @@ export function SelectionProductDetailModal({
 
   // Calcul des prix
   const basePrice =
-    mode === 'edit' ? localCustomPriceHT : item?.base_price_ht || 0;
-  const commissionRate = (item?.commission_rate || 0) / 100; // Conversion % → décimal (5.00 → 0.05)
+    mode === 'edit' ? localCustomPriceHT : (item?.base_price_ht ?? 0);
+  const commissionRate = (item?.commission_rate ?? 0) / 100; // Conversion % → décimal (5.00 → 0.05)
 
   // Prix de vente avec taux de marque
   // Note: sellingPriceWithMargin = ce que l'affilié gagne (basePrice / (1 - tauxMarque))
@@ -156,9 +156,9 @@ export function SelectionProductDetailModal({
 
     // Validation: vérifier que le prix final ne dépasse pas le prix public
     if (item.public_price_ht && item.public_price_ht > 0) {
-      const commissionRate = (item.commission_rate || 0) / 100;
+      const commissionRate = (item.commission_rate ?? 0) / 100;
       const marginRateDecimal = localMarginRate;
-      const bufferRate = item.buffer_rate || 0.05;
+      const bufferRate = item.buffer_rate ?? 0.05;
 
       // Prix final avec taux de marque + commission
       const finalPrice =
@@ -187,7 +187,7 @@ export function SelectionProductDetailModal({
   const handleCancel = () => {
     if (item) {
       setLocalMarginRate(item.margin_rate / 100);
-      setLocalCustomPriceHT(item.base_price_ht || 0);
+      setLocalCustomPriceHT(item.base_price_ht ?? 0);
       setHasChanges(false);
     }
     onOpenChange(false);
@@ -234,7 +234,7 @@ export function SelectionProductDetailModal({
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
       pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
 
-      const filename = `fiche-produit-${item.product?.sku || item.id}${showMargin ? '' : '-sans-marge'}.pdf`;
+      const filename = `fiche-produit-${item.product?.sku ?? item.id}${showMargin ? '' : '-sans-marge'}.pdf`;
       pdf.save(filename);
     } catch (error) {
       console.error('Erreur génération PDF:', error);
@@ -270,7 +270,7 @@ export function SelectionProductDetailModal({
               {item.product_image_url ? (
                 <Image
                   src={item.product_image_url}
-                  alt={product?.name || 'Produit'}
+                  alt={product?.name ?? 'Produit'}
                   fill
                   className="object-cover"
                 />
@@ -285,10 +285,10 @@ export function SelectionProductDetailModal({
             <div className="flex-1 space-y-3">
               <div className="flex items-start justify-between gap-4">
                 <h2 className="text-2xl font-bold leading-tight">
-                  {product?.name || 'Produit'}
+                  {product?.name ?? 'Produit'}
                 </h2>
                 <Badge variant="outline" className="font-mono text-xs shrink-0">
-                  {product?.sku || 'N/A'}
+                  {product?.sku ?? 'N/A'}
                 </Badge>
               </div>
 
@@ -449,7 +449,7 @@ export function SelectionProductDetailModal({
                 </Badge>
               </div>
 
-              {marginResult && marginResult.isProductSellable ? (
+              {marginResult?.isProductSellable ? (
                 <MarginSlider
                   marginResult={marginResult}
                   value={localMarginRate}
@@ -498,7 +498,7 @@ export function SelectionProductDetailModal({
               </span>
 
               <span>
-                Commission LinkMe ({(item?.commission_rate || 0).toFixed(0)}%)
+                Commission LinkMe ({(item?.commission_rate ?? 0).toFixed(0)}%)
               </span>
               <span className="font-mono text-right">
                 {(basePrice * commissionRate).toFixed(2)} €

@@ -128,35 +128,37 @@ export default function SuppliersPage() {
         .select('*')
         .eq('type', 'supplier')
         .not('archived_at', 'is', null)
-        .order('archived_at', { ascending: false });
+        .order('archived_at', { ascending: false })
+        .returns<Organisation[]>();
 
       if (error) throw error;
 
       // Comptage des produits pour chaque fournisseur (même approche que useOrganisations)
-      let organisationsWithCounts = data || [];
+      let organisationsWithCounts = data ?? [];
 
-      if ((data || []).length > 0) {
+      if ((data ?? []).length > 0) {
         const supplierIds = data.map(s => s.id);
 
         // Requête groupée pour compter les produits par supplier_id
         const { data: productCounts } = await supabase
           .from('products')
           .select('supplier_id')
-          .in('supplier_id', supplierIds);
+          .in('supplier_id', supplierIds)
+          .returns<{ supplier_id: string | null }[]>();
 
         // Créer un Map de comptage
         const countsMap = new Map<string, number>();
         productCounts?.forEach(p => {
           if (!p.supplier_id) return;
-          const count = countsMap.get(p.supplier_id) || 0;
+          const count = countsMap.get(p.supplier_id) ?? 0;
           countsMap.set(p.supplier_id, count + 1);
         });
 
         // Merger les comptes avec les organisations
-        organisationsWithCounts = (data || []).map(org => ({
+        organisationsWithCounts = (data ?? []).map(org => ({
           ...org,
           _count: {
-            products: countsMap.get(org.id) || 0,
+            products: countsMap.get(org.id) ?? 0,
           },
         }));
       }
@@ -164,8 +166,12 @@ export default function SuppliersPage() {
       setArchivedSuppliers(
         organisationsWithCounts as unknown as Organisation[]
       );
-    } catch (err) {
-      console.error('Erreur chargement fournisseurs archivés:', err);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      console.error(
+        '[Suppliers] Erreur chargement fournisseurs archivés:',
+        message
+      );
     } finally {
       setArchivedLoading(false);
     }
@@ -523,6 +529,7 @@ export default function SuppliersPage() {
                               </span>
                             </div>
                           )}
+                          {/* eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- Intentional boolean OR */}
                           {(supplier.billing_postal_code ||
                             supplier.billing_city) && (
                             <div
@@ -804,6 +811,7 @@ export default function SuppliersPage() {
                           {supplier.billing_address_line1 && (
                             <div>{supplier.billing_address_line1}</div>
                           )}
+                          {/* eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- Intentional boolean OR */}
                           {(supplier.billing_postal_code ||
                             supplier.billing_city) && (
                             <div>
@@ -1046,14 +1054,14 @@ export default function SuppliersPage() {
       <SupplierFormModal
         isOpen={isModalOpen}
         onClose={handleCloseModal}
-        supplier={selectedSupplier as any}
+        supplier={selectedSupplier ?? undefined}
         onSuccess={handleSupplierSuccess}
       />
 
       <ConfirmDeleteOrganisationModal
         open={!!deleteModalSupplier}
         onOpenChange={open => !open && setDeleteModalSupplier(null)}
-        organisation={deleteModalSupplier as any}
+        organisation={deleteModalSupplier}
         organisationType="supplier"
         onConfirm={handleConfirmDelete}
         isDeleting={isDeleting}

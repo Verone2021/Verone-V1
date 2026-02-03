@@ -115,7 +115,7 @@ export function UserSecurityTab({ user }: UserSecurityTabProps) {
               <div className="flex justify-between">
                 <span className="text-neutral-600">Dernière modification:</span>
                 <span className="text-neutral-900 text-xs">
-                  {getTimeSince(user.profile?.updated_at || user.created_at)}
+                  {getTimeSince(user.profile?.updated_at ?? user.created_at)}
                 </span>
               </div>
             </div>
@@ -146,7 +146,7 @@ export function UserSecurityTab({ user }: UserSecurityTabProps) {
                       : 'Standard'}
                 </div>
                 <div className="text-sm text-neutral-600">
-                  Rôle: {user.profile?.role || 'Non défini'}
+                  Rôle: {user.profile?.role ?? 'Non défini'}
                 </div>
               </div>
             </div>

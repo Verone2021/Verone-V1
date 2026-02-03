@@ -31,7 +31,10 @@ export function TechnicalSection({
   const [newAttributeKey, setNewAttributeKey] = useState('');
   const [newAttributeValue, setNewAttributeValue] = useState('');
 
-  const updateField = (field: keyof WizardFormData, value: any) => {
+  const updateField = (
+    field: keyof WizardFormData,
+    value: WizardFormData[keyof WizardFormData]
+  ) => {
     setFormData({
       ...formData,
       [field]: value,
@@ -41,7 +44,7 @@ export function TechnicalSection({
   const updateDimension = (key: string, value: string) => {
     const dimensions = { ...formData.dimensions };
     if (value) {
-      dimensions[key] = parseFloat(value) || 0;
+      dimensions[key] = parseFloat(value) ?? 0;
     } else {
       delete dimensions[key];
     }
@@ -93,7 +96,7 @@ export function TechnicalSection({
                     type="number"
                     step="0.1"
                     min="0"
-                    value={formData.dimensions.length ?? ''}
+                    value={String(formData.dimensions.length ?? '')}
                     onChange={e => updateDimension('length', e.target.value)}
                     placeholder="0"
                     className="rounded-r-none"
@@ -112,7 +115,7 @@ export function TechnicalSection({
                     type="number"
                     step="0.1"
                     min="0"
-                    value={formData.dimensions.width ?? ''}
+                    value={String(formData.dimensions.width ?? '')}
                     onChange={e => updateDimension('width', e.target.value)}
                     placeholder="0"
                     className="rounded-r-none"
@@ -131,7 +134,7 @@ export function TechnicalSection({
                     type="number"
                     step="0.1"
                     min="0"
-                    value={formData.dimensions.height ?? ''}
+                    value={String(formData.dimensions.height ?? '')}
                     onChange={e => updateDimension('height', e.target.value)}
                     placeholder="0"
                     className="rounded-r-none"
@@ -163,6 +166,7 @@ export function TechnicalSection({
             </div>
 
             {/* Résumé dimensions */}
+            {/* eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- Intentional boolean OR to check if any dimension is truthy */}
             {(formData.dimensions.length ||
               formData.dimensions.width ||
               formData.dimensions.height ||

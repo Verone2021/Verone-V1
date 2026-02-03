@@ -36,10 +36,26 @@ import { useOrganisations } from '@verone/organisations';
 import { useVariantGroups } from '@verone/products';
 import { normalizeForSKU } from '@verone/products/utils/sku-generator';
 
+// ============================================
+// TYPES LOCAUX
+// ============================================
+
+interface CommonDimensions {
+  length?: number | null;
+  width?: number | null;
+  height?: number | null;
+  unit: 'cm' | 'm';
+}
+
+interface Subcategory {
+  id: string;
+  name: string;
+}
+
 interface VariantGroupFormProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: any) => void;
+  onSubmit: (data: FormData) => void;
   editingGroup?: VariantGroup | null;
 }
 
@@ -159,7 +175,9 @@ export function VariantGroupForm({
     return getCategoriesByFamily(filters.familyId);
   }, [filters.familyId, getCategoriesByFamily]);
 
-  const [filteredSubcategories, setFilteredSubcategories] = useState<any[]>([]);
+  const [filteredSubcategories, setFilteredSubcategories] = useState<
+    Subcategory[]
+  >([]);
 
   // Charger sous-catégories quand catégorie change
   useEffect(() => {
@@ -206,19 +224,22 @@ export function VariantGroupForm({
     if (isOpen) {
       if (editingGroup) {
         // Mode édition
-        const dimensions = (editingGroup.common_dimensions as any) || {};
+        const dimensions =
+          (editingGroup.common_dimensions as CommonDimensions | null) ?? null;
         setFormData({
           name: editingGroup.name,
           base_sku: editingGroup.base_sku,
           subcategory_id: editingGroup.subcategory_id,
-          variant_type: editingGroup.variant_type || 'color',
+          variant_type: editingGroup.variant_type ?? 'color',
           style: editingGroup.style ?? '',
-          suitable_rooms: (editingGroup.suitable_rooms || []) as RoomType[],
-          common_length: dimensions.length?.toString() ?? '',
-          common_width: dimensions.width?.toString() ?? '',
-          common_height: dimensions.height?.toString() ?? '',
-          common_dimensions_unit: dimensions.unit || 'cm',
-        } as any);
+          suitable_rooms: (editingGroup.suitable_rooms ?? []) as RoomType[],
+          common_length: dimensions?.length?.toString() ?? '',
+          common_width: dimensions?.width?.toString() ?? '',
+          common_height: dimensions?.height?.toString() ?? '',
+          common_dimensions_unit: dimensions?.unit ?? 'cm',
+          has_common_supplier: false,
+          supplier_id: '',
+        });
       } else {
         // Mode création
         setFormData({
@@ -232,7 +253,9 @@ export function VariantGroupForm({
           common_width: '',
           common_height: '',
           common_dimensions_unit: 'cm',
-        } as any);
+          has_common_supplier: false,
+          supplier_id: '',
+        });
         setFilters({
           familyId: '',
           categoryId: '',
@@ -318,6 +341,7 @@ export function VariantGroupForm({
         }
       } else {
         // Mode création
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         success = !!(await createVariantGroup(groupData as any));
         if (success) {
           toast({
@@ -646,8 +670,8 @@ export function VariantGroupForm({
                   <SelectContent>
                     {suppliers.map(supplier => (
                       <SelectItem key={supplier.id} value={supplier.id}>
-                        {supplier.legal_name ||
-                          supplier.trade_name ||
+                        {supplier.legal_name ??
+                          supplier.trade_name ??
                           'Sans nom'}
                       </SelectItem>
                     ))}

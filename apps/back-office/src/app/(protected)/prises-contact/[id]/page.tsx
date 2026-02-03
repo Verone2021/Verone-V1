@@ -61,7 +61,7 @@ type FormSubmission = {
   created_at: string;
   updated_at: string;
   sla_deadline: string | null;
-  metadata: any;
+  metadata: Record<string, unknown>;
   internal_notes: string | null;
 };
 
@@ -111,12 +111,13 @@ export default function SubmissionDetailPage({
       try {
         const supabase = createClient();
 
-        // Fetch submission (using any to bypass type checking for new table)
-        const { data: sub, error: subError } = await (supabase as any)
+        // Fetch submission
+        const { data: sub, error: subError } = await supabase
           .from('form_submissions')
           .select('*')
           .eq('id', id)
-          .single();
+          .single()
+          .returns<FormSubmission>();
 
         if (subError) throw subError;
         if (!sub) {
@@ -129,18 +130,21 @@ export default function SubmissionDetailPage({
         setNewPriority(sub.priority);
         setNewNotes(sub.internal_notes ?? '');
 
-        // Fetch form type (using any to bypass type checking for new table)
-        const { data: type, error: typeError } = await (supabase as any)
+        // Fetch form type
+        const { data: type, error: typeError } = await supabase
           .from('form_types')
           .select('*')
           .eq('code', sub.form_type)
-          .single();
+          .single()
+          .returns<FormType>();
 
         if (!typeError && type) {
           setFormType(type);
         }
-      } catch (error) {
-        console.error('Error fetching submission:', error);
+      } catch (error: unknown) {
+        const message =
+          error instanceof Error ? error.message : 'Unknown error';
+        console.error('[ContactDetail] Error fetching submission:', message);
       } finally {
         setLoading(false);
       }
@@ -159,17 +163,18 @@ export default function SubmissionDetailPage({
     try {
       const supabase = createClient();
 
-      const { error } = await (supabase as any)
+      const { error } = (await supabase
         .from('form_submissions')
         .update({ status: newStatus })
-        .eq('id', submission.id);
+        .eq('id', submission.id)) as { error: unknown };
 
       if (error) throw error;
 
       setSubmission({ ...submission, status: newStatus });
       setEditingStatus(false);
-    } catch (error) {
-      console.error('Error updating status:', error);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      console.error('[ContactDetail] Error updating status:', message);
       alert('Erreur lors de la mise à jour du statut');
     } finally {
       setSaving(false);
@@ -184,17 +189,18 @@ export default function SubmissionDetailPage({
     try {
       const supabase = createClient();
 
-      const { error } = await (supabase as any)
+      const { error } = (await supabase
         .from('form_submissions')
         .update({ priority: newPriority })
-        .eq('id', submission.id);
+        .eq('id', submission.id)) as { error: unknown };
 
       if (error) throw error;
 
       setSubmission({ ...submission, priority: newPriority });
       setEditingPriority(false);
-    } catch (error) {
-      console.error('Error updating priority:', error);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      console.error('[ContactDetail] Error updating priority:', message);
       alert('Erreur lors de la mise à jour de la priorité');
     } finally {
       setSaving(false);
@@ -209,17 +215,18 @@ export default function SubmissionDetailPage({
     try {
       const supabase = createClient();
 
-      const { error } = await (supabase as any)
+      const { error } = (await supabase
         .from('form_submissions')
         .update({ internal_notes: newNotes ?? null })
-        .eq('id', submission.id);
+        .eq('id', submission.id)) as { error: unknown };
 
       if (error) throw error;
 
       setSubmission({ ...submission, internal_notes: newNotes ?? null });
       setEditingNotes(false);
-    } catch (error) {
-      console.error('Error updating notes:', error);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      console.error('[ContactDetail] Error updating notes:', message);
       alert('Erreur lors de la mise à jour des notes');
     } finally {
       setSaving(false);
@@ -301,7 +308,7 @@ export default function SubmissionDetailPage({
               {submission.first_name} {submission.last_name}
             </h1>
             <p className="text-sm" style={{ color: colors.text.subtle }}>
-              {formType?.label || submission.form_type} • {createdDate}
+              {formType?.label ?? submission.form_type} • {createdDate}
             </p>
           </div>
 
@@ -356,7 +363,7 @@ export default function SubmissionDetailPage({
               >
                 <Edit className="h-4 w-4 mr-1" />
                 {statusOptions.find(s => s.value === submission.status)
-                  ?.label || submission.status}
+                  ?.label ?? submission.status}
               </ButtonUnified>
             )}
 
@@ -410,7 +417,7 @@ export default function SubmissionDetailPage({
               >
                 <AlertCircle className="h-4 w-4 mr-1" />
                 {priorityOptions.find(p => p.value === submission.priority)
-                  ?.label || submission.priority}
+                  ?.label ?? submission.priority}
               </ButtonUnified>
             )}
           </div>
@@ -546,7 +553,7 @@ export default function SubmissionDetailPage({
                 className="text-lg font-semibold mb-2"
                 style={{ color: colors.text.DEFAULT }}
               >
-                {submission.subject || 'Message'}
+                {submission.subject ?? 'Message'}
               </h2>
               <p
                 className="text-sm leading-relaxed whitespace-pre-wrap"
@@ -627,7 +634,7 @@ export default function SubmissionDetailPage({
                   className="text-sm leading-relaxed whitespace-pre-wrap"
                   style={{ color: colors.text.subtle }}
                 >
-                  {submission.internal_notes || 'Aucune note'}
+                  {submission.internal_notes ?? 'Aucune note'}
                 </p>
               )}
             </div>

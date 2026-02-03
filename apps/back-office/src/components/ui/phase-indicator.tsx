@@ -55,7 +55,7 @@ export function PhaseIndicator({
     return 'Bientot disponible';
   };
 
-  const colorClass = PHASE_COLORS[status] || PHASE_COLORS['coming-soon'];
+  const colorClass = PHASE_COLORS[status] ?? PHASE_COLORS['coming-soon'];
 
   if (variant === 'icon-only') {
     return (

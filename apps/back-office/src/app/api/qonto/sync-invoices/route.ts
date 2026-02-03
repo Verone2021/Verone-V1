@@ -101,9 +101,9 @@ export async function POST(_request: NextRequest): Promise<
       try {
         // Obtenir le numero de facture (peut etre 'number' ou 'invoice_number')
         const invoiceNumber =
-          invoice.number || invoice.invoice_number || invoice.id;
+          invoice.number ?? invoice.invoice_number ?? invoice.id;
         // Obtenir la date d'echeance (peut etre 'due_date' ou 'payment_deadline')
-        const dueDate = (invoice.due_date || invoice.payment_deadline) ?? null;
+        const dueDate = invoice.due_date ?? invoice.payment_deadline ?? null;
 
         // Calculer les montants
         const totalTtc = invoice.total_amount_cents / 100;
@@ -208,7 +208,7 @@ export async function POST(_request: NextRequest): Promise<
           abby_invoice_id: invoice.id,
           abby_invoice_number: invoiceNumber,
           description: `Facture Qonto ${invoiceNumber}`,
-          notes: `Client: ${invoice.client?.name || 'N/A'}`,
+          notes: `Client: ${invoice.client?.name ?? 'N/A'}`,
           updated_at: new Date().toISOString(),
         };
 
@@ -243,7 +243,7 @@ export async function POST(_request: NextRequest): Promise<
           }
         }
       } catch (invoiceError) {
-        const num = invoice.number || invoice.invoice_number || invoice.id;
+        const num = invoice.number ?? invoice.invoice_number ?? invoice.id;
         errors.push(
           `Invoice ${num}: ${invoiceError instanceof Error ? invoiceError.message : 'Unknown error'}`
         );

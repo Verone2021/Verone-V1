@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import { useParams, useRouter } from 'next/navigation';
 
@@ -54,13 +54,7 @@ export default function EditEmailTemplatePage() {
   const [active, setActive] = useState(true);
   const [variablesInput, setVariablesInput] = useState('');
 
-  useEffect(() => {
-    void loadTemplate().catch(error => {
-      console.error('[EmailEditPage] loadTemplate failed:', error);
-    });
-  }, [slug]);
-
-  async function loadTemplate() {
+  const loadTemplate = useCallback(async () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
@@ -80,7 +74,7 @@ export default function EditEmailTemplatePage() {
       setName(data.name);
       setSubject(data.subject);
       setHtmlBody(data.html_body);
-      setCategory(data.category || 'general');
+      setCategory(data.category ?? 'general');
       setActive(data.active ?? true);
       setVariablesInput(
         Array.isArray(data.variables) ? data.variables.join(', ') : ''
@@ -91,7 +85,13 @@ export default function EditEmailTemplatePage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [slug]);
+
+  useEffect(() => {
+    void loadTemplate().catch(error => {
+      console.error('[EmailEditPage] loadTemplate failed:', error);
+    });
+  }, [loadTemplate]);
 
   async function handleSave() {
     try {

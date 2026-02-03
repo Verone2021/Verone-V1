@@ -72,7 +72,7 @@ export async function GET() {
 
     // Pour chaque profil, récupérer l'email depuis auth.users et les stats d'activité
     const usersWithStats = await Promise.all(
-      (profiles || []).map(async profile => {
+      (profiles ?? []).map(async profile => {
         // Récupérer email depuis auth.users
         const { data: authUser } = await supabase.auth.admin.getUserById(
           profile.user_id
@@ -84,7 +84,7 @@ export async function GET() {
           p_days: 30,
         });
 
-        const userStats = stats?.[0] || {
+        const userStats = stats?.[0] ?? {
           total_sessions: 0,
           total_actions: 0,
           avg_session_duration: null,
@@ -109,13 +109,13 @@ export async function GET() {
 
         return {
           user_id: profile.user_id,
-          email: authUser?.user?.email || "Pas d'email",
+          email: authUser?.user?.email ?? "Pas d'email",
           full_name: fullName,
           role: profile.role,
-          total_sessions: userStats.total_sessions || 0,
-          total_actions: userStats.total_actions || 0,
+          total_sessions: userStats.total_sessions ?? 0,
+          total_actions: userStats.total_actions ?? 0,
           last_activity: userStats.last_activity,
-          engagement_score: userStats.engagement_score || 0,
+          engagement_score: userStats.engagement_score ?? 0,
           most_used_module: userStats.most_used_module,
           is_active_now: isActiveNow,
         } as UserActivityStats;

@@ -159,35 +159,35 @@ export default function StockagePage() {
         <KPICard
           icon={Box}
           label="Volume total"
-          value={formatVolumeM3(totals?.total_volume_m3 || 0)}
+          value={formatVolumeM3(totals?.total_volume_m3 ?? 0)}
           color="blue"
           isLoading={totalsLoading}
         />
         <KPICard
           icon={TrendingUp}
           label="Volume facturable"
-          value={formatVolumeM3(totals?.billable_volume_m3 || 0)}
+          value={formatVolumeM3(totals?.billable_volume_m3 ?? 0)}
           color="green"
           isLoading={totalsLoading}
         />
         <KPICard
           icon={Package}
           label="Unites stockees"
-          value={`${totals?.total_units || 0}`}
+          value={`${totals?.total_units ?? 0}`}
           color="purple"
           isLoading={totalsLoading}
         />
         <KPICard
           icon={Users}
           label="Owners actifs"
-          value={`${totals?.active_owners || 0}`}
+          value={`${totals?.active_owners ?? 0}`}
           color="orange"
           isLoading={totalsLoading}
         />
         <KPICard
           icon={Building2}
           label="Produits"
-          value={`${totals?.products_count || 0}`}
+          value={`${totals?.products_count ?? 0}`}
           color="gray"
           isLoading={totalsLoading}
         />
@@ -311,7 +311,7 @@ export default function StockagePage() {
                 >
                   <td className="px-6 py-4">
                     <p className="font-medium text-gray-900">
-                      {item.owner_name || '-'}
+                      {item.owner_name ?? '-'}
                     </p>
                   </td>
                   <td className="px-6 py-4">
@@ -436,7 +436,7 @@ function OwnerStorageDetail({
   >('allocations');
 
   const { data: detailData, isLoading: detailLoading } =
-    useAffiliateStorageDetail(owner?.owner_type || 'enseigne', owner?.owner_id);
+    useAffiliateStorageDetail(owner?.owner_type ?? 'enseigne', owner?.owner_id);
 
   const { data: weightedAverage, isLoading: avgLoading } =
     useStorageWeightedAverage(
@@ -915,7 +915,7 @@ function AddAllocationDialog({
                       {ownersLoading ? 'Chargement...' : 'Aucun client trouve'}
                     </CommandEmpty>
                     <CommandGroup>
-                      {(owners || []).map(owner => (
+                      {(owners ?? []).map(owner => (
                         <CommandItem
                           key={`${owner.type}-${owner.id}`}
                           value={`${owner.type}-${owner.id}`}
@@ -988,7 +988,7 @@ function AddAllocationDialog({
                           : 'Aucun produit trouve'}
                     </CommandEmpty>
                     <CommandGroup>
-                      {(products || []).map(product => (
+                      {(products ?? []).map(product => (
                         <CommandItem
                           key={product.id}
                           value={product.id}
@@ -1028,7 +1028,7 @@ function AddAllocationDialog({
               min={1}
               value={quantity}
               onChange={e =>
-                setQuantity(Math.max(1, parseInt(e.target.value) || 1))
+                setQuantity(Math.max(1, parseInt(e.target.value) ?? 1))
               }
             />
           </div>

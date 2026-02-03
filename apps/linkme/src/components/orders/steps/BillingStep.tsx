@@ -140,7 +140,7 @@ function ContactForm({ contact, onChange }: ContactFormProps) {
         <Input
           id="billingContact-phone"
           type="tel"
-          value={contact.phone || ''}
+          value={contact.phone ?? ''}
           onChange={e => onChange('phone', e.target.value)}
           placeholder="06 12 34 56 78"
         />
@@ -151,7 +151,7 @@ function ContactForm({ contact, onChange }: ContactFormProps) {
         <Input
           id="billingContact-position"
           type="text"
-          value={contact.position || ''}
+          value={contact.position ?? ''}
           onChange={e => onChange('position', e.target.value)}
           placeholder="Comptable, DAF..."
         />
@@ -175,7 +175,7 @@ function CreateNewCard({
   onClick,
   isActive,
   label = 'Nouveau',
-  icon = 'contact',
+  icon: _icon = 'contact',
 }: CreateNewCardProps) {
   return (
     <Card
@@ -326,12 +326,12 @@ function RestaurantAddressCard({
             )}
           </div>
           <p className="text-xs font-medium text-gray-700 mt-0.5 truncate">
-            {legalName || restaurantName || 'Restaurant'}
+            {legalName ?? restaurantName ?? 'Restaurant'}
           </p>
           {addressLine1 && (
             <p className="text-xs text-gray-500 truncate">{addressLine1}</p>
           )}
-          {(postalCode || city) && (
+          {(postalCode ?? city) && (
             <p className="text-xs text-gray-500 truncate">
               {[postalCode, city].filter(Boolean).join(' ')}
             </p>
@@ -421,12 +421,12 @@ function ParentAddressCard({
             )}
           </div>
           <p className="text-xs font-medium text-gray-700 mt-0.5 truncate">
-            {legalName || parentName || 'Organisation mere'}
+            {legalName ?? parentName ?? 'Organisation mere'}
           </p>
           {addressLine1 && (
             <p className="text-xs text-gray-500 truncate">{addressLine1}</p>
           )}
-          {(postalCode || city) && (
+          {(postalCode ?? city) && (
             <p className="text-xs text-gray-500 truncate">
               {[postalCode, city].filter(Boolean).join(' ')}
             </p>
@@ -446,7 +446,11 @@ function ParentAddressCard({
 // MAIN COMPONENT
 // ============================================================================
 
-export function BillingStep({ formData, errors, onUpdate }: BillingStepProps) {
+export function BillingStep({
+  formData,
+  errors: _errors,
+  onUpdate,
+}: BillingStepProps) {
   const [showContactForm, setShowContactForm] = useState(
     formData.contacts.billingContact.mode === 'new'
   );
@@ -460,15 +464,15 @@ export function BillingStep({ formData, errors, onUpdate }: BillingStepProps) {
   // Get organisation ID (restaurant selectionne)
   const organisationId =
     formData.restaurant.mode === 'existing'
-      ? formData.restaurant.existingId || null
+      ? (formData.restaurant.existingId ?? null)
       : null;
 
   // Determine ownership type
   const ownershipType = useMemo(() => {
     if (formData.restaurant.mode === 'new') {
-      return formData.restaurant.newRestaurant?.ownershipType || null;
+      return formData.restaurant.newRestaurant?.ownershipType ?? null;
     }
-    return formData.restaurant.existingOwnershipType || null;
+    return formData.restaurant.existingOwnershipType ?? null;
   }, [formData.restaurant]);
 
   // Is franchise? (no parent address for franchises)
@@ -478,7 +482,7 @@ export function BillingStep({ formData, errors, onUpdate }: BillingStepProps) {
   const { data: contactsData, isLoading: contactsLoading } =
     useOrganisationContacts(
       organisationId,
-      enseigneId || null,
+      enseigneId ?? null,
       ownershipType,
       true // Inclure contacts enseigne
     );
@@ -503,7 +507,9 @@ export function BillingStep({ formData, errors, onUpdate }: BillingStepProps) {
     useUpdateOrganisationAddress();
 
   // Contacts disponibles - Séparés en locaux et enseigne
-  const allContacts = contactsData?.allContacts || [];
+  const allContacts = useMemo(() => {
+    return contactsData?.allContacts ?? [];
+  }, [contactsData]);
 
   const localContacts = useMemo(() => {
     return allContacts.filter(c => c.organisationId === organisationId);
@@ -529,23 +535,23 @@ export function BillingStep({ formData, errors, onUpdate }: BillingStepProps) {
     const org = restaurantDetail?.organisation;
     return {
       id: formData.restaurant.existingId,
-      name: formData.restaurant.existingName || null,
-      city: formData.restaurant.existingCity || null,
-      country: formData.restaurant.existingCountry || null,
+      name: formData.restaurant.existingName ?? null,
+      city: formData.restaurant.existingCity ?? null,
+      country: formData.restaurant.existingCountry ?? null,
       // Enhanced data from useOrganisationDetail
-      legalName: org?.legal_name || null,
-      tradeName: org?.trade_name || null,
+      legalName: org?.legal_name ?? null,
+      tradeName: org?.trade_name ?? null,
       addressLine1:
-        org?.billing_address_line1 || org?.shipping_address_line1 || null,
-      postalCode: org?.billing_postal_code || org?.shipping_postal_code || null,
-      billingCity: org?.billing_city || org?.shipping_city || null,
-      siret: org?.siret || null,
-      vatNumber: org?.vat_number || null,
+        org?.billing_address_line1 ?? org?.shipping_address_line1 ?? null,
+      postalCode: org?.billing_postal_code ?? org?.shipping_postal_code ?? null,
+      billingCity: org?.billing_city ?? org?.shipping_city ?? null,
+      siret: org?.siret ?? null,
+      vatNumber: org?.vat_number ?? null,
     };
   }, [formData.restaurant, restaurantDetail]);
 
   // Existing billing addresses
-  const billingAddresses = addressesData?.billing || [];
+  const billingAddresses = addressesData?.billing ?? [];
 
   // Show parent address only for non-franchises with valid parent data
   const showParentAddress = !isFranchise && parentOrg && parentPrimaryAddress;
@@ -563,14 +569,14 @@ export function BillingStep({ formData, errors, onUpdate }: BillingStepProps) {
     const initial = initialAddressRef.current;
 
     return (
-      (current.tradeName || '') !== initial.tradeName ||
-      (current.legalName || '') !== initial.legalName ||
-      (current.siret || '') !== initial.siret ||
-      (current.vatNumber || '') !== initial.vatNumber ||
-      (current.addressLine1 || '') !== initial.addressLine1 ||
-      (current.postalCode || '') !== initial.postalCode ||
-      (current.city || '') !== initial.city ||
-      (current.country || 'FR') !== initial.country
+      (current.tradeName ?? '') !== initial.tradeName ||
+      (current.legalName ?? '') !== initial.legalName ||
+      (current.siret ?? '') !== initial.siret ||
+      (current.vatNumber ?? '') !== initial.vatNumber ||
+      (current.addressLine1 ?? '') !== initial.addressLine1 ||
+      (current.postalCode ?? '') !== initial.postalCode ||
+      (current.city ?? '') !== initial.city ||
+      (current.country ?? 'FR') !== initial.country
     );
   }, [formData.contacts.billingAddress.customAddress]);
 
@@ -633,8 +639,8 @@ export function BillingStep({ formData, errors, onUpdate }: BillingStepProps) {
           firstName: contact.firstName,
           lastName: contact.lastName,
           email: contact.email,
-          phone: contact.phone || contact.mobile || '',
-          position: contact.title || '',
+          phone: contact.phone ?? contact.mobile ?? '',
+          position: contact.title ?? '',
         },
       });
       setShowContactForm(false);
@@ -668,7 +674,7 @@ export function BillingStep({ formData, errors, onUpdate }: BillingStepProps) {
     (field: keyof ContactBase, value: string) => {
       handleBillingContactUpdate({
         contact: {
-          ...(formData.contacts.billingContact.contact || defaultContact),
+          ...(formData.contacts.billingContact.contact ?? defaultContact),
           [field]: value,
         },
       });
@@ -695,58 +701,58 @@ export function BillingStep({ formData, errors, onUpdate }: BillingStepProps) {
   // Auto-remplissage: Adresse restaurant
   const handleSelectRestaurantAddress = useCallback(() => {
     const newAddress: PartialAddressData = {
-      tradeName: restaurantInfo?.tradeName || restaurantInfo?.name || '',
-      legalName: restaurantInfo?.legalName || '',
-      addressLine1: restaurantInfo?.addressLine1 || '',
-      postalCode: restaurantInfo?.postalCode || '',
-      city: restaurantInfo?.billingCity || restaurantInfo?.city || '',
-      country: restaurantInfo?.country || 'FR',
-      siret: restaurantInfo?.siret || '',
-      vatNumber: restaurantInfo?.vatNumber || '',
+      tradeName: restaurantInfo?.tradeName ?? restaurantInfo?.name ?? '',
+      legalName: restaurantInfo?.legalName ?? '',
+      addressLine1: restaurantInfo?.addressLine1 ?? '',
+      postalCode: restaurantInfo?.postalCode ?? '',
+      city: restaurantInfo?.billingCity ?? restaurantInfo?.city ?? '',
+      country: restaurantInfo?.country ?? 'FR',
+      siret: restaurantInfo?.siret ?? '',
+      vatNumber: restaurantInfo?.vatNumber ?? '',
     };
 
     // Stocker les valeurs initiales
     initialAddressRef.current = {
-      tradeName: newAddress.tradeName || '',
-      legalName: newAddress.legalName || '',
-      siret: newAddress.siret || '',
-      vatNumber: newAddress.vatNumber || '',
-      addressLine1: newAddress.addressLine1 || '',
-      postalCode: newAddress.postalCode || '',
-      city: newAddress.city || '',
-      country: newAddress.country || 'FR',
+      tradeName: newAddress.tradeName ?? '',
+      legalName: newAddress.legalName ?? '',
+      siret: newAddress.siret ?? '',
+      vatNumber: newAddress.vatNumber ?? '',
+      addressLine1: newAddress.addressLine1 ?? '',
+      postalCode: newAddress.postalCode ?? '',
+      city: newAddress.city ?? '',
+      country: newAddress.country ?? 'FR',
     };
 
     handleBillingAddressUpdate({
       mode: 'restaurant_address',
       existingAddressId: null,
       customAddress: newAddress,
-      sourceOrganisationId: restaurantInfo?.id || null,
+      sourceOrganisationId: restaurantInfo?.id ?? null,
     });
   }, [handleBillingAddressUpdate, restaurantInfo]);
 
   // Auto-remplissage: Adresse maison mère
   const handleSelectParentAddress = useCallback(() => {
     const newAddress: PartialAddressData = {
-      tradeName: parentOrg?.trade_name || '',
-      legalName: parentOrg?.legal_name || '',
-      addressLine1: parentPrimaryAddress?.addressLine1 || '',
-      postalCode: parentPrimaryAddress?.postalCode || '',
-      city: parentPrimaryAddress?.city || '',
+      tradeName: parentOrg?.trade_name ?? '',
+      legalName: parentOrg?.legal_name ?? '',
+      addressLine1: parentPrimaryAddress?.addressLine1 ?? '',
+      postalCode: parentPrimaryAddress?.postalCode ?? '',
+      city: parentPrimaryAddress?.city ?? '',
       country: 'FR', // Défaut FR pour la maison mère
-      siret: parentPrimaryAddress?.siret || '',
+      siret: parentPrimaryAddress?.siret ?? '',
       vatNumber: '', // Non disponible dans le parent address
     };
 
     // Stocker les valeurs initiales
     initialAddressRef.current = {
-      tradeName: newAddress.tradeName || '',
-      legalName: newAddress.legalName || '',
-      siret: newAddress.siret || '',
+      tradeName: newAddress.tradeName ?? '',
+      legalName: newAddress.legalName ?? '',
+      siret: newAddress.siret ?? '',
       vatNumber: '',
-      addressLine1: newAddress.addressLine1 || '',
-      postalCode: newAddress.postalCode || '',
-      city: newAddress.city || '',
+      addressLine1: newAddress.addressLine1 ?? '',
+      postalCode: newAddress.postalCode ?? '',
+      city: newAddress.city ?? '',
       country: 'FR',
     };
 
@@ -754,7 +760,7 @@ export function BillingStep({ formData, errors, onUpdate }: BillingStepProps) {
       mode: 'parent_address',
       existingAddressId: null,
       customAddress: newAddress,
-      sourceOrganisationId: parentOrg?.id || null,
+      sourceOrganisationId: parentOrg?.id ?? null,
     });
   }, [handleBillingAddressUpdate, parentOrg, parentPrimaryAddress]);
 
@@ -776,7 +782,7 @@ export function BillingStep({ formData, errors, onUpdate }: BillingStepProps) {
       addressLine1: '',
       postalCode: '',
       city: '',
-      country: restaurantInfo?.country || 'FR',
+      country: restaurantInfo?.country ?? 'FR',
       tradeName: '',
       legalName: '',
       siret: '',
@@ -829,14 +835,14 @@ export function BillingStep({ formData, errors, onUpdate }: BillingStepProps) {
       {
         organisationId: sourceId,
         addressData: {
-          billing_address_line1: currentAddress.addressLine1 || null,
-          billing_postal_code: currentAddress.postalCode || null,
-          billing_city: currentAddress.city || null,
-          billing_country: currentAddress.country || 'FR',
-          siret: currentAddress.siret || null,
-          vat_number: currentAddress.vatNumber || null,
-          legal_name: currentAddress.legalName || null,
-          trade_name: currentAddress.tradeName || null,
+          billing_address_line1: currentAddress.addressLine1 ?? null,
+          billing_postal_code: currentAddress.postalCode ?? null,
+          billing_city: currentAddress.city ?? null,
+          billing_country: currentAddress.country ?? 'FR',
+          siret: currentAddress.siret ?? null,
+          vat_number: currentAddress.vatNumber ?? null,
+          legal_name: currentAddress.legalName ?? null,
+          trade_name: currentAddress.tradeName ?? null,
         },
       },
       {
@@ -844,14 +850,14 @@ export function BillingStep({ formData, errors, onUpdate }: BillingStepProps) {
           // Mettre à jour les valeurs initiales après sauvegarde réussie
           if (currentAddress) {
             initialAddressRef.current = {
-              tradeName: currentAddress.tradeName || '',
-              legalName: currentAddress.legalName || '',
-              siret: currentAddress.siret || '',
-              vatNumber: currentAddress.vatNumber || '',
-              addressLine1: currentAddress.addressLine1 || '',
-              postalCode: currentAddress.postalCode || '',
-              city: currentAddress.city || '',
-              country: currentAddress.country || 'FR',
+              tradeName: currentAddress.tradeName ?? '',
+              legalName: currentAddress.legalName ?? '',
+              siret: currentAddress.siret ?? '',
+              vatNumber: currentAddress.vatNumber ?? '',
+              addressLine1: currentAddress.addressLine1 ?? '',
+              postalCode: currentAddress.postalCode ?? '',
+              city: currentAddress.city ?? '',
+              country: currentAddress.country ?? 'FR',
             };
           }
         },
@@ -1071,12 +1077,12 @@ export function BillingStep({ formData, errors, onUpdate }: BillingStepProps) {
                       'restaurant_address'
                     }
                     restaurantName={
-                      restaurantInfo.tradeName || restaurantInfo.name
+                      restaurantInfo.tradeName ?? restaurantInfo.name
                     }
                     legalName={restaurantInfo.legalName}
                     addressLine1={restaurantInfo.addressLine1}
                     postalCode={restaurantInfo.postalCode}
-                    city={restaurantInfo.billingCity || restaurantInfo.city}
+                    city={restaurantInfo.billingCity ?? restaurantInfo.city}
                     siret={restaurantInfo.siret}
                     isIncomplete={!restaurantInfo.siret}
                   />
@@ -1089,12 +1095,12 @@ export function BillingStep({ formData, errors, onUpdate }: BillingStepProps) {
                     isActive={
                       formData.contacts.billingAddress.mode === 'parent_address'
                     }
-                    parentName={parentOrg?.trade_name || null}
-                    legalName={parentOrg?.legal_name || null}
-                    addressLine1={parentPrimaryAddress?.addressLine1 || null}
-                    postalCode={parentPrimaryAddress?.postalCode || null}
-                    city={parentPrimaryAddress?.city || null}
-                    siret={parentPrimaryAddress?.siret || null}
+                    parentName={parentOrg?.trade_name ?? null}
+                    legalName={parentOrg?.legal_name ?? null}
+                    addressLine1={parentPrimaryAddress?.addressLine1 ?? null}
+                    postalCode={parentPrimaryAddress?.postalCode ?? null}
+                    city={parentPrimaryAddress?.city ?? null}
+                    siret={parentPrimaryAddress?.siret ?? null}
                     isIncomplete={!parentPrimaryAddress?.siret}
                   />
                 )}
@@ -1237,7 +1243,7 @@ export function BillingStep({ formData, errors, onUpdate }: BillingStepProps) {
                   </h5>
                   <ContactForm
                     contact={
-                      formData.contacts.billingContact.contact || defaultContact
+                      formData.contacts.billingContact.contact ?? defaultContact
                     }
                     onChange={handleBillingContactChange}
                   />

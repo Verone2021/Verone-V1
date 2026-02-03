@@ -293,14 +293,14 @@ export async function POST(request: NextRequest): Promise<
     const existingClient = await qontoClient.findClientByEmail(customerEmail);
     if (existingClient) {
       await qontoClient.updateClient(existingClient.id, {
-        name: customerName || existingClient.name,
+        name: customerName ?? existingClient.name,
         type: qontoClientType,
         address: qontoAddress,
       });
       qontoClientId = existingClient.id;
     } else {
       const newClient = await qontoClient.createClient({
-        name: customerName || 'Client',
+        name: customerName ?? 'Client',
         type: qontoClientType,
         email: customerEmail,
         currency: 'EUR',
@@ -312,8 +312,8 @@ export async function POST(request: NextRequest): Promise<
     // Mapper les lignes de commande vers items devis
     const items = (typedOrder.sales_order_items ?? []).map(item => ({
       title: item.products?.name ?? 'Article',
-      // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- Empty notes must become undefined (omitted in API payload)
-      description: item.notes || undefined,
+
+      description: item.notes ?? undefined,
       quantity: String(item.quantity ?? 1),
       unit: 'pièce',
       unitPrice: {
@@ -406,8 +406,8 @@ export async function POST(request: NextRequest): Promise<
       currency: 'EUR',
       issueDate,
       expiryDate,
-      // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- Empty order_number must become undefined
-      purchaseOrderNumber: typedOrder.order_number || undefined,
+
+      purchaseOrderNumber: typedOrder.order_number ?? undefined,
       items,
     };
 

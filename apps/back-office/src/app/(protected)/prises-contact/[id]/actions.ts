@@ -109,7 +109,7 @@ export async function convertToOrder(
     const supabase = createClient();
 
     // Fetch submission data
-    const { data: submission, error: fetchError } = await (supabase as any)
+    const { data: _submission, error: fetchError } = await (supabase as any)
       .from('form_submissions')
       .select('*')
       .eq('id', submissionId)
@@ -174,7 +174,7 @@ export async function convertToConsultation(
     const supabase = createClient();
 
     // Fetch submission data
-    const { data: submission, error: fetchError } = await (supabase as any)
+    const { data: _submission, error: fetchError } = await (supabase as any)
       .from('form_submissions')
       .select('*')
       .eq('id', submissionId)
@@ -243,7 +243,7 @@ export async function convertToSourcing(
     const supabase = createClient();
 
     // Fetch submission data
-    const { data: submission, error: fetchError } = await (supabase as any)
+    const { data: _submission, error: fetchError } = await (supabase as any)
       .from('form_submissions')
       .select('*')
       .eq('id', submissionId)
@@ -368,7 +368,7 @@ export async function convertToLead(
     const supabase = createClient();
 
     // Fetch submission data
-    const { data: submission, error: fetchError } = await (supabase as any)
+    const { data: _submission, error: fetchError } = await (supabase as any)
       .from('form_submissions')
       .select('*')
       .eq('id', submissionId)

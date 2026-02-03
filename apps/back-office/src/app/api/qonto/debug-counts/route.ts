@@ -23,6 +23,31 @@ interface CountResult {
   byYear: YearBreakdown;
 }
 
+// Types pour les RPC et queries Supabase
+interface YearCountRow {
+  year: string;
+  count: number;
+}
+
+interface SupabaseRpcResponse<T> {
+  data: T | null;
+  error: unknown;
+}
+
+interface SupabaseCountResponse {
+  count: number | null;
+  error: unknown;
+}
+
+interface ExpenseRow {
+  status: string;
+}
+
+interface SupabaseDataResponse<T> {
+  data: T | null;
+  error: unknown;
+}
+
 export async function GET() {
   // Security: Only allow in development or with explicit flag
   if (
@@ -80,21 +105,29 @@ export async function GET() {
       .eq('side', 'credit');
 
     // By year (using settled_at or emitted_at)
-    // Cast as any car la fonction RPC n'est pas encore dans les types générés
-    const { data: yearData } = await (supabase.rpc as CallableFunction)(
-      'get_transactions_by_year'
-    );
+    const { data: yearData } = await (
+      supabase.rpc as unknown as (
+        name: string
+      ) => Promise<SupabaseRpcResponse<YearCountRow[]>>
+    )('get_transactions_by_year');
 
     const dbByYear: YearBreakdown = {};
     if (yearData && Array.isArray(yearData)) {
-      for (const row of yearData as Array<{ year: string; count: number }>) {
+      for (const row of yearData) {
         dbByYear[row.year] = row.count;
       }
     }
 
-    // Expenses count - cast as any car la table n'est pas encore dans les types générés
+    // Expenses count
     const { count: expensesCreated } = await (
-      supabase as { from: CallableFunction }
+      supabase as unknown as {
+        from: (table: string) => {
+          select: (
+            col: string,
+            opts: { count: string; head: boolean }
+          ) => Promise<SupabaseCountResponse>;
+        };
+      }
     )
       .from('expenses')
       .select('*', { count: 'exact', head: true });
@@ -103,15 +136,21 @@ export async function GET() {
     let expensesByStatus: Array<{ status: string; count: number }> = [];
     try {
       const { data: expenseData } = await (
-        supabase as { from: CallableFunction }
+        supabase as unknown as {
+          from: (table: string) => {
+            select: (
+              col: string
+            ) => Promise<SupabaseDataResponse<ExpenseRow[]>>;
+          };
+        }
       )
         .from('expenses')
         .select('status');
 
       if (expenseData && Array.isArray(expenseData)) {
         const statusCounts: Record<string, number> = {};
-        for (const e of expenseData as Array<{ status: string }>) {
-          statusCounts[e.status] = (statusCounts[e.status] || 0) + 1;
+        for (const e of expenseData) {
+          statusCounts[e.status] = (statusCounts[e.status] ?? 0) + 1;
         }
         expensesByStatus = Object.entries(statusCounts).map(
           ([status, count]) => ({
@@ -133,11 +172,11 @@ export async function GET() {
     };
 
     const dbResult = {
-      total: dbTotal || 0,
-      debits: dbDebits || 0,
-      credits: dbCredits || 0,
-      expenses_created: expensesCreated || 0,
-      expenses_by_status: expensesByStatus || [],
+      total: dbTotal ?? 0,
+      debits: dbDebits ?? 0,
+      credits: dbCredits ?? 0,
+      expenses_created: expensesCreated ?? 0,
+      expenses_by_status: expensesByStatus ?? [],
       byYear: dbByYear,
     };
 

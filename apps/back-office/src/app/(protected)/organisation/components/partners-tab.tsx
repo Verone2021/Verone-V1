@@ -6,6 +6,7 @@ import { OrganisationListView } from '@verone/customers';
 import { OrganisationCard } from '@verone/organisations';
 import { PartnerFormModal } from '@verone/organisations';
 import { useOrganisations } from '@verone/organisations';
+import type { Organisation } from '@verone/organisations';
 import { Input } from '@verone/ui';
 import { Card, CardContent } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
@@ -18,10 +19,12 @@ export function PartnersTab() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [archivedPartners, setArchivedPartners] = useState<any[]>([]);
+  const [archivedPartners, setArchivedPartners] = useState<Organisation[]>([]);
   const [archivedLoading, setArchivedLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedPartner, _setSelectedPartner] = useState<any>(null);
+  const [selectedPartner, _setSelectedPartner] = useState<Organisation | null>(
+    null
+  );
 
   const filters = useMemo(
     () => ({
@@ -53,9 +56,12 @@ export function PartnersTab() {
         .order('archived_at', { ascending: false });
 
       if (error) throw error;
-      setArchivedPartners((data || []) as any[]);
-    } catch (err) {
-      console.error('Erreur chargement partenaires archivés:', err);
+      setArchivedPartners((data ?? []) as unknown as Organisation[]);
+    } catch (err: unknown) {
+      console.error(
+        '[PartnersTab] Error loading archived partners:',
+        err instanceof Error ? err.message : 'Unknown error'
+      );
     } finally {
       setArchivedLoading(false);
     }
@@ -69,7 +75,7 @@ export function PartnersTab() {
     }
   }, [activeTab]);
 
-  const handleArchive = async (partner: any) => {
+  const handleArchive = async (partner: Organisation) => {
     if (!partner.archived_at) {
       const success = await archiveOrganisation(partner.id);
       if (success) {
@@ -87,9 +93,9 @@ export function PartnersTab() {
     }
   };
 
-  const handleDelete = async (partner: any) => {
+  const handleDelete = async (partner: Organisation) => {
     const confirmed = confirm(
-      `Êtes-vous sûr de vouloir supprimer définitivement "${partner.name}" ?\n\nCette action est irréversible !`
+      `Êtes-vous sûr de vouloir supprimer définitivement "${partner.legal_name}" ?\n\nCette action est irréversible !`
     );
 
     if (confirmed) {
@@ -98,8 +104,11 @@ export function PartnersTab() {
         if (success) {
           await loadArchivedPartnersData();
         }
-      } catch (error) {
-        console.error('[PartnersTab] Failed to delete partner:', error);
+      } catch (error: unknown) {
+        console.error(
+          '[PartnersTab] Failed to delete partner:',
+          error instanceof Error ? error.message : 'Unknown error'
+        );
       }
     }
   };
@@ -255,10 +264,12 @@ export function PartnersTab() {
           {displayedPartners.map(partner => (
             <OrganisationCard
               key={partner.id}
-              organisation={{
-                ...partner,
-                type: 'partner',
-              }}
+              organisation={
+                {
+                  ...(partner as unknown as Organisation),
+                  type: 'partner' as const,
+                } as any
+              }
               activeTab={activeTab}
               onArchive={() => {
                 void handleArchive(partner).catch(error => {
@@ -277,10 +288,13 @@ export function PartnersTab() {
         <Card>
           <CardContent style={{ padding: spacing[3] }}>
             <OrganisationListView
-              organisations={displayedPartners.map(p => ({
-                ...p,
-                type: 'partner' as const,
-              }))}
+              organisations={displayedPartners.map(
+                p =>
+                  ({
+                    ...(p as unknown as Organisation),
+                    type: 'partner' as const,
+                  }) as any
+              )}
               activeTab={activeTab}
               onArchive={id => {
                 const partner = displayedPartners.find(p => p.id === id);

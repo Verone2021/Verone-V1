@@ -47,6 +47,12 @@ interface DeliveryNote {
   } | null;
 }
 
+interface DeliveryNotesApiResponse {
+  success: boolean;
+  delivery_notes: DeliveryNote[];
+  error?: string;
+}
+
 function formatDate(dateString: string): string {
   return new Intl.DateTimeFormat('fr-FR', {
     day: '2-digit',
@@ -68,13 +74,13 @@ export default function LivraisonsPage(): React.ReactNode {
 
     try {
       const response = await fetch('/api/delivery-notes?limit=100');
-      const data = await response.json();
+      const data = (await response.json()) as DeliveryNotesApiResponse;
 
       if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Failed to fetch delivery notes');
+        throw new Error(data.error ?? 'Failed to fetch delivery notes');
       }
 
-      setDeliveryNotes(data.delivery_notes || []);
+      setDeliveryNotes(data.delivery_notes ?? []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur inconnue');
     } finally {
@@ -177,7 +183,7 @@ export default function LivraisonsPage(): React.ReactNode {
                       )}
                     </TableCell>
                     <TableCell>
-                      {note.customer?.name || '-'}
+                      {note.customer?.name ?? '-'}
                       {note.customer?.type === 'organisation' && (
                         <Badge variant="outline" className="ml-2">
                           Entreprise
@@ -187,7 +193,7 @@ export default function LivraisonsPage(): React.ReactNode {
                     <TableCell>
                       <div>
                         <p className="font-medium">
-                          {note.product?.name || 'Produit'}
+                          {note.product?.name ?? 'Produit'}
                         </p>
                         {note.product?.sku && (
                           <p className="text-xs text-muted-foreground">

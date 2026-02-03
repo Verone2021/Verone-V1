@@ -102,7 +102,7 @@ export default function GoogleMerchantPage() {
   // 🚀 Handler: Ajouter produits depuis GoogleMerchantProductManager
   const handleAddProducts = async (
     productIds: string[],
-    customData: Record<string, any>,
+    customData: Record<string, unknown>,
     onProgress?: (progress: { synced: number; total: number }) => void
   ) => {
     logger.info('[Google Merchant Page] Adding products', {
@@ -256,13 +256,16 @@ export default function GoogleMerchantPage() {
         throw new Error('Sync failed');
       }
 
-      const result = await response.json();
+      const result = (await response.json()) as Record<string, unknown>;
       logger.info('[Google Merchant Page] Sync completed', result);
 
       // Refresh data
       window.location.reload();
-    } catch (error: any) {
-      logger.error('[Google Merchant Page] Sync error:', error);
+    } catch (error) {
+      logger.error(
+        '[Google Merchant Page] Sync error:',
+        error instanceof Error ? error : new Error(String(error))
+      );
     }
   };
 
@@ -399,7 +402,7 @@ export default function GoogleMerchantPage() {
             </AlertTitle>
             <AlertDescription className="text-red-700">
               <p>
-                {error || 'Une erreur est survenue lors de la synchronisation'}
+                {error ?? 'Une erreur est survenue lors de la synchronisation'}
               </p>
               {failed > 0 && (
                 <div className="mt-2 space-y-1">

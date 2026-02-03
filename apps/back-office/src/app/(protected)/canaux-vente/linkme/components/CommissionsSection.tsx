@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { useToast } from '@verone/common';
 import { Badge } from '@verone/ui';
@@ -64,6 +64,34 @@ interface Commission {
   } | null;
 }
 
+// Supabase query return types
+interface CommissionWithAffiliate {
+  id: string;
+  affiliate_id: string;
+  selection_id: string | null;
+  order_id: string | null;
+  order_item_id: string | null;
+  order_amount_ht: number;
+  affiliate_commission: number;
+  linkme_commission: number;
+  margin_rate_applied: number;
+  linkme_rate_applied: number;
+  status: string | null;
+  validated_at: string | null;
+  paid_at: string | null;
+  payment_reference: string | null;
+  payment_method: string | null;
+  created_at: string | null;
+  affiliate: {
+    display_name: string;
+  } | null;
+}
+
+interface AffiliateOption {
+  id: string;
+  display_name: string;
+}
+
 const statusConfig = {
   pending: {
     label: 'En attente',
@@ -113,21 +141,13 @@ export function CommissionsSection() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [processing, setProcessing] = useState(false);
 
-  useEffect(() => {
-    void fetchData().catch(error => {
-      console.error('[CommissionsSection] Initial fetch failed:', error);
-    });
-  }, []);
-
-  async function fetchData() {
+  const fetchData = useCallback(async () => {
     const supabase = createClient();
     setLoading(true);
 
     try {
       // Fetch commissions with affiliate info
-      const { data: commissionsData, error: commissionsError } = await (
-        supabase as any
-      )
+      const { data: commissionsData, error: commissionsError } = await supabase
         .from('linkme_commissions')
         .select(
           `
@@ -135,23 +155,24 @@ export function CommissionsSection() {
           affiliate:linkme_affiliates(display_name)
         `
         )
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .returns<CommissionWithAffiliate[]>();
 
       if (commissionsError) throw commissionsError;
 
       // Fetch affiliates for filter
-      const { data: affiliatesData, error: affiliatesError } = await (
-        supabase as any
-      )
+      const { data: affiliatesData, error: affiliatesError } = await supabase
         .from('linkme_affiliates')
-        .select('id, display_name');
+        .select('id, display_name')
+        .returns<AffiliateOption[]>();
 
       if (affiliatesError) throw affiliatesError;
 
-      setCommissions(commissionsData || []);
-      setAffiliates(affiliatesData || []);
-    } catch (error) {
-      console.error('Error fetching commissions:', error);
+      setCommissions(commissionsData ?? []);
+      setAffiliates(affiliatesData ?? []);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      console.error('[CommissionsSection] Fetch failed:', message);
       toast({
         title: 'Erreur',
         description: 'Impossible de charger les commissions',
@@ -160,14 +181,20 @@ export function CommissionsSection() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [toast]);
+
+  useEffect(() => {
+    void fetchData().catch(error => {
+      console.error('[CommissionsSection] Initial fetch failed:', error);
+    });
+  }, [fetchData]);
 
   async function handleValidate(ids: string[]) {
     const supabase = createClient();
     setProcessing(true);
 
     try {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from('linkme_commissions')
         .update({
           status: 'validated',
@@ -189,8 +216,9 @@ export function CommissionsSection() {
           error
         );
       });
-    } catch (error) {
-      console.error('Error validating commissions:', error);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      console.error('[CommissionsSection] Validate failed:', message);
       toast({
         title: 'Erreur',
         description: 'Impossible de valider les commissions',
@@ -206,7 +234,7 @@ export function CommissionsSection() {
     setProcessing(true);
 
     try {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from('linkme_commissions')
         .update({
           status: 'paid',
@@ -228,8 +256,9 @@ export function CommissionsSection() {
           error
         );
       });
-    } catch (error) {
-      console.error('Error marking paid:', error);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      console.error('[CommissionsSection] Mark paid failed:', message);
       toast({
         title: 'Erreur',
         description: 'Impossible de marquer les commissions comme payées',
@@ -263,12 +292,12 @@ export function CommissionsSection() {
 
     const rows = filtered.map(c => [
       c.created_at ? new Date(c.created_at).toLocaleDateString('fr-FR') : '-',
-      c.affiliate?.display_name || 'N/A',
+      c.affiliate?.display_name ?? 'N/A',
       (c.order_id ?? '').slice(0, 8),
       c.order_amount_ht.toFixed(2),
       c.affiliate_commission.toFixed(2),
       c.linkme_commission.toFixed(2),
-      statusConfig[(c.status || 'pending') as keyof typeof statusConfig].label,
+      statusConfig[(c.status ?? 'pending') as keyof typeof statusConfig].label,
     ]);
 
     const csv = [headers.join(';'), ...rows.map(r => r.join(';'))].join('\n');
@@ -535,7 +564,7 @@ export function CommissionsSection() {
                 {filteredCommissions.map(commission => {
                   const statusInfo =
                     statusConfig[
-                      (commission.status ||
+                      (commission.status ??
                         'pending') as keyof typeof statusConfig
                     ];
                   const canSelect =
@@ -559,7 +588,7 @@ export function CommissionsSection() {
                           : '-'}
                       </TableCell>
                       <TableCell>
-                        {commission.affiliate?.display_name || 'N/A'}
+                        {commission.affiliate?.display_name ?? 'N/A'}
                       </TableCell>
                       <TableCell className="font-mono text-sm">
                         #{(commission.order_id ?? '').slice(0, 8)}

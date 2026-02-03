@@ -5,6 +5,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createClient } from '@verone/utils/supabase/client';
+import type { Json } from '@verone/types';
 
 import type { SiteInternetProduct } from '../types';
 
@@ -14,16 +15,18 @@ const supabase = createClient();
  * Fetch produits site internet
  */
 async function fetchSiteInternetProducts(): Promise<SiteInternetProduct[]> {
-  const { data, error } = await supabase.rpc(
-    'get_site_internet_products' as any
-  );
+  const result = await supabase.rpc('get_site_internet_products');
+  const { data, error } = result as {
+    data: SiteInternetProduct[] | null;
+    error: Error | null;
+  };
 
   if (error) {
     console.error('Erreur fetch produits site internet:', error);
     throw error;
   }
 
-  return (data as unknown as SiteInternetProduct[]) || [];
+  return data ?? [];
 }
 
 /**
@@ -207,7 +210,7 @@ export function useUpdateProductMetadata() {
       metadata: {
         custom_title?: string;
         custom_description?: string;
-        metadata?: Record<string, any>;
+        metadata?: Json;
       };
     }) => {
       // Récupérer canal site_internet id
@@ -247,8 +250,12 @@ export function useSiteInternetProductsStats() {
   return useQuery({
     queryKey: ['site-internet-products-stats'],
     queryFn: async () => {
-      const { data } = await supabase.rpc('get_site_internet_products' as any);
-      const products = data as unknown as SiteInternetProduct[];
+      const result = await supabase.rpc('get_site_internet_products');
+      const { data } = result as {
+        data: SiteInternetProduct[] | null;
+        error: Error | null;
+      };
+      const products = data;
 
       if (!products) return null;
 

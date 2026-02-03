@@ -34,6 +34,7 @@
  */
 
 import { useState, useMemo, useCallback, useEffect } from 'react';
+import Image from 'next/image';
 
 import { useQueryClient } from '@tanstack/react-query';
 import { AddressAutocomplete, type AddressResult } from '@verone/ui';
@@ -53,7 +54,6 @@ import {
   AlertCircle,
   Check,
   Trash2,
-  Search,
   ArrowLeft,
   ArrowRight,
   Store,
@@ -73,6 +73,7 @@ import {
   useCreateAffiliateOrder,
   useAffiliateCustomers,
   useSelectionProducts,
+  type SelectionProduct,
 } from '../../../../lib/hooks/use-affiliate-orders';
 import {
   useOrganisationContacts,
@@ -83,6 +84,36 @@ import {
   useUserSelections,
   useUserAffiliate,
 } from '../../../../lib/hooks/use-user-selection';
+
+/**
+ * Type pour user_metadata de Supabase Auth
+ */
+interface UserMetadata {
+  full_name?: string;
+  phone?: string;
+  position?: string;
+}
+
+/**
+ * Type pour le résultat de la RPC create_public_linkme_order
+ */
+interface CreatePublicLinkmeOrderResult {
+  success: boolean;
+  error?: string;
+  order_id?: string;
+  order_number?: string;
+  total_ttc?: number;
+}
+
+/**
+ * Type pour les données de sélection avec affiliate
+ */
+interface SelectionDataWithAffiliate {
+  name: string;
+  linkme_affiliates: {
+    name: string;
+  } | null;
+}
 
 interface CreateOrderModalProps {
   isOpen: boolean;
@@ -207,7 +238,7 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
     name: '',
     email: '',
     phone: '',
-    position: null,
+    position: null as string | null,
   });
 
   // ============================================
@@ -243,12 +274,13 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
   // Initialiser le demandeur depuis l'utilisateur authentifié
   useEffect(() => {
     if (user) {
+      const metadata = user.user_metadata as UserMetadata | undefined;
       setRequester({
         type: 'responsable_enseigne',
-        name: user.user_metadata?.full_name || user.email || '',
-        email: user.email || '',
-        phone: user.user_metadata?.phone || '',
-        position: user.user_metadata?.position || null,
+        name: metadata?.full_name ?? user.email ?? '',
+        email: user.email ?? '',
+        phone: metadata?.phone ?? '',
+        position: metadata?.position ?? null,
       });
     }
   }, [user]);
@@ -265,10 +297,10 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
       if (primaryContact) {
         setNewRestaurantForm(prev => ({
           ...prev,
-          ownerFirstName: primaryContact.firstName || '',
-          ownerLastName: primaryContact.lastName || '',
-          ownerEmail: primaryContact.email || '',
-          ownerPhone: primaryContact.phone || '',
+          ownerFirstName: primaryContact.firstName ?? '',
+          ownerLastName: primaryContact.lastName ?? '',
+          ownerEmail: primaryContact.email ?? '',
+          ownerPhone: primaryContact.phone ?? '',
         }));
       }
     }
@@ -282,7 +314,7 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
     [selections, selectedSelectionId]
   );
 
-  const selectedCustomer = useMemo(
+  const _selectedCustomer = useMemo(
     () => customers?.find(c => c.id === selectedCustomerId),
     [customers, selectedCustomerId]
   );
@@ -294,7 +326,7 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
     const categoryMap = new Map<string, { count: number }>();
 
     for (const product of products) {
-      const cat = (product as any).category ?? 'Autres';
+      const cat = product.category ?? 'Autres';
       const existing = categoryMap.get(cat);
       if (existing) {
         existing.count++;
@@ -320,7 +352,7 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(
-        (p: any) =>
+        (p: SelectionProduct) =>
           p.productName.toLowerCase().includes(query) ||
           p.productSku.toLowerCase().includes(query)
       );
@@ -333,7 +365,7 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
       )?.name;
       if (categoryName) {
         filtered = filtered.filter(
-          (p: any) => (p.category ?? 'Autres') === categoryName
+          (p: SelectionProduct) => (p.category ?? 'Autres') === categoryName
         );
       }
     }
@@ -372,7 +404,7 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
       const tvaAmount = lineHt * item.taxRate;
       tvaByRate.set(
         item.taxRate,
-        (tvaByRate.get(item.taxRate) || 0) + tvaAmount
+        (tvaByRate.get(item.taxRate) ?? 0) + tvaAmount
       );
     });
 
@@ -430,10 +462,10 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
 
       setNewRestaurantForm(prev => ({
         ...prev,
-        ownerFirstName: primary.firstName || '',
-        ownerLastName: primary.lastName || '',
-        ownerEmail: primary.email || '',
-        ownerPhone: primary.phone || primary.mobile || '',
+        ownerFirstName: primary.firstName ?? '',
+        ownerLastName: primary.lastName ?? '',
+        ownerEmail: primary.email ?? '',
+        ownerPhone: primary.phone ?? primary.mobile ?? '',
       }));
     }
   }, [selectedCustomerContacts, isNewRestaurant]);
@@ -470,7 +502,7 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
     []
   );
 
-  const handleAddToCart = useCallback((product: any) => {
+  const handleAddToCart = useCallback((product: SelectionProduct) => {
     setCart(prev => {
       const existing = prev.find(item => item.selectionItemId === product.id);
       if (existing) {
@@ -491,7 +523,7 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
           unitPriceHt: product.sellingPriceHt,
           marginRate: product.marginRate,
           basePriceHt: product.basePriceHt,
-          taxRate: product.taxRate ?? 0.2,
+          taxRate: product.taxRate,
         },
       ];
     });
@@ -636,8 +668,7 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
       };
 
       // Appel RPC
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: result, error: rpcError } = await (supabase.rpc as any)(
+      const { data: result, error: rpcError } = (await supabase.rpc(
         'create_public_linkme_order',
         {
           p_affiliate_id: affiliate.id,
@@ -648,7 +679,7 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
           p_owner: p_owner,
           p_billing: p_billing,
         }
-      );
+      )) as { data: CreatePublicLinkmeOrderResult | null; error: Error | null };
 
       if (rpcError) {
         throw new Error(`Erreur création commande: ${rpcError.message}`);
@@ -658,7 +689,7 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
 
       if (!rpcResult?.success) {
         throw new Error(
-          rpcResult?.error || 'Erreur inconnue lors de la création'
+          rpcResult?.error ?? 'Erreur inconnue lors de la création'
         );
       }
 
@@ -668,11 +699,11 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
 
       // Envoyer notification email
       try {
-        const { data: selectionData } = await supabase
+        const { data: selectionData } = (await supabase
           .from('linkme_selections')
           .select('name, linkme_affiliates(name)')
           .eq('id', selectedSelectionId)
-          .single();
+          .single()) as { data: SelectionDataWithAffiliate | null };
 
         await fetch('/api/emails/notify-enseigne-order', {
           method: 'POST',
@@ -687,8 +718,7 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
             isNewRestaurant: true,
             totalTtc: totalTtc,
             source: 'create_order_modal',
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            affiliateName: (selectionData?.linkme_affiliates as any)?.name,
+            affiliateName: selectionData?.linkme_affiliates?.name,
             selectionName: selectionData?.name,
             notes: notes || null,
           }),
@@ -940,8 +970,8 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
                                   {customer.name}
                                 </p>
                                 <p className="text-xs text-gray-500">
-                                  {customer.city ||
-                                    customer.email ||
+                                  {customer.city ??
+                                    customer.email ??
                                     'Pas de détails'}
                                 </p>
                               </div>
@@ -1070,84 +1100,97 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
                           </div>
                         ) : paginatedProducts.length > 0 ? (
                           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                            {paginatedProducts.map((product: any) => {
-                              const inCart = cart.find(
-                                item => item.selectionItemId === product.id
-                              );
-                              return (
-                                <div
-                                  key={product.id}
-                                  className={`p-4 border rounded-xl transition-all ${
-                                    inCart
-                                      ? 'border-blue-500 bg-blue-50'
-                                      : 'border-gray-200 hover:border-gray-300'
-                                  }`}
-                                >
-                                  <div className="flex items-start gap-3">
-                                    <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
-                                      {product.productImage ? (
-                                        <img
-                                          src={product.productImage}
-                                          alt={product.productName}
-                                          className="w-full h-full object-cover"
-                                        />
-                                      ) : (
-                                        <Package className="h-8 w-8 text-gray-400" />
-                                      )}
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                      <p className="font-medium text-gray-900 line-clamp-2 text-sm">
-                                        {product.productName}
-                                      </p>
-                                      <p className="text-xs text-gray-500 mt-0.5">
-                                        {product.productSku}
-                                      </p>
-                                      <div className="flex items-center gap-2 mt-2">
-                                        <span className="text-sm font-semibold text-gray-900">
-                                          {product.sellingPriceHt.toFixed(2)} €
-                                        </span>
-                                        <span className="text-xs px-1.5 py-0.5 bg-orange-100 text-orange-700 rounded">
-                                          {product.marginRate.toFixed(0)}%
-                                        </span>
+                            {paginatedProducts.map(
+                              (product: SelectionProduct) => {
+                                const inCart = cart.find(
+                                  item => item.selectionItemId === product.id
+                                );
+                                return (
+                                  <div
+                                    key={product.id}
+                                    className={`p-4 border rounded-xl transition-all ${
+                                      inCart
+                                        ? 'border-blue-500 bg-blue-50'
+                                        : 'border-gray-200 hover:border-gray-300'
+                                    }`}
+                                  >
+                                    <div className="flex items-start gap-3">
+                                      <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
+                                        {product.productImage ? (
+                                          <Image
+                                            src={product.productImage}
+                                            alt={product.productName}
+                                            width={64}
+                                            height={64}
+                                            className="w-full h-full object-cover"
+                                          />
+                                        ) : (
+                                          <Package className="h-8 w-8 text-gray-400" />
+                                        )}
+                                      </div>
+                                      <div className="flex-1 min-w-0">
+                                        <p className="font-medium text-gray-900 line-clamp-2 text-sm">
+                                          {product.productName}
+                                        </p>
+                                        <p className="text-xs text-gray-500 mt-0.5">
+                                          {product.productSku}
+                                        </p>
+                                        <div className="flex items-center gap-2 mt-2">
+                                          <span className="text-sm font-semibold text-gray-900">
+                                            {product.sellingPriceHt.toFixed(2)}{' '}
+                                            €
+                                          </span>
+                                          <span className="text-xs px-1.5 py-0.5 bg-orange-100 text-orange-700 rounded">
+                                            {product.marginRate.toFixed(0)}%
+                                          </span>
+                                        </div>
                                       </div>
                                     </div>
-                                  </div>
-                                  <div className="mt-3 flex items-center justify-end">
-                                    {inCart ? (
-                                      <div className="flex items-center gap-2">
+                                    <div className="mt-3 flex items-center justify-end">
+                                      {inCart ? (
+                                        <div className="flex items-center gap-2">
+                                          <button
+                                            onClick={() =>
+                                              handleUpdateQuantity(
+                                                product.id,
+                                                -1
+                                              )
+                                            }
+                                            className="p-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
+                                          >
+                                            <Minus className="h-4 w-4" />
+                                          </button>
+                                          <span className="w-8 text-center font-semibold text-sm">
+                                            {inCart.quantity}
+                                          </span>
+                                          <button
+                                            onClick={() =>
+                                              handleUpdateQuantity(
+                                                product.id,
+                                                1
+                                              )
+                                            }
+                                            className="p-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
+                                          >
+                                            <Plus className="h-4 w-4" />
+                                          </button>
+                                        </div>
+                                      ) : (
                                         <button
                                           onClick={() =>
-                                            handleUpdateQuantity(product.id, -1)
+                                            handleAddToCart(product)
                                           }
-                                          className="p-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
-                                        >
-                                          <Minus className="h-4 w-4" />
-                                        </button>
-                                        <span className="w-8 text-center font-semibold text-sm">
-                                          {inCart.quantity}
-                                        </span>
-                                        <button
-                                          onClick={() =>
-                                            handleUpdateQuantity(product.id, 1)
-                                          }
-                                          className="p-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
+                                          className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors"
                                         >
                                           <Plus className="h-4 w-4" />
+                                          Ajouter
                                         </button>
-                                      </div>
-                                    ) : (
-                                      <button
-                                        onClick={() => handleAddToCart(product)}
-                                        className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors"
-                                      >
-                                        <Plus className="h-4 w-4" />
-                                        Ajouter
-                                      </button>
-                                    )}
+                                      )}
+                                    </div>
                                   </div>
-                                </div>
-                              );
-                            })}
+                                );
+                              }
+                            )}
                           </div>
                         ) : (
                           <div className="text-center py-12">
@@ -2208,84 +2251,88 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
                         </div>
                       ) : paginatedProducts.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                          {paginatedProducts.map((product: any) => {
-                            const inCart = cart.find(
-                              item => item.selectionItemId === product.id
-                            );
-                            return (
-                              <div
-                                key={product.id}
-                                className={`p-4 border rounded-xl transition-all ${
-                                  inCart
-                                    ? 'border-green-500 bg-green-50'
-                                    : 'border-gray-200 hover:border-gray-300'
-                                }`}
-                              >
-                                <div className="flex items-start gap-3">
-                                  <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
-                                    {product.productImage ? (
-                                      <img
-                                        src={product.productImage}
-                                        alt={product.productName}
-                                        className="w-full h-full object-cover"
-                                      />
-                                    ) : (
-                                      <Package className="h-8 w-8 text-gray-400" />
-                                    )}
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <p className="font-medium text-gray-900 line-clamp-2 text-sm">
-                                      {product.productName}
-                                    </p>
-                                    <p className="text-xs text-gray-500 mt-0.5">
-                                      {product.productSku}
-                                    </p>
-                                    <div className="flex items-center gap-2 mt-2">
-                                      <span className="text-sm font-semibold text-gray-900">
-                                        {product.sellingPriceHt.toFixed(2)} €
-                                      </span>
-                                      <span className="text-xs px-1.5 py-0.5 bg-orange-100 text-orange-700 rounded">
-                                        {product.marginRate.toFixed(0)}%
-                                      </span>
+                          {paginatedProducts.map(
+                            (product: SelectionProduct) => {
+                              const inCart = cart.find(
+                                item => item.selectionItemId === product.id
+                              );
+                              return (
+                                <div
+                                  key={product.id}
+                                  className={`p-4 border rounded-xl transition-all ${
+                                    inCart
+                                      ? 'border-green-500 bg-green-50'
+                                      : 'border-gray-200 hover:border-gray-300'
+                                  }`}
+                                >
+                                  <div className="flex items-start gap-3">
+                                    <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
+                                      {product.productImage ? (
+                                        <Image
+                                          src={product.productImage}
+                                          alt={product.productName}
+                                          width={64}
+                                          height={64}
+                                          className="w-full h-full object-cover"
+                                        />
+                                      ) : (
+                                        <Package className="h-8 w-8 text-gray-400" />
+                                      )}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <p className="font-medium text-gray-900 line-clamp-2 text-sm">
+                                        {product.productName}
+                                      </p>
+                                      <p className="text-xs text-gray-500 mt-0.5">
+                                        {product.productSku}
+                                      </p>
+                                      <div className="flex items-center gap-2 mt-2">
+                                        <span className="text-sm font-semibold text-gray-900">
+                                          {product.sellingPriceHt.toFixed(2)} €
+                                        </span>
+                                        <span className="text-xs px-1.5 py-0.5 bg-orange-100 text-orange-700 rounded">
+                                          {product.marginRate.toFixed(0)}%
+                                        </span>
+                                      </div>
                                     </div>
                                   </div>
-                                </div>
-                                <div className="mt-3 flex items-center justify-end">
-                                  {inCart ? (
-                                    <div className="flex items-center gap-2">
+                                  <div className="mt-3 flex items-center justify-end">
+                                    {inCart ? (
+                                      <div className="flex items-center gap-2">
+                                        <button
+                                          onClick={() =>
+                                            handleUpdateQuantity(product.id, -1)
+                                          }
+                                          className="p-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
+                                        >
+                                          <Minus className="h-4 w-4" />
+                                        </button>
+                                        <span className="w-8 text-center font-semibold text-sm">
+                                          {inCart.quantity}
+                                        </span>
+                                        <button
+                                          onClick={() =>
+                                            handleUpdateQuantity(product.id, 1)
+                                          }
+                                          className="p-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
+                                        >
+                                          <Plus className="h-4 w-4" />
+                                        </button>
+                                      </div>
+                                    ) : (
                                       <button
-                                        onClick={() =>
-                                          handleUpdateQuantity(product.id, -1)
-                                        }
-                                        className="p-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
-                                      >
-                                        <Minus className="h-4 w-4" />
-                                      </button>
-                                      <span className="w-8 text-center font-semibold text-sm">
-                                        {inCart.quantity}
-                                      </span>
-                                      <button
-                                        onClick={() =>
-                                          handleUpdateQuantity(product.id, 1)
-                                        }
-                                        className="p-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
+                                        onClick={() => handleAddToCart(product)}
+                                        className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium transition-colors"
                                       >
                                         <Plus className="h-4 w-4" />
+                                        Ajouter
                                       </button>
-                                    </div>
-                                  ) : (
-                                    <button
-                                      onClick={() => handleAddToCart(product)}
-                                      className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium transition-colors"
-                                    >
-                                      <Plus className="h-4 w-4" />
-                                      Ajouter
-                                    </button>
-                                  )}
+                                    )}
+                                  </div>
                                 </div>
-                              </div>
-                            );
-                          })}
+                              );
+                            }
+                          )}
                         </div>
                       ) : (
                         <div className="text-center py-12">

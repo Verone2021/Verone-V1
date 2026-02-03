@@ -9,9 +9,9 @@ import { createClient } from '@verone/utils/supabase/client';
 
 import type { Database } from '@verone/types';
 
-// Types Supabase
-type Organisation = Database['public']['Tables']['organisations']['Row'];
-type IndividualCustomer =
+// Types Supabase (reserved for future use)
+type _Organisation = Database['public']['Tables']['organisations']['Row'];
+type _IndividualCustomer =
   Database['public']['Tables']['individual_customers']['Row'];
 const supabase = createClient();
 
@@ -107,9 +107,9 @@ async function fetchEnseigneOrganisations(
     throw error;
   }
 
-  return (data || []).map(org => ({
+  return (data ?? []).map(org => ({
     id: org.id,
-    name: org.trade_name || org.legal_name,
+    name: org.trade_name ?? org.legal_name,
     legal_name: org.legal_name,
     trade_name: org.trade_name,
     email: org.email,
@@ -143,7 +143,7 @@ async function fetchEnseigneIndividualCustomers(
     throw error;
   }
 
-  return (data || []).map(customer => ({
+  return (data ?? []).map(customer => ({
     id: customer.id,
     first_name: customer.first_name,
     last_name: customer.last_name,
@@ -190,7 +190,7 @@ async function fetchOrganisationIndividualCustomers(
     throw error;
   }
 
-  return (data || []).map(customer => ({
+  return (data ?? []).map(customer => ({
     id: customer.id,
     first_name: customer.first_name,
     last_name: customer.last_name,
@@ -245,11 +245,11 @@ export function useLinkMeEnseigneCustomers(enseigneId: string | null) {
   const individualsQuery = useLinkMeEnseigneIndividualCustomers(enseigneId);
 
   return {
-    organisations: orgsQuery.data || [],
-    individuals: individualsQuery.data || [],
+    organisations: orgsQuery.data ?? [],
+    individuals: individualsQuery.data ?? [],
     isLoading: orgsQuery.isLoading || individualsQuery.isLoading,
     isError: orgsQuery.isError || individualsQuery.isError,
-    error: orgsQuery.error || individualsQuery.error,
+    error: orgsQuery.error ?? individualsQuery.error,
     refetch: () => {
       void Promise.all([orgsQuery.refetch(), individualsQuery.refetch()]).catch(
         error => {
@@ -325,12 +325,12 @@ export function useLinkMeAffiliateCustomers(
   return {
     // Pour enseignes: organisations liées
     // Pour org_independante: liste vide (normal, pas d'orgs liées)
-    organisations: isEnseigne ? enseigneOrgsQuery.data || [] : [],
+    organisations: isEnseigne ? (enseigneOrgsQuery.data ?? []) : [],
 
     // Clients particuliers selon le type
     individuals: isEnseigne
-      ? enseigneIndividualsQuery.data || []
-      : orgIndividualsQuery.data || [],
+      ? (enseigneIndividualsQuery.data ?? [])
+      : (orgIndividualsQuery.data ?? []),
 
     isLoading: isEnseigne
       ? enseigneOrgsQuery.isLoading || enseigneIndividualsQuery.isLoading
@@ -341,7 +341,7 @@ export function useLinkMeAffiliateCustomers(
       : orgIndividualsQuery.isError,
 
     error: isEnseigne
-      ? enseigneOrgsQuery.error || enseigneIndividualsQuery.error
+      ? (enseigneOrgsQuery.error ?? enseigneIndividualsQuery.error)
       : orgIndividualsQuery.error,
 
     refetch: () => {
@@ -389,10 +389,10 @@ export function useCreateEnseigneOrganisation() {
           address_line2: input.address_line2 ?? null,
           city: input.city ?? null,
           postal_code: input.postal_code ?? null,
-          country: input.country || 'FR',
+          country: input.country ?? 'FR',
           type: 'customer', // Toujours client
           is_active: true,
-          source_type: input.source_type || 'linkme', // Par défaut depuis CMS LinkMe
+          source_type: input.source_type ?? 'linkme', // Par défaut depuis CMS LinkMe
           source_affiliate_id: input.source_affiliate_id ?? null,
         })
         .select()

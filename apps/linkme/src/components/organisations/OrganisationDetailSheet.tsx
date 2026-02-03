@@ -38,7 +38,6 @@ import {
   type AddressResult,
   RadioGroup,
   RadioGroupItem,
-  Textarea,
 } from '@verone/ui';
 import { cn } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
@@ -55,7 +54,6 @@ import {
   FileText,
   User,
   Smartphone,
-  ExternalLink,
   Save,
   X,
   Loader2,
@@ -451,7 +449,7 @@ export function OrganisationDetailSheet({
 
   // Mutation générique pour mettre à jour n'importe quel champ
   const updateMutation = useMutation({
-    mutationFn: async (updates: Record<string, any>) => {
+    mutationFn: async (updates: Record<string, unknown>) => {
       if (!organisationId) throw new Error('No organisation ID');
 
       const { error } = await supabase
@@ -486,30 +484,30 @@ export function OrganisationDetailSheet({
         org.ownership_type === 'propre' ? 'succursale' : org.ownership_type;
       setOwnershipTypeForm(mappedOwnershipType);
       setShippingForm({
-        shipping_address_line1: org.shipping_address_line1 || '',
-        shipping_address_line2: org.shipping_address_line2 || '',
-        shipping_city: org.shipping_city || '',
-        shipping_postal_code: org.shipping_postal_code || '',
-        shipping_country: org.shipping_country || 'France',
+        shipping_address_line1: org.shipping_address_line1 ?? '',
+        shipping_address_line2: org.shipping_address_line2 ?? '',
+        shipping_city: org.shipping_city ?? '',
+        shipping_postal_code: org.shipping_postal_code ?? '',
+        shipping_country: org.shipping_country ?? 'France',
         latitude: org.latitude,
         longitude: org.longitude,
       });
       setBillingForm({
-        billing_address_line1: org.billing_address_line1 || '',
-        billing_address_line2: org.billing_address_line2 || '',
-        billing_city: org.billing_city || '',
-        billing_postal_code: org.billing_postal_code || '',
-        billing_country: org.billing_country || 'France',
+        billing_address_line1: org.billing_address_line1 ?? '',
+        billing_address_line2: org.billing_address_line2 ?? '',
+        billing_city: org.billing_city ?? '',
+        billing_postal_code: org.billing_postal_code ?? '',
+        billing_country: org.billing_country ?? 'France',
       });
       setContactsForm({
-        phone: org.phone || '',
-        email: org.email || '',
-        website: org.website || '',
+        phone: org.phone ?? '',
+        email: org.email ?? '',
+        website: org.website ?? '',
       });
       setLegalForm({
-        siren: org.siren || '',
-        siret: org.siret || '',
-        vat_number: org.vat_number || '',
+        siren: org.siren ?? '',
+        siret: org.siret ?? '',
+        vat_number: org.vat_number ?? '',
       });
     }
   }, [data?.organisation]);
@@ -594,7 +592,7 @@ export function OrganisationDetailSheet({
   }, [data?.organisation]);
 
   const displayName =
-    data?.organisation?.trade_name || data?.organisation?.legal_name || '';
+    data?.organisation?.trade_name ?? data?.organisation?.legal_name ?? '';
 
   const ownershipType = data?.organisation?.ownership_type;
   const isPropre = ownershipType === 'succursale';
@@ -692,7 +690,7 @@ export function OrganisationDetailSheet({
                 mode={mode}
                 editContent={
                   <RadioGroup
-                    value={ownershipTypeForm || ''}
+                    value={ownershipTypeForm ?? ''}
                     onValueChange={value =>
                       setOwnershipTypeForm(value as 'succursale' | 'franchise')
                     }
@@ -742,14 +740,14 @@ export function OrganisationDetailSheet({
                 onCancel={() => {
                   setShippingForm({
                     shipping_address_line1:
-                      data.organisation.shipping_address_line1 || '',
+                      data.organisation.shipping_address_line1 ?? '',
                     shipping_address_line2:
-                      data.organisation.shipping_address_line2 || '',
-                    shipping_city: data.organisation.shipping_city || '',
+                      data.organisation.shipping_address_line2 ?? '',
+                    shipping_city: data.organisation.shipping_city ?? '',
                     shipping_postal_code:
-                      data.organisation.shipping_postal_code || '',
+                      data.organisation.shipping_postal_code ?? '',
                     shipping_country:
-                      data.organisation.shipping_country || 'France',
+                      data.organisation.shipping_country ?? 'France',
                     latitude: data.organisation.latitude,
                     longitude: data.organisation.longitude,
                   });
@@ -836,14 +834,14 @@ export function OrganisationDetailSheet({
                 onCancel={() => {
                   setBillingForm({
                     billing_address_line1:
-                      data.organisation.billing_address_line1 || '',
+                      data.organisation.billing_address_line1 ?? '',
                     billing_address_line2:
-                      data.organisation.billing_address_line2 || '',
-                    billing_city: data.organisation.billing_city || '',
+                      data.organisation.billing_address_line2 ?? '',
+                    billing_city: data.organisation.billing_city ?? '',
                     billing_postal_code:
-                      data.organisation.billing_postal_code || '',
+                      data.organisation.billing_postal_code ?? '',
                     billing_country:
-                      data.organisation.billing_country || 'France',
+                      data.organisation.billing_country ?? 'France',
                   });
                   setEditingSection(null);
                 }}
@@ -929,9 +927,9 @@ export function OrganisationDetailSheet({
                 onSave={handleSaveContacts}
                 onCancel={() => {
                   setContactsForm({
-                    phone: data.organisation.phone || '',
-                    email: data.organisation.email || '',
-                    website: data.organisation.website || '',
+                    phone: data.organisation.phone ?? '',
+                    email: data.organisation.email ?? '',
+                    website: data.organisation.website ?? '',
                   });
                   setEditingSection(null);
                 }}
@@ -1032,9 +1030,9 @@ export function OrganisationDetailSheet({
                 onSave={handleSaveLegal}
                 onCancel={() => {
                   setLegalForm({
-                    siren: data.organisation.siren || '',
-                    siret: data.organisation.siret || '',
-                    vat_number: data.organisation.vat_number || '',
+                    siren: data.organisation.siren ?? '',
+                    siret: data.organisation.siret ?? '',
+                    vat_number: data.organisation.vat_number ?? '',
                   });
                   setEditingSection(null);
                 }}

@@ -18,8 +18,8 @@ async function healthCheck(_req: NextRequest) {
     status: 'healthy',
     timestamp: new Date().toISOString(),
     service: 'verone-back-office',
-    version: process.env.npm_package_version || '1.0.0',
-    environment: process.env.NODE_ENV || 'development',
+    version: process.env.npm_package_version ?? '1.0.0',
+    environment: process.env.NODE_ENV ?? 'development',
     checks: {
       memory: {
         status: 'healthy',

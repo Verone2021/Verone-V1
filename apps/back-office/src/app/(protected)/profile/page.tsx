@@ -78,7 +78,7 @@ export default function ProfilePage() {
       setEditData({
         email: user.email ?? '',
         raw_user_meta_data: {
-          name: (user.user_metadata?.name || user.email?.split('@')[0]) ?? '',
+          name: user.user_metadata?.name ?? user.email?.split('@')[0] ?? '',
         },
         first_name: '',
         last_name: '',
@@ -96,7 +96,12 @@ export default function ProfilePage() {
       if (profileError) {
         console.error('Error fetching profile:', profileError);
       } else {
-        setProfile(profileData as any);
+        setProfile({
+          ...profileData,
+          scopes: profileData.scopes ?? [],
+          created_at: profileData.created_at ?? new Date().toISOString(),
+          updated_at: profileData.updated_at ?? new Date().toISOString(),
+        });
         // Update edit data with profile info
         setEditData(prevData => ({
           ...prevData,
@@ -173,7 +178,7 @@ export default function ProfilePage() {
           .insert({
             user_id: user.id,
             ...sanitizedData,
-          } as any);
+          } as never);
 
         if (createError) {
           console.error('❌ Erreur création profil:', {
@@ -223,7 +228,12 @@ export default function ProfilePage() {
         .single();
 
       if (updatedProfile) {
-        setProfile(updatedProfile as any);
+        setProfile({
+          ...updatedProfile,
+          scopes: updatedProfile.scopes ?? [],
+          created_at: updatedProfile.created_at ?? new Date().toISOString(),
+          updated_at: updatedProfile.updated_at ?? new Date().toISOString(),
+        });
       }
 
       setIsEditing(false);
@@ -340,8 +350,8 @@ export default function ProfilePage() {
                   />
                 ) : (
                   <p className="font-medium text-xs text-neutral-900">
-                    {user?.user_metadata?.name ||
-                      user?.email?.split('@')[0] ||
+                    {user?.user_metadata?.name ??
+                      user?.email?.split('@')[0] ??
                       'Non défini'}
                   </p>
                 )}
@@ -375,7 +385,7 @@ export default function ProfilePage() {
                   />
                 ) : (
                   <p className="font-medium text-xs text-neutral-900">
-                    {profile?.first_name || 'Non renseigné'}
+                    {profile?.first_name ?? 'Non renseigné'}
                   </p>
                 )}
                 {validationErrors.firstName && (
@@ -409,7 +419,7 @@ export default function ProfilePage() {
                   />
                 ) : (
                   <p className="font-medium text-xs text-neutral-900">
-                    {profile?.last_name || 'Non renseigné'}
+                    {profile?.last_name ?? 'Non renseigné'}
                   </p>
                 )}
                 {validationErrors.lastName && (
@@ -442,7 +452,7 @@ export default function ProfilePage() {
                   />
                 ) : (
                   <p className="font-medium text-xs text-neutral-900">
-                    {profile?.phone || 'Non renseigné'}
+                    {profile?.phone ?? 'Non renseigné'}
                   </p>
                 )}
                 {isEditing && (
@@ -481,7 +491,7 @@ export default function ProfilePage() {
                   />
                 ) : (
                   <p className="font-medium text-xs text-neutral-900">
-                    {profile?.job_title || 'Non renseigné'}
+                    {profile?.job_title ?? 'Non renseigné'}
                   </p>
                 )}
                 {validationErrors.jobTitle && (

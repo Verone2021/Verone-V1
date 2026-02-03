@@ -604,7 +604,7 @@ interface RawProductData {
 export function formatCollectionProduct(
   rawProduct: RawProductData
 ): CollectionProduct {
-  const productImages = rawProduct.product_images || [];
+  const productImages = rawProduct.product_images ?? [];
 
   return {
     id: rawProduct.id,
@@ -613,15 +613,15 @@ export function formatCollectionProduct(
     status: rawProduct.status,
     creation_mode: rawProduct.creation_mode,
     cost_price: rawProduct.cost_price,
-    position: rawProduct.position || 0,
-    added_at: rawProduct.added_at || new Date().toISOString(),
+    position: rawProduct.position ?? 0,
+    added_at: rawProduct.added_at ?? new Date().toISOString(),
     product_images: productImages.map(img => ({
       id: img.id,
       public_url: img.public_url,
       storage_path: img.storage_path ?? '',
-      is_primary: img.is_primary || false,
-      display_order: img.display_order || 0,
-      image_type: img.image_type || 'gallery',
+      is_primary: img.is_primary ?? false,
+      display_order: img.display_order ?? 0,
+      image_type: img.image_type ?? 'gallery',
       alt_text: img.alt_text,
     })),
     primary_image_url: getPrimaryImageUrl(
@@ -629,8 +629,8 @@ export function formatCollectionProduct(
         id: img.id,
         public_url: img.public_url,
         storage_path: img.storage_path ?? '',
-        is_primary: img.is_primary || false,
-        display_order: img.display_order || 0,
+        is_primary: img.is_primary ?? false,
+        display_order: img.display_order ?? 0,
         image_type: img.image_type,
         alt_text: img.alt_text,
       }))

@@ -42,7 +42,7 @@ export function useUpdatePricing() {
         custom_price_ht: hasDiscount ? null : params.custom_price_ht,
         discount_rate: hasDiscount ? params.discount_rate : null,
         markup_rate: null, // Toujours null (mode non utilisé pour Site Internet)
-        min_quantity: params.min_quantity || 1,
+        min_quantity: params.min_quantity ?? 1,
         notes: params.notes ?? null,
         is_active: params.is_active ?? true,
       };
@@ -79,7 +79,7 @@ export function useUpdatePricing() {
       console.error('❌ Mutation ERROR pricing:', error);
       toast({
         title: 'Erreur lors de la sauvegarde',
-        description: error.message || 'Impossible de sauvegarder le pricing',
+        description: error.message ?? 'Impossible de sauvegarder le pricing',
         variant: 'destructive',
       });
     },

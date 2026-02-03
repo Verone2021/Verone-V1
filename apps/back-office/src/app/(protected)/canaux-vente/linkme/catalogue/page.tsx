@@ -69,7 +69,7 @@ function ProductStatusBadge({
 }: {
   status: 'active' | 'preorder' | 'discontinued' | 'draft';
 }) {
-  const config = PRODUCT_STATUS_CONFIG[status] || PRODUCT_STATUS_CONFIG.draft;
+  const config = PRODUCT_STATUS_CONFIG[status] ?? PRODUCT_STATUS_CONFIG.draft;
   return (
     <Badge variant="outline" className={`text-xs ${config.className}`}>
       {config.label}
@@ -152,32 +152,32 @@ export default function LinkMeCataloguePage() {
   // Séparer les produits par type: général, sourcés, affiliés
   const generalCatalogProducts = useMemo(
     () =>
-      (allCatalogProducts || []).filter(
+      (allCatalogProducts ?? []).filter(
         p => !p.is_sourced && !p.created_by_affiliate
       ),
     [allCatalogProducts]
   );
   const sourcingProducts = useMemo(
     () =>
-      (allCatalogProducts || []).filter(
+      (allCatalogProducts ?? []).filter(
         p => p.is_sourced && !p.created_by_affiliate
       ),
     [allCatalogProducts]
   );
   const affiliateProducts = useMemo(
     () =>
-      (allCatalogProducts || []).filter(p => p.created_by_affiliate !== null),
+      (allCatalogProducts ?? []).filter(p => p.created_by_affiliate !== null),
     [allCatalogProducts]
   );
 
   // Produits déjà dans le catalogue (IDs) - pour exclure du sélecteur
   const catalogProductIds = useMemo(() => {
-    return allCatalogProducts?.map(p => p.product_id) || [];
+    return allCatalogProducts?.map(p => p.product_id) ?? [];
   }, [allCatalogProducts]);
 
   // Produits catalogue général filtrés
   const filteredCatalogProducts = useMemo(() => {
-    return (generalCatalogProducts || []).filter(product => {
+    return (generalCatalogProducts ?? []).filter(product => {
       // Recherche
       if (searchTerm) {
         const search = searchTerm.toLowerCase();
@@ -203,7 +203,7 @@ export default function LinkMeCataloguePage() {
 
   // Produits sur mesure filtrés (même type LinkMeCatalogProduct)
   const filteredSourcingProducts = useMemo(() => {
-    return (sourcingProducts || []).filter(product => {
+    return (sourcingProducts ?? []).filter(product => {
       // Recherche
       if (searchTerm) {
         const search = searchTerm.toLowerCase();
@@ -229,7 +229,7 @@ export default function LinkMeCataloguePage() {
 
   // Produits affiliés filtrés
   const filteredAffiliateProducts = useMemo(() => {
-    return (affiliateProducts || []).filter(product => {
+    return (affiliateProducts ?? []).filter(product => {
       // Recherche
       if (searchTerm) {
         const search = searchTerm.toLowerCase();
@@ -255,7 +255,7 @@ export default function LinkMeCataloguePage() {
 
   // Stats
   const stats = useMemo(() => {
-    const allProducts = allCatalogProducts || [];
+    const allProducts = allCatalogProducts ?? [];
     return {
       total: allProducts.length,
       enabled: allProducts.filter(p => p.is_enabled).length,
@@ -695,7 +695,7 @@ export default function LinkMeCataloguePage() {
                               className="text-xs border-amber-500 text-amber-700 bg-amber-50"
                             >
                               <Users className="h-3 w-3 mr-1" />
-                              {product.enseigne_name ||
+                              {product.enseigne_name ??
                                 product.assigned_client_name}
                             </Badge>
                           </div>
@@ -816,7 +816,7 @@ export default function LinkMeCataloguePage() {
                               className="text-xs border-amber-500 text-amber-700 bg-amber-50"
                             >
                               <Users className="h-3 w-3 mr-1" />
-                              {product.enseigne_name ||
+                              {product.enseigne_name ??
                                 product.assigned_client_name}
                             </Badge>
                           )}
@@ -971,7 +971,7 @@ export default function LinkMeCataloguePage() {
                             className="text-xs border-amber-500 text-amber-700 bg-amber-50"
                           >
                             <Users className="h-3 w-3 mr-1" />
-                            {product.enseigne_name ||
+                            {product.enseigne_name ??
                               product.assigned_client_name}
                           </Badge>
                         </div>
@@ -1090,7 +1090,7 @@ export default function LinkMeCataloguePage() {
                             className="text-xs border-amber-500 text-amber-700 bg-amber-50"
                           >
                             <Users className="h-3 w-3 mr-1" />
-                            {product.enseigne_name ||
+                            {product.enseigne_name ??
                               product.assigned_client_name}
                           </Badge>
                         </div>

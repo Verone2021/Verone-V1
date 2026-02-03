@@ -45,14 +45,14 @@ interface RecentAction {
   id: string;
   action: string;
   module: string | null;
-  new_data: any;
+  new_data: unknown;
   created_at: string;
 }
 
 interface ActivityData {
   statistics: ActivityStats;
   recent_actions: RecentAction[];
-  active_sessions: any[];
+  active_sessions: unknown[];
 }
 
 export function UserActivityTab({ user }: UserActivityTabProps) {
@@ -69,13 +69,15 @@ export function UserActivityTab({ user }: UserActivityTabProps) {
         const response = await fetch(
           `/api/admin/users/${user.id}/activity?days=30&limit=50`
         );
-        const data = await response.json();
+        const data: unknown = await response.json();
 
         if (!response.ok) {
-          throw new Error(data.error || 'Erreur lors du chargement');
+          throw new Error(
+            (data as { error?: string }).error ?? 'Erreur lors du chargement'
+          );
         }
 
-        setActivityData(data);
+        setActivityData(data as ActivityData);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Erreur inconnue');
       } finally {
@@ -149,7 +151,7 @@ export function UserActivityTab({ user }: UserActivityTabProps) {
       organisation: 'Organisation',
       admin: 'Administration',
     };
-    return labels[module] || module;
+    return labels[module] ?? module;
   };
 
   if (isLoading) {

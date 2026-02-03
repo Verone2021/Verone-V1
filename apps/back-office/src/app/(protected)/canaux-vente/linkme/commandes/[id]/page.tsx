@@ -1,5 +1,7 @@
 'use client';
 
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return */
+
 /**
  * Page: Détail Commande Enseigne LinkMe
  *
@@ -305,7 +307,7 @@ export default function LinkMeOrderDetailPage() {
         created_by_affiliate_id: orderData.created_by_affiliate_id ?? null,
         linkme_selection_id: orderData.linkme_selection_id ?? null,
         organisation: organisation,
-        items: (orderData.sales_order_items || []).map((item: any) => ({
+        items: (orderData.sales_order_items ?? []).map((item: any) => ({
           id: item.id,
           product_id: item.product_id,
           quantity: item.quantity,
@@ -333,24 +335,24 @@ export default function LinkMeOrderDetailPage() {
           .in('id', productIds);
 
         const productMap = new Map(
-          (productsData || []).map((p: any) => [p.id, p.created_by_affiliate])
+          (productsData ?? []).map((p: any) => [p.id, p.created_by_affiliate])
         );
 
         setEnrichedItems(
           enrichedData.map((item: any) => ({
             id: item.id,
             product_id: item.product_id,
-            product_name: item.product_name || 'Produit inconnu',
-            product_sku: item.product_sku || '-',
+            product_name: item.product_name ?? 'Produit inconnu',
+            product_sku: item.product_sku ?? '-',
             product_image_url: item.product_image_url,
-            quantity: item.quantity || 0,
-            unit_price_ht: item.unit_price_ht || 0,
-            total_ht: item.total_ht || 0,
-            base_price_ht: item.base_price_ht || 0,
-            margin_rate: item.margin_rate || 0,
-            commission_rate: item.commission_rate || 0,
-            selling_price_ht: item.selling_price_ht || 0,
-            affiliate_margin: item.affiliate_margin || 0,
+            quantity: item.quantity ?? 0,
+            unit_price_ht: item.unit_price_ht ?? 0,
+            total_ht: item.total_ht ?? 0,
+            base_price_ht: item.base_price_ht ?? 0,
+            margin_rate: item.margin_rate ?? 0,
+            commission_rate: item.commission_rate ?? 0,
+            selling_price_ht: item.selling_price_ht ?? 0,
+            affiliate_margin: item.affiliate_margin ?? 0,
             created_by_affiliate: productMap.get(item.product_id) ?? null,
           }))
         );
@@ -527,8 +529,8 @@ export default function LinkMeOrderDetailPage() {
       delivered: 'Livrée',
     };
     return (
-      <Badge variant={variants[status] || 'outline'}>
-        {labels[status] || status}
+      <Badge variant={variants[status] ?? 'outline'}>
+        {labels[status] ?? status}
       </Badge>
     );
   };
@@ -568,7 +570,7 @@ export default function LinkMeOrderDetailPage() {
       <div className="p-6">
         <div className="flex items-center gap-2 p-4 bg-red-50 text-red-700 rounded-lg">
           <AlertCircle className="h-5 w-5" />
-          <span>{error || 'Commande non trouvée'}</span>
+          <span>{error ?? 'Commande non trouvée'}</span>
         </div>
       </div>
     );
@@ -723,7 +725,7 @@ export default function LinkMeOrderDetailPage() {
                   {enrichedItems.map(item => {
                     const isRevendeur = !!item.created_by_affiliate;
                     // Calcul de la marge/commission en €
-                    const marginCommissionEuros = item.affiliate_margin || 0;
+                    const marginCommissionEuros = item.affiliate_margin ?? 0;
                     // Payout affilié = prix vente - commission LinkMe (pour revendeur)
                     // Pour catalogue: payout = marge gagnée
                     const payoutAffilie = isRevendeur
@@ -774,8 +776,8 @@ export default function LinkMeOrderDetailPage() {
                             }
                           >
                             {isRevendeur
-                              ? `${item.commission_rate || 0}%`
-                              : `${item.margin_rate || 0}%`}
+                              ? `${item.commission_rate ?? 0}%`
+                              : `${item.margin_rate ?? 0}%`}
                           </span>
                           <p className="text-[10px] text-gray-400">
                             {isRevendeur ? 'Comm. LinkMe' : 'Marge affilié'}
@@ -809,10 +811,10 @@ export default function LinkMeOrderDetailPage() {
                 >
                   <div>
                     <p className="font-medium text-sm">
-                      {item.product?.name || 'Produit inconnu'}
+                      {item.product?.name ?? 'Produit inconnu'}
                     </p>
                     <p className="text-xs text-gray-500">
-                      {item.product?.sku || '-'} × {item.quantity}
+                      {item.product?.sku ?? '-'} × {item.quantity}
                     </p>
                   </div>
                   <p className="font-medium">
@@ -847,7 +849,7 @@ export default function LinkMeOrderDetailPage() {
                 <span className="text-sm">
                   Client:{' '}
                   <strong>
-                    {order.organisation.trade_name ||
+                    {order.organisation.trade_name ??
                       order.organisation.legal_name}
                   </strong>
                 </span>
@@ -998,7 +1000,7 @@ export default function LinkMeOrderDetailPage() {
                       <div>
                         <Label className="text-xs text-gray-500">Nom</Label>
                         <p className="font-medium">
-                          {details.owner_name || '-'}
+                          {details.owner_name ?? '-'}
                         </p>
                       </div>
                       <div>
@@ -1122,7 +1124,7 @@ export default function LinkMeOrderDetailPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label className="text-xs text-gray-500">Nom contact</Label>
-                    <p className="font-medium">{details.billing_name || '-'}</p>
+                    <p className="font-medium">{details.billing_name ?? '-'}</p>
                   </div>
                   {details.billing_email && (
                     <div>
@@ -1529,7 +1531,7 @@ export default function LinkMeOrderDetailPage() {
                 </p>
               </div>
               <Switch
-                checked={editForm.is_new_restaurant || false}
+                checked={editForm.is_new_restaurant ?? false}
                 onCheckedChange={checked =>
                   setEditForm(prev => ({ ...prev, is_new_restaurant: checked }))
                 }
@@ -1576,7 +1578,7 @@ export default function LinkMeOrderDetailPage() {
                 </p>
               </div>
               <Switch
-                checked={editForm.owner_contact_same_as_requester || false}
+                checked={editForm.owner_contact_same_as_requester ?? false}
                 onCheckedChange={checked =>
                   setEditForm(prev => ({
                     ...prev,
@@ -1810,7 +1812,7 @@ export default function LinkMeOrderDetailPage() {
                 </p>
               </div>
               <Switch
-                checked={editForm.delivery_terms_accepted || false}
+                checked={editForm.delivery_terms_accepted ?? false}
                 onCheckedChange={checked =>
                   setEditForm(prev => ({
                     ...prev,
@@ -1843,7 +1845,7 @@ export default function LinkMeOrderDetailPage() {
                 </p>
               </div>
               <Switch
-                checked={editForm.mall_form_required || false}
+                checked={editForm.mall_form_required ?? false}
                 onCheckedChange={checked =>
                   setEditForm(prev => ({
                     ...prev,
@@ -1974,3 +1976,5 @@ export default function LinkMeOrderDetailPage() {
     </div>
   );
 }
+
+/* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return */

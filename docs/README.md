@@ -45,8 +45,7 @@ docs/
 
 ## Archives
 
-Documentation archivee disponible dans `docs/archive/2026-01/`.
-Voir le [manifest d'archive](./archive/2026-01/ARCHIVE_MANIFEST.md) pour retrouver les anciennes infos.
+Documentation archivée disponible dans `docs/archive/2026-01/`.
 
 ---
 

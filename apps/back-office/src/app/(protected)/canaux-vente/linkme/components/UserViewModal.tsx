@@ -1,5 +1,7 @@
 'use client';
 
+import Image from 'next/image';
+
 import { cn } from '@verone/utils';
 import {
   X,
@@ -37,7 +39,7 @@ export function UserViewModal({ isOpen, user, onClose }: UserViewModalProps) {
   const fullName =
     [user.first_name, user.last_name].filter(Boolean).join(' ') || 'Sans nom';
   const initials =
-    `${user.first_name?.[0] ?? ''}${user.last_name?.[0] ?? ''}`.toUpperCase() ||
+    `${user.first_name?.[0] ?? ''}${user.last_name?.[0] ?? ''}`.toUpperCase() ??
     '?';
 
   const RoleIcon =
@@ -81,9 +83,11 @@ export function UserViewModal({ isOpen, user, onClose }: UserViewModalProps) {
             {/* Avatar et nom */}
             <div className="flex items-center gap-4">
               {user.avatar_url ? (
-                <img
+                <Image
                   src={user.avatar_url}
                   alt={fullName}
+                  width={64}
+                  height={64}
                   className="h-16 w-16 rounded-full object-cover"
                 />
               ) : (
@@ -144,7 +148,7 @@ export function UserViewModal({ isOpen, user, onClose }: UserViewModalProps) {
             </div>
 
             {/* Enseigne / Organisation */}
-            {(user.enseigne_name || user.organisation_name) && (
+            {(user.enseigne_name ?? user.organisation_name) && (
               <div className="space-y-3">
                 <h4 className="text-sm font-medium text-gray-700 flex items-center gap-2">
                   <Building2 className="h-4 w-4" />

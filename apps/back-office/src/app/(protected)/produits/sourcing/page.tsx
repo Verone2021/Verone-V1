@@ -47,6 +47,19 @@ import {
   ImageIcon,
 } from 'lucide-react';
 
+// Interface pour images produit
+interface ProductImage {
+  public_url: string | null;
+  is_primary: boolean;
+}
+
+// Interface pour produit avec images
+interface ProductWithImages {
+  id: string;
+  name: string;
+  product_images?: ProductImage[];
+}
+
 export default function SourcingPage() {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
@@ -109,9 +122,14 @@ export default function SourcingPage() {
           .gte('created_at', startOfMonth.toISOString())
           .lte('created_at', endOfMonth.toISOString());
 
-        setCompletedThisMonth(count || 0);
-      } catch (error) {
-        console.error('Erreur chargement produits complétés:', error);
+        setCompletedThisMonth(count ?? 0);
+      } catch (error: unknown) {
+        const message =
+          error instanceof Error ? error.message : 'Unknown error';
+        console.error(
+          '[Sourcing] Erreur chargement produits complétés:',
+          message
+        );
       }
     };
     void fetchCompletedCount().catch(error => {
@@ -122,15 +140,15 @@ export default function SourcingPage() {
   // KPIs calculés
   const stats = {
     totalDrafts:
-      sourcingProducts?.filter(p => p.product_status === 'draft').length || 0,
+      sourcingProducts?.filter(p => p.product_status === 'draft').length ?? 0,
     pendingValidation:
       sourcingProducts?.filter(
         p => p.product_status === 'preorder' || p.requires_sample
-      ).length || 0,
+      ).length ?? 0,
     samplesOrdered:
       sourcingProducts?.filter(
         p => p.requires_sample && p.product_status === 'preorder'
-      ).length || 0,
+      ).length ?? 0,
     completedThisMonth,
   };
 
@@ -167,7 +185,7 @@ export default function SourcingPage() {
       default:
         return (
           <Badge variant="outline" className="border-gray-300 text-gray-600">
-            {productStatus || 'Inconnu'}
+            {productStatus ?? 'Inconnu'}
           </Badge>
         );
     }
@@ -246,13 +264,11 @@ export default function SourcingPage() {
   };
 
   // Helper pour récupérer l'image principale
-  const getPrimaryImage = (product: any) => {
+  const getPrimaryImage = (product: ProductWithImages): string | null => {
     if (!product.product_images || product.product_images.length === 0)
       return null;
-    const primary = product.product_images.find((img: any) => img.is_primary);
-    return (
-      (primary?.public_url || product.product_images[0]?.public_url) ?? null
-    );
+    const primary = product.product_images.find(img => img.is_primary);
+    return primary?.public_url ?? product.product_images[0]?.public_url ?? null;
   };
 
   return (

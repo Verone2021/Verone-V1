@@ -67,6 +67,11 @@ interface OrganisationIndependante {
   is_linkme_active: boolean;
 }
 
+// Type pour le résultat de la view v_linkme_users
+type LinkMeUserWithOrg = {
+  organisation_id: string | null;
+};
+
 /**
  * EnseignesSection - Gestion des enseignes & organisations LinkMe
  *
@@ -129,20 +134,21 @@ export function EnseignesSection() {
 
       try {
         // 1. Récupérer les organisation_id des utilisateurs LinkMe (rôle org_independante)
-        const { data: usersWithOrg, error: usersError } = await (
-          supabase as any
-        )
+        const { data: usersWithOrg, error: usersError } = await supabase
           .from('v_linkme_users')
           .select('organisation_id')
           .not('organisation_id', 'is', null)
-          .is('enseigne_id', null);
+          .is('enseigne_id', null)
+          .returns<LinkMeUserWithOrg[]>();
 
         if (usersError) throw usersError;
 
         // 2. Extraire les IDs uniques
         const orgIds = [
           ...new Set(
-            usersWithOrg?.map((u: any) => u.organisation_id).filter(Boolean)
+            usersWithOrg
+              ?.map((u: LinkMeUserWithOrg) => u.organisation_id)
+              .filter(Boolean)
           ),
         ] as string[];
 
@@ -152,20 +158,21 @@ export function EnseignesSection() {
         }
 
         // 3. Récupérer les détails des organisations
-        const { data: orgs, error: orgsError } = await (supabase as any)
+        const { data: orgs, error: orgsError } = await supabase
           .from('organisations')
           .select(
             'id, legal_name, trade_name, logo_url, city, address_line1, postal_code'
           )
           .in('id', orgIds)
-          .order('legal_name');
+          .order('legal_name')
+          .returns<Omit<OrganisationIndependante, 'is_linkme_active'>[]>();
 
         if (orgsError) throw orgsError;
 
         // Mapper les résultats
         const organisationsMapped: OrganisationIndependante[] = (
-          orgs || []
-        ).map((org: any) => ({
+          orgs ?? []
+        ).map((org: Omit<OrganisationIndependante, 'is_linkme_active'>) => ({
           id: org.id,
           legal_name: org.legal_name,
           trade_name: org.trade_name,
@@ -253,10 +260,11 @@ export function EnseignesSection() {
       });
       setIsCreateModalOpen(false);
       resetForm();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Erreur',
-        description: error?.message || 'Erreur lors de la création',
+        description:
+          error instanceof Error ? error.message : 'Erreur lors de la création',
         variant: 'destructive',
       });
     }
@@ -276,10 +284,13 @@ export function EnseignesSection() {
       });
       setIsEditModalOpen(false);
       resetForm();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Erreur',
-        description: error?.message || 'Erreur lors de la mise à jour',
+        description:
+          error instanceof Error
+            ? error.message
+            : 'Erreur lors de la mise à jour',
         variant: 'destructive',
       });
     }
@@ -295,10 +306,13 @@ export function EnseignesSection() {
         title: 'Succès',
         description: `Enseigne "${enseigne.name}" supprimée`,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Erreur',
-        description: error?.message || 'Erreur lors de la suppression',
+        description:
+          error instanceof Error
+            ? error.message
+            : 'Erreur lors de la suppression',
         variant: 'destructive',
       });
     }
@@ -314,10 +328,13 @@ export function EnseignesSection() {
         title: 'Succès',
         description: `Enseigne ${enseigne.is_active ? 'désactivée' : 'activée'}`,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Erreur',
-        description: error?.message || 'Erreur lors du changement de statut',
+        description:
+          error instanceof Error
+            ? error.message
+            : 'Erreur lors du changement de statut',
         variant: 'destructive',
       });
     }
@@ -784,7 +801,7 @@ export function EnseignesSection() {
                           {org.logo_url ? (
                             <Image
                               src={getLogoUrl(org.logo_url) ?? ''}
-                              alt={org.trade_name || org.legal_name}
+                              alt={org.trade_name ?? org.legal_name}
                               width={64}
                               height={64}
                               className="object-contain"
@@ -806,7 +823,7 @@ export function EnseignesSection() {
                       {/* Name + Location */}
                       <div className="mb-4">
                         <h3 className="font-semibold text-lg">
-                          {org.trade_name || org.legal_name}
+                          {org.trade_name ?? org.legal_name}
                         </h3>
                         {org.city && (
                           <span className="text-sm text-muted-foreground">
@@ -1012,7 +1029,7 @@ export function EnseignesSection() {
               </Badge>
             </DialogTitle>
             <DialogDescription>
-              {selectedEnseigne?.description || 'Aucune description'}
+              {selectedEnseigne?.description ?? 'Aucune description'}
             </DialogDescription>
           </DialogHeader>
 

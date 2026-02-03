@@ -211,7 +211,7 @@ export default function SelectionPerformancePage() {
             >
               <Button variant="ghost" size="sm" className="gap-1 px-2">
                 <ChevronLeft className="h-4 w-4" />
-                {data?.affiliateName || 'Affilié'}
+                {data?.affiliateName ?? 'Affilié'}
               </Button>
             </Link>
 
@@ -229,10 +229,10 @@ export default function SelectionPerformancePage() {
               ) : (
                 <>
                   <h1 className="text-xl font-semibold">
-                    {data?.selectionName || 'Sélection'}
+                    {data?.selectionName ?? 'Sélection'}
                   </h1>
                   <p className="text-sm text-gray-500">
-                    {data?.affiliateName || 'Affilié'}
+                    {data?.affiliateName ?? 'Affilié'}
                   </p>
                 </>
               )}
@@ -264,7 +264,7 @@ export default function SelectionPerformancePage() {
         <div className="grid grid-cols-4 gap-4">
           <KpiCard
             title="Panier moyen"
-            value={formatCurrency(data?.averageBasket || 0)}
+            value={formatCurrency(data?.averageBasket ?? 0)}
             icon={ShoppingBag}
             iconBgColor="bg-orange-100"
             iconColor="text-orange-600"
@@ -272,7 +272,7 @@ export default function SelectionPerformancePage() {
           />
           <KpiCard
             title="CA HT"
-            value={formatCurrency(data?.totalRevenueHT || 0)}
+            value={formatCurrency(data?.totalRevenueHT ?? 0)}
             icon={DollarSign}
             iconBgColor="bg-green-100"
             iconColor="text-green-600"
@@ -280,7 +280,7 @@ export default function SelectionPerformancePage() {
           />
           <KpiCard
             title="Commissions TTC"
-            value={formatCurrency(data?.totalCommissionsTTC || 0)}
+            value={formatCurrency(data?.totalCommissionsTTC ?? 0)}
             icon={Wallet}
             iconBgColor="bg-emerald-100"
             iconColor="text-emerald-600"
@@ -288,7 +288,7 @@ export default function SelectionPerformancePage() {
           />
           <KpiCard
             title="Commandes"
-            value={formatNumber(data?.totalOrders || 0)}
+            value={formatNumber(data?.totalOrders ?? 0)}
             icon={ShoppingCart}
             iconBgColor="bg-blue-100"
             iconColor="text-blue-600"
@@ -369,11 +369,11 @@ export default function SelectionPerformancePage() {
             href={`/canaux-vente/linkme/analytics/performance/${affiliateId}`}
             className="hover:text-gray-700"
           >
-            {data?.affiliateName || 'Affilié'}
+            {data?.affiliateName ?? 'Affilié'}
           </Link>
           <ChevronRight className="h-3 w-3" />
           <span className="text-gray-900 font-medium">
-            {data?.selectionName || 'Sélection'}
+            {data?.selectionName ?? 'Sélection'}
           </span>
         </div>
       </div>

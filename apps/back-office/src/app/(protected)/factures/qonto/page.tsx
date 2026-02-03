@@ -78,6 +78,25 @@ interface QontoCreditNote {
 
 type DocumentType = 'invoice' | 'quote' | 'credit_note';
 
+// API Response Interfaces
+interface QontoInvoicesResponse {
+  success: boolean;
+  invoices?: QontoInvoice[];
+  error?: string;
+}
+
+interface QontoQuotesResponse {
+  success: boolean;
+  quotes?: QontoQuote[];
+  error?: string;
+}
+
+interface QontoCreditNotesResponse {
+  success: boolean;
+  credit_notes?: QontoCreditNote[];
+  error?: string;
+}
+
 // ============================================================
 // STATUS BADGE COMPONENT
 // ============================================================
@@ -119,8 +138,8 @@ function StatusBadge({
   };
 
   return (
-    <Badge variant={variants[status] || 'outline'}>
-      {labels[status] || status}
+    <Badge variant={variants[status] ?? 'outline'}>
+      {labels[status] ?? status}
     </Badge>
   );
 }
@@ -155,14 +174,14 @@ export default function QontoDocumentsPage(): React.ReactNode {
 
     try {
       const response = await fetch('/api/qonto/invoices');
-      const data = await response.json();
+      const data = (await response.json()) as QontoInvoicesResponse;
 
       if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Erreur chargement factures');
+        throw new Error(data.error ?? 'Erreur chargement factures');
       }
 
-      setInvoices(data.invoices || []);
-    } catch (err) {
+      setInvoices(data.invoices ?? []);
+    } catch (err: unknown) {
       setErrorInvoices(err instanceof Error ? err.message : 'Erreur inconnue');
     } finally {
       setLoadingInvoices(false);
@@ -175,14 +194,14 @@ export default function QontoDocumentsPage(): React.ReactNode {
 
     try {
       const response = await fetch('/api/qonto/quotes');
-      const data = await response.json();
+      const data = (await response.json()) as QontoQuotesResponse;
 
       if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Erreur chargement devis');
+        throw new Error(data.error ?? 'Erreur chargement devis');
       }
 
-      setQuotes(data.quotes || []);
-    } catch (err) {
+      setQuotes(data.quotes ?? []);
+    } catch (err: unknown) {
       setErrorQuotes(err instanceof Error ? err.message : 'Erreur inconnue');
     } finally {
       setLoadingQuotes(false);
@@ -195,14 +214,14 @@ export default function QontoDocumentsPage(): React.ReactNode {
 
     try {
       const response = await fetch('/api/qonto/credit-notes');
-      const data = await response.json();
+      const data = (await response.json()) as QontoCreditNotesResponse;
 
       if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Erreur chargement avoirs');
+        throw new Error(data.error ?? 'Erreur chargement avoirs');
       }
 
-      setCreditNotes(data.credit_notes || []);
-    } catch (err) {
+      setCreditNotes(data.credit_notes ?? []);
+    } catch (err: unknown) {
       setErrorCreditNotes(
         err instanceof Error ? err.message : 'Erreur inconnue'
       );
@@ -364,7 +383,7 @@ export default function QontoDocumentsPage(): React.ReactNode {
                     <div className="flex items-center justify-between">
                       <div className="space-y-1">
                         <p className="text-sm text-muted-foreground">
-                          Client: {invoice.client?.name || 'N/A'}
+                          Client: {invoice.client?.name ?? 'N/A'}
                         </p>
                         <p className="text-sm text-muted-foreground">
                           Date: {invoice.issue_date} | Echeance:{' '}
@@ -443,7 +462,7 @@ export default function QontoDocumentsPage(): React.ReactNode {
                     <div className="flex items-center justify-between">
                       <div className="space-y-1">
                         <p className="text-sm text-muted-foreground">
-                          Client: {quote.client?.name || 'N/A'}
+                          Client: {quote.client?.name ?? 'N/A'}
                         </p>
                         <p className="text-sm text-muted-foreground">
                           Date: {quote.issue_date} | Expire: {quote.expiry_date}
@@ -505,8 +524,8 @@ export default function QontoDocumentsPage(): React.ReactNode {
                   <CardHeader className="pb-2">
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-lg">
-                        {creditNote.credit_note_number ||
-                          creditNote.number ||
+                        {creditNote.credit_note_number ??
+                          creditNote.number ??
                           'N/A'}
                       </CardTitle>
                       <StatusBadge
@@ -519,7 +538,7 @@ export default function QontoDocumentsPage(): React.ReactNode {
                     <div className="flex items-center justify-between">
                       <div className="space-y-1">
                         <p className="text-sm text-muted-foreground">
-                          Client: {creditNote.client?.name || 'N/A'}
+                          Client: {creditNote.client?.name ?? 'N/A'}
                         </p>
                         <p className="text-sm text-muted-foreground">
                           Date: {creditNote.issue_date}

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
+import Image from 'next/image';
 
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
@@ -64,6 +65,20 @@ interface StockFilters {
   sortOrder: 'asc' | 'desc';
 }
 
+interface ProductWithStock {
+  id: string;
+  name: string;
+  sku: string;
+  stock_real: number;
+  stock_forecasted_in: number;
+  stock_forecasted_out: number;
+  stock_available: number;
+  stock_total_forecasted: number;
+  last_movement_at?: string | null;
+  primary_image_url?: string;
+  [key: string]: unknown; // Pour les autres propriétés du produit comme minimumSellingPrice, price_ttc
+}
+
 export default function CatalogueStocksPage() {
   const [filters, setFilters] = useState<StockFilters>({
     search: '',
@@ -72,13 +87,14 @@ export default function CatalogueStocksPage() {
     sortBy: 'name',
     sortOrder: 'asc',
   });
-  const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const [selectedProduct, setSelectedProduct] =
+    useState<ProductWithStock | null>(null);
   const [showMovementModal, setShowMovementModal] = useState(false);
   const [showGeneralMovementModal, setShowGeneralMovementModal] =
     useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [selectedProductForHistory, setSelectedProductForHistory] =
-    useState<any>(null);
+    useState<ProductWithStock | null>(null);
   const [activeTab, setActiveTab] = useState('overview');
 
   const { toast } = useToast();
@@ -103,7 +119,7 @@ export default function CatalogueStocksPage() {
     void fetchAllStock().catch(error => {
       console.error('[CatalogueStocks] fetchAllStock failed:', error);
     });
-  }, []);
+  }, [loadCatalogueData, fetchAllStock]);
 
   // Données enrichies produits + stock
   const enrichedProducts = useMemo(() => {
@@ -113,11 +129,11 @@ export default function CatalogueStocksPage() {
       const stock = stockData.find(s => s.product_id === product.id);
       return {
         ...product,
-        stock_real: stock?.stock_real || 0,
-        stock_forecasted_in: stock?.stock_forecasted_in || 0,
-        stock_forecasted_out: stock?.stock_forecasted_out || 0,
-        stock_available: stock?.stock_available || 0,
-        stock_total_forecasted: stock?.stock_total_forecasted || 0,
+        stock_real: stock?.stock_real ?? 0,
+        stock_forecasted_in: stock?.stock_forecasted_in ?? 0,
+        stock_forecasted_out: stock?.stock_forecasted_out ?? 0,
+        stock_available: stock?.stock_available ?? 0,
+        stock_total_forecasted: stock?.stock_total_forecasted ?? 0,
         last_movement_at: stock?.last_movement_at,
       };
     });
@@ -158,16 +174,25 @@ export default function CatalogueStocksPage() {
 
     // Tri
     filtered.sort((a, b) => {
-      let aValue: any = a[filters.sortBy as keyof typeof a];
-      let bValue: any = b[filters.sortBy as keyof typeof b];
+      const aValue = a[filters.sortBy as keyof typeof a];
+      const bValue = b[filters.sortBy as keyof typeof b];
 
-      if (typeof aValue === 'string') {
-        aValue = aValue.toLowerCase();
-        bValue = bValue.toLowerCase();
-      }
+      // Conversion en valeurs comparables
+      const aCompare: string | number =
+        typeof aValue === 'string'
+          ? aValue.toLowerCase()
+          : typeof aValue === 'number'
+            ? aValue
+            : 0;
+      const bCompare: string | number =
+        typeof bValue === 'string'
+          ? bValue.toLowerCase()
+          : typeof bValue === 'number'
+            ? bValue
+            : 0;
 
-      if (aValue < bValue) return filters.sortOrder === 'asc' ? -1 : 1;
-      if (aValue > bValue) return filters.sortOrder === 'asc' ? 1 : -1;
+      if (aCompare < bCompare) return filters.sortOrder === 'asc' ? -1 : 1;
+      if (aCompare > bCompare) return filters.sortOrder === 'asc' ? 1 : -1;
       return 0;
     });
 
@@ -204,7 +229,7 @@ export default function CatalogueStocksPage() {
     setShowGeneralMovementModal(false);
   };
 
-  const handleShowHistory = (product: any) => {
+  const handleShowHistory = (product: ProductWithStock) => {
     setSelectedProductForHistory(product);
     setShowHistoryModal(true);
   };
@@ -361,7 +386,7 @@ export default function CatalogueStocksPage() {
                 </div>
                 <Select
                   value={filters.status}
-                  onValueChange={(value: any) =>
+                  onValueChange={(value: StockFilters['status']) =>
                     setFilters({ ...filters, status: value })
                   }
                 >
@@ -380,7 +405,7 @@ export default function CatalogueStocksPage() {
                 </Select>
                 <Select
                   value={filters.sortBy}
-                  onValueChange={(value: any) =>
+                  onValueChange={(value: StockFilters['sortBy']) =>
                     setFilters({ ...filters, sortBy: value })
                   }
                 >
@@ -449,18 +474,25 @@ export default function CatalogueStocksPage() {
                         <TableCell>
                           <div className="flex items-center gap-3">
                             {product.primary_image_url && (
-                              <img
+                              <Image
                                 src={product.primary_image_url}
                                 alt={product.name}
-                                className="w-10 h-10 rounded object-cover"
+                                width={40}
+                                height={40}
+                                className="rounded object-cover"
                               />
                             )}
                             <div>
                               <div className="font-medium">{product.name}</div>
                               <div className="text-sm text-gray-600">
                                 {formatPrice(
-                                  (product as any).minimumSellingPrice ||
-                                    (product as any).price_ttc
+                                  (product['minimumSellingPrice'] as
+                                    | number
+                                    | undefined) ??
+                                    (product['price_ttc'] as
+                                      | number
+                                      | undefined) ??
+                                    0
                                 )}
                               </div>
                             </div>

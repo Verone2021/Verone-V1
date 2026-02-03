@@ -147,8 +147,8 @@ async function approveOrder(
       .from('organisations')
       .insert({
         legal_name:
-          details.owner_company_legal_name ||
-          details.owner_company_trade_name ||
+          details.owner_company_legal_name ??
+          details.owner_company_trade_name ??
           'À compléter',
         trade_name: details.owner_company_trade_name,
         email: details.owner_email ?? null,
@@ -287,7 +287,7 @@ async function approveOrder(
         ownerName,
         step4Token,
         organisationName,
-        totalTtc: orderData?.total_ttc || 0,
+        totalTtc: orderData?.total_ttc ?? 0,
       }),
     });
   } catch (emailError) {
@@ -699,7 +699,7 @@ export function usePendingOrdersCount() {
         throw error;
       }
 
-      return count || 0;
+      return count ?? 0;
     },
     staleTime: 120000, // 2 minutes
     refetchInterval: 60000,
@@ -774,7 +774,7 @@ export function usePendingOrders() {
       }
 
       // BATCH: Récupérer toutes les organisations en UNE SEULE requête (fix N+1)
-      const organisationIds = (orders || [])
+      const organisationIds = (orders ?? [])
         .filter(o => o.customer_type === 'organization' && o.customer_id)
         .map(o => o.customer_id);
 
@@ -791,21 +791,22 @@ export function usePendingOrders() {
         const { data: orgsData } = await supabase
           .from('organisations')
           .select('id, trade_name, legal_name, enseigne:enseigne_id(name)')
-          .in('id', organisationIds);
+          .in('id', organisationIds)
+          .returns<
+            {
+              id: string;
+              trade_name: string | null;
+              legal_name: string;
+              enseigne: { name: string | null } | null;
+            }[]
+          >();
 
         if (orgsData) {
           for (const org of orgsData) {
             organisationsMap.set(org.id, {
               trade_name: org.trade_name,
               legal_name: org.legal_name,
-              enseigne_name: (org.enseigne as
-                | { name?: string | null }
-                | Array<{ name?: string | null }>
-                | undefined)
-                ? Array.isArray(org.enseigne)
-                  ? (org.enseigne[0]?.name ?? null)
-                  : ((org.enseigne as { name?: string | null }).name ?? null)
-                : null,
+              enseigne_name: org.enseigne?.name ?? null,
             });
           }
         }
@@ -814,7 +815,7 @@ export function usePendingOrders() {
       // Map orders with organisation data from the batch
       const enrichedOrders: PendingOrder[] = [];
 
-      for (const order of orders || []) {
+      for (const order of orders ?? []) {
         // Get organisation name from cached map (no additional query)
         let organisationName: string | null = null;
         let enseigneName: string | null = null;
@@ -822,7 +823,7 @@ export function usePendingOrders() {
         if (order.customer_type === 'organization' && order.customer_id) {
           const orgData = organisationsMap.get(order.customer_id);
           if (orgData) {
-            organisationName = orgData.trade_name || orgData.legal_name;
+            organisationName = orgData.trade_name ?? orgData.legal_name;
             enseigneName = orgData.enseigne_name;
           }
         }
@@ -1017,7 +1018,7 @@ export function useAllLinkMeOrders(status?: OrderValidationStatus) {
       }
 
       // BATCH: Récupérer toutes les organisations en UNE SEULE requête
-      const organisationIds = (orders || [])
+      const organisationIds = (orders ?? [])
         .filter(o => o.customer_type === 'organization' && o.customer_id)
         .map(o => o.customer_id);
 
@@ -1066,7 +1067,7 @@ export function useAllLinkMeOrders(status?: OrderValidationStatus) {
       // Enrichir les commandes
       const enrichedOrders: PendingOrder[] = [];
 
-      for (const order of orders || []) {
+      for (const order of orders ?? []) {
         const linkmeDetails = order.sales_order_linkme_details as Record<
           string,
           unknown
@@ -1077,7 +1078,7 @@ export function useAllLinkMeOrders(status?: OrderValidationStatus) {
           ? organisationsMap.get(order.customer_id)
           : null;
 
-        const items: PendingOrderItem[] = (rawItems || []).map(item => {
+        const items: PendingOrderItem[] = (rawItems ?? []).map(item => {
           const products = item.products as Record<string, unknown> | null;
           const productImages = products?.product_images as
             | { public_url: string; is_primary: boolean }[]
@@ -1107,8 +1108,7 @@ export function useAllLinkMeOrders(status?: OrderValidationStatus) {
           total_ht: order.total_ht,
           total_ttc: order.total_ttc,
           created_at: order.created_at,
-          organisation_name:
-            (orgData?.trade_name || orgData?.legal_name) ?? null,
+          organisation_name: orgData?.trade_name ?? orgData?.legal_name ?? null,
           enseigne_name: orgData?.enseigne_name ?? null,
           requester_type: linkmeDetails?.requester_type as string | null,
           requester_name: linkmeDetails?.requester_name as string | null,
@@ -1116,7 +1116,7 @@ export function useAllLinkMeOrders(status?: OrderValidationStatus) {
           linkme_details: linkmeDetails
             ? {
                 is_new_restaurant:
-                  (linkmeDetails.is_new_restaurant as boolean) || false,
+                  (linkmeDetails.is_new_restaurant as boolean) ?? false,
                 requester_type: linkmeDetails.requester_type as string | null,
                 requester_name: linkmeDetails.requester_name as string | null,
                 requester_email: linkmeDetails.requester_email as string | null,

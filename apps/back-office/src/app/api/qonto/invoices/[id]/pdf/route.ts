@@ -16,7 +16,7 @@ import { createServerClient } from '@verone/utils/supabase/server';
 
 function getQontoClient(): QontoClient {
   return new QontoClient({
-    authMode: (process.env.QONTO_AUTH_MODE as 'oauth' | 'api_key') || 'oauth',
+    authMode: (process.env.QONTO_AUTH_MODE as 'oauth' | 'api_key') ?? 'oauth',
     organizationId: process.env.QONTO_ORGANIZATION_ID,
     apiKey: process.env.QONTO_API_KEY,
     accessToken: process.env.QONTO_ACCESS_TOKEN,
@@ -102,7 +102,7 @@ export async function GET(
     const client = getQontoClient();
 
     // Utiliser qonto_invoice_id si disponible, sinon utiliser l'ID passé en paramètre
-    const qontoId = qontoInvoiceId || id;
+    const qontoId = qontoInvoiceId ?? id;
 
     // Récupérer la facture pour obtenir le pdf_url
     const invoice = await client.getClientInvoiceById(qontoId);

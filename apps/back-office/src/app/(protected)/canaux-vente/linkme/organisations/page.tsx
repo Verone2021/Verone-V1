@@ -166,7 +166,7 @@ export default function OrganisationsPage() {
             Validez les restaurants crees via le stepper enseigne
           </p>
         </div>
-        {pendingCount && pendingCount > 0 && (
+        {(pendingCount ?? 0) > 0 && (
           <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 border border-amber-200 rounded-lg">
             <Clock className="h-5 w-5 text-amber-600" />
             <span className="font-semibold text-amber-700">
@@ -257,7 +257,7 @@ export default function OrganisationsPage() {
                   <td className="px-6 py-4">
                     <div>
                       <p className="font-medium text-gray-900">
-                        {org.trade_name || org.legal_name}
+                        {org.trade_name ?? org.legal_name}
                       </p>
                       {org.trade_name && (
                         <p className="text-sm text-gray-500">
@@ -283,7 +283,7 @@ export default function OrganisationsPage() {
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <p className="text-gray-900">{org.enseigne_name || '-'}</p>
+                    <p className="text-gray-900">{org.enseigne_name ?? '-'}</p>
                   </td>
                   <td className="px-6 py-4">
                     <p className="text-gray-600">
@@ -349,7 +349,7 @@ export default function OrganisationsPage() {
             <div className="py-4">
               <div className="p-4 bg-gray-50 rounded-lg space-y-2">
                 <p className="font-medium">
-                  {selectedOrg.trade_name || selectedOrg.legal_name}
+                  {selectedOrg.trade_name ?? selectedOrg.legal_name}
                 </p>
                 {selectedOrg.trade_name && (
                   <p className="text-sm text-gray-500">
@@ -454,7 +454,7 @@ export default function OrganisationsPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-gray-500">Nom commercial</p>
-                  <p className="font-medium">{selectedOrg.trade_name || '-'}</p>
+                  <p className="font-medium">{selectedOrg.trade_name ?? '-'}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Raison sociale</p>
@@ -465,12 +465,12 @@ export default function OrganisationsPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-gray-500">SIRET</p>
-                  <p className="font-medium">{selectedOrg.siret || '-'}</p>
+                  <p className="font-medium">{selectedOrg.siret ?? '-'}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Enseigne</p>
                   <p className="font-medium">
-                    {selectedOrg.enseigne_name || '-'}
+                    {selectedOrg.enseigne_name ?? '-'}
                   </p>
                 </div>
               </div>

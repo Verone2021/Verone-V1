@@ -46,10 +46,10 @@ export function PasswordChangeDialog({
   open,
   onOpenChange,
 }: PasswordChangeDialogProps) {
-  const [currentPassword, setCurrentPassword] = useState('');
+  const [_currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [_showCurrentPassword, _setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -157,7 +157,7 @@ export function PasswordChangeDialog({
       }, 2000);
     } catch (error: any) {
       console.error('Erreur changement mot de passe:', error);
-      setError(error.message || 'Erreur lors du changement de mot de passe');
+      setError(error.message ?? 'Erreur lors du changement de mot de passe');
     } finally {
       setLoading(false);
     }

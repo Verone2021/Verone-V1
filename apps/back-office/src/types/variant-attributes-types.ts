@@ -160,14 +160,14 @@ export type VariantAttributesFormData = Partial<VariantAttributes>;
  * Vérifie si une valeur est une couleur valide
  * Système dynamique: toute chaîne non-vide est valide
  */
-export function isValidColor(value: any): value is ProductColor {
+export function isValidColor(value: unknown): value is ProductColor {
   return typeof value === 'string' && value.trim().length > 0;
 }
 
 /**
  * Vérifie si une valeur est un matériau valide
  */
-export function isValidMaterial(value: any): value is ProductMaterial {
+export function isValidMaterial(value: unknown): value is ProductMaterial {
   return typeof value === 'string' && value in MATERIAL_LABELS;
 }
 
@@ -218,7 +218,7 @@ export function getMaterialLabel(
  * Valide un objet VariantAttributes complet
  * Retourne les erreurs de validation le cas échéant
  */
-export function validateVariantAttributes(attributes: any): {
+export function validateVariantAttributes(attributes: unknown): {
   valid: boolean;
   errors: string[];
 } {
@@ -228,28 +228,30 @@ export function validateVariantAttributes(attributes: any): {
     return { valid: true, errors: [] }; // Attributs optionnels
   }
 
+  // Type guard: cast to Record<string, unknown> after verifying it's an object
+  const attrs = attributes as Record<string, unknown>;
+
   // Validation couleur principale
-  if (attributes.color && !isValidColor(attributes.color)) {
-    errors.push(`Couleur invalide: ${attributes.color}`);
+  if (attrs.color && !isValidColor(attrs.color)) {
+    errors.push(`Couleur invalide: ${String(attrs.color)}`);
   }
 
   // Validation couleur secondaire
-  if (attributes.color_secondary && !isValidColor(attributes.color_secondary)) {
-    errors.push(`Couleur secondaire invalide: ${attributes.color_secondary}`);
+  if (attrs.color_secondary && !isValidColor(attrs.color_secondary)) {
+    errors.push(
+      `Couleur secondaire invalide: ${String(attrs.color_secondary)}`
+    );
   }
 
   // Validation matériau principal
-  if (attributes.material && !isValidMaterial(attributes.material)) {
-    errors.push(`Matériau invalide: ${attributes.material}`);
+  if (attrs.material && !isValidMaterial(attrs.material)) {
+    errors.push(`Matériau invalide: ${String(attrs.material)}`);
   }
 
   // Validation matériau secondaire
-  if (
-    attributes.material_secondary &&
-    !isValidMaterial(attributes.material_secondary)
-  ) {
+  if (attrs.material_secondary && !isValidMaterial(attrs.material_secondary)) {
     errors.push(
-      `Matériau secondaire invalide: ${attributes.material_secondary}`
+      `Matériau secondaire invalide: ${String(attrs.material_secondary)}`
     );
   }
 

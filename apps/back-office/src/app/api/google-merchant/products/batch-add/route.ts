@@ -55,7 +55,7 @@ export async function POST(
 ): Promise<NextResponse<BatchAddResponse>> {
   try {
     // 1. Parse et valider body
-    const body = await request.json();
+    const body: unknown = await request.json();
 
     const validation = BatchAddSchema.safeParse(body);
     if (!validation.success) {
@@ -78,7 +78,7 @@ export async function POST(
     const supabase = await createServerClient();
 
     // 3. Appeler RPC batch_add_google_merchant_products
-    const { data, error } = await (supabase as any).rpc(
+    const { data, error } = await supabase.rpc(
       'batch_add_google_merchant_products',
       {
         product_ids: productIds,
@@ -91,10 +91,11 @@ export async function POST(
         '[API] RPC batch_add_google_merchant_products failed:',
         error
       );
+      const errorMessage = error instanceof Error ? error.message : String(error);
       return NextResponse.json(
         {
           success: false,
-          error: `Database error: ${error.message}`,
+          error: `Database error: ${errorMessage}`,
         },
         { status: 500 }
       );
@@ -114,7 +115,7 @@ export async function POST(
       .filter(r => !r.success)
       .map(r => ({
         productId: r.product_id,
-        error: r.error || 'Unknown error',
+        error: r.error ?? 'Unknown error',
       }));
 
     console.warn(
@@ -130,7 +131,7 @@ export async function POST(
         ...(errors.length > 0 && { errors }),
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[API] Batch add failed:', error);
 
     return NextResponse.json(

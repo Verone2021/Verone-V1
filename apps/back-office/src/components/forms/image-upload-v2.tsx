@@ -163,7 +163,7 @@ export function ImageUploadV2({
     if (!canUpload) return;
 
     const files = e.dataTransfer.files;
-    if (files && files[0]) {
+    if (files?.[0]) {
       void handleFileSelect(files[0]).catch(error => {
         console.error('[ImageUploadV2] handleFileSelect failed:', error);
       });
@@ -172,7 +172,7 @@ export function ImageUploadV2({
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (files && files[0]) {
+    if (files?.[0]) {
       void handleFileSelect(files[0]).catch(error => {
         console.error('[ImageUploadV2] handleFileSelect failed:', error);
       });
@@ -227,7 +227,7 @@ export function ImageUploadV2({
    * 🚨 Rendu des erreurs
    */
   const renderError = () => {
-    const errorMessage = validationError || error?.message;
+    const errorMessage = validationError ?? error?.message;
 
     if (!errorMessage) return null;
 

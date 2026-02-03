@@ -19,10 +19,11 @@
 
 import React, { useState, useEffect } from 'react';
 
+import type { ReceptionShipmentStats, ReceptionHistory } from '@verone/types';
+
 import {
   PurchaseOrderReceptionModal,
   AffiliateReceptionModal,
-  type AffiliateReception,
 } from '@verone/orders';
 import { usePurchaseReceptions } from '@verone/orders';
 import { ProductThumbnail } from '@verone/products';
@@ -69,6 +70,96 @@ import {
   Building2,
 } from 'lucide-react';
 
+// ============================================================================
+// TYPES LOCAUX
+// ============================================================================
+
+/**
+ * Purchase Order avec items enrichis + supplier name mappé
+ * Retourné par loadPurchaseOrdersReadyForReception()
+ */
+interface PurchaseOrderWithSupplier {
+  id: string;
+  po_number: string;
+  status: string;
+  created_at: string;
+  expected_delivery_date: string | null;
+  received_at: string | null;
+  supplier_name: string;
+  organisations: {
+    id: string;
+    legal_name: string;
+    trade_name: string | null;
+  } | null;
+  purchase_order_items: Array<{
+    id: string;
+    product_id: string;
+    quantity: number;
+    quantity_received: number | null;
+    unit_price_ht: number;
+    products: {
+      id: string;
+      name: string;
+      sku: string;
+      stock_real: number | null; // ✅ stock_real (pas stock_quantity)
+      product_images?: Array<{
+        public_url: string;
+        is_primary: boolean;
+      }>;
+    };
+  }>;
+}
+
+/**
+ * Historique annulation (reliquat annulé)
+ * Retourné par loadCancellationHistory()
+ */
+interface CancellationHistoryItem {
+  id: string;
+  performed_at: string;
+  notes: string | null;
+  quantity_cancelled: number;
+  product_name: string;
+  product_sku: string;
+}
+
+/**
+ * Réception affilié mappée avec noms display
+ * Retourné par loadAffiliateProductReceptions()
+ */
+interface AffiliateReceptionMapped {
+  id: string;
+  reference_type: string;
+  product_id: string;
+  quantity_expected: number;
+  quantity_received: number | null;
+  status: string;
+  notes: string | null;
+  received_at: string | null;
+  received_by: string | null;
+  created_at: string;
+  affiliate_id: string | null;
+  affiliate_name: string;
+  enseigne_name: string;
+  product_name: string;
+  product_sku: string;
+  product_image_url: string | null;
+}
+
+/**
+ * Filtres pour queries PO
+ */
+interface ReceptionFilters {
+  status?: string;
+  search?: string;
+  urgent_only?: boolean;
+  overdue_only?: boolean;
+}
+
+// ============================================================================
+// COMPOSANT
+// ============================================================================
+
 export default function ReceptionsPage() {
   const {
     loading,
@@ -80,20 +171,31 @@ export default function ReceptionsPage() {
     loadAffiliateProductReceptions,
   } = usePurchaseReceptions();
 
-  const [stats, setStats] = useState<any>(null);
-  const [orders, setOrders] = useState<any[]>([]);
-  const [historyOrders, setHistoryOrders] = useState<any[]>([]);
-  const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [stats, setStats] = useState<ReceptionShipmentStats | null>(null);
+  const [orders, setOrders] = useState<PurchaseOrderWithSupplier[]>([]);
+  const [historyOrders, setHistoryOrders] = useState<
+    PurchaseOrderWithSupplier[]
+  >([]);
+  const [selectedOrder, setSelectedOrder] =
+    useState<PurchaseOrderWithSupplier | null>(null);
   const [showReceptionModal, setShowReceptionModal] = useState(false);
-  const [receptionHistory, setReceptionHistory] = useState<any[]>([]);
-  const [cancellationHistory, setCancellationHistory] = useState<any[]>([]);
+  const [receptionHistory, setReceptionHistory] = useState<ReceptionHistory[]>(
+    []
+  );
+  const [cancellationHistory, setCancellationHistory] = useState<
+    CancellationHistoryItem[]
+  >([]);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
 
   // Réceptions affiliés
-  const [affiliateReceptions, setAffiliateReceptions] = useState<any[]>([]);
-  const [affiliateHistory, setAffiliateHistory] = useState<any[]>([]);
+  const [affiliateReceptions, setAffiliateReceptions] = useState<
+    AffiliateReceptionMapped[]
+  >([]);
+  const [affiliateHistory, setAffiliateHistory] = useState<
+    AffiliateReceptionMapped[]
+  >([]);
   const [selectedAffiliateReception, setSelectedAffiliateReception] =
-    useState<AffiliateReception | null>(null);
+    useState<AffiliateReceptionMapped | null>(null);
 
   const [activeTab, setActiveTab] = useState<string>('to-receive');
   const [searchTerm, setSearchTerm] = useState('');
@@ -153,7 +255,7 @@ export default function ReceptionsPage() {
       activeTab === 'to-receive' &&
       (sourceFilter === 'suppliers' || sourceFilter === 'all')
     ) {
-      const filters: any = {};
+      const filters: ReceptionFilters = {};
 
       if (statusFilter !== 'all') {
         filters.status = statusFilter;
@@ -199,7 +301,7 @@ export default function ReceptionsPage() {
   // Charger historique POs reçus + affiliés
   useEffect(() => {
     if (activeTab === 'history') {
-      const filters: any = {
+      const filters: ReceptionFilters = {
         status: 'received', // Uniquement les POs complètement reçus
       };
 
@@ -230,7 +332,7 @@ export default function ReceptionsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [historySearchTerm, activeTab]);
 
-  const handleOpenReception = (order: any) => {
+  const handleOpenReception = (order: PurchaseOrderWithSupplier) => {
     setSelectedOrder(order);
     setShowReceptionModal(true);
   };
@@ -251,15 +353,15 @@ export default function ReceptionsPage() {
     setSelectedOrder(null);
   };
 
-  const handleViewHistory = async (order: any) => {
+  const handleViewHistory = async (order: PurchaseOrderWithSupplier) => {
     setSelectedOrder(order);
     // Charger réceptions ET annulations en parallèle
     const [history, cancellations] = await Promise.all([
       loadReceptionHistory(order.id),
       loadCancellationHistory(order.id),
     ]);
-    setReceptionHistory(history || []);
-    setCancellationHistory(cancellations || []);
+    setReceptionHistory(history ?? []);
+    setCancellationHistory(cancellations ?? []);
     setShowHistoryModal(true);
   };
 
@@ -531,15 +633,20 @@ export default function ReceptionsPage() {
                           // Calculer progression
                           const totalItems =
                             order.purchase_order_items?.reduce(
-                              (sum: number, item: any) => sum + item.quantity,
+                              (
+                                sum: number,
+                                item: PurchaseOrderWithSupplier['purchase_order_items'][0]
+                              ) => sum + item.quantity,
                               0
-                            ) || 0;
+                            ) ?? 0;
                           const receivedItems =
                             order.purchase_order_items?.reduce(
-                              (sum: number, item: any) =>
-                                sum + (item.quantity_received || 0),
+                              (
+                                sum: number,
+                                item: PurchaseOrderWithSupplier['purchase_order_items'][0]
+                              ) => sum + (item.quantity_received ?? 0),
                               0
-                            ) || 0;
+                            ) ?? 0;
                           const progressPercent =
                             totalItems > 0
                               ? Math.round((receivedItems / totalItems) * 100)
@@ -596,7 +703,7 @@ export default function ReceptionsPage() {
                                   )}
                                 </TableCell>
                                 <TableCell>
-                                  {order.supplier_name || 'Fournisseur inconnu'}
+                                  {order.supplier_name ?? 'Fournisseur inconnu'}
                                 </TableCell>
                                 <TableCell>
                                   <Badge
@@ -659,7 +766,10 @@ export default function ReceptionsPage() {
                                       </h4>
                                       <div className="space-y-2">
                                         {order.purchase_order_items?.map(
-                                          (item: any, itemIndex: number) => (
+                                          (
+                                            item: PurchaseOrderWithSupplier['purchase_order_items'][0],
+                                            itemIndex: number
+                                          ) => (
                                             <div
                                               key={
                                                 item.id ||
@@ -670,7 +780,10 @@ export default function ReceptionsPage() {
                                               <ProductThumbnail
                                                 src={
                                                   item.products?.product_images?.find(
-                                                    (img: any) => img.is_primary
+                                                    (img: {
+                                                      public_url: string;
+                                                      is_primary: boolean;
+                                                    }) => img.is_primary
                                                   )?.public_url ||
                                                   item.products
                                                     ?.product_images?.[0]
@@ -689,12 +802,12 @@ export default function ReceptionsPage() {
                                                 </p>
                                                 <p className="text-xs text-gray-500 font-mono">
                                                   SKU:{' '}
-                                                  {item.products?.sku || 'N/A'}
+                                                  {item.products?.sku ?? 'N/A'}
                                                 </p>
                                               </div>
                                               <div className="text-right">
                                                 <p className="text-sm font-medium">
-                                                  {item.quantity_received || 0}{' '}
+                                                  {item.quantity_received ?? 0}{' '}
                                                   / {item.quantity} reçu(s)
                                                 </p>
                                                 <p className="text-xs text-gray-500">
@@ -706,13 +819,13 @@ export default function ReceptionsPage() {
                                               <div className="text-right">
                                                 <p className="text-sm font-medium">
                                                   {formatCurrency(
-                                                    (item.unit_price_ht || 0) *
+                                                    (item.unit_price_ht ?? 0) *
                                                       item.quantity
                                                   )}
                                                 </p>
                                                 <p className="text-xs text-gray-500">
                                                   {formatCurrency(
-                                                    item.unit_price_ht || 0
+                                                    item.unit_price_ht ?? 0
                                                   )}{' '}
                                                   /u
                                                 </p>
@@ -836,7 +949,9 @@ export default function ReceptionsPage() {
           {/* Modal réception affilié */}
           {selectedAffiliateReception && (
             <AffiliateReceptionModal
-              reception={selectedAffiliateReception}
+              reception={
+                selectedAffiliateReception as unknown as import('@verone/orders').AffiliateReception
+              }
               open={!!selectedAffiliateReception}
               onClose={() => setSelectedAffiliateReception(null)}
               onSuccess={handleAffiliateReceptionSuccess}
@@ -914,15 +1029,20 @@ export default function ReceptionsPage() {
                         // Calculer quantité totale commandée vs reçue
                         const totalOrdered =
                           order.purchase_order_items?.reduce(
-                            (sum: number, item: any) => sum + item.quantity,
+                            (
+                              sum: number,
+                              item: PurchaseOrderWithSupplier['purchase_order_items'][0]
+                            ) => sum + item.quantity,
                             0
-                          ) || 0;
+                          ) ?? 0;
                         const totalReceived =
                           order.purchase_order_items?.reduce(
-                            (sum: number, item: any) =>
-                              sum + (item.quantity_received || 0),
+                            (
+                              sum: number,
+                              item: PurchaseOrderWithSupplier['purchase_order_items'][0]
+                            ) => sum + (item.quantity_received ?? 0),
                             0
-                          ) || 0;
+                          ) ?? 0;
                         const isComplete = totalReceived >= totalOrdered;
 
                         const isExpanded = expandedHistoryRows.has(order.id);
@@ -946,7 +1066,7 @@ export default function ReceptionsPage() {
                                 {order.po_number}
                               </TableCell>
                               <TableCell>
-                                {order.supplier_name || 'Fournisseur inconnu'}
+                                {order.supplier_name ?? 'Fournisseur inconnu'}
                               </TableCell>
                               <TableCell>
                                 {isComplete ? (
@@ -999,11 +1119,14 @@ export default function ReceptionsPage() {
                                   <div className="p-4">
                                     <h4 className="font-medium text-sm mb-3 text-gray-700">
                                       Produits de la commande (
-                                      {order.purchase_order_items?.length || 0})
+                                      {order.purchase_order_items?.length ?? 0})
                                     </h4>
                                     <div className="space-y-2">
                                       {order.purchase_order_items?.map(
-                                        (item: any, itemIndex: number) => (
+                                        (
+                                          item: PurchaseOrderWithSupplier['purchase_order_items'][0],
+                                          itemIndex: number
+                                        ) => (
                                           <div
                                             key={
                                               item.id ||
@@ -1014,14 +1137,17 @@ export default function ReceptionsPage() {
                                             <ProductThumbnail
                                               src={
                                                 item.products?.product_images?.find(
-                                                  (img: any) => img.is_primary
-                                                )?.public_url ||
+                                                  (img: {
+                                                    public_url: string;
+                                                    is_primary: boolean;
+                                                  }) => img.is_primary
+                                                )?.public_url ??
                                                 item.products
                                                   ?.product_images?.[0]
                                                   ?.public_url
                                               }
                                               alt={
-                                                item.products?.name || 'Produit'
+                                                item.products?.name ?? 'Produit'
                                               }
                                               size="sm"
                                             />
@@ -1032,12 +1158,12 @@ export default function ReceptionsPage() {
                                               </p>
                                               <p className="text-xs text-gray-500 font-mono">
                                                 SKU:{' '}
-                                                {item.products?.sku || 'N/A'}
+                                                {item.products?.sku ?? 'N/A'}
                                               </p>
                                             </div>
                                             <div className="text-right">
                                               <p className="text-sm font-medium">
-                                                {item.quantity_received || 0} /{' '}
+                                                {item.quantity_received ?? 0} /{' '}
                                                 {item.quantity} reçu(s)
                                               </p>
                                               <p className="text-xs text-gray-500">
@@ -1049,13 +1175,13 @@ export default function ReceptionsPage() {
                                             <div className="text-right">
                                               <p className="text-sm font-medium">
                                                 {formatCurrency(
-                                                  (item.unit_price_ht || 0) *
+                                                  (item.unit_price_ht ?? 0) *
                                                     item.quantity
                                                 )}
                                               </p>
                                               <p className="text-xs text-gray-500">
                                                 {formatCurrency(
-                                                  item.unit_price_ht || 0
+                                                  item.unit_price_ht ?? 0
                                                 )}{' '}
                                                 /u
                                               </p>
@@ -1137,7 +1263,7 @@ export default function ReceptionsPage() {
                           <TableCell>{reception.affiliate_name}</TableCell>
                           <TableCell>{reception.enseigne_name}</TableCell>
                           <TableCell className="font-medium">
-                            {reception.quantity_received || 0} /{' '}
+                            {reception.quantity_received ?? 0} /{' '}
                             {reception.quantity_expected} unité(s)
                           </TableCell>
                           <TableCell>
@@ -1172,7 +1298,9 @@ export default function ReceptionsPage() {
       {/* Modal de réception */}
       {selectedOrder && showReceptionModal && (
         <PurchaseOrderReceptionModal
-          order={selectedOrder}
+          order={
+            selectedOrder as unknown as import('@verone/orders').PurchaseOrder
+          }
           open={showReceptionModal}
           onClose={() => {
             setShowReceptionModal(false);
@@ -1205,7 +1333,7 @@ export default function ReceptionsPage() {
                 </ButtonV2>
               </div>
               <CardDescription>
-                Fournisseur: {selectedOrder.supplier_name || 'Non renseigné'}
+                Fournisseur: {selectedOrder.supplier_name ?? 'Non renseigné'}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -1223,103 +1351,110 @@ export default function ReceptionsPage() {
                         <CheckCircle className="h-5 w-5 text-green-500" />
                         Réceptions ({receptionHistory.length})
                       </h3>
-                      {receptionHistory.map((reception: any, index: number) => (
-                        <Card
-                          key={index}
-                          className="border-l-4 border-verone-success"
-                        >
-                          <CardHeader>
-                            <div className="flex justify-between items-start">
-                              <div>
-                                <CardTitle className="text-lg">
-                                  Réception #{index + 1}
-                                </CardTitle>
-                                <CardDescription>
-                                  {reception.received_at
-                                    ? `Reçue le ${formatDate(reception.received_at)}`
-                                    : 'Date non disponible'}
-                                </CardDescription>
-                              </div>
-                              {reception.received_by_name && (
-                                <Badge variant="outline">
-                                  Par: {reception.received_by_name}
-                                </Badge>
-                              )}
-                            </div>
-                          </CardHeader>
-                          <CardContent>
-                            {/* Notes réception */}
-                            {reception.notes && (
-                              <div className="mb-4 p-3 bg-gray-50 rounded">
-                                <p className="text-sm font-medium text-gray-700">
-                                  Notes:
-                                </p>
-                                <p className="text-sm text-gray-600">
-                                  {reception.notes}
-                                </p>
-                              </div>
-                            )}
-
-                            {/* Liste articles reçus */}
-                            <Table>
-                              <TableHeader>
-                                <TableRow>
-                                  <TableHead className="w-[50px]" />
-                                  <TableHead>Produit</TableHead>
-                                  <TableHead>SKU</TableHead>
-                                  <TableHead className="text-right">
-                                    Quantité reçue
-                                  </TableHead>
-                                  <TableHead className="text-right">
-                                    Stock avant
-                                  </TableHead>
-                                  <TableHead className="text-right">
-                                    Stock après
-                                  </TableHead>
-                                </TableRow>
-                              </TableHeader>
-                              <TableBody>
-                                {reception.items?.map(
-                                  (item: any, idx: number) => (
-                                    <TableRow key={idx}>
-                                      <TableCell className="w-[50px] p-1">
-                                        <ProductThumbnail
-                                          src={item.product_image_url}
-                                          alt={item.product_name}
-                                          size="xs"
-                                        />
-                                      </TableCell>
-                                      <TableCell>{item.product_name}</TableCell>
-                                      <TableCell className="font-mono text-sm">
-                                        {item.product_sku}
-                                      </TableCell>
-                                      <TableCell className="text-right font-medium text-green-600">
-                                        +{item.quantity_received}
-                                      </TableCell>
-                                      <TableCell className="text-right text-gray-600">
-                                        {item.stock_before}
-                                      </TableCell>
-                                      <TableCell className="text-right font-medium">
-                                        {item.stock_after}
-                                      </TableCell>
-                                    </TableRow>
-                                  )
+                      {receptionHistory.map(
+                        (reception: ReceptionHistory, index: number) => (
+                          <Card
+                            key={index}
+                            className="border-l-4 border-verone-success"
+                          >
+                            <CardHeader>
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <CardTitle className="text-lg">
+                                    Réception #{index + 1}
+                                  </CardTitle>
+                                  <CardDescription>
+                                    {reception.received_at
+                                      ? `Reçue le ${formatDate(reception.received_at)}`
+                                      : 'Date non disponible'}
+                                  </CardDescription>
+                                </div>
+                                {reception.received_by_name && (
+                                  <Badge variant="outline">
+                                    Par: {reception.received_by_name}
+                                  </Badge>
                                 )}
-                              </TableBody>
-                            </Table>
+                              </div>
+                            </CardHeader>
+                            <CardContent>
+                              {/* Notes réception */}
+                              {reception.notes && (
+                                <div className="mb-4 p-3 bg-gray-50 rounded">
+                                  <p className="text-sm font-medium text-gray-700">
+                                    Notes:
+                                  </p>
+                                  <p className="text-sm text-gray-600">
+                                    {reception.notes}
+                                  </p>
+                                </div>
+                              )}
 
-                            {/* Résumé */}
-                            <div className="mt-4 pt-4 border-t">
-                              <p className="text-sm font-medium text-gray-700">
-                                Total reçu:{' '}
-                                <span className="text-verone-success font-bold">
-                                  {reception.total_quantity} unités
-                                </span>
-                              </p>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
+                              {/* Liste articles reçus */}
+                              <Table>
+                                <TableHeader>
+                                  <TableRow>
+                                    <TableHead className="w-[50px]" />
+                                    <TableHead>Produit</TableHead>
+                                    <TableHead>SKU</TableHead>
+                                    <TableHead className="text-right">
+                                      Quantité reçue
+                                    </TableHead>
+                                    <TableHead className="text-right">
+                                      Stock avant
+                                    </TableHead>
+                                    <TableHead className="text-right">
+                                      Stock après
+                                    </TableHead>
+                                  </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                  {reception.items?.map(
+                                    (
+                                      item: ReceptionHistory['items'][0],
+                                      idx: number
+                                    ) => (
+                                      <TableRow key={idx}>
+                                        <TableCell className="w-[50px] p-1">
+                                          <ProductThumbnail
+                                            src={item.product_image_url}
+                                            alt={item.product_name}
+                                            size="xs"
+                                          />
+                                        </TableCell>
+                                        <TableCell>
+                                          {item.product_name}
+                                        </TableCell>
+                                        <TableCell className="font-mono text-sm">
+                                          {item.product_sku}
+                                        </TableCell>
+                                        <TableCell className="text-right font-medium text-green-600">
+                                          +{item.quantity_received}
+                                        </TableCell>
+                                        <TableCell className="text-right text-gray-600">
+                                          {item.stock_before}
+                                        </TableCell>
+                                        <TableCell className="text-right font-medium">
+                                          {item.stock_after}
+                                        </TableCell>
+                                      </TableRow>
+                                    )
+                                  )}
+                                </TableBody>
+                              </Table>
+
+                              {/* Résumé */}
+                              <div className="mt-4 pt-4 border-t">
+                                <p className="text-sm font-medium text-gray-700">
+                                  Total reçu:{' '}
+                                  <span className="text-verone-success font-bold">
+                                    {reception.total_quantity} unités
+                                  </span>
+                                </p>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        )
+                      )}
                     </>
                   )}
 
@@ -1368,7 +1503,10 @@ export default function ReceptionsPage() {
                             </TableHeader>
                             <TableBody>
                               {cancellationHistory.map(
-                                (cancellation: any, idx: number) => (
+                                (
+                                  cancellation: CancellationHistoryItem,
+                                  idx: number
+                                ) => (
                                   <TableRow key={idx}>
                                     <TableCell>
                                       {cancellation.product_name}
@@ -1391,7 +1529,7 @@ export default function ReceptionsPage() {
                               Total annulé:{' '}
                               <span className="text-amber-600 font-bold">
                                 {cancellationHistory.reduce(
-                                  (sum: number, c: any) =>
+                                  (sum: number, c: CancellationHistoryItem) =>
                                     sum + c.quantity_cancelled,
                                   0
                                 )}{' '}

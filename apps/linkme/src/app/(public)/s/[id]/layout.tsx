@@ -4,11 +4,16 @@ import { use, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { usePathname, useRouter } from 'next/navigation';
 
+import type { Database } from '@verone/types';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { createClient } from '@verone/utils/supabase/client';
 import { Check, ShoppingCart } from 'lucide-react';
 
 import { OrderFormUnified } from '@/components/OrderFormUnified';
-import type { CartItem as UnifiedCartItem } from '@/components/OrderFormUnified';
+import type {
+  CartItem as UnifiedCartItem,
+  OrderFormUnifiedData,
+} from '@/components/OrderFormUnified';
 import { SelectionHero } from '@/components/public-selection';
 import { useEnseigneOrganisations } from '@/lib/hooks/use-enseigne-organisations';
 import { useSubmitUnifiedOrder } from '@/lib/hooks/use-submit-unified-order';
@@ -25,7 +30,7 @@ import {
   type SelectionContextValue,
 } from './selection-context';
 
-const supabase = createClient();
+const supabase: SupabaseClient<Database> = createClient();
 
 function formatPrice(price: number): string {
   return new Intl.NumberFormat('fr-FR', {
@@ -73,13 +78,11 @@ export default function SelectionLayout({
       setError(null);
 
       try {
-        const { data: selectionData, error: selectionError } = await (
-          supabase as any
-        )
+        const { data: selectionData, error: selectionError } = await supabase
           .from('linkme_selections')
           .select('*')
           .eq('id', id)
-          .single();
+          .single<ISelection>();
 
         if (selectionError || !selectionData) {
           setError('Selection non trouvee');
@@ -93,15 +96,25 @@ export default function SelectionLayout({
           return;
         }
 
-        setSelection(selectionData as ISelection);
+        setSelection(selectionData);
+
+        /**
+         * Type pour affiliate avec JOIN enseignes
+         */
+        interface AffiliateWithEnseigne {
+          display_name: string;
+          enseigne_id: string | null;
+          enseignes: {
+            name: string;
+          } | null;
+        }
 
         // Fetch affiliate info
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data: affiliateData } = await (supabase as any)
+        const { data: affiliateData } = await supabase
           .from('linkme_affiliates')
           .select('display_name, enseigne_id, enseignes(name)')
           .eq('id', selectionData.affiliate_id)
-          .single();
+          .single<AffiliateWithEnseigne>();
 
         if (affiliateData) {
           setAffiliateInfo({
@@ -111,38 +124,72 @@ export default function SelectionLayout({
           });
         }
 
-        // Fetch items
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data: itemsData, error: itemsError } = await (supabase as any)
-          .from('linkme_selection_items_with_pricing')
+        /**
+         * Type pour la view linkme_selection_items_with_pricing
+         * Cette view JOIN selection_items + products + pricing
+         * Note: View non présente dans les types Supabase générés
+         */
+        interface SelectionItemWithPricing {
+          id: string;
+          selection_id: string;
+          product_id: string;
+          product_name: string;
+          product_sku: string;
+          product_image: string | null;
+          selling_price_ht: number;
+          selling_price_ttc: number;
+          margin_rate: number;
+          category_name: string | null;
+          subcategory_id: string | null;
+          subcategory_name: string | null;
+          display_order: number;
+        }
+
+        // Fetch items (view non typée dans Database, utiliser cast)
+        const { data: itemsData, error: itemsError } = await supabase
+          .from('linkme_selection_items_with_pricing' as 'products')
           .select('*')
-          .eq('selection_id', id);
+          .eq('selection_id', id)
+          .returns<SelectionItemWithPricing[]>();
 
         if (itemsError) {
           console.error('Error fetching items:', itemsError);
         } else {
-          setItems((itemsData || []) as ISelectionItem[]);
+          setItems((itemsData ?? []) as unknown as ISelectionItem[]);
         }
 
-        // Fetch branding
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data: brandingData } = await (supabase as any)
-          .from('linkme_affiliate_branding')
+        /**
+         * Type pour table linkme_affiliate_branding
+         * Note: Table non présente dans les types Supabase générés
+         */
+        interface AffiliateBrandingRow {
+          affiliate_id: string;
+          primary_color: string | null;
+          secondary_color: string | null;
+          accent_color: string | null;
+          text_color: string | null;
+          background_color: string | null;
+          logo_url: string | null;
+        }
+
+        // Fetch branding (table non typée dans Database, utiliser cast)
+        const { data: brandingData } = await supabase
+          .from('linkme_affiliate_branding' as 'products')
           .select('*')
           .eq('affiliate_id', selectionData.affiliate_id)
-          .single();
+          .single<AffiliateBrandingRow>();
 
         if (brandingData) {
           setBranding({
             primary_color:
-              brandingData.primary_color || DEFAULT_BRANDING.primary_color,
+              brandingData.primary_color ?? DEFAULT_BRANDING.primary_color,
             secondary_color:
-              brandingData.secondary_color || DEFAULT_BRANDING.secondary_color,
+              brandingData.secondary_color ?? DEFAULT_BRANDING.secondary_color,
             accent_color:
-              brandingData.accent_color || DEFAULT_BRANDING.accent_color,
-            text_color: brandingData.text_color || DEFAULT_BRANDING.text_color,
+              brandingData.accent_color ?? DEFAULT_BRANDING.accent_color,
+            text_color: brandingData.text_color ?? DEFAULT_BRANDING.text_color,
             background_color:
-              brandingData.background_color ||
+              brandingData.background_color ??
               DEFAULT_BRANDING.background_color,
             logo_url: brandingData.logo_url,
           });
@@ -215,7 +262,7 @@ export default function SelectionLayout({
             if (subcat) {
               subcat.count += 1;
             } else {
-              existing.subcategories = existing.subcategories || [];
+              existing.subcategories = existing.subcategories ?? [];
               existing.subcategories.push({
                 id: item.subcategory_id,
                 name: item.subcategory_name,
@@ -247,7 +294,7 @@ export default function SelectionLayout({
   }, [items]);
 
   const handleOrderSubmit = useCallback(
-    async (data: any, cartItems: UnifiedCartItem[]) => {
+    async (data: OrderFormUnifiedData, cartItems: UnifiedCartItem[]) => {
       if (!selection) return;
 
       const result = await submitOrder({
@@ -296,7 +343,7 @@ export default function SelectionLayout({
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            {error || 'Selection non trouvee'}
+            {error ?? 'Selection non trouvee'}
           </h1>
           <p className="text-gray-600">Verifiez l'URL et reessayez.</p>
         </div>
@@ -445,7 +492,7 @@ export default function SelectionLayout({
                       quantity: item.quantity,
                     })
                   )}
-                  organisations={organisations as any}
+                  organisations={organisations}
                   onSubmit={handleOrderSubmit}
                   onClose={() => setIsOrderFormOpen(false)}
                   isSubmitting={isSubmitting}

@@ -273,7 +273,7 @@ export default function AffiliatePerformancePage() {
               ) : (
                 <>
                   <h1 className="text-xl font-semibold">
-                    {data?.affiliateName || 'Affilié'}
+                    {data?.affiliateName ?? 'Affilié'}
                   </h1>
                   <p className="text-sm text-gray-500">Performance détaillée</p>
                 </>
@@ -306,7 +306,7 @@ export default function AffiliatePerformancePage() {
         <div className="grid grid-cols-4 gap-4">
           <KpiCard
             title="Panier moyen"
-            value={formatCurrency(data?.averageBasket || 0)}
+            value={formatCurrency(data?.averageBasket ?? 0)}
             icon={ShoppingBag}
             iconBgColor="bg-orange-100"
             iconColor="text-orange-600"
@@ -314,7 +314,7 @@ export default function AffiliatePerformancePage() {
           />
           <KpiCard
             title="CA HT"
-            value={formatCurrency(data?.totalRevenueHT || 0)}
+            value={formatCurrency(data?.totalRevenueHT ?? 0)}
             icon={DollarSign}
             iconBgColor="bg-green-100"
             iconColor="text-green-600"
@@ -322,7 +322,7 @@ export default function AffiliatePerformancePage() {
           />
           <KpiCard
             title="Commissions TTC"
-            value={formatCurrency(data?.totalCommissionsTTC || 0)}
+            value={formatCurrency(data?.totalCommissionsTTC ?? 0)}
             icon={Wallet}
             iconBgColor="bg-emerald-100"
             iconColor="text-emerald-600"
@@ -330,7 +330,7 @@ export default function AffiliatePerformancePage() {
           />
           <KpiCard
             title="Commandes"
-            value={formatNumber(data?.totalOrders || 0)}
+            value={formatNumber(data?.totalOrders ?? 0)}
             icon={ShoppingCart}
             iconBgColor="bg-blue-100"
             iconColor="text-blue-600"
@@ -442,7 +442,7 @@ export default function AffiliatePerformancePage() {
           </Link>
           <ChevronRight className="h-3 w-3" />
           <span className="text-gray-900 font-medium">
-            {data?.affiliateName || 'Affilié'}
+            {data?.affiliateName ?? 'Affilié'}
           </span>
         </div>
       </div>

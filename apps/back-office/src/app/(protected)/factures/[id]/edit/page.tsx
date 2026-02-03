@@ -75,6 +75,16 @@ interface QontoDocument {
   terms_and_conditions?: string;
 }
 
+// API Response types
+interface QontoApiResponse {
+  success: boolean;
+  invoice?: QontoDocument;
+  quote?: QontoDocument;
+  credit_note?: QontoDocument;
+  creditNote?: QontoDocument;
+  error?: string;
+}
+
 interface IEditableItem {
   id: string;
   title: string;
@@ -99,17 +109,17 @@ function getDocumentTypeLabel(type: DocumentType): string {
     quote: 'Devis',
     credit_note: 'Avoir',
   };
-  return labels[type] || type;
+  return labels[type] ?? type;
 }
 
 function getDocumentNumber(doc: QontoDocument, type: DocumentType): string {
   switch (type) {
     case 'invoice':
-      return doc.invoice_number || doc.id;
+      return doc.invoice_number ?? doc.id;
     case 'quote':
-      return doc.quote_number || doc.id;
+      return doc.quote_number ?? doc.id;
     case 'credit_note':
-      return doc.credit_note_number || doc.id;
+      return doc.credit_note_number ?? doc.id;
     default:
       return doc.id;
   }
@@ -259,11 +269,11 @@ export default function EditDraftPage({ params }: IPageProps) {
         try {
           const endpoint = getApiEndpoint(type, id);
           const response = await fetch(endpoint);
-          const data = await response.json();
+          const data = (await response.json()) as QontoApiResponse;
 
           if (response.ok && data.success) {
             const doc =
-              data.invoice || data.quote || data.credit_note || data.creditNote;
+              data.invoice ?? data.quote ?? data.credit_note ?? data.creditNote;
 
             if (doc) {
               // Check if draft
@@ -281,14 +291,14 @@ export default function EditDraftPage({ params }: IPageProps) {
               // Initialize form fields
               if (doc.items && doc.items.length > 0) {
                 setItems(
-                  doc.items.map((item: QontoInvoiceItem) => ({
+                  doc.items.map(item => ({
                     id: generateId(),
                     title: item.title ?? '',
                     description: item.description ?? '',
-                    quantity: item.quantity || '1',
-                    unit: item.unit || 'unit',
-                    unitPrice: item.unit_price?.value || '0',
-                    vatRate: item.vat_rate || '0.20',
+                    quantity: item.quantity ?? '1',
+                    unit: item.unit ?? 'unit',
+                    unitPrice: item.unit_price?.value ?? '0',
+                    vatRate: item.vat_rate ?? '0.20',
                   }))
                 );
               } else {
@@ -317,8 +327,12 @@ export default function EditDraftPage({ params }: IPageProps) {
               return;
             }
           }
-        } catch {
-          // Try next type
+        } catch (error: unknown) {
+          // Try next type (error logged if all fail)
+          console.error(
+            `[FacturesEdit] Failed to load ${type}:`,
+            error instanceof Error ? error.message : 'Unknown error'
+          );
         }
       }
 
@@ -379,13 +393,13 @@ export default function EditDraftPage({ params }: IPageProps) {
       const body: Record<string, unknown> = {
         items: validItems.map(item => ({
           title: item.title,
-          // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- Empty string must become undefined (omitted in JSON), not preserved
-          description: item.description || undefined,
+
+          description: item.description ?? undefined,
           quantity: item.quantity,
           unit: item.unit,
           unitPrice: {
             value: item.unitPrice,
-            currency: document?.currency || 'EUR',
+            currency: document?.currency ?? 'EUR',
           },
           vatRate: item.vatRate,
         })),
@@ -412,10 +426,10 @@ export default function EditDraftPage({ params }: IPageProps) {
         body: JSON.stringify(body),
       });
 
-      const data = await response.json();
+      const data = (await response.json()) as QontoApiResponse;
 
       if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Erreur lors de la sauvegarde');
+        throw new Error(data.error ?? 'Erreur lors de la sauvegarde');
       }
 
       toast.success('Modifications enregistrées');
@@ -534,7 +548,7 @@ export default function EditDraftPage({ params }: IPageProps) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="font-medium">{document.client?.name || 'Client'}</p>
+          <p className="font-medium">{document.client?.name ?? 'Client'}</p>
           {document.client?.email && (
             <p className="text-sm text-muted-foreground">
               {document.client.email}

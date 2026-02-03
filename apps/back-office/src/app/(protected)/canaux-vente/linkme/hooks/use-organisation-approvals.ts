@@ -65,7 +65,7 @@ export function usePendingOrganisationsCount() {
         throw affError;
       }
 
-      const orgIds = (affiliates || [])
+      const orgIds = (affiliates ?? [])
         .map(a => a.organisation_id)
         .filter(Boolean) as string[];
 
@@ -85,7 +85,7 @@ export function usePendingOrganisationsCount() {
         throw error;
       }
 
-      return count || 0;
+      return count ?? 0;
     },
     staleTime: 120000, // 2 minutes
     refetchInterval: 60000,
@@ -114,7 +114,7 @@ export function usePendingOrganisations() {
         throw affError;
       }
 
-      const orgIds = (affiliates || [])
+      const orgIds = (affiliates ?? [])
         .map(a => a.organisation_id)
         .filter(Boolean) as string[];
 
@@ -124,7 +124,7 @@ export function usePendingOrganisations() {
 
       // Créer un map pour les display_name
       const displayNameMap = new Map(
-        (affiliates || []).map(a => [a.organisation_id, a.display_name])
+        (affiliates ?? []).map(a => [a.organisation_id, a.display_name])
       );
 
       const { data, error } = await supabase
@@ -160,7 +160,7 @@ export function usePendingOrganisations() {
         throw error;
       }
 
-      return (data || []).map((org: Record<string, unknown>) => ({
+      return (data ?? []).map((org: Record<string, unknown>) => ({
         ...org,
         enseigne_name: (org.enseigne as { name?: string })?.name ?? null,
         affiliate_display_name: displayNameMap.get(org.id as string) ?? null,
@@ -193,7 +193,7 @@ export function useAllOrganisationsWithApproval(
         throw affError;
       }
 
-      const orgIds = (affiliates || [])
+      const orgIds = (affiliates ?? [])
         .map(a => a.organisation_id)
         .filter(Boolean) as string[];
 
@@ -203,7 +203,7 @@ export function useAllOrganisationsWithApproval(
 
       // Créer un map pour les display_name
       const displayNameMap = new Map(
-        (affiliates || []).map(a => [a.organisation_id, a.display_name])
+        (affiliates ?? []).map(a => [a.organisation_id, a.display_name])
       );
 
       let query = supabase
@@ -245,7 +245,7 @@ export function useAllOrganisationsWithApproval(
         throw error;
       }
 
-      return (data || []).map((org: Record<string, unknown>) => ({
+      return (data ?? []).map((org: Record<string, unknown>) => ({
         ...org,
         enseigne_name: (org.enseigne as { name?: string })?.name ?? null,
         affiliate_display_name: displayNameMap.get(org.id as string) ?? null,

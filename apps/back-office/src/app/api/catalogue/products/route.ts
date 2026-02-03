@@ -12,6 +12,22 @@ import { logger, catalogueLogger } from '@verone/utils/logger';
 import { withApiSecurity } from '@verone/utils/middleware/api-security';
 import { withLogging } from '@verone/utils/middleware/logging';
 
+// Interface basée sur schéma products (consulté via MCP Supabase)
+interface CreateProductBody {
+  name: string;
+  sku: string;
+  description?: string;
+  price_ht: number;
+  price_ttc?: number;
+  brand?: string;
+  status?: string;
+  stock_status?: string;
+  product_status?: string;
+  category?: string;
+  images?: string[];
+  [key: string]: unknown;
+}
+
 // Mock data pour démonstration
 const MOCK_PRODUCTS = [
   {
@@ -73,13 +89,13 @@ async function getProducts(req: NextRequest) {
 
   // Parse query parameters
   const params = {
-    page: parseInt(url.searchParams.get('page') || '1'),
-    limit: Math.min(parseInt(url.searchParams.get('limit') || '20'), 100),
+    page: parseInt(url.searchParams.get('page') ?? '1'),
+    limit: Math.min(parseInt(url.searchParams.get('limit') ?? '20'), 100),
     category: url.searchParams.get('category'),
-    status: url.searchParams.get('status') || 'active',
+    status: url.searchParams.get('status') ?? 'active',
     search: url.searchParams.get('search'),
-    sort: url.searchParams.get('sort') || 'updated_at',
-    order: url.searchParams.get('order') || 'desc',
+    sort: url.searchParams.get('sort') ?? 'updated_at',
+    order: url.searchParams.get('order') ?? 'desc',
   };
 
   // Log début traitement avec paramètres
@@ -128,7 +144,7 @@ async function getProducts(req: NextRequest) {
 
   // Log business metrics
   catalogueLogger.productViewed(
-    `products-list-${params.category || 'all'}`,
+    `products-list-${params.category ?? 'all'}`,
     'system'
   );
 
@@ -186,7 +202,7 @@ async function createProduct(req: NextRequest) {
   const timer = logger.startTimer();
 
   try {
-    const body = await req.json();
+    const body = (await req.json()) as CreateProductBody;
 
     // Validation simple
     if (!body.name || !body.sku || !body.price_ht) {
@@ -205,7 +221,7 @@ async function createProduct(req: NextRequest) {
       return NextResponse.json(
         {
           error: 'Validation failed',
-          missing_fields: ['name', 'sku', 'price_ht'].filter(
+          missing_fields: (['name', 'sku', 'price_ht'] as const).filter(
             field => !body[field]
           ),
         },
@@ -220,9 +236,9 @@ async function createProduct(req: NextRequest) {
       id: crypto.randomUUID(),
       ...body,
       price_ttc: body.price_ht * 1.2, // 20% VAT
-      status: body.status || 'draft',
-      stock_status: body.stock_status || 'out_of_stock',
-      product_status: body.product_status || 'draft',
+      status: body.status ?? 'draft',
+      stock_status: body.stock_status ?? 'out_of_stock',
+      product_status: body.product_status ?? 'draft',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };

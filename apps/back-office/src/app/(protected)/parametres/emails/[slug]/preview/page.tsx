@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import { useParams, useRouter } from 'next/navigation';
 
@@ -41,53 +41,47 @@ export default function PreviewEmailTemplatePage() {
   const [showRawHtml, setShowRawHtml] = useState(false);
 
   useEffect(() => {
+    async function loadTemplate() {
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from('email_templates')
+          .select('*')
+          .eq('slug', slug)
+          .single();
+
+        if (error) throw error;
+
+        const variables = Array.isArray(data.variables)
+          ? data.variables.filter(v => typeof v === 'string')
+          : [];
+
+        const templateData = {
+          ...data,
+          variables,
+        };
+
+        setTemplate(templateData as EmailTemplate);
+
+        // Initialize variable values with placeholders
+        const initialValues: Record<string, string> = {};
+        variables.forEach((variable: string) => {
+          initialValues[variable] = `{{${variable}}}`;
+        });
+        setVariableValues(initialValues);
+      } catch (error) {
+        console.error('Error loading template:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
     void loadTemplate().catch(error => {
       console.error('[EmailPreviewPage] loadTemplate failed:', error);
     });
   }, [slug]);
 
-  useEffect(() => {
-    if (template) {
-      renderTemplate();
-    }
-  }, [template, variableValues]);
-
-  async function loadTemplate() {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('email_templates')
-        .select('*')
-        .eq('slug', slug)
-        .single();
-
-      if (error) throw error;
-
-      const variables = Array.isArray(data.variables)
-        ? data.variables.filter(v => typeof v === 'string')
-        : [];
-
-      const templateData = {
-        ...data,
-        variables,
-      };
-
-      setTemplate(templateData as EmailTemplate);
-
-      // Initialize variable values with placeholders
-      const initialValues: Record<string, string> = {};
-      variables.forEach((variable: string) => {
-        initialValues[variable] = `{{${variable}}}`;
-      });
-      setVariableValues(initialValues);
-    } catch (error) {
-      console.error('Error loading template:', error);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  function renderTemplate() {
+  const renderTemplate = useCallback(() => {
     if (!template) return;
 
     let html = template.html_body;
@@ -113,7 +107,13 @@ export default function PreviewEmailTemplatePage() {
     );
 
     setRenderedHtml(html);
-  }
+  }, [template, variableValues]);
+
+  useEffect(() => {
+    if (template) {
+      renderTemplate();
+    }
+  }, [template, renderTemplate]);
 
   if (loading) {
     return (
@@ -215,7 +215,7 @@ export default function PreviewEmailTemplatePage() {
             <p className="text-sm text-black">
               {template.subject.replace(
                 /{{(\w+)}}/g,
-                (match, varName) => variableValues[varName] || match
+                (match, varName) => variableValues[varName] ?? match
               )}
             </p>
           </div>

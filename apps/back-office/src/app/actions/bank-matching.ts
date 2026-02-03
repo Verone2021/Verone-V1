@@ -61,7 +61,7 @@ async function generateInvoiceNumber(
     .gte('created_at', `${year}-01-01`)
     .lt('created_at', `${year + 1}-01-01`);
 
-  const nextNumber = (count || 0) + 1;
+  const nextNumber = (count ?? 0) + 1;
   return `INV-${year}-${String(nextNumber).padStart(5, '0')}`;
 }
 
@@ -75,7 +75,7 @@ function extractFirstAttachmentId(rawData: unknown): string | null {
 
   // Qonto stocke les attachments comme un tableau d'objets avec id
   if (Array.isArray(data.attachments) && data.attachments.length > 0) {
-    const first = data.attachments[0];
+    const first: unknown = data.attachments[0];
     if (typeof first === 'object' && first !== null && 'id' in first) {
       return String((first as Record<string, unknown>).id);
     }
@@ -184,7 +184,7 @@ export async function matchTransactionToOrder(
         document_number: invoiceNumber,
         partner_id: typedOrder.customer_id,
         partner_type: 'customer',
-        document_date: (typedOrder.shipped_at || typedOrder.created_at).split(
+        document_date: (typedOrder.shipped_at ?? typedOrder.created_at).split(
           'T'
         )[0],
         total_ht: typedOrder.total_ht,
@@ -209,7 +209,7 @@ export async function matchTransactionToOrder(
     }
 
     // 9. Appeler record_payment() via RPC
-    const paymentDate = (typedTx.settled_at || typedTx.emitted_at).split(
+    const paymentDate = (typedTx.settled_at ?? typedTx.emitted_at).split(
       'T'
     )[0];
     const paymentAmount = Math.abs(typedTx.amount);
@@ -221,7 +221,7 @@ export async function matchTransactionToOrder(
         p_amount_paid: paymentAmount,
         p_payment_date: paymentDate,
         p_payment_method: 'bank_transfer',
-        p_transaction_reference: typedTx.reference || typedTx.transaction_id,
+        p_transaction_reference: typedTx.reference ?? typedTx.transaction_id,
         p_bank_transaction_id: bankTransactionId,
         p_notes: `Rapprochement automatique - Transaction Qonto ${typedTx.transaction_id}`,
       }
@@ -359,20 +359,19 @@ export async function matchTransactionToMultipleOrders(
 
         // Créer l'entrée dans bank_transaction_matches
         // Note: Cast nécessaire car la migration n'est pas encore dans les types générés
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { error: matchError } = await (supabase as any)
-          .from('bank_transaction_matches')
+        const { error: matchError } = await supabase
+          .from('bank_transaction_matches' as never)
           .insert({
             bank_transaction_id: bankTransactionId,
             sales_order_id: orderMatch.orderId,
             matched_amount: matchedAmount,
             matched_by: user.id,
-          });
+          } as never);
 
         if (matchError) {
-          result.errors.push(
-            `Erreur match ${order.order_number}: ${matchError.message}`
-          );
+          const errorMessage =
+            matchError instanceof Error ? matchError.message : String(matchError);
+          result.errors.push(`Erreur match ${order.order_number}: ${errorMessage}`);
           continue;
         }
 
@@ -393,7 +392,7 @@ export async function matchTransactionToMultipleOrders(
             partner_id: typedOrder.customer_id,
             partner_type: 'customer',
             document_date: (
-              typedOrder.shipped_at || typedOrder.created_at
+              typedOrder.shipped_at ?? typedOrder.created_at
             ).split('T')[0],
             total_ht: typedOrder.total_ht,
             total_ttc: typedOrder.total_ttc,
@@ -420,7 +419,7 @@ export async function matchTransactionToMultipleOrders(
 
         // Enregistrer le paiement
         const paymentDate = (
-          transaction.settled_at || transaction.emitted_at
+          transaction.settled_at ?? transaction.emitted_at
         ).split('T')[0];
 
         const { error: paymentError } = await supabase.rpc('record_payment', {
@@ -429,7 +428,7 @@ export async function matchTransactionToMultipleOrders(
           p_payment_date: paymentDate,
           p_payment_method: 'bank_transfer',
           p_transaction_reference:
-            transaction.reference || transaction.transaction_id,
+            transaction.reference ?? transaction.transaction_id,
           p_bank_transaction_id: bankTransactionId,
           p_notes: `Multi-match - Transaction Qonto ${transaction.transaction_id}`,
         });
@@ -494,7 +493,7 @@ export async function ignoreTransaction(
       .from('bank_transactions')
       .update({
         matching_status: 'ignored',
-        match_reason: reason || 'Ignoré manuellement',
+        match_reason: reason ?? 'Ignoré manuellement',
         updated_at: new Date().toISOString(),
       })
       .eq('id', bankTransactionId);

@@ -48,21 +48,23 @@ const QUERY_KEY = 'linkme-page-configurations';
 async function fetchPageConfigurations(): Promise<LinkMePageConfiguration[]> {
   const supabase = createClient();
 
-  // Note: table sera typée après régénération des types Supabase
+  /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
   const { data, error } = await (supabase as any)
     .from('linkme_page_configurations')
     .select('*')
     .order('page_id');
+  /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
 
   if (error) {
     // Si la table n'existe pas encore, retourner les valeurs par défaut
     // PGRST205 = table not found in schema cache (PostgREST)
     // 42P01 = undefined_table (PostgreSQL)
     // PGRST116 = relation does not exist
+    const errorCode = (error as { code?: string }).code;
     if (
-      error.code === '42P01' ||
-      error.code === 'PGRST116' ||
-      error.code === 'PGRST205'
+      errorCode === '42P01' ||
+      errorCode === 'PGRST116' ||
+      errorCode === 'PGRST205'
     ) {
       console.warn(
         'Table linkme_page_configurations not found, using defaults'
@@ -73,7 +75,9 @@ async function fetchPageConfigurations(): Promise<LinkMePageConfiguration[]> {
     throw error;
   }
 
-  return (data as LinkMePageConfiguration[]) ?? getDefaultConfigurations();
+  return (
+    (data as LinkMePageConfiguration[] | null) ?? getDefaultConfigurations()
+  );
 }
 
 /**
@@ -120,7 +124,7 @@ async function updatePageConfiguration(
 ): Promise<LinkMePageConfiguration> {
   const supabase = createClient();
 
-  // Note: table sera typée après régénération des types Supabase
+  /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
   const { data, error } = await (supabase as any)
     .from('linkme_page_configurations')
     .update({
@@ -130,6 +134,7 @@ async function updatePageConfiguration(
     .eq('page_id', pageId)
     .select()
     .single();
+  /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
 
   if (error) {
     console.error('Erreur update page configuration:', error);

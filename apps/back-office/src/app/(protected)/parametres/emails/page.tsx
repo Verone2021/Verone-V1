@@ -39,32 +39,32 @@ export default function EmailTemplatesPage() {
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
 
   useEffect(() => {
+    async function loadTemplates() {
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from('email_templates')
+          .select('*')
+          .order('category', { ascending: true })
+          .order('name', { ascending: true });
+
+        if (error) throw error;
+        const templates = (data ?? []).map(item => ({
+          ...item,
+          variables: Array.isArray(item.variables) ? item.variables : [],
+        }));
+        setTemplates(templates as EmailTemplate[]);
+      } catch (error) {
+        console.error('Error loading templates:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
     void loadTemplates().catch(error => {
       console.error('[EmailsPage] loadTemplates failed:', error);
     });
   }, []);
-
-  async function loadTemplates() {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('email_templates')
-        .select('*')
-        .order('category', { ascending: true })
-        .order('name', { ascending: true });
-
-      if (error) throw error;
-      const templates = (data || []).map(item => ({
-        ...item,
-        variables: Array.isArray(item.variables) ? item.variables : [],
-      }));
-      setTemplates(templates as EmailTemplate[]);
-    } catch (error) {
-      console.error('Error loading templates:', error);
-    } finally {
-      setLoading(false);
-    }
-  }
 
   const filteredTemplates = templates.filter(template => {
     const matchesSearch =

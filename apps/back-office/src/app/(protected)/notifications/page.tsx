@@ -48,7 +48,7 @@ function groupNotificationsByDate(notifications: DatabaseNotification[]) {
   };
 
   notifications.forEach(notif => {
-    const date = new Date(notif.created_at || new Date());
+    const date = new Date(notif.created_at ?? new Date());
 
     if (isToday(date)) {
       groups.today.push(notif);
@@ -137,7 +137,7 @@ const NotificationCard = ({
   onDelete,
 }: NotificationCardProps) => {
   const timeAgo = formatDistanceToNow(
-    new Date(notification.created_at || new Date()),
+    new Date(notification.created_at ?? new Date()),
     {
       addSuffix: true,
       locale: fr,
@@ -158,7 +158,7 @@ const NotificationCard = ({
       className: 'bg-blue-500/10 text-blue-700 border border-blue-200',
       label: 'Info',
     },
-  }[notification.severity] || {
+  }[notification.severity] ?? {
     className: 'bg-blue-500/10 text-blue-700 border border-blue-200',
     label: 'Info',
   }; // Fallback vers 'info' si severity inconnue
@@ -339,7 +339,7 @@ export default function NotificationsPage() {
         performance: 'Performance',
         maintenance: 'Maintenance',
       };
-      return labels[key] || key;
+      return labels[key] ?? key;
     }
 
     const labels: Record<string, string> = {
@@ -348,7 +348,7 @@ export default function NotificationsPage() {
       thisWeek: 'Cette semaine',
       older: 'Plus ancien',
     };
-    return labels[key] || key;
+    return labels[key] ?? key;
   };
 
   if (loading) {

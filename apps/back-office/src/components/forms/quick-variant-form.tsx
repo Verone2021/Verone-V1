@@ -8,6 +8,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 
 import { useToast } from '@verone/common';
 import { ButtonV2 } from '@verone/ui';
@@ -44,6 +45,13 @@ interface QuickVariantFormData {
   image_url: string;
 }
 
+interface CreatedProduct {
+  id: string;
+  name: string;
+  sku?: string;
+  [key: string]: unknown;
+}
+
 interface QuickVariantFormProps {
   isOpen: boolean;
   onClose: () => void;
@@ -51,7 +59,7 @@ interface QuickVariantFormProps {
   baseProductId: string;
   groupName: string;
   variantType: 'color' | 'size' | 'material' | 'pattern';
-  onProductCreated: (product: any) => void;
+  onProductCreated: (product: CreatedProduct) => void;
 }
 
 export function QuickVariantForm({
@@ -198,7 +206,7 @@ export function QuickVariantForm({
         .order('variant_position', { ascending: false })
         .limit(1);
 
-      const nextPosition = (maxPositionData?.[0]?.variant_position || 0) + 1;
+      const nextPosition = (maxPositionData?.[0]?.variant_position ?? 0) + 1;
 
       // Générer un SKU unique basé sur le SKU de base
       const variantSuffix = [
@@ -254,11 +262,11 @@ export function QuickVariantForm({
         await supabase.from('product_images').insert([
           {
             product_id: newProduct.id,
-            image_url: formData.image_url,
+            storage_path: formData.image_url,
             is_primary: true,
             display_order: 1,
-          },
-        ] as any);
+          } as never,
+        ]);
       }
 
       toast({
@@ -268,11 +276,12 @@ export function QuickVariantForm({
 
       onProductCreated(newProduct);
       onClose();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Form submission error:', error);
       toast({
         title: '❌ Erreur',
-        description: error.message || 'Une erreur est survenue',
+        description:
+          error instanceof Error ? error.message : 'Une erreur est survenue',
         variant: 'destructive',
       });
     } finally {
@@ -474,7 +483,7 @@ export function QuickVariantForm({
               onChange={e =>
                 setFormData(prev => ({
                   ...prev,
-                  cost_price: parseFloat(e.target.value) || 0,
+                  cost_price: parseFloat(e.target.value) ?? 0,
                 }))
               }
               placeholder="0.00"
@@ -495,11 +504,14 @@ export function QuickVariantForm({
             <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
               {formData.image_url ? (
                 <div className="relative">
-                  <img
-                    src={formData.image_url}
-                    alt="Preview"
-                    className="w-full h-32 object-cover rounded-lg"
-                  />
+                  <div className="relative w-full h-32 rounded-lg overflow-hidden">
+                    <Image
+                      src={formData.image_url}
+                      alt="Preview"
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
                   <ButtonV2
                     type="button"
                     variant="destructive"

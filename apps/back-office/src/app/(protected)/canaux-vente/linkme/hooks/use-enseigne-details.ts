@@ -18,6 +18,39 @@ import { createClient } from '@verone/utils/supabase/client';
 // TYPES
 // ============================================
 
+// Types pour le retour Supabase (query avec join)
+interface EnseigneRow {
+  id: string;
+  name: string;
+  legal_name: string | null;
+  logo_url: string | null;
+  billing_address_line1: string | null;
+  billing_address_line2: string | null;
+  billing_postal_code: string | null;
+  billing_city: string | null;
+  billing_country: string | null;
+  siret: string | null;
+  vat_number: string | null;
+}
+
+interface OrganisationRow {
+  id: string;
+  trade_name: string | null;
+  legal_name: string;
+  logo_url: string | null;
+  ownership_type: 'succursale' | 'franchise' | null;
+  billing_address_line1: string | null;
+  billing_address_line2: string | null;
+  billing_postal_code: string | null;
+  billing_city: string | null;
+  billing_country: string | null;
+  shipping_address_line1: string | null;
+  shipping_postal_code: string | null;
+  shipping_city: string | null;
+  shipping_country: string | null;
+  enseigne: EnseigneRow | null;
+}
+
 export interface EnseigneDetails {
   id: string;
   name: string;
@@ -69,7 +102,7 @@ export function useOrganisationWithEnseigne(organisationId: string | null) {
       const supabase = createClient();
 
       // Fetch organisation with its enseigne in one query
-      const { data, error } = await supabase
+      const { data: rawData, error } = await supabase
         .from('organisations')
         .select(
           `
@@ -110,12 +143,11 @@ export function useOrganisationWithEnseigne(organisationId: string | null) {
         throw error;
       }
 
-      if (!data) return null;
+      if (!rawData) return null;
 
-      // Extract enseigne data (handle array or object from Supabase join)
-      const enseigneData = Array.isArray(data.enseigne)
-        ? data.enseigne[0]
-        : data.enseigne;
+      // Type assertion pour le retour Supabase avec join
+      const data = rawData as OrganisationRow;
+      const enseigneData = data.enseigne;
 
       return {
         id: data.id,
@@ -124,11 +156,11 @@ export function useOrganisationWithEnseigne(organisationId: string | null) {
         logoUrl: data.logo_url,
         ownershipType: data.ownership_type,
         address: {
-          line1: data.shipping_address_line1 || data.billing_address_line1,
+          line1: data.shipping_address_line1 ?? data.billing_address_line1,
           line2: data.billing_address_line2,
-          postalCode: data.shipping_postal_code || data.billing_postal_code,
-          city: data.shipping_city || data.billing_city,
-          country: data.shipping_country || data.billing_country,
+          postalCode: data.shipping_postal_code ?? data.billing_postal_code,
+          city: data.shipping_city ?? data.billing_city,
+          country: data.shipping_country ?? data.billing_country,
         },
         enseigne: enseigneData
           ? {

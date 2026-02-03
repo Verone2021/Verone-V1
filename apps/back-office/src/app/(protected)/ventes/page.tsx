@@ -30,15 +30,15 @@ export default function VentesDashboardPage() {
   const { metrics, loading, error } = useSalesDashboard();
 
   // Extraction avec fallbacks si pas de données
-  const stats = metrics?.stats || {
+  const stats = metrics?.stats ?? {
     consultationsActives: 0,
     commandesEnCours: 0,
     chiffreAffaireMois: 0,
     tauxConversion: 0,
   };
 
-  const recentConsultations = metrics?.recentConsultations || [];
-  const recentOrders = metrics?.recentOrders || [];
+  const recentConsultations = metrics?.recentConsultations ?? [];
+  const recentOrders = metrics?.recentOrders ?? [];
 
   return (
     <div className="min-h-screen bg-gray-50">

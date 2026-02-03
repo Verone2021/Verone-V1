@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 import { useRouter } from 'next/navigation';
 
@@ -65,93 +65,16 @@ export default function PrixClientsPage() {
     total_retrocession: 0,
   });
 
-  // Charger les prix clients
-  useEffect(() => {
-    void loadPricingRules().catch(error => {
-      console.error('[PrixClientsPage] loadPricingRules failed:', error);
-    });
-  }, []);
-
-  const loadPricingRules = async () => {
-    setIsLoading(true);
-    try {
-      // Requête customer_pricing seul (sans jointures pour MVP)
-      const { data: pricingData, error } = await supabase
-        .from('customer_pricing')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      if (!pricingData || pricingData.length === 0) {
-        setPricingRules([]);
-        setFilteredRules([]);
-        calculateStats([]);
-        return;
-      }
-
-      // Récupérer les organisations et produits séparément
-      const customerIds = [
-        ...new Set(pricingData.map(p => p.customer_id).filter(Boolean)),
-      ];
-      const productIds = [
-        ...new Set(pricingData.map(p => p.product_id).filter(Boolean)),
-      ];
-
-      // Fetch organisations
-      const { data: orgsData } = await supabase
-        .from('organisations')
-        .select('id, trade_name, legal_name')
-        .in('id', customerIds);
-
-      // Fetch products
-      const { data: productsData } = await supabase
-        .from('products')
-        .select('id, name')
-        .in('id', productIds);
-
-      // Créer des maps pour lookup rapide
-      const orgsMap = new Map(orgsData?.map(o => [o.id, o]) || []);
-      const productsMap = new Map(productsData?.map(p => [p.id, p]) || []);
-
-      // Transformer les données avec les noms
-      const transformedData: CustomerPricing[] = pricingData.map(item => {
-        const org = orgsMap.get(item.customer_id);
-        const product = productsMap.get(item.product_id);
-
-        return {
-          ...item,
-          customer_name:
-            org?.trade_name ||
-            org?.legal_name ||
-            `Client ${item.customer_id?.slice(0, 8)}`,
-          product_name:
-            product?.name || `Produit ${item.product_id?.slice(0, 8)}`,
-        } as CustomerPricing;
-      });
-
-      setPricingRules(transformedData);
-      setFilteredRules(transformedData);
-      calculateStats(transformedData);
-    } catch (error) {
-      console.error('Erreur chargement prix clients:', error);
-      setPricingRules([]);
-      setFilteredRules([]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   // Calculer les statistiques
-  const calculateStats = (data: CustomerPricing[]) => {
+  const calculateStats = useCallback((data: CustomerPricing[]) => {
     const activeRules = data.filter(r => r.is_active);
     const uniqueCustomers = new Set(data.map(r => r.customer_id)).size;
     const avgDiscount =
       data.length > 0
-        ? data.reduce((sum, r) => sum + (r.discount_rate || 0), 0) / data.length
+        ? data.reduce((sum, r) => sum + (r.discount_rate ?? 0), 0) / data.length
         : 0;
     const totalRetrocession = data.reduce(
-      (sum, r) => sum + (r.retrocession_rate || 0),
+      (sum, r) => sum + (r.retrocession_rate ?? 0),
       0
     );
 
@@ -162,7 +85,90 @@ export default function PrixClientsPage() {
       avg_discount: avgDiscount,
       total_retrocession: totalRetrocession,
     });
-  };
+  }, []);
+
+  // Charger les prix clients
+  useEffect(() => {
+    const loadPricingRules = async () => {
+      setIsLoading(true);
+      try {
+        // Requête customer_pricing seul (sans jointures pour MVP)
+        const { data: pricingData, error } = await supabase
+          .from('customer_pricing')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        if (!pricingData || pricingData.length === 0) {
+          setPricingRules([]);
+          setFilteredRules([]);
+          calculateStats([]);
+          return;
+        }
+
+        // Récupérer les organisations et produits séparément
+        const customerIds = [
+          ...new Set(pricingData.map(p => p.customer_id).filter(Boolean)),
+        ];
+        const productIds = [
+          ...new Set(pricingData.map(p => p.product_id).filter(Boolean)),
+        ];
+
+        // Fetch organisations
+        const { data: orgsData } = await supabase
+          .from('organisations')
+          .select('id, trade_name, legal_name')
+          .in('id', customerIds)
+          .returns<{ id: string; trade_name: string; legal_name: string }[]>();
+
+        // Fetch products
+        const { data: productsData } = await supabase
+          .from('products')
+          .select('id, name')
+          .in('id', productIds)
+          .returns<{ id: string; name: string }[]>();
+
+        // Créer des maps pour lookup rapide
+        const orgsMap = new Map(orgsData?.map(o => [o.id, o]) ?? []);
+        const productsMap = new Map(productsData?.map(p => [p.id, p]) ?? []);
+
+        // Transformer les données avec les noms
+        const transformedData: CustomerPricing[] = pricingData.map(item => {
+          const org = orgsMap.get(item.customer_id);
+          const product = productsMap.get(item.product_id);
+
+          return {
+            ...item,
+            customer_name:
+              org?.trade_name ??
+              org?.legal_name ??
+              `Client ${item.customer_id?.slice(0, 8)}`,
+            product_name:
+              product?.name ?? `Produit ${item.product_id?.slice(0, 8)}`,
+          } as CustomerPricing;
+        });
+
+        setPricingRules(transformedData);
+        setFilteredRules(transformedData);
+        calculateStats(transformedData);
+      } catch (error: unknown) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : 'Erreur chargement prix clients';
+        console.error('[PrixClientsPage]:', message);
+        setPricingRules([]);
+        setFilteredRules([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    void loadPricingRules().catch(error => {
+      console.error('[PrixClientsPage] loadPricingRules failed:', error);
+    });
+  }, []);
 
   // Filtrer les prix clients
   useEffect(() => {
@@ -511,7 +517,7 @@ export default function PrixClientsPage() {
                             : '0%'}
                         </td>
                         <td className="px-4 py-3 text-sm text-right text-gray-700">
-                          {rule.min_quantity || 1}
+                          {rule.min_quantity ?? 1}
                         </td>
                         <td className="px-4 py-3 text-sm">
                           {getStatusBadge(rule)}

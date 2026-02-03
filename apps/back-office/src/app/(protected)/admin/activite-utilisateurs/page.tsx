@@ -54,10 +54,10 @@ export default function ActiviteUtilisateursPage() {
       setError(null);
 
       const response = await fetch('/api/admin/users');
-      const data: ApiResponse = await response.json();
+      const data = (await response.json()) as ApiResponse;
 
       if (!response.ok) {
-        throw new Error(data.error || 'Erreur lors du chargement');
+        throw new Error(data.error ?? 'Erreur lors du chargement');
       }
 
       setUsers(data.users);
@@ -82,11 +82,12 @@ export default function ActiviteUtilisateursPage() {
         return;
       }
 
-      const { data: profile } = (await supabase
+      const { data: profile } = await supabase
         .from('user_profiles')
         .select('role')
         .eq('user_id', user.id)
-        .single()) as { data: { role: string } | null };
+        .single()
+        .returns<{ role: string }>();
 
       if (profile?.role !== 'owner') {
         router.push('/dashboard');
@@ -171,7 +172,7 @@ export default function ActiviteUtilisateursPage() {
       organisation: '🏢',
       admin: '⚙️',
     };
-    return module ? icons[module] || '📄' : '—';
+    return module ? (icons[module] ?? '📄') : '—';
   };
 
   if (isLoading && users.length === 0) {
@@ -360,7 +361,7 @@ export default function ActiviteUtilisateursPage() {
                       </div>
                       <div className="ml-4">
                         <div className="text-sm font-medium text-neutral-900">
-                          {user.full_name || 'Sans nom'}
+                          {user.full_name ?? 'Sans nom'}
                         </div>
                         <div className="text-sm text-neutral-500">
                           {user.email}
@@ -407,7 +408,7 @@ export default function ActiviteUtilisateursPage() {
                         {getModuleIcon(user.most_used_module)}
                       </span>
                       <span className="capitalize">
-                        {user.most_used_module || '—'}
+                        {user.most_used_module ?? '—'}
                       </span>
                     </div>
                   </td>

@@ -70,7 +70,7 @@ export async function PATCH(
     }
 
     // 2. Parse et valider body
-    const body = await request.json();
+    const body: unknown = await request.json();
 
     const validation = ToggleVisibilitySchema.safeParse(body);
     if (!validation.success) {
@@ -93,7 +93,7 @@ export async function PATCH(
     const supabase = await createServerClient();
 
     // 4. Appeler RPC toggle_google_merchant_visibility
-    const { data, error } = await (supabase as any).rpc(
+    const { data, error } = await supabase.rpc(
       'toggle_google_merchant_visibility',
       {
         p_product_id: productId,
@@ -106,10 +106,11 @@ export async function PATCH(
         '[API] RPC toggle_google_merchant_visibility failed:',
         error
       );
+      const errorMessage = error instanceof Error ? error.message : String(error);
       return NextResponse.json(
         {
           success: false,
-          error: `Database error: ${error.message}`,
+          error: `Database error: ${errorMessage}`,
         },
         { status: 500 }
       );
@@ -118,7 +119,7 @@ export async function PATCH(
     // 5. Vérifier résultat RPC
     const result = data as Array<{ success: boolean; error: string | null }>;
     if (!result || result.length === 0 || !result[0].success) {
-      const errorMsg = result?.[0]?.error || 'Unknown error';
+      const errorMsg = result?.[0]?.error ?? 'Unknown error';
       return NextResponse.json(
         {
           success: false,
@@ -139,7 +140,7 @@ export async function PATCH(
         visible,
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[API] Toggle visibility failed:', error);
 
     return NextResponse.json(

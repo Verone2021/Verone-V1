@@ -2,6 +2,8 @@
 
 import { useEffect, useState, useMemo } from 'react';
 
+import type { Database } from '@verone/types';
+
 import { useToast } from '@verone/common';
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
@@ -55,7 +57,6 @@ import {
 
 interface Affiliate {
   id: string;
-  user_id: string | null;
   organisation_id: string | null;
   enseigne_id: string | null;
   affiliate_type: string; // 'enseigne' | 'client_professionnel' | 'client_particulier'
@@ -64,7 +65,6 @@ interface Affiliate {
   logo_url: string | null;
   bio: string | null;
   default_margin_rate: number | null;
-  max_margin_rate: number | null;
   linkme_commission_rate: number | null;
   status: string | null; // 'pending' | 'active' | 'suspended' - relaxed for Supabase types
   verified_at: string | null;
@@ -81,6 +81,18 @@ interface Organisation {
   trade_name: string | null;
   logo_url: string | null;
 }
+
+type AffiliateRow = Database['public']['Tables']['linkme_affiliates']['Row'];
+type AffiliateInsert =
+  Database['public']['Tables']['linkme_affiliates']['Insert'];
+type AffiliateUpdate =
+  Database['public']['Tables']['linkme_affiliates']['Update'];
+type AffiliateWithOrg = AffiliateRow & {
+  organisations: {
+    legal_name: string;
+    trade_name: string | null;
+  } | null;
+};
 
 interface Enseigne {
   id: string;
@@ -185,6 +197,7 @@ export function AffiliatesSection() {
     void fetchEnseignes().catch(error => {
       console.error('[Affiliates] Fetch enseignes failed:', error);
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Filtrer les entités déjà liées à un affilié
@@ -209,7 +222,7 @@ export function AffiliatesSection() {
       return availableOrganisations.filter(
         org =>
           org.legal_name.toLowerCase().includes(searchLower) ||
-          (org.trade_name && org.trade_name.toLowerCase().includes(searchLower))
+          org.trade_name?.toLowerCase().includes(searchLower)
       );
     } else {
       return availableEnseignes.filter(ens =>
@@ -228,9 +241,7 @@ export function AffiliatesSection() {
     setLoading(true);
 
     try {
-      // Note: Cast as any car les types Supabase ne sont pas à jour pour linkme_affiliates
-      // TODO: Régénérer les types Supabase quand possible
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('linkme_affiliates')
         .select(
           `
@@ -238,17 +249,23 @@ export function AffiliatesSection() {
           organisations:organisation_id(legal_name, trade_name)
         `
         )
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .returns<AffiliateWithOrg[]>();
 
       if (error) throw error;
 
       // Mapper les données avec les noms des entités liées
-      const affiliatesWithNames = (data || []).map((a: any) => ({
-        ...a,
-        organisation_name:
-          (a.organisations?.trade_name || a.organisations?.legal_name) ?? null,
-        enseigne_name: null, // Sera peuplé via le mapping organisations->enseignes
-      }));
+      const affiliatesWithNames = (data ?? []).map(
+        (a: AffiliateWithOrg): Affiliate => {
+          const { organisations, ...affiliateData } = a;
+          return {
+            ...affiliateData,
+            organisation_name:
+              organisations?.trade_name ?? organisations?.legal_name ?? null,
+            enseigne_name: null, // Sera peuplé via le mapping organisations->enseignes
+          };
+        }
+      );
 
       setAffiliates(affiliatesWithNames);
     } catch (error) {
@@ -273,7 +290,7 @@ export function AffiliatesSection() {
         .order('legal_name');
 
       if (error) throw error;
-      setOrganisations(data || []);
+      setOrganisations(data ?? []);
     } catch (error) {
       console.error('Error fetching organisations:', error);
     }
@@ -293,9 +310,9 @@ export function AffiliatesSection() {
 
       if (error) throw error;
       // Mapper vers interface Enseigne pour compatibilité
-      const mappedData = (data || []).map(org => ({
+      const mappedData = (data ?? []).map(org => ({
         id: org.id,
-        name: org.trade_name || org.legal_name,
+        name: org.trade_name ?? org.legal_name,
         logo_url: org.logo_url,
       }));
       setEnseignes(mappedData);
@@ -326,9 +343,9 @@ export function AffiliatesSection() {
             : null,
       };
 
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from('linkme_affiliates')
-        .insert(insertData);
+        .insert(insertData as AffiliateInsert);
 
       if (error) throw error;
 
@@ -360,14 +377,16 @@ export function AffiliatesSection() {
     setSaving(true);
 
     try {
-      const { error } = await (supabase as any)
+      const updateData: AffiliateUpdate = {
+        display_name: formData.display_name,
+        slug: formData.slug.toLowerCase().replace(/[^a-z0-9-]/g, '-'),
+        affiliate_type: formData.affiliate_type,
+        bio: formData.bio ?? null,
+      };
+
+      const { error } = await supabase
         .from('linkme_affiliates')
-        .update({
-          display_name: formData.display_name,
-          slug: formData.slug.toLowerCase().replace(/[^a-z0-9-]/g, '-'),
-          affiliate_type: formData.affiliate_type,
-          bio: formData.bio ?? null,
-        })
+        .update(updateData)
         .eq('id', selectedAffiliate.id);
 
       if (error) throw error;
@@ -410,9 +429,9 @@ export function AffiliatesSection() {
         updateData.verified_at = new Date().toISOString();
       }
 
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from('linkme_affiliates')
-        .update(updateData)
+        .update(updateData as AffiliateUpdate)
         .eq('id', affiliateId);
 
       if (error) throw error;
@@ -442,7 +461,7 @@ export function AffiliatesSection() {
     const supabase = createClient();
 
     try {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from('linkme_affiliates')
         .delete()
         .eq('id', affiliateId);
@@ -484,7 +503,7 @@ export function AffiliatesSection() {
     if (formData.entity_type === 'organisation') {
       const org = organisations.find(o => o.id === entityId);
       if (org) {
-        const displayName = org.trade_name || org.legal_name;
+        const displayName = org.trade_name ?? org.legal_name;
         const slug = displayName
           .toLowerCase()
           .normalize('NFD')
@@ -523,10 +542,10 @@ export function AffiliatesSection() {
     setSelectedAffiliate(affiliate);
     setFormData({
       entity_type: affiliate.enseigne_id ? 'enseigne' : 'organisation',
-      entity_id: (affiliate.enseigne_id || affiliate.organisation_id) ?? '',
+      entity_id: affiliate.enseigne_id ?? affiliate.organisation_id ?? '',
       display_name: affiliate.display_name,
       slug: affiliate.slug,
-      affiliate_type: (affiliate.affiliate_type || 'enseigne') as AffiliateType,
+      affiliate_type: (affiliate.affiliate_type ?? 'enseigne') as AffiliateType,
       bio: affiliate.bio ?? '',
     });
     setIsEditModalOpen(true);
@@ -652,7 +671,7 @@ export function AffiliatesSection() {
                 <SelectItem value="all">Toutes les organisations</SelectItem>
                 {organisations.map(org => (
                   <SelectItem key={org.id} value={org.id}>
-                    {org.trade_name || org.legal_name}
+                    {org.trade_name ?? org.legal_name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -699,11 +718,11 @@ export function AffiliatesSection() {
                     ];
                   const statusInfo =
                     statusConfig[
-                      (affiliate.status ||
+                      (affiliate.status ??
                         'pending') as keyof typeof statusConfig
                     ];
                   const linkedEntityName =
-                    affiliate.organisation_name || affiliate.enseigne_name;
+                    affiliate.organisation_name ?? affiliate.enseigne_name;
                   const linkedEntityType = affiliate.enseigne_id
                     ? 'enseigne'
                     : affiliate.organisation_id
@@ -961,8 +980,8 @@ export function AffiliatesSection() {
                       .map(entity => {
                         const isOrg = formData.entity_type === 'organisation';
                         const name = isOrg
-                          ? (entity as Organisation).trade_name ||
-                            (entity as Organisation).legal_name
+                          ? ((entity as Organisation).trade_name ??
+                            (entity as Organisation).legal_name)
                           : (entity as Enseigne).name;
                         const isSelected = formData.entity_id === entity.id;
 
@@ -1028,7 +1047,7 @@ export function AffiliatesSection() {
                     }
                   />
                   <p className="text-xs text-muted-foreground">
-                    URL: linkme.verone.fr/s/{formData.slug || 'votre-slug'}
+                    URL: linkme.verone.fr/s/{formData.slug ?? 'votre-slug'}
                   </p>
                 </div>
                 <div className="grid gap-2">

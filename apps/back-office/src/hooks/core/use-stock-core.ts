@@ -252,7 +252,7 @@ export function useStockCore({
 
         if (fetchError) throw fetchError;
 
-        const items = (data || []) as StockItem[];
+        const items = (data ?? []) as StockItem[];
         setStockItems(items);
         return items;
       } catch (err) {
@@ -382,7 +382,7 @@ export function useStockCore({
 
         if (fetchError) throw fetchError;
 
-        const movementsData = (data || []) as StockMovement[];
+        const movementsData = (data ?? []) as StockMovement[];
         setMovements(movementsData);
         return movementsData;
       } catch (err) {
@@ -454,7 +454,7 @@ export function useStockCore({
           reference_type: params.reference_type ?? null,
           reference_id: params.reference_id ?? null,
           notes: params.notes ?? null,
-          affects_forecast: params.affects_forecast || false,
+          affects_forecast: params.affects_forecast ?? false,
           forecast_type: params.forecast_type ?? null,
           performed_by: userId,
           performed_at: new Date().toISOString(),
@@ -486,7 +486,7 @@ export function useStockCore({
         if (!data) throw new Error('Mouvement créé mais non retourné');
 
         console.warn(
-          `✅ [useStockCore] Mouvement créé: ${data.id} (${params.movement_type}, channel=${finalChannelId || 'NULL'})`
+          `✅ [useStockCore] Mouvement créé: ${data.id} (${params.movement_type}, channel=${finalChannelId ?? 'NULL'})`
         );
 
         // Trigger refetch automatique (mouvements sont mis à jour via DB triggers)

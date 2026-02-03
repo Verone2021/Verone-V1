@@ -127,7 +127,7 @@ export function ProductPricingCard({
 
   // Auto-remplissage des marges quand le calcul change
   useEffect(() => {
-    if (marginResult && marginResult.isProductSellable) {
+    if (marginResult?.isProductSellable) {
       // Convertir les taux décimaux en pourcentages pour l'affichage
       const minMarginPercent = Math.round(marginResult.minRate * 100 * 10) / 10;
       const maxMarginPercent = Math.round(marginResult.maxRate * 100 * 10) / 10;

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 
 import Link from 'next/link';
 import { useParams, useSearchParams } from 'next/navigation';
@@ -123,7 +124,7 @@ export default function CustomerDetailPage() {
           .order('created_at', { ascending: false });
 
         // Mapper les données avec l'image primaire
-        const mappedProducts: CustomerProduct[] = (data || []).map(p => ({
+        const mappedProducts: CustomerProduct[] = (data ?? []).map(p => ({
           id: p.id,
           name: p.name,
           sku: p.sku,
@@ -246,7 +247,7 @@ export default function CustomerDetailPage() {
             id: 'samples',
             label: 'Échantillons',
             icon: <FlaskConical className="h-4 w-4" />,
-            badge: counts.samples?.toString() || '0',
+            badge: counts.samples?.toString() ?? '0',
             disabled: !isModuleDeployed('sales_orders'),
             disabledBadge: getModulePhase('sales_orders'),
           },
@@ -378,17 +379,18 @@ export default function CustomerDetailPage() {
                     : 'Client Particulier'}
                 </Badge>
               )}
-              {customer.ownership_type && (() => {
-                const badge = getOwnershipBadge(customer.ownership_type);
-                return badge ? (
-                  <Badge
-                    variant="outline"
-                    className={cn("border-gray-200", badge.className)}
-                  >
-                    {badge.label}
-                  </Badge>
-                ) : null;
-              })()}
+              {customer.ownership_type &&
+                (() => {
+                  const badge = getOwnershipBadge(customer.ownership_type);
+                  return badge ? (
+                    <Badge
+                      variant="outline"
+                      className={cn('border-gray-200', badge.className)}
+                    >
+                      {badge.label}
+                    </Badge>
+                  ) : null;
+                })()}
             </div>
           </div>
           <p className="text-sm text-gray-600">
@@ -580,10 +582,12 @@ export default function CustomerDetailPage() {
                       <CardContent className="p-4">
                         <div className="flex items-start gap-3">
                           {product.primary_image_url ? (
-                            <img
+                            <Image
                               src={product.primary_image_url}
                               alt={product.name}
-                              className="w-12 h-12 object-cover rounded"
+                              width={48}
+                              height={48}
+                              className="object-cover rounded"
                             />
                           ) : (
                             <div className="w-12 h-12 bg-gray-100 rounded flex items-center justify-center">

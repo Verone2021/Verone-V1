@@ -49,6 +49,21 @@ import {
   buildCategoryTree,
 } from '../hooks/use-site-internet-categories';
 
+// Interface basée sur schéma categories (consulté via MCP Supabase)
+interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  level: number | null;
+  is_active: boolean | null;
+  is_visible_menu: boolean | null;
+  display_order: number | null;
+  description?: string | null;
+  image_url?: string | null;
+  children?: Category[];
+  [key: string]: unknown;
+}
+
 /**
  * Composant Ligne Catégorie (récursif pour enfants) - Memoized
  */
@@ -58,7 +73,7 @@ const CategoryRow = memo(function CategoryRow({
   onToggleVisibility,
   isTogglingId,
 }: {
-  category: any;
+  category: Category;
   level?: number;
   onToggleVisibility: (categoryId: string, isVisible: boolean) => void;
   isTogglingId?: string;
@@ -107,7 +122,7 @@ const CategoryRow = memo(function CategoryRow({
 
         {/* Slug */}
         <TableCell className="text-sm text-muted-foreground">
-          {category.slug || '—'}
+          {category.slug ?? '—'}
         </TableCell>
 
         {/* Level */}
@@ -138,9 +153,12 @@ const CategoryRow = memo(function CategoryRow({
         {/* Toggle Visible Menu */}
         <TableCell>
           <Switch
-            checked={category.is_visible_menu}
+            checked={category.is_visible_menu ?? false}
             onCheckedChange={() =>
-              onToggleVisibility(category.id, !category.is_visible_menu)
+              onToggleVisibility(
+                category.id,
+                !(category.is_visible_menu ?? false)
+              )
             }
             disabled={!category.is_active || isTogglingId === category.id}
           />
@@ -150,7 +168,7 @@ const CategoryRow = memo(function CategoryRow({
       {/* Enfants (récursif) */}
       {hasChildren &&
         isExpanded &&
-        category.children.map((child: any) => (
+        category.children?.map((child: Category) => (
           <CategoryRow
             key={child.id}
             category={child}
@@ -264,28 +282,28 @@ export function CategoriesSection() {
         <KPICardUnified
           variant="elegant"
           title="Catégories Total"
-          value={stats?.total || 0}
+          value={stats?.total ?? 0}
           icon={FolderTree}
         />
 
         <KPICardUnified
           variant="elegant"
           title="Actives"
-          value={stats?.active || 0}
+          value={stats?.active ?? 0}
           icon={Eye}
         />
 
         <KPICardUnified
           variant="elegant"
           title="Visibles Menu"
-          value={stats?.visibleMenu || 0}
+          value={stats?.visibleMenu ?? 0}
           icon={Folder}
         />
 
         <KPICardUnified
           variant="elegant"
           title="Racines"
-          value={stats?.rootCategories || 0}
+          value={stats?.rootCategories ?? 0}
           icon={FolderTree}
         />
       </div>
@@ -298,7 +316,7 @@ export function CategoriesSection() {
               <CardTitle>Catégories Site Internet</CardTitle>
               <CardDescription>
                 {filteredCategories.length} catégories (
-                {stats?.visibleMenu || 0} visibles dans le menu)
+                {stats?.visibleMenu ?? 0} visibles dans le menu)
               </CardDescription>
             </div>
           </div>

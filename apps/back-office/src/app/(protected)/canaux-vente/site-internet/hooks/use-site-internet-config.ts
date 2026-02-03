@@ -5,6 +5,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createClient } from '@verone/utils/supabase/client';
+import type { Json } from '@verone/types';
 
 import type { SiteInternetConfig } from '../types';
 
@@ -14,14 +15,18 @@ const supabase = createClient();
  * Fetch configuration canal site internet
  */
 async function fetchSiteInternetConfig(): Promise<SiteInternetConfig | null> {
-  const { data, error } = await supabase.rpc('get_site_internet_config' as any);
+  const result = await supabase.rpc('get_site_internet_config');
+  const { data, error } = result as {
+    data: SiteInternetConfig | null;
+    error: Error | null;
+  };
 
   if (error) {
     console.error('Erreur fetch config site internet:', error);
     throw error;
   }
 
-  return data as unknown as SiteInternetConfig | null;
+  return data;
 }
 
 /**
@@ -114,24 +119,22 @@ export function useUpdateSiteInternetConfigJSON() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (configUpdates: Record<string, any>) => {
+    mutationFn: async (configUpdates: Json) => {
       // Fetch config actuelle
       const { data: currentConfig } = await supabase
         .from('sales_channels')
         .select('config')
         .eq('code', 'site_internet')
-        .single();
+        .single()
+        .returns<{ config: Json | null }>();
 
       if (!currentConfig) throw new Error('Config non trouvée');
 
-      // Cast to any to access config column (added via migration)
-      const configData = currentConfig as any;
-
       // Merge avec updates
       const newConfig = {
-        ...(configData.config || {}),
-        ...configUpdates,
-      };
+        ...((currentConfig.config as Record<string, unknown>) ?? {}),
+        ...(configUpdates as Record<string, unknown>),
+      } as Json;
 
       // Update
       const { error } = await supabase

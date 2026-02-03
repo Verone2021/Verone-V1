@@ -38,6 +38,11 @@ interface UserEditModalProps {
   onClose: () => void;
 }
 
+interface ApiErrorResponse {
+  success: false;
+  message?: string;
+}
+
 /**
  * Modal de modification d'un utilisateur LinkMe
  */
@@ -158,9 +163,9 @@ export function UserEditModal({ isOpen, user, onClose }: UserEditModalProps) {
         });
 
         if (!emailResponse.ok) {
-          const errorData = await emailResponse.json();
+          const errorData = (await emailResponse.json()) as ApiErrorResponse;
           throw new Error(
-            errorData.message || "Erreur lors de la modification de l'email"
+            errorData.message ?? "Erreur lors de la modification de l'email"
           );
         }
         setIsUpdatingEmail(false);
@@ -182,9 +187,9 @@ export function UserEditModal({ isOpen, user, onClose }: UserEditModalProps) {
         );
 
         if (!passwordResponse.ok) {
-          const errorData = await passwordResponse.json();
+          const errorData = (await passwordResponse.json()) as ApiErrorResponse;
           throw new Error(
-            errorData.message ||
+            errorData.message ??
               'Erreur lors de la modification du mot de passe'
           );
         }
@@ -571,7 +576,7 @@ export function UserEditModal({ isOpen, user, onClose }: UserEditModalProps) {
                     enseignes?.map(e => ({
                       value: e.id,
                       label: e.name,
-                    })) || []
+                    })) ?? []
                   }
                   value={enseigneId}
                   onValueChange={value => {
@@ -601,7 +606,7 @@ export function UserEditModal({ isOpen, user, onClose }: UserEditModalProps) {
                     organisations?.map(o => ({
                       value: o.id,
                       label: o.name,
-                    })) || []
+                    })) ?? []
                   }
                   value={organisationId}
                   onValueChange={setOrganisationId}
@@ -645,7 +650,7 @@ export function UserEditModal({ isOpen, user, onClose }: UserEditModalProps) {
             </div>
 
             {/* Error global */}
-            {(updateUser.error || errors.submit) && (
+            {(updateUser.error ?? errors.submit) && (
               <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
                 <AlertCircle className="h-4 w-4 text-red-600 mt-0.5" />
                 <p className="text-sm text-red-700">

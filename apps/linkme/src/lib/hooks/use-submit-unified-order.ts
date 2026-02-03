@@ -15,6 +15,8 @@
 import { useState, useCallback } from 'react';
 
 import { useQueryClient } from '@tanstack/react-query';
+import type { Database } from '@verone/types';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { createClient } from '@verone/utils/supabase/client';
 import { toast } from 'sonner';
 
@@ -65,7 +67,7 @@ export function useSubmitUnifiedOrder() {
       params: SubmitUnifiedOrderParams
     ): Promise<SubmitUnifiedOrderResult> => {
       const { affiliateId, selectionId, cart, data } = params;
-      const supabase = createClient();
+      const supabase: SupabaseClient<Database> = createClient();
 
       setIsSubmitting(true);
       setError(null);
@@ -80,16 +82,17 @@ export function useSubmitUnifiedOrder() {
             quantity: item.quantity,
           }));
 
-          const { data: orderId, error: rpcError } = await (
-            supabase.rpc as any
-          )('create_affiliate_order', {
-            p_affiliate_id: affiliateId,
-            p_customer_id: data.existingOrganisationId,
-            p_customer_type: 'organization',
-            p_selection_id: selectionId,
-            p_items: items,
-            p_notes: data.finalNotes || null,
-          });
+          const { data: orderId, error: rpcError } = await supabase.rpc(
+            'create_affiliate_order',
+            {
+              p_affiliate_id: affiliateId,
+              p_customer_id: data.existingOrganisationId,
+              p_customer_type: 'organization' as const,
+              p_selection_id: selectionId,
+              p_items: items,
+              p_notes: data.finalNotes ?? null,
+            }
+          );
 
           if (rpcError) {
             console.error(
@@ -99,7 +102,7 @@ export function useSubmitUnifiedOrder() {
             throw new Error(`Erreur création commande: ${rpcError.message}`);
           }
 
-          console.log(
+          console.error(
             '[useSubmitUnifiedOrder] Order created (existing org):',
             orderId
           );
@@ -116,7 +119,7 @@ export function useSubmitUnifiedOrder() {
 
           return {
             success: true,
-            orderId: orderId as string,
+            orderId,
             orderNumber: undefined, // Explicitly undefined for consistency
             customerId: data.existingOrganisationId,
           };
@@ -138,9 +141,9 @@ export function useSubmitUnifiedOrder() {
           const p_requester = {
             name: data.requester.name,
             email: data.requester.email,
-            phone: data.requester.phone || null,
-            position: data.requester.position || null,
-            notes: data.requester.notes || null,
+            phone: data.requester.phone ?? null,
+            position: data.requester.position ?? null,
+            notes: data.requester.notes ?? null,
           };
 
           // Organisation (Step 2)
@@ -152,10 +155,10 @@ export function useSubmitUnifiedOrder() {
                 ? data.responsable.companyLegalName
                 : data.newRestaurant.tradeName,
             city: data.newRestaurant.city,
-            postal_code: data.newRestaurant.postalCode || null,
-            address: data.newRestaurant.address || null,
-            latitude: data.newRestaurant.latitude || null,
-            longitude: data.newRestaurant.longitude || null,
+            postal_code: data.newRestaurant.postalCode ?? null,
+            address: data.newRestaurant.address ?? null,
+            latitude: data.newRestaurant.latitude ?? null,
+            longitude: data.newRestaurant.longitude ?? null,
             ownership_type: data.newRestaurant.ownershipType, // 'succursale' | 'franchise'
           };
 
@@ -166,14 +169,14 @@ export function useSubmitUnifiedOrder() {
                 is_new: true,
                 name: data.responsable.name,
                 email: data.responsable.email,
-                phone: data.responsable.phone || null,
+                phone: data.responsable.phone ?? null,
                 company_legal_name:
                   data.newRestaurant.ownershipType === 'franchise'
-                    ? data.responsable.companyLegalName || null
+                    ? (data.responsable.companyLegalName ?? null)
                     : null,
                 siret:
                   data.newRestaurant.ownershipType === 'franchise'
-                    ? data.responsable.siret || null
+                    ? (data.responsable.siret ?? null)
                     : null,
               }
             : data.existingContact.isNewContact
@@ -182,7 +185,7 @@ export function useSubmitUnifiedOrder() {
                   is_new: true,
                   name: data.responsable.name,
                   email: data.responsable.email,
-                  phone: data.responsable.phone || null,
+                  phone: data.responsable.phone ?? null,
                   company_legal_name: null,
                   siret: null,
                 }
@@ -212,8 +215,8 @@ export function useSubmitUnifiedOrder() {
                 use_parent: false,
                 contact_source:
                   data.billing.contactSource === 'custom'
-                    ? 'custom'
-                    : 'responsable',
+                    ? ('custom' as const)
+                    : ('responsable' as const),
                 name:
                   data.billing.contactSource === 'custom'
                     ? data.billing.name
@@ -224,15 +227,15 @@ export function useSubmitUnifiedOrder() {
                     : data.responsable.email,
                 phone:
                   data.billing.contactSource === 'custom'
-                    ? data.billing.phone || null
-                    : data.responsable.phone || null,
-                address: data.billing.address || null,
-                postal_code: data.billing.postalCode || null,
-                city: data.billing.city || null,
-                latitude: data.billing.latitude || null,
-                longitude: data.billing.longitude || null,
-                company_legal_name: data.billing.companyLegalName || null,
-                siret: data.billing.siret || null,
+                    ? (data.billing.phone ?? null)
+                    : (data.responsable.phone ?? null),
+                address: data.billing.address ?? null,
+                postal_code: data.billing.postalCode ?? null,
+                city: data.billing.city ?? null,
+                latitude: data.billing.latitude ?? null,
+                longitude: data.billing.longitude ?? null,
+                company_legal_name: data.billing.companyLegalName ?? null,
+                siret: data.billing.siret ?? null,
               };
 
           // Livraison (Step 5)
@@ -240,31 +243,31 @@ export function useSubmitUnifiedOrder() {
             use_responsable_contact: data.delivery.useResponsableContact,
             contact_name: data.delivery.useResponsableContact
               ? null
-              : data.delivery.contactName || null,
+              : (data.delivery.contactName ?? null),
             contact_email: data.delivery.useResponsableContact
               ? null
-              : data.delivery.contactEmail || null,
+              : (data.delivery.contactEmail ?? null),
             contact_phone: data.delivery.useResponsableContact
               ? null
-              : data.delivery.contactPhone || null,
-            address: data.delivery.address || null,
-            postal_code: data.delivery.postalCode || null,
-            city: data.delivery.city || null,
-            latitude: data.delivery.latitude || null,
-            longitude: data.delivery.longitude || null,
-            delivery_date: data.delivery.deliveryDate || null,
-            is_mall_delivery: data.delivery.isMallDelivery || false,
+              : (data.delivery.contactPhone ?? null),
+            address: data.delivery.address ?? null,
+            postal_code: data.delivery.postalCode ?? null,
+            city: data.delivery.city ?? null,
+            latitude: data.delivery.latitude ?? null,
+            longitude: data.delivery.longitude ?? null,
+            delivery_date: data.delivery.deliveryDate ?? null,
+            is_mall_delivery: data.delivery.isMallDelivery ?? false,
             mall_email: data.delivery.isMallDelivery
-              ? data.delivery.mallEmail || null
+              ? (data.delivery.mallEmail ?? null)
               : null,
-            access_form_required: data.delivery.accessFormRequired || false,
-            access_form_url: data.delivery.accessFormUrl || null,
+            access_form_required: data.delivery.accessFormRequired ?? false,
+            access_form_url: data.delivery.accessFormUrl ?? null,
             semi_trailer_accessible:
               data.delivery.semiTrailerAccessible !== false, // true par défaut
-            notes: data.delivery.notes || null,
+            notes: data.delivery.notes ?? null,
           };
 
-          const { data: result, error: rpcError } = await (supabase.rpc as any)(
+          const { data: result, error: rpcError } = await supabase.rpc(
             'create_public_linkme_order',
             {
               p_affiliate_id: affiliateId,
@@ -272,7 +275,7 @@ export function useSubmitUnifiedOrder() {
               p_cart: p_cart,
               p_requester: p_requester,
               p_organisation: p_organisation,
-              p_responsable: p_responsable,
+              p_owner: p_responsable,
               p_billing: p_billing,
               p_delivery: p_delivery,
             }
@@ -288,16 +291,17 @@ export function useSubmitUnifiedOrder() {
             throw new Error(`Erreur création commande: ${rpcError.message}`);
           }
 
-          const rpcResult = result as RpcResponse;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const rpcResult = result as any as RpcResponse;
 
-          console.log(
+          console.error(
             '[useSubmitUnifiedOrder] Order created (new org):',
             rpcResult
           );
 
           if (!rpcResult?.success) {
             throw new Error(
-              rpcResult?.error || 'Erreur inconnue lors de la création'
+              rpcResult?.error ?? 'Erreur inconnue lors de la création'
             );
           }
 
@@ -308,11 +312,18 @@ export function useSubmitUnifiedOrder() {
 
           // Envoyer notification email
           try {
+            interface SelectionWithAffiliate {
+              name: string;
+              linkme_affiliates: {
+                name: string;
+              } | null;
+            }
+
             const { data: selectionData } = await supabase
               .from('linkme_selections')
               .select('name, linkme_affiliates(name)')
               .eq('id', selectionId)
-              .single();
+              .single<SelectionWithAffiliate>();
 
             await fetch('/api/emails/notify-enseigne-order', {
               method: 'POST',
@@ -328,7 +339,7 @@ export function useSubmitUnifiedOrder() {
                 totalTtc: totalTtc,
                 source: 'unified_form',
 
-                affiliateName: (selectionData?.linkme_affiliates as any)?.name,
+                affiliateName: selectionData?.linkme_affiliates?.name,
                 selectionName: selectionData?.name,
               }),
             });
@@ -348,9 +359,9 @@ export function useSubmitUnifiedOrder() {
 
           return {
             success: true,
-            orderNumber: orderNumber || undefined,
-            orderId: orderId || undefined,
-            customerId: customerId || undefined,
+            orderNumber: orderNumber ?? undefined,
+            orderId: orderId ?? undefined,
+            customerId: customerId ?? undefined,
           };
         }
 

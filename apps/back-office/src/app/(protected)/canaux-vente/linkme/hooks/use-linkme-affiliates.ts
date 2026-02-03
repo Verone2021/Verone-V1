@@ -7,10 +7,10 @@
 'use client';
 import type { Database } from '@verone/types';
 
-// Types Supabase
-type LinkMeAffiliateRow =
+// Types Supabase (reserved for future use)
+type _LinkMeAffiliateRow =
   Database['public']['Tables']['linkme_affiliates']['Row'];
-type Organisation = Database['public']['Tables']['organisations']['Row'];
+type _Organisation = Database['public']['Tables']['organisations']['Row'];
 
 import { useQuery } from '@tanstack/react-query';
 import { createClient } from '@verone/utils/supabase/client';
@@ -88,10 +88,10 @@ async function fetchLinkMeAffiliates(
 
   // Compter les sélections par affilié
   const selectionsCountMap = new Map<string, number>();
-  (selections || []).forEach(s => {
+  (selections ?? []).forEach(s => {
     selectionsCountMap.set(
       s.affiliate_id,
-      (selectionsCountMap.get(s.affiliate_id) || 0) + 1
+      (selectionsCountMap.get(s.affiliate_id) ?? 0) + 1
     );
   });
 
@@ -106,8 +106,8 @@ async function fetchLinkMeAffiliates(
       // Nom de l'enseigne ou organisation
       const enseigneName = affiliate.enseigne?.name ?? null;
       const organisationName =
-        affiliate.organisation?.trade_name ||
-        affiliate.organisation?.legal_name ||
+        affiliate.organisation?.trade_name ??
+        affiliate.organisation?.legal_name ??
         null;
 
       return {
@@ -122,7 +122,7 @@ async function fetchLinkMeAffiliates(
         logo_url: affiliate.logo_url,
         default_margin_rate: affiliate.default_margin_rate,
         linkme_commission_rate: affiliate.linkme_commission_rate,
-        selections_count: selectionsCountMap.get(affiliate.id) || 0,
+        selections_count: selectionsCountMap.get(affiliate.id) ?? 0,
         is_active: affiliate.status === 'active',
       };
     })
@@ -192,13 +192,13 @@ async function fetchLinkMeAffiliateById(
     organisation_id: affiliate.organisation_id,
     enseigne_name: affiliate.enseigne?.name ?? null,
     organisation_name:
-      affiliate.organisation?.trade_name ||
-      affiliate.organisation?.legal_name ||
+      affiliate.organisation?.trade_name ??
+      affiliate.organisation?.legal_name ??
       null,
     logo_url: affiliate.logo_url,
     default_margin_rate: affiliate.default_margin_rate,
     linkme_commission_rate: affiliate.linkme_commission_rate,
-    selections_count: selectionsCount || 0,
+    selections_count: selectionsCount ?? 0,
     is_active: affiliate.status === 'active',
   };
 }
@@ -255,7 +255,7 @@ export function useLinkMeSelectionsByAffiliate(affiliateId: string | null) {
         throw error;
       }
 
-      return data || [];
+      return data ?? [];
     },
     enabled: !!affiliateId,
     staleTime: 30000,

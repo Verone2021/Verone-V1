@@ -4,10 +4,10 @@
 
 ## Architecture des Sessions
 
-| Session | Role | Permissions |
-|---------|------|-------------|
-| **WRITE** | Modifie le code, commit, push | Read + Write + Edit + Bash |
-| **VERIFY** | Lit, teste, propose | Read-only, peut lancer tests |
+| Session    | Role                          | Permissions                  |
+| ---------- | ----------------------------- | ---------------------------- |
+| **WRITE**  | Modifie le code, commit, push | Read + Write + Edit + Bash   |
+| **VERIFY** | Lit, teste, propose           | Read-only, peut lancer tests |
 
 **Note**: Fonctionne aussi avec 1 seule session si besoin.
 
@@ -42,13 +42,14 @@ Ce fichier est **versionne** dans le repo et partage entre toutes les sessions.
 
 Format: `[APP]-[DOMAIN]-[NNN]`
 
-| Prefixe | Application |
-|---------|-------------|
-| `BO-*` | back-office |
-| `LM-*` | linkme |
+| Prefixe | Application   |
+| ------- | ------------- |
+| `BO-*`  | back-office   |
+| `LM-*`  | linkme        |
 | `WEB-*` | site-internet |
 
 Exemples:
+
 - `BO-DASH-001` - Dashboard back-office
 - `LM-ORD-002` - Commandes LinkMe
 - `WEB-CMS-003` - CMS site internet
@@ -100,13 +101,13 @@ FORCE_STOP=1 claude ...
 
 ## Fichiers Cles
 
-| Fichier | Description |
-|---------|-------------|
-| `.claude/work/ACTIVE.md` | Plan actif (source de verite) |
-| `.claude/scripts/plan-sync.js` | Script de synchronisation |
-| `.claude/scripts/validate-command.js` | Validation Task ID |
-| `.claude/scripts/task-completed.sh` | Stop hook (verification sync) |
-| `.claude/archive/plans-YYYY-MM/` | Archives des taches Done |
+| Fichier                               | Description                   |
+| ------------------------------------- | ----------------------------- |
+| `.claude/work/ACTIVE.md`              | Plan actif (source de verite) |
+| `.claude/scripts/plan-sync.js`        | Script de synchronisation     |
+| `.claude/scripts/validate-command.js` | Validation Task ID            |
+| `.claude/scripts/task-completed.sh`   | Stop hook (verification sync) |
+| `.claude/archive/plans-YYYY-MM/`      | Archives des taches Done      |
 
 ---
 
@@ -115,6 +116,7 @@ FORCE_STOP=1 claude ...
 ### PreToolUse (Bash)
 
 Valide les commandes `git commit`:
+
 - Bloque si pas de Task ID
 - Autorise si prefixe chore/merge/revert
 - Autorise si bypass `[NO-TASK]`
@@ -126,6 +128,7 @@ Execute `plan-sync.js` apres chaque `git commit` reussi.
 ### Stop
 
 Bloque si:
+
 - Dernier commit contient un Task ID
 - ET `ACTIVE.md` n'a pas ete modifie depuis
 
@@ -136,11 +139,13 @@ Bloque si:
 ### "Commit bloque: ajoute un Task ID"
 
 Solution: Ajouter un Task ID dans le message
+
 ```bash
 git commit -m "[BO-XXX-001] Your message"
 ```
 
 Ou bypass (rare):
+
 ```bash
 git commit -m "[NO-TASK] Your message"
 ```
@@ -148,12 +153,14 @@ git commit -m "[NO-TASK] Your message"
 ### "Plan non synchronise"
 
 Solution:
+
 ```bash
 pnpm plan:sync
 git commit -am "chore(plan): sync"
 ```
 
 Ou bypass (rare):
+
 ```bash
 FORCE_STOP=1
 ```
@@ -203,6 +210,7 @@ Puis commit et push sur `main`.
 ### Pourquoi ca fonctionne
 
 L'`ignoreCommand` dans `vercel.json` surveille les paths:
+
 - `apps/linkme` ou `apps/back-office`
 - `packages`
 - `package.json`, `pnpm-lock.yaml`, `turbo.json`
@@ -216,12 +224,12 @@ Pour un nouveau build, il faut un **nouveau commit** sur `main` qui modifie les 
 
 ### Troubleshooting Deploiement
 
-| Probleme | Cause | Solution |
-|----------|-------|----------|
-| Deploiement "Canceled" | Build concurrent (Plan Hobby) | Attendre ou upgrader |
-| Deploiement "Ignored" | ignoreCommand skip | Modifier `.vercel-trigger` |
-| Deploiement disparait | ignoreCommand skip au demarrage | Modifier fichier dans paths surveilles |
-| Redeploy meme commit | Deploy Hook | Faire un nouveau commit |
+| Probleme               | Cause                           | Solution                               |
+| ---------------------- | ------------------------------- | -------------------------------------- |
+| Deploiement "Canceled" | Build concurrent (Plan Hobby)   | Attendre ou upgrader                   |
+| Deploiement "Ignored"  | ignoreCommand skip              | Modifier `.vercel-trigger`             |
+| Deploiement disparait  | ignoreCommand skip au demarrage | Modifier fichier dans paths surveilles |
+| Redeploy meme commit   | Deploy Hook                     | Faire un nouveau commit                |
 
 ---
 

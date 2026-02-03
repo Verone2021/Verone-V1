@@ -30,8 +30,8 @@ export default function ProductPricingSection({
       product.discount_rate > 0
   );
   const [formData, setFormData] = useState({
-    custom_price_ht: product.price_ht || 0,
-    discount_rate: (product.discount_rate || 0) * 100, // Convertir 0.30 → 30
+    custom_price_ht: product.price_ht ?? 0,
+    discount_rate: (product.discount_rate ?? 0) * 100, // Convertir 0.30 → 30
   });
 
   const updatePricing = useUpdatePricing();
@@ -61,8 +61,8 @@ export default function ProductPricingSection({
     setIsEditing(false);
     // Reset aux valeurs initiales
     setFormData({
-      custom_price_ht: product.price_ht || 0,
-      discount_rate: (product.discount_rate || 0) * 100,
+      custom_price_ht: product.price_ht ?? 0,
+      discount_rate: (product.discount_rate ?? 0) * 100,
     });
     setHasDiscount(
       product.price_source === 'channel_pricing' &&

@@ -17,12 +17,24 @@ import {
   createServerClient,
   createAdminClient,
 } from '@verone/utils/supabase/server';
+import type { Database } from '@verone/types';
 
 import { UserActivityTab } from './components/user-activity-tab';
 import { UserHeader } from './components/user-header';
 import { UserProfileTab } from './components/user-profile-tab';
 import { UserSecurityTab } from './components/user-security-tab';
 import { UserStatsCards } from './components/user-stats-cards';
+
+type _UserProfile = Database['public']['Tables']['user_profiles']['Row'];
+
+interface ActivityStats {
+  total_sessions: number;
+  total_actions: number;
+  avg_session_duration: number;
+  most_used_module: string | null;
+  engagement_score: number;
+  last_activity: string | null;
+}
 
 // Extended user interface with analytics data
 export interface UserDetailData {
@@ -67,11 +79,12 @@ async function getCurrentUserRole() {
   } = await supabase.auth.getUser();
   if (!user) return null;
 
-  const { data: profile } = (await supabase
+  const { data: profile } = await supabase
     .from('user_profiles')
     .select('role')
     .eq('user_id', user.id)
-    .single()) as { data: { role: string } | null };
+    .single()
+    .returns<{ role: string }>();
 
   return profile?.role ?? null;
 }
@@ -83,11 +96,11 @@ async function getUserDetailData(
   const adminClient = createAdminClient();
 
   // Récupérer le profil depuis la DB
-  const { data: profile, error: profileError } = (await supabase
+  const { data: profile, error: profileError } = await supabase
     .from('user_profiles')
     .select('*')
     .eq('user_id', userId)
-    .single()) as { data: any; error: any };
+    .single();
 
   if (profileError || !profile) {
     console.error('Erreur récupération profil:', profileError);
@@ -119,7 +132,7 @@ async function getUserDetailData(
     );
 
     // ✅ Récupérer VRAIES analytics directement depuis Supabase RPC
-    let realAnalytics = {
+    let realAnalytics: ActivityStats = {
       total_sessions: 0,
       total_actions: 0,
       avg_session_duration: 0,
@@ -130,21 +143,23 @@ async function getUserDetailData(
 
     try {
       // Appel direct RPC Supabase (pas de fetch HTTP)
-      const { data: stats, error: statsError } = await (supabase as any).rpc(
-        'get_user_activity_stats',
-        {
-          p_user_id: userId,
-          p_days: 30,
-        }
-      );
+      const result = await supabase.rpc('get_user_activity_stats', {
+        p_user_id: userId,
+        p_days: 30,
+      });
+
+      const { data: stats, error: statsError } = result as {
+        data: ActivityStats[] | null;
+        error: Error | null;
+      };
 
       if (!statsError && stats && stats.length > 0) {
         realAnalytics = {
-          total_sessions: stats[0].total_sessions || 0,
-          total_actions: stats[0].total_actions || 0,
-          avg_session_duration: stats[0].avg_session_duration || 0,
+          total_sessions: stats[0].total_sessions ?? 0,
+          total_actions: stats[0].total_actions ?? 0,
+          avg_session_duration: stats[0].avg_session_duration ?? 0,
           most_used_module: stats[0].most_used_module ?? null,
-          engagement_score: stats[0].engagement_score || 0,
+          engagement_score: stats[0].engagement_score ?? 0,
           last_activity: stats[0].last_activity ?? null,
         };
       } else if (statsError) {
@@ -169,18 +184,18 @@ async function getUserDetailData(
       email_confirmed_at: user.email_confirmed_at ?? null,
       created_at: user.created_at,
       last_sign_in_at: user.last_sign_in_at ?? null,
-      user_metadata: user.user_metadata || {},
+      user_metadata: user.user_metadata ?? {},
       profile: {
-        role: profile.role,
-        user_type: profile.user_type,
-        created_at: profile.created_at,
-        updated_at: profile.updated_at,
+        role: profile.role ?? 'employee',
+        user_type: profile.user_type ?? 'standard',
+        created_at: profile.created_at ?? user.created_at,
+        updated_at: profile.updated_at ?? user.created_at,
       },
       analytics: {
         total_sessions: realAnalytics.total_sessions,
-        avg_session_duration: realAnalytics.avg_session_duration || 0,
+        avg_session_duration: realAnalytics.avg_session_duration ?? 0,
         last_activity:
-          (realAnalytics.last_activity || user.last_sign_in_at) ?? null,
+          realAnalytics.last_activity ?? user.last_sign_in_at ?? null,
         days_since_creation: daysSinceCreation,
         login_frequency: loginFrequency,
         engagement_score: realAnalytics.engagement_score,
@@ -191,6 +206,15 @@ async function getUserDetailData(
     return null;
   }
 }
+
+// Type for user metadata
+type UserMetadata = {
+  name?: string;
+  first_name?: string;
+  last_name?: string;
+  job_title?: string;
+  phone?: string;
+};
 
 // ✅ Cache Next.js : revalide toutes les 5 minutes
 export const revalidate = 300;
@@ -211,19 +235,22 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
     notFound();
   }
 
-  const formatUserName = (email: string, user_metadata: any = null) => {
+  const formatUserName = (
+    email: string,
+    user_metadata: UserMetadata | null = null
+  ) => {
     if (user_metadata?.name) {
       return user_metadata.name;
     }
 
-    if (user_metadata?.first_name || user_metadata?.last_name) {
+    if (user_metadata?.first_name ?? user_metadata?.last_name) {
       return [user_metadata.first_name, user_metadata.last_name]
         .filter(Boolean)
         .join(' ')
         .trim();
     }
 
-    const tempName = email.split('@')[0].split('.') || [''];
+    const tempName = email.split('@')[0].split('.') ?? [''];
     return tempName.length > 1 ? tempName.join(' ') : tempName[0];
   };
 

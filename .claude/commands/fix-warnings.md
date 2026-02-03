@@ -6,6 +6,39 @@
 
 ---
 
+## ⚠️ AVANT DE COMMENCER (CHECKLIST OBLIGATOIRE)
+
+**CETTE CHECKLIST DOIT ÊTRE VALIDÉE À 100% AVANT TOUTE CORRECTION.**
+
+### Engagement Lecture Complète
+
+- [ ] J'ai LU ce fichier en ENTIER (434 lignes)
+- [ ] Je comprends le workflow 5 phases (Discovery → Analysis → Planning → Implementation → Validation)
+- [ ] Je m'engage à suivre EXACTEMENT ce workflow (pas d'improvisation)
+- [ ] Je NE vais PAS inventer mon propre workflow (batch par règle, commits multiples, etc.)
+- [ ] Je comprends que l'approche documentation-first est 2-3x plus rapide que trial-and-error
+
+### Règles Absolues Comprises
+
+- [ ] ✅ **UN fichier à la fois, TOUS les warnings du fichier** (pas de correction partielle)
+- [ ] ✅ **Self-verify ESLint + TypeScript AVANT commit** : 0 warnings + 0 errors
+- [ ] ✅ **Pattern officiel D'ABORD** (MCP Context7 OBLIGATOIRE)
+- [ ] ✅ **Boy Scout Rule** : Fichier PLUS propre après modification
+- [ ] ✅ **Corriger erreurs TypeScript legacy** si rencontrées (ne PAS contourner avec `as any`)
+- [ ] ❌ **JAMAIS** de remplacement aveugle (`sed` global, batch par règle)
+- [ ] ❌ **JAMAIS** `--no-verify` pour contourner hooks
+- [ ] ❌ **JAMAIS** corriger UNE règle sur 87 fichiers (commits trop gros)
+
+### Temps Attendu
+
+- [ ] Je comprends que cette approche prend **1-2 jours** (50 fichiers × 20 min)
+- [ ] Je comprends que l'approche ad-hoc prend **4-5 jours** (2.5-3x plus lent)
+- [ ] Je comprends que l'approche AI-assisted optimisée permet **193 fichiers en minutes** (source : Addy Osmani)
+
+**SI UNE SEULE CASE ❌ : RE-LIRE CE FICHIER COMPLÈTEMENT.**
+
+---
+
 ## 🎯 Objectif
 
 Corriger les warnings ESLint de manière **intelligente et durable** en suivant les meilleures pratiques 2026 :
@@ -175,6 +208,212 @@ Corriger les warnings ESLint de manière **intelligente et durable** en suivant 
    ```
 
 **✅ Checkpoint 5** : Commit validé par hooks ✓
+
+---
+
+### Phase 6 : TYPESCRIPT VALIDATION (CRITIQUE)
+
+**Règle d'or** : Un fichier corrigé = 0 warnings ESLint + 0 erreurs TypeScript + build OK.
+
+**Pourquoi cette phase ?**
+
+Les corrections ESLint peuvent révéler des erreurs TypeScript legacy masquées par `any`, `as any`, ou types incorrects. Un expert NE CONTOURNE PAS ces erreurs, il les CORRIGE.
+
+---
+
+#### 1. Vérification TypeScript Systématique
+
+**TOUJOURS vérifier TypeScript après self-verify ESLint** :
+
+```bash
+# Après avoir vérifié ESLint
+pnpm eslint --quiet file.tsx  # ✅ 0 warnings
+
+# Vérifier TypeScript
+pnpm --filter @verone/[app] type-check 2>&1 | grep -A5 "file.tsx"
+```
+
+**Résultat attendu** : Aucune erreur TypeScript dans le fichier.
+
+---
+
+#### 2. Si Erreurs TypeScript : ANALYSER, PAS CONTOURNER
+
+**❌ INTERDIT** :
+
+```typescript
+// ❌ Contourner avec as any
+const data = (suppliersData as any) ?? [];
+
+// ❌ Ignorer et push avec --no-verify
+git commit --no-verify
+
+// ❌ Changer de fichier pour éviter le problème
+```
+
+**✅ APPROCHE EXPERT** :
+
+1. **Lire CHAQUE erreur attentivement**
+
+   ```
+   error TS2345: Argument of type 'X' is not assignable to parameter of type 'Y'.
+   Property 'field_name' is missing...
+   ```
+
+2. **Identifier la cause racine** (3 cas courants) :
+
+   **Cas 1 : Types Supabase générés différents de l'interface locale**
+
+   ```typescript
+   // Interface locale incorrecte
+   interface Organisation {
+     id: string;
+     name: string; // ❌ Colonne n'existe pas dans DB
+     type: string;
+   }
+
+   // Solution : Utiliser noms de colonnes réels
+   interface Organisation {
+     id: string;
+     legal_name: string; // ✅ Colonne Supabase réelle
+     type: string | null; // ✅ Nullable comme dans DB
+   }
+   ```
+
+   **Cas 2 : Champs requis manquants dans Insert**
+
+   ```typescript
+   // ❌ Champ requis manquant
+   await supabase.from('financial_documents').insert({
+     document_type: 'expense',
+     partner_id: formData.partner_id,
+     // ❌ created_by manquant (requis par Supabase)
+   });
+
+   // ✅ Récupérer user et ajouter created_by
+   const {
+     data: { user },
+   } = await supabase.auth.getUser();
+   if (!user) throw new Error('Not authenticated');
+
+   await supabase.from('financial_documents').insert({
+     document_type: 'expense',
+     partner_id: formData.partner_id,
+     created_by: user.id, // ✅
+   });
+   ```
+
+   **Cas 3 : Array typé `never[]` (inférence échouée)**
+
+   ```typescript
+   // ❌ TypeScript infère never[]
+   const items = [];
+   items.push({ field: 'value' }); // ❌ Error: type 'never'
+
+   // ✅ Typer explicitement avec types Supabase
+   import type { Database } from '@verone/types';
+
+   const items: Database['public']['Tables']['table_name']['Insert'][] = [];
+   items.push({ field: 'value' }); // ✅
+   ```
+
+3. **Chercher les types Supabase générés**
+
+   ```bash
+   # Les types sont dans packages/@verone/types/src/supabase.ts
+   grep -n "table_name:" packages/@verone/types/src/supabase.ts
+
+   # Lire le type Insert de la table
+   # Ligne XXXX : table_name: { Row: {...}, Insert: {...}, Update: {...} }
+   ```
+
+4. **Corriger une par une les erreurs**
+   - Erreur ligne 127 → Corriger l'interface
+   - Erreur ligne 276 → Ajouter champ manquant
+   - Erreur lignes 305, 320, 336 → Typer l'array
+
+5. **Re-vérifier jusqu'à 0 erreurs**
+
+   ```bash
+   pnpm --filter @verone/[app] type-check 2>&1 | grep "file.tsx"
+   # → DOIT afficher "No errors" ou rien
+   ```
+
+---
+
+#### 3. Utiliser Types Supabase Générés (Best Practice)
+
+**Pattern OBLIGATOIRE** : Importer et utiliser les types Supabase générés.
+
+```typescript
+// ✅ Import types centralisés
+import type { Database } from '@verone/types';
+
+// ✅ Typer les arrays d'insert
+const items: Database['public']['Tables']['financial_document_lines']['Insert'][] =
+  [];
+
+// ✅ Typer les queries
+type Organisation = Database['public']['Tables']['organisations']['Row'];
+const [suppliers, setSuppliers] = useState<Organisation[]>([]);
+
+// ✅ Utiliser noms de colonnes exacts
+const { data } = await supabase
+  .from('organisations')
+  .select('id, legal_name, type') // ✅ Pas 'name'
+  .eq('type', 'supplier');
+```
+
+**Pourquoi ?**
+
+- Types à jour avec le schéma DB
+- Autocomplete dans l'IDE
+- Erreurs TypeScript détectées à la compilation
+- Pas de divergence entre code et DB
+
+---
+
+#### 4. Vérification Complète Avant Commit
+
+**Checklist finale (TOUTES doivent passer)** :
+
+```bash
+# 1. ESLint → 0 warnings
+pnpm eslint --quiet file.tsx
+
+# 2. TypeScript → 0 errors
+pnpm --filter @verone/[app] type-check
+
+# 3. Build (optionnel mais recommandé)
+pnpm --filter @verone/[app] build
+```
+
+**Si 1 seule échoue** : NE PAS commit. Corriger d'abord.
+
+---
+
+#### 5. Commit Après Validation Complète
+
+```bash
+# Staging
+git add file.tsx
+
+# Commit (hook lint-staged + pre-push type-check)
+git commit -m "[BO-LINT-XXX] fix: N warnings + TypeScript errors in file"
+
+# Push (hook pre-push = type-check complet)
+git push
+```
+
+**Le hook pre-push vérifie** :
+
+- ✅ `pnpm --filter @verone/[app] type-check` DOIT passer
+- ❌ Si erreurs TypeScript → push bloqué
+- ✅ Garantit que le code pushed est type-safe
+
+---
+
+**✅ Checkpoint 6** : TypeScript validation passée ✓
 
 ---
 
@@ -424,10 +663,28 @@ pnpm eslint --quiet commissions/page.tsx  # 0 warnings ✅
 git add commissions/page.tsx
 git commit -m "[BO-LINT-002] fix: 27 warnings (exhaustive-deps + nullish)"
 # Hook passe ✅
-git push
+```
+
+**Phase 6 - TypeScript Validation** :
+
+```bash
+# Vérifier TypeScript AVANT push
+pnpm --filter @verone/back-office type-check 2>&1 | grep "commissions/page.tsx"
+# → No errors ✅
+
+# Si erreurs TypeScript détectées :
+# 1. Lire erreurs : "Property 'created_by' is missing..."
+# 2. Chercher types Supabase : grep -n "table_name:" packages/@verone/types/src/supabase.ts
+# 3. Corriger avec types générés
+# 4. Re-vérifier type-check
+# 5. Amend commit si nécessaire : git commit --amend --no-edit
+
+# Push final (hook pre-push vérifie type-check)
+git push  # ✅ Passe car TypeScript OK
 ```
 
 ---
 
-**Dernière révision** : 2026-01-28
+**Dernière révision** : 2026-02-01
+**Version** : 2.0.0 (ajout Phase 6 TypeScript Validation)
 **Prochaine révision** : Après 10 fichiers corrigés ou 1 erreur bloquante

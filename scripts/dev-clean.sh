@@ -22,5 +22,4 @@ rm -rf .turbo
 
 echo "✅ Nettoyage terminé"
 echo ""
-echo "🚀 Lancement du serveur..."
-pnpm dev
+echo "👉 Lancez manuellement le serveur avec: pnpm dev:safe"

@@ -22,11 +22,26 @@ interface TestConnectionResponse {
     accountId: string;
     dataSourceId: string;
     timestamp: string;
-    details?: any;
+    details?: Record<string, unknown>;
   };
   error?: string;
   message?: string;
-  details?: any;
+  details?: unknown;
+}
+
+interface ExtendedTestRequestBody {
+  includeProductList?: boolean;
+  testProduct?: string | null;
+}
+
+interface GoogleMerchantApiResult<T = unknown> {
+  success: boolean;
+  data?: T;
+  error?: string;
+}
+
+interface ProductListData {
+  products?: unknown[];
 }
 
 /**
@@ -72,7 +87,7 @@ export async function GET(
       accountId: GOOGLE_MERCHANT_CONFIG.accountId,
       dataSourceId: GOOGLE_MERCHANT_CONFIG.dataSourceId,
       timestamp: new Date().toISOString(),
-      details: {} as any,
+      details: {} as Record<string, unknown>,
     };
 
     // 1. Test d'authentification
@@ -86,11 +101,16 @@ export async function GET(
           success: testResults.authentication,
         }
       );
-    } catch (error: any) {
-      logger.error('Authentication test failed', error, {
-        operation: 'auth_test_failed',
-      });
-      testResults.details.authError = error.message;
+    } catch (error: unknown) {
+      logger.error(
+        'Authentication test failed',
+        error instanceof Error ? error : undefined,
+        {
+          operation: 'auth_test_failed',
+        }
+      );
+      testResults.details.authError =
+        error instanceof Error ? error.message : 'Unknown error';
     }
 
     // 2. Test de connexion API
@@ -116,11 +136,16 @@ export async function GET(
             success: testResults.apiConnection,
           }
         );
-      } catch (error: any) {
-        logger.error('API connection test failed', error, {
-          operation: 'api_connection_test_failed',
-        });
-        testResults.details.apiError = error.message;
+      } catch (error: unknown) {
+        logger.error(
+          'API connection test failed',
+          error instanceof Error ? error : undefined,
+          {
+            operation: 'api_connection_test_failed',
+          }
+        );
+        testResults.details.apiError =
+          error instanceof Error ? error.message : 'Unknown error';
       }
     } else {
       logger.warn('Skipping API connection test - auth failed', {
@@ -180,18 +205,22 @@ export async function GET(
         { status: 500 }
       );
     }
-  } catch (error: any) {
-    logger.error('Connection test crashed', error, {
-      operation: 'google_merchant_test_crash',
-    });
+  } catch (error: unknown) {
+    logger.error(
+      'Connection test crashed',
+      error instanceof Error ? error : undefined,
+      {
+        operation: 'google_merchant_test_crash',
+      }
+    );
 
     return NextResponse.json(
       {
         success: false,
         error: 'Test de connexion échoué',
         details: {
-          message: error.message,
-          stack: error.stack,
+          message: error instanceof Error ? error.message : 'Unknown error',
+          stack: error instanceof Error ? error.stack : undefined,
           timestamp: new Date().toISOString(),
         },
       },
@@ -229,19 +258,23 @@ export async function POST(
     });
 
     // Récupérer les données de la requête pour des tests spécifiques
-    const body = await request.json().catch(() => ({}));
+    const body = (await request
+      .json()
+      .catch(() => ({}))) as ExtendedTestRequestBody;
     const { includeProductList = false, testProduct = null } = body;
 
     // Effectuer le test de base
     const baseTestResponse = await GET(request);
-    const baseTest = await baseTestResponse.json();
+    const baseTest = (await baseTestResponse.json()) as TestConnectionResponse;
 
     if (!baseTest.success) {
       return baseTestResponse;
     }
 
     // Tests étendus
-    const extendedDetails = { ...baseTest.data!.details };
+    const extendedDetails: Record<string, unknown> = {
+      ...baseTest.data?.details,
+    };
 
     // Test listage des produits
     if (includeProductList) {
@@ -250,18 +283,20 @@ export async function POST(
       });
       try {
         const client = getGoogleMerchantClient();
-        const listResult = await client.listProducts(5); // Liste 5 produits max
+        const listResult = (await client.listProducts(
+          5
+        )) as GoogleMerchantApiResult<ProductListData>; // Liste 5 produits max
 
         extendedDetails.productListTest = {
           success: listResult.success,
-          productCount: listResult.data?.products?.length || 0,
+          productCount: listResult.data?.products?.length ?? 0,
           data: listResult.data,
           error: listResult.error,
         };
-      } catch (error: any) {
+      } catch (error: unknown) {
         extendedDetails.productListTest = {
           success: false,
-          error: error.message,
+          error: error instanceof Error ? error.message : 'Unknown error',
         };
       }
     }
@@ -274,7 +309,9 @@ export async function POST(
       });
       try {
         const client = getGoogleMerchantClient();
-        const productResult = await client.getProduct(testProduct);
+        const productResult = (await client.getProduct(
+          testProduct
+        )) as GoogleMerchantApiResult;
 
         extendedDetails.specificProductTest = {
           sku: testProduct,
@@ -283,32 +320,36 @@ export async function POST(
           data: productResult.data,
           error: productResult.error,
         };
-      } catch (error: any) {
+      } catch (error: unknown) {
         extendedDetails.specificProductTest = {
           sku: testProduct,
           success: false,
-          error: error.message,
+          error: error instanceof Error ? error.message : 'Unknown error',
         };
       }
     }
 
-    return NextResponse.json({
+    return NextResponse.json<TestConnectionResponse>({
       success: true,
       data: {
-        ...baseTest.data!,
+        ...(baseTest.data ?? {}),
         details: extendedDetails,
-      },
+      } as TestConnectionResponse['data'],
     });
-  } catch (error: any) {
-    logger.error('Extended connection test failed', error, {
-      operation: 'google_merchant_extended_test_failed',
-    });
+  } catch (error: unknown) {
+    logger.error(
+      'Extended connection test failed',
+      error instanceof Error ? error : undefined,
+      {
+        operation: 'google_merchant_extended_test_failed',
+      }
+    );
 
     return NextResponse.json(
       {
         success: false,
         error: 'Test de connexion étendu échoué',
-        details: error.message,
+        details: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     );

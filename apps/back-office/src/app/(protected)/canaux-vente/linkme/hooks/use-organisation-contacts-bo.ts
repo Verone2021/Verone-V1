@@ -90,7 +90,7 @@ export function useOrganisationContactsBO(organisationId: string | null) {
         throw error;
       }
 
-      const contacts: ContactBO[] = (data || []).map(c => ({
+      const contacts: ContactBO[] = (data ?? []).map(c => ({
         id: c.id,
         firstName: c.first_name,
         lastName: c.last_name,
@@ -98,10 +98,10 @@ export function useOrganisationContactsBO(organisationId: string | null) {
         phone: c.phone,
         mobile: c.mobile,
         title: c.title,
-        isPrimaryContact: c.is_primary_contact || false,
-        isBillingContact: c.is_billing_contact || false,
-        isCommercialContact: c.is_commercial_contact || false,
-        isTechnicalContact: c.is_technical_contact || false,
+        isPrimaryContact: c.is_primary_contact ?? false,
+        isBillingContact: c.is_billing_contact ?? false,
+        isCommercialContact: c.is_commercial_contact ?? false,
+        isTechnicalContact: c.is_technical_contact ?? false,
       }));
 
       // Identifier les contacts clés
@@ -138,8 +138,8 @@ export function useCreateContactBO() {
           email: input.email,
           phone: input.phone ?? null,
           title: input.title ?? null,
-          is_billing_contact: input.isBillingContact || false,
-          is_primary_contact: input.isPrimaryContact || false,
+          is_billing_contact: input.isBillingContact ?? false,
+          is_primary_contact: input.isPrimaryContact ?? false,
           is_active: true,
         })
         .select('id, first_name, last_name, email')

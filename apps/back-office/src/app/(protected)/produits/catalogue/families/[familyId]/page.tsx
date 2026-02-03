@@ -22,6 +22,18 @@ import { useFamilies } from '@verone/categories';
 import { useCategories, type CategoryWithCount } from '@verone/categories';
 import type { Database } from '@verone/utils/supabase/types';
 
+interface FamilyFormData {
+  name: string;
+  description?: string;
+  is_active: boolean;
+  display_order?: number;
+  image_url?: string;
+}
+
+interface CategoryFormData extends FamilyFormData {
+  family_id?: string;
+}
+
 type Family = Database['public']['Tables']['families']['Row'];
 type Category = Database['public']['Tables']['categories']['Row'];
 
@@ -79,7 +91,7 @@ export default function FamilyDetailPage() {
             <div className="h-8 w-64 bg-gray-200 rounded animate-pulse" />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(6)].map((_, i) => (
+            {Array.from({ length: 6 }).map((_, i) => (
               <div
                 key={i}
                 className="h-48 bg-gray-200 rounded-lg animate-pulse"
@@ -120,7 +132,7 @@ export default function FamilyDetailPage() {
     setIsEditFamilyOpen(true);
   };
 
-  const handleSubmitFamily = async (formData: any) => {
+  const handleSubmitFamily = async (formData: FamilyFormData) => {
     try {
       await updateFamily(familyId, {
         name: formData.name,
@@ -140,16 +152,17 @@ export default function FamilyDetailPage() {
     setIsNewCategoryOpen(true);
   };
 
-  const handleSubmitNewCategory = async (formData: any) => {
+  const handleSubmitNewCategory = async (formData: CategoryFormData) => {
     try {
       await createCategory({
         name: formData.name,
-        description: formData.description,
+        slug: formData.name.toLowerCase().replace(/\s+/g, '-'),
+        description: formData.description ?? null,
         family_id: familyId,
         is_active: formData.is_active,
-        display_order: formData.display_order,
-        image_url: formData.image_url,
-      } as any);
+        display_order: formData.display_order ?? null,
+        image_url: formData.image_url ?? null,
+      });
       setIsNewCategoryOpen(false);
     } catch (error) {
       console.error('Erreur lors de la création de la catégorie:', error);
@@ -161,7 +174,7 @@ export default function FamilyDetailPage() {
     setIsEditCategoryOpen(true);
   };
 
-  const handleSubmitEditCategory = async (formData: any) => {
+  const handleSubmitEditCategory = async (formData: CategoryFormData) => {
     if (!editingCategory) return;
 
     try {
@@ -274,7 +287,7 @@ export default function FamilyDetailPage() {
                 <div>
                   <p className="text-2xl font-bold text-black">
                     {familyCategories.reduce(
-                      (sum, cat) => sum + (cat.subcategory_count || 0),
+                      (sum, cat) => sum + (cat.subcategory_count ?? 0),
                       0
                     )}
                   </p>
@@ -327,7 +340,7 @@ export default function FamilyDetailPage() {
                   imageUrl={category.image_url ?? undefined}
                   entityType="category"
                   slug={category.slug}
-                  count={category.subcategory_count || 0}
+                  count={category.subcategory_count ?? 0}
                   countLabel="sous-catégorie"
                   isActive={category.is_active ?? undefined}
                   iconPosition="top-right"
@@ -364,7 +377,7 @@ export default function FamilyDetailPage() {
                 name: family.name,
                 description: family.description ?? '',
                 is_active: family.is_active ?? true,
-                display_order: family.display_order || 1,
+                display_order: family.display_order ?? 1,
                 image_url: family.image_url ?? undefined,
               }
             : undefined
@@ -378,7 +391,7 @@ export default function FamilyDetailPage() {
         onClose={() => setIsNewCategoryOpen(false)}
         type="category"
         mode="create"
-        parentOptions={families?.map(f => ({ id: f.id, name: f.name })) || []}
+        parentOptions={families?.map(f => ({ id: f.id, name: f.name })) ?? []}
         onSubmit={handleSubmitNewCategory}
       />
 
@@ -398,13 +411,13 @@ export default function FamilyDetailPage() {
                 name: editingCategory.name,
                 description: editingCategory.description ?? '',
                 is_active: editingCategory.is_active ?? true,
-                display_order: editingCategory.display_order || 1,
+                display_order: editingCategory.display_order ?? 1,
                 parent_id: editingCategory.family_id ?? undefined,
                 image_url: editingCategory.image_url ?? undefined,
               }
             : undefined
         }
-        parentOptions={families?.map(f => ({ id: f.id, name: f.name })) || []}
+        parentOptions={families?.map(f => ({ id: f.id, name: f.name })) ?? []}
         onSubmit={handleSubmitEditCategory}
       />
     </div>

@@ -18,7 +18,7 @@ import { createAdminClient } from '@verone/utils/supabase/server';
 
 function getQontoClient(): QontoClient {
   return new QontoClient({
-    authMode: (process.env.QONTO_AUTH_MODE as 'oauth' | 'api_key') || 'oauth',
+    authMode: (process.env.QONTO_AUTH_MODE as 'oauth' | 'api_key') ?? 'oauth',
     organizationId: process.env.QONTO_ORGANIZATION_ID,
     apiKey: process.env.QONTO_API_KEY,
     accessToken: process.env.QONTO_ACCESS_TOKEN,
@@ -197,7 +197,7 @@ export async function POST(
     let qontoClientId: string;
     const customerEmail = typedPartner.email;
     const customerName =
-      typedPartner.trade_name || typedPartner.legal_name || 'Client';
+      typedPartner.trade_name ?? typedPartner.legal_name ?? 'Client';
 
     if (!customerEmail) {
       return NextResponse.json(
@@ -239,14 +239,14 @@ export async function POST(
           streetAddress: String(billingAddress?.street ?? ''),
           city: String(billingAddress?.city ?? ''),
           zipCode: String(billingAddress?.postal_code ?? ''),
-          countryCode: String(billingAddress?.country || 'FR'),
+          countryCode: String(billingAddress?.country ?? 'FR'),
         },
       });
       qontoClientId = newClient.id;
     }
 
     // 6. Construire les lignes du devis
-    const quoteItems = (items || []).map(item => ({
+    const quoteItems = (items ?? []).map(item => ({
       title: item.description,
       quantity: String(item.quantity),
       unit: 'piece',
@@ -258,9 +258,9 @@ export async function POST(
     }));
 
     // Ajouter les frais
-    const feesVatRate = typedInvoice.fees_vat_rate || 0.2;
+    const feesVatRate = typedInvoice.fees_vat_rate ?? 0.2;
 
-    if ((typedInvoice.shipping_cost_ht || 0) > 0) {
+    if ((typedInvoice.shipping_cost_ht ?? 0) > 0) {
       quoteItems.push({
         title: 'Frais de livraison',
         quantity: '1',
@@ -273,7 +273,7 @@ export async function POST(
       });
     }
 
-    if ((typedInvoice.handling_cost_ht || 0) > 0) {
+    if ((typedInvoice.handling_cost_ht ?? 0) > 0) {
       quoteItems.push({
         title: 'Frais de manutention',
         quantity: '1',
@@ -286,7 +286,7 @@ export async function POST(
       });
     }
 
-    if ((typedInvoice.insurance_cost_ht || 0) > 0) {
+    if ((typedInvoice.insurance_cost_ht ?? 0) > 0) {
       quoteItems.push({
         title: "Frais d'assurance",
         quantity: '1',
@@ -323,8 +323,7 @@ export async function POST(
       issueDate,
       expiryDate,
       items: quoteItems,
-      // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- Empty notes must become undefined (omitted in API payload)
-      footer: typedInvoice.notes || undefined,
+      footer: typedInvoice.notes ?? undefined,
     });
 
     console.warn(

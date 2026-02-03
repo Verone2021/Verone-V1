@@ -7,9 +7,10 @@ import { createClient } from '@verone/utils/supabase/client';
 const supabase = createClient();
 import type { Database, Json } from '@verone/types';
 
-// Types Supabase
-type LinkMeAffiliate = Database['public']['Tables']['linkme_affiliates']['Row'];
-type Organisation = Database['public']['Tables']['organisations']['Row'];
+// Types Supabase (reserved for future use)
+type _LinkMeAffiliate =
+  Database['public']['Tables']['linkme_affiliates']['Row'];
+type _Organisation = Database['public']['Tables']['organisations']['Row'];
 
 // ID du canal LinkMe
 const LINKME_CHANNEL_ID = '93c68db1-5a30-4168-89ec-6383152be405';
@@ -198,7 +199,7 @@ async function fetchSelectionById(
   }
 
   // 3. Récupérer les images des produits
-  const productIds = items?.map((item: SelectionItem) => item.product_id) || [];
+  const productIds = items?.map((item: SelectionItem) => item.product_id) ?? [];
   let imagesByProductId: Record<string, string> = {};
   const commissionByProductId: Record<string, number | null> = {};
   const catalogPriceByProductId: Record<string, number | null> = {};
@@ -262,7 +263,7 @@ async function fetchSelectionById(
   }
 
   // 5. Combiner les données (y compris données étendues pour modal)
-  const itemsWithImages = (items || []).map(item => {
+  const itemsWithImages = (items ?? []).map(item => {
     const channelData = channelPricingDataByProductId[item.product_id];
 
     const rawProduct = item.product;
@@ -281,11 +282,11 @@ async function fetchSelectionById(
             weight_kg: rawProduct.weight,
             dimensions_cm: rawProduct.dimensions,
             subcategory_id:
-              (rawProduct.subcategory_id || rawProduct.subcategory?.id) ?? null,
+              rawProduct.subcategory_id ?? rawProduct.subcategory?.id ?? null,
             category_name: rawProduct.subcategory?.name ?? null,
             supplier_name:
-              rawProduct.supplier?.trade_name ||
-              rawProduct.supplier?.legal_name ||
+              rawProduct.supplier?.trade_name ??
+              rawProduct.supplier?.legal_name ??
               null,
             // PRODUITS AFFILIÉ (modèle inversé)
             created_by_affiliate: rawProduct.created_by_affiliate ?? null,
@@ -379,6 +380,12 @@ export function useUpdateSelection() {
   });
 }
 
+// API response types
+interface AddItemApiResponse {
+  item?: { id: string };
+  message?: string;
+}
+
 /**
  * Hook: Ajouter un produit à la sélection
  * Utilise l'API Route avec supabaseAdmin pour bypass RLS
@@ -412,10 +419,10 @@ export function useAddProductToSelection() {
         }),
       });
 
-      const data = await response.json();
+      const data = (await response.json()) as AddItemApiResponse;
 
       if (!response.ok) {
-        throw new Error(data.message || 'Erreur ajout produit');
+        throw new Error(data.message ?? 'Erreur ajout produit');
       }
 
       return data.item?.id; // Retourne l'ID du nouvel item
@@ -436,7 +443,7 @@ export function useAddProductToSelection() {
       console.error('Error adding product:', error);
       toast({
         title: 'Erreur',
-        description: error.message || "Impossible d'ajouter le produit.",
+        description: error.message ?? "Impossible d'ajouter le produit.",
         variant: 'destructive',
       });
     },
@@ -469,7 +476,7 @@ export function useRemoveProductFromSelection() {
       if (error) throw error;
 
       // Mettre à jour le compteur de produits
-      await supabase.rpc('decrement_selection_products_count' as any, {
+      await supabase.rpc('decrement_selection_products_count', {
         p_selection_id: selectionId,
       });
     },
@@ -738,7 +745,7 @@ async function fetchEnseigneSourcedProducts(
       sellingPrice = channelPrice.public_price_ht;
     } else {
       // Calcul par défaut: cost_price × 1.30 (marge 30%)
-      sellingPrice = (p.cost_price || 0) * 1.3;
+      sellingPrice = (p.cost_price ?? 0) * 1.3;
     }
 
     return {
@@ -839,7 +846,7 @@ async function fetchSelectionsByEnseigne(
     throw selError;
   }
 
-  return (selections || []).map(s => ({
+  return (selections ?? []).map(s => ({
     id: s.id,
     name: s.name,
     slug: s.slug,

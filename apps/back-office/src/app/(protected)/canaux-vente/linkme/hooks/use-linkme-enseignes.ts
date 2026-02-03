@@ -7,10 +7,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createClient } from '@verone/utils/supabase/client';
 import type { Database } from '@verone/types';
 
-// Types Supabase
-type Enseigne = Database['public']['Tables']['enseignes']['Row'];
-type Organisation = Database['public']['Tables']['organisations']['Row'];
-type LinkMeAffiliate = Database['public']['Tables']['linkme_affiliates']['Row'];
+// Types Supabase (reserved for future use)
+type _Enseigne = Database['public']['Tables']['enseignes']['Row'];
+type _Organisation = Database['public']['Tables']['organisations']['Row'];
+type _LinkMeAffiliate =
+  Database['public']['Tables']['linkme_affiliates']['Row'];
 
 /**
  * Interface Enseigne avec statistiques
@@ -97,11 +98,11 @@ async function fetchEnseignesWithStats(): Promise<EnseigneWithStats[]> {
 
   // Compter organisations par enseigne
   const orgsCountMap = new Map<string, number>();
-  (orgsResult.data || []).forEach(o => {
+  (orgsResult.data ?? []).forEach(o => {
     if (o.enseigne_id)
       orgsCountMap.set(
         o.enseigne_id,
-        (orgsCountMap.get(o.enseigne_id) || 0) + 1
+        (orgsCountMap.get(o.enseigne_id) ?? 0) + 1
       );
   });
 
@@ -120,12 +121,12 @@ async function fetchEnseignesWithStats(): Promise<EnseigneWithStats[]> {
 
   // Compter sélections par enseigne (via affiliate->enseigne mapping)
   const selectionsCountMap = new Map<string, number>();
-  (selectionsResult.data || []).forEach(s => {
+  (selectionsResult.data ?? []).forEach(s => {
     const enseigneId = affiliateToEnseigneMap.get(s.affiliate_id);
     if (enseigneId) {
       selectionsCountMap.set(
         enseigneId,
-        (selectionsCountMap.get(enseigneId) || 0) + 1
+        (selectionsCountMap.get(enseigneId) ?? 0) + 1
       );
     }
   });
@@ -136,15 +137,15 @@ async function fetchEnseignesWithStats(): Promise<EnseigneWithStats[]> {
     name: enseigne.name,
     description: enseigne.description,
     logo_url: enseigne.logo_url,
-    member_count: enseigne.member_count || 0,
+    member_count: enseigne.member_count ?? 0,
     is_active: enseigne.is_active ?? true,
     created_at: enseigne.created_at,
     updated_at: enseigne.updated_at,
     created_by: enseigne.created_by,
     // Stats
-    organisations_count: orgsCountMap.get(enseigne.id) || 0,
-    affiliates_count: affiliatesCountMap.get(enseigne.id) || 0,
-    selections_count: selectionsCountMap.get(enseigne.id) || 0,
+    organisations_count: orgsCountMap.get(enseigne.id) ?? 0,
+    affiliates_count: affiliatesCountMap.get(enseigne.id) ?? 0,
+    selections_count: selectionsCountMap.get(enseigne.id) ?? 0,
     orders_count: 0,
     total_ca_ht: 0,
     total_commissions: 0,
@@ -185,7 +186,7 @@ async function fetchEnseigneById(
       .eq('enseigne_id', enseigneId),
   ]);
 
-  const affiliateIds = (affiliatesResult.data || []).map(a => a.id);
+  const affiliateIds = (affiliatesResult.data ?? []).map(a => a.id);
 
   const { count: selectionsCount } =
     affiliateIds.length > 0
@@ -200,14 +201,14 @@ async function fetchEnseigneById(
     name: enseigne.name,
     description: enseigne.description,
     logo_url: enseigne.logo_url,
-    member_count: enseigne.member_count || 0,
+    member_count: enseigne.member_count ?? 0,
     is_active: enseigne.is_active ?? true,
     created_at: enseigne.created_at,
     updated_at: enseigne.updated_at,
     created_by: enseigne.created_by,
-    organisations_count: orgsResult.count || 0,
-    affiliates_count: affiliatesResult.data?.length || 0,
-    selections_count: selectionsCount || 0,
+    organisations_count: orgsResult.count ?? 0,
+    affiliates_count: affiliatesResult.data?.length ?? 0,
+    selections_count: selectionsCount ?? 0,
     orders_count: 0,
     total_ca_ht: 0,
     total_commissions: 0,

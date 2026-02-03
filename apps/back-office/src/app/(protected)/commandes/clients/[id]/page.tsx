@@ -67,6 +67,9 @@ interface OrderWithRelations {
   }>;
 }
 
+// Type alias pour les items de commande
+type OrderItem = NonNullable<OrderWithRelations['sales_order_items']>[number];
+
 interface OrderDetailPageProps {
   params: Promise<{ id: string }>;
 }
@@ -117,16 +120,37 @@ export default async function OrderDetailPage({
     `
     )
     .eq('id', id)
-    .single();
+    .single()
+    .returns<OrderWithRelations>();
 
   if (orderData) {
     order = orderData;
   } else {
     // FALLBACK: Essayer via RPC get_linkme_orders pour les commandes LinkMe
-    const { data: linkmeOrders, error: linkmeError } = await supabase.rpc(
-      'get_linkme_orders',
-      {}
-    );
+    type LinkMeOrder = {
+      id: string;
+      order_number: string;
+      status: string;
+      payment_status: string | null;
+      customer_id: string | null;
+      customer_type: string | null;
+      shipping_address: unknown;
+      total_ht: number | null;
+      total_ttc: number | null;
+      shipping_cost_ht: number | null;
+      handling_cost_ht: number | null;
+      insurance_cost_ht: number | null;
+      created_at: string | null;
+      created_by_affiliate_id: string | null;
+      items: unknown;
+    };
+
+    const result = await supabase.rpc('get_linkme_orders', {});
+
+    const { data: linkmeOrders, error: linkmeError } = result as {
+      data: LinkMeOrder[] | null;
+      error: Error | null;
+    };
 
     if (linkmeOrders && linkmeOrders.length > 0) {
       const linkmeOrder = linkmeOrders.find((o: { id: string }) => o.id === id);
@@ -142,9 +166,9 @@ export default async function OrderDetailPage({
           shipping_address: linkmeOrder.shipping_address,
           total_ht: linkmeOrder.total_ht,
           total_ttc: linkmeOrder.total_ttc,
-          shipping_cost_ht: linkmeOrder.shipping_cost_ht || 0,
-          handling_cost_ht: linkmeOrder.handling_cost_ht || 0,
-          insurance_cost_ht: linkmeOrder.insurance_cost_ht || 0,
+          shipping_cost_ht: linkmeOrder.shipping_cost_ht ?? 0,
+          handling_cost_ht: linkmeOrder.handling_cost_ht ?? 0,
+          insurance_cost_ht: linkmeOrder.insurance_cost_ht ?? 0,
           fees_vat_rate: 20, // Défaut
           created_at: linkmeOrder.created_at,
           created_by: linkmeOrder.created_by_affiliate_id,
@@ -180,7 +204,7 @@ export default async function OrderDetailPage({
     }
 
     if (!order) {
-      console.error('[Order Detail] Error:', orderError || linkmeError);
+      console.error('[Order Detail] Error:', orderError ?? linkmeError);
       notFound();
     }
   }
@@ -192,24 +216,42 @@ export default async function OrderDetailPage({
   let isOrganisation = false;
 
   if (order.customer_type === 'organization' && order.customer_id) {
+    type OrganisationData = {
+      id: string;
+      legal_name: string;
+      trade_name: string | null;
+      email: string | null;
+      phone: string | null;
+    };
+
     const { data: org } = await supabase
       .from('organisations')
       .select('id, legal_name, trade_name, email, phone')
       .eq('id', order.customer_id)
-      .single();
+      .single()
+      .returns<OrganisationData>();
 
     if (org) {
-      customerName = org.trade_name || org.legal_name;
+      customerName = org.trade_name ?? org.legal_name;
       customerEmail = org.email ?? '';
       customerPhone = org.phone ?? '';
       isOrganisation = true;
     }
   } else if (order.customer_type === 'individual' && order.customer_id) {
+    type IndividualCustomerData = {
+      id: string;
+      first_name: string;
+      last_name: string;
+      email: string | null;
+      phone: string | null;
+    };
+
     const { data: individual } = await supabase
       .from('individual_customers')
       .select('id, first_name, last_name, email, phone')
       .eq('id', order.customer_id)
-      .single();
+      .single()
+      .returns<IndividualCustomerData>();
 
     if (individual) {
       customerName = `${individual.first_name} ${individual.last_name}`;
@@ -223,9 +265,20 @@ export default async function OrderDetailPage({
   let creatorEmail = '';
 
   if (order.created_by) {
-    const { data: creatorInfo } = await supabase.rpc('get_user_info', {
+    type UserInfo = {
+      first_name?: string;
+      last_name?: string;
+      email?: string;
+    };
+
+    const result = await supabase.rpc('get_user_info', {
       p_user_id: order.created_by,
     });
+
+    const { data: creatorInfo } = result as {
+      data: UserInfo[] | null;
+      error: Error | null;
+    };
 
     if (creatorInfo && Array.isArray(creatorInfo) && creatorInfo.length > 0) {
       const creator = creatorInfo[0] as {
@@ -375,10 +428,10 @@ export default async function OrderDetailPage({
                       <div className="flex justify-between items-start mb-2">
                         <div>
                           <p className="font-medium">
-                            {item.products?.name || 'Produit inconnu'}
+                            {item.products?.name ?? 'Produit inconnu'}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            SKU: {item.products?.sku || 'N/A'}
+                            SKU: {item.products?.sku ?? 'N/A'}
                           </p>
                         </div>
                         <p className="text-sm font-medium">
@@ -487,12 +540,12 @@ export default async function OrderDetailPage({
               orderId={order.id}
               orderNumber={order.order_number}
               orderStatus={order.status}
-              totalHt={order.total_ht || 0}
-              totalTtc={order.total_ttc || 0}
+              totalHt={order.total_ht ?? 0}
+              totalTtc={order.total_ttc ?? 0}
               taxRate={20}
               currency="EUR"
               paymentTerms="immediate"
-              paymentStatus={order.payment_status || 'pending'}
+              paymentStatus={order.payment_status ?? 'pending'}
               customerName={customerName}
               customerEmail={customerEmail ?? null}
               customerType={
@@ -500,10 +553,10 @@ export default async function OrderDetailPage({
                   ? 'organization'
                   : 'individual'
               }
-              orderItems={items.map((item: any) => ({
+              orderItems={items.map((item: OrderItem) => ({
                 id: item.id,
                 quantity: item.quantity,
-                unit_price_ht: item.unit_price_ht,
+                unit_price_ht: item.unit_price_ht ?? 0,
                 tax_rate: 20,
                 products: item.products ? { name: item.products.name } : null,
               }))}

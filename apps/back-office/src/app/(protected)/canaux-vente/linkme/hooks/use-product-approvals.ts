@@ -55,7 +55,7 @@ export function usePendingApprovalsCount() {
         throw error;
       }
 
-      return data || 0;
+      return data ?? 0;
     },
     staleTime: 120000, // 2 minutes
     refetchInterval: 60000, // Refresh every minute
@@ -103,7 +103,7 @@ export function usePendingApprovals() {
       }
 
       // Map data to flat structure
-      return (data || []).map((product: Record<string, unknown>) => ({
+      return (data ?? []).map((product: Record<string, unknown>) => ({
         ...product,
         enseigne_name: (product.enseigne as { name?: string })?.name ?? null,
         affiliate_display_name:
@@ -170,14 +170,14 @@ export function useAllAffiliateProducts(
       }
 
       // Map data and determine storage type from receptions
-      return (data || []).map((product: Record<string, unknown>) => {
+      return (data ?? []).map((product: Record<string, unknown>) => {
         const receptions =
           (product.purchase_order_receptions as Array<{
             id: string;
             quantity_expected: number;
             status: string;
             reference_type: string;
-          }>) || [];
+          }>) ?? [];
 
         // Find affiliate reception (indicates storage by Vérone)
         const affiliateReception = receptions.find(
@@ -348,25 +348,31 @@ export function useUpdateAffiliateProduct() {
       const supabase = createClient();
 
       // Note: RPC function 'update_affiliate_product' - types will be available after migration
-      const { data, error } = await (supabase.rpc as any)(
-        'update_affiliate_product',
-        {
-          p_product_id: productId,
-          p_commission_rate: commissionRate ?? null,
-          p_payout_ht: payoutHt ?? null,
-          p_change_reason: changeReason ?? null,
-        }
-      );
+      const rpcResult = await supabase.rpc('update_affiliate_product', {
+        p_product_id: productId,
+        p_commission_rate: commissionRate,
+        p_payout_ht: payoutHt,
+        p_change_reason: changeReason,
+      });
+
+      const { data, error } = rpcResult as {
+        data: UpdateAffiliateProductResult | null;
+        error: Error | null;
+      };
 
       if (error) {
         console.error('Error updating affiliate product:', error);
         throw error;
       }
 
-      const result = data as unknown as UpdateAffiliateProductResult;
+      if (!data) {
+        throw new Error('No data returned from RPC');
+      }
+
+      const result = data;
 
       if (!result.success) {
-        throw new Error(result.error || 'Erreur lors de la mise a jour');
+        throw new Error(result.error ?? 'Erreur lors de la mise a jour');
       }
 
       return result;
@@ -410,19 +416,21 @@ export function useProductCommissionHistory(productId: string | undefined) {
       const supabase = createClient();
 
       // Note: RPC function 'get_product_commission_history' - types will be available after migration
-      const { data, error } = await (supabase.rpc as any)(
-        'get_product_commission_history',
-        {
-          p_product_id: productId,
-        }
-      );
+      const rpcResult = await supabase.rpc('get_product_commission_history', {
+        p_product_id: productId,
+      });
+
+      const { data, error } = rpcResult as {
+        data: CommissionHistoryEntry[] | null;
+        error: Error | null;
+      };
 
       if (error) {
         console.error('Error fetching commission history:', error);
         throw error;
       }
 
-      return (data || []) as unknown as CommissionHistoryEntry[];
+      return data ?? [];
     },
     enabled: !!productId,
     staleTime: 30000,

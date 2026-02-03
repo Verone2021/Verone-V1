@@ -21,6 +21,13 @@ function getQontoClient(): QontoClient {
   });
 }
 
+interface QontoFinalizedInvoice {
+  pdf_url?: string;
+  public_url?: string;
+  invoice_number?: string;
+  [key: string]: unknown;
+}
+
 interface FinalizeWorkflowResponse {
   success: boolean;
   invoice?: {
@@ -105,12 +112,12 @@ export async function POST(
 
     // 4. Appeler Qonto /finalize
     const qontoClient = getQontoClient();
-    let finalizedInvoice;
+    let finalizedInvoice: QontoFinalizedInvoice;
 
     try {
-      finalizedInvoice = await qontoClient.finalizeClientInvoice(
+      finalizedInvoice = (await qontoClient.finalizeClientInvoice(
         invoice.qonto_invoice_id
-      );
+      )) as unknown as QontoFinalizedInvoice;
     } catch (qontoError) {
       console.error('[Finalize workflow] Qonto finalize failed:', qontoError);
       return NextResponse.json(
@@ -140,7 +147,7 @@ export async function POST(
 
           // Générer le chemin de stockage : invoices/customer/{year}/{document_number}.pdf
           const year = new Date().getFullYear();
-          const fileName = `${finalizedInvoice.invoice_number || invoiceId}.pdf`;
+          const fileName = `${finalizedInvoice.invoice_number ?? invoiceId}.pdf`;
           localPdfPath = `customer/${year}/${fileName}`;
 
           console.warn(

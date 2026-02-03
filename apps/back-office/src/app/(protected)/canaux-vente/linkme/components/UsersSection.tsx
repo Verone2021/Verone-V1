@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
 import { cn } from '@verone/utils';
@@ -137,9 +138,11 @@ function UserRow({
       <td className="px-4 py-3">
         <div className="flex items-center gap-3">
           {user.avatar_url ? (
-            <img
+            <Image
               src={user.avatar_url}
               alt={fullName}
+              width={40}
+              height={40}
               className="h-10 w-10 rounded-full object-cover"
             />
           ) : (
@@ -344,25 +347,25 @@ export function UsersSection() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Total Utilisateurs"
-          value={stats?.total || 0}
+          value={stats?.total ?? 0}
           icon={Users}
           color="bg-blue-500"
         />
         <StatCard
           title="Admins Enseigne"
-          value={stats?.byRole.enseigne_admin || 0}
+          value={stats?.byRole.enseigne_admin ?? 0}
           icon={Building2}
           color="bg-purple-500"
         />
         <StatCard
           title="Admins Organisation"
-          value={stats?.byRole.organisation_admin || 0}
+          value={stats?.byRole.organisation_admin ?? 0}
           icon={Store}
           color="bg-indigo-500"
         />
         <StatCard
           title="Clients"
-          value={stats?.byRole.client || 0}
+          value={stats?.byRole.client ?? 0}
           icon={ShoppingCart}
           color="bg-green-500"
         />
@@ -486,7 +489,7 @@ export function UsersSection() {
       {filteredUsers.length > 0 && (
         <p className="text-sm text-gray-500">
           Affichage de {filteredUsers.length} utilisateur
-          {filteredUsers.length > 1 ? 's' : ''} sur {users?.length || 0}
+          {filteredUsers.length > 1 ? 's' : ''} sur {users?.length ?? 0}
         </p>
       )}
 

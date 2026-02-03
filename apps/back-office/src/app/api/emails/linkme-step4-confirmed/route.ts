@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
       receptionContactEmail,
       confirmedDeliveryDate,
       notifyAdmin = true,
-      adminEmail = process.env.VERONE_ADMIN_EMAIL || 'admin@verone.fr',
+      adminEmail = process.env.VERONE_ADMIN_EMAIL ?? 'admin@verone.fr',
     } = body;
 
     if (!orderNumber || !requesterEmail) {
@@ -118,11 +118,11 @@ export async function POST(request: NextRequest) {
 
     emails.push(
       resendClient.emails.send({
-        from: process.env.RESEND_FROM_EMAIL || 'commandes@verone.fr',
+        from: process.env.RESEND_FROM_EMAIL ?? 'commandes@verone.fr',
         to: requesterEmail,
         subject: `Commande ${orderNumber} - Livraison confirmée`,
         html: requesterEmailHtml,
-        replyTo: process.env.RESEND_REPLY_TO || 'commandes@verone.fr',
+        replyTo: process.env.RESEND_REPLY_TO ?? 'commandes@verone.fr',
       })
     );
 
@@ -141,7 +141,7 @@ export async function POST(request: NextRequest) {
     </h2>
     <p><strong>Commande:</strong> ${orderNumber}</p>
     ${organisationName ? `<p><strong>Client:</strong> ${organisationName}</p>` : ''}
-    <p><strong>Contact réception:</strong> ${receptionContactName || 'Non spécifié'}</p>
+    <p><strong>Contact réception:</strong> ${receptionContactName ?? 'Non spécifié'}</p>
     <p><strong>Date confirmée:</strong> ${formattedDate}</p>
     <hr style="border: none; border-top: 1px solid #bae6fd; margin: 15px 0;">
     <p style="font-size: 12px; color: #666;">
@@ -154,7 +154,7 @@ export async function POST(request: NextRequest) {
 
       emails.push(
         resendClient.emails.send({
-          from: process.env.RESEND_FROM_EMAIL || 'commandes@verone.fr',
+          from: process.env.RESEND_FROM_EMAIL ?? 'commandes@verone.fr',
           to: adminEmail,
           subject: `[LinkMe] Étape 4 complétée - ${orderNumber}`,
           html: adminEmailHtml,

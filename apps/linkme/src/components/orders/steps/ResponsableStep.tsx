@@ -99,7 +99,7 @@ function ContactForm({
         <Input
           id="responsable-phone"
           type="tel"
-          value={contact.phone || ''}
+          value={contact.phone ?? ''}
           onChange={e => onChange('phone', e.target.value)}
           placeholder="06 12 34 56 78"
         />
@@ -110,7 +110,7 @@ function ContactForm({
         <Input
           id="responsable-position"
           type="text"
-          value={contact.position || ''}
+          value={contact.position ?? ''}
           onChange={e => onChange('position', e.target.value)}
           placeholder="Directeur, Gerant..."
         />
@@ -122,7 +122,7 @@ function ContactForm({
           <Input
             id="responsable-company"
             type="text"
-            value={contact.company || ''}
+            value={contact.company ?? ''}
             onChange={e => onChange('company', e.target.value)}
             placeholder="Nom de la societe"
           />
@@ -178,7 +178,7 @@ function CreateNewCard({ onClick, isActive }: CreateNewCardProps) {
 
 export function ResponsableStep({
   formData,
-  errors,
+  errors: _errors,
   onUpdate,
 }: ResponsableStepProps) {
   const [showForm, setShowForm] = useState(
@@ -191,15 +191,15 @@ export function ResponsableStep({
   // Get organisation ID (restaurant selectionne)
   const organisationId =
     formData.restaurant.mode === 'existing'
-      ? formData.restaurant.existingId || null
+      ? (formData.restaurant.existingId ?? null)
       : null;
 
   // Determine ownership type
   const ownershipType = useMemo(() => {
     if (formData.restaurant.mode === 'new') {
-      return formData.restaurant.newRestaurant?.ownershipType || null;
+      return formData.restaurant.newRestaurant?.ownershipType ?? null;
     }
-    return formData.restaurant.existingOwnershipType || null;
+    return formData.restaurant.existingOwnershipType ?? null;
   }, [formData.restaurant]);
 
   // Is franchise?
@@ -208,13 +208,15 @@ export function ResponsableStep({
   // Fetch organisation contacts (toujours avec enseigne pour cette etape)
   const { data: contactsData, isLoading } = useOrganisationContacts(
     organisationId,
-    enseigneId || null,
+    enseigneId ?? null,
     ownershipType,
     true // Toujours inclure les contacts enseigne pour l'etape responsable
   );
 
   // Separate local and enseigne contacts
-  const allContacts = contactsData?.allContacts || [];
+  const allContacts = useMemo(() => {
+    return contactsData?.allContacts ?? [];
+  }, [contactsData]);
 
   const localContacts = useMemo(() => {
     return allContacts.filter(c => c.organisationId === organisationId);
@@ -256,8 +258,8 @@ export function ResponsableStep({
           firstName: contact.firstName,
           lastName: contact.lastName,
           email: contact.email,
-          phone: contact.phone || contact.mobile || '',
-          position: contact.title || '',
+          phone: contact.phone ?? contact.mobile ?? '',
+          position: contact.title ?? '',
         },
       });
       setShowForm(false);

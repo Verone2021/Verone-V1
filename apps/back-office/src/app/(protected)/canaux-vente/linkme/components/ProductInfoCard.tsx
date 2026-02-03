@@ -74,7 +74,7 @@ export function ProductInfoCard({
   // Handlers
   const handleAddPoint = () => {
     if (!newPoint.trim()) return;
-    const currentPoints = formData.custom_selling_points || [];
+    const currentPoints = formData.custom_selling_points ?? [];
     setFormData(prev => ({
       ...prev,
       custom_selling_points: [...currentPoints, newPoint.trim()],
@@ -84,7 +84,7 @@ export function ProductInfoCard({
   };
 
   const handleRemovePoint = (index: number) => {
-    const currentPoints = formData.custom_selling_points || [];
+    const currentPoints = formData.custom_selling_points ?? [];
     setFormData(prev => ({
       ...prev,
       custom_selling_points: currentPoints.filter((_, i) => i !== index),
@@ -316,7 +316,7 @@ export function ProductInfoCard({
             )}
 
           <div className="space-y-2">
-            {(formData.custom_selling_points || []).map((point, index) => (
+            {(formData.custom_selling_points ?? []).map((point, index) => (
               <div
                 key={index}
                 className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-lg px-3 py-2"

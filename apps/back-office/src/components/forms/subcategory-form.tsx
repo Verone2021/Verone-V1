@@ -7,6 +7,8 @@
 
 'use client';
 
+import Image from 'next/image';
+
 import { useState, useEffect } from 'react';
 
 import { ButtonV2 } from '@verone/ui';
@@ -89,7 +91,7 @@ export function SubcategoryForm({
     name: initialData?.name ?? '',
     description: initialData?.description ?? '',
     image_url: initialData?.image_url ?? '',
-    display_order: initialData?.display_order || 1,
+    display_order: initialData?.display_order ?? 1,
     is_active: initialData?.is_active ?? true,
   });
 
@@ -102,7 +104,7 @@ export function SubcategoryForm({
         name: initialData?.name ?? '',
         description: initialData?.description ?? '',
         image_url: initialData?.image_url ?? '',
-        display_order: initialData?.display_order || 1,
+        display_order: initialData?.display_order ?? 1,
         is_active: initialData?.is_active ?? true,
       });
     }
@@ -123,12 +125,14 @@ export function SubcategoryForm({
 
       if (error) throw error;
 
-      setFormData(prev => ({ ...prev, family_id: data.family_id }) as any);
-    } catch (error: any) {
-      console.error(
-        'Erreur récupération family_id catégorie:',
-        error?.message || JSON.stringify(error)
-      );
+      setFormData(prev => ({
+        ...prev,
+        family_id: data.family_id ?? '',
+      }));
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : JSON.stringify(error);
+      console.error('Erreur récupération family_id catégorie:', message);
     }
   };
 
@@ -169,11 +173,10 @@ export function SubcategoryForm({
         title: '✅ Image téléchargée',
         description: "L'image a été uploadée avec succès",
       });
-    } catch (error: any) {
-      console.error(
-        'Erreur upload image sous-catégorie:',
-        error?.message || JSON.stringify(error)
-      );
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : JSON.stringify(error);
+      console.error('Erreur upload image sous-catégorie:', message);
       toast({
         title: '❌ Erreur upload',
         description: "Impossible de télécharger l'image",
@@ -274,17 +277,23 @@ export function SubcategoryForm({
 
       onSubmit(result as Subcategory);
       onClose();
-    } catch (error: any) {
-      console.error(
-        'Erreur soumission formulaire sous-catégorie:',
-        error?.message || JSON.stringify(error)
-      );
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : JSON.stringify(error);
+      console.error('Erreur soumission formulaire sous-catégorie:', message);
 
       // Gestion spécifique des erreurs de contrainte unique
-      let errorMessage = error.message || 'Une erreur est survenue';
-      if (error.code === '23505') {
+      let errorMessage = 'Une erreur est survenue';
+      if (
+        error &&
+        typeof error === 'object' &&
+        'code' in error &&
+        error.code === '23505'
+      ) {
         errorMessage =
           'Une sous-catégorie avec ce nom existe déjà dans cette catégorie. Veuillez choisir un nom différent.';
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
       }
 
       toast({
@@ -413,10 +422,12 @@ export function SubcategoryForm({
             <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
               {formData.image_url ? (
                 <div className="relative">
-                  <img
+                  <Image
                     src={formData.image_url}
                     alt="Preview"
                     className="w-full h-32 object-cover rounded-lg"
+                    width={400}
+                    height={128}
                   />
                   <ButtonV2
                     type="button"

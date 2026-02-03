@@ -88,6 +88,28 @@ interface Quote {
   items?: QuoteItem[];
 }
 
+// API Response types
+interface QuoteApiResponse {
+  success: boolean;
+  quote: Quote;
+  error?: string;
+}
+
+interface DeleteApiResponse {
+  success: boolean;
+  error?: string;
+}
+
+interface ConvertApiResponse {
+  success: boolean;
+  invoice?: { id: string };
+  error?: string;
+}
+
+interface ErrorResponse {
+  error?: string;
+}
+
 // Parse Qonto amount - handles both number and object formats
 function parseQontoAmount(
   amount: QontoAmount | undefined,
@@ -100,7 +122,7 @@ function parseQontoAmount(
     return amount;
   }
   if (typeof amount === 'object' && 'value' in amount) {
-    return parseFloat(amount.value) || 0;
+    return parseFloat(amount.value) ?? 0;
   }
   return 0;
 }
@@ -139,8 +161,8 @@ function StatusBadge({ status }: { status: string }): React.ReactNode {
   };
 
   return (
-    <Badge variant={variants[status] || 'outline'}>
-      {labels[status] || status}
+    <Badge variant={variants[status] ?? 'outline'}>
+      {labels[status] ?? status}
     </Badge>
   );
 }
@@ -159,28 +181,28 @@ export default function QuoteDetailPage(): React.ReactNode {
   const [showConvertWarning, setShowConvertWarning] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
 
-  const fetchQuote = async (): Promise<void> => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const response = await fetch(`/api/qonto/quotes/${id}`);
-      const data = await response.json();
-
-      if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Failed to fetch quote');
-      }
-
-      setQuote(data.quote);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erreur inconnue');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
     if (id) {
+      const fetchQuote = async (): Promise<void> => {
+        setLoading(true);
+        setError(null);
+
+        try {
+          const response = await fetch(`/api/qonto/quotes/${id}`);
+          const data = (await response.json()) as QuoteApiResponse;
+
+          if (!response.ok || !data.success) {
+            throw new Error(data.error ?? 'Failed to fetch quote');
+          }
+
+          setQuote(data.quote);
+        } catch (err: unknown) {
+          setError(err instanceof Error ? err.message : 'Erreur inconnue');
+        } finally {
+          setLoading(false);
+        }
+      };
+
       void fetchQuote();
     }
   }, [id]);
@@ -193,10 +215,10 @@ export default function QuoteDetailPage(): React.ReactNode {
       const response = await fetch(`/api/qonto/quotes/${id}/finalize`, {
         method: 'POST',
       });
-      const data = await response.json();
+      const data = (await response.json()) as QuoteApiResponse;
 
       if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Failed to finalize');
+        throw new Error(data.error ?? 'Failed to finalize');
       }
 
       setQuote(data.quote);
@@ -204,7 +226,7 @@ export default function QuoteDetailPage(): React.ReactNode {
         title: 'Devis finalisé',
         description: 'Devis finalisé avec succès',
       });
-    } catch (err) {
+    } catch (err: unknown) {
       toast({
         title: 'Erreur',
         description: err instanceof Error ? err.message : 'Erreur',
@@ -223,10 +245,10 @@ export default function QuoteDetailPage(): React.ReactNode {
       const response = await fetch(`/api/qonto/quotes/${id}`, {
         method: 'DELETE',
       });
-      const data = await response.json();
+      const data = (await response.json()) as DeleteApiResponse;
 
       if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Failed to delete');
+        throw new Error(data.error ?? 'Failed to delete');
       }
 
       toast({
@@ -234,7 +256,7 @@ export default function QuoteDetailPage(): React.ReactNode {
         description: 'Devis supprimé avec succès',
       });
       router.push('/devis');
-    } catch (err) {
+    } catch (err: unknown) {
       toast({
         title: 'Erreur',
         description: err instanceof Error ? err.message : 'Erreur',
@@ -253,10 +275,10 @@ export default function QuoteDetailPage(): React.ReactNode {
       const response = await fetch(`/api/qonto/quotes/${id}/convert`, {
         method: 'POST',
       });
-      const data = await response.json();
+      const data = (await response.json()) as ConvertApiResponse;
 
       if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Failed to convert');
+        throw new Error(data.error ?? 'Failed to convert');
       }
 
       toast({
@@ -268,7 +290,7 @@ export default function QuoteDetailPage(): React.ReactNode {
       if (data.invoice?.id) {
         router.push(`/factures/${data.invoice.id}`);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       toast({
         title: 'Erreur',
         description: err instanceof Error ? err.message : 'Erreur',
@@ -286,9 +308,11 @@ export default function QuoteDetailPage(): React.ReactNode {
       const response = await fetch(`/api/qonto/quotes/${id}/pdf`);
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+        const errorData = (await response
+          .json()
+          .catch(() => ({}))) as ErrorResponse;
         throw new Error(
-          errorData.error || `Erreur ${response.status}: ${response.statusText}`
+          errorData.error ?? `Erreur ${response.status}: ${response.statusText}`
         );
       }
 
@@ -300,7 +324,7 @@ export default function QuoteDetailPage(): React.ReactNode {
       }
 
       // Utiliser le numéro de devis ou l'ID si non disponible
-      const filename = quote.quote_number || quote.number || id;
+      const filename = quote.quote_number ?? quote.number ?? id;
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -314,7 +338,7 @@ export default function QuoteDetailPage(): React.ReactNode {
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
       }, 1000);
-    } catch (err) {
+    } catch (err: unknown) {
       toast({
         title: 'Erreur',
         description:
@@ -339,7 +363,7 @@ export default function QuoteDetailPage(): React.ReactNode {
     return (
       <div className="container mx-auto py-6">
         <div className="rounded-lg border border-destructive/20 bg-destructive/10 p-4 text-destructive">
-          {error || 'Devis non trouvé'}
+          {error ?? 'Devis non trouvé'}
         </div>
       </div>
     );
@@ -739,7 +763,7 @@ export default function QuoteDetailPage(): React.ReactNode {
             <AlertDialogTitle>Envoyer le devis au client ?</AlertDialogTitle>
             <AlertDialogDescription>
               Le devis sera envoyé par email à{' '}
-              {quote.client?.email || "l'adresse du client"}. Une fois envoyé,
+              {quote.client?.email ?? "l'adresse du client"}. Une fois envoyé,
               le PDF sera disponible au téléchargement et vous pourrez le
               convertir en facture.
             </AlertDialogDescription>

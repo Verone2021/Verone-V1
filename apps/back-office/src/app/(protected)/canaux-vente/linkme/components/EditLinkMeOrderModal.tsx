@@ -54,13 +54,13 @@ export function EditLinkMeOrderModal({
   // Charger les donnees de la commande
   useEffect(() => {
     if (order) {
-      setTaxRate(order.tax_rate || 0.2);
-      setShippingCostHt(order.shipping_cost_ht || 0);
-      setInsuranceCostHt(order.insurance_cost_ht || 0);
-      setHandlingCostHt(order.handling_cost_ht || 0);
+      setTaxRate(order.tax_rate ?? 0.2);
+      setShippingCostHt(order.shipping_cost_ht ?? 0);
+      setInsuranceCostHt(order.insurance_cost_ht ?? 0);
+      setHandlingCostHt(order.handling_cost_ht ?? 0);
       setInternalNotes(order.notes ?? '');
       setItems(
-        (order.items || []).map(item => ({
+        (order.items ?? []).map(item => ({
           ...item,
           originalQuantity: item.quantity,
         }))
@@ -103,10 +103,10 @@ export function EditLinkMeOrderModal({
   const hasChanges = useMemo(() => {
     if (!order) return false;
 
-    const taxChanged = taxRate !== (order.tax_rate || 0.2);
-    const shippingChanged = shippingCostHt !== (order.shipping_cost_ht || 0);
-    const insuranceChanged = insuranceCostHt !== (order.insurance_cost_ht || 0);
-    const handlingChanged = handlingCostHt !== (order.handling_cost_ht || 0);
+    const taxChanged = taxRate !== (order.tax_rate ?? 0.2);
+    const shippingChanged = shippingCostHt !== (order.shipping_cost_ht ?? 0);
+    const insuranceChanged = insuranceCostHt !== (order.insurance_cost_ht ?? 0);
+    const handlingChanged = handlingCostHt !== (order.handling_cost_ht ?? 0);
     const notesChanged = internalNotes !== (order.notes ?? '');
     const itemsChanged = items.some(
       item => item.quantity !== item.originalQuantity
@@ -176,7 +176,7 @@ export function EditLinkMeOrderModal({
               <div>
                 <h2 className="text-lg font-semibold">Modifier la commande</h2>
                 <p className="text-sm text-gray-500">
-                  {order?.order_number || 'Chargement...'}
+                  {order?.order_number ?? 'Chargement...'}
                 </p>
               </div>
             </div>

@@ -173,12 +173,17 @@ export default function PartnersPage() {
         .select('*')
         .eq('type', 'partner')
         .not('archived_at', 'is', null)
-        .order('archived_at', { ascending: false });
+        .order('archived_at', { ascending: false })
+        .returns<Organisation[]>();
 
       if (error) throw error;
-      setArchivedPartners((data || []) as unknown as Organisation[]);
-    } catch (err) {
-      console.error('Erreur chargement partenaires archivés:', err);
+      setArchivedPartners(data ?? []);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      console.error(
+        '[Partners] Erreur chargement partenaires archivés:',
+        message
+      );
     } finally {
       setArchivedLoading(false);
     }
@@ -493,6 +498,7 @@ export default function PartnersPage() {
                               </span>
                             </div>
                           )}
+                          {/* eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- Intentional boolean OR */}
                           {(partner.billing_postal_code ||
                             partner.billing_city) && (
                             <div
@@ -747,6 +753,7 @@ export default function PartnersPage() {
                           {partner.billing_address_line1 && (
                             <div>{partner.billing_address_line1}</div>
                           )}
+                          {/* eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- Intentional boolean OR */}
                           {(partner.billing_postal_code ||
                             partner.billing_city) && (
                             <div>
@@ -972,14 +979,14 @@ export default function PartnersPage() {
       <PartnerFormModal
         isOpen={isModalOpen}
         onClose={handleCloseModal}
-        partner={selectedPartner as any}
+        partner={selectedPartner ?? undefined}
         onSuccess={handlePartnerSuccess}
       />
 
       <ConfirmDeleteOrganisationModal
         open={!!deleteModalPartner}
         onOpenChange={open => !open && setDeleteModalPartner(null)}
-        organisation={deleteModalPartner as any}
+        organisation={deleteModalPartner}
         organisationType="partner"
         onConfirm={handleConfirmDelete}
         isDeleting={isDeleting}

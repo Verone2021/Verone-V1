@@ -65,6 +65,24 @@ export interface CreateCustomerIndividualInput {
   city?: string;
 }
 
+/**
+ * Interface pour les produits d'une sélection LinkMe
+ * Utilisée par useSelectionProducts et CreateOrderModal
+ */
+export interface SelectionProduct {
+  id: string; // linkme_selection_items.id
+  productId: string;
+  productName: string;
+  productSku: string;
+  productImage: string | null;
+  basePriceHt: number;
+  sellingPriceHt: number;
+  marginRate: number;
+  taxRate: number;
+  subcategoryId: string | null;
+  category?: string; // Ajouté dynamiquement via fetch catégories
+}
+
 // ============================================
 // HOOKS
 // ============================================
@@ -262,13 +280,37 @@ export function useCreateCustomerIndividual() {
 }
 
 /**
+ * Type pour le résultat de la query linkme_selection_items avec JOIN products
+ */
+interface SelectionItemWithProduct {
+  id: string;
+  product_id: string;
+  base_price_ht: number | null;
+  selling_price_ht: number | null;
+  margin_rate: number | null;
+  product: {
+    name: string;
+    sku: string;
+    subcategory_id: string | null;
+  } | null;
+}
+
+/**
+ * Type pour le résultat de la query product_images
+ */
+interface ProductImageResult {
+  product_id: string;
+  public_url: string | null;
+}
+
+/**
  * Hook pour récupérer les produits d'une sélection avec leurs marges
  * Utilise la même approche que useSelectionItems pour compatibilité RLS
  */
 export function useSelectionProducts(selectionId: string | null) {
-  return useQuery({
+  return useQuery<SelectionProduct[]>({
     queryKey: ['selection-products', selectionId],
-    queryFn: async () => {
+    queryFn: async (): Promise<SelectionProduct[]> => {
       if (!selectionId) return [];
 
       const supabase = createClient();
@@ -291,7 +333,8 @@ export function useSelectionProducts(selectionId: string | null) {
         `
         )
         .eq('selection_id', selectionId)
-        .order('display_order', { ascending: true });
+        .order('display_order', { ascending: true })
+        .returns<SelectionItemWithProduct[]>();
 
       if (error) {
         console.error('Erreur récupération produits sélection:', error);
@@ -299,8 +342,7 @@ export function useSelectionProducts(selectionId: string | null) {
       }
 
       // Récupérer les images séparément (comme useSelectionItems)
-      /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
-      const productIds = (data ?? []).map((item: any) => item.product_id);
+      const productIds = (data ?? []).map(item => item.product_id);
       let imageMap = new Map<string, string>();
 
       if (productIds.length > 0) {
@@ -308,14 +350,15 @@ export function useSelectionProducts(selectionId: string | null) {
           .from('product_images')
           .select('product_id, public_url')
           .in('product_id', productIds)
-          .eq('is_primary', true);
+          .eq('is_primary', true)
+          .returns<ProductImageResult[]>();
 
         imageMap = new Map(
-          (images ?? []).map((img: any) => [img.product_id, img.public_url])
+          (images ?? []).map(img => [img.product_id, img.public_url ?? ''])
         );
       }
 
-      return (data ?? []).map((item: any) => ({
+      return (data ?? []).map(item => ({
         id: item.id,
         productId: item.product_id,
         productName: item.product?.name ?? 'Produit inconnu',
@@ -327,7 +370,6 @@ export function useSelectionProducts(selectionId: string | null) {
         taxRate: 0.2, // TVA 20% par défaut (stockée sur sales_order_items, pas products)
         subcategoryId: item.product?.subcategory_id ?? null,
       }));
-      /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
     },
     enabled: !!selectionId,
     staleTime: 5 * 60 * 1000,

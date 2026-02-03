@@ -33,6 +33,18 @@ import { EditLinkMeOrderModal } from '../components/EditLinkMeOrderModal';
 // ID du canal LinkMe
 const LINKME_CHANNEL_ID = '93c68db1-5a30-4168-89ec-6383152be405';
 
+// Type pour la réponse de la fonction RPC get_linkme_orders
+type LinkMeOrderRpcResult = {
+  id: string;
+  affiliate_name: string | null;
+  affiliate_type: 'enseigne' | 'organisation' | null;
+  selection_name: string | null;
+  total_affiliate_margin: number;
+  pending_admin_validation: boolean;
+  created_by_affiliate_id: string | null;
+  linkme_selection_id: string | null;
+};
+
 // Type pour les donnees enrichies LinkMe
 interface LinkMeEnrichedData {
   [orderId: string]: {
@@ -93,10 +105,14 @@ export default function LinkMeOrdersPage() {
       setIsLoadingEnriched(true);
       try {
         // Utiliser la RPC existante pour avoir les donnees enrichies
-        const { data: ordersData, error } = await (supabase as any).rpc(
-          'get_linkme_orders',
-          { p_affiliate_id: null }
-        );
+        const result = await supabase.rpc('get_linkme_orders', {
+          p_affiliate_id: undefined,
+        });
+
+        const { data: ordersData, error } = result as {
+          data: LinkMeOrderRpcResult[] | null;
+          error: Error | null;
+        };
 
         if (error) {
           console.error('Erreur fetch LinkMe enriched data:', error);
@@ -105,21 +121,23 @@ export default function LinkMeOrdersPage() {
 
         // Construire un map des donnees enrichies par order_id
         const enriched: LinkMeEnrichedData = {};
-        (ordersData || []).forEach((order: any) => {
+        (ordersData ?? []).forEach(order => {
           enriched[order.id] = {
             affiliate_name: order.affiliate_name ?? null,
             affiliate_type: order.affiliate_type ?? null,
             selection_name: order.selection_name ?? null,
-            total_affiliate_margin: order.total_affiliate_margin || 0,
-            pending_admin_validation: order.pending_admin_validation || false,
+            total_affiliate_margin: order.total_affiliate_margin ?? 0,
+            pending_admin_validation: order.pending_admin_validation ?? false,
             created_by_affiliate_id: order.created_by_affiliate_id ?? null,
             linkme_selection_id: order.linkme_selection_id ?? null,
           };
         });
 
         setEnrichedData(enriched);
-      } catch (error) {
-        console.error('Erreur fetch enriched data:', error);
+      } catch (error: unknown) {
+        const message =
+          error instanceof Error ? error.message : 'Unknown error';
+        console.error('[LinkMeOrders] Erreur fetch enriched data:', message);
       } finally {
         setIsLoadingEnriched(false);
       }
@@ -246,16 +264,17 @@ export default function LinkMeOrdersPage() {
               setIsLoadingEnriched(true);
               supabase
                 .rpc('get_linkme_orders', { p_affiliate_id: undefined })
+                .returns<LinkMeOrderRpcResult[]>()
                 .then(({ data }) => {
                   const enriched: LinkMeEnrichedData = {};
-                  (data || []).forEach((order: any) => {
+                  (data ?? []).forEach((order: LinkMeOrderRpcResult) => {
                     enriched[order.id] = {
                       affiliate_name: order.affiliate_name ?? null,
                       affiliate_type: order.affiliate_type ?? null,
                       selection_name: order.selection_name ?? null,
-                      total_affiliate_margin: order.total_affiliate_margin || 0,
+                      total_affiliate_margin: order.total_affiliate_margin ?? 0,
                       pending_admin_validation:
-                        order.pending_admin_validation || false,
+                        order.pending_admin_validation ?? false,
                       created_by_affiliate_id:
                         order.created_by_affiliate_id ?? null,
                       linkme_selection_id: order.linkme_selection_id ?? null,

@@ -126,7 +126,7 @@ const SubmissionCard = ({ submission, formTypeLabel }: SubmissionCardProps) => {
       className: 'bg-blue-500/10 text-blue-700 border border-blue-200',
       label: '🔵 Basse',
     },
-  }[submission.priority] || {
+  }[submission.priority] ?? {
     className: 'bg-gray-500/10 text-gray-700 border border-gray-200',
     label: 'Normal',
   };
@@ -158,7 +158,7 @@ const SubmissionCard = ({ submission, formTypeLabel }: SubmissionCardProps) => {
       label: '🔒 Fermé',
       icon: CheckCircle,
     },
-  }[submission.status] || {
+  }[submission.status] ?? {
     className: 'bg-gray-500/10 text-gray-700',
     label: submission.status,
     icon: AlertCircle,
@@ -340,25 +340,27 @@ export default function PrisesContactPage() {
       try {
         const supabase = createClient();
 
-        // Fetch submissions (using any to bypass type checking for new table)
-        const { data: subs, error: subsError } = await (supabase as any)
+        // Fetch submissions
+        const { data: subs, error: subsError } = await supabase
           .from('form_submissions')
           .select('*')
-          .order('created_at', { ascending: false });
+          .order('created_at', { ascending: false })
+          .returns<FormSubmission[]>();
 
         if (subsError) throw subsError;
 
-        // Fetch form types (using any to bypass type checking for new table)
-        const { data: types, error: typesError } = await (supabase as any)
+        // Fetch form types
+        const { data: types, error: typesError } = await supabase
           .from('form_types')
           .select('code, label, icon')
-          .eq('enabled', true);
+          .eq('enabled', true)
+          .returns<FormType[]>();
 
         if (typesError) throw typesError;
 
-        setSubmissions(subs || []);
-        setFormTypes(types || []);
-      } catch (error) {
+        setSubmissions(subs ?? []);
+        setFormTypes(types ?? []);
+      } catch (error: unknown) {
         console.error('Error fetching data:', error);
       } finally {
         setLoading(false);
@@ -399,7 +401,7 @@ export default function PrisesContactPage() {
           s.last_name.toLowerCase().includes(query) ||
           s.email.toLowerCase().includes(query) ||
           s.message.toLowerCase().includes(query) ||
-          (s.company_name && s.company_name.toLowerCase().includes(query))
+          s.company_name?.toLowerCase().includes(query)
       );
     }
 
@@ -419,13 +421,13 @@ export default function PrisesContactPage() {
       thisWeek: 'Cette semaine',
       older: 'Plus ancien',
     };
-    return labels[key] || key;
+    return labels[key] ?? key;
   };
 
   // Get form type label
   const getFormTypeLabel = (code: string): string => {
     const type = formTypes.find(t => t.code === code);
-    return type?.label || code;
+    return type?.label ?? code;
   };
 
   if (loading) {

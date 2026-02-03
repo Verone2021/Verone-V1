@@ -12,6 +12,7 @@ export interface UnifiedCustomer {
   type: CustomerType;
   displayName: string;
   email: string | null;
+  is_active?: boolean | null;
 
   // Données spécifiques selon le type
   // Pour professional (organisations)
@@ -107,6 +108,7 @@ async function fetchCustomers(
         type: 'professional' as CustomerType,
         displayName: getOrganisationDisplayName(org),
         email: org.email,
+        is_active: org.is_active,
         name: getOrganisationDisplayName(org),
         siret: org.siret,
         vat_number: org.vat_number,
@@ -159,6 +161,7 @@ async function fetchCustomers(
           `${individual.first_name || ''} ${individual.last_name || ''}`.trim() ||
           'Client particulier',
         email: individual.email,
+        is_active: individual.is_active,
         first_name: individual.first_name,
         last_name: individual.last_name,
         phone: individual.phone,

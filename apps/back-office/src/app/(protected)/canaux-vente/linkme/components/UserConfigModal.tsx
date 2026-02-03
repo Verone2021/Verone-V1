@@ -40,6 +40,11 @@ interface AffiliateData {
   linkme_commission_rate: number;
 }
 
+interface ApiErrorResponse {
+  success: false;
+  message?: string;
+}
+
 /**
  * Modal unifié de configuration utilisateur LinkMe
  * - Onglet Profil : prénom, nom, téléphone
@@ -96,48 +101,48 @@ export function UserConfigModal({
       setErrors({});
       setActiveTab('profile');
 
+      // Récupérer les données de l'affilié
+      async function fetchAffiliateData() {
+        if (!user.enseigne_id && !user.organisation_id) {
+          setAffiliateData(null);
+          return;
+        }
+
+        setIsLoadingAffiliate(true);
+        const supabase = createClient();
+
+        try {
+          let query = supabase
+            .from('linkme_affiliates')
+            .select('id, default_margin_rate, linkme_commission_rate');
+
+          if (user.enseigne_id) {
+            query = query.eq('enseigne_id', user.enseigne_id);
+          } else if (user.organisation_id) {
+            query = query.eq('organisation_id', user.organisation_id);
+          }
+
+          const { data, error } = await query.single();
+
+          if (error) {
+            console.error('Erreur fetch affiliate:', error);
+            setAffiliateData(null);
+          } else if (data) {
+            setAffiliateData(data as AffiliateData);
+          }
+        } catch (err) {
+          console.error('Erreur fetch affiliate:', err);
+        } finally {
+          setIsLoadingAffiliate(false);
+        }
+      }
+
       // Charger les données affilié pour l'onglet Rémunération
       void fetchAffiliateData().catch(error => {
         console.error('[UserConfigModal] fetchAffiliateData failed:', error);
       });
     }
   }, [isOpen, user]);
-
-  // Récupérer les données de l'affilié
-  async function fetchAffiliateData() {
-    if (!user.enseigne_id && !user.organisation_id) {
-      setAffiliateData(null);
-      return;
-    }
-
-    setIsLoadingAffiliate(true);
-    const supabase = createClient();
-
-    try {
-      let query = supabase
-        .from('linkme_affiliates')
-        .select('id, default_margin_rate, linkme_commission_rate');
-
-      if (user.enseigne_id) {
-        query = query.eq('enseigne_id', user.enseigne_id);
-      } else if (user.organisation_id) {
-        query = query.eq('organisation_id', user.organisation_id);
-      }
-
-      const { data, error } = await query.single();
-
-      if (error) {
-        console.error('Erreur fetch affiliate:', error);
-        setAffiliateData(null);
-      } else if (data) {
-        setAffiliateData(data as AffiliateData);
-      }
-    } catch (err) {
-      console.error('Erreur fetch affiliate:', err);
-    } finally {
-      setIsLoadingAffiliate(false);
-    }
-  }
 
   // Validation profil
   const validateProfile = (): boolean => {
@@ -206,8 +211,8 @@ export function UserConfigModal({
         });
 
         if (!emailResponse.ok) {
-          const data = await emailResponse.json();
-          setErrors({ email: data.message || 'Erreur modification email' });
+          const data = (await emailResponse.json()) as ApiErrorResponse;
+          setErrors({ email: data.message ?? 'Erreur modification email' });
           setIsUpdatingEmail(false);
           return;
         }
@@ -256,10 +261,10 @@ export function UserConfigModal({
         }),
       });
 
-      const data = await response.json();
+      const data = (await response.json()) as ApiErrorResponse;
 
       if (!response.ok) {
-        throw new Error(data.message || 'Erreur lors de la réinitialisation');
+        throw new Error(data.message ?? 'Erreur lors de la réinitialisation');
       }
 
       setPasswordSuccess(true);

@@ -104,12 +104,12 @@ export function PaymentRequestModalAdmin({
   // Calculs des totaux
   const totals = useMemo(() => {
     const totalHT = selectedCommissions.reduce(
-      (sum, c) => sum + (c.affiliate_commission || 0),
+      (sum, c) => sum + (c.affiliate_commission ?? 0),
       0
     );
     const totalTTC = selectedCommissions.reduce(
       (sum, c) =>
-        sum + (c.affiliate_commission_ttc || c.affiliate_commission * 1.2),
+        sum + (c.affiliate_commission_ttc ?? c.affiliate_commission * 1.2),
       0
     );
     return { totalHT, totalTTC, count: selectedCommissions.length };
@@ -174,7 +174,7 @@ export function PaymentRequestModalAdmin({
       '',
       ...selectedCommissions.map(
         c =>
-          `• Commande #${c.order_number || c.sales_order?.order_number || c.id.slice(0, 8)} : ${formatPrice(c.affiliate_commission)}`
+          `• Commande #${c.order_number ?? c.sales_order?.order_number ?? c.id.slice(0, 8)} : ${formatPrice(c.affiliate_commission)}`
       ),
     ];
     try {
@@ -305,8 +305,8 @@ export function PaymentRequestModalAdmin({
                       <div>
                         <span className="text-sm font-medium text-gray-900">
                           #
-                          {c.order_number ||
-                            c.sales_order?.order_number ||
+                          {c.order_number ??
+                            c.sales_order?.order_number ??
                             c.id.slice(0, 8)}
                         </span>
                         <span className="text-xs text-gray-500 ml-2">
@@ -315,7 +315,7 @@ export function PaymentRequestModalAdmin({
                       </div>
                       <span className="text-sm font-semibold text-emerald-600">
                         {formatPrice(
-                          c.affiliate_commission_ttc ||
+                          c.affiliate_commission_ttc ??
                             c.affiliate_commission * 1.2
                         )}
                       </span>
@@ -505,8 +505,8 @@ export function PaymentRequestModalAdmin({
                         <tr key={c.id} className="hover:bg-gray-50">
                           <td className="px-4 py-2 text-xs text-gray-600">
                             <span className="text-gray-400">•</span> Commande #
-                            {c.order_number ||
-                              c.sales_order?.order_number ||
+                            {c.order_number ??
+                              c.sales_order?.order_number ??
                               c.id.slice(0, 8)}
                           </td>
                           <td className="px-4 py-2 text-xs text-right font-medium text-gray-900">

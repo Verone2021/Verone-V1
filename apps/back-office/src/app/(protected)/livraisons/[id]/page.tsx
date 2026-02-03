@@ -103,7 +103,7 @@ export default function DeliveryNoteDetailPage(): React.ReactNode {
       const data = await response.json();
 
       if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Failed to fetch delivery note');
+        throw new Error(data.error ?? 'Failed to fetch delivery note');
       }
 
       setDeliveryNote(data.delivery_note);
@@ -133,7 +133,7 @@ export default function DeliveryNoteDetailPage(): React.ReactNode {
     return (
       <div className="container mx-auto py-6">
         <div className="rounded-lg border border-destructive/20 bg-destructive/10 p-4 text-destructive">
-          {error || 'Bon de livraison non trouvé'}
+          {error ?? 'Bon de livraison non trouvé'}
         </div>
       </div>
     );
@@ -203,7 +203,7 @@ export default function DeliveryNoteDetailPage(): React.ReactNode {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            <p className="font-medium">{deliveryNote.customer?.name || '-'}</p>
+            <p className="font-medium">{deliveryNote.customer?.name ?? '-'}</p>
             {deliveryNote.customer?.email && (
               <p className="text-sm text-muted-foreground">
                 {deliveryNote.customer.email}
@@ -279,16 +279,16 @@ export default function DeliveryNoteDetailPage(): React.ReactNode {
               {deliveryNote.items.map(item => (
                 <TableRow key={item.id}>
                   <TableCell className="font-medium">
-                    {item.product?.name || 'Produit'}
+                    {item.product?.name ?? 'Produit'}
                   </TableCell>
                   <TableCell className="font-mono text-sm text-muted-foreground">
-                    {item.product?.sku || '-'}
+                    {item.product?.sku ?? '-'}
                   </TableCell>
                   <TableCell className="text-center font-medium">
                     {item.quantity_shipped}
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
-                    {item.notes || '-'}
+                    {item.notes ?? '-'}
                   </TableCell>
                 </TableRow>
               ))}

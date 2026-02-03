@@ -24,7 +24,7 @@ const resend = process.env.RESEND_API_KEY
   ? new Resend(process.env.RESEND_API_KEY)
   : null;
 
-const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'noreply@verone.com';
+const FROM_EMAIL = process.env.RESEND_FROM_EMAIL ?? 'noreply@verone.com';
 
 /**
  * Générer le contenu HTML de l'email
@@ -46,7 +46,7 @@ function generateEmailHtml(
     general_inquiry: 'Demande Générale',
   };
 
-  const formTypeLabel = formTypeLabels[formType] || formType;
+  const formTypeLabel = formTypeLabels[formType] ?? formType;
 
   return `
 <!DOCTYPE html>
@@ -105,7 +105,7 @@ function generateEmailText(
     general_inquiry: 'Demande Générale',
   };
 
-  const formTypeLabel = formTypeLabels[formType] || formType;
+  const formTypeLabel = formTypeLabels[formType] ?? formType;
 
   return `
 Bonjour ${recipientName},

@@ -47,6 +47,16 @@ interface InvoicesByOrderResponse {
   error?: string;
 }
 
+interface ApiErrorResponse {
+  error?: string;
+  message?: string;
+}
+
+interface ApiSuccessResponse {
+  success: boolean;
+  message?: string;
+}
+
 const WORKFLOW_STATUS_LABELS: Record<
   InvoiceLinked['workflow_status'],
   { label: string; color: string }
@@ -72,16 +82,16 @@ export function InvoicesSection({ orderId }: { orderId: string }) {
   // Fetch factures liées
   const { data, isLoading } = useQuery<InvoicesByOrderResponse>({
     queryKey: ['invoices-by-order', orderId],
-    queryFn: async () => {
+    queryFn: async (): Promise<InvoicesByOrderResponse> => {
       const res = await fetch(`/api/qonto/invoices/by-order/${orderId}`);
       if (!res.ok) throw new Error('Failed to fetch invoices');
-      return res.json();
+      return res.json() as Promise<InvoicesByOrderResponse>;
     },
   });
 
   // Mutation validation synchronized → draft_validated
   const validateToDraft = useMutation({
-    mutationFn: async (invoiceId: string) => {
+    mutationFn: async (invoiceId: string): Promise<ApiSuccessResponse> => {
       const res = await fetch(
         `/api/qonto/invoices/${invoiceId}/validate-to-draft`,
         {
@@ -89,10 +99,10 @@ export function InvoicesSection({ orderId }: { orderId: string }) {
         }
       );
       if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || 'Validation failed');
+        const error = (await res.json().catch(() => ({}))) as ApiErrorResponse;
+        throw new Error(error.error ?? 'Validation failed');
       }
-      return res.json();
+      return res.json() as Promise<ApiSuccessResponse>;
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({
@@ -111,7 +121,7 @@ export function InvoicesSection({ orderId }: { orderId: string }) {
 
   // Mutation finalisation draft_validated → finalized
   const finalizeWorkflow = useMutation({
-    mutationFn: async (invoiceId: string) => {
+    mutationFn: async (invoiceId: string): Promise<ApiSuccessResponse> => {
       const res = await fetch(
         `/api/qonto/invoices/${invoiceId}/finalize-workflow`,
         {
@@ -119,10 +129,10 @@ export function InvoicesSection({ orderId }: { orderId: string }) {
         }
       );
       if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || 'Finalization failed');
+        const error = (await res.json().catch(() => ({}))) as ApiErrorResponse;
+        throw new Error(error.error ?? 'Finalization failed');
       }
-      return res.json();
+      return res.json() as Promise<ApiSuccessResponse>;
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({

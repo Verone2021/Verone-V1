@@ -69,21 +69,27 @@ function useEnseigneSelections(enseigneId: string | null) {
       // CHEMIN 1: Chercher affilié avec enseigne_id direct
       let affiliateId: string | null = null;
 
+      type AffiliateIdResult = { id: string };
+
       const { data: directAffiliate } = await supabase
         .from('linkme_affiliates')
         .select('id')
         .eq('enseigne_id', enseigneId)
-        .single();
+        .single()
+        .returns<AffiliateIdResult>();
 
       if (directAffiliate) {
         affiliateId = directAffiliate.id;
       } else {
         // CHEMIN 2: Chercher affilié via organisation.enseigne_id
         // D'abord trouver les organisations de cette enseigne
+        type OrganisationIdResult = { id: string };
+
         const { data: orgs } = await supabase
           .from('organisations')
           .select('id')
-          .eq('enseigne_id', enseigneId);
+          .eq('enseigne_id', enseigneId)
+          .returns<OrganisationIdResult[]>();
 
         if (orgs && orgs.length > 0) {
           const orgIds = orgs.map(o => o.id);
@@ -93,7 +99,8 @@ function useEnseigneSelections(enseigneId: string | null) {
             .select('id')
             .in('organisation_id', orgIds)
             .limit(1)
-            .single();
+            .single()
+            .returns<AffiliateIdResult>();
 
           if (orgAffiliate) {
             affiliateId = orgAffiliate.id;
@@ -114,14 +121,14 @@ function useEnseigneSelections(enseigneId: string | null) {
           'id, name, description, archived_at, products_count, views_count, orders_count, created_at'
         )
         .eq('affiliate_id', affiliateId)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .returns<EnseigneSelection[]>();
 
       if (error) {
-        console.error('Erreur chargement sélections:', error);
+        console.error('[Enseignes] Erreur chargement sélections:', error);
         setSelections([]);
       } else {
-        // Cast to EnseigneSelection[] - status type comes as string from DB
-        setSelections((data || []) as EnseigneSelection[]);
+        setSelections(data ?? []);
       }
       setLoading(false);
     };
@@ -166,6 +173,19 @@ function useEnseigneProducts(enseigneId: string | null) {
       setLoading(true);
       const supabase = createClient();
 
+      type ProductWithImages = {
+        id: string;
+        name: string;
+        sku: string | null;
+        supplier_reference: string | null;
+        created_at: string | null;
+        created_by_affiliate: string | null;
+        product_images: Array<{
+          public_url: string;
+          is_primary: boolean;
+        }> | null;
+      };
+
       // Query ALL products for this enseigne with created_by_affiliate to distinguish
       const { data, error } = await supabase
         .from('products')
@@ -183,17 +203,21 @@ function useEnseigneProducts(enseigneId: string | null) {
         .eq('enseigne_id', enseigneId)
         .is('archived_at', null)
         .order('created_at', { ascending: false })
-        .limit(100);
+        .limit(100)
+        .returns<ProductWithImages[]>();
 
       if (error) {
-        console.error('Erreur chargement produits enseigne:', error);
+        console.error(
+          '[Enseignes] Erreur chargement produits enseigne:',
+          error
+        );
         setSurMesure([]);
         setAffilies([]);
       } else {
         // Transform and separate products
-        const allProducts = (data || []).map((p: any) => {
-          const primaryImg = (p.product_images || []).find(
-            (img: any) => img.is_primary
+        const allProducts = (data ?? []).map(p => {
+          const primaryImg = (p.product_images ?? []).find(
+            img => img.is_primary
           );
           return {
             id: p.id,
@@ -307,7 +331,7 @@ export default function EnseigneDetailPage() {
         <TabsContent value="organisations" className="mt-6">
           {/* Tableau organisations membres */}
           <EnseigneOrganisationsTable
-            organisations={stats?.organisationsWithRevenue || []}
+            organisations={stats?.organisationsWithRevenue ?? []}
             parentOrganisation={stats?.parentOrganisation ?? null}
             loading={statsLoading}
             enseigneId={id}
@@ -374,8 +398,8 @@ export default function EnseigneDetailPage() {
                         Raison sociale
                       </p>
                       <p className="font-medium">
-                        {stats.parentOrganisation.legal_name ||
-                          stats.parentOrganisation.trade_name ||
+                        {stats.parentOrganisation.legal_name ??
+                          stats.parentOrganisation.trade_name ??
                           '-'}
                       </p>
                     </div>
@@ -391,14 +415,14 @@ export default function EnseigneDetailPage() {
                           </p>
                         </div>
                       )}
-                    {(stats.parentOrganisation.siret ||
+                    {(stats.parentOrganisation.siret ??
                       stats.parentOrganisation.siren) && (
                       <div>
                         <p className="text-sm text-muted-foreground">
                           {stats.parentOrganisation.siret ? 'SIRET' : 'SIREN'}
                         </p>
                         <p className="font-medium">
-                          {stats.parentOrganisation.siret ||
+                          {stats.parentOrganisation.siret ??
                             stats.parentOrganisation.siren}
                         </p>
                       </div>
@@ -414,7 +438,7 @@ export default function EnseigneDetailPage() {
                           {[
                             stats.parentOrganisation.billing_address_line1,
                             stats.parentOrganisation.billing_postal_code,
-                            stats.parentOrganisation.billing_city ||
+                            stats.parentOrganisation.billing_city ??
                               stats.parentOrganisation.city,
                           ]
                             .filter(Boolean)
@@ -432,7 +456,7 @@ export default function EnseigneDetailPage() {
         {/* Onglet Géographie */}
         <TabsContent value="geography" className="mt-6">
           <EnseigneGeographySection
-            citiesDistribution={stats?.citiesDistribution || []}
+            citiesDistribution={stats?.citiesDistribution ?? []}
             loading={statsLoading}
             className="max-w-none"
           />

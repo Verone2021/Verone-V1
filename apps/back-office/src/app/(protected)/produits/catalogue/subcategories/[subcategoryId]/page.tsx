@@ -35,6 +35,16 @@ type Family = Database['public']['Tables']['families']['Row'];
 type Category = Database['public']['Tables']['categories']['Row'];
 type Subcategory = Database['public']['Tables']['subcategories']['Row'];
 
+// Interface produit pour VéroneCard
+interface ProductForCard {
+  id: string;
+  name: string;
+  description: string | null;
+  primary_image_url: string | null;
+  sku: string | null;
+  status: string;
+}
+
 export default function SubcategoryDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -91,7 +101,7 @@ export default function SubcategoryDetailPage() {
             <div className="h-8 w-64 bg-gray-200 rounded animate-pulse" />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(6)].map((_, i) => (
+            {Array.from({ length: 6 }).map((_, i) => (
               <div
                 key={i}
                 className="h-48 bg-gray-200 rounded-lg animate-pulse"
@@ -265,7 +275,7 @@ export default function SubcategoryDetailPage() {
                 <Grid3X3 className="w-8 h-8 text-black" />
                 <div>
                   <p className="text-lg font-bold text-black">
-                    Ordre {subcategory.display_order || 0}
+                    Ordre {subcategory.display_order ?? 0}
                   </p>
                   <p className="text-gray-600">Position</p>
                 </div>
@@ -343,7 +353,7 @@ export default function SubcategoryDetailPage() {
             </Card>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {products.map(product => (
+              {(products as ProductForCard[]).map(product => (
                 <VéroneCard
                   key={product.id}
                   title={product.name}

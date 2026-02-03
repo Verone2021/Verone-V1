@@ -252,7 +252,7 @@ export const getRoomConfig = (roomType: RoomType): RoomConfig | undefined => {
 
 export const getRoomLabel = (roomType: RoomType): string => {
   const config = getRoomConfig(roomType);
-  return config?.label || roomType;
+  return config?.label ?? roomType;
 };
 
 export const getRoomsByCategory = (

@@ -13,6 +13,7 @@
  */
 
 import { useState } from 'react';
+import Image from 'next/image';
 
 import { useRouter } from 'next/navigation';
 
@@ -215,9 +216,9 @@ export default function SourcingEchantillonsPage() {
       if (customer.type === 'professional') {
         const address = [
           customer.name,
-          customer.shipping_address_line1 || customer.billing_address_line1,
-          customer.shipping_city || customer.billing_city,
-          customer.shipping_postal_code || customer.billing_postal_code,
+          customer.shipping_address_line1 ?? customer.billing_address_line1,
+          customer.shipping_city ?? customer.billing_city,
+          customer.shipping_postal_code ?? customer.billing_postal_code,
         ]
           .filter(Boolean)
           .join(', ');
@@ -310,7 +311,7 @@ export default function SourcingEchantillonsPage() {
           purchase_order_id: newPO.id,
           product_id: selectedProductId,
           quantity,
-          unit_price_ht: product?.cost_price || 0.01,
+          unit_price_ht: product?.cost_price ?? 0.01,
           sample_type: 'customer',
           customer_organisation_id:
             selectedCustomer.type === 'professional'
@@ -1066,15 +1067,17 @@ export default function SourcingEchantillonsPage() {
                     <div className="flex items-start gap-3">
                       {selectedProduct.product_images &&
                       selectedProduct.product_images.length > 0 ? (
-                        <img
+                        <Image
                           src={
                             selectedProduct.product_images.find(
                               (img: any) => img.is_primary
-                            )?.public_url ||
+                            )?.public_url ??
                             selectedProduct.product_images[0].public_url
                           }
                           alt={selectedProduct.name}
-                          className="h-12 w-12 object-cover rounded"
+                          width={48}
+                          height={48}
+                          className="object-cover rounded"
                         />
                       ) : (
                         <div className="h-12 w-12 bg-gray-200 rounded flex items-center justify-center">
@@ -1105,7 +1108,7 @@ export default function SourcingEchantillonsPage() {
                 min="1"
                 max="10"
                 value={quantity}
-                onChange={e => setQuantity(parseInt(e.target.value) || 1)}
+                onChange={e => setQuantity(parseInt(e.target.value) ?? 1)}
                 disabled={submitting}
               />
               <p className="text-sm text-gray-500 mt-1">

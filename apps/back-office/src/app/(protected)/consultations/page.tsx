@@ -6,7 +6,10 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
 import { useToast } from '@verone/common';
-import { useConsultations } from '@verone/consultations';
+import {
+  useConsultations,
+  type ClientConsultation,
+} from '@verone/consultations';
 import { useConsultationImages } from '@verone/consultations';
 import { Badge } from '@verone/ui';
 import { ButtonUnified } from '@verone/ui';
@@ -45,7 +48,7 @@ import {
 import { ConsultationImageViewerModal } from '@/components/business/consultation-image-viewer-modal';
 
 // Helper pour récupérer le nom du client (enseigne ou organisation)
-function getClientName(consultation: any): string {
+function getClientName(consultation: ClientConsultation): string {
   if (consultation.enseigne?.name) {
     return consultation.enseigne.name;
   }
@@ -60,7 +63,7 @@ function getClientName(consultation: any): string {
 
 // Composant pour afficher une ligne de consultation avec miniature photo
 interface ConsultationRowProps {
-  consultation: any;
+  consultation: ClientConsultation;
   onOpenPhotoModal: (id: string, title: string) => void;
   onViewDetails: () => void;
 }
@@ -91,7 +94,7 @@ function ConsultationRow({
               title="Cliquer pour voir toutes les photos"
             >
               <Image
-                src={primaryImage.public_url || '/placeholder-consultation.svg'}
+                src={primaryImage.public_url ?? '/placeholder-consultation.svg'}
                 alt={`Photo ${getClientName(consultation)}`}
                 fill
                 className="object-cover group-hover:scale-110 transition-transform"
@@ -214,7 +217,7 @@ function ConsultationPhotoModal({
     <ConsultationImageViewerModal
       isOpen={isOpen}
       onClose={onClose}
-      images={images as any}
+      images={images}
       initialImageIndex={selectedImageIndex}
       consultationTitle={consultationTitle}
       allowEdit={false}
@@ -243,7 +246,7 @@ export default function ConsultationsPage() {
         error
       );
     });
-  }, []);
+  }, [fetchConsultations]);
 
   // Filtrer les consultations
   const filteredConsultations = consultations.filter(consultation => {

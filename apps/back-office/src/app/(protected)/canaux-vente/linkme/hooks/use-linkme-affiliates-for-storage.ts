@@ -25,6 +25,19 @@ export interface AffiliateForStorage {
   organisation_name: string | null;
 }
 
+// RPC response interface
+interface GetAffiliatesWithUsersRow {
+  id: string;
+  display_name: string | null;
+  slug: string | null;
+  affiliate_type: string;
+  enseigne_id: string | null;
+  enseigne_name: string | null;
+  organisation_id: string | null;
+  organisation_name: string | null;
+  users_count: number;
+}
+
 /**
  * Hook: récupère les affiliés actifs qui ont au moins 1 utilisateur LinkMe
  * IMPORTANT: Utilise la RPC get_affiliates_with_users pour filtrer
@@ -38,20 +51,18 @@ export function useLinkMeAffiliatesForStorage() {
 
       // ✅ RPC qui joint user_app_roles pour ne retourner que les affiliés
       // ayant au moins 1 utilisateur LinkMe actif
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (supabase.rpc as any)(
-        'get_affiliates_with_users'
-      );
+      const { data, error } = await supabase
+        .rpc('get_affiliates_with_users')
+        .returns<GetAffiliatesWithUsersRow[]>();
 
       if (error) {
         console.warn('Error fetching affiliates with users:', error.message);
         return [];
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return ((data as any[]) || []).map((a: any) => ({
+      return (data ?? []).map(a => ({
         id: a.id,
-        display_name: a.display_name || 'Sans nom',
+        display_name: a.display_name ?? 'Sans nom',
         slug: a.slug ?? '',
         affiliate_type: a.affiliate_type as AffiliateType,
         enseigne_id: a.enseigne_id ?? null,
@@ -68,5 +79,5 @@ export function useLinkMeAffiliatesForStorage() {
  * Get display name for affiliate (enseigne or organisation name)
  */
 export function getAffiliateEntityName(affiliate: AffiliateForStorage): string {
-  return affiliate.enseigne_name || affiliate.organisation_name || 'Inconnu';
+  return affiliate.enseigne_name ?? affiliate.organisation_name ?? 'Inconnu';
 }

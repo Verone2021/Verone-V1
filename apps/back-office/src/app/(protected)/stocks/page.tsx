@@ -60,7 +60,7 @@ export default function StocksDashboardPage() {
   }, [fetchAlerts]);
 
   // Extraction des métriques avec fallbacks
-  const overview = metrics?.overview || {
+  const overview = metrics?.overview ?? {
     total_value: 0,
     products_in_stock: 0,
     products_out_of_stock: 0,
@@ -70,7 +70,7 @@ export default function StocksDashboardPage() {
     total_available: 0,
   };
 
-  const movements = metrics?.movements || {
+  const movements = metrics?.movements ?? {
     last_7_days: {
       entries: { count: 0, quantity: 0 },
       exits: { count: 0, quantity: 0 },
@@ -83,12 +83,12 @@ export default function StocksDashboardPage() {
   // Vraies alertes actives depuis useStockAlerts (filtrées: stock_real < min_stock)
   const realAlertsCount = activeAlerts.length;
   const criticalCount =
-    criticalAlerts?.filter(a => a.stock_real < a.min_stock).length || 0;
+    criticalAlerts?.filter(a => a.stock_real < a.min_stock).length ?? 0;
 
   // Rotation 7 jours = entrées + sorties
   const rotation7j =
-    (movements.last_7_days?.entries?.quantity || 0) +
-    (movements.last_7_days?.exits?.quantity || 0);
+    (movements.last_7_days?.entries?.quantity ?? 0) +
+    (movements.last_7_days?.exits?.quantity ?? 0);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -166,7 +166,7 @@ export default function StocksDashboardPage() {
               style: 'currency',
               currency: 'EUR',
               maximumFractionDigits: 0,
-            }).format(overview.total_value || 0)}
+            }).format(overview.total_value ?? 0)}
             icon={BarChart3}
             variant="default"
             subtitle="HT"
@@ -275,10 +275,10 @@ export default function StocksDashboardPage() {
                     {activeAlerts.slice(0, 10).map(alert => {
                       const stockPrevisionnel =
                         alert.stock_real +
-                        (alert.stock_forecasted_in || 0) -
-                        (alert.stock_forecasted_out || 0);
+                        (alert.stock_forecasted_in ?? 0) -
+                        (alert.stock_forecasted_out ?? 0);
                       const seuilAtteint =
-                        stockPrevisionnel >= (alert.min_stock || 0);
+                        stockPrevisionnel >= (alert.min_stock ?? 0);
 
                       // Couleur indicateur vertical
                       const indicatorColor =
@@ -397,12 +397,12 @@ export default function StocksDashboardPage() {
 
                           <ProductThumbnail
                             src={movement.product_image_url}
-                            alt={movement.product_name || 'Produit'}
+                            alt={movement.product_name ?? 'Produit'}
                             size="xs"
                           />
                           <div className="flex-1 min-w-0">
                             <p className="text-xs font-medium text-black truncate">
-                              {movement.product_name || 'Produit'}
+                              {movement.product_name ?? 'Produit'}
                             </p>
                             <p className="text-[10px] text-gray-500">
                               {new Date(movement.performed_at).toLocaleString(

@@ -183,26 +183,23 @@ function usePaymentRequestsAdmin(statusFilter: PaymentRequestStatus | 'all') {
           ? baseQuery.eq('status', statusFilter)
           : baseQuery;
 
-      const { data, error } = await query;
+      const { data, error } = await query.returns<PaymentRequestRaw[]>();
 
       if (error) {
         console.error('Erreur fetch payment requests admin:', error);
         throw error;
       }
 
-      // Cast des données avec le type attendu
-      const typedData = data as unknown as PaymentRequestRaw[];
-
-      return (typedData || []).map(item => {
+      return (data ?? []).map(item => {
         const affiliate = item.linkme_affiliates;
         return {
           id: item.id,
           requestNumber: item.request_number,
           affiliateId: item.affiliate_id,
-          affiliateName: affiliate?.display_name || 'Affilié',
+          affiliateName: affiliate?.display_name ?? 'Affilié',
           affiliateEmail: affiliate?.email ?? '',
-          totalAmountHT: item.total_amount_ht || 0,
-          totalAmountTTC: item.total_amount_ttc || 0,
+          totalAmountHT: item.total_amount_ht ?? 0,
+          totalAmountTTC: item.total_amount_ttc ?? 0,
           status: item.status as PaymentRequestStatus,
           invoiceFileUrl: item.invoice_file_url,
           invoiceFileName: item.invoice_file_name,
@@ -252,7 +249,7 @@ function useMarkAsPaid() {
 
 // Badge statut
 function StatusBadge({ status }: { status: PaymentRequestStatus }) {
-  const config = STATUS_CONFIG[status] || STATUS_CONFIG.pending;
+  const config = STATUS_CONFIG[status] ?? STATUS_CONFIG.pending;
   const Icon = config.icon;
 
   return (
@@ -295,7 +292,12 @@ function MarkAsPaidModal({
       });
       onSuccess();
       handleClose();
-    } catch {
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Erreur lors de la mise à jour';
+      console.error('[MarkAsPaidModal] Error:', message);
       setError('Erreur lors de la mise à jour');
     }
   };
@@ -400,11 +402,11 @@ export default function PaymentRequestsAdminPage() {
 
   // Stats rapides
   const stats = {
-    total: requests?.length || 0,
-    pending: requests?.filter(r => r.status === 'pending').length || 0,
+    total: requests?.length ?? 0,
+    pending: requests?.filter(r => r.status === 'pending').length ?? 0,
     invoiceReceived:
-      requests?.filter(r => r.status === 'invoice_received').length || 0,
-    paid: requests?.filter(r => r.status === 'paid').length || 0,
+      requests?.filter(r => r.status === 'invoice_received').length ?? 0,
+    paid: requests?.filter(r => r.status === 'paid').length ?? 0,
   };
 
   return (

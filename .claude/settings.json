@@ -8,40 +8,80 @@
     "magic",
     "supabase"
   ],
+  "outputStyle": "explanatory",
   "statusLine": {
     "type": "command",
     "command": "/Users/romeodossantos/verone-back-office-V1/.claude/scripts/statusline.sh",
     "padding": 0
   },
+  "UserPromptSubmit": [
+    {
+      "hooks": [
+        {
+          "type": "command",
+          "command": "$CLAUDE_PROJECT_DIR/.claude/scripts/clarify-before-code.sh"
+        }
+      ]
+    }
+  ],
   "PreToolUse": [
     {
       "matcher": "Bash(git commit*)",
-      "hooks": [{
-        "type": "command",
-        "command": "bash -c 'BRANCH=$(git branch --show-current); if [ \"$BRANCH\" = \"main\" ]; then echo \"❌ INTERDIT commit sur main\"; exit 1; fi; if ! echo \"$TOOL_INPUT\" | grep -qE \"\\[(BO|LM|WEB)-[A-Z]+-[0-9]{3}\\]|\\[NO-TASK\\]\"; then echo \"❌ Task ID requis: [APP-XXX-001]\"; exit 1; fi'"
-      }]
+      "hooks": [
+        {
+          "type": "command",
+          "command": "bash -c 'BRANCH=$(git branch --show-current); if [ \"$BRANCH\" = \"main\" ] || [ \"$BRANCH\" = \"master\" ]; then echo \"❌ INTERDIT de commit sur main. Créer une feature branch: git checkout -b feat/XXX\"; exit 1; fi; if ! echo \"$TOOL_INPUT\" | grep -qE \"\\[(BO|LM|WEB)-[A-Z0-9]+-[0-9]{3}\\]|\\[NO-TASK\\]\"; then echo \"❌ Task ID manquant. Format: [APP-XXX-001] ou [NO-TASK]\"; exit 1; fi'"
+        }
+      ]
+    },
+    {
+      "matcher": "Bash(git push*main*)",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "bash -c 'if echo \"$TOOL_INPUT\" | grep -qE \"origin (main|master)\"; then echo \"❌ INTERDIT: Push direct sur main. Créer une PR via: gh pr create\"; exit 1; fi'"
+        }
+      ]
+    },
+    {
+      "matcher": "Bash(*)",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "bash -c 'if echo \"$TOOL_INPUT\" | grep -qE \"(pnpm|npm|yarn|turbo)\\s+(dev|start)\"; then echo \"❌ INTERDIT: Seul l'utilisateur peut lancer les serveurs. Demandez à l'utilisateur d'exécuter: pnpm dev:safe\"; exit 1; fi'"
+        }
+      ]
     },
     {
       "matcher": "Edit(*middleware*)",
-      "hooks": [{
-        "type": "command",
-        "command": "echo '⚠️ MIDDLEWARE CRITIQUE - Vérifier patterns existants avant modification' && exit 0"
-      }]
+      "hooks": [
+        {
+          "type": "command",
+          "command": "echo '⚠️ MIDDLEWARE CRITIQUE - Vérifier patterns existants avant modification' && exit 0"
+        }
+      ]
     },
     {
       "matcher": "Edit(*_rls_*)",
-      "hooks": [{
-        "type": "command",
-        "command": "echo '⚠️ RLS CRITIQUE - Approbation requise pour migrations auth' && exit 0"
-      }]
+      "hooks": [
+        {
+          "type": "command",
+          "command": "echo '⚠️ RLS CRITIQUE - Approbation requise pour migrations auth' && exit 0"
+        }
+      ]
     }
   ],
-  "Stop": [{
-    "hooks": [{
-      "type": "command",
-      "command": "$CLAUDE_PROJECT_DIR/.claude/scripts/task-completed.sh"
-    }]
-  }],
+  "PostToolUse": [],
+  "Stop": [
+    {
+      "hooks": [
+        {
+          "type": "command",
+          "command": "$CLAUDE_PROJECT_DIR/.claude/scripts/task-completed.sh"
+        }
+      ]
+    }
+  ],
   "permissions": {
     "allow": [
       "Bash(git *)",
@@ -72,6 +112,7 @@
       "Bash(curl *)",
       "Bash(supabase *)",
       "Bash(tsx *)",
+      "Bash(chmod *)",
       "Read",
       "Write",
       "Edit",
@@ -83,50 +124,6 @@
       "TodoWrite",
       "mcp__*"
     ],
-    "deny": [
-      "Bash(rm -rf /)",
-      "Bash(rm -rf /*)",
-      "Bash(sudo *)"
-    ]
-  },
-  "PreToolUse": [
-    {
-      "matcher": "Bash(git commit*)",
-      "hooks": [
-        {
-          "type": "command",
-          "command": "bash -c 'BRANCH=$(git branch --show-current); if [ \"$BRANCH\" = \"main\" ] || [ \"$BRANCH\" = \"master\" ]; then echo \"❌ INTERDIT de commit sur main. Créer une feature branch: git checkout -b feat/XXX\"; exit 1; fi; if ! echo \"$TOOL_INPUT\" | grep -qE \"\\[(BO|LM|WEB)-[A-Z0-9]+-[0-9]{3}\\]|\\[NO-TASK\\]\"; then echo \"❌ Task ID manquant. Format: [APP-XXX-001] ou [NO-TASK]\"; exit 1; fi'"
-        }
-      ]
-    },
-    {
-      "matcher": "Bash(git push*main*)",
-      "hooks": [
-        {
-          "type": "command",
-          "command": "bash -c 'if echo \"$TOOL_INPUT\" | grep -qE \"origin (main|master)\"; then echo \"❌ INTERDIT: Push direct sur main. Créer une PR via: gh pr create\"; exit 1; fi'"
-        }
-      ]
-    },
-    {
-      "matcher": "Bash(*)",
-      "hooks": [
-        {
-          "type": "command",
-          "command": "bash -c 'if echo \"$TOOL_INPUT\" | grep -qE \"(pnpm|npm|yarn|turbo)\\s+(dev|start)\"; then echo \"❌ INTERDIT: Seul l'utilisateur peut lancer les serveurs. Demandez à l'utilisateur d'exécuter: pnpm dev:safe\"; exit 1; fi'"
-        }
-      ]
-    }
-  ],
-  "PostToolUse": [],
-  "Stop": [
-    {
-      "hooks": [
-        {
-          "type": "command",
-          "command": "$CLAUDE_PROJECT_DIR/.claude/scripts/task-completed.sh"
-        }
-      ]
-    }
-  ]
+    "deny": ["Bash(rm -rf /)", "Bash(rm -rf /*)", "Bash(sudo *)"]
+  }
 }

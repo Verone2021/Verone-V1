@@ -56,7 +56,7 @@ export function useTogglePublish() {
       toast({
         title: 'Erreur lors de la publication',
         description:
-          error.message || 'Impossible de modifier le statut de publication',
+          error.message ?? 'Impossible de modifier le statut de publication',
         variant: 'destructive',
       });
     },

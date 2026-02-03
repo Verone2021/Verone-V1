@@ -9,6 +9,8 @@
 
 import { useState, useEffect } from 'react';
 
+import Image from 'next/image';
+
 import { ButtonV2 } from '@verone/ui';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@verone/ui';
 import { Input } from '@verone/ui';
@@ -82,7 +84,7 @@ export function CategoryForm({
     name: initialData?.name ?? '',
     description: initialData?.description ?? '',
     image_url: initialData?.image_url ?? '',
-    display_order: initialData?.display_order || 1,
+    display_order: initialData?.display_order ?? 1,
     is_active: initialData?.is_active ?? true,
   });
 
@@ -94,7 +96,7 @@ export function CategoryForm({
         name: initialData?.name ?? '',
         description: initialData?.description ?? '',
         image_url: initialData?.image_url ?? '',
-        display_order: initialData?.display_order || 1,
+        display_order: initialData?.display_order ?? 1,
         is_active: initialData?.is_active ?? true,
       });
     }
@@ -137,11 +139,10 @@ export function CategoryForm({
         title: '✅ Image téléchargée',
         description: "L'image a été uploadée avec succès",
       });
-    } catch (error: any) {
-      console.error(
-        'Erreur upload image catégorie:',
-        error?.message || JSON.stringify(error)
-      );
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Erreur inconnue';
+      console.error('Erreur upload image catégorie:', errorMessage);
       toast({
         title: '❌ Erreur upload',
         description: "Impossible de télécharger l'image",
@@ -229,22 +230,26 @@ export function CategoryForm({
 
       onSubmit(result as unknown as Category);
       onClose();
-    } catch (error: any) {
-      console.error(
-        'Erreur soumission formulaire catégorie:',
-        error?.message || JSON.stringify(error)
-      );
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Erreur inconnue';
+      console.error('Erreur soumission formulaire catégorie:', errorMessage);
 
-      // Gestion spécifique des erreurs de contrainte unique
-      let errorMessage = error.message || 'Une erreur est survenue';
-      if (error.code === '23505') {
-        errorMessage =
+      // Gestion spécifique des erreurs de contrainte unique Postgres
+      let displayMessage = errorMessage;
+      if (
+        error &&
+        typeof error === 'object' &&
+        'code' in error &&
+        error.code === '23505'
+      ) {
+        displayMessage =
           'Une catégorie avec ce nom existe déjà dans cette famille. Veuillez choisir un nom différent.';
       }
 
       toast({
         title: '❌ Erreur',
-        description: errorMessage,
+        description: displayMessage,
         variant: 'destructive',
       });
     } finally {
@@ -348,9 +353,11 @@ export function CategoryForm({
             <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
               {formData.image_url ? (
                 <div className="relative">
-                  <img
+                  <Image
                     src={formData.image_url}
                     alt="Preview"
+                    width={400}
+                    height={128}
                     className="w-full h-32 object-cover rounded-lg"
                   />
                   <ButtonV2

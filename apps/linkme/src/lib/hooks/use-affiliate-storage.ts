@@ -12,6 +12,8 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
+import type { Database } from '@verone/types';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { createClient } from '@verone/utils/supabase/client';
 
 import { useAuth } from '../../contexts/AuthContext';
@@ -52,15 +54,23 @@ export function useAffiliateStorageSummary() {
         return null;
       }
 
-      const supabase = createClient();
+      const supabase: SupabaseClient<Database> = createClient();
 
-      const { data, error } = await (supabase.rpc as any)(
-        'get_affiliate_storage_summary',
-        {
-          p_owner_enseigne_id: enseigneId ?? null,
-          p_owner_organisation_id: organisationId ?? null,
-        }
-      );
+      // RPC returns TABLE -> array of rows
+      interface RpcRow {
+        total_units: number;
+        total_volume_m3: number;
+        billable_volume_m3: number;
+        products_count: number;
+        billable_products_count: number;
+      }
+
+      const { data, error } = await supabase
+        .rpc('get_affiliate_storage_summary', {
+          p_owner_enseigne_id: enseigneId ?? undefined,
+          p_owner_organisation_id: organisationId ?? undefined,
+        })
+        .returns<RpcRow[]>();
 
       if (error) {
         console.error('Error fetching storage summary:', error);
@@ -77,9 +87,9 @@ export function useAffiliateStorageSummary() {
         };
       }
 
-      return data[0] as StorageSummary;
+      return data[0];
     },
-    enabled: !!(enseigneId || organisationId),
+    enabled: !!(enseigneId ?? organisationId),
     staleTime: 60000,
   });
 }
@@ -99,24 +109,23 @@ export function useAffiliateStorageDetails() {
         return [];
       }
 
-      const supabase = createClient();
+      const supabase: SupabaseClient<Database> = createClient();
 
-      const { data, error } = await (supabase.rpc as any)(
-        'get_storage_details',
-        {
-          p_owner_enseigne_id: enseigneId ?? null,
-          p_owner_organisation_id: organisationId ?? null,
-        }
-      );
+      const { data, error } = await supabase
+        .rpc('get_storage_details', {
+          p_owner_enseigne_id: enseigneId ?? undefined,
+          p_owner_organisation_id: organisationId ?? undefined,
+        })
+        .returns<StorageAllocation[]>();
 
       if (error) {
         console.error('Error fetching storage details:', error);
         throw error;
       }
 
-      return (data ?? []) as StorageAllocation[];
+      return data ?? [];
     },
-    enabled: !!(enseigneId || organisationId),
+    enabled: !!(enseigneId ?? organisationId),
     staleTime: 60000,
   });
 }
@@ -137,15 +146,14 @@ export function useAffiliateBillableStorage() {
         return [];
       }
 
-      const supabase = createClient();
+      const supabase: SupabaseClient<Database> = createClient();
 
-      const { data, error } = await (supabase.rpc as any)(
-        'get_storage_details',
-        {
-          p_owner_enseigne_id: enseigneId ?? null,
-          p_owner_organisation_id: organisationId ?? null,
-        }
-      );
+      const { data, error } = await supabase
+        .rpc('get_storage_details', {
+          p_owner_enseigne_id: enseigneId ?? undefined,
+          p_owner_organisation_id: organisationId ?? undefined,
+        })
+        .returns<StorageAllocation[]>();
 
       if (error) {
         console.error('Error fetching billable storage:', error);
@@ -153,11 +161,11 @@ export function useAffiliateBillableStorage() {
       }
 
       // Filtrer uniquement les produits facturables
-      return ((data ?? []) as StorageAllocation[]).filter(
+      return (data ?? []).filter(
         allocation => allocation.billable_in_storage === true
       );
     },
-    enabled: !!(enseigneId || organisationId),
+    enabled: !!(enseigneId ?? organisationId),
     staleTime: 60000,
   });
 }
@@ -178,13 +186,22 @@ export function useStoragePricingTiers() {
   return useQuery({
     queryKey: ['storage-pricing-tiers-public'],
     queryFn: async (): Promise<StoragePricingTier[]> => {
-      const supabase = createClient();
+      const supabase: SupabaseClient<Database> = createClient();
 
-      const { data, error } = await (supabase as any)
+      interface StoragePricingTierRow {
+        id: string;
+        min_volume_m3: number;
+        max_volume_m3: number | null;
+        price_per_m3: number;
+        label: string | null;
+      }
+
+      const { data, error } = await supabase
         .from('storage_pricing_tiers')
         .select('id, min_volume_m3, max_volume_m3, price_per_m3, label')
         .eq('is_active', true)
-        .order('min_volume_m3', { ascending: true });
+        .order('min_volume_m3', { ascending: true })
+        .returns<StoragePricingTierRow[]>();
 
       if (error) {
         console.error('Error fetching pricing tiers:', error);

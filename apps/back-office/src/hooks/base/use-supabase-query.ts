@@ -3,17 +3,21 @@
  *
  * Hook base pour queries Supabase read-only
  * Usage : Dashboard widgets, analytics, listes avec filtres
+ *
+ * Note: Ce hook est intentionnellement générique et utilise `any` pour
+ * le query builder afin de supporter n'importe quelle table dynamiquement.
  */
 
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 
 import { createClient } from '@verone/utils/supabase/client';
 
-export interface QueryOptions<T = any> {
+export interface QueryOptions<_T> {
   tableName: string;
   select?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   filters?: (query: any) => any;
   orderBy?: { column: string; ascending?: boolean };
   limit?: number;
@@ -36,14 +40,16 @@ export function useSupabaseQuery<T>(options: QueryOptions<T>): QueryState<T> {
   // ✅ FIX: useMemo garantit createClient() appelé une seule fois par instance
   const supabase = useMemo(() => createClient(), []);
 
-  const fetch = async () => {
+  const fetch = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let query: any = supabase
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .from(options.tableName as any)
-        .select(options.select || '*');
+        .select(options.select ?? '*');
 
       // Apply filters
       if (options.filters) {
@@ -66,7 +72,7 @@ export function useSupabaseQuery<T>(options: QueryOptions<T>): QueryState<T> {
 
       if (fetchError) throw fetchError;
 
-      setData(result as T[]);
+      setData((result as T[]) ?? []);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erreur inconnue';
       setError(message);
@@ -77,15 +83,22 @@ export function useSupabaseQuery<T>(options: QueryOptions<T>): QueryState<T> {
     } finally {
       setLoading(false);
     }
-  };
+  }, [
+    supabase,
+    options.tableName,
+    options.select,
+    options.filters,
+    options.orderBy,
+    options.limit,
+  ]);
 
   useEffect(() => {
     if (options.autoFetch !== false) {
-      void fetch().catch(error => {
+      void fetch().catch((error: unknown) => {
         console.error('[useSupabaseQuery] useEffect fetch failed:', error);
       });
     }
-  }, [options.tableName]);
+  }, [fetch, options.autoFetch]);
 
   return {
     data,

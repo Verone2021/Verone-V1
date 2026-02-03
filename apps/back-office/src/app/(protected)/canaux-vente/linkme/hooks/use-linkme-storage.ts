@@ -7,9 +7,10 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+
 import { createClient } from '@verone/utils/supabase/client';
 
-// Types
+// Types métier
 export interface StorageOverviewItem {
   owner_id: string;
   owner_type: 'enseigne' | 'organisation';
@@ -58,7 +59,7 @@ export function useStorageOverview() {
       }
 
       // Filter out entries with no storage
-      return ((data || []) as StorageOverviewItem[]).filter(
+      return ((data ?? []) as StorageOverviewItem[]).filter(
         item => item.total_units > 0 || item.products_count > 0
       );
     },
@@ -72,12 +73,12 @@ export function useStorageOverview() {
 export function useStorageTotals() {
   const { data: overview, ...rest } = useStorageOverview();
 
-  const totals = (overview || []).reduce(
+  const totals = (overview ?? []).reduce(
     (acc, item) => ({
-      total_units: acc.total_units + (item.total_units || 0),
-      total_volume_m3: acc.total_volume_m3 + (item.total_volume_m3 || 0),
+      total_units: acc.total_units + (item.total_units ?? 0),
+      total_volume_m3: acc.total_volume_m3 + (item.total_volume_m3 ?? 0),
       billable_volume_m3:
-        acc.billable_volume_m3 + (item.billable_volume_m3 || 0),
+        acc.billable_volume_m3 + (item.billable_volume_m3 ?? 0),
       affiliates_count: acc.affiliates_count + 1,
     }),
     {
@@ -166,7 +167,7 @@ export function useAffiliateStorageDetail(
           products_count: 0,
           billable_products_count: 0,
         },
-        allocations: (detailsData || []) as StorageAllocation[],
+        allocations: (detailsData ?? []) as StorageAllocation[],
       };
     },
     enabled: !!ownerId,
@@ -190,10 +191,8 @@ export function useUpdateAllocationBillable() {
     }): Promise<void> => {
       const supabase = createClient();
 
-      // Table renommee - types seront regeneres
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase as any)
-        .from('storage_allocations')
+      const { error } = await supabase
+        .from('affiliate_storage_allocations')
         .update({ billable_in_storage: billable })
         .eq('id', allocationId);
 
@@ -233,10 +232,8 @@ export function useCreateStorageAllocation() {
     }): Promise<void> => {
       const supabase = createClient();
 
-      // Table renommee - types seront regeneres
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase as any)
-        .from('storage_allocations')
+      const { error } = await supabase
+        .from('affiliate_storage_allocations')
         .upsert(
           {
             product_id: productId,
@@ -281,10 +278,8 @@ export function useUpdateStorageQuantity() {
     }): Promise<void> => {
       const supabase = createClient();
 
-      // Table renommee - types seront regeneres
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase as any)
-        .from('storage_allocations')
+      const { error } = await supabase
+        .from('affiliate_storage_allocations')
         .update({ stock_quantity: quantity })
         .eq('id', allocationId);
 
@@ -322,9 +317,9 @@ export interface StoragePricingTier {
   max_volume_m3: number | null;
   price_per_m3: number;
   label: string | null;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
+  is_active: boolean | null;
+  created_at: string | null;
+  updated_at: string | null;
 }
 
 /**
@@ -336,8 +331,7 @@ export function useStoragePricingTiers() {
     queryFn: async (): Promise<StoragePricingTier[]> => {
       const supabase = createClient();
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('storage_pricing_tiers')
         .select('*')
         .eq('is_active', true)
@@ -348,7 +342,7 @@ export function useStoragePricingTiers() {
         return [];
       }
 
-      return data || [];
+      return data ?? [];
     },
     staleTime: 300000, // 5 minutes
   });
@@ -383,8 +377,7 @@ export function useUpdatePricingTier() {
         updateData.label = label;
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from('storage_pricing_tiers')
         .update(updateData)
         .eq('id', id);
@@ -422,16 +415,13 @@ export function useCreatePricingTier() {
     }): Promise<void> => {
       const supabase = createClient();
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase as any)
-        .from('storage_pricing_tiers')
-        .insert({
-          min_volume_m3,
-          max_volume_m3,
-          price_per_m3,
-          label,
-          is_active: true,
-        });
+      const { error } = await supabase.from('storage_pricing_tiers').insert({
+        min_volume_m3,
+        max_volume_m3,
+        price_per_m3,
+        label,
+        is_active: true,
+      });
 
       if (error) {
         console.warn('Error creating pricing tier:', error.message);
@@ -456,8 +446,7 @@ export function useDeletePricingTier() {
     mutationFn: async (id: string): Promise<void> => {
       const supabase = createClient();
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from('storage_pricing_tiers')
         .update({ is_active: false })
         .eq('id', id);

@@ -200,8 +200,8 @@ export function EditSiteInternetProductModal({
     return catalogueImages.map(img => ({
       id: img.id,
       public_url: img.public_url ?? '',
-      alt_text: img.alt_text || `${product.name}`,
-      is_primary: img.is_primary || false,
+      alt_text: img.alt_text ?? `${product.name}`,
+      is_primary: img.is_primary ?? false,
     }));
   }, [catalogueImages, product.name]);
 
@@ -222,7 +222,7 @@ export function EditSiteInternetProductModal({
     custom_description_long: product.description ?? '',
     custom_technical_description: product.technical_description ?? '',
     custom_brand: product.brand ?? '',
-    custom_selling_points: product.selling_points || [],
+    custom_selling_points: product.selling_points ?? [],
   });
 
   // Mutation update
@@ -284,7 +284,7 @@ export function EditSiteInternetProductModal({
               custom_description_long: data.custom_description_long,
               custom_technical_description: data.custom_technical_description,
               custom_brand: data.custom_brand,
-              custom_selling_points: data.custom_selling_points || [],
+              custom_selling_points: data.custom_selling_points ?? [],
             },
             { onConflict: 'product_id,channel_id' }
           )
@@ -308,7 +308,7 @@ export function EditSiteInternetProductModal({
               custom_price_ht: data.custom_price_ht,
               discount_rate: data.discount_rate ?? null,
               markup_rate: null, // Toujours null (mode custom_price uniquement)
-              min_quantity: data.min_quantity || 1,
+              min_quantity: data.min_quantity ?? 1,
               notes: data.notes ?? null,
               is_active: data.is_active ?? true,
             },
@@ -526,7 +526,7 @@ export function EditSiteInternetProductModal({
                       </p>
                     )}
                     <p className="text-sm text-gray-500 mt-1">
-                      URL: https://verone.fr/produit/{formData.slug || 'slug'}
+                      URL: https://verone.fr/produit/{formData.slug ?? 'slug'}
                     </p>
                   </div>
                 </TabsContent>
@@ -539,14 +539,14 @@ export function EditSiteInternetProductModal({
                       <Label>Titre SEO custom (priorité 1)</Label>
                       <span
                         className={`text-sm ${
-                          (formData.custom_title?.length || 0) < 30
+                          (formData.custom_title?.length ?? 0) < 30
                             ? 'text-red-600'
-                            : (formData.custom_title?.length || 0) <= 60
+                            : (formData.custom_title?.length ?? 0) <= 60
                               ? 'text-green-600'
                               : 'text-gray-600'
                         }`}
                       >
-                        {formData.custom_title?.length || 0} / 60
+                        {formData.custom_title?.length ?? 0} / 60
                       </span>
                     </div>
                     <Input
@@ -573,14 +573,14 @@ export function EditSiteInternetProductModal({
                       <Label>Description SEO custom (priorité 1)</Label>
                       <span
                         className={`text-sm ${
-                          (formData.custom_description?.length || 0) < 80
+                          (formData.custom_description?.length ?? 0) < 80
                             ? 'text-red-600'
-                            : (formData.custom_description?.length || 0) <= 160
+                            : (formData.custom_description?.length ?? 0) <= 160
                               ? 'text-green-600'
                               : 'text-gray-600'
                         }`}
                       >
-                        {formData.custom_description?.length || 0} / 160
+                        {formData.custom_description?.length ?? 0} / 160
                       </span>
                     </div>
                     <Textarea
@@ -612,13 +612,13 @@ export function EditSiteInternetProductModal({
                         <span className="text-blue-700 font-medium">
                           Titre:
                         </span>{' '}
-                        {formData.custom_title || product.seo_title}
+                        {formData.custom_title ?? product.seo_title}
                       </div>
                       <div>
                         <span className="text-blue-700 font-medium">
                           Description:
                         </span>{' '}
-                        {formData.custom_description ||
+                        {formData.custom_description ??
                           product.seo_meta_description}
                       </div>
                     </div>
@@ -894,7 +894,7 @@ export function EditSiteInternetProductModal({
                             <div className="aspect-square relative bg-gray-100">
                               <Image
                                 src={image.public_url ?? ''}
-                                alt={image.alt_text || `Photo ${index + 1}`}
+                                alt={image.alt_text ?? `Photo ${index + 1}`}
                                 fill
                                 className="object-cover"
                                 sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
@@ -1061,7 +1061,7 @@ export function EditSiteInternetProductModal({
                       <div className="flex items-center justify-between">
                         <Label>Description complète</Label>
                         <span className="text-sm text-gray-500">
-                          {formData.custom_description_long?.length || 0} / 5000
+                          {formData.custom_description_long?.length ?? 0} / 5000
                         </span>
                       </div>
                       <Textarea
@@ -1093,7 +1093,7 @@ export function EditSiteInternetProductModal({
                       <div className="flex items-center justify-between">
                         <Label>Description technique</Label>
                         <span className="text-sm text-gray-500">
-                          {formData.custom_technical_description?.length || 0} /
+                          {formData.custom_technical_description?.length ?? 0} /
                           2000
                         </span>
                       </div>
@@ -1143,7 +1143,7 @@ export function EditSiteInternetProductModal({
                         </p>
                       )}
                       <p className="text-sm text-gray-500 mt-1">
-                        Waterfall: Custom canal → {product.brand || 'Vide'}
+                        Waterfall: Custom canal → {product.brand ?? 'Vide'}
                       </p>
                     </div>
 
@@ -1151,7 +1151,7 @@ export function EditSiteInternetProductModal({
                     <div>
                       <Label>Points de vente (Selling Points)</Label>
                       <div className="space-y-2 mt-2">
-                        {(formData.custom_selling_points || []).map(
+                        {(formData.custom_selling_points ?? []).map(
                           (point, index) => (
                             <div
                               key={index}
@@ -1161,7 +1161,7 @@ export function EditSiteInternetProductModal({
                                 value={point}
                                 onChange={e => {
                                   const newPoints = [
-                                    ...(formData.custom_selling_points || []),
+                                    ...(formData.custom_selling_points ?? []),
                                   ];
                                   newPoints[index] = e.target.value;
                                   setFormData({
@@ -1177,7 +1177,7 @@ export function EditSiteInternetProductModal({
                                 size="sm"
                                 onClick={() => {
                                   const newPoints = (
-                                    formData.custom_selling_points || []
+                                    formData.custom_selling_points ?? []
                                   ).filter((_, i) => i !== index);
                                   setFormData({
                                     ...formData,
@@ -1198,7 +1198,7 @@ export function EditSiteInternetProductModal({
                             setFormData({
                               ...formData,
                               custom_selling_points: [
-                                ...(formData.custom_selling_points || []),
+                                ...(formData.custom_selling_points ?? []),
                                 '',
                               ],
                             });

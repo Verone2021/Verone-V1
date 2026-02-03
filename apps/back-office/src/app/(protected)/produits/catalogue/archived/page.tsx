@@ -4,9 +4,20 @@ import { Badge } from '@verone/ui';
 import { ButtonUnified } from '@verone/ui';
 import { ArrowLeft, Package, RotateCcw, Trash2 } from 'lucide-react';
 
+// Interface produit archivé
+interface ArchivedProduct {
+  id: string;
+  name: string;
+  status: 'archived' | 'discontinued' | 'end_of_life';
+  sku: string | null;
+  price_ht: number | null;
+  archived_at: string;
+  archived_reason: string | null;
+}
+
 export default function ArchivedProductsPage() {
   // Données mockées pour l'interface
-  const archivedProducts: any[] = [];
+  const archivedProducts: ArchivedProduct[] = [];
 
   const statusConfig = {
     archived: { label: '📦 Archivé', className: 'bg-gray-600 text-white' },
@@ -81,7 +92,7 @@ export default function ArchivedProductsPage() {
         </div>
       ) : (
         <div className="grid gap-4">
-          {archivedProducts.map((product: any) => (
+          {archivedProducts.map(product => (
             <div
               key={product.id}
               className="bg-white border border-gray-200 p-6 hover:shadow-sm transition-shadow"
@@ -94,13 +105,11 @@ export default function ArchivedProductsPage() {
                     </h3>
                     <Badge
                       className={
-                        statusConfig[
-                          product.status as keyof typeof statusConfig
-                        ]?.className || 'bg-gray-600 text-white'
+                        statusConfig[product.status]?.className ||
+                        'bg-gray-600 text-white'
                       }
                     >
-                      {statusConfig[product.status as keyof typeof statusConfig]
-                        ?.label || '📦 Archivé'}
+                      {statusConfig[product.status]?.label ?? '📦 Archivé'}
                     </Badge>
                   </div>
 
@@ -120,7 +129,7 @@ export default function ArchivedProductsPage() {
                     </div>
                     <div>
                       <span className="font-medium">Raison:</span>{' '}
-                      {product.archived_reason || 'Non spécifiée'}
+                      {product.archived_reason ?? 'Non spécifiée'}
                     </div>
                   </div>
                 </div>

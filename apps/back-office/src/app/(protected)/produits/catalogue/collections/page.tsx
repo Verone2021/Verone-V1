@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useCallback, useEffect } from 'react';
 
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
 import { getRoomLabel, type RoomType } from '@verone/types';
@@ -37,6 +38,13 @@ interface LocalCollectionFilters {
   visibility: 'all' | 'public' | 'private';
 }
 
+// Interface produit dans collection (preview)
+interface CollectionProduct {
+  id: string;
+  name: string;
+  image_url: string | null;
+}
+
 // Helper pour formater le style de collection
 const formatCollectionStyle = (style?: string): string => {
   if (!style) return '';
@@ -50,7 +58,7 @@ const formatCollectionStyle = (style?: string): string => {
     boheme: 'Bohème',
     art_deco: 'Art Déco',
   };
-  return styleMap[style] || style;
+  return styleMap[style] ?? style;
 };
 
 // Helper pour formater la catégorie de pièce
@@ -68,7 +76,7 @@ const _formatRoomCategory = (roomCategory?: string): string => {
     exterieur_balcon: 'Balcon',
     exterieur_jardin: 'Jardin',
   };
-  return roomMap[roomCategory] || roomCategory;
+  return roomMap[roomCategory] ?? roomCategory;
 };
 
 export default function CollectionsPage() {
@@ -116,7 +124,7 @@ export default function CollectionsPage() {
   });
 
   // Fonction pour charger les collections archivées
-  const loadArchivedCollectionsData = async () => {
+  const loadArchivedCollectionsData = useCallback(async () => {
     setArchivedLoading(true);
     try {
       const result = await loadArchivedCollections();
@@ -126,7 +134,7 @@ export default function CollectionsPage() {
     } finally {
       setArchivedLoading(false);
     }
-  };
+  }, [loadArchivedCollections]);
 
   // Charger les collections archivées quand on change d'onglet
   useEffect(() => {
@@ -138,7 +146,7 @@ export default function CollectionsPage() {
         );
       });
     }
-  }, [activeTab]);
+  }, [activeTab, loadArchivedCollectionsData]);
 
   // Pas besoin de filtrage manuel, le hook s'en charge
   const filteredCollections = collections;
@@ -412,24 +420,28 @@ export default function CollectionsPage() {
           <div className="mb-2 h-14">
             {collection.products && collection.products.length > 0 ? (
               <div className="flex space-x-1.5 overflow-x-auto h-full scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
-                {collection.products.slice(0, 5).map((product: any) => (
-                  <div
-                    key={product.id}
-                    className="relative flex-shrink-0 w-14 h-14 rounded bg-gray-100 overflow-hidden"
-                  >
-                    {product.image_url ? (
-                      <img
-                        src={product.image_url}
-                        alt={product.name}
-                        className="w-full h-full object-contain"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <Package className="h-6 w-6 text-gray-400" />
-                      </div>
-                    )}
-                  </div>
-                ))}
+                {(collection.products as CollectionProduct[])
+                  .slice(0, 5)
+                  .map(product => (
+                    <div
+                      key={product.id}
+                      className="relative flex-shrink-0 w-14 h-14 rounded bg-gray-100 overflow-hidden"
+                    >
+                      {product.image_url ? (
+                        <Image
+                          src={product.image_url}
+                          alt={product.name}
+                          width={56}
+                          height={56}
+                          className="w-full h-full object-contain"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Package className="h-6 w-6 text-gray-400" />
+                        </div>
+                      )}
+                    </div>
+                  ))}
                 {collection.product_count > 5 && (
                   <div className="flex-shrink-0 w-14 h-14 rounded bg-gray-100 flex items-center justify-center text-[10px] text-gray-500 font-medium">
                     +{collection.product_count - 5}
@@ -651,7 +663,10 @@ export default function CollectionsPage() {
           <select
             value={filters.status}
             onChange={e =>
-              setFilters(prev => ({ ...prev, status: e.target.value as any }))
+              setFilters(prev => ({
+                ...prev,
+                status: e.target.value as 'all' | 'active' | 'inactive',
+              }))
             }
             className="border border-gray-300 rounded-md px-3 py-2"
           >
@@ -665,7 +680,7 @@ export default function CollectionsPage() {
             onChange={e =>
               setFilters(prev => ({
                 ...prev,
-                visibility: e.target.value as any,
+                visibility: e.target.value as 'all' | 'public' | 'private',
               }))
             }
             className="border border-gray-300 rounded-md px-3 py-2"

@@ -19,6 +19,8 @@
 
 import React, { useState, useEffect } from 'react';
 
+import type { Database } from '@verone/types';
+
 import { useSalesShipments, SalesOrderShipmentModal } from '@verone/orders';
 import { ProductThumbnail } from '@verone/products';
 import { Badge } from '@verone/ui';
@@ -62,6 +64,49 @@ import {
   ChevronRight,
 } from 'lucide-react';
 
+// Types locaux pour structures avec relations
+type ProductRow = Database['public']['Tables']['products']['Row'];
+type ProductImage = Database['public']['Tables']['product_images']['Row'];
+type SalesOrderItemRow =
+  Database['public']['Tables']['sales_order_items']['Row'];
+type SalesOrderRow = Database['public']['Tables']['sales_orders']['Row'];
+
+interface ProductWithImages extends Partial<ProductRow> {
+  product_images?: ProductImage[];
+}
+
+interface SalesOrderItem extends SalesOrderItemRow {
+  products?: ProductWithImages;
+}
+
+interface SalesOrder extends SalesOrderRow {
+  sales_order_items?: SalesOrderItem[];
+  customer_name?: string;
+}
+
+interface ShipmentStats {
+  total_pending: number;
+  total_partial: number;
+  total_completed_today: number;
+  total_overdue: number;
+  total_urgent: number;
+}
+
+interface ShipmentHistoryItem {
+  shipped_at?: string;
+  tracking_number?: string;
+  tracking_url?: string;
+  carrier_name?: string;
+  service_name?: string;
+  cost_paid_eur?: number;
+  cost_charged_eur?: number;
+  items?: Array<{
+    product_name: string;
+    product_sku: string;
+    quantity_shipped: number;
+  }>;
+}
+
 export default function ExpeditionsPage() {
   const {
     loading,
@@ -72,14 +117,16 @@ export default function ExpeditionsPage() {
     loadShippedOrdersHistory,
   } = useSalesShipments();
 
-  const [stats, setStats] = useState<any>(null);
-  const [orders, setOrders] = useState<any[]>([]);
-  const [historyOrders, setHistoryOrders] = useState<any[]>([]);
-  const [selectedOrder, setSelectedOrder] = useState<any>(null);
-  const [shipmentHistory, setShipmentHistory] = useState<any[]>([]);
+  const [stats, setStats] = useState<ShipmentStats | null>(null);
+  const [orders, setOrders] = useState<SalesOrder[]>([]);
+  const [historyOrders, setHistoryOrders] = useState<SalesOrder[]>([]);
+  const [selectedOrder, setSelectedOrder] = useState<SalesOrder | null>(null);
+  const [shipmentHistory, setShipmentHistory] = useState<ShipmentHistoryItem[]>(
+    []
+  );
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [showShipmentModal, setShowShipmentModal] = useState(false);
-  const [orderToShip, setOrderToShip] = useState<any>(null);
+  const [orderToShip, setOrderToShip] = useState<SalesOrder | null>(null);
 
   // État pour les lignes expandées (affichage détails produits)
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
@@ -132,7 +179,12 @@ export default function ExpeditionsPage() {
   // Charger liste commandes à expédier
   useEffect(() => {
     if (activeTab === 'to-ship') {
-      const filters: any = {};
+      const filters: {
+        status?: string;
+        search?: string;
+        urgent_only?: boolean;
+        overdue_only?: boolean;
+      } = {};
 
       if (statusFilter !== 'all') {
         filters.status = statusFilter;
@@ -166,7 +218,10 @@ export default function ExpeditionsPage() {
   // ✅ FIX 2025-11-28: Utiliser loadShippedOrdersHistory avec filtrage .in() pour éviter erreur enum
   useEffect(() => {
     if (activeTab === 'history') {
-      const filters: any = {};
+      const filters: {
+        status?: string;
+        search?: string;
+      } = {};
 
       // ✅ Status filter: 'all' = ['shipped', 'delivered'], sinon single status
       if (historyStatusFilter !== 'all') {
@@ -192,7 +247,7 @@ export default function ExpeditionsPage() {
   ]);
 
   // Handler pour ouvrir le modal d'expédition
-  const handleOpenShipmentModal = (order: any) => {
+  const handleOpenShipmentModal = (order: SalesOrder) => {
     setOrderToShip(order);
     setShowShipmentModal(true);
   };
@@ -217,10 +272,10 @@ export default function ExpeditionsPage() {
       });
   };
 
-  const handleViewHistory = async (order: any) => {
+  const handleViewHistory = async (order: SalesOrder) => {
     setSelectedOrder(order);
     const history = await loadShipmentHistory(order.id);
-    setShipmentHistory(history || []);
+    setShipmentHistory(history ?? []);
     setShowHistoryModal(true);
   };
 
@@ -421,19 +476,20 @@ export default function ExpeditionsPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {orders.map(order => {
+                      {orders.map((order: SalesOrder) => {
                         // Calculer progression
                         const totalItems =
                           order.sales_order_items?.reduce(
-                            (sum: number, item: any) => sum + item.quantity,
+                            (sum: number, item: SalesOrderItem) =>
+                              sum + item.quantity,
                             0
-                          ) || 0;
+                          ) ?? 0;
                         const shippedItems =
                           order.sales_order_items?.reduce(
-                            (sum: number, item: any) =>
-                              sum + (item.quantity_shipped || 0),
+                            (sum: number, item: SalesOrderItem) =>
+                              sum + (item.quantity_shipped ?? 0),
                             0
-                          ) || 0;
+                          ) ?? 0;
                         const progressPercent =
                           totalItems > 0
                             ? Math.round((shippedItems / totalItems) * 100)
@@ -489,7 +545,7 @@ export default function ExpeditionsPage() {
                                 )}
                               </TableCell>
                               <TableCell>
-                                {order.customer_name || 'Client inconnu'}
+                                {order.customer_name ?? 'Client inconnu'}
                               </TableCell>
                               <TableCell>
                                 <Badge
@@ -546,11 +602,11 @@ export default function ExpeditionsPage() {
                                   <div className="p-4">
                                     <h4 className="font-medium text-sm mb-3 text-gray-700">
                                       Produits de la commande (
-                                      {order.sales_order_items?.length || 0})
+                                      {order.sales_order_items?.length ?? 0})
                                     </h4>
                                     <div className="space-y-2">
                                       {order.sales_order_items?.map(
-                                        (item: any) => (
+                                        (item: SalesOrderItem) => (
                                           <div
                                             key={item.id}
                                             className="flex items-center gap-4 p-2 bg-white rounded-lg border"
@@ -558,30 +614,31 @@ export default function ExpeditionsPage() {
                                             <ProductThumbnail
                                               src={
                                                 item.products?.product_images?.find(
-                                                  (img: any) => img.is_primary
-                                                )?.public_url ||
+                                                  (img: ProductImage) =>
+                                                    img.is_primary
+                                                )?.public_url ??
                                                 item.products
                                                   ?.product_images?.[0]
                                                   ?.public_url
                                               }
                                               alt={
-                                                item.products?.name || 'Produit'
+                                                item.products?.name ?? 'Produit'
                                               }
                                               size="sm"
                                             />
                                             <div className="flex-1 min-w-0">
                                               <p className="font-medium text-sm truncate">
-                                                {item.products?.name ||
+                                                {item.products?.name ??
                                                   'Produit inconnu'}
                                               </p>
                                               <p className="text-xs text-gray-500 font-mono">
                                                 SKU:{' '}
-                                                {item.products?.sku || 'N/A'}
+                                                {item.products?.sku ?? 'N/A'}
                                               </p>
                                             </div>
                                             <div className="text-right">
                                               <p className="text-sm font-medium">
-                                                {item.quantity_shipped || 0} /{' '}
+                                                {item.quantity_shipped ?? 0} /{' '}
                                                 {item.quantity} expédié(s)
                                               </p>
                                               <p className="text-xs text-gray-500">
@@ -703,13 +760,14 @@ export default function ExpeditionsPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {historyOrders.map(order => {
+                      {historyOrders.map((order: SalesOrder) => {
                         // Calculer quantité totale
                         const totalItems =
                           order.sales_order_items?.reduce(
-                            (sum: number, item: any) => sum + item.quantity,
+                            (sum: number, item: SalesOrderItem) =>
+                              sum + item.quantity,
                             0
-                          ) || 0;
+                          ) ?? 0;
 
                         const isExpanded = expandedHistoryRows.has(order.id);
 
@@ -732,7 +790,7 @@ export default function ExpeditionsPage() {
                                 {order.order_number}
                               </TableCell>
                               <TableCell>
-                                {order.customer_name || 'Client inconnu'}
+                                {order.customer_name ?? 'Client inconnu'}
                               </TableCell>
                               <TableCell>
                                 <Badge
@@ -789,11 +847,11 @@ export default function ExpeditionsPage() {
                                   <div className="p-4">
                                     <h4 className="font-medium text-sm mb-3 text-gray-700">
                                       Produits de la commande (
-                                      {order.sales_order_items?.length || 0})
+                                      {order.sales_order_items?.length ?? 0})
                                     </h4>
                                     <div className="space-y-2">
                                       {order.sales_order_items?.map(
-                                        (item: any) => (
+                                        (item: SalesOrderItem) => (
                                           <div
                                             key={item.id}
                                             className="flex items-center gap-4 p-2 bg-white rounded-lg border"
@@ -801,30 +859,31 @@ export default function ExpeditionsPage() {
                                             <ProductThumbnail
                                               src={
                                                 item.products?.product_images?.find(
-                                                  (img: any) => img.is_primary
-                                                )?.public_url ||
+                                                  (img: ProductImage) =>
+                                                    img.is_primary
+                                                )?.public_url ??
                                                 item.products
                                                   ?.product_images?.[0]
                                                   ?.public_url
                                               }
                                               alt={
-                                                item.products?.name || 'Produit'
+                                                item.products?.name ?? 'Produit'
                                               }
                                               size="sm"
                                             />
                                             <div className="flex-1 min-w-0">
                                               <p className="font-medium text-sm truncate">
-                                                {item.products?.name ||
+                                                {item.products?.name ??
                                                   'Produit inconnu'}
                                               </p>
                                               <p className="text-xs text-gray-500 font-mono">
                                                 SKU:{' '}
-                                                {item.products?.sku || 'N/A'}
+                                                {item.products?.sku ?? 'N/A'}
                                               </p>
                                             </div>
                                             <div className="text-right">
                                               <p className="text-sm font-medium">
-                                                {item.quantity_shipped || 0} /{' '}
+                                                {item.quantity_shipped ?? 0} /{' '}
                                                 {item.quantity} expédié(s)
                                               </p>
                                               <p className="text-xs text-gray-500">
@@ -902,7 +961,7 @@ export default function ExpeditionsPage() {
                 </ButtonV2>
               </div>
               <CardDescription>
-                Client: {selectedOrder.customer_name || 'Non renseigné'}
+                Client: {selectedOrder.customer_name ?? 'Non renseigné'}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -912,102 +971,105 @@ export default function ExpeditionsPage() {
                 </div>
               ) : (
                 <div className="space-y-6">
-                  {shipmentHistory.map((shipment: any, index: number) => (
-                    <Card
-                      key={index}
-                      className="border-l-4 border-verone-success"
-                    >
-                      <CardHeader>
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <CardTitle className="text-lg">
-                              Expédition #{index + 1}
-                            </CardTitle>
-                            <CardDescription>
-                              {shipment.shipped_at
-                                ? `Expédiée le ${formatDate(shipment.shipped_at)}`
-                                : 'Date non disponible'}
-                            </CardDescription>
+                  {shipmentHistory.map(
+                    (shipment: ShipmentHistoryItem, index: number) => (
+                      <Card
+                        key={index}
+                        className="border-l-4 border-verone-success"
+                      >
+                        <CardHeader>
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <CardTitle className="text-lg">
+                                Expédition #{index + 1}
+                              </CardTitle>
+                              <CardDescription>
+                                {shipment.shipped_at
+                                  ? `Expédiée le ${formatDate(shipment.shipped_at)}`
+                                  : 'Date non disponible'}
+                              </CardDescription>
+                            </div>
+                            {shipment.tracking_number && (
+                              <Badge variant="outline">
+                                Suivi: {shipment.tracking_number}
+                              </Badge>
+                            )}
                           </div>
-                          {shipment.tracking_number && (
-                            <Badge variant="outline">
-                              Suivi: {shipment.tracking_number}
-                            </Badge>
+                        </CardHeader>
+                        <CardContent>
+                          {/* Infos transporteur */}
+                          {shipment.carrier_name && (
+                            <div className="mb-4 p-3 bg-gray-50 rounded">
+                              <p className="text-sm font-medium text-gray-700">
+                                Transporteur: {shipment.carrier_name}
+                              </p>
+                              {shipment.service_name && (
+                                <p className="text-sm text-gray-600">
+                                  Service: {shipment.service_name}
+                                </p>
+                              )}
+                              {shipment.tracking_url && (
+                                <a
+                                  href={shipment.tracking_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-sm text-verone-primary hover:underline"
+                                >
+                                  Suivre le colis →
+                                </a>
+                              )}
+                            </div>
                           )}
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        {/* Infos transporteur */}
-                        {shipment.carrier_name && (
-                          <div className="mb-4 p-3 bg-gray-50 rounded">
-                            <p className="text-sm font-medium text-gray-700">
-                              Transporteur: {shipment.carrier_name}
-                            </p>
-                            {shipment.service_name && (
-                              <p className="text-sm text-gray-600">
-                                Service: {shipment.service_name}
-                              </p>
-                            )}
-                            {shipment.tracking_url && (
-                              <a
-                                href={shipment.tracking_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-sm text-verone-primary hover:underline"
-                              >
-                                Suivre le colis →
-                              </a>
-                            )}
-                          </div>
-                        )}
 
-                        {/* Liste articles expédiés */}
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>Produit</TableHead>
-                              <TableHead>SKU</TableHead>
-                              <TableHead className="text-right">
-                                Quantité
-                              </TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {shipment.items?.map((item: any, idx: number) => (
-                              <TableRow key={idx}>
-                                <TableCell>{item.product_name}</TableCell>
-                                <TableCell className="font-mono text-sm">
-                                  {item.product_sku}
-                                </TableCell>
-                                <TableCell className="text-right font-medium">
-                                  {item.quantity_shipped}
-                                </TableCell>
+                          {/* Liste articles expédiés */}
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Produit</TableHead>
+                                <TableHead>SKU</TableHead>
+                                <TableHead className="text-right">
+                                  Quantité
+                                </TableHead>
                               </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
+                            </TableHeader>
+                            <TableBody>
+                              {shipment.items?.map((item, idx: number) => (
+                                <TableRow key={idx}>
+                                  <TableCell>{item.product_name}</TableCell>
+                                  <TableCell className="font-mono text-sm">
+                                    {item.product_sku}
+                                  </TableCell>
+                                  <TableCell className="text-right font-medium">
+                                    {item.quantity_shipped}
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
 
-                        {/* Coûts */}
-                        {(shipment.cost_paid_eur ||
-                          shipment.cost_charged_eur) && (
-                          <div className="mt-4 pt-4 border-t space-y-1">
-                            {shipment.cost_paid_eur && (
-                              <p className="text-sm text-gray-600">
-                                Coût réel:{' '}
-                                {formatCurrency(shipment.cost_paid_eur)}
-                              </p>
-                            )}
-                            {shipment.cost_charged_eur && (
-                              <p className="text-sm text-gray-600">
-                                Coût facturé:{' '}
-                                {formatCurrency(shipment.cost_charged_eur)}
-                              </p>
-                            )}
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  ))}
+                          {/* Coûts */}
+                          {/* eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing */}
+                          {(shipment.cost_paid_eur ||
+                            shipment.cost_charged_eur) && (
+                            <div className="mt-4 pt-4 border-t space-y-1">
+                              {shipment.cost_paid_eur && (
+                                <p className="text-sm text-gray-600">
+                                  Coût réel:{' '}
+                                  {formatCurrency(shipment.cost_paid_eur)}
+                                </p>
+                              )}
+                              {shipment.cost_charged_eur && (
+                                <p className="text-sm text-gray-600">
+                                  Coût facturé:{' '}
+                                  {formatCurrency(shipment.cost_charged_eur)}
+                                </p>
+                              )}
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    )
+                  )}
                 </div>
               )}
             </CardContent>

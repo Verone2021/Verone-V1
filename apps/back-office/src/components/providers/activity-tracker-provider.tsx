@@ -51,7 +51,7 @@ export function ActivityTrackerProvider({
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [supabase.auth]);
 
   // Initialiser tracker uniquement si user authentifié
   const {

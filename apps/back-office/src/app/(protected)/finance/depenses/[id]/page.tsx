@@ -6,12 +6,12 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, type ComponentType } from 'react';
 import { use } from 'react';
 
 import Link from 'next/link';
 
-import { useFinancialPayments } from '@verone/finance';
+import { useFinancialPayments, type FinancialPayment } from '@verone/finance';
 import { FinancialPaymentForm } from '@verone/finance';
 import type { FinancialDocument, DocumentStatus } from '@verone/finance';
 import { Badge, ButtonUnified, IconButton } from '@verone/ui';
@@ -88,7 +88,7 @@ export default function ExpenseDetailPage(props: PageProps) {
   } = useFinancialPayments(isCreateMode ? '' : params.id);
 
   // Fetch document and items
-  const fetchDocument = async () => {
+  const fetchDocument = useCallback(async () => {
     // Si mode création, on ne charge rien
     if (isCreateMode) {
       setLoading(false);
@@ -116,7 +116,7 @@ export default function ExpenseDetailPage(props: PageProps) {
 
       // Fetch items (lignes TVA)
       // Note: utilise financial_document_lines (table existante)
-      const { data: items, error: itemsError } = await (supabase as any)
+      const { data: items, error: itemsError } = await supabase
         .from('financial_document_lines')
         .select('*')
         .eq('document_id', params.id)
@@ -130,19 +130,35 @@ export default function ExpenseDetailPage(props: PageProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [isCreateMode, supabase, params.id]);
 
   useEffect(() => {
     void fetchDocument().catch(error => {
       console.error('[Depenses] fetchDocument failed:', error);
     });
-  }, [params.id]);
+  }, [fetchDocument]);
 
   // Badge status helper
   const getStatusBadge = (status: DocumentStatus) => {
+    type BadgeVariant =
+      | 'default'
+      | 'supplier'
+      | 'customer'
+      | 'partner'
+      | 'warning'
+      | 'secondary'
+      | 'success'
+      | 'destructive'
+      | 'outline'
+      | 'danger'
+      | 'info';
     const variants: Record<
       DocumentStatus,
-      { variant: any; icon: any; label: string }
+      {
+        variant: BadgeVariant;
+        icon: ComponentType<{ className?: string }>;
+        label: string;
+      }
     > = {
       draft: { variant: 'secondary', icon: FileText, label: 'Brouillon' },
       sent: { variant: 'secondary', icon: FileText, label: 'Envoyée' },
@@ -296,7 +312,7 @@ export default function ExpenseDetailPage(props: PageProps) {
               <div>
                 <p className="font-medium">
                   {/* Catégorie extraite de la description [PCG xxx] */}
-                  {document.description?.match(/\[([^\]]+)\]/)?.[1] || 'N/A'}
+                  {document.description?.match(/\[([^\]]+)\]/)?.[1] ?? 'N/A'}
                 </p>
               </div>
             </div>
@@ -528,7 +544,7 @@ export default function ExpenseDetailPage(props: PageProps) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {payments.map(payment => (
+                {(payments as FinancialPayment[]).map(payment => (
                   <TableRow key={payment.id}>
                     <TableCell>
                       {format(new Date(payment.payment_date), 'dd MMM yyyy', {
@@ -539,13 +555,13 @@ export default function ExpenseDetailPage(props: PageProps) {
                       {payment.amount_paid.toFixed(2)} €
                     </TableCell>
                     <TableCell className="capitalize">
-                      {payment.payment_method || '-'}
+                      {payment.payment_method ?? '-'}
                     </TableCell>
                     <TableCell className="text-sm text-gray-500">
-                      {payment.transaction_reference || '-'}
+                      {payment.transaction_reference ?? '-'}
                     </TableCell>
                     <TableCell className="text-sm text-gray-500">
-                      {payment.notes || '-'}
+                      {payment.notes ?? '-'}
                     </TableCell>
                   </TableRow>
                 ))}

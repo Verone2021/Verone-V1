@@ -93,6 +93,13 @@ function useEnseignes() {
     queryKey: ['admin-enseignes'],
     queryFn: async () => {
       const supabase = createClient();
+
+      type EnseigneWithCount = {
+        id: string;
+        name: string;
+        linkme_affiliates: Array<{ count: number }>;
+      };
+
       const { data, error } = await supabase
         .from('enseignes')
         .select(
@@ -102,21 +109,16 @@ function useEnseignes() {
           linkme_affiliates!inner(count)
         `
         )
-        .order('name');
+        .order('name')
+        .returns<EnseigneWithCount[]>();
 
       if (error) throw error;
 
-      return (data || []).map(
-        (e: {
-          id: string;
-          name: string;
-          linkme_affiliates: { count: number }[];
-        }) => ({
-          id: e.id,
-          name: e.name,
-          affiliate_count: e.linkme_affiliates?.[0]?.count || 0,
-        })
-      ) as Enseigne[];
+      return (data ?? []).map(e => ({
+        id: e.id,
+        name: e.name,
+        affiliate_count: e.linkme_affiliates?.[0]?.count ?? 0,
+      })) as Enseigne[];
     },
   });
 }
@@ -130,6 +132,16 @@ function useAffiliates(enseigneId?: string) {
     queryKey: ['admin-affiliates', enseigneId],
     queryFn: async () => {
       const supabase = createClient();
+
+      type LinkMeUser = {
+        user_id: string;
+        email: string;
+        first_name: string | null;
+        last_name: string | null;
+        enseigne_id: string | null;
+        enseigne_name: string | null;
+      };
+
       let query = supabase
         .from('v_linkme_users')
         .select(
@@ -142,10 +154,12 @@ function useAffiliates(enseigneId?: string) {
         query = query.eq('enseigne_id', enseigneId);
       }
 
-      const { data, error } = await query.order('first_name');
+      const { data, error } = await query
+        .order('first_name')
+        .returns<LinkMeUser[]>();
       if (error) throw error;
 
-      return (data || []).map(u => ({
+      return (data ?? []).map(u => ({
         id: u.user_id,
         user_id: u.user_id,
         display_name:
@@ -185,21 +199,25 @@ function useSendNotification() {
       // Récupérer les user_ids cibles via v_linkme_users
       let userIds: string[] = [];
 
+      type UserIdResult = { user_id: string };
+
       if (targetType === 'all') {
         const { data } = await supabase
           .from('v_linkme_users')
           .select('user_id')
           .eq('is_active', true)
-          .not('user_id', 'is', null);
-        userIds = (data || []).map(a => a.user_id).filter(Boolean) as string[];
+          .not('user_id', 'is', null)
+          .returns<UserIdResult[]>();
+        userIds = (data ?? []).map(a => a.user_id).filter(Boolean);
       } else if (targetType === 'enseigne' && targetId) {
         const { data } = await supabase
           .from('v_linkme_users')
           .select('user_id')
           .eq('enseigne_id', targetId)
           .eq('is_active', true)
-          .not('user_id', 'is', null);
-        userIds = (data || []).map(a => a.user_id).filter(Boolean) as string[];
+          .not('user_id', 'is', null)
+          .returns<UserIdResult[]>();
+        userIds = (data ?? []).map(a => a.user_id).filter(Boolean);
       } else if (targetType === 'affiliate' && targetId) {
         // targetId est déjà le user_id
         userIds = [targetId];
@@ -238,8 +256,9 @@ function useSendNotification() {
         queryKey: ['notification-history'],
       });
     },
-    onError: error => {
-      console.error('Erreur envoi notification:', error);
+    onError: (error: unknown) => {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      console.error('[Messages] Erreur envoi notification:', message);
       toast.error("Erreur lors de l'envoi de la notification");
     },
   });
@@ -353,10 +372,10 @@ export default function MessagesPage() {
   // Calculate recipient count
   const getRecipientCount = (): number => {
     if (targetType === 'all') {
-      return affiliates?.length || 0;
+      return affiliates?.length ?? 0;
     }
     if (targetType === 'enseigne' && selectedEnseigne) {
-      return affiliates?.filter(a => a.enseigne_name).length || 0;
+      return affiliates?.filter(a => a.enseigne_name).length ?? 0;
     }
     if (targetType === 'affiliate' && selectedAffiliate) {
       return 1;
@@ -473,7 +492,7 @@ export default function MessagesPage() {
                         Tous les affiliés
                       </span>
                       <Badge variant="secondary">
-                        {affiliates?.length || 0}
+                        {affiliates?.length ?? 0}
                       </Badge>
                     </button>
 
@@ -490,7 +509,7 @@ export default function MessagesPage() {
                       <Building2 className="h-6 w-6" />
                       <span className="text-sm font-medium">Par enseigne</span>
                       <Badge variant="secondary">
-                        {enseignes?.length || 0}
+                        {enseignes?.length ?? 0}
                       </Badge>
                     </button>
 

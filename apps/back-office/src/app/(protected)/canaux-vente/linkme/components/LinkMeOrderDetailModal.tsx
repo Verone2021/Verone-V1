@@ -125,16 +125,16 @@ export function LinkMeOrderDetailModal({
 }: LinkMeOrderDetailModalProps) {
   if (!order) return null;
 
-  const statusInfo = STATUS_LABELS[order.status] || {
+  const statusInfo = STATUS_LABELS[order.status] ?? {
     label: order.status,
     variant: 'secondary' as const,
   };
 
   const paymentInfo = order.payment_status
-    ? PAYMENT_STATUS_LABELS[order.payment_status] || {
+    ? (PAYMENT_STATUS_LABELS[order.payment_status] ?? {
         label: order.payment_status,
         variant: 'secondary' as const,
-      }
+      })
     : null;
 
   // Calculer TVA (défaut 20% si non spécifié)
@@ -225,7 +225,7 @@ export function LinkMeOrderDetailModal({
                     {item.quantity}
                   </TableCell>
                   <TableCell className="text-right text-slate-700">
-                    {formatPrice(item.selling_price_ht || item.unit_price_ht)}
+                    {formatPrice(item.selling_price_ht ?? item.unit_price_ht)}
                   </TableCell>
                   <TableCell className="text-right font-medium text-slate-900">
                     {formatPrice(item.total_ht)}
@@ -314,7 +314,7 @@ export function LinkMeOrderDetailModal({
                 {order.customer_address}
               </p>
             )}
-            {(order.customer_postal_code || order.customer_city) && (
+            {(order.customer_postal_code ?? order.customer_city) && (
               <p className="text-sm text-slate-600">
                 {[order.customer_postal_code, order.customer_city]
                   .filter(Boolean)

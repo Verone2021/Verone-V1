@@ -282,8 +282,8 @@ export default function LinkMePricingConfigPage() {
       }
 
       // Calcul marge: (vente - achat) / achat
-      const costPrice = p.product_price_ht || 0;
-      const sellingPrice = p.product_selling_price_ht || p.public_price_ht || 0;
+      const costPrice = p.product_price_ht ?? 0;
+      const sellingPrice = p.product_selling_price_ht ?? p.public_price_ht ?? 0;
       if (costPrice > 0 && sellingPrice > 0) {
         totalMargin += (sellingPrice - costPrice) / costPrice;
         marginCount++;
@@ -374,7 +374,7 @@ export default function LinkMePricingConfigPage() {
     // Grouper les changements par produit
     const changesByProduct = new Map<string, Record<string, number | null>>();
     pendingChanges.forEach(change => {
-      const existing = changesByProduct.get(change.catalogProductId) || {};
+      const existing = changesByProduct.get(change.catalogProductId) ?? {};
       existing[change.field] = change.newValue;
       changesByProduct.set(change.catalogProductId, existing);
     });
@@ -456,7 +456,7 @@ export default function LinkMePricingConfigPage() {
 
   // Calculer la marge pour un produit
   const calculateMargin = (product: LinkMeCatalogProduct): number | null => {
-    const costPrice = product.product_price_ht || 0;
+    const costPrice = product.product_price_ht ?? 0;
     const sellingPrice =
       getEffectiveValue(product, 'custom_price_ht') ??
       getEffectiveValue(product, 'public_price_ht') ??

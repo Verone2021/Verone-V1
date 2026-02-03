@@ -120,10 +120,7 @@ export default function ReglesPage() {
   const searchFilteredRules = rules.filter(
     rule =>
       rule.match_value.toLowerCase().includes(rulesSearch.toLowerCase()) ||
-      (rule.organisation_name &&
-        rule.organisation_name
-          .toLowerCase()
-          .includes(rulesSearch.toLowerCase()))
+      rule.organisation_name?.toLowerCase().includes(rulesSearch.toLowerCase())
   );
 
   // Séparation règles complètes / incomplètes
@@ -558,7 +555,7 @@ export default function ReglesPage() {
                             <div className="mt-1 flex items-center gap-2">
                               <Building2 size={14} className="text-slate-400" />
                               <span className="truncate text-sm text-slate-600">
-                                {rule.organisation_name || 'Non assigné'}
+                                {rule.organisation_name ?? 'Non assigné'}
                               </span>
                             </div>
                             <div className="mt-1 flex flex-wrap items-center gap-2">
@@ -568,7 +565,8 @@ export default function ReglesPage() {
                               >
                                 {missingCategory
                                   ? '⚠️ Catégorie manquante'
-                                  : pcgCategory?.label || rule.default_category}
+                                  : (pcgCategory?.label ??
+                                    rule.default_category)}
                               </Badge>
                               <Badge
                                 variant="default"

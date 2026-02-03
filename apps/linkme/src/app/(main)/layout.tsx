@@ -41,7 +41,7 @@ export default async function MainLayout({
   } = await supabase.auth.getUser();
 
   // Debug logs pour production (Vercel Function Logs)
-  console.log('[MainLayout] Auth check:', {
+  console.error('[MainLayout] Auth check:', {
     hasUser: !!user,
     userId: user?.id,
     email: user?.email,
@@ -64,9 +64,9 @@ export default async function MainLayout({
     .maybeSingle();
 
   // Debug logs pour RLS check
-  console.log('[MainLayout] LinkMe role check:', {
+  console.error('[MainLayout] LinkMe role check:', {
     hasRole: !!linkmeRole,
-    roleId: linkmeRole?.id,
+    roleId: linkmeRole?.id as string | undefined,
     userId: user.id,
     error: roleError?.message,
     errorDetails: roleError?.details,
@@ -79,7 +79,7 @@ export default async function MainLayout({
     redirect('/login?error=no_linkme_access');
   }
 
-  console.log('[MainLayout] Auth successful, rendering dashboard');
+  console.error('[MainLayout] Auth successful, rendering dashboard');
 
   // Utilisateur authentifié avec rôle LinkMe = render la page
   return (
