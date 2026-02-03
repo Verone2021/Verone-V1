@@ -60,9 +60,9 @@ export function SuppliersTab() {
       const mappedData = (data ?? []).map(org => ({
         ...org,
         name: org.trade_name ?? org.legal_name,
-      }));
+      })) as Organisation[];
 
-      setArchivedSuppliers(mappedData as unknown as Organisation[]);
+      setArchivedSuppliers(mappedData);
     } catch (err) {
       console.error('Erreur chargement fournisseurs archivés:', err);
     } finally {

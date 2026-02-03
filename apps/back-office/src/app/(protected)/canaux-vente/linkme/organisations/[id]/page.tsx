@@ -121,8 +121,8 @@ function useOrganisation(organisationId: string | null) {
         console.error('Erreur chargement organisation:', error);
         setError('Organisation non trouvée');
       } else {
-        // Cast nécessaire car show_on_linkme_globe n'est pas encore dans les types générés
-        setOrganisation(data as unknown as OrganisationDetail);
+        // show_on_linkme_globe est dans Database types, pas de cast nécessaire
+        setOrganisation(data);
       }
       setLoading(false);
     };

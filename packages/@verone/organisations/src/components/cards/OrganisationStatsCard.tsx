@@ -61,14 +61,22 @@ export function OrganisationStatsCard({
               <Calendar className="h-4 w-4" />
               Créé le:
             </span>
-            <span>{formatDate(organisation.created_at)}</span>
+            <span>
+              {organisation.created_at
+                ? formatDate(organisation.created_at)
+                : 'N/A'}
+            </span>
           </div>
           <div className="flex justify-between items-center">
             <span className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
               Modifié le:
             </span>
-            <span>{formatDate(organisation.updated_at)}</span>
+            <span>
+              {organisation.updated_at
+                ? formatDate(organisation.updated_at)
+                : 'N/A'}
+            </span>
           </div>
 
           {/* Segment (fournisseurs) */}
