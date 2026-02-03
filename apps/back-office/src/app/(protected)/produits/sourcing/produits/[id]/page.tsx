@@ -1,5 +1,6 @@
 'use client';
 
+import type { ComponentProps } from 'react';
 import { useState } from 'react';
 
 import { useRouter } from 'next/navigation';
@@ -180,8 +181,9 @@ export default function SourcingProductDetailPage() {
       <div className="w-full px-4 py-8 space-y-6">
         {/* Product Info Card - Éditable inline */}
         <SourcingProductEditCard
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any -- SourcingProduct types differ between hook and component (technical debt to fix)
-          product={product as any}
+          product={
+            product as ComponentProps<typeof SourcingProductEditCard>['product']
+          }
           primaryImage={primaryImage}
           images={images}
           imagesLoading={imagesLoading}

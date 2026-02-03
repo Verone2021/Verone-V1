@@ -164,9 +164,7 @@ export function SelectionsSection() {
 
     try {
       // Fetch selections with affiliate info
-      const { data: selectionsData, error: selectionsError } = await (
-        supabase as any
-      )
+      const { data: selectionsData, error: selectionsError } = await supabase
         .from('linkme_selections')
         .select(
           `
@@ -179,9 +177,7 @@ export function SelectionsSection() {
       if (selectionsError) throw selectionsError;
 
       // Fetch affiliates for filter (actifs uniquement)
-      const { data: affiliatesData, error: affiliatesError } = await (
-        supabase as any
-      )
+      const { data: affiliatesData, error: affiliatesError } = await supabase
         .from('linkme_affiliates')
         .select('id, display_name, slug')
         .eq('status', 'active');
@@ -293,9 +289,7 @@ export function SelectionsSection() {
       const shareToken = crypto.randomUUID().slice(0, 8);
 
       // 1. Créer la sélection (toujours publiée immédiatement)
-      const { data: selectionData, error: selectionError } = await (
-        supabase as any
-      )
+      const { data: selectionData, error: selectionError } = await supabase
         .from('linkme_selections')
         .insert({
           affiliate_id: formData.affiliate_id,
@@ -325,7 +319,7 @@ export function SelectionsSection() {
         is_featured: index === 0, // Premier produit en vedette
       }));
 
-      const { error: itemsError } = await (supabase as any)
+      const { error: itemsError } = await supabase
         .from('linkme_selection_items')
         .insert(selectionItems);
 
@@ -474,7 +468,7 @@ export function SelectionsSection() {
     const newArchivedAt = isCurrentlyArchived ? null : new Date().toISOString();
 
     try {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from('linkme_selections')
         .update({
           archived_at: newArchivedAt,

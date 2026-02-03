@@ -67,18 +67,15 @@ export async function POST(
       }, 0) ?? 0;
 
     // Close order - Trigger CAS 5 will release forecasted_out automatically
-    // NOTE: 'closed' status may need migration - current enum: draft,validated,partially_shipped,shipped,delivered,cancelled
-    /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment -- 'closed' status needs DB migration to be added to sales_order_status enum */
     const { error: updateError } = await supabase
       .from('sales_orders')
       .update({
-        status: 'closed' as any,
+        status: 'closed',
         closed_at: new Date().toISOString(),
         closed_by: user.id,
         updated_at: new Date().toISOString(),
       })
       .eq('id', orderId);
-    /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment */
 
     if (updateError) {
       console.error('[Close Order] Update failed:', updateError);

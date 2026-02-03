@@ -282,14 +282,14 @@ export default function LinkMeOrderDetailPage() {
 
       if (orderError) throw orderError;
 
-      // Extraire organisation de la jointure (peut être array ou objet)
-      const orgRaw = orderData.organisations as any;
+      // Extraire organisation de la jointure (peut être array ou objet selon Supabase)
+      const orgRaw: unknown = orderData.organisations;
       const organisation = Array.isArray(orgRaw)
         ? (orgRaw[0] ?? null)
         : (orgRaw ?? null);
 
-      // Extraire linkme details de la jointure (peut être array ou objet)
-      const linkmeDetailsRaw = orderData.sales_order_linkme_details as any;
+      // Extraire linkme details de la jointure (peut être array ou objet selon Supabase)
+      const linkmeDetailsRaw: unknown = orderData.sales_order_linkme_details;
       const linkmeData = Array.isArray(linkmeDetailsRaw)
         ? (linkmeDetailsRaw[0] ?? null)
         : (linkmeDetailsRaw ?? null);
