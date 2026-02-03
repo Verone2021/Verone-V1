@@ -14,34 +14,36 @@ import {
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import { Card, CardContent } from '@verone/ui';
-import { spacing, colors } from '@verone/ui';
+import { colors } from '@verone/ui';
 import { getOrganisationDisplayName } from '@verone/utils/utils/organisation-helpers';
 import { SupplierCategoryBadge } from '@verone/categories/components/badges/SupplierCategoryBadge';
 import { OrganisationLogo } from '@verone/organisations/components/display/OrganisationLogo';
-import type { SupplierSegmentType } from '@verone/suppliers/components/badges/SupplierSegmentBadge';
 import { SupplierSegmentBadge } from '@verone/suppliers/components/badges/SupplierSegmentBadge';
 
-interface OrganisationCardProps {
-  organisation: {
-    id: string;
-    legal_name: string;
-    trade_name?: string | null;
-    type: 'customer' | 'supplier' | 'partner';
-    email?: string | null;
-    country?: string | null;
-    city?: string | null;
-    postal_code?: string | null;
-    is_active: boolean;
-    archived_at?: string | null;
-    website?: string | null;
-    logo_url?: string | null;
-    customer_type?: 'professional' | 'individual' | null;
-    supplier_segment?: SupplierSegmentType | null;
-    supplier_category?: string | null;
-    _count?: {
-      products?: number;
-    };
+/** Type organisation compatible avec OrganisationCard (subset de Organisation de @verone/types) */
+type OrganisationForCard = {
+  id: string;
+  legal_name: string;
+  trade_name?: string | null;
+  type?: string | null;
+  email?: string | null;
+  country?: string | null;
+  city?: string | null;
+  postal_code?: string | null;
+  is_active?: boolean | null;
+  archived_at?: string | null;
+  website?: string | null;
+  logo_url?: string | null;
+  customer_type?: string | null;
+  supplier_segment?: string | null;
+  supplier_category?: string | null;
+  _count?: {
+    products?: number;
   };
+};
+
+interface OrganisationCardProps {
+  organisation: OrganisationForCard;
   activeTab: 'active' | 'archived';
   onArchive: () => void;
   onDelete?: () => void;
@@ -70,7 +72,10 @@ function formatCountryCode(country: string | null): string {
 /**
  * Retourne les informations de badge selon le type d'organisation
  */
-function getOrganisationTypeInfo(type: string, customerType?: string | null) {
+function getOrganisationTypeInfo(
+  type: string | null | undefined,
+  customerType?: string | null
+) {
   if (type === 'customer') {
     return {
       label: customerType === 'professional' ? 'B2B Pro' : 'B2C',
@@ -88,9 +93,16 @@ function getOrganisationTypeInfo(type: string, customerType?: string | null) {
     };
   }
 
+  if (type === 'partner') {
+    return {
+      label: 'Partenaire',
+      colorClass: 'bg-orange-50 text-orange-700 border-orange-200',
+    };
+  }
+
   return {
-    label: 'Partenaire',
-    colorClass: 'bg-orange-50 text-orange-700 border-orange-200',
+    label: 'Organisation',
+    colorClass: 'bg-gray-50 text-gray-700 border-gray-200',
   };
 }
 
@@ -111,7 +123,7 @@ export function OrganisationCard({
     organisation.type,
     organisation.customer_type
   );
-  const countryCode = formatCountryCode(organisation.country || null);
+  const countryCode = formatCountryCode(organisation.country ?? null);
   const baseUrl =
     organisation.type === 'customer'
       ? '/contacts-organisations/customers'
@@ -127,7 +139,7 @@ export function OrganisationCard({
           <div className="flex items-center gap-1.5 flex-1 min-w-0">
             <OrganisationLogo
               logoUrl={organisation.logo_url}
-              organisationName={getOrganisationDisplayName(organisation as any)}
+              organisationName={getOrganisationDisplayName(organisation)}
               size="sm"
               fallback="initials"
               className="flex-shrink-0"
@@ -141,7 +153,7 @@ export function OrganisationCard({
                 style={{ color: colors.text.DEFAULT }}
               >
                 <span className="truncate">
-                  {getOrganisationDisplayName(organisation as any)}
+                  {getOrganisationDisplayName(organisation)}
                 </span>
                 <ExternalLink className="h-3 w-3 flex-shrink-0 opacity-60" />
               </a>
@@ -150,7 +162,7 @@ export function OrganisationCard({
                 className="truncate text-sm font-medium leading-tight"
                 style={{ color: colors.text.DEFAULT }}
               >
-                {getOrganisationDisplayName(organisation as any)}
+                {getOrganisationDisplayName(organisation)}
               </span>
             )}
           </div>
@@ -234,7 +246,7 @@ export function OrganisationCard({
                 className="font-medium"
                 style={{ color: colors.text.DEFAULT }}
               >
-                {organisation._count.products || 0}
+                {organisation._count.products ?? 0}
               </span>
             </div>
           )}

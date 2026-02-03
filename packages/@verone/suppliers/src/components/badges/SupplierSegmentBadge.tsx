@@ -22,7 +22,8 @@ export type SupplierSegmentType =
   | 'COMMODITY';
 
 interface SupplierSegmentBadgeProps {
-  segment: SupplierSegmentType | null | undefined;
+  /** Segment value - accepts both uppercase (STRATEGIC) and lowercase (strategic) from DB */
+  segment: SupplierSegmentType | string | null | undefined;
   size?: 'sm' | 'md';
   showIcon?: boolean;
   className?: string;
@@ -69,6 +70,19 @@ const SEGMENT_CONFIG: Record<
   },
 };
 
+/** Normalize segment to uppercase for lookup - accepts lowercase values from DB */
+function normalizeSegment(
+  segment: string | null | undefined
+): SupplierSegmentType | null {
+  if (!segment) return null;
+  const upper = segment.toUpperCase() as SupplierSegmentType;
+  // Validate it's a known segment
+  if (upper in SEGMENT_CONFIG) {
+    return upper;
+  }
+  return null;
+}
+
 // Configuration tailles
 const SIZE_CONFIG = {
   sm: {
@@ -89,16 +103,15 @@ export function SupplierSegmentBadge({
   showIcon = true,
   className,
 }: SupplierSegmentBadgeProps) {
-  // Ne rien afficher si pas de segment
-  if (!segment) {
+  // Normalize segment (handles lowercase from DB and validates)
+  const normalizedSegment = normalizeSegment(segment);
+
+  // Ne rien afficher si pas de segment valide
+  if (!normalizedSegment) {
     return null;
   }
 
-  const config = SEGMENT_CONFIG[segment];
-  // Protection contre les segments invalides (non présents dans SEGMENT_CONFIG)
-  if (!config) {
-    return null;
-  }
+  const config = SEGMENT_CONFIG[normalizedSegment];
   const sizeConfig = SIZE_CONFIG[size];
   const Icon = config.icon;
 
@@ -142,12 +155,14 @@ export function SupplierSegmentBadgeWithTooltip({
     COMMODITY: 'Produits standards, facilement remplaçables',
   };
 
-  if (!segment) {
+  // Normalize segment for tooltip lookup
+  const normalizedSegment = normalizeSegment(segment);
+  if (!normalizedSegment) {
     return null;
   }
 
   return (
-    <span title={DESCRIPTIONS[segment]} className="cursor-help">
+    <span title={DESCRIPTIONS[normalizedSegment]} className="cursor-help">
       <SupplierSegmentBadge
         segment={segment}
         size={size}

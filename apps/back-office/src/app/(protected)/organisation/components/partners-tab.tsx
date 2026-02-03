@@ -60,7 +60,7 @@ export function PartnersTab() {
       // Ajouter le champ calculé 'name' pour chaque organisation
       const partnersWithName = (data ?? []).map(org => ({
         ...org,
-        name: org.trade_name || org.legal_name,
+        name: org.trade_name ?? org.legal_name,
       })) as Organisation[];
       setArchivedPartners(partnersWithName);
     } catch (err: unknown) {
@@ -270,12 +270,10 @@ export function PartnersTab() {
           {displayedPartners.map(partner => (
             <OrganisationCard
               key={partner.id}
-              organisation={
-                {
-                  ...partner,
-                  type: 'partner' as const,
-                } as any
-              }
+              organisation={{
+                ...partner,
+                type: 'partner' as const,
+              }}
               activeTab={activeTab}
               onArchive={() => {
                 void handleArchive(partner).catch(error => {
@@ -294,13 +292,10 @@ export function PartnersTab() {
         <Card>
           <CardContent style={{ padding: spacing[3] }}>
             <OrganisationListView
-              organisations={displayedPartners.map(
-                p =>
-                  ({
-                    ...p,
-                    type: 'partner' as const,
-                  }) as any
-              )}
+              organisations={displayedPartners.map(p => ({
+                ...p,
+                type: 'partner' as const,
+              }))}
               activeTab={activeTab}
               onArchive={id => {
                 const partner = displayedPartners.find(p => p.id === id);

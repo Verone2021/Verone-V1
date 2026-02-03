@@ -267,7 +267,6 @@ export function SuppliersTab() {
           {displayedSuppliers.map(supplier => (
             <OrganisationCard
               key={supplier.id}
-              // @ts-expect-error - Organisation type includes 'internal' but OrganisationCard expects only 'supplier'|'customer'|'partner'
               organisation={supplier}
               activeTab={activeTab}
               onArchive={() => {
@@ -287,7 +286,6 @@ export function SuppliersTab() {
         <Card>
           <CardContent style={{ padding: spacing[3] }}>
             <OrganisationListView
-              // @ts-expect-error - Organisation type includes 'internal' but OrganisationListView expects only 'supplier'|'customer'|'partner'
               organisations={displayedSuppliers}
               activeTab={activeTab}
               onArchive={id => {

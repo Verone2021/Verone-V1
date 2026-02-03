@@ -17,29 +17,31 @@ import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import { getOrganisationDisplayName } from '@verone/utils/utils/organisation-helpers';
 import { OrganisationLogo } from '@verone/organisations/components/display/OrganisationLogo';
-import type { SupplierSegmentType } from '@verone/suppliers/components/badges/SupplierSegmentBadge';
 import { SupplierSegmentBadge } from '@verone/suppliers/components/badges/SupplierSegmentBadge';
 
+/** Type organisation compatible (subset de Organisation de @verone/types) */
+type OrganisationForListView = {
+  id: string;
+  legal_name: string;
+  trade_name?: string | null;
+  type?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  country?: string | null;
+  city?: string | null;
+  postal_code?: string | null;
+  is_active?: boolean | null;
+  archived_at?: string | null;
+  logo_url?: string | null;
+  customer_type?: string | null;
+  supplier_segment?: string | null;
+  _count?: {
+    products?: number;
+  };
+};
+
 interface OrganisationListViewProps {
-  organisations: Array<{
-    id: string;
-    legal_name: string;
-    trade_name?: string | null;
-    type: 'customer' | 'supplier' | 'partner';
-    email?: string | null;
-    phone?: string | null;
-    country?: string | null;
-    city?: string | null;
-    postal_code?: string | null;
-    is_active: boolean;
-    archived_at?: string | null;
-    logo_url?: string | null;
-    customer_type?: 'professional' | 'individual' | null;
-    supplier_segment?: SupplierSegmentType | null;
-    _count?: {
-      products?: number;
-    };
-  }>;
+  organisations: OrganisationForListView[];
   activeTab: 'active' | 'archived';
   onArchive: (id: string) => void;
   onDelete?: (id: string) => void;
@@ -68,25 +70,34 @@ function formatCountryCode(country: string | null): string {
 /**
  * Retourne le label de type d'organisation
  */
-function getTypeLabel(type: string, customerType?: string | null) {
+function getTypeLabel(
+  type: string | null | undefined,
+  customerType?: string | null
+) {
   if (type === 'customer') {
     return customerType === 'professional' ? 'B2B Pro' : 'B2C';
   }
   if (type === 'supplier') return 'Fournisseur';
-  return 'Partenaire';
+  if (type === 'partner') return 'Partenaire';
+  return 'Organisation';
 }
 
 /**
  * Retourne la couleur du badge selon le type
  */
-function getTypeBadgeColor(type: string, customerType?: string | null) {
+function getTypeBadgeColor(
+  type: string | null | undefined,
+  customerType?: string | null
+) {
   if (type === 'customer') {
     return customerType === 'professional'
       ? 'bg-blue-50 text-blue-700 border-blue-200'
       : 'bg-purple-50 text-purple-700 border-purple-200';
   }
   if (type === 'supplier') return 'bg-green-50 text-green-700 border-green-200';
-  return 'bg-orange-50 text-orange-700 border-orange-200';
+  if (type === 'partner')
+    return 'bg-orange-50 text-orange-700 border-orange-200';
+  return 'bg-gray-50 text-gray-700 border-gray-200';
 }
 
 /**
@@ -101,7 +112,7 @@ export function OrganisationListView({
   onArchive,
   onDelete,
 }: OrganisationListViewProps) {
-  const getBaseUrl = (type: string) => {
+  const getBaseUrl = (type: string | null | undefined) => {
     if (type === 'customer') return '/contacts-organisations/customers';
     if (type === 'supplier') return '/contacts-organisations/suppliers';
     return '/contacts-organisations/partners';
@@ -127,7 +138,7 @@ export function OrganisationListView({
         </thead>
         <tbody className="divide-y divide-gray-100">
           {organisations.map(org => {
-            const countryCode = formatCountryCode(org.country || null);
+            const countryCode = formatCountryCode(org.country ?? null);
             const baseUrl = getBaseUrl(org.type);
 
             return (
@@ -137,14 +148,14 @@ export function OrganisationListView({
                   <div className="flex items-center gap-2">
                     <OrganisationLogo
                       logoUrl={org.logo_url}
-                      organisationName={getOrganisationDisplayName(org as any)}
+                      organisationName={getOrganisationDisplayName(org)}
                       size="sm"
                       fallback="initials"
                       className="flex-shrink-0"
                     />
                     <div className="min-w-0">
                       <p className="font-medium text-black truncate leading-tight">
-                        {getOrganisationDisplayName(org as any)}
+                        {getOrganisationDisplayName(org)}
                       </p>
                       {org.archived_at && (
                         <Badge
@@ -224,7 +235,7 @@ export function OrganisationListView({
                       <div className="flex items-center gap-1 text-xs">
                         <Package className="h-3 w-3 text-gray-400" />
                         <span className="font-medium text-black">
-                          {org._count.products || 0}
+                          {org._count.products ?? 0}
                         </span>
                       </div>
                     ) : (

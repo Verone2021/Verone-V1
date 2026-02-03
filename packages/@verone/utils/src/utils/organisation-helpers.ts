@@ -11,7 +11,7 @@
  */
 interface Organisation {
   legal_name: string;
-  trade_name: string | null;
+  trade_name?: string | null;
 }
 
 /**
@@ -36,7 +36,7 @@ interface Organisation {
 export function getOrganisationDisplayName(
   org: Pick<Organisation, 'legal_name' | 'trade_name'>
 ): string {
-  return org.trade_name || org.legal_name;
+  return org.trade_name ?? org.legal_name;
 }
 
 /**
@@ -60,5 +60,5 @@ export function getOrganisationLegalName(
 export function getOrganisationTradeName(
   org: Pick<Organisation, 'trade_name'>
 ): string | null {
-  return org.trade_name;
+  return org.trade_name ?? null;
 }
