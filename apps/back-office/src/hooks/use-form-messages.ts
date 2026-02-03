@@ -17,20 +17,21 @@ interface ApiErrorResponse {
   error?: string;
 }
 
+/**
+ * FormMessage interface matching form_submission_messages table schema
+ */
 export interface FormMessage {
   id: string;
-  submission_id: string;
-  message: string;
-  is_internal: boolean;
-  sent_via: 'email' | 'internal' | 'other';
+  form_submission_id: string;
+  message_body: string;
+  message_type: string | null;
+  author_type: string;
+  author_name: string | null;
+  author_user_id: string | null;
+  sent_via: string | null;
   email_id: string | null;
-  created_at: string;
-  created_by: string | null;
-  user?: {
-    id: string;
-    full_name: string | null;
-    email: string;
-  } | null;
+  email_sent_at: string | null;
+  created_at: string | null;
 }
 
 export interface UseFormMessagesReturn {
@@ -66,22 +67,23 @@ export function useFormMessages(submissionId: string): UseFormMessagesReturn {
       const supabase = createClient();
 
       const { data, error: fetchError } = await supabase
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .from('form_submission_messages' as any)
+        .from('form_submission_messages')
         .select(
           `
           id,
-          submission_id,
-          message,
-          is_internal,
+          form_submission_id,
+          message_body,
+          message_type,
+          author_type,
+          author_name,
+          author_user_id,
           sent_via,
           email_id,
-          created_at,
-          created_by,
-          user:created_by(id, full_name, email)
+          email_sent_at,
+          created_at
         `
         )
-        .eq('submission_id', submissionId)
+        .eq('form_submission_id', submissionId)
         .order('created_at', { ascending: true });
 
       if (fetchError) {

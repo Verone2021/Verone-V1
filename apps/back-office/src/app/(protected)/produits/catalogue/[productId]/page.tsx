@@ -1,8 +1,7 @@
 'use client';
 
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return, react-hooks/exhaustive-deps */
-
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import type { Database } from '@verone/types';
 
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
@@ -84,7 +83,7 @@ const _PRODUCT_FIELD_LABELS: Record<string, string> = {
  * Calcule champs obligatoires manquants par section
  * Basé sur REQUIRED_PRODUCT_FIELDS
  */
-function calculateMissingFields(product: any | null) {
+function calculateMissingFields(product: Product | null) {
   if (!product)
     return {
       infosGenerales: 0,
@@ -116,46 +115,23 @@ function calculateMissingFields(product: any | null) {
   };
 }
 
-// Interface pour un produit
-interface Product {
-  id: string;
-  name: string;
-  sku: string | null;
-  description: string | null;
-  technical_description: string | null;
-  selling_points: string | null;
-  price_ht: number | null;
-  cost_price: number | null;
-  tax_rate: number | null;
-  selling_price: number | null;
-  margin_percentage: number | null;
-  brand: string | null;
-  stock_status: 'in_stock' | 'out_of_stock' | 'coming_soon';
-  product_status: 'active' | 'preorder' | 'discontinued' | 'draft';
-  condition: 'new' | 'used' | 'refurbished';
-  stock_quantity: number | null;
-  stock_real: number | null;
-  stock_forecasted_in: number | null;
-  completion_percentage: number | null;
-  min_stock: number | null;
-  supplier_id: string | null;
-  supplier_reference: string | null;
-  subcategory_id: string | null;
-  family_id: string | null;
-  dimensions: string | null;
-  weight: number | null;
-  variant_attributes: Record<string, any> | null;
-  variant_group_id: string | null;
-  gtin: string | null;
-  slug: string | null;
-  images: any[];
-  requires_sample: boolean | null;
-  created_at: string;
-  updated_at: string;
-  organisation_id: string;
-  enseigne_id: string | null;
-  assigned_client_id: string | null;
-  show_on_linkme_globe: boolean | null;
+// Type pour un produit avec ses relations (basé sur types Supabase générés)
+type ProductRow = Database['public']['Tables']['products']['Row'];
+type ProductUpdate = Database['public']['Tables']['products']['Update'];
+
+// Types pour les champs JSONB
+interface ProductDimensions {
+  length?: number;
+  width?: number;
+  height?: number;
+  unit?: 'cm' | 'mm' | 'in';
+  [key: string]: unknown;
+}
+
+type VariantAttributes = Record<string, unknown>;
+
+// Relations jointes via select
+interface ProductRelations {
   enseigne?: {
     id: string;
     name: string;
@@ -165,11 +141,6 @@ interface Product {
     legal_name: string;
     trade_name: string | null;
   } | null;
-  // Colonnes affiliés
-  created_by_affiliate: string | null;
-  affiliate_approval_status: string | null;
-  affiliate_commission_rate: number | null;
-  affiliate_payout_ht: number | null;
   affiliate_creator?: {
     id: string;
     display_name: string;
@@ -221,6 +192,9 @@ interface Product {
     supplier_id: string | null;
   } | null;
 }
+
+// Type combiné Product (Row + Relations)
+type Product = ProductRow & ProductRelations;
 
 export default function ProductDetailPage() {
   const params = useParams();
@@ -335,7 +309,8 @@ export default function ProductDetailPage() {
         throw new Error('Produit non trouvé');
       }
 
-      setProduct(data as any);
+      // Cast to Product with relations (Supabase returns row + joined relations)
+      setProduct(data as unknown as Product);
     } catch (err) {
       console.error('Erreur lors du chargement du produit:', err);
       setError(
@@ -351,16 +326,17 @@ export default function ProductDetailPage() {
 
   // Handler pour mettre à jour le produit (✅ Optimisé avec optimistic update + DB)
   const handleProductUpdate = useCallback(
-    async (updatedData: Partial<Product>) => {
+    async (updatedData: Partial<ProductRow>) => {
       // 1. Optimistic UI update (instantané)
-      setProduct(prev => (prev ? ({ ...prev, ...updatedData } as any) : null));
+      setProduct(prev => (prev ? { ...prev, ...updatedData } : null));
 
       // 2. Sauvegarde réelle en DB
       try {
         const supabase = createClient();
+        const updatePayload: ProductUpdate = updatedData;
         const { error } = await supabase
           .from('products')
-          .update(updatedData as any) // Cast nécessaire car Product interface ≠ Supabase types
+          .update(updatePayload)
           .eq('id', productId);
 
         if (error) {
@@ -619,7 +595,7 @@ export default function ProductDetailPage() {
               icon={ImageIcon}
               iconPosition="left"
             >
-              Gérer photos ({product.images?.length ?? 0})
+              Gérer photos ({productImages.length})
             </ButtonUnified>
             <ButtonUnified
               variant="outline"
@@ -936,7 +912,6 @@ export default function ProductDetailPage() {
                 id: product.id,
                 cost_price: product.cost_price ?? undefined,
                 margin_percentage: product.margin_percentage ?? undefined,
-                selling_price: product.selling_price ?? undefined,
                 variant_group_id: product.variant_group_id ?? undefined,
               }}
               variantGroup={product.variant_group ?? null}
@@ -992,7 +967,7 @@ export default function ProductDetailPage() {
                 sku: product.sku ?? '',
                 brand: product.brand ?? undefined,
                 gtin: product.gtin ?? undefined,
-                condition: product.condition,
+                condition: product.condition ?? undefined,
               }}
               onUpdate={handleProductUpdate as any}
             />
@@ -1088,20 +1063,16 @@ export default function ProductDetailPage() {
               <div className="flex justify-between py-2 border-b border-neutral-100">
                 <span className="text-neutral-600">Créé le:</span>
                 <span className="text-neutral-900">
-                  {new Date(product.created_at).toLocaleString('fr-FR')}
-                </span>
-              </div>
-              <div className="flex justify-between py-2 border-b border-neutral-100">
-                <span className="text-neutral-600">Modifié le:</span>
-                <span className="text-neutral-900">
-                  {new Date(product.updated_at).toLocaleString('fr-FR')}
+                  {product.created_at
+                    ? new Date(product.created_at).toLocaleString('fr-FR')
+                    : 'N/A'}
                 </span>
               </div>
               <div className="flex justify-between py-2">
-                <span className="text-neutral-600">Organisation ID:</span>
-                <span className="font-mono text-neutral-900">
-                  {product.organisation_id
-                    ? product.organisation_id.slice(0, 8) + '...'
+                <span className="text-neutral-600">Modifié le:</span>
+                <span className="text-neutral-900">
+                  {product.updated_at
+                    ? new Date(product.updated_at).toLocaleString('fr-FR')
                     : 'N/A'}
                 </span>
               </div>
@@ -1135,9 +1106,11 @@ export default function ProductDetailPage() {
         productId={product.id}
         productName={product.name}
         initialData={{
-          variant_attributes: product.variant_attributes ?? undefined,
+          variant_attributes: (product.variant_attributes ?? undefined) as
+            | VariantAttributes
+            | undefined,
           dimensions: (product.dimensions ?? undefined) as
-            | Record<string, any>
+            | ProductDimensions
             | undefined,
           weight: product.weight ?? undefined,
         }}
@@ -1222,5 +1195,3 @@ export default function ProductDetailPage() {
     </div>
   );
 }
-
-/* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return, react-hooks/exhaustive-deps */

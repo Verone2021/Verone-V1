@@ -149,64 +149,72 @@ export function FormSubmissionMessages({
         </div>
       ) : (
         <div className="space-y-4 mb-6 max-h-96 overflow-y-auto">
-          {messages.map(msg => (
-            <div
-              key={msg.id}
-              className={cn(
-                'p-3 rounded',
-                msg.is_internal
-                  ? 'bg-gray-50 border border-gray-200'
-                  : 'bg-blue-50 border border-blue-200'
-              )}
-            >
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  {msg.is_internal ? (
-                    <Lock
-                      className="h-4 w-4"
+          {messages.map(msg => {
+            const isInternal = msg.message_type === 'internal';
+            return (
+              <div
+                key={msg.id}
+                className={cn(
+                  'p-3 rounded',
+                  isInternal
+                    ? 'bg-gray-50 border border-gray-200'
+                    : 'bg-blue-50 border border-blue-200'
+                )}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    {isInternal ? (
+                      <Lock
+                        className="h-4 w-4"
+                        style={{ color: colors.text.muted }}
+                      />
+                    ) : (
+                      <Mail
+                        className="h-4 w-4"
+                        style={{ color: colors.primary[600] }}
+                      />
+                    )}
+                    <span
+                      className="text-sm font-medium"
+                      style={{ color: colors.text.DEFAULT }}
+                    >
+                      {isInternal ? 'Note interne' : 'Email envoyé'}
+                    </span>
+                    <span
+                      className="text-xs"
                       style={{ color: colors.text.muted }}
-                    />
-                  ) : (
-                    <Mail
-                      className="h-4 w-4"
-                      style={{ color: colors.primary[600] }}
-                    />
-                  )}
-                  <span
-                    className="text-sm font-medium"
-                    style={{ color: colors.text.DEFAULT }}
-                  >
-                    {msg.is_internal ? 'Note interne' : 'Email envoyé'}
-                  </span>
+                    >
+                      par {msg.author_name ?? 'Utilisateur'}
+                    </span>
+                  </div>
                   <span
                     className="text-xs"
                     style={{ color: colors.text.muted }}
                   >
-                    par {msg.user?.full_name ?? 'Utilisateur'}
+                    {msg.created_at
+                      ? formatDistanceToNow(new Date(msg.created_at), {
+                          addSuffix: true,
+                          locale: fr,
+                        })
+                      : 'Date inconnue'}
                   </span>
                 </div>
-                <span className="text-xs" style={{ color: colors.text.muted }}>
-                  {formatDistanceToNow(new Date(msg.created_at), {
-                    addSuffix: true,
-                    locale: fr,
-                  })}
-                </span>
+                <p
+                  className="text-sm whitespace-pre-wrap"
+                  style={{ color: colors.text.DEFAULT }}
+                >
+                  {msg.message_body}
+                </p>
+                {msg.email_id && (
+                  <div className="mt-2 flex items-center gap-1 text-xs text-green-600">
+                    <CheckCircle className="h-3 w-3" />
+                    Email envoyé avec succès (ID: {msg.email_id.substring(0, 8)}
+                    ...)
+                  </div>
+                )}
               </div>
-              <p
-                className="text-sm whitespace-pre-wrap"
-                style={{ color: colors.text.DEFAULT }}
-              >
-                {msg.message}
-              </p>
-              {msg.email_id && (
-                <div className="mt-2 flex items-center gap-1 text-xs text-green-600">
-                  <CheckCircle className="h-3 w-3" />
-                  Email envoyé avec succès (ID: {msg.email_id.substring(0, 8)}
-                  ...)
-                </div>
-              )}
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
