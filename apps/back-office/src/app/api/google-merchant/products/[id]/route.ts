@@ -61,12 +61,16 @@ export async function DELETE(
     const supabase = await createServerClient();
 
     // 3. Appeler RPC remove_from_google_merchant
-    const { data, error } = await (supabase as any).rpc(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call -- Supabase RPC functions not in generated types
+    const { data, error } = (await (supabase as any).rpc(
       'remove_from_google_merchant',
       {
         p_product_id: productId,
       }
-    );
+    )) as {
+      data: Array<{ success: boolean; error: string | null }> | null;
+      error: { message: string } | null;
+    };
 
     if (error) {
       console.error('[API] RPC remove_from_google_merchant failed:', error);
@@ -80,9 +84,8 @@ export async function DELETE(
     }
 
     // 4. Vérifier résultat RPC
-    const result = data as Array<{ success: boolean; error: string | null }>;
-    if (!result || result.length === 0 || !result[0].success) {
-      const errorMsg = result?.[0]?.error ?? 'Unknown error';
+    if (!data || data.length === 0 || !data[0].success) {
+      const errorMsg = data?.[0]?.error ?? 'Unknown error';
       return NextResponse.json(
         {
           success: false,
@@ -103,7 +106,7 @@ export async function DELETE(
         removed: true,
       },
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('[API] Remove product failed:', error);
 
     return NextResponse.json(
