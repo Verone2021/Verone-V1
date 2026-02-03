@@ -97,11 +97,12 @@ export function usePublicStats() {
     queryFn: async (): Promise<PublicStats> => {
       // Appel RPC - cast vers unknown car RPC pas encore dans les types générés
       // Une fois la migration appliquée et types regénérés, ce cast pourra être supprimé
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-      const { data, error } = (await (supabase as any).rpc(
+      const { data, error } = (await supabase.rpc(
         'get_linkme_public_stats'
-      )) as { data: PublicStatsRpcResponse | null; error: Error | null };
+      )) as {
+        data: PublicStatsRpcResponse | null;
+        error: Error | null;
+      };
 
       if (error) {
         console.error('Erreur fetch public stats:', error);

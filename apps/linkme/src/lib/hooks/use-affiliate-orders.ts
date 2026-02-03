@@ -101,29 +101,23 @@ export function useCreateAffiliateOrder() {
     mutationFn: async (input: CreateAffiliateOrderInput) => {
       const supabase = createClient();
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
-      const { data, error } = await (supabase.rpc as any)(
-        'create_affiliate_order',
-        {
-          p_affiliate_id: input.affiliateId,
-          p_customer_id: input.customerId,
-          p_customer_type: input.customerType,
-          p_selection_id: input.selectionId,
-          p_items: input.items,
-          p_notes: input.notes ?? null,
-        }
-      );
+      const { data, error } = await supabase.rpc('create_affiliate_order', {
+        p_affiliate_id: input.affiliateId,
+        p_customer_id: input.customerId,
+        p_customer_type: input.customerType,
+        p_selection_id: input.selectionId,
+        p_items: input.items,
+        p_notes: input.notes,
+      });
 
       if (error) {
         console.error('Erreur création commande affilié:', error);
-        /* eslint-disable @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access */
         throw new Error(
           error.message ?? 'Erreur lors de la création de la commande'
         );
-        /* eslint-enable @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access */
       }
 
-      return data as string; // order_id
+      return data; // order_id (string)
     },
     onSuccess: async (orderId, variables) => {
       // Invalider les caches pertinents
@@ -159,8 +153,7 @@ export function useAffiliateCustomers(affiliateId: string | null) {
 
       const supabase = createClient();
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
-      const { data, error } = await (supabase.rpc as any)(
+      const { data, error } = await supabase.rpc(
         'get_customers_for_affiliate',
         {
           p_affiliate_id: affiliateId,
@@ -189,31 +182,28 @@ export function useCreateCustomerOrganisation() {
     mutationFn: async (input: CreateCustomerOrgInput) => {
       const supabase = createClient();
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
-      const { data, error } = await (supabase.rpc as any)(
+      const { data, error } = await supabase.rpc(
         'create_customer_organisation_for_affiliate',
         {
           p_affiliate_id: input.affiliateId,
           p_legal_name: input.legalName,
-          p_trade_name: input.tradeName ?? null,
-          p_email: input.email ?? null,
-          p_phone: input.phone ?? null,
-          p_address: input.address ?? null,
-          p_postal_code: input.postalCode ?? null,
-          p_city: input.city ?? null,
+          p_trade_name: input.tradeName,
+          p_email: input.email,
+          p_phone: input.phone,
+          p_address: input.address,
+          p_postal_code: input.postalCode,
+          p_city: input.city,
         }
       );
 
       if (error) {
         console.error('Erreur création organisation:', error);
-        /* eslint-disable @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access */
         throw new Error(
           error.message ?? 'Erreur lors de la création du client'
         );
-        /* eslint-enable @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access */
       }
 
-      return data as string; // customer_id
+      return data; // customer_id (string)
     },
     onSuccess: async (_, variables) => {
       await queryClient.invalidateQueries({
@@ -239,31 +229,28 @@ export function useCreateCustomerIndividual() {
     mutationFn: async (input: CreateCustomerIndividualInput) => {
       const supabase = createClient();
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
-      const { data, error } = await (supabase.rpc as any)(
+      const { data, error } = await supabase.rpc(
         'create_customer_individual_for_affiliate',
         {
           p_affiliate_id: input.affiliateId,
           p_first_name: input.firstName,
           p_last_name: input.lastName,
-          p_email: input.email ?? null,
-          p_phone: input.phone ?? null,
-          p_address: input.address ?? null,
-          p_postal_code: input.postalCode ?? null,
-          p_city: input.city ?? null,
+          p_email: input.email,
+          p_phone: input.phone,
+          p_address: input.address,
+          p_postal_code: input.postalCode,
+          p_city: input.city,
         }
       );
 
       if (error) {
         console.error('Erreur création client individuel:', error);
-        /* eslint-disable @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access */
         throw new Error(
           error.message ?? 'Erreur lors de la création du client'
         );
-        /* eslint-enable @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access */
       }
 
-      return data as string; // customer_id
+      return data; // customer_id (string)
     },
     onSuccess: async (_, variables) => {
       await queryClient.invalidateQueries({

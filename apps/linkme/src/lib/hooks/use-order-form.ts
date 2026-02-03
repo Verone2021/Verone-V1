@@ -394,23 +394,23 @@ export function useOrderForm(): UseOrderFormReturn {
         // Créer une nouvelle organisation
         const newResto = formData.restaurant.newRestaurant;
 
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
-        const { data: orgId, error: orgError } = await (supabase.rpc as any)(
+        const { data: orgId, error: orgError } = await supabase.rpc(
           'create_customer_organisation_for_affiliate',
           {
             p_affiliate_id: affiliate.id,
             p_legal_name: newResto.tradeName,
             p_trade_name: newResto.tradeName,
-            p_email: formData.contacts.responsable.email ?? null,
-            p_phone: formData.contacts.responsable.phone ?? null,
-            p_address: newResto.address ?? formData.delivery.address ?? null,
+            p_email: formData.contacts.responsable.email ?? undefined,
+            p_phone: formData.contacts.responsable.phone ?? undefined,
+            p_address:
+              newResto.address ?? formData.delivery.address ?? undefined,
             p_postal_code:
-              newResto.postalCode ?? formData.delivery.postalCode ?? null,
-            p_city: newResto.city ?? null,
+              newResto.postalCode ?? formData.delivery.postalCode ?? undefined,
+            p_city: newResto.city ?? undefined,
             // Données géolocalisation pour TVA dynamique
             p_country: newResto.country ?? 'FR',
-            p_latitude: newResto.latitude ?? null,
-            p_longitude: newResto.longitude ?? null,
+            p_latitude: newResto.latitude ?? undefined,
+            p_longitude: newResto.longitude ?? undefined,
           }
         );
 
@@ -422,7 +422,7 @@ export function useOrderForm(): UseOrderFormReturn {
           );
         }
 
-        customerId = orgId as string;
+        customerId = orgId;
       } else {
         // Utiliser l'organisation existante
         customerId = formData.restaurant.existingId!;
@@ -457,20 +457,19 @@ export function useOrderForm(): UseOrderFormReturn {
 
       // Étape 3: Créer la commande via RPC
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
-      const { data: orderId, error: orderError } = await (supabase.rpc as any)(
+      const { data: orderId, error: orderError } = await supabase.rpc(
         'create_affiliate_order',
         {
           p_affiliate_id: affiliate.id,
           p_customer_id: customerId,
-          p_customer_type: 'organization',
+          p_customer_type: 'organization' as const,
           p_selection_id: formData.selection.selectionId,
           p_items: orderItems,
-          p_notes: formData.delivery.notes ?? null,
+          p_notes: formData.delivery.notes ?? undefined,
           // NEW: Contact IDs
-          p_responsable_contact_id: responsableContactId,
-          p_billing_contact_id: billingContactId,
-          p_delivery_contact_id: deliveryContactId,
+          p_responsable_contact_id: responsableContactId ?? undefined,
+          p_billing_contact_id: billingContactId ?? undefined,
+          p_delivery_contact_id: deliveryContactId ?? undefined,
         }
       );
 
@@ -507,7 +506,7 @@ export function useOrderForm(): UseOrderFormReturn {
         const { error: updateError } = await supabase
           .from('sales_orders')
           .update(deliveryUpdate)
-          .eq('id', orderId as string);
+          .eq('id', orderId);
 
         if (updateError) {
           console.warn('Warning: Could not update delivery info:', updateError);
@@ -527,7 +526,7 @@ export function useOrderForm(): UseOrderFormReturn {
       // Réinitialiser le formulaire après succès
       resetForm();
 
-      return orderId as string;
+      return orderId;
     } catch (error) {
       console.error('Error submitting order:', error);
       const message =

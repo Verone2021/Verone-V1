@@ -122,7 +122,7 @@ export function useAffiliateProducts() {
         throw error;
       }
 
-      return (data ?? []) as AffiliateProduct[];
+      return (data ?? []) as unknown as AffiliateProduct[];
     },
     enabled: !!enseigneId || (isOrgIndependante && !!organisationId),
     staleTime: 30000,
@@ -237,8 +237,8 @@ export function useCreateAffiliateProduct() {
 
       // Create the product
       // Note: affiliate_commission_rate sera definie par le back-office lors de l'approbation
-      // Note: store_at_verone et stock_quantity ajoutés conditionnellement pour éviter erreur cache PostgREST
-      const insertData: Record<string, unknown> = {
+      type ProductInsert = Database['public']['Tables']['products']['Insert'];
+      const insertData: ProductInsert = {
         name: input.name,
         sku,
         description: input.description ?? null,
@@ -248,20 +248,13 @@ export function useCreateAffiliateProduct() {
         enseigne_id: targetEnseigneId,
         created_by_affiliate: affiliate.id,
         product_status: 'draft',
+        store_at_verone: input.store_at_verone ?? false,
+        stock_quantity: input.store_at_verone ? (input.stock_quantity ?? 0) : 0,
       };
-
-      // Ajouter store_at_verone seulement si true (évite erreur cache si colonne pas encore visible)
-      if (input.store_at_verone) {
-        insertData.store_at_verone = true;
-        if (input.stock_quantity) {
-          insertData.stock_quantity = input.stock_quantity;
-        }
-      }
 
       const { data, error } = await supabase
         .from('products')
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .insert(insertData as any)
+        .insert(insertData)
         .select()
         .single<AffiliateProduct>();
 

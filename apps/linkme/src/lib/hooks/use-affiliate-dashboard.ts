@@ -75,8 +75,7 @@ export function useAffiliateDashboard() {
     queryFn: async (): Promise<DashboardData | null> => {
       if (!affiliate?.id) return null;
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-      const { data, error } = await (supabase as any).rpc(
+      const { data, error } = await supabase.rpc(
         'get_affiliate_dashboard_data',
         {
           p_affiliate_id: affiliate.id,
@@ -89,7 +88,7 @@ export function useAffiliateDashboard() {
       }
 
       // The RPC returns JSONB which is automatically parsed
-      return data as DashboardData;
+      return data as unknown as DashboardData;
     },
     enabled: !!affiliate?.id,
     staleTime: 2 * 60 * 1000, // 2 minutes
