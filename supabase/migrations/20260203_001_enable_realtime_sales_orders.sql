@@ -1,0 +1,28 @@
+-- Migration: Activer Realtime sur sales_orders
+-- Date: 2026-02-03
+-- Auteur: Romeo Dos Santos
+-- Ticket: BO-TYPE-001
+--
+-- Raison: Le hook useLinkmePendingCount utilise Supabase Realtime pour écouter
+-- les changements de commandes LinkMe. Sans cette publication, l'erreur
+-- "CHANNEL_ERROR" se produit et force un fallback vers le polling (30s).
+--
+-- Historique:
+-- - Le hook a été créé le 2026-01-23 (commit f31e3c44)
+-- - L'erreur CHANNEL_ERROR a toujours existé mais était masquée
+-- - Le fallback polling fonctionnait, mais sans temps réel
+--
+-- Tables ajoutées:
+-- - sales_orders: Commandes clients (source pour linkme_orders_enriched)
+--
+-- Note: Realtime ne fonctionne que sur les TABLES, pas les vues.
+-- La vue linkme_orders_enriched est basée sur sales_orders, donc
+-- on écoute les changements sur la table source avec filtre channel_id.
+--
+-- Impact: Les badges LinkMe dans le sidebar Back-Office se mettront à jour
+-- instantanément au lieu d'attendre 30 secondes (polling).
+
+-- Ajouter sales_orders à la publication Realtime
+-- Note: Cette migration a déjà été appliquée via MCP le 2026-02-03
+-- Elle est ici pour documentation et reproductibilité
+ALTER PUBLICATION supabase_realtime ADD TABLE public.sales_orders;
