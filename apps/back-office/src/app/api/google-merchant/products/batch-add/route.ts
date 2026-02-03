@@ -91,7 +91,8 @@ export async function POST(
         '[API] RPC batch_add_google_merchant_products failed:',
         error
       );
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       return NextResponse.json(
         {
           success: false,

@@ -26,6 +26,17 @@ export type VariantGroup =
 // export type ProductVariant = Database['public']['Tables']['product_variants']['Row'];
 
 // =====================================================
+// Shared Types
+// =====================================================
+
+export interface ProductDimensions {
+  length?: number;
+  width?: number;
+  height?: number;
+  unit?: string;
+}
+
+// =====================================================
 // Types RPC Functions
 // =====================================================
 
@@ -43,7 +54,7 @@ export interface SiteInternetProduct {
   // SEO
   seo_title: string;
   seo_meta_description: string;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
 
   // Prix
   price_ht: number;
@@ -78,7 +89,7 @@ export interface SiteInternetProduct {
   selling_points: string[];
 
   // Informations produit (READ-ONLY - catalogue uniquement)
-  dimensions: Record<string, any> | null;
+  dimensions: ProductDimensions | null;
   weight: number | null;
   suitable_rooms: string[];
   subcategory_id: string | null;

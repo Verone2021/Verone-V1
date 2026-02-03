@@ -134,7 +134,7 @@ export async function GET(
     const { data: pollResult, error: pollError } = await supabase
       .rpc('poll_google_merchant_statuses', {
         product_ids: syncedProducts.map(p => p.product_id),
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment -- Supabase RPC requires Json type
         statuses_data: statusesData as any,
       })
       .returns<PollResult[]>();

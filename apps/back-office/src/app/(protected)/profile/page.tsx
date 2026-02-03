@@ -75,10 +75,11 @@ export default function ProfilePage() {
       setUser(user);
 
       // Initialize edit data
+      const metadata = user.user_metadata as { name?: string } | undefined;
       setEditData({
         email: user.email ?? '',
         raw_user_meta_data: {
-          name: user.user_metadata?.name ?? user.email?.split('@')[0] ?? '',
+          name: metadata?.name ?? user.email?.split('@')[0] ?? '',
         },
         first_name: '',
         last_name: '',

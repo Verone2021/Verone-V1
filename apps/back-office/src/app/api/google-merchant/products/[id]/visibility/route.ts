@@ -106,7 +106,8 @@ export async function PATCH(
         '[API] RPC toggle_google_merchant_visibility failed:',
         error
       );
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       return NextResponse.json(
         {
           success: false,

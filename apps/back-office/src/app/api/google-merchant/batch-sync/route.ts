@@ -160,7 +160,7 @@ export async function POST(
         ...(errors.length > 0 && { errors }),
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[API] Batch sync failed:', error);
 
     return NextResponse.json(

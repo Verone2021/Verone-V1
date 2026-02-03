@@ -427,6 +427,7 @@ export default function EnseigneDetailPage() {
                         </p>
                       </div>
                     )}
+                    {/* eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- Intentional boolean OR to check if any address field exists */}
                     {(stats.parentOrganisation.billing_address_line1 ||
                       stats.parentOrganisation.city) && (
                       <div>

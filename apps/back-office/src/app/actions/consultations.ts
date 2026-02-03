@@ -2,7 +2,11 @@
 
 import { revalidatePath } from 'next/cache';
 
+import type { Database } from '@verone/types';
 import { createAdminClient } from '@verone/utils/supabase/server';
+
+type ClientConsultationRow =
+  Database['public']['Tables']['client_consultations']['Row'];
 
 interface CreateConsultationData {
   enseigne_id?: string;
@@ -19,7 +23,7 @@ interface CreateConsultationData {
 
 interface CreateConsultationResult {
   success: boolean;
-  data?: any;
+  data?: ClientConsultationRow;
   error?: string;
 }
 

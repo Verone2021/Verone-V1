@@ -342,7 +342,7 @@ export function VariantGroupForm({
         }
       } else {
         // Mode création
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument -- CreateVariantGroupData type mismatch with hook
         success = !!(await createVariantGroup(groupData as any));
         if (success) {
           toast({

@@ -334,9 +334,11 @@ export default function CategoriesPage() {
   };
 
   // États de chargement combinés
+  /* eslint-disable @typescript-eslint/prefer-nullish-coalescing -- Intentional boolean OR for combined loading/error states */
   const isLoading =
     familiesLoading || categoriesLoading || subcategoriesLoading;
   const hasError = familiesError || categoriesError || subcategoriesError;
+  /* eslint-enable @typescript-eslint/prefer-nullish-coalescing */
 
   // Calcul du temps de chargement
   const loadTime = Math.round(performance.now() - startTime);

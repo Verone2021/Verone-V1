@@ -31,7 +31,10 @@ export function StockSection({
   setFormData,
   onSave: _onSave,
 }: StockSectionProps) {
-  const updateField = (field: keyof WizardFormData, value: any) => {
+  const updateField = (
+    field: keyof WizardFormData,
+    value: WizardFormData[keyof WizardFormData]
+  ) => {
     setFormData({
       ...formData,
       [field]: value,

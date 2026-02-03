@@ -31,7 +31,10 @@ export function DescriptionsSection({
 }: DescriptionsSectionProps) {
   const [newSellingPoint, setNewSellingPoint] = useState('');
 
-  const updateField = (field: keyof WizardFormData, value: any) => {
+  const updateField = (
+    field: keyof WizardFormData,
+    value: WizardFormData[keyof WizardFormData]
+  ) => {
     setFormData({
       ...formData,
       [field]: value,

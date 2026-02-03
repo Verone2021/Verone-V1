@@ -231,22 +231,13 @@ export function GeneralInfoSection({
         </CardHeader>
         <CardContent className="pt-4">
           <CategorySelector
-            {...({
-              value: formData.subcategory_id,
-              onChange: (
-                subcategoryId: string,
-                hierarchy: {
-                  family: { id: string };
-                  category: { id: string };
-                }
-              ) => {
-                updateField('subcategory_id', subcategoryId);
-                updateField('family_id', hierarchy.family.id);
-                updateField('category_id', hierarchy.category.id);
-              },
-              placeholder: 'Sélectionner une sous-catégorie...',
-              required: false,
-            } as any)}
+            value={formData.subcategory_id}
+            onChange={(subcategoryId, hierarchy) => {
+              updateField('subcategory_id', subcategoryId);
+              updateField('family_id', hierarchy.family.id);
+              updateField('category_id', hierarchy.category.id);
+            }}
+            placeholder="Sélectionner une sous-catégorie..."
           />
         </CardContent>
       </Card>

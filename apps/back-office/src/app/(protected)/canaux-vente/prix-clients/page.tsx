@@ -176,6 +176,7 @@ export default function PrixClientsPage() {
 
     // Recherche textuelle
     if (searchQuery) {
+      /* eslint-disable @typescript-eslint/prefer-nullish-coalescing -- Intentional boolean OR for filter conditions */
       filtered = filtered.filter(
         rule =>
           rule.customer_name
@@ -188,6 +189,7 @@ export default function PrixClientsPage() {
             ?.toLowerCase()
             .includes(searchQuery.toLowerCase())
       );
+      /* eslint-enable @typescript-eslint/prefer-nullish-coalescing */
     }
 
     // Filtre customer_type

@@ -6,7 +6,12 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
+import type { QontoClientCreditNote } from '@verone/integrations/qonto';
 import { QontoClient } from '@verone/integrations/qonto';
+
+interface QontoSendCreditNoteResponse {
+  credit_note?: QontoClientCreditNote;
+}
 
 function getQontoClient(): QontoClient {
   return new QontoClient({
@@ -72,11 +77,11 @@ export async function POST(
       );
     }
 
-    const data = await response.json();
+    const data = (await response.json()) as QontoSendCreditNoteResponse;
 
     return NextResponse.json({
       success: true,
-      creditNote: data.credit_note || creditNote,
+      creditNote: data.credit_note ?? creditNote,
       message: 'Avoir envoyé au client',
     });
   } catch (error) {

@@ -45,6 +45,17 @@ import {
 import { z } from 'zod';
 
 // =============================================================================
+// Types
+// =============================================================================
+
+interface ProductDimensions {
+  length?: number;
+  width?: number;
+  height?: number;
+  unit?: string;
+}
+
+// =============================================================================
 // Helper Functions
 // =============================================================================
 
@@ -53,7 +64,7 @@ import { z } from 'zod';
  * @param dimensions - Object JSONB avec length, width, height, unit
  * @returns String formatée "L120 × l80 × H75 cm" ou "Non défini"
  */
-function formatDimensions(dimensions: Record<string, any> | null): string {
+function formatDimensions(dimensions: ProductDimensions | null): string {
   if (!dimensions) return 'Non défini';
 
   const { length, width, height, unit = 'cm' } = dimensions;
@@ -89,7 +100,7 @@ interface SiteInternetProduct {
   status: string;
   seo_title: string;
   seo_meta_description: string;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
   price_ht: number;
   price_ttc: number;
   price_source: string;
@@ -107,7 +118,7 @@ interface SiteInternetProduct {
   technical_description: string | null;
   brand: string | null;
   selling_points: string[];
-  dimensions: Record<string, any> | null;
+  dimensions: ProductDimensions | null;
   weight: number | null;
   suitable_rooms: string[];
   subcategory_id: string | null;

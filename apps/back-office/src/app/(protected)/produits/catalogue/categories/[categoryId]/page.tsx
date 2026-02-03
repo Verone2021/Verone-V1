@@ -107,7 +107,7 @@ export default function CategoryDetailPage() {
             <div className="h-8 w-64 bg-gray-200 rounded animate-pulse" />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(6)].map((_, i) => (
+            {Array.from({ length: 6 }, (_, i) => i).map(i => (
               <div
                 key={i}
                 className="h-48 bg-gray-200 rounded-lg animate-pulse"
@@ -496,18 +496,16 @@ export default function CategoryDetailPage() {
         mode="edit"
         initialData={
           editingSubcategory
-            ? ({
+            ? {
                 id: editingSubcategory.id,
-                parent_id: editingSubcategory.category_id,
-                family_id: category?.family_id ?? '',
+                category_id: editingSubcategory.category_id,
                 name: editingSubcategory.name,
                 slug: editingSubcategory.slug,
                 description: editingSubcategory.description ?? '',
                 image_url: editingSubcategory.image_url ?? '',
                 display_order: editingSubcategory.display_order ?? 1,
                 is_active: editingSubcategory.is_active ?? true,
-                level: 2 as const,
-              } as any)
+              }
             : null
         }
         categories={

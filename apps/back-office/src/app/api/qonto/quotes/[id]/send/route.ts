@@ -8,7 +8,12 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
+import type { QontoClientQuote } from '@verone/integrations/qonto';
 import { QontoClient } from '@verone/integrations/qonto';
+
+interface QontoSendQuoteResponse {
+  quote?: QontoClientQuote;
+}
 
 function getQontoClient(): QontoClient {
   return new QontoClient({
@@ -64,11 +69,11 @@ export async function POST(
       });
     }
 
-    const data = await response.json();
+    const data = (await response.json()) as QontoSendQuoteResponse;
 
     return NextResponse.json({
       success: true,
-      quote: data.quote || quote,
+      quote: data.quote ?? quote,
       message: 'Devis renvoyé au client',
     });
   } catch (error) {

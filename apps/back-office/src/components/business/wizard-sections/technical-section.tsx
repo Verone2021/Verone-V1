@@ -166,11 +166,12 @@ export function TechnicalSection({
             </div>
 
             {/* Résumé dimensions */}
-            {/* eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- Intentional boolean OR to check if any dimension is truthy */}
+            {/* eslint-disable @typescript-eslint/prefer-nullish-coalescing -- Intentional boolean OR to check if any dimension is truthy */}
             {(formData.dimensions.length ||
               formData.dimensions.width ||
               formData.dimensions.height ||
               formData.weight) && (
+              /* eslint-enable @typescript-eslint/prefer-nullish-coalescing */
               <div className="p-3 bg-gray-50 rounded-lg">
                 <div className="text-sm text-gray-600">
                   <strong>Résumé :</strong>{' '}

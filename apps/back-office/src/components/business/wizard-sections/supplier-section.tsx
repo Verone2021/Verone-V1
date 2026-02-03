@@ -25,7 +25,10 @@ export function SupplierSection({
   setFormData,
   onSave: _onSave,
 }: SupplierSectionProps) {
-  const updateField = (field: keyof WizardFormData, value: any) => {
+  const updateField = (
+    field: keyof WizardFormData,
+    value: WizardFormData[keyof WizardFormData]
+  ) => {
     setFormData({
       ...formData,
       [field]: value,
@@ -53,7 +56,7 @@ export function SupplierSection({
             <SupplierSelector
               selectedSupplierId={formData.supplier_id}
               onSupplierChange={supplierId =>
-                updateField('supplier_id', supplierId)
+                updateField('supplier_id', supplierId ?? '')
               }
               required={false}
             />

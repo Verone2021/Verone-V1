@@ -779,6 +779,7 @@ export default function ReceptionsPage() {
                                             >
                                               <ProductThumbnail
                                                 src={
+                                                  /* eslint-disable @typescript-eslint/prefer-nullish-coalescing -- Fallback to first image if no primary found */
                                                   item.products?.product_images?.find(
                                                     (img: {
                                                       public_url: string;
@@ -788,6 +789,7 @@ export default function ReceptionsPage() {
                                                   item.products
                                                     ?.product_images?.[0]
                                                     ?.public_url
+                                                  /* eslint-enable @typescript-eslint/prefer-nullish-coalescing */
                                                 }
                                                 alt={
                                                   item.products?.name ||
