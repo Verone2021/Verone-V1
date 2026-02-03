@@ -5,5 +5,34 @@
 # Pour régénérer manuellement : pnpm generate:types
 # Ou via MCP : mcp__supabase__generate_typescript_types
 
-# 2. Lint-staged (ESLint + Prettier)
+# 2. Validation RLS patterns (CRITIQUE - bloque patterns obsolètes)
+echo "🔍 Validation patterns RLS..."
+if ls supabase/migrations/*.sql 1> /dev/null 2>&1; then
+  # Chercher patterns obsolètes (ignorer commentaires SQL)
+  OBSOLETE=$(grep -h "CREATE POLICY\|USING\|WITH CHECK" supabase/migrations/*.sql | \
+    grep -v "^--" | \
+    grep -E "user_profiles\.(app|role)(?! IS)|raw_user_meta_data.*role" || true)
+
+  if [ -n "$OBSOLETE" ]; then
+    echo "❌ ERREUR: Pattern RLS obsolète détecté dans migrations SQL"
+    echo ""
+    echo "Patterns INTERDITS:"
+    echo "  ❌ user_profiles.app        (colonne N'EXISTE PAS)"
+    echo "  ❌ user_profiles.role       (obsolète, sauf pour admin check)"
+    echo "  ❌ raw_user_meta_data->>'role' (fragile)"
+    echo ""
+    echo "Patterns OBLIGATOIRES:"
+    echo "  ✅ is_backoffice_user()     (staff back-office)"
+    echo "  ✅ is_back_office_admin()   (admin uniquement)"
+    echo ""
+    echo "Référence: .claude/rules/database/rls-patterns.md"
+    echo ""
+    echo "Extrait détecté:"
+    echo "$OBSOLETE"
+    exit 1
+  fi
+fi
+echo "✅ RLS patterns corrects"
+
+# 3. Lint-staged (ESLint + Prettier)
 npx lint-staged
