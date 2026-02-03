@@ -155,9 +155,13 @@ export function PasswordChangeDialog({
         });
         window.location.href = '/login';
       }, 2000);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Erreur changement mot de passe:', error);
-      setError(error.message ?? 'Erreur lors du changement de mot de passe');
+      setError(
+        error instanceof Error
+          ? error.message
+          : 'Erreur lors du changement de mot de passe'
+      );
     } finally {
       setLoading(false);
     }

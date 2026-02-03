@@ -253,7 +253,7 @@ export function ImageUploadV2({
   };
 
   // Déterminer l'URL de l'image à afficher
-  const displayImageUrl = uploadResult?.publicUrl || currentImageUrl;
+  const displayImageUrl = uploadResult?.publicUrl ?? currentImageUrl;
 
   return (
     <div className={cn('space-y-4', className)}>
@@ -296,7 +296,7 @@ export function ImageUploadV2({
               ? 'cursor-pointer hover:border-gray-400'
               : 'opacity-50 cursor-not-allowed',
             dragActive && canUpload && 'border-black bg-gray-50',
-            (error || validationError) && 'border-red-500 bg-red-50'
+            (error ?? validationError) && 'border-red-500 bg-red-50'
           )}
           onDragEnter={handleDragIn}
           onDragLeave={handleDragOut}
