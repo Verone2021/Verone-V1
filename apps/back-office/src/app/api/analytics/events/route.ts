@@ -14,6 +14,7 @@ import { createClient } from '@verone/utils/supabase/server';
 // Node.js runtime
 export const dynamic = 'force-dynamic';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase Json type requires any for JSONB columns
 interface ActivityEvent {
   action: string;
   table_name?: string;
@@ -64,10 +65,10 @@ export async function POST(request: NextRequest) {
 
     // Récupérer IP et User Agent bruts
     const rawIP =
-      request.headers.get('x-forwarded-for') ||
+      request.headers.get('x-forwarded-for') ??
       request.headers.get('x-real-ip');
     const rawUA =
-      event.metadata?.user_agent || request.headers.get('user-agent');
+      event.metadata?.user_agent ?? request.headers.get('user-agent');
 
     // Préparer données log avec anonymisation RGPD
     const activityLog = {
@@ -82,7 +83,7 @@ export async function POST(request: NextRequest) {
       metadata: event.metadata ?? {},
       session_id: event.metadata?.session_duration?.toString() ?? null, // Utiliser comme proxy session
       page_url:
-        (event.metadata?.page_url || request.headers.get('referer')) ?? null,
+        event.metadata?.page_url ?? request.headers.get('referer') ?? null,
       user_agent: simplifyUserAgent(rawUA), // ✅ Anonymisé production
       ip_address: anonymizeIP(rawIP), // ✅ Anonymisée production
     };

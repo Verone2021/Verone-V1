@@ -14,6 +14,7 @@ import { createClient } from '@verone/utils/supabase/server';
 // Node.js runtime
 export const dynamic = 'force-dynamic';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase Json type requires any for JSONB columns
 interface ActivityEvent {
   action: string;
   table_name?: string;
@@ -76,7 +77,7 @@ export async function POST(request: NextRequest) {
 
     // Récupérer IP et User Agent bruts une seule fois
     const rawIP =
-      request.headers.get('x-forwarded-for') ||
+      request.headers.get('x-forwarded-for') ??
       request.headers.get('x-real-ip');
     const rawUA = request.headers.get('user-agent');
 
@@ -93,7 +94,7 @@ export async function POST(request: NextRequest) {
       metadata: event.metadata ?? {},
       session_id: session_id,
       page_url: event.metadata?.page_url ?? null,
-      user_agent: simplifyUserAgent(event.metadata?.user_agent || rawUA), // ✅ Anonymisé production
+      user_agent: simplifyUserAgent(event.metadata?.user_agent ?? rawUA), // ✅ Anonymisé production
       ip_address: anonymizeIP(rawIP), // ✅ Anonymisée production
     }));
 
