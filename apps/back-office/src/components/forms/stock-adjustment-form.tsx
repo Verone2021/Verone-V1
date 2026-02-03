@@ -8,7 +8,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 
 import { useRouter } from 'next/navigation';
 
@@ -91,7 +91,7 @@ export function StockAdjustmentForm({
   onCancel,
 }: StockAdjustmentFormProps) {
   const router = useRouter();
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   // États formulaire
   const [formData, setFormData] = useState<StockAdjustmentFormData>({
@@ -123,7 +123,7 @@ export function StockAdjustmentForm({
 
         if (error) throw error;
 
-        setProducts((data as any) ?? []);
+        setProducts((data as Product[]) ?? []);
       } catch (err) {
         console.error('Erreur chargement produits:', err);
         setError('Impossible de charger la liste des produits');
@@ -334,7 +334,10 @@ export function StockAdjustmentForm({
               onValueChange={value =>
                 setFormData({
                   ...formData,
-                  adjustment_type: value as any,
+                  adjustment_type: value as
+                    | 'increase'
+                    | 'decrease'
+                    | 'correction',
                 })
               }
               disabled={loading}
@@ -394,7 +397,16 @@ export function StockAdjustmentForm({
             <Select
               value={formData.reason}
               onValueChange={value =>
-                setFormData({ ...formData, reason: value as any })
+                setFormData({
+                  ...formData,
+                  reason: value as
+                    | 'inventory_count'
+                    | 'damage'
+                    | 'loss'
+                    | 'found'
+                    | 'correction'
+                    | 'other',
+                })
               }
               disabled={loading}
             >

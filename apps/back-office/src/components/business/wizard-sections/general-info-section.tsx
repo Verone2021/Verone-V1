@@ -32,7 +32,10 @@ export function GeneralInfoSection({
   setFormData,
   onSave: _onSave,
 }: GeneralInfoSectionProps) {
-  const updateField = (field: keyof WizardFormData, value: any) => {
+  const updateField = (
+    field: keyof WizardFormData,
+    value: WizardFormData[keyof WizardFormData]
+  ) => {
     setFormData({
       ...formData,
       [field]: value,
@@ -230,7 +233,13 @@ export function GeneralInfoSection({
           <CategorySelector
             {...({
               value: formData.subcategory_id,
-              onChange: (subcategoryId: any, hierarchy: any) => {
+              onChange: (
+                subcategoryId: string,
+                hierarchy: {
+                  family: { id: string };
+                  category: { id: string };
+                }
+              ) => {
                 updateField('subcategory_id', subcategoryId);
                 updateField('family_id', hierarchy.family.id);
                 updateField('category_id', hierarchy.category.id);
