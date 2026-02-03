@@ -73,7 +73,7 @@ export async function PUT(
     }
 
     // 2. Parse et valider body
-    const body = await request.json();
+    const body: unknown = await request.json();
 
     const validation = UpdatePriceSchema.safeParse(body);
     if (!validation.success) {
@@ -96,21 +96,19 @@ export async function PUT(
     const supabase = await createServerClient();
 
     // 4. Appeler RPC update_google_merchant_price
-    const { data, error } = await (supabase as any).rpc(
-      'update_google_merchant_price',
-      {
-        p_product_id: productId,
-        p_price_ht_cents: priceHtCents,
-        p_tva_rate: tvaRate,
-      }
-    );
+    const { data, error } = await supabase.rpc('update_google_merchant_price', {
+      p_product_id: productId,
+      p_price_ht_cents: priceHtCents,
+      p_tva_rate: tvaRate,
+    });
 
     if (error) {
       console.error('[API] RPC update_google_merchant_price failed:', error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
       return NextResponse.json(
         {
           success: false,
-          error: `Database error: ${error.message}`,
+          error: `Database error: ${errorMessage}`,
         },
         { status: 500 }
       );
@@ -144,7 +142,7 @@ export async function PUT(
         priceTtcCents,
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[API] Update price failed:', error);
 
     return NextResponse.json(

@@ -75,7 +75,7 @@ function extractFirstAttachmentId(rawData: unknown): string | null {
 
   // Qonto stocke les attachments comme un tableau d'objets avec id
   if (Array.isArray(data.attachments) && data.attachments.length > 0) {
-    const first = data.attachments[0];
+    const first: unknown = data.attachments[0];
     if (typeof first === 'object' && first !== null && 'id' in first) {
       return String((first as Record<string, unknown>).id);
     }
@@ -359,20 +359,19 @@ export async function matchTransactionToMultipleOrders(
 
         // Créer l'entrée dans bank_transaction_matches
         // Note: Cast nécessaire car la migration n'est pas encore dans les types générés
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { error: matchError } = await (supabase as any)
-          .from('bank_transaction_matches')
+        const { error: matchError } = await supabase
+          .from('bank_transaction_matches' as never)
           .insert({
             bank_transaction_id: bankTransactionId,
             sales_order_id: orderMatch.orderId,
             matched_amount: matchedAmount,
             matched_by: user.id,
-          });
+          } as never);
 
         if (matchError) {
-          result.errors.push(
-            `Erreur match ${order.order_number}: ${matchError.message}`
-          );
+          const errorMessage =
+            matchError instanceof Error ? matchError.message : String(matchError);
+          result.errors.push(`Erreur match ${order.order_number}: ${errorMessage}`);
           continue;
         }
 

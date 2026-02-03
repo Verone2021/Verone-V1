@@ -115,14 +115,16 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
     `;
 
     // Exécuter le SQL directement
-    const { error } = await (supabase as any).rpc('exec_sql', { sql });
+    const { error } = await supabase.rpc('exec_sql' as never, { sql } as never);
 
     if (error) {
       console.error('[Migration] Error:', error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       return NextResponse.json(
         {
           success: false,
-          error: `Migration failed: ${error.message}`,
+          error: `Migration failed: ${errorMessage}`,
         },
         { status: 500 }
       );
@@ -132,12 +134,14 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
       success: true,
       message: 'Migration Google Merchant executée avec succès!',
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[API] Migration error:', error);
+    const errorMessage =
+      error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
       {
         success: false,
-        error: error.message,
+        error: errorMessage,
       },
       { status: 500 }
     );
