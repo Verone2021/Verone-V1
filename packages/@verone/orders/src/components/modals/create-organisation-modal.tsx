@@ -30,7 +30,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@verone/ui';
 import { Textarea } from '@verone/ui';
 import { AddressAutocomplete, type AddressResult } from '@verone/ui';
-import { Plus, Building2, X } from 'lucide-react';
+import { Plus, Building2 } from 'lucide-react';
 
 interface CreateOrganisationModalProps {
   onOrganisationCreated?: (
@@ -108,7 +108,7 @@ export function CreateOrganisationModal({
 
   const handleInputChange = (
     field: keyof CreateOrganisationData,
-    value: any
+    value: string | boolean | number | null
   ) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
@@ -176,7 +176,12 @@ export function CreateOrganisationModal({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form
+          onSubmit={e => {
+            void handleSubmit(e);
+          }}
+          className="space-y-6"
+        >
           <Tabs defaultValue="general" className="w-full">
             <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="general">Général</TabsTrigger>
@@ -213,7 +218,7 @@ export function CreateOrganisationModal({
                       Type <span className="text-red-500">*</span>
                     </Label>
                     <Select
-                      value={formData.type}
+                      value={formData.type ?? undefined}
                       onValueChange={value => handleInputChange('type', value)}
                     >
                       <SelectTrigger className="border-black">
@@ -286,7 +291,7 @@ export function CreateOrganisationModal({
                   <div className="flex items-center space-x-2">
                     <Checkbox
                       id="is_active"
-                      checked={formData.is_active}
+                      checked={formData.is_active ?? false}
                       onCheckedChange={checked =>
                         handleInputChange('is_active', checked)
                       }
@@ -399,7 +404,7 @@ export function CreateOrganisationModal({
                   <div className="flex items-center space-x-2 pt-4">
                     <Checkbox
                       id="has_different_shipping_address"
-                      checked={formData.has_different_shipping_address}
+                      checked={formData.has_different_shipping_address ?? false}
                       onCheckedChange={checked =>
                         handleInputChange(
                           'has_different_shipping_address',
@@ -602,7 +607,7 @@ export function CreateOrganisationModal({
                   <div className="flex items-center space-x-2">
                     <Checkbox
                       id="prepayment_required"
-                      checked={formData.prepayment_required}
+                      checked={formData.prepayment_required ?? false}
                       onCheckedChange={checked =>
                         handleInputChange('prepayment_required', checked)
                       }

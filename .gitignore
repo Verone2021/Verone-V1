@@ -142,3 +142,8 @@ storybook-static
 .cursor/
 .tasks/INDEX.md
 .claude/logs/
+
+# Business data - Achats et rapports (local uniquement, données sensibles)
+docs/Achat_verone(hors-projet)/
+RAPPORT_*.md
+INVENTAIRE_*.md

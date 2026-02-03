@@ -1,7 +1,5 @@
 'use client';
 
-import { useState } from 'react';
-
 import { Building2, Save, X, Edit, FileText } from 'lucide-react';
 
 import { ButtonV2 } from '@verone/ui';
@@ -12,7 +10,7 @@ interface Organisation {
   id: string;
   legal_name: string;
   trade_name?: string | null;
-  has_different_trade_name?: boolean | null;
+  has_different_trade_name?: boolean;
   siren?: string | null;
   siret?: string | null;
 }
@@ -21,6 +19,15 @@ interface LegalIdentityEditSectionProps {
   organisation: Organisation;
   onUpdate: (updatedOrganisation: Partial<Organisation>) => void;
   className?: string;
+}
+
+// Type pour les données légales éditées
+interface LegalEditData {
+  legal_name?: string;
+  trade_name?: string | null;
+  has_different_trade_name?: boolean;
+  siren?: string | null;
+  siret?: string | null;
 }
 
 export function LegalIdentityEditSection({
@@ -40,16 +47,16 @@ export function LegalIdentityEditSection({
     hasChanges,
   } = useInlineEdit({
     organisationId: organisation.id,
-    onUpdate: updatedData => {
+    onUpdate: (updatedData: Partial<Organisation>) => {
       onUpdate(updatedData);
     },
-    onError: error => {
+    onError: (error: string) => {
       console.error('❌ Erreur mise à jour identité légale:', error);
     },
   });
 
   const section: EditableSection = 'legal';
-  const editData = getEditedData(section);
+  const editData = getEditedData(section) as LegalEditData | null;
   const error = getError(section);
 
   const handleStartEdit = () => {
@@ -64,16 +71,17 @@ export function LegalIdentityEditSection({
 
   const handleSave = async () => {
     // Nettoyer les données avant sauvegarde (trim des espaces)
-    const cleanedData = Object.fromEntries(
-      Object.entries(editData || {}).map(([key, val]) => {
-        if (typeof val === 'string') {
-          const trimmed = val.trim();
-          // Convertir les chaînes vides en null pour les champs optionnels
-          return [key, trimmed === '' ? null : trimmed];
-        }
-        return [key, val];
-      })
-    );
+    const dataToClean = editData ?? {};
+    const cleanedData: Record<string, unknown> = {};
+    for (const [key, val] of Object.entries(dataToClean)) {
+      if (typeof val === 'string') {
+        const trimmed = val.trim();
+        // Convertir les chaînes vides en null pour les champs optionnels
+        cleanedData[key] = trimmed === '' ? null : trimmed;
+      } else {
+        cleanedData[key] = val;
+      }
+    }
 
     // Mettre à jour avec les données nettoyées
     updateEditedData(section, cleanedData);
@@ -82,11 +90,12 @@ export function LegalIdentityEditSection({
     await new Promise(resolve => setTimeout(resolve, 0));
 
     // Récupérer les données nettoyées pour validation
-    const dataToValidate = getEditedData(section);
+    const dataToValidate = getEditedData(section) as LegalEditData | null;
 
     // Validation SIREN (9 chiffres)
-    if (dataToValidate?.siren?.trim()) {
-      const sirenClean = dataToValidate.siren.replace(/\s/g, '');
+    const sirenValue = dataToValidate?.siren;
+    if (sirenValue && typeof sirenValue === 'string' && sirenValue.trim()) {
+      const sirenClean = sirenValue.replace(/\s/g, '');
       if (!/^\d{9}$/.test(sirenClean)) {
         updateEditedData(section, {
           _error: 'Le SIREN doit contenir exactement 9 chiffres',
@@ -96,8 +105,9 @@ export function LegalIdentityEditSection({
     }
 
     // Validation SIRET (14 chiffres)
-    if (dataToValidate?.siret?.trim()) {
-      const siretClean = dataToValidate.siret.replace(/\s/g, '');
+    const siretValue = dataToValidate?.siret;
+    if (siretValue && typeof siretValue === 'string' && siretValue.trim()) {
+      const siretClean = siretValue.replace(/\s/g, '');
       if (!/^\d{14}$/.test(siretClean)) {
         updateEditedData(section, {
           _error: 'Le SIRET doit contenir exactement 14 chiffres',
@@ -107,9 +117,10 @@ export function LegalIdentityEditSection({
     }
 
     // Validation trade_name si has_different_trade_name = true
+    const tradeName = dataToValidate?.trade_name;
     if (
       dataToValidate?.has_different_trade_name &&
-      !dataToValidate?.trade_name?.trim()
+      (!tradeName || (typeof tradeName === 'string' && !tradeName.trim()))
     ) {
       updateEditedData(section, {
         _error:
@@ -118,10 +129,7 @@ export function LegalIdentityEditSection({
       return;
     }
 
-    const success = await saveChanges(section);
-    if (success) {
-      console.log('✅ Identité légale mise à jour avec succès');
-    }
+    await saveChanges(section);
   };
 
   const handleCancel = () => {
@@ -168,7 +176,9 @@ export function LegalIdentityEditSection({
             <ButtonV2
               variant="secondary"
               size="sm"
-              onClick={handleSave}
+              onClick={() => {
+                void handleSave();
+              }}
               disabled={!hasChanges(section) || isSaving(section)}
             >
               <Save className="h-3 w-3 mr-1" />

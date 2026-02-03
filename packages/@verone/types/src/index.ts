@@ -24,6 +24,25 @@ export type Contact = Database['public']['Tables']['contacts']['Row'];
 export type Product = Database['public']['Tables']['products']['Row'];
 export type Collection = Database['public']['Tables']['collections']['Row'];
 
+// Types organisations (base DB)
+export type OrganisationRow =
+  Database['public']['Tables']['organisations']['Row'];
+export type OrganisationInsert =
+  Database['public']['Tables']['organisations']['Insert'];
+export type OrganisationUpdate =
+  Database['public']['Tables']['organisations']['Update'];
+
+// Type Organisation avec champ "name" calculé (trade_name || legal_name)
+export type Organisation = OrganisationRow & {
+  name: string; // Nom d'affichage calculé
+  _count?: {
+    products: number; // Comptage produits pour fournisseurs
+  };
+  enseigne?: {
+    name: string; // Nom de l'enseigne (jointure enseignes.name)
+  } | null;
+};
+
 // Types créations
 export type CreateCollectionData =
   Database['public']['Tables']['collections']['Insert'];

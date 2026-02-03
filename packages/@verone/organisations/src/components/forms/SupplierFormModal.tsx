@@ -5,6 +5,11 @@ import { useState } from 'react';
 import type { Organisation } from '@verone/organisations/hooks';
 import { useSuppliers } from '@verone/organisations/hooks';
 import type { SupplierSegmentType } from '@verone/suppliers/components/badges/SupplierSegmentBadge';
+import type { Database } from '@verone/types';
+
+// Type DB pour les opérations Supabase (lowercase: strategic, preferred, approved, commodity, artisan)
+type SupplierSegmentDbType =
+  Database['public']['Enums']['supplier_segment_type'];
 
 import { SupplierSegmentSelect } from './supplier-segment-select';
 import type { OrganisationFormData } from './unified-organisation-form';
@@ -88,8 +93,9 @@ export function SupplierFormModal({
         currency: supplierData.currency || 'EUR',
         payment_terms: supplierData.payment_terms || undefined,
 
-        // Taxonomie fournisseur
-        supplier_segment: supplierData.supplier_segment || undefined,
+        // Taxonomie fournisseur (convertir UI uppercase → DB lowercase)
+        supplier_segment: (supplierData.supplier_segment?.toLowerCase() ??
+          null) as SupplierSegmentDbType | null,
       });
     } else {
       // Création
@@ -120,8 +126,9 @@ export function SupplierFormModal({
         currency: supplierData.currency || 'EUR',
         payment_terms: supplierData.payment_terms || undefined,
 
-        // Taxonomie fournisseur
-        supplier_segment: supplierData.supplier_segment || undefined,
+        // Taxonomie fournisseur (convertir UI uppercase → DB lowercase)
+        supplier_segment: (supplierData.supplier_segment?.toLowerCase() ??
+          null) as SupplierSegmentDbType | null,
       });
     }
 

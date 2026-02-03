@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
 
 import {
   useInlineEdit,
   type EditableSection,
 } from '@verone/common/hooks/use-inline-edit';
 import { Button } from '@verone/ui';
-import { cn, formatPrice } from '@verone/utils';
+import { cn } from '@verone/utils';
 import {
   CreditCard,
   Save,
@@ -29,7 +29,7 @@ interface Organisation {
   ownership_type?: 'succursale' | 'franchise' | null;
   enseigne_id?: string | null;
   enseigne?: {
-    legal_name?: string;
+    name: string;
   } | null;
 }
 
@@ -38,6 +38,15 @@ interface CommercialEditSectionProps {
   onUpdate: (updatedOrganisation: Partial<Organisation>) => void;
   className?: string;
   organisationType: 'supplier' | 'service_provider' | 'customer';
+}
+
+// Type pour les données commerciales éditées
+interface CommercialEditData {
+  payment_terms?: string | null;
+  delivery_time_days?: number | null;
+  minimum_order_amount?: number | null;
+  currency?: string | null;
+  prepayment_required?: boolean | null;
 }
 
 export function CommercialEditSection({
@@ -70,16 +79,16 @@ export function CommercialEditSection({
     hasChanges,
   } = useInlineEdit({
     organisationId: organisation.id,
-    onUpdate: updatedData => {
+    onUpdate: (updatedData: Partial<Organisation>) => {
       onUpdate(updatedData);
     },
-    onError: error => {
+    onError: (error: string) => {
       console.error('❌ Erreur mise à jour conditions commerciales:', error);
     },
   });
 
   const section: EditableSection = 'commercial';
-  const editData = getEditedData(section);
+  const editData = getEditedData(section) as CommercialEditData | null;
   const error = getError(section);
 
   const handleStartEdit = () => {
@@ -104,10 +113,7 @@ export function CommercialEditSection({
       return;
     }
 
-    const success = await saveChanges(section);
-    if (success) {
-      console.log('✅ Conditions commerciales mises à jour avec succès');
-    }
+    await saveChanges(section);
   };
 
   const handleCancel = () => {
@@ -115,10 +121,10 @@ export function CommercialEditSection({
   };
 
   const handleFieldChange = (
-    field: string,
+    field: keyof CommercialEditData,
     value: string | number | boolean
   ) => {
-    let processedValue: any = value;
+    let processedValue: string | number | boolean | null = value;
 
     if (field === 'delivery_time_days') {
       processedValue = parseInt(value.toString()) || 0;
@@ -128,7 +134,7 @@ export function CommercialEditSection({
       processedValue = parseFloat(value.toString()) || 0;
     }
 
-    updateEditedData(section, { [field]: processedValue || null });
+    updateEditedData(section, { [field]: processedValue });
   };
 
   // Options de devises
@@ -167,7 +173,9 @@ export function CommercialEditSection({
             </Button>
             <Button
               size="sm"
-              onClick={handleSave}
+              onClick={() => {
+                void handleSave();
+              }}
               disabled={!hasChanges(section) || isSaving(section)}
             >
               <Save className="h-3 w-3 mr-1" />
@@ -276,8 +284,8 @@ export function CommercialEditSection({
           {/* Résumé des conditions en temps réel */}
           {editData &&
             (editData.payment_terms ||
-              editData.delivery_time_days > 0 ||
-              editData.minimum_order_amount > 0) && (
+              (editData.delivery_time_days ?? 0) > 0 ||
+              (editData.minimum_order_amount ?? 0) > 0) && (
               <div className="bg-blue-50 p-2 rounded-lg border border-blue-200">
                 <h4 className="text-xs font-medium text-blue-800 mb-1.5 flex items-center">
                   <Package className="h-3 w-3 mr-1" />
@@ -298,21 +306,21 @@ export function CommercialEditSection({
                     </div>
                   )}
 
-                  {editData.delivery_time_days > 0 && (
+                  {(editData.delivery_time_days ?? 0) > 0 && (
                     <div className="flex justify-between">
                       <span className="text-blue-700">Livraison:</span>
                       <span className="font-medium text-blue-800">
                         {editData.delivery_time_days} j
-                        {editData.delivery_time_days > 1 ? 's' : ''}
+                        {(editData.delivery_time_days ?? 0) > 1 ? 's' : ''}
                       </span>
                     </div>
                   )}
 
-                  {editData.minimum_order_amount > 0 && (
+                  {(editData.minimum_order_amount ?? 0) > 0 && (
                     <div className="flex justify-between">
                       <span className="text-blue-700">Min:</span>
                       <span className="font-medium text-blue-800">
-                        {editData.minimum_order_amount.toFixed(2)}{' '}
+                        {(editData.minimum_order_amount ?? 0).toFixed(2)}{' '}
                         {editData.currency}
                       </span>
                     </div>
@@ -371,13 +379,14 @@ export function CommercialEditSection({
                 <div className="text-sm text-blue-800">
                   <p className="font-medium mb-1">
                     Restaurant appartenant à l'enseigne{' '}
-                    {organisation.enseigne?.legal_name
-                      ? `"${organisation.enseigne.legal_name}"`
+                    {organisation.enseigne?.name
+                      ? `"${organisation.enseigne.name}"`
                       : 'parent'}
                   </p>
                   <p className="text-xs">
                     Les conditions commerciales sont définies au niveau de
-                    l'enseigne et ne peuvent pas être modifiées individuellement.
+                    l'enseigne et ne peuvent pas être modifiées
+                    individuellement.
                   </p>
                 </div>
               </div>
