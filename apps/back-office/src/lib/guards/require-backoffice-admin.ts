@@ -26,7 +26,7 @@ import { NextResponse } from 'next/server';
 import type { User } from '@supabase/supabase-js';
 import { createServerClient } from '@verone/utils/supabase/server';
 
-import type { Database } from '@/types/supabase';
+import type { Database } from '@verone/types';
 
 type UserRoleType = Database['public']['Enums']['user_role_type'];
 

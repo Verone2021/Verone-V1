@@ -11,7 +11,7 @@ import { NextResponse } from 'next/server';
 import { createAdminClient } from '@verone/utils/supabase/server';
 
 import { requireBackofficeAdmin } from '@/lib/guards';
-import type { Database } from '@/types/supabase';
+import type { Database } from '@verone/types';
 
 type UserAppRoleRow = Database['public']['Tables']['user_app_roles']['Row'];
 type UserProfileRow = Database['public']['Tables']['user_profiles']['Row'];
