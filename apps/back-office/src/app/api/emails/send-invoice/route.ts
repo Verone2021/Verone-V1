@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
 
     // Préparer le contenu de l'email
     const emailSubject =
-      subject || `Facture ${invoice.invoice_number} - Verone`;
+      subject ?? `Facture ${invoice.invoice_number} - Verone`;
 
     const emailHtml = `
 <!DOCTYPE html>

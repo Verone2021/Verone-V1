@@ -124,7 +124,7 @@ Référence: ${submissionId.substring(0, 8)}
 
 export async function POST(request: NextRequest) {
   try {
-    const body: FormReplyRequest = await request.json();
+    const body = (await request.json()) as FormReplyRequest;
 
     // Validation
     if (

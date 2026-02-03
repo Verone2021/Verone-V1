@@ -49,7 +49,7 @@ interface NotifyEnseigneOrderRequest {
  */
 export async function POST(request: NextRequest) {
   try {
-    const body: NotifyEnseigneOrderRequest = await request.json();
+    const body = (await request.json()) as NotifyEnseigneOrderRequest;
 
     const {
       orderNumber,
