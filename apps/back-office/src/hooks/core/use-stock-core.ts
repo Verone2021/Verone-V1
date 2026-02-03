@@ -92,7 +92,11 @@ export interface StockMovement {
   updated_at: string;
 
   // Relations
-  products?: any;
+  products?: {
+    id: string;
+    sku: string | null;
+    name: string;
+  } | null;
   sales_channels?: {
     id: string;
     name: string;
@@ -461,7 +465,8 @@ export function useStockCore({
           channel_id: finalChannelId, // 🆕 Auto-injecté si OUT sale
         };
 
-        const { data, error: insertError } = await supabase
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- Supabase dynamic select with relations
+        const { data: insertedData, error: insertError } = await supabase
           .from('stock_movements')
           .insert(movementData)
           .select(
@@ -483,21 +488,24 @@ export function useStockCore({
           .single();
 
         if (insertError) throw insertError;
-        if (!data) throw new Error('Mouvement créé mais non retourné');
+        if (!insertedData) throw new Error('Mouvement créé mais non retourné');
+
+        const movement = insertedData as StockMovement;
 
         console.warn(
-          `✅ [useStockCore] Mouvement créé: ${data.id} (${params.movement_type}, channel=${finalChannelId ?? 'NULL'})`
+          `✅ [useStockCore] Mouvement créé: ${movement.id} (${params.movement_type}, channel=${finalChannelId ?? 'NULL'})`
         );
 
         // Trigger refetch automatique (mouvements sont mis à jour via DB triggers)
         await refetch();
 
-        return data as StockMovement;
+        return movement;
       } catch (err) {
         console.error('❌ [useStockCore] Erreur création mouvement:', err);
         throw err;
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- refetch is defined later but captured in closure, adding it would cause circular dependency
     [supabase, channelId, userId, getStockItem]
   );
 

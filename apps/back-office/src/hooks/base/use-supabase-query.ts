@@ -53,11 +53,13 @@ export function useSupabaseQuery<T>(options: QueryOptions<T>): QueryState<T> {
 
       // Apply filters
       if (options.filters) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- Dynamic query builder
         query = options.filters(query);
       }
 
       // Apply ordering
       if (options.orderBy) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access -- Dynamic query builder
         query = query.order(options.orderBy.column, {
           ascending: options.orderBy.ascending ?? true,
         });
@@ -65,9 +67,11 @@ export function useSupabaseQuery<T>(options: QueryOptions<T>): QueryState<T> {
 
       // Apply limit
       if (options.limit) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access -- Dynamic query builder
         query = query.limit(options.limit);
       }
 
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- Dynamic query result
       const { data: result, error: fetchError } = await query;
 
       if (fetchError) throw fetchError;
@@ -83,6 +87,7 @@ export function useSupabaseQuery<T>(options: QueryOptions<T>): QueryState<T> {
     } finally {
       setLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Individual properties listed to avoid unnecessary re-renders
   }, [
     supabase,
     options.tableName,

@@ -13,6 +13,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@verone/utils/supabase/client';
 
+interface ApiErrorResponse {
+  error?: string;
+}
+
 export interface FormMessage {
   id: string;
   submission_id: string;
@@ -129,7 +133,7 @@ export function useFormMessages(submissionId: string): UseFormMessagesReturn {
         );
 
         if (!response.ok) {
-          const errorData = await response.json();
+          const errorData = (await response.json()) as ApiErrorResponse;
           throw new Error(
             errorData.error ?? "Erreur lors de l'ajout du message"
           );
