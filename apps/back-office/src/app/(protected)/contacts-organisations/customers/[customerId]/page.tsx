@@ -54,6 +54,22 @@ import {
   Wallet,
 } from 'lucide-react';
 
+// Interface pour les images de produit (Supabase join)
+interface ProductImageRow {
+  public_url: string | null;
+  is_primary: boolean;
+}
+
+// Interface pour les produits retournés par Supabase
+interface ProductWithImages {
+  id: string;
+  name: string;
+  sku: string | null;
+  product_status: string;
+  created_at: string | null;
+  product_images: ProductImageRow[] | null;
+}
+
 // Interface pour les produits du client
 interface CustomerProduct {
   id: string;
@@ -61,7 +77,7 @@ interface CustomerProduct {
   sku: string | null;
   product_status: string;
   created_at: string | null;
-  primary_image_url?: string;
+  primary_image_url?: string | null;
 }
 
 // Interface pour les canaux de vente de l'organisation
@@ -124,15 +140,15 @@ export default function CustomerDetailPage() {
           .order('created_at', { ascending: false });
 
         // Mapper les données avec l'image primaire
-        const mappedProducts: CustomerProduct[] = (data ?? []).map(p => ({
+        const products = data as ProductWithImages[] | null;
+        const mappedProducts: CustomerProduct[] = (products ?? []).map(p => ({
           id: p.id,
           name: p.name,
           sku: p.sku,
           product_status: p.product_status,
           created_at: p.created_at,
           primary_image_url:
-            (p.product_images as any[])?.find((img: any) => img.is_primary)
-              ?.public_url ?? null,
+            p.product_images?.find(img => img.is_primary)?.public_url ?? null,
         }));
         setCustomerProducts(mappedProducts);
       } catch (err) {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
@@ -29,6 +29,12 @@ import {
   Truck,
   User,
 } from 'lucide-react';
+
+interface DeliveryNoteApiResponse {
+  success: boolean;
+  error?: string;
+  delivery_note?: DeliveryNoteDetail;
+}
 
 interface DeliveryNoteDetail {
   id: string;
@@ -94,31 +100,31 @@ export default function DeliveryNoteDetailPage(): React.ReactNode {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchDeliveryNote = async (): Promise<void> => {
+  const fetchDeliveryNote = useCallback(async (): Promise<void> => {
     setLoading(true);
     setError(null);
 
     try {
       const response = await fetch(`/api/delivery-notes/${id}`);
-      const data = await response.json();
+      const data = (await response.json()) as DeliveryNoteApiResponse;
 
       if (!response.ok || !data.success) {
         throw new Error(data.error ?? 'Failed to fetch delivery note');
       }
 
-      setDeliveryNote(data.delivery_note);
+      setDeliveryNote(data.delivery_note ?? null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur inconnue');
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
   useEffect(() => {
     if (id) {
       void fetchDeliveryNote();
     }
-  }, [id]);
+  }, [id, fetchDeliveryNote]);
 
   if (loading) {
     return (
