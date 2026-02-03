@@ -284,8 +284,10 @@ export function CustomersTab() {
               organisation={
                 {
                   ...customer,
-                  type: 'customer',
-                } as any
+                  type: 'customer' as const,
+                } as unknown as Parameters<
+                  typeof OrganisationCard
+                >[0]['organisation']
               }
               activeTab={activeTab}
               onArchive={() => {
@@ -305,12 +307,12 @@ export function CustomersTab() {
         <Card>
           <CardContent style={{ padding: spacing[3] }}>
             <OrganisationListView
-              organisations={
-                displayedCustomers.map(c => ({
-                  ...c,
-                  type: 'customer' as const,
-                })) as any
-              }
+              organisations={displayedCustomers.map(c => ({
+                ...c,
+                type: 'customer' as const,
+              })) as unknown as Parameters<
+                typeof OrganisationListView
+              >[0]['organisations']}
               activeTab={activeTab}
               onArchive={id => {
                 const customer = displayedCustomers.find(c => c.id === id);
@@ -348,7 +350,7 @@ export function CustomersTab() {
           });
           setIsModalOpen(false);
         }}
-        customer={selectedCustomer as any}
+        customer={selectedCustomer ?? undefined}
         mode={selectedCustomer ? 'edit' : 'create'}
       />
     </div>

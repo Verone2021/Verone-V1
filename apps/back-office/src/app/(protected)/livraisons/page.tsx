@@ -47,6 +47,12 @@ interface DeliveryNote {
   } | null;
 }
 
+interface DeliveryNotesApiResponse {
+  success: boolean;
+  delivery_notes: DeliveryNote[];
+  error?: string;
+}
+
 function formatDate(dateString: string): string {
   return new Intl.DateTimeFormat('fr-FR', {
     day: '2-digit',
@@ -68,7 +74,7 @@ export default function LivraisonsPage(): React.ReactNode {
 
     try {
       const response = await fetch('/api/delivery-notes?limit=100');
-      const data = await response.json();
+      const data = (await response.json()) as DeliveryNotesApiResponse;
 
       if (!response.ok || !data.success) {
         throw new Error(data.error ?? 'Failed to fetch delivery notes');

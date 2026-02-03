@@ -45,6 +45,13 @@ interface QuickVariantFormData {
   image_url: string;
 }
 
+interface CreatedProduct {
+  id: string;
+  name: string;
+  sku?: string;
+  [key: string]: unknown;
+}
+
 interface QuickVariantFormProps {
   isOpen: boolean;
   onClose: () => void;
@@ -52,7 +59,7 @@ interface QuickVariantFormProps {
   baseProductId: string;
   groupName: string;
   variantType: 'color' | 'size' | 'material' | 'pattern';
-  onProductCreated: (product: any) => void;
+  onProductCreated: (product: CreatedProduct) => void;
 }
 
 export function QuickVariantForm({
@@ -255,11 +262,11 @@ export function QuickVariantForm({
         await supabase.from('product_images').insert([
           {
             product_id: newProduct.id,
-            image_url: formData.image_url,
+            storage_path: formData.image_url,
             is_primary: true,
             display_order: 1,
-          },
-        ] as any);
+          } as never,
+        ]);
       }
 
       toast({
@@ -269,11 +276,12 @@ export function QuickVariantForm({
 
       onProductCreated(newProduct);
       onClose();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Form submission error:', error);
       toast({
         title: '❌ Erreur',
-        description: error.message ?? 'Une erreur est survenue',
+        description:
+          error instanceof Error ? error.message : 'Une erreur est survenue',
         variant: 'destructive',
       });
     } finally {

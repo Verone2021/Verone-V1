@@ -40,6 +40,11 @@ interface AffiliateData {
   linkme_commission_rate: number;
 }
 
+interface ApiErrorResponse {
+  success: false;
+  message?: string;
+}
+
 /**
  * Modal unifié de configuration utilisateur LinkMe
  * - Onglet Profil : prénom, nom, téléphone
@@ -206,7 +211,7 @@ export function UserConfigModal({
         });
 
         if (!emailResponse.ok) {
-          const data = await emailResponse.json();
+          const data = (await emailResponse.json()) as ApiErrorResponse;
           setErrors({ email: data.message ?? 'Erreur modification email' });
           setIsUpdatingEmail(false);
           return;
@@ -256,7 +261,7 @@ export function UserConfigModal({
         }),
       });
 
-      const data = await response.json();
+      const data = (await response.json()) as ApiErrorResponse;
 
       if (!response.ok) {
         throw new Error(data.message ?? 'Erreur lors de la réinitialisation');

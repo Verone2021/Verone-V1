@@ -38,6 +38,11 @@ interface UserEditModalProps {
   onClose: () => void;
 }
 
+interface ApiErrorResponse {
+  success: false;
+  message?: string;
+}
+
 /**
  * Modal de modification d'un utilisateur LinkMe
  */
@@ -158,7 +163,7 @@ export function UserEditModal({ isOpen, user, onClose }: UserEditModalProps) {
         });
 
         if (!emailResponse.ok) {
-          const errorData = await emailResponse.json();
+          const errorData = (await emailResponse.json()) as ApiErrorResponse;
           throw new Error(
             errorData.message ?? "Erreur lors de la modification de l'email"
           );
@@ -182,7 +187,7 @@ export function UserEditModal({ isOpen, user, onClose }: UserEditModalProps) {
         );
 
         if (!passwordResponse.ok) {
-          const errorData = await passwordResponse.json();
+          const errorData = (await passwordResponse.json()) as ApiErrorResponse;
           throw new Error(
             errorData.message ??
               'Erreur lors de la modification du mot de passe'

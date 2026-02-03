@@ -96,7 +96,12 @@ export default function ProfilePage() {
       if (profileError) {
         console.error('Error fetching profile:', profileError);
       } else {
-        setProfile(profileData as any);
+        setProfile({
+          ...profileData,
+          scopes: profileData.scopes ?? [],
+          created_at: profileData.created_at ?? new Date().toISOString(),
+          updated_at: profileData.updated_at ?? new Date().toISOString(),
+        });
         // Update edit data with profile info
         setEditData(prevData => ({
           ...prevData,
@@ -173,7 +178,7 @@ export default function ProfilePage() {
           .insert({
             user_id: user.id,
             ...sanitizedData,
-          } as any);
+          } as never);
 
         if (createError) {
           console.error('❌ Erreur création profil:', {
@@ -223,7 +228,12 @@ export default function ProfilePage() {
         .single();
 
       if (updatedProfile) {
-        setProfile(updatedProfile as any);
+        setProfile({
+          ...updatedProfile,
+          scopes: updatedProfile.scopes ?? [],
+          created_at: updatedProfile.created_at ?? new Date().toISOString(),
+          updated_at: updatedProfile.updated_at ?? new Date().toISOString(),
+        });
       }
 
       setIsEditing(false);

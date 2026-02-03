@@ -90,7 +90,7 @@
 | LINK-240031 | 09/07/2024 | Pokawa BFM            | 1,997.50 € | 2,697.00 €  | Expédiée |
 | LINK-240050 | 12/07/2024 | Pokawa Vincennes 2    | 3,053.24 € | 3,843.89 €  | Expédiée |
 | LINK-240064 | 21/07/2024 | Pokawa Odysséum       | 476.40 €   | 630.48 €    | Expédiée |
-| LINK-240065 | 21/07/2024 | Client non spécifié   | 635.20 €   | 821.04 €    | Expédiée |
+| LINK-240065 | 21/07/2024 | (Client non renseigné dans BDD)   | 635.20 €   | 821.04 €    | Expédiée |
 | LINK-240066 | 21/07/2024 | Pokawa Nice           | 397.00 €   | 476.40 €    | Expédiée |
 | LINK-240038 | 26/07/2024 | Pokawa Neyrpic        | 5,424.03 € | 7,048.84 €  | Expédiée |
 | LINK-240068 | 28/07/2024 | Pokawa Lyon Mercière  | 31.76 €    | 38.11 €     | Expédiée |
@@ -328,7 +328,7 @@
 | LINK-240063 | 04/07/2024 | Pokawa Angers Centre        | 30  | 15.88 € | 476.40 €   |
 | LINK-240050 | 12/07/2024 | Pokawa Vincennes 2          | 50  | 15.88 € | 794.00 €   |
 | LINK-240064 | 21/07/2024 | Pokawa Odysséum             | 30  | 15.88 € | 476.40 €   |
-| LINK-240065 | 21/07/2024 | Client non spécifié         | 40  | 15.88 € | 635.20 €   |
+| LINK-240065 | 21/07/2024 | (Client non renseigné dans BDD)         | 40  | 15.88 € | 635.20 €   |
 | LINK-240066 | 21/07/2024 | Pokawa Nice                 | 25  | 15.88 € | 397.00 €   |
 | LINK-240038 | 26/07/2024 | Pokawa Neyrpic              | 100 | 15.88 € | 1,588.00 € |
 | LINK-240068 | 28/07/2024 | Pokawa Lyon Mercière        | 2   | 15.88 € | 31.76 €    |
