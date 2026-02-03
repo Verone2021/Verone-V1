@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, type ComponentProps } from 'react';
 import Image from 'next/image';
 
 import { useRouter } from 'next/navigation';
@@ -11,6 +11,9 @@ import { useSubcategories } from '@verone/categories';
 import type { FamilyWithStats } from '@verone/categories';
 import type { CategoryWithChildren } from '@verone/categories';
 import type { SubcategoryWithDetails } from '@verone/categories';
+// Note: Les hooks useFamilies/useCategories/useSubcategories génèrent automatiquement le slug
+// à partir du name, mais leurs types l'exigent. Les casts ci-dessous sont nécessaires car
+// les formulaires ne fournissent pas le slug (il sera généré).
 import { Badge } from '@verone/ui';
 import { ButtonUnified, IconButton } from '@verone/ui';
 import { cn } from '@verone/utils';
@@ -226,51 +229,55 @@ export default function CategoriesPage() {
   };
 
   // Gestionnaire de soumission de formulaire
+  // Note: Les hooks génèrent le slug automatiquement, on utilise Parameters<> pour le type exact
   const handleFormSubmit = async (formData: unknown): Promise<void> => {
     try {
       if (formState.mode === 'create') {
         switch (formState.type) {
           case 'family':
-            /* eslint-disable @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any */
-            await createFamily(formData as any);
-            /* eslint-enable @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any */
+            await createFamily(formData as Parameters<typeof createFamily>[0]);
             break;
           case 'category':
             if (!formState.parentId) break;
-            /* eslint-disable @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any */
             await createCategory({
-              ...(formData as any),
+              ...(formData as Omit<
+                Parameters<typeof createCategory>[0],
+                'family_id'
+              >),
               family_id: formState.parentId,
             });
-            /* eslint-enable @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any */
             break;
           case 'subcategory':
             if (!formState.parentId) break;
-            /* eslint-disable @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any */
             await createSubcategory({
-              ...(formData as any),
+              ...(formData as Omit<
+                Parameters<typeof createSubcategory>[0],
+                'category_id'
+              >),
               category_id: formState.parentId,
             });
-            /* eslint-enable @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any */
             break;
         }
       } else {
         if (!formState.data) return;
         switch (formState.type) {
           case 'family':
-            /* eslint-disable @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any */
-            await updateFamily(formState.data.id, formData as any);
-            /* eslint-enable @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any */
+            await updateFamily(
+              formState.data.id,
+              formData as Parameters<typeof updateFamily>[1]
+            );
             break;
           case 'category':
-            /* eslint-disable @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any */
-            await updateCategory(formState.data.id, formData as any);
-            /* eslint-enable @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any */
+            await updateCategory(
+              formState.data.id,
+              formData as Parameters<typeof updateCategory>[1]
+            );
             break;
           case 'subcategory':
-            /* eslint-disable @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any */
-            await updateSubcategory(formState.data.id, formData as any);
-            /* eslint-enable @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any */
+            await updateSubcategory(
+              formState.data.id,
+              formData as Parameters<typeof updateSubcategory>[1]
+            );
             break;
         }
       }
@@ -862,8 +869,7 @@ export default function CategoriesPage() {
             });
           }}
           initialData={
-            /* eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment */
-            formState.data as any
+            formState.data as ComponentProps<typeof FamilyForm>['initialData']
           }
           mode={formState.mode}
         />
@@ -882,11 +888,13 @@ export default function CategoriesPage() {
             });
           }}
           initialData={
-            /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment */
             formState.mode === 'create' && formState.parentId
-              ? ({ family_id: formState.parentId } as any)
-              : (formState.data as any)
-            /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment */
+              ? ({ family_id: formState.parentId } as ComponentProps<
+                  typeof CategoryForm
+                >['initialData'])
+              : (formState.data as ComponentProps<
+                  typeof CategoryForm
+                >['initialData'])
           }
           mode={formState.mode}
           families={families?.map(f => ({ id: f.id, name: f.name })) ?? []}
@@ -906,13 +914,13 @@ export default function CategoriesPage() {
             });
           }}
           initialData={
-            /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment */
             formState.mode === 'create' && formState.parentId
               ? ({
                   category_id: formState.parentId,
-                } as any)
-              : (formState.data as any)
-            /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment */
+                } as ComponentProps<typeof SubcategoryForm>['initialData'])
+              : (formState.data as ComponentProps<
+                  typeof SubcategoryForm
+                >['initialData'])
           }
           mode={formState.mode}
           categories={

@@ -1,5 +1,6 @@
 'use client';
 
+import type { ComponentProps } from 'react';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import type { Database } from '@verone/types';
 
@@ -579,7 +580,11 @@ export default function ProductDetailPage() {
             <ProductImageGallery
               productId={product.id}
               productName={product.name}
-              productStatus={product.product_status as any}
+              productStatus={
+                product.product_status as ComponentProps<
+                  typeof ProductImageGallery
+                >['productStatus']
+              }
               compact={false}
               onManagePhotos={() => setShowPhotosModal(true)}
             />
@@ -624,7 +629,9 @@ export default function ProductDetailPage() {
                 id: product.id,
                 product_status: product.product_status,
               }}
-              onUpdate={handleProductUpdate as any}
+              onUpdate={updates => {
+                void handleProductUpdate(updates).catch(console.error);
+              }}
             />
 
             <CompletionStatusCompact
@@ -665,7 +672,9 @@ export default function ProductDetailPage() {
                 subcategory_id: product.subcategory_id,
                 variant_group_id: product.variant_group_id,
               }}
-              onUpdate={handleProductUpdate as any}
+              onUpdate={async updates => {
+                await handleProductUpdate(updates as Partial<ProductRow>);
+              }}
             />
 
             {/* Section: Attribution client (produit sur mesure) */}
@@ -790,9 +799,11 @@ export default function ProductDetailPage() {
                 id: product.id,
                 description: product.description,
                 technical_description: product.technical_description,
-                selling_points: product.selling_points as any,
+                selling_points: product.selling_points as string[] | null,
               }}
-              onUpdate={handleProductUpdate as any}
+              onUpdate={updates => {
+                void handleProductUpdate(updates).catch(console.error);
+              }}
             />
           </ProductDetailAccordion>
 
@@ -857,14 +868,30 @@ export default function ProductDetailPage() {
             }
           >
             <SupplierEditSection
-              product={product as any}
-              variantGroup={(product.variant_group ?? undefined) as any}
-              onUpdate={handleProductUpdate as any}
+              product={
+                product as ComponentProps<typeof SupplierEditSection>['product']
+              }
+              variantGroup={
+                (product.variant_group ?? undefined) as ComponentProps<
+                  typeof SupplierEditSection
+                >['variantGroup']
+              }
+              onUpdate={updates => {
+                void handleProductUpdate(updates).catch(console.error);
+              }}
             />
             <WeightEditSection
-              product={product as any}
-              variantGroup={(product.variant_group ?? undefined) as any}
-              onUpdate={handleProductUpdate as any}
+              product={
+                product as ComponentProps<typeof WeightEditSection>['product']
+              }
+              variantGroup={
+                (product.variant_group ?? undefined) as ComponentProps<
+                  typeof WeightEditSection
+                >['variantGroup']
+              }
+              onUpdate={updates => {
+                void handleProductUpdate(updates).catch(console.error);
+              }}
               className="mt-4"
             />
           </ProductDetailAccordion>
@@ -893,11 +920,13 @@ export default function ProductDetailPage() {
               product={
                 {
                   id: product.id,
-                  condition: (product as any).condition,
+                  condition: product.condition,
                   min_stock: product.min_stock ?? undefined,
-                } as any
-              } // TypeScript types incomplete, condition exists in DB
-              onUpdate={handleProductUpdate as any}
+                } as ComponentProps<typeof StockEditSection>['product']
+              }
+              onUpdate={updates => {
+                void handleProductUpdate(updates).catch(console.error);
+              }}
             />
           </ProductDetailAccordion>
 
@@ -915,7 +944,9 @@ export default function ProductDetailPage() {
                 variant_group_id: product.variant_group_id ?? undefined,
               }}
               variantGroup={product.variant_group ?? null}
-              onUpdate={handleProductUpdate as any}
+              onUpdate={updates => {
+                void handleProductUpdate(updates).catch(console.error);
+              }}
             />
           </ProductDetailAccordion>
 
@@ -937,7 +968,13 @@ export default function ProductDetailPage() {
                 </a>
               </div>
             )}
-            <ProductFixedCharacteristics product={product as any} />
+            <ProductFixedCharacteristics
+              product={
+                product as ComponentProps<
+                  typeof ProductFixedCharacteristics
+                >['product']
+              }
+            />
 
             <div className="mt-4">
               <ButtonUnified
@@ -969,7 +1006,9 @@ export default function ProductDetailPage() {
                 gtin: product.gtin ?? undefined,
                 condition: product.condition ?? undefined,
               }}
-              onUpdate={handleProductUpdate as any}
+              onUpdate={updates => {
+                void handleProductUpdate(updates).catch(console.error);
+              }}
             />
           </ProductDetailAccordion>
 
