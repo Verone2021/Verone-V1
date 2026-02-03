@@ -51,13 +51,15 @@ export default function InventairePage() {
   const [stockLevelFilter, setStockLevelFilter] = useState<
     'all' | 'critical' | 'low' | 'sufficient'
   >('all');
-  const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const { inventory, stats, loading, fetchInventory, exportInventoryCSV } =
+    useStockInventory();
+
+  const [selectedProduct, setSelectedProduct] = useState<
+    (typeof inventory)[number] | null
+  >(null);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   const [isReportsModalOpen, setIsReportsModalOpen] = useState(false);
   const [isAdjustmentModalOpen, setIsAdjustmentModalOpen] = useState(false);
-
-  const { inventory, stats, loading, fetchInventory, exportInventoryCSV } =
-    useStockInventory();
 
   useEffect(() => {
     void fetchInventory().catch(error => {
@@ -97,12 +99,12 @@ export default function InventairePage() {
     });
   };
 
-  const openHistoryModal = (product: any) => {
+  const openHistoryModal = (product: (typeof inventory)[number]) => {
     setSelectedProduct(product);
     setIsHistoryModalOpen(true);
   };
 
-  const openAdjustmentModal = (product: any) => {
+  const openAdjustmentModal = (product: (typeof inventory)[number]) => {
     setSelectedProduct(product);
     setIsAdjustmentModalOpen(true);
   };
@@ -117,14 +119,16 @@ export default function InventairePage() {
     switch (filter) {
       case 'today':
         return { from: formatDate(today), to: formatDate(today) };
-      case '7days':
+      case '7days': {
         const weekAgo = new Date(today);
         weekAgo.setDate(weekAgo.getDate() - 7);
         return { from: formatDate(weekAgo), to: formatDate(today) };
-      case '30days':
+      }
+      case '30days': {
         const monthAgo = new Date(today);
         monthAgo.setDate(monthAgo.getDate() - 30);
         return { from: formatDate(monthAgo), to: formatDate(today) };
+      }
       default:
         return null;
     }
