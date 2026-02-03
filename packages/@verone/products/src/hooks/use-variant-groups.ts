@@ -5,7 +5,6 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useToast } from '@verone/common/hooks';
 import type {
   VariantGroup,
-  VariantProduct,
   CreateVariantGroupData,
   AddProductsToGroupData,
   VariantGroupFilters,
@@ -16,6 +15,52 @@ import logger from '@verone/utils/logger';
 import { createClient } from '@verone/utils/supabase/client';
 
 import { generateProductSKU } from '@verone/products/utils';
+
+// ============================================================================
+// TYPES LOCAUX (pour typage interne des requêtes Supabase)
+// ============================================================================
+
+/** Produit tel que retourné par la requête Supabase dans fetchVariantGroups */
+interface FetchedProduct {
+  id: string;
+  name: string;
+  sku: string;
+  stock_status: string | null;
+  product_status: string | null;
+  variant_group_id: string | null;
+  variant_position: number | null;
+  cost_price: number | null;
+  weight: number | null;
+  variant_attributes: Record<string, unknown> | null;
+}
+
+/** Image de produit */
+interface ProductImageRef {
+  product_id: string;
+  public_url: string;
+}
+
+/** Données de mise à jour pour un variant group */
+interface VariantGroupUpdateData {
+  name?: string;
+  variant_type?: string;
+  subcategory_id?: string;
+  style?: string | null;
+  suitable_rooms?: string[] | null;
+  has_common_supplier?: boolean;
+  supplier_id?: string | null;
+  common_dimensions?: {
+    length?: number | null;
+    width?: number | null;
+    height?: number | null;
+    unit?: 'cm' | 'm' | 'mm' | 'in' | string;
+  } | null;
+  common_weight?: number | null;
+  has_common_weight?: boolean;
+  common_cost_price?: number | null;
+  has_common_cost_price?: boolean;
+  common_eco_tax?: number | null;
+}
 
 export function useVariantGroups(filters?: VariantGroupFilters) {
   const [variantGroups, setVariantGroups] = useState<VariantGroup[]>([]);
@@ -79,7 +124,7 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
 
       // Récupérer tous les produits des groupes en une seule requête
       const groupIds = (data || []).map(g => g.id);
-      let allProducts: any[] = [];
+      let allProducts: FetchedProduct[] = [];
 
       if (groupIds.length > 0) {
         const { data: productsData } = await supabase
@@ -90,12 +135,12 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
           .in('variant_group_id', groupIds)
           .order('variant_position', { ascending: true });
 
-        allProducts = productsData || [];
+        allProducts = (productsData ?? []) as FetchedProduct[];
       }
 
       // Récupérer les images des produits en une requête
       const productIds = allProducts.map(p => p.id);
-      let allImages: any[] = [];
+      let allImages: ProductImageRef[] = [];
 
       if (productIds.length > 0) {
         const { data: imagesData } = await supabase
@@ -104,7 +149,7 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
           .in('product_id', productIds)
           .order('display_order', { ascending: true });
 
-        allImages = imagesData || [];
+        allImages = (imagesData ?? []) as ProductImageRef[];
       }
 
       // Associer les images aux produits
@@ -125,7 +170,7 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
         ).length,
       }));
 
-      setVariantGroups(groupsWithProducts as any);
+      setVariantGroups(groupsWithProducts as VariantGroup[]);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur inconnue');
       logger.error('Erreur chargement variant groups', err as Error, {
@@ -134,7 +179,6 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
     } finally {
       setLoading(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     supabase,
     filters?.search,
@@ -145,7 +189,7 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
   ]);
 
   useEffect(() => {
-    fetchVariantGroups();
+    void fetchVariantGroups();
   }, [fetchVariantGroups]);
 
   // Créer un nouveau groupe de variantes
@@ -177,6 +221,7 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
             has_common_supplier: data.has_common_supplier || false, // Flag fournisseur commun
             product_count: 0,
           },
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase strict enum types pour suitable_rooms nécessitent cast
         ] as any)
         .select()
         .single();
@@ -295,9 +340,12 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
         let productSKU = '';
 
         if (productData?.variant_attributes) {
-          const attrs = productData.variant_attributes as Record<string, any>;
+          const attrs = productData.variant_attributes as Record<
+            string,
+            unknown
+          >;
           const variantType = groupData?.variant_type || 'color';
-          const variantValue = attrs[variantType];
+          const variantValue = attrs[variantType] as string | undefined;
           if (variantValue) {
             productName = `${groupData?.name} - ${variantValue}`;
             productSKU = generateProductSKU(
@@ -408,7 +456,7 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
           for (const existingProduct of existingProducts) {
             const existing = existingProduct.variant_attributes as Record<
               string,
-              any
+              unknown
             >;
 
             // Si le groupe est de type COLOR, bloquer si même couleur
@@ -431,7 +479,12 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
         }
 
         // 5. Préparer les dimensions si elles existent
-        const commonDims = group.common_dimensions as any;
+        const commonDims = group.common_dimensions as {
+          length?: number;
+          width?: number;
+          height?: number;
+          unit?: string;
+        } | null;
         const hasDimensions =
           commonDims?.length || commonDims?.width || commonDims?.height;
 
@@ -575,6 +628,7 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
           .update({
             ...finalUpdates,
             updated_at: new Date().toISOString(),
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- dimensions type mismatch avec Supabase Json
           } as any)
           .eq('id', productId);
 
@@ -763,10 +817,10 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
   // Mettre à jour un groupe de variantes
   const updateVariantGroup = async (
     groupId: string,
-    data: any
+    data: VariantGroupUpdateData
   ): Promise<boolean> => {
     try {
-      const updateData: any = {
+      const updateData: Record<string, unknown> = {
         updated_at: new Date().toISOString(),
       };
 
@@ -1015,7 +1069,7 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
         data.common_weight !== undefined;
 
       if (needsPropagation) {
-        const productsUpdateData: any = {};
+        const productsUpdateData: Record<string, unknown> = {};
 
         // Dimensions communes (JSONB direct)
         if (data.common_dimensions !== undefined) {
@@ -1050,8 +1104,11 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
 
             // Mettre à jour chaque produit avec le nouveau nom
             for (const product of products) {
-              const attrs = product.variant_attributes as Record<string, any>;
-              const variantValue = attrs?.[variantType];
+              const attrs = product.variant_attributes as Record<
+                string,
+                unknown
+              > | null;
+              const variantValue = attrs?.[variantType] as string | undefined;
               if (variantValue) {
                 const newProductName = `${data.name} - ${variantValue}`;
                 await supabase
@@ -1264,7 +1321,8 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
 
       // Récupérer les produits des groupes archivés (incluant archivés et actifs)
       const groupIds = (data || []).map(g => g.id);
-      let allProducts: any[] = [];
+      let allProducts: (FetchedProduct & { archived_at?: string | null })[] =
+        [];
 
       if (groupIds.length > 0) {
         const { data: productsData } = await supabase
@@ -1275,12 +1333,14 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
           .in('variant_group_id', groupIds)
           .order('variant_position', { ascending: true });
 
-        allProducts = productsData || [];
+        allProducts = (productsData ?? []) as (FetchedProduct & {
+          archived_at?: string | null;
+        })[];
       }
 
       // Récupérer les images
       const productIds = allProducts.map(p => p.id);
-      let allImages: any[] = [];
+      let allImages: ProductImageRef[] = [];
 
       if (productIds.length > 0) {
         const { data: imagesData } = await supabase
@@ -1289,7 +1349,7 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
           .in('product_id', productIds)
           .order('display_order', { ascending: true });
 
-        allImages = imagesData || [];
+        allImages = (imagesData ?? []) as ProductImageRef[];
       }
 
       // Associer les images aux produits
@@ -1420,15 +1480,24 @@ export function useProductVariantEditing() {
 
       // Mettre à jour l'attribut spécifique
       const updatedAttributes = {
-        ...((product?.variant_attributes || {}) as any),
+        ...((product?.variant_attributes ?? {}) as Record<string, unknown>),
         [attributeKey]: value,
       };
 
       // Récupérer les infos du groupe pour régénérer nom et SKU
-      const groupData = (product as any)?.variant_groups;
+
+      const groupData = (
+        product as {
+          variant_groups?: {
+            name: string;
+            base_sku: string;
+            variant_type?: string;
+          };
+        }
+      )?.variant_groups;
 
       // Préparer les données de mise à jour
-      const updateData: any = {
+      const updateData: Record<string, unknown> = {
         variant_attributes: updatedAttributes,
         updated_at: new Date().toISOString(),
       };
@@ -1436,7 +1505,9 @@ export function useProductVariantEditing() {
       // Si le produit appartient à un groupe, régénérer automatiquement nom ET SKU
       if (groupData?.name && groupData.base_sku) {
         const variantType = groupData.variant_type || attributeKey;
-        const variantValue = updatedAttributes[variantType];
+        const variantValue = updatedAttributes[variantType] as
+          | string
+          | undefined;
 
         if (variantValue) {
           // Générer le nouveau nom : "{group_name} - {variant_value}"
@@ -1570,7 +1641,7 @@ export function useVariantGroup(groupId: string) {
 
         // Récupérer les images des produits
         const productIds = products.map(p => p.id);
-        let allImages: any[] = [];
+        let allImages: ProductImageRef[] = [];
 
         if (productIds.length > 0) {
           const { data: imagesData } = await supabase
@@ -1579,7 +1650,7 @@ export function useVariantGroup(groupId: string) {
             .in('product_id', productIds)
             .order('display_order', { ascending: true });
 
-          allImages = imagesData || [];
+          allImages = (imagesData ?? []) as ProductImageRef[];
         }
 
         // Associer les images aux produits
@@ -1596,7 +1667,7 @@ export function useVariantGroup(groupId: string) {
           product_count: productsWithImages.length,
         };
 
-        setVariantGroup(groupWithProducts as any);
+        setVariantGroup(groupWithProducts as VariantGroup);
         setLoading(false);
         setError(null);
       } catch (err) {
@@ -1608,7 +1679,7 @@ export function useVariantGroup(groupId: string) {
       }
     };
 
-    fetchVariantGroup();
+    void fetchVariantGroup();
   }, [groupId, supabase]);
 
   return { variantGroup, loading, error };
