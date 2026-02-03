@@ -77,7 +77,11 @@ export default function VariantesPage() {
   const stableFilters = useMemo(
     () => ({
       search: filters.search ?? undefined,
-      variant_type: filters.type === 'all' ? undefined : (filters.type as any),
+      // Cast to hook's expected type (hook accepts 'color' | 'material' | undefined)
+      variant_type:
+        filters.type === 'all'
+          ? undefined
+          : (filters.type as 'color' | 'material'),
       is_active:
         filters.status === 'all' ? undefined : filters.status === 'active',
     }),
@@ -557,7 +561,10 @@ export default function VariantesPage() {
             <select
               value={filters.status}
               onChange={e =>
-                setFilters(prev => ({ ...prev, status: e.target.value as any }))
+                setFilters(prev => ({
+                  ...prev,
+                  status: e.target.value as LocalVariantFilters['status'],
+                }))
               }
               className="border border-gray-300 rounded-md px-3 py-2"
             >
@@ -569,7 +576,10 @@ export default function VariantesPage() {
             <select
               value={filters.type}
               onChange={e =>
-                setFilters(prev => ({ ...prev, type: e.target.value as any }))
+                setFilters(prev => ({
+                  ...prev,
+                  type: e.target.value as LocalVariantFilters['type'],
+                }))
               }
               className="border border-gray-300 rounded-md px-3 py-2"
             >

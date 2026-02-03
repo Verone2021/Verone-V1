@@ -74,30 +74,27 @@ export async function GET(request: NextRequest, context: RouteContext) {
     const limit = parseInt(searchParams.get('limit') ?? '50');
     const days = parseInt(searchParams.get('days') ?? '30');
 
-    // Récupérer activité récente via fonction SQL
-    /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call -- Supabase RPC functions not in generated types */
-    const { data: recentActions, error: actionsError } = (await (
-      supabase as any
-    ).rpc('get_user_recent_actions', {
-      p_user_id: targetUserId,
-      p_limit: limit,
-    })) as { data: UserAction[] | null; error: { message: string } | null };
-    /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */
+    // Récupérer activité récente via fonction SQL (RPC exists in generated types)
+    const { data: recentActions, error: actionsError } = await supabase.rpc(
+      'get_user_recent_actions',
+      {
+        p_user_id: targetUserId,
+        p_limit: limit,
+      }
+    );
 
     if (actionsError) {
       console.error('[Admin Activity] Actions error:', actionsError);
     }
 
-    // Récupérer statistiques via fonction SQL
-    /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call -- Supabase RPC functions not in generated types */
-    const { data: stats, error: statsError } = (await (supabase as any).rpc(
+    // Récupérer statistiques via fonction SQL (RPC exists in generated types)
+    const { data: stats, error: statsError } = await supabase.rpc(
       'get_user_activity_stats',
       {
         p_user_id: targetUserId,
         p_days: days,
       }
-    )) as { data: UserStats[] | null; error: { message: string } | null };
-    /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */
+    );
 
     if (statsError) {
       console.error('[Admin Activity] Stats error:', statsError);

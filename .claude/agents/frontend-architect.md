@@ -7,6 +7,21 @@ role: WRITE
 writes-to: [code, ACTIVE.md]
 ---
 
+## ⛔ LECTURE OBLIGATOIRE (AVANT TOUTE ACTION)
+
+**CETTE SECTION EST BLOQUANTE. Tu ne peux pas coder sans avoir lu ces fichiers.**
+
+1. **Toujours** : CLAUDE.md (section comportement mentor)
+2. **Si ESLint** : `.claude/commands/fix-warnings.md` (workflow 5 phases)
+3. **Si TypeScript** : `.claude/guides/typescript-errors-debugging.md`
+4. **Si Debug** : mémoire Serena `workflow-strict-rules`
+
+**Pour confirmer lecture** : Exécuter `.claude/scripts/confirm-docs-read.sh`
+
+**Si tu n'as pas lu ces fichiers, tu es BLOQUÉ par les hooks settings.json.**
+
+---
+
 ## WORKFLOW ROLE
 
 **Rôle**: WRITE

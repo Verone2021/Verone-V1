@@ -13,7 +13,13 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
+import type { Database, Json } from '@verone/types/supabase';
 import { createAdminClient } from '@verone/utils/supabase/server';
+
+// Types for sales orders updates
+type SalesOrderUpdate = Database['public']['Tables']['sales_orders']['Update'];
+type SalesOrderItemInsert =
+  Database['public']['Tables']['sales_order_items']['Insert'];
 
 // Type pour les items de facture
 interface IInvoiceItem {
@@ -219,12 +225,11 @@ export async function POST(
       0
     );
 
-    // 7. Mettre a jour la commande
-    // Note: Utiliser any pour bypasser les types stricts (colonnes existent dans la DB)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const orderUpdateData: Record<string, any> = {
-      billing_address: typedInvoice.billing_address,
-      shipping_address: typedInvoice.shipping_address,
+    // 7. Mettre a jour la commande (typed update)
+    const orderUpdateData: SalesOrderUpdate = {
+      // Address fields: cast Record<string, unknown> to Json (structurally compatible)
+      billing_address: typedInvoice.billing_address as Json | undefined,
+      shipping_address: typedInvoice.shipping_address as Json | undefined,
       shipping_cost_ht: typedInvoice.shipping_cost_ht ?? 0,
       handling_cost_ht: typedInvoice.handling_cost_ht ?? 0,
       insurance_cost_ht: typedInvoice.insurance_cost_ht ?? 0,
@@ -233,28 +238,22 @@ export async function POST(
       delivery_contact_id: typedInvoice.delivery_contact_id,
       responsable_contact_id: typedInvoice.responsable_contact_id,
       // Recalculer les totaux de la commande
+      // Note: total_vat column does not exist in sales_orders table
+      // VAT is calculated from (total_ttc - total_ht) when needed
       total_ht:
         productTotalHt +
         (typedInvoice.shipping_cost_ht ?? 0) +
         (typedInvoice.handling_cost_ht ?? 0) +
         (typedInvoice.insurance_cost_ht ?? 0),
       total_ttc: typedInvoice.total_ttc,
-      total_vat:
-        productTotalVat +
-        ((typedInvoice.shipping_cost_ht ?? 0) +
-          (typedInvoice.handling_cost_ht ?? 0) +
-          (typedInvoice.insurance_cost_ht ?? 0)) *
-          (typedInvoice.fees_vat_rate ?? 0.2),
       notes: typedInvoice.notes,
       updated_at: new Date().toISOString(),
     };
 
-    /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
-    const { error: updateOrderError } = await (supabase as any)
+    const { error: updateOrderError } = await supabase
       .from('sales_orders')
       .update(orderUpdateData)
-      .eq('id', typedInvoice.sales_order_id);
-    /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
+      .eq('id', typedInvoice.sales_order_id!);
 
     if (updateOrderError) {
       console.error('[Sync-to-order] Order update error:', updateOrderError);
@@ -290,7 +289,7 @@ export async function POST(
 
     // 8b. Recreer les lignes a partir de la facture (seulement les produits)
     if (productItems.length > 0) {
-      const newOrderItems = productItems
+      const newOrderItems: SalesOrderItemInsert[] = productItems
         .filter(item => item.product_id !== null) // S'assurer que product_id n'est pas null
         .map((item, index) => ({
           sales_order_id: typedInvoice.sales_order_id!,
@@ -302,11 +301,9 @@ export async function POST(
           sort_order: index,
         }));
 
-      /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
-      const { error: insertItemsError } = await (supabase as any)
+      const { error: insertItemsError } = await supabase
         .from('sales_order_items')
         .insert(newOrderItems);
-      /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
 
       if (insertItemsError) {
         console.error('[Sync-to-order] Insert items error:', insertItemsError);

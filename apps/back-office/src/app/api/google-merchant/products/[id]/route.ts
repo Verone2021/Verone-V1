@@ -60,17 +60,10 @@ export async function DELETE(
     // 2. Initialisation Supabase
     const supabase = await createServerClient();
 
-    // 3. Appeler RPC remove_from_google_merchant
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access -- Supabase RPC functions not in generated types
-    const { data, error } = (await (supabase as any).rpc(
-      'remove_from_google_merchant',
-      {
-        p_product_id: productId,
-      }
-    )) as {
-      data: Array<{ success: boolean; error: string | null }> | null;
-      error: { message: string } | null;
-    };
+    // 3. Appeler RPC remove_from_google_merchant (type exists in generated types)
+    const { data, error } = await supabase.rpc('remove_from_google_merchant', {
+      p_product_id: productId,
+    });
 
     if (error) {
       console.error('[API] RPC remove_from_google_merchant failed:', error);
