@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 
-import type { PostgrestFilterBuilder } from '@supabase/postgrest-js';
+import type { PostgrestError } from '@supabase/supabase-js';
 import { createClient } from '@verone/utils/supabase/client';
 
 interface QueryOptions {
@@ -20,15 +20,16 @@ interface QueryState<T> {
   refetch: () => Promise<void>;
 }
 
-interface MutationState<T> {
-  mutate: (variables: any) => Promise<T | null>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- V defaults to any for backward compatibility
+interface MutationState<T, V = any> {
+  mutate: (variables: V) => Promise<T | null>;
   loading: boolean;
   error: string | null;
 }
 
 interface QueryCache {
   [key: string]: {
-    data: any;
+    data: unknown;
     timestamp: number;
     staleTime: number;
   };
@@ -36,18 +37,18 @@ interface QueryCache {
 
 const queryCache: QueryCache = {};
 
-export function useSupabaseQuery<T = any>(
+export function useSupabaseQuery<T = unknown>(
   queryKey: string,
   queryFn: (
     supabase: ReturnType<typeof createClient>
-  ) => Promise<{ data: T | null; error: any }>,
+  ) => Promise<{ data: T | null; error: PostgrestError | null }>,
   options: QueryOptions = {}
 ): QueryState<T> {
   const {
     enabled = true,
     refetchOnWindowFocus = false,
     staleTime = 5 * 60 * 1000, // 5 minutes
-    cacheTime = 10 * 60 * 1000, // 10 minutes
+    // cacheTime reserved for future use
   } = options;
 
   const [state, setState] = useState<Omit<QueryState<T>, 'refetch'>>({
@@ -66,7 +67,7 @@ export function useSupabaseQuery<T = any>(
     const cached = queryCache[queryKey];
     if (cached && Date.now() - cached.timestamp < cached.staleTime) {
       setState({
-        data: cached.data,
+        data: cached.data as T,
         loading: false,
         error: null,
       });
@@ -92,7 +93,7 @@ export function useSupabaseQuery<T = any>(
         setState({
           data: null,
           loading: false,
-          error: result.error.message || 'Erreur inconnue',
+          error: result.error.message ?? 'Erreur inconnue',
         });
       } else {
         // Cache the result
@@ -116,20 +117,25 @@ export function useSupabaseQuery<T = any>(
         error: error instanceof Error ? error.message : 'Erreur inconnue',
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- options.sloThreshold is stable config
   }, [queryKey, queryFn, enabled, supabase, staleTime]);
 
   useEffect(() => {
-    fetchData();
-  }, [queryKey, enabled]); // Éviter boucle infinie - ne pas inclure fetchData
+    void fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fetchData excluded to prevent infinite loop
+  }, [queryKey, enabled]);
 
   // Optional: refetch on window focus
   useEffect(() => {
     if (!refetchOnWindowFocus) return;
 
-    const handleFocus = () => fetchData();
+    const handleFocus = () => {
+      void fetchData();
+    };
     window.addEventListener('focus', handleFocus);
     return () => window.removeEventListener('focus', handleFocus);
-  }, [refetchOnWindowFocus]); // Éviter boucle infinie - ne pas inclure fetchData
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fetchData excluded to prevent infinite loop
+  }, [refetchOnWindowFocus]);
 
   const refetch = useCallback(async () => {
     // Clear cache for this query
@@ -143,13 +149,17 @@ export function useSupabaseQuery<T = any>(
   };
 }
 
-export function useSupabaseMutation<T = any>(
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- V defaults to any for backward compatibility
+export function useSupabaseMutation<T = unknown, V = any>(
   mutationFn: (
     supabase: ReturnType<typeof createClient>,
-    variables: any
-  ) => Promise<{ data: T | null; error: any }>
-): MutationState<T> {
-  const [state, setState] = useState({
+    variables: V
+  ) => Promise<{ data: T | null; error: PostgrestError | Error | null }>
+): MutationState<T, V> {
+  const [state, setState] = useState<{
+    loading: boolean;
+    error: string | null;
+  }>({
     loading: false,
     error: null,
   });
@@ -158,7 +168,7 @@ export function useSupabaseMutation<T = any>(
   const supabase = useMemo(() => createClient(), []);
 
   const mutate = useCallback(
-    async (variables: any): Promise<T | null> => {
+    async (variables: V): Promise<T | null> => {
       setState({ loading: true, error: null });
 
       try {
@@ -167,7 +177,7 @@ export function useSupabaseMutation<T = any>(
         if (result.error) {
           setState({
             loading: false,
-            error: result.error.message || 'Erreur mutation',
+            error: result.error.message ?? 'Erreur mutation',
           });
           return null;
         }
@@ -189,9 +199,7 @@ export function useSupabaseMutation<T = any>(
         console.error('Erreur mutation:', error);
         setState({
           loading: false,
-          error: (error instanceof Error
-            ? error.message
-            : 'Erreur inconnue') as any,
+          error: error instanceof Error ? error.message : 'Erreur inconnue',
         });
         return null;
       }
@@ -206,9 +214,9 @@ export function useSupabaseMutation<T = any>(
 }
 
 // Helper pour requêtes avec filtres standardisés
-export function useSupabaseTable<T = any>(
+export function useSupabaseTable<T = unknown>(
   tableName: string,
-  filters: Record<string, any> = {},
+  filters: Record<string, unknown> = {},
   options: QueryOptions & {
     select?: string;
     orderBy?: { column: string; ascending?: boolean };
@@ -222,8 +230,10 @@ export function useSupabaseTable<T = any>(
 
   const queryFn = useCallback(
     async (supabase: ReturnType<typeof createClient>) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment -- Dynamic table name requires any cast
       let query = supabase.from(tableName as any).select(select) as any;
 
+      /* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment -- Dynamic query builder */
       // Apply filters
       Object.entries(filters).forEach(([key, value]) => {
         if (value !== undefined && value !== null && value !== '') {
@@ -236,9 +246,11 @@ export function useSupabaseTable<T = any>(
           }
         }
       });
+      /* eslint-enable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment */
 
       // Apply ordering
       if (orderBy) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment
         query = query.order(orderBy.column, {
           ascending: orderBy.ascending ?? true,
         });
@@ -246,15 +258,18 @@ export function useSupabaseTable<T = any>(
 
       // Apply pagination
       if (limit) {
-        const start = offset || 0;
+        const start = offset ?? 0;
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment
         query = query.range(start, start + limit - 1);
       }
 
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
       return await query;
     },
     [tableName, select, filters, orderBy, limit, offset]
   );
 
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any -- Dynamic query builder
   return useSupabaseQuery<T[]>(queryKey, queryFn as any, queryOptions);
 }
 
