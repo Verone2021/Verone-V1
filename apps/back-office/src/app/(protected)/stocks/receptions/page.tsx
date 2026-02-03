@@ -247,7 +247,6 @@ export default function ReceptionsPage() {
       .catch(error => {
         console.error('[Receptions] Failed to load stats:', error);
       });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Charger liste POs à recevoir (fournisseurs) - aussi quand 'all'
@@ -278,7 +277,6 @@ export default function ReceptionsPage() {
           console.error('[Receptions] Failed to load purchase orders:', error);
         });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusFilter, searchTerm, urgencyFilter, activeTab, sourceFilter]);
 
   // Charger réceptions affiliés - aussi quand 'all'
@@ -296,7 +294,6 @@ export default function ReceptionsPage() {
           );
         });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchTerm, activeTab, sourceFilter]);
 
   // Charger historique POs reçus + affiliés
@@ -330,7 +327,6 @@ export default function ReceptionsPage() {
           );
         });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [historySearchTerm, activeTab]);
 
   const handleOpenReception = (order: PurchaseOrderWithSupplier) => {

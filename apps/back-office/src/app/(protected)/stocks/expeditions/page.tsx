@@ -1048,7 +1048,7 @@ export default function ExpeditionsPage() {
                           </Table>
 
                           {/* Coûts */}
-                          {/* eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing */}
+                          {}
                           {(shipment.cost_paid_eur ||
                             shipment.cost_charged_eur) && (
                             <div className="mt-4 pt-4 border-t space-y-1">

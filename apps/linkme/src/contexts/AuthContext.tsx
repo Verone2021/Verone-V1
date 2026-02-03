@@ -106,7 +106,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
         // Utiliser la vue v_linkme_users qui join user_app_roles + user_profiles + enseignes + organisations
         if (DEBUG)
           console.error('[AuthContext] Fetching from v_linkme_users...');
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         const { data, error } = await (supabase as SupabaseClient)
           .from('v_linkme_users')
           .select('*')
@@ -392,7 +391,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // Vérifier que l'utilisateur a accès à LinkMe
       console.warn('[signIn] AVANT query user_app_roles');
       const beforeQuery = Date.now();
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const { data: roleData, error: roleError } = await (
         supabase as SupabaseClient
       )

@@ -14,7 +14,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createClient } from '@verone/utils/supabase/client';
 // Database type is used by TypeScript for supabase.rpc() type inference
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import type { Database } from '@verone/types';
 import { toast } from 'sonner';
 

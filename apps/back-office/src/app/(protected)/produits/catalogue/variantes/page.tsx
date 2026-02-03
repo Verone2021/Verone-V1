@@ -1,7 +1,5 @@
 'use client';
 
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @next/next/no-img-element, react-hooks/exhaustive-deps */
-
 import { useState, useMemo, useCallback, useEffect } from 'react';
 
 import type { VariantGroup, VariantProduct } from '@verone/types';
@@ -35,6 +33,7 @@ import { VariantAddProductModal } from '@verone/products';
 import { VariantGroupEditModal } from '@verone/products';
 import { VariantGroupCreationWizard } from '@verone/products';
 import { useVariantGroups } from '@verone/products';
+import type { VariantGroup, VariantType } from '@verone/types';
 
 // Interface filtres variantes
 interface LocalVariantFilters {
@@ -746,5 +745,3 @@ export default function VariantesPage() {
     </div>
   );
 }
-
-/* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @next/next/no-img-element, react-hooks/exhaustive-deps */

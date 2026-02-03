@@ -53,7 +53,6 @@ export default function StockAnalyticsPage() {
     void generateReport(90).catch(error => {
       console.error('[StocksAnalyticsPage] generateReport failed:', error);
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   /**

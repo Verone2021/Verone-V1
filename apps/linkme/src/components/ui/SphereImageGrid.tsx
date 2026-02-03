@@ -531,7 +531,7 @@ const SphereImageGrid: React.FC<SphereImageGridProps> = ({
           onClick={() => setSelectedImage(image)}
         >
           <div className="relative w-full h-full rounded-full overflow-hidden shadow-lg border-2 border-white/20">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
+            {}
             <img
               src={image.src}
               alt={image.alt}
@@ -565,7 +565,7 @@ const SphereImageGrid: React.FC<SphereImageGridProps> = ({
           }}
         >
           <div className="relative aspect-square">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
+            {}
             <img
               src={selectedImage.src}
               alt={selectedImage.alt}

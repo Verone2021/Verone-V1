@@ -53,7 +53,6 @@ async function fetchPageConfigurations(): Promise<LinkMePageConfiguration[]> {
     .from('linkme_page_configurations')
     .select('*')
     .order('page_id');
-  /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
 
   if (error) {
     // Si la table n'existe pas encore, retourner les valeurs par défaut
@@ -144,7 +143,6 @@ async function updatePageConfiguration(
     .eq('page_id', pageId)
     .select()
     .single();
-  /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
 
   if (error) {
     console.error('Erreur update page configuration:', error);

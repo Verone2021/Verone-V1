@@ -246,7 +246,7 @@ export default function CategoriesPage() {
               >),
               family_id: formState.parentId,
             });
-            /* eslint-enable @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any */
+
             break;
           case 'subcategory':
             if (!formState.parentId) break;
@@ -257,7 +257,7 @@ export default function CategoriesPage() {
               >),
               category_id: formState.parentId,
             });
-            /* eslint-enable @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any */
+
             break;
         }
       } else {
@@ -890,7 +890,6 @@ export default function CategoriesPage() {
             });
           }}
           initialData={
-            /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment */
             formState.mode === 'create' && formState.parentId
               ? ({ family_id: formState.parentId } as ComponentProps<
                   typeof CategoryForm
@@ -917,7 +916,6 @@ export default function CategoriesPage() {
             });
           }}
           initialData={
-            /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment */
             formState.mode === 'create' && formState.parentId
               ? ({
                   category_id: formState.parentId,

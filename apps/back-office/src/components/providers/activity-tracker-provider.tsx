@@ -90,7 +90,6 @@ export function ActivityTrackerProvider({
       }
     }
     // Seulement pathname et user dans les dépendances pour éviter boucles infinies
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname, user]);
 
   // Flush événements avant fermeture page
@@ -107,7 +106,6 @@ export function ActivityTrackerProvider({
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
     // Pas de dépendances - on veut installer le listener une seule fois
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Rendre provider invisible (ne modifie pas le DOM)

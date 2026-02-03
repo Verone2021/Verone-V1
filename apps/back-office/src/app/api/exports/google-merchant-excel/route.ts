@@ -110,7 +110,6 @@ function generateExcelFile<T extends object>(
   fileName: string,
   headers: readonly string[]
 ): Buffer {
-  /* eslint-disable @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access */
   // 1. Créer le workbook
   const workbook = XLSX.utils.book_new();
 
@@ -168,7 +167,6 @@ function generateExcelFile<T extends object>(
     bookType: 'xlsx',
     compression: true,
   });
-  /* eslint-enable @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access */
 }
 
 /**

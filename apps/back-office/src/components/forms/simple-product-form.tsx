@@ -292,7 +292,7 @@ export function SimpleProductForm({
               {/* Aperçu de l'image */}
               {imagePreview && (
                 <div className="flex items-center space-x-3 p-3 bg-gray-50 border border-gray-200">
-                  {/* eslint-disable-next-line @next/next/no-img-element -- Local base64 preview, not a production image */}
+                  {}
                   <img
                     src={imagePreview}
                     alt="Aperçu"
