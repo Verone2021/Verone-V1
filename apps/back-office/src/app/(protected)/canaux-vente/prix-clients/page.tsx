@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 
 import { useRouter } from 'next/navigation';
 
@@ -48,7 +48,7 @@ interface Stats {
 
 export default function PrixClientsPage() {
   const _router = useRouter();
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   const [pricingRules, setPricingRules] = useState<CustomerPricing[]>([]);
   const [filteredRules, setFilteredRules] = useState<CustomerPricing[]>([]);
@@ -168,7 +168,7 @@ export default function PrixClientsPage() {
     void loadPricingRules().catch(error => {
       console.error('[PrixClientsPage] loadPricingRules failed:', error);
     });
-  }, []);
+  }, [supabase, calculateStats]);
 
   // Filtrer les prix clients
   useEffect(() => {

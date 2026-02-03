@@ -209,7 +209,8 @@ export function VariantGroupForm({
     return () => {
       isMounted = false;
     };
-  }, [filters.categoryId]); // Enlevé getSubcategoriesByCategory des dépendances
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- getSubcategoriesByCategory is memoized in hook, adding it causes infinite re-renders
+  }, [filters.categoryId]);
 
   // Auto-générer base_sku quand le nom change
   useEffect(() => {

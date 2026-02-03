@@ -14,7 +14,7 @@ import { createClient } from '@verone/utils/supabase/server';
 // Node.js runtime
 export const dynamic = 'force-dynamic';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase Json type requires any for JSONB columns
+/* eslint-disable @typescript-eslint/no-explicit-any -- Supabase Json type requires any for JSONB columns */
 interface ActivityEvent {
   action: string;
   table_name?: string;
@@ -30,6 +30,7 @@ interface ActivityEvent {
     [key: string]: any;
   };
 }
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
 interface BatchRequest {
   events: ActivityEvent[];
@@ -51,7 +52,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Parser batch request
-    const { events, session_id }: BatchRequest = await request.json();
+    const { events, session_id } = (await request.json()) as BatchRequest;
 
     if (!events || !Array.isArray(events) || events.length === 0) {
       return NextResponse.json(
@@ -115,7 +116,7 @@ export async function POST(request: NextRequest) {
       {
         success: true,
         message: `${events.length} événements enregistrés`,
-        count: count || events.length,
+        count: count ?? events.length,
       },
       { status: 200 }
     );

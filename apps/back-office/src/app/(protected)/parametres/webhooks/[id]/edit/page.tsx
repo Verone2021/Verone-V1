@@ -89,7 +89,7 @@ export default function EditWebhookPage() {
     } finally {
       setLoading(false);
     }
-  }, [webhookId]);
+  }, [webhookId, supabase]);
 
   useEffect(() => {
     void loadWebhook().catch(error => {

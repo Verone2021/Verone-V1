@@ -53,7 +53,7 @@ export default function ProduitsPage() {
     void loadMetrics().catch(error => {
       console.error('[Products] Load metrics failed:', error);
     });
-  }, []);
+  }, [fetchProductMetrics]);
 
   // Calcul métriques dérivées
   const stockAlertsCount = Math.floor(metrics.total * 0.15); // Estimation 15% produits en alerte stock

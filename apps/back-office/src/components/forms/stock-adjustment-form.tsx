@@ -138,7 +138,7 @@ export function StockAdjustmentForm({
         error
       );
     });
-  }, []);
+  }, [supabase]);
 
   // Mise à jour produit sélectionné
   const handleProductChange = (productId: string) => {

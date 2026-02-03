@@ -14,7 +14,7 @@ import { createClient } from '@verone/utils/supabase/server';
 // Node.js runtime
 export const dynamic = 'force-dynamic';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase Json type requires any for JSONB columns
+/* eslint-disable @typescript-eslint/no-explicit-any -- Supabase Json type requires any for JSONB columns */
 interface ActivityEvent {
   action: string;
   table_name?: string;
@@ -38,6 +38,7 @@ interface ActivityEvent {
     };
   };
 }
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
 export async function POST(request: NextRequest) {
   try {
@@ -54,7 +55,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Parser événement
-    const event: ActivityEvent = await request.json();
+    const event = (await request.json()) as ActivityEvent;
 
     // Récupérer user_profile pour organisation_id
     const { data: profile } = (await supabase

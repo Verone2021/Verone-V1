@@ -85,7 +85,7 @@ export default function EditEmailTemplatePage() {
     } finally {
       setLoading(false);
     }
-  }, [slug]);
+  }, [slug, supabase]);
 
   useEffect(() => {
     void loadTemplate().catch(error => {

@@ -49,21 +49,24 @@ export default function WebhooksPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
-  const loadRecentLogs = useCallback(async (webhookId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('webhook_logs')
-        .select('*')
-        .eq('webhook_id', webhookId)
-        .order('created_at', { ascending: false })
-        .limit(5);
+  const loadRecentLogs = useCallback(
+    async (webhookId: string) => {
+      try {
+        const { data, error } = await supabase
+          .from('webhook_logs')
+          .select('*')
+          .eq('webhook_id', webhookId)
+          .order('created_at', { ascending: false })
+          .limit(5);
 
-      if (error) throw error;
-      setLogs(prev => ({ ...prev, [webhookId]: data ?? [] }));
-    } catch (error) {
-      console.error('Error loading logs:', error);
-    }
-  }, []);
+        if (error) throw error;
+        setLogs(prev => ({ ...prev, [webhookId]: data ?? [] }));
+      } catch (error) {
+        console.error('Error loading logs:', error);
+      }
+    },
+    [supabase]
+  );
 
   const loadWebhooks = useCallback(async () => {
     try {
@@ -91,7 +94,7 @@ export default function WebhooksPage() {
     } finally {
       setLoading(false);
     }
-  }, [loadRecentLogs]);
+  }, [loadRecentLogs, supabase]);
 
   useEffect(() => {
     void loadWebhooks().catch(error => {

@@ -27,6 +27,10 @@ import {
   LINKME_ROLE_COLORS,
 } from '../hooks/use-linkme-users';
 
+interface ApiErrorResponse {
+  message?: string;
+}
+
 interface LinkMeResetPasswordDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -83,7 +87,7 @@ export function LinkMeResetPasswordDialog({
       });
 
       if (!response.ok) {
-        const data = await response.json();
+        const data = (await response.json()) as ApiErrorResponse;
         setError(data.message ?? 'Erreur lors de la réinitialisation');
         return;
       }
