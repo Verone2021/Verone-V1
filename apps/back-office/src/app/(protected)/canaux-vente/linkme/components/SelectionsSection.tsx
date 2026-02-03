@@ -1,7 +1,5 @@
 'use client';
 
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return, react-hooks/exhaustive-deps */
-
 import { useEffect, useState, useMemo } from 'react';
 
 import Link from 'next/link';
@@ -107,6 +105,23 @@ interface SelectedProduct {
   linkme_commission_rate: number;
 }
 
+// Types for Supabase query results
+interface CatalogDataItem {
+  id: string;
+  product_id: string;
+  max_margin_rate: number | null;
+  min_margin_rate: number | null;
+  suggested_margin_rate: number | null;
+  channel_commission_rate: number | null;
+  public_price_ht: number | null;
+  products: { name: string; sku: string } | null;
+}
+
+interface ProductImageItem {
+  product_id: string;
+  public_url: string;
+}
+
 /**
  * SelectionsSection - Liste des sélections (mini-boutiques)
  *
@@ -145,6 +160,7 @@ export function SelectionsSection() {
     void fetchData().catch(error => {
       console.error('[SelectionsSection] Initial fetch failed:', error);
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fetchData is not memoized, including it would cause infinite loop
   }, []);
 
   // Filtrer les produits du catalogue par recherche
@@ -212,8 +228,9 @@ export function SelectionsSection() {
       }
 
       // Fetch images primaires depuis product_images
-      const productIds = (catalogData ?? []).map(
-        (item: any) => item.product_id
+      const typedCatalogData = (catalogData ?? []) as CatalogDataItem[];
+      const productIds = typedCatalogData.map(
+        (item: CatalogDataItem) => item.product_id
       );
       const { data: imagesData } = await supabase
         .from('product_images')
@@ -222,13 +239,17 @@ export function SelectionsSection() {
         .eq('is_primary', true);
 
       // Créer map des images par product_id
+      const typedImagesData = (imagesData ?? []) as ProductImageItem[];
       const imageMap = new Map(
-        (imagesData ?? []).map((img: any) => [img.product_id, img.public_url])
+        typedImagesData.map((img: ProductImageItem) => [
+          img.product_id,
+          img.public_url,
+        ])
       );
 
       // Transformer les données pour correspondre à l'interface CatalogProduct
-      const transformedCatalog: CatalogProduct[] = (catalogData ?? []).map(
-        (item: any) => ({
+      const transformedCatalog: CatalogProduct[] = typedCatalogData.map(
+        (item: CatalogDataItem) => ({
           id: item.id,
           product_id: item.product_id,
           product_name: item.products?.name ?? 'Produit inconnu',
@@ -438,7 +459,7 @@ export function SelectionsSection() {
         body: JSON.stringify({ selection_id: selectionId }),
       });
 
-      const data = await response.json();
+      const data = (await response.json()) as { message?: string };
 
       if (!response.ok) {
         throw new Error(data.message ?? 'Erreur lors de la suppression');
@@ -964,5 +985,3 @@ export function SelectionsSection() {
     </>
   );
 }
-
-/* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return, react-hooks/exhaustive-deps */
