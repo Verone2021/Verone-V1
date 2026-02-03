@@ -19,7 +19,7 @@ import {
 import { Textarea } from '@verone/ui';
 import { spacing, colors, componentShadows } from '@verone/ui';
 import { Building2, MapPin, FileText, CreditCard, Users } from 'lucide-react';
-import { useForm } from 'react-hook-form';
+import { useForm, type SubmitHandler, type Resolver } from 'react-hook-form';
 import * as z from 'zod';
 
 import type { Organisation } from '@verone/organisations/hooks';
@@ -91,7 +91,8 @@ const baseOrganisationSchema = z.object({
   supplier_segment: z.string().optional().or(z.literal('')),
 });
 
-export type OrganisationFormData = z.infer<typeof baseOrganisationSchema>;
+// z.output gives the type AFTER defaults are applied (all required fields have values)
+export type OrganisationFormData = z.output<typeof baseOrganisationSchema>;
 
 // ========================
 // CONSTANTS
@@ -185,7 +186,7 @@ const getDefaultValues = (
   return {
     name: organisation.name,
     country: organisation.country || 'FR',
-    is_active: organisation.is_active,
+    is_active: organisation.is_active ?? true,
     notes: organisation.notes || '',
     // Adresse de facturation
     billing_address_line1: organisation.billing_address_line1 || '',
@@ -260,7 +261,10 @@ export function UnifiedOrganisationForm({
   const isCustomer = organisationType === 'customer';
 
   const form = useForm<OrganisationFormData>({
-    resolver: zodResolver(baseOrganisationSchema) as any,
+    // Cast via unknown to resolve zodResolver/react-hook-form type mismatch with .default() fields
+    resolver: zodResolver(
+      baseOrganisationSchema
+    ) as unknown as Resolver<OrganisationFormData>,
     defaultValues: getDefaultValues(organisation),
   });
 
@@ -270,7 +274,7 @@ export function UnifiedOrganisationForm({
     }
   }, [isOpen, organisation]);
 
-  const handleSubmit = async (data: OrganisationFormData) => {
+  const handleSubmit: SubmitHandler<OrganisationFormData> = async data => {
     setIsSubmitting(true);
     try {
       await onSubmit(data, organisation?.id);
@@ -314,7 +318,11 @@ export function UnifiedOrganisationForm({
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={form.handleSubmit(handleSubmit as any)}>
+        <form
+          onSubmit={e => {
+            void form.handleSubmit(handleSubmit)(e);
+          }}
+        >
           <div
             style={{
               display: 'flex',

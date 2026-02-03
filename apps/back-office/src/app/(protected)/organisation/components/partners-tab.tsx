@@ -56,7 +56,13 @@ export function PartnersTab() {
         .order('archived_at', { ascending: false });
 
       if (error) throw error;
-      setArchivedPartners((data ?? []) as unknown as Organisation[]);
+
+      // Ajouter le champ calculé 'name' pour chaque organisation
+      const partnersWithName = (data ?? []).map(org => ({
+        ...org,
+        name: org.trade_name || org.legal_name,
+      })) as Organisation[];
+      setArchivedPartners(partnersWithName);
     } catch (err: unknown) {
       console.error(
         '[PartnersTab] Error loading archived partners:',
@@ -266,7 +272,7 @@ export function PartnersTab() {
               key={partner.id}
               organisation={
                 {
-                  ...(partner as unknown as Organisation),
+                  ...partner,
                   type: 'partner' as const,
                 } as any
               }
@@ -291,7 +297,7 @@ export function PartnersTab() {
               organisations={displayedPartners.map(
                 p =>
                   ({
-                    ...(p as unknown as Organisation),
+                    ...p,
                     type: 'partner' as const,
                   }) as any
               )}

@@ -154,18 +154,23 @@ export default function SuppliersPage() {
           countsMap.set(p.supplier_id, count + 1);
         });
 
-        // Merger les comptes avec les organisations
+        // Merger les comptes avec les organisations + ajouter le champ 'name'
         organisationsWithCounts = (data ?? []).map(org => ({
           ...org,
+          name: org.trade_name ?? org.legal_name,
           _count: {
             products: countsMap.get(org.id) ?? 0,
           },
-        }));
+        })) as Organisation[];
+      } else {
+        // Ajouter le champ 'name' même sans comptage
+        organisationsWithCounts = (data ?? []).map(org => ({
+          ...org,
+          name: org.trade_name ?? org.legal_name,
+        })) as Organisation[];
       }
 
-      setArchivedSuppliers(
-        organisationsWithCounts as unknown as Organisation[]
-      );
+      setArchivedSuppliers(organisationsWithCounts);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Unknown error';
       console.error(

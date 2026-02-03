@@ -81,7 +81,13 @@ export function CustomersTab() {
         .order('archived_at', { ascending: false });
 
       if (error) throw error;
-      setArchivedCustomers((data ?? []) as unknown as Organisation[]);
+
+      // Ajouter le champ calculé 'name' pour chaque organisation
+      const customersWithName = (data ?? []).map(org => ({
+        ...org,
+        name: org.trade_name || org.legal_name,
+      })) as Organisation[];
+      setArchivedCustomers(customersWithName);
     } catch (err) {
       console.error('Erreur chargement clients archivés:', err);
     } finally {
@@ -307,12 +313,14 @@ export function CustomersTab() {
         <Card>
           <CardContent style={{ padding: spacing[3] }}>
             <OrganisationListView
-              organisations={displayedCustomers.map(c => ({
-                ...c,
-                type: 'customer' as const,
-              })) as unknown as Parameters<
-                typeof OrganisationListView
-              >[0]['organisations']}
+              organisations={
+                displayedCustomers.map(c => ({
+                  ...c,
+                  type: 'customer' as const,
+                })) as unknown as Parameters<
+                  typeof OrganisationListView
+                >[0]['organisations']
+              }
               activeTab={activeTab}
               onArchive={id => {
                 const customer = displayedCustomers.find(c => c.id === id);
