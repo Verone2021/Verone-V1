@@ -50,7 +50,7 @@ export function LegalIdentityEditSection({
     onUpdate: (updatedData: Partial<Organisation>) => {
       onUpdate(updatedData);
     },
-    onError: (error: Error) => {
+    onError: (error: string) => {
       console.error('❌ Erreur mise à jour identité légale:', error);
     },
   });

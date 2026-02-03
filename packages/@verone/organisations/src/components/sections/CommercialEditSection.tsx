@@ -82,7 +82,7 @@ export function CommercialEditSection({
     onUpdate: (updatedData: Partial<Organisation>) => {
       onUpdate(updatedData);
     },
-    onError: (error: Error) => {
+    onError: (error: string) => {
       console.error('❌ Erreur mise à jour conditions commerciales:', error);
     },
   });
@@ -284,8 +284,8 @@ export function CommercialEditSection({
           {/* Résumé des conditions en temps réel */}
           {editData &&
             (editData.payment_terms ||
-              editData.delivery_time_days > 0 ||
-              editData.minimum_order_amount > 0) && (
+              (editData.delivery_time_days ?? 0) > 0 ||
+              (editData.minimum_order_amount ?? 0) > 0) && (
               <div className="bg-blue-50 p-2 rounded-lg border border-blue-200">
                 <h4 className="text-xs font-medium text-blue-800 mb-1.5 flex items-center">
                   <Package className="h-3 w-3 mr-1" />
@@ -306,21 +306,21 @@ export function CommercialEditSection({
                     </div>
                   )}
 
-                  {editData.delivery_time_days > 0 && (
+                  {(editData.delivery_time_days ?? 0) > 0 && (
                     <div className="flex justify-between">
                       <span className="text-blue-700">Livraison:</span>
                       <span className="font-medium text-blue-800">
                         {editData.delivery_time_days} j
-                        {editData.delivery_time_days > 1 ? 's' : ''}
+                        {(editData.delivery_time_days ?? 0) > 1 ? 's' : ''}
                       </span>
                     </div>
                   )}
 
-                  {editData.minimum_order_amount > 0 && (
+                  {(editData.minimum_order_amount ?? 0) > 0 && (
                     <div className="flex justify-between">
                       <span className="text-blue-700">Min:</span>
                       <span className="font-medium text-blue-800">
-                        {editData.minimum_order_amount.toFixed(2)}{' '}
+                        {(editData.minimum_order_amount ?? 0).toFixed(2)}{' '}
                         {editData.currency}
                       </span>
                     </div>
