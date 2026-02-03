@@ -1,7 +1,5 @@
 'use client';
 
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return */
-
 /**
  * Page: Détail Commande Enseigne LinkMe
  *
@@ -139,6 +137,37 @@ interface EnrichedOrderItem {
   selling_price_ht: number;
   affiliate_margin: number;
   // Ajouté via jointure products
+  created_by_affiliate: string | null;
+}
+
+// Types pour les données Supabase intermédiaires
+interface SalesOrderItemRaw {
+  id: string;
+  product_id: string;
+  quantity: number;
+  unit_price_ht: number;
+  total_ht: number;
+  products: { name: string; sku: string } | null;
+}
+
+interface LinkmeOrderItemEnrichedRaw {
+  id: string;
+  product_id: string;
+  product_name: string | null;
+  product_sku: string | null;
+  product_image_url: string | null;
+  quantity: number | null;
+  unit_price_ht: number | null;
+  total_ht: number | null;
+  base_price_ht: number | null;
+  margin_rate: number | null;
+  commission_rate: number | null;
+  selling_price_ht: number | null;
+  affiliate_margin: number | null;
+}
+
+interface ProductWithAffiliate {
+  id: string;
   created_by_affiliate: string | null;
 }
 
@@ -284,15 +313,17 @@ export default function LinkMeOrderDetailPage() {
 
       // Extraire organisation de la jointure (peut être array ou objet selon Supabase)
       const orgRaw: unknown = orderData.organisations;
-      const organisation = Array.isArray(orgRaw)
-        ? (orgRaw[0] ?? null)
-        : (orgRaw ?? null);
+      const organisation = (
+        Array.isArray(orgRaw) ? (orgRaw[0] ?? null) : (orgRaw ?? null)
+      ) as OrderWithDetails['organisation'];
 
       // Extraire linkme details de la jointure (peut être array ou objet selon Supabase)
       const linkmeDetailsRaw: unknown = orderData.sales_order_linkme_details;
-      const linkmeData = Array.isArray(linkmeDetailsRaw)
-        ? (linkmeDetailsRaw[0] ?? null)
-        : (linkmeDetailsRaw ?? null);
+      const linkmeData = (
+        Array.isArray(linkmeDetailsRaw)
+          ? (linkmeDetailsRaw[0] ?? null)
+          : (linkmeDetailsRaw ?? null)
+      ) as LinkMeOrderDetails | null;
 
       setOrder({
         id: orderData.id,
@@ -307,14 +338,16 @@ export default function LinkMeOrderDetailPage() {
         created_by_affiliate_id: orderData.created_by_affiliate_id ?? null,
         linkme_selection_id: orderData.linkme_selection_id ?? null,
         organisation: organisation,
-        items: (orderData.sales_order_items ?? []).map((item: any) => ({
-          id: item.id,
-          product_id: item.product_id,
-          quantity: item.quantity,
-          unit_price_ht: item.unit_price_ht,
-          total_ht: item.total_ht,
-          product: item.products,
-        })),
+        items: ((orderData.sales_order_items ?? []) as SalesOrderItemRaw[]).map(
+          (item: SalesOrderItemRaw) => ({
+            id: item.id,
+            product_id: item.product_id,
+            quantity: item.quantity,
+            unit_price_ht: item.unit_price_ht,
+            total_ht: item.total_ht,
+            product: item.products,
+          })
+        ),
         linkmeDetails: linkmeData,
       });
 
@@ -325,9 +358,13 @@ export default function LinkMeOrderDetailPage() {
         .eq('sales_order_id', orderId);
 
       if (enrichedData && enrichedData.length > 0) {
+        // Cast enriched data to typed array
+        const typedEnrichedData =
+          enrichedData as unknown as LinkmeOrderItemEnrichedRaw[];
+
         // Récupérer les product_ids pour fetch created_by_affiliate
-        const productIds = enrichedData
-          .map((item: any) => item.product_id)
+        const productIds = typedEnrichedData
+          .map((item: LinkmeOrderItemEnrichedRaw) => item.product_id)
           .filter(Boolean);
         const { data: productsData } = await supabase
           .from('products')
@@ -335,11 +372,13 @@ export default function LinkMeOrderDetailPage() {
           .in('id', productIds);
 
         const productMap = new Map(
-          (productsData ?? []).map((p: any) => [p.id, p.created_by_affiliate])
+          ((productsData ?? []) as ProductWithAffiliate[]).map(
+            (p: ProductWithAffiliate) => [p.id, p.created_by_affiliate]
+          )
         );
 
         setEnrichedItems(
-          enrichedData.map((item: any) => ({
+          typedEnrichedData.map((item: LinkmeOrderItemEnrichedRaw) => ({
             id: item.id,
             product_id: item.product_id,
             product_name: item.product_name ?? 'Produit inconnu',
@@ -1976,5 +2015,3 @@ export default function LinkMeOrderDetailPage() {
     </div>
   );
 }
-
-/* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return */
