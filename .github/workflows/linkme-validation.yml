@@ -58,6 +58,9 @@ jobs:
       - name: 📦 Install dependencies
         run: pnpm install
 
+      - name: 📝 ESLint check (LinkMe)
+        run: pnpm turbo run lint --filter=@verone/linkme
+
       - name: 🔧 TypeScript check (LinkMe)
         run: pnpm turbo run type-check --filter=@verone/linkme
         env:
