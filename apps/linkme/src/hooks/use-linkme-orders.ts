@@ -177,13 +177,30 @@ export function useLinkMeOrders(
       );
 
       if (ordersError) {
-        console.error('Erreur fetch commandes:', ordersError);
+        console.error('[useLinkMeOrders] RPC error:', {
+          message: ordersError.message,
+          code: ordersError.code,
+          details: ordersError.details,
+          hint: ordersError.hint,
+          affiliateId: effectiveAffiliateId,
+          fetchAll,
+        });
         throw ordersError;
       }
 
       if (!ordersData || ordersData.length === 0) {
+        console.info('[useLinkMeOrders] No orders found', {
+          affiliateId: effectiveAffiliateId,
+          fetchAll,
+        });
         return [];
       }
+
+      console.info('[useLinkMeOrders] Orders fetched successfully', {
+        count: ordersData.length,
+        affiliateId: effectiveAffiliateId,
+        fetchAll,
+      });
 
       // Map les commandes (items deja inclus dans la RPC)
       return (ordersData as RawOrderFromRPC[]).map(
