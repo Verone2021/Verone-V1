@@ -1,0 +1,19 @@
+# BATCH 1: prefer-nullish-coalescing (~150-200 warnings)
+# Fichiers sélectionnés: 10-15 warnings chacun
+
+apps/back-office/src/app/(protected)/canaux-vente/linkme/selections/[id]/page.tsx (15)
+apps/back-office/src/app/(protected)/commandes/fournisseurs/page.tsx (14)
+apps/back-office/src/app/api/qonto/invoices/[id]/sync-to-order/route.ts (12)
+apps/back-office/src/app/(protected)/stocks/produits/page.tsx (12)
+apps/back-office/src/app/(protected)/finance/depenses/page.tsx (12)
+apps/back-office/src/app/(protected)/factures/page.tsx (12)
+apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-dashboard.ts (12)
+apps/back-office/src/app/(protected)/factures/[id]/edit/page.tsx (11)
+apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-enseignes.ts (11)
+apps/back-office/src/app/api/qonto/quotes/service/route.ts (10)
+apps/back-office/src/app/(protected)/produits/catalogue/variantes/[groupId]/page.tsx (10)
+apps/back-office/src/app/(protected)/factures/qonto/page.tsx (10)
+apps/back-office/src/app/(protected)/contacts-organisations/enseignes/[id]/page.tsx (10)
+apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-enseigne-customers.ts (10)
+
+Total estimé: ~161 warnings
