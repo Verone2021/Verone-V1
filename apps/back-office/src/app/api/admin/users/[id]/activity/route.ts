@@ -78,7 +78,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
         p_user_id: targetUserId,
         p_days: days,
       }
-    )) as { data: UserStats[] | null; error: unknown };
+    );
 
     if (statsError) {
       console.error('[Admin Activity] Stats error:', statsError);

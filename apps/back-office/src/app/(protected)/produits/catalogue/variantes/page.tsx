@@ -33,7 +33,6 @@ import { VariantAddProductModal } from '@verone/products';
 import { VariantGroupEditModal } from '@verone/products';
 import { VariantGroupCreationWizard } from '@verone/products';
 import { useVariantGroups } from '@verone/products';
-import type { VariantGroup, VariantType } from '@verone/types';
 
 // Interface filtres variantes
 interface LocalVariantFilters {
