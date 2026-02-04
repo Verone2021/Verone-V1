@@ -10,6 +10,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createClient } from '@verone/utils/supabase/client';
+import type { Json } from '@verone/types';
 
 /**
  * Interface pour une configuration de page LinkMe
@@ -22,7 +23,7 @@ export type LinkMePageConfiguration = {
   page_icon: string | null;
   globe_enabled: boolean;
   globe_rotation_speed: number;
-  config: Record<string, unknown>;
+  config: Json;
   created_at: string;
   updated_at: string;
   updated_by: string | null;
@@ -34,7 +35,7 @@ export type LinkMePageConfiguration = {
 export type PageConfigUpdate = {
   globe_enabled?: boolean;
   globe_rotation_speed?: number;
-  config?: Record<string, unknown>;
+  config?: Json;
 };
 
 /**
@@ -48,19 +49,17 @@ const QUERY_KEY = 'linkme-page-configurations';
 async function fetchPageConfigurations(): Promise<LinkMePageConfiguration[]> {
   const supabase = createClient();
 
-  /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from('linkme_page_configurations')
     .select('*')
     .order('page_id');
-  /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
 
   if (error) {
     // Si la table n'existe pas encore, retourner les valeurs par défaut
     // PGRST205 = table not found in schema cache (PostgREST)
     // 42P01 = undefined_table (PostgreSQL)
     // PGRST116 = relation does not exist
-    const errorCode = (error as { code?: string }).code;
+    const errorCode = error.code;
     if (
       errorCode === '42P01' ||
       errorCode === 'PGRST116' ||
@@ -75,9 +74,20 @@ async function fetchPageConfigurations(): Promise<LinkMePageConfiguration[]> {
     throw error;
   }
 
-  return (
-    (data as LinkMePageConfiguration[] | null) ?? getDefaultConfigurations()
-  );
+  // Transform Supabase data to match our interface
+  return (data ?? []).map(row => ({
+    id: row.id,
+    page_id: row.page_id,
+    page_name: row.page_name,
+    page_description: row.page_description,
+    page_icon: row.page_icon,
+    globe_enabled: row.globe_enabled,
+    globe_rotation_speed: Number(row.globe_rotation_speed),
+    config: row.config ?? {},
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+    updated_by: row.updated_by,
+  }));
 }
 
 /**
@@ -124,8 +134,7 @@ async function updatePageConfiguration(
 ): Promise<LinkMePageConfiguration> {
   const supabase = createClient();
 
-  /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from('linkme_page_configurations')
     .update({
       ...updates,
@@ -134,14 +143,26 @@ async function updatePageConfiguration(
     .eq('page_id', pageId)
     .select()
     .single();
-  /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
 
   if (error) {
     console.error('Erreur update page configuration:', error);
     throw error;
   }
 
-  return data as LinkMePageConfiguration;
+  // Transform Supabase row to match our interface
+  return {
+    id: data.id,
+    page_id: data.page_id,
+    page_name: data.page_name,
+    page_description: data.page_description,
+    page_icon: data.page_icon,
+    globe_enabled: data.globe_enabled,
+    globe_rotation_speed: Number(data.globe_rotation_speed),
+    config: data.config ?? {},
+    created_at: data.created_at,
+    updated_at: data.updated_at,
+    updated_by: data.updated_by,
+  };
 }
 
 /**
