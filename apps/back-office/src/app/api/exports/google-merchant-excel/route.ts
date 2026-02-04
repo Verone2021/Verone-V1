@@ -39,10 +39,13 @@ interface ExportFilters {
   limit?: number;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type Product = any; // Type Supabase complexe à régénérer
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type ExcelRow = any; // Structure Excel dynamique
+// Supabase products query with variant group joins - complex return type
+type Product = Record<string, unknown> & {
+  item_group_id?: string | null;
+  variant_group?: Array<{
+    group: { id: string; name: string; item_group_id: string | null } | null;
+  }>;
+};
 
 /**
  * Récupère les produits avec leurs relations depuis Supabase
@@ -96,14 +99,14 @@ async function getProductsForExport(
     throw new Error(`Erreur récupération produits: ${error.message}`);
   }
 
-  return products ?? [];
+  return (products ?? []) as Product[];
 }
 
 /**
  * Génère le fichier Excel avec les données produits
  */
-function generateExcelFile(
-  excelData: ExcelRow[],
+function generateExcelFile<T extends object>(
+  excelData: T[],
   fileName: string,
   headers: readonly string[]
 ): Buffer {
@@ -114,7 +117,9 @@ function generateExcelFile(
   // 2. Préparer les données avec headers
   const worksheetData = [
     [...headers], // En-têtes en première ligne (copie mutable)
-    ...excelData.map(row => headers.map(header => row[header] ?? '')),
+    ...excelData.map(row =>
+      headers.map(header => (row as Record<string, unknown>)[header] ?? '')
+    ),
   ];
 
   // 3. Créer la worksheet
@@ -239,9 +244,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-explicit-any */
     // 3. Enrichir les produits avec les item_group_id des variantes
-    const enrichedProducts: Product[] = products.map((product: any) => {
+    const enrichedProducts: Product[] = products.map(product => {
       // Extraire l'item_group_id si le produit fait partie d'un groupe de variantes
       const variantGroup = product.variant_group?.[0]?.group;
       const item_group_id = variantGroup?.item_group_id ?? null;
@@ -254,9 +258,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     console.warn(`[API] Products enriched with variant data:`, {
       total: enrichedProducts.length,
-      withVariants: enrichedProducts.filter((p: any) => p.item_group_id).length,
+      withVariants: enrichedProducts.filter(p => p.item_group_id).length,
     });
-    /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-explicit-any */
 
     // 4. Transformation des données pour Excel
     const {
@@ -367,8 +370,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   );
 
   try {
-    /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-    const body = await request.json();
+    const body = (await request.json()) as {
+      filters?: ExportFilters;
+      options?: { fileName?: string };
+      productIds?: string[] | null;
+    };
     const { filters = {}, options = {}, productIds = null } = body;
 
     console.warn('[API] Advanced Excel export requested:', {
@@ -376,7 +382,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       options,
       productIds,
     });
-    /* eslint-enable @typescript-eslint/no-unsafe-assignment */
 
     // Initialisation Supabase (Admin pour bypass RLS)
     const supabase = createAdminClient();
@@ -399,7 +404,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       products = data ?? [];
     } else {
       // Export avec filtres
-      /* eslint-disable-next-line @typescript-eslint/no-unsafe-argument */
       products = await getProductsForExport(supabase, filters);
     }
 
@@ -431,7 +435,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument */
     const fileName =
       options.fileName ?? `google-merchant-export-${Date.now()}.xlsx`;
     const excelBuffer = generateExcelFile(
@@ -439,7 +442,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       fileName,
       GOOGLE_MERCHANT_EXCEL_HEADERS
     );
-    /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument */
 
     return new NextResponse(new Uint8Array(excelBuffer), {
       status: 200,

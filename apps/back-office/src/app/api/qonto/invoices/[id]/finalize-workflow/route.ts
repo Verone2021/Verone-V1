@@ -115,6 +115,7 @@ export async function POST(
     let finalizedInvoice: QontoFinalizedInvoice;
 
     try {
+      // QontoClientInvoice lacks index signature; QontoFinalizedInvoice has [key: string]
       finalizedInvoice = (await qontoClient.finalizeClientInvoice(
         invoice.qonto_invoice_id
       )) as unknown as QontoFinalizedInvoice;

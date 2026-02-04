@@ -120,17 +120,6 @@ function calculateMissingFields(product: Product | null) {
 type ProductRow = Database['public']['Tables']['products']['Row'];
 type ProductUpdate = Database['public']['Tables']['products']['Update'];
 
-// Types pour les champs JSONB
-interface ProductDimensions {
-  length?: number;
-  width?: number;
-  height?: number;
-  unit?: 'cm' | 'mm' | 'in';
-  [key: string]: unknown;
-}
-
-type VariantAttributes = Record<string, unknown>;
-
 // Relations jointes via select
 interface ProductRelations {
   enseigne?: {
@@ -311,7 +300,7 @@ export default function ProductDetailPage() {
       }
 
       // Cast to Product with relations (Supabase returns row + joined relations)
-      setProduct(data as unknown as Product);
+      setProduct(data as Product);
     } catch (err) {
       console.error('Erreur lors du chargement du produit:', err);
       setError(
@@ -323,7 +312,7 @@ export default function ProductDetailPage() {
       setLoading(false);
       checkSLOCompliance(startTime, 'dashboard');
     }
-  }, [productId, router]);
+  }, [productId, router, startTime]);
 
   // Handler pour mettre à jour le produit (✅ Optimisé avec optimistic update + DB)
   const handleProductUpdate = useCallback(
@@ -380,7 +369,7 @@ export default function ProductDetailPage() {
     void fetchProduct().catch(error => {
       console.error('[ProductDetail] Initial fetch failed:', error);
     });
-  }, [productId]);
+  }, [fetchProduct]);
 
   // ✅ HOOKS DÉPLACÉS AVANT RETURNS CONDITIONNELS (React Rules of Hooks)
   // Breadcrumb (✅ Optimisé avec useMemo)
@@ -398,26 +387,12 @@ export default function ProductDetailPage() {
     }
     parts.push(product.name);
     return parts;
-  }, [
-    product?.subcategory?.category?.family?.name,
-    product?.subcategory?.category?.name,
-    product?.subcategory?.name,
-    product?.name,
-  ]);
+  }, [product]);
 
   // Calcul complétude accordéons (✅ Optimisé avec useMemo)
   const missingFields = useMemo(
     () => calculateMissingFields(product),
-    [
-      product?.name,
-      product?.sku,
-      product?.cost_price,
-      product?.supplier_id,
-      product?.subcategory_id,
-      product?.description,
-      product?.product_status,
-      product?.stock_status,
-    ]
+    [product]
   );
 
   // Calcul sourcing (interne vs client/sur mesure vs affilié)
@@ -1145,16 +1120,16 @@ export default function ProductDetailPage() {
         productId={product.id}
         productName={product.name}
         initialData={{
-          variant_attributes: (product.variant_attributes ?? undefined) as
-            | VariantAttributes
-            | undefined,
-          dimensions: (product.dimensions ?? undefined) as
-            | ProductDimensions
-            | undefined,
+          // JSONB fields from Supabase are typed as Json; actual runtime shape is Record
+          variant_attributes:
+            (product.variant_attributes as Record<string, unknown>) ??
+            undefined,
+          dimensions:
+            (product.dimensions as Record<string, unknown>) ?? undefined,
           weight: product.weight ?? undefined,
         }}
         onUpdate={data => {
-          void handleProductUpdate(data).catch(error => {
+          void handleProductUpdate(data as Partial<ProductRow>).catch(error => {
             console.error(
               '[ProductDetail] Characteristics update failed:',
               error
@@ -1177,7 +1152,7 @@ export default function ProductDetailPage() {
             | undefined,
         }}
         onUpdate={data => {
-          void handleProductUpdate(data).catch(error => {
+          void handleProductUpdate(data as Partial<ProductRow>).catch(error => {
             console.error('[ProductDetail] Descriptions update failed:', error);
           });
         }}

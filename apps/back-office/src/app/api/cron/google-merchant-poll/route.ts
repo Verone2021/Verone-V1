@@ -136,6 +136,7 @@ export async function GET(
       .rpc('poll_google_merchant_statuses', {
         product_ids: syncedProducts.map(p => p.product_id),
         // Cast to Json type expected by RPC (array of objects is valid Json)
+        // ProductStatusData[] is structurally incompatible with Json (Supabase RPC param)
         statuses_data: statusesData as unknown as Json,
       })
       .returns<PollResult[]>();

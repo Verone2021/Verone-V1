@@ -37,6 +37,7 @@ export interface BankTransaction {
   amount_ht: number | null;
   amount_vat: number | null;
   nature: string | null;
+  vat_source: string | null;
   // Pièces jointes
   attachment_ids: string[] | null;
   has_attachment: boolean | null;

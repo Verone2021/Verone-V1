@@ -290,8 +290,7 @@ export default function LinkMePricingConfigPage() {
       }
 
       // Buffer
-      const bufferRate =
-        (p as unknown as { buffer_rate?: number }).buffer_rate ?? null;
+      const bufferRate = p.buffer_rate ?? null;
       if (bufferRate !== null) {
         totalBuffer += bufferRate;
         bufferCount++;
@@ -326,22 +325,16 @@ export default function LinkMePricingConfigPage() {
       newValue: number | null
     ) => {
       const key = `${product.id}-${field}`;
-      const extProduct = product as unknown as {
-        buffer_rate?: number;
-        public_price_ht?: number | null;
-        product_selling_price_ht?: number | null;
-        channel_commission_rate?: number | null;
-      };
 
       let originalValue: number | null = null;
       if (field === 'buffer_rate') {
-        originalValue = extProduct.buffer_rate ?? 0.05;
+        originalValue = product.buffer_rate ?? 0.05;
       } else if (field === 'public_price_ht') {
-        originalValue = extProduct.public_price_ht ?? null;
+        originalValue = product.public_price_ht ?? null;
       } else if (field === 'custom_price_ht') {
-        originalValue = extProduct.product_selling_price_ht ?? null;
+        originalValue = product.product_selling_price_ht ?? null;
       } else if (field === 'channel_commission_rate') {
-        originalValue = extProduct.channel_commission_rate ?? null;
+        originalValue = product.channel_commission_rate ?? null;
       }
 
       if (newValue === originalValue) {
@@ -432,24 +425,17 @@ export default function LinkMePricingConfigPage() {
       return pending.newValue;
     }
 
-    const extProduct = product as unknown as {
-      buffer_rate?: number;
-      public_price_ht?: number | null;
-      product_selling_price_ht?: number | null;
-      channel_commission_rate?: number | null;
-    };
-
     if (field === 'buffer_rate') {
-      return extProduct.buffer_rate ?? 0.05;
+      return product.buffer_rate ?? 0.05;
     }
     if (field === 'public_price_ht') {
-      return extProduct.public_price_ht ?? null;
+      return product.public_price_ht ?? null;
     }
     if (field === 'custom_price_ht') {
-      return extProduct.product_selling_price_ht ?? null;
+      return product.product_selling_price_ht ?? null;
     }
     if (field === 'channel_commission_rate') {
-      return extProduct.channel_commission_rate ?? null;
+      return product.channel_commission_rate ?? null;
     }
     return null;
   };

@@ -92,7 +92,7 @@ export function useFormMessages(submissionId: string): UseFormMessagesReturn {
         return;
       }
 
-      setMessages((data as unknown as FormMessage[]) ?? []);
+      setMessages((data ?? []) as FormMessage[]);
     } catch (err) {
       console.error('[useFormMessages] Unexpected error:', err);
       setError('Erreur inattendue');

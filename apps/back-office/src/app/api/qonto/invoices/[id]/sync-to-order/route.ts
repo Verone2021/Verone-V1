@@ -118,6 +118,7 @@ export async function POST(
       );
     }
 
+    // Supabase query result has billing_address as Json, incompatible with Record<string, unknown>
     const typedInvoice = invoice as unknown as IInvoiceWithOrder;
 
     // 2. Verifier que la facture a une commande liee
@@ -220,7 +221,7 @@ export async function POST(
       (sum, item) => sum + (item.total_ht ?? 0),
       0
     );
-    const productTotalVat = productItems.reduce(
+    const _productTotalVat = productItems.reduce(
       (sum, item) => sum + (item.tva_amount ?? 0),
       0
     );
@@ -253,7 +254,7 @@ export async function POST(
     const { error: updateOrderError } = await supabase
       .from('sales_orders')
       .update(orderUpdateData)
-      .eq('id', typedInvoice.sales_order_id!);
+      .eq('id', typedInvoice.sales_order_id);
 
     if (updateOrderError) {
       console.error('[Sync-to-order] Order update error:', updateOrderError);

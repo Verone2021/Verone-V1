@@ -218,7 +218,7 @@ export async function POST(request: NextRequest): Promise<
       );
     }
 
-    const orderWithItems = order as unknown as ISalesOrderWithItems;
+    const orderWithItems = order as ISalesOrderWithItems;
 
     // Fetch manuel du customer selon customer_type
     let customer: Organisation | IndividualCustomer | null = null;

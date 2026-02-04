@@ -193,7 +193,7 @@ export function FamilyForm({
         });
       }
 
-      onSubmit(result as unknown as Family);
+      onSubmit(result as Family);
       onClose();
     } catch (error: unknown) {
       const errorMessage =

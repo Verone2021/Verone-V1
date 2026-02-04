@@ -122,6 +122,7 @@ export async function POST(
       );
     }
 
+    // Supabase query result has billing_address as Json, incompatible with Record<string, unknown>
     const typedInvoice = invoice as unknown as ILocalInvoice;
 
     // 2. Verifier que la facture est en brouillon valide
@@ -157,7 +158,7 @@ export async function POST(
       );
     }
 
-    const typedPartner = partner as unknown as IPartner;
+    const typedPartner = partner as IPartner;
 
     // 4. Recuperer les lignes de la facture
     const { data: items, error: itemsError } = await (

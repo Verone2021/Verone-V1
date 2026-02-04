@@ -37,6 +37,13 @@ import { Textarea } from '@verone/ui';
 import { createClient } from '@verone/utils/supabase/client';
 import { cn } from '@verone/utils';
 
+interface ProductDescriptionsUpdate {
+  description: string | null;
+  technical_description: string | null;
+  selling_points: string[] | null;
+  updated_at: string;
+}
+
 interface ProductDescriptionsModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -47,7 +54,7 @@ interface ProductDescriptionsModalProps {
     technical_description?: string;
     selling_points?: string[];
   };
-  onUpdate: (data: any) => void;
+  onUpdate: (data: ProductDescriptionsUpdate) => void;
 }
 
 // Suggestions de points de vente par type de produit

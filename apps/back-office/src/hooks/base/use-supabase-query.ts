@@ -140,7 +140,7 @@ export function useSupabaseQuery<T>(options: QueryOptions<T>): QueryState<T> {
     } finally {
       setLoading(false);
     }
-    // Individual properties listed to avoid unnecessary re-renders
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Individual properties listed to avoid unnecessary re-renders when options object ref changes
   }, [
     supabase,
     options.tableName,

@@ -31,7 +31,7 @@ async function fetchProductDetail(
     throw error;
   }
 
-  return data as unknown as SiteInternetProductDetail | null;
+  return data as SiteInternetProductDetail | null;
 }
 
 /**

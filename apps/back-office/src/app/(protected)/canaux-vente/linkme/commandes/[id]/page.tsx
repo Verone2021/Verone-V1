@@ -359,8 +359,7 @@ export default function LinkMeOrderDetailPage() {
 
       if (enrichedData && enrichedData.length > 0) {
         // Cast enriched data to typed array
-        const typedEnrichedData =
-          enrichedData as unknown as LinkmeOrderItemEnrichedRaw[];
+        const typedEnrichedData = enrichedData as LinkmeOrderItemEnrichedRaw[];
 
         // Récupérer les product_ids pour fetch created_by_affiliate
         const productIds = typedEnrichedData

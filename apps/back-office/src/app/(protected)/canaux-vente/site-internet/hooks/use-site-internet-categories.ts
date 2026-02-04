@@ -157,9 +157,7 @@ export function useSiteInternetCategoriesStats() {
       const total = categoriesData.length;
       const active = categoriesData.filter(c => c.is_active).length;
       const visibleMenu = categoriesData.filter(
-        c =>
-          c.is_active &&
-          (c as unknown as { is_visible_menu?: boolean }).is_visible_menu
+        c => c.is_active && c.is_visible_menu
       ).length;
       const rootCategories = categoriesData.filter(
         c => c.family_id === null

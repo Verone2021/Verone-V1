@@ -8,29 +8,27 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
+import type { Json } from '@verone/types/supabase';
 import { anonymizeIP, simplifyUserAgent } from '@verone/utils/analytics';
 import { createClient } from '@verone/utils/supabase/server';
 
 // Node.js runtime
 export const dynamic = 'force-dynamic';
-
-/* eslint-disable @typescript-eslint/no-explicit-any -- Supabase Json type requires any for JSONB columns */
 interface ActivityEvent {
   action: string;
   table_name?: string;
   record_id?: string;
-  old_data?: Record<string, any>;
-  new_data?: Record<string, any>;
+  old_data?: Record<string, unknown>;
+  new_data?: Record<string, unknown>;
   severity?: 'info' | 'warning' | 'error' | 'critical';
   metadata?: {
     page_url?: string;
     user_agent?: string;
     ip_address?: string;
     session_duration?: number;
-    [key: string]: any;
+    [key: string]: unknown;
   };
 }
-/* eslint-enable @typescript-eslint/no-explicit-any */
 
 interface BatchRequest {
   events: ActivityEvent[];
@@ -89,10 +87,10 @@ export async function POST(request: NextRequest) {
       action: event.action,
       table_name: event.table_name ?? null,
       record_id: event.record_id ?? null,
-      old_data: event.old_data ?? null,
-      new_data: event.new_data ?? null,
+      old_data: (event.old_data ?? null) as Json,
+      new_data: (event.new_data ?? null) as Json,
       severity: event.severity ?? 'info',
-      metadata: event.metadata ?? {},
+      metadata: (event.metadata ?? {}) as Json,
       session_id: session_id,
       page_url: event.metadata?.page_url ?? null,
       user_agent: simplifyUserAgent(event.metadata?.user_agent ?? rawUA), // ✅ Anonymisé production

@@ -228,7 +228,7 @@ export function CategoryForm({
         });
       }
 
-      onSubmit(result as unknown as Category);
+      onSubmit(result as Category);
       onClose();
     } catch (error: unknown) {
       const errorMessage =

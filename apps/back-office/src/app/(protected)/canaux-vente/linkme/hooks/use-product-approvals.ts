@@ -249,6 +249,7 @@ export function useApproveProduct() {
         throw error;
       }
 
+      // RPC returns Json union type; ApprovalResult is the actual structure
       return data as unknown as ApprovalResult;
     },
     onSuccess: async () => {

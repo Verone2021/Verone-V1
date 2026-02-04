@@ -960,7 +960,7 @@ async function fetchLinkMeProductDetail(
   if (!cpData) return null;
 
   // Typage avec jointure products
-  const cp = cpData as unknown as ChannelPricingWithProduct;
+  const cp = cpData as ChannelPricingWithProduct;
   const product = cp.products;
 
   // Récupérer l'image primaire

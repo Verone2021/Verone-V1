@@ -112,7 +112,7 @@ export default function ExpenseDetailPage(props: PageProps) {
 
       if (error) throw error;
 
-      setDocument(data as unknown as FinancialDocument);
+      setDocument(data as FinancialDocument);
 
       // Fetch items (lignes TVA)
       // Note: utilise financial_document_lines (table existante)

@@ -839,7 +839,7 @@ export function usePendingOrders() {
 
         // Map items with proper typing and extract primary image
         const items: PendingOrderItem[] = (
-          (order.sales_order_items as unknown as Array<{
+          (order.sales_order_items as Array<{
             id: string;
             quantity: number;
             unit_price_ht: number | null;

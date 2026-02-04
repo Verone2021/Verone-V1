@@ -92,11 +92,12 @@ export async function GET() {
       },
       timestamp: new Date().toISOString(),
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const qontoError = error as { code?: string; message?: string; details?: unknown; statusCode?: number };
     console.error('Qonto connection test failed:', error);
 
     // Gestion erreurs spécifiques
-    if (error.code === 'AUTH_ERROR') {
+    if (qontoError.code === 'AUTH_ERROR') {
       return NextResponse.json(
         {
           success: false,
@@ -113,7 +114,7 @@ export async function GET() {
       );
     }
 
-    if (error.code === 'PERMISSION_ERROR') {
+    if (qontoError.code === 'PERMISSION_ERROR') {
       return NextResponse.json(
         {
           success: false,
@@ -125,7 +126,7 @@ export async function GET() {
       );
     }
 
-    if (error.code === 'RATE_LIMIT') {
+    if (qontoError.code === 'RATE_LIMIT') {
       return NextResponse.json(
         {
           success: false,
@@ -142,11 +143,11 @@ export async function GET() {
       {
         success: false,
         error: 'Erreur de connexion Qonto',
-        message: error.message ?? 'Une erreur inattendue s\'est produite',
-        code: error.code ?? 'UNKNOWN_ERROR',
-        details: error.details,
+        message: qontoError.message ?? 'Une erreur inattendue s\'est produite',
+        code: qontoError.code ?? 'UNKNOWN_ERROR',
+        details: qontoError.details,
       },
-      { status: error.statusCode ?? 500 }
+      { status: qontoError.statusCode ?? 500 }
     );
   }
   */

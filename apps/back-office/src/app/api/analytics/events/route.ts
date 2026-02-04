@@ -8,19 +8,19 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
+import type { Json } from '@verone/types/supabase';
 import { anonymizeIP, simplifyUserAgent } from '@verone/utils/analytics';
 import { createClient } from '@verone/utils/supabase/server';
 
 // Node.js runtime
 export const dynamic = 'force-dynamic';
 
-/* eslint-disable @typescript-eslint/no-explicit-any -- Supabase Json type requires any for JSONB columns */
 interface ActivityEvent {
   action: string;
   table_name?: string;
   record_id?: string;
-  old_data?: Record<string, any>;
-  new_data?: Record<string, any>;
+  old_data?: Record<string, unknown>;
+  new_data?: Record<string, unknown>;
   severity?: 'info' | 'warning' | 'error' | 'critical';
   metadata?: {
     page_url?: string;
@@ -30,7 +30,7 @@ interface ActivityEvent {
     click_position?: { x: number; y: number };
     element_target?: string;
     search_query?: string;
-    filter_applied?: Record<string, any>;
+    filter_applied?: Record<string, unknown>;
     performance_metrics?: {
       load_time?: number;
       interaction_time?: number;
@@ -38,7 +38,6 @@ interface ActivityEvent {
     };
   };
 }
-/* eslint-enable @typescript-eslint/no-explicit-any */
 
 export async function POST(request: NextRequest) {
   try {
@@ -78,10 +77,10 @@ export async function POST(request: NextRequest) {
       action: event.action,
       table_name: event.table_name ?? null,
       record_id: event.record_id ?? null,
-      old_data: event.old_data ?? null,
-      new_data: event.new_data ?? null,
+      old_data: (event.old_data ?? null) as Json,
+      new_data: (event.new_data ?? null) as Json,
       severity: event.severity ?? 'info',
-      metadata: event.metadata ?? {},
+      metadata: (event.metadata ?? {}) as Json,
       session_id: event.metadata?.session_duration?.toString() ?? null, // Utiliser comme proxy session
       page_url:
         event.metadata?.page_url ?? request.headers.get('referer') ?? null,

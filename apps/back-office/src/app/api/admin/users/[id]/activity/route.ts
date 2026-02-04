@@ -23,22 +23,6 @@ interface UserProfile {
   role: string;
 }
 
-interface UserAction {
-  action_type: string;
-  module: string;
-  created_at: string;
-  details: Record<string, unknown>;
-}
-
-interface UserStats {
-  total_sessions: number;
-  total_actions: number;
-  avg_session_duration: number | null;
-  most_used_module: string | null;
-  engagement_score: number;
-  last_activity: string | null;
-}
-
 export async function GET(request: NextRequest, context: RouteContext) {
   try {
     const supabase = await createServerClient();
