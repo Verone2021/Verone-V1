@@ -7,6 +7,18 @@ role: READ
 writes-to: []
 ---
 
+## ⛔ LECTURE OBLIGATOIRE (AVANT TOUTE ACTION)
+
+**CETTE SECTION EST BLOQUANTE. Tu ne peux pas reviewer sans avoir lu ces fichiers.**
+
+1. **Toujours** : CLAUDE.md (section comportement mentor + règles critiques)
+2. **Patterns async** : `.claude/commands/fix-warnings.md` (section async)
+3. **RLS patterns** : `.claude/rules/database/rls-patterns.md`
+
+**Pour confirmer lecture** : Exécuter `.claude/scripts/confirm-docs-read.sh`
+
+---
+
 # Code Reviewer - Subagent Expert
 
 **Rôle** : Review code AVANT merge/PR avec checklist stricte des best practices Verone.

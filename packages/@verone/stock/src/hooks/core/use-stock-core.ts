@@ -92,7 +92,11 @@ export interface StockMovement {
   updated_at: string;
 
   // Relations
-  products?: any;
+  products?: {
+    id: string;
+    sku: string;
+    name: string;
+  } | null;
   sales_channels?: {
     id: string;
     name: string;
@@ -432,6 +436,20 @@ export function useStockCore({
     [supabase]
   );
 
+  // =========================================================================
+  // REFRESH (défini ici car utilisé par createMovement)
+  // =========================================================================
+
+  /**
+   * Rafraîchir stocks + mouvements
+   */
+  const refetch = useCallback(async () => {
+    await Promise.all([
+      getStockItems({ archived: false }),
+      getMovements({ limit: 100 }),
+    ]);
+  }, [getStockItems, getMovements]);
+
   /**
    * Créer mouvement stock avec auto-injection channel_id
    *
@@ -468,13 +486,6 @@ export function useStockCore({
           channelId
         ) {
           finalChannelId = channelId;
-          console.log(
-            `✅ [useStockCore] Auto-injection channel_id: ${channelId} (OUT sale)`
-          );
-        } else {
-          console.log(
-            `ℹ️ [useStockCore] Pas de channel_id (type=${params.movement_type}, ref=${params.reference_type})`
-          );
         }
 
         // Préparer données mouvement
@@ -485,16 +496,17 @@ export function useStockCore({
           quantity_before: quantityBefore,
           quantity_after: quantityAfter,
           reason_code: params.reason_code,
-          reference_type: params.reference_type || null,
-          reference_id: params.reference_id || null,
-          notes: params.notes || null,
-          affects_forecast: params.affects_forecast || false,
-          forecast_type: params.forecast_type || null,
+          reference_type: params.reference_type ?? null,
+          reference_id: params.reference_id ?? null,
+          notes: params.notes ?? null,
+          affects_forecast: params.affects_forecast ?? false,
+          forecast_type: params.forecast_type ?? null,
           performed_by: userId,
           performed_at: new Date().toISOString(),
-          channel_id: finalChannelId, // 🆕 Auto-injecté si OUT sale
+          channel_id: finalChannelId,
         };
 
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- Supabase client typing limitation
         const { data, error: insertError } = await supabase
           .from('stock_movements')
           .insert(movementData)
@@ -519,20 +531,16 @@ export function useStockCore({
         if (insertError) throw insertError;
         if (!data) throw new Error('Mouvement créé mais non retourné');
 
-        console.log(
-          `✅ [useStockCore] Mouvement créé: ${data.id} (${params.movement_type}, channel=${finalChannelId || 'NULL'})`
-        );
-
         // Trigger refetch automatique (mouvements sont mis à jour via DB triggers)
         await refetch();
 
         return data as StockMovement;
       } catch (err) {
-        console.error('❌ [useStockCore] Erreur création mouvement:', err);
+        console.error('[useStockCore] Erreur création mouvement:', err);
         throw err;
       }
     },
-    [supabase, channelId, userId, getStockItem]
+    [supabase, channelId, userId, getStockItem, refetch]
   );
 
   // =========================================================================
@@ -569,20 +577,6 @@ export function useStockCore({
     },
     [getMovements]
   );
-
-  // =========================================================================
-  // REFRESH
-  // =========================================================================
-
-  /**
-   * Rafraîchir stocks + mouvements
-   */
-  const refetch = useCallback(async () => {
-    await Promise.all([
-      getStockItems({ archived: false }),
-      getMovements({ limit: 100 }),
-    ]);
-  }, [getStockItems, getMovements]);
 
   // =========================================================================
   // RETURN API

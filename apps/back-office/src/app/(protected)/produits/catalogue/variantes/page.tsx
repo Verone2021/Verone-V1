@@ -1,8 +1,8 @@
 'use client';
 
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @next/next/no-img-element, react-hooks/exhaustive-deps */
-
 import { useState, useMemo, useCallback, useEffect } from 'react';
+
+import type { VariantGroup, VariantProduct } from '@verone/types';
 
 import { useRouter } from 'next/navigation';
 
@@ -64,20 +64,23 @@ export default function VariantesPage() {
     subcategoryId: undefined,
   });
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
-  const [editingGroup, setEditingGroup] = useState<any>(null);
+  const [editingGroup, setEditingGroup] = useState<VariantGroup | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showAddProductsModal, setShowAddProductsModal] = useState(false);
   const [selectedGroupForProducts, setSelectedGroupForProducts] =
-    useState<any>(null);
+    useState<VariantGroup | null>(null);
   const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active');
-  const [archivedVariantGroups, setArchivedVariantGroups] = useState<any[]>([]);
+  const [archivedVariantGroups, setArchivedVariantGroups] = useState<
+    VariantGroup[]
+  >([]);
   const [archivedLoading, setArchivedLoading] = useState(false);
 
   // Stabiliser les filtres avec useMemo pour éviter boucle infinie
   const stableFilters = useMemo(
     () => ({
       search: filters.search ?? undefined,
-      variant_type: filters.type === 'all' ? undefined : (filters.type as any),
+      // Hook accepts 'color' | 'material' | undefined
+      variant_type: filters.type === 'all' ? undefined : filters.type,
       is_active:
         filters.status === 'all' ? undefined : filters.status === 'active',
     }),
@@ -118,7 +121,7 @@ export default function VariantesPage() {
     });
   };
 
-  const handleEditGroup = useCallback((group: any) => {
+  const handleEditGroup = useCallback((group: VariantGroup) => {
     setEditingGroup(group);
     setShowEditModal(true);
   }, []);
@@ -146,6 +149,15 @@ export default function VariantesPage() {
     [deleteVariantGroup, toast]
   );
 
+  // Must be defined before handleArchiveGroup since it uses it
+  const handleLoadArchivedGroups = useCallback(async () => {
+    setArchivedLoading(true);
+    const archivedGroups = await loadArchivedVariantGroups();
+    // Cast: hook returns compatible structure but with looser types
+    setArchivedVariantGroups(archivedGroups as VariantGroup[]);
+    setArchivedLoading(false);
+  }, [loadArchivedVariantGroups]);
+
   const handleArchiveGroup = useCallback(
     async (groupId: string, isArchived: boolean) => {
       const result = isArchived
@@ -161,17 +173,16 @@ export default function VariantesPage() {
         }
       }
     },
-    [archiveVariantGroup, unarchiveVariantGroup, refetch, activeTab]
+    [
+      archiveVariantGroup,
+      unarchiveVariantGroup,
+      refetch,
+      activeTab,
+      handleLoadArchivedGroups,
+    ]
   );
 
-  const handleLoadArchivedGroups = useCallback(async () => {
-    setArchivedLoading(true);
-    const archivedGroups = await loadArchivedVariantGroups();
-    setArchivedVariantGroups(archivedGroups);
-    setArchivedLoading(false);
-  }, [loadArchivedVariantGroups]);
-
-  const handleAddProducts = useCallback((group: any) => {
+  const handleAddProducts = useCallback((group: VariantGroup) => {
     setSelectedGroupForProducts(group);
     setShowAddProductsModal(true);
   }, []);
@@ -209,7 +220,7 @@ export default function VariantesPage() {
   }, [activeTab, archivedVariantGroups.length, handleLoadArchivedGroups]);
 
   // Obtenir l'icône du type de variante
-  const getVariantTypeIcon = (type: string) => {
+  const getVariantTypeIcon = (type?: string) => {
     switch (type) {
       case 'color':
         return <Palette className="h-4 w-4 text-purple-600" />;
@@ -225,7 +236,7 @@ export default function VariantesPage() {
   };
 
   // Composant Groupe Card
-  const renderGroupCard = (group: any, isArchived: boolean) => {
+  const renderGroupCard = (group: VariantGroup, isArchived: boolean) => {
     const isSelected = selectedGroups.includes(group.id);
 
     return (
@@ -289,12 +300,13 @@ export default function VariantesPage() {
           <div className="mb-2 h-14">
             {group.products && group.products.length > 0 ? (
               <div className="flex space-x-1.5 overflow-x-auto h-full scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
-                {group.products.slice(0, 5).map((product: any) => (
+                {group.products.slice(0, 5).map((product: VariantProduct) => (
                   <div
                     key={product.id}
                     className="relative flex-shrink-0 w-14 h-14 rounded bg-gray-100 overflow-hidden group/product"
                   >
                     {product.image_url ? (
+                      /* eslint-disable-next-line @next/next/no-img-element -- Dynamic URL from Supabase Storage, next/image requires domain config */
                       <img
                         src={product.image_url}
                         alt={product.name}
@@ -446,7 +458,7 @@ export default function VariantesPage() {
 
     // Filtrer par subcategory_id du groupe (relation directe)
     return variantGroups.filter(
-      (group: any) => group.subcategory_id === filters.subcategoryId
+      (group: VariantGroup) => group.subcategory_id === filters.subcategoryId
     );
   }, [variantGroups, filters.subcategoryId]);
 
@@ -557,7 +569,10 @@ export default function VariantesPage() {
             <select
               value={filters.status}
               onChange={e =>
-                setFilters(prev => ({ ...prev, status: e.target.value as any }))
+                setFilters(prev => ({
+                  ...prev,
+                  status: e.target.value as LocalVariantFilters['status'],
+                }))
               }
               className="border border-gray-300 rounded-md px-3 py-2"
             >
@@ -569,7 +584,10 @@ export default function VariantesPage() {
             <select
               value={filters.type}
               onChange={e =>
-                setFilters(prev => ({ ...prev, type: e.target.value as any }))
+                setFilters(prev => ({
+                  ...prev,
+                  type: e.target.value as LocalVariantFilters['type'],
+                }))
               }
               className="border border-gray-300 rounded-md px-3 py-2"
             >
@@ -726,5 +744,3 @@ export default function VariantesPage() {
     </div>
   );
 }
-
-/* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @next/next/no-img-element, react-hooks/exhaustive-deps */

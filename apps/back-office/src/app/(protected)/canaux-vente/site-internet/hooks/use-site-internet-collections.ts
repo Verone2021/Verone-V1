@@ -94,9 +94,7 @@ export function useToggleCollectionVisibility() {
 
       if (!collection) throw new Error('Collection non trouvée');
 
-      const collectionData = collection as unknown as Collection & {
-        visible_channels: string[] | null;
-      };
+      const collectionData = collection as Collection;
 
       // 3. Calculer nouveau array visible_channels
       let newVisibleChannels: string[] | null;

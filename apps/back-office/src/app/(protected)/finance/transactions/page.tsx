@@ -1987,22 +1987,16 @@ function TransactionsPageV2() {
                                     <span className="text-muted-foreground">
                                       TVA
                                     </span>
-                                    {(
-                                      selectedTransaction as unknown as {
-                                        vat_source?: string;
-                                      }
-                                    ).vat_source === 'qonto_ocr' ? (
+                                    {selectedTransaction.vat_source ===
+                                    'qonto_ocr' ? (
                                       <Badge
                                         variant="secondary"
                                         className="bg-green-100 text-green-700 text-[8px] px-0.5 py-0"
                                       >
                                         OCR
                                       </Badge>
-                                    ) : (
-                                        selectedTransaction as unknown as {
-                                          vat_source?: string;
-                                        }
-                                      ).vat_source === 'manual' ? (
+                                    ) : selectedTransaction.vat_source ===
+                                      'manual' ? (
                                       <Badge
                                         variant="secondary"
                                         className="bg-blue-100 text-blue-700 text-[8px] px-0.5 py-0"

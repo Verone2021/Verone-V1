@@ -64,7 +64,7 @@ export default function EmailTemplatesPage() {
     void loadTemplates().catch(error => {
       console.error('[EmailsPage] loadTemplates failed:', error);
     });
-  }, []);
+  }, [supabase]);
 
   const filteredTemplates = templates.filter(template => {
     const matchesSearch =

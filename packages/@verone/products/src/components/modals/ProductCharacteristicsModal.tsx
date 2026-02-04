@@ -35,17 +35,24 @@ import { Label } from '@verone/ui';
 import { createClient } from '@verone/utils/supabase/client';
 import { cn } from '@verone/utils';
 
+interface ProductCharacteristicsUpdate {
+  variant_attributes: Record<string, string | string[]> | null;
+  dimensions: Record<string, number> | null;
+  weight: number | null;
+  updated_at: string;
+}
+
 interface ProductCharacteristicsModalProps {
   isOpen: boolean;
   onClose: () => void;
   productId: string;
   productName: string;
   initialData?: {
-    variant_attributes?: Record<string, any>;
-    dimensions?: Record<string, any>;
+    variant_attributes?: Record<string, unknown>;
+    dimensions?: Record<string, unknown>;
     weight?: number;
   };
-  onUpdate: (data: any) => void;
+  onUpdate: (data: ProductCharacteristicsUpdate) => void;
 }
 
 // Caractéristiques prédéfinies pour l'interface
@@ -155,8 +162,8 @@ export function ProductCharacteristicsModal({
       setVariantAttributes(predefined);
       setCustomAttributes(custom);
 
-      // Dimensions
-      setDimensions(initialData.dimensions || {});
+      // Dimensions - JSONB values are stored as unknown, but are always numbers
+      setDimensions((initialData.dimensions || {}) as Record<string, number>);
 
       // Weight
       setWeight(initialData.weight);

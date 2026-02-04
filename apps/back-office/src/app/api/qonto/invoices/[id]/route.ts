@@ -15,6 +15,11 @@ import {
   createAdminClient,
 } from '@verone/utils/supabase/server';
 
+interface SyncErrorResponse {
+  error?: string;
+  message?: string;
+}
+
 function getQontoClient(): QontoClient {
   return new QontoClient({
     authMode: (process.env.QONTO_AUTH_MODE as 'oauth' | 'api_key') ?? 'oauth',
@@ -316,7 +321,7 @@ export async function PATCH(
               `[PATCH Invoice] Synced to order ${typedLocalInvoice.sales_order_id}`
             );
           } else {
-            const syncError = await syncResponse.json();
+            const syncError = (await syncResponse.json()) as SyncErrorResponse;
             console.warn('[PATCH Invoice] Sync to order warning:', syncError);
           }
         } catch (syncError) {

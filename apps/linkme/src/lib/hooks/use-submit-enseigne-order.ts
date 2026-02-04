@@ -133,8 +133,7 @@ export function useSubmitEnseigneOrder(): UseSubmitEnseigneOrderReturn {
         // Cette RPC bypass le RLS et permet aux clients anonymes de creer
         // des commandes en toute securite (validation cote serveur PostgreSQL)
 
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call
-        const { data: result, error: rpcError } = await (supabase.rpc as any)(
+        const { data: result, error: rpcError } = await supabase.rpc(
           'create_public_linkme_order',
           {
             p_affiliate_id: affiliateId,
@@ -155,7 +154,7 @@ export function useSubmitEnseigneOrder(): UseSubmitEnseigneOrderReturn {
         }
 
         // La RPC retourne un objet JSONB
-        const rpcResult = result as RpcResponse;
+        const rpcResult = result as unknown as RpcResponse;
 
         if (!rpcResult?.success) {
           throw new Error(
@@ -209,8 +208,9 @@ export function useSubmitEnseigneOrder(): UseSubmitEnseigneOrderReturn {
               totalTtc: totalTtc,
               source: 'client',
 
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-              affiliateName: (selectionData?.linkme_affiliates as any)?.name,
+              affiliateName: (
+                selectionData?.linkme_affiliates as { name?: string } | null
+              )?.name,
               selectionName: selectionData?.name,
             }),
           });

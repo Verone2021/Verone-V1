@@ -26,13 +26,18 @@ interface AddMessageRequest {
   sendEmail: boolean;
 }
 
+interface EmailApiResponse {
+  success: boolean;
+  emailId?: string;
+}
+
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id: submissionId } = await params;
-    const body: AddMessageRequest = await request.json();
+    const body = (await request.json()) as AddMessageRequest;
 
     // Validation
     if (!body.message?.trim()) {
@@ -94,7 +99,7 @@ export async function POST(
         );
 
         if (emailResponse.ok) {
-          const emailData = await emailResponse.json();
+          const emailData = (await emailResponse.json()) as EmailApiResponse;
           emailId = emailData.emailId ?? null;
         } else {
           console.warn(

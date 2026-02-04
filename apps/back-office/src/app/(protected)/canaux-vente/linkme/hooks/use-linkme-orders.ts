@@ -289,7 +289,7 @@ async function fetchLinkMeOrderById(orderId: string): Promise<LinkMeOrder> {
   }
 
   // Mapper les données
-  const order = data as unknown as SalesOrderWithItems;
+  const order = data as SalesOrderWithItems;
   return {
     ...order,
     customer_organisation_id:
@@ -542,7 +542,7 @@ async function createLinkMeOrder(
     throw itemsError;
   }
 
-  // Note: cast to unknown first because DB response may have different column names
+  // Supabase insert returns a subset of columns; LinkMeOrder includes joined fields
   return order as unknown as LinkMeOrder;
 }
 

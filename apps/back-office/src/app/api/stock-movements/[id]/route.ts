@@ -11,11 +11,16 @@ import { NextResponse } from 'next/server';
 
 import { createServerClient } from '@verone/utils/supabase/server';
 
+interface MovementDeleteDetails {
+  reason?: string;
+  reference_type?: string;
+}
+
 interface DeleteResponse {
   success: boolean;
   message?: string;
   error?: string;
-  details?: any;
+  details?: MovementDeleteDetails | string;
 }
 
 /**
@@ -140,14 +145,14 @@ export async function DELETE(
       message:
         'Mouvement supprimé avec succès. Le stock a été recalculé automatiquement.',
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[API] Delete stock movement failed:', error);
 
     return NextResponse.json(
       {
         success: false,
         error: 'Erreur interne du serveur',
-        details: error.message,
+        details: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     );

@@ -7,6 +7,21 @@ role: WRITE
 writes-to: [migrations, ACTIVE.md]
 ---
 
+## ⛔ LECTURE OBLIGATOIRE (AVANT TOUTE ACTION)
+
+**CETTE SECTION EST BLOQUANTE. Tu ne peux pas écrire de migrations sans avoir lu ces fichiers.**
+
+1. **Toujours** : CLAUDE.md (section comportement mentor)
+2. **Migrations** : `.claude/rules/database/supabase.md`
+3. **RLS patterns** : `.claude/rules/database/rls-patterns.md`
+4. **Mémoires obligatoires** : `database-migrations-convention`, `supabase-workflow-correct`
+
+**Pour confirmer lecture** : Exécuter `.claude/scripts/confirm-docs-read.sh`
+
+**Si tu n'as pas lu ces fichiers, tu es BLOQUÉ par les hooks settings.json.**
+
+---
+
 ## WORKFLOW ROLE
 
 **Rôle**: WRITE

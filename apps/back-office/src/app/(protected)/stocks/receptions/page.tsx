@@ -25,6 +25,7 @@ import {
   PurchaseOrderReceptionModal,
   AffiliateReceptionModal,
 } from '@verone/orders';
+import type { AffiliateReception, PurchaseOrder } from '@verone/orders';
 import { usePurchaseReceptions } from '@verone/orders';
 import { ProductThumbnail } from '@verone/products';
 import { Badge } from '@verone/ui';
@@ -779,6 +780,7 @@ export default function ReceptionsPage() {
                                             >
                                               <ProductThumbnail
                                                 src={
+                                                  /* eslint-disable @typescript-eslint/prefer-nullish-coalescing -- Fallback to first image if no primary found */
                                                   item.products?.product_images?.find(
                                                     (img: {
                                                       public_url: string;
@@ -788,6 +790,7 @@ export default function ReceptionsPage() {
                                                   item.products
                                                     ?.product_images?.[0]
                                                     ?.public_url
+                                                  /* eslint-enable @typescript-eslint/prefer-nullish-coalescing */
                                                 }
                                                 alt={
                                                   item.products?.name ||
@@ -950,7 +953,7 @@ export default function ReceptionsPage() {
           {selectedAffiliateReception && (
             <AffiliateReceptionModal
               reception={
-                selectedAffiliateReception as unknown as import('@verone/orders').AffiliateReception
+                selectedAffiliateReception as unknown as AffiliateReception
               }
               open={!!selectedAffiliateReception}
               onClose={() => setSelectedAffiliateReception(null)}
@@ -1298,9 +1301,7 @@ export default function ReceptionsPage() {
       {/* Modal de réception */}
       {selectedOrder && showReceptionModal && (
         <PurchaseOrderReceptionModal
-          order={
-            selectedOrder as unknown as import('@verone/orders').PurchaseOrder
-          }
+          order={selectedOrder as unknown as PurchaseOrder}
           open={showReceptionModal}
           onClose={() => {
             setShowReceptionModal(false);

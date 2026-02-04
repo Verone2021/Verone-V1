@@ -79,7 +79,7 @@ export default function PreviewEmailTemplatePage() {
     void loadTemplate().catch(error => {
       console.error('[EmailPreviewPage] loadTemplate failed:', error);
     });
-  }, [slug]);
+  }, [slug, supabase]);
 
   const renderTemplate = useCallback(() => {
     if (!template) return;
@@ -98,11 +98,9 @@ export default function PreviewEmailTemplatePage() {
     // This is a simplified version - real Handlebars would be better
     html = html.replace(
       /{{#if\s+(\w+)}}([\s\S]*?){{\/if}}/g,
-      (match, varName, content) => {
-        return variableValues[varName] &&
-          variableValues[varName] !== `{{${varName}}}`
-          ? content
-          : '';
+      (_match: string, varName: string, content: string): string => {
+        const value = variableValues[varName];
+        return value && value !== `{{${varName}}}` ? content : '';
       }
     );
 
@@ -215,7 +213,8 @@ export default function PreviewEmailTemplatePage() {
             <p className="text-sm text-black">
               {template.subject.replace(
                 /{{(\w+)}}/g,
-                (match, varName) => variableValues[varName] ?? match
+                (match: string, varName: string): string =>
+                  variableValues[varName] ?? match
               )}
             </p>
           </div>

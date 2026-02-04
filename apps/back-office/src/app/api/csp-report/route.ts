@@ -83,14 +83,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     let report: CSPReport;
 
     if (contentType.includes('application/csp-report')) {
-      report = await request.json();
+      report = (await request.json()) as CSPReport;
     } else if (contentType.includes('application/json')) {
-      report = await request.json();
+      report = (await request.json()) as CSPReport;
     } else {
       // Accept raw body for some browsers
       const text = await request.text();
       try {
-        report = JSON.parse(text);
+        report = JSON.parse(text) as CSPReport;
       } catch {
         return NextResponse.json(
           { error: 'Invalid report format' },

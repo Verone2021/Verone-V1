@@ -18,7 +18,9 @@
 const config = {
   // TypeScript/JavaScript files - PROGRESSIVE RATCHET EFFECT (MIGRATION MODE)
   '**/*.{ts,tsx,js,jsx}': [
-    'eslint --fix', // Fix what can be fixed automatically
+    // Auto-fix what ESLint can; exit 0 regardless so ratchet handles the gate decision
+    files =>
+      `bash -c 'eslint --fix ${files.map(f => `"${f}"`).join(' ')} || true'`,
     'bash scripts/eslint-ratchet-progressive.sh', // Progressive validation (allows reduction, blocks increase)
     'prettier --write',
   ],

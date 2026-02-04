@@ -491,9 +491,11 @@ export default function OrganisationsPage() {
                 )}
               </div>
 
+              {/* eslint-disable @typescript-eslint/prefer-nullish-coalescing -- Intentional boolean OR to check if any address field exists */}
               {(selectedOrg.address_line1 ||
                 selectedOrg.city ||
                 selectedOrg.postal_code) && (
+                /* eslint-enable @typescript-eslint/prefer-nullish-coalescing */
                 <div className="p-4 bg-gray-50 rounded-lg space-y-2">
                   <p className="text-sm font-medium text-gray-700 flex items-center gap-1">
                     <MapPin className="h-4 w-4" />

@@ -26,7 +26,7 @@ interface RejectionEmailRequest {
 
 export async function POST(request: NextRequest) {
   try {
-    const body: RejectionEmailRequest = await request.json();
+    const body = (await request.json()) as RejectionEmailRequest;
 
     const {
       orderNumber,

@@ -241,8 +241,7 @@ export function useSelectionWithProducts(
  */
 export function useIncrementSelectionViews() {
   return async (selectionId: string) => {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-    const { error } = await (supabase as any).rpc('increment_selection_views', {
+    const { error } = await supabase.rpc('track_selection_view', {
       p_selection_id: selectionId,
     });
 

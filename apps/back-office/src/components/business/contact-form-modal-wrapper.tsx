@@ -5,23 +5,7 @@
  */
 
 import { ContactFormModal as CustomerContactFormModal } from '@verone/customers/components/modals/contact-form-modal';
-
-interface Contact {
-  id: string;
-  organisation_id: string;
-  first_name: string;
-  last_name: string;
-  title: string | null;
-  department: string | null;
-  email: string;
-  phone: string | null;
-  mobile: string | null;
-  is_primary_contact: boolean;
-  is_billing_contact: boolean;
-  is_technical_contact: boolean;
-  is_commercial_contact: boolean;
-  is_active: boolean;
-}
+import type { Contact } from '@verone/customers/hooks';
 
 interface ContactFormModalWrapperProps {
   isOpen: boolean;
@@ -44,7 +28,7 @@ export function ContactFormModalWrapper({
   contact,
   onSuccess,
 }: ContactFormModalWrapperProps) {
-  const handleSave = async (_contactData: any) => {
+  const handleSave = async (_contactData: unknown) => {
     // TODO: Implémenter save logic ici ou dans le modal
     // Pour l'instant on appelle juste onSuccess
     onSuccess();
@@ -59,7 +43,7 @@ export function ContactFormModalWrapper({
           console.error('[ContactFormModalWrapper] handleSave failed:', error);
         });
       }}
-      contact={contact as any}
+      contact={contact}
       organisationId={organisationId}
       organisationName="Organisation" // TODO: Récupérer nom réel
     />

@@ -84,7 +84,7 @@ export function MovementsListView({
   if (loading) {
     return (
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {[...Array(6)].map((_, i) => (
+        {Array.from({ length: 6 }, (_, i) => i).map(i => (
           <div
             key={i}
             className="h-32 rounded-[10px] border border-gray-300 bg-gray-100 animate-pulse"

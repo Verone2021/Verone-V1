@@ -291,8 +291,7 @@ export function useSubmitUnifiedOrder() {
             throw new Error(`Erreur création commande: ${rpcError.message}`);
           }
 
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const rpcResult = result as any as RpcResponse;
+          const rpcResult = result as unknown as RpcResponse;
 
           console.error(
             '[useSubmitUnifiedOrder] Order created (new org):',

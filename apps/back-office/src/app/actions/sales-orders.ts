@@ -10,6 +10,7 @@ export type SalesOrderStatus =
   | 'partially_shipped'
   | 'shipped'
   | 'delivered'
+  | 'closed'
   | 'cancelled';
 
 interface UpdateStatusResult {

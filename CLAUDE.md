@@ -100,6 +100,27 @@ if (isValidData(data)) {
 
 ---
 
+## 📖 DOCUMENTATION PAR TÂCHE (Index Obligatoire)
+
+| Si tu fais...           | Tu DOIS lire AVANT...                              |
+|-------------------------|----------------------------------------------------|
+| Correction ESLint       | `.claude/commands/fix-warnings.md` (~10 min)       |
+| Erreurs TypeScript      | `.claude/guides/typescript-errors-debugging.md`    |
+| Investigation bug       | Utiliser agent `verone-debug-investigator`         |
+| Nouvelle feature        | `EnterPlanMode` puis validation utilisateur        |
+| Migration DB            | `.claude/rules/database/supabase.md`               |
+| Modification RLS        | `.claude/rules/database/rls-patterns.md`           |
+
+**⚠️ HOOKS BLOQUANTS** : Les hooks dans `settings.json` BLOQUENT automatiquement :
+- `git commit/push --no-verify` → INTERDIT (contourne validations)
+- Patterns `any`/`as any` dans le **nouveau** code → INTERDIT (perd type safety)
+- Commit sur main → INTERDIT (utiliser feature branch)
+- Push direct sur main → INTERDIT (utiliser PR)
+
+**Note** : Les hooks vérifient uniquement le **nouveau contenu** écrit, pas le code existant.
+
+---
+
 ## Stack Technique
 
 - **Frontend** : Next.js 15 (App Router, RSC) + shadcn/ui + Tailwind CSS
@@ -243,6 +264,29 @@ const mutation = useMutation({
 
 - ❌ `pnpm build` (build 31 packages = 3-5 min)
 - ✅ `pnpm --filter @verone/[app] build` (30-60 sec)
+
+### 6. TOUJOURS Vérifier AVANT Commit (WORKFLOW PRO)
+
+**OBLIGATOIRE avant CHAQUE commit :**
+
+```
+┌─────────────────────────────────────────────────┐
+│  CHECKLIST PRÉ-COMMIT (NON NÉGOCIABLE)          │
+├─────────────────────────────────────────────────┤
+│  1. git diff --staged          → Review code    │
+│  2. pnpm --filter type-check   → TypeScript OK  │
+│  3. eslint fichiers modifiés   → Qualité OK     │
+│  4. git commit                 → Si tout passe  │
+└─────────────────────────────────────────────────┘
+```
+
+**Vérifications `git diff --staged`** :
+- ✅ Seuls les fichiers pertinents sont stagés
+- ❌ Pas de `.claude/`, `CLAUDE.md` (sauf demande explicite)
+- ❌ Pas de secrets (`.env`, credentials)
+- ❌ Pas de fichiers générés (`.next/`, `dist/`)
+
+📖 **Détails complets** : `.claude/rules/dev/git-workflow.md` (section "VÉRIFICATION OBLIGATOIRE")
 
 ---
 

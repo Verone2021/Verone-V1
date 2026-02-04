@@ -87,6 +87,80 @@ git push -u origin fix/feature
 5. ✅ **CI validation** (chaque push validé par CI/CD)
 6. ✅ **Historique clair** (commits logiques par étape)
 
+## VÉRIFICATION OBLIGATOIRE AVANT COMMIT (CRITIQUE)
+
+**Cette checklist est NON NÉGOCIABLE. Claude DOIT exécuter ces étapes AVANT chaque commit.**
+
+### Étape 1 : Voir ce qui sera commité
+
+```bash
+# Voir les fichiers stagés
+git diff --staged --name-only
+
+# Voir le contenu des changements (OBLIGATOIRE pour review)
+git diff --staged
+```
+
+**Vérifier** :
+- ✅ Seuls les fichiers pertinents sont inclus
+- ✅ Pas de fichiers `.claude/`, `CLAUDE.md` (sauf si explicitement demandé)
+- ✅ Pas de fichiers secrets (`.env`, credentials)
+- ✅ Pas de fichiers générés (`.next/`, `node_modules/`, `dist/`)
+
+### Étape 2 : Type-check sur les packages modifiés
+
+```bash
+# Identifier les packages touchés
+git diff --staged --name-only | grep -E "^(apps|packages)" | cut -d'/' -f1-3 | sort -u
+
+# Type-check FILTRÉ (JAMAIS pnpm type-check global)
+pnpm --filter @verone/[package-modifié] type-check
+```
+
+**Règle** : Si type-check échoue → CORRIGER avant commit, JAMAIS commiter du code qui ne compile pas.
+
+### Étape 3 : ESLint sur les fichiers modifiés
+
+```bash
+# ESLint sur les fichiers stagés uniquement
+git diff --staged --name-only -- '*.ts' '*.tsx' | xargs pnpm eslint --max-warnings=0
+```
+
+**Règle** :
+- Erreurs ESLint → CORRIGER avant commit
+- Warnings sur code EXISTANT → OK (pré-existants, hors scope)
+- Warnings sur code NOUVEAU → CORRIGER avant commit
+
+### Étape 4 : Commit uniquement si tout passe
+
+```bash
+# Seulement après validation des étapes 1-3
+git commit -m "[APP-DOMAIN-NNN] type: description"
+```
+
+### Résumé Workflow Pro
+
+```
+┌─────────────────────────────────────────────────┐
+│  AVANT CHAQUE COMMIT (OBLIGATOIRE)              │
+├─────────────────────────────────────────────────┤
+│  1. git diff --staged          → Review code    │
+│  2. pnpm --filter type-check   → TypeScript OK  │
+│  3. eslint fichiers modifiés   → Qualité OK     │
+│  4. git commit                 → Si tout passe  │
+└─────────────────────────────────────────────────┘
+```
+
+### ❌ INTERDIT
+
+- Commiter sans `git diff --staged` préalable
+- Commiter avec des erreurs TypeScript
+- Commiter avec des erreurs ESLint sur nouveau code
+- Inclure des fichiers de config Claude sans demande explicite
+- Utiliser `git add .` aveuglément (toujours vérifier ce qui est stagé)
+
+---
+
 ## Commits Fréquents (Save Points)
 
 **Pattern recommandé** : Commit à chaque étape logique

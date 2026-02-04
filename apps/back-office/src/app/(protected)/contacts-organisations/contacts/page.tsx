@@ -96,12 +96,14 @@ export default function ContactsPage() {
         contact.organisation?.type === 'supplier') ||
       (filterType === 'customer' && contact.organisation?.type === 'customer');
 
+    /* eslint-disable @typescript-eslint/prefer-nullish-coalescing -- Intentional boolean OR for filter conditions */
     const matchesRole =
       filterRole === 'all' ||
       (filterRole === 'primary' && contact.is_primary_contact) ||
       (filterRole === 'commercial' && contact.is_commercial_contact) ||
       (filterRole === 'technical' && contact.is_technical_contact) ||
       (filterRole === 'billing' && contact.is_billing_contact);
+    /* eslint-enable @typescript-eslint/prefer-nullish-coalescing */
 
     return matchesSearch && matchesType && matchesRole;
   });

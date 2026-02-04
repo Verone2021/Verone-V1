@@ -85,7 +85,7 @@ export function CustomersTab() {
       // Ajouter le champ calculé 'name' pour chaque organisation
       const customersWithName = (data ?? []).map(org => ({
         ...org,
-        name: org.trade_name || org.legal_name,
+        name: org.trade_name ?? org.legal_name,
       })) as Organisation[];
       setArchivedCustomers(customersWithName);
     } catch (err) {
@@ -287,14 +287,10 @@ export function CustomersTab() {
           {displayedCustomers.map(customer => (
             <OrganisationCard
               key={customer.id}
-              organisation={
-                {
-                  ...customer,
-                  type: 'customer' as const,
-                } as unknown as Parameters<
-                  typeof OrganisationCard
-                >[0]['organisation']
-              }
+              organisation={{
+                ...customer,
+                type: 'customer' as const,
+              }}
               activeTab={activeTab}
               onArchive={() => {
                 void handleArchive(customer).catch(error => {
@@ -313,14 +309,10 @@ export function CustomersTab() {
         <Card>
           <CardContent style={{ padding: spacing[3] }}>
             <OrganisationListView
-              organisations={
-                displayedCustomers.map(c => ({
-                  ...c,
-                  type: 'customer' as const,
-                })) as unknown as Parameters<
-                  typeof OrganisationListView
-                >[0]['organisations']
-              }
+              organisations={displayedCustomers.map(c => ({
+                ...c,
+                type: 'customer' as const,
+              }))}
               activeTab={activeTab}
               onArchive={id => {
                 const customer = displayedCustomers.find(c => c.id === id);

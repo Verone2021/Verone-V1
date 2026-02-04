@@ -1,6 +1,6 @@
 #!/bin/sh
 
-echo "🔍 Type-check avant push..."
+echo "🔍 Validation avant push (ESLint + Type-check)..."
 
 # Detect which apps have been modified
 CHANGED_FILES=$(git diff --cached --name-only HEAD~1 2>/dev/null || git diff --name-only HEAD~1 2>/dev/null || echo "")
@@ -27,17 +27,56 @@ if echo "$CHANGED_FILES" | grep -q "^packages/"; then
   CHECK_PACKAGES=true
 fi
 
-# If packages changed, check all apps that depend on them
+FAILED=false
+
+# --- ESLint Check ---
+echo ""
+echo "📝 ESLint..."
+
 if [ "$CHECK_PACKAGES" = true ]; then
-  echo "📦 Packages modifiés - type-check complet requis"
-  if ! pnpm type-check; then
-    echo "❌ Type-check échoué. Push annulé."
-    exit 1
+  echo "   📦 Packages modifiés - lint complet requis"
+  if ! pnpm lint; then
+    FAILED=true
+    echo "   ❌ ESLint échoué"
   fi
 else
-  # Filtered type-check for modified apps only
-  FAILED=false
+  if [ "$CHECK_BO" = true ]; then
+    echo "   → Lint back-office..."
+    if ! pnpm --filter @verone/back-office lint; then
+      FAILED=true
+    fi
+  fi
 
+  if [ "$CHECK_LM" = true ]; then
+    echo "   → Lint linkme..."
+    if ! pnpm --filter @verone/linkme lint; then
+      FAILED=true
+    fi
+  fi
+
+  if [ "$CHECK_SI" = true ]; then
+    echo "   → Lint site-internet..."
+    if ! pnpm --filter @verone/site-internet lint; then
+      FAILED=true
+    fi
+  fi
+
+  if [ "$CHECK_BO" = false ] && [ "$CHECK_LM" = false ] && [ "$CHECK_SI" = false ]; then
+    echo "   → Aucune app spécifique modifiée, skip lint"
+  fi
+fi
+
+# --- Type-check ---
+echo ""
+echo "📘 Type-check..."
+
+if [ "$CHECK_PACKAGES" = true ]; then
+  echo "   📦 Packages modifiés - type-check complet requis"
+  if ! pnpm type-check; then
+    FAILED=true
+    echo "   ❌ Type-check échoué"
+  fi
+else
   if [ "$CHECK_BO" = true ]; then
     echo "   → Type-check back-office..."
     if ! pnpm --filter @verone/back-office type-check; then
@@ -59,16 +98,18 @@ else
     fi
   fi
 
-  # If no specific app detected, run minimal check
   if [ "$CHECK_BO" = false ] && [ "$CHECK_LM" = false ] && [ "$CHECK_SI" = false ]; then
     echo "   → Aucune app spécifique modifiée, skip type-check"
   fi
-
-  if [ "$FAILED" = true ]; then
-    echo "❌ Type-check échoué. Push annulé."
-    exit 1
-  fi
 fi
 
-echo "✅ Type-check réussi, push autorisé"
+# --- Result ---
+if [ "$FAILED" = true ]; then
+  echo ""
+  echo "❌ Validation échouée. Push annulé."
+  exit 1
+fi
+
+echo ""
+echo "✅ ESLint + Type-check réussis, push autorisé"
 echo "ℹ️  Le build complet sera validé par GitHub Actions"

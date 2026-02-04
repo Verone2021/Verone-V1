@@ -163,10 +163,11 @@ export function useAffiliateNetwork(affiliateId: string | null) {
 
       const supabase = createClient();
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-      const { data, error } = await (supabase.rpc as any)(
+      const { data, error } = await supabase.rpc(
         'get_customers_for_affiliate',
-        { p_affiliate_id: affiliateId }
+        {
+          p_affiliate_id: affiliateId,
+        }
       );
 
       if (error) {

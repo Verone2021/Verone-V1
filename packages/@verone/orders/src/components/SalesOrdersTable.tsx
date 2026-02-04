@@ -108,6 +108,7 @@ const statusLabels: Record<SalesOrderStatus, string> = {
   partially_shipped: 'Partiellement expediee',
   shipped: 'Expediee',
   delivered: 'Livree',
+  closed: 'Cloturee',
   cancelled: 'Annulee',
 };
 
@@ -117,6 +118,7 @@ const statusColors: Record<SalesOrderStatus, string> = {
   partially_shipped: 'bg-amber-100 text-amber-800',
   shipped: 'bg-cyan-100 text-cyan-800',
   delivered: 'bg-green-100 text-green-800',
+  closed: 'bg-purple-100 text-purple-800',
   cancelled: 'bg-red-100 text-red-800',
 };
 

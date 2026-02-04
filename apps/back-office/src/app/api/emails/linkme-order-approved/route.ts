@@ -27,7 +27,7 @@ interface ApprovalEmailRequest {
 
 export async function POST(request: NextRequest) {
   try {
-    const body: ApprovalEmailRequest = await request.json();
+    const body = (await request.json()) as ApprovalEmailRequest;
 
     const {
       orderNumber,

@@ -12,6 +12,11 @@ import { createAdminClient } from '@verone/utils/supabase/server';
 
 import { requireBackofficeAdmin } from '@/lib/guards';
 
+interface IUpdateEmailInput {
+  user_id: string;
+  new_email: string;
+}
+
 export async function POST(request: NextRequest): Promise<NextResponse> {
   // 🔐 GUARD: Vérifier authentification admin back-office
   const guardResult = await requireBackofficeAdmin(request);
@@ -21,7 +26,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   try {
     const supabaseAdmin = createAdminClient();
-    const body = await request.json();
+    const body = (await request.json()) as IUpdateEmailInput;
     const { user_id, new_email } = body;
 
     // Validation

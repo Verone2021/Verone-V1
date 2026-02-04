@@ -11,6 +11,13 @@ import { NextResponse } from 'next/server';
 import { QontoClient } from '@verone/integrations/qonto';
 import { Resend } from 'resend';
 
+interface ISendInvoiceInput {
+  invoiceId: string;
+  to: string | string[];
+  subject?: string;
+  message?: string;
+}
+
 function getResendClient(): Resend {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
@@ -20,8 +27,9 @@ function getResendClient(): Resend {
 }
 
 function getQontoClient(): QontoClient {
+  const authMode = process.env.QONTO_AUTH_MODE;
   return new QontoClient({
-    authMode: (process.env.QONTO_AUTH_MODE as 'oauth' | 'api_key') || 'oauth',
+    authMode: authMode === 'api_key' ? 'api_key' : 'oauth',
     organizationId: process.env.QONTO_ORGANIZATION_ID,
     apiKey: process.env.QONTO_API_KEY,
     accessToken: process.env.QONTO_ACCESS_TOKEN,
@@ -39,7 +47,7 @@ function getQontoClient(): QontoClient {
  */
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    const body = (await request.json()) as ISendInvoiceInput;
     const { invoiceId, to, subject, message } = body;
 
     if (!invoiceId) {
@@ -83,7 +91,7 @@ export async function POST(request: NextRequest) {
 
     // Préparer le contenu de l'email
     const emailSubject =
-      subject || `Facture ${invoice.invoice_number} - Verone`;
+      subject ?? `Facture ${invoice.invoice_number} - Verone`;
 
     const emailHtml = `
 <!DOCTYPE html>

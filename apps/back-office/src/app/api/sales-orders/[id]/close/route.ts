@@ -70,7 +70,7 @@ export async function POST(
     const { error: updateError } = await supabase
       .from('sales_orders')
       .update({
-        status: 'closed' as any, // TypeScript types incomplete, 'closed' exists in DB
+        status: 'closed',
         closed_at: new Date().toISOString(),
         closed_by: user.id,
         updated_at: new Date().toISOString(),

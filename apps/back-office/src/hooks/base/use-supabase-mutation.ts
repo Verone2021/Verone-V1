@@ -3,6 +3,9 @@
  *
  * Hook base pour mutations Supabase (create, update, delete)
  * Gère toasts, error handling, callbacks onSuccess/onError
+ *
+ * Note: This hook accepts any table name dynamically.
+ * Type safety is enforced at the call site through the generic T parameter.
  */
 
 'use client';
@@ -11,6 +14,46 @@ import { useState, useMemo } from 'react';
 
 import { createClient } from '@verone/utils/supabase/client';
 import { toast } from 'react-hot-toast';
+
+/**
+ * Response type from Supabase mutations
+ */
+interface MutationResponse<T> {
+  data: T | null;
+  error: { message: string; code?: string } | null;
+}
+
+/**
+ * Generic Supabase client type that accepts dynamic table names.
+ * This is necessary because the generated Database types create strict
+ * literal unions that cause "Type instantiation is excessively deep" errors
+ * when used with generic table name parameters.
+ */
+interface DynamicSupabaseClient {
+  from: (table: string) => {
+    insert: (data: Record<string, unknown>[]) => {
+      select: () => {
+        single: () => Promise<MutationResponse<unknown>>;
+      };
+    };
+    update: (data: Record<string, unknown>) => {
+      eq: (
+        column: string,
+        value: string
+      ) => {
+        select: () => {
+          single: () => Promise<MutationResponse<unknown>>;
+        };
+      };
+    };
+    delete: () => {
+      eq: (
+        column: string,
+        value: string
+      ) => Promise<{ error: { message: string } | null }>;
+    };
+  };
+}
 
 export interface MutationOptions<T> {
   tableName: string;
@@ -32,8 +75,12 @@ export function useSupabaseMutation<T>(
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // ✅ FIX: useMemo garantit createClient() appelé une seule fois par instance
-  const supabase = useMemo(() => createClient(), []);
+  // useMemo garantit createClient() appelé une seule fois par instance
+  // Cast to DynamicSupabaseClient to avoid deep type recursion with 100+ table union
+  const supabase = useMemo(
+    () => createClient() as unknown as DynamicSupabaseClient,
+    []
+  );
 
   const create = async (data: Partial<T>): Promise<T | null> => {
     try {
@@ -41,9 +88,8 @@ export function useSupabaseMutation<T>(
       setError(null);
 
       const { data: result, error: createError } = await supabase
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .from(options.tableName as any)
-        .insert([data])
+        .from(options.tableName)
+        .insert([data as Record<string, unknown>])
         .select()
         .single();
 
@@ -52,7 +98,7 @@ export function useSupabaseMutation<T>(
         if (createError.code === '23505') {
           throw new Error('Un élément avec ces valeurs existe déjà');
         }
-        throw createError;
+        throw new Error(createError.message);
       }
 
       if (!result) {
@@ -87,14 +133,13 @@ export function useSupabaseMutation<T>(
       setError(null);
 
       const { data: result, error: updateError } = await supabase
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .from(options.tableName as any)
-        .update(data)
+        .from(options.tableName)
+        .update(data as Record<string, unknown>)
         .eq('id', id)
         .select()
         .single();
 
-      if (updateError) throw updateError;
+      if (updateError) throw new Error(updateError.message);
 
       if (!result) {
         throw new Error('Aucune donnée retournée après modification');
@@ -129,12 +174,11 @@ export function useSupabaseMutation<T>(
       setError(null);
 
       const { error: deleteError } = await supabase
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .from(options.tableName as any)
+        .from(options.tableName)
         .delete()
         .eq('id', id);
 
-      if (deleteError) throw deleteError;
+      if (deleteError) throw new Error(deleteError.message);
 
       toast.success('Supprimé avec succès');
     } catch (err) {

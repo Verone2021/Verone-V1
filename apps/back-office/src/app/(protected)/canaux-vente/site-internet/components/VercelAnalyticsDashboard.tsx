@@ -16,6 +16,7 @@ import {
 } from '@verone/ui';
 import { Badge } from '@verone/ui';
 import { Progress } from '@verone/ui';
+import type { LucideIcon } from 'lucide-react';
 import {
   BarChart,
   LineChart,
@@ -55,7 +56,7 @@ function KPICard({
   title: string;
   value: string | number;
   subtitle?: string;
-  icon: any;
+  icon: LucideIcon;
   trend?: 'up' | 'down';
   trendValue?: string;
   color?: 'blue' | 'green' | 'purple' | 'orange';
@@ -165,7 +166,7 @@ export function VercelAnalyticsDashboard() {
     return (
       <div className="space-y-6">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {[...Array(4)].map((_, i) => (
+          {Array.from({ length: 4 }, (_, i) => i).map(i => (
             <Card key={i}>
               <CardContent className="pt-6">
                 <div className="h-24 animate-pulse bg-muted rounded" />

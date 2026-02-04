@@ -6,11 +6,6 @@
  * @since 2025-12-18
  */
 
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { useQuery } from '@tanstack/react-query';
 import { createClient } from '@verone/utils/supabase/client';
 
@@ -176,9 +171,10 @@ export function useLinkMeOrders(
 
       // Fetch commandes via RPC (items inclus directement - elimine N+1)
       const supabase = createClient();
-      const { data: ordersData, error: ordersError } = await (
-        supabase as any
-      ).rpc('get_linkme_orders', { p_affiliate_id: effectiveAffiliateId });
+      const { data: ordersData, error: ordersError } = await supabase.rpc(
+        'get_linkme_orders',
+        { p_affiliate_id: effectiveAffiliateId ?? undefined }
+      );
 
       if (ordersError) {
         console.error('Erreur fetch commandes:', ordersError);

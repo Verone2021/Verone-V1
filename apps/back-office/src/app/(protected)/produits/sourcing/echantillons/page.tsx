@@ -1070,7 +1070,7 @@ export default function SourcingEchantillonsPage() {
                         <Image
                           src={
                             selectedProduct.product_images.find(
-                              (img: any) => img.is_primary
+                              img => img.is_primary
                             )?.public_url ??
                             selectedProduct.product_images[0].public_url
                           }

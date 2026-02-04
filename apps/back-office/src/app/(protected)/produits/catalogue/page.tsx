@@ -207,8 +207,9 @@ export default function CataloguePage() {
     setArchivedLoading(true);
     try {
       const result = await loadArchivedProducts(filters);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-      setArchivedProducts(result.products as any);
+      // Type assertion: loadArchivedProducts returns a subset of Product fields
+      // compatible with the Product interface (missing fields are optional in usage)
+      setArchivedProducts(result.products as Product[]);
     } catch (error) {
       console.error('Erreur chargement produits archivés:', error);
     } finally {

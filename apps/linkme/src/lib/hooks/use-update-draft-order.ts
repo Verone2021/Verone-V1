@@ -166,11 +166,10 @@ async function updateDraftOrder(
     }
   } else {
     // Pas de modification d'items, garder le total existant
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const existingItems = currentOrder.sales_order_items as any as Array<{
+    const existingItems = currentOrder.sales_order_items as unknown as Array<{
       quantity: number;
       unit_price_ht: number;
-    }>;
+    }> | null;
     for (const item of existingItems ?? []) {
       newProductsHt += item.quantity * item.unit_price_ht;
     }

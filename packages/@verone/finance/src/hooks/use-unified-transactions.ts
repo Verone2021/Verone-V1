@@ -86,6 +86,7 @@ export interface UnifiedTransaction {
     tva_rate: number;
     tva_amount: number;
   }> | null;
+  vat_source: string | null;
   payment_method: string | null;
   nature: string | null;
 
@@ -311,7 +312,7 @@ export function useUnifiedTransactions(
         if (fetchError) throw fetchError;
 
         // Mapping simplifié - la vue fournit déjà tous les champs enrichis
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         const transformed: UnifiedTransaction[] = (data || []).map(
           (tx: any) => ({
             id: tx.id,
@@ -396,7 +397,7 @@ export function useUnifiedTransactions(
   const fetchStats = useCallback(async () => {
     try {
       // Helper pour créer une requête avec les filtres appliqués
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       const createFilteredQuery = () => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         let query = (supabase as any)

@@ -28,7 +28,10 @@ export function PricingSection({
   setFormData,
   onSave: _onSave,
 }: PricingSectionProps) {
-  const updateField = (field: keyof WizardFormData, value: any) => {
+  const updateField = (
+    field: keyof WizardFormData,
+    value: WizardFormData[keyof WizardFormData]
+  ) => {
     setFormData({
       ...formData,
       [field]: value,

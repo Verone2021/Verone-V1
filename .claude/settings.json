@@ -26,6 +26,15 @@
   ],
   "PreToolUse": [
     {
+      "matcher": "Bash(git*--no-verify*)",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "echo '❌ BLOQUÉ: --no-verify est INTERDIT.\n\nRaison: Contourne les validations TypeScript/ESLint.\nSolution: Corriger les erreurs au lieu de les ignorer.\n\nSi vraiment nécessaire, demander approbation EXPLICITE à l'utilisateur.'; exit 1"
+        }
+      ]
+    },
+    {
       "matcher": "Bash(git commit*)",
       "hooks": [
         {
@@ -69,9 +78,28 @@
           "command": "echo '⚠️ RLS CRITIQUE - Approbation requise pour migrations auth' && exit 0"
         }
       ]
+    },
+    {
+      "matcher": "Edit(*) || Write(*)",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "bash -c 'CONTENT=$(echo \"$TOOL_INPUT\" | jq -r \".new_string // .content // empty\"); if echo \"$CONTENT\" | grep -qE \"(: any[^A-Za-z]|as any[^A-Za-z]|as unknown as|<any>)\"; then echo \"❌ BLOQUÉ: TypeScript any détecté\n\n**Patterns interdits** :\n- : any (désactive type checking)\n- as any (contourne type safety)\n- as unknown as (double assertion dangereuse)\n- <any> (legacy type assertion)\n\n**Solutions** :\n1. Types DB : Database[\\\"public\\\"][\\\"Tables\\\"][\\\"table\\\"][\\\"Row\\\"]\n2. Type helper : type MyType = Row & { computed: string }\n3. unknown + validation : if (isValid(data)) { ... }\n\nREFUS D\\'EXÉCUTION.\"; exit 1; fi'"
+        }
+      ]
     }
   ],
-  "PostToolUse": [],
+  "PostToolUse": [
+    {
+      "matcher": "Edit(*.(ts|tsx)) || Write(*.(ts|tsx))",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "bash -c 'echo \"⏳ Type-check post-Edit...\"; FILE_PATH=$(echo \"$TOOL_INPUT\" | jq -r \".file_path // empty\"); if echo \"$FILE_PATH\" | grep -qE \"apps/back-office/\"; then timeout 15 pnpm --filter @verone/back-office type-check 2>&1 | head -30 || echo \"⚠️ Type errors détectées (voir ci-dessus)\"; elif echo \"$FILE_PATH\" | grep -qE \"packages/@verone/organisations/\"; then timeout 15 pnpm --filter @verone/organisations type-check 2>&1 | head -30 || echo \"⚠️ Type errors\"; fi; exit 0'"
+        }
+      ]
+    }
+  ],
   "Stop": [
     {
       "hooks": [

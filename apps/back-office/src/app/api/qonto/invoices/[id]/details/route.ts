@@ -261,7 +261,7 @@ export async function GET(
       );
     }
 
-    // Cast to RawInvoiceData to handle TypeScript
+    // Supabase query result type includes joined relations with incompatible shapes
     const rawInvoice = invoice as unknown as RawInvoiceData;
 
     // Récupérer les lignes de la facture

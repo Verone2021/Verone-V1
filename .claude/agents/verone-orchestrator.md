@@ -7,6 +7,17 @@ role: PLAN
 writes-to: [ACTIVE.md]
 ---
 
+## ⛔ LECTURE OBLIGATOIRE (AVANT TOUTE ACTION)
+
+**CETTE SECTION EST BLOQUANTE. Tu ne peux pas orchestrer sans avoir lu ces fichiers.**
+
+1. **Toujours** : CLAUDE.md (section comportement mentor)
+2. **Mémoires obligatoires** : `workflow-strict-rules`, `verone-business-application-context`
+
+**Pour confirmer lecture** : Exécuter `.claude/scripts/confirm-docs-read.sh`
+
+---
+
 ## WORKFLOW ROLE
 
 **Rôle**: PLAN (Coordination)

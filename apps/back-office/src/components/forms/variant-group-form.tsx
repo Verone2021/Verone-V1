@@ -5,7 +5,11 @@ import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 
 import type { RoomType } from '@verone/types';
-import type { VariantGroup, VariantType } from '@verone/types';
+import type {
+  VariantGroup,
+  VariantType,
+  CreateVariantGroupData,
+} from '@verone/types';
 import { ButtonV2 } from '@verone/ui';
 import { Checkbox } from '@verone/ui';
 import {
@@ -209,7 +213,8 @@ export function VariantGroupForm({
     return () => {
       isMounted = false;
     };
-  }, [filters.categoryId]); // Enlevé getSubcategoriesByCategory des dépendances
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- getSubcategoriesByCategory is memoized in hook, adding it causes infinite re-renders
+  }, [filters.categoryId]);
 
   // Auto-générer base_sku quand le nom change
   useEffect(() => {
@@ -299,40 +304,43 @@ export function VariantGroupForm({
     setLoading(true);
 
     try {
-      // Construire common_dimensions si au moins une dimension est renseignée
-      const hasDimensions =
-        formData.common_length ||
-        formData.common_width ||
-        formData.common_height;
-      const common_dimensions = hasDimensions
-        ? {
-            length: parseFloat(formData.common_length) ?? null,
-            width: parseFloat(formData.common_width) ?? null,
-            height: parseFloat(formData.common_height) ?? null,
-            unit: formData.common_dimensions_unit,
-          }
-        : null;
+      // Parse dimensions (NaN becomes undefined via || undefined pattern)
+      const parsedLength = parseFloat(formData.common_length);
+      const parsedWidth = parseFloat(formData.common_width);
+      const parsedHeight = parseFloat(formData.common_height);
 
-      const groupData = {
+      // Construire groupData avec les champs individuels (aligné avec CreateVariantGroupData)
+      const groupData: CreateVariantGroupData = {
         name: formData.name.trim(),
         base_sku: formData.base_sku.trim(),
         subcategory_id: formData.subcategory_id,
         variant_type: formData.variant_type,
-        style: formData.style ?? null,
+        // Dimensions en champs individuels (format attendu par le hook)
+        dimensions_length: !isNaN(parsedLength) ? parsedLength : undefined,
+        dimensions_width: !isNaN(parsedWidth) ? parsedWidth : undefined,
+        dimensions_height: !isNaN(parsedHeight) ? parsedHeight : undefined,
+        dimensions_unit: formData.common_dimensions_unit,
+        // Catégorisation
+        style: formData.style || undefined,
         suitable_rooms:
-          formData.suitable_rooms.length > 0 ? formData.suitable_rooms : null,
-        common_dimensions,
+          formData.suitable_rooms.length > 0
+            ? (formData.suitable_rooms as string[])
+            : undefined,
+        // Fournisseur
         has_common_supplier: formData.has_common_supplier,
         supplier_id: formData.has_common_supplier
-          ? (formData.supplier_id ?? null)
+          ? formData.supplier_id || null
           : null,
       };
 
       let success = false;
 
       if (editingGroup) {
-        // Mode édition
-        success = await updateVariantGroup(editingGroup.id, groupData);
+        // Mode édition - cast vers le type attendu par updateVariantGroup
+        success = await updateVariantGroup(
+          editingGroup.id,
+          groupData as Parameters<typeof updateVariantGroup>[1]
+        );
         if (success) {
           toast({
             title: 'Succès',
@@ -340,9 +348,8 @@ export function VariantGroupForm({
           });
         }
       } else {
-        // Mode création
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        success = !!(await createVariantGroup(groupData as any));
+        // Mode création - groupData est déjà correctement typé
+        success = !!(await createVariantGroup(groupData));
         if (success) {
           toast({
             title: 'Succès',

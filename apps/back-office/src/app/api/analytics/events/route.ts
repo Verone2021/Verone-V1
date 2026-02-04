@@ -8,6 +8,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
+import type { Json } from '@verone/types/supabase';
 import { anonymizeIP, simplifyUserAgent } from '@verone/utils/analytics';
 import { createClient } from '@verone/utils/supabase/server';
 
@@ -18,8 +19,8 @@ interface ActivityEvent {
   action: string;
   table_name?: string;
   record_id?: string;
-  old_data?: Record<string, any>;
-  new_data?: Record<string, any>;
+  old_data?: Record<string, unknown>;
+  new_data?: Record<string, unknown>;
   severity?: 'info' | 'warning' | 'error' | 'critical';
   metadata?: {
     page_url?: string;
@@ -29,7 +30,7 @@ interface ActivityEvent {
     click_position?: { x: number; y: number };
     element_target?: string;
     search_query?: string;
-    filter_applied?: Record<string, any>;
+    filter_applied?: Record<string, unknown>;
     performance_metrics?: {
       load_time?: number;
       interaction_time?: number;
@@ -53,7 +54,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Parser événement
-    const event: ActivityEvent = await request.json();
+    const event = (await request.json()) as ActivityEvent;
 
     // Récupérer user_profile pour organisation_id
     const { data: profile } = (await supabase
@@ -64,10 +65,10 @@ export async function POST(request: NextRequest) {
 
     // Récupérer IP et User Agent bruts
     const rawIP =
-      request.headers.get('x-forwarded-for') ||
+      request.headers.get('x-forwarded-for') ??
       request.headers.get('x-real-ip');
     const rawUA =
-      event.metadata?.user_agent || request.headers.get('user-agent');
+      event.metadata?.user_agent ?? request.headers.get('user-agent');
 
     // Préparer données log avec anonymisation RGPD
     const activityLog = {
@@ -76,13 +77,13 @@ export async function POST(request: NextRequest) {
       action: event.action,
       table_name: event.table_name ?? null,
       record_id: event.record_id ?? null,
-      old_data: event.old_data ?? null,
-      new_data: event.new_data ?? null,
+      old_data: (event.old_data ?? null) as Json,
+      new_data: (event.new_data ?? null) as Json,
       severity: event.severity ?? 'info',
-      metadata: event.metadata ?? {},
+      metadata: (event.metadata ?? {}) as Json,
       session_id: event.metadata?.session_duration?.toString() ?? null, // Utiliser comme proxy session
       page_url:
-        (event.metadata?.page_url || request.headers.get('referer')) ?? null,
+        event.metadata?.page_url ?? request.headers.get('referer') ?? null,
       user_agent: simplifyUserAgent(rawUA), // ✅ Anonymisé production
       ip_address: anonymizeIP(rawIP), // ✅ Anonymisée production
     };

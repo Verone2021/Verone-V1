@@ -23,6 +23,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
+import type { Json } from '@verone/types/supabase';
 import { createServerClient } from '@verone/utils/supabase/server';
 
 interface CronResponse {
@@ -134,8 +135,9 @@ export async function GET(
     const { data: pollResult, error: pollError } = await supabase
       .rpc('poll_google_merchant_statuses', {
         product_ids: syncedProducts.map(p => p.product_id),
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        statuses_data: statusesData as any,
+        // Cast to Json type expected by RPC (array of objects is valid Json)
+        // ProductStatusData[] is structurally incompatible with Json (Supabase RPC param)
+        statuses_data: statusesData as unknown as Json,
       })
       .returns<PollResult[]>();
 

@@ -192,7 +192,7 @@ export default function EnseigneDetailPage() {
 
         // Vérifier si l'affiliate est lié à cette enseigne via son organisation
         if (linkmeAffiliate) {
-          const org = linkmeAffiliate.organisation as unknown as {
+          const org = linkmeAffiliate.organisation as {
             enseigne_id: string | null;
           };
           if (org?.enseigne_id === enseigneId) {

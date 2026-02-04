@@ -7,6 +7,20 @@ role: HYBRID
 writes-to: [code, ACTIVE.md]
 ---
 
+## ⛔ LECTURE OBLIGATOIRE (AVANT TOUTE ACTION)
+
+**CETTE SECTION EST BLOQUANTE. Tu ne peux pas débugger sans avoir lu ces fichiers.**
+
+1. **Toujours** : CLAUDE.md (section comportement mentor)
+2. **Si TypeScript** : `.claude/guides/typescript-errors-debugging.md`
+3. **Mémoires obligatoires** : `workflow-strict-rules`, `auth-paths-immutable`
+
+**Pour confirmer lecture** : Exécuter `.claude/scripts/confirm-docs-read.sh`
+
+**Si tu n'as pas lu ces fichiers, tu es BLOQUÉ par les hooks settings.json.**
+
+---
+
 ## WORKFLOW ROLE
 
 **Rôle**: HYBRID (READ investigation → WRITE fix)

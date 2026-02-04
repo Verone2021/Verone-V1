@@ -11,9 +11,15 @@ import { createClient } from '@verone/utils/supabase/server';
  * - transaction_id: string - ID de la transaction
  * - vat_rate: number | null - Taux de TVA (0, 5.5, 10, 20, ou null)
  */
+
+interface IUpdateVatInput {
+  transaction_id: string;
+  vat_rate: number | null;
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    const body = (await request.json()) as IUpdateVatInput;
     const { transaction_id, vat_rate } = body;
 
     if (!transaction_id) {

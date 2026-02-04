@@ -91,6 +91,7 @@ export async function POST(_request: NextRequest): Promise<
 
     // Recuperer TOUTES les factures de Qonto (sans filtre de status)
     const result = await qontoClient.getClientInvoices();
+    // QontoClientInvoice has total_amount incompatible with QontoInvoice total_amount type
     const invoices = result.client_invoices as unknown as QontoInvoice[];
 
     console.warn(

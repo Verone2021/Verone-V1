@@ -370,8 +370,12 @@ export async function matchTransactionToMultipleOrders(
 
         if (matchError) {
           const errorMessage =
-            matchError instanceof Error ? matchError.message : String(matchError);
-          result.errors.push(`Erreur match ${order.order_number}: ${errorMessage}`);
+            matchError instanceof Error
+              ? matchError.message
+              : String(matchError);
+          result.errors.push(
+            `Erreur match ${order.order_number}: ${errorMessage}`
+          );
           continue;
         }
 

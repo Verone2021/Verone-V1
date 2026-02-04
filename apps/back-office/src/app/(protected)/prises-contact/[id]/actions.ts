@@ -9,7 +9,25 @@ import { revalidatePath } from 'next/cache';
 
 import { createClient } from '@verone/utils/supabase/server';
 
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
+import type { Database } from '@verone/types';
+
+/**
+ * Type helpers for form_submissions table
+ */
+type FormSubmissionUpdate =
+  Database['public']['Tables']['form_submissions']['Update'];
+
+/**
+ * Type helpers for form_submission_messages table
+ */
+type FormSubmissionMessageInsert =
+  Database['public']['Tables']['form_submission_messages']['Insert'];
+
+/**
+ * Type for form_submissions row
+ */
+type FormSubmissionRow =
+  Database['public']['Tables']['form_submissions']['Row'];
 
 /**
  * Marquer une soumission comme résolue
@@ -18,23 +36,28 @@ export async function markAsResolved(submissionId: string) {
   try {
     const supabase = createClient();
 
-    const { error } = await (supabase as any)
+    const updateData: FormSubmissionUpdate = {
+      status: 'resolved',
+      updated_at: new Date().toISOString(),
+    };
+
+    const { error } = await supabase
       .from('form_submissions')
-      .update({
-        status: 'resolved',
-        updated_at: new Date().toISOString(),
-      })
+      .update(updateData)
       .eq('id', submissionId);
 
     if (error) throw error;
 
     // Add system message
-    await (supabase as any).from('form_submission_messages').insert({
-      submission_id: submissionId,
+    const messageData: FormSubmissionMessageInsert = {
+      form_submission_id: submissionId,
+      author_type: 'system',
       message_type: 'system',
-      content: 'Soumission marquée comme résolue',
+      message_body: 'Soumission marquée comme résolue',
       created_at: new Date().toISOString(),
-    });
+    };
+
+    await supabase.from('form_submission_messages').insert(messageData);
 
     revalidatePath(`/prises-contact/${submissionId}`);
     revalidatePath('/prises-contact');
@@ -59,12 +82,14 @@ export async function markAsClosed(
   try {
     const supabase = createClient();
 
-    const { error } = await (supabase as any)
+    const updateData: FormSubmissionUpdate = {
+      status: 'closed',
+      updated_at: new Date().toISOString(),
+    };
+
+    const { error } = await supabase
       .from('form_submissions')
-      .update({
-        status: 'closed',
-        updated_at: new Date().toISOString(),
-      })
+      .update(updateData)
       .eq('id', submissionId);
 
     if (error) throw error;
@@ -74,12 +99,15 @@ export async function markAsClosed(
       ? `Soumission fermée: ${reason}`
       : 'Soumission fermée';
 
-    await (supabase as any).from('form_submission_messages').insert({
-      submission_id: submissionId,
+    const messageData: FormSubmissionMessageInsert = {
+      form_submission_id: submissionId,
+      author_type: 'system',
       message_type: 'system',
-      content: message,
+      message_body: message,
       created_at: new Date().toISOString(),
-    });
+    };
+
+    await supabase.from('form_submission_messages').insert(messageData);
 
     revalidatePath(`/prises-contact/${submissionId}`);
     revalidatePath('/prises-contact');
@@ -109,7 +137,7 @@ export async function convertToOrder(
     const supabase = createClient();
 
     // Fetch submission data
-    const { data: _submission, error: fetchError } = await (supabase as any)
+    const { data: _submission, error: fetchError } = await supabase
       .from('form_submissions')
       .select('*')
       .eq('id', submissionId)
@@ -122,26 +150,31 @@ export async function convertToOrder(
     const placeholderOrderId = `ORDER-PLACEHOLDER-${Date.now()}`;
 
     // Update submission with conversion data
-    const { error: updateError } = await (supabase as any)
+    const updateData: FormSubmissionUpdate = {
+      converted_to_type: 'order',
+      converted_to_id: placeholderOrderId,
+      converted_at: new Date().toISOString(),
+      status: 'closed',
+      updated_at: new Date().toISOString(),
+    };
+
+    const { error: updateError } = await supabase
       .from('form_submissions')
-      .update({
-        converted_to_type: 'order',
-        converted_to_id: placeholderOrderId,
-        converted_at: new Date().toISOString(),
-        status: 'closed',
-        updated_at: new Date().toISOString(),
-      })
+      .update(updateData)
       .eq('id', submissionId);
 
     if (updateError) throw updateError;
 
     // Add system message
-    await (supabase as any).from('form_submission_messages').insert({
-      submission_id: submissionId,
+    const messageData: FormSubmissionMessageInsert = {
+      form_submission_id: submissionId,
+      author_type: 'system',
       message_type: 'system',
-      content: `Converti en commande ${placeholderOrderId}`,
+      message_body: `Converti en commande ${placeholderOrderId}`,
       created_at: new Date().toISOString(),
-    });
+    };
+
+    await supabase.from('form_submission_messages').insert(messageData);
 
     revalidatePath(`/prises-contact/${submissionId}`);
     revalidatePath('/prises-contact');
@@ -174,7 +207,7 @@ export async function convertToConsultation(
     const supabase = createClient();
 
     // Fetch submission data
-    const { data: _submission, error: fetchError } = await (supabase as any)
+    const { data: _submission, error: fetchError } = await supabase
       .from('form_submissions')
       .select('*')
       .eq('id', submissionId)
@@ -186,15 +219,17 @@ export async function convertToConsultation(
     const placeholderConsultationId = `CONSULT-PLACEHOLDER-${Date.now()}`;
 
     // Update submission with conversion data
-    const { error: updateError } = await (supabase as any)
+    const updateData: FormSubmissionUpdate = {
+      converted_to_type: 'consultation',
+      converted_to_id: placeholderConsultationId,
+      converted_at: new Date().toISOString(),
+      status: 'closed',
+      updated_at: new Date().toISOString(),
+    };
+
+    const { error: updateError } = await supabase
       .from('form_submissions')
-      .update({
-        converted_to_type: 'consultation',
-        converted_to_id: placeholderConsultationId,
-        converted_at: new Date().toISOString(),
-        status: 'closed',
-        updated_at: new Date().toISOString(),
-      })
+      .update(updateData)
       .eq('id', submissionId);
 
     if (updateError) throw updateError;
@@ -204,12 +239,15 @@ export async function convertToConsultation(
       ? `Converti en consultation ${placeholderConsultationId} - Programmée le ${consultationData.scheduled_date}`
       : `Converti en consultation ${placeholderConsultationId}`;
 
-    await (supabase as any).from('form_submission_messages').insert({
-      submission_id: submissionId,
+    const messageData: FormSubmissionMessageInsert = {
+      form_submission_id: submissionId,
+      author_type: 'system',
       message_type: 'system',
-      content: message,
+      message_body: message,
       created_at: new Date().toISOString(),
-    });
+    };
+
+    await supabase.from('form_submission_messages').insert(messageData);
 
     revalidatePath(`/prises-contact/${submissionId}`);
     revalidatePath('/prises-contact');
@@ -243,7 +281,7 @@ export async function convertToSourcing(
     const supabase = createClient();
 
     // Fetch submission data
-    const { data: _submission, error: fetchError } = await (supabase as any)
+    const { data: _submission, error: fetchError } = await supabase
       .from('form_submissions')
       .select('*')
       .eq('id', submissionId)
@@ -255,26 +293,31 @@ export async function convertToSourcing(
     const placeholderProductId = `PRODUCT-SOURCING-${Date.now()}`;
 
     // Update submission with conversion data
-    const { error: updateError } = await (supabase as any)
+    const updateData: FormSubmissionUpdate = {
+      converted_to_type: 'sourcing',
+      converted_to_id: placeholderProductId,
+      converted_at: new Date().toISOString(),
+      status: 'closed',
+      updated_at: new Date().toISOString(),
+    };
+
+    const { error: updateError } = await supabase
       .from('form_submissions')
-      .update({
-        converted_to_type: 'sourcing',
-        converted_to_id: placeholderProductId,
-        converted_at: new Date().toISOString(),
-        status: 'closed',
-        updated_at: new Date().toISOString(),
-      })
+      .update(updateData)
       .eq('id', submissionId);
 
     if (updateError) throw updateError;
 
     // Add system message
-    await (supabase as any).from('form_submission_messages').insert({
-      submission_id: submissionId,
+    const messageData: FormSubmissionMessageInsert = {
+      form_submission_id: submissionId,
+      author_type: 'system',
       message_type: 'system',
-      content: `Converti en sourcing produit ${placeholderProductId} pour ${sourcingData.client_type} ${sourcingData.client_id}`,
+      message_body: `Converti en sourcing produit ${placeholderProductId} pour ${sourcingData.client_type} ${sourcingData.client_id}`,
       created_at: new Date().toISOString(),
-    });
+    };
+
+    await supabase.from('form_submission_messages').insert(messageData);
 
     revalidatePath(`/prises-contact/${submissionId}`);
     revalidatePath('/prises-contact');
@@ -303,7 +346,7 @@ export async function convertToContact(
     const supabase = createClient();
 
     // Fetch submission data
-    const { data: submission, error: fetchError } = await (supabase as any)
+    const { data: submission, error: fetchError } = await supabase
       .from('form_submissions')
       .select('*')
       .eq('id', submissionId)
@@ -315,26 +358,37 @@ export async function convertToContact(
     const placeholderContactId = `CONTACT-${Date.now()}`;
 
     // Update submission with conversion data
-    const { error: updateError } = await (supabase as any)
+    const updateData: FormSubmissionUpdate = {
+      converted_to_type: 'contact',
+      converted_to_id: placeholderContactId,
+      converted_at: new Date().toISOString(),
+      status: 'closed',
+      updated_at: new Date().toISOString(),
+    };
+
+    const { error: updateError } = await supabase
       .from('form_submissions')
-      .update({
-        converted_to_type: 'contact',
-        converted_to_id: placeholderContactId,
-        converted_at: new Date().toISOString(),
-        status: 'closed',
-        updated_at: new Date().toISOString(),
-      })
+      .update(updateData)
       .eq('id', submissionId);
 
     if (updateError) throw updateError;
 
+    // Type guard for submission data
+    const submissionRow = submission as FormSubmissionRow | null;
+    const firstName = submissionRow?.first_name ?? 'Unknown';
+    const lastName = submissionRow?.last_name ?? '';
+    const email = submissionRow?.email ?? '';
+
     // Add system message
-    await (supabase as any).from('form_submission_messages').insert({
-      submission_id: submissionId,
+    const messageData: FormSubmissionMessageInsert = {
+      form_submission_id: submissionId,
+      author_type: 'system',
       message_type: 'system',
-      content: `Contact CRM créé: ${placeholderContactId} - ${submission.first_name} ${submission.last_name} (${submission.email})`,
+      message_body: `Contact CRM créé: ${placeholderContactId} - ${firstName} ${lastName} (${email})`,
       created_at: new Date().toISOString(),
-    });
+    };
+
+    await supabase.from('form_submission_messages').insert(messageData);
 
     revalidatePath(`/prises-contact/${submissionId}`);
     revalidatePath('/prises-contact');
@@ -368,7 +422,7 @@ export async function convertToLead(
     const supabase = createClient();
 
     // Fetch submission data
-    const { data: _submission, error: fetchError } = await (supabase as any)
+    const { data: _submission, error: fetchError } = await supabase
       .from('form_submissions')
       .select('*')
       .eq('id', submissionId)
@@ -380,15 +434,17 @@ export async function convertToLead(
     const placeholderLeadId = `LEAD-${Date.now()}`;
 
     // Update submission with conversion data
-    const { error: updateError } = await (supabase as any)
+    const updateData: FormSubmissionUpdate = {
+      converted_to_type: 'lead',
+      converted_to_id: placeholderLeadId,
+      converted_at: new Date().toISOString(),
+      status: 'closed',
+      updated_at: new Date().toISOString(),
+    };
+
+    const { error: updateError } = await supabase
       .from('form_submissions')
-      .update({
-        converted_to_type: 'lead',
-        converted_to_id: placeholderLeadId,
-        converted_at: new Date().toISOString(),
-        status: 'closed',
-        updated_at: new Date().toISOString(),
-      })
+      .update(updateData)
       .eq('id', submissionId);
 
     if (updateError) throw updateError;
@@ -398,12 +454,15 @@ export async function convertToLead(
       ? `Lead créé: ${placeholderLeadId} - Score: ${leadData.score}/100`
       : `Lead créé: ${placeholderLeadId}`;
 
-    await (supabase as any).from('form_submission_messages').insert({
-      submission_id: submissionId,
+    const messageData: FormSubmissionMessageInsert = {
+      form_submission_id: submissionId,
+      author_type: 'system',
       message_type: 'system',
-      content: message,
+      message_body: message,
       created_at: new Date().toISOString(),
-    });
+    };
+
+    await supabase.from('form_submission_messages').insert(messageData);
 
     revalidatePath(`/prises-contact/${submissionId}`);
     revalidatePath('/prises-contact');
@@ -433,23 +492,28 @@ export async function addMessage(
     const supabase = createClient();
 
     // Add message
-    const { error } = await (supabase as any)
+    const messageData: FormSubmissionMessageInsert = {
+      form_submission_id: submissionId,
+      author_type: messageType === 'customer' ? 'customer' : 'staff',
+      message_type: messageType,
+      message_body: content,
+      created_at: new Date().toISOString(),
+    };
+
+    const { error } = await supabase
       .from('form_submission_messages')
-      .insert({
-        submission_id: submissionId,
-        message_type: messageType,
-        content: content,
-        created_at: new Date().toISOString(),
-      });
+      .insert(messageData);
 
     if (error) throw error;
 
     // Update submission updated_at
-    await (supabase as any)
+    const updateData: FormSubmissionUpdate = {
+      updated_at: new Date().toISOString(),
+    };
+
+    await supabase
       .from('form_submissions')
-      .update({
-        updated_at: new Date().toISOString(),
-      })
+      .update(updateData)
       .eq('id', submissionId);
 
     revalidatePath(`/prises-contact/${submissionId}`);
@@ -463,5 +527,3 @@ export async function addMessage(
     };
   }
 }
-
-/* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */

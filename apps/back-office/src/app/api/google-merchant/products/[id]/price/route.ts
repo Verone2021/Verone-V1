@@ -104,7 +104,8 @@ export async function PUT(
 
     if (error) {
       console.error('[API] RPC update_google_merchant_price failed:', error);
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       return NextResponse.json(
         {
           success: false,

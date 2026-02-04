@@ -58,15 +58,14 @@ export default function FinanceResetPage() {
     setResult(null);
 
     try {
-      // Use standard Supabase RPC call pattern
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-      const { data, error } = await (supabase as any).rpc(
-        'reset_finance_auto_data',
-        { p_dry_run: true }
-      );
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
-      if (error) throw new Error(error.message ?? String(error));
+      // RPC call - returns Json type, cast result appropriately
+      const { data, error } = await supabase.rpc('reset_finance_auto_data', {
+        p_dry_run: true,
+      });
 
+      if (error) throw new Error(error.message);
+
+      // Parse Json result into expected structure
       const result = data as {
         dry_run?: boolean;
         preview?: ResetPreview;
@@ -109,15 +108,14 @@ export default function FinanceResetPage() {
     setError(null);
 
     try {
-      // Use standard Supabase RPC call pattern
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-      const { data, error } = await (supabase as any).rpc(
-        'reset_finance_auto_data',
-        { p_dry_run: false }
-      );
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
-      if (error) throw new Error(error.message ?? String(error));
+      // RPC call - returns Json type, cast result appropriately
+      const { data, error } = await supabase.rpc('reset_finance_auto_data', {
+        p_dry_run: false,
+      });
 
+      if (error) throw new Error(error.message);
+
+      // Parse Json result into expected structure
       const result = data as {
         dry_run?: boolean;
         success?: boolean;

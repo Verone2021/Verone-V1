@@ -7,7 +7,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
@@ -22,8 +22,9 @@ interface Product {
   id: string;
   name: string;
   sku: string;
-  price_ht: number;
-  status: string;
+  cost_price: number | null;
+  stock_status: 'coming_soon' | 'in_stock' | 'out_of_stock';
+  product_status: 'active' | 'draft' | 'preorder' | 'discontinued';
   variant_group_id: string | null;
 }
 
@@ -55,17 +56,20 @@ export function ProductSelector({
     useVariantProducts();
 
   // Rechercher les produits disponibles
-  const searchProducts = async (search?: string) => {
-    setSearching(true);
-    try {
-      const products = await getAvailableProductsForVariantGroup(search, 50);
-      setAvailableProducts(products as any);
-    } catch (error) {
-      console.error('Error searching products:', error);
-    } finally {
-      setSearching(false);
-    }
-  };
+  const searchProducts = useCallback(
+    async (search?: string) => {
+      setSearching(true);
+      try {
+        const products = await getAvailableProductsForVariantGroup(search, 50);
+        setAvailableProducts(products as Product[]);
+      } catch (error) {
+        console.error('Error searching products:', error);
+      } finally {
+        setSearching(false);
+      }
+    },
+    [getAvailableProductsForVariantGroup]
+  );
 
   // Charger les produits au montage et à chaque changement de recherche
   useEffect(() => {
@@ -74,7 +78,7 @@ export function ProductSelector({
         console.error('[ProductSelector] searchProducts failed:', error);
       });
     }
-  }, [isOpen, searchTerm]);
+  }, [isOpen, searchTerm, searchProducts]);
 
   // Reset lors de l'ouverture/fermeture
   useEffect(() => {
@@ -264,14 +268,16 @@ export function ProductSelector({
                             <h4 className="font-medium text-gray-900">
                               {product.name}
                             </h4>
-                            {getStatusBadge(product.status)}
+                            {getStatusBadge(product.product_status)}
                             {isSelected && (
                               <Check className="h-4 w-4 text-blue-600" />
                             )}
                           </div>
                           <div className="flex items-center space-x-4 text-sm text-gray-600">
                             <span>SKU: {product.sku}</span>
-                            <span>Prix: {product.price_ht}€ HT</span>
+                            {product.cost_price !== null && (
+                              <span>Prix: {product.cost_price}€ HT</span>
+                            )}
                           </div>
                         </div>
                         <ButtonV2

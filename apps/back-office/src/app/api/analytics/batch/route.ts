@@ -8,25 +8,25 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
+import type { Json } from '@verone/types/supabase';
 import { anonymizeIP, simplifyUserAgent } from '@verone/utils/analytics';
 import { createClient } from '@verone/utils/supabase/server';
 
 // Node.js runtime
 export const dynamic = 'force-dynamic';
-
 interface ActivityEvent {
   action: string;
   table_name?: string;
   record_id?: string;
-  old_data?: Record<string, any>;
-  new_data?: Record<string, any>;
+  old_data?: Record<string, unknown>;
+  new_data?: Record<string, unknown>;
   severity?: 'info' | 'warning' | 'error' | 'critical';
   metadata?: {
     page_url?: string;
     user_agent?: string;
     ip_address?: string;
     session_duration?: number;
-    [key: string]: any;
+    [key: string]: unknown;
   };
 }
 
@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Parser batch request
-    const { events, session_id }: BatchRequest = await request.json();
+    const { events, session_id } = (await request.json()) as BatchRequest;
 
     if (!events || !Array.isArray(events) || events.length === 0) {
       return NextResponse.json(
@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
 
     // Récupérer IP et User Agent bruts une seule fois
     const rawIP =
-      request.headers.get('x-forwarded-for') ||
+      request.headers.get('x-forwarded-for') ??
       request.headers.get('x-real-ip');
     const rawUA = request.headers.get('user-agent');
 
@@ -87,13 +87,13 @@ export async function POST(request: NextRequest) {
       action: event.action,
       table_name: event.table_name ?? null,
       record_id: event.record_id ?? null,
-      old_data: event.old_data ?? null,
-      new_data: event.new_data ?? null,
+      old_data: (event.old_data ?? null) as Json,
+      new_data: (event.new_data ?? null) as Json,
       severity: event.severity ?? 'info',
-      metadata: event.metadata ?? {},
+      metadata: (event.metadata ?? {}) as Json,
       session_id: session_id,
       page_url: event.metadata?.page_url ?? null,
-      user_agent: simplifyUserAgent(event.metadata?.user_agent || rawUA), // ✅ Anonymisé production
+      user_agent: simplifyUserAgent(event.metadata?.user_agent ?? rawUA), // ✅ Anonymisé production
       ip_address: anonymizeIP(rawIP), // ✅ Anonymisée production
     }));
 
@@ -114,7 +114,7 @@ export async function POST(request: NextRequest) {
       {
         success: true,
         message: `${events.length} événements enregistrés`,
-        count: count || events.length,
+        count: count ?? events.length,
       },
       { status: 200 }
     );

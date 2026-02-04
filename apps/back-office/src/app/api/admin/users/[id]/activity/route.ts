@@ -23,22 +23,6 @@ interface UserProfile {
   role: string;
 }
 
-interface UserAction {
-  action_type: string;
-  module: string;
-  created_at: string;
-  details: Record<string, unknown>;
-}
-
-interface UserStats {
-  total_sessions: number;
-  total_actions: number;
-  avg_session_duration: number | null;
-  most_used_module: string | null;
-  engagement_score: number;
-  last_activity: string | null;
-}
-
 export async function GET(request: NextRequest, context: RouteContext) {
   try {
     const supabase = await createServerClient();
@@ -74,28 +58,27 @@ export async function GET(request: NextRequest, context: RouteContext) {
     const limit = parseInt(searchParams.get('limit') ?? '50');
     const days = parseInt(searchParams.get('days') ?? '30');
 
-    // Récupérer activité récente via fonction SQL
-
-    const { data: recentActions, error: actionsError } = (await (
-      supabase as any
-    ).rpc('get_user_recent_actions', {
-      p_user_id: targetUserId,
-      p_limit: limit,
-    })) as { data: UserAction[] | null; error: unknown };
+    // Récupérer activité récente via fonction SQL (RPC exists in generated types)
+    const { data: recentActions, error: actionsError } = await supabase.rpc(
+      'get_user_recent_actions',
+      {
+        p_user_id: targetUserId,
+        p_limit: limit,
+      }
+    );
 
     if (actionsError) {
       console.error('[Admin Activity] Actions error:', actionsError);
     }
 
-    // Récupérer statistiques via fonction SQL
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: stats, error: statsError } = (await (supabase as any).rpc(
+    // Récupérer statistiques via fonction SQL (RPC exists in generated types)
+    const { data: stats, error: statsError } = await supabase.rpc(
       'get_user_activity_stats',
       {
         p_user_id: targetUserId,
         p_days: days,
       }
-    )) as { data: UserStats[] | null; error: unknown };
+    );
 
     if (statsError) {
       console.error('[Admin Activity] Stats error:', statsError);

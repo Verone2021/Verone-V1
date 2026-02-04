@@ -4147,6 +4147,56 @@ export type Database = {
           },
         ];
       };
+      linkme_page_configurations: {
+        Row: {
+          config: Json;
+          created_at: string;
+          globe_enabled: boolean;
+          globe_rotation_speed: number;
+          id: string;
+          page_description: string | null;
+          page_icon: string | null;
+          page_id: string;
+          page_name: string;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          config?: Json;
+          created_at?: string;
+          globe_enabled?: boolean;
+          globe_rotation_speed?: number;
+          id?: string;
+          page_description?: string | null;
+          page_icon?: string | null;
+          page_id: string;
+          page_name: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          config?: Json;
+          created_at?: string;
+          globe_enabled?: boolean;
+          globe_rotation_speed?: number;
+          id?: string;
+          page_description?: string | null;
+          page_icon?: string | null;
+          page_id?: string;
+          page_name?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'linkme_page_configurations_updated_by_fkey';
+            columns: ['updated_by'];
+            isOneToOne: false;
+            referencedRelation: 'v_linkme_users';
+            referencedColumns: ['user_id'];
+          },
+        ];
+      };
       linkme_payment_request_items: {
         Row: {
           commission_amount_ttc: number;
@@ -10575,6 +10625,10 @@ export type Database = {
       };
       check_incomplete_catalog_products: { Args: never; Returns: number };
       check_late_shipments: { Args: never; Returns: number };
+      check_linkme_access_by_email: {
+        Args: { p_email: string };
+        Returns: boolean;
+      };
       check_linkme_affiliate_access: {
         Args: {
           affiliate_row: Database['public']['Tables']['linkme_affiliates']['Row'];
@@ -12895,6 +12949,7 @@ export type Database = {
         | 'partially_shipped'
         | 'shipped'
         | 'delivered'
+        | 'closed'
         | 'cancelled';
       sample_request_status_type: 'pending_approval' | 'approved' | 'rejected';
       sample_status_type:
@@ -13255,6 +13310,7 @@ export const Constants = {
         'partially_shipped',
         'shipped',
         'delivered',
+        'closed',
         'cancelled',
       ],
       sample_request_status_type: ['pending_approval', 'approved', 'rejected'],

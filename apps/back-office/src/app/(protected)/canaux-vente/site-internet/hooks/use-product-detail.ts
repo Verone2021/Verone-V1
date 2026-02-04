@@ -26,7 +26,7 @@ export function useProductDetail(productId: string | null) {
         throw error;
       }
 
-      return data as unknown as SiteInternetProduct;
+      return data as SiteInternetProduct;
     },
     enabled: !!productId,
     staleTime: 30000, // 30s

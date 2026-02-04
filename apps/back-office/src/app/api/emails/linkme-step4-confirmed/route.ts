@@ -31,7 +31,7 @@ interface Step4ConfirmedEmailRequest {
 
 export async function POST(request: NextRequest) {
   try {
-    const body: Step4ConfirmedEmailRequest = await request.json();
+    const body = (await request.json()) as Step4ConfirmedEmailRequest;
 
     const {
       orderNumber,
@@ -53,6 +53,7 @@ export async function POST(request: NextRequest) {
     }
 
     const resendClient = getResendClient();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Resend SDK returns complex types
     const emails: Promise<any>[] = [];
 
     // Format date
