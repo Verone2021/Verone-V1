@@ -36,3 +36,6 @@ echo "✅ RLS patterns corrects"
 
 # 3. Lint-staged (ESLint + Prettier)
 npx lint-staged
+
+# 4. Type-check filtré (détecte apps modifiées dans staged files)
+bash scripts/type-check-precommit.sh

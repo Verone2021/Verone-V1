@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useCallback, useEffect } from 'react';
 
-import type { VariantGroup, VariantProduct } from '@verone/types';
+import type { VariantGroup, VariantProduct, VariantType } from '@verone/types';
 
 import { useRouter } from 'next/navigation';
 
@@ -33,7 +33,6 @@ import { VariantAddProductModal } from '@verone/products';
 import { VariantGroupEditModal } from '@verone/products';
 import { VariantGroupCreationWizard } from '@verone/products';
 import { useVariantGroups } from '@verone/products';
-import type { VariantGroup, VariantType } from '@verone/types';
 
 // Interface filtres variantes
 interface LocalVariantFilters {
