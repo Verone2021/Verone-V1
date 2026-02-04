@@ -40,14 +40,7 @@ export default async function MainLayout({
     error,
   } = await supabase.auth.getUser();
 
-  // Auth check logs (INFO level - flux normal)
-  console.info('[MainLayout] Auth check:', {
-    hasUser: !!user,
-    userId: user?.id,
-    email: user?.email,
-  });
-
-  // Erreur auth = log ERROR
+  // Log ERROR uniquement en cas d'erreur (flux normal = silencieux)
   if (error) {
     console.error('[MainLayout] Auth error:', error.message);
   }
@@ -67,14 +60,7 @@ export default async function MainLayout({
     .eq('is_active', true)
     .maybeSingle();
 
-  // LinkMe role check logs (INFO level)
-  console.info('[MainLayout] LinkMe role check:', {
-    hasRole: !!linkmeRole,
-    roleId: linkmeRole?.id as string | undefined,
-    userId: user.id,
-  });
-
-  // Erreur RLS = log ERROR
+  // Log ERROR uniquement en cas d'erreur RLS (flux normal = silencieux)
   if (roleError) {
     console.error('[MainLayout] Role check error:', {
       message: roleError.message,
@@ -89,8 +75,7 @@ export default async function MainLayout({
     redirect('/login?error=no_linkme_access');
   }
 
-  // Succès auth = log INFO
-  console.info('[MainLayout] Auth successful, rendering dashboard');
+  // Succès auth = silencieux (flux normal attendu, pas de log)
 
   // Utilisateur authentifié avec rôle LinkMe = render la page
   return (

@@ -188,19 +188,10 @@ export function useLinkMeOrders(
         throw ordersError;
       }
 
+      // Succès = silencieux (flux normal, pas de log INFO)
       if (!ordersData || ordersData.length === 0) {
-        console.info('[useLinkMeOrders] No orders found', {
-          affiliateId: effectiveAffiliateId,
-          fetchAll,
-        });
         return [];
       }
-
-      console.info('[useLinkMeOrders] Orders fetched successfully', {
-        count: ordersData.length,
-        affiliateId: effectiveAffiliateId,
-        fetchAll,
-      });
 
       // Map les commandes (items deja inclus dans la RPC)
       return (ordersData as RawOrderFromRPC[]).map(

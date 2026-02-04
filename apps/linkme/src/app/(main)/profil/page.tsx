@@ -103,7 +103,7 @@ export default function ProfilPage(): JSX.Element | null {
 
       // Pas de rôle LinkMe actif → redirect dashboard
       // (cohérent avec MainLayout et /catalogue)
-      if (!linkMeRole || !linkMeRole.is_active) {
+      if (!linkMeRole?.is_active) {
         console.warn('[ProfilPage] No active LinkMe role, redirecting');
         router.push('/dashboard');
         return;
