@@ -53,7 +53,7 @@ export default function StockAnalyticsPage() {
     void generateReport(90).catch(error => {
       console.error('[StocksAnalyticsPage] generateReport failed:', error);
     });
-  }, []);
+  }, [generateReport]);
 
   /**
    * Formate un nombre avec 2 décimales

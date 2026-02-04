@@ -499,8 +499,8 @@ export default function PartnersPage() {
                             </div>
                           )}
                           {}
-                          {(partner.billing_postal_code ||
-                            partner.billing_city) && (
+                          {(!!partner.billing_postal_code ||
+                            !!partner.billing_city) && (
                             <div
                               className="text-xs pl-[18px]"
                               style={{ color: colors.text.subtle }}
@@ -754,8 +754,8 @@ export default function PartnersPage() {
                             <div>{partner.billing_address_line1}</div>
                           )}
                           {}
-                          {(partner.billing_postal_code ||
-                            partner.billing_city) && (
+                          {(!!partner.billing_postal_code ||
+                            !!partner.billing_city) && (
                             <div>
                               {partner.billing_postal_code &&
                                 `${partner.billing_postal_code}, `}

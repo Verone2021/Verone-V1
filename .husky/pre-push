@@ -3,7 +3,8 @@
 echo "🔍 Validation avant push (ESLint + Type-check)..."
 
 # Detect which apps have been modified
-CHANGED_FILES=$(git diff --cached --name-only HEAD~1 2>/dev/null || git diff --name-only HEAD~1 2>/dev/null || echo "")
+# Compare against remote main to catch ALL commits being pushed (not just HEAD~1)
+CHANGED_FILES=$(git diff --name-only origin/main...HEAD 2>/dev/null || echo "")
 
 # Check each app for changes
 CHECK_BO=false

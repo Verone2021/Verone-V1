@@ -631,10 +631,9 @@ export function TransactionsPageLegacy() {
       const s = search.toLowerCase();
       filtered = filtered.filter(
         tx =>
-          tx.label?.toLowerCase().includes(s) ||
-          // Boolean OR is correct here, not nullish coalescing
-          tx.counterparty_name?.toLowerCase().includes(s) ||
-          tx.reference?.toLowerCase().includes(s)
+          !!tx.label?.toLowerCase().includes(s) ||
+          !!tx.counterparty_name?.toLowerCase().includes(s) ||
+          !!tx.reference?.toLowerCase().includes(s)
       );
     }
 

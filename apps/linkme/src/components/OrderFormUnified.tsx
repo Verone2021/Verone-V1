@@ -425,6 +425,7 @@ export function OrderFormUnified({
         localStorage.removeItem(REQUESTER_CACHE_KEY);
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Exécuter uniquement au montage (mount only). Les valeurs data.isNewRestaurant et data.existingOrganisationId sont vérifiées dans le if pour éviter de charger le cache inutilement, mais on ne veut PAS relancer ce useEffect si elles changent.
   }, []); // Exécuter uniquement au montage
 
   // Mise à jour des données

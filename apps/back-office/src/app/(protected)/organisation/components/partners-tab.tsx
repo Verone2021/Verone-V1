@@ -297,7 +297,7 @@ export function PartnersTab() {
                   ({
                     ...(p as unknown as Organisation),
                     type: 'partner' as const,
-                  }) as any
+                  }) as Organisation & { type: 'partner' }
               )}
               activeTab={activeTab}
               onArchive={id => {

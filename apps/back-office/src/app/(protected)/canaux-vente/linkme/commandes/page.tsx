@@ -101,11 +101,12 @@ export default function LinkMeOrdersPage() {
 
   // Fetch donnees enrichies LinkMe (affilie, selection, marge)
   useEffect(() => {
+    const supabaseClient = createClient();
     async function fetchEnrichedData() {
       setIsLoadingEnriched(true);
       try {
         // Utiliser la RPC existante pour avoir les donnees enrichies
-        const result = await supabase.rpc('get_linkme_orders', {
+        const result = await supabaseClient.rpc('get_linkme_orders', {
           p_affiliate_id: undefined,
         });
 

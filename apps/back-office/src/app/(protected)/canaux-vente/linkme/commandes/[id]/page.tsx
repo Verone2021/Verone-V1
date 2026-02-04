@@ -17,7 +17,7 @@
  * - Refuser
  */
 
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { useParams, useRouter } from 'next/navigation';
 
@@ -228,7 +228,7 @@ export default function LinkMeOrderDetailPage() {
   const rejectOrder = useRejectOrder();
   const updateDetails = useUpdateLinkMeDetails();
 
-  const fetchOrder = async () => {
+  const fetchOrder = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
@@ -403,7 +403,7 @@ export default function LinkMeOrderDetailPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [orderId]);
 
   useEffect(() => {
     if (orderId) {
@@ -411,7 +411,7 @@ export default function LinkMeOrderDetailPage() {
         console.error('[LinkMeOrderDetail] Initial fetch failed:', error);
       });
     }
-  }, [orderId]);
+  }, [orderId, fetchOrder]);
 
   // Handlers Actions
   const handleApprove = async () => {

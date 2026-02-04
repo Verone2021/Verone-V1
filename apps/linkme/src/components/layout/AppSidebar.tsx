@@ -73,7 +73,7 @@ export function AppSidebar(): JSX.Element | null {
   const [cachedRole, setCachedRole] = useState<typeof linkMeRole>(() => {
     if (typeof window === 'undefined') return null;
     const stored = sessionStorage.getItem('linkme_role_cache');
-    return stored ? JSON.parse(stored) : null;
+    return stored ? (JSON.parse(stored) as typeof linkMeRole) : null;
   });
 
   useEffect(() => {
@@ -84,7 +84,7 @@ export function AppSidebar(): JSX.Element | null {
   }, [linkMeRole]);
 
   // Utiliser le rôle actuel ou le dernier rôle connu
-  const roleToUse = linkMeRole || cachedRole;
+  const roleToUse = linkMeRole ?? cachedRole;
 
   // Filtrer les liens selon le rôle de l'utilisateur
   const filteredLinks = sidebarLinks.filter(link => {

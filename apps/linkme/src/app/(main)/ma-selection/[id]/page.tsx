@@ -412,10 +412,7 @@ export default function SelectionDetailPage(): React.JSX.Element | null {
                 />
               ) : (
                 <p className="text-linkme-marine/70 text-sm">
-                  {}
-                  {selection.description ? (
-                    selection.description
-                  ) : (
+                  {selection.description ?? (
                     <span className="italic text-linkme-marine/40">
                       Aucune description
                     </span>

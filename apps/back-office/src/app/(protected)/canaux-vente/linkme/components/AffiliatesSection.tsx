@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import type { Database } from '@verone/types';
 
@@ -187,55 +187,7 @@ export function AffiliatesSection() {
   const [saving, setSaving] = useState(false);
   const [entitySearch, setEntitySearch] = useState('');
 
-  useEffect(() => {
-    void fetchAffiliates().catch(error => {
-      console.error('[Affiliates] Fetch failed:', error);
-    });
-    void fetchOrganisations().catch(error => {
-      console.error('[Affiliates] Fetch organisations failed:', error);
-    });
-    void fetchEnseignes().catch(error => {
-      console.error('[Affiliates] Fetch enseignes failed:', error);
-    });
-  }, []);
-
-  // Filtrer les entités déjà liées à un affilié
-  const availableOrganisations = useMemo(() => {
-    const linkedOrgIds = new Set(
-      affiliates.map(a => a.organisation_id).filter(Boolean)
-    );
-    return organisations.filter(org => !linkedOrgIds.has(org.id));
-  }, [organisations, affiliates]);
-
-  const availableEnseignes = useMemo(() => {
-    const linkedEnsIds = new Set(
-      affiliates.map(a => a.enseigne_id).filter(Boolean)
-    );
-    return enseignes.filter(ens => !linkedEnsIds.has(ens.id));
-  }, [enseignes, affiliates]);
-
-  // Filtrer par recherche
-  const filteredEntities = useMemo(() => {
-    const searchLower = entitySearch.toLowerCase();
-    if (formData.entity_type === 'organisation') {
-      return availableOrganisations.filter(
-        org =>
-          org.legal_name.toLowerCase().includes(searchLower) ||
-          org.trade_name?.toLowerCase().includes(searchLower)
-      );
-    } else {
-      return availableEnseignes.filter(ens =>
-        ens.name.toLowerCase().includes(searchLower)
-      );
-    }
-  }, [
-    formData.entity_type,
-    entitySearch,
-    availableOrganisations,
-    availableEnseignes,
-  ]);
-
-  async function fetchAffiliates() {
+  const fetchAffiliates = useCallback(async () => {
     const supabase = createClient();
     setLoading(true);
 
@@ -277,7 +229,55 @@ export function AffiliatesSection() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [toast]);
+
+  useEffect(() => {
+    void fetchAffiliates().catch(error => {
+      console.error('[Affiliates] Fetch failed:', error);
+    });
+    void fetchOrganisations().catch(error => {
+      console.error('[Affiliates] Fetch organisations failed:', error);
+    });
+    void fetchEnseignes().catch(error => {
+      console.error('[Affiliates] Fetch enseignes failed:', error);
+    });
+  }, [fetchAffiliates]);
+
+  // Filtrer les entités déjà liées à un affilié
+  const availableOrganisations = useMemo(() => {
+    const linkedOrgIds = new Set(
+      affiliates.map(a => a.organisation_id).filter(Boolean)
+    );
+    return organisations.filter(org => !linkedOrgIds.has(org.id));
+  }, [organisations, affiliates]);
+
+  const availableEnseignes = useMemo(() => {
+    const linkedEnsIds = new Set(
+      affiliates.map(a => a.enseigne_id).filter(Boolean)
+    );
+    return enseignes.filter(ens => !linkedEnsIds.has(ens.id));
+  }, [enseignes, affiliates]);
+
+  // Filtrer par recherche
+  const filteredEntities = useMemo(() => {
+    const searchLower = entitySearch.toLowerCase();
+    if (formData.entity_type === 'organisation') {
+      return availableOrganisations.filter(
+        org =>
+          org.legal_name.toLowerCase().includes(searchLower) ||
+          org.trade_name?.toLowerCase().includes(searchLower)
+      );
+    } else {
+      return availableEnseignes.filter(ens =>
+        ens.name.toLowerCase().includes(searchLower)
+      );
+    }
+  }, [
+    formData.entity_type,
+    entitySearch,
+    availableOrganisations,
+    availableEnseignes,
+  ]);
 
   async function fetchOrganisations() {
     const supabase = createClient();

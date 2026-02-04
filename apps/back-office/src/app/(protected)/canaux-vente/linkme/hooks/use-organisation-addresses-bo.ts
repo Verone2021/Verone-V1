@@ -13,8 +13,6 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createClient } from '@verone/utils/supabase/client';
-// Database type is used by TypeScript for supabase.rpc() type inference
-import type { Database } from '@verone/types';
 import { toast } from 'sonner';
 
 // ============================================

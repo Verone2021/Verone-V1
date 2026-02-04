@@ -686,8 +686,8 @@ export default function CustomersPage() {
                             </div>
                           )}
                           {}
-                          {(customer.billing_postal_code ||
-                            customer.billing_city) && (
+                          {(!!customer.billing_postal_code ||
+                            !!customer.billing_city) && (
                             <div
                               className="text-xs pl-[18px]"
                               style={{ color: colors.text.subtle }}
@@ -951,8 +951,8 @@ export default function CustomersPage() {
                             <div>{customer.billing_address_line1}</div>
                           )}
                           {}
-                          {(customer.billing_postal_code ||
-                            customer.billing_city) && (
+                          {(!!customer.billing_postal_code ||
+                            !!customer.billing_city) && (
                             <div>
                               {customer.billing_postal_code &&
                                 `${customer.billing_postal_code}, `}

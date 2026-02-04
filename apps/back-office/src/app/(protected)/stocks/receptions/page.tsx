@@ -247,7 +247,7 @@ export default function ReceptionsPage() {
       .catch(error => {
         console.error('[Receptions] Failed to load stats:', error);
       });
-  }, []);
+  }, [loadReceptionStats]);
 
   // Charger liste POs à recevoir (fournisseurs) - aussi quand 'all'
   useEffect(() => {
@@ -277,7 +277,14 @@ export default function ReceptionsPage() {
           console.error('[Receptions] Failed to load purchase orders:', error);
         });
     }
-  }, [statusFilter, searchTerm, urgencyFilter, activeTab, sourceFilter]);
+  }, [
+    statusFilter,
+    searchTerm,
+    urgencyFilter,
+    activeTab,
+    sourceFilter,
+    loadPurchaseOrdersReadyForReception,
+  ]);
 
   // Charger réceptions affiliés - aussi quand 'all'
   useEffect(() => {
@@ -294,7 +301,7 @@ export default function ReceptionsPage() {
           );
         });
     }
-  }, [searchTerm, activeTab, sourceFilter]);
+  }, [searchTerm, activeTab, sourceFilter, loadAffiliateProductReceptions]);
 
   // Charger historique POs reçus + affiliés
   useEffect(() => {
@@ -327,7 +334,12 @@ export default function ReceptionsPage() {
           );
         });
     }
-  }, [historySearchTerm, activeTab]);
+  }, [
+    historySearchTerm,
+    activeTab,
+    loadAffiliateProductReceptions,
+    loadPurchaseOrdersReadyForReception,
+  ]);
 
   const handleOpenReception = (order: PurchaseOrderWithSupplier) => {
     setSelectedOrder(order);

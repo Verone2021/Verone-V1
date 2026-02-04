@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 
+import Image from 'next/image';
+
 import { ButtonV2 } from '@verone/ui';
 import { Input } from '@verone/ui';
 import { Label } from '@verone/ui';
@@ -293,10 +295,12 @@ export function SimpleProductForm({
               {imagePreview && (
                 <div className="flex items-center space-x-3 p-3 bg-gray-50 border border-gray-200">
                   {}
-                  <img
+                  <Image
                     src={imagePreview}
                     alt="Aperçu"
-                    className="h-12 w-12 object-cover rounded"
+                    width={48}
+                    height={48}
+                    className="object-cover rounded"
                   />
                   <div className="flex-1">
                     <p className="text-sm font-medium text-black">

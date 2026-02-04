@@ -90,7 +90,7 @@ export function ActivityTrackerProvider({
       }
     }
     // Seulement pathname et user dans les dépendances pour éviter boucles infinies
-  }, [pathname, user]);
+  }, [pathname, user, trackEvent]);
 
   // Flush événements avant fermeture page
   useEffect(() => {
@@ -106,7 +106,7 @@ export function ActivityTrackerProvider({
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
     // Pas de dépendances - on veut installer le listener une seule fois
-  }, []);
+  }, [flushEvents]);
 
   // Rendre provider invisible (ne modifie pas le DOM)
   return <>{children}</>;
