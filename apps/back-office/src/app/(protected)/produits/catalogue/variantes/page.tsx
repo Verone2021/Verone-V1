@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useCallback, useEffect } from 'react';
 
-import type { VariantGroup, VariantProduct, VariantType } from '@verone/types';
+import type { VariantGroup, VariantProduct } from '@verone/types';
 
 import { useRouter } from 'next/navigation';
 
