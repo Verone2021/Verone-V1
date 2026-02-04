@@ -68,11 +68,29 @@ export function AppSidebar(): JSX.Element | null {
   const { isOpen, isMobile, close, setIsMobile } = useSidebar();
   const { user, linkMeRole, signOut } = useAuth();
 
+  // Mémoriser le dernier rôle valide pour éviter les flashes visuels
+  // Utilise sessionStorage pour persister entre les navigations
+  const [cachedRole, setCachedRole] = useState<typeof linkMeRole>(() => {
+    if (typeof window === 'undefined') return null;
+    const stored = sessionStorage.getItem('linkme_role_cache');
+    return stored ? JSON.parse(stored) : null;
+  });
+
+  useEffect(() => {
+    if (linkMeRole) {
+      setCachedRole(linkMeRole);
+      sessionStorage.setItem('linkme_role_cache', JSON.stringify(linkMeRole));
+    }
+  }, [linkMeRole]);
+
+  // Utiliser le rôle actuel ou le dernier rôle connu
+  const roleToUse = linkMeRole || cachedRole;
+
   // Filtrer les liens selon le rôle de l'utilisateur
   const filteredLinks = sidebarLinks.filter(link => {
     if (!link.roles) return true; // Pas de restriction
-    if (!linkMeRole) return false; // Pas de rôle = pas d'accès aux liens restreints
-    return link.roles.includes(linkMeRole.role);
+    if (!roleToUse) return false; // Pas de rôle = pas d'accès aux liens restreints
+    return link.roles.includes(roleToUse.role);
   });
 
   // État pour le hover (desktop) - collapsible
