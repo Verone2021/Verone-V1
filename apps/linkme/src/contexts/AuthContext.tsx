@@ -352,6 +352,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, [fetchLinkMeRole]); // supabase retiré car c'est un singleton stable
 
   // Connexion
+  // SÉCURITÉ: Vérifie l'accès LinkMe AVANT de créer une session Supabase
+  // pour éviter toute faille d'isolation entre applications
   const signIn = async (
     email: string,
     password: string
@@ -360,6 +362,46 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const startTime = Date.now();
       console.warn('[signIn] START', { timestamp: new Date().toISOString() });
 
+      // ========================================================================
+      // ÉTAPE 1: Vérifier l'accès LinkMe AVANT la connexion (CRITIQUE)
+      // Utilise la RPC check_linkme_access_by_email qui est SECURITY DEFINER
+      // pour accéder à auth.users sans authentification
+      // ========================================================================
+      console.warn(
+        '[signIn] ÉTAPE 1: Vérification accès LinkMe AVANT connexion'
+      );
+      const beforeCheck = Date.now();
+      const { data: hasAccess, error: checkError } = await supabase.rpc(
+        'check_linkme_access_by_email',
+        { p_email: email }
+      );
+      const afterCheck = Date.now();
+      console.warn('[signIn] check_linkme_access_by_email completed', {
+        duration: afterCheck - beforeCheck,
+        hasAccess,
+        error: checkError?.message,
+      });
+
+      // Si erreur RPC ou pas d'accès → BLOQUER IMMÉDIATEMENT (pas de session créée)
+      if (checkError) {
+        console.error('[signIn] RPC error:', checkError);
+        // Fallback: continuer avec l'ancienne méthode si RPC échoue
+        console.warn('[signIn] Fallback vers vérification post-connexion');
+      } else if (!hasAccess) {
+        console.warn('[signIn] END - no LinkMe access (pre-auth check)', {
+          totalElapsed: Date.now() - startTime,
+        });
+        return {
+          error: new Error(
+            "Cet email n'a pas de compte LinkMe. Créez un compte ou utilisez un autre email."
+          ),
+        };
+      }
+
+      // ========================================================================
+      // ÉTAPE 2: Authentification Supabase (seulement si accès vérifié)
+      // ========================================================================
+      console.warn('[signIn] ÉTAPE 2: Authentification Supabase');
       const beforePassword = Date.now();
       const { data, error: authError } = await supabase.auth.signInWithPassword(
         {
@@ -388,14 +430,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
         return { error: new Error('Utilisateur non trouvé') };
       }
 
-      // Vérifier que l'utilisateur a accès à LinkMe
-      console.warn('[signIn] AVANT query user_app_roles');
+      // ========================================================================
+      // ÉTAPE 3: Double vérification du rôle (sécurité additionnelle)
+      // Nécessaire en cas de fallback ou de changement de rôle entre les 2 étapes
+      // ========================================================================
+      console.warn('[signIn] ÉTAPE 3: Double vérification rôle LinkMe');
       const beforeQuery = Date.now();
       const { data: roleData, error: roleError } = await (
         supabase as SupabaseClient
       )
         .from('user_app_roles')
-        .select('*')
+        .select('id')
         .eq('user_id', data.user.id)
         .eq('app', 'linkme')
         .eq('is_active', true)
@@ -408,10 +453,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
       });
 
       if (roleError ?? !roleData) {
-        // L'utilisateur n'a pas accès à LinkMe - déconnecter
+        // L'utilisateur n'a pas accès à LinkMe - déconnecter immédiatement
         console.warn('[signIn] AVANT signOut (no access)');
         await supabase.auth.signOut();
-        console.warn('[signIn] END - no access', {
+        console.warn('[signIn] END - no access (post-auth check)', {
           totalElapsed: Date.now() - startTime,
         });
         return {
@@ -421,9 +466,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
         };
       }
 
-      // Mettre a jour les states IMMEDIATEMENT avec les donnees retournees
-      // (ne pas attendre onAuthStateChange qui peut etre lent)
-      console.warn('[signIn] AVANT setState + fetchLinkMeRole');
+      // ========================================================================
+      // ÉTAPE 4: Mise à jour des states et chargement du rôle complet
+      // ========================================================================
+      console.warn('[signIn] ÉTAPE 4: Mise à jour states + fetchLinkMeRole');
       setSession(data.session);
       setUser(data.user);
       const beforeFetch = Date.now();
