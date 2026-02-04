@@ -1,5 +1,12 @@
 #!/bin/bash
-# Statusline statique ultra-léger (< 1ms)
-# Pas de dépendances externes (pas de ccusage, pas de calculs système)
+# Wrapper ccusage avec fallback gracieux
+set -euo pipefail
 
-echo "🤖 Sonnet 4.5 | ⚡ Claude Code"
+result=$(ccusage statusline --visual-burn-rate emoji 2>/dev/null) || result=""
+
+if [ -z "$result" ]; then
+  # Fallback si ccusage échoue
+  echo "⚡ Claude Code (ccusage unavailable)"
+else
+  echo "$result"
+fi

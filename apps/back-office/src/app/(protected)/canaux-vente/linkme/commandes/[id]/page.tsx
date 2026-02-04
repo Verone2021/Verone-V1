@@ -1,7 +1,5 @@
 'use client';
 
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return, @typescript-eslint/prefer-nullish-coalescing */
-
 /**
  * Page: Détail Commande Enseigne LinkMe
  *
@@ -413,7 +411,6 @@ export default function LinkMeOrderDetailPage() {
         console.error('[LinkMeOrderDetail] Initial fetch failed:', error);
       });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderId]);
 
   // Handlers Actions
@@ -2016,5 +2013,3 @@ export default function LinkMeOrderDetailPage() {
     </div>
   );
 }
-
-/* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return, @typescript-eslint/prefer-nullish-coalescing */

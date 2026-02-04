@@ -412,7 +412,7 @@ export default function SelectionDetailPage(): React.JSX.Element | null {
                 />
               ) : (
                 <p className="text-linkme-marine/70 text-sm">
-                  {/* eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- empty string should show fallback */}
+                  {}
                   {selection.description ? (
                     selection.description
                   ) : (

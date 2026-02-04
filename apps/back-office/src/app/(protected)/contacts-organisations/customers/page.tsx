@@ -685,7 +685,7 @@ export default function CustomersPage() {
                               </span>
                             </div>
                           )}
-                          {/* eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- Logique booléenne intentionnelle: vérifie au moins un champ non-vide */}
+                          {}
                           {(customer.billing_postal_code ||
                             customer.billing_city) && (
                             <div
@@ -950,7 +950,7 @@ export default function CustomersPage() {
                           {customer.billing_address_line1 && (
                             <div>{customer.billing_address_line1}</div>
                           )}
-                          {/* eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- Logique booléenne intentionnelle: vérifie au moins un champ non-vide */}
+                          {}
                           {(customer.billing_postal_code ||
                             customer.billing_city) && (
                             <div>

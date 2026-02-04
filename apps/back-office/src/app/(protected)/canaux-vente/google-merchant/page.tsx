@@ -111,8 +111,7 @@ export default function GoogleMerchantPage() {
 
     return new Promise<{ success: boolean; synced: number; failed: number }>(
       resolve => {
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        insertProducts(productIds, {
+        void insertProducts(productIds, {
           onSuccess: data => {
             logger.info('[Google Merchant Page] Products added successfully', {
               synced: data.synced,

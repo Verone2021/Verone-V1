@@ -534,7 +534,7 @@ export default function SuppliersPage() {
                               </span>
                             </div>
                           )}
-                          {/* eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- Intentional boolean OR */}
+                          {}
                           {(supplier.billing_postal_code ||
                             supplier.billing_city) && (
                             <div
@@ -816,7 +816,7 @@ export default function SuppliersPage() {
                           {supplier.billing_address_line1 && (
                             <div>{supplier.billing_address_line1}</div>
                           )}
-                          {/* eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- Intentional boolean OR */}
+                          {}
                           {(supplier.billing_postal_code ||
                             supplier.billing_city) && (
                             <div>

@@ -633,7 +633,6 @@ export function TransactionsPageLegacy() {
         tx =>
           tx.label?.toLowerCase().includes(s) ||
           // Boolean OR is correct here, not nullish coalescing
-          // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
           tx.counterparty_name?.toLowerCase().includes(s) ||
           tx.reference?.toLowerCase().includes(s)
       );

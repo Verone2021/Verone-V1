@@ -246,6 +246,7 @@ export default function CategoriesPage() {
               >),
               family_id: formState.parentId,
             });
+
             break;
           case 'subcategory':
             if (!formState.parentId) break;
@@ -256,6 +257,7 @@ export default function CategoriesPage() {
               >),
               category_id: formState.parentId,
             });
+
             break;
         }
       } else {

@@ -152,7 +152,6 @@ export function useUserAffiliate() {
         queryDescription = `user_id = ${user.id}`;
       }
 
-      // eslint-disable-next-line no-console
       console.log(
         `🔍 useUserAffiliate: Recherche affiliate (${queryDescription})`
       );
@@ -174,7 +173,6 @@ export function useUserAffiliate() {
         return null;
       }
 
-      // eslint-disable-next-line no-console
       console.log('✅ Affiliate trouvé:', data.id, data.display_name);
 
       return {

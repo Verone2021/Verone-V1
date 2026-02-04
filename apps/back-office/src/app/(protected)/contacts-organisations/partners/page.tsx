@@ -498,7 +498,7 @@ export default function PartnersPage() {
                               </span>
                             </div>
                           )}
-                          {/* eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- Intentional boolean OR */}
+                          {}
                           {(partner.billing_postal_code ||
                             partner.billing_city) && (
                             <div
@@ -753,7 +753,7 @@ export default function PartnersPage() {
                           {partner.billing_address_line1 && (
                             <div>{partner.billing_address_line1}</div>
                           )}
-                          {/* eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- Intentional boolean OR */}
+                          {}
                           {(partner.billing_postal_code ||
                             partner.billing_city) && (
                             <div>

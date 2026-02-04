@@ -185,7 +185,7 @@ export function ImageSphere({
                 animationDuration: `${3 + (index % 3)}s`,
               }}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
+              {}
               <img
                 src={image.url}
                 alt={image.alt}

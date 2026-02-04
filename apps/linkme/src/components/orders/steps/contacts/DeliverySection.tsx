@@ -114,7 +114,6 @@ export function DeliverySection({
       });
     }
     // Only run on mount
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Check if section is complete

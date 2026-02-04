@@ -149,7 +149,6 @@ export default function LinkMeOrdersPage() {
         error
       );
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Fetch une seule fois au montage
 
   // Compter les commandes en attente de validation

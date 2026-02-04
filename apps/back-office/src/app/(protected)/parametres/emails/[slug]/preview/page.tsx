@@ -107,6 +107,34 @@ export default function PreviewEmailTemplatePage() {
     setRenderedHtml(html);
   }, [template, variableValues]);
 
+  const renderTemplate = useCallback(() => {
+    if (!template) return;
+
+    let html = template.html_body;
+    let subject = template.subject;
+
+    // Simple variable replacement (basic Handlebars-like)
+    Object.entries(variableValues).forEach(([key, value]) => {
+      const regex = new RegExp(`{{${key}}}`, 'g');
+      html = html.replace(regex, value);
+      subject = subject.replace(regex, value);
+    });
+
+    // Handle basic conditionals {{#if variable}}...{{/if}}
+    // This is a simplified version - real Handlebars would be better
+    html = html.replace(
+      /{{#if\s+(\w+)}}([\s\S]*?){{\/if}}/g,
+      (match, varName, content) => {
+        return variableValues[varName] &&
+          variableValues[varName] !== `{{${varName}}}`
+          ? content
+          : '';
+      }
+    );
+
+    setRenderedHtml(html);
+  }, [template, variableValues]);
+
   useEffect(() => {
     if (template) {
       renderTemplate();

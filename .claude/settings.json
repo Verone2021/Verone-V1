@@ -11,7 +11,7 @@
   "outputStyle": "explanatory",
   "statusLine": {
     "type": "command",
-    "command": "/Users/romeodossantos/verone-back-office-V1/.claude/scripts/statusline.sh",
+    "command": "ccusage statusline --visual-burn-rate emoji",
     "padding": 0
   },
   "UserPromptSubmit": [

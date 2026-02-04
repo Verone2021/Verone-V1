@@ -425,7 +425,6 @@ export function OrderFormUnified({
         localStorage.removeItem(REQUESTER_CACHE_KEY);
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Exécuter uniquement au montage
 
   // Mise à jour des données

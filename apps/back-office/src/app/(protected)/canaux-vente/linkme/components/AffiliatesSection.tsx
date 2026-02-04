@@ -197,7 +197,6 @@ export function AffiliatesSection() {
     void fetchEnseignes().catch(error => {
       console.error('[Affiliates] Fetch enseignes failed:', error);
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Filtrer les entités déjà liées à un affilié
