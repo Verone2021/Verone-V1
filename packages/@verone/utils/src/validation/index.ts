@@ -76,7 +76,7 @@ export {
   // Admin
   runMigrationSchema,
   // Helpers
-  validateRequestBody,
+  // validateRequestBody, // ❌ DÉSACTIVÉ : charge DOMPurify → jsdom → parse5 → ERR_REQUIRE_ESM en standalone
   validateRequestBodyNoSanitize,
   validateQueryParams,
 } from './api-schemas';
