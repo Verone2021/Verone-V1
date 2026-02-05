@@ -1,5 +1,9 @@
 'use client';
 
+// Force dynamic rendering - Fix 404 production (pages complexes nécessitent runtime)
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+
 import { useState, useMemo } from 'react';
 
 import Image from 'next/image';
