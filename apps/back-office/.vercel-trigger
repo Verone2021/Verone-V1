@@ -1,1 +1,4 @@
-# Force deploy Wed Jan 21 04:29:02 CET 2026
+# Force deploy 2026-02-05 14:37:07 CET
+# Reason: LinkMe routes returning 404 in production (/canaux-vente/linkme/commandes, /utilisateurs, /approbations)
+# Cause: Incomplete Vercel build - routes exist in source but not in deployed build
+# Fix: Force full rebuild to regenerate all Next.js routes
