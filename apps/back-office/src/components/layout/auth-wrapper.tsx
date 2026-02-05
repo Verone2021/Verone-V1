@@ -59,7 +59,8 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
     });
 
     return () => subscription.unsubscribe();
-  }, [supabase.auth]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // ✅ Client Supabase est singleton (useMemo), setup listeners UNE FOIS au montage
 
   // Pendant le chargement, affichage minimal
   if (isLoading) {
