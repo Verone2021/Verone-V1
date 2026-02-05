@@ -1,97 +1,104 @@
 # Screenshots Playwright MCP
 
-Ce dossier contient des screenshots temporaires générés par MCP Playwright lors des tests et du développement.
+## État Actuel (2026-02-05)
 
-## État Actuel
+- **Fichiers** : ~400 screenshots PNG + profiles navigateur
+- **Taille totale** : ~158 MB (optimisé depuis 229 MB)
+- **Maintenance** : Nettoyage automatique tous les 7 jours
 
-- **Fichiers** : ~176 screenshots PNG
-- **Taille** : ~78 MB
-- **Dernière maintenance** : 2026-01-17 (nettoyage de 71 MB)
-
-## Convention d'Usage
-
-**NE PAS versionner** les screenshots dans Git (voir `.gitignore` - ligne 90).
-
-### Que Capturer
-
-- ✅ Screenshots de debug pour issues actives
-- ✅ Documentation visuelle de bugs critiques
-- ✅ Captures de pages du back-office pour référence
-
-### À Éviter
-
-- ❌ Dashboards externes (Vercel, GitHub, Resend, etc.)
-- ❌ Sites web externes (maps, sites tiers)
-- ❌ Prototypage UI (21st.dev)
-- ❌ Variants/Duplicats (zoom, hover, before/after)
-- ❌ Tests temporaires déjà résolus
-
-## Nettoyage Automatique
-
-Les screenshots de plus de **30 jours** sont supprimés automatiquement chaque **dimanche à minuit UTC** via GitHub Actions.
-
-Workflow: `.github/workflows/cleanup-screenshots.yml`
-
-## Structure Recommandée
-
-Avec la configuration MCP Playwright optimale :
+## Structure
 
 ```
 .playwright-mcp/
-├── lane-1/           # Outputs de playwright-lane-1
-├── lane-2/           # Outputs de playwright-lane-2
-├── *.png            # Screenshots temporaires (gitignored)
-└── README.md        # Ce fichier (versionné)
+├── profiles/           # Profiles navigateur (requis pour tests)
+│   ├── lane-1/        # Lane 1 (principale)
+│   └── lane-2/        # Lane 2 (parallélisation)
+├── page-*.png         # Screenshots horodatés (temporaires)
+├── linkme-*.png       # Screenshots LinkMe (documentation)
+├── back-office-*.png  # Screenshots Back-Office (documentation)
+└── *.pdf              # PDFs de tests (temporaires)
 ```
 
-## Configuration MCP Recommandée
+## Rétention
 
-Pour éviter les conflits entre agents parallèles, utiliser 2 lanes isolées :
+### Conservés Indéfiniment
 
-```json
-{
-  "mcpServers": {
-    "playwright-lane-1": {
-      "command": "npx",
-      "args": [
-        "@playwright/mcp@latest",
-        "--isolated",
-        "--timeout-action=3000",
-        "--timeout-navigation=30000",
-        "--viewport-size=1280x720",
-        "--output-dir=/path/to/project/.playwright-mcp/lane-1"
-      ]
-    },
-    "playwright-lane-2": {
-      "command": "npx",
-      "args": [
-        "@playwright/mcp@latest",
-        "--isolated",
-        "--timeout-action=3000",
-        "--timeout-navigation=30000",
-        "--viewport-size=1280x720",
-        "--output-dir=/path/to/project/.playwright-mcp/lane-2"
-      ]
-    }
-  }
-}
+- ✅ **Screenshots documentés** : Noms descriptifs (ex: `linkme-dashboard-after-fix.png`)
+- ✅ **Profiles navigateur** : Cache requis pour exécution tests (`profiles/`)
+- ✅ **Screenshots bugs** : Documentation issues (ex: `back-office-login-form.png`)
+
+### Nettoyés Automatiquement
+
+- ❌ **Screenshots horodatés** : Supprimés après 7 jours (ex: `page-2026-01-23T15-42-12.png`)
+- ❌ **Logs console** : Supprimés immédiatement (régénérables)
+- ❌ **PDFs temporaires** : Supprimés immédiatement (noms UUID)
+- ❌ **Dossiers imbriqués** : Anomalies supprimées automatiquement
+
+## Nettoyage
+
+### Manuel
+
+```bash
+# Exécuter nettoyage manuel
+pnpm playwright:cleanup
+
+# Vérifier taille actuelle
+du -sh .playwright-mcp
 ```
 
-## Bonnes Pratiques
+### Automatique
 
-1. **Nommage Descriptif** : `back-office-dashboard.png`, `catalogue-bug-123.png`
-2. **Supprimer Après Usage** : Une fois le bug résolu, supprimer la capture
-3. **Backup Local** : Si besoin de conserver, déplacer hors du projet
-4. **Taille Limite** : Garder le dossier sous 100 MB
+Le script `scripts/playwright-cleanup.sh` nettoie automatiquement :
+- Logs console (100% temporaires)
+- Screenshots horodatés > 7 jours
+- PDFs UUID (temporaires)
+- Dossiers imbriqués anomaux
 
-## Historique
+### CI/CD
 
-- **2026-01-17** : Nettoyage initial (149 MB → 78 MB, -71 MB)
-  - Supprimé : services externes, 21st.dev, tests temporaires, duplicats
-  - Conservé : documentation back-office, captures utiles
+Le workflow GitHub Actions `.github/workflows/cleanup-screenshots.yml` nettoie automatiquement chaque dimanche à 2h du matin (si configuré).
 
-## Liens Utiles
+## Conventions de Nommage
 
-- [Playwright MCP GitHub](https://github.com/microsoft/playwright-mcp)
-- [Playwright Screenshot Cleanup Issue](https://github.com/microsoft/playwright/issues/23644)
-- [Fast Playwright MCP](https://github.com/tontoko/fast-playwright-mcp)
+### ✅ BON (Noms Descriptifs)
+
+Ces fichiers sont conservés indéfiniment car ils documentent des features/bugs :
+
+```
+linkme-dashboard-after-fix.png
+back-office-login-form-error.png
+catalogue-produits-pagination.png
+facture-invoice-layout.png
+bubble-facture-template.png
+```
+
+### ❌ MAUVAIS (Noms Horodatés)
+
+Ces fichiers sont supprimés après 7 jours (temporaires) :
+
+```
+page-2026-01-23T15-42-12.png
+page-2026-02-05T11-38-40.png
+```
+
+## Recommandation
+
+Lors de la création de screenshots pour documentation :
+1. **Utiliser noms descriptifs** : `linkme-bug-LM-001-order-form.png`
+2. **Éviter horodatage** : `page-2026-*T*.png` = temporaire
+3. **Documenter dans commit** : "Add screenshot for bug LM-001 fix"
+
+## Notes Techniques
+
+- Les profiles navigateur (`profiles/`) **NE DOIVENT PAS** être supprimés (requis tests)
+- La structure `.playwright-mcp/.playwright-mcp/` (imbriquée) est une anomalie (legacy)
+- Les logs console > 5 MB indiquent potentiellement une boucle infinie dans les tests
+
+## Historique Optimisation
+
+- **2026-02-05** : Nettoyage initial (229 MB → 158 MB, gain 31%)
+  - Suppression 165 screenshots horodatés (> 7j)
+  - Suppression 4 logs console
+  - Suppression 2 PDFs UUID
+  - Suppression dossier imbriqué anomal
+  - Création script `playwright-cleanup.sh`
