@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { useParams, useRouter } from 'next/navigation';
 
@@ -87,7 +87,7 @@ export default function CreditNoteDetailPage(): React.ReactNode {
   const [showDeleteWarning, setShowDeleteWarning] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
 
-  const fetchCreditNote = async (): Promise<void> => {
+  const fetchCreditNote = useCallback(async (): Promise<void> => {
     setLoading(true);
     setError(null);
 
@@ -105,13 +105,13 @@ export default function CreditNoteDetailPage(): React.ReactNode {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
   useEffect(() => {
     if (id) {
       void fetchCreditNote();
     }
-  }, [id]);
+  }, [id, fetchCreditNote]);
 
   const handleFinalize = async (): Promise<void> => {
     setShowFinalizeWarning(false);

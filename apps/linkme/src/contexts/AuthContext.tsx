@@ -106,7 +106,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
         // Utiliser la vue v_linkme_users qui join user_app_roles + user_profiles + enseignes + organisations
         if (DEBUG)
           console.error('[AuthContext] Fetching from v_linkme_users...');
-        const { data, error } = await (supabase as SupabaseClient)
+        const { data, error } = await (
+          supabase as unknown as SupabaseClient<{
+            v_linkme_users: ViewLinkMeUser;
+          }>
+        )
           .from('v_linkme_users')
           .select('*')
           .eq('user_id', userId)

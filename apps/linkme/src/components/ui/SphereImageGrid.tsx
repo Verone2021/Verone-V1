@@ -14,6 +14,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 
+import Image from 'next/image';
 import { X } from 'lucide-react';
 
 // ==========================================
@@ -531,13 +532,14 @@ const SphereImageGrid: React.FC<SphereImageGridProps> = ({
           onClick={() => setSelectedImage(image)}
         >
           <div className="relative w-full h-full rounded-full overflow-hidden shadow-lg border-2 border-white/20">
-            {}
-            <img
+            <Image
               src={image.src}
               alt={image.alt}
-              className="w-full h-full object-cover"
+              fill
+              className="object-cover"
               draggable={false}
-              loading={index < 3 ? 'eager' : 'lazy'}
+              priority={index < 3}
+              sizes="(max-width: 768px) 100vw, 50vw"
             />
           </div>
         </div>
@@ -565,11 +567,12 @@ const SphereImageGrid: React.FC<SphereImageGridProps> = ({
           }}
         >
           <div className="relative aspect-square">
-            {}
-            <img
+            <Image
               src={selectedImage.src}
               alt={selectedImage.alt}
-              className="w-full h-full object-cover"
+              fill
+              className="object-cover"
+              sizes="(max-width: 768px) 100vw, 50vw"
             />
             <button
               onClick={() => setSelectedImage(null)}

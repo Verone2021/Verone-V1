@@ -11,6 +11,8 @@
 
 import { useEffect, useRef, useCallback } from 'react';
 
+import Image from 'next/image';
+
 import createGlobe, { type COBEOptions } from 'cobe';
 
 import { cn } from '@/lib/utils';
@@ -185,12 +187,13 @@ export function ImageSphere({
                 animationDuration: `${3 + (index % 3)}s`,
               }}
             >
-              {}
-              <img
+              <Image
                 src={image.url}
                 alt={image.alt}
-                className="w-full h-full object-cover"
+                fill
+                className="object-cover"
                 loading="lazy"
+                sizes="(max-width: 768px) 100vw, 50vw"
               />
             </div>
           );

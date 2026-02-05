@@ -152,10 +152,6 @@ export function useUserAffiliate() {
         queryDescription = `user_id = ${user.id}`;
       }
 
-      console.log(
-        `🔍 useUserAffiliate: Recherche affiliate (${queryDescription})`
-      );
-
       const { data, error } = await query.maybeSingle<LinkMeAffiliateRow>();
 
       if (error) {
@@ -172,8 +168,6 @@ export function useUserAffiliate() {
         );
         return null;
       }
-
-      console.log('✅ Affiliate trouvé:', data.id, data.display_name);
 
       return {
         id: data.id,

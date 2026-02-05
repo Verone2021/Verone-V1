@@ -50,7 +50,7 @@ import {
 
 export default function ProfilPage(): JSX.Element | null {
   const router = useRouter();
-  const { user, loading } = useAuth();
+  const { user, linkMeRole, loading } = useAuth();
   const { data: profile, isLoading: profileLoading } = useUserProfile();
   const {
     mutate: updateProfile,
@@ -92,12 +92,24 @@ export default function ProfilPage(): JSX.Element | null {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
-  // Rediriger si non connecté
+  // Vérifier authentification et rôle LinkMe actif
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
+    if (!loading) {
+      // Pas connecté → redirect login
+      if (!user) {
+        router.push('/login');
+        return;
+      }
+
+      // Pas de rôle LinkMe actif → redirect dashboard
+      // (cohérent avec MainLayout et /catalogue)
+      if (!linkMeRole?.is_active) {
+        console.warn('[ProfilPage] No active LinkMe role, redirecting');
+        router.push('/dashboard');
+        return;
+      }
     }
-  }, [user, loading, router]);
+  }, [user, linkMeRole, loading, router]);
 
   // Reset form quand le profil est chargé
   useEffect(() => {

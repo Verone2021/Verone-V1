@@ -1049,8 +1049,8 @@ export default function ExpeditionsPage() {
 
                           {/* Coûts */}
                           {}
-                          {(shipment.cost_paid_eur ||
-                            shipment.cost_charged_eur) && (
+                          {(!!shipment.cost_paid_eur ||
+                            !!shipment.cost_charged_eur) && (
                             <div className="mt-4 pt-4 border-t space-y-1">
                               {shipment.cost_paid_eur && (
                                 <p className="text-sm text-gray-600">

@@ -153,8 +153,11 @@ function generateExcelFile<T extends object>(
   // Appliquer le style aux en-têtes (première ligne)
   headers.forEach((_, colIndex) => {
     const cellAddress = XLSX.utils.encode_cell({ r: 0, c: colIndex });
-    if (worksheet[cellAddress]) {
-      worksheet[cellAddress].s = headerStyle;
+    const cell = worksheet[cellAddress] as
+      | { s?: typeof headerStyle }
+      | undefined;
+    if (cell) {
+      cell.s = headerStyle;
     }
   });
 
@@ -166,7 +169,7 @@ function generateExcelFile<T extends object>(
     type: 'buffer',
     bookType: 'xlsx',
     compression: true,
-  });
+  }) as Buffer;
 }
 
 /**

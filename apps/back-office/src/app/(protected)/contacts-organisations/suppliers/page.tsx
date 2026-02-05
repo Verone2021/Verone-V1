@@ -535,8 +535,8 @@ export default function SuppliersPage() {
                             </div>
                           )}
                           {}
-                          {(supplier.billing_postal_code ||
-                            supplier.billing_city) && (
+                          {(!!supplier.billing_postal_code ||
+                            !!supplier.billing_city) && (
                             <div
                               className="text-xs pl-[18px]"
                               style={{ color: colors.text.subtle }}
@@ -817,8 +817,8 @@ export default function SuppliersPage() {
                             <div>{supplier.billing_address_line1}</div>
                           )}
                           {}
-                          {(supplier.billing_postal_code ||
-                            supplier.billing_city) && (
+                          {(!!supplier.billing_postal_code ||
+                            !!supplier.billing_city) && (
                             <div>
                               {supplier.billing_postal_code &&
                                 `${supplier.billing_postal_code}, `}

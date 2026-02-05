@@ -177,10 +177,18 @@ export function useLinkMeOrders(
       );
 
       if (ordersError) {
-        console.error('Erreur fetch commandes:', ordersError);
+        console.error('[useLinkMeOrders] RPC error:', {
+          message: ordersError.message,
+          code: ordersError.code,
+          details: ordersError.details,
+          hint: ordersError.hint,
+          affiliateId: effectiveAffiliateId,
+          fetchAll,
+        });
         throw ordersError;
       }
 
+      // Succès = silencieux (flux normal, pas de log INFO)
       if (!ordersData || ordersData.length === 0) {
         return [];
       }

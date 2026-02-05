@@ -14,7 +14,14 @@ import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
-import { User, Building2, Store, LogOut, ChevronDown } from 'lucide-react';
+import {
+  User,
+  Building2,
+  Store,
+  LogOut,
+  ChevronDown,
+  Users,
+} from 'lucide-react';
 
 import { useAuth, type LinkMeRole } from '../../contexts/AuthContext';
 
@@ -140,16 +147,16 @@ export function UserMenu({ className }: IUserMenuProps): JSX.Element | null {
               <User className="h-4 w-4" />
               Mon profil
             </Link>
-            {/* Lien Organisations - uniquement pour enseignes */}
+            {/* Lien Contacts - pour enseigne_admin et org_independante */}
             {(linkMeRole?.role === 'enseigne_admin' ||
-              linkMeRole?.role === 'organisation_admin') && (
+              linkMeRole?.role === 'org_independante') && (
               <Link
-                href="/organisations"
+                href="/contacts"
                 onClick={() => setIsOpen(false)}
                 className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
               >
-                <Building2 className="h-4 w-4" />
-                Mes organisations
+                <Users className="h-4 w-4" />
+                Mes contacts
               </Link>
             )}
           </div>
