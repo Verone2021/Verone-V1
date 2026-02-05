@@ -20,7 +20,7 @@ import { withRateLimit, RATE_LIMIT_PRESETS } from '@verone/utils/security';
 import { createAdminClient } from '@verone/utils/supabase/server';
 import {
   createInvoiceSchema,
-  validateRequestBody,
+  validateRequestBodyNoSanitize,
 } from '@verone/utils/validation';
 
 type SalesOrder = Database['public']['Tables']['sales_orders']['Row'];
@@ -220,8 +220,12 @@ export async function POST(request: NextRequest): Promise<
   }
 
   try {
-    // Validate request body with Zod
-    const validation = await validateRequestBody(request, createInvoiceSchema);
+    // Validate request body with Zod (no DOMPurify sanitization)
+    // REASON: Qonto sends structured JSON, no HTML/XSS risk
+    const validation = await validateRequestBodyNoSanitize(
+      request,
+      createInvoiceSchema
+    );
     if (!validation.success) {
       return validation.response as NextResponse<{
         success: boolean;

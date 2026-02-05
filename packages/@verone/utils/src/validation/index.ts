@@ -77,5 +77,6 @@ export {
   runMigrationSchema,
   // Helpers
   validateRequestBody,
+  validateRequestBodyNoSanitize,
   validateQueryParams,
 } from './api-schemas';
