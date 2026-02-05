@@ -18,10 +18,6 @@ import type { CreateClientInvoiceParams } from '@verone/integrations/qonto';
 import type { Database } from '@verone/types';
 import { withRateLimit, RATE_LIMIT_PRESETS } from '@verone/utils/security';
 import { createAdminClient } from '@verone/utils/supabase/server';
-import {
-  createInvoiceSchema,
-  validateRequestBodyNoSanitize,
-} from '@verone/utils/validation';
 
 type SalesOrder = Database['public']['Tables']['sales_orders']['Row'];
 type Organisation = Database['public']['Tables']['organisations']['Row'];
@@ -220,25 +216,23 @@ export async function POST(request: NextRequest): Promise<
   }
 
   try {
-    // Validate request body with Zod (no DOMPurify sanitization)
-    // REASON: Qonto sends structured JSON, no HTML/XSS risk
-    const validation = await validateRequestBodyNoSanitize(
-      request,
-      createInvoiceSchema
-    );
-    if (!validation.success) {
-      return validation.response as NextResponse<{
-        success: boolean;
-        error?: string;
-      }>;
-    }
+    // Parse request body (simple validation, no DOMPurify to avoid ERR_REQUIRE_ESM)
+    const body = (await request.json()) as {
+      salesOrderId: string;
+      autoFinalize?: boolean;
+      fees?: IFeesData;
+      customLines?: ICustomLine[];
+    };
 
-    const {
-      salesOrderId,
-      autoFinalize = false,
-      fees,
-      customLines,
-    } = validation.data;
+    const { salesOrderId, autoFinalize = false, fees, customLines } = body;
+
+    // Basic validation
+    if (!salesOrderId) {
+      return NextResponse.json(
+        { success: false, error: 'salesOrderId is required' },
+        { status: 400 }
+      );
+    }
 
     // Récupérer la commande avec ses lignes (sans jointures polymorphiques)
     // Utilise createAdminClient pour bypasser RLS (API route sans contexte user)
