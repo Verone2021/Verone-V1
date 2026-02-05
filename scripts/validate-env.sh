@@ -4,6 +4,10 @@
 
 set -e
 
+# Charger nvm et activer la version par défaut (Node 20 LTS)
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && nvm use default --silent 2>/dev/null
+
 echo "🔍 Validation de l'environnement de développement..."
 echo ""
 
@@ -77,34 +81,23 @@ for app in back-office linkme site-internet; do
 done
 echo ""
 
-# 5. Vérifier les symlinks critiques
-echo "🔗 Vérification des symlinks..."
-SYMLINK_OK=0
-SYMLINK_BROKEN=0
+# 5. Vérifier les dépendances critiques (pnpm workspace hoisting)
+echo "🔗 Vérification des dépendances..."
 
-for app in back-office linkme site-internet; do
-  NEXT_SYMLINK="apps/$app/node_modules/next"
-
-  if [ ! -L "$NEXT_SYMLINK" ]; then
-    echo "   ❌ apps/$app/node_modules/next n'existe pas"
-    SYMLINK_BROKEN=$((SYMLINK_BROKEN+1))
+# Avec pnpm workspace, les packages sont dans node_modules/ racine (hoisting)
+DEPS_OK=true
+for pkg in next react typescript; do
+  if [ -e "node_modules/.bin/$pkg" ] || [ -d "node_modules/$pkg" ]; then
+    echo "   ✅ $pkg installé"
   else
-    # Vérifier que le symlink pointe vers un fichier existant
-    if [ -e "$NEXT_SYMLINK" ]; then
-      SYMLINK_OK=$((SYMLINK_OK+1))
-    else
-      echo "   ❌ apps/$app/node_modules/next est cassé (lien mort)"
-      SYMLINK_BROKEN=$((SYMLINK_BROKEN+1))
-    fi
+    echo "   ❌ $pkg manquant"
+    DEPS_OK=false
   fi
 done
 
-if [ $SYMLINK_BROKEN -gt 0 ]; then
-  echo "   ❌ $SYMLINK_BROKEN symlink(s) cassé(s)"
-  echo "      → Exécutez: pnpm install --force"
+if [ "$DEPS_OK" = false ]; then
+  echo "   → Exécutez: pnpm install"
   ISSUES=$((ISSUES+1))
-else
-  echo "   ✅ $SYMLINK_OK symlink(s) valides"
 fi
 echo ""
 

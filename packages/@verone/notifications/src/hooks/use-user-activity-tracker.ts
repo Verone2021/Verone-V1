@@ -147,14 +147,18 @@ export function useUserActivityTracker() {
     }
   );
 
-  // ✅ FIX: Mémoriser flushEventQueue avec useCallback
+  // ✅ FIX: Stabiliser la référence à mutate via useRef (évite boucle infinie)
+  const mutateRef = useRef(logActivityMutation.mutate);
+  mutateRef.current = logActivityMutation.mutate;
+
+  // ✅ FIX: flushEventQueue sans dépendances instables
   const flushEventQueue = useCallback(async () => {
     if (eventQueueRef.current.length === 0) return;
 
     const events = [...eventQueueRef.current];
     eventQueueRef.current = [];
-    await logActivityMutation.mutate(events);
-  }, [logActivityMutation]);
+    await mutateRef.current(events);
+  }, []);
 
   // ✅ FIX: Réactiver auto-flush périodique avec cleanup proper
   useEffect(() => {
