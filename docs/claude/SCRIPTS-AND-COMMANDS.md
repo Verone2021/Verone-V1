@@ -71,16 +71,12 @@ Documentation complète de tous les scripts et commandes slash utilisables dans 
 
 ### Scripts d'Analyse (Non référencés mais utiles)
 
-| Script                       | Description                       | Quand l'utiliser             |
-| ---------------------------- | --------------------------------- | ---------------------------- |
-| `analyze-async-errors.sh`    | Analyse erreurs async par fichier | Audit ESLint async           |
-| `fix-async-errors.sh`        | Fix automatique erreurs async     | Migration async patterns     |
-| `fix-nullish-coalescing.sh`  | Fix automatique `\|\|` → `??`     | Migration nullish coalescing |
-| `guard-no-global-zoom.sh`    | Détecte zoom/scale global         | CI/CD guard                  |
-| `repo-control.sh`            | Outil unifié gestion repo         | Audit + hygiene + classify   |
-| `validate-pr-ready.sh`       | Validation avant PR               | Pre-PR check                 |
-| `generate-linkme-reports.ts` | Génère rapports LinkMe            | Analyse business             |
-| `auth-setup.ts`              | Setup auth Supabase               | Configuration initiale       |
+| Script                       | Description                       | Quand l'utiliser       |
+| ---------------------------- | --------------------------------- | ---------------------- |
+| `analyze-async-errors.sh`    | Analyse erreurs async par fichier | Audit ESLint async     |
+| `fix-async-errors.sh`        | Fix automatique erreurs async     | Migration async        |
+| `generate-linkme-reports.ts` | Génère rapports LinkMe            | Analyse business       |
+| `auth-setup.ts`              | Setup auth Supabase               | Configuration initiale |
 
 ---
 
@@ -94,13 +90,6 @@ Documentation complète de tous les scripts et commandes slash utilisables dans 
 | `task-completed.sh`          | Hook Event      | Actions post-completion task         |
 | `validate-critical-files.sh` | Hook Pre-commit | Validation fichiers critiques        |
 | `session-token-report.sh`    | Utilitaire      | Rapport usage tokens session         |
-
-### Scripts Screenshot (scripts/claude/)
-
-| Script                     | Description                   |
-| -------------------------- | ----------------------------- |
-| `clean-old-screenshots.sh` | Nettoie screenshots > 1 jour  |
-| `organize-screenshots.sh`  | Organise screenshots par date |
 
 ---
 
@@ -173,8 +162,8 @@ Les agents sont invoqués automatiquement par Claude selon le contexte de la tâ
 
 1. **Démarrage** : `pnpm dev:safe` (valide env + démarre)
 2. **Développement** : Commits fréquents sur feature branch
-3. **Avant Commit** : `pnpm type-check && pnpm build`
-4. **Avant PR** : `./scripts/validate-pr-ready.sh` (si disponible)
+3. **Avant Commit** : Pre-commit hooks valident automatiquement (ESLint, type-check)
+4. **Avant PR** : Pre-push hooks valident automatiquement (ESLint, type-check)
 5. **Tests** : `pnpm test:e2e` (si changements UI)
 
 ### Debug & Audit
@@ -182,13 +171,11 @@ Les agents sont invoqués automatiquement par Claude selon le contexte de la tâ
 1. **Erreurs Console** : `pnpm check:console`
 2. **Types DB** : `pnpm validate:types`
 3. **Composants UI** : `pnpm audit:component`
-4. **Santé Repo** : `./scripts/repo-control.sh health`
 
 ### Nettoyage
 
 1. **Serveurs** : `pnpm dev:stop`
 2. **Caches** : `pnpm dev:clean` ou `pnpm turbo:clean`
-3. **Screenshots** : `./scripts/claude/clean-old-screenshots.sh`
 
 ---
 

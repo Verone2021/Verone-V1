@@ -47,10 +47,8 @@ Répéter jusqu'à feature complète.
 - [ ] Build production OK
 - [ ] Au moins 2-3 commits atomiques
 - [ ] Branche à jour avec main
-- [ ] Valider pre-PR:
-  ```bash
-  ./.claude/scripts/validate-pr-ready.sh
-  ```
+- [ ] Pre-push hooks ont validé (ESLint + type-check automatique)
+- [ ] CI GitHub Actions passe (build + tests)
 - [ ] Créer UNE SEULE PR:
   ```bash
   gh pr create \
