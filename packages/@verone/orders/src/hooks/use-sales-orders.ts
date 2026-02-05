@@ -5,7 +5,7 @@
  * Gère le workflow : devis → commande → préparation → expédition → livraison
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo, useRef } from 'react';
 
 import { useToast } from '@verone/common/hooks';
 import { useStockMovements } from '@verone/stock/hooks/use-stock-movements';
@@ -308,9 +308,13 @@ export function useSalesOrders() {
   const [loading, setLoading] = useState(false);
   const [orders, setOrders] = useState<SalesOrder[]>([]);
   const [currentOrder, setCurrentOrder] = useState<SalesOrder | null>(null);
+  // ✅ FIX: useRef pour currentOrder dans les callbacks (évite re-création de 7 callbacks à chaque changement)
+  const currentOrderRef = useRef(currentOrder);
+  currentOrderRef.current = currentOrder;
   const [stats, setStats] = useState<SalesOrderStats | null>(null);
   const { toast } = useToast();
-  const supabase = createClient();
+  // ✅ FIX: useMemo pour éviter recréation du client à chaque render
+  const supabase = useMemo(() => createClient(), []);
   const { createMovement, getAvailableStock } = useStockMovements();
 
   // Récupérer toutes les commandes avec filtres
@@ -928,7 +932,7 @@ export function useSalesOrders() {
         });
 
         await fetchOrders();
-        if (currentOrder?.id === orderId) {
+        if (currentOrderRef.current?.id === orderId) {
           await fetchOrder(orderId);
         }
       } catch (error: any) {
@@ -943,7 +947,7 @@ export function useSalesOrders() {
         setLoading(false);
       }
     },
-    [supabase, toast, fetchOrders, currentOrder, fetchOrder]
+    [supabase, toast, fetchOrders, fetchOrder]
   );
 
   // Marquer comme payé manuellement
@@ -989,7 +993,7 @@ export function useSalesOrders() {
         });
 
         await fetchOrders();
-        if (currentOrder?.id === orderId) {
+        if (currentOrderRef.current?.id === orderId) {
           await fetchOrder(orderId);
         }
       } catch (error: any) {
@@ -1005,7 +1009,7 @@ export function useSalesOrders() {
         setLoading(false);
       }
     },
-    [supabase, toast, fetchOrders, currentOrder, fetchOrder]
+    [supabase, toast, fetchOrders, fetchOrder]
   );
 
   // Marquer la sortie entrepôt
@@ -1025,7 +1029,7 @@ export function useSalesOrders() {
         });
 
         await fetchOrders();
-        if (currentOrder?.id === orderId) {
+        if (currentOrderRef.current?.id === orderId) {
           await fetchOrder(orderId);
         }
       } catch (error: any) {
@@ -1041,7 +1045,7 @@ export function useSalesOrders() {
         setLoading(false);
       }
     },
-    [supabase, toast, fetchOrders, currentOrder, fetchOrder]
+    [supabase, toast, fetchOrders, fetchOrder]
   );
 
   // Créer une nouvelle commande avec vérification de stock
@@ -1287,7 +1291,7 @@ export function useSalesOrders() {
         });
 
         await fetchOrders();
-        if (currentOrder?.id === orderId) {
+        if (currentOrderRef.current?.id === orderId) {
           await fetchOrder(orderId);
         }
       } catch (error: any) {
@@ -1303,7 +1307,7 @@ export function useSalesOrders() {
         setLoading(false);
       }
     },
-    [supabase, toast, fetchOrders, currentOrder, fetchOrder]
+    [supabase, toast, fetchOrders, fetchOrder]
   );
 
   // Mettre à jour une commande avec ses items (édition complète)
@@ -1525,7 +1529,7 @@ export function useSalesOrders() {
         });
 
         await fetchOrders();
-        if (currentOrder?.id === orderId) {
+        if (currentOrderRef.current?.id === orderId) {
           await fetchOrder(orderId);
         }
 
@@ -1543,7 +1547,7 @@ export function useSalesOrders() {
         setLoading(false);
       }
     },
-    [supabase, toast, fetchOrders, currentOrder, fetchOrder, getAvailableStock]
+    [supabase, toast, fetchOrders, fetchOrder, getAvailableStock]
   );
 
   // Changer le statut d'une commande
@@ -1661,7 +1665,7 @@ export function useSalesOrders() {
         });
 
         await fetchOrders();
-        if (currentOrder?.id === orderId) {
+        if (currentOrderRef.current?.id === orderId) {
           await fetchOrder(orderId);
         }
 
@@ -1682,7 +1686,7 @@ export function useSalesOrders() {
         setLoading(false);
       }
     },
-    [supabase, toast, fetchOrders, currentOrder, fetchOrder]
+    [supabase, toast, fetchOrders, fetchOrder]
   );
 
   // Expédier des items (totalement ou partiellement)
@@ -1855,7 +1859,7 @@ export function useSalesOrders() {
         });
 
         await fetchOrders();
-        if (currentOrder?.id === orderId) {
+        if (currentOrderRef.current?.id === orderId) {
           setCurrentOrder(null);
         }
       } catch (error: any) {
@@ -1870,7 +1874,7 @@ export function useSalesOrders() {
         setLoading(false);
       }
     },
-    [supabase, toast, fetchOrders, currentOrder]
+    [supabase, toast, fetchOrders]
   );
 
   return {

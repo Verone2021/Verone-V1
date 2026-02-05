@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 import Link from 'next/link';
 
@@ -42,25 +42,38 @@ export default function CommandesOverviewPage() {
     fetchStats: fetchPurchaseStats,
   } = usePurchaseOrders();
 
+  // Refs pour stabiliser les fonctions fetch (pattern anti-loop)
+  const fetchSalesOrdersRef = useRef(fetchSalesOrders);
+  fetchSalesOrdersRef.current = fetchSalesOrders;
+  const fetchSalesStatsRef = useRef(fetchSalesStats);
+  fetchSalesStatsRef.current = fetchSalesStats;
+  const fetchPurchaseOrdersRef = useRef(fetchPurchaseOrders);
+  fetchPurchaseOrdersRef.current = fetchPurchaseOrders;
+  const fetchPurchaseStatsRef = useRef(fetchPurchaseStats);
+  fetchPurchaseStatsRef.current = fetchPurchaseStats;
+
   useEffect(() => {
-    void fetchSalesOrders().catch(error =>
-      console.error('[CommandesPage] fetchSalesOrders failed:', error)
-    );
-    void fetchSalesStats().catch(error =>
-      console.error('[CommandesPage] fetchSalesStats failed:', error)
-    );
-    void fetchPurchaseOrders().catch(error =>
-      console.error('[CommandesPage] fetchPurchaseOrders failed:', error)
-    );
-    void fetchPurchaseStats().catch(error =>
-      console.error('[CommandesPage] fetchPurchaseStats failed:', error)
-    );
-  }, [
-    fetchSalesOrders,
-    fetchSalesStats,
-    fetchPurchaseOrders,
-    fetchPurchaseStats,
-  ]);
+    void fetchSalesOrdersRef
+      .current()
+      .catch(error =>
+        console.error('[CommandesPage] fetchSalesOrders failed:', error)
+      );
+    void fetchSalesStatsRef
+      .current()
+      .catch(error =>
+        console.error('[CommandesPage] fetchSalesStats failed:', error)
+      );
+    void fetchPurchaseOrdersRef
+      .current()
+      .catch(error =>
+        console.error('[CommandesPage] fetchPurchaseOrders failed:', error)
+      );
+    void fetchPurchaseStatsRef
+      .current()
+      .catch(error =>
+        console.error('[CommandesPage] fetchPurchaseStats failed:', error)
+      );
+  }, []);
 
   const isLoading = salesLoading || purchaseLoading;
 

@@ -286,7 +286,7 @@ export function SalesOrdersTable({
 
   const { toast } = useToast();
   const searchParams = useSearchParams();
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   // Etats filtres
   const [searchTerm, setSearchTerm] = useState('');
