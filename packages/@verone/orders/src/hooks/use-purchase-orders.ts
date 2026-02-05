@@ -5,7 +5,7 @@
  * Gère le workflow complet : création → envoi → confirmation → réception
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 
 // FIXME: Server actions can't be imported from monorepo packages
 // import { updatePurchaseOrderStatus as updatePurchaseOrderStatusAction } from '@/app/actions/purchase-orders';
@@ -185,7 +185,8 @@ export function usePurchaseOrders() {
   const [currentOrder, setCurrentOrder] = useState<PurchaseOrder | null>(null);
   const [stats, setStats] = useState<PurchaseOrderStats | null>(null);
   const { toast } = useToast();
-  const supabase = createClient();
+  // ✅ FIX: useMemo pour éviter recréation du client à chaque render
+  const supabase = useMemo(() => createClient(), []);
   const { createMovement } = useStockMovements();
 
   // PERFORMANCE FIX #3: Payload Optimization (+200ms gain)

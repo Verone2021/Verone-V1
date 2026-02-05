@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 
 import type { PostgrestError } from '@supabase/supabase-js';
 import { createClient } from '@verone/utils/supabase/client';
@@ -60,6 +60,10 @@ export function useSupabaseQuery<T = unknown>(
   // ✅ FIX: useMemo garantit createClient() appelé une seule fois par instance
   const supabase = useMemo(() => createClient(), []);
 
+  // ✅ FIX: useRef stabilise queryFn (inline = nouvelle ref chaque render)
+  const queryFnRef = useRef(queryFn);
+  queryFnRef.current = queryFn;
+
   const fetchData = useCallback(async () => {
     if (!enabled) return;
 
@@ -78,7 +82,7 @@ export function useSupabaseQuery<T = unknown>(
 
     try {
       const startTime = performance.now();
-      const result = await queryFn(supabase);
+      const result = await queryFnRef.current(supabase);
       const loadTime = performance.now() - startTime;
 
       // Performance monitoring selon SLO Vérone (seuil configurable)
@@ -117,8 +121,8 @@ export function useSupabaseQuery<T = unknown>(
         error: error instanceof Error ? error.message : 'Erreur inconnue',
       });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- options.sloThreshold is stable config
-  }, [queryKey, queryFn, enabled, supabase, staleTime]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- options.sloThreshold is stable config, queryFn stabilized via useRef
+  }, [queryKey, enabled, supabase, staleTime]);
 
   useEffect(() => {
     void fetchData();
@@ -167,12 +171,16 @@ export function useSupabaseMutation<T = unknown, V = any>(
   // ✅ FIX: useMemo garantit createClient() appelé une seule fois par instance
   const supabase = useMemo(() => createClient(), []);
 
+  // ✅ FIX: useRef stabilise mutationFn (inline = nouvelle ref chaque render → boucle infinie)
+  const mutationFnRef = useRef(mutationFn);
+  mutationFnRef.current = mutationFn;
+
   const mutate = useCallback(
     async (variables: V): Promise<T | null> => {
       setState({ loading: true, error: null });
 
       try {
-        const result = await mutationFn(supabase, variables);
+        const result = await mutationFnRef.current(supabase, variables);
 
         if (result.error) {
           setState({
@@ -204,7 +212,7 @@ export function useSupabaseMutation<T = unknown, V = any>(
         return null;
       }
     },
-    [mutationFn, supabase]
+    [supabase]
   );
 
   return {

@@ -59,7 +59,7 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
     });
 
     return () => subscription.unsubscribe();
-  }, [supabase.auth]);
+  }, [supabase]); // ✅ FIX: supabase singleton stable (supabase.auth = objet instable)
 
   // Pendant le chargement, affichage minimal
   if (isLoading) {
