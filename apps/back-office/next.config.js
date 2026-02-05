@@ -11,8 +11,7 @@ const nextConfig = {
 
   // WORKAROUND (2025-10-17): Désactiver export statique pour résoudre Html import error
   // Bug Next.js 15.5.4 avec prerendering pages d'erreur /_error, /404, /500
-  // FIX (2026-02-05): Désactiver standalone qui cause 404 sur routes complexes LinkMe
-  // output: 'standalone',
+  output: 'standalone',
 
   // ESLint: Activé avec config stricte @verone/eslint-config (2025-11-07)
   // Validation complète au build avec TypeScript recommended + Prettier
