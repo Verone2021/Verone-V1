@@ -13,7 +13,9 @@
     "DATABASE_URL",
     "QONTO_AUTH_MODE",
     "QONTO_ORGANIZATION_ID",
-    "QONTO_API_KEY"
+    "QONTO_API_KEY",
+    "QONTO_API_BASE_URL",
+    "SUPABASE_SERVICE_ROLE_KEY"
   ],
   "tasks": {
     "build": {
