@@ -5,6 +5,9 @@ const nextConfig = {
   // Next.js 15 App Router configuration
   reactStrictMode: true,
 
+  // Production source maps for debugging
+  productionBrowserSourceMaps: true,
+
   // ✅ FIX (2026-01-26): Externaliser jsdom pour éviter erreur build
   // jsdom (dépendance de isomorphic-dompurify) charge un fichier CSS incompatible avec le bundling Next.js
   serverExternalPackages: ['jsdom', 'isomorphic-dompurify'],
