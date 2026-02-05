@@ -376,6 +376,72 @@ export async function validateRequestBody<T>(
 }
 
 /**
+ * Validate API request body WITHOUT DOMPurify sanitization
+ *
+ * Use this for:
+ * - External API integrations (Qonto, Stripe, etc.) that send structured JSON
+ * - Internal APIs where XSS protection is not needed
+ * - Cases where DOMPurify dependency causes build issues (ERR_REQUIRE_ESM)
+ *
+ * SECURITY NOTE:
+ * - Zod schema validation is STILL applied (type safety)
+ * - Only HTML/XSS sanitization is skipped
+ * - Safe for structured data (JSON), NOT safe for user HTML content
+ *
+ * @example
+ * ```typescript
+ * // API route receiving Qonto data (JSON structure, no HTML risk)
+ * const result = await validateRequestBodyNoSanitize(request, createInvoiceSchema);
+ * if (!result.success) return result.response;
+ * const { data } = result;
+ * ```
+ */
+export async function validateRequestBodyNoSanitize<T>(
+  request: Request,
+  schema: z.ZodSchema<T>
+): Promise<
+  { success: true; data: T } | { success: false; response: Response }
+> {
+  try {
+    const body = await request.json();
+    const result = schema.safeParse(body);
+
+    if (!result.success) {
+      return {
+        success: false,
+        response: new Response(
+          JSON.stringify({
+            error: 'Validation Error',
+            details: result.error.flatten(),
+          }),
+          {
+            status: 400,
+            headers: { 'Content-Type': 'application/json' },
+          }
+        ),
+      };
+    }
+
+    // Return validated data directly (no sanitization)
+    return { success: true, data: result.data };
+  } catch {
+    return {
+      success: false,
+      response: new Response(
+        JSON.stringify({
+          error: 'Invalid JSON',
+          message: 'Request body must be valid JSON',
+        }),
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      ),
+    };
+  }
+}
+
+/**
  * Validate query parameters with a Zod schema
  */
 export function validateQueryParams<T>(
