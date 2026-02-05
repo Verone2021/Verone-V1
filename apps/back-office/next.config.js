@@ -156,7 +156,7 @@ const nextConfig = {
       config.optimization.splitChunks = {
         ...config.optimization.splitChunks,
         chunks: 'all',
-        maxSize: 200000, // ✅ FIX: Augmenter maxSize pour éviter big strings warnings
+        maxSize: 500000, // ✅ FIX: Augmenter pour pages volumineuses (était 200000)
         cacheGroups: {
           ...config.optimization.splitChunks.cacheGroups,
           // Separate large hooks/utils into their own chunks
@@ -192,7 +192,7 @@ const nextConfig = {
         ...config.optimization.splitChunks,
         chunks: 'all',
         minSize: 20000,
-        maxSize: 244000, // Reduce max size to avoid large string warnings
+        maxSize: 500000, // ✅ FIX: Augmenter pour pages volumineuses (était 244000)
       };
     }
 
