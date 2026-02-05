@@ -51,7 +51,7 @@ export function ActivityTrackerProvider({
     });
 
     return () => subscription.unsubscribe();
-  }, [supabase.auth]);
+  }, [supabase]); // ✅ FIX: supabase singleton stable (supabase.auth = objet instable)
 
   // Initialiser tracker uniquement si user authentifié
   const {
