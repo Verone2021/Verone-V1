@@ -16,9 +16,10 @@ export function useUserMetrics() {
   const fetch = async () => {
     try {
       // Récupération de tous les profils utilisateurs
+      // TODO: Fix after role column removal - need to join with user_app_roles
       const { data: profiles, error: profilesError } = await supabase
         .from('user_profiles')
-        .select('user_id, role, created_at, last_sign_in_at');
+        .select('user_id, created_at, last_sign_in_at');
 
       if (profilesError) throw profilesError;
 
@@ -46,14 +47,12 @@ export function useUserMetrics() {
           }
         }).length || 0;
 
-      // Comptage par rôle
+      // TODO: Restore role-based metrics by querying user_app_roles table
       const byRole = {
-        admin: profiles?.filter(p => p.role === 'admin').length || 0,
-        catalog_manager:
-          profiles?.filter(p => p.role === 'catalog_manager').length || 0,
-        sales: profiles?.filter(p => p.role === 'sales').length || 0,
-        partner_manager:
-          profiles?.filter(p => p.role === 'partner_manager').length || 0,
+        admin: 0,
+        catalog_manager: 0,
+        sales: 0,
+        partner_manager: 0,
       };
 
       // Calcul de la tendance (nouveaux utilisateurs sur 7 jours)
