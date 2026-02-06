@@ -57,6 +57,7 @@ export interface SalesOrder {
   total_ht: number;
   total_ttc: number;
   paid_amount?: number;
+  order_date?: string | null;
   expected_delivery_date?: string;
   shipping_address?: any;
   billing_address?: any;

@@ -1167,10 +1167,11 @@ export function SalesOrdersTable({
                         onClick={() => handleSort('date')}
                       >
                         <span className="inline-flex items-center gap-1">
-                          Date
+                          Date création
                           {renderSortIcon('date')}
                         </span>
                       </TableHead>
+                      <TableHead>Date commande</TableHead>
                       {showChannelColumn && <TableHead>Canal</TableHead>}
                       {/* Colonnes additionnelles */}
                       {additionalColumns.map(col => (
@@ -1379,6 +1380,11 @@ export function SalesOrdersTable({
                             <TableCell>
                               {formatDate(order.created_at)}
                             </TableCell>
+                            <TableCell>
+                              {order.order_date
+                                ? formatDate(order.order_date)
+                                : '-'}
+                            </TableCell>
                             {showChannelColumn && (
                               <TableCell>
                                 {order.sales_channel?.name ? (
@@ -1559,7 +1565,7 @@ export function SalesOrdersTable({
                             <TableRow className="bg-muted/50 hover:bg-muted/50">
                               <TableCell
                                 colSpan={
-                                  8 +
+                                  9 +
                                   additionalColumns.length +
                                   (showChannelColumn ? 1 : 0)
                                 }
