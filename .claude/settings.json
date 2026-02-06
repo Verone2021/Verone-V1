@@ -26,6 +26,15 @@
   ],
   "PreToolUse": [
     {
+      "matcher": "Edit(*) || Write(*) || mcp__supabase__apply_migration(*)",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "bash -c 'REPO_DIR=$(pwd); BRANCH=$(git branch --show-current 2>/dev/null || echo \"unknown\"); if [ \"$REPO_DIR\" = \"/Users/romeodossantos/verone-back-office-V1\" ] && [ \"$BRANCH\" = \"main\" ]; then echo \"❌ BLOQUÉ: Opération d\\'écriture INTERDITE sur main dans le repo principal.\n\n**Raison** : Le repo principal (/verone-back-office-V1) doit rester sur main propre.\n**Solution** : Utiliser un worktree :\n  ./scripts/worktree-create.sh [NOM] feat/XXX\n  cd ../verone-worktrees/[NOM]\n\nVoir: docs/workflows/WORKTREES-QUICKSTART.md\"; exit 1; elif [ \"$BRANCH\" = \"main\" ] || [ \"$BRANCH\" = \"master\" ]; then echo \"❌ BLOQUÉ: Opération d\\'écriture INTERDITE sur main.\n\n**Solution** : Créer une feature branch MAINTENANT :\n  git checkout -b feat/[APP]-[DOMAIN]-[NNN]-description\n\nExemple : git checkout -b feat/BO-DB-001-fix-owner-role\"; exit 1; fi'"
+        }
+      ]
+    },
+    {
       "matcher": "Bash(git*--no-verify*)",
       "hooks": [
         {
@@ -150,8 +159,26 @@
       "WebFetch",
       "Task",
       "TodoWrite",
-      "mcp__*"
+      "mcp__serena__*",
+      "mcp__context7__*",
+      "mcp__playwright-lane-1__*",
+      "mcp__playwright-lane-2__*",
+      "mcp__magic__*",
+      "mcp__supabase__execute_sql(*)",
+      "mcp__supabase__list_*",
+      "mcp__supabase__get_*",
+      "mcp__supabase__generate_typescript_types(*)"
     ],
-    "deny": ["Bash(rm -rf /)", "Bash(rm -rf /*)", "Bash(sudo *)"]
+    "deny": [
+      "Bash(rm -rf /)",
+      "Bash(rm -rf /*)",
+      "Bash(sudo *)",
+      "mcp__supabase__apply_migration(*)",
+      "mcp__supabase__create_branch(*)",
+      "mcp__supabase__merge_branch(*)",
+      "mcp__supabase__delete_branch(*)",
+      "mcp__supabase__reset_branch(*)",
+      "mcp__supabase__deploy_edge_function(*)"
+    ]
   }
 }
