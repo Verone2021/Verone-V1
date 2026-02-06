@@ -47,17 +47,20 @@ async function verifyOwnerAccess(): Promise<ActionResult> {
     return { success: false, error: 'Non authentifié' };
   }
 
-  const { data: profile, error: profileError } = await supabase
-    .from('user_profiles')
+  // Check if user has owner role in back-office app
+  const { data: userRole, error: roleError } = await supabase
+    .from('user_app_roles')
     .select('role')
     .eq('user_id', user.id)
+    .eq('app', 'back-office')
+    .eq('is_active', true)
     .single();
 
-  if (profileError || !profile) {
+  if (roleError || !userRole) {
     return { success: false, error: 'Profil utilisateur non trouvé' };
   }
 
-  if (profile.role !== 'owner') {
+  if (userRole.role !== 'owner') {
     return { success: false, error: 'Accès non autorisé - Rôle owner requis' };
   }
 
@@ -143,7 +146,6 @@ export async function createUserWithRole(
     try {
       const result = await supabase.from('user_profiles').insert({
         user_id: newUser.user.id,
-        role: userData.role,
         user_type: 'staff',
         scopes: [], // À définir selon les besoins
         partner_id: null,
@@ -153,6 +155,20 @@ export async function createUserWithRole(
       });
 
       profileError = result.error;
+
+      // Also create entry in user_app_roles for back-office app
+      if (!profileError) {
+        const roleResult = await supabase.from('user_app_roles').insert({
+          user_id: newUser.user.id,
+          app: 'back-office',
+          role: userData.role,
+          is_active: true,
+        });
+
+        if (roleResult.error) {
+          profileError = roleResult.error;
+        }
+      }
     } catch (dbError) {
       console.error('Erreur DB insert profil:', dbError);
       profileError = dbError;
@@ -219,17 +235,21 @@ export async function deleteUser(userId: string): Promise<ActionResult> {
 
     // Vérifier qu'on ne supprime pas le dernier owner
     const { data: owners } = await supabase
-      .from('user_profiles')
+      .from('user_app_roles')
       .select('user_id')
-      .eq('role', 'owner');
+      .eq('app', 'back-office')
+      .eq('role', 'owner')
+      .eq('is_active', true);
 
-    const { data: userProfile } = await supabase
-      .from('user_profiles')
+    const { data: userRole } = await supabase
+      .from('user_app_roles')
       .select('role')
       .eq('user_id', userId)
+      .eq('app', 'back-office')
+      .eq('is_active', true)
       .single();
 
-    if (userProfile?.role === 'owner' && owners && owners.length <= 1) {
+    if (userRole?.role === 'owner' && owners && owners.length <= 1) {
       return {
         success: false,
         error: 'Impossible de supprimer le dernier propriétaire du système',
@@ -294,17 +314,21 @@ export async function updateUserRole(
     // Vérifier qu'on ne retire pas le rôle owner du dernier owner
     if (newRole !== 'owner') {
       const { data: owners } = await supabase
-        .from('user_profiles')
+        .from('user_app_roles')
         .select('user_id')
-        .eq('role', 'owner');
+        .eq('app', 'back-office')
+        .eq('role', 'owner')
+        .eq('is_active', true);
 
-      const { data: currentUser } = await supabase
-        .from('user_profiles')
+      const { data: currentUserRole } = await supabase
+        .from('user_app_roles')
         .select('role')
         .eq('user_id', userId)
+        .eq('app', 'back-office')
+        .eq('is_active', true)
         .single();
 
-      if (currentUser?.role === 'owner' && owners && owners.length <= 1) {
+      if (currentUserRole?.role === 'owner' && owners && owners.length <= 1) {
         return {
           success: false,
           error:
@@ -423,8 +447,20 @@ export async function updateUserProfile(
       updated_at: new Date().toISOString(),
     };
 
+    // Update role in user_app_roles instead of user_profiles
     if (updateData.role) {
-      profileUpdates.role = updateData.role;
+      const { error: roleError } = await supabase
+        .from('user_app_roles')
+        .update({ role: updateData.role })
+        .eq('user_id', userId)
+        .eq('app', 'back-office');
+
+      if (roleError) {
+        return {
+          success: false,
+          error: 'Erreur lors de la mise à jour du rôle',
+        };
+      }
     }
 
     // ✅ Support des nouveaux champs (migration 20251030_001)
