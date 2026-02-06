@@ -1,11 +1,36 @@
 #!/bin/bash
+# Affiche le statut du worktree/repo actuel
 
-echo "📊 Worktrees actifs :"
-git worktree list
+set -euo pipefail
 
+# Récupérer infos
+CURRENT_DIR=$(pwd)
+BRANCH=$(git branch --show-current 2>/dev/null || echo "unknown")
+
+# Détecter si worktree ou repo principal
+if [ -f ".git" ]; then
+  # C'est un worktree (fichier .git pointe vers .git/worktrees/NOM)
+  WORKTREE_NAME=$(basename "$CURRENT_DIR")
+  TYPE="WORKTREE"
+elif [ -d ".git" ]; then
+  # C'est le repo principal (dossier .git)
+  WORKTREE_NAME="main-repo"
+  TYPE="REPO PRINCIPAL"
+else
+  echo "❌ Pas un dépôt git"
+  exit 1
+fi
+
+# Affichage coloré
 echo ""
-echo "📝 Capacité : 2 worktrees max"
-ACTIVE=$(git worktree list | grep -v "(bare)" | wc -l | tr -d ' ')
-REMAINING=$((3 - ACTIVE))  # 3 = 1 repo + 2 worktrees
-echo "   Utilisés : $((ACTIVE - 1))/2"
-echo "   Disponibles : $((REMAINING - 1))"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "📍 SESSION ACTIVE"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+echo "  Type       : $TYPE"
+echo "  Nom        : $WORKTREE_NAME"
+echo "  Répertoire : $CURRENT_DIR"
+echo "  Branche    : $BRANCH"
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
