@@ -102,7 +102,7 @@ export function EditUserDialog({
         first_name: formData.first_name.trim(),
         last_name: formData.last_name.trim(),
         job_title: formData.job_title.trim(),
-        role: formData.role,
+        // Note: role est géré via user_app_roles via updateUserRole()
       });
 
       if (!result.success) {

@@ -47,17 +47,19 @@ async function verifyOwnerAccess(): Promise<ActionResult> {
     return { success: false, error: 'Non authentifié' };
   }
 
-  const { data: profile, error: profileError } = await supabase
-    .from('user_profiles')
+  const { data: userRole, error: roleError } = await supabase
+    .from('user_app_roles')
     .select('role')
     .eq('user_id', user.id)
+    .eq('app', 'back-office')
+    .eq('is_active', true)
     .single();
 
-  if (profileError || !profile) {
-    return { success: false, error: 'Profil utilisateur non trouvé' };
+  if (roleError || !userRole) {
+    return { success: false, error: 'Rôle utilisateur non trouvé' };
   }
 
-  if (profile.role !== 'owner') {
+  if (userRole.role !== 'owner') {
     return { success: false, error: 'Accès non autorisé - Rôle owner requis' };
   }
 
@@ -219,17 +221,21 @@ export async function deleteUser(userId: string): Promise<ActionResult> {
 
     // Vérifier qu'on ne supprime pas le dernier owner
     const { data: owners } = await supabase
-      .from('user_profiles')
+      .from('user_app_roles')
       .select('user_id')
-      .eq('role', 'owner');
+      .eq('app', 'back-office')
+      .eq('role', 'owner')
+      .eq('is_active', true);
 
-    const { data: userProfile } = await supabase
-      .from('user_profiles')
+    const { data: userRole } = await supabase
+      .from('user_app_roles')
       .select('role')
       .eq('user_id', userId)
+      .eq('app', 'back-office')
+      .eq('is_active', true)
       .single();
 
-    if (userProfile?.role === 'owner' && owners && owners.length <= 1) {
+    if (userRole?.role === 'owner' && owners && owners.length <= 1) {
       return {
         success: false,
         error: 'Impossible de supprimer le dernier propriétaire du système',
@@ -294,14 +300,18 @@ export async function updateUserRole(
     // Vérifier qu'on ne retire pas le rôle owner du dernier owner
     if (newRole !== 'owner') {
       const { data: owners } = await supabase
-        .from('user_profiles')
+        .from('user_app_roles')
         .select('user_id')
-        .eq('role', 'owner');
+        .eq('app', 'back-office')
+        .eq('role', 'owner')
+        .eq('is_active', true);
 
       const { data: currentUser } = await supabase
-        .from('user_profiles')
+        .from('user_app_roles')
         .select('role')
         .eq('user_id', userId)
+        .eq('app', 'back-office')
+        .eq('is_active', true)
         .single();
 
       if (currentUser?.role === 'owner' && owners && owners.length <= 1) {
@@ -315,9 +325,10 @@ export async function updateUserRole(
 
     // Mettre à jour le rôle
     const { error } = await supabase
-      .from('user_profiles')
-      .update({ role: newRole, updated_at: new Date().toISOString() })
-      .eq('user_id', userId);
+      .from('user_app_roles')
+      .update({ role: newRole })
+      .eq('user_id', userId)
+      .eq('app', 'back-office');
 
     if (error) {
       console.error('Erreur mise à jour rôle:', error);
@@ -384,7 +395,7 @@ export interface UpdateUserProfileData {
   first_name?: string;
   last_name?: string;
   job_title?: string;
-  role?: string;
+  // Note: role est géré via user_app_roles, pas user_profiles
 }
 
 /**
@@ -423,9 +434,8 @@ export async function updateUserProfile(
       updated_at: new Date().toISOString(),
     };
 
-    if (updateData.role) {
-      profileUpdates.role = updateData.role;
-    }
+    // TODO: Gérer update role via user_app_roles si nécessaire
+    // La colonne 'role' n'existe plus sur user_profiles
 
     // ✅ Support des nouveaux champs (migration 20251030_001)
     if (updateData.first_name !== undefined) {
