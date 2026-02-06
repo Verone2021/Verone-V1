@@ -196,7 +196,7 @@ export function useLinkMeOrders(
 
       // Map les commandes (items deja inclus dans la RPC)
       // TODO: Fix type mismatch after schema changes
-      return (ordersData as any as RawOrderFromRPC[]).map(
+      return (ordersData as unknown as RawOrderFromRPC[]).map(
         (order): LinkMeOrder => ({
           id: order.id,
           order_number: order.order_number,
