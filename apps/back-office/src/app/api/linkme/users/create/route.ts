@@ -167,9 +167,15 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         console.error('Erreur création rôle:', roleError);
         // Rollback: supprimer l'utilisateur et le profil
         await supabaseAdmin.auth.admin.deleteUser(userId);
-        await supabaseAdmin.from('user_profiles').delete().eq('user_id', userId);
+        await supabaseAdmin
+          .from('user_profiles')
+          .delete()
+          .eq('user_id', userId);
         return NextResponse.json(
-          { error: 'Erreur création rôle utilisateur', details: roleError.message },
+          {
+            error: 'Erreur création rôle utilisateur',
+            details: roleError.message,
+          },
           { status: 500 }
         );
       }
