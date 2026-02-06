@@ -15,19 +15,41 @@ export function useUserMetrics() {
 
   const fetch = async () => {
     try {
-      // Récupération de tous les profils utilisateurs
-      const { data: profiles, error: profilesError } = await supabase
-        .from('user_profiles')
-        .select('user_id, role, created_at, last_sign_in_at');
+      // Récupération de tous les utilisateurs back-office
+      const { data: backofficeRoles, error: rolesError } = await supabase
+        .from('user_app_roles')
+        .select('user_id, role, created_at')
+        .eq('app', 'back-office')
+        .eq('is_active', true);
 
-      if (profilesError) throw profilesError;
+      if (rolesError) throw rolesError;
+
+      // Récupérer les profils pour avoir last_sign_in_at
+      const { data: profiles } = await supabase
+        .from('user_profiles')
+        .select('user_id, last_sign_in_at')
+        .in(
+          'user_id',
+          (backofficeRoles ?? []).map(r => r.user_id)
+        );
+
+      // Mapper les données
+      const usersData = (backofficeRoles ?? []).map(role => {
+        const profile = profiles?.find(p => p.user_id === role.user_id);
+        return {
+          user_id: role.user_id,
+          role: role.role,
+          created_at: role.created_at,
+          last_sign_in_at: profile?.last_sign_in_at,
+        };
+      });
 
       // Récupération des utilisateurs créés dans les 7 derniers jours
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
       const newUsers =
-        profiles?.filter(
+        usersData.filter(
           p => p.created_at && new Date(p.created_at) > sevenDaysAgo
         ).length || 0;
 
@@ -36,7 +58,7 @@ export function useUserMetrics() {
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
       const activeUsers =
-        profiles?.filter(p => {
+        usersData.filter(p => {
           try {
             return (
               p.last_sign_in_at && new Date(p.last_sign_in_at) > thirtyDaysAgo
@@ -46,24 +68,20 @@ export function useUserMetrics() {
           }
         }).length || 0;
 
-      // Comptage par rôle
+      // Comptage par rôle (uniquement owner et admin)
       const byRole = {
-        admin: profiles?.filter(p => p.role === 'admin').length || 0,
-        catalog_manager:
-          profiles?.filter(p => p.role === 'catalog_manager').length || 0,
-        sales: profiles?.filter(p => p.role === 'sales').length || 0,
-        partner_manager:
-          profiles?.filter(p => p.role === 'partner_manager').length || 0,
+        admin: usersData.filter(p => p.role === 'admin').length || 0,
+        owner: usersData.filter(p => p.role === 'owner').length || 0,
       };
 
       // Calcul de la tendance (nouveaux utilisateurs sur 7 jours)
       const trend =
-        profiles && profiles.length > 0
-          ? (newUsers / profiles.length) * 100
+        usersData && usersData.length > 0
+          ? (newUsers / usersData.length) * 100
           : 0;
 
       return {
-        total: profiles?.length || 0,
+        total: usersData.length || 0,
         active: activeUsers,
         new: newUsers,
         byRole,
@@ -80,9 +98,7 @@ export function useUserMetrics() {
         new: 0,
         byRole: {
           admin: 0,
-          catalog_manager: 0,
-          sales: 0,
-          partner_manager: 0,
+          owner: 0,
         },
         trend: 0,
       };

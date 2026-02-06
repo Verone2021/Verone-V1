@@ -47,17 +47,19 @@ async function verifyOwnerAccess(): Promise<ActionResult> {
     return { success: false, error: 'Non authentifié' };
   }
 
-  const { data: profile, error: profileError } = await supabase
-    .from('user_profiles')
+  const { data: userRole, error: roleError } = await supabase
+    .from('user_app_roles')
     .select('role')
     .eq('user_id', user.id)
+    .eq('app', 'back-office')
+    .eq('is_active', true)
     .single();
 
-  if (profileError || !profile) {
-    return { success: false, error: 'Profil utilisateur non trouvé' };
+  if (roleError || !userRole) {
+    return { success: false, error: 'Rôle utilisateur non trouvé' };
   }
 
-  if (profile.role !== 'owner') {
+  if (userRole.role !== 'owner') {
     return { success: false, error: 'Accès non autorisé - Rôle owner requis' };
   }
 
@@ -137,29 +139,26 @@ export async function createUserWithRole(
       };
     }
 
-    // 2. Créer le profil utilisateur dans la table user_profiles
-    let profileError: any;
+    // 2. Créer l'accès back-office dans user_app_roles
+    let roleError: any;
 
     try {
-      const result = await supabase.from('user_profiles').insert({
+      const result = await supabase.from('user_app_roles').insert({
         user_id: newUser.user.id,
+        app: 'back-office',
         role: userData.role,
-        user_type: 'staff',
-        scopes: [], // À définir selon les besoins
-        partner_id: null,
+        is_active: true,
         organisation_id: null, // ✅ CORRECTION : Explicitement NULL pour staff back-office
-        // Note: first_name, last_name, phone, job_title pas encore dans le schéma
-        // Ces colonnes seront ajoutées dans une prochaine migration
       });
 
-      profileError = result.error;
+      roleError = result.error;
     } catch (dbError) {
-      console.error('Erreur DB insert profil:', dbError);
-      profileError = dbError;
+      console.error('Erreur DB insert role:', dbError);
+      roleError = dbError;
     }
 
-    if (profileError) {
-      console.error('Erreur création profil:', profileError);
+    if (roleError) {
+      console.error('Erreur création rôle:', roleError);
 
       // Supprimer l'utilisateur auth si la création du profil a échoué
       try {

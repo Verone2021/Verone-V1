@@ -40,29 +40,44 @@ export async function GET() {
     }
 
     // Vérifier rôle owner
-    const { data: profile, error: profileError } = await supabase
-      .from('user_profiles')
+    const { data: userRole, error: roleError } = await supabase
+      .from('user_app_roles')
       .select('role')
       .eq('user_id', user.id)
+      .eq('app', 'back-office')
+      .eq('is_active', true)
       .single();
 
-    if (profileError || profile?.role !== 'owner') {
+    if (roleError || userRole?.role !== 'owner') {
       return NextResponse.json(
         { error: 'Accès refusé - Owner uniquement' },
         { status: 403 }
       );
     }
 
-    // Récupérer tous les utilisateurs
-    const { data: profiles, error: profilesError } = await supabase
-      .from('user_profiles')
+    // Récupérer tous les utilisateurs back-office
+    const { data: backofficeRoles, error: rolesError } = await supabase
+      .from('user_app_roles')
       .select(
         `
         user_id,
-        first_name,
-        last_name,
         role
       `
+      )
+      .eq('app', 'back-office')
+      .eq('is_active', true);
+
+    if (rolesError) {
+      throw rolesError;
+    }
+
+    // Récupérer les profils pour avoir first_name, last_name
+    const { data: profiles, error: profilesError } = await supabase
+      .from('user_profiles')
+      .select('user_id, first_name, last_name')
+      .in(
+        'user_id',
+        (backofficeRoles ?? []).map(r => r.user_id)
       )
       .order('last_name');
 
@@ -107,11 +122,16 @@ export async function GET() {
           [profile.first_name, profile.last_name].filter(Boolean).join(' ') ||
           null;
 
+        // Récupérer le rôle depuis backofficeRoles
+        const roleData = backofficeRoles?.find(
+          r => r.user_id === profile.user_id
+        );
+
         return {
           user_id: profile.user_id,
           email: authUser?.user?.email ?? "Pas d'email",
           full_name: fullName,
-          role: profile.role,
+          role: roleData?.role ?? 'unknown',
           total_sessions: userStats.total_sessions ?? 0,
           total_actions: userStats.total_actions ?? 0,
           last_activity: userStats.last_activity,

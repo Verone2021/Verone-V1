@@ -82,19 +82,21 @@ export default function ActiviteUtilisateursPage() {
         return;
       }
 
-      const { data: profile } = await supabase
-        .from('user_profiles')
+      const { data: userRole } = await supabase
+        .from('user_app_roles')
         .select('role')
         .eq('user_id', user.id)
+        .eq('app', 'back-office')
+        .eq('is_active', true)
         .single()
         .returns<{ role: string }>();
 
-      if (profile?.role !== 'owner') {
+      if (userRole?.role !== 'owner') {
         router.push('/dashboard');
         return;
       }
 
-      setUserRole(profile.role);
+      setUserRole(userRole.role);
       setIsCheckingAccess(false);
     };
 
