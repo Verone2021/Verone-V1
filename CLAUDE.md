@@ -137,6 +137,40 @@ Claude **DEMANDE** avant : creer/merger PR, deploiement, migration DB.
 
 ---
 
+## Worktrees (Sessions Multiples)
+
+Romeo travaille quotidiennement avec 2-3 features en parallèle. **TOUJOURS** utiliser worktrees pour éviter les conflits.
+
+### Limitation : 2 worktrees maximum
+
+- **PRIMARY** : Feature longue (>1 jour)
+- **SECONDARY** : Feature courte/hotfix (<1 jour)
+- **REPO PRINCIPAL** : Urgence ultra-rapide (<20 min)
+
+### Commandes essentielles
+
+```bash
+# Créer worktree
+./scripts/worktree-create.sh [NOM] [BRANCHE]
+
+# Statut
+./scripts/worktree-status.sh
+
+# Cleanup
+./scripts/worktree-cleanup.sh [NOM]
+```
+
+### Règles STRICTES
+
+- JAMAIS commit dans `/verone-back-office-V1` (repo principal = main propre)
+- TOUJOURS travailler dans `/verone-worktrees/[NOM]`
+- Si 2 worktrees pleins + besoin 3e feature → rotation obligatoire
+- Coordination si modification `@verone/types` (fichier partagé)
+
+Voir `docs/workflows/WORKTREES-QUICKSTART.md` pour guide complet.
+
+---
+
 ## Documentation Complete
 
 - `.claude/rules/general.md` - Philosophie, langue, securite
