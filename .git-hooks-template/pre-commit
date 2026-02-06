@@ -1,0 +1,23 @@
+#!/bin/bash
+# Protection ABSOLUE : Interdit commit sur main
+
+BRANCH=$(git branch --show-current 2>/dev/null)
+
+if [ "$BRANCH" = "main" ] || [ "$BRANCH" = "master" ]; then
+  echo ""
+  echo "🚨 ============================================== 🚨"
+  echo "❌ COMMIT INTERDIT sur main"
+  echo "🚨 ============================================== 🚨"
+  echo ""
+  echo "Vous NE POUVEZ PAS commiter sur main."
+  echo "Créez une feature branch MAINTENANT :"
+  echo ""
+  echo "  git checkout -b feat/APP-DOMAIN-NNN-description"
+  echo ""
+  exit 1
+fi
+
+# Si feature branch, continuer avec Husky
+if [ -f ".husky/pre-commit" ]; then
+  .husky/pre-commit
+fi

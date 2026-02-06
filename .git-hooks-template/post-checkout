@@ -1,0 +1,22 @@
+#!/bin/bash
+# Protection ABSOLUE : Interdit checkout de main
+
+BRANCH=$(git branch --show-current 2>/dev/null)
+
+if [ "$BRANCH" = "main" ] || [ "$BRANCH" = "master" ]; then
+  echo ""
+  echo "🚨 ============================================== 🚨"
+  echo "❌ INTERDIT: Vous êtes sur la branche main"
+  echo "🚨 ============================================== 🚨"
+  echo ""
+  echo "La branche main est EN LECTURE SEULE."
+  echo "Créez une feature branch MAINTENANT :"
+  echo ""
+  echo "  git checkout -b feat/APP-DOMAIN-NNN-description"
+  echo ""
+  echo "Exemples:"
+  echo "  git checkout -b feat/BO-FIX-001-fix-orders"
+  echo "  git checkout -b feat/LM-UI-002-new-button"
+  echo ""
+  exit 1
+fi
