@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -202,29 +202,40 @@ export default function CataloguePage() {
     filters.suppliers.length > 0 ||
     filters.statuses.length > 0;
 
-  // Fonction pour charger les produits archivés
-  const loadArchivedProductsData = useCallback(async () => {
-    setArchivedLoading(true);
-    try {
-      const result = await loadArchivedProducts(filters);
-      // Type assertion: loadArchivedProducts returns a subset of Product fields
-      // compatible with the Product interface (missing fields are optional in usage)
-      setArchivedProducts(result.products as Product[]);
-    } catch (error) {
-      console.error('Erreur chargement produits archivés:', error);
-    } finally {
-      setArchivedLoading(false);
-    }
-  }, [filters, loadArchivedProducts]);
+  // useRef pour éviter dépendances instables (pattern MEMORY.md)
+  const filtersRef = useRef(filters);
+  const loadArchivedProductsRef = useRef(loadArchivedProducts);
+
+  // Garder les refs à jour
+  useEffect(() => {
+    filtersRef.current = filters;
+    loadArchivedProductsRef.current = loadArchivedProducts;
+  });
 
   // Charger les produits archivés quand on change d'onglet
   useEffect(() => {
     if (activeTab === 'archived') {
-      void loadArchivedProductsData().catch(error => {
-        console.error('[Catalogue] loadArchivedProductsData failed:', error);
+      const loadData = async () => {
+        setArchivedLoading(true);
+        try {
+          const result = await loadArchivedProductsRef.current(
+            filtersRef.current
+          );
+          // Type assertion: loadArchivedProducts returns a subset of Product fields
+          // compatible with the Product interface (missing fields are optional in usage)
+          setArchivedProducts(result.products as Product[]);
+        } catch (error) {
+          console.error('Erreur chargement produits archivés:', error);
+        } finally {
+          setArchivedLoading(false);
+        }
+      };
+
+      void loadData().catch(error => {
+        console.error('[Catalogue] loadData failed:', error);
       });
     }
-  }, [activeTab, filters, loadArchivedProductsData]);
+  }, [activeTab]);
 
   // Listener global ⌘K pour CommandPalette
   useEffect(() => {
@@ -287,12 +298,22 @@ export default function CataloguePage() {
         await unarchiveProduct(product.id);
         console.warn('✅ Produit restauré:', product.name);
         // Rafraîchir la liste des archivés après restauration
-        await loadArchivedProductsData();
+        if (activeTab === 'archived') {
+          const result = await loadArchivedProductsRef.current(
+            filtersRef.current
+          );
+          setArchivedProducts(result.products as Product[]);
+        }
       } else {
         await archiveProduct(product.id);
         console.warn('✅ Produit archivé:', product.name);
         // Rafraîchir la liste des archivés après archivage
-        await loadArchivedProductsData();
+        if (activeTab === 'archived') {
+          const result = await loadArchivedProductsRef.current(
+            filtersRef.current
+          );
+          setArchivedProducts(result.products as Product[]);
+        }
       }
     } catch (error) {
       console.error('❌ Erreur archivage produit:', error);
