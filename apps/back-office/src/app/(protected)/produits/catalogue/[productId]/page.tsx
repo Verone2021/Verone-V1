@@ -207,10 +207,9 @@ export default function ProductDetailPage() {
       autoFetch: true,
     });
 
-  const startTime = Date.now();
-
   // Charger le produit (✅ Optimisé avec useCallback)
   const fetchProduct = useCallback(async () => {
+    const startTime = Date.now();
     try {
       setLoading(true);
       setError(null);
@@ -312,7 +311,7 @@ export default function ProductDetailPage() {
       setLoading(false);
       checkSLOCompliance(startTime, 'dashboard');
     }
-  }, [productId, router, startTime]);
+  }, [productId, router]);
 
   // Handler pour mettre à jour le produit (✅ Optimisé avec optimistic update + DB)
   const handleProductUpdate = useCallback(
