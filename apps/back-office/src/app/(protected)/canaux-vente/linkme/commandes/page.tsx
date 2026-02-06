@@ -111,7 +111,7 @@ export default function LinkMeOrdersPage() {
       try {
         // Utiliser la RPC existante pour avoir les donnees enrichies
         const result = await supabaseClient.rpc('get_linkme_orders', {
-          p_affiliate_id: undefined,
+          // p_affiliate_id removed from RPC signature
         });
 
         const { data: ordersData, error } = result as {
@@ -267,7 +267,7 @@ export default function LinkMeOrdersPage() {
               // Rafraichir les donnees enrichies apres creation
               setIsLoadingEnriched(true);
               supabase
-                .rpc('get_linkme_orders', { p_affiliate_id: undefined })
+                .rpc('get_linkme_orders', {}) // p_affiliate_id removed from RPC
                 .returns<LinkMeOrderRpcResult[]>()
                 .then(({ data }) => {
                   const enriched: LinkMeEnrichedData = {};

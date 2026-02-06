@@ -25,10 +25,10 @@ import {
 
 import { PasswordChangeDialog } from '@/components/profile/password-change-dialog';
 
+// Match actual user_profiles table schema (after role/scopes removal)
 interface UserProfile {
   user_id: string;
-  role: string;
-  scopes: string[];
+  scopes: never[]; // Legacy field for compatibility, always empty array
   partner_id: string | null;
   first_name?: string | null;
   last_name?: string | null;
@@ -36,11 +36,17 @@ interface UserProfile {
   job_title?: string | null;
   created_at: string;
   updated_at: string;
+  app_source?: string | null;
+  avatar_url?: string | null;
+  client_type?: string | null;
+  email?: string | null;
+  user_type?: string | null;
 }
 
 export default function ProfilePage() {
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null); // Role from user_app_roles
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
@@ -94,12 +100,23 @@ export default function ProfilePage() {
         .eq('user_id', user.id)
         .single();
 
+      // Get user role from user_app_roles
+      const { data: roleData } = await supabase
+        .from('user_app_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .eq('app', 'back-office')
+        .eq('is_active', true)
+        .single();
+
+      setUserRole(roleData?.role ?? null);
+
       if (profileError) {
         console.error('Error fetching profile:', profileError);
       } else {
         setProfile({
           ...profileData,
-          scopes: profileData.scopes ?? [],
+          scopes: [], // scopes column removed from user_profiles
           created_at: profileData.created_at ?? new Date().toISOString(),
           updated_at: profileData.updated_at ?? new Date().toISOString(),
         });
@@ -231,7 +248,7 @@ export default function ProfilePage() {
       if (updatedProfile) {
         setProfile({
           ...updatedProfile,
-          scopes: updatedProfile.scopes ?? [],
+          scopes: [], // scopes column removed
           created_at: updatedProfile.created_at ?? new Date().toISOString(),
           updated_at: updatedProfile.updated_at ?? new Date().toISOString(),
         });
@@ -268,7 +285,7 @@ export default function ProfilePage() {
                 <h1 className="text-lg font-bold text-neutral-900">
                   Mon Profil
                 </h1>
-                {profile && <RoleBadge role={profile.role as UserRole} />}
+                {userRole && <RoleBadge role={userRole as UserRole} />}
               </div>
               <p className="text-sm text-neutral-600">
                 Informations de votre compte Vérone
@@ -526,8 +543,8 @@ export default function ProfilePage() {
                 <p className="text-[11px] mb-2 text-neutral-600">
                   Rôle et permissions
                 </p>
-                {profile && (
-                  <RoleBadge role={profile.role as UserRole} className="mb-2" />
+                {userRole && (
+                  <RoleBadge role={userRole as UserRole} className="mb-2" />
                 )}
               </div>
             </div>
@@ -563,7 +580,7 @@ export default function ProfilePage() {
               >
                 Changer le mot de passe
               </ButtonUnified>
-              {profile?.role === 'owner' && (
+              {userRole === 'owner' && (
                 <ButtonUnified variant="secondary" size="sm">
                   Paramètres système
                 </ButtonUnified>

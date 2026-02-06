@@ -34,13 +34,15 @@ export function AppHeader({ className }: AppHeaderProps) {
       } = await supabase.auth.getUser();
 
       if (user) {
-        const { data: profile } = await supabase
-          .from('user_profiles')
+        const { data: userRole } = await supabase
+          .from('user_app_roles')
           .select('role')
           .eq('user_id', user.id)
+          .eq('app', 'back-office')
+          .eq('is_active', true)
           .single();
 
-        setUserRole(profile?.role ?? null);
+        setUserRole(userRole?.role ?? null);
       }
     };
 
