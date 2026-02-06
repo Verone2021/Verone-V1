@@ -202,7 +202,7 @@ export async function getCurrentUserProfile(): Promise<UserProfile | null> {
 
     const { data: profile, error: profileError } = await supabase
       .from('user_profiles')
-      .select('user_id, role, user_type')
+      .select('user_id, user_type')
       .eq('user_id', user.id)
       .single();
 
@@ -211,7 +211,9 @@ export async function getCurrentUserProfile(): Promise<UserProfile | null> {
       return null;
     }
 
-    return profile as UserProfile;
+    // TODO: Fix UserProfile type - role column no longer exists in user_profiles table
+    // Need to join with user_app_roles or refactor this function
+    return profile as unknown as UserProfile;
   } catch (error) {
     console.error('💥 Erreur récupération profil:', error);
     return null;

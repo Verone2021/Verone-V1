@@ -144,14 +144,42 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       first_name: firstName,
       last_name: lastName,
       phone: phone ?? null,
-      app: 'linkme',
       app_source: 'linkme',
-      role: profileRole,
+      user_type: role === 'client' ? 'customer' : 'staff',
     };
 
     const { error: profileError } = await supabaseAdmin
       .from('user_profiles')
       .insert(profileData);
+
+    // Also create entry in user_app_roles
+    if (!profileError) {
+      const { error: roleError } = await supabaseAdmin
+        .from('user_app_roles')
+        .insert({
+          user_id: userId,
+          app: 'linkme',
+          role: profileRole,
+          is_active: true,
+        });
+
+      if (roleError) {
+        console.error('Erreur création rôle:', roleError);
+        // Rollback: supprimer l'utilisateur et le profil
+        await supabaseAdmin.auth.admin.deleteUser(userId);
+        await supabaseAdmin
+          .from('user_profiles')
+          .delete()
+          .eq('user_id', userId);
+        return NextResponse.json(
+          {
+            error: 'Erreur création rôle utilisateur',
+            details: roleError.message,
+          },
+          { status: 500 }
+        );
+      }
+    }
 
     if (profileError) {
       console.error('Erreur création profil:', profileError);

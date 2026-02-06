@@ -145,5 +145,6 @@ storybook-static
 
 # Business data - Achats et rapports (local uniquement, données sensibles)
 docs/Achat_verone(hors-projet)/
+docs/Vente-*/*.pdf
 RAPPORT_*.md
 INVENTAIRE_*.md

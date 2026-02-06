@@ -70,15 +70,17 @@ export async function requireBackofficeAdmin(
       );
     }
 
-    // 3. Verifier le role dans user_profiles
-    const { data: profile, error: profileError } = await supabase
-      .from('user_profiles')
+    // 3. Verifier le role dans user_app_roles
+    const { data: userRole, error: roleError } = await supabase
+      .from('user_app_roles')
       .select('role, organisation_id')
       .eq('user_id', user.id)
+      .eq('app', 'back-office')
+      .eq('is_active', true)
       .single();
 
-    if (profileError) {
-      console.error('[requireBackofficeAdmin] DB error:', profileError);
+    if (roleError) {
+      console.error('[requireBackofficeAdmin] DB error:', roleError);
       return NextResponse.json(
         {
           error: 'Erreur verification permissions',
@@ -90,7 +92,7 @@ export async function requireBackofficeAdmin(
 
     // Verifier que le role est owner ou admin
     const adminRoles: UserRoleType[] = ['owner', 'admin'];
-    if (!profile || !adminRoles.includes(profile.role)) {
+    if (!userRole || !adminRoles.includes(userRole.role as UserRoleType)) {
       return NextResponse.json(
         {
           error: 'Permissions insuffisantes - Admin back-office requis',
@@ -102,7 +104,7 @@ export async function requireBackofficeAdmin(
 
     // 4. Si une organisation specifique est requise, verifier l'acces
     if (options?.requiredOrganisationId) {
-      if (profile.organisation_id !== options.requiredOrganisationId) {
+      if (userRole.organisation_id !== options.requiredOrganisationId) {
         return NextResponse.json(
           {
             error: 'Acces refuse a cette organisation',
@@ -116,8 +118,8 @@ export async function requireBackofficeAdmin(
     // 5. Succes - retourner le contexte
     return {
       user,
-      organisationId: profile.organisation_id,
-      roleName: profile.role as 'owner' | 'admin',
+      organisationId: userRole.organisation_id,
+      roleName: userRole.role as 'owner' | 'admin',
     };
   } catch {
     console.error(

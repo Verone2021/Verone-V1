@@ -107,6 +107,15 @@ async function getUserDetailData(
     return null;
   }
 
+  // Récupérer rôle depuis user_app_roles
+  const { data: userRole } = await supabase
+    .from('user_app_roles')
+    .select('role')
+    .eq('user_id', userId)
+    .eq('app', 'back-office')
+    .eq('is_active', true)
+    .single();
+
   // Récupérer les données utilisateur via Admin API
   try {
     const {
@@ -186,7 +195,7 @@ async function getUserDetailData(
       last_sign_in_at: user.last_sign_in_at ?? null,
       user_metadata: user.user_metadata ?? {},
       profile: {
-        role: profile.role ?? 'employee',
+        role: userRole?.role ?? 'employee',
         user_type: profile.user_type ?? 'standard',
         created_at: profile.created_at ?? user.created_at,
         updated_at: profile.updated_at ?? user.created_at,

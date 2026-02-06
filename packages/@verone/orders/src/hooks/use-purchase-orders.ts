@@ -54,6 +54,7 @@ export interface PurchaseOrder {
   eco_tax_vat_rate: number | null;
   total_ht: number;
   total_ttc: number;
+  order_date?: string | null;
   expected_delivery_date?: string;
   delivery_address?: any;
   payment_terms?: string;

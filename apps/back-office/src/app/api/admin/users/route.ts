@@ -40,28 +40,29 @@ export async function GET() {
     }
 
     // Vérifier rôle owner
-    const { data: profile, error: profileError } = await supabase
-      .from('user_profiles')
+    const { data: userRole, error: roleError } = await supabase
+      .from('user_app_roles')
       .select('role')
       .eq('user_id', user.id)
+      .eq('app', 'back-office')
+      .eq('is_active', true)
       .single();
 
-    if (profileError || profile?.role !== 'owner') {
+    if (roleError || userRole?.role !== 'owner') {
       return NextResponse.json(
         { error: 'Accès refusé - Owner uniquement' },
         { status: 403 }
       );
     }
 
-    // Récupérer tous les utilisateurs
+    // Récupérer tous les utilisateurs back-office avec leurs rôles
     const { data: profiles, error: profilesError } = await supabase
       .from('user_profiles')
       .select(
         `
         user_id,
         first_name,
-        last_name,
-        role
+        last_name
       `
       )
       .order('last_name');
@@ -70,13 +71,22 @@ export async function GET() {
       throw profilesError;
     }
 
-    // Pour chaque profil, récupérer l'email depuis auth.users et les stats d'activité
+    // Pour chaque profil, récupérer l'email, le rôle et les stats d'activité
     const usersWithStats = await Promise.all(
       (profiles ?? []).map(async profile => {
         // Récupérer email depuis auth.users
         const { data: authUser } = await supabase.auth.admin.getUserById(
           profile.user_id
         );
+
+        // Récupérer rôle depuis user_app_roles
+        const { data: userRole } = await supabase
+          .from('user_app_roles')
+          .select('role')
+          .eq('user_id', profile.user_id)
+          .eq('app', 'back-office')
+          .eq('is_active', true)
+          .single();
 
         // Stats d'activité via fonction SQL
         const { data: stats } = await supabase.rpc('get_user_activity_stats', {
@@ -111,7 +121,7 @@ export async function GET() {
           user_id: profile.user_id,
           email: authUser?.user?.email ?? "Pas d'email",
           full_name: fullName,
-          role: profile.role,
+          role: userRole?.role ?? 'unknown',
           total_sessions: userStats.total_sessions ?? 0,
           total_actions: userStats.total_actions ?? 0,
           last_activity: userStats.last_activity,

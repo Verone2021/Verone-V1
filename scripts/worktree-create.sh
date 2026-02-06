@@ -1,0 +1,34 @@
+#!/bin/bash
+set -euo pipefail
+
+TASK_ID="$1"
+BRANCH_NAME="${2:-feat/$TASK_ID}"
+WORKTREE_DIR="/Users/romeodossantos/verone-worktrees/$TASK_ID"
+
+# Vérifier nombre worktrees actifs
+ACTIVE_COUNT=$(git worktree list | grep -v "(bare)" | wc -l | tr -d ' ')
+if [ "$ACTIVE_COUNT" -ge 3 ]; then  # 1 repo principal + 2 worktrees = 3
+  echo "❌ Maximum 2 worktrees atteint. Nettoyer un worktree d'abord :"
+  git worktree list
+  exit 1
+fi
+
+# Créer worktree
+if [ -d "$WORKTREE_DIR" ]; then
+  echo "❌ Worktree $TASK_ID existe déjà"
+  exit 1
+fi
+
+echo "📁 Création worktree $TASK_ID..."
+git worktree add "$WORKTREE_DIR" "$BRANCH_NAME" || \
+  git worktree add -b "$BRANCH_NAME" "$WORKTREE_DIR"
+
+echo "📦 Installation dépendances (2-3 min)..."
+cd "$WORKTREE_DIR"
+pnpm install --frozen-lockfile
+
+echo "✅ Worktree $TASK_ID prêt!"
+echo ""
+echo "📌 Next steps:"
+echo "  cd $WORKTREE_DIR"
+echo "  code . && claude"

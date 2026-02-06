@@ -983,6 +983,7 @@ export default function PurchaseOrdersPage() {
                     >
                       Date création {renderSortIcon('date')}
                     </TableHead>
+                    <TableHead>Date commande</TableHead>
                     <TableHead>Date livraison</TableHead>
                     <TableHead
                       className="cursor-pointer hover:bg-gray-50"
@@ -1147,6 +1148,11 @@ export default function PurchaseOrdersPage() {
                             </span>
                           </TableCell>
                           <TableCell>{formatDate(order.created_at)}</TableCell>
+                          <TableCell>
+                            {order.order_date
+                              ? formatDate(order.order_date)
+                              : '-'}
+                          </TableCell>
                           <TableCell>
                             {order.expected_delivery_date
                               ? formatDate(order.expected_delivery_date)
@@ -1324,7 +1330,7 @@ export default function PurchaseOrdersPage() {
                         {/* Ligne d'expansion - affiche les produits */}
                         {isExpanded && items.length > 0 && (
                           <TableRow className="bg-muted/50 hover:bg-muted/50">
-                            <TableCell colSpan={9} className="p-0">
+                            <TableCell colSpan={10} className="p-0">
                               <div className="py-3 px-6 space-y-2">
                                 {items.map(item => (
                                   <div
