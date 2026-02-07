@@ -1,7 +1,5 @@
 'use client';
 
-import { useState } from 'react';
-
 import { User, Save, X, Edit, Mail, Phone, Globe } from 'lucide-react';
 
 import { ButtonV2 } from '@verone/ui';
@@ -42,7 +40,7 @@ export function ContactEditSection({
     hasChanges,
   } = useInlineEdit({
     organisationId: organisation.id,
-    onUpdate: updatedData => {
+    onUpdate: (updatedData: Partial<Organisation>) => {
       onUpdate(updatedData);
     },
     onError: error => {
@@ -51,24 +49,24 @@ export function ContactEditSection({
   });
 
   const section: EditableSection = 'contact';
-  const editData = getEditedData(section);
+  const editData = getEditedData(section) as Partial<Organisation> | null;
   const error = getError(section);
 
   const handleStartEdit = () => {
     startEdit(section, {
       legal_name: organisation.legal_name,
-      trade_name: organisation.trade_name || '',
-      email: organisation.email || '',
-      phone: organisation.phone || '',
-      secondary_email: organisation.secondary_email || '',
-      website: organisation.website || '',
+      trade_name: organisation.trade_name ?? '',
+      email: organisation.email ?? '',
+      phone: organisation.phone ?? '',
+      secondary_email: organisation.secondary_email ?? '',
+      website: organisation.website ?? '',
     });
   };
 
   const handleSave = async () => {
     const success = await saveChanges(section);
     if (success) {
-      console.log('✅ Informations contact mises à jour avec succès');
+      console.error('✅ Informations contact mises à jour avec succès');
     }
   };
 
@@ -116,7 +114,11 @@ export function ContactEditSection({
             <ButtonV2
               variant="secondary"
               size="sm"
-              onClick={handleSave}
+              onClick={() => {
+                void handleSave().catch(error => {
+                  console.error('[ContactEditSection] Save failed:', error);
+                });
+              }}
               disabled={!hasChanges(section) || isSaving(section)}
             >
               <Save className="h-3 w-3 mr-1" />
@@ -133,8 +135,8 @@ export function ContactEditSection({
             </label>
             <input
               type="text"
-              value={editData?.name || ''}
-              onChange={e => handleFieldChange('name', e.target.value)}
+              value={editData?.legal_name ?? ''}
+              onChange={e => handleFieldChange('legal_name', e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
               placeholder="Nom du fournisseur"
               required
@@ -148,7 +150,7 @@ export function ContactEditSection({
             </label>
             <input
               type="email"
-              value={editData?.email || ''}
+              value={editData?.email ?? ''}
               onChange={e => handleFieldChange('email', e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
               placeholder="contact@fournisseur.com"
@@ -162,7 +164,7 @@ export function ContactEditSection({
             </label>
             <input
               type="tel"
-              value={editData?.phone || ''}
+              value={editData?.phone ?? ''}
               onChange={e => handleFieldChange('phone', e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
               placeholder="+33 1 23 45 67 89"
@@ -176,7 +178,7 @@ export function ContactEditSection({
             </label>
             <input
               type="email"
-              value={editData?.secondary_email || ''}
+              value={editData?.secondary_email ?? ''}
               onChange={e =>
                 handleFieldChange('secondary_email', e.target.value)
               }
@@ -195,7 +197,7 @@ export function ContactEditSection({
             </label>
             <input
               type="url"
-              value={editData?.website || ''}
+              value={editData?.website ?? ''}
               onChange={e => handleFieldChange('website', e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
               placeholder="www.fournisseur.com"
@@ -234,7 +236,7 @@ export function ContactEditSection({
         <div>
           <span className="text-sm text-black opacity-70">Nom:</span>
           <div className="text-lg font-semibold text-black">
-            {getOrganisationDisplayName(organisation as any)}
+            {getOrganisationDisplayName(organisation)}
           </div>
         </div>
 

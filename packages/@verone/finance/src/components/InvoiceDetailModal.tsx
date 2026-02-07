@@ -50,10 +50,8 @@ import {
   X,
 } from 'lucide-react';
 
-import {
-  CreditNoteCreateModal,
-  IInvoiceForCreditNote,
-} from './CreditNoteCreateModal';
+import type { IInvoiceForCreditNote } from './CreditNoteCreateModal';
+import { CreditNoteCreateModal } from './CreditNoteCreateModal';
 
 // Types pour l'API
 interface InvoiceItem {
@@ -1245,7 +1243,7 @@ export function InvoiceDetailModal({
                       <TableHead className="text-right w-28">
                         Total HT
                       </TableHead>
-                      <TableHead className="w-12"></TableHead>
+                      <TableHead className="w-12" />
                     </TableRow>
                   </TableHeader>
                   <TableBody>

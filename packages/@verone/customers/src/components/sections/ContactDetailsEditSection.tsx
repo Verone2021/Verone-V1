@@ -30,7 +30,7 @@ export function ContactDetailsEditSection({
     hasChanges,
   } = useInlineEdit({
     contactId: contact.id,
-    onUpdate: updatedData => {
+    onUpdate: (updatedData: Partial<Contact>) => {
       onUpdate(updatedData);
     },
     onError: error => {
@@ -39,23 +39,23 @@ export function ContactDetailsEditSection({
   });
 
   const section: EditableSection = 'contact';
-  const editData = getEditedData(section);
+  const editData = getEditedData(section) as Partial<Contact> | null;
   const error = getError(section);
 
   const handleStartEdit = () => {
     startEdit(section, {
-      email: contact.email || '',
-      phone: contact.phone || '',
-      mobile: contact.mobile || '',
-      secondary_email: contact.secondary_email || '',
-      direct_line: contact.direct_line || '',
+      email: contact.email ?? '',
+      phone: contact.phone ?? '',
+      mobile: contact.mobile ?? '',
+      secondary_email: contact.secondary_email ?? '',
+      direct_line: contact.direct_line ?? '',
     });
   };
 
   const handleSave = async () => {
     const success = await saveChanges(section);
     if (success) {
-      console.log('✅ Coordonnées mises à jour avec succès');
+      console.error('✅ Coordonnées mises à jour avec succès');
     }
   };
 
@@ -96,7 +96,14 @@ export function ContactDetailsEditSection({
             <ButtonV2
               variant="secondary"
               size="sm"
-              onClick={handleSave}
+              onClick={() => {
+                void handleSave().catch(error => {
+                  console.error(
+                    '[ContactDetailsEditSection] Save failed:',
+                    error
+                  );
+                });
+              }}
               disabled={!hasChanges(section) || isSaving(section)}
             >
               <Save className="h-3 w-3 mr-1" />
@@ -113,7 +120,7 @@ export function ContactDetailsEditSection({
             </label>
             <input
               type="email"
-              value={editData?.email || ''}
+              value={editData?.email ?? ''}
               onChange={e => handleFieldChange('email', e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
               placeholder="contact@email.com"
@@ -128,7 +135,7 @@ export function ContactDetailsEditSection({
             </label>
             <input
               type="email"
-              value={editData?.secondary_email || ''}
+              value={editData?.secondary_email ?? ''}
               onChange={e =>
                 handleFieldChange('secondary_email', e.target.value)
               }
@@ -148,7 +155,7 @@ export function ContactDetailsEditSection({
               </label>
               <input
                 type="tel"
-                value={editData?.phone || ''}
+                value={editData?.phone ?? ''}
                 onChange={e => handleFieldChange('phone', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
                 placeholder="+33 1 23 45 67 89"
@@ -162,7 +169,7 @@ export function ContactDetailsEditSection({
               </label>
               <input
                 type="tel"
-                value={editData?.mobile || ''}
+                value={editData?.mobile ?? ''}
                 onChange={e => handleFieldChange('mobile', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
                 placeholder="+33 6 12 34 56 78"
@@ -177,7 +184,7 @@ export function ContactDetailsEditSection({
             </label>
             <input
               type="tel"
-              value={editData?.direct_line || ''}
+              value={editData?.direct_line ?? ''}
               onChange={e => handleFieldChange('direct_line', e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
               placeholder="+33 1 23 45 67 89 (poste 123)"

@@ -378,14 +378,12 @@ export default defineConfig([
     },
   },
 
-  // Packages - Similar gradual migration
+  // Packages - Gradual migration: type-safety rules as warnings for ALL packages
+  // Covers all @verone/* packages uniformly (same treatment as apps during migration)
   {
     files: [
-      'packages/@verone/types/src/**/*.ts',
-      'packages/@verone/utils/src/**/*.ts',
-      'packages/@verone/notifications/src/**/*.ts',
-      'packages/@verone/ui/src/**/*.tsx',
-      'packages/@verone/ui-business/src/**/*.tsx',
+      'packages/@verone/*/src/**/*.ts',
+      'packages/@verone/*/src/**/*.tsx',
     ],
     rules: {
       '@typescript-eslint/no-explicit-any': 'warn',
@@ -394,6 +392,11 @@ export default defineConfig([
       '@typescript-eslint/no-unsafe-call': 'warn',
       '@typescript-eslint/no-unsafe-member-access': 'warn',
       '@typescript-eslint/no-unsafe-return': 'warn',
+      // Async safety - also warn during migration (packages have ~500 violations)
+      // Will be promoted to error package-by-package as they are cleaned up
+      '@typescript-eslint/no-floating-promises': 'warn',
+      '@typescript-eslint/no-misused-promises': 'warn',
+      '@typescript-eslint/await-thenable': 'warn',
     },
   },
 ]);
