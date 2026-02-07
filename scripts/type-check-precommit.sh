@@ -40,37 +40,35 @@ FAILED=false
 echo ""
 echo "📘 Type-check (pre-commit)..."
 
+# OPTIMISATION: Skip type-check complet même si packages/ modifiés
+# Raison: Trop lent (1-2 min), validé dans pre-push + GitHub Actions
 if [ "$CHECK_PACKAGES" = true ]; then
-  echo "   📦 Packages modifiés - type-check complet"
-  if ! pnpm type-check; then
+  echo "   📦 Packages modifiés - skip type-check complet (validé dans pre-push)"
+fi
+
+if [ "$CHECK_BO" = true ]; then
+  echo "   → Type-check back-office..."
+  if ! pnpm --filter @verone/back-office type-check; then
     FAILED=true
-    echo "   ❌ Type-check complet échoué"
   fi
-else
-  if [ "$CHECK_BO" = true ]; then
-    echo "   → Type-check back-office..."
-    if ! pnpm --filter @verone/back-office type-check; then
-      FAILED=true
-    fi
-  fi
+fi
 
-  if [ "$CHECK_LM" = true ]; then
-    echo "   → Type-check linkme..."
-    if ! pnpm --filter @verone/linkme type-check; then
-      FAILED=true
-    fi
+if [ "$CHECK_LM" = true ]; then
+  echo "   → Type-check linkme..."
+  if ! pnpm --filter @verone/linkme type-check; then
+    FAILED=true
   fi
+fi
 
-  if [ "$CHECK_SI" = true ]; then
-    echo "   → Type-check site-internet..."
-    if ! pnpm --filter @verone/site-internet type-check; then
-      FAILED=true
-    fi
+if [ "$CHECK_SI" = true ]; then
+  echo "   → Type-check site-internet..."
+  if ! pnpm --filter @verone/site-internet type-check; then
+    FAILED=true
   fi
+fi
 
-  if [ "$CHECK_BO" = false ] && [ "$CHECK_LM" = false ] && [ "$CHECK_SI" = false ]; then
-    echo "   → Aucune app modifiée, skip type-check"
-  fi
+if [ "$CHECK_BO" = false ] && [ "$CHECK_LM" = false ] && [ "$CHECK_SI" = false ]; then
+  echo "   → Aucune app modifiée, skip type-check"
 fi
 
 if [ "$FAILED" = true ]; then
