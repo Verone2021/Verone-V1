@@ -4,4 +4,4 @@
 
 // Components
 export * from './components/shipment-forms';
-export * from './components/modals';
+export type * from './components/modals';
