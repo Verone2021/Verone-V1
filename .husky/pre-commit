@@ -1,5 +1,8 @@
 #!/bin/sh
 
+# 0. WORKTREE GUARD (PRIORITÉ ABSOLUE - bloque commits main/mauvaise branche)
+bash .husky/worktree-guard.sh
+
 # 1. Génération types désactivée (manuel via MCP recommandé)
 # Raison : Types générés uniquement APRÈS apply_migration (MCP workflow)
 # Pour régénérer manuellement : pnpm generate:types

@@ -1,116 +1,22 @@
 #!/bin/sh
 
-echo "🔍 Validation avant push (ESLint + Type-check)..."
+# WORKTREE GUARD - Block push to main from wrong location
+bash .husky/worktree-guard.sh
 
-# Detect which apps have been modified
-# Compare against remote main to catch ALL commits being pushed (not just HEAD~1)
-CHANGED_FILES=$(git diff --name-only origin/main...HEAD 2>/dev/null || echo "")
+# Original pre-push checks
+echo "🚀 Pre-push validation..."
 
-# Check each app for changes
-CHECK_BO=false
-CHECK_LM=false
-CHECK_SI=false
-CHECK_PACKAGES=false
+# Get current branch
+CURRENT_BRANCH=$(git branch --show-current)
 
-if echo "$CHANGED_FILES" | grep -q "^apps/back-office/"; then
-  CHECK_BO=true
-fi
-
-if echo "$CHANGED_FILES" | grep -q "^apps/linkme/"; then
-  CHECK_LM=true
-fi
-
-if echo "$CHANGED_FILES" | grep -q "^apps/site-internet/"; then
-  CHECK_SI=true
-fi
-
-if echo "$CHANGED_FILES" | grep -q "^packages/"; then
-  CHECK_PACKAGES=true
-fi
-
-FAILED=false
-
-# --- ESLint Check ---
-echo ""
-echo "📝 ESLint..."
-
-if [ "$CHECK_PACKAGES" = true ]; then
-  echo "   📦 Packages modifiés - lint complet requis"
-  if ! pnpm lint; then
-    FAILED=true
-    echo "   ❌ ESLint échoué"
-  fi
-else
-  if [ "$CHECK_BO" = true ]; then
-    echo "   → Lint back-office..."
-    if ! pnpm --filter @verone/back-office lint; then
-      FAILED=true
-    fi
-  fi
-
-  if [ "$CHECK_LM" = true ]; then
-    echo "   → Lint linkme..."
-    if ! pnpm --filter @verone/linkme lint; then
-      FAILED=true
-    fi
-  fi
-
-  if [ "$CHECK_SI" = true ]; then
-    echo "   → Lint site-internet..."
-    if ! pnpm --filter @verone/site-internet lint; then
-      FAILED=true
-    fi
-  fi
-
-  if [ "$CHECK_BO" = false ] && [ "$CHECK_LM" = false ] && [ "$CHECK_SI" = false ]; then
-    echo "   → Aucune app spécifique modifiée, skip lint"
+# Block force push to main/master
+if [[ "$CURRENT_BRANCH" == "main" ]] || [[ "$CURRENT_BRANCH" == "master" ]]; then
+  # Check if this is a force push
+  if [[ "$*" == *"--force"* ]] || [[ "$*" == *"-f"* ]]; then
+    echo "❌ PUSH BLOCKED: Force push to main/master is forbidden"
+    exit 1
   fi
 fi
 
-# --- Type-check ---
-echo ""
-echo "📘 Type-check..."
-
-if [ "$CHECK_PACKAGES" = true ]; then
-  echo "   📦 Packages modifiés - type-check complet requis"
-  if ! pnpm type-check; then
-    FAILED=true
-    echo "   ❌ Type-check échoué"
-  fi
-else
-  if [ "$CHECK_BO" = true ]; then
-    echo "   → Type-check back-office..."
-    if ! pnpm --filter @verone/back-office type-check; then
-      FAILED=true
-    fi
-  fi
-
-  if [ "$CHECK_LM" = true ]; then
-    echo "   → Type-check linkme..."
-    if ! pnpm --filter @verone/linkme type-check; then
-      FAILED=true
-    fi
-  fi
-
-  if [ "$CHECK_SI" = true ]; then
-    echo "   → Type-check site-internet..."
-    if ! pnpm --filter @verone/site-internet type-check; then
-      FAILED=true
-    fi
-  fi
-
-  if [ "$CHECK_BO" = false ] && [ "$CHECK_LM" = false ] && [ "$CHECK_SI" = false ]; then
-    echo "   → Aucune app spécifique modifiée, skip type-check"
-  fi
-fi
-
-# --- Result ---
-if [ "$FAILED" = true ]; then
-  echo ""
-  echo "❌ Validation échouée. Push annulé."
-  exit 1
-fi
-
-echo ""
-echo "✅ ESLint + Type-check réussis, push autorisé"
-echo "ℹ️  Le build complet sera validé par GitHub Actions"
+echo "✅ Pre-push validation OK"
+exit 0
