@@ -51,10 +51,23 @@ export function AppHeader({ className }: AppHeaderProps) {
     });
   }, []);
 
-  const handleLogout = async () => {
+  const handleLogout = () => {
     const supabase = createClient();
-    await supabase.auth.signOut();
-    router.push('/');
+    void supabase.auth
+      .signOut()
+      .then(() => {
+        // Hard navigation évite rerender pendant session cleanup
+        if (typeof window !== 'undefined') {
+          window.location.href = '/login';
+        }
+      })
+      .catch(error => {
+        console.error('[AppHeader] Logout failed:', error);
+        // Fallback: force redirect même si signOut échoue
+        if (typeof window !== 'undefined') {
+          window.location.href = '/login';
+        }
+      });
   };
 
   return (
@@ -120,11 +133,7 @@ export function AppHeader({ className }: AppHeaderProps) {
             <DropdownMenuSeparator />
             <DropdownMenuItem
               className="cursor-pointer text-verone-black font-medium hover:bg-gray-100 focus:bg-gray-100"
-              onClick={() => {
-                void handleLogout().catch(error => {
-                  console.error('[AppHeader] handleLogout failed:', error);
-                });
-              }}
+              onClick={handleLogout}
             >
               <LogOut className="mr-2 h-4 w-4" />
               <span>Se déconnecter</span>
