@@ -639,7 +639,7 @@ export default function CataloguePage() {
                               </div>
                               <div className="text-right flex-shrink-0">
                                 <div className="font-semibold text-sm text-black">
-                                  {product.cost_price
+                                  {product.cost_price != null
                                     ? `${product.cost_price.toFixed(2)} € HT`
                                     : 'Prix non défini'}
                                 </div>

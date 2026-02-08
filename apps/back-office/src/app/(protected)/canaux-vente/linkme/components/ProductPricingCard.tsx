@@ -507,7 +507,7 @@ export function ProductPricingCard({
           </Label>
           <div className="flex items-center gap-2">
             <Input
-              value={product.cost_price.toFixed(2)}
+              value={product.cost_price?.toFixed(2) ?? '0.00'}
               disabled
               className="bg-muted font-mono text-sm"
             />

@@ -275,8 +275,10 @@ export function ProductSelector({
                           </div>
                           <div className="flex items-center space-x-4 text-sm text-gray-600">
                             <span>SKU: {product.sku}</span>
-                            {product.cost_price !== null && (
-                              <span>Prix: {product.cost_price}€ HT</span>
+                            {product.cost_price != null && (
+                              <span>
+                                Prix: {product.cost_price.toFixed(2)}€ HT
+                              </span>
                             )}
                           </div>
                         </div>
