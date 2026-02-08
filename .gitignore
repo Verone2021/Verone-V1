@@ -103,7 +103,10 @@ next-env.d.ts
 # Husky
 .husky/_
 
-# Playwright MCP Browser screenshots (temporary files)
+# Playwright MCP Browser outputs
+.playwright-mcp/screenshots/**/*.png
+.playwright-mcp/screenshots/**/*.jpg
+.playwright-mcp/screenshots/**/*.jpeg
 .playwright-mcp/*.png
 .playwright-mcp/*.jpg
 .playwright-mcp/*.jpeg
@@ -112,6 +115,14 @@ next-env.d.ts
 
 # Keep Playwright MCP documentation
 !.playwright-mcp/README.md
+!.playwright-mcp/screenshots/.gitkeep
+
+# Root screenshots (temporaires, à migrer vers .playwright-mcp/screenshots/)
+/*.png
+/*.jpg
+/*.jpeg
+!docs/**/*.png
+!apps/**/public/**/*.png
 
 # Audit reports (generated, not source)
 /reports/
