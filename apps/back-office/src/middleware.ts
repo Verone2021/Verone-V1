@@ -17,7 +17,7 @@ export async function middleware(request: NextRequest) {
     appName: 'back-office',
     publicRoutes: [/^\/login$/, /^\/auth/, /^\/api\/auth/],
     loginPath: '/login',
-    defaultRedirect: '/',
+    defaultRedirect: '/dashboard',
   });
 }
 
