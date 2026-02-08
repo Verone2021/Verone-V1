@@ -11,7 +11,7 @@
   "outputStyle": "explanatory",
   "statusLine": {
     "type": "command",
-    "command": "ccusage statusline --visual-burn-rate emoji",
+    "command": "bash $CLAUDE_PROJECT_DIR/.claude/scripts/statusline-debug.sh",
     "padding": 0
   },
   "UserPromptSubmit": [
