@@ -20,7 +20,8 @@ interface Product {
   variant_group_id?: string | null;
   supplier?: {
     id: string;
-    name: string;
+    legal_name?: string;
+    trade_name?: string;
     email?: string;
     phone?: string;
   };
@@ -75,7 +76,10 @@ export function SupplierEditSection({
   const error = getError(section);
 
   // Données actuelles
-  const currentSupplierName = product.supplier?.name || 'Non défini';
+  const currentSupplierName =
+    product.supplier?.trade_name ??
+    product.supplier?.legal_name ??
+    'Non défini';
   const currentSupplierReference = product.supplier_reference || '-';
   const currentSupplierPageUrl = product.supplier_page_url || null;
 
