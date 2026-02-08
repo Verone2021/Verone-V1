@@ -96,6 +96,15 @@
           "command": "bash -c 'CONTENT=$(echo \"$TOOL_INPUT\" | jq -r \".new_string // .content // empty\"); if echo \"$CONTENT\" | grep -qE \"(: any([^A-Za-z]|$)|as any([^A-Za-z]|$)|as unknown as|<any>|any\\[\\]|eslint-disable.*no-explicit-any)\"; then echo \"❌ BLOQUÉ: TypeScript any détecté\n\n**Patterns interdits** :\n- : any (désactive type checking)\n- as any (contourne type safety)\n- as unknown as (double assertion dangereuse)\n- <any> (legacy type assertion)\n- any[] (tableau sans type)\n- eslint-disable no-explicit-any (contournement interdit)\n\n**Solutions** :\n1. Types DB : Database[\\\"public\\\"][\\\"Tables\\\"][\\\"table\\\"][\\\"Row\\\"]\n2. Type helper : type MyType = Row & { computed: string }\n3. unknown + validation : if (isValid(data)) { ... }\n\nREFUS D\\'EXÉCUTION.\"; exit 1; fi'"
         }
       ]
+    },
+    {
+      "matcher": "mcp__playwright-lane-1__browser_take_screenshot(*) || mcp__playwright-lane-2__browser_take_screenshot(*)",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "$CLAUDE_PROJECT_DIR/.claude/scripts/validate-playwright-screenshot.sh"
+        }
+      ]
     }
   ],
   "PostToolUse": [
