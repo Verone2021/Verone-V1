@@ -210,12 +210,13 @@ export function useLinkmePendingCount(options?: {
               }
             }
           )
-          .subscribe(status => {
+          .subscribe((status, err) => {
             if (status === 'SUBSCRIBED') {
               // Realtime subscribed successfully
             } else if (status === 'CHANNEL_ERROR') {
               console.error(
-                '[useLinkmePendingCount] Realtime error - falling back to polling'
+                '[useLinkmePendingCount] Realtime error - falling back to polling',
+                err
               );
               // Fallback : activer polling si Realtime fail
               if (!intervalRef.current && refetchInterval > 0) {
