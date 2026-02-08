@@ -24,6 +24,19 @@ interface ProductInfoSectionProps {
     supplier_id?: string | null;
     subcategory_id?: string | null;
     variant_group_id?: string | null;
+
+    // Ajouts pour calcul complétude étendu (6 champs supplémentaires)
+    variant_attributes?: Record<string, unknown> | null; // JSONB couleur, matériau, finition, etc.
+    style?: string | null; // Style décoratif (colonne products.style)
+    dimensions?: Record<string, unknown> | null; // JSONB dimensions (width, height, depth)
+    weight?: number | null; // Poids (colonne products.weight)
+    variant_group?: {
+      style?: string | null; // Style hérité du groupe
+      dimensions_length?: number | null; // Dimensions héritées
+      dimensions_width?: number | null;
+      dimensions_height?: number | null;
+      common_weight?: number | null; // Poids hérité du groupe
+    } | null;
   };
   onUpdate?: (
     updates: Partial<ProductInfoSectionProps['product']>
@@ -31,20 +44,53 @@ interface ProductInfoSectionProps {
   className?: string;
 }
 
-// Helper: Calculer pourcentage complétude produit
+// Helper: Calculer pourcentage complétude produit (6 champs de base + 6 caractéristiques = 12 champs)
 function calculateCompletion(
   product: ProductInfoSectionProps['product']
 ): number {
-  const fields = [
-    product.name,
-    product.sku,
+  // === CHAMPS DE BASE (6) ===
+  const basicFields = [
+    product.name, // Nom produit
+    product.sku, // SKU
     product.cost_price != null && product.cost_price > 0, // Prix d'achat HT
     product.product_status, // Statut commercial (NOT NULL donc toujours présent)
     product.supplier_id, // Fournisseur obligatoire
     product.subcategory_id, // Catégorisation obligatoire
   ];
-  const completed = fields.filter(Boolean).length;
-  return Math.round((completed / fields.length) * 100);
+
+  // === CARACTÉRISTIQUES (6) ===
+  const characteristicsFields = [
+    // 1. Couleur (variant_attributes.color)
+    product.variant_attributes?.color != null,
+
+    // 2. Matériau (variant_attributes.material)
+    product.variant_attributes?.material != null,
+
+    // 3. Style (hérité du variant_group si existe, sinon colonne style)
+    product.variant_group_id
+      ? product.variant_group?.style != null
+      : product.style != null,
+
+    // 4. Finition (variant_attributes.finish)
+    product.variant_attributes?.finish != null,
+
+    // 5. Dimensions (héritées du variant_group si existe, sinon colonne dimensions)
+    product.variant_group_id
+      ? product.variant_group?.dimensions_length != null ||
+        product.variant_group?.dimensions_width != null ||
+        product.variant_group?.dimensions_height != null
+      : product.dimensions != null &&
+        Object.keys(product.dimensions).length > 0,
+
+    // 6. Poids (hérité du variant_group si existe, sinon colonne weight)
+    product.variant_group_id
+      ? product.variant_group?.common_weight != null
+      : product.weight != null,
+  ];
+
+  const allFields = [...basicFields, ...characteristicsFields];
+  const completed = allFields.filter(Boolean).length;
+  return Math.round((completed / allFields.length) * 100);
 }
 
 // Helper: Formater prix
@@ -237,13 +283,23 @@ export const ProductInfoSection = React.memo(
   },
   (prevProps, nextProps) => {
     // Comparaison shallow pour éviter re-render si props identiques
+    // Inclut maintenant les caractéristiques pour calcul complétude correct
     return (
       prevProps.product.id === nextProps.product.id &&
       prevProps.product.name === nextProps.product.name &&
       prevProps.product.sku === nextProps.product.sku &&
       prevProps.product.cost_price === nextProps.product.cost_price &&
       prevProps.product.stock_status === nextProps.product.stock_status &&
-      prevProps.product.product_status === nextProps.product.product_status
+      prevProps.product.product_status === nextProps.product.product_status &&
+      prevProps.product.supplier_id === nextProps.product.supplier_id &&
+      prevProps.product.subcategory_id === nextProps.product.subcategory_id &&
+      // Nouveaux champs pour calcul complétude
+      prevProps.product.variant_attributes ===
+        nextProps.product.variant_attributes &&
+      prevProps.product.style === nextProps.product.style &&
+      prevProps.product.dimensions === nextProps.product.dimensions &&
+      prevProps.product.weight === nextProps.product.weight &&
+      prevProps.product.variant_group === nextProps.product.variant_group
     );
   }
 );

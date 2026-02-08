@@ -14,14 +14,14 @@ import { COLLECTION_STYLE_OPTIONS } from '@verone/types';
  */
 function formatStyle(style: string): string {
   const styleOption = COLLECTION_STYLE_OPTIONS.find(s => s.value === style);
-  return styleOption?.label || style;
+  return styleOption?.label ?? style;
 }
 
 interface Product {
   id: string;
   name?: string;
   // Caractéristiques fixes de la variante (nouveau système variant_groups)
-  variant_attributes?: Record<string, any> | null;
+  variant_attributes?: Record<string, unknown> | null;
   variant_group_id?: string | null;
   video_url?: string;
 
@@ -75,11 +75,12 @@ function getCompatibleRooms(product: Product): string[] {
   }
 
   // Priorité 2 : Calcul automatique selon type de produit
-  const productName = product.name?.toLowerCase() || '';
-  const subcategoryName = product.subcategory?.name?.toLowerCase() || '';
-  const categoryName = product.subcategory?.category?.name?.toLowerCase() || '';
-  const familyName =
-    product.subcategory?.category?.family?.name?.toLowerCase() || '';
+  const productName = product.name?.toLowerCase() ?? '';
+  const subcategoryName = product.subcategory?.name?.toLowerCase() ?? '';
+  const categoryName = product.subcategory?.category?.name?.toLowerCase() ?? '';
+  // familyName unused (kept for potential future categorization logic)
+  const _familyName =
+    product.subcategory?.category?.family?.name?.toLowerCase() ?? '';
 
   // Toutes les pièces disponibles
   const allRooms = [
@@ -192,7 +193,7 @@ function getCompatibleRooms(product: Product): string[] {
   return ['salon', 'chambre', 'bureau'];
 }
 
-// Labels pour les types d'attributs variantes
+// Labels pour les types d'attributs variantes (alignés avec ProductCharacteristicsModal)
 const VARIANT_ATTRIBUTE_LABELS: Record<
   string,
   { label: string; emoji: string }
@@ -201,6 +202,8 @@ const VARIANT_ATTRIBUTE_LABELS: Record<
   size: { label: 'Taille', emoji: '📏' },
   material: { label: 'Matériau', emoji: '🧵' },
   pattern: { label: 'Motif', emoji: '🔷' },
+  finish: { label: 'Finition', emoji: '✨' },
+  style: { label: 'Style', emoji: '🎭' },
 };
 
 export function ProductFixedCharacteristics({
@@ -218,12 +221,12 @@ export function ProductFixedCharacteristics({
           length: variantGroup.dimensions_length,
           width: variantGroup.dimensions_width,
           height: variantGroup.dimensions_height,
-          unit: variantGroup.dimensions_unit || 'cm',
+          unit: variantGroup.dimensions_unit ?? 'cm',
         }
       : null;
 
   const compatibleRooms = getCompatibleRooms(product);
-  const variantAttributes = product.variant_attributes || {};
+  const variantAttributes = product.variant_attributes ?? {};
   const hasVariantAttributes = Object.keys(variantAttributes).length > 0;
 
   return (
@@ -247,49 +250,95 @@ export function ProductFixedCharacteristics({
       </div>
 
       <div className="space-y-4">
-        {/* Caractéristiques Variante (Système variant_groups) */}
-        {hasVariantAttributes && product.variant_group_id && (
-          <div>
-            <h4 className="text-sm font-medium text-black mb-2 opacity-70">
-              Attributs de variante
-            </h4>
-            <div className="grid grid-cols-2 gap-3">
-              {Object.entries(variantAttributes).map(([key, value]) => {
-                const attributeInfo = VARIANT_ATTRIBUTE_LABELS[key] || {
+        {/* Caractéristiques Variante (Système variant_groups) - TOUJOURS afficher les champs standards */}
+        <div>
+          <h4 className="text-sm font-medium text-black mb-2 opacity-70">
+            Attributs de variante
+          </h4>
+          <div className="grid grid-cols-2 gap-3">
+            {/* Afficher TOUJOURS les 6 attributs standards (principe miroir avec modal édition) */}
+            {['color', 'material', 'finish', 'pattern', 'style'].map(key => {
+              const attributeInfo = VARIANT_ATTRIBUTE_LABELS[key] ?? {
+                label: key,
+                emoji: '🔹',
+              };
+              const value: unknown = variantAttributes[key];
+              const displayValue = typeof value === 'string' ? value : null;
+              return (
+                <div
+                  key={key}
+                  className={cn(
+                    'p-2 rounded border',
+                    displayValue
+                      ? 'bg-purple-50 border-purple-200'
+                      : 'bg-gray-50 border-gray-200'
+                  )}
+                >
+                  <span className="text-xs text-black opacity-60 flex items-center gap-1">
+                    <span>{attributeInfo.emoji}</span>
+                    {attributeInfo.label}
+                  </span>
+                  <div className="font-medium text-black">
+                    {displayValue ?? (
+                      <span className="text-gray-400 italic text-sm">
+                        Non renseigné
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* Afficher les attributs personnalisés (hors standards) */}
+            {Object.entries(variantAttributes)
+              .filter(
+                ([key]) =>
+                  ![
+                    'color',
+                    'material',
+                    'finish',
+                    'pattern',
+                    'style',
+                    'size',
+                  ].includes(key)
+              )
+              .map(([key, value]) => {
+                const attributeInfo = VARIANT_ATTRIBUTE_LABELS[key] ?? {
                   label: key,
                   emoji: '🔹',
                 };
+                const displayValue =
+                  typeof value === 'string' ? value : String(value);
                 return (
                   <div
                     key={key}
-                    className="bg-purple-50 p-2 rounded border border-purple-200"
+                    className="bg-blue-50 p-2 rounded border border-blue-200"
                   >
                     <span className="text-xs text-black opacity-60 flex items-center gap-1">
                       <span>{attributeInfo.emoji}</span>
                       {attributeInfo.label}
                     </span>
                     <div className="font-medium text-black">
-                      {value || (
+                      {displayValue ?? (
                         <span className="text-gray-400 italic">Non défini</span>
                       )}
                     </div>
                   </div>
                 );
               })}
-            </div>
+          </div>
+          {product.variant_group_id && (
             <div className="text-xs text-purple-600 mt-1 flex items-center gap-1">
               ℹ️ Attributs spécifiques à cette variante du groupe
-              {product.variant_group_id && (
-                <a
-                  href={`/catalogue/variantes/${product.variant_group_id}`}
-                  className="underline font-medium hover:text-purple-800"
-                >
-                  (voir le groupe)
-                </a>
-              )}
+              <a
+                href={`/catalogue/variantes/${product.variant_group_id}`}
+                className="underline font-medium hover:text-purple-800"
+              >
+                (voir le groupe)
+              </a>
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Pièces compatibles (automatique selon type produit) */}
         <div>
@@ -338,62 +387,77 @@ export function ProductFixedCharacteristics({
           </div>
         </div>
 
-        {/* Dimensions (héritées du Variant Group) */}
-        {dimensions && product.variant_group_id && (
-          <div>
-            <h4 className="text-sm font-medium text-black mb-2 opacity-70 flex items-center gap-2">
-              📐 Dimensions (héritées du groupe)
+        {/* Dimensions - TOUJOURS afficher (principe miroir avec modal édition) */}
+        <div>
+          <h4 className="text-sm font-medium text-black mb-2 opacity-70 flex items-center gap-2">
+            📐 Dimensions
+            {product.variant_group_id && dimensions && (
               <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">
-                🔒 Non modifiable ici
+                🔒 Héritées du groupe
               </span>
-            </h4>
-            <div className="bg-green-50 p-3 rounded border border-green-200">
+            )}
+          </h4>
+          {dimensions ? (
+            <div className="bg-green-50 p-3 rounded-lg border border-green-200">
               <div className="text-sm font-medium text-black">
-                L: {dimensions.length || '-'} × l: {dimensions.width || '-'} ×
-                H: {dimensions.height || '-'} {dimensions.unit || 'cm'}
+                L: {dimensions.length ?? '-'} × l: {dimensions.width ?? '-'} ×
+                H: {dimensions.height ?? '-'} {dimensions.unit ?? 'cm'}
               </div>
-              <div className="text-xs text-green-600 mt-2 flex items-center gap-1">
-                📏 Dimensions communes à toutes les variantes du groupe
-                {product.variant_group_id && (
+              {product.variant_group_id && (
+                <div className="text-xs text-green-600 mt-2 flex items-center gap-1">
+                  📏 Dimensions communes à toutes les variantes du groupe
                   <a
                     href={`/catalogue/variantes/${product.variant_group_id}`}
                     className="underline font-medium hover:text-green-800 ml-1"
                   >
                     (modifier dans le groupe)
                   </a>
-                )}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+              <div className="text-gray-400 italic text-sm">
+                Non renseignées
               </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
-        {/* Poids commun (hérité du Variant Group) */}
-        {product.variant_group?.common_weight && product.variant_group_id && (
-          <div>
-            <h4 className="text-sm font-medium text-black mb-2 opacity-70 flex items-center gap-2">
-              ⚖️ Poids (hérité du groupe)
-              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
-                🔒 Non modifiable ici
-              </span>
-            </h4>
-            <div className="bg-blue-50 p-3 rounded border border-blue-200">
+        {/* Poids - TOUJOURS afficher (principe miroir avec modal édition) */}
+        <div>
+          <h4 className="text-sm font-medium text-black mb-2 opacity-70 flex items-center gap-2">
+            ⚖️ Poids
+            {product.variant_group_id &&
+              product.variant_group?.common_weight && (
+                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
+                  🔒 Hérité du groupe
+                </span>
+              )}
+          </h4>
+          {product.variant_group?.common_weight ? (
+            <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
               <div className="text-sm font-medium text-black">
                 {product.variant_group.common_weight} kg
               </div>
-              <div className="text-xs text-blue-600 mt-2 flex items-center gap-1">
-                ⚖️ Poids commun à toutes les variantes du groupe
-                {product.variant_group_id && (
+              {product.variant_group_id && (
+                <div className="text-xs text-blue-600 mt-2 flex items-center gap-1">
+                  ⚖️ Poids commun à toutes les variantes du groupe
                   <a
                     href={`/catalogue/variantes/${product.variant_group_id}`}
                     className="underline font-medium hover:text-blue-800 ml-1"
                   >
                     (modifier dans le groupe)
                   </a>
-                )}
-              </div>
+                </div>
+              )}
             </div>
-          </div>
-        )}
+          ) : (
+            <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+              <div className="text-gray-400 italic text-sm">Non renseigné</div>
+            </div>
+          )}
+        </div>
 
         {/* Style décoratif (hérité du Variant Group) */}
         {product.variant_group?.style && product.variant_group_id && (
