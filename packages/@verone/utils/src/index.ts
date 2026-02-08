@@ -80,7 +80,7 @@ export * from './export/csv';
 
 export * from './middleware/api-security';
 export * from './middleware/logging';
-export * from './middleware/app-isolation';
+export * from './middleware/enforce-app-isolation';
 
 // ========================================
 // LINKME
