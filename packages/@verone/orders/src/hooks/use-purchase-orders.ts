@@ -99,6 +99,12 @@ export interface PurchaseOrderItem {
   created_at: string;
   updated_at: string;
 
+  // Fee allocation
+  allocated_shipping_ht?: number;
+  allocated_customs_ht?: number;
+  allocated_insurance_ht?: number;
+  unit_cost_net?: number | null;
+
   // Échantillons
   sample_type?: 'internal' | 'customer' | null;
   customer_organisation_id?: string | null;
@@ -146,6 +152,7 @@ export interface CreatePurchaseOrderItemData {
   quantity: number;
   unit_price_ht: number;
   discount_percentage?: number;
+  eco_tax?: number;
   expected_delivery_date?: string;
   notes?: string;
 }
@@ -244,6 +251,7 @@ export function usePurchaseOrders() {
             discount_percentage,
             total_ht,
             eco_tax,
+            unit_cost_net,
             quantity_received,
             expected_delivery_date,
             notes,
@@ -435,6 +443,7 @@ export function usePurchaseOrders() {
             discount_percentage,
             total_ht,
             eco_tax,
+            unit_cost_net,
             quantity_received,
             expected_delivery_date,
             notes,
@@ -577,45 +586,58 @@ export function usePurchaseOrders() {
     async (data: CreatePurchaseOrderData) => {
       setLoading(true);
       try {
-        // 1. Générer le numéro de commande
+        // 1. Generate PO number
         const { data: poNumber, error: numberError } =
           await supabase.rpc('generate_po_number');
 
         if (numberError) throw numberError;
 
-        // 2. Calculer les totaux
+        // 2. Calculate totals (including eco_tax)
         const totalHT = data.items.reduce((sum, item) => {
-          const itemTotal =
+          const subtotal =
             item.quantity *
             item.unit_price_ht *
             (1 - (item.discount_percentage || 0) / 100);
-          return sum + itemTotal;
+          const itemEcoTax = (item.eco_tax || 0) * item.quantity;
+          return sum + subtotal + itemEcoTax;
         }, 0);
 
-        const totalTTC = totalHT * (1 + 0.2); // TVA par défaut
+        const ecoTaxTotal = data.items.reduce((sum, item) => {
+          return sum + (item.eco_tax || 0) * item.quantity;
+        }, 0);
 
-        // 3. Créer la commande
+        const totalTTC = totalHT * (1 + 0.2); // Default VAT 20%
+
+        // 3. Create the order
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (!user) throw new Error('Utilisateur non authentifié');
+
         const { data: order, error: orderError } = await supabase
           .from('purchase_orders')
-          .insert([
-            {
-              po_number: poNumber,
-              supplier_id: data.supplier_id,
-              expected_delivery_date: data.expected_delivery_date,
-              delivery_address: data.delivery_address,
-              payment_terms: data.payment_terms,
-              notes: data.notes,
-              total_ht: totalHT,
-              total_ttc: totalTTC,
-              created_by: (await supabase.auth.getUser()).data.user?.id,
-            },
-          ] as any)
+          .insert({
+            po_number: poNumber,
+            supplier_id: data.supplier_id,
+            expected_delivery_date: data.expected_delivery_date,
+            delivery_address: data.delivery_address,
+            payment_terms: data.payment_terms,
+            notes: data.notes,
+            total_ht: totalHT,
+            total_ttc: totalTTC,
+            eco_tax_total: ecoTaxTotal,
+            eco_tax_vat_rate: data.eco_tax_vat_rate ?? null,
+            shipping_cost_ht: data.shipping_cost_ht || 0,
+            customs_cost_ht: data.customs_cost_ht || 0,
+            insurance_cost_ht: data.insurance_cost_ht || 0,
+            created_by: user.id,
+          })
           .select()
           .single();
 
         if (orderError) throw orderError;
 
-        // 4. Créer les items
+        // 4. Create items (including eco_tax)
         const { error: itemsError } = await supabase
           .from('purchase_order_items')
           .insert(
@@ -625,6 +647,7 @@ export function usePurchaseOrders() {
               quantity: item.quantity,
               unit_price_ht: item.unit_price_ht,
               discount_percentage: item.discount_percentage || 0,
+              eco_tax: item.eco_tax || 0,
               expected_delivery_date: item.expected_delivery_date,
               notes: item.notes,
             }))
@@ -638,13 +661,17 @@ export function usePurchaseOrders() {
         });
 
         await fetchOrders();
-        await fetchStats(); // ✅ FIX Bug #6: Rafraîchir les stats après création
+        await fetchStats();
         return order;
-      } catch (error: any) {
+      } catch (error: unknown) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : 'Impossible de créer la commande';
         console.error('Erreur lors de la création de la commande:', error);
         toast({
           title: 'Erreur',
-          description: error.message || 'Impossible de créer la commande',
+          description: message,
           variant: 'destructive',
         });
         throw error;
