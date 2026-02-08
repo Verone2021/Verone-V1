@@ -239,7 +239,7 @@ export default function ProductDetailPage() {
             legal_name,
             trade_name
           ),
-          supplier:organisations!products_supplier_id_fkey(
+          supplier:organisations!supplier_id(
             id,
             legal_name,
             trade_name,
