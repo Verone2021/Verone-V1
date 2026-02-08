@@ -106,6 +106,11 @@
       "types": "./src/hooks/index.ts",
       "import": "./src/hooks/index.ts",
       "require": "./src/hooks/index.ts"
+    },
+    "./middleware/enforce-app-isolation": {
+      "types": "./src/middleware/enforce-app-isolation.ts",
+      "import": "./src/middleware/enforce-app-isolation.ts",
+      "require": "./src/middleware/enforce-app-isolation.ts"
     }
   }
 }
