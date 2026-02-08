@@ -40,7 +40,7 @@ export function AppHeader({ className }: AppHeaderProps) {
           .eq('user_id', user.id)
           .eq('app', 'back-office')
           .eq('is_active', true)
-          .single();
+          .maybeSingle();
 
         setUserRole(userRole?.role ?? null);
       }
