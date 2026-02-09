@@ -194,6 +194,9 @@ export function PurchaseOrderDetailModal({
                           <TableHead className="w-28 text-right">
                             Total HT
                           </TableHead>
+                          <TableHead className="w-28 text-right">
+                            Revient Net
+                          </TableHead>
                           <TableHead className="w-24 text-center">
                             Réception
                           </TableHead>
@@ -275,6 +278,15 @@ export function PurchaseOrderDetailModal({
                               {/* TOTAL HT */}
                               <TableCell className="text-right font-semibold">
                                 {formatCurrency(totalHT)}
+                              </TableCell>
+
+                              {/* PRIX DE REVIENT NET */}
+                              <TableCell className="text-right text-sm">
+                                {item.unit_cost_net ? (
+                                  formatCurrency(item.unit_cost_net)
+                                ) : (
+                                  <span className="text-gray-400">-</span>
+                                )}
                               </TableCell>
 
                               {/* RÉCEPTION */}
