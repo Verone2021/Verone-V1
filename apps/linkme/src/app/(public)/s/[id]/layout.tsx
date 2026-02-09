@@ -78,13 +78,80 @@ export default function SelectionLayout({
       setError(null);
 
       try {
-        const { data: selectionData, error: selectionError } = await supabase
-          .from('linkme_selections')
-          .select('*')
-          .eq('id', id)
-          .single<ISelection>();
+        /**
+         * LOGIQUE CRITIQUE - NE PAS MODIFIER SANS REVIEW
+         *
+         * Cette détection UUID vs slug est ESSENTIELLE pour le routing des sélections publiques.
+         *
+         * Contexte :
+         * - Dashboard LinkMe génère des liens avec SLUG (/s/collection-mobilier-pokawa)
+         * - DB stocke id=UUID + slug=text dans linkme_selections
+         * - Cette logique permet de supporter les 2 formats (UUID et slug)
+         *
+         * RPCs utilisés :
+         * - get_public_selection(uuid) : Accès par UUID
+         * - get_public_selection_by_slug(text) : Accès par slug
+         *
+         * Historique régressions :
+         * - 2026-02-09 : Commit fa2cc973 a cassé cette logique → restaurée
+         *
+         * Tests :
+         * - tests/e2e/linkme-public-selection.spec.ts
+         *
+         * Documentation :
+         * - docs/critical/linkme-public-selection-routing.md
+         *
+         * @see https://github.com/Verone2021/verone-back-office/commit/3c8d51da
+         */
+        // Détecter UUID vs slug pour appeler le bon RPC
+        // Pattern UUID : 8-4-4-4-12 caractères hexadécimaux
+        const isUuid =
+          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+            id
+          );
 
-        if (selectionError || !selectionData) {
+        /**
+         * Type pour la réponse des RPCs get_public_selection et get_public_selection_by_slug
+         * Structure définie dans migrations :
+         * - 20251223_002_get_selection_by_slug.sql
+         * - 20260109_008_add_branding_to_public_selection_rpc.sql
+         */
+        interface PublicSelectionResponse {
+          success: boolean;
+          error?: string;
+          selection?: ISelection;
+          items?: unknown[];
+          branding?: {
+            primary_color: string;
+            secondary_color: string;
+            accent_color: string;
+            text_color: string;
+            background_color: string;
+            logo_url: string | null;
+          };
+          item_count?: number;
+        }
+
+        // Appel RPC selon le format
+        // - UUID : get_public_selection(p_selection_id uuid)
+        // - Slug : get_public_selection_by_slug(p_slug text)
+        const { data, error: rpcError } = await supabase.rpc(
+          isUuid ? 'get_public_selection' : 'get_public_selection_by_slug',
+          isUuid ? { p_selection_id: id } : { p_slug: id }
+        );
+
+        if (rpcError) throw rpcError;
+
+        // Cast explicite du type de retour (RPC retourne Json, on cast en PublicSelectionResponse)
+        const typedData = data as unknown as PublicSelectionResponse;
+
+        if (!typedData?.success) {
+          throw new Error(typedData?.error ?? 'Selection non trouvee');
+        }
+
+        const selectionData = typedData.selection;
+
+        if (!selectionData) {
           setError('Selection non trouvee');
           setIsLoading(false);
           return;
@@ -97,6 +164,31 @@ export default function SelectionLayout({
         }
 
         setSelection(selectionData);
+
+        // Les RPCs get_public_selection et get_public_selection_by_slug
+        // retournent déjà items et branding dans la réponse
+        if (typedData.items) {
+          setItems(typedData.items as unknown as ISelectionItem[]);
+        }
+
+        if (typedData.branding) {
+          setBranding({
+            primary_color:
+              typedData.branding.primary_color ??
+              DEFAULT_BRANDING.primary_color,
+            secondary_color:
+              typedData.branding.secondary_color ??
+              DEFAULT_BRANDING.secondary_color,
+            accent_color:
+              typedData.branding.accent_color ?? DEFAULT_BRANDING.accent_color,
+            text_color:
+              typedData.branding.text_color ?? DEFAULT_BRANDING.text_color,
+            background_color:
+              typedData.branding.background_color ??
+              DEFAULT_BRANDING.background_color,
+            logo_url: typedData.branding.logo_url,
+          });
+        }
 
         /**
          * Type pour affiliate avec JOIN enseignes
@@ -121,77 +213,6 @@ export default function SelectionLayout({
             role: affiliateData.enseigne_id ? 'enseigne' : null,
             enseigne_id: affiliateData.enseigne_id,
             enseigne_name: affiliateData.enseignes?.name ?? null,
-          });
-        }
-
-        /**
-         * Type pour la view linkme_selection_items_with_pricing
-         * Cette view JOIN selection_items + products + pricing
-         * Note: View non présente dans les types Supabase générés
-         */
-        interface SelectionItemWithPricing {
-          id: string;
-          selection_id: string;
-          product_id: string;
-          product_name: string;
-          product_sku: string;
-          product_image: string | null;
-          selling_price_ht: number;
-          selling_price_ttc: number;
-          margin_rate: number;
-          category_name: string | null;
-          subcategory_id: string | null;
-          subcategory_name: string | null;
-          display_order: number;
-        }
-
-        // Fetch items (view non typée dans Database, utiliser cast)
-        const { data: itemsData, error: itemsError } = await supabase
-          .from('linkme_selection_items_with_pricing' as 'products')
-          .select('*')
-          .eq('selection_id', id)
-          .returns<SelectionItemWithPricing[]>();
-
-        if (itemsError) {
-          console.error('Error fetching items:', itemsError);
-        } else {
-          setItems((itemsData ?? []) as unknown as ISelectionItem[]);
-        }
-
-        /**
-         * Type pour table linkme_affiliate_branding
-         * Note: Table non présente dans les types Supabase générés
-         */
-        interface AffiliateBrandingRow {
-          affiliate_id: string;
-          primary_color: string | null;
-          secondary_color: string | null;
-          accent_color: string | null;
-          text_color: string | null;
-          background_color: string | null;
-          logo_url: string | null;
-        }
-
-        // Fetch branding (table non typée dans Database, utiliser cast)
-        const { data: brandingData } = await supabase
-          .from('linkme_affiliate_branding' as 'products')
-          .select('*')
-          .eq('affiliate_id', selectionData.affiliate_id)
-          .single<AffiliateBrandingRow>();
-
-        if (brandingData) {
-          setBranding({
-            primary_color:
-              brandingData.primary_color ?? DEFAULT_BRANDING.primary_color,
-            secondary_color:
-              brandingData.secondary_color ?? DEFAULT_BRANDING.secondary_color,
-            accent_color:
-              brandingData.accent_color ?? DEFAULT_BRANDING.accent_color,
-            text_color: brandingData.text_color ?? DEFAULT_BRANDING.text_color,
-            background_color:
-              brandingData.background_color ??
-              DEFAULT_BRANDING.background_color,
-            logo_url: brandingData.logo_url,
           });
         }
       } catch (err) {
