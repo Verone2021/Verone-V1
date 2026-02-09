@@ -85,7 +85,7 @@ export default function CataloguePage(): JSX.Element {
 function CatalogueContent(): JSX.Element | null {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user, linkMeRole, loading: authLoading } = useAuth();
+  const { user, linkMeRole, initializing: authLoading } = useAuth();
 
   // Récupérer le selectionId depuis les query params (si présent)
   const selectionIdFromUrl = searchParams.get('selection');
