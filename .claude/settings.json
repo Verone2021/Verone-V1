@@ -30,7 +30,7 @@
       "hooks": [
         {
           "type": "command",
-          "command": "bash -c 'REPO_DIR=$(pwd); BRANCH=$(git branch --show-current 2>/dev/null || echo \"unknown\"); if [ \"$REPO_DIR\" = \"/Users/romeodossantos/verone-back-office-V1\" ] && [ \"$BRANCH\" = \"main\" ]; then echo \"❌ BLOQUÉ: Opération d\\'écriture INTERDITE sur main dans le repo principal.\n\n**Raison** : Le repo principal (/verone-back-office-V1) doit rester sur main propre.\n**Solution** : Utiliser un worktree :\n  ./scripts/worktree-create.sh [NOM] feat/XXX\n  cd ../verone-worktrees/[NOM]\n\nVoir: docs/workflows/WORKTREES-QUICKSTART.md\"; exit 1; elif [ \"$BRANCH\" = \"main\" ] || [ \"$BRANCH\" = \"master\" ]; then echo \"❌ BLOQUÉ: Opération d\\'écriture INTERDITE sur main.\n\n**Solution** : Créer une feature branch MAINTENANT :\n  git checkout -b feat/[APP]-[DOMAIN]-[NNN]-description\n\nExemple : git checkout -b feat/BO-DB-001-fix-owner-role\"; exit 1; fi'"
+          "command": "bash -c 'BRANCH=$(git branch --show-current 2>/dev/null || echo \"unknown\"); if [ \"$BRANCH\" = \"main\" ] || [ \"$BRANCH\" = \"master\" ]; then echo \"❌ BLOQUÉ: Opération d\\'écriture INTERDITE sur main.\n\n**Solution** : Créer une feature branch MAINTENANT :\n  git checkout -b feat/[APP]-[DOMAIN]-[NNN]-description\n\nExemple : git checkout -b feat/BO-DB-001-fix-owner-role\"; exit 1; fi'"
         }
       ]
     },
@@ -48,7 +48,7 @@
       "hooks": [
         {
           "type": "command",
-          "command": "bash -c 'REPO_DIR=$(pwd); if [ \"$REPO_DIR\" = \"/Users/romeodossantos/verone-back-office-V1\" ]; then echo \"❌ COMMIT INTERDIT dans repo principal.\n\n**Raison** : Le repo principal doit rester sur main propre.\n**Solution** : Utiliser un worktree :\n  ./scripts/worktree-create.sh [NOM] feat/XXX\n  cd ../verone-worktrees/[NOM]\n\nVoir: docs/workflows/WORKTREES-QUICKSTART.md\"; exit 1; fi; BRANCH=$(git branch --show-current); if [ \"$BRANCH\" = \"main\" ] || [ \"$BRANCH\" = \"master\" ]; then echo \"❌ INTERDIT de commit sur main. Créer une feature branch: git checkout -b feat/XXX\"; exit 1; fi; if ! echo \"$TOOL_INPUT\" | grep -qE \"\\[(BO|LM|WEB)-[A-Z0-9]+-[0-9]{3}\\]|\\[NO-TASK\\]\"; then echo \"❌ Task ID manquant. Format: [APP-XXX-001] ou [NO-TASK]\"; exit 1; fi'"
+          "command": "bash -c 'BRANCH=$(git branch --show-current); if [ \"$BRANCH\" = \"main\" ] || [ \"$BRANCH\" = \"master\" ]; then echo \"❌ INTERDIT de commit sur main. Créer une feature branch: git checkout -b feat/XXX\"; exit 1; fi; if ! echo \"$TOOL_INPUT\" | grep -qE \"\\[(BO|LM|WEB)-[A-Z0-9]+-[0-9]{3}\\]|\\[NO-TASK\\]\"; then echo \"❌ Task ID manquant. Format: [APP-XXX-001] ou [NO-TASK]\"; exit 1; fi'"
         }
       ]
     },

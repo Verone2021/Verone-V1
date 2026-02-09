@@ -137,37 +137,258 @@ Claude **DEMANDE** avant : creer/merger PR, deploiement, migration DB.
 
 ---
 
-## Worktrees (Sessions Multiples)
+## Multi-Agent Workflow : Un Agent = Une Branche (STRICT)
 
-Romeo travaille quotidiennement avec 2-3 features en parallèle. **TOUJOURS** utiliser worktrees pour éviter les conflits.
+Romeo orchestre plusieurs agents Claude en parallèle. **AUCUN worktree**. Coordination manuelle obligatoire.
 
-### Limitation : 2 worktrees maximum
+### Principe Absolu
 
-- **PRIMARY** : Feature longue (>1 jour)
-- **SECONDARY** : Feature courte/hotfix (<1 jour)
-- **REPO PRINCIPAL** : Urgence ultra-rapide (<20 min)
+> **"Exactly ONE agent must be designated as the orchestrator to prevent coordination conflicts. Each specialist handles a well-defined domain."**
+>
+> — Multi-Agent AI Systems 2026
 
-### Commandes essentielles
+**Architecture** :
+
+- **Romeo = Coordinateur** : Crée les branches, décide qui travaille où
+- **Chaque Agent Claude = Specialist** : Travaille sur UNE branche, ne switch JAMAIS
+- **Communication via Romeo** : Les agents ne coordonnent PAS entre eux
+
+---
+
+### Règles STRICTES (NON NÉGOCIABLES)
+
+#### ❌ INTERDIT
+
+1. **Agent crée une branche sans autorisation**
+
+   ```bash
+   git checkout -b feat/nouvelle-branche  # ❌ BLOQUÉ par hook
+   ```
+
+2. **Agent switch vers une autre branche**
+
+   ```bash
+   git checkout autre-branche  # ❌ BLOQUÉ par hook
+   ```
+
+3. **Agent commit sur main**
+
+   ```bash
+   git commit -m "fix"  # ❌ BLOQUÉ par hook si sur main
+   ```
+
+4. **Agent force push**
+   ```bash
+   git push --force  # ❌ BLOQUÉ par GitHub branch protection
+   ```
+
+#### ✅ OBLIGATOIRE
+
+1. **Romeo crée la branche AVANT de lancer l'agent**
+
+   ```bash
+   git checkout -b feat/BO-XXX-description
+   ```
+
+2. **Agent reste sur SA branche pour toute la session**
+   - Aucun `git checkout` autorisé (sauf `git checkout main` pour coordination)
+
+3. **Agent push régulièrement sur SA branche**
+
+   ```bash
+   git push  # Save points fréquents
+   ```
+
+4. **Romeo merge via PR quand feature complète**
+   ```bash
+   gh pr create
+   ```
+
+---
+
+### Workflow Type (Session Simple)
 
 ```bash
-# Créer worktree
-./scripts/worktree-create.sh [NOM] [BRANCHE]
+# 1. Romeo crée la branche
+git checkout -b feat/BO-XXX-description
 
-# Statut
-./scripts/worktree-status.sh
+# 2. Romeo lance Agent Claude
+# (Agent travaille dans cette session)
 
-# Cleanup
-./scripts/worktree-cleanup.sh [NOM]
+# 3. Agent code + commit + push régulièrement
+git add .
+git commit -m "[BO-XXX-001] step: description"
+git push
+
+# 4. Romeo merge PR quand prêt
+gh pr create
+gh pr merge
 ```
 
-### Règles STRICTES
+---
 
-- JAMAIS commit dans `/verone-back-office-V1` (repo principal = main propre)
-- TOUJOURS travailler dans `/verone-worktrees/[NOM]`
-- Si 2 worktrees pleins + besoin 3e feature → rotation obligatoire
-- Coordination si modification `@verone/types` (fichier partagé)
+### Workflow Sessions Multiples (2+ Features Parallèles)
 
-Voir `docs/workflows/WORKTREES-QUICKSTART.md` pour guide complet.
+**Contrainte** : Impossible de travailler sur 2 branches simultanément dans même repo.
+
+**Solutions** :
+
+#### Option A : Sessions Séquentielles (RECOMMANDÉ)
+
+```bash
+# Feature 1
+git checkout -b feat/BO-XXX-feature1
+# Agent travaille...
+git push
+gh pr create
+
+# Attendre merge Feature 1, PUIS :
+
+# Feature 2
+git checkout main
+git pull
+git checkout -b feat/BO-YYY-feature2
+# Agent travaille...
+```
+
+#### Option B : Fermer/Rouvrir Sessions
+
+```bash
+# Session 1 : Feature A
+git checkout -b feat/BO-AAA-featureA
+# Agent 1 travaille...
+git push  # Save point
+# FERMER session Agent 1
+
+# Session 2 : Feature B
+git checkout main
+git checkout -b feat/BO-BBB-featureB
+# Agent 2 travaille...
+git push  # Save point
+# FERMER session Agent 2
+
+# Reprendre Session 1
+git checkout feat/BO-AAA-featureA
+# Relancer Agent 1...
+```
+
+**Important** : Toujours `git push` avant de fermer session pour sauvegarder.
+
+---
+
+### Protection 3 Couches
+
+#### Couche 1 : GitHub Branch Protection (Server-Side)
+
+**Configuration** : Settings → Branches → Branch protection rules
+
+**Pour `main`** :
+
+- ✅ Require pull request reviews before merging
+- ✅ Require status checks to pass
+- ✅ Do not allow bypassing
+- ✅ Restrict force pushes (nobody)
+- ✅ Do not allow deletions
+
+**Pour feature branches** :
+
+- ✅ Restrict force pushes (maintainers only)
+
+**Pourquoi** : Seul moyen NON CONTOURNABLE. Server-side = sécurité réelle.
+
+#### Couche 2 : Client-Side Hooks (Advisory)
+
+**Scripts actifs** :
+
+- `.claude/scripts/validate-git-checkout.sh` - Bloque checkout non autorisé
+- `.claude/scripts/session-branch-check.sh` - Affiche contexte session
+- `.claude/scripts/auto-sync-with-main.sh` - Alerte divergence main
+
+**Statut** : Advisory, pas enforcement. Alerte 90% des problèmes.
+
+#### Couche 3 : Documentation (Cette section)
+
+**Rôle** : Éducation et clarté pour agents futurs.
+
+---
+
+### Synchronisation avec Main
+
+> **"Daily rebase/merge hygiene prevents coordination debt."**
+>
+> — Git Synchronization 2026
+
+**Best Practice** : Synchroniser régulièrement pour éviter conflits massifs.
+
+```bash
+# Option A : Rebase (historique propre)
+git fetch origin
+git rebase origin/main
+
+# Option B : Merge (plus sûr si conflits attendus)
+git fetch origin
+git merge origin/main
+```
+
+**Alerte automatique** : Hook `auto-sync-with-main.sh` alerte si >5 commits de retard.
+
+---
+
+### Limitations Honnêtes
+
+**Avec cette approche (sans worktrees), sache que** :
+
+1. ⚠️ **Client-side hooks ne sont PAS fiables à 100%**
+   - Un agent peut techniquement bypasser
+   - Mais 90% du temps, ça alertera
+
+2. ✅ **Server-side protection = seule garantie réelle**
+   - GitHub branch protection est NON CONTOURNABLE
+
+3. 🤝 **Discipline manuelle requise**
+   - Romeo crée les branches
+   - Romeo coordonne les agents
+   - Romeo est le "Coordinator" du pattern
+
+4. 🔄 **Pas de sessions vraiment parallèles**
+   - Pour 2 features parallèles = fermer/rouvrir sessions
+   - Moins smooth que worktrees, mais fonctionne
+
+---
+
+### Dépannage
+
+**Problème** : Agent a switché de branche accidentellement
+
+**Solution** :
+
+```bash
+# Revenir à la bonne branche
+git checkout feat/BO-XXX-ma-feature
+
+# Vérifier qu'aucun changement n'a été fait sur mauvaise branche
+git log --oneline -5
+
+# Si commits accidentels sur mauvaise branche :
+git cherry-pick <commit-hash>  # Sur la bonne branche
+```
+
+**Problème** : Divergence massive avec main (>10 commits)
+
+**Solution** :
+
+```bash
+# Option A : Rebase (si pas pushé)
+git fetch origin
+git rebase origin/main
+
+# Option B : Merge (si déjà pushé)
+git fetch origin
+git merge origin/main
+
+# Option C : Créer PR immédiatement (si feature stable)
+gh pr create
+```
 
 ---
 
