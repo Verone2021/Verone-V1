@@ -134,6 +134,34 @@ pnpm lint:fix                              # ESLint auto-fix
 **Git** : Feature branch AVANT de coder. Format : `[APP-DOMAIN-NNN] type: description`
 Details : `.claude/rules/dev/git-workflow.md`
 
+### Workflow Déploiement (Staging Branch)
+
+**Pattern** : PRs → `staging` → `main` (1-2×/jour)
+
+```bash
+# Développement quotidien
+git checkout -b feat/APP-XXX-description
+# ... code + commits ...
+gh pr create --base staging --fill  # PR vers staging (pas main)
+gh pr merge --squash
+
+# Déploiement production (1-2×/jour par Romeo)
+gh pr create --base main --head staging --title "[DEPLOY] Daily release $(date +%Y-%m-%d)"
+gh pr merge --squash
+```
+
+**Avantages** :
+
+- ✅ Push vers `staging` = **Pas de déploiement Vercel** (config: `git.deploymentEnabled`)
+- ✅ Push vers `main` = **Déploiement Vercel** (production)
+- ✅ Réduit déploiements de ~10/jour à ~2-4/jour (économie free tier)
+- ✅ Workflows CI/CD valident PRs vers `staging` ET `main`
+
+**Fichiers config** :
+
+- `vercel.json` + `apps/*/vercel.json` : `git.deploymentEnabled.staging = false`
+- `.github/workflows/quality.yml` + `ci.yml` : branches `[main, staging]`
+
 ---
 
 ## Regles Critiques (NON NEGOCIABLES)
