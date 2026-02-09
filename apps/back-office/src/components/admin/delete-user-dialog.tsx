@@ -22,7 +22,7 @@ import { RoleBadge, type UserRole } from '@verone/ui';
 import { AlertTriangle, Trash2, X } from 'lucide-react';
 
 import type { UserWithProfile } from '@/app/(protected)/admin/users/page';
-import { deleteUser } from '@verone/admin/actions/user-management';
+import { deleteUser } from '@/app/actions/user-management';
 
 interface DeleteUserDialogProps {
   open: boolean;
