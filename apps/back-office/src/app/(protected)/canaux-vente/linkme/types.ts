@@ -32,7 +32,7 @@ export interface LinkMeProductDetail {
   /** Tarif public HT - depuis channel_pricing.public_price_ht (éditable) */
   public_price_ht: number | null;
   /** Prix d'achat - READ-ONLY depuis products.cost_price (confidentiel) */
-  cost_price: number;
+  cost_price: number | null;
   /** Prix minimum de vente HT calculé: (cost_price + eco_tax) × (1 + margin/100) - READ-ONLY */
   min_selling_price_ht: number | null;
 

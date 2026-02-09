@@ -115,7 +115,9 @@ function CollectionProductCard({
         {/* Prix compact */}
         <div className="flex-none mb-2">
           <div className="text-sm font-semibold text-black">
-            {product.cost_price ? `${product.cost_price?.toFixed(2)} €` : 'N/A'}
+            {product.cost_price != null
+              ? `${product.cost_price.toFixed(2)} €`
+              : 'N/A'}
           </div>
         </div>
 

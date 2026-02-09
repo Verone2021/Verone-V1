@@ -552,7 +552,7 @@ export default function SourcingPage() {
                             </span>
                           </div>
 
-                          {product.cost_price && (
+                          {product.cost_price != null && (
                             <div className="flex items-center space-x-2">
                               <Euro
                                 className="h-4 w-4"
