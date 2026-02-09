@@ -405,4 +405,41 @@ gh pr create
 - `.claude/rules/dev/servers.md` - Gestion serveurs
 - `.claude/templates/component.tsx` - Template composant
 
+---
+
+## Règles MCP Playwright (Screenshots)
+
+**OBLIGATOIRE** : Tous les screenshots Playwright doivent être sauvegardés dans `.playwright-mcp/screenshots/`
+
+### Pattern Standard
+
+```typescript
+// ❌ INTERDIT (sauvegarde à la racine)
+mcp__playwright-lane-1__browser_take_screenshot({
+  filename: "audit-login.png"
+})
+
+// ✅ OBLIGATOIRE (sauvegarde dans dossier dédié)
+mcp__playwright-lane-1__browser_take_screenshot({
+  filename: ".playwright-mcp/screenshots/audit-login.png"
+})
+```
+
+### Conventions Nommage
+
+- **Format** : `.playwright-mcp/screenshots/[context]-[description]-[YYYYMMDD].png`
+- **Exemples** :
+  - `.playwright-mcp/screenshots/audit-login-page-20260208.png`
+  - `.playwright-mcp/screenshots/test-logout-flow-success.png`
+  - `.playwright-mcp/screenshots/debug-modal-state.png`
+
+### Pourquoi ?
+
+1. **Organisation** : Screenshots groupés, faciles à retrouver
+2. **Gitignore** : Patterns `.playwright-mcp/*.png` évitent commits accidentels
+3. **Cleanup automatique** : Script `pnpm clean:screenshots` nettoie dossier
+4. **Best Practice 2026** : Standard industrie (Playwright, Cypress, Puppeteer)
+
+---
+
 **Version** : 12.0.0 (Refactoring tokens 2026-02-05)
