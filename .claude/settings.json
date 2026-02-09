@@ -35,6 +35,15 @@
       ]
     },
     {
+      "matcher": "Bash(git checkout*)",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "$CLAUDE_PROJECT_DIR/.claude/scripts/validate-git-checkout.sh"
+        }
+      ]
+    },
+    {
       "matcher": "Bash(git*--no-verify*)",
       "hooks": [
         {
@@ -49,6 +58,10 @@
         {
           "type": "command",
           "command": "bash -c 'BRANCH=$(git branch --show-current); if [ \"$BRANCH\" = \"main\" ] || [ \"$BRANCH\" = \"master\" ]; then echo \"❌ INTERDIT de commit sur main. Créer une feature branch: git checkout -b feat/XXX\"; exit 1; fi; if ! echo \"$TOOL_INPUT\" | grep -qE \"\\[(BO|LM|WEB)-[A-Z0-9]+-[0-9]{3}\\]|\\[NO-TASK\\]\"; then echo \"❌ Task ID manquant. Format: [APP-XXX-001] ou [NO-TASK]\"; exit 1; fi'"
+        },
+        {
+          "type": "command",
+          "command": "$CLAUDE_PROJECT_DIR/.claude/scripts/auto-sync-with-main.sh"
         }
       ]
     },

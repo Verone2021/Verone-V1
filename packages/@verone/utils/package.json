@@ -67,6 +67,11 @@
       "import": "./src/supabase/server.ts",
       "require": "./src/supabase/server.ts"
     },
+    "./supabase/admin": {
+      "types": "./src/supabase/admin.ts",
+      "import": "./src/supabase/admin.ts",
+      "require": "./src/supabase/admin.ts"
+    },
     "./export": {
       "types": "./src/export/csv.ts",
       "import": "./src/export/csv.ts",
