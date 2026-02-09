@@ -4,10 +4,12 @@ on:
   pull_request:
     branches:
       - main
+      - staging
       - integration/*
   push:
     branches:
       - main
+      - staging
 
 # Annuler les workflows en cours si nouveau push
 concurrency:
