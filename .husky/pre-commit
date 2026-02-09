@@ -1,41 +1,42 @@
 #!/bin/sh
+# PRE-COMMIT SIMPLIFIÉ 2026
+# Objectif : < 1 seconde (vs 30-60s actuellement)
+# Philosophie : CI/CD valide, pre-commit facilite
 
-# 1. Génération types désactivée (manuel via MCP recommandé)
-# Raison : Types générés uniquement APRÈS apply_migration (MCP workflow)
-# Pour régénérer manuellement : pnpm generate:types
-# Ou via MCP : mcp__supabase__generate_typescript_types
+echo "⚡ Pre-commit (simplifié 2026)..."
 
-# 2. Validation RLS patterns (CRITIQUE - bloque patterns obsolètes)
-echo "🔍 Validation patterns RLS..."
+# 1. Validation format commit message (< 0.1s)
+COMMIT_MSG=$(git log -1 --pretty=%B 2>/dev/null || cat "$1" 2>/dev/null || echo "[NO-TASK] temp")
+if ! echo "$COMMIT_MSG" | grep -qE '^\[(NO-TASK|[A-Z]+-[A-Z]+-[0-9]+)\]'; then
+  echo "❌ Format commit invalide. Use: [APP-DOMAIN-NNN] type: description"
+  echo "   Exemple: [BO-FIN-001] feat: add ecotax system"
+  exit 1
+fi
+
+# 2. Protection branche main (< 0.1s)
+BRANCH=$(git branch --show-current)
+if [ "$BRANCH" = "main" ] || [ "$BRANCH" = "master" ]; then
+  echo "❌ Cannot commit on main. Create feature branch first."
+  exit 1
+fi
+
+# 3. Validation RLS patterns (< 0.1s, critique pour sécurité DB)
 if ls supabase/migrations/*.sql 1> /dev/null 2>&1; then
-  # Chercher patterns obsolètes (ignorer commentaires SQL)
   OBSOLETE=$(grep -h "CREATE POLICY\|USING\|WITH CHECK" supabase/migrations/*.sql | \
     grep -v "^--" | \
     grep -E "user_profiles\.(app|role)(?! IS)|raw_user_meta_data.*role" || true)
 
   if [ -n "$OBSOLETE" ]; then
-    echo "❌ ERREUR: Pattern RLS obsolète détecté dans migrations SQL"
-    echo ""
-    echo "Patterns INTERDITS:"
-    echo "  ❌ user_profiles.app        (colonne N'EXISTE PAS)"
-    echo "  ❌ user_profiles.role       (obsolète, sauf pour admin check)"
-    echo "  ❌ raw_user_meta_data->>'role' (fragile)"
-    echo ""
-    echo "Patterns OBLIGATOIRES:"
-    echo "  ✅ is_backoffice_user()     (staff back-office)"
-    echo "  ✅ is_back_office_admin()   (admin uniquement)"
-    echo ""
-    echo "Référence: .claude/rules/database/rls-patterns.md"
-    echo ""
-    echo "Extrait détecté:"
-    echo "$OBSOLETE"
+    echo "❌ Pattern RLS obsolète détecté. Voir .claude/rules/database/rls-patterns.md"
     exit 1
   fi
 fi
-echo "✅ RLS patterns corrects"
 
-# 3. Lint-staged (ESLint + Prettier)
-npx lint-staged
+# 4. Prettier auto-format (< 0.5s pour fichiers stagés uniquement)
+STAGED_FILES=$(git diff --staged --name-only --diff-filter=ACM | grep -E '\.(ts|tsx|js|jsx|json|md)$' || true)
+if [ -n "$STAGED_FILES" ]; then
+  echo "$STAGED_FILES" | xargs npx prettier --write --log-level=error
+  echo "$STAGED_FILES" | xargs git add
+fi
 
-# 4. Type-check filtré (détecte apps modifiées dans staged files)
-bash scripts/type-check-precommit.sh
+echo "✅ Pre-commit OK (< 1s) - Validation complète dans CI/CD"

@@ -1,0 +1,626 @@
+- generic [ref=e2]:
+  - banner [ref=e3]:
+    - navigation [ref=e4]:
+      - generic [ref=e5]:
+        - link "Logo of Opjet Paris Accueil" [ref=e6] [cursor=pointer]:
+          - /url: /
+          - img "Logo of Opjet Paris" [ref=e7]:
+            - img "Opjet Paris" [ref=e8]
+          - generic [ref=e9]: Accueil
+        - generic [ref=e10]:
+          - separator [ref=e15]
+          - list [ref=e16]:
+            - listitem [ref=e17]:
+              - menuitem "TOUS LES PRODUITS" [ref=e18] [cursor=pointer]
+            - listitem [ref=e19]:
+              - link "CATEGORIES" [ref=e20] [cursor=pointer]:
+                - /url: "#"
+              - text:  
+            - listitem [ref=e21]:
+              - menuitem "NOUVEAUTÉS" [ref=e22] [cursor=pointer]
+            - listitem [ref=e23]:
+              - menuitem "CATALOGUE" [ref=e24] [cursor=pointer]
+            - listitem [ref=e25]:
+              - menuitem "AIDE" [ref=e26] [cursor=pointer]
+            - listitem [ref=e27]:
+              - menuitem "Produits recommandés" [ref=e28] [cursor=pointer]
+            - listitem [ref=e29]:
+              - link "" [ref=e30] [cursor=pointer]:
+                - /url: "#"
+                - generic [ref=e31]: 
+            - listitem [ref=e32]:
+              - button "":
+                - generic [ref=e33] [cursor=pointer]: 
+            - listitem [ref=e34]:
+              - link " 59 €" [ref=e35] [cursor=pointer]:
+                - /url: /shop/cart
+                - generic [ref=e36]: 
+                - superscript [ref=e37]: 59 €
+            - listitem [ref=e38]:
+              - link " 824 €" [ref=e39] [cursor=pointer]:
+                - /url: /shop/cart
+                - generic [ref=e40]: 
+                - superscript [ref=e41]: 824 €
+            - text: 
+            - listitem [ref=e42]:
+              - button "VERONE" [ref=e43] [cursor=pointer]
+  - generic [ref=e45]:
+    - text: Plus que
+    - strong [ref=e46]: "941"
+    - strong [ref=e47]: €
+    - text: à ajouter à votre commande, Pour bénéficier des frais de port offerts
+  - generic: ×
+  - text: ×
+  - main [ref=e48]:
+    - generic [ref=e50]:
+      - list [ref=e52]:
+        - listitem [ref=e53]:
+          - link "Accueil" [ref=e54] [cursor=pointer]:
+            - /url: /my/home
+            - generic [ref=e55]: 
+        - listitem [ref=e56]:
+          - text: ">"
+          - link "Factures" [ref=e57] [cursor=pointer]:
+            - /url: /my/invoices
+        - listitem [ref=e58]: "> 20145539"
+      - group [ref=e60]:
+        - button "Précédent" [ref=e61] [cursor=pointer]:
+          - img "Précédent" [ref=e62]: 
+        - button "Suivant" [ref=e63] [cursor=pointer]:
+          - img "Suivant" [ref=e64]: 
+    - generic [ref=e68]:
+      - generic [ref=e70]:
+        - heading "2 440,04 €" [level=2] [ref=e72]:
+          - generic [ref=e73]: 2 440,04 €
+        - list [ref=e74]:
+          - listitem [ref=e75]:
+            - generic [ref=e77]:
+              - generic [ref=e78]: 
+              - text: Payé
+            - generic [ref=e79]:
+              - link " Télécharger" [ref=e81] [cursor=pointer]:
+                - /url: /my/invoices/703097?access_token=1de2fe61-3f2d-403f-86ad-1a7a6635d9c5&report_type=pdf&download=true
+                - generic [ref=e82]: 
+                - text: Télécharger
+              - link " Imprimer" [ref=e84] [cursor=pointer]:
+                - /url: /my/invoices/703097?access_token=1de2fe61-3f2d-403f-86ad-1a7a6635d9c5&report_type=pdf
+                - generic [ref=e85]: 
+                - text: Imprimer
+          - listitem [ref=e86]:
+            - strong [ref=e88]: Vendeur
+            - generic [ref=e89]:
+              - img "Contact" [ref=e91]
+              - generic [ref=e92]:
+                - generic [ref=e94]:
+                  - generic [ref=e95]: Hadassa Perrimond
+                  - generic [ref=e97]: "0614851077"
+                - link " Envoyer un message" [ref=e98] [cursor=pointer]:
+                  - /url: "#discussion"
+                  - generic [ref=e99]: 
+                  - text: Envoyer un message
+      - generic [ref=e100]:
+        - generic [ref=e102]:
+          - button "Annuler" [ref=e103] [cursor=pointer]: ×
+          - paragraph [ref=e105]: Votre paiement a été traité avec succès. Merci!
+        - generic [ref=e106]:
+          - generic [ref=e108]: 
+          - iframe [ref=e109]:
+            - main [ref=f13e3]:
+              - generic [ref=f13e5]:
+                - img "Logo" [ref=f13e6]
+                - generic [ref=f13e7]:
+                  - strong [ref=f13e9]: OPJET
+                  - generic [ref=f13e14]:
+                    - text: ZA de la Blanche Tache
+                    - text: Rue Rosa Luxembourg
+                    - text: 80450 Camon
+                    - text: FRANCE
+              - generic [ref=f13e16]:
+                - generic [ref=f13e17]:
+                  - generic [ref=f13e19]:
+                    - strong [ref=f13e20]: "Adresse de livraison:"
+                    - generic [ref=f13e22]:
+                      - generic [ref=f13e23]: VERONE, imane fraija
+                      - generic [ref=f13e26]:
+                        - text: 4 rue du perou
+                        - text: 91300 Massy
+                        - text: FRANCE
+                  - generic [ref=f13e27]:
+                    - generic [ref=f13e29]:
+                      - generic [ref=f13e30]: VERONE
+                      - generic [ref=f13e33]:
+                        - text: 229 rue saint honoré
+                        - text: 75001 paris
+                        - text: FRANCE
+                    - generic [ref=f13e34]: "TVA: FR20914588785"
+                - generic [ref=f13e35]:
+                  - heading "Facture 20145539" [level=2] [ref=f13e36]
+                  - generic [ref=f13e37]:
+                    - generic [ref=f13e38]:
+                      - strong [ref=f13e39]: "Date de la facture :"
+                      - paragraph [ref=f13e40]: 29/10/2024
+                    - generic [ref=f13e41]:
+                      - strong [ref=f13e42]: "Date d'échéance :"
+                      - paragraph [ref=f13e43]: 29/10/2024
+                    - generic [ref=f13e44]:
+                      - strong [ref=f13e45]: "Origine :"
+                      - paragraph [ref=f13e46]: S71509
+                    - generic [ref=f13e47]:
+                      - strong [ref=f13e48]: "Numéro de client :"
+                      - paragraph [ref=f13e49]: "76119"
+                  - table [ref=f13e50]:
+                    - rowgroup [ref=f13e51]:
+                      - row "Photo Description Quantité Poids Brut (kg) Poids Net (kg) Prix unitaire Montant HT" [ref=f13e52]:
+                        - columnheader "Photo" [ref=f13e53]
+                        - columnheader "Description" [ref=f13e54]
+                        - columnheader "Quantité" [ref=f13e55]
+                        - columnheader "Poids Brut (kg)" [ref=f13e56]: Poids Brut (kg)
+                        - columnheader "Poids Net (kg)" [ref=f13e57]
+                        - columnheader "Prix unitaire" [ref=f13e58]
+                        - columnheader "Montant HT" [ref=f13e59]
+                    - rowgroup [ref=f13e60]:
+                      - 'row "[012510] Catalogue janvier 2024 [012510] Catalogue janvier 2024 1,00 Code douanier : 491110100 Code barre : 3457010000280 Origine produit : FRANCE Unité(s) 0,43 0,0 0,00 0,00 €" [ref=f13e61]':
+                        - cell "[012510] Catalogue janvier 2024" [ref=f13e62]:
+                          - img "[012510] Catalogue janvier 2024" [ref=f13e64]
+                        - cell "[012510] Catalogue janvier 2024" [ref=f13e65]
+                        - 'cell "1,00 Code douanier : 491110100 Code barre : 3457010000280 Origine produit : FRANCE Unité(s)" [ref=f13e66]':
+                          - text: 1,00
+                          - paragraph [ref=f13e67]: "Code douanier : 491110100"
+                          - paragraph [ref=f13e68]: "Code barre : 3457010000280"
+                          - paragraph [ref=f13e69]: "Origine produit : FRANCE"
+                          - text: Unité(s)
+                        - cell "0,43" [ref=f13e70]
+                        - cell "0,0" [ref=f13e71]
+                        - cell "0,00" [ref=f13e72]
+                        - cell "0,00 €" [ref=f13e73]:
+                          - generic [ref=f13e74]: 0,00 €
+                      - 'row "[017145] Bout de canapé Bibi bleu vert doux D40 H43cm [017145] Bout de canapé Bibi bleu vert doux D40 H43cm Eco-mobilier : + 0.22 € 1,00 Code douanier : 940320800 Code barre : 3460000042733 Origine produit : Inde Unité(s) 6,7 4,5 79,00 79,00 €" [ref=f13e75]':
+                        - cell "[017145] Bout de canapé Bibi bleu vert doux D40 H43cm" [ref=f13e76]:
+                          - img "[017145] Bout de canapé Bibi bleu vert doux D40 H43cm" [ref=f13e78]
+                        - 'cell "[017145] Bout de canapé Bibi bleu vert doux D40 H43cm Eco-mobilier : + 0.22 €" [ref=f13e79]':
+                          - generic [ref=f13e80]:
+                            - text: "[017145] Bout de canapé Bibi bleu vert doux D40 H43cm"
+                            - text: "Eco-mobilier : + 0.22 €"
+                        - 'cell "1,00 Code douanier : 940320800 Code barre : 3460000042733 Origine produit : Inde Unité(s)" [ref=f13e81]':
+                          - text: 1,00
+                          - paragraph [ref=f13e82]: "Code douanier : 940320800"
+                          - paragraph [ref=f13e83]: "Code barre : 3460000042733"
+                          - paragraph [ref=f13e84]: "Origine produit : Inde"
+                          - text: Unité(s)
+                        - cell "6,7" [ref=f13e85]
+                        - cell "4,5" [ref=f13e86]
+                        - cell "79,00" [ref=f13e87]
+                        - cell "79,00 €" [ref=f13e88]:
+                          - generic [ref=f13e89]: 79,00 €
+                      - 'row "[016515] Fauteuil Walter pivotant blanc L65 P77 H69cm [016515] Fauteuil Walter blanc pivotant L65 P77 H69cm Eco-mobilier : + 3.58 € 2,00 Code douanier : 940161000 Code barre : 3460000030037 Origine produit : Chine Unité(s) 35,0 31,0 139,00 278,00 €" [ref=f13e90]':
+                        - cell "[016515] Fauteuil Walter pivotant blanc L65 P77 H69cm" [ref=f13e91]:
+                          - img "[016515] Fauteuil Walter pivotant blanc L65 P77 H69cm" [ref=f13e93]
+                        - 'cell "[016515] Fauteuil Walter blanc pivotant L65 P77 H69cm Eco-mobilier : + 3.58 €" [ref=f13e94]':
+                          - generic [ref=f13e95]:
+                            - text: "[016515] Fauteuil Walter blanc pivotant L65 P77 H69cm"
+                            - text: "Eco-mobilier : + 3.58 €"
+                        - 'cell "2,00 Code douanier : 940161000 Code barre : 3460000030037 Origine produit : Chine Unité(s)" [ref=f13e96]':
+                          - text: 2,00
+                          - paragraph [ref=f13e97]: "Code douanier : 940161000"
+                          - paragraph [ref=f13e98]: "Code barre : 3460000030037"
+                          - paragraph [ref=f13e99]: "Origine produit : Chine"
+                          - text: Unité(s)
+                        - cell "35,0" [ref=f13e100]
+                        - cell "31,0" [ref=f13e101]
+                        - cell "139,00" [ref=f13e102]
+                        - cell "278,00 €" [ref=f13e103]:
+                          - generic [ref=f13e104]: 278,00 €
+                      - 'row "[016906] Banc Edouard boucle naturel L117 P42 H37,5cm [016906] Banc Edouard boucle naturel L117 P42 H37,5cm 1,00 Code douanier : 940161000 Code barre : 3460000038156 Origine produit : Chine Unité(s) 12,2 10,5 85,00 85,00 €" [ref=f13e105]':
+                        - cell "[016906] Banc Edouard boucle naturel L117 P42 H37,5cm" [ref=f13e106]:
+                          - img "[016906] Banc Edouard boucle naturel L117 P42 H37,5cm" [ref=f13e108]
+                        - cell "[016906] Banc Edouard boucle naturel L117 P42 H37,5cm" [ref=f13e109]
+                        - 'cell "1,00 Code douanier : 940161000 Code barre : 3460000038156 Origine produit : Chine Unité(s)" [ref=f13e110]':
+                          - text: 1,00
+                          - paragraph [ref=f13e111]: "Code douanier : 940161000"
+                          - paragraph [ref=f13e112]: "Code barre : 3460000038156"
+                          - paragraph [ref=f13e113]: "Origine produit : Chine"
+                          - text: Unité(s)
+                        - cell "12,2" [ref=f13e114]
+                        - cell "10,5" [ref=f13e115]
+                        - cell "85,00" [ref=f13e116]
+                        - cell "85,00 €" [ref=f13e117]:
+                          - generic [ref=f13e118]: 85,00 €
+                      - 'row "[016755] Banc Lize naturel L100 P38 H44cm [016755] Banc Lize L100 P38 H44cm 1,00 Code douanier : 940161000 Code barre : 3460000034950 Origine produit : Chine Unité(s) 17,0 15,0 69,00 69,00 €" [ref=f13e119]':
+                        - cell "[016755] Banc Lize naturel L100 P38 H44cm" [ref=f13e120]:
+                          - img "[016755] Banc Lize naturel L100 P38 H44cm" [ref=f13e122]
+                        - cell "[016755] Banc Lize L100 P38 H44cm" [ref=f13e123]
+                        - 'cell "1,00 Code douanier : 940161000 Code barre : 3460000034950 Origine produit : Chine Unité(s)" [ref=f13e124]':
+                          - text: 1,00
+                          - paragraph [ref=f13e125]: "Code douanier : 940161000"
+                          - paragraph [ref=f13e126]: "Code barre : 3460000034950"
+                          - paragraph [ref=f13e127]: "Origine produit : Chine"
+                          - text: Unité(s)
+                        - cell "17,0" [ref=f13e128]
+                        - cell "15,0" [ref=f13e129]
+                        - cell "69,00" [ref=f13e130]
+                        - cell "69,00 €" [ref=f13e131]:
+                          - generic [ref=f13e132]: 69,00 €
+                      - 'row "[015748] Fauteuil Sharing bouclé L54 P60 H70cm [015748] Fauteuil Sharing bouclé L54 P60 H70cm Eco-mobilier : + 1.21 € 1,00 Code douanier : 940161000 Code barre : 3460000010121 Origine produit : Chine Unité(s) 8,45 6,7 99,00 99,00 €" [ref=f13e133]':
+                        - cell "[015748] Fauteuil Sharing bouclé L54 P60 H70cm" [ref=f13e134]:
+                          - img "[015748] Fauteuil Sharing bouclé L54 P60 H70cm" [ref=f13e136]
+                        - 'cell "[015748] Fauteuil Sharing bouclé L54 P60 H70cm Eco-mobilier : + 1.21 €" [ref=f13e137]':
+                          - generic [ref=f13e138]:
+                            - text: "[015748] Fauteuil Sharing bouclé L54 P60 H70cm"
+                            - text: "Eco-mobilier : + 1.21 €"
+                        - 'cell "1,00 Code douanier : 940161000 Code barre : 3460000010121 Origine produit : Chine Unité(s)" [ref=f13e139]':
+                          - text: 1,00
+                          - paragraph [ref=f13e140]: "Code douanier : 940161000"
+                          - paragraph [ref=f13e141]: "Code barre : 3460000010121"
+                          - paragraph [ref=f13e142]: "Origine produit : Chine"
+                          - text: Unité(s)
+                        - cell "8,45" [ref=f13e143]
+                        - cell "6,7" [ref=f13e144]
+                        - cell "99,00" [ref=f13e145]
+                        - cell "99,00 €" [ref=f13e146]:
+                          - generic [ref=f13e147]: 99,00 €
+                      - 'row "[017377] Fauteuil douce velours tissé pivotant naturel L78 P76 H80cm [017377] Fauteuil douce velours tissé naturel pivotant L78 P76 H80cm Eco-mobilier : + 5.67 € 1,00 Code douanier : 940161000 Code barre : 3460000048018 Origine produit : Chine Unité(s) 26,8 23,8 209,00 209,00 €" [ref=f13e148]':
+                        - cell "[017377] Fauteuil douce velours tissé pivotant naturel L78 P76 H80cm" [ref=f13e149]:
+                          - img "[017377] Fauteuil douce velours tissé pivotant naturel L78 P76 H80cm" [ref=f13e151]
+                        - 'cell "[017377] Fauteuil douce velours tissé naturel pivotant L78 P76 H80cm Eco-mobilier : + 5.67 €" [ref=f13e152]':
+                          - generic [ref=f13e153]:
+                            - text: "[017377] Fauteuil douce velours tissé naturel pivotant L78 P76 H80cm"
+                            - text: "Eco-mobilier : + 5.67 €"
+                        - 'cell "1,00 Code douanier : 940161000 Code barre : 3460000048018 Origine produit : Chine Unité(s)" [ref=f13e154]':
+                          - text: 1,00
+                          - paragraph [ref=f13e155]: "Code douanier : 940161000"
+                          - paragraph [ref=f13e156]: "Code barre : 3460000048018"
+                          - paragraph [ref=f13e157]: "Origine produit : Chine"
+                          - text: Unité(s)
+                        - cell "26,8" [ref=f13e158]
+                        - cell "23,8" [ref=f13e159]
+                        - cell "209,00" [ref=f13e160]
+                        - cell "209,00 €" [ref=f13e161]:
+                          - generic [ref=f13e162]: 209,00 €
+                      - 'row "[015276] Vase ceramic Spirituel nude L21 P8 H15cm [015276] Vase ceramic Spirituel nude L21 P8 H15cm 4,00 Code douanier : 691390980 Code barre : 3460000002898 Origine produit : Chine Unité(s) 4,52 3,6 6,90 27,60 €" [ref=f13e163]':
+                        - cell "[015276] Vase ceramic Spirituel nude L21 P8 H15cm" [ref=f13e164]:
+                          - img "[015276] Vase ceramic Spirituel nude L21 P8 H15cm" [ref=f13e166]
+                        - cell "[015276] Vase ceramic Spirituel nude L21 P8 H15cm" [ref=f13e167]
+                        - 'cell "4,00 Code douanier : 691390980 Code barre : 3460000002898 Origine produit : Chine Unité(s)" [ref=f13e168]':
+                          - text: 4,00
+                          - paragraph [ref=f13e169]: "Code douanier : 691390980"
+                          - paragraph [ref=f13e170]: "Code barre : 3460000002898"
+                          - paragraph [ref=f13e171]: "Origine produit : Chine"
+                          - text: Unité(s)
+                        - cell "4,52" [ref=f13e172]
+                        - cell "3,6" [ref=f13e173]
+                        - cell "6,90" [ref=f13e174]
+                        - cell "27,60 €" [ref=f13e175]:
+                          - generic [ref=f13e176]: 27,60 €
+                      - 'row "[017765] Lampe Atomic chromé D25 H34cm [017765] Lampe Atomic chromé D25 H34cm DEEE : + 0.17 € 4,00 Code douanier : 94052940 Code barre : 3460000060386 Origine produit : Chine Unité(s) 8,56 5,8 35,00 140,00 €" [ref=f13e177]':
+                        - cell "[017765] Lampe Atomic chromé D25 H34cm" [ref=f13e178]:
+                          - img "[017765] Lampe Atomic chromé D25 H34cm" [ref=f13e180]
+                        - 'cell "[017765] Lampe Atomic chromé D25 H34cm DEEE : + 0.17 €" [ref=f13e181]':
+                          - generic [ref=f13e182]:
+                            - text: "[017765] Lampe Atomic chromé D25 H34cm"
+                            - text: "DEEE : + 0.17 €"
+                        - 'cell "4,00 Code douanier : 94052940 Code barre : 3460000060386 Origine produit : Chine Unité(s)" [ref=f13e183]':
+                          - text: 4,00
+                          - paragraph [ref=f13e184]: "Code douanier : 94052940"
+                          - paragraph [ref=f13e185]: "Code barre : 3460000060386"
+                          - paragraph [ref=f13e186]: "Origine produit : Chine"
+                          - text: Unité(s)
+                        - cell "8,56" [ref=f13e187]
+                        - cell "5,8" [ref=f13e188]
+                        - cell "35,00" [ref=f13e189]
+                        - cell "140,00 €" [ref=f13e190]:
+                          - generic [ref=f13e191]: 140,00 €
+                      - 'row "[017763] Lampe Atomic kaki D25 H34cm [017763] Lampe Atomic kaki D25 H34cm DEEE : + 0.17 € 4,00 Code douanier : 94052940 Code barre : 3460000060379 Origine produit : Chine Unité(s) 8,56 5,84 35,00 140,00 €" [ref=f13e192]':
+                        - cell "[017763] Lampe Atomic kaki D25 H34cm" [ref=f13e193]:
+                          - generic:
+                            - img "[017763] Lampe Atomic kaki D25 H34cm"
+                        - 'cell "[017763] Lampe Atomic kaki D25 H34cm DEEE : + 0.17 €" [ref=f13e194]':
+                          - generic [ref=f13e195]:
+                            - text: "[017763] Lampe Atomic kaki D25 H34cm"
+                            - text: "DEEE : + 0.17 €"
+                        - 'cell "4,00 Code douanier : 94052940 Code barre : 3460000060379 Origine produit : Chine Unité(s)" [ref=f13e196]':
+                          - text: 4,00
+                          - paragraph [ref=f13e197]: "Code douanier : 94052940"
+                          - paragraph [ref=f13e198]: "Code barre : 3460000060379"
+                          - paragraph [ref=f13e199]: "Origine produit : Chine"
+                          - text: Unité(s)
+                        - cell "8,56" [ref=f13e200]
+                        - cell "5,84" [ref=f13e201]
+                        - cell "35,00" [ref=f13e202]
+                        - cell "140,00 €" [ref=f13e203]:
+                          - generic [ref=f13e204]: 140,00 €
+                      - 'row "[016875] Lampe boule gm naturelle D25 H38cm [016875] Lampe boule gm naturelle D25 H38cm DEEE : + 0.17 € 4,00 Code douanier : 94052940 Code barre : 3460000037692 Origine produit : Chine Unité(s) 8,0 6,0 24,00 96,00 €" [ref=f13e205]':
+                        - cell "[016875] Lampe boule gm naturelle D25 H38cm" [ref=f13e206]:
+                          - generic:
+                            - img "[016875] Lampe boule gm naturelle D25 H38cm"
+                        - 'cell "[016875] Lampe boule gm naturelle D25 H38cm DEEE : + 0.17 €" [ref=f13e207]':
+                          - generic [ref=f13e208]:
+                            - text: "[016875] Lampe boule gm naturelle D25 H38cm"
+                            - text: "DEEE : + 0.17 €"
+                        - 'cell "4,00 Code douanier : 94052940 Code barre : 3460000037692 Origine produit : Chine Unité(s)" [ref=f13e209]':
+                          - text: 4,00
+                          - paragraph [ref=f13e210]: "Code douanier : 94052940"
+                          - paragraph [ref=f13e211]: "Code barre : 3460000037692"
+                          - paragraph [ref=f13e212]: "Origine produit : Chine"
+                          - text: Unité(s)
+                        - cell "8,0" [ref=f13e213]
+                        - cell "6,0" [ref=f13e214]
+                        - cell "24,00" [ref=f13e215]
+                        - cell "96,00 €" [ref=f13e216]:
+                          - generic [ref=f13e217]: 96,00 €
+                      - 'row "[013562] Console 2T Juju gm L100 P30 H75cm [013562] Console 2T Juju gm L100 P30 H75cm Eco-mobilier : + 0.68 € 1,00 Code douanier : 940360100 Code barre : 3457010011033 Origine produit : Chine Unité(s) 17,5 15,0 119,00 119,00 €" [ref=f13e218]':
+                        - cell "[013562] Console 2T Juju gm L100 P30 H75cm" [ref=f13e219]:
+                          - generic:
+                            - img "[013562] Console 2T Juju gm L100 P30 H75cm"
+                        - 'cell "[013562] Console 2T Juju gm L100 P30 H75cm Eco-mobilier : + 0.68 €" [ref=f13e220]':
+                          - generic [ref=f13e221]:
+                            - text: "[013562] Console 2T Juju gm L100 P30 H75cm"
+                            - text: "Eco-mobilier : + 0.68 €"
+                        - 'cell "1,00 Code douanier : 940360100 Code barre : 3457010011033 Origine produit : Chine Unité(s)" [ref=f13e222]':
+                          - text: 1,00
+                          - paragraph [ref=f13e223]: "Code douanier : 940360100"
+                          - paragraph [ref=f13e224]: "Code barre : 3457010011033"
+                          - paragraph [ref=f13e225]: "Origine produit : Chine"
+                          - text: Unité(s)
+                        - cell "17,5" [ref=f13e226]
+                        - cell "15,0" [ref=f13e227]
+                        - cell "119,00" [ref=f13e228]
+                        - cell "119,00 €" [ref=f13e229]:
+                          - generic [ref=f13e230]: 119,00 €
+                      - 'row "[017761] Lampe Atomic blanc cassé D25 H34cm [017761] Lampe Atomic blanc cassé D25 H34cm DEEE : + 0.17 € 4,00 Code douanier : 94052940 Code barre : 3460000060362 Origine produit : Chine Unité(s) 8,56 5,8 35,00 140,00 €" [ref=f13e231]':
+                        - cell "[017761] Lampe Atomic blanc cassé D25 H34cm" [ref=f13e232]:
+                          - generic:
+                            - img "[017761] Lampe Atomic blanc cassé D25 H34cm"
+                        - 'cell "[017761] Lampe Atomic blanc cassé D25 H34cm DEEE : + 0.17 €" [ref=f13e233]':
+                          - generic [ref=f13e234]:
+                            - text: "[017761] Lampe Atomic blanc cassé D25 H34cm"
+                            - text: "DEEE : + 0.17 €"
+                        - 'cell "4,00 Code douanier : 94052940 Code barre : 3460000060362 Origine produit : Chine Unité(s)" [ref=f13e235]':
+                          - text: 4,00
+                          - paragraph [ref=f13e236]: "Code douanier : 94052940"
+                          - paragraph [ref=f13e237]: "Code barre : 3460000060362"
+                          - paragraph [ref=f13e238]: "Origine produit : Chine"
+                          - text: Unité(s)
+                        - cell "8,56" [ref=f13e239]
+                        - cell "5,8" [ref=f13e240]
+                        - cell "35,00" [ref=f13e241]
+                        - cell "140,00 €" [ref=f13e242]:
+                          - generic [ref=f13e243]: 140,00 €
+                      - 'row "[017759] Lampe Atomic doré satiné D25 H34cm [017759] Lampe Atomic doré satiné D25 H34cm DEEE : + 0.17 € 4,00 Code douanier : 94052940 Code barre : 3460000060348 Origine produit : Chine Unité(s) 8,56 5,8 35,00 140,00 €" [ref=f13e244]':
+                        - cell "[017759] Lampe Atomic doré satiné D25 H34cm" [ref=f13e245]:
+                          - generic:
+                            - img "[017759] Lampe Atomic doré satiné D25 H34cm"
+                        - 'cell "[017759] Lampe Atomic doré satiné D25 H34cm DEEE : + 0.17 €" [ref=f13e246]':
+                          - generic [ref=f13e247]:
+                            - text: "[017759] Lampe Atomic doré satiné D25 H34cm"
+                            - text: "DEEE : + 0.17 €"
+                        - 'cell "4,00 Code douanier : 94052940 Code barre : 3460000060348 Origine produit : Chine Unité(s)" [ref=f13e248]':
+                          - text: 4,00
+                          - paragraph [ref=f13e249]: "Code douanier : 94052940"
+                          - paragraph [ref=f13e250]: "Code barre : 3460000060348"
+                          - paragraph [ref=f13e251]: "Origine produit : Chine"
+                          - text: Unité(s)
+                        - cell "8,56" [ref=f13e252]
+                        - cell "5,8" [ref=f13e253]
+                        - cell "35,00" [ref=f13e254]
+                        - cell "140,00 €" [ref=f13e255]:
+                          - generic [ref=f13e256]: 140,00 €
+                      - 'row "[016073] Chaise Suédoise noire pivotante pied foncé L57 P53,5 H76cm [016073] Chaise Suédoise noire pivotante pied foncé L57 P53,5 H76cm Eco-mobilier : + 0.69 € 1,00 Code douanier : 940161000 Code barre : 3460000019643 Origine produit : Chine Unité(s) 9,7 8,5 99,00 99,00 €" [ref=f13e257]':
+                        - cell "[016073] Chaise Suédoise noire pivotante pied foncé L57 P53,5 H76cm" [ref=f13e258]:
+                          - generic:
+                            - img "[016073] Chaise Suédoise noire pivotante pied foncé L57 P53,5 H76cm"
+                        - 'cell "[016073] Chaise Suédoise noire pivotante pied foncé L57 P53,5 H76cm Eco-mobilier : + 0.69 €" [ref=f13e259]':
+                          - generic [ref=f13e260]:
+                            - text: "[016073] Chaise Suédoise noire pivotante pied foncé L57 P53,5 H76cm"
+                            - text: "Eco-mobilier : + 0.69 €"
+                        - 'cell "1,00 Code douanier : 940161000 Code barre : 3460000019643 Origine produit : Chine Unité(s)" [ref=f13e261]':
+                          - text: 1,00
+                          - paragraph [ref=f13e262]: "Code douanier : 940161000"
+                          - paragraph [ref=f13e263]: "Code barre : 3460000019643"
+                          - paragraph [ref=f13e264]: "Origine produit : Chine"
+                          - text: Unité(s)
+                        - cell "9,7" [ref=f13e265]
+                        - cell "8,5" [ref=f13e266]
+                        - cell "99,00" [ref=f13e267]
+                        - cell "99,00 €" [ref=f13e268]:
+                          - generic [ref=f13e269]: 99,00 €
+                      - 'row "[016159] Bout de canapé Bibi écru D40 H43cm [016159] Bout de canapé Bibi écru D40 H43cm Eco-mobilier : + 0.22 € 1,00 Code douanier : 940320800 Code barre : 3460000021431 Origine produit : Inde Unité(s) 6,7 4,5 79,00 79,00 €" [ref=f13e270]':
+                        - cell "[016159] Bout de canapé Bibi écru D40 H43cm" [ref=f13e271]:
+                          - generic:
+                            - img "[016159] Bout de canapé Bibi écru D40 H43cm"
+                        - 'cell "[016159] Bout de canapé Bibi écru D40 H43cm Eco-mobilier : + 0.22 €" [ref=f13e272]':
+                          - generic [ref=f13e273]:
+                            - text: "[016159] Bout de canapé Bibi écru D40 H43cm"
+                            - text: "Eco-mobilier : + 0.22 €"
+                        - 'cell "1,00 Code douanier : 940320800 Code barre : 3460000021431 Origine produit : Inde Unité(s)" [ref=f13e274]':
+                          - text: 1,00
+                          - paragraph [ref=f13e275]: "Code douanier : 940320800"
+                          - paragraph [ref=f13e276]: "Code barre : 3460000021431"
+                          - paragraph [ref=f13e277]: "Origine produit : Inde"
+                          - text: Unité(s)
+                        - cell "6,7" [ref=f13e278]
+                        - cell "4,5" [ref=f13e279]
+                        - cell "79,00" [ref=f13e280]
+                        - cell "79,00 €" [ref=f13e281]:
+                          - generic [ref=f13e282]: 79,00 €
+                      - 'row "[013558] Miroir naturel Efia pm D44cm [013558] Miroir naturel Efia pm D44cm 8,00 Code douanier : 700992000 Code barre : 3457010010999 Origine produit : Chine Unité(s) 5,76 4,24 12,90 103,20 €" [ref=f13e283]':
+                        - cell "[013558] Miroir naturel Efia pm D44cm" [ref=f13e284]:
+                          - generic:
+                            - img "[013558] Miroir naturel Efia pm D44cm"
+                        - cell "[013558] Miroir naturel Efia pm D44cm" [ref=f13e285]
+                        - 'cell "8,00 Code douanier : 700992000 Code barre : 3457010010999 Origine produit : Chine Unité(s)" [ref=f13e286]':
+                          - text: 8,00
+                          - paragraph [ref=f13e287]: "Code douanier : 700992000"
+                          - paragraph [ref=f13e288]: "Code barre : 3457010010999"
+                          - paragraph [ref=f13e289]: "Origine produit : Chine"
+                          - text: Unité(s)
+                        - cell "5,76" [ref=f13e290]
+                        - cell "4,24" [ref=f13e291]
+                        - cell "12,90" [ref=f13e292]
+                        - cell "103,20 €" [ref=f13e293]:
+                          - generic [ref=f13e294]: 103,20 €
+                      - 'row "[013563] Console 2T Juju pm L80 P30 H75cm [013563] Console 2T Juju pm L80 P30 H75cm Eco-mobilier : + 0.68 € 1,00 Code douanier : 940360100 Code barre : 3457010011040 Origine produit : Chine Unité(s) 15,0 13,0 109,00 109,00 €" [ref=f13e295]':
+                        - cell "[013563] Console 2T Juju pm L80 P30 H75cm" [ref=f13e296]:
+                          - generic:
+                            - img "[013563] Console 2T Juju pm L80 P30 H75cm"
+                        - 'cell "[013563] Console 2T Juju pm L80 P30 H75cm Eco-mobilier : + 0.68 €" [ref=f13e297]':
+                          - generic [ref=f13e298]:
+                            - text: "[013563] Console 2T Juju pm L80 P30 H75cm"
+                            - text: "Eco-mobilier : + 0.68 €"
+                        - 'cell "1,00 Code douanier : 940360100 Code barre : 3457010011040 Origine produit : Chine Unité(s)" [ref=f13e299]':
+                          - text: 1,00
+                          - paragraph [ref=f13e300]: "Code douanier : 940360100"
+                          - paragraph [ref=f13e301]: "Code barre : 3457010011040"
+                          - paragraph [ref=f13e302]: "Origine produit : Chine"
+                          - text: Unité(s)
+                        - cell "15,0" [ref=f13e303]
+                        - cell "13,0" [ref=f13e304]
+                        - cell "109,00" [ref=f13e305]
+                        - cell "109,00 €" [ref=f13e306]:
+                          - generic [ref=f13e307]: 109,00 €
+                      - row "[TransSITE] Transport (site internet) Livraison par transporteur (sous 2 à 10 jours) 1,00 Unité(s) 0,0 0,0 0,00 0,00 €" [ref=f13e308]:
+                        - cell "[TransSITE] Transport (site internet)" [ref=f13e309]:
+                          - img "[TransSITE] Transport (site internet)" [ref=f13e311]
+                        - cell "Livraison par transporteur (sous 2 à 10 jours)" [ref=f13e312]
+                        - cell "1,00 Unité(s)" [ref=f13e313]
+                        - cell "0,0" [ref=f13e314]
+                        - cell "0,0" [ref=f13e315]
+                        - cell "0,00" [ref=f13e316]
+                        - cell "0,00 €" [ref=f13e317]:
+                          - generic [ref=f13e318]: 0,00 €
+                  - table [ref=f13e322]:
+                    - rowgroup [ref=f13e323]:
+                      - row "Sous-total 2 011,80 €" [ref=f13e324]:
+                        - cell "Sous-total" [ref=f13e325]:
+                          - strong [ref=f13e326]: Sous-total
+                        - cell "2 011,80 €" [ref=f13e327]:
+                          - strong [ref=f13e328]:
+                            - generic [ref=f13e329]: 2 011,80 €
+                      - row "Total Eco-mobilier 20,30 €" [ref=f13e330]:
+                        - cell "Total Eco-mobilier" [ref=f13e331]:
+                          - strong [ref=f13e332]: Total Eco-mobilier
+                        - cell "20,30 €" [ref=f13e333]:
+                          - generic [ref=f13e334]: 20,30 €
+                      - row "Total DEEE 4,20 €" [ref=f13e335]:
+                        - cell "Total DEEE" [ref=f13e336]:
+                          - strong [ref=f13e337]: Total DEEE
+                        - cell "4,20 €" [ref=f13e338]:
+                          - generic [ref=f13e339]: 4,20 €
+                      - row "Total HT 2 036,30 €" [ref=f13e340]:
+                        - cell "Total HT" [ref=f13e341]:
+                          - strong [ref=f13e342]: Total HT
+                        - cell "2 036,30 €" [ref=f13e343]:
+                          - strong [ref=f13e344]:
+                            - generic [ref=f13e345]: 2 036,30 €
+                      - row "Total TVA 403,74 €" [ref=f13e346]:
+                        - cell "Total TVA" [ref=f13e347]:
+                          - strong [ref=f13e348]: Total TVA
+                        - cell "403,74 €" [ref=f13e349]:
+                          - generic [ref=f13e350]: 403,74 €
+                      - row "Total TTC 2 440,04 €" [ref=f13e351]:
+                        - cell "Total TTC" [ref=f13e352]:
+                          - strong [ref=f13e353]: Total TTC
+                        - cell "2 440,04 €" [ref=f13e354]:
+                          - strong [ref=f13e355]:
+                            - generic [ref=f13e356]: 2 440,04 €
+                      - row "Paid on 28/10/2024 2 440,04 €" [ref=f13e357]:
+                        - cell "Paid on 28/10/2024" [ref=f13e358]
+                        - cell "2 440,04 €" [ref=f13e359]:
+                          - generic [ref=f13e360]: 2 440,04 €
+                      - row "Amount Due 0,00 €" [ref=f13e361]:
+                        - cell "Amount Due" [ref=f13e362]:
+                          - strong [ref=f13e363]: Amount Due
+                        - cell "0,00 €" [ref=f13e364]:
+                          - generic [ref=f13e365]: 0,00 €
+                  - paragraph [ref=f13e366]:
+                    - text: "Merci d'utiliser la communication suivante pour votre paiement:"
+                    - generic [ref=f13e367]: "20145539"
+                  - paragraph [ref=f13e368]: "Conditions de règlement : Règlement immédiat"
+                - paragraph [ref=f13e369]: "Paiement par virement : IBAN FR76 3008 7338 3100 0202 0580 112 - BIC : CMCIFRPP"
+                - paragraph [ref=f13e370]: "Eori : FR34950905900052"
+              - generic [ref=f13e372]:
+                - list [ref=f13e373]:
+                  - listitem [ref=f13e374]:
+                    - img "Téléphone" [ref=f13e375]: 
+                    - text: "+33978490230"
+                  - listitem [ref=f13e376]:
+                    - img "Email" [ref=f13e377]: 
+                    - text: contact@opjet.com
+                  - listitem [ref=f13e378]:
+                    - img "Site Web" [ref=f13e379]: 
+                    - text: https://www.opjet.com
+                  - listitem [ref=f13e380]:
+                    - img "Numéro fiscal" [ref=f13e381]: 
+                    - text: "TVA: FR63349509059"
+                - generic [ref=f13e382]:
+                  - paragraph [ref=f13e383]:
+                    - strong [ref=f13e384]: OPJET - S.A.R.L. au capital de 4802 € - SIRET 349 509 059 00086 - RCS MEAUX - APE 4647Z
+                  - paragraph [ref=f13e385]:
+                    - text: "Conditions générales de vente consultables à l'adresse :"
+                    - link "https://www.opjet.com/shop/terms" [ref=f13e386] [cursor=pointer]:
+                      - /url: https://www.opjet.com/shop/terms
+                  - paragraph [ref=f13e387]: "Pénalités pour retard de paiement : 3 fois le taux d'intérêt légal. Décret du 2 octobre 2012 : indemnité forfaitaire de 40 € en cas de retard de paiement."
+        - generic [ref=e110]:
+          - heading "Historique" [level=2] [ref=e111]
+          - generic [ref=e144]:
+            - generic [ref=e146]:
+              - generic [ref=e147]: 
+              - text: 1 commentaire
+            - separator [ref=e148]
+            - generic [ref=e150]:
+              - img "Avatar" [ref=e151]
+              - generic [ref=e154]:
+                - textbox "Envoyer un message..." [ref=e155]
+                - generic [ref=e156]:
+                  - button "Envoyer" [ref=e157] [cursor=pointer]
+                  - button "" [ref=e158] [cursor=pointer]:
+                    - generic [ref=e159]: 
+            - separator [ref=e160]
+            - generic [ref=e163]:
+              - img "Avatar" [ref=e164]
+              - generic [ref=e165]:
+                - generic [ref=e166]:
+                  - heading "Romeo" [level=5] [ref=e167]
+                  - paragraph [ref=e168]: Publié sur octobre 29 2024, 9:30:10 am
+                - generic [ref=e169]:
+                  - paragraph [ref=e170]:
+                    - text: Cher VERONE,
+                    - text: Vous trouverez ci-joint la facture
+                    - strong [ref=e171]: "20145539"
+                    - text: "(référence de votre commande : S71509) d'un montant de"
+                    - strong [ref=e172]: 2 440,04 €
+                    - text: émise par OPJET.
+                    - text: Nous restons à votre disposition pour toute question complémentaire.
+                  - paragraph [ref=e173]
+                - link "Invoice_20145539.pdf Invoice_20145539.pdf" [ref=e178] [cursor=pointer]:
+                  - /url: /web/content/2235144?download=true&access_token=dcf1226c-093d-408a-aebc-543cc6a8d85f
+                  - generic "Invoice_20145539.pdf" [ref=e179]
+                  - generic [ref=e180]: Invoice_20145539.pdf
+    - generic: ×
+  - contentinfo [ref=e112]:
+    - generic [ref=e113]:
+      - generic [ref=e115]:
+        - link "" [ref=e117] [cursor=pointer]:
+          - /url: https://www.instagram.com/opjetparis/
+          - generic [ref=e118]: 
+        - paragraph [ref=e119]: ZA de la Blanche Tâche, rue Rosa Luxembourg • 80450 • Camon • France
+        - list [ref=e120]:
+          - listitem [ref=e121]:
+            - generic [ref=e122]: 
+            - link "+33 9 78 49 02 30" [ref=e124] [cursor=pointer]:
+              - /url: tel:+33 9 78 49 02 30
+          - listitem [ref=e125]:
+            - generic [ref=e126]: 
+            - link "contact@opjet.com" [ref=e128] [cursor=pointer]:
+              - /url: mailto:contact@opjet.com
+      - paragraph [ref=e131]:
+        - img [ref=e133]
+    - generic [ref=e137]:
+      - generic [ref=e138]:
+        - text: Copyright © OPJET PARIS -
+        - link "Conditions générales de vente" [ref=e139] [cursor=pointer]:
+          - /url: /shop/terms
+      - button "Français" [expanded] [ref=e141] [cursor=pointer]:
+        - img [ref=e142]
+        - text: Français
+  - dialog
+  - dialog

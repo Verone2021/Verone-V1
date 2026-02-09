@@ -1,0 +1,11 @@
+Total messages: 31 (Errors: 0, Warnings: 8)
+Returning 8 messages for level "warning"
+
+[WARNING] GoTrueClient@sb-aorroydfjsrygmosnzrl-auth-token:1 (2.80.0) 2026-02-08T20:56:10.372Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key. @ webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/@supabase+auth-js@2.80.0/node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:112
+[WARNING] ❌ Activity tracking: No authenticated user @ webpack-internal:///(app-pages-browser)/../../packages/@verone/notifications/src/hooks/use-user-activity-tracker.ts:34
+[WARNING] Image with src "/images/logo-verone-text.png" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: "auto"' or 'height: "auto"' to maintain the aspect ratio. @ webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.10_@babel+core@7.28.5_@opentelemetry+api@1.9.0_@playwright+test@1.56.1_react-_5656d4490c96d03d64daa2402f0ea280/node_modules/next/dist/shared/lib/utils/warn-once.js:15
+[WARNING] [useLinkmePendingCount] Channel closed, will reconnect on next mount @ webpack-internal:///(app-pages-browser)/../../packages/@verone/notifications/src/hooks/use-linkme-pending-count.ts:186
+[WARNING] [useProductsIncompleteCount] Channel closed, will reconnect on next mount @ webpack-internal:///(app-pages-browser)/../../packages/@verone/notifications/src/hooks/use-products-incomplete-count.ts:140
+[WARNING] [useOrdersPendingCount] Channel closed, will reconnect on next mount @ webpack-internal:///(app-pages-browser)/../../packages/@verone/notifications/src/hooks/use-orders-pending-count.ts:149
+[WARNING] [useLinkmePendingCount] Channel closed, will reconnect on next mount @ webpack-internal:///(app-pages-browser)/../../packages/@verone/notifications/src/hooks/use-linkme-pending-count.ts:186
+[WARNING] ❌ Activity tracking: No authenticated user @ webpack-internal:///(app-pages-browser)/../../packages/@verone/notifications/src/hooks/use-user-activity-tracker.ts:34

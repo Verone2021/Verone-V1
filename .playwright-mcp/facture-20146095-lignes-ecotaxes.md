@@ -1,0 +1,549 @@
+- generic [ref=e2]:
+  - banner [ref=e3]:
+    - navigation [ref=e4]:
+      - generic [ref=e5]:
+        - link "Logo of Opjet Paris Accueil" [ref=e6] [cursor=pointer]:
+          - /url: /
+          - img "Logo of Opjet Paris" [ref=e7]:
+            - img "Opjet Paris" [ref=e8]
+          - generic [ref=e9]: Accueil
+        - generic [ref=e10]:
+          - separator [ref=e15]
+          - list [ref=e16]:
+            - listitem [ref=e17]:
+              - menuitem "TOUS LES PRODUITS" [ref=e18] [cursor=pointer]
+            - listitem [ref=e19]:
+              - link "CATEGORIES" [ref=e20] [cursor=pointer]:
+                - /url: "#"
+              - text:  
+            - listitem [ref=e21]:
+              - menuitem "NOUVEAUTÉS" [ref=e22] [cursor=pointer]
+            - listitem [ref=e23]:
+              - menuitem "CATALOGUE" [ref=e24] [cursor=pointer]
+            - listitem [ref=e25]:
+              - menuitem "AIDE" [ref=e26] [cursor=pointer]
+            - listitem [ref=e27]:
+              - menuitem "Produits recommandés" [ref=e28] [cursor=pointer]
+            - listitem [ref=e29]:
+              - link "" [ref=e30] [cursor=pointer]:
+                - /url: "#"
+                - generic [ref=e31]: 
+            - listitem [ref=e32]:
+              - button "":
+                - generic [ref=e33] [cursor=pointer]: 
+            - listitem [ref=e34]:
+              - link " 59 €" [ref=e35] [cursor=pointer]:
+                - /url: /shop/cart
+                - generic [ref=e36]: 
+                - superscript [ref=e37]: 59 €
+            - listitem [ref=e38]:
+              - link " 824 €" [ref=e39] [cursor=pointer]:
+                - /url: /shop/cart
+                - generic [ref=e40]: 
+                - superscript [ref=e41]: 824 €
+            - text: 
+            - listitem [ref=e42]:
+              - button "VERONE" [ref=e43] [cursor=pointer]
+  - generic [ref=e45]:
+    - text: Plus que
+    - strong [ref=e46]: "941"
+    - strong [ref=e47]: €
+    - text: à ajouter à votre commande, Pour bénéficier des frais de port offerts
+  - generic: ×
+  - text: ×
+  - main [ref=e48]:
+    - generic [ref=e50]:
+      - list [ref=e52]:
+        - listitem [ref=e53]:
+          - link "Accueil" [ref=e54] [cursor=pointer]:
+            - /url: /my/home
+            - generic [ref=e55]: 
+        - listitem [ref=e56]:
+          - text: ">"
+          - link "Factures" [ref=e57] [cursor=pointer]:
+            - /url: /my/invoices
+        - listitem [ref=e58]: "> 20146095"
+      - group [ref=e60]:
+        - button "Précédent" [ref=e61] [cursor=pointer]:
+          - img "Précédent" [ref=e62]: 
+        - button "Suivant" [ref=e63] [cursor=pointer]:
+          - img "Suivant" [ref=e64]: 
+    - generic [ref=e68]:
+      - generic [ref=e70]:
+        - heading "1 648,75 €" [level=2] [ref=e72]:
+          - generic [ref=e73]: 1 648,75 €
+        - list [ref=e74]:
+          - listitem [ref=e75]:
+            - generic [ref=e77]:
+              - generic [ref=e78]: 
+              - text: Payé
+            - generic [ref=e79]:
+              - link " Télécharger" [ref=e81] [cursor=pointer]:
+                - /url: /my/invoices/714817?access_token=dc08c6bf-f429-40de-be26-0f2844699761&report_type=pdf&download=true
+                - generic [ref=e82]: 
+                - text: Télécharger
+              - link " Imprimer" [ref=e84] [cursor=pointer]:
+                - /url: /my/invoices/714817?access_token=dc08c6bf-f429-40de-be26-0f2844699761&report_type=pdf
+                - generic [ref=e85]: 
+                - text: Imprimer
+          - listitem [ref=e86]:
+            - strong [ref=e88]: Vendeur
+            - generic [ref=e89]:
+              - img "Contact" [ref=e91]
+              - generic [ref=e92]:
+                - generic [ref=e94]:
+                  - generic [ref=e95]: Hadassa Perrimond
+                  - generic [ref=e97]: "0614851077"
+                - link " Envoyer un message" [ref=e98] [cursor=pointer]:
+                  - /url: "#discussion"
+                  - generic [ref=e99]: 
+                  - text: Envoyer un message
+      - generic [ref=e100]:
+        - generic [ref=e102]:
+          - button "Annuler" [ref=e103] [cursor=pointer]: ×
+          - paragraph [ref=e105]: Votre paiement a été traité avec succès. Merci!
+        - generic [ref=e106]:
+          - generic [ref=e108]: 
+          - iframe [ref=e109]:
+            - main [ref=f14e3]:
+              - generic [ref=f14e5]:
+                - img "Logo" [ref=f14e6]
+                - generic [ref=f14e7]:
+                  - strong [ref=f14e9]: OPJET
+                  - generic [ref=f14e14]:
+                    - text: ZA de la Blanche Tache
+                    - text: Rue Rosa Luxembourg
+                    - text: 80450 Camon
+                    - text: FRANCE
+              - generic [ref=f14e16]:
+                - generic [ref=f14e17]:
+                  - generic [ref=f14e19]:
+                    - strong [ref=f14e20]: "Adresse de livraison:"
+                    - generic [ref=f14e22]:
+                      - generic [ref=f14e23]: VERONE, imane fraija
+                      - generic [ref=f14e26]:
+                        - text: 4 rue du perou
+                        - text: 91300 Massy
+                        - text: FRANCE
+                  - generic [ref=f14e27]:
+                    - generic [ref=f14e29]:
+                      - generic [ref=f14e30]: VERONE
+                      - generic [ref=f14e33]:
+                        - text: 229 rue saint honoré
+                        - text: 75001 paris
+                        - text: FRANCE
+                    - generic [ref=f14e34]: "TVA: FR20914588785"
+                - generic [ref=f14e35]:
+                  - heading "Facture 20146095" [level=2] [ref=f14e36]
+                  - generic [ref=f14e37]:
+                    - generic [ref=f14e38]:
+                      - strong [ref=f14e39]: "Date de la facture :"
+                      - paragraph [ref=f14e40]: 14/11/2024
+                    - generic [ref=f14e41]:
+                      - strong [ref=f14e42]: "Date d'échéance :"
+                      - paragraph [ref=f14e43]: 14/11/2024
+                    - generic [ref=f14e44]:
+                      - strong [ref=f14e45]: "Origine :"
+                      - paragraph [ref=f14e46]: S71592
+                    - generic [ref=f14e47]:
+                      - strong [ref=f14e48]: "Numéro de client :"
+                      - paragraph [ref=f14e49]: "76119"
+                  - table [ref=f14e50]:
+                    - rowgroup [ref=f14e51]:
+                      - row "Photo Description Quantité Poids Brut (kg) Poids Net (kg) Prix unitaire Montant HT" [ref=f14e52]:
+                        - columnheader "Photo" [ref=f14e53]
+                        - columnheader "Description" [ref=f14e54]
+                        - columnheader "Quantité" [ref=f14e55]
+                        - columnheader "Poids Brut (kg)" [ref=f14e56]: Poids Brut (kg)
+                        - columnheader "Poids Net (kg)" [ref=f14e57]
+                        - columnheader "Prix unitaire" [ref=f14e58]
+                        - columnheader "Montant HT" [ref=f14e59]
+                    - rowgroup [ref=f14e60]:
+                      - 'row "[017791] Lampadaire Saturne bouclette blanc D30 H130cm [017791] Lampadaire Saturne bouclette blanc D30 H130cm 1,00 Code douanier : 94052190 Code barre : 3460000061062 Origine produit : Chine Unité(s) 4,1 2,9 79,00 79,00 €" [ref=f14e61]':
+                        - cell "[017791] Lampadaire Saturne bouclette blanc D30 H130cm" [ref=f14e62]:
+                          - img "[017791] Lampadaire Saturne bouclette blanc D30 H130cm" [ref=f14e64]
+                        - cell "[017791] Lampadaire Saturne bouclette blanc D30 H130cm" [ref=f14e65]
+                        - 'cell "1,00 Code douanier : 94052190 Code barre : 3460000061062 Origine produit : Chine Unité(s)" [ref=f14e66]':
+                          - text: 1,00
+                          - paragraph [ref=f14e67]: "Code douanier : 94052190"
+                          - paragraph [ref=f14e68]: "Code barre : 3460000061062"
+                          - paragraph [ref=f14e69]: "Origine produit : Chine"
+                          - text: Unité(s)
+                        - cell "4,1" [ref=f14e70]
+                        - cell "2,9" [ref=f14e71]
+                        - cell "79,00" [ref=f14e72]
+                        - cell "79,00 €" [ref=f14e73]:
+                          - generic [ref=f14e74]: 79,00 €
+                      - 'row "[013261] Bout de canapé sellette Aya D33 H37cm [013261] Bout de canapé sellette Aya D33 H37cm Eco-mobilier : + 1.71 € 2,00 Code douanier : 44201190 Code barre : 3457010008477 Origine produit : Chine Unité(s) 16,0 15,0 49,00 98,00 €" [ref=f14e75]':
+                        - cell "[013261] Bout de canapé sellette Aya D33 H37cm" [ref=f14e76]:
+                          - img "[013261] Bout de canapé sellette Aya D33 H37cm" [ref=f14e78]
+                        - 'cell "[013261] Bout de canapé sellette Aya D33 H37cm Eco-mobilier : + 1.71 €" [ref=f14e79]':
+                          - generic [ref=f14e80]:
+                            - text: "[013261] Bout de canapé sellette Aya D33 H37cm"
+                            - text: "Eco-mobilier : + 1.71 €"
+                        - 'cell "2,00 Code douanier : 44201190 Code barre : 3457010008477 Origine produit : Chine Unité(s)" [ref=f14e81]':
+                          - text: 2,00
+                          - paragraph [ref=f14e82]: "Code douanier : 44201190"
+                          - paragraph [ref=f14e83]: "Code barre : 3457010008477"
+                          - paragraph [ref=f14e84]: "Origine produit : Chine"
+                          - text: Unité(s)
+                        - cell "16,0" [ref=f14e85]
+                        - cell "15,0" [ref=f14e86]
+                        - cell "49,00" [ref=f14e87]
+                        - cell "98,00 €" [ref=f14e88]:
+                          - generic [ref=f14e89]: 98,00 €
+                      - 'row "[013565] Chevet 1T Juju gm L40 P30 H60cm [013565] Chevet 1T Juju gm L40 P30 H60cm Eco-mobilier : + 0.68 € 2,00 Code douanier : 940350000 Code barre : 3457010011064 Origine produit : Chine Unité(s) 16,0 13,0 59,00 118,00 €" [ref=f14e90]':
+                        - cell "[013565] Chevet 1T Juju gm L40 P30 H60cm" [ref=f14e91]:
+                          - img "[013565] Chevet 1T Juju gm L40 P30 H60cm" [ref=f14e93]
+                        - 'cell "[013565] Chevet 1T Juju gm L40 P30 H60cm Eco-mobilier : + 0.68 €" [ref=f14e94]':
+                          - generic [ref=f14e95]:
+                            - text: "[013565] Chevet 1T Juju gm L40 P30 H60cm"
+                            - text: "Eco-mobilier : + 0.68 €"
+                        - 'cell "2,00 Code douanier : 940350000 Code barre : 3457010011064 Origine produit : Chine Unité(s)" [ref=f14e96]':
+                          - text: 2,00
+                          - paragraph [ref=f14e97]: "Code douanier : 940350000"
+                          - paragraph [ref=f14e98]: "Code barre : 3457010011064"
+                          - paragraph [ref=f14e99]: "Origine produit : Chine"
+                          - text: Unité(s)
+                        - cell "16,0" [ref=f14e100]
+                        - cell "13,0" [ref=f14e101]
+                        - cell "59,00" [ref=f14e102]
+                        - cell "118,00 €" [ref=f14e103]:
+                          - generic [ref=f14e104]: 118,00 €
+                      - 'row "[015190] Vase ceramic Double blanc D15 H20,2cm [015190] Vase ceramic Double blanc D15 H20,2cm 6,00 Code douanier : 691390980 Code barre : 3460000001952 Origine produit : Chine Unité(s) 4,98 4,5 8,90 53,40 €" [ref=f14e105]':
+                        - cell "[015190] Vase ceramic Double blanc D15 H20,2cm" [ref=f14e106]:
+                          - img "[015190] Vase ceramic Double blanc D15 H20,2cm" [ref=f14e108]
+                        - cell "[015190] Vase ceramic Double blanc D15 H20,2cm" [ref=f14e109]
+                        - 'cell "6,00 Code douanier : 691390980 Code barre : 3460000001952 Origine produit : Chine Unité(s)" [ref=f14e110]':
+                          - text: 6,00
+                          - paragraph [ref=f14e111]: "Code douanier : 691390980"
+                          - paragraph [ref=f14e112]: "Code barre : 3460000001952"
+                          - paragraph [ref=f14e113]: "Origine produit : Chine"
+                          - text: Unité(s)
+                        - cell "4,98" [ref=f14e114]
+                        - cell "4,5" [ref=f14e115]
+                        - cell "8,90" [ref=f14e116]
+                        - cell "53,40 €" [ref=f14e117]:
+                          - generic [ref=f14e118]: 53,40 €
+                      - 'row "[017308] Vide poche cœur vert L15,2 P15 H3cm [017308] Vide poche cœur vert L15,2 P15 H3cm 6,00 Code douanier : 691390980 Code barre : 3460000046656 Origine produit : Chine Unité(s) 1,32 1,08 4,99 29,94 €" [ref=f14e119]':
+                        - cell "[017308] Vide poche cœur vert L15,2 P15 H3cm" [ref=f14e120]:
+                          - img "[017308] Vide poche cœur vert L15,2 P15 H3cm" [ref=f14e122]
+                        - cell "[017308] Vide poche cœur vert L15,2 P15 H3cm" [ref=f14e123]
+                        - 'cell "6,00 Code douanier : 691390980 Code barre : 3460000046656 Origine produit : Chine Unité(s)" [ref=f14e124]':
+                          - text: 6,00
+                          - paragraph [ref=f14e125]: "Code douanier : 691390980"
+                          - paragraph [ref=f14e126]: "Code barre : 3460000046656"
+                          - paragraph [ref=f14e127]: "Origine produit : Chine"
+                          - text: Unité(s)
+                        - cell "1,32" [ref=f14e128]
+                        - cell "1,08" [ref=f14e129]
+                        - cell "4,99" [ref=f14e130]
+                        - cell "29,94 €" [ref=f14e131]:
+                          - generic [ref=f14e132]: 29,94 €
+                      - 'row "[015795] Fauteuil Eve tissu bouclette rouille L58 P73 H71cm [015795] Fauteuil Eve tissu bouclette rouille L58 P73 H71cm Eco-mobilier : + 2.17 € 1,00 Code douanier : 940161000 Code barre : 3460000011210 Origine produit : Chine Unité(s) 10,0 8,0 109,00 109,00 €" [ref=f14e133]':
+                        - cell "[015795] Fauteuil Eve tissu bouclette rouille L58 P73 H71cm" [ref=f14e134]:
+                          - img "[015795] Fauteuil Eve tissu bouclette rouille L58 P73 H71cm" [ref=f14e136]
+                        - 'cell "[015795] Fauteuil Eve tissu bouclette rouille L58 P73 H71cm Eco-mobilier : + 2.17 €" [ref=f14e137]':
+                          - generic [ref=f14e138]:
+                            - text: "[015795] Fauteuil Eve tissu bouclette rouille L58 P73 H71cm"
+                            - text: "Eco-mobilier : + 2.17 €"
+                        - 'cell "1,00 Code douanier : 940161000 Code barre : 3460000011210 Origine produit : Chine Unité(s)" [ref=f14e139]':
+                          - text: 1,00
+                          - paragraph [ref=f14e140]: "Code douanier : 940161000"
+                          - paragraph [ref=f14e141]: "Code barre : 3460000011210"
+                          - paragraph [ref=f14e142]: "Origine produit : Chine"
+                          - text: Unité(s)
+                        - cell "10,0" [ref=f14e143]
+                        - cell "8,0" [ref=f14e144]
+                        - cell "109,00" [ref=f14e145]
+                        - cell "109,00 €" [ref=f14e146]:
+                          - generic [ref=f14e147]: 109,00 €
+                      - 'row "[015797] Fauteuil Eve tissu bouclette bleu vert doux L58 P73 H71cm [015797] Fauteuil Eve tissu bouclette bleu vert doux L58 P73 H71cm Eco-mobilier : + 2.17 € 1,00 Code douanier : 940161000 Code barre : 3460000011234 Origine produit : Chine Unité(s) 9,5 8,0 109,00 109,00 €" [ref=f14e148]':
+                        - cell "[015797] Fauteuil Eve tissu bouclette bleu vert doux L58 P73 H71cm" [ref=f14e149]:
+                          - img "[015797] Fauteuil Eve tissu bouclette bleu vert doux L58 P73 H71cm" [ref=f14e151]
+                        - 'cell "[015797] Fauteuil Eve tissu bouclette bleu vert doux L58 P73 H71cm Eco-mobilier : + 2.17 €" [ref=f14e152]':
+                          - generic [ref=f14e153]:
+                            - text: "[015797] Fauteuil Eve tissu bouclette bleu vert doux L58 P73 H71cm"
+                            - text: "Eco-mobilier : + 2.17 €"
+                        - 'cell "1,00 Code douanier : 940161000 Code barre : 3460000011234 Origine produit : Chine Unité(s)" [ref=f14e154]':
+                          - text: 1,00
+                          - paragraph [ref=f14e155]: "Code douanier : 940161000"
+                          - paragraph [ref=f14e156]: "Code barre : 3460000011234"
+                          - paragraph [ref=f14e157]: "Origine produit : Chine"
+                          - text: Unité(s)
+                        - cell "9,5" [ref=f14e158]
+                        - cell "8,0" [ref=f14e159]
+                        - cell "109,00" [ref=f14e160]
+                        - cell "109,00 €" [ref=f14e161]:
+                          - generic [ref=f14e162]: 109,00 €
+                      - 'row "[017143] Bout de canapé Bibi marron D40 H43cm [017143] Bout de canapé Bibi marron D40 H43cm Eco-mobilier : + 0.22 € 1,00 Code douanier : 940320800 Code barre : 3460000042719 Origine produit : Inde Unité(s) 6,7 4,5 79,00 79,00 €" [ref=f14e163]':
+                        - cell "[017143] Bout de canapé Bibi marron D40 H43cm" [ref=f14e164]:
+                          - img "[017143] Bout de canapé Bibi marron D40 H43cm" [ref=f14e166]
+                        - 'cell "[017143] Bout de canapé Bibi marron D40 H43cm Eco-mobilier : + 0.22 €" [ref=f14e167]':
+                          - generic [ref=f14e168]:
+                            - text: "[017143] Bout de canapé Bibi marron D40 H43cm"
+                            - text: "Eco-mobilier : + 0.22 €"
+                        - 'cell "1,00 Code douanier : 940320800 Code barre : 3460000042719 Origine produit : Inde Unité(s)" [ref=f14e169]':
+                          - text: 1,00
+                          - paragraph [ref=f14e170]: "Code douanier : 940320800"
+                          - paragraph [ref=f14e171]: "Code barre : 3460000042719"
+                          - paragraph [ref=f14e172]: "Origine produit : Inde"
+                          - text: Unité(s)
+                        - cell "6,7" [ref=f14e173]
+                        - cell "4,5" [ref=f14e174]
+                        - cell "79,00" [ref=f14e175]
+                        - cell "79,00 €" [ref=f14e176]:
+                          - generic [ref=f14e177]: 79,00 €
+                      - 'row "[017145] Bout de canapé Bibi bleu vert doux D40 H43cm [017145] Bout de canapé Bibi bleu vert doux D40 H43cm Eco-mobilier : + 0.22 € 1,00 Code douanier : 940320800 Code barre : 3460000042733 Origine produit : Inde Unité(s) 6,7 4,5 79,00 79,00 €" [ref=f14e178]':
+                        - cell "[017145] Bout de canapé Bibi bleu vert doux D40 H43cm" [ref=f14e179]:
+                          - img "[017145] Bout de canapé Bibi bleu vert doux D40 H43cm" [ref=f14e181]
+                        - 'cell "[017145] Bout de canapé Bibi bleu vert doux D40 H43cm Eco-mobilier : + 0.22 €" [ref=f14e182]':
+                          - generic [ref=f14e183]:
+                            - text: "[017145] Bout de canapé Bibi bleu vert doux D40 H43cm"
+                            - text: "Eco-mobilier : + 0.22 €"
+                        - 'cell "1,00 Code douanier : 940320800 Code barre : 3460000042733 Origine produit : Inde Unité(s)" [ref=f14e184]':
+                          - text: 1,00
+                          - paragraph [ref=f14e185]: "Code douanier : 940320800"
+                          - paragraph [ref=f14e186]: "Code barre : 3460000042733"
+                          - paragraph [ref=f14e187]: "Origine produit : Inde"
+                          - text: Unité(s)
+                        - cell "6,7" [ref=f14e188]
+                        - cell "4,5" [ref=f14e189]
+                        - cell "79,00" [ref=f14e190]
+                        - cell "79,00 €" [ref=f14e191]:
+                          - generic [ref=f14e192]: 79,00 €
+                      - 'row "[016748] Commode Marguerite L80 P38 H90cm [016748] Commode Marguerite L80 P38 H90cm 1,00 Code douanier : 940360900 Code barre : 3460000034844 Origine produit : Chine Unité(s) 15,95 14,75 199,00 199,00 €" [ref=f14e193]':
+                        - cell "[016748] Commode Marguerite L80 P38 H90cm" [ref=f14e194]:
+                          - img "[016748] Commode Marguerite L80 P38 H90cm" [ref=f14e196]
+                        - cell "[016748] Commode Marguerite L80 P38 H90cm" [ref=f14e197]
+                        - 'cell "1,00 Code douanier : 940360900 Code barre : 3460000034844 Origine produit : Chine Unité(s)" [ref=f14e198]':
+                          - text: 1,00
+                          - paragraph [ref=f14e199]: "Code douanier : 940360900"
+                          - paragraph [ref=f14e200]: "Code barre : 3460000034844"
+                          - paragraph [ref=f14e201]: "Origine produit : Chine"
+                          - text: Unité(s)
+                        - cell "15,95" [ref=f14e202]
+                        - cell "14,75" [ref=f14e203]
+                        - cell "199,00" [ref=f14e204]
+                        - cell "199,00 €" [ref=f14e205]:
+                          - generic [ref=f14e206]: 199,00 €
+                      - 'row "[016749] Chevet Marguerite L35 P35 H80cm [016749] Chevet Marguerite L35 P35 H80cm Eco-mobilier : + 0.68 € 1,00 Code douanier : 940360900 Code barre : 3460000034851 Origine produit : Chine Unité(s) 8,2 8,2 98,00 98,00 €" [ref=f14e207]':
+                        - cell "[016749] Chevet Marguerite L35 P35 H80cm" [ref=f14e208]:
+                          - generic:
+                            - img "[016749] Chevet Marguerite L35 P35 H80cm"
+                        - 'cell "[016749] Chevet Marguerite L35 P35 H80cm Eco-mobilier : + 0.68 €" [ref=f14e209]':
+                          - generic [ref=f14e210]:
+                            - text: "[016749] Chevet Marguerite L35 P35 H80cm"
+                            - text: "Eco-mobilier : + 0.68 €"
+                        - 'cell "1,00 Code douanier : 940360900 Code barre : 3460000034851 Origine produit : Chine Unité(s)" [ref=f14e211]':
+                          - text: 1,00
+                          - paragraph [ref=f14e212]: "Code douanier : 940360900"
+                          - paragraph [ref=f14e213]: "Code barre : 3460000034851"
+                          - paragraph [ref=f14e214]: "Origine produit : Chine"
+                          - text: Unité(s)
+                        - cell "8,2" [ref=f14e215]
+                        - cell "8,2" [ref=f14e216]
+                        - cell "98,00" [ref=f14e217]
+                        - cell "98,00 €" [ref=f14e218]:
+                          - generic [ref=f14e219]: 98,00 €
+                      - 'row "[015876] Console Roméo L120 P40,5 H71cm [015876] Console Roméo L120 P40,5 H71cm 1,00 Code douanier : 940383000 Code barre : 3460000014280 Origine produit : Chine Unité(s) 9,7 8,5 159,00 159,00 €" [ref=f14e220]':
+                        - cell "[015876] Console Roméo L120 P40,5 H71cm" [ref=f14e221]:
+                          - generic:
+                            - img "[015876] Console Roméo L120 P40,5 H71cm"
+                        - cell "[015876] Console Roméo L120 P40,5 H71cm" [ref=f14e222]
+                        - 'cell "1,00 Code douanier : 940383000 Code barre : 3460000014280 Origine produit : Chine Unité(s)" [ref=f14e223]':
+                          - text: 1,00
+                          - paragraph [ref=f14e224]: "Code douanier : 940383000"
+                          - paragraph [ref=f14e225]: "Code barre : 3460000014280"
+                          - paragraph [ref=f14e226]: "Origine produit : Chine"
+                          - text: Unité(s)
+                        - cell "9,7" [ref=f14e227]
+                        - cell "8,5" [ref=f14e228]
+                        - cell "159,00" [ref=f14e229]
+                        - cell "159,00 €" [ref=f14e230]:
+                          - generic [ref=f14e231]: 159,00 €
+                      - 'row "[015326] Chaise Scandy rouille L48 P43 H83cm [015326] Chaise Scandy rouille L48 P43 H83cm Eco-mobilier : + 0.49 € 4,00 Code douanier : 940161000 Code barre : 3460000003666 Origine produit : Chine Unité(s) 22,0 20,0 17,00 68,00 €" [ref=f14e232]':
+                        - cell "[015326] Chaise Scandy rouille L48 P43 H83cm" [ref=f14e233]:
+                          - generic:
+                            - img "[015326] Chaise Scandy rouille L48 P43 H83cm"
+                        - 'cell "[015326] Chaise Scandy rouille L48 P43 H83cm Eco-mobilier : + 0.49 €" [ref=f14e234]':
+                          - generic [ref=f14e235]:
+                            - text: "[015326] Chaise Scandy rouille L48 P43 H83cm"
+                            - text: "Eco-mobilier : + 0.49 €"
+                        - 'cell "4,00 Code douanier : 940161000 Code barre : 3460000003666 Origine produit : Chine Unité(s)" [ref=f14e236]':
+                          - text: 4,00
+                          - paragraph [ref=f14e237]: "Code douanier : 940161000"
+                          - paragraph [ref=f14e238]: "Code barre : 3460000003666"
+                          - paragraph [ref=f14e239]: "Origine produit : Chine"
+                          - text: Unité(s)
+                        - cell "22,0" [ref=f14e240]
+                        - cell "20,0" [ref=f14e241]
+                        - cell "17,00" [ref=f14e242]
+                        - cell "68,00 €" [ref=f14e243]:
+                          - generic [ref=f14e244]: 68,00 €
+                      - 'row "[015320] Chaise Scandy vert thym L48 P43 H83cm [015320] Chaise Scandy vert thym L48 P43 H83cm Eco-mobilier : + 0.49 € 4,00 Code douanier : 940161000 Code barre : 3460000003604 Origine produit : Chine Unité(s) 22,0 20,0 20,99 83,96 €" [ref=f14e245]':
+                        - cell "[015320] Chaise Scandy vert thym L48 P43 H83cm" [ref=f14e246]:
+                          - generic:
+                            - img "[015320] Chaise Scandy vert thym L48 P43 H83cm"
+                        - 'cell "[015320] Chaise Scandy vert thym L48 P43 H83cm Eco-mobilier : + 0.49 €" [ref=f14e247]':
+                          - generic [ref=f14e248]:
+                            - text: "[015320] Chaise Scandy vert thym L48 P43 H83cm"
+                            - text: "Eco-mobilier : + 0.49 €"
+                        - 'cell "4,00 Code douanier : 940161000 Code barre : 3460000003604 Origine produit : Chine Unité(s)" [ref=f14e249]':
+                          - text: 4,00
+                          - paragraph [ref=f14e250]: "Code douanier : 940161000"
+                          - paragraph [ref=f14e251]: "Code barre : 3460000003604"
+                          - paragraph [ref=f14e252]: "Origine produit : Chine"
+                          - text: Unité(s)
+                        - cell "22,0" [ref=f14e253]
+                        - cell "20,0" [ref=f14e254]
+                        - cell "20,99" [ref=f14e255]
+                        - cell "83,96 €" [ref=f14e256]:
+                          - generic [ref=f14e257]: 83,96 €
+                      - row "[TransSITE] Transport (site internet) Livraison par transporteur (sous 2 à 10 jours) 1,00 Unité(s) 0,0 0,0 0,00 0,00 €" [ref=f14e258]:
+                        - cell "[TransSITE] Transport (site internet)" [ref=f14e259]:
+                          - img "[TransSITE] Transport (site internet)" [ref=f14e261]
+                        - cell "Livraison par transporteur (sous 2 à 10 jours)" [ref=f14e262]
+                        - cell "1,00 Unité(s)" [ref=f14e263]
+                        - cell "0,0" [ref=f14e264]
+                        - cell "0,0" [ref=f14e265]
+                        - cell "0,00" [ref=f14e266]
+                        - cell "0,00 €" [ref=f14e267]:
+                          - generic [ref=f14e268]: 0,00 €
+                  - table [ref=f14e272]:
+                    - rowgroup [ref=f14e273]:
+                      - row "Sous-total 1 362,30 €" [ref=f14e274]:
+                        - cell "Sous-total" [ref=f14e275]:
+                          - strong [ref=f14e276]: Sous-total
+                        - cell "1 362,30 €" [ref=f14e277]:
+                          - strong [ref=f14e278]:
+                            - generic [ref=f14e279]: 1 362,30 €
+                      - row "Total Eco-mobilier 11,66 €" [ref=f14e280]:
+                        - cell "Total Eco-mobilier" [ref=f14e281]:
+                          - strong [ref=f14e282]: Total Eco-mobilier
+                        - cell "11,66 €" [ref=f14e283]:
+                          - generic [ref=f14e284]: 11,66 €
+                      - row "Total DEEE 0,00 €" [ref=f14e285]:
+                        - cell "Total DEEE" [ref=f14e286]:
+                          - strong [ref=f14e287]: Total DEEE
+                        - cell "0,00 €" [ref=f14e288]:
+                          - generic [ref=f14e289]: 0,00 €
+                      - row "Total HT 1 373,96 €" [ref=f14e290]:
+                        - cell "Total HT" [ref=f14e291]:
+                          - strong [ref=f14e292]: Total HT
+                        - cell "1 373,96 €" [ref=f14e293]:
+                          - strong [ref=f14e294]:
+                            - generic [ref=f14e295]: 1 373,96 €
+                      - row "Total TVA 274,79 €" [ref=f14e296]:
+                        - cell "Total TVA" [ref=f14e297]:
+                          - strong [ref=f14e298]: Total TVA
+                        - cell "274,79 €" [ref=f14e299]:
+                          - generic [ref=f14e300]: 274,79 €
+                      - row "Total TTC 1 648,75 €" [ref=f14e301]:
+                        - cell "Total TTC" [ref=f14e302]:
+                          - strong [ref=f14e303]: Total TTC
+                        - cell "1 648,75 €" [ref=f14e304]:
+                          - strong [ref=f14e305]:
+                            - generic [ref=f14e306]: 1 648,75 €
+                      - row "Paid on 12/11/2024 1 648,75 €" [ref=f14e307]:
+                        - cell "Paid on 12/11/2024" [ref=f14e308]
+                        - cell "1 648,75 €" [ref=f14e309]:
+                          - generic [ref=f14e310]: 1 648,75 €
+                      - row "Amount Due 0,00 €" [ref=f14e311]:
+                        - cell "Amount Due" [ref=f14e312]:
+                          - strong [ref=f14e313]: Amount Due
+                        - cell "0,00 €" [ref=f14e314]:
+                          - generic [ref=f14e315]: 0,00 €
+                  - paragraph [ref=f14e316]:
+                    - text: "Merci d'utiliser la communication suivante pour votre paiement:"
+                    - generic [ref=f14e317]: "20146095"
+                  - paragraph [ref=f14e318]: "Conditions de règlement : Règlement immédiat"
+                - paragraph [ref=f14e319]: "Paiement par virement : IBAN FR76 3008 7338 3100 0202 0580 112 - BIC : CMCIFRPP"
+                - paragraph [ref=f14e320]: "Eori : FR34950905900052"
+              - generic [ref=f14e322]:
+                - list [ref=f14e323]:
+                  - listitem [ref=f14e324]:
+                    - img "Téléphone" [ref=f14e325]: 
+                    - text: "+33978490230"
+                  - listitem [ref=f14e326]:
+                    - img "Email" [ref=f14e327]: 
+                    - text: contact@opjet.com
+                  - listitem [ref=f14e328]:
+                    - img "Site Web" [ref=f14e329]: 
+                    - text: https://www.opjet.com
+                  - listitem [ref=f14e330]:
+                    - img "Numéro fiscal" [ref=f14e331]: 
+                    - text: "TVA: FR63349509059"
+                - generic [ref=f14e332]:
+                  - paragraph [ref=f14e333]:
+                    - strong [ref=f14e334]: OPJET - S.A.R.L. au capital de 4802 € - SIRET 349 509 059 00086 - RCS MEAUX - APE 4647Z
+                  - paragraph [ref=f14e335]:
+                    - text: "Conditions générales de vente consultables à l'adresse :"
+                    - link "https://www.opjet.com/shop/terms" [ref=f14e336] [cursor=pointer]:
+                      - /url: https://www.opjet.com/shop/terms
+                  - paragraph [ref=f14e337]: "Pénalités pour retard de paiement : 3 fois le taux d'intérêt légal. Décret du 2 octobre 2012 : indemnité forfaitaire de 40 € en cas de retard de paiement."
+        - generic [ref=e110]:
+          - heading "Historique" [level=2] [ref=e111]
+          - generic [ref=e144]:
+            - generic [ref=e146]:
+              - generic [ref=e147]: 
+              - text: 1 commentaire
+            - separator [ref=e148]
+            - generic [ref=e150]:
+              - img "Avatar" [ref=e151]
+              - generic [ref=e154]:
+                - textbox "Envoyer un message..." [ref=e155]
+                - generic [ref=e156]:
+                  - button "Envoyer" [ref=e157] [cursor=pointer]
+                  - button "" [ref=e158] [cursor=pointer]:
+                    - generic [ref=e159]: 
+            - separator [ref=e160]
+            - generic [ref=e163]:
+              - img "Avatar" [ref=e164]
+              - generic [ref=e165]:
+                - generic [ref=e166]:
+                  - heading "Romeo" [level=5] [ref=e167]
+                  - paragraph [ref=e168]: Publié sur novembre 14 2024, 1:50:06 pm
+                - generic [ref=e169]:
+                  - paragraph [ref=e170]:
+                    - text: Cher VERONE,
+                    - text: Vous trouverez ci-joint la facture
+                    - strong [ref=e171]: "20146095"
+                    - text: "(référence de votre commande : S71592) d'un montant de"
+                    - strong [ref=e172]: 1 648,75 €
+                    - text: émise par OPJET.
+                    - text: Nous restons à votre disposition pour toute question complémentaire.
+                  - paragraph [ref=e173]
+                - link "Invoice_20146095.pdf Invoice_20146095.pdf" [ref=e178] [cursor=pointer]:
+                  - /url: /web/content/2241974?download=true&access_token=5f84af0a-dfbc-42f6-8a89-0e2e81af3723
+                  - generic "Invoice_20146095.pdf" [ref=e179]
+                  - generic [ref=e180]: Invoice_20146095.pdf
+    - generic: ×
+  - contentinfo [ref=e112]:
+    - generic [ref=e113]:
+      - generic [ref=e115]:
+        - link "" [ref=e117] [cursor=pointer]:
+          - /url: https://www.instagram.com/opjetparis/
+          - generic [ref=e118]: 
+        - paragraph [ref=e119]: ZA de la Blanche Tâche, rue Rosa Luxembourg • 80450 • Camon • France
+        - list [ref=e120]:
+          - listitem [ref=e121]:
+            - generic [ref=e122]: 
+            - link "+33 9 78 49 02 30" [ref=e124] [cursor=pointer]:
+              - /url: tel:+33 9 78 49 02 30
+          - listitem [ref=e125]:
+            - generic [ref=e126]: 
+            - link "contact@opjet.com" [ref=e128] [cursor=pointer]:
+              - /url: mailto:contact@opjet.com
+      - paragraph [ref=e131]:
+        - img [ref=e133]
+    - generic [ref=e137]:
+      - generic [ref=e138]:
+        - text: Copyright © OPJET PARIS -
+        - link "Conditions générales de vente" [ref=e139] [cursor=pointer]:
+          - /url: /shop/terms
+      - button "Français" [expanded] [ref=e141] [cursor=pointer]:
+        - img [ref=e142]
+        - text: Français
+  - dialog
+  - dialog
