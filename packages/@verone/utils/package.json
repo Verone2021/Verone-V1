@@ -17,6 +17,7 @@
     "verone"
   ],
   "dependencies": {
+    "@supabase/ssr": "^0.8.0",
     "@verone/types": "workspace:*",
     "clsx": "^2.1.0",
     "isomorphic-dompurify": "^2.28.0",
@@ -28,89 +29,89 @@
   },
   "exports": {
     ".": {
-      "types": "./src/index.ts",
-      "import": "./src/index.ts",
-      "require": "./src/index.ts"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js"
     },
     "./logger": {
-      "types": "./src/logger.ts",
-      "import": "./src/logger.ts",
-      "require": "./src/logger.ts"
+      "types": "./dist/logger.d.ts",
+      "import": "./dist/logger.js",
+      "require": "./dist/logger.js"
     },
     "./excel-utils": {
-      "types": "./src/excel-utils.ts",
-      "import": "./src/excel-utils.ts",
-      "require": "./src/excel-utils.ts"
+      "types": "./dist/excel-utils.d.ts",
+      "import": "./dist/excel-utils.js",
+      "require": "./dist/excel-utils.js"
     },
     "./validation": {
-      "types": "./src/validation/index.ts",
-      "import": "./src/validation/index.ts",
-      "require": "./src/validation/index.ts"
+      "types": "./dist/validation/index.d.ts",
+      "import": "./dist/validation/index.js",
+      "require": "./dist/validation/index.js"
     },
     "./upload": {
-      "types": "./src/upload/index.ts",
-      "import": "./src/upload/index.ts",
-      "require": "./src/upload/index.ts"
+      "types": "./dist/upload/index.d.ts",
+      "import": "./dist/upload/index.js",
+      "require": "./dist/upload/index.js"
     },
     "./supabase": {
-      "types": "./src/supabase.ts",
-      "import": "./src/supabase.ts",
-      "require": "./src/supabase.ts"
+      "types": "./dist/supabase.d.ts",
+      "import": "./dist/supabase.js",
+      "require": "./dist/supabase.js"
     },
     "./supabase/client": {
-      "types": "./src/supabase/client.ts",
-      "import": "./src/supabase/client.ts",
-      "require": "./src/supabase/client.ts"
+      "types": "./dist/supabase/client.d.ts",
+      "import": "./dist/supabase/client.js",
+      "require": "./dist/supabase/client.js"
     },
     "./supabase/server": {
-      "types": "./src/supabase/server.ts",
-      "import": "./src/supabase/server.ts",
-      "require": "./src/supabase/server.ts"
+      "types": "./dist/supabase/server.d.ts",
+      "import": "./dist/supabase/server.js",
+      "require": "./dist/supabase/server.js"
     },
     "./export": {
-      "types": "./src/export/csv.ts",
-      "import": "./src/export/csv.ts",
-      "require": "./src/export/csv.ts"
+      "types": "./dist/export/csv.d.ts",
+      "import": "./dist/export/csv.js",
+      "require": "./dist/export/csv.js"
     },
     "./analytics": {
-      "types": "./src/analytics/index.ts",
-      "import": "./src/analytics/index.ts",
-      "require": "./src/analytics/index.ts"
+      "types": "./dist/analytics/index.d.ts",
+      "import": "./dist/analytics/index.js",
+      "require": "./dist/analytics/index.js"
     },
     "./monitoring": {
-      "types": "./src/monitoring/index.ts",
-      "import": "./src/monitoring/index.ts",
-      "require": "./src/monitoring/index.ts"
+      "types": "./dist/monitoring/index.d.ts",
+      "import": "./dist/monitoring/index.js",
+      "require": "./dist/monitoring/index.js"
     },
     "./deployed-modules": {
-      "types": "./src/deployed-modules.ts",
-      "import": "./src/deployed-modules.ts",
-      "require": "./src/deployed-modules.ts"
+      "types": "./dist/deployed-modules.d.ts",
+      "import": "./dist/deployed-modules.js",
+      "require": "./dist/deployed-modules.js"
     },
     "./feature-flags": {
-      "types": "./src/feature-flags.ts",
-      "import": "./src/feature-flags.ts",
-      "require": "./src/feature-flags.ts"
+      "types": "./dist/feature-flags.d.ts",
+      "import": "./dist/feature-flags.js",
+      "require": "./dist/feature-flags.js"
     },
     "./business-rules": {
-      "types": "./src/business-rules/naming-rules.ts",
-      "import": "./src/business-rules/naming-rules.ts",
-      "require": "./src/business-rules/naming-rules.ts"
+      "types": "./dist/business-rules/naming-rules.d.ts",
+      "import": "./dist/business-rules/naming-rules.js",
+      "require": "./dist/business-rules/naming-rules.js"
     },
     "./security": {
-      "types": "./src/security/index.ts",
-      "import": "./src/security/index.ts",
-      "require": "./src/security/index.ts"
+      "types": "./dist/security/index.d.ts",
+      "import": "./dist/security/index.js",
+      "require": "./dist/security/index.js"
     },
     "./hooks": {
-      "types": "./src/hooks/index.ts",
-      "import": "./src/hooks/index.ts",
-      "require": "./src/hooks/index.ts"
+      "types": "./dist/hooks/index.d.ts",
+      "import": "./dist/hooks/index.js",
+      "require": "./dist/hooks/index.js"
     },
     "./middleware/enforce-app-isolation": {
-      "types": "./src/middleware/enforce-app-isolation.ts",
-      "import": "./src/middleware/enforce-app-isolation.ts",
-      "require": "./src/middleware/enforce-app-isolation.ts"
+      "types": "./dist/middleware/enforce-app-isolation.d.ts",
+      "import": "./dist/middleware/enforce-app-isolation.js",
+      "require": "./dist/middleware/enforce-app-isolation.js"
     }
   }
 }
