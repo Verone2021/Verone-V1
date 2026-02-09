@@ -1,30 +1,16 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import Image from 'next/image';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 
 import { useToggle } from '@verone/hooks';
 import { ButtonV2 } from '@verone/ui';
 import { Card, CardContent, CardHeader } from '@verone/ui';
 import { Popover, PopoverTrigger, PopoverContent } from '@verone/ui';
 import { createClient } from '@verone/utils/supabase/client';
-import {
-  Eye,
-  EyeOff,
-  LogIn,
-  Mail,
-  Lock,
-  Info,
-  ShieldAlert,
-} from 'lucide-react';
-
-/** Map URL error codes to user-friendly messages */
-const URL_ERROR_MESSAGES: Record<string, string> = {
-  no_access:
-    "Ce compte n'a pas accès au Back Office. Vérifiez que vous utilisez le bon email.",
-};
+import { Eye, EyeOff, LogIn, Mail, Lock, Info } from 'lucide-react';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -32,17 +18,7 @@ export default function LoginPage() {
   const [showPassword, toggleShowPassword] = useToggle(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [urlError, setUrlError] = useState('');
   const router = useRouter();
-  const searchParams = useSearchParams();
-
-  // Read error from URL query params (set by middleware app isolation)
-  useEffect(() => {
-    const errorCode = searchParams.get('error');
-    if (errorCode && errorCode in URL_ERROR_MESSAGES) {
-      setUrlError(URL_ERROR_MESSAGES[errorCode]);
-    }
-  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -133,14 +109,6 @@ export default function LoginPage() {
           </CardHeader>
 
           <CardContent className="space-y-6 pb-8">
-            {/* URL error banner (e.g. no_access from middleware) */}
-            {urlError && (
-              <div className="flex items-start gap-3 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
-                <ShieldAlert className="h-5 w-5 text-amber-500 mt-0.5 shrink-0" />
-                <span>{urlError}</span>
-              </div>
-            )}
-
             <form
               onSubmit={e => {
                 void handleSubmit(e).catch((error: unknown) => {

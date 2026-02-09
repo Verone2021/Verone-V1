@@ -1,14 +1,8 @@
 /**
- * Protected Layout — Back-Office (Mur Porteur)
+ * Protected Layout — Back-Office
  *
- * Verifie l'authentification ET le role back-office AVANT de render.
- * Tourne en Node.js complet sur Vercel (pas Edge Runtime).
- *
- * Verification en 2 etapes :
- * 1. getUser() — valide le JWT avec le serveur Supabase
- * 2. user_app_roles — verifie role actif pour back-office
- *
- * Si refus : signOut + redirect vers /login?error=no_access
+ * Verifie l'authentification ET le role back-office cote serveur.
+ * Base sur le pattern f352e5f3 (prouve fonctionnel) + verification role.
  */
 import { redirect } from 'next/navigation';
 
@@ -23,7 +17,6 @@ export default async function ProtectedLayout({
 }) {
   const supabase = await createServerClient();
 
-  // Etape 1 : Verifier l'authentification (getUser, pas getSession)
   const {
     data: { user },
     error,
@@ -33,7 +26,7 @@ export default async function ProtectedLayout({
     redirect('/login');
   }
 
-  // Etape 2 : Verifier le role back-office dans user_app_roles
+  // Verification role back-office (ajout par rapport a f352e5f3)
   const { data: role } = await supabase
     .from('user_app_roles')
     .select('id')
@@ -43,8 +36,9 @@ export default async function ProtectedLayout({
     .maybeSingle();
 
   if (!role) {
-    await supabase.auth.signOut();
-    redirect('/login?error=no_access');
+    // PAS de signOut() ici — modifier les cookies pendant le render serveur
+    // peut causer des mismatches d'hydration. Simple redirect suffit.
+    redirect('/login');
   }
 
   return <>{children}</>;
