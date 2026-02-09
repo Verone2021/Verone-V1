@@ -71,7 +71,7 @@ const ALLOWED_ROLES = ['enseigne_admin', 'organisation_admin'];
 function OrganisationsPageContent(): JSX.Element | null {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user, linkMeRole, loading, initializing } = useAuth();
+  const { user, linkMeRole, initializing } = useAuth();
   const { data: affiliate, isLoading: affiliateLoading } = useUserAffiliate();
 
   // Données
@@ -155,22 +155,21 @@ function OrganisationsPageContent(): JSX.Element | null {
 
   // Rediriger si non connecté
   useEffect(() => {
-    if (!loading && !initializing && !user) {
+    if (!initializing && !user) {
       router.push('/login');
     }
-  }, [user, loading, initializing, router]);
+  }, [user, initializing, router]);
 
   // Rediriger si rôle non autorisé
   useEffect(() => {
     if (
-      !loading &&
       !initializing &&
       linkMeRole &&
       !ALLOWED_ROLES.includes(linkMeRole.role)
     ) {
       router.push('/dashboard');
     }
-  }, [linkMeRole, loading, initializing, router]);
+  }, [linkMeRole, initializing, router]);
 
   // Reset page quand la recherche ou le tab change
   useEffect(() => {
@@ -252,7 +251,7 @@ function OrganisationsPageContent(): JSX.Element | null {
   };
 
   // Afficher loader pendant chargement
-  if (loading || initializing) {
+  if (initializing) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
         <Loader2 className="h-8 w-8 animate-spin text-gray-400" />

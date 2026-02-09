@@ -50,7 +50,7 @@ import {
 
 export default function ProfilPage(): JSX.Element | null {
   const router = useRouter();
-  const { user, linkMeRole, loading } = useAuth();
+  const { user, linkMeRole, initializing: loading } = useAuth();
   const { data: profile, isLoading: profileLoading } = useUserProfile();
   const {
     mutate: updateProfile,

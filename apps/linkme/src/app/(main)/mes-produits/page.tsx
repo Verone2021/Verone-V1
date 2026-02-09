@@ -94,7 +94,7 @@ export default function MesProduitsPage(): JSX.Element {
 
 function MesProduitsContent(): JSX.Element | null {
   const router = useRouter();
-  const { user, linkMeRole, loading: authLoading } = useAuth();
+  const { user, linkMeRole, initializing: authLoading } = useAuth();
   const { data: products, isLoading } = useAffiliateProducts();
 
   const canCreate = linkMeRole && CAN_CREATE_ROLES.includes(linkMeRole.role);

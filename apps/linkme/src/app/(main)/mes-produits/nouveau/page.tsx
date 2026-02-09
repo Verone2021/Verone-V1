@@ -49,7 +49,7 @@ interface FormData {
 
 export default function NouveauProduitPage() {
   const router = useRouter();
-  const { user, linkMeRole, loading: authLoading } = useAuth();
+  const { user, linkMeRole, initializing: authLoading } = useAuth();
   const createProduct = useCreateAffiliateProduct();
   const submitForApproval = useSubmitForApproval();
 

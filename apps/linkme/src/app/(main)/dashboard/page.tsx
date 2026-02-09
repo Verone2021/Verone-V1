@@ -43,7 +43,7 @@ import { useAffiliateDashboard } from '../../../lib/hooks/use-affiliate-dashboar
 
 export default function DashboardPage(): JSX.Element | null {
   const router = useRouter();
-  const { user, linkMeRole, loading, initializing } = useAuth();
+  const { user, linkMeRole, initializing } = useAuth();
 
   // Dashboard data (RPC optimisé - 1 requête au lieu de 6+)
   const {
@@ -55,13 +55,13 @@ export default function DashboardPage(): JSX.Element | null {
 
   // Rediriger si non connecté
   useEffect(() => {
-    if (!loading && !user) {
+    if (!initializing && !user) {
       router.push('/login');
     }
-  }, [user, loading, router]);
+  }, [user, initializing, router]);
 
   // Afficher loader pendant chargement initial ou action en cours
-  if (loading || initializing) {
+  if (initializing) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
         <Loader2 className="h-8 w-8 animate-spin text-gray-400" />

@@ -61,7 +61,7 @@ export default function EditProduitPage() {
   const productId = params.id as string;
   const isEditMode = searchParams.get('edit') === 'true';
 
-  const { user, linkMeRole, loading: authLoading } = useAuth();
+  const { user, linkMeRole, initializing: authLoading } = useAuth();
   const { data: product, isLoading: productLoading } =
     useAffiliateProduct(productId);
 

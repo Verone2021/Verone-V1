@@ -16,7 +16,7 @@
 import { useState, useEffect, Suspense } from 'react';
 
 import Image from 'next/image';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 
 import {
   LogIn,
@@ -61,7 +61,6 @@ export default function LoginPage(): JSX.Element {
 }
 
 function LoginContent(): JSX.Element {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const { signIn, initializing } = useAuth();
 
@@ -95,6 +94,7 @@ function LoginContent(): JSX.Element {
   ];
 
   const redirectUrl = searchParams.get('redirect') ?? '/dashboard';
+  const errorParam = searchParams.get('error');
 
   type GlobeApiItem = {
     id: string;
@@ -175,8 +175,9 @@ function LoginContent(): JSX.Element {
         return;
       }
 
-      // Succes : rediriger vers dashboard
-      router.push(redirectUrl);
+      // Succes : full page reload pour propager les cookies de session au serveur
+      // (router.push = soft navigation, ne renvoie pas les nouveaux cookies)
+      window.location.href = redirectUrl;
     } catch {
       setError('Une erreur est survenue. Veuillez reessayer.');
       setLoading(false);
@@ -289,7 +290,20 @@ function LoginContent(): JSX.Element {
               </div>
             )}
 
-            {/* Erreur */}
+            {/* Message d'erreur d'accès (redirigé par middleware) */}
+            {(errorParam === 'no_access' ||
+              errorParam === 'no_linkme_access') &&
+              !error && (
+                <div className="mb-5 p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-3">
+                  <AlertCircle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                  <div className="text-sm text-amber-700">
+                    Votre compte n&apos;a pas accès à LinkMe. Connectez-vous
+                    avec un compte partenaire LinkMe.
+                  </div>
+                </div>
+              )}
+
+            {/* Erreur de connexion */}
             {error && (
               <div className="mb-5 p-4 bg-red-50 border border-red-100 rounded-xl flex items-start gap-3">
                 <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
