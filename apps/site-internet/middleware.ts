@@ -1,35 +1,17 @@
 /**
- * Middleware Site-Internet — App Isolation
+ * Middleware Site-Internet - Session Refresh
  *
- * Single wall: user must have an active role in user_app_roles
- * for app='site-internet'. Otherwise → sign out + redirect to /auth/login.
+ * Gere le refresh de session Supabase et protege /compte.
+ * Le site-internet est principalement public.
  *
- * Most routes are public (products, collections, contact).
- * Only /compte/* requires authentication + role check.
- *
- * @module middleware
- * @since 2026-02-08
+ * @since 2026-02-09 - Simplifie (suppression app-isolation non necessaire)
  */
+import { type NextRequest } from 'next/server';
 
-import type { NextRequest } from 'next/server';
-
-import { enforceAppIsolation } from '@verone/utils/middleware/enforce-app-isolation';
+import { updateSession } from '@/lib/supabase/middleware';
 
 export async function middleware(request: NextRequest) {
-  return enforceAppIsolation(request, {
-    appName: 'site-internet',
-    publicRoutes: [
-      /^\/$/, // Homepage
-      /^\/produits/, // Product pages
-      /^\/collections/, // Collection pages
-      /^\/contact/, // Contact
-      /^\/auth/, // Auth pages (login, signup, etc.)
-      /^\/api\/public/, // Public APIs
-      /^\/api\/auth/, // OAuth callbacks
-    ],
-    loginPath: '/auth/login',
-    defaultRedirect: '/compte',
-  });
+  return await updateSession(request);
 }
 
 export const config = {

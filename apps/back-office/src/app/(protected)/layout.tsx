@@ -1,21 +1,51 @@
 /**
- * Protected Layout — Back-Office
+ * Protected Layout — Back-Office (Mur Porteur)
  *
- * Authentication and app isolation are handled by src/middleware.ts.
- * This layout only needs force-dynamic to prevent build-time errors
- * (no session exists at build time).
+ * Verifie l'authentification ET le role back-office AVANT de render.
+ * Tourne en Node.js complet sur Vercel (pas Edge Runtime).
  *
- * @updated 2026-02-08 - Simplified: middleware handles auth + isolation
+ * Verification en 2 etapes :
+ * 1. getUser() — valide le JWT avec le serveur Supabase
+ * 2. user_app_roles — verifie role actif pour back-office
+ *
+ * Si refus : signOut + redirect vers /login?error=no_access
  */
+import { redirect } from 'next/navigation';
 
-// Force dynamic rendering for all protected routes
-// Prevents build-time errors when auth check fails (no session at build time)
+import { createServerClient } from '@verone/utils/supabase/server';
+
 export const dynamic = 'force-dynamic';
 
-export default function ProtectedLayout({
+export default async function ProtectedLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const supabase = await createServerClient();
+
+  // Etape 1 : Verifier l'authentification (getUser, pas getSession)
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
+
+  if (error || !user) {
+    redirect('/login');
+  }
+
+  // Etape 2 : Verifier le role back-office dans user_app_roles
+  const { data: role } = await supabase
+    .from('user_app_roles')
+    .select('id')
+    .eq('user_id', user.id)
+    .eq('app', 'back-office')
+    .eq('is_active', true)
+    .maybeSingle();
+
+  if (!role) {
+    await supabase.auth.signOut();
+    redirect('/login?error=no_access');
+  }
+
   return <>{children}</>;
 }
