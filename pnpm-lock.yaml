@@ -984,9 +984,6 @@ importers:
 
   packages/@verone/utils:
     dependencies:
-      '@supabase/ssr':
-        specifier: ^0.8.0
-        version: 0.8.0(@supabase/supabase-js@2.80.0)
       '@verone/types':
         specifier: workspace:*
         version: link:../types
