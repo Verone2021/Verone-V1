@@ -29,6 +29,15 @@ interface AppIsolationConfig {
 
   /** Where to redirect authenticated users who land on the login page */
   defaultRedirect?: string;
+
+  /**
+   * Whether to sign out the user when they have no role for this app.
+   * Default: false.
+   *
+   * Set to false for apps sharing a single Supabase cookie (multi-app architecture)
+   * where signing out would disconnect the user from ALL apps.
+   */
+  signOutOnNoRole?: boolean;
 }
 
 export type { AppName, AppIsolationConfig };
@@ -81,10 +90,12 @@ export async function enforceAppIsolation(
 
     // --- Public route ---
     if (isPublic) {
-      // Redirect logged-in users away from login page
-      if (user && pathname === config.loginPath) {
+      // Redirect logged-in users away from login page (only if defaultRedirect is set)
+      // For LinkMe: user may be authenticated on another app (back-office) without a
+      // LinkMe role, so we must NOT redirect blindly from /login.
+      if (user && pathname === config.loginPath && config.defaultRedirect) {
         const url = request.nextUrl.clone();
-        url.pathname = config.defaultRedirect ?? '/';
+        url.pathname = config.defaultRedirect;
         return NextResponse.redirect(url);
       }
       return supabaseResponse;
@@ -115,8 +126,10 @@ export async function enforceAppIsolation(
       .maybeSingle();
 
     if (!role) {
-      // No role for this app → sign out so stale session doesn't persist
-      await supabase.auth.signOut();
+      // No role for this app → redirect to login with error
+      if (config.signOutOnNoRole) {
+        await supabase.auth.signOut();
+      }
       const url = request.nextUrl.clone();
       url.pathname = config.loginPath;
       url.searchParams.set('error', 'no_access');
