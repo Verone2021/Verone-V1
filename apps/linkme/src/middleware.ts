@@ -108,12 +108,11 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
   } = await supabase.auth.getUser();
 
   // Route publique → laisser passer (avec cookies rafraîchis)
+  // NB: On ne redirige PAS /login → /dashboard ici, meme si user est authentifie.
+  // Un user peut etre authentifie sur une AUTRE app (back-office) sans role LinkMe.
+  // La redirection aveugle creait une boucle infinie avec le layout qui rejette
+  // les users sans role LinkMe vers /login. La page login gere sa propre logique.
   if (isPublicRoute(pathname)) {
-    // Si connecté sur /login → rediriger vers /dashboard
-    // Note: La vérification du rôle LinkMe se fait dans AuthContext
-    if (user && pathname === '/login') {
-      return NextResponse.redirect(new URL('/dashboard', request.url));
-    }
     return supabaseResponse;
   }
 
