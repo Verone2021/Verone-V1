@@ -10,7 +10,7 @@ import {
   useInlineEdit,
   type EditableSection,
 } from '@verone/common/hooks/use-inline-edit';
-import { SupplierSelector } from '@verone/suppliers/components/selectors/SupplierSelector';
+import { SupplierSelector } from '@verone/organisations/components/suppliers';
 
 interface Product {
   id: string;

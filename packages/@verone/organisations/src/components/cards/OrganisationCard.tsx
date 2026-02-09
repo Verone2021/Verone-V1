@@ -18,7 +18,7 @@ import { colors } from '@verone/ui';
 import { getOrganisationDisplayName } from '@verone/utils/utils/organisation-helpers';
 import { SupplierCategoryBadge } from '@verone/categories/components/badges/SupplierCategoryBadge';
 import { OrganisationLogo } from '@verone/organisations/components/display/OrganisationLogo';
-import { SupplierSegmentBadge } from '@verone/suppliers/components/badges/SupplierSegmentBadge';
+import { SupplierSegmentBadge } from '../suppliers/SupplierSegmentBadge';
 
 /** Type organisation compatible avec OrganisationCard (subset de Organisation de @verone/types) */
 type OrganisationForCard = {
