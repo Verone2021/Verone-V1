@@ -6,12 +6,8 @@
 echo "⚡ Pre-commit (simplifié 2026)..."
 
 # 1. Validation format commit message (< 0.1s)
-COMMIT_MSG=$(git log -1 --pretty=%B 2>/dev/null || cat "$1" 2>/dev/null || echo "[NO-TASK] temp")
-if ! echo "$COMMIT_MSG" | grep -qE '^\[(NO-TASK|[A-Z]+-[A-Z]+-[0-9]+)\]'; then
-  echo "❌ Format commit invalide. Use: [APP-DOMAIN-NNN] type: description"
-  echo "   Exemple: [BO-FIN-001] feat: add ecotax system"
-  exit 1
-fi
+# Skip validation if no message yet (will be validated by commit-msg hook)
+# Pre-commit runs before message is written
 
 # 2. Protection branche main (< 0.1s)
 BRANCH=$(git branch --show-current)
@@ -24,7 +20,7 @@ fi
 if ls supabase/migrations/*.sql 1> /dev/null 2>&1; then
   OBSOLETE=$(grep -h "CREATE POLICY\|USING\|WITH CHECK" supabase/migrations/*.sql | \
     grep -v "^--" | \
-    grep -E "user_profiles\.(app|role)(?! IS)|raw_user_meta_data.*role" || true)
+    grep -E "user_profiles\.(app|role)|raw_user_meta_data.*role" || true)
 
   if [ -n "$OBSOLETE" ]; then
     echo "❌ Pattern RLS obsolète détecté. Voir .claude/rules/database/rls-patterns.md"
