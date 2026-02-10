@@ -403,45 +403,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
 
       // ========================================================================
-      // ÉTAPE 3: Double vérification du rôle (sécurité additionnelle)
-      // Nécessaire en cas de fallback ou de changement de rôle entre les 2 étapes
+      // Mise à jour des states et chargement du rôle complet
+      // Note: La vérification du rôle LinkMe est maintenant gérée par le
+      // middleware qui redirect vers /unauthorized si nécessaire.
       // ========================================================================
-      console.warn('[signIn] ÉTAPE 3: Double vérification rôle LinkMe');
-      const beforeQuery = Date.now();
-      const { data: roleData, error: roleError } = await (
-        supabase as SupabaseClient
-      )
-        .from('user_app_roles')
-        .select('id')
-        .eq('user_id', data.user.id)
-        .eq('app', 'linkme')
-        .eq('is_active', true)
-        .single();
-      const afterQuery = Date.now();
-      console.warn('[signIn] query user_app_roles completed', {
-        duration: afterQuery - beforeQuery,
-        hasRole: !!roleData,
-        error: roleError?.message,
-      });
-
-      if (roleError ?? !roleData) {
-        // L'utilisateur n'a pas accès à LinkMe - déconnecter immédiatement
-        console.warn('[signIn] AVANT signOut (no access)');
-        await supabase.auth.signOut();
-        console.warn('[signIn] END - no access (post-auth check)', {
-          totalElapsed: Date.now() - startTime,
-        });
-        return {
-          error: new Error(
-            "Vous n'avez pas accès à LinkMe. Contactez votre administrateur."
-          ),
-        };
-      }
-
-      // ========================================================================
-      // ÉTAPE 4: Mise à jour des states et chargement du rôle complet
-      // ========================================================================
-      console.warn('[signIn] ÉTAPE 4: Mise à jour states + fetchLinkMeRole');
+      console.warn('[signIn] Mise à jour states + fetchLinkMeRole');
       setSession(data.session);
       setUser(data.user);
       const beforeFetch = Date.now();
