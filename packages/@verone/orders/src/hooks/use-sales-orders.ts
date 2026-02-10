@@ -475,7 +475,7 @@ export function useSalesOrders() {
           const { data: orgs } = await supabase
             .from('organisations')
             .select(
-              'id, legal_name, trade_name, email, phone, website, address_line1, address_line2, postal_code, city, region'
+              'id, legal_name, trade_name, email, phone, website, address_line1, address_line2, postal_code, city, region, enseigne_id'
             )
             .in('id', orgIds);
           for (const org of orgs || []) {
