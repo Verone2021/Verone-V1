@@ -25,7 +25,7 @@ interface AuthWrapperProps {
 }
 
 // Pages publiques qui n'utilisent pas le layout authentifié
-const PUBLIC_PAGES = ['/', '/login'];
+const PUBLIC_PAGES = ['/', '/login', '/unauthorized'];
 
 export function AuthWrapper({ children }: AuthWrapperProps) {
   const pathname = usePathname();
