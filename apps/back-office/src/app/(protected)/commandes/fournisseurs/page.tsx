@@ -118,7 +118,7 @@ const statusColors: Record<PurchaseOrderStatus, string> = {
   cancelled: 'bg-red-100 text-red-800',
 };
 
-type SortColumn = 'date' | 'supplier' | 'amount' | null;
+type SortColumn = 'date' | 'po_number' | 'amount' | null;
 type SortDirection = 'asc' | 'desc';
 
 export default function PurchaseOrdersPage() {
@@ -316,16 +316,9 @@ export default function PurchaseOrdersPage() {
               new Date(a.created_at).getTime() -
               new Date(b.created_at).getTime();
             break;
-          case 'supplier': {
-            const nameA = a.organisations
-              ? getOrganisationDisplayName(a.organisations)
-              : '';
-            const nameB = b.organisations
-              ? getOrganisationDisplayName(b.organisations)
-              : '';
-            comparison = nameA.localeCompare(nameB);
+          case 'po_number':
+            comparison = (a.po_number || '').localeCompare(b.po_number || '');
             break;
-          }
           case 'amount':
             comparison = (a.total_ttc ?? 0) - (b.total_ttc ?? 0);
             break;
@@ -967,13 +960,13 @@ export default function PurchaseOrdersPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-10" />
-                    <TableHead>N° Commande</TableHead>
                     <TableHead
                       className="cursor-pointer hover:bg-gray-50"
-                      onClick={() => handleSort('supplier')}
+                      onClick={() => handleSort('po_number')}
                     >
-                      Fournisseur {renderSortIcon('supplier')}
+                      N° Commande {renderSortIcon('po_number')}
                     </TableHead>
+                    <TableHead>Fournisseur</TableHead>
                     <TableHead>Statut</TableHead>
                     <TableHead>Paiement V2</TableHead>
                     <TableHead className="w-20 text-center">Articles</TableHead>
