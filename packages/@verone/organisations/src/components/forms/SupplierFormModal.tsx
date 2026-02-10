@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 import type { Organisation } from '@verone/organisations/hooks';
 import { useSuppliers } from '@verone/organisations/hooks';
-import type { SupplierSegmentType } from '@verone/suppliers/components/badges/SupplierSegmentBadge';
+import type { SupplierSegmentType } from '../suppliers/SupplierSegmentBadge';
 import type { Database } from '@verone/types';
 
 // Type DB pour les opérations Supabase (lowercase: strategic, preferred, approved, commodity, artisan)

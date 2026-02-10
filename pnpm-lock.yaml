@@ -483,24 +483,6 @@ importers:
         specifier: ^5.3.3
         version: 5.9.3
 
-  packages/@verone/admin:
-    dependencies:
-      '@verone/types':
-        specifier: workspace:*
-        version: link:../types
-      '@verone/ui':
-        specifier: workspace:*
-        version: link:../ui
-      '@verone/utils':
-        specifier: workspace:*
-        version: link:../utils
-      react:
-        specifier: ^18.2.0
-        version: 18.3.1
-      react-dom:
-        specifier: ^18.2.0
-        version: 18.3.1(react@18.3.1)
-
   packages/@verone/categories:
     dependencies:
       '@verone/types':
@@ -695,12 +677,6 @@ importers:
         specifier: ^5.3.3
         version: 5.9.3
 
-  packages/@verone/kpi:
-    devDependencies:
-      typescript:
-        specifier: ^5.3.3
-        version: 5.9.3
-
   packages/@verone/logistics:
     dependencies:
       '@verone/types':
@@ -851,42 +827,6 @@ importers:
       typescript:
         specifier: ^5.3.3
         version: 5.9.3
-
-  packages/@verone/suppliers:
-    dependencies:
-      '@verone/types':
-        specifier: workspace:*
-        version: link:../types
-      '@verone/ui':
-        specifier: workspace:*
-        version: link:../ui
-      '@verone/utils':
-        specifier: workspace:*
-        version: link:../utils
-      react:
-        specifier: ^18.2.0
-        version: 18.3.1
-      react-dom:
-        specifier: ^18.2.0
-        version: 18.3.1(react@18.3.1)
-
-  packages/@verone/testing:
-    dependencies:
-      '@verone/types':
-        specifier: workspace:*
-        version: link:../types
-      '@verone/ui':
-        specifier: workspace:*
-        version: link:../ui
-      '@verone/utils':
-        specifier: workspace:*
-        version: link:../utils
-      react:
-        specifier: ^18.2.0
-        version: 18.3.1
-      react-dom:
-        specifier: ^18.2.0
-        version: 18.3.1(react@18.3.1)
 
   packages/@verone/types:
     devDependencies:

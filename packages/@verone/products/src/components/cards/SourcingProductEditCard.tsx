@@ -5,7 +5,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 
 import { useInlineEdit, type EditableSection } from '@verone/common/hooks';
-import { SupplierSelector } from '@verone/suppliers';
+import { SupplierSelector } from '@verone/organisations/components/suppliers';
 import {
   Badge,
   ButtonV2,
