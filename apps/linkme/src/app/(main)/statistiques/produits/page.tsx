@@ -7,14 +7,14 @@
  * Zero commission, zero marge, zero rémunération.
  *
  * - 4 KPIs (produits, quantité, CA HT, CA TTC)
- * - Filtres : recherche + année + source produit
  * - Graphiques : DonutChart CA par source + Top 5 quantité
- * - Tableau paginé avec tri
+ * - Tableau paginé avec search + year + tri + clic détail
+ * - Modal détail ventes par produit
  * - Export CSV
  *
  * @module StatistiquesProduits
  * @since 2026-01-08
- * @updated 2026-02-10 - Purge commissions, focus produit
+ * @updated 2026-02-10 - Suppression onglets, search+year dans tableau, modal détail
  */
 
 import { useState, useMemo, useCallback } from 'react';
@@ -39,8 +39,8 @@ import {
   type ProductStatsFilters,
 } from '@/lib/hooks/use-all-products-stats';
 
+import { ProductSalesDetailModal } from './components/ProductSalesDetailModal';
 import { ProductStatsCharts } from './components/ProductStatsCharts';
-import { TopFiltersBar } from './components/TopFiltersBar';
 
 // ============================================
 // HELPERS
@@ -61,15 +61,16 @@ function formatCurrency(value: number): string {
 
 export default function StatistiquesProduits(): JSX.Element {
   // Filters state
-  const [filters, setFilters] = useState<ProductStatsFilters>({
-    productSource: 'all',
-  });
+  const [filters, setFilters] = useState<ProductStatsFilters>({});
   const [search, setSearch] = useState('');
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(
+    null
+  );
 
   // Data fetching with filters
   const { data, isLoading, error, refetch } = useAllProductsStats(filters);
 
-  // Client-side search filtering (debounced via TopFiltersBar)
+  // Client-side search filtering (debounced via ProductStatsTable)
   const filteredProducts = useMemo(() => {
     const products = data?.products ?? [];
     if (!search.trim()) return products;
@@ -80,6 +81,11 @@ export default function StatistiquesProduits(): JSX.Element {
         p.productSku.toLowerCase().includes(lower)
     );
   }, [data?.products, search]);
+
+  // Year filter handler
+  const handleYearFilterChange = useCallback((year: number | undefined) => {
+    setFilters(prev => ({ ...prev, year }));
+  }, []);
 
   // Export CSV
   const exportToCSV = useCallback(() => {
@@ -262,16 +268,6 @@ export default function StatistiquesProduits(): JSX.Element {
           </Card>
         </section>
 
-        {/* Top Filters Bar */}
-        <section>
-          <TopFiltersBar
-            filters={filters}
-            onChange={setFilters}
-            search={search}
-            onSearchChange={setSearch}
-          />
-        </section>
-
         {/* Charts */}
         <section>
           <ProductStatsCharts
@@ -285,6 +281,11 @@ export default function StatistiquesProduits(): JSX.Element {
           <ProductStatsTable
             products={filteredProducts}
             isLoading={isLoading}
+            search={search}
+            onSearchChange={setSearch}
+            yearFilter={filters.year}
+            onYearFilterChange={handleYearFilterChange}
+            onProductClick={setSelectedProductId}
           />
         </section>
 
@@ -301,6 +302,12 @@ export default function StatistiquesProduits(): JSX.Element {
           </p>
         </div>
       </div>
+
+      {/* Modal détail ventes produit */}
+      <ProductSalesDetailModal
+        productId={selectedProductId}
+        onClose={() => setSelectedProductId(null)}
+      />
     </div>
   );
 }

@@ -22,16 +22,9 @@ const supabase = createClient();
 // ============================================
 
 export type ProductSource = 'catalogue' | 'mes-produits' | 'sur-mesure';
-export type ProductSourceFilter =
-  | 'all'
-  | 'catalogue'
-  | 'mes-produits'
-  | 'sur-mesure';
-
 export interface ProductStatsFilters {
   year?: number; // 2023 à current year
   search?: string; // nom ou SKU
-  productSource?: ProductSourceFilter;
 }
 
 export interface ProductStatsData {
@@ -139,32 +132,10 @@ export function useAllProductsStats(
         ),
       ];
 
-      let productsTypeQuery = supabase
+      const { data: productsTypeData } = await supabase
         .from('products')
         .select('id, created_by_affiliate, enseigne_id, assigned_client_id')
         .in('id', productIdsFromItems);
-
-      // Filtrer par source de produit si spécifié
-      if (filters?.productSource && filters.productSource !== 'all') {
-        if (filters.productSource === 'catalogue') {
-          productsTypeQuery = productsTypeQuery
-            .is('created_by_affiliate', null)
-            .is('enseigne_id', null)
-            .is('assigned_client_id', null);
-        } else if (filters.productSource === 'mes-produits') {
-          productsTypeQuery = productsTypeQuery.not(
-            'created_by_affiliate',
-            'is',
-            null
-          );
-        } else if (filters.productSource === 'sur-mesure') {
-          productsTypeQuery = productsTypeQuery.or(
-            'enseigne_id.not.is.null,assigned_client_id.not.is.null'
-          );
-        }
-      }
-
-      const { data: productsTypeData } = await productsTypeQuery;
 
       // Map pour identifier la source de chaque produit
       const productSourceMap = new Map<
@@ -195,14 +166,6 @@ export function useAllProductsStats(
         if (!productId) return;
 
         const sourceInfo = productSourceMap.get(productId);
-        // Si le produit n'est pas dans la map (filtré par productSource), on skip
-        if (
-          !sourceInfo &&
-          filters?.productSource &&
-          filters.productSource !== 'all'
-        )
-          return;
-
         const isAffiliateProduct = sourceInfo?.isAffiliate ?? false;
         const isCustomProduct = sourceInfo?.isCustom ?? false;
 

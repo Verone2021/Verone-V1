@@ -6,25 +6,36 @@
  * Zero commission, zero marge.
  *
  * Features:
+ * - Search intégré (debounced) + sélecteur année
  * - Pagination (10/20 par page)
  * - Tri par quantité (défaut) ou CA HT
  * - Badges source : Catalogue / Mes produits / Sur-mesure
+ * - Ligne cliquable → détail ventes produit
  *
  * @module ProductStatsTable
  * @since 2026-01-08
- * @updated 2026-02-10 - Purge commissions, focus produit
+ * @updated 2026-02-10 - Search+year intégrés, bouton détail, suppression onglets
  */
 
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 
 import Image from 'next/image';
 
 import { Card } from '@tremor/react';
-import { Package, ChevronLeft, ChevronRight, ArrowUpDown } from 'lucide-react';
+import {
+  Package,
+  ChevronLeft,
+  ChevronRight as ChevronRightIcon,
+  ArrowUpDown,
+  Search,
+  X,
+  Calendar,
+} from 'lucide-react';
 
 import type { ProductStatsData } from '@/lib/hooks/use-all-products-stats';
+import { cn } from '@/lib/utils';
 
 // ============================================
 // TYPES
@@ -33,6 +44,11 @@ import type { ProductStatsData } from '@/lib/hooks/use-all-products-stats';
 interface ProductStatsTableProps {
   products: ProductStatsData[];
   isLoading?: boolean;
+  search: string;
+  onSearchChange: (search: string) => void;
+  yearFilter?: number;
+  onYearFilterChange: (year: number | undefined) => void;
+  onProductClick: (productId: string) => void;
 }
 
 type SortField = 'quantity' | 'revenue';
@@ -49,6 +65,15 @@ function formatCurrency(value: number): string {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(value);
+}
+
+function getAvailableYears(): number[] {
+  const currentYear = new Date().getFullYear();
+  const years: number[] = [];
+  for (let y = currentYear; y >= 2023; y--) {
+    years.push(y);
+  }
+  return years;
 }
 
 const SOURCE_BADGE_STYLES: Record<
@@ -79,12 +104,33 @@ const SOURCE_BADGE_STYLES: Record<
 export function ProductStatsTable({
   products,
   isLoading = false,
+  search,
+  onSearchChange,
+  yearFilter,
+  onYearFilterChange,
+  onProductClick,
 }: ProductStatsTableProps): JSX.Element {
   // States
   const [sortField, setSortField] = useState<SortField>('quantity');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
+  const [searchInput, setSearchInput] = useState(search);
+  const [showYearDropdown, setShowYearDropdown] = useState(false);
+  const availableYears = useMemo(() => getAvailableYears(), []);
+
+  // Debounced search (300ms)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      onSearchChange(searchInput);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchInput, onSearchChange]);
+
+  // Sync external search changes
+  useEffect(() => {
+    setSearchInput(search);
+  }, [search]);
 
   // Trier les produits
   const sortedProducts = useMemo(() => {
@@ -127,6 +173,11 @@ export function ProductStatsTable({
     setPage(1);
   };
 
+  const handleYearSelect = (year: number | undefined): void => {
+    onYearFilterChange(year);
+    setShowYearDropdown(false);
+  };
+
   // Loading skeleton
   if (isLoading) {
     return (
@@ -156,33 +207,123 @@ export function ProductStatsTable({
 
   return (
     <Card className="p-6">
-      {/* Header avec tri */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-        <h3 className="text-sm font-semibold text-gray-900">
-          Détail par produit
-        </h3>
+      {/* Header : titre + search + year + tri */}
+      <div className="space-y-4 mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <h3 className="text-sm font-semibold text-gray-900">
+            Détail par produit
+          </h3>
 
-        {/* Tri */}
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-500">Trier par :</span>
-          <div className="flex gap-1">
-            {[
-              { field: 'quantity' as const, label: 'Quantité' },
-              { field: 'revenue' as const, label: 'CA HT' },
-            ].map(({ field, label }) => (
+          {/* Tri */}
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-500">Trier par :</span>
+            <div className="flex gap-1">
+              {[
+                { field: 'quantity' as const, label: 'Quantité' },
+                { field: 'revenue' as const, label: 'CA HT' },
+              ].map(({ field, label }) => (
+                <button
+                  key={field}
+                  onClick={() => handleSortChange(field)}
+                  className={`px-3 py-1.5 text-sm rounded-lg flex items-center gap-1 transition-colors ${
+                    sortField === field
+                      ? 'bg-[#5DBEBB] text-white'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  {label}
+                  {sortField === field && <ArrowUpDown className="h-3 w-3" />}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Search + Year filter row */}
+        <div className="flex flex-col sm:flex-row gap-3">
+          {/* Search */}
+          <div className="relative flex-1 sm:max-w-[320px]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Rechercher par nom ou SKU..."
+              value={searchInput}
+              onChange={e => setSearchInput(e.target.value)}
+              className="pl-10 pr-8 py-2 w-full border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#5DBEBB] focus:border-transparent"
+            />
+            {searchInput && (
               <button
-                key={field}
-                onClick={() => handleSortChange(field)}
-                className={`px-3 py-1.5 text-sm rounded-lg flex items-center gap-1 transition-colors ${
-                  sortField === field
-                    ? 'bg-[#5DBEBB] text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
+                onClick={() => {
+                  setSearchInput('');
+                  onSearchChange('');
+                }}
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 rounded"
               >
-                {label}
-                {sortField === field && <ArrowUpDown className="h-3 w-3" />}
+                <X className="h-3.5 w-3.5 text-gray-400" />
               </button>
-            ))}
+            )}
+          </div>
+
+          {/* Year selector */}
+          <div className="relative">
+            <button
+              onClick={() => setShowYearDropdown(!showYearDropdown)}
+              className={cn(
+                'flex items-center gap-2 px-3 py-2 border rounded-lg text-sm transition-colors',
+                yearFilter
+                  ? 'border-linkme-turquoise/50 bg-linkme-turquoise/5 text-linkme-marine'
+                  : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+              )}
+            >
+              <Calendar className="h-4 w-4" />
+              {yearFilter ? `Année ${yearFilter}` : 'Toutes les années'}
+              {yearFilter && (
+                <button
+                  onClick={e => {
+                    e.stopPropagation();
+                    handleYearSelect(undefined);
+                  }}
+                  className="ml-1 p-0.5 hover:bg-gray-200 rounded"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              )}
+            </button>
+
+            {/* Year dropdown */}
+            {showYearDropdown && (
+              <>
+                <div
+                  className="fixed inset-0 z-10"
+                  onClick={() => setShowYearDropdown(false)}
+                />
+                <div className="absolute top-full mt-1 left-0 bg-white border border-gray-200 rounded-lg shadow-lg z-20 min-w-[160px]">
+                  <button
+                    onClick={() => handleYearSelect(undefined)}
+                    className={cn(
+                      'w-full text-left px-3 py-2 text-sm hover:bg-gray-50 transition-colors',
+                      !yearFilter &&
+                        'bg-linkme-turquoise/10 text-linkme-marine font-medium'
+                    )}
+                  >
+                    Toutes les années
+                  </button>
+                  {availableYears.map(year => (
+                    <button
+                      key={year}
+                      onClick={() => handleYearSelect(year)}
+                      className={cn(
+                        'w-full text-left px-3 py-2 text-sm hover:bg-gray-50 transition-colors',
+                        yearFilter === year &&
+                          'bg-linkme-turquoise/10 text-linkme-marine font-medium'
+                      )}
+                    >
+                      {year}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -207,6 +348,7 @@ export function ProductStatsTable({
               <th className="text-right py-3 px-2 font-medium text-gray-500">
                 CA HT
               </th>
+              <th className="w-10" />
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -217,7 +359,8 @@ export function ProductStatsTable({
               return (
                 <tr
                   key={product.productId}
-                  className="hover:bg-gray-50 transition-colors"
+                  onClick={() => onProductClick(product.productId)}
+                  className="hover:bg-gray-50 transition-colors cursor-pointer"
                 >
                   {/* Rang */}
                   <td className="py-3 px-2">
@@ -280,6 +423,11 @@ export function ProductStatsTable({
                   <td className="py-3 px-2 text-right font-semibold text-[#183559]">
                     {formatCurrency(product.revenueHT)}
                   </td>
+
+                  {/* Chevron détail */}
+                  <td className="py-3 px-2 text-right">
+                    <ChevronRightIcon className="h-4 w-4 text-gray-400" />
+                  </td>
                 </tr>
               );
             })}
@@ -335,7 +483,7 @@ export function ProductStatsTable({
             disabled={page >= totalPages}
             className="p-2 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            <ChevronRight className="h-4 w-4" />
+            <ChevronRightIcon className="h-4 w-4" />
           </button>
         </div>
       </div>
