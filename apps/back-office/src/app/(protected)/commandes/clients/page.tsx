@@ -92,6 +92,13 @@ export default function SalesOrdersClientsPage() {
         updateStatusAction={updateSalesOrderStatus}
         enablePagination
         defaultItemsPerPage={20}
+        sortableColumns={{
+          date: true,
+          client: false, // ❌ Retirer tri client
+          amount: true,
+          orderNumber: true, // ✅ Ajouter tri numéro
+        }}
+        showEnseigneFilter // ✅ Ajouter filtres enseigne/org
       />
     </div>
   );
