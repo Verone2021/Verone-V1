@@ -20,31 +20,22 @@ export default function UnauthorizedPage() {
         <div className="text-center">
           <AlertCircle className="mx-auto h-12 w-12 text-red-500" />
           <h2 className="mt-6 text-3xl font-bold text-gray-900">
-            Accès non autorisé
+            Accès refusé
           </h2>
           <p className="mt-2 text-sm text-gray-600">
-            Vous n&apos;avez pas de compte Back-Office Vérone.
+            Ce compte n&apos;a pas accès à cette application.
           </p>
           <p className="mt-2 text-sm text-gray-600">
-            Si vous avez un compte LinkMe, veuillez vous connecter sur{' '}
-            <span className="font-medium">linkme.verone.fr</span>
+            Si vous pensez qu&apos;il s&apos;agit d&apos;une erreur, contactez
+            votre administrateur.
           </p>
         </div>
 
-        <div className="space-y-3">
-          <Button
-            onClick={() => {
-              window.location.href = 'https://linkme.verone.fr';
-            }}
-            className="w-full"
-          >
-            Accéder à LinkMe
-          </Button>
+        <div>
           <Button
             onClick={() => {
               window.location.href = '/login';
             }}
-            variant="outline"
             className="w-full"
           >
             Retour à la connexion
