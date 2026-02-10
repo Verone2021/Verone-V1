@@ -12,6 +12,7 @@ import {
   Package,
   ShoppingCart,
   Coins,
+  BarChart3,
   Settings,
   Building2,
   LogOut,
@@ -54,6 +55,11 @@ const sidebarLinks: SidebarLink[] = [
   },
   { icon: ShoppingCart, label: 'Commandes', href: '/commandes' },
   { icon: Coins, label: 'Commissions', href: '/commissions' },
+  {
+    icon: BarChart3,
+    label: 'Stats Produits',
+    href: '/statistiques/produits',
+  },
   {
     icon: Building2,
     label: 'Organisations',

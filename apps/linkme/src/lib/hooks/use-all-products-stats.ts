@@ -2,13 +2,12 @@
  * Hook: useAllProductsStats
  * Statistiques de TOUS les produits vendus par l'affilié
  *
- * Retourne tous les produits (pas limité à 10) avec :
- * - Calcul TVA correct
- * - Valeurs HT et TTC
- * - Tri et pagination côté client
+ * 100% orienté produit : quantités vendues, CA généré.
+ * Zero commission, zero marge, zero rémunération.
  *
  * @module use-all-products-stats
  * @since 2026-01-08
+ * @updated 2026-02-10 - Purge commissions, focus produit
  */
 
 import { useQuery } from '@tanstack/react-query';
@@ -22,7 +21,11 @@ const supabase = createClient();
 // TYPES
 // ============================================
 
-export type CommissionType = 'catalogue' | 'revendeur';
+export type ProductSource = 'catalogue' | 'mes-produits' | 'sur-mesure';
+export interface ProductStatsFilters {
+  year?: number; // 2023 à current year
+  search?: string; // nom ou SKU
+}
 
 export interface ProductStatsData {
   productId: string;
@@ -31,12 +34,9 @@ export interface ProductStatsData {
   productImageUrl: string | null;
   quantitySold: number;
   revenueHT: number;
-  commissionHT: number;
-  commissionType: CommissionType; // 'catalogue' = produit Vérone, 'revendeur' = produit affilié
-  // Nouveaux champs - Source de vérité: linkme_order_items_enriched
-  avgMarginRate: number; // Taux de commission moyen pondéré par quantité (%)
-  marginPerUnit: number; // Marge HT par unité (€)
-  isCustomProduct: boolean; // true si enseigne_id ou assigned_client_id non-null (Sur mesure)
+  revenueTTC: number;
+  productSource: ProductSource;
+  avgPriceHT: number; // total_ht / quantity (moyenne pondérée)
 }
 
 export interface AllProductsStatsResult {
@@ -45,7 +45,7 @@ export interface AllProductsStatsResult {
     productsCount: number;
     totalQuantity: number;
     totalRevenueHT: number;
-    totalCommissionHT: number;
+    totalRevenueTTC: number;
   };
 }
 
@@ -53,23 +53,33 @@ export interface AllProductsStatsResult {
 // HOOK
 // ============================================
 
-export function useAllProductsStats(): ReturnType<
-  typeof useQuery<AllProductsStatsResult | null>
-> {
+export function useAllProductsStats(
+  filters?: ProductStatsFilters
+): ReturnType<typeof useQuery<AllProductsStatsResult | null>> {
   const { data: affiliate } = useUserAffiliate();
 
   return useQuery({
-    queryKey: ['all-products-stats', affiliate?.id],
+    queryKey: ['all-products-stats', affiliate?.id, filters],
     queryFn: async (): Promise<AllProductsStatsResult | null> => {
       if (!affiliate) {
         return null;
       }
 
-      // 1. Récupérer toutes les commissions de l'affilié (SOURCE DE VÉRITÉ)
-      const { data: commissionsData, error: commissionsError } = await supabase
+      // 1. Récupérer les commissions de l'affilié (UNIQUEMENT pour order_id + filtre année)
+      let commissionsQuery = supabase
         .from('linkme_commissions')
-        .select('order_id, affiliate_commission_ttc')
+        .select('order_id, created_at')
         .eq('affiliate_id', affiliate.id);
+
+      // Filtrer par année si spécifié
+      if (filters?.year) {
+        commissionsQuery = commissionsQuery
+          .gte('created_at', `${filters.year}-01-01`)
+          .lte('created_at', `${filters.year}-12-31`);
+      }
+
+      const { data: commissionsData, error: commissionsError } =
+        await commissionsQuery;
 
       if (commissionsError) {
         console.error('Erreur fetch commissions:', commissionsError);
@@ -87,12 +97,12 @@ export function useAllProductsStats(): ReturnType<
             productsCount: 0,
             totalQuantity: 0,
             totalRevenueHT: 0,
-            totalCommissionHT: 0,
+            totalRevenueTTC: 0,
           },
         };
       }
 
-      // 2. Récupérer les items depuis linkme_order_items_enriched (inclut margin_rate)
+      // 2. Récupérer les items depuis linkme_order_items_enriched
       const { data: orderItemsData, error: orderItemsError } = await supabase
         .from('linkme_order_items_enriched')
         .select(
@@ -100,8 +110,8 @@ export function useAllProductsStats(): ReturnType<
           product_id,
           quantity,
           total_ht,
-          affiliate_margin,
-          margin_rate
+          tax_rate,
+          sales_order_id
         `
         )
         .in('sales_order_id', orderIds);
@@ -113,12 +123,10 @@ export function useAllProductsStats(): ReturnType<
 
       const orderItems = orderItemsData ?? [];
 
-      // 2b. Récupérer les produits avec leurs infos de type
-      // - created_by_affiliate: produit créé par affilié (revendeur)
-      // - enseigne_id / assigned_client_id: produit sur mesure Vérone
+      // 3. Récupérer les produits avec infos de type
       const productIdsFromItems: string[] = [
         ...new Set(
-          (orderItemsData ?? [])
+          orderItems
             .map(item => item.product_id)
             .filter((id): id is string => id !== null && id !== undefined)
         ),
@@ -129,26 +137,25 @@ export function useAllProductsStats(): ReturnType<
         .select('id, created_by_affiliate, enseigne_id, assigned_client_id')
         .in('id', productIdsFromItems);
 
-      // Map pour identifier le type de chaque produit
-      const productTypeMap = new Map<
+      // Map pour identifier la source de chaque produit
+      const productSourceMap = new Map<
         string,
         { isAffiliate: boolean; isCustom: boolean }
       >();
       (productsTypeData ?? []).forEach(p => {
-        productTypeMap.set(p.id, {
+        productSourceMap.set(p.id, {
           isAffiliate: p.created_by_affiliate !== null,
           isCustom: p.enseigne_id !== null || p.assigned_client_id !== null,
         });
       });
 
-      // 3. Agréger par produit
+      // 4. Agréger par produit
       const productMap = new Map<
         string,
         {
           quantity: number;
           revenueHT: number;
-          commissionHT: number;
-          weightedMarginRate: number; // margin_rate × quantity pour moyenne pondérée
+          revenueTTC: number;
           isAffiliateProduct: boolean;
           isCustomProduct: boolean;
         }
@@ -158,17 +165,15 @@ export function useAllProductsStats(): ReturnType<
         const productId = item.product_id;
         if (!productId) return;
 
-        const marginRate = item.margin_rate ?? 0;
-        const typeInfo = productTypeMap.get(productId);
-        const isAffiliateProduct = typeInfo?.isAffiliate ?? false;
-        const isCustomProduct = typeInfo?.isCustom ?? false;
+        const sourceInfo = productSourceMap.get(productId);
+        const isAffiliateProduct = sourceInfo?.isAffiliate ?? false;
+        const isCustomProduct = sourceInfo?.isCustom ?? false;
 
         if (!productMap.has(productId)) {
           productMap.set(productId, {
             quantity: 0,
             revenueHT: 0,
-            commissionHT: 0,
-            weightedMarginRate: 0,
+            revenueTTC: 0,
             isAffiliateProduct,
             isCustomProduct,
           });
@@ -176,14 +181,16 @@ export function useAllProductsStats(): ReturnType<
 
         const entry = productMap.get(productId)!;
         const qty = item.quantity ?? 0;
+        const totalHT = item.total_ht ?? 0;
+        const taxRate = item.tax_rate ?? 0;
+        const totalTTC = totalHT * (1 + taxRate / 100);
+
         entry.quantity += qty;
-        entry.revenueHT += item.total_ht ?? 0;
-        entry.commissionHT += item.affiliate_margin ?? 0;
-        // Moyenne pondérée du taux de commission
-        entry.weightedMarginRate += marginRate * qty;
+        entry.revenueHT += totalHT;
+        entry.revenueTTC += totalTTC;
       });
 
-      // 4. Récupérer les infos produits et images
+      // 5. Récupérer les infos produits et images
       const productIds = Array.from(productMap.keys());
 
       if (productIds.length === 0) {
@@ -193,7 +200,7 @@ export function useAllProductsStats(): ReturnType<
             productsCount: 0,
             totalQuantity: 0,
             totalRevenueHT: 0,
-            totalCommissionHT: 0,
+            totalRevenueTTC: 0,
           },
         };
       }
@@ -218,16 +225,18 @@ export function useAllProductsStats(): ReturnType<
         (imagesResult.data ?? []).map(img => [img.product_id, img.public_url])
       );
 
-      // 5. Construire les données finales
+      // 6. Construire les données finales
       const products: ProductStatsData[] = Array.from(productMap.entries()).map(
         ([productId, data]) => {
           const info = productsInfo.get(productId);
-          // Calculer le taux de commission moyen pondéré par quantité
-          const avgMarginRate =
-            data.quantity > 0 ? data.weightedMarginRate / data.quantity : 0;
-          // Calculer la marge HT par unité
-          const marginPerUnit =
-            data.quantity > 0 ? data.commissionHT / data.quantity : 0;
+
+          // Déterminer la source du produit
+          let productSource: ProductSource = 'catalogue';
+          if (data.isAffiliateProduct) {
+            productSource = 'mes-produits';
+          } else if (data.isCustomProduct) {
+            productSource = 'sur-mesure';
+          }
 
           return {
             productId,
@@ -236,31 +245,29 @@ export function useAllProductsStats(): ReturnType<
             productImageUrl: imageMap.get(productId) ?? null,
             quantitySold: data.quantity,
             revenueHT: data.revenueHT,
-            commissionHT: data.commissionHT,
-            commissionType: data.isAffiliateProduct ? 'revendeur' : 'catalogue',
-            avgMarginRate,
-            marginPerUnit,
-            isCustomProduct: data.isCustomProduct,
+            revenueTTC: data.revenueTTC,
+            productSource,
+            avgPriceHT: data.quantity > 0 ? data.revenueHT / data.quantity : 0,
           };
         }
       );
 
-      // 6. Trier par commission HT décroissante
-      products.sort((a, b) => b.commissionHT - a.commissionHT);
+      // 7. Trier par quantité vendue décroissante (plus pertinent que commission)
+      products.sort((a, b) => b.quantitySold - a.quantitySold);
 
-      // 7. Calculer les totaux
+      // 8. Calculer les totaux
       const totals = products.reduce(
         (acc, p) => ({
           productsCount: acc.productsCount + 1,
           totalQuantity: acc.totalQuantity + p.quantitySold,
           totalRevenueHT: acc.totalRevenueHT + p.revenueHT,
-          totalCommissionHT: acc.totalCommissionHT + p.commissionHT,
+          totalRevenueTTC: acc.totalRevenueTTC + p.revenueTTC,
         }),
         {
           productsCount: 0,
           totalQuantity: 0,
           totalRevenueHT: 0,
-          totalCommissionHT: 0,
+          totalRevenueTTC: 0,
         }
       );
 

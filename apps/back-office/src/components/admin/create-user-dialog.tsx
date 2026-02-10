@@ -53,7 +53,7 @@ interface CreateUserFormData {
 const INITIAL_FORM_DATA: CreateUserFormData = {
   email: '',
   password: '',
-  role: 'catalog_manager',
+  role: 'admin',
   firstName: '',
   lastName: '',
   phone: '',
@@ -281,12 +281,6 @@ export function CreateUserDialog({ children }: CreateUserDialogProps) {
                   <SelectValue placeholder="Sélectionner un rôle" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="catalog_manager">
-                    <div className="flex items-center space-x-2">
-                      <RoleBadge role="catalog_manager" />
-                      <span>Catalog Manager</span>
-                    </div>
-                  </SelectItem>
                   <SelectItem value="admin">
                     <div className="flex items-center space-x-2">
                       <RoleBadge role="admin" />
