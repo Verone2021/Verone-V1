@@ -13,8 +13,6 @@ import {
   createServerClient,
   createAdminClient,
 } from '@verone/utils/supabase/server';
-import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Database } from '@verone/types';
 // import { validateProfileForm, sanitizeProfileData } from '@verone/utils/validation/profile-validation'
 
 export interface CreateUserData {
@@ -94,12 +92,10 @@ export async function createUserWithRole(
       return accessCheck;
     }
 
-    // CORRECTION: Initialiser les clients avec gestion d'erreur
-    let supabase: SupabaseClient<Database>;
+    // CORRECTION: Initialiser le client admin avec gestion d'erreur
     let adminClient: ReturnType<typeof createAdminClient>;
 
     try {
-      supabase = await createServerClient();
       adminClient = createAdminClient();
     } catch (clientError) {
       console.error('Erreur initialisation clients Supabase:', clientError);
@@ -150,24 +146,27 @@ export async function createUserWithRole(
     }
 
     // 2. Créer le profil utilisateur dans la table user_profiles
+    //    Utilise adminClient pour bypass RLS (opération admin)
     let profileError: unknown;
 
     try {
-      const result = await supabase.from('user_profiles').insert({
+      const result = await adminClient.from('user_profiles').insert({
         user_id: newUser.user.id,
         user_type: 'staff',
-        scopes: [], // À définir selon les besoins
+        email: userData.email,
+        first_name: userData.firstName?.trim() || null,
+        last_name: userData.lastName?.trim() || null,
+        phone: userData.phone?.trim() || null,
+        job_title: userData.jobTitle?.trim() || null,
         partner_id: null,
-        organisation_id: null, // ✅ CORRECTION : Explicitement NULL pour staff back-office
-        // Note: first_name, last_name, phone, job_title pas encore dans le schéma
-        // Ces colonnes seront ajoutées dans une prochaine migration
+        organisation_id: null,
       });
 
       profileError = result.error;
 
       // Also create entry in user_app_roles for back-office app
       if (!profileError) {
-        const roleResult = await supabase.from('user_app_roles').insert({
+        const roleResult = await adminClient.from('user_app_roles').insert({
           user_id: newUser.user.id,
           app: 'back-office',
           role: userData.role,
@@ -267,7 +266,21 @@ export async function deleteUser(userId: string): Promise<ActionResult> {
       };
     }
 
-    // Supprimer d'abord le profil utilisateur
+    // 1. Supprimer les rôles applicatifs (user_app_roles)
+    const { error: rolesError } = await supabase
+      .from('user_app_roles')
+      .delete()
+      .eq('user_id', userId);
+
+    if (rolesError) {
+      console.error('Erreur suppression rôles:', rolesError);
+      return {
+        success: false,
+        error: "Erreur lors de la suppression des rôles de l'utilisateur",
+      };
+    }
+
+    // 2. Supprimer le profil utilisateur (user_profiles)
     const { error: profileError } = await supabase
       .from('user_profiles')
       .delete()
@@ -281,7 +294,7 @@ export async function deleteUser(userId: string): Promise<ActionResult> {
       };
     }
 
-    // Ensuite supprimer l'utilisateur auth
+    // 3. Supprimer l'utilisateur auth
     const { error: authError } =
       await adminClient.auth.admin.deleteUser(userId);
 
@@ -348,11 +361,12 @@ export async function updateUserRole(
       }
     }
 
-    // Mettre à jour le rôle
+    // Mettre à jour le rôle dans user_app_roles (pas user_profiles qui n'a pas de colonne role)
     const { error } = await supabase
-      .from('user_profiles')
-      .update({ role: newRole, updated_at: new Date().toISOString() })
-      .eq('user_id', userId);
+      .from('user_app_roles')
+      .update({ role: newRole })
+      .eq('user_id', userId)
+      .eq('app', 'back-office');
 
     if (error) {
       console.error('Erreur mise à jour rôle:', error);
