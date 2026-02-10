@@ -8,12 +8,13 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { redirect } from 'next/navigation';
 
 import {
   createServerClient,
   createAdminClient,
 } from '@verone/utils/supabase/server';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '@verone/types';
 // import { validateProfileForm, sanitizeProfileData } from '@verone/utils/validation/profile-validation'
 
 export interface CreateUserData {
@@ -29,7 +30,11 @@ export interface CreateUserData {
 export interface ActionResult {
   success: boolean;
   error?: string;
-  data?: any;
+  data?: {
+    user_id?: string;
+    email?: string;
+    role?: string;
+  };
 }
 
 /**
@@ -90,8 +95,8 @@ export async function createUserWithRole(
     }
 
     // CORRECTION: Initialiser les clients avec gestion d'erreur
-    let supabase: any;
-    let adminClient: any;
+    let supabase: SupabaseClient<Database>;
+    let adminClient: ReturnType<typeof createAdminClient>;
 
     try {
       supabase = await createServerClient();
@@ -105,8 +110,12 @@ export async function createUserWithRole(
     }
 
     // 1. Créer l'utilisateur dans Supabase Auth avec l'API Admin
-    let newUser: any;
-    let authError: any;
+    let newUser: Awaited<
+      ReturnType<typeof adminClient.auth.admin.createUser>
+    >['data'];
+    let authError: Awaited<
+      ReturnType<typeof adminClient.auth.admin.createUser>
+    >['error'];
 
     try {
       const result = await adminClient.auth.admin.createUser({
@@ -135,13 +144,13 @@ export async function createUserWithRole(
       return {
         success: false,
         error:
-          authError?.message ||
+          authError?.message ??
           'Erreur lors de la création du compte utilisateur',
       };
     }
 
     // 2. Créer le profil utilisateur dans la table user_profiles
-    let profileError: any;
+    let profileError: unknown;
 
     try {
       const result = await supabase.from('user_profiles').insert({
@@ -207,14 +216,16 @@ export async function createUserWithRole(
         role: userData.role,
       },
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     // CORRECTION: Catch global qui capture TOUT problème imprévu
     console.error('Erreur globale createUserWithRole:', error);
+    const errorMessage =
+      error instanceof Error
+        ? error.message
+        : "Une erreur inattendue s'est produite lors de la création de l'utilisateur";
     return {
       success: false,
-      error:
-        error?.message ||
-        "Une erreur inattendue s'est produite lors de la création de l'utilisateur",
+      error: errorMessage,
     };
   }
 }
@@ -443,7 +454,12 @@ export async function updateUserProfile(
     }
 
     // Préparer les mises à jour
-    const profileUpdates: any = {
+    const profileUpdates: {
+      updated_at: string;
+      first_name?: string | null;
+      last_name?: string | null;
+      job_title?: string | null;
+    } = {
       updated_at: new Date().toISOString(),
     };
 
@@ -465,15 +481,15 @@ export async function updateUserProfile(
 
     // ✅ Support des nouveaux champs (migration 20251030_001)
     if (updateData.first_name !== undefined) {
-      profileUpdates.first_name = updateData.first_name?.trim() || null;
+      profileUpdates.first_name = updateData.first_name?.trim() ?? null;
     }
 
     if (updateData.last_name !== undefined) {
-      profileUpdates.last_name = updateData.last_name?.trim() || null;
+      profileUpdates.last_name = updateData.last_name?.trim() ?? null;
     }
 
     if (updateData.job_title !== undefined) {
-      profileUpdates.job_title = updateData.job_title?.trim() || null;
+      profileUpdates.job_title = updateData.job_title?.trim() ?? null;
     }
 
     // Mettre à jour le profil
@@ -494,7 +510,7 @@ export async function updateUserProfile(
     }
 
     // Mettre à jour les métadonnées utilisateur
-    if (updateData.first_name || updateData.last_name) {
+    if (updateData.first_name ?? updateData.last_name) {
       const displayName = [updateData.first_name, updateData.last_name]
         .filter(Boolean)
         .join(' ')
@@ -505,9 +521,9 @@ export async function updateUserProfile(
           await adminClient.auth.admin.updateUserById(userId, {
             user_metadata: {
               name: displayName,
-              first_name: updateData.first_name || '',
-              last_name: updateData.last_name || '',
-              job_title: updateData.job_title || '',
+              first_name: updateData.first_name ?? '',
+              last_name: updateData.last_name ?? '',
+              job_title: updateData.job_title ?? '',
             },
           });
 
@@ -522,11 +538,15 @@ export async function updateUserProfile(
     revalidatePath('/admin/users');
 
     return { success: true };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Erreur updateUserProfile:', error);
+    const errorMessage =
+      error instanceof Error
+        ? error.message
+        : "Une erreur inattendue s'est produite";
     return {
       success: false,
-      error: error.message || "Une erreur inattendue s'est produite",
+      error: errorMessage,
     };
   }
 }
