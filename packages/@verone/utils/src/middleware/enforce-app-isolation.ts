@@ -38,6 +38,13 @@ interface AppIsolationConfig {
    * where signing out would disconnect the user from ALL apps.
    */
   signOutOnNoRole?: boolean;
+
+  /**
+   * Path to redirect users who are authenticated but have no role for this app.
+   * If not provided, redirects to loginPath with ?error=no_access.
+   * Example: '/unauthorized'
+   */
+  unauthorizedPath?: string;
 }
 
 export type { AppName, AppIsolationConfig };
@@ -126,11 +133,20 @@ export async function enforceAppIsolation(
       .maybeSingle();
 
     if (!role) {
-      // No role for this app → redirect to login with error
+      // No role for this app → redirect to unauthorized page or login
       if (config.signOutOnNoRole) {
         await supabase.auth.signOut();
       }
+
       const url = request.nextUrl.clone();
+
+      // If unauthorizedPath is configured, redirect there (better UX)
+      if (config.unauthorizedPath) {
+        url.pathname = config.unauthorizedPath;
+        return NextResponse.redirect(url);
+      }
+
+      // Otherwise, redirect to login with error (backward compatible behavior)
       url.pathname = config.loginPath;
       url.searchParams.set('error', 'no_access');
       return NextResponse.redirect(url);
