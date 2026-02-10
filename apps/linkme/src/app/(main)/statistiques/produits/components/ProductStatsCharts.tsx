@@ -4,19 +4,21 @@
  * ProductStatsCharts - Section graphiques pour les statistiques produits
  *
  * 2 graphiques côte à côte (desktop) :
- * 1. Évolution mensuelle CA HT + Commissions HT (AreaChart Tremor)
- * 2. Top 10 produits par commission HT (horizontal bar)
+ * 1. DonutChart - Répartition du CA HT par source produit (Recharts PieChart)
+ * 2. Top 5 produits par quantité vendue (barres horizontales CSS)
  *
- * Calculs faits côté client avec useMemo pour réactivité instantanée.
+ * 100% orienté produit. Zero commission.
  *
  * @module ProductStatsCharts
  * @since 2026-02-10
+ * @updated 2026-02-10 - DonutChart CA par source + Top 5 quantité
  */
 
 import { useMemo } from 'react';
 
-import { Card, AreaChart } from '@tremor/react';
-import { TrendingUp, Trophy } from 'lucide-react';
+import { Card } from '@tremor/react';
+import { PieChart as PieChartIcon, Trophy } from 'lucide-react';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 
 import type { ProductStatsData } from '@/lib/hooks/use-all-products-stats';
 
@@ -33,20 +35,22 @@ function formatCurrency(value: number): string {
   }).format(value);
 }
 
-const MONTHS_FR = [
-  'Jan',
-  'Fév',
-  'Mar',
-  'Avr',
-  'Mai',
-  'Jun',
-  'Jul',
-  'Aoû',
-  'Sep',
-  'Oct',
-  'Nov',
-  'Déc',
-];
+function formatPercent(value: number): string {
+  return `${value.toFixed(1)} %`;
+}
+
+// Couleurs par source produit
+const SOURCE_COLORS: Record<string, string> = {
+  catalogue: '#5DBEBB', // teal
+  'mes-produits': '#8B5CF6', // violet
+  'sur-mesure': '#F59E0B', // amber
+};
+
+const SOURCE_LABELS: Record<string, string> = {
+  catalogue: 'Catalogue',
+  'mes-produits': 'Mes produits',
+  'sur-mesure': 'Sur-mesure',
+};
 
 // ============================================
 // TYPES
@@ -57,6 +61,14 @@ interface ProductStatsChartsProps {
   isLoading?: boolean;
 }
 
+interface SourceData {
+  [key: string]: string | number;
+  name: string;
+  value: number;
+  color: string;
+  source: string;
+}
+
 // ============================================
 // COMPONENT
 // ============================================
@@ -65,19 +77,6 @@ export function ProductStatsCharts({
   products,
   isLoading = false,
 }: ProductStatsChartsProps): JSX.Element {
-  // Top 10 produits par commission HT
-  const top10Products = useMemo(() => {
-    return [...products]
-      .sort((a, b) => b.commissionHT - a.commissionHT)
-      .slice(0, 10);
-  }, [products]);
-
-  // Trouver la commission max pour le bar chart
-  const maxCommission = useMemo(() => {
-    if (top10Products.length === 0) return 0;
-    return top10Products[0].commissionHT;
-  }, [top10Products]);
-
   // Loading skeleton
   if (isLoading) {
     return (
@@ -105,29 +104,188 @@ export function ProductStatsCharts({
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      {/* Chart 1: Évolution mensuelle (simple résumé CA/Commissions) */}
-      <MonthlyEvolutionChart products={products} />
+      <DonutChartBySource products={products} />
+      <Top5ProductsByQuantity products={products} />
+    </div>
+  );
+}
 
-      {/* Chart 2: Top 10 produits par commission */}
+// ============================================
+// SUB-COMPONENT: Donut Chart CA HT par source
+// ============================================
+
+function DonutChartBySource({
+  products,
+}: {
+  products: ProductStatsData[];
+}): JSX.Element {
+  const { chartData, totalCA } = useMemo(() => {
+    const bySource: Record<string, number> = {};
+
+    products.forEach(p => {
+      bySource[p.productSource] =
+        (bySource[p.productSource] ?? 0) + p.revenueHT;
+    });
+
+    const total = Object.values(bySource).reduce((s, v) => s + v, 0);
+
+    const data: SourceData[] = Object.entries(bySource)
+      .filter(([, value]) => value > 0)
+      .map(([source, value]) => ({
+        name: SOURCE_LABELS[source] ?? source,
+        value,
+        color: SOURCE_COLORS[source] ?? '#94A3B8',
+        source,
+      }))
+      .sort((a, b) => b.value - a.value);
+
+    return { chartData: data, totalCA: total };
+  }, [products]);
+
+  if (chartData.length === 0) {
+    return (
       <Card className="p-6">
         <div className="flex items-center gap-3 mb-4">
-          <div className="p-2 bg-amber-100 rounded-lg">
-            <Trophy className="h-5 w-5 text-amber-600" />
+          <div className="p-2 bg-teal-100 rounded-lg">
+            <PieChartIcon className="h-5 w-5 text-teal-600" />
           </div>
           <div>
             <h3 className="text-sm font-semibold text-gray-900">
-              Top 10 Produits
+              Répartition CA par source
             </h3>
-            <p className="text-xs text-gray-500">Par commission HT</p>
+          </div>
+        </div>
+        <div className="h-48 flex items-center justify-center bg-gray-50 rounded-lg">
+          <p className="text-sm text-gray-500">Aucune donnée disponible</p>
+        </div>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="p-6">
+      <div className="flex items-center gap-3 mb-4">
+        <div className="p-2 bg-teal-100 rounded-lg">
+          <PieChartIcon className="h-5 w-5 text-teal-600" />
+        </div>
+        <div>
+          <h3 className="text-sm font-semibold text-gray-900">
+            Répartition CA par source
+          </h3>
+          <p className="text-xs text-gray-500">
+            {formatCurrency(totalCA)} CA HT total
+          </p>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-6">
+        {/* Donut */}
+        <div className="relative w-48 h-48 flex-shrink-0">
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={chartData}
+                cx="50%"
+                cy="50%"
+                innerRadius={50}
+                outerRadius={80}
+                dataKey="value"
+                strokeWidth={2}
+                stroke="#fff"
+              >
+                {chartData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
+                ))}
+              </Pie>
+              <Tooltip
+                formatter={(value: number) => formatCurrency(value)}
+                contentStyle={{
+                  fontSize: '12px',
+                  borderRadius: '8px',
+                  border: '1px solid #e5e7eb',
+                }}
+              />
+            </PieChart>
+          </ResponsiveContainer>
+          {/* Centre du donut : total */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="text-center">
+              <p className="text-xs text-gray-500">Total</p>
+              <p className="text-sm font-bold text-[#183559]">
+                {formatCurrency(totalCA)}
+              </p>
+            </div>
           </div>
         </div>
 
+        {/* Légende */}
+        <div className="flex-1 space-y-3">
+          {chartData.map(entry => {
+            const percentage = totalCA > 0 ? (entry.value / totalCA) * 100 : 0;
+            return (
+              <div key={entry.source} className="flex items-center gap-3">
+                <div
+                  className="w-3 h-3 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: entry.color }}
+                />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-gray-700">{entry.name}</p>
+                  <p className="text-xs text-gray-500">
+                    {formatCurrency(entry.value)} · {formatPercent(percentage)}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+// ============================================
+// SUB-COMPONENT: Top 5 produits par quantité
+// ============================================
+
+function Top5ProductsByQuantity({
+  products,
+}: {
+  products: ProductStatsData[];
+}): JSX.Element {
+  const top5 = useMemo(() => {
+    return [...products]
+      .sort((a, b) => b.quantitySold - a.quantitySold)
+      .slice(0, 5);
+  }, [products]);
+
+  const maxQuantity = useMemo(() => {
+    if (top5.length === 0) return 0;
+    return top5[0].quantitySold;
+  }, [top5]);
+
+  return (
+    <Card className="p-6">
+      <div className="flex items-center gap-3 mb-4">
+        <div className="p-2 bg-amber-100 rounded-lg">
+          <Trophy className="h-5 w-5 text-amber-600" />
+        </div>
+        <div>
+          <h3 className="text-sm font-semibold text-gray-900">
+            Top 5 Produits
+          </h3>
+          <p className="text-xs text-gray-500">Par quantité vendue</p>
+        </div>
+      </div>
+
+      {top5.length === 0 ? (
+        <div className="h-48 flex items-center justify-center bg-gray-50 rounded-lg">
+          <p className="text-sm text-gray-500">Aucune donnée disponible</p>
+        </div>
+      ) : (
         <div className="space-y-3">
-          {top10Products.map((product, index) => {
+          {top5.map((product, index) => {
             const percentage =
-              maxCommission > 0
-                ? (product.commissionHT / maxCommission) * 100
-                : 0;
+              maxQuantity > 0 ? (product.quantitySold / maxQuantity) * 100 : 0;
 
             return (
               <div key={product.productId} className="group">
@@ -140,117 +298,24 @@ export function ProductStatsCharts({
                       {product.productName}
                     </span>
                   </div>
-                  <span className="text-sm font-medium text-[#5DBEBB] shrink-0 ml-2">
-                    {formatCurrency(product.commissionHT)}
-                  </span>
+                  <div className="flex items-center gap-3 shrink-0 ml-2">
+                    <span className="text-sm font-semibold text-[#3976BB]">
+                      {product.quantitySold.toLocaleString('fr-FR')} u.
+                    </span>
+                    <span className="text-xs text-gray-500">
+                      {formatCurrency(product.revenueHT)}
+                    </span>
+                  </div>
                 </div>
                 <div className="ml-7 h-2 bg-gray-100 rounded-full overflow-hidden">
                   <div
-                    className="h-full rounded-full bg-gradient-to-r from-[#7E84C0] to-[#5DBEBB] transition-all duration-500"
+                    className="h-full rounded-full bg-gradient-to-r from-[#7E84C0] to-[#3976BB] transition-all duration-500"
                     style={{ width: `${percentage}%` }}
                   />
                 </div>
               </div>
             );
           })}
-        </div>
-      </Card>
-    </div>
-  );
-}
-
-// ============================================
-// SUB-COMPONENT: Monthly Evolution
-// ============================================
-
-function MonthlyEvolutionChart({
-  products,
-}: {
-  products: ProductStatsData[];
-}): JSX.Element {
-  // Aggregate revenue and commission by month
-  // Since we don't have per-item dates, we show a summary view
-  // In a future iteration, we could pass order dates from the hook
-  const totalCA = useMemo(
-    () => products.reduce((sum, p) => sum + p.revenueHT, 0),
-    [products]
-  );
-  const totalCommission = useMemo(
-    () => products.reduce((sum, p) => sum + p.commissionHT, 0),
-    [products]
-  );
-
-  // Create a simple distribution chart based on product types
-  const chartData = useMemo(() => {
-    const catalogProducts = products.filter(
-      p => p.commissionType === 'catalogue'
-    );
-    const revendeurProducts = products.filter(
-      p => p.commissionType === 'revendeur'
-    );
-    const customProducts = products.filter(p => p.isCustomProduct);
-
-    return [
-      {
-        category: 'Catalogue',
-        'CA HT': catalogProducts.reduce((s, p) => s + p.revenueHT, 0),
-        'Commission HT': catalogProducts.reduce(
-          (s, p) => s + p.commissionHT,
-          0
-        ),
-      },
-      {
-        category: 'Revendeur',
-        'CA HT': revendeurProducts.reduce((s, p) => s + p.revenueHT, 0),
-        'Commission HT': revendeurProducts.reduce(
-          (s, p) => s + p.commissionHT,
-          0
-        ),
-      },
-      {
-        category: 'Sur-mesure',
-        'CA HT': customProducts.reduce((s, p) => s + p.revenueHT, 0),
-        'Commission HT': customProducts.reduce((s, p) => s + p.commissionHT, 0),
-      },
-    ].filter(d => d['CA HT'] > 0 || d['Commission HT'] > 0);
-  }, [products]);
-
-  return (
-    <Card className="p-6">
-      <div className="flex items-center gap-3 mb-4">
-        <div className="p-2 bg-cyan-100 rounded-lg">
-          <TrendingUp className="h-5 w-5 text-cyan-600" />
-        </div>
-        <div>
-          <h3 className="text-sm font-semibold text-gray-900">
-            Répartition par type
-          </h3>
-          <p className="text-xs text-gray-500">
-            {formatCurrency(totalCA)} CA — {formatCurrency(totalCommission)}{' '}
-            commissions
-          </p>
-        </div>
-      </div>
-
-      {chartData.length > 0 ? (
-        <AreaChart
-          data={chartData}
-          index="category"
-          categories={['CA HT', 'Commission HT']}
-          colors={['blue', 'cyan']}
-          valueFormatter={value => formatCurrency(value)}
-          showLegend
-          showGridLines
-          showAnimation
-          className="h-48"
-          yAxisWidth={70}
-        />
-      ) : (
-        <div className="h-48 flex items-center justify-center bg-gray-50 rounded-lg">
-          <div className="text-center">
-            <TrendingUp className="h-10 w-10 text-gray-300 mx-auto mb-2" />
-            <p className="text-sm text-gray-500">Aucune donnée disponible</p>
-          </div>
         </div>
       )}
     </Card>

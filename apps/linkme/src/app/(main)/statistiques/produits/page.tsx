@@ -1,18 +1,20 @@
 'use client';
 
 /**
- * Page Statistiques Produits (Enhanced)
+ * Page Statistiques Produits
  *
- * Affiche TOUS les produits vendus avec :
- * - 6 KPIs (produits, quantités, CA HT, CA TTC, commissions HT, commissions pending)
- * - Filtres avancés (type, année, statut commission) + recherche debounced
- * - Graphiques (répartition par type + top 10 produits)
- * - Tableau paginé avec recherche et tri
+ * 100% orientée produit : quantités vendues, CA généré.
+ * Zero commission, zero marge, zero rémunération.
+ *
+ * - 4 KPIs (produits, quantité, CA HT, CA TTC)
+ * - Filtres : recherche + année + source produit
+ * - Graphiques : DonutChart CA par source + Top 5 quantité
+ * - Tableau paginé avec tri
  * - Export CSV
  *
  * @module StatistiquesProduits
  * @since 2026-01-08
- * @updated 2026-02-10 - Enhanced filters, charts, KPIs
+ * @updated 2026-02-10 - Purge commissions, focus produit
  */
 
 import { useState, useMemo, useCallback } from 'react';
@@ -25,11 +27,9 @@ import {
   Package,
   ShoppingCart,
   DollarSign,
-  Wallet,
   RefreshCw,
   AlertCircle,
   Receipt,
-  Clock,
   Download,
 } from 'lucide-react';
 
@@ -40,7 +40,6 @@ import {
 } from '@/lib/hooks/use-all-products-stats';
 
 import { ProductStatsCharts } from './components/ProductStatsCharts';
-import { ProductStatsFilterSidebar } from './components/ProductStatsFilterSidebar';
 import { TopFiltersBar } from './components/TopFiltersBar';
 
 // ============================================
@@ -63,10 +62,9 @@ function formatCurrency(value: number): string {
 export default function StatistiquesProduits(): JSX.Element {
   // Filters state
   const [filters, setFilters] = useState<ProductStatsFilters>({
-    productType: 'all',
+    productSource: 'all',
   });
   const [search, setSearch] = useState('');
-  const [isFilterSidebarOpen, setIsFilterSidebarOpen] = useState(false);
 
   // Data fetching with filters
   const { data, isLoading, error, refetch } = useAllProductsStats(filters);
@@ -83,39 +81,29 @@ export default function StatistiquesProduits(): JSX.Element {
     );
   }, [data?.products, search]);
 
-  // Active filters count (excluding search and productType='all')
-  const activeFiltersCount = useMemo(() => {
-    let count = 0;
-    if (filters.year) count++;
-    if (filters.productType && filters.productType !== 'all') count++;
-    if (filters.commissionStatuses && filters.commissionStatuses.length > 0)
-      count++;
-    return count;
-  }, [filters]);
-
   // Export CSV
   const exportToCSV = useCallback(() => {
     const headers = [
       'Produit',
       'SKU',
-      'Type',
+      'Source',
       'Quantité',
+      'Prix unit. HT',
       'CA HT',
       'CA TTC',
-      'Commission HT',
-      'Taux Marge',
-      'Statut',
     ];
     const rows = filteredProducts.map(p => [
       p.productName,
       p.productSku,
-      p.commissionType === 'catalogue' ? 'Catalogue' : 'Revendeur',
+      p.productSource === 'catalogue'
+        ? 'Catalogue'
+        : p.productSource === 'mes-produits'
+          ? 'Mes produits'
+          : 'Sur-mesure',
       p.quantitySold.toString(),
+      p.avgPriceHT.toFixed(2),
       p.revenueHT.toFixed(2),
       p.revenueTTC.toFixed(2),
-      p.commissionHT.toFixed(2),
-      `${p.avgMarginRate.toFixed(1)}%`,
-      p.commissionStatus,
     ]);
 
     const csv = [headers, ...rows]
@@ -203,8 +191,8 @@ export default function StatistiquesProduits(): JSX.Element {
           </Card>
         )}
 
-        {/* 6 KPIs */}
-        <section className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+        {/* 4 KPIs */}
+        <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Produits vendus */}
           <Card className="p-4 border-l-4 border-[#7E84C0]">
             <div className="flex items-center gap-2 mb-2">
@@ -256,7 +244,7 @@ export default function StatistiquesProduits(): JSX.Element {
             )}
           </Card>
 
-          {/* CA Total TTC (NOUVEAU) */}
+          {/* CA Total TTC */}
           <Card className="p-4 border-l-4 border-[#183559]/60">
             <div className="flex items-center gap-2 mb-2">
               <div className="p-1.5 bg-[#183559]/5 rounded-lg">
@@ -272,40 +260,6 @@ export default function StatistiquesProduits(): JSX.Element {
               </p>
             )}
           </Card>
-
-          {/* Commissions HT */}
-          <Card className="p-4 border-l-4 border-[#5DBEBB]">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="p-1.5 bg-[#5DBEBB]/10 rounded-lg">
-                <Wallet className="h-4 w-4 text-[#5DBEBB]" />
-              </div>
-              <span className="text-xs text-gray-600">Commissions</span>
-            </div>
-            {isLoading ? (
-              <div className="animate-pulse h-7 bg-gray-200 rounded w-24" />
-            ) : (
-              <p className="text-xl font-bold text-[#5DBEBB]">
-                {formatCurrency(data?.totals.totalCommissionTTC ?? 0)}
-              </p>
-            )}
-          </Card>
-
-          {/* Commissions Pending (NOUVEAU) */}
-          <Card className="p-4 border-l-4 border-orange-400">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="p-1.5 bg-orange-50 rounded-lg">
-                <Clock className="h-4 w-4 text-orange-500" />
-              </div>
-              <span className="text-xs text-gray-600">En attente</span>
-            </div>
-            {isLoading ? (
-              <div className="animate-pulse h-7 bg-gray-200 rounded w-24" />
-            ) : (
-              <p className="text-xl font-bold text-orange-500">
-                {formatCurrency(data?.totals.totalCommissionPending ?? 0)}
-              </p>
-            )}
-          </Card>
         </section>
 
         {/* Top Filters Bar */}
@@ -315,8 +269,6 @@ export default function StatistiquesProduits(): JSX.Element {
             onChange={setFilters}
             search={search}
             onSearchChange={setSearch}
-            onOpenSidebar={() => setIsFilterSidebarOpen(true)}
-            activeFiltersCount={activeFiltersCount}
           />
         </section>
 
@@ -349,14 +301,6 @@ export default function StatistiquesProduits(): JSX.Element {
           </p>
         </div>
       </div>
-
-      {/* Filter Sidebar */}
-      <ProductStatsFilterSidebar
-        isOpen={isFilterSidebarOpen}
-        onClose={() => setIsFilterSidebarOpen(false)}
-        filters={filters}
-        onChange={setFilters}
-      />
     </div>
   );
 }

@@ -5,22 +5,22 @@
  *
  * Contient :
  * - Recherche texte (debounced)
- * - Tabs type produit (Tous | Catalogue | Revendeur | Sur-mesure)
- * - Sélecteur année
- * - Badge filtres actifs + bouton Reset
- * - Bouton filtres avancés (sidebar)
+ * - Tabs source produit (Tous | Catalogue | Mes produits | Sur-mesure)
+ * - Sélecteur année (depuis 2023)
+ * - Bouton Reset
  *
  * @module TopFiltersBar
  * @since 2026-02-10
+ * @updated 2026-02-10 - Purge commissions, années depuis 2023
  */
 
 import { useState, useEffect, useMemo } from 'react';
 
-import { Search, SlidersHorizontal, X, Calendar } from 'lucide-react';
+import { Search, X, Calendar } from 'lucide-react';
 
 import type {
   ProductStatsFilters,
-  ProductTypeFilter,
+  ProductSourceFilter,
 } from '@/lib/hooks/use-all-products-stats';
 import { cn } from '@/lib/utils';
 
@@ -28,18 +28,18 @@ import { cn } from '@/lib/utils';
 // CONSTANTS
 // ============================================
 
-const PRODUCT_TYPE_TABS: { value: ProductTypeFilter; label: string }[] = [
+const PRODUCT_SOURCE_TABS: { value: ProductSourceFilter; label: string }[] = [
   { value: 'all', label: 'Tous' },
   { value: 'catalogue', label: 'Catalogue' },
-  { value: 'revendeur', label: 'Revendeur' },
-  { value: 'custom', label: 'Sur-mesure' },
+  { value: 'mes-produits', label: 'Mes produits' },
+  { value: 'sur-mesure', label: 'Sur-mesure' },
 ];
 
-// Generate available years (from 2024 to current year)
+// Generate available years (from current year down to 2023 - first orders)
 function getAvailableYears(): number[] {
   const currentYear = new Date().getFullYear();
   const years: number[] = [];
-  for (let y = currentYear; y >= 2024; y--) {
+  for (let y = currentYear; y >= 2023; y--) {
     years.push(y);
   }
   return years;
@@ -54,8 +54,6 @@ interface TopFiltersBarProps {
   onChange: (filters: ProductStatsFilters) => void;
   search: string;
   onSearchChange: (search: string) => void;
-  onOpenSidebar: () => void;
-  activeFiltersCount: number;
 }
 
 // ============================================
@@ -67,8 +65,6 @@ export function TopFiltersBar({
   onChange,
   search,
   onSearchChange,
-  onOpenSidebar,
-  activeFiltersCount,
 }: TopFiltersBarProps): JSX.Element {
   const [searchInput, setSearchInput] = useState(search);
   const [showYearDropdown, setShowYearDropdown] = useState(false);
@@ -87,8 +83,8 @@ export function TopFiltersBar({
     setSearchInput(search);
   }, [search]);
 
-  const handleTypeChange = (type: ProductTypeFilter): void => {
-    onChange({ ...filters, productType: type });
+  const handleSourceChange = (source: ProductSourceFilter): void => {
+    onChange({ ...filters, productSource: source });
   };
 
   const handleYearSelect = (year: number | undefined): void => {
@@ -97,14 +93,22 @@ export function TopFiltersBar({
   };
 
   const handleResetAll = (): void => {
-    onChange({ productType: 'all' });
+    onChange({ productSource: 'all' });
     setSearchInput('');
     onSearchChange('');
   };
 
+  // Active filters count (excluding productSource='all')
+  const activeFiltersCount = useMemo(() => {
+    let count = 0;
+    if (filters.year) count++;
+    if (filters.productSource && filters.productSource !== 'all') count++;
+    return count;
+  }, [filters]);
+
   return (
     <div className="space-y-3">
-      {/* Row 1: Search + Year + Filters button */}
+      {/* Row 1: Search + Year */}
       <div className="flex flex-col sm:flex-row gap-3">
         {/* Search */}
         <div className="relative flex-1 sm:max-w-[320px]">
@@ -190,36 +194,17 @@ export function TopFiltersBar({
             </>
           )}
         </div>
-
-        {/* Filters sidebar button */}
-        <button
-          onClick={onOpenSidebar}
-          className={cn(
-            'flex items-center gap-2 px-3 py-2 border rounded-lg text-sm transition-colors',
-            activeFiltersCount > 0
-              ? 'border-linkme-turquoise/50 bg-linkme-turquoise/5 text-linkme-marine'
-              : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
-          )}
-        >
-          <SlidersHorizontal className="h-4 w-4" />
-          Filtres
-          {activeFiltersCount > 0 && (
-            <span className="bg-linkme-turquoise text-white text-xs px-1.5 py-0.5 rounded-full">
-              {activeFiltersCount}
-            </span>
-          )}
-        </button>
       </div>
 
-      {/* Row 2: Product type tabs */}
+      {/* Row 2: Product source tabs */}
       <div className="flex items-center gap-1">
-        {PRODUCT_TYPE_TABS.map(tab => (
+        {PRODUCT_SOURCE_TABS.map(tab => (
           <button
             key={tab.value}
-            onClick={() => handleTypeChange(tab.value)}
+            onClick={() => handleSourceChange(tab.value)}
             className={cn(
               'px-3 py-1.5 text-sm rounded-lg transition-colors',
-              (filters.productType ?? 'all') === tab.value
+              (filters.productSource ?? 'all') === tab.value
                 ? 'bg-[#183559] text-white'
                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
             )}
