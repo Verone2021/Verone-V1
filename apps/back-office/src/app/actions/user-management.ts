@@ -149,6 +149,12 @@ export async function createUserWithRole(
     //    Utilise adminClient pour bypass RLS (opération admin)
     let profileError: unknown;
 
+    // Sanitize phone: strip spaces/dots/dashes to match DB check_phone_format constraint
+    const rawPhone = userData.phone?.trim() || null;
+    const sanitizedPhone = rawPhone
+      ? rawPhone.replace(/[\s.\-()]/g, '') || null
+      : null;
+
     try {
       const result = await adminClient.from('user_profiles').insert({
         user_id: newUser.user.id,
@@ -156,7 +162,7 @@ export async function createUserWithRole(
         email: userData.email,
         first_name: userData.firstName?.trim() || null,
         last_name: userData.lastName?.trim() || null,
-        phone: userData.phone?.trim() || null,
+        phone: sanitizedPhone,
         job_title: userData.jobTitle?.trim() || null,
         partner_id: null,
         organisation_id: null,
@@ -183,7 +189,7 @@ export async function createUserWithRole(
     }
 
     if (profileError) {
-      console.error('Erreur création profil:', profileError);
+      console.error('Erreur création profil/rôle:', profileError);
 
       // Supprimer l'utilisateur auth si la création du profil a échoué
       try {
@@ -192,9 +198,25 @@ export async function createUserWithRole(
         console.error('Erreur cleanup utilisateur:', cleanupError);
       }
 
+      // Propager l'erreur Supabase réelle au lieu d'un message générique
+      let errorMsg = 'Erreur lors de la création du profil utilisateur';
+
+      if (profileError instanceof Error) {
+        errorMsg = profileError.message;
+      } else if (typeof profileError === 'object' && profileError !== null) {
+        const errObj = profileError as Record<string, unknown>;
+        if (typeof errObj.message === 'string') {
+          errorMsg = errObj.message;
+        } else {
+          errorMsg = JSON.stringify(profileError);
+        }
+      } else if (typeof profileError === 'string') {
+        errorMsg = profileError;
+      }
+
       return {
         success: false,
-        error: 'Erreur lors de la création du profil utilisateur',
+        error: errorMsg,
       };
     }
 
