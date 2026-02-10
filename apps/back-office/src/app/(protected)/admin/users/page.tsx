@@ -54,7 +54,6 @@ async function getUsersWithProfiles(): Promise<UserWithProfile[]> {
   // En récupérant les profils selon la structure DB réelle
   type UserProfileData = {
     user_id: string;
-    role: string;
     user_type: string | null;
     first_name: string | null;
     last_name: string | null;
@@ -69,7 +68,6 @@ async function getUsersWithProfiles(): Promise<UserWithProfile[]> {
     .select(
       `
       user_id,
-      role,
       user_type,
       first_name,
       last_name,
@@ -86,6 +84,18 @@ async function getUsersWithProfiles(): Promise<UserWithProfile[]> {
     console.error('Erreur lors de la récupération des profils:', error);
     return [];
   }
+
+  // Récupérer les rôles back-office depuis user_app_roles
+  const { data: appRoles } = await supabase
+    .from('user_app_roles')
+    .select('user_id, role')
+    .eq('app', 'back-office')
+    .eq('is_active', true);
+
+  // Map userId → role pour lookup O(1)
+  const roleMap = new Map<string, string>(
+    (appRoles ?? []).map(r => [r.user_id, r.role])
+  );
 
   // ✅ FIX PERFORMANCE: Récupérer TOUS les utilisateurs UNE SEULE FOIS (au lieu de N fois)
   const {
@@ -124,6 +134,10 @@ async function getUsersWithProfiles(): Promise<UserWithProfile[]> {
   const usersWithProfiles: UserWithProfile[] = [];
 
   for (const profile of profiles) {
+    // Seuls les utilisateurs avec un rôle back-office sont pertinents
+    const backofficeRole = roleMap.get(profile.user_id);
+    if (!backofficeRole) continue;
+
     // ✅ Lookup O(1) dans la Map au lieu d'appel API
     const user = userMap.get(profile.user_id);
 
@@ -135,7 +149,7 @@ async function getUsersWithProfiles(): Promise<UserWithProfile[]> {
         created_at: user.created_at,
         user_metadata: user.user_metadata ?? {},
         profile: {
-          role: profile.role,
+          role: backofficeRole,
           user_type: profile.user_type ?? 'standard',
           first_name: profile.first_name,
           last_name: profile.last_name,
@@ -161,14 +175,15 @@ async function getCurrentUserRole() {
   } = await supabase.auth.getUser();
   if (!user) return null;
 
-  const { data: profile } = await supabase
-    .from('user_profiles')
+  const { data: userRole } = await supabase
+    .from('user_app_roles')
     .select('role')
     .eq('user_id', user.id)
-    .single()
-    .returns<{ role: string }>();
+    .eq('app', 'back-office')
+    .eq('is_active', true)
+    .maybeSingle();
 
-  return profile?.role ?? null;
+  return userRole?.role ?? null;
 }
 
 export default async function AdminUsersPage() {
