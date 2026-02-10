@@ -367,45 +367,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
       console.warn('[signIn] START', { timestamp: new Date().toISOString() });
 
       // ========================================================================
-      // ÉTAPE 1: Vérifier l'accès LinkMe AVANT la connexion (CRITIQUE)
-      // Utilise la RPC check_linkme_access_by_email qui est SECURITY DEFINER
-      // pour accéder à auth.users sans authentification
+      // Authentification Supabase
+      // Note: La vérification du rôle LinkMe est maintenant gérée par le
+      // middleware (apps/linkme/src/middleware.ts) qui redirect vers
+      // /unauthorized si l'utilisateur n'a pas de rôle LinkMe actif.
+      // Pattern unifié avec back-office (cross-app protection).
       // ========================================================================
-      console.warn(
-        '[signIn] ÉTAPE 1: Vérification accès LinkMe AVANT connexion'
-      );
-      const beforeCheck = Date.now();
-      const { data: hasAccess, error: checkError } = await supabase.rpc(
-        'check_linkme_access_by_email',
-        { p_email: email }
-      );
-      const afterCheck = Date.now();
-      console.warn('[signIn] check_linkme_access_by_email completed', {
-        duration: afterCheck - beforeCheck,
-        hasAccess,
-        error: checkError?.message,
-      });
-
-      // Si erreur RPC ou pas d'accès → BLOQUER IMMÉDIATEMENT (pas de session créée)
-      if (checkError) {
-        console.error('[signIn] RPC error:', checkError);
-        // Fallback: continuer avec l'ancienne méthode si RPC échoue
-        console.warn('[signIn] Fallback vers vérification post-connexion');
-      } else if (!hasAccess) {
-        console.warn('[signIn] END - no LinkMe access (pre-auth check)', {
-          totalElapsed: Date.now() - startTime,
-        });
-        return {
-          error: new Error(
-            "Cet email n'a pas de compte LinkMe. Créez un compte ou utilisez un autre email."
-          ),
-        };
-      }
-
-      // ========================================================================
-      // ÉTAPE 2: Authentification Supabase (seulement si accès vérifié)
-      // ========================================================================
-      console.warn('[signIn] ÉTAPE 2: Authentification Supabase');
+      console.warn('[signIn] Authentification Supabase');
       const beforePassword = Date.now();
       const { data, error: authError } = await supabase.auth.signInWithPassword(
         {
