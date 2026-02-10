@@ -114,7 +114,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           .from('v_linkme_users')
           .select('*')
           .eq('user_id', userId)
-          .single();
+          .maybeSingle();
 
         if (error) {
           // TOUJOURS logger les erreurs (pas de flag DEBUG pour les erreurs)
@@ -151,7 +151,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
               .eq('user_id', userId)
               .eq('app', 'linkme')
               .eq('is_active', true)
-              .single();
+              .maybeSingle();
 
             if (roleError ?? !roleData) {
               console.error('[AuthContext] user_app_roles FALLBACK ERROR', {
