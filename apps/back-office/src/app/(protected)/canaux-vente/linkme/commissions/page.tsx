@@ -80,7 +80,7 @@ interface Commission {
   } | null;
   sales_order?: {
     order_number: string;
-    payment_status: string | null;
+    payment_status_v2: string | null;
     customer_type: string;
     total_ttc: number | null;
   } | null;
@@ -190,7 +190,7 @@ export default function LinkMeCommissionsPage() {
           `
           *,
           affiliate:linkme_affiliates(display_name, enseigne_id, organisation_id),
-          sales_order:sales_orders(order_number, payment_status, customer_type, total_ttc)
+          sales_order:sales_orders(order_number, payment_status_v2, customer_type, total_ttc)
         `
         )
         .order('created_at', { ascending: false })
@@ -377,7 +377,7 @@ export default function LinkMeCommissionsPage() {
       c.order_number ?? c.sales_order?.order_number ?? '-',
       c.affiliate?.display_name ?? 'N/A',
       c.affiliate?.enseigne_id ? 'Enseigne' : 'Organisation',
-      c.sales_order?.payment_status === 'paid' ? 'Payé' : 'En attente',
+      c.sales_order?.payment_status_v2 === 'paid' ? 'Payé' : 'En attente',
       c.order_amount_ht.toFixed(2),
       c.affiliate_commission.toFixed(2),
       (c.affiliate_commission_ttc ?? c.affiliate_commission * 1.2).toFixed(2),
@@ -741,19 +741,19 @@ export default function LinkMeCommissionsPage() {
                               <TableCell>
                                 <Badge
                                   variant={
-                                    commission.sales_order?.payment_status ===
-                                    'paid'
+                                    commission.sales_order
+                                      ?.payment_status_v2 === 'paid'
                                       ? 'default'
                                       : 'outline'
                                   }
                                   className={
-                                    commission.sales_order?.payment_status ===
-                                    'paid'
+                                    commission.sales_order
+                                      ?.payment_status_v2 === 'paid'
                                       ? 'bg-green-100 text-green-700 border-green-200'
                                       : 'bg-orange-50 text-orange-600 border-orange-200'
                                   }
                                 >
-                                  {commission.sales_order?.payment_status ===
+                                  {commission.sales_order?.payment_status_v2 ===
                                   'paid'
                                     ? 'Payé'
                                     : 'En attente'}
