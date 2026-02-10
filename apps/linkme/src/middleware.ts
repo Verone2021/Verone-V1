@@ -5,10 +5,12 @@
  * 1. Refresh session Supabase
  * 2. Vérifier authentification sur routes protégées
  * 3. Vérifier rôle LinkMe actif dans user_app_roles
+ * 4. Redirect vers /unauthorized si authentifié MAIS sans rôle LinkMe
  *
  * @module middleware
  * @since 2025-12-01
  * @updated 2026-02-09 - Refactored to use shared enforceAppIsolation (DRY)
+ * @updated 2026-02-10 - Added unauthorizedPath for cross-app protection
  */
 
 import type { NextRequest, NextResponse } from 'next/server';
@@ -19,10 +21,12 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
   return enforceAppIsolation(request, {
     appName: 'linkme',
     loginPath: '/login',
+    unauthorizedPath: '/unauthorized',
     publicRoutes: [
       // Pages publiques exactes
       /^\/$/,
       /^\/login$/,
+      /^\/unauthorized$/,
       /^\/about$/,
       /^\/contact$/,
       /^\/cgu$/,
