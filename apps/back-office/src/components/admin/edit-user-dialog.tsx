@@ -30,7 +30,7 @@ import {
 import { Edit, Save, X } from 'lucide-react';
 
 import type { UserWithProfile } from '@/app/(protected)/admin/users/page';
-import { updateUserProfile } from '@verone/admin/actions/user-management';
+import { updateUserProfile } from '@/app/actions/user-management';
 
 interface EditUserDialogProps {
   open: boolean;

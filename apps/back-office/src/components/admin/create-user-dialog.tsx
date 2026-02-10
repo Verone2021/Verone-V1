@@ -10,7 +10,7 @@
 import type { ReactNode } from 'react';
 import React, { useState } from 'react';
 
-import { createUserWithRole } from '@verone/admin/actions/user-management';
+import { createUserWithRole } from '@/app/actions/user-management';
 import { useToggle } from '@verone/hooks';
 import { ButtonV2 } from '@verone/ui';
 import {
