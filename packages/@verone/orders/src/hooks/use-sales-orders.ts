@@ -117,6 +117,7 @@ export interface SalesOrder {
     postal_code?: string;
     city?: string;
     region?: string;
+    enseigne_id?: string | null; // 🆕 AJOUTÉ - Pour filtrer organisations indépendantes vs enseignes
   };
   individual_customers?: {
     id: string;

@@ -139,7 +139,7 @@ const paymentStatusColors: Record<string, string> = {
   overdue: 'bg-red-100 text-red-800',
 };
 
-type SortColumn = 'date' | 'client' | 'amount' | null;
+type SortColumn = 'date' | 'client' | 'amount' | 'order_number' | null;
 type SortDirection = 'asc' | 'desc';
 
 // Props du composant
@@ -223,6 +223,17 @@ export interface SalesOrdersTableProps {
 
   /** Commandes pré-chargées (évite double fetch quand parent fetch déjà) */
   preloadedOrders?: SalesOrder[];
+
+  /** Contrôle colonnes triables */
+  sortableColumns?: {
+    date?: boolean;
+    client?: boolean;
+    amount?: boolean;
+    orderNumber?: boolean;
+  };
+
+  /** Afficher filtre enseigne/organisation */
+  showEnseigneFilter?: boolean;
 }
 
 const isOrderEditable = (order: SalesOrder, channelId?: string | null) => {
@@ -268,6 +279,8 @@ export function SalesOrdersTable({
   enablePagination = false,
   defaultItemsPerPage = 10,
   preloadedOrders,
+  sortableColumns,
+  showEnseigneFilter = false,
 }: SalesOrdersTableProps) {
   const {
     loading: hookLoading,
@@ -292,7 +305,7 @@ export function SalesOrdersTable({
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState<SalesOrderStatus | 'all'>('all');
   const [customerTypeFilter, setCustomerTypeFilter] = useState<
-    'all' | 'professional' | 'individual'
+    'all' | 'professional' | 'individual' | 'organisation' | 'enseigne'
   >('all');
   const [periodFilter, setPeriodFilter] = useState<
     'all' | 'month' | 'quarter' | 'year'
@@ -374,17 +387,30 @@ export function SalesOrdersTable({
 
       // Filtre type client
       if (customerTypeFilter !== 'all') {
-        if (
-          customerTypeFilter === 'professional' &&
-          order.customer_type !== 'organization'
-        ) {
-          return false;
-        }
-        if (
-          customerTypeFilter === 'individual' &&
-          order.customer_type !== 'individual'
-        ) {
-          return false;
+        switch (customerTypeFilter) {
+          case 'individual':
+            if (order.customer_type !== 'individual') return false;
+            break;
+          case 'professional':
+            // Backward compat : toutes les organisations
+            if (order.customer_type !== 'organization') return false;
+            break;
+          case 'organisation':
+            // Organisation indépendante (sans enseigne)
+            if (
+              order.customer_type !== 'organization' ||
+              order.organisations?.enseigne_id !== null
+            )
+              return false;
+            break;
+          case 'enseigne':
+            // Organisation avec enseigne
+            if (
+              order.customer_type !== 'organization' ||
+              !order.organisations?.enseigne_id
+            )
+              return false;
+            break;
         }
       }
 
@@ -495,6 +521,11 @@ export function SalesOrdersTable({
                   ''
                 : `${b.individual_customers?.first_name} ${b.individual_customers?.last_name}`;
             comparison = nameA.localeCompare(nameB);
+            break;
+          case 'order_number':
+            comparison = (a.order_number || '').localeCompare(
+              b.order_number || ''
+            );
             break;
           case 'amount':
             comparison = (a.total_ttc || 0) - (b.total_ttc || 0);
@@ -1074,12 +1105,20 @@ export function SalesOrdersTable({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Tous les types</SelectItem>
-                  <SelectItem value="professional">
-                    Clients professionnels
-                  </SelectItem>
                   <SelectItem value="individual">
                     Clients particuliers
                   </SelectItem>
+                  <SelectItem value="professional">
+                    Clients professionnels
+                  </SelectItem>
+                  {showEnseigneFilter && (
+                    <>
+                      <SelectItem value="organisation">
+                        Organisations (indep.)
+                      </SelectItem>
+                      <SelectItem value="enseigne">Enseignes</SelectItem>
+                    </>
+                  )}
                 </SelectContent>
               </Select>
             )}
@@ -1146,46 +1185,74 @@ export function SalesOrdersTable({
                   <TableHeader>
                     <TableRow>
                       <TableHead className="w-10" />
-                      <TableHead>N Commande</TableHead>
-                      <TableHead
-                        className="cursor-pointer hover:bg-gray-50"
-                        onClick={() => handleSort('client')}
-                      >
-                        <span className="inline-flex items-center gap-1">
-                          Client
-                          {renderSortIcon('client')}
-                        </span>
-                      </TableHead>
+                      {/* N° Commande - sortable si sortableColumns.orderNumber */}
+                      {sortableColumns?.orderNumber !== false ? (
+                        <TableHead
+                          className="cursor-pointer hover:bg-gray-50"
+                          onClick={() => handleSort('order_number')}
+                        >
+                          <span className="inline-flex items-center gap-1">
+                            N Commande
+                            {renderSortIcon('order_number')}
+                          </span>
+                        </TableHead>
+                      ) : (
+                        <TableHead>N Commande</TableHead>
+                      )}
+                      {/* Client - sortable si sortableColumns.client */}
+                      {sortableColumns?.client !== false ? (
+                        <TableHead
+                          className="cursor-pointer hover:bg-gray-50"
+                          onClick={() => handleSort('client')}
+                        >
+                          <span className="inline-flex items-center gap-1">
+                            Client
+                            {renderSortIcon('client')}
+                          </span>
+                        </TableHead>
+                      ) : (
+                        <TableHead>Client</TableHead>
+                      )}
                       <TableHead>Statut</TableHead>
                       <TableHead>Paiement</TableHead>
                       <TableHead>Paiement V2</TableHead>
                       <TableHead className="w-20 text-center">
                         Articles
                       </TableHead>
-                      <TableHead
-                        className="cursor-pointer hover:bg-gray-50"
-                        onClick={() => handleSort('date')}
-                      >
-                        <span className="inline-flex items-center gap-1">
-                          Date création
-                          {renderSortIcon('date')}
-                        </span>
-                      </TableHead>
+                      {/* Date - sortable si sortableColumns.date */}
+                      {sortableColumns?.date !== false ? (
+                        <TableHead
+                          className="cursor-pointer hover:bg-gray-50"
+                          onClick={() => handleSort('date')}
+                        >
+                          <span className="inline-flex items-center gap-1">
+                            Date création
+                            {renderSortIcon('date')}
+                          </span>
+                        </TableHead>
+                      ) : (
+                        <TableHead>Date création</TableHead>
+                      )}
                       <TableHead>Date commande</TableHead>
                       {showChannelColumn && <TableHead>Canal</TableHead>}
                       {/* Colonnes additionnelles */}
                       {additionalColumns.map(col => (
                         <TableHead key={col.key}>{col.header}</TableHead>
                       ))}
-                      <TableHead
-                        className="cursor-pointer hover:bg-gray-50"
-                        onClick={() => handleSort('amount')}
-                      >
-                        <span className="inline-flex items-center gap-1">
-                          Montant TTC
-                          {renderSortIcon('amount')}
-                        </span>
-                      </TableHead>
+                      {/* Montant - sortable si sortableColumns.amount */}
+                      {sortableColumns?.amount !== false ? (
+                        <TableHead
+                          className="cursor-pointer hover:bg-gray-50"
+                          onClick={() => handleSort('amount')}
+                        >
+                          <span className="inline-flex items-center gap-1">
+                            Montant TTC
+                            {renderSortIcon('amount')}
+                          </span>
+                        </TableHead>
+                      ) : (
+                        <TableHead>Montant TTC</TableHead>
+                      )}
                       <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
