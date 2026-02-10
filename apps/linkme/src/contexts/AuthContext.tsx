@@ -114,7 +114,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           .from('v_linkme_users')
           .select('*')
           .eq('user_id', userId)
-          .single();
+          .maybeSingle();
 
         if (error) {
           // TOUJOURS logger les erreurs (pas de flag DEBUG pour les erreurs)
@@ -151,7 +151,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
               .eq('user_id', userId)
               .eq('app', 'linkme')
               .eq('is_active', true)
-              .single();
+              .maybeSingle();
 
             if (roleError ?? !roleData) {
               console.error('[AuthContext] user_app_roles FALLBACK ERROR', {
@@ -367,45 +367,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
       console.warn('[signIn] START', { timestamp: new Date().toISOString() });
 
       // ========================================================================
-      // ÉTAPE 1: Vérifier l'accès LinkMe AVANT la connexion (CRITIQUE)
-      // Utilise la RPC check_linkme_access_by_email qui est SECURITY DEFINER
-      // pour accéder à auth.users sans authentification
+      // Authentification Supabase
+      // Note: La vérification du rôle LinkMe est maintenant gérée par le
+      // middleware (apps/linkme/src/middleware.ts) qui redirect vers
+      // /unauthorized si l'utilisateur n'a pas de rôle LinkMe actif.
+      // Pattern unifié avec back-office (cross-app protection).
       // ========================================================================
-      console.warn(
-        '[signIn] ÉTAPE 1: Vérification accès LinkMe AVANT connexion'
-      );
-      const beforeCheck = Date.now();
-      const { data: hasAccess, error: checkError } = await supabase.rpc(
-        'check_linkme_access_by_email',
-        { p_email: email }
-      );
-      const afterCheck = Date.now();
-      console.warn('[signIn] check_linkme_access_by_email completed', {
-        duration: afterCheck - beforeCheck,
-        hasAccess,
-        error: checkError?.message,
-      });
-
-      // Si erreur RPC ou pas d'accès → BLOQUER IMMÉDIATEMENT (pas de session créée)
-      if (checkError) {
-        console.error('[signIn] RPC error:', checkError);
-        // Fallback: continuer avec l'ancienne méthode si RPC échoue
-        console.warn('[signIn] Fallback vers vérification post-connexion');
-      } else if (!hasAccess) {
-        console.warn('[signIn] END - no LinkMe access (pre-auth check)', {
-          totalElapsed: Date.now() - startTime,
-        });
-        return {
-          error: new Error(
-            "Cet email n'a pas de compte LinkMe. Créez un compte ou utilisez un autre email."
-          ),
-        };
-      }
-
-      // ========================================================================
-      // ÉTAPE 2: Authentification Supabase (seulement si accès vérifié)
-      // ========================================================================
-      console.warn('[signIn] ÉTAPE 2: Authentification Supabase');
+      console.warn('[signIn] Authentification Supabase');
       const beforePassword = Date.now();
       const { data, error: authError } = await supabase.auth.signInWithPassword(
         {
@@ -435,45 +403,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
 
       // ========================================================================
-      // ÉTAPE 3: Double vérification du rôle (sécurité additionnelle)
-      // Nécessaire en cas de fallback ou de changement de rôle entre les 2 étapes
+      // Mise à jour des states et chargement du rôle complet
+      // Note: La vérification du rôle LinkMe est maintenant gérée par le
+      // middleware qui redirect vers /unauthorized si nécessaire.
       // ========================================================================
-      console.warn('[signIn] ÉTAPE 3: Double vérification rôle LinkMe');
-      const beforeQuery = Date.now();
-      const { data: roleData, error: roleError } = await (
-        supabase as SupabaseClient
-      )
-        .from('user_app_roles')
-        .select('id')
-        .eq('user_id', data.user.id)
-        .eq('app', 'linkme')
-        .eq('is_active', true)
-        .single();
-      const afterQuery = Date.now();
-      console.warn('[signIn] query user_app_roles completed', {
-        duration: afterQuery - beforeQuery,
-        hasRole: !!roleData,
-        error: roleError?.message,
-      });
-
-      if (roleError ?? !roleData) {
-        // L'utilisateur n'a pas accès à LinkMe - déconnecter immédiatement
-        console.warn('[signIn] AVANT signOut (no access)');
-        await supabase.auth.signOut();
-        console.warn('[signIn] END - no access (post-auth check)', {
-          totalElapsed: Date.now() - startTime,
-        });
-        return {
-          error: new Error(
-            "Vous n'avez pas accès à LinkMe. Contactez votre administrateur."
-          ),
-        };
-      }
-
-      // ========================================================================
-      // ÉTAPE 4: Mise à jour des states et chargement du rôle complet
-      // ========================================================================
-      console.warn('[signIn] ÉTAPE 4: Mise à jour states + fetchLinkMeRole');
+      console.warn('[signIn] Mise à jour states + fetchLinkMeRole');
       setSession(data.session);
       setUser(data.user);
       const beforeFetch = Date.now();
