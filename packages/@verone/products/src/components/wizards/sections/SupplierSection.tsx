@@ -12,7 +12,7 @@ import {
 } from '@verone/ui';
 import { Input } from '@verone/ui';
 import { Label } from '@verone/ui';
-import { SupplierSelector } from '@verone/suppliers/components/selectors/SupplierSelector';
+import { SupplierSelector } from '@verone/organisations/components/suppliers';
 
 import type { WizardFormData } from '../CompleteProductWizard';
 
