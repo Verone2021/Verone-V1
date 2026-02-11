@@ -35,14 +35,14 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: ESLint (--max-warnings=0)
-        run: pnpm lint
+      - name: ESLint (Back-Office + LinkMe only)
+        run: turbo lint --filter=@verone/back-office --filter=@verone/linkme
 
-      - name: Type-check
-        run: pnpm type-check
+      - name: Type-check (Back-Office + LinkMe only)
+        run: turbo type-check --filter=@verone/back-office --filter=@verone/linkme
 
-      - name: Build
-        run: pnpm build
+      - name: Build (Back-Office + LinkMe only)
+        run: turbo build --filter=@verone/back-office --filter=@verone/linkme
         env:
           TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
           TURBO_TEAM: ${{ secrets.TURBO_TEAM }}

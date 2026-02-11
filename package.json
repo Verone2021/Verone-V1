@@ -30,6 +30,7 @@
     "playwright:codegen": "npx playwright codegen localhost:3000",
     "playwright:show-report": "npx playwright show-report .playwright-mcp/reports",
     "playwright:cleanup": "./scripts/playwright-cleanup.sh",
+    "e2e:ci": "playwright test --config=playwright.config.ts",
     "clean:screenshots": "bash scripts/clean-screenshots.sh",
     "generate:types": "supabase gen types typescript --linked > packages/@verone/types/src/supabase.ts",
     "audit:duplicates": "jscpd apps/ packages/ --min-lines 5 --min-tokens 50 --format 'console'",

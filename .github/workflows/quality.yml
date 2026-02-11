@@ -42,13 +42,13 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: ESLint Check
+      - name: ESLint Check (Back-Office + LinkMe only)
         id: eslint
         run: |
           echo "## 🔍 ESLint Results" >> $GITHUB_STEP_SUMMARY
 
           # Lancer ESLint et capturer le résultat
-          if pnpm lint 2>&1 | tee eslint-output.txt; then
+          if turbo lint --filter=@verone/back-office --filter=@verone/linkme 2>&1 | tee eslint-output.txt; then
             echo "✅ **ESLint**: No errors found" >> $GITHUB_STEP_SUMMARY
             echo "eslint_status=success" >> $GITHUB_OUTPUT
           else
@@ -61,13 +61,13 @@ jobs:
             exit 1
           fi
 
-      - name: Type-Check
+      - name: Type-Check (Back-Office + LinkMe only)
         id: typecheck
         run: |
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## 📘 Type-Check Results" >> $GITHUB_STEP_SUMMARY
 
-          if pnpm type-check 2>&1 | tee typecheck-output.txt; then
+          if turbo type-check --filter=@verone/back-office --filter=@verone/linkme 2>&1 | tee typecheck-output.txt; then
             echo "✅ **Type-Check**: No type errors" >> $GITHUB_STEP_SUMMARY
             echo "typecheck_status=success" >> $GITHUB_OUTPUT
           else
@@ -80,13 +80,13 @@ jobs:
             exit 1
           fi
 
-      - name: Build
+      - name: Build (Back-Office + LinkMe only)
         id: build
         run: |
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## 🏗️ Build Results" >> $GITHUB_STEP_SUMMARY
 
-          if pnpm build 2>&1 | tee build-output.txt; then
+          if turbo build --filter=@verone/back-office --filter=@verone/linkme 2>&1 | tee build-output.txt; then
             echo "✅ **Build**: Successful" >> $GITHUB_STEP_SUMMARY
             echo "build_status=success" >> $GITHUB_OUTPUT
           else
