@@ -11,6 +11,8 @@ export interface SalesAdvancedFilters {
   customerType: string;
   /** ID enseigne spécifique (quand customerType === 'enseigne') */
   enseigneId: string | null;
+  /** Année spécifique (null = toutes les années) */
+  filterYear: number | null;
   /** Période rapide */
   period: 'all' | 'month' | 'quarter' | 'year';
   /** Montant TTC min */
@@ -25,6 +27,7 @@ export const DEFAULT_SALES_FILTERS: SalesAdvancedFilters = {
   statuses: [],
   customerType: 'all',
   enseigneId: null,
+  filterYear: null,
   period: 'all',
   amountMin: null,
   amountMax: null,
@@ -38,6 +41,8 @@ export interface PurchaseAdvancedFilters {
   statuses: string[];
   /** ID fournisseur spécifique */
   supplierId: string | null;
+  /** Année spécifique (null = toutes les années) */
+  filterYear: number | null;
   /** Période rapide */
   period: 'all' | 'month' | 'quarter' | 'year';
   /** Montant HT min */
@@ -51,6 +56,7 @@ export interface PurchaseAdvancedFilters {
 export const DEFAULT_PURCHASE_FILTERS: PurchaseAdvancedFilters = {
   statuses: [],
   supplierId: null,
+  filterYear: null,
   period: 'all',
   amountMin: null,
   amountMax: null,
