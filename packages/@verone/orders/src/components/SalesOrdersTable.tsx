@@ -309,7 +309,8 @@ export function SalesOrdersTable({
   const availableYears = useMemo(() => {
     const years = new Set<number>();
     orders.forEach(order => {
-      years.add(new Date(order.created_at).getFullYear());
+      const dateRef = order.order_date ?? order.created_at;
+      years.add(new Date(dateRef).getFullYear());
     });
     years.add(currentYear);
     return Array.from(years).sort((a, b) => a - b);
@@ -439,9 +440,10 @@ export function SalesOrdersTable({
         }
       }
 
-      // Filtre avancé: année spécifique
+      // Filtre avancé: année spécifique (basé sur date commande, fallback date création)
+      const orderDateRef = order.order_date ?? order.created_at;
       if (advancedFilters.filterYear !== null) {
-        const orderDate = new Date(order.created_at);
+        const orderDate = new Date(orderDateRef);
         if (orderDate.getFullYear() !== advancedFilters.filterYear)
           return false;
       }
@@ -452,7 +454,7 @@ export function SalesOrdersTable({
         advancedFilters.filterYear === currentYear;
 
       if (periodActive && advancedFilters.period !== 'all') {
-        const orderDate = new Date(order.created_at);
+        const orderDate = new Date(orderDateRef);
         const now = new Date();
 
         switch (advancedFilters.period) {
