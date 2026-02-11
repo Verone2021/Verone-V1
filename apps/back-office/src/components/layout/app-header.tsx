@@ -14,7 +14,6 @@ import {
   DropdownMenuTrigger,
 } from '@verone/ui';
 import { cn } from '@verone/utils';
-import { getUserSafe } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
 import { User, LogOut, Settings, Users, Activity } from 'lucide-react';
 
@@ -29,12 +28,12 @@ export function AppHeader({ className }: AppHeaderProps) {
   // Récupérer le rôle de l'utilisateur au chargement
   useEffect(() => {
     const fetchUserRole = async () => {
+      const supabase = createClient();
       const {
         data: { user },
-      } = await getUserSafe();
+      } = await supabase.auth.getUser();
 
       if (user) {
-        const supabase = createClient();
         const { data: userRole } = await supabase
           .from('user_app_roles')
           .select('role')
