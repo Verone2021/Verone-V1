@@ -11,13 +11,12 @@ import { useEffect, useState } from 'react';
 
 import { createClient } from '@verone/utils/supabase/client';
 
-// Type pour les statuts de commandes
+// Type pour les statuts de commandes (catégories génériques dashboard)
 export type OrderStatus =
   | 'pending'
   | 'validated'
   | 'processing'
   | 'shipped'
-  | 'delivered'
   | 'cancelled';
 
 export interface OrderStatusCount {
@@ -46,8 +45,7 @@ const STATUS_CONFIG: Record<OrderStatus, { label: string; color: string }> = {
   pending: { label: 'En attente', color: '#ff9b3e' },
   validated: { label: 'Validées', color: '#3b82f6' },
   processing: { label: 'En préparation', color: '#8b5cf6' },
-  shipped: { label: 'Expédiées', color: '#06b6d4' },
-  delivered: { label: 'Livrées', color: '#10b981' },
+  shipped: { label: 'Expédiées / Reçues', color: '#10b981' },
   cancelled: { label: 'Annulées', color: '#ef4444' },
 };
 
@@ -112,7 +110,6 @@ export function useOrdersStatus(): UseOrdersStatusResult {
           validated: 'validated',
           partially_shipped: 'processing',
           shipped: 'shipped',
-          delivered: 'delivered',
           cancelled: 'cancelled',
         };
         return mapping[status] || 'pending';
@@ -123,7 +120,7 @@ export function useOrdersStatus(): UseOrdersStatusResult {
           draft: 'pending',
           validated: 'validated',
           partially_received: 'processing',
-          received: 'delivered',
+          received: 'shipped',
           cancelled: 'cancelled',
         };
         return mapping[status] || 'pending';

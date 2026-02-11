@@ -247,8 +247,6 @@ export default function LinkMeOrdersPage() {
       <SalesOrdersTable
         channelId={LINKME_CHANNEL_ID}
         showChannelColumn={false}
-        showCustomerTypeFilter={false}
-        showPeriodFilter={false}
         showKPIs
         allowValidate
         allowShip

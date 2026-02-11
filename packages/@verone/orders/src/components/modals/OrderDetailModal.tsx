@@ -53,28 +53,11 @@ interface OrderDetailModalProps {
   channelRedirectUrl?: string | null; // URL de redirection vers CMS du canal
 }
 
-const paymentStatusLabels: Record<string, string> = {
-  pending: 'En attente',
-  partial: 'Partiel',
-  paid: 'Payé',
-  refunded: 'Remboursé',
-  overdue: 'En retard',
-};
-
-const paymentStatusColors: Record<string, string> = {
-  pending: 'bg-orange-100 text-orange-800',
-  partial: 'bg-yellow-100 text-yellow-800',
-  paid: 'bg-green-100 text-green-800',
-  refunded: 'bg-gray-100 text-gray-800',
-  overdue: 'bg-red-100 text-red-800',
-};
-
 const orderStatusLabels: Record<string, string> = {
   draft: 'Brouillon',
-  confirmed: 'Validée',
+  validated: 'Validée',
   partially_shipped: 'Partiellement expédiée',
   shipped: 'Expédiée',
-  delivered: 'Livrée',
   cancelled: 'Annulée',
 };
 
@@ -137,7 +120,7 @@ export function OrderDetailModal({
 
   const canMarkAsPaid =
     ['validated', 'partially_shipped', 'shipped'].includes(order.status) &&
-    (order.payment_status === 'pending' || order.payment_status === 'partial');
+    order.payment_status_v2 !== 'paid';
 
   // Workflow Odoo-inspired: Permettre expédition pour validated + partially_shipped
   const canShip = ['validated', 'partially_shipped'].includes(order.status);
@@ -490,13 +473,15 @@ export function OrderDetailModal({
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  {order.payment_status && (
+                  {order.payment_status_v2 && (
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-gray-600">Statut :</span>
                       <Badge
-                        className={`text-xs ${paymentStatusColors[order.payment_status]}`}
+                        className={`text-xs ${order.payment_status_v2 === 'paid' ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'}`}
                       >
-                        {paymentStatusLabels[order.payment_status]}
+                        {order.payment_status_v2 === 'paid'
+                          ? 'Payé'
+                          : 'En attente'}
                       </Badge>
                     </div>
                   )}

@@ -18,6 +18,7 @@ import { useSearchParams } from 'next/navigation';
 
 import { useToast } from '@verone/common';
 import { RapprochementFromOrderModal } from '@verone/finance/components';
+import { useActiveEnseignes } from '@verone/organisations';
 import { ProductThumbnail } from '@verone/products';
 import {
   AlertDialog,
@@ -92,6 +93,11 @@ import {
   CheckSquare,
 } from 'lucide-react';
 
+import type { SalesAdvancedFilters } from '../types/advanced-filters';
+import {
+  DEFAULT_SALES_FILTERS,
+  countActiveFilters,
+} from '../types/advanced-filters';
 import type { SalesOrder, SalesOrderStatus } from '../hooks/use-sales-orders';
 import { useSalesOrders } from '../hooks/use-sales-orders';
 import { OrderDetailModal } from './modals/OrderDetailModal';
@@ -107,8 +113,6 @@ const statusLabels: Record<SalesOrderStatus, string> = {
   validated: 'Validee',
   partially_shipped: 'Partiellement expediee',
   shipped: 'Expediee',
-  delivered: 'Livree',
-  closed: 'Cloturee',
   cancelled: 'Annulee',
 };
 
@@ -116,27 +120,8 @@ const statusColors: Record<SalesOrderStatus, string> = {
   draft: 'bg-gray-100 text-gray-800',
   validated: 'bg-blue-100 text-blue-800',
   partially_shipped: 'bg-amber-100 text-amber-800',
-  shipped: 'bg-cyan-100 text-cyan-800',
-  delivered: 'bg-green-100 text-green-800',
-  closed: 'bg-purple-100 text-purple-800',
+  shipped: 'bg-green-100 text-green-800',
   cancelled: 'bg-red-100 text-red-800',
-};
-
-// Labels et couleurs statut paiement
-const paymentStatusLabels: Record<string, string> = {
-  pending: 'En attente',
-  partial: 'Partiel',
-  paid: 'Paye',
-  refunded: 'Rembourse',
-  overdue: 'En retard',
-};
-
-const paymentStatusColors: Record<string, string> = {
-  pending: 'bg-orange-100 text-orange-800',
-  partial: 'bg-yellow-100 text-yellow-800',
-  paid: 'bg-green-100 text-green-800',
-  refunded: 'bg-gray-100 text-gray-800',
-  overdue: 'bg-red-100 text-red-800',
 };
 
 type SortColumn = 'date' | 'client' | 'amount' | 'order_number' | null;
@@ -149,12 +134,6 @@ export interface SalesOrdersTableProps {
 
   /** Afficher la colonne Canal */
   showChannelColumn?: boolean;
-
-  /** Afficher le filtre type client */
-  showCustomerTypeFilter?: boolean;
-
-  /** Afficher le filtre periode */
-  showPeriodFilter?: boolean;
 
   /** Afficher les KPIs */
   showKPIs?: boolean;
@@ -231,9 +210,6 @@ export interface SalesOrdersTableProps {
     amount?: boolean;
     orderNumber?: boolean;
   };
-
-  /** Afficher filtre enseigne/organisation */
-  showEnseigneFilter?: boolean;
 }
 
 const isOrderEditable = (order: SalesOrder, channelId?: string | null) => {
@@ -260,8 +236,6 @@ const getChannelRedirectUrl = (order: SalesOrder) => {
 export function SalesOrdersTable({
   channelId = null,
   showChannelColumn = true,
-  showCustomerTypeFilter = true,
-  showPeriodFilter = true,
   showKPIs = true,
   allowValidate = true,
   allowShip = true,
@@ -280,7 +254,6 @@ export function SalesOrdersTable({
   defaultItemsPerPage = 10,
   preloadedOrders,
   sortableColumns,
-  showEnseigneFilter = false,
 }: SalesOrdersTableProps) {
   const {
     loading: hookLoading,
@@ -300,19 +273,37 @@ export function SalesOrdersTable({
   const { toast } = useToast();
   const searchParams = useSearchParams();
   const supabase = useMemo(() => createClient(), []);
+  const { enseignes } = useActiveEnseignes();
 
   // Etats filtres
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState<SalesOrderStatus | 'all'>('all');
-  const [customerTypeFilter, setCustomerTypeFilter] = useState<
-    'all' | 'professional' | 'individual' | 'organisation' | 'enseigne'
-  >('all');
-  const [periodFilter, setPeriodFilter] = useState<
-    'all' | 'month' | 'quarter' | 'year'
-  >('all');
-  const [matchingFilter, setMatchingFilter] = useState<
-    'all' | 'matched' | 'unmatched'
-  >('all');
+  const [advancedFilters, setAdvancedFilters] = useState<SalesAdvancedFilters>(
+    DEFAULT_SALES_FILTERS
+  );
+
+  // Année courante + années disponibles
+  const currentYear = new Date().getFullYear();
+
+  const availableYears = useMemo(() => {
+    const years = new Set<number>();
+    orders.forEach(order => {
+      const dateRef = order.order_date ?? order.created_at;
+      years.add(new Date(dateRef).getFullYear());
+    });
+    years.add(currentYear);
+    return Array.from(years).sort((a, b) => a - b);
+  }, [orders, currentYear]);
+
+  const isPeriodEnabled =
+    advancedFilters.filterYear === null ||
+    advancedFilters.filterYear === currentYear;
+
+  // Détection filtres actifs (pour bouton reset)
+  const hasActiveFilters = useMemo(
+    () => countActiveFilters(advancedFilters, DEFAULT_SALES_FILTERS) > 0,
+    [advancedFilters]
+  );
 
   // Etats tri
   const [sortColumn, setSortColumn] = useState<SortColumn>(null);
@@ -379,48 +370,74 @@ export function SalesOrdersTable({
 
   // Filtrage des commandes
   const filteredOrders = useMemo(() => {
+    const normalizeString = (str: string | null | undefined): string => {
+      if (!str) return '';
+      return str
+        .trim()
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
+    };
+
     const filtered = orders.filter(order => {
-      // Filtre onglet statut
+      // Filtre onglet statut (accès direct, prioritaire)
       if (activeTab !== 'all' && order.status !== activeTab) {
         return false;
       }
 
-      // Filtre type client
-      if (customerTypeFilter !== 'all') {
-        switch (customerTypeFilter) {
+      // Filtre avancé: statuts multi-select (si onglet = 'all')
+      if (
+        activeTab === 'all' &&
+        advancedFilters.statuses.length > 0 &&
+        !advancedFilters.statuses.includes(order.status)
+      ) {
+        return false;
+      }
+
+      // Filtre avancé: type client
+      if (advancedFilters.customerType !== 'all') {
+        switch (advancedFilters.customerType) {
           case 'individual':
             if (order.customer_type !== 'individual') return false;
             break;
           case 'professional':
-            // Backward compat : toutes les organisations
             if (order.customer_type !== 'organization') return false;
             break;
-          case 'organisation':
-            // Organisation indépendante (sans enseigne)
-            if (
-              order.customer_type !== 'organization' ||
-              order.organisations?.enseigne_id !== null
-            )
-              return false;
-            break;
           case 'enseigne':
-            // Organisation avec enseigne
             if (
               order.customer_type !== 'organization' ||
               !order.organisations?.enseigne_id
+            )
+              return false;
+            // Filtre enseigne spécifique
+            if (
+              advancedFilters.enseigneId &&
+              order.organisations?.enseigne_id !== advancedFilters.enseigneId
             )
               return false;
             break;
         }
       }
 
-      // Filtre periode
-      if (periodFilter !== 'all') {
-        const orderDate = new Date(order.created_at);
+      // Filtre avancé: année spécifique (basé sur date commande, fallback date création)
+      const orderDateRef = order.order_date ?? order.created_at;
+      if (advancedFilters.filterYear !== null) {
+        const orderDate = new Date(orderDateRef);
+        if (orderDate.getFullYear() !== advancedFilters.filterYear)
+          return false;
+      }
+
+      // Filtre avancé: période (seulement si année courante ou toutes)
+      const periodActive =
+        advancedFilters.filterYear === null ||
+        advancedFilters.filterYear === currentYear;
+
+      if (periodActive && advancedFilters.period !== 'all') {
+        const orderDate = new Date(orderDateRef);
         const now = new Date();
 
-        switch (periodFilter) {
-          case 'month':
+        switch (advancedFilters.period) {
+          case 'month': {
             const monthAgo = new Date(
               now.getFullYear(),
               now.getMonth() - 1,
@@ -428,7 +445,8 @@ export function SalesOrdersTable({
             );
             if (orderDate < monthAgo) return false;
             break;
-          case 'quarter':
+          }
+          case 'quarter': {
             const quarterAgo = new Date(
               now.getFullYear(),
               now.getMonth() - 3,
@@ -436,7 +454,8 @@ export function SalesOrdersTable({
             );
             if (orderDate < quarterAgo) return false;
             break;
-          case 'year':
+          }
+          case 'year': {
             const yearAgo = new Date(
               now.getFullYear() - 1,
               now.getMonth(),
@@ -444,20 +463,36 @@ export function SalesOrdersTable({
             );
             if (orderDate < yearAgo) return false;
             break;
+          }
         }
       }
 
-      // Filtre recherche
-      if (searchTerm) {
-        const normalizeString = (str: string | null | undefined): string => {
-          if (!str) return '';
-          return str
-            .trim()
-            .toLowerCase()
-            .normalize('NFD')
-            .replace(/[\u0300-\u036f]/g, '');
-        };
+      // Filtre avancé: montant TTC
+      if (
+        advancedFilters.amountMin !== null &&
+        (order.total_ttc || 0) < advancedFilters.amountMin
+      ) {
+        return false;
+      }
+      if (
+        advancedFilters.amountMax !== null &&
+        (order.total_ttc || 0) > advancedFilters.amountMax
+      ) {
+        return false;
+      }
 
+      // Filtre avancé: rapprochement bancaire
+      if (advancedFilters.matching !== 'all') {
+        if (advancedFilters.matching === 'matched' && !order.is_matched) {
+          return false;
+        }
+        if (advancedFilters.matching === 'unmatched' && order.is_matched) {
+          return false;
+        }
+      }
+
+      // Filtre recherche (accès direct)
+      if (searchTerm) {
         const term = normalizeString(searchTerm);
         const matchesOrderNumber = normalizeString(order.order_number).includes(
           term
@@ -474,16 +509,6 @@ export function SalesOrdersTable({
           normalizeString(order.individual_customers?.last_name).includes(term);
 
         if (!matchesOrderNumber && !matchesOrgName && !matchesIndividualName) {
-          return false;
-        }
-      }
-
-      // Filtre rapprochement bancaire
-      if (matchingFilter !== 'all') {
-        if (matchingFilter === 'matched' && !order.is_matched) {
-          return false;
-        }
-        if (matchingFilter === 'unmatched' && order.is_matched) {
           return false;
         }
       }
@@ -507,7 +532,7 @@ export function SalesOrdersTable({
               new Date(a.created_at).getTime() -
               new Date(b.created_at).getTime();
             break;
-          case 'client':
+          case 'client': {
             const nameA =
               a.customer_type === 'organization'
                 ? a.organisations?.trade_name ||
@@ -522,6 +547,7 @@ export function SalesOrdersTable({
                 : `${b.individual_customers?.first_name} ${b.individual_customers?.last_name}`;
             comparison = nameA.localeCompare(nameB);
             break;
+          }
           case 'order_number':
             comparison = (a.order_number || '').localeCompare(
               b.order_number || ''
@@ -540,9 +566,7 @@ export function SalesOrdersTable({
   }, [
     orders,
     activeTab,
-    customerTypeFilter,
-    periodFilter,
-    matchingFilter,
+    advancedFilters,
     searchTerm,
     sortColumn,
     sortDirection,
@@ -617,7 +641,7 @@ export function SalesOrdersTable({
   // Reset page quand les filtres changent
   useEffect(() => {
     setCurrentPage(1);
-  }, [activeTab, customerTypeFilter, periodFilter, searchTerm, customFilter]);
+  }, [activeTab, advancedFilters, searchTerm, customFilter]);
 
   // Compteurs par onglet
   const tabCounts = useMemo(() => {
@@ -850,8 +874,8 @@ export function SalesOrdersTable({
         },
         body: JSON.stringify({
           activeTab,
-          customerTypeFilter,
-          periodFilter,
+          customerType: advancedFilters.customerType,
+          period: advancedFilters.period,
           searchTerm,
           channelId,
         }),
@@ -1079,84 +1103,183 @@ export function SalesOrdersTable({
             </TabsList>
           </Tabs>
 
-          {/* Filtres complementaires */}
-          <div className="flex flex-col lg:flex-row gap-4">
-            {/* Recherche */}
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder="Rechercher par numero ou client..."
-                  value={searchTerm}
-                  onChange={e => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
+          {/* Recherche */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Input
+              placeholder="Rechercher par numero ou client..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+
+          {/* Filtres inline (dropdowns compacts) */}
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Type client */}
+            <div className="flex items-center gap-1.5">
+              <span className="text-sm font-medium text-gray-600 whitespace-nowrap">
+                Type client :
+              </span>
+              <Select
+                value={advancedFilters.customerType}
+                onValueChange={value =>
+                  setAdvancedFilters(prev => ({
+                    ...prev,
+                    customerType: value as SalesAdvancedFilters['customerType'],
+                    enseigneId: value !== 'enseigne' ? null : prev.enseigneId,
+                  }))
+                }
+              >
+                <SelectTrigger className="w-[140px] h-8 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tous</SelectItem>
+                  <SelectItem value="individual">Particulier</SelectItem>
+                  <SelectItem value="professional">Professionnel</SelectItem>
+                  <SelectItem value="enseigne">Enseigne</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
-            {/* Type client */}
-            {showCustomerTypeFilter && (
+            {/* Enseigne (visible si customerType === 'enseigne') */}
+            {advancedFilters.customerType === 'enseigne' &&
+              enseignes.length > 0 && (
+                <div className="flex items-center gap-1.5">
+                  <span className="text-sm font-medium text-gray-600 whitespace-nowrap">
+                    Enseigne :
+                  </span>
+                  <Select
+                    value={advancedFilters.enseigneId ?? 'all'}
+                    onValueChange={value =>
+                      setAdvancedFilters(prev => ({
+                        ...prev,
+                        enseigneId: value === 'all' ? null : value,
+                      }))
+                    }
+                  >
+                    <SelectTrigger className="w-[180px] h-8 text-xs">
+                      <SelectValue placeholder="Toutes" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Toutes</SelectItem>
+                      {enseignes.map(e => (
+                        <SelectItem key={e.id} value={e.id}>
+                          {e.name} ({e.member_count})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+            {/* Année */}
+            <div className="flex items-center gap-1.5">
+              <span className="text-sm font-medium text-gray-600 whitespace-nowrap">
+                Année :
+              </span>
               <Select
-                value={customerTypeFilter}
-                onValueChange={(value: any) => setCustomerTypeFilter(value)}
+                value={advancedFilters.filterYear?.toString() ?? 'all'}
+                onValueChange={value => {
+                  const year = value === 'all' ? null : Number(value);
+                  setAdvancedFilters(prev => ({
+                    ...prev,
+                    filterYear: year,
+                    period:
+                      year !== null && year !== currentYear
+                        ? 'all'
+                        : prev.period,
+                  }));
+                }}
               >
-                <SelectTrigger className="w-full lg:w-56">
-                  <SelectValue placeholder="Type de client" />
+                <SelectTrigger className="w-[110px] h-8 text-xs">
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Tous les types</SelectItem>
-                  <SelectItem value="individual">
-                    Clients particuliers
-                  </SelectItem>
-                  <SelectItem value="professional">
-                    Clients professionnels
-                  </SelectItem>
-                  {showEnseigneFilter && (
-                    <>
-                      <SelectItem value="organisation">
-                        Organisations (indep.)
-                      </SelectItem>
-                      <SelectItem value="enseigne">Enseignes</SelectItem>
-                    </>
+                  <SelectItem value="all">Toutes</SelectItem>
+                  {availableYears.map(year => (
+                    <SelectItem key={year} value={year.toString()}>
+                      {year}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Période */}
+            <div className="flex items-center gap-1.5">
+              <span
+                className={cn(
+                  'text-sm font-medium whitespace-nowrap',
+                  !isPeriodEnabled ? 'text-gray-400' : 'text-gray-600'
+                )}
+              >
+                Période :
+              </span>
+              <Select
+                value={advancedFilters.period}
+                onValueChange={value =>
+                  setAdvancedFilters(prev => ({
+                    ...prev,
+                    period: value as SalesAdvancedFilters['period'],
+                  }))
+                }
+                disabled={!isPeriodEnabled}
+              >
+                <SelectTrigger
+                  className={cn(
+                    'w-[120px] h-8 text-xs',
+                    !isPeriodEnabled && 'opacity-50'
                   )}
-                </SelectContent>
-              </Select>
-            )}
-
-            {/* Periode */}
-            {showPeriodFilter && (
-              <Select
-                value={periodFilter}
-                onValueChange={(value: any) => setPeriodFilter(value)}
-              >
-                <SelectTrigger className="w-full lg:w-48">
-                  <SelectValue placeholder="Periode" />
+                >
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Toute periode</SelectItem>
+                  <SelectItem value="all">Toute</SelectItem>
                   <SelectItem value="month">Ce mois</SelectItem>
-                  <SelectItem value="quarter">Ce trimestre</SelectItem>
-                  <SelectItem value="year">Cette annee</SelectItem>
+                  <SelectItem value="quarter">Trimestre</SelectItem>
+                  <SelectItem value="year">Année</SelectItem>
                 </SelectContent>
               </Select>
-            )}
+            </div>
 
-            {/* Filtre rapprochement bancaire */}
-            <Select
-              value={matchingFilter}
-              onValueChange={(value: 'all' | 'matched' | 'unmatched') =>
-                setMatchingFilter(value)
-              }
-            >
-              <SelectTrigger className="w-full lg:w-52">
-                <SelectValue placeholder="Rapprochement" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tous</SelectItem>
-                <SelectItem value="matched">Rapprochees</SelectItem>
-                <SelectItem value="unmatched">Non rapprochees</SelectItem>
-              </SelectContent>
-            </Select>
+            {/* Rapprochement */}
+            <div className="flex items-center gap-1.5">
+              <span className="text-sm font-medium text-gray-600 whitespace-nowrap">
+                Rapprochement :
+              </span>
+              <Select
+                value={advancedFilters.matching}
+                onValueChange={value =>
+                  setAdvancedFilters(prev => ({
+                    ...prev,
+                    matching: value as SalesAdvancedFilters['matching'],
+                  }))
+                }
+              >
+                <SelectTrigger className="w-[90px] h-8 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tous</SelectItem>
+                  <SelectItem value="matched">Oui</SelectItem>
+                  <SelectItem value="unmatched">Non</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Reset */}
+            {hasActiveFilters && (
+              <ButtonUnified
+                variant="ghost"
+                size="sm"
+                icon={RotateCcw}
+                onClick={() => setAdvancedFilters(DEFAULT_SALES_FILTERS)}
+              >
+                Réinitialiser
+              </ButtonUnified>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -1215,7 +1338,6 @@ export function SalesOrdersTable({
                       )}
                       <TableHead>Statut</TableHead>
                       <TableHead>Paiement</TableHead>
-                      <TableHead>Paiement V2</TableHead>
                       <TableHead className="w-20 text-center">
                         Articles
                       </TableHead>
@@ -1322,21 +1444,6 @@ export function SalesOrdersTable({
                                   </Badge>
                                 )}
                               </div>
-                            </TableCell>
-                            <TableCell>
-                              {order.payment_status ? (
-                                <Badge
-                                  className={
-                                    paymentStatusColors[order.payment_status] ||
-                                    'bg-gray-100 text-gray-800'
-                                  }
-                                >
-                                  {paymentStatusLabels[order.payment_status] ||
-                                    order.payment_status}
-                                </Badge>
-                              ) : (
-                                <span className="text-gray-400 text-sm">-</span>
-                              )}
                             </TableCell>
                             <TableCell>
                               <div className="flex items-center gap-2">
@@ -1597,8 +1704,7 @@ export function SalesOrdersTable({
 
                                 {/* Lier transaction / Rapprochée */}
                                 {(order.status === 'validated' ||
-                                  order.status === 'shipped' ||
-                                  order.status === 'delivered') && (
+                                  order.status === 'shipped') && (
                                   <>
                                     {order.is_matched ? (
                                       <Badge
@@ -1632,7 +1738,7 @@ export function SalesOrdersTable({
                             <TableRow className="bg-muted/50 hover:bg-muted/50">
                               <TableCell
                                 colSpan={
-                                  9 +
+                                  10 +
                                   additionalColumns.length +
                                   (showChannelColumn ? 1 : 0)
                                 }

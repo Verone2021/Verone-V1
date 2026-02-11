@@ -589,7 +589,7 @@ export function useSalesShipments() {
 
   /**
    * Charger historique des commandes expédiées (pour onglet Historique)
-   * Supporte filtres: shipped, delivered, ou tous
+   * shipped = statut final (delivered réservé futur Packlink/Chronotruck)
    */
   const loadShippedOrdersHistory = useCallback(
     async (filters?: { status?: string; search?: string }) => {
@@ -597,9 +597,9 @@ export function useSalesShipments() {
         setLoading(true);
         setError(null);
 
-        // Déterminer les statuts à charger - typage explicite pour Supabase
-        type ShippedStatus = 'shipped' | 'delivered';
-        let statusesToLoad: ShippedStatus[] = ['shipped', 'delivered'];
+        // Statut unique: shipped (delivered supprimé du workflow actif)
+        type ShippedStatus = 'shipped';
+        let statusesToLoad: ShippedStatus[] = ['shipped'];
         if (filters?.status && filters.status !== 'all') {
           statusesToLoad = [filters.status as ShippedStatus];
         }

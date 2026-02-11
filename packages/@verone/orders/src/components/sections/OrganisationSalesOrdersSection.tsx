@@ -33,15 +33,13 @@ interface OrganisationSalesOrdersSectionProps {
 // Mapping statuts avec couleurs - Sales Orders
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   draft: { label: 'Brouillon', color: 'bg-gray-100 text-gray-800' },
-  confirmed: { label: 'Confirmée', color: 'bg-blue-100 text-blue-800' },
+  validated: { label: 'Validée', color: 'bg-blue-100 text-blue-800' },
   partially_shipped: {
     label: 'Partiellement expédiée',
     color: 'bg-purple-100 text-purple-800',
   },
-  shipped: { label: 'Expédiée', color: 'bg-yellow-100 text-yellow-800' },
-  delivered: { label: 'Livrée', color: 'bg-green-100 text-green-800' },
+  shipped: { label: 'Expédiée', color: 'bg-green-100 text-green-800' },
   cancelled: { label: 'Annulée', color: 'bg-red-100 text-red-800' },
-  closed: { label: 'Clôturée', color: 'bg-gray-100 text-gray-800' },
 };
 
 export function OrganisationSalesOrdersSection({
@@ -72,7 +70,6 @@ export function OrganisationSalesOrdersSection({
     draft: customerOrders.filter(o => o.status === 'draft').length,
     validated: customerOrders.filter(o => o.status === 'validated').length,
     shipped: customerOrders.filter(o => o.status === 'shipped').length,
-    delivered: customerOrders.filter(o => o.status === 'delivered').length,
     totalValue: customerOrders.reduce((sum, o) => sum + o.total_ttc, 0),
   };
 
@@ -159,9 +156,9 @@ export function OrganisationSalesOrdersSection({
             </div>
             <div className="text-center p-3 bg-green-50 rounded-lg">
               <div className="text-2xl font-bold text-green-600">
-                {stats.delivered}
+                {stats.total}
               </div>
-              <div className="text-xs text-gray-600">Livrées</div>
+              <div className="text-xs text-gray-600">Total</div>
             </div>
           </div>
         </CardContent>
