@@ -48,7 +48,7 @@ jobs:
           echo "## 🔍 ESLint Results" >> $GITHUB_STEP_SUMMARY
 
           # Lancer ESLint et capturer le résultat
-          if turbo lint --filter=@verone/back-office --filter=@verone/linkme 2>&1 | tee eslint-output.txt; then
+          if pnpm turbo lint --filter=@verone/back-office --filter=@verone/linkme 2>&1 | tee eslint-output.txt; then
             echo "✅ **ESLint**: No errors found" >> $GITHUB_STEP_SUMMARY
             echo "eslint_status=success" >> $GITHUB_OUTPUT
           else
@@ -67,7 +67,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## 📘 Type-Check Results" >> $GITHUB_STEP_SUMMARY
 
-          if turbo type-check --filter=@verone/back-office --filter=@verone/linkme 2>&1 | tee typecheck-output.txt; then
+          if pnpm turbo type-check --filter=@verone/back-office --filter=@verone/linkme 2>&1 | tee typecheck-output.txt; then
             echo "✅ **Type-Check**: No type errors" >> $GITHUB_STEP_SUMMARY
             echo "typecheck_status=success" >> $GITHUB_OUTPUT
           else
@@ -86,7 +86,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## 🏗️ Build Results" >> $GITHUB_STEP_SUMMARY
 
-          if turbo build --filter=@verone/back-office --filter=@verone/linkme 2>&1 | tee build-output.txt; then
+          if pnpm turbo build --filter=@verone/back-office --filter=@verone/linkme 2>&1 | tee build-output.txt; then
             echo "✅ **Build**: Successful" >> $GITHUB_STEP_SUMMARY
             echo "build_status=success" >> $GITHUB_OUTPUT
           else
