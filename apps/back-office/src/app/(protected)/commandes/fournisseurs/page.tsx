@@ -147,6 +147,22 @@ export default function PurchaseOrdersPage() {
   const [advancedFilters, setAdvancedFilters] =
     useState<PurchaseAdvancedFilters>(DEFAULT_PURCHASE_FILTERS);
 
+  // Année courante + années disponibles
+  const currentYear = new Date().getFullYear();
+
+  const availableYears = useMemo(() => {
+    const years = new Set<number>();
+    orders.forEach(order => {
+      years.add(new Date(order.created_at).getFullYear());
+    });
+    years.add(currentYear);
+    return Array.from(years).sort((a, b) => a - b);
+  }, [orders, currentYear]);
+
+  const isPeriodEnabled =
+    advancedFilters.filterYear === null ||
+    advancedFilters.filterYear === currentYear;
+
   // Détection filtres actifs (pour bouton reset)
   const hasActiveFilters = useMemo(
     () => countActiveFilters(advancedFilters, DEFAULT_PURCHASE_FILTERS) > 0,
@@ -283,8 +299,19 @@ export default function PurchaseOrdersPage() {
       )
         return false;
 
-      // Filtre période
-      if (advancedFilters.period !== 'all') {
+      // Filtre année spécifique
+      if (advancedFilters.filterYear !== null) {
+        const orderDate = new Date(order.created_at);
+        if (orderDate.getFullYear() !== advancedFilters.filterYear)
+          return false;
+      }
+
+      // Filtre période (seulement si année courante ou toutes)
+      const periodActive =
+        advancedFilters.filterYear === null ||
+        advancedFilters.filterYear === currentYear;
+
+      if (periodActive && advancedFilters.period !== 'all') {
         const orderDate = new Date(order.created_at);
         const now = new Date();
 
@@ -929,11 +956,11 @@ export default function PurchaseOrdersPage() {
             />
           </div>
 
-          {/* Filtres inline (chips) */}
-          <div className="space-y-3">
+          {/* Filtres inline (dropdowns compacts) */}
+          <div className="flex flex-wrap items-center gap-3">
             {/* Fournisseur */}
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-sm font-medium text-gray-600 mr-1">
+            <div className="flex items-center gap-1.5">
+              <span className="text-sm font-medium text-gray-600 whitespace-nowrap">
                 Fournisseur :
               </span>
               <Select
@@ -959,84 +986,111 @@ export default function PurchaseOrdersPage() {
               </Select>
             </div>
 
-            {/* Période + Rapprochement */}
-            <div className="flex flex-wrap items-center gap-4">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-sm font-medium text-gray-600 mr-1">
-                  Période :
-                </span>
-                {(
-                  [
-                    { value: 'all', label: 'Toute' },
-                    { value: 'month', label: 'Ce mois' },
-                    { value: 'quarter', label: 'Trimestre' },
-                    { value: 'year', label: 'Année' },
-                  ] as const
-                ).map(opt => (
-                  <button
-                    key={opt.value}
-                    onClick={() =>
-                      setAdvancedFilters(prev => ({
-                        ...prev,
-                        period: opt.value,
-                      }))
-                    }
-                    className={cn(
-                      'text-xs px-3 py-1.5 rounded-full border transition-colors',
-                      advancedFilters.period === opt.value
-                        ? 'bg-primary text-primary-foreground border-primary'
-                        : 'bg-white text-gray-700 border-gray-300 hover:border-primary/50'
-                    )}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-sm font-medium text-gray-600 mr-1">
-                  Rapprochement :
-                </span>
-                {(
-                  [
-                    { value: 'all', label: 'Tous' },
-                    { value: 'matched', label: 'Oui' },
-                    { value: 'unmatched', label: 'Non' },
-                  ] as const
-                ).map(opt => (
-                  <button
-                    key={opt.value}
-                    onClick={() =>
-                      setAdvancedFilters(prev => ({
-                        ...prev,
-                        matching: opt.value,
-                      }))
-                    }
-                    className={cn(
-                      'text-xs px-3 py-1.5 rounded-full border transition-colors',
-                      advancedFilters.matching === opt.value
-                        ? 'bg-primary text-primary-foreground border-primary'
-                        : 'bg-white text-gray-700 border-gray-300 hover:border-primary/50'
-                    )}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
+            {/* Année */}
+            <div className="flex items-center gap-1.5">
+              <span className="text-sm font-medium text-gray-600 whitespace-nowrap">
+                Année :
+              </span>
+              <Select
+                value={advancedFilters.filterYear?.toString() ?? 'all'}
+                onValueChange={value => {
+                  const year = value === 'all' ? null : Number(value);
+                  setAdvancedFilters(prev => ({
+                    ...prev,
+                    filterYear: year,
+                    period:
+                      year !== null && year !== currentYear
+                        ? 'all'
+                        : prev.period,
+                  }));
+                }}
+              >
+                <SelectTrigger className="w-[110px] h-8 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Toutes</SelectItem>
+                  {availableYears.map(year => (
+                    <SelectItem key={year} value={year.toString()}>
+                      {year}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
-            {/* Bouton réinitialiser */}
-            {hasActiveFilters && (
-              <div className="flex justify-end">
-                <ButtonUnified
-                  variant="ghost"
-                  size="sm"
-                  icon={RotateCcw}
-                  onClick={() => setAdvancedFilters(DEFAULT_PURCHASE_FILTERS)}
+            {/* Période */}
+            <div className="flex items-center gap-1.5">
+              <span
+                className={cn(
+                  'text-sm font-medium whitespace-nowrap',
+                  !isPeriodEnabled ? 'text-gray-400' : 'text-gray-600'
+                )}
+              >
+                Période :
+              </span>
+              <Select
+                value={advancedFilters.period}
+                onValueChange={value =>
+                  setAdvancedFilters(prev => ({
+                    ...prev,
+                    period: value as PurchaseAdvancedFilters['period'],
+                  }))
+                }
+                disabled={!isPeriodEnabled}
+              >
+                <SelectTrigger
+                  className={cn(
+                    'w-[120px] h-8 text-xs',
+                    !isPeriodEnabled && 'opacity-50'
+                  )}
                 >
-                  Réinitialiser les filtres
-                </ButtonUnified>
-              </div>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Toute</SelectItem>
+                  <SelectItem value="month">Ce mois</SelectItem>
+                  <SelectItem value="quarter">Trimestre</SelectItem>
+                  <SelectItem value="year">Année</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Rapprochement */}
+            <div className="flex items-center gap-1.5">
+              <span className="text-sm font-medium text-gray-600 whitespace-nowrap">
+                Rapprochement :
+              </span>
+              <Select
+                value={advancedFilters.matching}
+                onValueChange={value =>
+                  setAdvancedFilters(prev => ({
+                    ...prev,
+                    matching: value as PurchaseAdvancedFilters['matching'],
+                  }))
+                }
+              >
+                <SelectTrigger className="w-[90px] h-8 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tous</SelectItem>
+                  <SelectItem value="matched">Oui</SelectItem>
+                  <SelectItem value="unmatched">Non</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Reset */}
+            {hasActiveFilters && (
+              <ButtonUnified
+                variant="ghost"
+                size="sm"
+                icon={RotateCcw}
+                onClick={() => setAdvancedFilters(DEFAULT_PURCHASE_FILTERS)}
+              >
+                Réinitialiser
+              </ButtonUnified>
             )}
           </div>
         </CardContent>
