@@ -8,7 +8,6 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { redirect } from 'next/navigation';
 
 import {
   createServerClient,
@@ -29,7 +28,11 @@ export interface CreateUserData {
 export interface ActionResult {
   success: boolean;
   error?: string;
-  data?: any;
+  data?: {
+    user_id?: string;
+    email?: string;
+    role?: string;
+  };
 }
 
 /**
@@ -89,12 +92,10 @@ export async function createUserWithRole(
       return accessCheck;
     }
 
-    // CORRECTION: Initialiser les clients avec gestion d'erreur
-    let supabase: any;
-    let adminClient: any;
+    // CORRECTION: Initialiser le client admin avec gestion d'erreur
+    let adminClient: ReturnType<typeof createAdminClient>;
 
     try {
-      supabase = await createServerClient();
       adminClient = createAdminClient();
     } catch (clientError) {
       console.error('Erreur initialisation clients Supabase:', clientError);
@@ -105,8 +106,12 @@ export async function createUserWithRole(
     }
 
     // 1. Créer l'utilisateur dans Supabase Auth avec l'API Admin
-    let newUser: any;
-    let authError: any;
+    let newUser: Awaited<
+      ReturnType<typeof adminClient.auth.admin.createUser>
+    >['data'];
+    let authError: Awaited<
+      ReturnType<typeof adminClient.auth.admin.createUser>
+    >['error'];
 
     try {
       const result = await adminClient.auth.admin.createUser({
@@ -135,30 +140,39 @@ export async function createUserWithRole(
       return {
         success: false,
         error:
-          authError?.message ||
+          authError?.message ??
           'Erreur lors de la création du compte utilisateur',
       };
     }
 
     // 2. Créer le profil utilisateur dans la table user_profiles
-    let profileError: any;
+    //    Utilise adminClient pour bypass RLS (opération admin)
+    let profileError: unknown;
+
+    // Sanitize phone: strip spaces/dots/dashes to match DB check_phone_format constraint
+    const rawPhone = userData.phone?.trim() || null;
+    const sanitizedPhone = rawPhone
+      ? rawPhone.replace(/[\s.\-()]/g, '') || null
+      : null;
 
     try {
-      const result = await supabase.from('user_profiles').insert({
+      const result = await adminClient.from('user_profiles').insert({
         user_id: newUser.user.id,
         user_type: 'staff',
-        scopes: [], // À définir selon les besoins
+        email: userData.email,
+        first_name: userData.firstName?.trim() || null,
+        last_name: userData.lastName?.trim() || null,
+        phone: sanitizedPhone,
+        job_title: userData.jobTitle?.trim() || null,
         partner_id: null,
-        organisation_id: null, // ✅ CORRECTION : Explicitement NULL pour staff back-office
-        // Note: first_name, last_name, phone, job_title pas encore dans le schéma
-        // Ces colonnes seront ajoutées dans une prochaine migration
+        organisation_id: null,
       });
 
       profileError = result.error;
 
       // Also create entry in user_app_roles for back-office app
       if (!profileError) {
-        const roleResult = await supabase.from('user_app_roles').insert({
+        const roleResult = await adminClient.from('user_app_roles').insert({
           user_id: newUser.user.id,
           app: 'back-office',
           role: userData.role,
@@ -175,7 +189,7 @@ export async function createUserWithRole(
     }
 
     if (profileError) {
-      console.error('Erreur création profil:', profileError);
+      console.error('Erreur création profil/rôle:', profileError);
 
       // Supprimer l'utilisateur auth si la création du profil a échoué
       try {
@@ -184,9 +198,25 @@ export async function createUserWithRole(
         console.error('Erreur cleanup utilisateur:', cleanupError);
       }
 
+      // Propager l'erreur Supabase réelle au lieu d'un message générique
+      let errorMsg = 'Erreur lors de la création du profil utilisateur';
+
+      if (profileError instanceof Error) {
+        errorMsg = profileError.message;
+      } else if (typeof profileError === 'object' && profileError !== null) {
+        const errObj = profileError as Record<string, unknown>;
+        if (typeof errObj.message === 'string') {
+          errorMsg = errObj.message;
+        } else {
+          errorMsg = JSON.stringify(profileError);
+        }
+      } else if (typeof profileError === 'string') {
+        errorMsg = profileError;
+      }
+
       return {
         success: false,
-        error: 'Erreur lors de la création du profil utilisateur',
+        error: errorMsg,
       };
     }
 
@@ -207,14 +237,16 @@ export async function createUserWithRole(
         role: userData.role,
       },
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     // CORRECTION: Catch global qui capture TOUT problème imprévu
     console.error('Erreur globale createUserWithRole:', error);
+    const errorMessage =
+      error instanceof Error
+        ? error.message
+        : "Une erreur inattendue s'est produite lors de la création de l'utilisateur";
     return {
       success: false,
-      error:
-        error?.message ||
-        "Une erreur inattendue s'est produite lors de la création de l'utilisateur",
+      error: errorMessage,
     };
   }
 }
@@ -256,7 +288,21 @@ export async function deleteUser(userId: string): Promise<ActionResult> {
       };
     }
 
-    // Supprimer d'abord le profil utilisateur
+    // 1. Supprimer les rôles applicatifs (user_app_roles)
+    const { error: rolesError } = await supabase
+      .from('user_app_roles')
+      .delete()
+      .eq('user_id', userId);
+
+    if (rolesError) {
+      console.error('Erreur suppression rôles:', rolesError);
+      return {
+        success: false,
+        error: "Erreur lors de la suppression des rôles de l'utilisateur",
+      };
+    }
+
+    // 2. Supprimer le profil utilisateur (user_profiles)
     const { error: profileError } = await supabase
       .from('user_profiles')
       .delete()
@@ -270,7 +316,7 @@ export async function deleteUser(userId: string): Promise<ActionResult> {
       };
     }
 
-    // Ensuite supprimer l'utilisateur auth
+    // 3. Supprimer l'utilisateur auth
     const { error: authError } =
       await adminClient.auth.admin.deleteUser(userId);
 
@@ -337,11 +383,12 @@ export async function updateUserRole(
       }
     }
 
-    // Mettre à jour le rôle
+    // Mettre à jour le rôle dans user_app_roles (pas user_profiles qui n'a pas de colonne role)
     const { error } = await supabase
-      .from('user_profiles')
-      .update({ role: newRole, updated_at: new Date().toISOString() })
-      .eq('user_id', userId);
+      .from('user_app_roles')
+      .update({ role: newRole })
+      .eq('user_id', userId)
+      .eq('app', 'back-office');
 
     if (error) {
       console.error('Erreur mise à jour rôle:', error);
@@ -443,7 +490,12 @@ export async function updateUserProfile(
     }
 
     // Préparer les mises à jour
-    const profileUpdates: any = {
+    const profileUpdates: {
+      updated_at: string;
+      first_name?: string | null;
+      last_name?: string | null;
+      job_title?: string | null;
+    } = {
       updated_at: new Date().toISOString(),
     };
 
@@ -465,15 +517,15 @@ export async function updateUserProfile(
 
     // ✅ Support des nouveaux champs (migration 20251030_001)
     if (updateData.first_name !== undefined) {
-      profileUpdates.first_name = updateData.first_name?.trim() || null;
+      profileUpdates.first_name = updateData.first_name?.trim() ?? null;
     }
 
     if (updateData.last_name !== undefined) {
-      profileUpdates.last_name = updateData.last_name?.trim() || null;
+      profileUpdates.last_name = updateData.last_name?.trim() ?? null;
     }
 
     if (updateData.job_title !== undefined) {
-      profileUpdates.job_title = updateData.job_title?.trim() || null;
+      profileUpdates.job_title = updateData.job_title?.trim() ?? null;
     }
 
     // Mettre à jour le profil
@@ -494,7 +546,7 @@ export async function updateUserProfile(
     }
 
     // Mettre à jour les métadonnées utilisateur
-    if (updateData.first_name || updateData.last_name) {
+    if (updateData.first_name ?? updateData.last_name) {
       const displayName = [updateData.first_name, updateData.last_name]
         .filter(Boolean)
         .join(' ')
@@ -505,9 +557,9 @@ export async function updateUserProfile(
           await adminClient.auth.admin.updateUserById(userId, {
             user_metadata: {
               name: displayName,
-              first_name: updateData.first_name || '',
-              last_name: updateData.last_name || '',
-              job_title: updateData.job_title || '',
+              first_name: updateData.first_name ?? '',
+              last_name: updateData.last_name ?? '',
+              job_title: updateData.job_title ?? '',
             },
           });
 
@@ -522,11 +574,15 @@ export async function updateUserProfile(
     revalidatePath('/admin/users');
 
     return { success: true };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Erreur updateUserProfile:', error);
+    const errorMessage =
+      error instanceof Error
+        ? error.message
+        : "Une erreur inattendue s'est produite";
     return {
       success: false,
-      error: error.message || "Une erreur inattendue s'est produite",
+      error: errorMessage,
     };
   }
 }
