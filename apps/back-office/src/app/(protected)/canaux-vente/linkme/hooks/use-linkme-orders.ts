@@ -30,7 +30,7 @@ type SalesOrderWithCustomer = Pick<
   | 'customer_id'
   | 'customer_type'
   | 'status'
-  | 'payment_status'
+  | 'payment_status_v2'
   | 'total_ht'
   | 'total_ttc'
   | 'created_at'
@@ -125,7 +125,7 @@ export interface LinkMeOrder {
   customer_organisation_id: string | null;
   individual_customer_id: string | null;
   status: string | null;
-  payment_status: string | null;
+  payment_status_v2: string | null;
   total_ht: number;
   total_ttc: number;
   tax_rate: number;
@@ -204,7 +204,7 @@ async function fetchLinkMeOrders(): Promise<LinkMeOrder[]> {
       customer_id,
       customer_type,
       status,
-      payment_status,
+      payment_status_v2,
       total_ht,
       total_ttc,
       created_at,
@@ -253,7 +253,7 @@ async function fetchLinkMeOrderById(orderId: string): Promise<LinkMeOrder> {
       customer_id,
       customer_type,
       status,
-      payment_status,
+      payment_status_v2,
       total_ht,
       total_ttc,
       tax_rate,
@@ -479,7 +479,7 @@ async function createLinkMeOrder(
     customer_type: input.customer_type,
     created_by: user.id,
     status: 'draft' as const,
-    payment_status: 'pending',
+    payment_status_v2: 'pending',
     total_ht: totalHt,
     total_ttc: totalTtc,
     tax_rate: 0, // TVA calculee par ligne, pas globale
