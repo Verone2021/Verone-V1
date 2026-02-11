@@ -19,5 +19,3 @@ export {
   type CustomerType,
 } from './customer-selector';
 export { CreateIndividualCustomerModal } from './create-individual-customer-modal';
-export { AdvancedSalesFiltersModal } from './AdvancedSalesFiltersModal';
-export { AdvancedPurchaseFiltersModal } from './AdvancedPurchaseFiltersModal';

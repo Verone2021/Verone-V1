@@ -18,6 +18,7 @@ import { useSearchParams } from 'next/navigation';
 
 import { useToast } from '@verone/common';
 import { RapprochementFromOrderModal } from '@verone/finance/components';
+import { useActiveEnseignes } from '@verone/organisations';
 import { ProductThumbnail } from '@verone/products';
 import {
   AlertDialog,
@@ -40,6 +41,13 @@ import {
   CardTitle,
 } from '@verone/ui';
 import { Input } from '@verone/ui';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@verone/ui';
 import {
   Table,
   TableBody,
@@ -86,10 +94,12 @@ import {
 } from 'lucide-react';
 
 import type { SalesAdvancedFilters } from '../types/advanced-filters';
-import { DEFAULT_SALES_FILTERS } from '../types/advanced-filters';
+import {
+  DEFAULT_SALES_FILTERS,
+  countActiveFilters,
+} from '../types/advanced-filters';
 import type { SalesOrder, SalesOrderStatus } from '../hooks/use-sales-orders';
 import { useSalesOrders } from '../hooks/use-sales-orders';
-import { AdvancedSalesFiltersModal } from './modals/AdvancedSalesFiltersModal';
 import { OrderDetailModal } from './modals/OrderDetailModal';
 import { SalesOrderFormModal } from './modals/SalesOrderFormModal';
 import { SalesOrderShipmentModal } from './modals/SalesOrderShipmentModal';
@@ -145,12 +155,6 @@ export interface SalesOrdersTableProps {
 
   /** Afficher la colonne Canal */
   showChannelColumn?: boolean;
-
-  /** Afficher le filtre type client */
-  showCustomerTypeFilter?: boolean;
-
-  /** Afficher le filtre periode */
-  showPeriodFilter?: boolean;
 
   /** Afficher les KPIs */
   showKPIs?: boolean;
@@ -227,9 +231,6 @@ export interface SalesOrdersTableProps {
     amount?: boolean;
     orderNumber?: boolean;
   };
-
-  /** Afficher filtre enseigne/organisation */
-  showEnseigneFilter?: boolean;
 }
 
 const isOrderEditable = (order: SalesOrder, channelId?: string | null) => {
@@ -256,8 +257,6 @@ const getChannelRedirectUrl = (order: SalesOrder) => {
 export function SalesOrdersTable({
   channelId = null,
   showChannelColumn = true,
-  showCustomerTypeFilter: _showCustomerTypeFilter = true,
-  showPeriodFilter: _showPeriodFilter = true,
   showKPIs = true,
   allowValidate = true,
   allowShip = true,
@@ -276,7 +275,6 @@ export function SalesOrdersTable({
   defaultItemsPerPage = 10,
   preloadedOrders,
   sortableColumns,
-  showEnseigneFilter: _showEnseigneFilter = false,
 }: SalesOrdersTableProps) {
   const {
     loading: hookLoading,
@@ -296,12 +294,19 @@ export function SalesOrdersTable({
   const { toast } = useToast();
   const searchParams = useSearchParams();
   const supabase = useMemo(() => createClient(), []);
+  const { enseignes } = useActiveEnseignes();
 
   // Etats filtres
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState<SalesOrderStatus | 'all'>('all');
   const [advancedFilters, setAdvancedFilters] = useState<SalesAdvancedFilters>(
     DEFAULT_SALES_FILTERS
+  );
+
+  // Détection filtres actifs (pour bouton reset)
+  const hasActiveFilters = useMemo(
+    () => countActiveFilters(advancedFilters, DEFAULT_SALES_FILTERS) > 0,
+    [advancedFilters]
   );
 
   // Etats tri
@@ -401,13 +406,6 @@ export function SalesOrdersTable({
             break;
           case 'professional':
             if (order.customer_type !== 'organization') return false;
-            break;
-          case 'organisation':
-            if (
-              order.customer_type !== 'organization' ||
-              order.organisations?.enseigne_id !== null
-            )
-              return false;
             break;
           case 'enseigne':
             if (
@@ -1097,26 +1095,159 @@ export function SalesOrdersTable({
             </TabsList>
           </Tabs>
 
-          {/* Recherche + Filtres avancés */}
-          <div className="flex flex-col lg:flex-row gap-4">
-            {/* Recherche */}
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder="Rechercher par numero ou client..."
-                  value={searchTerm}
-                  onChange={e => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
+          {/* Recherche */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Input
+              placeholder="Rechercher par numero ou client..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+
+          {/* Filtres inline (chips) */}
+          <div className="space-y-3">
+            {/* Type client */}
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-sm font-medium text-gray-600 mr-1">
+                Type client :
+              </span>
+              {(
+                [
+                  { value: 'all', label: 'Tous' },
+                  { value: 'individual', label: 'Particulier' },
+                  { value: 'professional', label: 'Professionnel' },
+                  { value: 'enseigne', label: 'Enseigne' },
+                ] as const
+              ).map(opt => (
+                <button
+                  key={opt.value}
+                  onClick={() =>
+                    setAdvancedFilters(prev => ({
+                      ...prev,
+                      customerType: opt.value,
+                      enseigneId:
+                        opt.value !== 'enseigne' ? null : prev.enseigneId,
+                    }))
+                  }
+                  className={cn(
+                    'text-xs px-3 py-1.5 rounded-full border transition-colors',
+                    advancedFilters.customerType === opt.value
+                      ? 'bg-primary text-primary-foreground border-primary'
+                      : 'bg-white text-gray-700 border-gray-300 hover:border-primary/50'
+                  )}
+                >
+                  {opt.label}
+                </button>
+              ))}
+
+              {/* Dropdown enseigne (visible uniquement quand "Enseigne" sélectionné) */}
+              {advancedFilters.customerType === 'enseigne' &&
+                enseignes.length > 0 && (
+                  <Select
+                    value={advancedFilters.enseigneId ?? 'all'}
+                    onValueChange={value =>
+                      setAdvancedFilters(prev => ({
+                        ...prev,
+                        enseigneId: value === 'all' ? null : value,
+                      }))
+                    }
+                  >
+                    <SelectTrigger className="w-[200px] h-8 text-xs">
+                      <SelectValue placeholder="Toutes les enseignes" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Toutes les enseignes</SelectItem>
+                      {enseignes.map(e => (
+                        <SelectItem key={e.id} value={e.id}>
+                          {e.name} ({e.member_count})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+            </div>
+
+            {/* Période + Rapprochement */}
+            <div className="flex flex-wrap items-center gap-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-sm font-medium text-gray-600 mr-1">
+                  Période :
+                </span>
+                {(
+                  [
+                    { value: 'all', label: 'Toute' },
+                    { value: 'month', label: 'Ce mois' },
+                    { value: 'quarter', label: 'Trimestre' },
+                    { value: 'year', label: 'Année' },
+                  ] as const
+                ).map(opt => (
+                  <button
+                    key={opt.value}
+                    onClick={() =>
+                      setAdvancedFilters(prev => ({
+                        ...prev,
+                        period: opt.value,
+                      }))
+                    }
+                    className={cn(
+                      'text-xs px-3 py-1.5 rounded-full border transition-colors',
+                      advancedFilters.period === opt.value
+                        ? 'bg-primary text-primary-foreground border-primary'
+                        : 'bg-white text-gray-700 border-gray-300 hover:border-primary/50'
+                    )}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-sm font-medium text-gray-600 mr-1">
+                  Rapprochement :
+                </span>
+                {(
+                  [
+                    { value: 'all', label: 'Tous' },
+                    { value: 'matched', label: 'Oui' },
+                    { value: 'unmatched', label: 'Non' },
+                  ] as const
+                ).map(opt => (
+                  <button
+                    key={opt.value}
+                    onClick={() =>
+                      setAdvancedFilters(prev => ({
+                        ...prev,
+                        matching: opt.value,
+                      }))
+                    }
+                    className={cn(
+                      'text-xs px-3 py-1.5 rounded-full border transition-colors',
+                      advancedFilters.matching === opt.value
+                        ? 'bg-primary text-primary-foreground border-primary'
+                        : 'bg-white text-gray-700 border-gray-300 hover:border-primary/50'
+                    )}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
               </div>
             </div>
 
-            {/* Bouton filtres avancés (remplace les 3 selects) */}
-            <AdvancedSalesFiltersModal
-              filters={advancedFilters}
-              onApply={setAdvancedFilters}
-            />
+            {/* Bouton réinitialiser */}
+            {hasActiveFilters && (
+              <div className="flex justify-end">
+                <ButtonUnified
+                  variant="ghost"
+                  size="sm"
+                  icon={RotateCcw}
+                  onClick={() => setAdvancedFilters(DEFAULT_SALES_FILTERS)}
+                >
+                  Réinitialiser les filtres
+                </ButtonUnified>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

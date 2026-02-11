@@ -12,10 +12,10 @@ import { PurchaseOrderFormModal } from '@verone/orders';
 import { PurchaseOrderReceptionModal } from '@verone/orders';
 import { PurchaseOrderDetailModal } from '@verone/orders';
 import { CancelRemainderModal } from '@verone/orders';
-import { AdvancedPurchaseFiltersModal } from '@verone/orders';
 import type { PurchaseAdvancedFilters } from '@verone/orders';
-import { DEFAULT_PURCHASE_FILTERS } from '@verone/orders';
+import { DEFAULT_PURCHASE_FILTERS, countActiveFilters } from '@verone/orders';
 import { usePurchaseOrders } from '@verone/orders';
+import { useOrganisations } from '@verone/organisations';
 import { ProductThumbnail } from '@verone/products';
 import type { Database } from '@verone/types';
 
@@ -48,6 +48,13 @@ import {
   CardTitle,
 } from '@verone/ui';
 import { Input } from '@verone/ui';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@verone/ui';
 import {
   Table,
   TableBody,
@@ -130,6 +137,7 @@ export default function PurchaseOrdersPage() {
 
   const { toast } = useToast();
   const searchParams = useSearchParams();
+  const { organisations: suppliers } = useOrganisations({ type: 'supplier' });
 
   // États filtres
   const [searchTerm, setSearchTerm] = useState('');
@@ -138,6 +146,12 @@ export default function PurchaseOrdersPage() {
   );
   const [advancedFilters, setAdvancedFilters] =
     useState<PurchaseAdvancedFilters>(DEFAULT_PURCHASE_FILTERS);
+
+  // Détection filtres actifs (pour bouton reset)
+  const hasActiveFilters = useMemo(
+    () => countActiveFilters(advancedFilters, DEFAULT_PURCHASE_FILTERS) > 0,
+    [advancedFilters]
+  );
 
   // États tri
   const [sortColumn, setSortColumn] = useState<SortColumn>(null);
@@ -904,25 +918,126 @@ export default function PurchaseOrdersPage() {
             </TabsList>
           </Tabs>
 
-          {/* Recherche + Filtres avancés */}
-          <div className="flex flex-col lg:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder="Rechercher par numéro de commande ou fournisseur..."
-                  value={searchTerm}
-                  onChange={e => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
+          {/* Recherche */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Input
+              placeholder="Rechercher par numéro de commande ou fournisseur..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+
+          {/* Filtres inline (chips) */}
+          <div className="space-y-3">
+            {/* Fournisseur */}
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-sm font-medium text-gray-600 mr-1">
+                Fournisseur :
+              </span>
+              <Select
+                value={advancedFilters.supplierId ?? 'all'}
+                onValueChange={value =>
+                  setAdvancedFilters(prev => ({
+                    ...prev,
+                    supplierId: value === 'all' ? null : value,
+                  }))
+                }
+              >
+                <SelectTrigger className="w-[220px] h-8 text-xs">
+                  <SelectValue placeholder="Tous les fournisseurs" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tous les fournisseurs</SelectItem>
+                  {suppliers.map(s => (
+                    <SelectItem key={s.id} value={s.id}>
+                      {getOrganisationDisplayName(s)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Période + Rapprochement */}
+            <div className="flex flex-wrap items-center gap-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-sm font-medium text-gray-600 mr-1">
+                  Période :
+                </span>
+                {(
+                  [
+                    { value: 'all', label: 'Toute' },
+                    { value: 'month', label: 'Ce mois' },
+                    { value: 'quarter', label: 'Trimestre' },
+                    { value: 'year', label: 'Année' },
+                  ] as const
+                ).map(opt => (
+                  <button
+                    key={opt.value}
+                    onClick={() =>
+                      setAdvancedFilters(prev => ({
+                        ...prev,
+                        period: opt.value,
+                      }))
+                    }
+                    className={cn(
+                      'text-xs px-3 py-1.5 rounded-full border transition-colors',
+                      advancedFilters.period === opt.value
+                        ? 'bg-primary text-primary-foreground border-primary'
+                        : 'bg-white text-gray-700 border-gray-300 hover:border-primary/50'
+                    )}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-sm font-medium text-gray-600 mr-1">
+                  Rapprochement :
+                </span>
+                {(
+                  [
+                    { value: 'all', label: 'Tous' },
+                    { value: 'matched', label: 'Oui' },
+                    { value: 'unmatched', label: 'Non' },
+                  ] as const
+                ).map(opt => (
+                  <button
+                    key={opt.value}
+                    onClick={() =>
+                      setAdvancedFilters(prev => ({
+                        ...prev,
+                        matching: opt.value,
+                      }))
+                    }
+                    className={cn(
+                      'text-xs px-3 py-1.5 rounded-full border transition-colors',
+                      advancedFilters.matching === opt.value
+                        ? 'bg-primary text-primary-foreground border-primary'
+                        : 'bg-white text-gray-700 border-gray-300 hover:border-primary/50'
+                    )}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
               </div>
             </div>
 
-            {/* Bouton filtres avancés (remplace les 2 selects) */}
-            <AdvancedPurchaseFiltersModal
-              filters={advancedFilters}
-              onApply={setAdvancedFilters}
-            />
+            {/* Bouton réinitialiser */}
+            {hasActiveFilters && (
+              <div className="flex justify-end">
+                <ButtonUnified
+                  variant="ghost"
+                  size="sm"
+                  icon={RotateCcw}
+                  onClick={() => setAdvancedFilters(DEFAULT_PURCHASE_FILTERS)}
+                >
+                  Réinitialiser les filtres
+                </ButtonUnified>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

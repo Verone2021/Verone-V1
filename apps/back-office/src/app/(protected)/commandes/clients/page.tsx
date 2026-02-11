@@ -81,8 +81,6 @@ export default function SalesOrdersClientsPage() {
       <SalesOrdersTable
         channelId={CHANNEL_IDS[channelFilter]}
         showChannelColumn={channelFilter === 'all'}
-        showCustomerTypeFilter
-        showPeriodFilter
         showKPIs
         allowValidate
         allowShip
@@ -94,11 +92,10 @@ export default function SalesOrdersClientsPage() {
         defaultItemsPerPage={20}
         sortableColumns={{
           date: true,
-          client: false, // ❌ Retirer tri client
+          client: false,
           amount: true,
-          orderNumber: true, // ✅ Ajouter tri numéro
+          orderNumber: true,
         }}
-        showEnseigneFilter // ✅ Ajouter filtres enseigne/org
       />
     </div>
   );

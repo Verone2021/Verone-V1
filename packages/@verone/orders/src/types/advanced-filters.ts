@@ -7,20 +7,16 @@
 export interface SalesAdvancedFilters {
   /** Multi-select statuts commande */
   statuses: string[];
-  /** Type client: all | individual | professional | organisation | enseigne */
+  /** Type client: all | individual | professional | enseigne */
   customerType: string;
-  /** ID enseigne spécifique */
+  /** ID enseigne spécifique (quand customerType === 'enseigne') */
   enseigneId: string | null;
-  /** ID organisation spécifique */
-  organisationId: string | null;
   /** Période rapide */
   period: 'all' | 'month' | 'quarter' | 'year';
   /** Montant TTC min */
   amountMin: number | null;
   /** Montant TTC max */
   amountMax: number | null;
-  /** Canal de vente ID */
-  channelId: string | null;
   /** Rapprochement bancaire */
   matching: 'all' | 'matched' | 'unmatched';
 }
@@ -29,11 +25,9 @@ export const DEFAULT_SALES_FILTERS: SalesAdvancedFilters = {
   statuses: [],
   customerType: 'all',
   enseigneId: null,
-  organisationId: null,
   period: 'all',
   amountMin: null,
   amountMax: null,
-  channelId: null,
   matching: 'all',
 };
 
