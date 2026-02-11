@@ -12,8 +12,10 @@ import { PurchaseOrderFormModal } from '@verone/orders';
 import { PurchaseOrderReceptionModal } from '@verone/orders';
 import { PurchaseOrderDetailModal } from '@verone/orders';
 import { CancelRemainderModal } from '@verone/orders';
+import { AdvancedPurchaseFiltersModal } from '@verone/orders';
+import type { PurchaseAdvancedFilters } from '@verone/orders';
+import { DEFAULT_PURCHASE_FILTERS } from '@verone/orders';
 import { usePurchaseOrders } from '@verone/orders';
-import { useOrganisations } from '@verone/organisations';
 import { ProductThumbnail } from '@verone/products';
 import type { Database } from '@verone/types';
 
@@ -46,13 +48,6 @@ import {
   CardTitle,
 } from '@verone/ui';
 import { Input } from '@verone/ui';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@verone/ui';
 import {
   Table,
   TableBody,
@@ -133,7 +128,6 @@ export default function PurchaseOrdersPage() {
     markAsManuallyPaid,
   } = usePurchaseOrders();
 
-  const { organisations: suppliers } = useOrganisations({ type: 'supplier' });
   const { toast } = useToast();
   const searchParams = useSearchParams();
 
@@ -142,10 +136,8 @@ export default function PurchaseOrdersPage() {
   const [activeTab, setActiveTab] = useState<PurchaseOrderStatus | 'all'>(
     'all'
   );
-  const [supplierFilter, setSuppliersFilter] = useState<string>('all');
-  const [periodFilter, setPeriodFilter] = useState<
-    'all' | 'month' | 'quarter' | 'year'
-  >('all');
+  const [advancedFilters, setAdvancedFilters] =
+    useState<PurchaseAdvancedFilters>(DEFAULT_PURCHASE_FILTERS);
 
   // États tri
   const [sortColumn, setSortColumn] = useState<SortColumn>(null);
@@ -245,7 +237,7 @@ export default function PurchaseOrdersPage() {
     };
   }, [orders]);
 
-  // ✅ Filtrage + Tri
+  // ✅ Filtrage + Tri (filtres avancés)
   const filteredOrders = useMemo(() => {
     const filtered = orders.filter(order => {
       // Filtre onglet
@@ -263,44 +255,67 @@ export default function PurchaseOrdersPage() {
           .includes(searchTerm.toLowerCase());
       if (!matchesSearch) return false;
 
+      // Filtre multi-statuts (filtres avancés)
+      if (
+        advancedFilters.statuses.length > 0 &&
+        !advancedFilters.statuses.includes(order.status)
+      )
+        return false;
+
       // Filtre fournisseur
-      if (supplierFilter !== 'all' && order.supplier_id !== supplierFilter)
+      if (
+        advancedFilters.supplierId &&
+        order.supplier_id !== advancedFilters.supplierId
+      )
         return false;
 
       // Filtre période
-      if (periodFilter !== 'all') {
+      if (advancedFilters.period !== 'all') {
         const orderDate = new Date(order.created_at);
         const now = new Date();
 
-        switch (periodFilter) {
+        switch (advancedFilters.period) {
           case 'month':
-            // Ce mois
             if (
               orderDate.getMonth() !== now.getMonth() ||
               orderDate.getFullYear() !== now.getFullYear()
-            ) {
+            )
               return false;
-            }
             break;
           case 'quarter': {
-            // Ce trimestre
             const currentQuarter = Math.floor(now.getMonth() / 3);
             const orderQuarter = Math.floor(orderDate.getMonth() / 3);
             if (
               orderQuarter !== currentQuarter ||
               orderDate.getFullYear() !== now.getFullYear()
-            ) {
+            )
               return false;
-            }
             break;
           }
           case 'year':
-            // Cette année
-            if (orderDate.getFullYear() !== now.getFullYear()) {
-              return false;
-            }
+            if (orderDate.getFullYear() !== now.getFullYear()) return false;
             break;
         }
+      }
+
+      // Filtre montant HT
+      if (
+        advancedFilters.amountMin !== null &&
+        (order.total_ht ?? 0) < advancedFilters.amountMin
+      )
+        return false;
+      if (
+        advancedFilters.amountMax !== null &&
+        (order.total_ht ?? 0) > advancedFilters.amountMax
+      )
+        return false;
+
+      // Filtre rapprochement bancaire
+      if (advancedFilters.matching !== 'all') {
+        const extended = order as PurchaseOrderExtended;
+        const isMatched = extended.is_matched === true;
+        if (advancedFilters.matching === 'matched' && !isMatched) return false;
+        if (advancedFilters.matching === 'unmatched' && isMatched) return false;
       }
 
       return true;
@@ -332,8 +347,7 @@ export default function PurchaseOrdersPage() {
     orders,
     activeTab,
     searchTerm,
-    supplierFilter,
-    periodFilter,
+    advancedFilters,
     sortColumn,
     sortDirection,
   ]);
@@ -890,7 +904,7 @@ export default function PurchaseOrdersPage() {
             </TabsList>
           </Tabs>
 
-          {/* Filtres complémentaires */}
+          {/* Recherche + Filtres avancés */}
           <div className="flex flex-col lg:flex-row gap-4">
             <div className="flex-1">
               <div className="relative">
@@ -903,35 +917,12 @@ export default function PurchaseOrdersPage() {
                 />
               </div>
             </div>
-            <Select value={supplierFilter} onValueChange={setSuppliersFilter}>
-              <SelectTrigger className="w-full lg:w-48">
-                <SelectValue placeholder="Fournisseur" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tous les fournisseurs</SelectItem>
-                {suppliers.map(supplier => (
-                  <SelectItem key={supplier.id} value={supplier.id}>
-                    {getOrganisationDisplayName(supplier)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select
-              value={periodFilter}
-              onValueChange={(value: 'all' | 'month' | 'quarter' | 'year') =>
-                setPeriodFilter(value)
-              }
-            >
-              <SelectTrigger className="w-full lg:w-48">
-                <SelectValue placeholder="Période" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Toute période</SelectItem>
-                <SelectItem value="month">Ce mois</SelectItem>
-                <SelectItem value="quarter">Ce trimestre</SelectItem>
-                <SelectItem value="year">Cette année</SelectItem>
-              </SelectContent>
-            </Select>
+
+            {/* Bouton filtres avancés (remplace les 2 selects) */}
+            <AdvancedPurchaseFiltersModal
+              filters={advancedFilters}
+              onApply={setAdvancedFilters}
+            />
           </div>
         </CardContent>
       </Card>
