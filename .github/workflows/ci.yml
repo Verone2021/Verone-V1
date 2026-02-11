@@ -35,21 +35,56 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: ESLint (Back-Office + LinkMe only)
-        run: pnpm turbo lint --filter=@verone/back-office --filter=@verone/linkme
+      - name: ESLint (--max-warnings=0)
+        run: pnpm lint
 
-      - name: Type-check (Back-Office + LinkMe only)
-        run: pnpm turbo type-check --filter=@verone/back-office --filter=@verone/linkme
+      - name: Type-check
+        run: pnpm type-check
 
-      - name: Build (Back-Office + LinkMe only)
-        run: pnpm turbo build --filter=@verone/back-office --filter=@verone/linkme
+      - name: Build
+        run: pnpm build
         env:
           TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
           TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
 
-  # e2e-tests: Disabled for now (tests run locally only)
-  # Will be re-enabled once staging environment is stable
-  # See playwright.config.ts for local test configuration
+  e2e-tests:
+    name: E2E Tests (Playwright)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.13.1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run E2E tests
+        run: pnpm e2e:ci
+        env:
+          CI: true
+
+      - name: Upload test results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
 
   # Auto-merge for dependabot/owner PRs (optional)
   # Uncomment if you want auto-merge when CI passes

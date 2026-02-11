@@ -85,9 +85,9 @@ export default defineConfig({
 
   // Serveur de développement
   webServer: {
-    command: 'pnpm --filter @verone/back-office dev',
+    command: 'npm run dev',
     url: 'http://localhost:3000',
-    reuseExistingServer: !process.env.CI, // Local: réutilise serveur existant | CI: lance serveur frais
+    reuseExistingServer: true, // Toujours réutiliser serveur existant
     timeout: 120000, // 2 minutes pour démarrage
   },
 });

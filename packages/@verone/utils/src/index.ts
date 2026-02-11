@@ -59,8 +59,8 @@ export * from './upload/image-optimization';
 // SUPABASE
 // ========================================
 
-// ✅ Export singleton createClient + getUserSafe depuis supabase/client.ts
-export { createClient, getUserSafe } from './supabase/client';
+// ✅ Export singleton createClient depuis supabase/client.ts
+export { createClient } from './supabase/client';
 export type * from './supabase/types';
 
 // ⚠️ NE PAS exporter './supabase/server' depuis l'index principal

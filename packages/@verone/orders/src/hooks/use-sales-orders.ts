@@ -1324,14 +1324,14 @@ export function useSalesOrders() {
         // 1. Vérifier que la commande n'est pas payée (règle métier stricte)
         const { data: existingOrder, error: fetchError } = await supabase
           .from('sales_orders')
-          .select('payment_status_v2, status, order_number')
+          .select('payment_status, status, order_number')
           .eq('id', orderId)
           .single();
 
         if (fetchError) throw fetchError;
         if (!existingOrder) throw new Error('Commande non trouvée');
 
-        if (existingOrder.payment_status_v2 === 'paid') {
+        if (existingOrder.payment_status === 'paid') {
           throw new Error('Impossible de modifier une commande déjà payée');
         }
 
