@@ -393,6 +393,7 @@ export default function PurchaseOrdersPage() {
     advancedFilters,
     sortColumn,
     sortDirection,
+    currentYear,
   ]);
 
   // ✅ KPI dynamiques sur commandes filtrées
