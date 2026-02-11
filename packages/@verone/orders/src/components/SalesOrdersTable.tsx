@@ -113,8 +113,6 @@ const statusLabels: Record<SalesOrderStatus, string> = {
   validated: 'Validee',
   partially_shipped: 'Partiellement expediee',
   shipped: 'Expediee',
-  delivered: 'Livree',
-  closed: 'Cloturee',
   cancelled: 'Annulee',
 };
 
@@ -122,27 +120,8 @@ const statusColors: Record<SalesOrderStatus, string> = {
   draft: 'bg-gray-100 text-gray-800',
   validated: 'bg-blue-100 text-blue-800',
   partially_shipped: 'bg-amber-100 text-amber-800',
-  shipped: 'bg-cyan-100 text-cyan-800',
-  delivered: 'bg-green-100 text-green-800',
-  closed: 'bg-purple-100 text-purple-800',
+  shipped: 'bg-green-100 text-green-800',
   cancelled: 'bg-red-100 text-red-800',
-};
-
-// Labels et couleurs statut paiement
-const paymentStatusLabels: Record<string, string> = {
-  pending: 'En attente',
-  partial: 'Partiel',
-  paid: 'Paye',
-  refunded: 'Rembourse',
-  overdue: 'En retard',
-};
-
-const paymentStatusColors: Record<string, string> = {
-  pending: 'bg-orange-100 text-orange-800',
-  partial: 'bg-yellow-100 text-yellow-800',
-  paid: 'bg-green-100 text-green-800',
-  refunded: 'bg-gray-100 text-gray-800',
-  overdue: 'bg-red-100 text-red-800',
 };
 
 type SortColumn = 'date' | 'client' | 'amount' | 'order_number' | null;
@@ -1359,7 +1338,6 @@ export function SalesOrdersTable({
                       )}
                       <TableHead>Statut</TableHead>
                       <TableHead>Paiement</TableHead>
-                      <TableHead>Paiement V2</TableHead>
                       <TableHead className="w-20 text-center">
                         Articles
                       </TableHead>
@@ -1466,21 +1444,6 @@ export function SalesOrdersTable({
                                   </Badge>
                                 )}
                               </div>
-                            </TableCell>
-                            <TableCell>
-                              {order.payment_status ? (
-                                <Badge
-                                  className={
-                                    paymentStatusColors[order.payment_status] ||
-                                    'bg-gray-100 text-gray-800'
-                                  }
-                                >
-                                  {paymentStatusLabels[order.payment_status] ||
-                                    order.payment_status}
-                                </Badge>
-                              ) : (
-                                <span className="text-gray-400 text-sm">-</span>
-                              )}
                             </TableCell>
                             <TableCell>
                               <div className="flex items-center gap-2">
@@ -1741,8 +1704,7 @@ export function SalesOrdersTable({
 
                                 {/* Lier transaction / Rapprochée */}
                                 {(order.status === 'validated' ||
-                                  order.status === 'shipped' ||
-                                  order.status === 'delivered') && (
+                                  order.status === 'shipped') && (
                                   <>
                                     {order.is_matched ? (
                                       <Badge
@@ -1776,7 +1738,7 @@ export function SalesOrdersTable({
                             <TableRow className="bg-muted/50 hover:bg-muted/50">
                               <TableCell
                                 colSpan={
-                                  9 +
+                                  10 +
                                   additionalColumns.length +
                                   (showChannelColumn ? 1 : 0)
                                 }

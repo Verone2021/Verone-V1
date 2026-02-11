@@ -1130,7 +1130,7 @@ export default function PurchaseOrdersPage() {
                     </TableHead>
                     <TableHead>Fournisseur</TableHead>
                     <TableHead>Statut</TableHead>
-                    <TableHead>Paiement V2</TableHead>
+                    <TableHead>Paiement</TableHead>
                     <TableHead className="w-20 text-center">Articles</TableHead>
                     <TableHead
                       className="cursor-pointer hover:bg-gray-50"
@@ -1194,7 +1194,7 @@ export default function PurchaseOrdersPage() {
                               )}
                             </div>
                           </TableCell>
-                          {/* Colonne Paiement V2 */}
+                          {/* Colonne Paiement */}
                           <TableCell>
                             <div className="flex items-center gap-2">
                               {(order as PurchaseOrderExtended)

@@ -218,9 +218,9 @@ export default function CommandesOverviewPage() {
                     <div className="grid grid-cols-2 gap-4">
                       <div className="text-center p-3 bg-green-50 rounded-lg">
                         <div className="text-lg font-bold text-green-700">
-                          {salesStats.delivered_orders}
+                          {salesStats.shipped_orders}
                         </div>
-                        <div className="text-xs text-green-600">Livrées</div>
+                        <div className="text-xs text-green-600">Expédiées</div>
                       </div>
                       <div className="text-center p-3 bg-blue-50 rounded-lg">
                         <div className="text-lg font-bold text-blue-700">
