@@ -10,6 +10,7 @@ export * from './components/cards';
 export * from './components/modals';
 export * from './components/display';
 export * from './components/badges';
+export * from './components/suppliers';
 export * from './components';
 
 // Hooks

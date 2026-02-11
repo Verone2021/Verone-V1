@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@verone/ui';
-import type { SupplierSegmentType } from '@verone/suppliers/components/badges/SupplierSegmentBadge';
+import type { SupplierSegmentType } from './SupplierSegmentBadge';
 
 interface SupplierSegmentSelectProps {
   value: SupplierSegmentType | null | undefined;

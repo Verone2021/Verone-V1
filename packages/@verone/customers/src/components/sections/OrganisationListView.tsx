@@ -17,7 +17,7 @@ import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import { getOrganisationDisplayName } from '@verone/utils/utils/organisation-helpers';
 import { OrganisationLogo } from '@verone/organisations/components/display/OrganisationLogo';
-import { SupplierSegmentBadge } from '@verone/suppliers/components/badges/SupplierSegmentBadge';
+import { SupplierSegmentBadge } from '@verone/organisations/components/suppliers';
 
 /** Type organisation compatible (subset de Organisation de @verone/types) */
 type OrganisationForListView = {
