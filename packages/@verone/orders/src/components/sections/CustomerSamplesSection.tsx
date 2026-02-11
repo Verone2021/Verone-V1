@@ -66,16 +66,13 @@ interface CustomerSamplesSectionProps {
 // Mapping statuts avec couleurs
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   draft: { label: 'Brouillon', color: 'bg-gray-100 text-gray-800' },
-  confirmed: { label: 'Confirmée', color: 'bg-blue-100 text-blue-800' },
   validated: { label: 'Validée', color: 'bg-blue-100 text-blue-800' },
   partially_shipped: {
     label: 'Partiellement expédiée',
     color: 'bg-purple-100 text-purple-800',
   },
-  shipped: { label: 'Expédiée', color: 'bg-yellow-100 text-yellow-800' },
-  delivered: { label: 'Livrée', color: 'bg-green-100 text-green-800' },
+  shipped: { label: 'Expédiée', color: 'bg-green-100 text-green-800' },
   cancelled: { label: 'Annulée', color: 'bg-red-100 text-red-800' },
-  closed: { label: 'Clôturée', color: 'bg-gray-100 text-gray-800' },
 };
 
 export function CustomerSamplesSection({
