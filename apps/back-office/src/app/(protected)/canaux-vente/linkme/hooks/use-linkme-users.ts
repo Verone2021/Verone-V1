@@ -354,8 +354,13 @@ export function useCreateLinkMeUser() {
       });
 
       if (!response.ok) {
-        const error = (await response.json()) as { message?: string };
-        throw new Error(error.message ?? 'Erreur lors de la création');
+        const errorData = (await response.json()) as {
+          message?: string;
+          error?: string;
+        };
+        throw new Error(
+          errorData.message ?? errorData.error ?? 'Erreur lors de la création'
+        );
       }
 
       return response.json() as Promise<{ user_id: string }>;
