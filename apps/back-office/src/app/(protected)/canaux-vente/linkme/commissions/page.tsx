@@ -45,6 +45,9 @@ import {
   Banknote,
   Hourglass,
   ArrowRightCircle,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
   ChevronLeft,
   ChevronRight,
   X,
@@ -104,6 +107,8 @@ interface Affiliate {
 // ============================================
 
 type TabType = 'en_attente' | 'payables' | 'en_cours' | 'payees';
+type SortColumn = 'date' | 'order_number' | null;
+type SortDirection = 'asc' | 'desc';
 
 const TABS_CONFIG: Record<
   TabType,
@@ -187,6 +192,8 @@ export default function LinkMeCommissionsPage() {
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(0);
+  const [sortColumn, setSortColumn] = useState<SortColumn>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
   const fetchData = useCallback(async () => {
     const supabase = createClient();
@@ -265,6 +272,30 @@ export default function LinkMeCommissionsPage() {
   }
 
   // ============================================
+  // SORT HANDLERS
+  // ============================================
+
+  const handleSort = (column: SortColumn) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn(column);
+      setSortDirection('desc');
+    }
+  };
+
+  const renderSortIcon = (column: SortColumn) => {
+    if (sortColumn !== column) {
+      return <ArrowUpDown className="h-4 w-4 opacity-50" />;
+    }
+    return sortDirection === 'asc' ? (
+      <ArrowUp className="h-4 w-4" />
+    ) : (
+      <ArrowDown className="h-4 w-4" />
+    );
+  };
+
+  // ============================================
   // FILTER BY TAB
   // ============================================
 
@@ -292,7 +323,7 @@ export default function LinkMeCommissionsPage() {
   }
 
   function applyFilters(list: Commission[]): Commission[] {
-    return list.filter(c => {
+    const filtered = list.filter(c => {
       // Search by order number
       const orderNum =
         c.sales_order?.order_number ?? c.order_number ?? c.order_id ?? '';
@@ -327,6 +358,32 @@ export default function LinkMeCommissionsPage() {
 
       return matchesSearch && matchesAffiliate && matchesType;
     });
+
+    // Sort
+    if (sortColumn) {
+      filtered.sort((a, b) => {
+        let comparison = 0;
+
+        switch (sortColumn) {
+          case 'date': {
+            const dateA = a.sales_order?.created_at ?? a.created_at ?? '';
+            const dateB = b.sales_order?.created_at ?? b.created_at ?? '';
+            comparison = new Date(dateA).getTime() - new Date(dateB).getTime();
+            break;
+          }
+          case 'order_number': {
+            const numA = a.sales_order?.order_number ?? a.order_number ?? '';
+            const numB = b.sales_order?.order_number ?? b.order_number ?? '';
+            comparison = numA.localeCompare(numB);
+            break;
+          }
+        }
+
+        return sortDirection === 'asc' ? comparison : -comparison;
+      });
+    }
+
+    return filtered;
   }
 
   // ============================================
@@ -789,8 +846,24 @@ export default function LinkMeCommissionsPage() {
                               />
                             </TableHead>
                           )}
-                          <TableHead>Date</TableHead>
-                          <TableHead>N° Commande</TableHead>
+                          <TableHead
+                            className="cursor-pointer hover:bg-gray-50"
+                            onClick={() => handleSort('date')}
+                          >
+                            <span className="inline-flex items-center gap-1">
+                              Date
+                              {renderSortIcon('date')}
+                            </span>
+                          </TableHead>
+                          <TableHead
+                            className="cursor-pointer hover:bg-gray-50"
+                            onClick={() => handleSort('order_number')}
+                          >
+                            <span className="inline-flex items-center gap-1">
+                              N° Commande
+                              {renderSortIcon('order_number')}
+                            </span>
+                          </TableHead>
                           <TableHead>Affilié</TableHead>
                           <TableHead>Type</TableHead>
                           <TableHead>Paiement</TableHead>
