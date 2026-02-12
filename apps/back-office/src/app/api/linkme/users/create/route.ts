@@ -124,7 +124,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       user_id: userId,
       first_name: firstName,
       last_name: lastName,
-      phone: phone ?? null,
+      phone: phone || null,
       app_source: 'linkme',
       user_type: 'staff',
     };
@@ -177,7 +177,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       first_name: firstName,
       last_name: lastName,
       email,
-      phone: phone ?? null,
+      phone: phone || null,
       is_primary_contact: true, // Premier contact créé = contact principal
       is_active: true,
       notes: `Contact créé automatiquement pour utilisateur LinkMe (${role})`,
@@ -240,7 +240,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         display_name: displayName,
         slug: uniqueSlug,
         email: email,
-        phone: phone ?? null,
+        phone: phone || null,
         status: 'active',
         default_margin_rate: 20,
         linkme_commission_rate: 5,
