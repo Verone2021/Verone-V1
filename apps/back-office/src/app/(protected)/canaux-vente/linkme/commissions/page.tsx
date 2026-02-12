@@ -1,8 +1,9 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useToast } from '@verone/common';
+import { useActiveEnseignes } from '@verone/organisations';
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import {
@@ -46,6 +47,7 @@ import {
   ArrowRightCircle,
   ChevronLeft,
   ChevronRight,
+  X,
 } from 'lucide-react';
 
 import { PaymentRequestModalAdmin } from '../components/PaymentRequestModalAdmin';
@@ -177,6 +179,8 @@ export default function LinkMeCommissionsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [affiliateFilter, setAffiliateFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [filterYear, setFilterYear] = useState<number | null>(null);
+  const [enseigneFilter, setEnseigneFilter] = useState<string>('all');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [processing, setProcessing] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>('payables');
@@ -233,6 +237,33 @@ export default function LinkMeCommissionsPage() {
     });
   }, [fetchData]);
 
+  const { enseignes } = useActiveEnseignes();
+
+  const availableYears = useMemo(() => {
+    const years = new Set<number>();
+    commissions.forEach(c => {
+      const dateRef = c.sales_order?.created_at ?? c.created_at;
+      if (dateRef) years.add(new Date(dateRef).getFullYear());
+    });
+    return Array.from(years).sort((a, b) => b - a);
+  }, [commissions]);
+
+  const hasActiveFilters =
+    searchTerm !== '' ||
+    filterYear !== null ||
+    typeFilter !== 'all' ||
+    enseigneFilter !== 'all' ||
+    affiliateFilter !== 'all';
+
+  function resetFilters() {
+    setSearchTerm('');
+    setFilterYear(null);
+    setTypeFilter('all');
+    setEnseigneFilter('all');
+    setAffiliateFilter('all');
+    setCurrentPage(0);
+  }
+
   // ============================================
   // FILTER BY TAB
   // ============================================
@@ -280,6 +311,18 @@ export default function LinkMeCommissionsPage() {
         matchesType =
           (typeFilter === 'enseigne' && isEnseigne) ||
           (typeFilter === 'organisation' && !isEnseigne);
+      }
+
+      // Filter by year
+      if (filterYear !== null) {
+        const dateRef = c.sales_order?.created_at ?? c.created_at;
+        if (!dateRef || new Date(dateRef).getFullYear() !== filterYear)
+          return false;
+      }
+
+      // Filter by specific enseigne
+      if (enseigneFilter !== 'all') {
+        if (c.affiliate?.enseigne_id !== enseigneFilter) return false;
       }
 
       return matchesSearch && matchesAffiliate && matchesType;
@@ -626,20 +669,20 @@ export default function LinkMeCommissionsPage() {
                       />
                     </div>
                     <Select
-                      value={affiliateFilter}
+                      value={filterYear === null ? 'all' : String(filterYear)}
                       onValueChange={v => {
-                        setAffiliateFilter(v);
+                        setFilterYear(v === 'all' ? null : Number(v));
                         setCurrentPage(0);
                       }}
                     >
-                      <SelectTrigger className="w-[200px]">
-                        <SelectValue placeholder="Affilié" />
+                      <SelectTrigger className="w-[140px]">
+                        <SelectValue placeholder="Année" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">Tous les affiliés</SelectItem>
-                        {affiliates.map(affiliate => (
-                          <SelectItem key={affiliate.id} value={affiliate.id}>
-                            {affiliate.display_name}
+                        <SelectItem value="all">Toutes les années</SelectItem>
+                        {availableYears.map(year => (
+                          <SelectItem key={year} value={String(year)}>
+                            {year}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -662,6 +705,59 @@ export default function LinkMeCommissionsPage() {
                         </SelectItem>
                       </SelectContent>
                     </Select>
+                    {typeFilter !== 'organisation' && (
+                      <Select
+                        value={enseigneFilter}
+                        onValueChange={v => {
+                          setEnseigneFilter(v);
+                          setCurrentPage(0);
+                        }}
+                      >
+                        <SelectTrigger className="w-[200px]">
+                          <SelectValue placeholder="Enseigne" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">
+                            Toutes les enseignes
+                          </SelectItem>
+                          {enseignes.map(enseigne => (
+                            <SelectItem key={enseigne.id} value={enseigne.id}>
+                              {enseigne.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                    <Select
+                      value={affiliateFilter}
+                      onValueChange={v => {
+                        setAffiliateFilter(v);
+                        setCurrentPage(0);
+                      }}
+                    >
+                      <SelectTrigger className="w-[200px]">
+                        <SelectValue placeholder="Affilié" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Tous les affiliés</SelectItem>
+                        {affiliates.map(affiliate => (
+                          <SelectItem key={affiliate.id} value={affiliate.id}>
+                            {affiliate.display_name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {hasActiveFilters && (
+                      <ButtonV2
+                        variant="ghost"
+                        size="sm"
+                        onClick={resetFilters}
+                        className="h-10 px-3 text-muted-foreground hover:text-foreground"
+                      >
+                        <X className="h-4 w-4 mr-1" />
+                        Réinitialiser
+                      </ButtonV2>
+                    )}
                   </div>
 
                   {/* TABLE */}
