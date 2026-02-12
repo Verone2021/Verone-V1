@@ -197,67 +197,88 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       console.error('Erreur création contact (non-bloquant):', contactError);
     }
 
-    // 5. Créer l'affilié LinkMe pour enseigne_admin et organisation_admin
+    // 5. Vérifier si un affilié LinkMe existe déjà pour cette enseigne/organisation
+    //    Un affilié est lié à une ENSEIGNE (pas à un utilisateur).
+    //    Plusieurs utilisateurs d'une même enseigne partagent le même affilié.
     if (role === 'enseigne_admin' || role === 'organisation_admin') {
-      // Générer un slug unique basé sur le nom
-      const baseSlug = `${firstName}-${lastName}`
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/(^-|-$)/g, '');
-      const uniqueSlug = `${baseSlug}-${Date.now().toString(36)}`;
-
-      // Récupérer le nom de l'enseigne ou organisation pour le display_name
-      let displayName = `${firstName} ${lastName}`;
+      let existingAffiliate: { id: string } | null = null;
 
       if (role === 'enseigne_admin' && enseigneId) {
-        const { data: enseigne } = await supabaseAdmin
-          .from('enseignes')
-          .select('name')
-          .eq('id', enseigneId)
-          .single<Pick<EnseigneRow, 'name'>>();
-        if (enseigne?.name) {
-          displayName = enseigne.name;
-        }
+        const { data } = await supabaseAdmin
+          .from('linkme_affiliates')
+          .select('id')
+          .eq('enseigne_id', enseigneId)
+          .maybeSingle();
+        existingAffiliate = data;
       } else if (role === 'organisation_admin' && organisationId) {
-        const { data: org } = await supabaseAdmin
-          .from('organisations')
-          .select('trade_name, legal_name')
-          .eq('id', organisationId)
-          .single<Pick<OrganisationRow, 'trade_name' | 'legal_name'>>();
-        if (org) {
-          displayName = org.trade_name ?? org.legal_name ?? displayName;
-        }
+        const { data } = await supabaseAdmin
+          .from('linkme_affiliates')
+          .select('id')
+          .eq('organisation_id', organisationId)
+          .maybeSingle();
+        existingAffiliate = data;
       }
 
-      const affiliateData: LinkmeAffiliateInsert = {
-        affiliate_type: role === 'enseigne_admin' ? 'enseigne' : 'prescripteur',
-        display_name: displayName,
-        slug: uniqueSlug,
-        email: email,
-        phone,
-        status: 'active',
-        default_margin_rate: 20,
-        linkme_commission_rate: 5,
-        enseigne_id:
-          role === 'enseigne_admin' && enseigneId ? enseigneId : null,
-        organisation_id:
-          role === 'organisation_admin' && organisationId
-            ? organisationId
-            : null,
-      };
+      // Créer l'affilié UNIQUEMENT s'il n'existe pas encore
+      if (!existingAffiliate) {
+        const baseSlug = `${firstName}-${lastName}`
+          .toLowerCase()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/(^-|-$)/g, '');
+        const uniqueSlug = `${baseSlug}-${Date.now().toString(36)}`;
 
-      const { error: affiliateError } = await supabaseAdmin
-        .from('linkme_affiliates')
-        .insert(affiliateData);
+        let displayName = `${firstName} ${lastName}`;
 
-      if (affiliateError) {
-        // Log l'erreur mais ne pas bloquer - l'affilié peut être créé manuellement
-        console.error(
-          'Erreur création affilié (non-bloquant):',
-          affiliateError
-        );
+        if (role === 'enseigne_admin' && enseigneId) {
+          const { data: enseigne } = await supabaseAdmin
+            .from('enseignes')
+            .select('name')
+            .eq('id', enseigneId)
+            .single<Pick<EnseigneRow, 'name'>>();
+          if (enseigne?.name) {
+            displayName = enseigne.name;
+          }
+        } else if (role === 'organisation_admin' && organisationId) {
+          const { data: org } = await supabaseAdmin
+            .from('organisations')
+            .select('trade_name, legal_name')
+            .eq('id', organisationId)
+            .single<Pick<OrganisationRow, 'trade_name' | 'legal_name'>>();
+          if (org) {
+            displayName = org.trade_name ?? org.legal_name ?? displayName;
+          }
+        }
+
+        const affiliateData: LinkmeAffiliateInsert = {
+          affiliate_type:
+            role === 'enseigne_admin' ? 'enseigne' : 'prescripteur',
+          display_name: displayName,
+          slug: uniqueSlug,
+          email: email,
+          phone,
+          status: 'active',
+          default_margin_rate: 20,
+          linkme_commission_rate: 5,
+          enseigne_id:
+            role === 'enseigne_admin' && enseigneId ? enseigneId : null,
+          organisation_id:
+            role === 'organisation_admin' && organisationId
+              ? organisationId
+              : null,
+        };
+
+        const { error: affiliateError } = await supabaseAdmin
+          .from('linkme_affiliates')
+          .insert(affiliateData);
+
+        if (affiliateError) {
+          console.error(
+            'Erreur création affilié (non-bloquant):',
+            affiliateError
+          );
+        }
       }
     }
 
