@@ -681,10 +681,9 @@ export function SalesOrderFormModal({
     for (const item of linkmeCart) {
       const lineTotal = item.quantity * item.unit_price_ht;
       totalHt += lineTotal;
-      // Commission calculée sur base_price_ht (135€), pas sur unit_price_ht (168.75€)
-      // Formule: base_price × margin_rate = 135 × 0.15 = 20.25€
+      // Commission = marge par unité × quantité (SSOT: selling - base)
       totalRetrocession +=
-        item.quantity * item.base_price_ht * item.retrocession_rate;
+        (item.unit_price_ht - item.base_price_ht) * item.quantity;
     }
 
     return {
