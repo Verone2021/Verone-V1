@@ -83,6 +83,7 @@ interface Commission {
     payment_status_v2: string | null;
     customer_type: string;
     total_ttc: number | null;
+    created_at: string | null;
   } | null;
 }
 
@@ -190,7 +191,7 @@ export default function LinkMeCommissionsPage() {
           `
           *,
           affiliate:linkme_affiliates(display_name, enseigne_id, organisation_id),
-          sales_order:sales_orders(order_number, payment_status_v2, customer_type, total_ttc)
+          sales_order:sales_orders(order_number, payment_status_v2, customer_type, total_ttc, created_at)
         `
         )
         .order('created_at', { ascending: false })
@@ -373,14 +374,18 @@ export default function LinkMeCommissionsPage() {
     ];
 
     const rows = filtered.map(c => [
-      c.created_at ? new Date(c.created_at).toLocaleDateString('fr-FR') : '-',
+      (c.sales_order?.created_at ?? c.created_at)
+        ? new Date(
+            (c.sales_order?.created_at ?? c.created_at)!
+          ).toLocaleDateString('fr-FR')
+        : '-',
       c.order_number ?? c.sales_order?.order_number ?? '-',
       c.affiliate?.display_name ?? 'N/A',
       c.affiliate?.enseigne_id ? 'Enseigne' : 'Organisation',
       c.sales_order?.payment_status_v2 === 'paid' ? 'Payé' : 'En attente',
       c.order_amount_ht.toFixed(2),
       c.affiliate_commission.toFixed(2),
-      (c.affiliate_commission_ttc ?? c.affiliate_commission * 1.2).toFixed(2),
+      (c.affiliate_commission_ttc ?? 0).toFixed(2),
       statusConfig[(c.status ?? 'pending') as keyof typeof statusConfig]
         ?.label ?? c.status,
     ]);
@@ -423,32 +428,28 @@ export default function LinkMeCommissionsPage() {
     en_attente: {
       count: getCommissionsByTab('en_attente').length,
       total: getCommissionsByTab('en_attente').reduce(
-        (sum, c) =>
-          sum + (c.affiliate_commission_ttc ?? c.affiliate_commission * 1.2),
+        (sum, c) => sum + (c.affiliate_commission_ttc ?? 0),
         0
       ),
     },
     payables: {
       count: getCommissionsByTab('payables').length,
       total: getCommissionsByTab('payables').reduce(
-        (sum, c) =>
-          sum + (c.affiliate_commission_ttc ?? c.affiliate_commission * 1.2),
+        (sum, c) => sum + (c.affiliate_commission_ttc ?? 0),
         0
       ),
     },
     en_cours: {
       count: getCommissionsByTab('en_cours').length,
       total: getCommissionsByTab('en_cours').reduce(
-        (sum, c) =>
-          sum + (c.affiliate_commission_ttc ?? c.affiliate_commission * 1.2),
+        (sum, c) => sum + (c.affiliate_commission_ttc ?? 0),
         0
       ),
     },
     payees: {
       count: getCommissionsByTab('payees').length,
       total: getCommissionsByTab('payees').reduce(
-        (sum, c) =>
-          sum + (c.affiliate_commission_ttc ?? c.affiliate_commission * 1.2),
+        (sum, c) => sum + (c.affiliate_commission_ttc ?? 0),
         0
       ),
     },
@@ -692,9 +693,7 @@ export default function LinkMeCommissionsPage() {
                             commission.sales_order?.order_number ??
                             `#${commission.order_id.slice(0, 8)}`;
                           const commissionTTC =
-                            commission.affiliate_commission_ttc ??
-                            commission.affiliate_commission *
-                              (1 + (commission.tax_rate ?? 0.2));
+                            commission.affiliate_commission_ttc ?? 0;
 
                           return (
                             <TableRow key={commission.id}>
@@ -711,9 +710,11 @@ export default function LinkMeCommissionsPage() {
                                 </TableCell>
                               )}
                               <TableCell>
-                                {commission.created_at
+                                {(commission.sales_order?.created_at ??
+                                commission.created_at)
                                   ? new Date(
-                                      commission.created_at
+                                      (commission.sales_order?.created_at ??
+                                        commission.created_at)!
                                     ).toLocaleDateString('fr-FR', {
                                       day: '2-digit',
                                       month: '2-digit',
@@ -764,8 +765,7 @@ export default function LinkMeCommissionsPage() {
                               </TableCell>
                               <TableCell className="text-right">
                                 {formatPrice(
-                                  commission.sales_order?.total_ttc ??
-                                    commission.order_amount_ht * 1.2
+                                  commission.sales_order?.total_ttc ?? 0
                                 )}
                               </TableCell>
                               <TableCell className="text-right font-medium">

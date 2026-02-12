@@ -108,8 +108,7 @@ export function PaymentRequestModalAdmin({
       0
     );
     const totalTTC = selectedCommissions.reduce(
-      (sum, c) =>
-        sum + (c.affiliate_commission_ttc ?? c.affiliate_commission * 1.2),
+      (sum, c) => sum + (c.affiliate_commission_ttc ?? 0),
       0
     );
     return { totalHT, totalTTC, count: selectedCommissions.length };
@@ -314,10 +313,7 @@ export function PaymentRequestModalAdmin({
                         </span>
                       </div>
                       <span className="text-sm font-semibold text-emerald-600">
-                        {formatPrice(
-                          c.affiliate_commission_ttc ??
-                            c.affiliate_commission * 1.2
-                        )}
+                        {formatPrice(c.affiliate_commission_ttc ?? 0)}
                       </span>
                     </div>
                   ))}
