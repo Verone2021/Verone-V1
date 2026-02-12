@@ -42,7 +42,7 @@ import {
 import { cn } from '@/lib/utils';
 
 // Roles qui peuvent creer des produits
-const CAN_CREATE_ROLES: LinkMeRole[] = ['enseigne_admin', 'org_independante'];
+const CAN_CREATE_ROLES: LinkMeRole[] = ['enseigne_admin', 'organisation_admin'];
 
 // Config statuts
 const STATUS_CONFIG: Record<

@@ -53,7 +53,7 @@ import {
 } from '../../../../lib/hooks/use-user-selection';
 
 // Rôles autorisés
-const AUTHORIZED_ROLES: LinkMeRole[] = ['enseigne_admin', 'org_independante'];
+const AUTHORIZED_ROLES: LinkMeRole[] = ['enseigne_admin', 'organisation_admin'];
 
 export default function SelectionDetailPage(): React.JSX.Element | null {
   const params = useParams();

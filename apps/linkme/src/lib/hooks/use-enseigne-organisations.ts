@@ -81,7 +81,7 @@ export function useEnseigneOrganisations(
       }
 
       if (!affiliate?.enseigne_id) {
-        // Affiliate sans enseigne (org_independante) → pas d'organisations à charger
+        // Affiliate sans enseigne (organisation_admin) → pas d'organisations à charger
         return [];
       }
 

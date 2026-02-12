@@ -29,7 +29,7 @@ interface ICreateUserInput {
   first_name: string;
   last_name: string;
   phone?: string;
-  role: 'enseigne_admin' | 'organisation_admin' | 'org_independante' | 'client';
+  role: 'enseigne_admin' | 'organisation_admin';
   enseigne_id?: string;
   organisation_id?: string;
   permissions?: string[];
@@ -66,18 +66,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    // Validation rôle
-    const validRoles = [
-      'enseigne_admin',
-      'organisation_admin',
-      'org_independante',
-      'client',
-    ];
+    // Validation rôle (2 rôles actifs pour LinkMe)
+    const validRoles = ['enseigne_admin', 'organisation_admin'];
     if (!validRoles.includes(role)) {
       return NextResponse.json(
         {
           message:
-            'Rôle invalide. Doit être: enseigne_admin, organisation_admin, org_independante, ou client',
+            'Rôle invalide. Doit être: enseigne_admin ou organisation_admin',
         },
         { status: 400 }
       );
@@ -95,16 +90,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       return NextResponse.json(
         {
           message: 'Un admin organisation doit être associé à une organisation',
-        },
-        { status: 400 }
-      );
-    }
-
-    if (role === 'org_independante' && !organisationId) {
-      return NextResponse.json(
-        {
-          message:
-            'Une org. indépendante doit être associée à une organisation',
         },
         { status: 400 }
       );
@@ -135,51 +120,18 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const userId = authData.user.id;
 
     // 2. Créer le profil utilisateur
-    // Mapper le rôle LinkMe vers l'enum user_role_type valide
-    // enseigne_admin/organisation_admin → partner_manager, client → customer
-    const profileRole = role === 'client' ? 'customer' : 'partner_manager';
-
     const profileData: UserProfileInsert = {
       user_id: userId,
       first_name: firstName,
       last_name: lastName,
       phone: phone ?? null,
       app_source: 'linkme',
-      user_type: role === 'client' ? 'customer' : 'staff',
+      user_type: 'staff',
     };
 
     const { error: profileError } = await supabaseAdmin
       .from('user_profiles')
       .insert(profileData);
-
-    // Also create entry in user_app_roles
-    if (!profileError) {
-      const { error: roleError } = await supabaseAdmin
-        .from('user_app_roles')
-        .insert({
-          user_id: userId,
-          app: 'linkme',
-          role: profileRole,
-          is_active: true,
-        });
-
-      if (roleError) {
-        console.error('Erreur création rôle:', roleError);
-        // Rollback: supprimer l'utilisateur et le profil
-        await supabaseAdmin.auth.admin.deleteUser(userId);
-        await supabaseAdmin
-          .from('user_profiles')
-          .delete()
-          .eq('user_id', userId);
-        return NextResponse.json(
-          {
-            error: 'Erreur création rôle utilisateur',
-            details: roleError.message,
-          },
-          { status: 500 }
-        );
-      }
-    }
 
     if (profileError) {
       console.error('Erreur création profil:', profileError);
@@ -231,14 +183,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       notes: `Contact créé automatiquement pour utilisateur LinkMe (${role})`,
       enseigne_id: role === 'enseigne_admin' && enseigneId ? enseigneId : null,
       organisation_id:
-        (role === 'organisation_admin' || role === 'org_independante') &&
-        organisationId
-          ? organisationId
-          : null,
+        role === 'organisation_admin' && organisationId ? organisationId : null,
       owner_type:
         role === 'enseigne_admin'
           ? 'enseigne'
-          : role === 'organisation_admin' || role === 'org_independante'
+          : role === 'organisation_admin'
             ? 'organisation'
             : null,
     };
@@ -252,9 +201,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       console.error('Erreur création contact (non-bloquant):', contactError);
     }
 
-    // 5. Créer l'affilié LinkMe pour enseigne_admin et org_independante
-    // (organisation_admin n'a pas besoin d'affilié - ils voient via leur org)
-    if (role === 'enseigne_admin' || role === 'org_independante') {
+    // 5. Créer l'affilié LinkMe pour enseigne_admin et organisation_admin
+    if (role === 'enseigne_admin' || role === 'organisation_admin') {
       // Générer un slug unique basé sur le nom
       const baseSlug = `${firstName}-${lastName}`
         .toLowerCase()
@@ -276,7 +224,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         if (enseigne?.name) {
           displayName = enseigne.name;
         }
-      } else if (role === 'org_independante' && organisationId) {
+      } else if (role === 'organisation_admin' && organisationId) {
         const { data: org } = await supabaseAdmin
           .from('organisations')
           .select('trade_name, legal_name')
@@ -299,7 +247,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         enseigne_id:
           role === 'enseigne_admin' && enseigneId ? enseigneId : null,
         organisation_id:
-          role === 'org_independante' && organisationId ? organisationId : null,
+          role === 'organisation_admin' && organisationId
+            ? organisationId
+            : null,
       };
 
       const { error: affiliateError } = await supabaseAdmin

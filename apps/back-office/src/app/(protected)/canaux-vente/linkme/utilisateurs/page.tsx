@@ -17,8 +17,6 @@ import {
   Filter,
   Building2,
   Store,
-  ShoppingCart,
-  Briefcase,
   Check,
   X,
   Eye,
@@ -47,14 +45,7 @@ import {
  * Badge Rôle avec couleur
  */
 function RoleBadge({ role }: { role: LinkMeRole }) {
-  const Icon =
-    role === 'enseigne_admin'
-      ? Building2
-      : role === 'organisation_admin'
-        ? Store
-        : role === 'org_independante'
-          ? Briefcase
-          : ShoppingCart;
+  const Icon = role === 'enseigne_admin' ? Building2 : Store;
 
   return (
     <span
@@ -410,10 +401,8 @@ export default function LinkMeUtilisateursPage() {
               className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="all">Tous les rôles</option>
-              <option value="enseigne_admin">Admin Enseigne</option>
-              <option value="organisation_admin">Admin Organisation</option>
-              <option value="org_independante">Org. Indépendante</option>
-              <option value="client">Client</option>
+              <option value="enseigne_admin">Enseigne</option>
+              <option value="organisation_admin">Organisation</option>
             </select>
           </div>
 
