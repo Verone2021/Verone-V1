@@ -82,6 +82,7 @@ interface Commission {
     order_number: string;
     payment_status_v2: string | null;
     customer_type: string;
+    total_ht: number | null;
     total_ttc: number | null;
     created_at: string | null;
   } | null;
@@ -191,7 +192,7 @@ export default function LinkMeCommissionsPage() {
           `
           *,
           affiliate:linkme_affiliates(display_name, enseigne_id, organisation_id),
-          sales_order:sales_orders(order_number, payment_status_v2, customer_type, total_ttc, created_at)
+          sales_order:sales_orders(order_number, payment_status_v2, customer_type, total_ht, total_ttc, created_at)
         `
         )
         .order('created_at', { ascending: false })
@@ -259,7 +260,7 @@ export default function LinkMeCommissionsPage() {
     return list.filter(c => {
       // Search by order number
       const orderNum =
-        c.order_number ?? c.sales_order?.order_number ?? c.order_id ?? '';
+        c.sales_order?.order_number ?? c.order_number ?? c.order_id ?? '';
       const matchesSearch = orderNum
         .toLowerCase()
         .includes(searchTerm.toLowerCase());
@@ -379,11 +380,11 @@ export default function LinkMeCommissionsPage() {
             (c.sales_order?.created_at ?? c.created_at)!
           ).toLocaleDateString('fr-FR')
         : '-',
-      c.order_number ?? c.sales_order?.order_number ?? '-',
+      c.sales_order?.order_number ?? c.order_number ?? '-',
       c.affiliate?.display_name ?? 'N/A',
       c.affiliate?.enseigne_id ? 'Enseigne' : 'Organisation',
       c.sales_order?.payment_status_v2 === 'paid' ? 'Payé' : 'En attente',
-      c.order_amount_ht.toFixed(2),
+      (c.sales_order?.total_ht ?? c.order_amount_ht).toFixed(2),
       c.affiliate_commission.toFixed(2),
       (c.affiliate_commission_ttc ?? 0).toFixed(2),
       statusConfig[(c.status ?? 'pending') as keyof typeof statusConfig]
@@ -689,8 +690,8 @@ export default function LinkMeCommissionsPage() {
                             ? 'Enseigne'
                             : 'Organisation';
                           const orderNumber =
-                            commission.order_number ??
                             commission.sales_order?.order_number ??
+                            commission.order_number ??
                             `#${commission.order_id.slice(0, 8)}`;
                           const commissionTTC =
                             commission.affiliate_commission_ttc ?? 0;
@@ -761,7 +762,10 @@ export default function LinkMeCommissionsPage() {
                                 </Badge>
                               </TableCell>
                               <TableCell className="text-right">
-                                {formatPrice(commission.order_amount_ht)}
+                                {formatPrice(
+                                  commission.sales_order?.total_ht ??
+                                    commission.order_amount_ht
+                                )}
                               </TableCell>
                               <TableCell className="text-right">
                                 {formatPrice(
