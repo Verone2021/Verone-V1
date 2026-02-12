@@ -31,6 +31,8 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 
 /**
  * Statuts commandes ventes (sync avec DB enum)
+ * Note: 'delivered' gardé pour backward compat DB (enum PostgreSQL)
+ * mais plus utilisé dans le workflow actif (shipped = statut final)
  */
 export type SalesOrderStatus =
   | 'draft'
@@ -39,16 +41,6 @@ export type SalesOrderStatus =
   | 'shipped'
   | 'delivered'
   | 'cancelled';
-
-/**
- * Statuts paiement
- */
-export type PaymentStatus =
-  | 'pending'
-  | 'partial'
-  | 'paid'
-  | 'refunded'
-  | 'overdue';
 
 /**
  * Contexte validation (infos complémentaires)
@@ -79,7 +71,7 @@ export interface SalesOrderData {
   customer_id: string;
   customer_type: 'organization' | 'individual';
   channel_id?: string | null;
-  payment_status?: PaymentStatus;
+  payment_status_v2?: 'pending' | 'paid' | null;
   total_ht: number;
   total_ttc: number;
   items?: Array<{
@@ -96,16 +88,17 @@ export interface SalesOrderData {
 /**
  * Machine à états finis - Transitions autorisées
  *
- * Workflow standard: draft → validated → partially_shipped → shipped → delivered
- * Annulation: possible depuis draft, validated, partially_shipped, shipped
- * États finaux: delivered, cancelled (pas de retour arrière)
+ * Workflow standard: draft → validated → partially_shipped → shipped
+ * shipped = statut final actif (delivered réservé futur Packlink/Chronotruck)
+ * Annulation: possible depuis draft uniquement (dévalider d'abord si validated)
+ * États finaux: shipped, cancelled (pas de retour arrière)
  */
 const STATUS_TRANSITIONS: Record<SalesOrderStatus, SalesOrderStatus[]> = {
   draft: ['validated', 'cancelled'],
-  validated: ['partially_shipped', 'shipped', 'delivered', 'cancelled'],
-  partially_shipped: ['shipped', 'delivered', 'cancelled'],
-  shipped: ['delivered', 'cancelled'],
-  delivered: [], // État final - SAV géré séparément
+  validated: ['partially_shipped', 'shipped', 'cancelled'],
+  partially_shipped: ['shipped', 'cancelled'],
+  shipped: [], // État final - futur: delivered via Packlink/Chronotruck
+  delivered: [], // Backward compat DB - plus utilisé dans workflow actif
   cancelled: [], // État final
 };
 
@@ -214,9 +207,10 @@ export function canShip(status: SalesOrderStatus): boolean {
 
 /**
  * Vérifier si status permet marquage livraison
+ * Désactivé: delivered réservé futur Packlink/Chronotruck
  */
-export function canDeliver(status: SalesOrderStatus): boolean {
-  return ['validated', 'partially_shipped', 'shipped'].includes(status);
+export function canDeliver(_status: SalesOrderStatus): boolean {
+  return false;
 }
 
 // ============================================================================
@@ -357,23 +351,17 @@ export async function validateStatusChange(
       }
       break;
 
-    case 'delivered':
-      // Vérifier que commande expédiée ou partiellement expédiée
-      if (
-        !['shipped', 'partially_shipped', 'validated'].includes(currentStatus)
-      ) {
-        errors.push('Commande doit être expédiée avant livraison');
-      }
-      break;
-
     case 'cancelled':
-      // Vérifier que commande pas payée
-      if (orderData.payment_status === 'paid') {
-        warnings.push('⚠️ Commande payée - Remboursement nécessaire');
+      // Bloquer annulation si payée (erreur, pas warning)
+      if (orderData.payment_status_v2 === 'paid') {
+        errors.push(
+          "Impossible d'annuler une commande payée. Créez un avoir pour procéder au remboursement."
+        );
       }
 
-      if (currentStatus === 'delivered') {
-        errors.push("Impossible d'annuler une commande livrée (SAV séparé)");
+      // Bloquer annulation depuis shipped (statut final)
+      if (currentStatus === 'shipped') {
+        errors.push("Impossible d'annuler une commande expédiée");
       }
       break;
   }

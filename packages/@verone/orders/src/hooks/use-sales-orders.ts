@@ -18,15 +18,7 @@ export type SalesOrderStatus =
   | 'validated'
   | 'partially_shipped'
   | 'shipped'
-  | 'delivered'
-  | 'closed'
   | 'cancelled';
-export type PaymentStatus =
-  | 'pending'
-  | 'partial'
-  | 'paid'
-  | 'refunded'
-  | 'overdue';
 
 export type ManualPaymentType =
   | 'cash'
@@ -42,7 +34,6 @@ export interface SalesOrder {
   customer_id: string;
   customer_type: 'organization' | 'individual';
   status: SalesOrderStatus;
-  payment_status?: PaymentStatus;
   payment_status_v2?: 'pending' | 'paid' | null; // Statut calculé via rapprochement bancaire
   // 🆕 Paiement manuel
   manual_payment_type?: ManualPaymentType | null;
@@ -117,6 +108,7 @@ export interface SalesOrder {
     postal_code?: string;
     city?: string;
     region?: string;
+    enseigne_id?: string | null; // 🆕 AJOUTÉ - Pour filtrer organisations indépendantes vs enseignes
   };
   individual_customers?: {
     id: string;
@@ -235,14 +227,12 @@ interface SalesOrderStats {
   average_basket: number; // Panier moyen (total_ttc / total_orders)
   pending_orders: number; // draft + validated
   shipped_orders: number;
-  delivered_orders: number;
   cancelled_orders: number;
   orders_by_status: {
     draft: number;
     validated: number;
     partially_shipped: number;
     shipped: number;
-    delivered: number;
     cancelled: number;
   };
 }
@@ -259,17 +249,9 @@ interface SalesOrderStats {
  */
 const STATUS_TRANSITIONS: Record<SalesOrderStatus, SalesOrderStatus[]> = {
   draft: ['validated', 'cancelled'],
-  validated: [
-    'draft',
-    'partially_shipped',
-    'shipped',
-    'delivered',
-    'cancelled',
-  ], // ✅ 'draft' ajouté pour dévalidation
-  partially_shipped: ['shipped', 'delivered', 'cancelled'],
-  shipped: ['delivered', 'cancelled'], // Retour partiel possible
-  delivered: ['closed'], // Peut être clôturée après livraison
-  closed: [], // État final - Commande clôturée
+  validated: ['draft', 'partially_shipped', 'shipped', 'cancelled'], // 'draft' pour dévalidation
+  partially_shipped: ['shipped', 'cancelled'],
+  shipped: [], // État final - futur: delivered via Packlink/Chronotruck
   cancelled: [], // État final
 };
 
@@ -475,7 +457,7 @@ export function useSalesOrders() {
           const { data: orgs } = await supabase
             .from('organisations')
             .select(
-              'id, legal_name, trade_name, email, phone, website, address_line1, address_line2, postal_code, city, region'
+              'id, legal_name, trade_name, email, phone, website, address_line1, address_line2, postal_code, city, region, enseigne_id'
             )
             .in('id', orgIds);
           for (const org of orgs || []) {
@@ -784,10 +766,6 @@ export function useSalesOrders() {
                 acc.orders_by_status.shipped++;
                 acc.shipped_orders++;
                 break;
-              case 'delivered':
-                acc.orders_by_status.delivered++;
-                acc.delivered_orders++;
-                break;
               case 'cancelled':
                 acc.orders_by_status.cancelled++;
                 acc.cancelled_orders++;
@@ -798,21 +776,18 @@ export function useSalesOrders() {
           {
             total_orders: 0,
             total_ht: 0,
-            // TODO: eco_tax_total (migration SQL pending): 0,
             total_ttc: 0,
             total_tva: 0, // Calculé après
             total_value: 0, // Calculé après (alias total_ttc)
             average_basket: 0, // Calculé après
             pending_orders: 0,
             shipped_orders: 0,
-            delivered_orders: 0,
             cancelled_orders: 0,
             orders_by_status: {
               draft: 0,
               validated: 0,
               partially_shipped: 0,
               shipped: 0,
-              delivered: 0,
               cancelled: 0,
             },
           }
@@ -1323,14 +1298,14 @@ export function useSalesOrders() {
         // 1. Vérifier que la commande n'est pas payée (règle métier stricte)
         const { data: existingOrder, error: fetchError } = await supabase
           .from('sales_orders')
-          .select('payment_status, status, order_number')
+          .select('payment_status_v2, status, order_number')
           .eq('id', orderId)
           .single();
 
         if (fetchError) throw fetchError;
         if (!existingOrder) throw new Error('Commande non trouvée');
 
-        if (existingOrder.payment_status === 'paid') {
+        if (existingOrder.payment_status_v2 === 'paid') {
           throw new Error('Impossible de modifier une commande déjà payée');
         }
 
@@ -1576,7 +1551,7 @@ export function useSalesOrders() {
         if (fetchError) throw fetchError;
         if (!currentOrderData) throw new Error('Commande introuvable');
 
-        const currentStatus = currentOrderData.status;
+        const currentStatus = currentOrderData.status as SalesOrderStatus;
 
         // Valider transition FSM (throws Error si invalide)
         validateStatusTransition(currentStatus, newStatus);

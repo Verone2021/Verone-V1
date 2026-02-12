@@ -134,12 +134,23 @@ interface RoleBadgeProps {
   className?: string;
 }
 
+const defaultConfig: RoleConfig = {
+  label: 'Utilisateur',
+  description: 'Rôle non configuré',
+  color: 'gray',
+  icon: <Shield className="h-3 w-3" />,
+  permissions: [],
+  bgClass: 'bg-gray-100',
+  textClass: 'text-gray-800',
+  borderClass: 'border-gray-200',
+};
+
 export function RoleBadge({
   role,
   showDetails = true,
   className = '',
 }: RoleBadgeProps) {
-  const config = roleConfigs[role];
+  const config = roleConfigs[role] ?? defaultConfig;
 
   if (!showDetails) {
     return (

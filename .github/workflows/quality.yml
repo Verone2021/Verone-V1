@@ -101,6 +101,9 @@ jobs:
             echo "build_status=failure" >> $GITHUB_OUTPUT
             exit 1
           fi
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
 
       - name: Comment PR on Failure
         if: failure() && github.event_name == 'pull_request'

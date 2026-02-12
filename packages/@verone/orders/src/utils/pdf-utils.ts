@@ -32,10 +32,9 @@ const formatDate = (dateString: string): string => {
 // Labels statuts
 const statusLabels: Record<string, string> = {
   draft: 'Brouillon',
-  confirmed: 'Validée',
-  paid: 'Payée',
+  validated: 'Validée',
+  partially_shipped: 'Partiellement expédiée',
   shipped: 'Expédiée',
-  delivered: 'Livrée',
   cancelled: 'Annulée',
 };
 

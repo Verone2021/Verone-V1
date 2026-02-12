@@ -9,8 +9,6 @@ export type SalesOrderStatus =
   | 'validated'
   | 'partially_shipped'
   | 'shipped'
-  | 'delivered'
-  | 'closed'
   | 'cancelled';
 
 interface UpdateStatusResult {
@@ -23,7 +21,6 @@ interface SalesOrderUpdateFields {
   confirmed_at?: string;
   confirmed_by?: string;
   shipped_at?: string;
-  delivered_at?: string;
   cancelled_at?: string;
   cancelled_by?: string;
 }
@@ -96,15 +93,6 @@ export async function updateSalesOrderStatus(
         updateFields.confirmed_by = userId;
       }
       updateFields.shipped_at = new Date().toISOString();
-    } else if (newStatus === 'delivered') {
-      if (!existingOrder.confirmed_at) {
-        updateFields.confirmed_at = new Date().toISOString();
-        updateFields.confirmed_by = userId;
-      }
-      if (!existingOrder.shipped_at) {
-        updateFields.shipped_at = new Date().toISOString();
-      }
-      updateFields.delivered_at = new Date().toISOString();
     } else if (newStatus === 'cancelled') {
       updateFields.cancelled_at = new Date().toISOString();
       updateFields.cancelled_by = userId;

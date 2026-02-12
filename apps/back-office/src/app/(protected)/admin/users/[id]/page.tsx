@@ -79,14 +79,15 @@ async function getCurrentUserRole() {
   } = await supabase.auth.getUser();
   if (!user) return null;
 
-  const { data: profile } = await supabase
-    .from('user_profiles')
+  const { data: userRole } = await supabase
+    .from('user_app_roles')
     .select('role')
     .eq('user_id', user.id)
-    .single()
-    .returns<{ role: string }>();
+    .eq('app', 'back-office')
+    .eq('is_active', true)
+    .maybeSingle();
 
-  return profile?.role ?? null;
+  return userRole?.role ?? null;
 }
 
 async function getUserDetailData(

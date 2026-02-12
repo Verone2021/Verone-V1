@@ -14,6 +14,9 @@ export type * from './components/shipments';
 export { SalesOrdersTable } from './components/SalesOrdersTable';
 export type { SalesOrdersTableProps } from './components/SalesOrdersTable';
 
+// Types
+export * from './types/advanced-filters';
+
 // Hooks
 export * from './hooks';
 

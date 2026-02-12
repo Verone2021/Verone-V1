@@ -1,34 +1,41 @@
 /**
  * ProductStatsTable Component
- * Tableau paginé de tous les produits vendus avec statistiques complètes
+ * Tableau paginé de tous les produits vendus
+ *
+ * 100% orienté produit : quantités, prix unitaire, CA.
+ * Zero commission, zero marge.
  *
  * Features:
+ * - Search intégré (debounced) + sélecteur année
  * - Pagination (10/20 par page)
- * - Tri par commission, quantité, CA
- * - Recherche par nom/SKU
- * - Badge Sur mesure / Catalogue
- * - Affichage HT uniquement (pas de TTC)
+ * - Tri par quantité (défaut) ou CA HT
+ * - Badges source : Catalogue / Mes produits / Sur-mesure
+ * - Ligne cliquable → détail ventes produit
  *
  * @module ProductStatsTable
  * @since 2026-01-08
+ * @updated 2026-02-10 - Search+year intégrés, bouton détail, suppression onglets
  */
 
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 
 import Image from 'next/image';
 
 import { Card } from '@tremor/react';
 import {
   Package,
-  Search,
   ChevronLeft,
-  ChevronRight,
+  ChevronRight as ChevronRightIcon,
   ArrowUpDown,
+  Search,
+  X,
+  Calendar,
 } from 'lucide-react';
 
 import type { ProductStatsData } from '@/lib/hooks/use-all-products-stats';
+import { cn } from '@/lib/utils';
 
 // ============================================
 // TYPES
@@ -37,11 +44,14 @@ import type { ProductStatsData } from '@/lib/hooks/use-all-products-stats';
 interface ProductStatsTableProps {
   products: ProductStatsData[];
   isLoading?: boolean;
-  /** Mode revendeur: affiche "Frais LinkMe" au lieu de "Commission" */
-  isRevendeur?: boolean;
+  search: string;
+  onSearchChange: (search: string) => void;
+  yearFilter?: number;
+  onYearFilterChange: (year: number | undefined) => void;
+  onProductClick: (productId: string) => void;
 }
 
-type SortField = 'commission' | 'quantity' | 'revenue';
+type SortField = 'quantity' | 'revenue';
 type SortDirection = 'asc' | 'desc';
 
 // ============================================
@@ -57,9 +67,35 @@ function formatCurrency(value: number): string {
   }).format(value);
 }
 
-function formatPercent(value: number): string {
-  return `${value.toFixed(1)} %`;
+function getAvailableYears(): number[] {
+  const currentYear = new Date().getFullYear();
+  const years: number[] = [];
+  for (let y = currentYear; y >= 2023; y--) {
+    years.push(y);
+  }
+  return years;
 }
+
+const SOURCE_BADGE_STYLES: Record<
+  string,
+  { bg: string; text: string; label: string }
+> = {
+  catalogue: {
+    bg: 'bg-teal-100',
+    text: 'text-teal-700',
+    label: 'Catalogue',
+  },
+  'mes-produits': {
+    bg: 'bg-violet-100',
+    text: 'text-violet-700',
+    label: 'Mes produits',
+  },
+  'sur-mesure': {
+    bg: 'bg-amber-100',
+    text: 'text-amber-700',
+    label: 'Sur-mesure',
+  },
+};
 
 // ============================================
 // COMPONENT
@@ -68,73 +104,59 @@ function formatPercent(value: number): string {
 export function ProductStatsTable({
   products,
   isLoading = false,
-  isRevendeur = false,
+  search,
+  onSearchChange,
+  yearFilter,
+  onYearFilterChange,
+  onProductClick,
 }: ProductStatsTableProps): JSX.Element {
-  // Labels dynamiques selon le type
-  const commissionLabel = isRevendeur ? 'Frais LinkMe' : 'Commission';
-
   // States
-  const [search, setSearch] = useState('');
-  const [sortField, setSortField] = useState<SortField>('commission');
+  const [sortField, setSortField] = useState<SortField>('quantity');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
+  const [searchInput, setSearchInput] = useState(search);
+  const [showYearDropdown, setShowYearDropdown] = useState(false);
+  const availableYears = useMemo(() => getAvailableYears(), []);
 
-  // Filtrer et trier les produits
-  const filteredAndSortedProducts = useMemo(() => {
-    let result = [...products];
+  // Debounced search (300ms)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      onSearchChange(searchInput);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchInput, onSearchChange]);
 
-    // Filtre par recherche
-    if (search.trim()) {
-      const searchLower = search.toLowerCase();
-      result = result.filter(
-        p =>
-          p.productName.toLowerCase().includes(searchLower) ||
-          p.productSku.toLowerCase().includes(searchLower)
-      );
-    }
+  // Sync external search changes
+  useEffect(() => {
+    setSearchInput(search);
+  }, [search]);
 
-    // Tri
+  // Trier les produits
+  const sortedProducts = useMemo(() => {
+    const result = [...products];
+
     result.sort((a, b) => {
-      let valueA: number;
-      let valueB: number;
-
-      switch (sortField) {
-        case 'commission':
-          valueA = a.commissionHT;
-          valueB = b.commissionHT;
-          break;
-        case 'quantity':
-          valueA = a.quantitySold;
-          valueB = b.quantitySold;
-          break;
-        case 'revenue':
-          valueA = a.revenueHT;
-          valueB = b.revenueHT;
-          break;
-        default:
-          valueA = a.commissionHT;
-          valueB = b.commissionHT;
-      }
-
+      const valueA = sortField === 'quantity' ? a.quantitySold : a.revenueHT;
+      const valueB = sortField === 'quantity' ? b.quantitySold : b.revenueHT;
       return sortDirection === 'desc' ? valueB - valueA : valueA - valueB;
     });
 
     return result;
-  }, [products, search, sortField, sortDirection]);
+  }, [products, sortField, sortDirection]);
 
   // Pagination
-  const totalPages = Math.ceil(filteredAndSortedProducts.length / perPage);
+  const totalPages = Math.ceil(sortedProducts.length / perPage);
   const paginatedProducts = useMemo(() => {
     const start = (page - 1) * perPage;
-    return filteredAndSortedProducts.slice(start, start + perPage);
-  }, [filteredAndSortedProducts, page, perPage]);
+    return sortedProducts.slice(start, start + perPage);
+  }, [sortedProducts, page, perPage]);
 
-  // Reset page when filter changes
-  const handleSearchChange = (value: string): void => {
-    setSearch(value);
+  // Reset page when products change
+  useMemo(() => {
     setPage(1);
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [products.length]);
 
   const handleSortChange = (field: SortField): void => {
     if (sortField === field) {
@@ -149,6 +171,11 @@ export function ProductStatsTable({
   const handlePerPageChange = (value: number): void => {
     setPerPage(value);
     setPage(1);
+  };
+
+  const handleYearSelect = (year: number | undefined): void => {
+    onYearFilterChange(year);
+    setShowYearDropdown(false);
   };
 
   // Loading skeleton
@@ -180,42 +207,123 @@ export function ProductStatsTable({
 
   return (
     <Card className="p-6">
-      {/* Header avec recherche et tri */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-        {/* Recherche */}
-        <div className="relative flex-1 sm:max-w-[280px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Rechercher par nom ou SKU..."
-            value={search}
-            onChange={e => handleSearchChange(e.target.value)}
-            className="pl-10 pr-4 py-2 w-full border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#5DBEBB] focus:border-transparent"
-          />
+      {/* Header : titre + search + year + tri */}
+      <div className="space-y-4 mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <h3 className="text-sm font-semibold text-gray-900">
+            Détail par produit
+          </h3>
+
+          {/* Tri */}
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-500">Trier par :</span>
+            <div className="flex gap-1">
+              {[
+                { field: 'quantity' as const, label: 'Quantité' },
+                { field: 'revenue' as const, label: 'CA HT' },
+              ].map(({ field, label }) => (
+                <button
+                  key={field}
+                  onClick={() => handleSortChange(field)}
+                  className={`px-3 py-1.5 text-sm rounded-lg flex items-center gap-1 transition-colors ${
+                    sortField === field
+                      ? 'bg-[#5DBEBB] text-white'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  {label}
+                  {sortField === field && <ArrowUpDown className="h-3 w-3" />}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
-        {/* Tri */}
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-500">Trier par :</span>
-          <div className="flex gap-1">
-            {[
-              { field: 'commission' as const, label: commissionLabel },
-              { field: 'quantity' as const, label: 'Quantité' },
-              { field: 'revenue' as const, label: 'CA' },
-            ].map(({ field, label }) => (
+        {/* Search + Year filter row */}
+        <div className="flex flex-col sm:flex-row gap-3">
+          {/* Search */}
+          <div className="relative flex-1 sm:max-w-[320px]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Rechercher par nom ou SKU..."
+              value={searchInput}
+              onChange={e => setSearchInput(e.target.value)}
+              className="pl-10 pr-8 py-2 w-full border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#5DBEBB] focus:border-transparent"
+            />
+            {searchInput && (
               <button
-                key={field}
-                onClick={() => handleSortChange(field)}
-                className={`px-3 py-1.5 text-sm rounded-lg flex items-center gap-1 transition-colors ${
-                  sortField === field
-                    ? 'bg-[#5DBEBB] text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
+                onClick={() => {
+                  setSearchInput('');
+                  onSearchChange('');
+                }}
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 rounded"
               >
-                {label}
-                {sortField === field && <ArrowUpDown className="h-3 w-3" />}
+                <X className="h-3.5 w-3.5 text-gray-400" />
               </button>
-            ))}
+            )}
+          </div>
+
+          {/* Year selector */}
+          <div className="relative">
+            <button
+              onClick={() => setShowYearDropdown(!showYearDropdown)}
+              className={cn(
+                'flex items-center gap-2 px-3 py-2 border rounded-lg text-sm transition-colors',
+                yearFilter
+                  ? 'border-linkme-turquoise/50 bg-linkme-turquoise/5 text-linkme-marine'
+                  : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+              )}
+            >
+              <Calendar className="h-4 w-4" />
+              {yearFilter ? `Année ${yearFilter}` : 'Toutes les années'}
+              {yearFilter && (
+                <button
+                  onClick={e => {
+                    e.stopPropagation();
+                    handleYearSelect(undefined);
+                  }}
+                  className="ml-1 p-0.5 hover:bg-gray-200 rounded"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              )}
+            </button>
+
+            {/* Year dropdown */}
+            {showYearDropdown && (
+              <>
+                <div
+                  className="fixed inset-0 z-10"
+                  onClick={() => setShowYearDropdown(false)}
+                />
+                <div className="absolute top-full mt-1 left-0 bg-white border border-gray-200 rounded-lg shadow-lg z-20 min-w-[160px]">
+                  <button
+                    onClick={() => handleYearSelect(undefined)}
+                    className={cn(
+                      'w-full text-left px-3 py-2 text-sm hover:bg-gray-50 transition-colors',
+                      !yearFilter &&
+                        'bg-linkme-turquoise/10 text-linkme-marine font-medium'
+                    )}
+                  >
+                    Toutes les années
+                  </button>
+                  {availableYears.map(year => (
+                    <button
+                      key={year}
+                      onClick={() => handleYearSelect(year)}
+                      className={cn(
+                        'w-full text-left px-3 py-2 text-sm hover:bg-gray-50 transition-colors',
+                        yearFilter === year &&
+                          'bg-linkme-turquoise/10 text-linkme-marine font-medium'
+                      )}
+                    >
+                      {year}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -225,7 +333,7 @@ export function ProductStatsTable({
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-gray-200">
-              <th className="text-left py-3 px-2 font-medium text-gray-500">
+              <th className="text-left py-3 px-2 font-medium text-gray-500 w-10">
                 #
               </th>
               <th className="text-left py-3 px-2 font-medium text-gray-500">
@@ -235,27 +343,24 @@ export function ProductStatsTable({
                 Qté
               </th>
               <th className="text-right py-3 px-2 font-medium text-gray-500">
+                Prix unit. HT
+              </th>
+              <th className="text-right py-3 px-2 font-medium text-gray-500">
                 CA HT
               </th>
-              <th className="text-right py-3 px-2 font-medium text-gray-500">
-                Taux
-              </th>
-              <th className="text-right py-3 px-2 font-medium text-gray-500">
-                Marge/u
-              </th>
-              <th className="text-right py-3 px-2 font-medium text-gray-500">
-                {commissionLabel} HT
-              </th>
+              <th className="w-10" />
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
             {paginatedProducts.map((product, index) => {
               const rank = (page - 1) * perPage + index + 1;
+              const badge = SOURCE_BADGE_STYLES[product.productSource];
 
               return (
                 <tr
                   key={product.productId}
-                  className="hover:bg-gray-50 transition-colors"
+                  onClick={() => onProductClick(product.productId)}
+                  className="hover:bg-gray-50 transition-colors cursor-pointer"
                 >
                   {/* Rang */}
                   <td className="py-3 px-2">
@@ -266,7 +371,7 @@ export function ProductStatsTable({
                     </div>
                   </td>
 
-                  {/* Produit avec Badge */}
+                  {/* Produit avec Badge source */}
                   <td className="py-3 px-2">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-lg bg-gray-100 overflow-hidden flex-shrink-0">
@@ -289,18 +394,11 @@ export function ProductStatsTable({
                           <p className="font-medium text-[#183559] truncate max-w-[180px]">
                             {product.productName}
                           </p>
-                          {/* Badge Sur mesure / Catalogue */}
-                          {!isRevendeur && (
+                          {badge && (
                             <span
-                              className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${
-                                product.isCustomProduct
-                                  ? 'bg-purple-100 text-purple-700'
-                                  : 'bg-blue-100 text-blue-700'
-                              }`}
+                              className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${badge.bg} ${badge.text}`}
                             >
-                              {product.isCustomProduct
-                                ? 'Sur mesure'
-                                : 'Catalogue'}
+                              {badge.label}
                             </span>
                           )}
                         </div>
@@ -316,26 +414,19 @@ export function ProductStatsTable({
                     {product.quantitySold.toLocaleString('fr-FR')}
                   </td>
 
-                  {/* CA HT */}
+                  {/* Prix unitaire HT */}
                   <td className="py-3 px-2 text-right text-gray-600">
+                    {formatCurrency(product.avgPriceHT)}
+                  </td>
+
+                  {/* CA HT */}
+                  <td className="py-3 px-2 text-right font-semibold text-[#183559]">
                     {formatCurrency(product.revenueHT)}
                   </td>
 
-                  {/* Taux de commission moyen */}
+                  {/* Chevron détail */}
                   <td className="py-3 px-2 text-right">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-teal-50 text-teal-700">
-                      {formatPercent(product.avgMarginRate)}
-                    </span>
-                  </td>
-
-                  {/* Marge par unité */}
-                  <td className="py-3 px-2 text-right text-gray-600">
-                    {formatCurrency(product.marginPerUnit)}
-                  </td>
-
-                  {/* Commission HT */}
-                  <td className="py-3 px-2 text-right font-semibold text-[#5DBEBB]">
-                    {formatCurrency(product.commissionHT)}
+                    <ChevronRightIcon className="h-4 w-4 text-gray-400" />
                   </td>
                 </tr>
               );
@@ -348,10 +439,9 @@ export function ProductStatsTable({
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-6 pt-4 border-t border-gray-100">
         {/* Info */}
         <div className="text-sm text-gray-500">
-          {filteredAndSortedProducts.length} produit
-          {filteredAndSortedProducts.length > 1 ? 's' : ''} trouvé
-          {filteredAndSortedProducts.length > 1 ? 's' : ''}
-          {search && ` pour "${search}"`}
+          {sortedProducts.length} produit
+          {sortedProducts.length > 1 ? 's' : ''} trouvé
+          {sortedProducts.length > 1 ? 's' : ''}
         </div>
 
         {/* Per page selector */}
@@ -393,7 +483,7 @@ export function ProductStatsTable({
             disabled={page >= totalPages}
             className="p-2 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            <ChevronRight className="h-4 w-4" />
+            <ChevronRightIcon className="h-4 w-4" />
           </button>
         </div>
       </div>

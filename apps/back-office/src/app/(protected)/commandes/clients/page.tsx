@@ -81,8 +81,6 @@ export default function SalesOrdersClientsPage() {
       <SalesOrdersTable
         channelId={CHANNEL_IDS[channelFilter]}
         showChannelColumn={channelFilter === 'all'}
-        showCustomerTypeFilter
-        showPeriodFilter
         showKPIs
         allowValidate
         allowShip
@@ -92,6 +90,12 @@ export default function SalesOrdersClientsPage() {
         updateStatusAction={updateSalesOrderStatus}
         enablePagination
         defaultItemsPerPage={20}
+        sortableColumns={{
+          date: true,
+          client: false,
+          amount: true,
+          orderNumber: true,
+        }}
       />
     </div>
   );

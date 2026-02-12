@@ -12,6 +12,8 @@ import { PurchaseOrderFormModal } from '@verone/orders';
 import { PurchaseOrderReceptionModal } from '@verone/orders';
 import { PurchaseOrderDetailModal } from '@verone/orders';
 import { CancelRemainderModal } from '@verone/orders';
+import type { PurchaseAdvancedFilters } from '@verone/orders';
+import { DEFAULT_PURCHASE_FILTERS, countActiveFilters } from '@verone/orders';
 import { usePurchaseOrders } from '@verone/orders';
 import { useOrganisations } from '@verone/organisations';
 import { ProductThumbnail } from '@verone/products';
@@ -118,7 +120,7 @@ const statusColors: Record<PurchaseOrderStatus, string> = {
   cancelled: 'bg-red-100 text-red-800',
 };
 
-type SortColumn = 'date' | 'supplier' | 'amount' | null;
+type SortColumn = 'date' | 'po_number' | 'amount' | null;
 type SortDirection = 'asc' | 'desc';
 
 export default function PurchaseOrdersPage() {
@@ -133,19 +135,40 @@ export default function PurchaseOrdersPage() {
     markAsManuallyPaid,
   } = usePurchaseOrders();
 
-  const { organisations: suppliers } = useOrganisations({ type: 'supplier' });
   const { toast } = useToast();
   const searchParams = useSearchParams();
+  const { organisations: suppliers } = useOrganisations({ type: 'supplier' });
 
   // États filtres
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState<PurchaseOrderStatus | 'all'>(
     'all'
   );
-  const [supplierFilter, setSuppliersFilter] = useState<string>('all');
-  const [periodFilter, setPeriodFilter] = useState<
-    'all' | 'month' | 'quarter' | 'year'
-  >('all');
+  const [advancedFilters, setAdvancedFilters] =
+    useState<PurchaseAdvancedFilters>(DEFAULT_PURCHASE_FILTERS);
+
+  // Année courante + années disponibles
+  const currentYear = new Date().getFullYear();
+
+  const availableYears = useMemo(() => {
+    const years = new Set<number>();
+    orders.forEach(order => {
+      const dateRef = order.order_date ?? order.created_at;
+      years.add(new Date(dateRef).getFullYear());
+    });
+    years.add(currentYear);
+    return Array.from(years).sort((a, b) => a - b);
+  }, [orders, currentYear]);
+
+  const isPeriodEnabled =
+    advancedFilters.filterYear === null ||
+    advancedFilters.filterYear === currentYear;
+
+  // Détection filtres actifs (pour bouton reset)
+  const hasActiveFilters = useMemo(
+    () => countActiveFilters(advancedFilters, DEFAULT_PURCHASE_FILTERS) > 0,
+    [advancedFilters]
+  );
 
   // États tri
   const [sortColumn, setSortColumn] = useState<SortColumn>(null);
@@ -245,7 +268,7 @@ export default function PurchaseOrdersPage() {
     };
   }, [orders]);
 
-  // ✅ Filtrage + Tri
+  // ✅ Filtrage + Tri (filtres avancés)
   const filteredOrders = useMemo(() => {
     const filtered = orders.filter(order => {
       // Filtre onglet
@@ -263,44 +286,79 @@ export default function PurchaseOrdersPage() {
           .includes(searchTerm.toLowerCase());
       if (!matchesSearch) return false;
 
-      // Filtre fournisseur
-      if (supplierFilter !== 'all' && order.supplier_id !== supplierFilter)
+      // Filtre multi-statuts (filtres avancés)
+      if (
+        advancedFilters.statuses.length > 0 &&
+        !advancedFilters.statuses.includes(order.status)
+      )
         return false;
 
-      // Filtre période
-      if (periodFilter !== 'all') {
-        const orderDate = new Date(order.created_at);
+      // Filtre fournisseur
+      if (
+        advancedFilters.supplierId &&
+        order.supplier_id !== advancedFilters.supplierId
+      )
+        return false;
+
+      // Filtre année spécifique (basé sur date commande, fallback date création)
+      const orderDateRef = order.order_date ?? order.created_at;
+      if (advancedFilters.filterYear !== null) {
+        const orderDate = new Date(orderDateRef);
+        if (orderDate.getFullYear() !== advancedFilters.filterYear)
+          return false;
+      }
+
+      // Filtre période (seulement si année courante ou toutes)
+      const periodActive =
+        advancedFilters.filterYear === null ||
+        advancedFilters.filterYear === currentYear;
+
+      if (periodActive && advancedFilters.period !== 'all') {
+        const orderDate = new Date(orderDateRef);
         const now = new Date();
 
-        switch (periodFilter) {
+        switch (advancedFilters.period) {
           case 'month':
-            // Ce mois
             if (
               orderDate.getMonth() !== now.getMonth() ||
               orderDate.getFullYear() !== now.getFullYear()
-            ) {
+            )
               return false;
-            }
             break;
           case 'quarter': {
-            // Ce trimestre
             const currentQuarter = Math.floor(now.getMonth() / 3);
             const orderQuarter = Math.floor(orderDate.getMonth() / 3);
             if (
               orderQuarter !== currentQuarter ||
               orderDate.getFullYear() !== now.getFullYear()
-            ) {
+            )
               return false;
-            }
             break;
           }
           case 'year':
-            // Cette année
-            if (orderDate.getFullYear() !== now.getFullYear()) {
-              return false;
-            }
+            if (orderDate.getFullYear() !== now.getFullYear()) return false;
             break;
         }
+      }
+
+      // Filtre montant HT
+      if (
+        advancedFilters.amountMin !== null &&
+        (order.total_ht ?? 0) < advancedFilters.amountMin
+      )
+        return false;
+      if (
+        advancedFilters.amountMax !== null &&
+        (order.total_ht ?? 0) > advancedFilters.amountMax
+      )
+        return false;
+
+      // Filtre rapprochement bancaire
+      if (advancedFilters.matching !== 'all') {
+        const extended = order as PurchaseOrderExtended;
+        const isMatched = extended.is_matched === true;
+        if (advancedFilters.matching === 'matched' && !isMatched) return false;
+        if (advancedFilters.matching === 'unmatched' && isMatched) return false;
       }
 
       return true;
@@ -316,16 +374,9 @@ export default function PurchaseOrdersPage() {
               new Date(a.created_at).getTime() -
               new Date(b.created_at).getTime();
             break;
-          case 'supplier': {
-            const nameA = a.organisations
-              ? getOrganisationDisplayName(a.organisations)
-              : '';
-            const nameB = b.organisations
-              ? getOrganisationDisplayName(b.organisations)
-              : '';
-            comparison = nameA.localeCompare(nameB);
+          case 'po_number':
+            comparison = (a.po_number || '').localeCompare(b.po_number || '');
             break;
-          }
           case 'amount':
             comparison = (a.total_ttc ?? 0) - (b.total_ttc ?? 0);
             break;
@@ -339,10 +390,10 @@ export default function PurchaseOrdersPage() {
     orders,
     activeTab,
     searchTerm,
-    supplierFilter,
-    periodFilter,
+    advancedFilters,
     sortColumn,
     sortDirection,
+    currentYear,
   ]);
 
   // ✅ KPI dynamiques sur commandes filtrées
@@ -897,48 +948,153 @@ export default function PurchaseOrdersPage() {
             </TabsList>
           </Tabs>
 
-          {/* Filtres complémentaires */}
-          <div className="flex flex-col lg:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder="Rechercher par numéro de commande ou fournisseur..."
-                  value={searchTerm}
-                  onChange={e => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
+          {/* Recherche */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Input
+              placeholder="Rechercher par numéro de commande ou fournisseur..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+
+          {/* Filtres inline (dropdowns compacts) */}
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Fournisseur */}
+            <div className="flex items-center gap-1.5">
+              <span className="text-sm font-medium text-gray-600 whitespace-nowrap">
+                Fournisseur :
+              </span>
+              <Select
+                value={advancedFilters.supplierId ?? 'all'}
+                onValueChange={value =>
+                  setAdvancedFilters(prev => ({
+                    ...prev,
+                    supplierId: value === 'all' ? null : value,
+                  }))
+                }
+              >
+                <SelectTrigger className="w-[220px] h-8 text-xs">
+                  <SelectValue placeholder="Tous les fournisseurs" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tous les fournisseurs</SelectItem>
+                  {suppliers.map(s => (
+                    <SelectItem key={s.id} value={s.id}>
+                      {getOrganisationDisplayName(s)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-            <Select value={supplierFilter} onValueChange={setSuppliersFilter}>
-              <SelectTrigger className="w-full lg:w-48">
-                <SelectValue placeholder="Fournisseur" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tous les fournisseurs</SelectItem>
-                {suppliers.map(supplier => (
-                  <SelectItem key={supplier.id} value={supplier.id}>
-                    {getOrganisationDisplayName(supplier)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select
-              value={periodFilter}
-              onValueChange={(value: 'all' | 'month' | 'quarter' | 'year') =>
-                setPeriodFilter(value)
-              }
-            >
-              <SelectTrigger className="w-full lg:w-48">
-                <SelectValue placeholder="Période" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Toute période</SelectItem>
-                <SelectItem value="month">Ce mois</SelectItem>
-                <SelectItem value="quarter">Ce trimestre</SelectItem>
-                <SelectItem value="year">Cette année</SelectItem>
-              </SelectContent>
-            </Select>
+
+            {/* Année */}
+            <div className="flex items-center gap-1.5">
+              <span className="text-sm font-medium text-gray-600 whitespace-nowrap">
+                Année :
+              </span>
+              <Select
+                value={advancedFilters.filterYear?.toString() ?? 'all'}
+                onValueChange={value => {
+                  const year = value === 'all' ? null : Number(value);
+                  setAdvancedFilters(prev => ({
+                    ...prev,
+                    filterYear: year,
+                    period:
+                      year !== null && year !== currentYear
+                        ? 'all'
+                        : prev.period,
+                  }));
+                }}
+              >
+                <SelectTrigger className="w-[110px] h-8 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Toutes</SelectItem>
+                  {availableYears.map(year => (
+                    <SelectItem key={year} value={year.toString()}>
+                      {year}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Période */}
+            <div className="flex items-center gap-1.5">
+              <span
+                className={cn(
+                  'text-sm font-medium whitespace-nowrap',
+                  !isPeriodEnabled ? 'text-gray-400' : 'text-gray-600'
+                )}
+              >
+                Période :
+              </span>
+              <Select
+                value={advancedFilters.period}
+                onValueChange={value =>
+                  setAdvancedFilters(prev => ({
+                    ...prev,
+                    period: value as PurchaseAdvancedFilters['period'],
+                  }))
+                }
+                disabled={!isPeriodEnabled}
+              >
+                <SelectTrigger
+                  className={cn(
+                    'w-[120px] h-8 text-xs',
+                    !isPeriodEnabled && 'opacity-50'
+                  )}
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Toute</SelectItem>
+                  <SelectItem value="month">Ce mois</SelectItem>
+                  <SelectItem value="quarter">Trimestre</SelectItem>
+                  <SelectItem value="year">Année</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Rapprochement */}
+            <div className="flex items-center gap-1.5">
+              <span className="text-sm font-medium text-gray-600 whitespace-nowrap">
+                Rapprochement :
+              </span>
+              <Select
+                value={advancedFilters.matching}
+                onValueChange={value =>
+                  setAdvancedFilters(prev => ({
+                    ...prev,
+                    matching: value as PurchaseAdvancedFilters['matching'],
+                  }))
+                }
+              >
+                <SelectTrigger className="w-[90px] h-8 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tous</SelectItem>
+                  <SelectItem value="matched">Oui</SelectItem>
+                  <SelectItem value="unmatched">Non</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Reset */}
+            {hasActiveFilters && (
+              <ButtonUnified
+                variant="ghost"
+                size="sm"
+                icon={RotateCcw}
+                onClick={() => setAdvancedFilters(DEFAULT_PURCHASE_FILTERS)}
+              >
+                Réinitialiser
+              </ButtonUnified>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -967,15 +1123,15 @@ export default function PurchaseOrdersPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-10" />
-                    <TableHead>N° Commande</TableHead>
                     <TableHead
                       className="cursor-pointer hover:bg-gray-50"
-                      onClick={() => handleSort('supplier')}
+                      onClick={() => handleSort('po_number')}
                     >
-                      Fournisseur {renderSortIcon('supplier')}
+                      N° Commande {renderSortIcon('po_number')}
                     </TableHead>
+                    <TableHead>Fournisseur</TableHead>
                     <TableHead>Statut</TableHead>
-                    <TableHead>Paiement V2</TableHead>
+                    <TableHead>Paiement</TableHead>
                     <TableHead className="w-20 text-center">Articles</TableHead>
                     <TableHead
                       className="cursor-pointer hover:bg-gray-50"
@@ -1039,7 +1195,7 @@ export default function PurchaseOrdersPage() {
                               )}
                             </div>
                           </TableCell>
-                          {/* Colonne Paiement V2 */}
+                          {/* Colonne Paiement */}
                           <TableCell>
                             <div className="flex items-center gap-2">
                               {(order as PurchaseOrderExtended)

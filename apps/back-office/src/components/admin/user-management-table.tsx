@@ -103,8 +103,10 @@ export function UserManagementTable({ users }: UserManagementTableProps) {
 
   const getFirstName = (
     email: string,
+    profile: UserWithProfile['profile'] | null = null,
     user_metadata: UserMetadata | null = null
   ) => {
+    if (profile?.first_name) return profile.first_name;
     if (user_metadata?.first_name) return user_metadata.first_name;
     const tempName = email.split('@')[0].split('.') || [''];
     return tempName[0] ?? '';
@@ -112,15 +114,17 @@ export function UserManagementTable({ users }: UserManagementTableProps) {
 
   const getLastName = (
     email: string,
+    profile: UserWithProfile['profile'] | null = null,
     user_metadata: UserMetadata | null = null
   ) => {
+    if (profile?.last_name) return profile.last_name;
     if (user_metadata?.last_name) return user_metadata.last_name;
     const tempName = email.split('@')[0].split('.') || [''];
     return tempName[1] ?? '';
   };
 
-  const getJobTitle = (user_metadata: UserMetadata | null = null) => {
-    return user_metadata?.job_title ?? 'Non renseigné';
+  const getJobTitle = (profile: UserWithProfile['profile'] | null = null) => {
+    return profile?.job_title ?? 'Non renseigné';
   };
 
   const handleViewUserDetails = (user: UserWithProfile) => {
@@ -249,7 +253,11 @@ export function UserManagementTable({ users }: UserManagementTableProps) {
                   {/* Prénom */}
                   <TableCell>
                     <div className="font-medium text-neutral-900">
-                      {getFirstName(user.email, user.user_metadata)}
+                      {getFirstName(
+                        user.email,
+                        user.profile,
+                        user.user_metadata
+                      )}
                     </div>
                     <div className="flex items-center space-x-2 text-[11px] text-neutral-500 mt-1">
                       <Mail className="h-2.5 w-2.5" />
@@ -260,7 +268,11 @@ export function UserManagementTable({ users }: UserManagementTableProps) {
                   {/* Nom */}
                   <TableCell>
                     <div className="font-medium text-neutral-900">
-                      {getLastName(user.email, user.user_metadata)}
+                      {getLastName(
+                        user.email,
+                        user.profile,
+                        user.user_metadata
+                      )}
                     </div>
                   </TableCell>
 
@@ -274,9 +286,9 @@ export function UserManagementTable({ users }: UserManagementTableProps) {
                   {/* Poste */}
                   <TableCell>
                     <span
-                      className={`text-sm ${getJobTitle(user.user_metadata) === 'Non renseigné' ? 'text-neutral-500' : 'text-neutral-900'}`}
+                      className={`text-sm ${getJobTitle(user.profile) === 'Non renseigné' ? 'text-neutral-500' : 'text-neutral-900'}`}
                     >
-                      {getJobTitle(user.user_metadata)}
+                      {getJobTitle(user.profile)}
                     </span>
                   </TableCell>
 

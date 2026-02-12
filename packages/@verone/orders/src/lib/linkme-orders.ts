@@ -13,13 +13,7 @@ import { createClient } from '@verone/utils/supabase/client';
 export interface LinkMeOrder {
   id: string;
   order_number: string;
-  status:
-    | 'draft'
-    | 'validated'
-    | 'partially_shipped'
-    | 'shipped'
-    | 'delivered'
-    | 'cancelled';
+  status: 'draft' | 'validated' | 'partially_shipped' | 'shipped' | 'cancelled';
   payment_status: string | null;
   total_ht: number;
   total_ttc: number;
@@ -99,7 +93,6 @@ export const STATUS_LABELS: Record<
   validated: { label: 'Validée', variant: 'default' },
   partially_shipped: { label: 'Expédition partielle', variant: 'warning' },
   shipped: { label: 'Expédiée', variant: 'success' },
-  delivered: { label: 'Livrée', variant: 'success' },
   cancelled: { label: 'Annulée', variant: 'destructive' },
 };
 

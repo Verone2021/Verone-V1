@@ -66,7 +66,7 @@ export interface LinkMeOrder {
   customer_organisation_id: string | null;
   individual_customer_id: string | null;
   status: string;
-  payment_status: string;
+  payment_status_v2: string;
   total_ht: number;
   total_ttc: number;
   created_at: string;
@@ -173,7 +173,7 @@ async function createLinkMeOrder(
     customer_type: input.customer_type,
     created_by: user.id,
     status: 'draft' as const,
-    payment_status: 'pending',
+    payment_status_v2: 'pending',
     total_ht: totalHt,
     total_ttc: totalTtc,
     tax_rate: 0.2,
