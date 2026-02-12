@@ -44,6 +44,8 @@ import {
   Banknote,
   Hourglass,
   ArrowRightCircle,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 
 import { PaymentRequestModalAdmin } from '../components/PaymentRequestModalAdmin';
@@ -179,6 +181,8 @@ export default function LinkMeCommissionsPage() {
   const [processing, setProcessing] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>('payables');
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [pageSize, setPageSize] = useState(10);
+  const [currentPage, setCurrentPage] = useState(0);
 
   const fetchData = useCallback(async () => {
     const supabase = createClient();
@@ -531,6 +535,7 @@ export default function LinkMeCommissionsPage() {
         onValueChange={v => {
           setActiveTab(v as TabType);
           setSelectedIds([]);
+          setCurrentPage(0);
         }}
       >
         <TabsList className="grid w-full grid-cols-4">
@@ -551,7 +556,16 @@ export default function LinkMeCommissionsPage() {
 
         {(Object.keys(TABS_CONFIG) as TabType[]).map(tab => {
           const config = TABS_CONFIG[tab];
-          const tabCommissions = applyFilters(getCommissionsByTab(tab));
+          const allTabCommissions = applyFilters(getCommissionsByTab(tab));
+          const totalPages = Math.max(
+            1,
+            Math.ceil(allTabCommissions.length / pageSize)
+          );
+          const safePage = Math.min(currentPage, totalPages - 1);
+          const tabCommissions = allTabCommissions.slice(
+            safePage * pageSize,
+            safePage * pageSize + pageSize
+          );
           const showCheckboxes = tab === 'payables' || tab === 'en_cours';
 
           return (
@@ -604,13 +618,19 @@ export default function LinkMeCommissionsPage() {
                       <Input
                         placeholder="Rechercher par N° commande..."
                         value={searchTerm}
-                        onChange={e => setSearchTerm(e.target.value)}
+                        onChange={e => {
+                          setSearchTerm(e.target.value);
+                          setCurrentPage(0);
+                        }}
                         className="pl-10"
                       />
                     </div>
                     <Select
                       value={affiliateFilter}
-                      onValueChange={setAffiliateFilter}
+                      onValueChange={v => {
+                        setAffiliateFilter(v);
+                        setCurrentPage(0);
+                      }}
                     >
                       <SelectTrigger className="w-[200px]">
                         <SelectValue placeholder="Affilié" />
@@ -624,7 +644,13 @@ export default function LinkMeCommissionsPage() {
                         ))}
                       </SelectContent>
                     </Select>
-                    <Select value={typeFilter} onValueChange={setTypeFilter}>
+                    <Select
+                      value={typeFilter}
+                      onValueChange={v => {
+                        setTypeFilter(v);
+                        setCurrentPage(0);
+                      }}
+                    >
                       <SelectTrigger className="w-[180px]">
                         <SelectValue placeholder="Type" />
                       </SelectTrigger>
@@ -792,6 +818,71 @@ export default function LinkMeCommissionsPage() {
                         })}
                       </TableBody>
                     </Table>
+                  )}
+
+                  {/* PAGINATION */}
+                  {allTabCommissions.length > 0 && (
+                    <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-muted-foreground">
+                          Afficher
+                        </span>
+                        <ButtonV2
+                          variant={pageSize === 10 ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => {
+                            setPageSize(10);
+                            setCurrentPage(0);
+                          }}
+                        >
+                          10
+                        </ButtonV2>
+                        <ButtonV2
+                          variant={pageSize === 20 ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => {
+                            setPageSize(20);
+                            setCurrentPage(0);
+                          }}
+                        >
+                          20
+                        </ButtonV2>
+                        <span className="text-sm text-muted-foreground">
+                          par page
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-muted-foreground">
+                          {safePage * pageSize + 1}–
+                          {Math.min(
+                            (safePage + 1) * pageSize,
+                            allTabCommissions.length
+                          )}{' '}
+                          sur {allTabCommissions.length}
+                        </span>
+                        <ButtonV2
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            setCurrentPage(p => Math.max(0, p - 1))
+                          }
+                          disabled={safePage === 0}
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                        </ButtonV2>
+                        <ButtonV2
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            setCurrentPage(p => Math.min(totalPages - 1, p + 1))
+                          }
+                          disabled={safePage >= totalPages - 1}
+                        >
+                          <ChevronRight className="h-4 w-4" />
+                        </ButtonV2>
+                      </div>
+                    </div>
                   )}
                 </CardContent>
               </Card>
