@@ -128,10 +128,10 @@ export function UserCreateModal({ isOpen, onClose }: UserCreateModalProps) {
       password,
       first_name: firstName,
       last_name: lastName,
-      phone: phone ?? undefined,
+      phone: phone || undefined,
       role,
-      enseigne_id: enseigneId ?? undefined,
-      organisation_id: organisationId ?? undefined,
+      enseigne_id: enseigneId || undefined,
+      organisation_id: organisationId || undefined,
     };
 
     try {

@@ -7,6 +7,7 @@
 
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import { createAdminClient } from '@verone/utils/supabase/server';
 
@@ -23,17 +24,24 @@ type LinkmeAffiliateInsert =
 type EnseigneRow = Database['public']['Tables']['enseignes']['Row'];
 type OrganisationRow = Database['public']['Tables']['organisations']['Row'];
 
-interface ICreateUserInput {
-  email: string;
-  password: string;
-  first_name: string;
-  last_name: string;
-  phone?: string;
-  role: 'enseigne_admin' | 'organisation_admin';
-  enseigne_id?: string;
-  organisation_id?: string;
-  permissions?: string[];
-}
+/** Zod: empty string → null for optional fields */
+const emptyToNull = z.string().transform(val => (val === '' ? null : val));
+
+const CreateLinkMeUserSchema = z.object({
+  email: z.string().email('Email invalide'),
+  password: z.string().min(6, 'Mot de passe trop court (min 6 caractères)'),
+  first_name: z.string().min(1, 'Prénom requis'),
+  last_name: z.string().min(1, 'Nom requis'),
+  phone: emptyToNull.nullable().optional().default(null),
+  role: z.enum(['enseigne_admin', 'organisation_admin'], {
+    error: 'Rôle invalide. Doit être: enseigne_admin ou organisation_admin',
+  }),
+  enseigne_id: emptyToNull.nullable().optional().default(null),
+  organisation_id: emptyToNull.nullable().optional().default(null),
+  permissions: z.array(z.string()).optional().default([]),
+});
+
+type CreateLinkMeUserInput = z.infer<typeof CreateLinkMeUserSchema>;
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   // 🔐 GUARD: Vérifier authentification admin back-office
@@ -45,7 +53,15 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   try {
     const supabaseAdmin = createAdminClient();
-    const body = (await request.json()) as ICreateUserInput;
+    const body: unknown = await request.json();
+
+    // Validation Zod (transforme "" → null automatiquement)
+    const parsed = CreateLinkMeUserSchema.safeParse(body);
+    if (!parsed.success) {
+      const firstError = parsed.error.issues[0]?.message ?? 'Données invalides';
+      return NextResponse.json({ message: firstError }, { status: 400 });
+    }
+
     const {
       email,
       password,
@@ -55,30 +71,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       role,
       enseigne_id: enseigneId,
       organisation_id: organisationId,
-      permissions = [],
-    } = body;
+      permissions,
+    } = parsed.data;
 
-    // Validation
-    if (!email || !password || !firstName || !lastName || !role) {
-      return NextResponse.json(
-        { message: 'Email, mot de passe, prénom, nom et rôle sont requis' },
-        { status: 400 }
-      );
-    }
-
-    // Validation rôle (2 rôles actifs pour LinkMe)
-    const validRoles = ['enseigne_admin', 'organisation_admin'];
-    if (!validRoles.includes(role)) {
-      return NextResponse.json(
-        {
-          message:
-            'Rôle invalide. Doit être: enseigne_admin ou organisation_admin',
-        },
-        { status: 400 }
-      );
-    }
-
-    // Validation contraintes rôle
+    // Validation contraintes rôle (logique métier, pas du format)
     if (role === 'enseigne_admin' && !enseigneId) {
       return NextResponse.json(
         { message: 'Un admin enseigne doit être associé à une enseigne' },
@@ -124,7 +120,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       user_id: userId,
       first_name: firstName,
       last_name: lastName,
-      phone: phone || null,
+      phone,
       app_source: 'linkme',
       user_type: 'staff',
     };
@@ -151,8 +147,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       user_id: userId,
       app: 'linkme',
       role: role,
-      enseigne_id: enseigneId ?? null,
-      organisation_id: organisationId ?? null,
+      enseigne_id: enseigneId,
+      organisation_id: organisationId,
       permissions: permissions,
       is_active: true,
     };
@@ -177,7 +173,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       first_name: firstName,
       last_name: lastName,
       email,
-      phone: phone || null,
+      phone,
       is_primary_contact: true, // Premier contact créé = contact principal
       is_active: true,
       notes: `Contact créé automatiquement pour utilisateur LinkMe (${role})`,
@@ -240,7 +236,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         display_name: displayName,
         slug: uniqueSlug,
         email: email,
-        phone: phone || null,
+        phone,
         status: 'active',
         default_margin_rate: 20,
         linkme_commission_rate: 5,
