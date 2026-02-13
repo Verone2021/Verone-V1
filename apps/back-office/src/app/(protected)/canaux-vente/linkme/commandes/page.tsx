@@ -66,7 +66,7 @@ interface LinkMeEnrichedData {
 // 3 canaux mutuellement exclusifs:
 // 1. Affilié = commande créée par un affilié depuis l'app LinkMe
 // 2. Sélection publique = commande créée par client final via catalogue public
-// 3. Back-office = commande créée manuellement par admin
+// 3. Manuel = commande créée manuellement par admin dans le back-office
 function getOrderChannel(
   created_by_affiliate_id: string | null,
   linkme_selection_id: string | null
@@ -89,9 +89,9 @@ function getOrderChannel(
     };
   }
 
-  // Canal 3: Créée dans le back-office par admin
+  // Canal 3: Créée manuellement par admin dans le back-office
   return {
-    label: 'Back-office',
+    label: 'Manuel',
     color: 'text-blue-700',
     bg: 'bg-blue-100',
   };
