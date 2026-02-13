@@ -131,13 +131,13 @@ export function ProductImageGallery({
       {/* Container image + badges */}
       <div className="flex gap-2 items-start">
         {/* Image principale 400x400 */}
-        <div className="relative w-[400px] h-[400px] flex items-center justify-center p-4 overflow-hidden rounded-lg border border-gray-200 bg-white flex-shrink-0">
+        <div className="relative w-full aspect-square flex items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-white">
           <Image
             src={mainImageSrc}
             alt={productName}
             fill
             className="object-contain transition-all duration-300 hover:scale-105"
-            sizes="400px"
+            sizes="(max-width: 768px) 100vw, 320px"
             priority
             onError={() => {
               console.warn(

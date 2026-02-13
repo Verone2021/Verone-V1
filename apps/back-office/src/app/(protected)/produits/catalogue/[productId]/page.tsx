@@ -9,7 +9,6 @@ import { useParams, useRouter } from 'next/navigation';
 
 import { CategoryHierarchySelector } from '@verone/categories';
 import { SupplierVsPricingEditSection } from '@verone/common';
-import { CompletionStatusCompact } from '@verone/products';
 import { ProductStatusCompact } from '@verone/products';
 import { SampleHistoryCompact } from '@verone/products';
 import { ProductVariantsGrid } from '@verone/products';
@@ -60,60 +59,112 @@ import {
   UserCircle2,
 } from 'lucide-react';
 
-// Champs obligatoires pour un produit complet
-const _REQUIRED_PRODUCT_FIELDS = [
-  'name',
-  'sku',
-  'supplier_id',
-  'subcategory_id',
-  'cost_price',
-  'description',
-] as const;
+// Nombre total de champs pour le calcul de completude
+const TOTAL_COMPLETION_FIELDS = 19;
 
-// Mapping des champs avec leurs libellés
-const _PRODUCT_FIELD_LABELS: Record<string, string> = {
-  name: 'Nom du produit',
-  sku: 'Référence SKU',
-  supplier_id: 'Fournisseur',
-  subcategory_id: 'Sous-catégorie',
-  cost_price: "Prix d'achat HT",
-  description: 'Description',
+// Labels des sections pour l'affichage du resume
+const SECTION_LABELS: Record<string, string> = {
+  infosGenerales: 'Infos generales',
+  descriptions: 'Descriptions',
+  categorisation: 'Categorisation',
+  fournisseur: 'Fournisseur',
+  stock: 'Stock',
+  tarification: 'Tarification',
+  caracteristiques: 'Caracteristiques',
+  identifiants: 'Identifiants',
 };
 
 /**
- * Calcule champs obligatoires manquants par section
- * Basé sur REQUIRED_PRODUCT_FIELDS
+ * Calcule champs manquants par section (19 champs au total)
+ * Couvre TOUTES les sections de la fiche produit
  */
-function calculateMissingFields(product: Product | null) {
+function calculateAllMissingFields(product: Product | null) {
   if (!product)
     return {
       infosGenerales: 0,
       descriptions: 0,
       categorisation: 0,
       fournisseur: 0,
+      stock: 0,
+      tarification: 0,
+      caracteristiques: 0,
       identifiants: 0,
     };
 
+  const attrs = product.variant_attributes as Record<string, unknown> | null;
+
   return {
-    // Informations Générales : name, cost_price (stock_status et product_status sont NOT NULL)
+    // Informations Generales (2 champs)
     infosGenerales: [
       !product.name || product.name.trim() === '',
       !product.cost_price || product.cost_price <= 0,
     ].filter(Boolean).length,
 
-    // Descriptions : description (obligatoire seulement)
-    descriptions:
-      !product.description || product.description.trim() === '' ? 1 : 0,
+    // Descriptions (3 champs)
+    descriptions: [
+      !product.description || product.description.trim() === '',
+      !product.technical_description ||
+        product.technical_description.trim() === '',
+      !product.selling_points ||
+        (product.selling_points as string[]).length === 0,
+    ].filter(Boolean).length,
 
-    // Catégorisation : subcategory_id (hiérarchie complète)
+    // Categorisation (1 champ)
     categorisation: !product.subcategory_id ? 1 : 0,
 
-    // Fournisseur : supplier_id
-    fournisseur: !product.supplier_id ? 1 : 0,
+    // Fournisseur & References (2 champs)
+    fournisseur: [
+      !product.supplier_id,
+      !product.weight || product.weight <= 0,
+    ].filter(Boolean).length,
 
-    // Identifiants : sku
-    identifiants: !product.sku || product.sku.trim() === '' ? 1 : 0,
+    // Stock (1 champ)
+    stock: !product.condition || product.condition.trim() === '' ? 1 : 0,
+
+    // Tarification (1 champ)
+    tarification:
+      product.margin_percentage == null || product.margin_percentage <= 0
+        ? 1
+        : 0,
+
+    // Caracteristiques (6 champs - avec heritage variant_group)
+    caracteristiques: [
+      !attrs?.color,
+      !attrs?.material,
+      product.variant_group_id ? !product.variant_group?.style : !product.style,
+      !attrs?.finish,
+      product.variant_group_id
+        ? !(
+            product.variant_group?.dimensions_length ??
+            product.variant_group?.dimensions_width ??
+            product.variant_group?.dimensions_height
+          )
+        : !(
+            product.dimensions &&
+            Object.keys(product.dimensions as Record<string, unknown>).length >
+              0
+          ),
+      product.variant_group_id
+        ? !product.variant_group?.common_weight
+        : !product.weight,
+    ].filter(Boolean).length,
+
+    // Identifiants (3 champs)
+    identifiants: [
+      !product.sku || product.sku.trim() === '',
+      !product.brand || product.brand.trim() === '',
+      !product.gtin || product.gtin.trim() === '',
+    ].filter(Boolean).length,
   };
+}
+
+function calculateCompletionPercentage(
+  missing: ReturnType<typeof calculateAllMissingFields>
+): number {
+  const totalMissing = Object.values(missing).reduce((sum, n) => sum + n, 0);
+  return Math.round(
+    ((TOTAL_COMPLETION_FIELDS - totalMissing) / TOTAL_COMPLETION_FIELDS) * 100
+  );
 }
 
 // Type pour un produit avec ses relations (basé sur types Supabase générés)
@@ -388,10 +439,15 @@ export default function ProductDetailPage() {
     return parts;
   }, [product]);
 
-  // Calcul complétude accordéons (✅ Optimisé avec useMemo)
+  // Calcul complétude accordéons (✅ 19 champs couvrant toutes les sections)
   const missingFields = useMemo(
-    () => calculateMissingFields(product),
+    () => calculateAllMissingFields(product),
     [product]
+  );
+
+  const completionPercentage = useMemo(
+    () => calculateCompletionPercentage(missingFields),
+    [missingFields]
   );
 
   // Calcul sourcing (interne vs client/sur mesure vs affilié)
@@ -545,6 +601,46 @@ export default function ProductDetailPage() {
         </div>
       </div>
 
+      {/* Zone resume completude */}
+      <div className="max-w-[1800px] mx-auto px-4 pt-4">
+        <div className="bg-white rounded-lg border border-neutral-200 p-4">
+          <div className="flex items-center gap-4">
+            <div className="flex-1">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-sm font-medium text-neutral-700">
+                  Completude fiche : {completionPercentage}% (
+                  {TOTAL_COMPLETION_FIELDS -
+                    Object.values(missingFields).reduce((sum, n) => sum + n, 0)}
+                  /{TOTAL_COMPLETION_FIELDS})
+                </span>
+              </div>
+              <div className="w-full bg-neutral-100 rounded-full h-2.5 overflow-hidden">
+                <div
+                  className={cn(
+                    'h-full transition-all duration-300 rounded-full',
+                    completionPercentage >= 80 && 'bg-green-500',
+                    completionPercentage >= 50 &&
+                      completionPercentage < 80 &&
+                      'bg-orange-500',
+                    completionPercentage < 50 && 'bg-red-500'
+                  )}
+                  style={{ width: `${completionPercentage}%` }}
+                />
+              </div>
+            </div>
+          </div>
+          {completionPercentage < 100 && (
+            <p className="text-xs text-neutral-500 mt-2">
+              Champs manquants :{' '}
+              {Object.entries(missingFields)
+                .filter(([, count]) => count > 0)
+                .map(([key, count]) => `${SECTION_LABELS[key]} (${count})`)
+                .join(' · ')}
+            </p>
+          )}
+        </div>
+      </div>
+
       {/* Layout Grid 2 colonnes */}
       <div className="max-w-[1800px] mx-auto grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-4 p-4">
         {/* SIDEBAR FIXE - Galerie Images */}
@@ -608,14 +704,6 @@ export default function ProductDetailPage() {
               }}
             />
 
-            <CompletionStatusCompact
-              product={{
-                id: product.id,
-                completion_percentage: product.completion_percentage ?? 0,
-              }}
-              missingFields={missingFields}
-            />
-
             {/* Historique échantillons commandés */}
             <SampleHistoryCompact productId={product.id} />
           </div>
@@ -646,6 +734,7 @@ export default function ProductDetailPage() {
                 subcategory_id: product.subcategory_id,
                 variant_group_id: product.variant_group_id,
               }}
+              completionPercentage={completionPercentage}
               onUpdate={async updates => {
                 await handleProductUpdate(updates as Partial<ProductRow>);
               }}
@@ -889,6 +978,7 @@ export default function ProductDetailPage() {
             title="Stock"
             icon={Boxes}
             defaultOpen={false}
+            badge={missingFields.stock > 0 ? missingFields.stock : undefined}
           >
             <StockEditSection
               product={
@@ -909,6 +999,11 @@ export default function ProductDetailPage() {
             title="Tarification"
             icon={DollarSign}
             defaultOpen={false}
+            badge={
+              missingFields.tarification > 0
+                ? missingFields.tarification
+                : undefined
+            }
           >
             <SupplierVsPricingEditSection
               product={{
@@ -929,6 +1024,11 @@ export default function ProductDetailPage() {
             title="Caractéristiques"
             icon={Settings}
             defaultOpen={false}
+            badge={
+              missingFields.caracteristiques > 0
+                ? missingFields.caracteristiques
+                : undefined
+            }
           >
             {product.variant_group_id && (
               <div className="mb-3 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-800">

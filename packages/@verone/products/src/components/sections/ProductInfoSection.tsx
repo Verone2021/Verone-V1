@@ -42,6 +42,7 @@ interface ProductInfoSectionProps {
     updates: Partial<ProductInfoSectionProps['product']>
   ) => Promise<void>;
   className?: string;
+  completionPercentage?: number;
 }
 
 // Helper: Calculer pourcentage complétude produit (6 champs de base + 6 caractéristiques = 12 champs)
@@ -108,12 +109,13 @@ export const ProductInfoSection = React.memo(
     product,
     onUpdate,
     className,
+    completionPercentage,
   }: ProductInfoSectionProps) {
     const [isEditingName, setIsEditingName] = React.useState(false);
     const [editedName, setEditedName] = React.useState(product.name);
     const [isSaving, setIsSaving] = React.useState(false);
 
-    const completion = calculateCompletion(product);
+    const completion = completionPercentage ?? calculateCompletion(product);
     const price = product?.cost_price; // Prix d'achat HT
     const isNameEditable = !product.variant_group_id; // Nom non éditable si dans groupe variantes
 
@@ -299,7 +301,8 @@ export const ProductInfoSection = React.memo(
       prevProps.product.style === nextProps.product.style &&
       prevProps.product.dimensions === nextProps.product.dimensions &&
       prevProps.product.weight === nextProps.product.weight &&
-      prevProps.product.variant_group === nextProps.product.variant_group
+      prevProps.product.variant_group === nextProps.product.variant_group &&
+      prevProps.completionPercentage === nextProps.completionPercentage
     );
   }
 );
