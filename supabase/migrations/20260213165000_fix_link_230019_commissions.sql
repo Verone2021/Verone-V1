@@ -1,7 +1,7 @@
 -- Migration: Fix LINK-230019 commissions
 -- Date: 2026-02-13
 -- Issue: sales_orders.linkme_selection_id NULL + prix divergents (DCO-0003, DCO-0004, PRD-0124) + commissions non recalculées
--- Expected commission: 853.21€ (was 782.70€, recovered +70.51€)
+-- Expected commission: 836.97€ (was 782.70€, recovered +54.27€)
 
 BEGIN;
 
@@ -37,9 +37,9 @@ WHERE product_id = (SELECT id FROM products WHERE sku = 'DCO-0004')
   AND channel_id = (SELECT id FROM sales_channels WHERE name = 'LinkMe');
 
 -- 3. Corriger channel_pricing pour PRD-0124 (Banc artisanal bois)
--- Prix Bubble: 145.13€, margin_rate 15% → base_price = 145.13 × 0.85 = 123.36€
+-- Prix Bubble: 143.13€ (pas 145.13€), margin_rate 15% → base_price = 143.13 × 0.85 = 121.66€
 UPDATE channel_pricing
-SET public_price_ht = 123.36
+SET public_price_ht = 121.66
 WHERE product_id = (SELECT id FROM products WHERE sku = 'PRD-0124')
   AND channel_id = (SELECT id FROM sales_channels WHERE name = 'LinkMe');
 
@@ -55,12 +55,12 @@ WHERE lsi.id = soi.linkme_selection_item_id
 COMMIT;
 
 -- Vérification post-migration
--- Total commission doit = 853.21€
+-- Total commission doit = 836.97€
 SELECT
   so.order_number,
   SUM(soi.retrocession_amount) as commission_totale,
-  853.21 as commission_attendue,
-  853.21 - SUM(soi.retrocession_amount) as ecart
+  836.97 as commission_attendue,
+  836.97 - SUM(soi.retrocession_amount) as ecart
 FROM sales_order_items soi
 JOIN sales_orders so ON so.id = soi.sales_order_id
 WHERE so.order_number = 'LINK-230019'
