@@ -85,6 +85,14 @@ import {
   type LinkMeOrderDetails,
 } from '../../hooks/use-linkme-order-actions';
 
+import {
+  getOrderMissingFields,
+  getRelevantTemplates,
+  REJECT_REASON_TEMPLATES,
+  type RequestInfoTemplate,
+  type RejectReasonTemplate,
+} from '../../utils/order-missing-fields';
+
 // ============================================
 // TYPES
 // ============================================
@@ -216,7 +224,11 @@ export default function LinkMeOrderDetailPage() {
   const [showRequestInfoDialog, setShowRequestInfoDialog] = useState(false);
   const [showRejectDialog, setShowRejectDialog] = useState(false);
   const [requestMessage, setRequestMessage] = useState('');
+  const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState('');
+  const [selectedRejectReason, setSelectedRejectReason] = useState<
+    string | null
+  >(null);
 
   // Dialogs édition (1 = Étape 1, 2 = Étape 2, etc.)
   const [editingStep, setEditingStep] = useState<1 | 2 | 3 | 4 | null>(null);
@@ -432,9 +444,18 @@ export default function LinkMeOrderDetailPage() {
   const handleRequestInfo = async () => {
     if (!requestMessage.trim()) return;
     try {
-      await requestInfo.mutateAsync({ orderId, message: requestMessage });
+      const missingFields = getOrderMissingFields(details);
+      await requestInfo.mutateAsync({
+        orderId,
+        message: requestMessage,
+        missingFields: missingFields.fields.map(f => ({
+          label: f.label,
+          category: f.category,
+        })),
+      });
       setShowRequestInfoDialog(false);
       setRequestMessage('');
+      setSelectedTemplate(null);
       void fetchOrder().catch(error => {
         console.error(
           '[LinkMeOrderDetail] Refetch after request info failed:',
@@ -452,6 +473,7 @@ export default function LinkMeOrderDetailPage() {
       await rejectOrder.mutateAsync({ orderId, reason: rejectReason });
       setShowRejectDialog(false);
       setRejectReason('');
+      setSelectedRejectReason(null);
       void fetchOrder().catch(error => {
         console.error(
           '[LinkMeOrderDetail] Refetch after reject failed:',
@@ -1379,28 +1401,108 @@ export default function LinkMeOrderDetailPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog: Demander compléments */}
+      {/* Dialog: Demander compléments (avec templates préconfigurés) */}
       <Dialog
         open={showRequestInfoDialog}
-        onOpenChange={setShowRequestInfoDialog}
+        onOpenChange={open => {
+          setShowRequestInfoDialog(open);
+          if (!open) {
+            setSelectedTemplate(null);
+            setRequestMessage('');
+          }
+        }}
       >
-        <DialogContent>
+        <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>Demander des compléments</DialogTitle>
             <DialogDescription>
               Un email sera envoyé au demandeur ({details?.requester_email}).
             </DialogDescription>
           </DialogHeader>
-          <div className="py-4">
-            <Label htmlFor="message">Message</Label>
-            <Textarea
-              id="message"
-              value={requestMessage}
-              onChange={e => setRequestMessage(e.target.value)}
-              placeholder="Précisez les informations manquantes..."
-              className="mt-2"
-              rows={4}
-            />
+          <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto">
+            {/* Champs manquants détectés automatiquement */}
+            {(() => {
+              const missingFields = getOrderMissingFields(details);
+              const relevantTemplates = getRelevantTemplates(missingFields);
+
+              return (
+                <>
+                  {missingFields.total > 0 && (
+                    <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                      <p className="text-sm font-medium text-amber-800 mb-2">
+                        <AlertTriangle className="h-4 w-4 inline mr-1" />
+                        {missingFields.total} champ(s) manquant(s) détecté(s)
+                      </p>
+                      <div className="flex flex-wrap gap-1">
+                        {missingFields.fields.map(f => (
+                          <Badge
+                            key={f.key}
+                            variant="outline"
+                            className="text-xs text-amber-700 border-amber-300"
+                          >
+                            {f.label}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Sélecteur de template */}
+                  <div className="space-y-2">
+                    <Label>Type de demande</Label>
+                    <div className="grid grid-cols-1 gap-2">
+                      {relevantTemplates.map(
+                        (template: RequestInfoTemplate) => (
+                          <button
+                            key={template.id}
+                            type="button"
+                            className={`flex items-start gap-3 p-3 rounded-lg border text-left transition-colors ${
+                              selectedTemplate === template.id
+                                ? 'border-blue-500 bg-blue-50'
+                                : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                            }`}
+                            onClick={() => {
+                              setSelectedTemplate(template.id);
+                              const msg = template.getMessage(
+                                missingFields.fields
+                              );
+                              setRequestMessage(msg);
+                            }}
+                          >
+                            <div className="flex-1">
+                              <p className="text-sm font-medium">
+                                {template.label}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                {template.description}
+                              </p>
+                            </div>
+                            {selectedTemplate === template.id && (
+                              <Check className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
+                            )}
+                          </button>
+                        )
+                      )}
+                    </div>
+                  </div>
+                </>
+              );
+            })()}
+
+            {/* Message (pré-rempli par le template ou libre) */}
+            <div className="space-y-2">
+              <Label htmlFor="message">Message</Label>
+              <Textarea
+                id="message"
+                value={requestMessage}
+                onChange={e => setRequestMessage(e.target.value)}
+                placeholder="Précisez les informations manquantes..."
+                rows={6}
+              />
+              <p className="text-xs text-gray-500">
+                Le message peut être modifié avant envoi.
+              </p>
+            </div>
           </div>
           <DialogFooter>
             <Button
@@ -1426,25 +1528,68 @@ export default function LinkMeOrderDetailPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog: Refuser */}
-      <Dialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
-        <DialogContent>
+      {/* Dialog: Refuser (avec raisons prédéfinies) */}
+      <Dialog
+        open={showRejectDialog}
+        onOpenChange={open => {
+          setShowRejectDialog(open);
+          if (!open) {
+            setSelectedRejectReason(null);
+            setRejectReason('');
+          }
+        }}
+      >
+        <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>Refuser la commande</DialogTitle>
             <DialogDescription>
               Un email sera envoyé au demandeur ({details?.requester_email}).
             </DialogDescription>
           </DialogHeader>
-          <div className="py-4">
-            <Label htmlFor="reason">Raison du refus</Label>
-            <Textarea
-              id="reason"
-              value={rejectReason}
-              onChange={e => setRejectReason(e.target.value)}
-              placeholder="Expliquez la raison du refus..."
-              className="mt-2"
-              rows={4}
-            />
+          <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto">
+            {/* Raisons prédéfinies */}
+            <div className="space-y-2">
+              <Label>Motif du refus</Label>
+              <div className="grid grid-cols-1 gap-2">
+                {REJECT_REASON_TEMPLATES.map((reason: RejectReasonTemplate) => (
+                  <button
+                    key={reason.id}
+                    type="button"
+                    className={`flex items-center gap-3 p-3 rounded-lg border text-left transition-colors ${
+                      selectedRejectReason === reason.id
+                        ? 'border-red-500 bg-red-50'
+                        : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                    }`}
+                    onClick={() => {
+                      setSelectedRejectReason(reason.id);
+                      setRejectReason(reason.message);
+                    }}
+                  >
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">{reason.label}</p>
+                    </div>
+                    {selectedRejectReason === reason.id && (
+                      <Check className="h-4 w-4 text-red-600 flex-shrink-0" />
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Message de refus */}
+            <div className="space-y-2">
+              <Label htmlFor="reason">Message envoyé au demandeur</Label>
+              <Textarea
+                id="reason"
+                value={rejectReason}
+                onChange={e => setRejectReason(e.target.value)}
+                placeholder="Expliquez la raison du refus..."
+                rows={5}
+              />
+              <p className="text-xs text-gray-500">
+                Le message peut être modifié avant envoi.
+              </p>
+            </div>
           </div>
           <DialogFooter>
             <Button

@@ -23,9 +23,16 @@ export interface ApproveOrderInput {
   orderId: string;
 }
 
+export interface RequestInfoMissingField {
+  label: string;
+  category: string;
+}
+
 export interface RequestInfoInput {
   orderId: string;
   message: string;
+  /** Champs manquants détectés automatiquement (enrichit l'email) */
+  missingFields?: RequestInfoMissingField[];
 }
 
 export interface RejectOrderInput {
@@ -372,6 +379,7 @@ async function requestInfo(
         requesterName: details.requester_name,
         message: input.message,
         organisationName,
+        missingFields: input.missingFields ?? [],
       }),
     });
   } catch (emailError) {
