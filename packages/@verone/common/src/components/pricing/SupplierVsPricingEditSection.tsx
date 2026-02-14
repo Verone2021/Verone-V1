@@ -1,7 +1,5 @@
 'use client';
 
-import { useState } from 'react';
-
 import { ButtonV2 } from '@verone/ui';
 import { cn, formatPrice } from '@verone/utils';
 import {
@@ -54,6 +52,14 @@ interface ChannelPricingRow {
   is_active: boolean;
 }
 
+/** Typed shape for pricing edit data (avoids unsafe `any` from useInlineEdit) */
+interface PricingEditData {
+  cost_price?: number;
+  eco_tax_default?: number;
+  margin_percentage?: number;
+  selling_price?: number;
+}
+
 interface SupplierVsPricingEditSectionProps {
   product: Product;
   variantGroup?: VariantGroup | null;
@@ -91,7 +97,7 @@ export function SupplierVsPricingEditSection({
   } = useInlineEdit({
     productId: product.id,
     onUpdate: updatedData => {
-      onUpdate(updatedData);
+      onUpdate(updatedData as Partial<Product>);
     },
     onError: error => {
       console.error('❌ Erreur mise à jour pricing supplier/internal:', error);
@@ -99,15 +105,15 @@ export function SupplierVsPricingEditSection({
   });
 
   const section: EditableSection = 'pricing';
-  const editData = getEditedData(section);
+  const editData = getEditedData(section) as PricingEditData | null;
   const error = getError(section);
 
   // Récupération des données de tarification simplifiée
   // Si cost_price géré par le groupe, utiliser common_cost_price
   const currentCostPrice = isCostPriceManagedByGroup
-    ? variantGroup?.common_cost_price || 0
-    : product.cost_price || 0;
-  const currentMarginPercentage = product.margin_percentage || 25; // Défaut 25%
+    ? (variantGroup?.common_cost_price ?? 0)
+    : (product.cost_price ?? 0);
+  const currentMarginPercentage = product.margin_percentage ?? 25; // Défaut 25%
 
   // Calcul automatique du prix de vente minimum
   const calculateMinSellingPrice = (
@@ -122,8 +128,8 @@ export function SupplierVsPricingEditSection({
 
   // ✅ Si éco-taxe gérée par le groupe, utiliser common_eco_tax
   const currentEcoTax = isEcoTaxManagedByGroup
-    ? variantGroup?.common_eco_tax || 0
-    : product.eco_tax_default || 0;
+    ? (variantGroup?.common_eco_tax ?? 0)
+    : (product.eco_tax_default ?? 0);
   const currentSellingPrice = calculateMinSellingPrice(
     currentCostPrice,
     currentEcoTax,
@@ -156,14 +162,14 @@ export function SupplierVsPricingEditSection({
     const sellingPrice = editData?.cost_price
       ? calculateMinSellingPrice(
           editData.cost_price,
-          editData.eco_tax_default || 0,
-          editData.margin_percentage || 25
+          editData.eco_tax_default ?? 0,
+          editData.margin_percentage ?? 25
         )
       : 0;
 
     const dataToSave = {
       cost_price: editData?.cost_price,
-      eco_tax_default: editData?.eco_tax_default || 0, // ✅ Inclure éco-taxe
+      eco_tax_default: editData?.eco_tax_default ?? 0, // ✅ Inclure éco-taxe
       margin_percentage: editData?.margin_percentage,
       selling_price: sellingPrice, // Prix calculé automatiquement
     };
@@ -172,11 +178,8 @@ export function SupplierVsPricingEditSection({
     updateEditedData(section, dataToSave);
 
     // Attendre un cycle pour que l'état soit mis à jour
-    setTimeout(async () => {
-      const success = await saveChanges(section);
-      if (success) {
-        console.log('✅ Tarification mise à jour avec succès');
-      }
+    setTimeout(() => {
+      void saveChanges(section).catch(console.error);
     }, 0);
   };
 
@@ -199,15 +202,15 @@ export function SupplierVsPricingEditSection({
   // Calculer prix de vente en temps réel pendant l'édition
   const editSellingPrice = editData
     ? calculateMinSellingPrice(
-        editData.cost_price || 0,
-        editData.eco_tax_default || 0,
-        editData.margin_percentage || 25
+        editData.cost_price ?? 0,
+        editData.eco_tax_default ?? 0,
+        editData.margin_percentage ?? 25
       )
     : currentSellingPrice;
 
   const editMarginAmount = editData
     ? editSellingPrice -
-      ((editData.cost_price || 0) + (editData.eco_tax_default || 0))
+      ((editData.cost_price ?? 0) + (editData.eco_tax_default ?? 0))
     : currentSellingPrice - (currentCostPrice + currentEcoTax);
 
   if (isEditing(section)) {
@@ -232,7 +235,9 @@ export function SupplierVsPricingEditSection({
             <ButtonV2
               variant="secondary"
               size="xs"
-              onClick={handleSave}
+              onClick={() => {
+                void handleSave().catch(console.error);
+              }}
               disabled={!hasChanges(section) || isSaving(section)}
               className="text-xs px-2 py-1"
             >
@@ -254,7 +259,7 @@ export function SupplierVsPricingEditSection({
               </label>
               <input
                 type="number"
-                value={editData?.cost_price || ''}
+                value={editData?.cost_price ?? ''}
                 onChange={e => handlePriceChange('cost_price', e.target.value)}
                 className={cn(
                   'w-full px-3 py-2 border border-red-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500',
@@ -285,7 +290,7 @@ export function SupplierVsPricingEditSection({
               </label>
               <input
                 type="number"
-                value={editData?.eco_tax_default || ''}
+                value={editData?.eco_tax_default ?? ''}
                 onChange={e =>
                   handlePriceChange('eco_tax_default', e.target.value)
                 }
@@ -326,7 +331,7 @@ export function SupplierVsPricingEditSection({
               </label>
               <input
                 type="number"
-                value={editData?.margin_percentage || ''}
+                value={editData?.margin_percentage ?? ''}
                 onChange={e =>
                   handlePriceChange('margin_percentage', e.target.value)
                 }

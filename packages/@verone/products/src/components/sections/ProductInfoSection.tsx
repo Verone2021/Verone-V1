@@ -170,7 +170,7 @@ export const ProductInfoSection = React.memo(
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
       if (e.key === 'Enter') {
-        handleSaveName();
+        void handleSaveName().catch(console.error);
       } else if (e.key === 'Escape') {
         handleCancelEdit();
       }
@@ -191,7 +191,9 @@ export const ProductInfoSection = React.memo(
                   value={editedName}
                   onChange={e => setEditedName(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  onBlur={handleSaveName}
+                  onBlur={() => {
+                    void handleSaveName().catch(console.error);
+                  }}
                   autoFocus
                   className={cn(
                     'flex-1 px-2 py-1.5 text-sm border border-primary-500 rounded-md',
@@ -204,7 +206,9 @@ export const ProductInfoSection = React.memo(
                   size="sm"
                   variant="ghost"
                   className="h-7 w-7 p-0"
-                  onClick={handleSaveName}
+                  onClick={() => {
+                    void handleSaveName().catch(console.error);
+                  }}
                   disabled={isSaving}
                 >
                   <Check className="h-3 w-3 text-green-600" />
@@ -246,7 +250,7 @@ export const ProductInfoSection = React.memo(
           <div>
             <Label className="text-xs text-neutral-600 mb-1">SKU</Label>
             <p className="text-sm font-mono text-neutral-700 truncate">
-              {product.sku || 'Non défini'}
+              {product.sku ?? 'Non défini'}
             </p>
           </div>
         </div>
