@@ -75,6 +75,8 @@ import {
   Truck,
   Clock,
   Check,
+  Upload,
+  Loader2,
 } from 'lucide-react';
 
 import {
@@ -84,6 +86,8 @@ import {
   useUpdateLinkMeDetails,
   type LinkMeOrderDetails,
 } from '../../hooks/use-linkme-order-actions';
+
+import { useDocumentUpload } from '../../hooks/use-document-upload';
 
 import {
   getOrderMissingFields,
@@ -239,6 +243,15 @@ export default function LinkMeOrderDetailPage() {
   const requestInfo = useRequestInfo();
   const rejectOrder = useRejectOrder();
   const updateDetails = useUpdateLinkMeDetails();
+
+  // Upload KBis
+  const kbisUpload = useDocumentUpload({
+    category: 'kbis',
+    orderId,
+    onSuccess: (url: string) => {
+      setEditForm(prev => ({ ...prev, owner_kbis_url: url }));
+    },
+  });
 
   const fetchOrder = useCallback(async () => {
     setIsLoading(true);
@@ -1863,30 +1876,90 @@ export default function LinkMeOrderDetailPage() {
                         }
                       />
                     </div>
-                    {/* KBis URL */}
+                    {/* KBis Upload */}
                     <div className="space-y-2">
-                      <Label>URL du KBis</Label>
-                      <Input
-                        type="url"
-                        placeholder="https://..."
-                        value={editForm.owner_kbis_url ?? ''}
-                        onChange={e =>
-                          setEditForm(prev => ({
-                            ...prev,
-                            owner_kbis_url: e.target.value,
-                          }))
-                        }
-                      />
-                      {editForm.owner_kbis_url && (
-                        <a
-                          href={editForm.owner_kbis_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs text-blue-600 hover:underline flex items-center gap-1"
-                        >
-                          <ExternalLink className="h-3 w-3" />
-                          Voir le document
-                        </a>
+                      <Label>Document KBis</Label>
+                      {editForm.owner_kbis_url ? (
+                        <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+                          <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-green-800">
+                              KBis enregistré
+                            </p>
+                            <a
+                              href={editForm.owner_kbis_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs text-blue-600 hover:underline flex items-center gap-1"
+                            >
+                              <ExternalLink className="h-3 w-3" />
+                              Voir le document
+                            </a>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setEditForm(prev => ({
+                                ...prev,
+                                owner_kbis_url: null,
+                              }));
+                              kbisUpload.reset();
+                            }}
+                          >
+                            Remplacer
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <label
+                            htmlFor="kbis-upload"
+                            className={`flex flex-col items-center justify-center p-4 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
+                              kbisUpload.uploading
+                                ? 'border-blue-300 bg-blue-50'
+                                : 'border-gray-300 hover:border-blue-400 hover:bg-blue-50/50'
+                            }`}
+                          >
+                            {kbisUpload.uploading ? (
+                              <Loader2 className="h-6 w-6 text-blue-500 animate-spin" />
+                            ) : (
+                              <Upload className="h-6 w-6 text-gray-400" />
+                            )}
+                            <span className="text-sm text-gray-600 mt-2">
+                              {kbisUpload.uploading
+                                ? 'Upload en cours...'
+                                : 'Cliquer pour uploader le KBis'}
+                            </span>
+                            <span className="text-xs text-gray-400 mt-1">
+                              PDF, JPG, PNG ou WEBP (max 10MB)
+                            </span>
+                          </label>
+                          <input
+                            id="kbis-upload"
+                            type="file"
+                            accept=".pdf,.jpg,.jpeg,.png,.webp"
+                            className="hidden"
+                            disabled={kbisUpload.uploading}
+                            onChange={e => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                void kbisUpload
+                                  .uploadFile(file)
+                                  .catch((err: unknown) => {
+                                    console.error('[KBis Upload] Failed:', err);
+                                  });
+                              }
+                              // Reset input pour permettre re-upload du même fichier
+                              e.target.value = '';
+                            }}
+                          />
+                          {kbisUpload.error && (
+                            <p className="text-xs text-red-600">
+                              {kbisUpload.error}
+                            </p>
+                          )}
+                        </div>
                       )}
                     </div>
                   </>
