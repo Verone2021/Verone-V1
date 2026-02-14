@@ -34,7 +34,8 @@ export interface ContactBO {
 }
 
 export interface CreateContactInput {
-  organisationId: string;
+  organisationId?: string;
+  enseigneId?: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -42,6 +43,8 @@ export interface CreateContactInput {
   title?: string;
   isBillingContact?: boolean;
   isPrimaryContact?: boolean;
+  isCommercialContact?: boolean;
+  isTechnicalContact?: boolean;
   isDeliveryContact?: boolean;
 }
 
@@ -120,7 +123,76 @@ export function useOrganisationContactsBO(organisationId: string | null) {
 }
 
 /**
- * Mutation pour créer un nouveau contact pour une organisation
+ * Récupère les contacts d'une enseigne (pour le back-office)
+ *
+ * @param enseigneId - ID de l'enseigne
+ * @returns Contacts avec leurs rôles
+ */
+export function useEnseigneContactsBO(enseigneId: string | null) {
+  return useQuery({
+    queryKey: ['enseigne-contacts-bo', enseigneId],
+    queryFn: async () => {
+      if (!enseigneId) return null;
+
+      const supabase = createClient();
+
+      const { data, error } = await supabase
+        .from('contacts')
+        .select(
+          `
+          id,
+          first_name,
+          last_name,
+          email,
+          phone,
+          mobile,
+          title,
+          is_primary_contact,
+          is_billing_contact,
+          is_commercial_contact,
+          is_technical_contact
+        `
+        )
+        .eq('enseigne_id', enseigneId)
+        .eq('is_active', true)
+        .order('is_primary_contact', { ascending: false })
+        .order('is_billing_contact', { ascending: false });
+
+      if (error) {
+        console.error('Erreur récupération contacts enseigne:', error);
+        throw error;
+      }
+
+      const contacts: ContactBO[] = (data ?? []).map(c => ({
+        id: c.id,
+        firstName: c.first_name,
+        lastName: c.last_name,
+        email: c.email,
+        phone: c.phone,
+        mobile: c.mobile,
+        title: c.title,
+        isPrimaryContact: c.is_primary_contact ?? false,
+        isBillingContact: c.is_billing_contact ?? false,
+        isCommercialContact: c.is_commercial_contact ?? false,
+        isTechnicalContact: c.is_technical_contact ?? false,
+      }));
+
+      const primaryContact = contacts.find(c => c.isPrimaryContact) ?? null;
+      const billingContact = contacts.find(c => c.isBillingContact) ?? null;
+
+      return {
+        contacts,
+        primaryContact,
+        billingContact,
+      };
+    },
+    enabled: !!enseigneId,
+    staleTime: 2 * 60 * 1000,
+  });
+}
+
+/**
+ * Mutation pour créer un nouveau contact (organisation ou enseigne)
  */
 export function useCreateContactBO() {
   const queryClient = useQueryClient();
@@ -132,7 +204,8 @@ export function useCreateContactBO() {
       const { data: contact, error } = await supabase
         .from('contacts')
         .insert({
-          organisation_id: input.organisationId,
+          organisation_id: input.organisationId ?? null,
+          enseigne_id: input.enseigneId ?? null,
           first_name: input.firstName,
           last_name: input.lastName,
           email: input.email,
@@ -140,6 +213,8 @@ export function useCreateContactBO() {
           title: input.title ?? null,
           is_billing_contact: input.isBillingContact ?? false,
           is_primary_contact: input.isPrimaryContact ?? false,
+          is_commercial_contact: input.isCommercialContact ?? false,
+          is_technical_contact: input.isTechnicalContact ?? false,
           is_active: true,
         })
         .select('id, first_name, last_name, email')
@@ -153,9 +228,16 @@ export function useCreateContactBO() {
       return contact;
     },
     onSuccess: async (_, variables) => {
-      await queryClient.invalidateQueries({
-        queryKey: ['organisation-contacts-bo', variables.organisationId],
-      });
+      if (variables.organisationId) {
+        await queryClient.invalidateQueries({
+          queryKey: ['organisation-contacts-bo', variables.organisationId],
+        });
+      }
+      if (variables.enseigneId) {
+        await queryClient.invalidateQueries({
+          queryKey: ['enseigne-contacts-bo', variables.enseigneId],
+        });
+      }
       toast.success('Contact créé avec succès');
     },
     onError: (error: Error) => {
