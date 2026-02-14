@@ -199,10 +199,12 @@ export default function ContactsPage() {
             professionnels
           </p>
         </div>
-        <ButtonV2 className="bg-black text-white hover:bg-gray-800">
-          <Plus className="h-4 w-4 mr-2" />
-          Nouveau contact
-        </ButtonV2>
+        <Link href="/contacts-organisations/enseignes">
+          <ButtonV2 className="bg-black text-white hover:bg-gray-800">
+            <Plus className="h-4 w-4 mr-2" />
+            Nouveau contact
+          </ButtonV2>
+        </Link>
       </div>
 
       {/* Statistiques */}
