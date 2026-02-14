@@ -14,6 +14,27 @@ export type Database = {
   };
   public: {
     Tables: {
+      _migration_payment_status_backup: {
+        Row: {
+          id: string | null;
+          payment_status: string | null;
+          payment_status_v2: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          id?: string | null;
+          payment_status?: string | null;
+          payment_status_v2?: string | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          id?: string | null;
+          payment_status?: string | null;
+          payment_status_v2?: string | null;
+          updated_at?: string | null;
+        };
+        Relationships: [];
+      };
       addresses: {
         Row: {
           address_line1: string;
@@ -315,6 +336,62 @@ export type Database = {
           user_id?: string | null;
         };
         Relationships: [];
+      };
+      audit_opjet_invoices: {
+        Row: {
+          audited_at: string | null;
+          created_at: string | null;
+          difference_ttc: number | null;
+          id: string;
+          invoice_date: string | null;
+          invoice_number: string;
+          invoice_total_ttc: number | null;
+          notes: string | null;
+          opjet_items: Json | null;
+          po_id: string | null;
+          po_total_ttc: number | null;
+          status: string;
+          verone_items: Json | null;
+        };
+        Insert: {
+          audited_at?: string | null;
+          created_at?: string | null;
+          difference_ttc?: number | null;
+          id?: string;
+          invoice_date?: string | null;
+          invoice_number: string;
+          invoice_total_ttc?: number | null;
+          notes?: string | null;
+          opjet_items?: Json | null;
+          po_id?: string | null;
+          po_total_ttc?: number | null;
+          status: string;
+          verone_items?: Json | null;
+        };
+        Update: {
+          audited_at?: string | null;
+          created_at?: string | null;
+          difference_ttc?: number | null;
+          id?: string;
+          invoice_date?: string | null;
+          invoice_number?: string;
+          invoice_total_ttc?: number | null;
+          notes?: string | null;
+          opjet_items?: Json | null;
+          po_id?: string | null;
+          po_total_ttc?: number | null;
+          status?: string;
+          verone_items?: Json | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'audit_opjet_invoices_po_id_fkey';
+            columns: ['po_id'];
+            isOneToOne: false;
+            referencedRelation: 'purchase_orders';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       bank_transactions: {
         Row: {
@@ -3819,6 +3896,20 @@ export type Database = {
             foreignKeyName: 'linkme_commissions_selection_id_fkey';
             columns: ['selection_id'];
             isOneToOne: false;
+            referencedRelation: 'linkme_orders_enriched';
+            referencedColumns: ['selection_id'];
+          },
+          {
+            foreignKeyName: 'linkme_commissions_selection_id_fkey';
+            columns: ['selection_id'];
+            isOneToOne: false;
+            referencedRelation: 'linkme_orders_with_margins';
+            referencedColumns: ['selection_id'];
+          },
+          {
+            foreignKeyName: 'linkme_commissions_selection_id_fkey';
+            columns: ['selection_id'];
+            isOneToOne: false;
             referencedRelation: 'linkme_selections';
             referencedColumns: ['id'];
           },
@@ -4046,6 +4137,20 @@ export type Database = {
             foreignKeyName: 'linkme_selection_items_selection_id_fkey';
             columns: ['selection_id'];
             isOneToOne: false;
+            referencedRelation: 'linkme_orders_enriched';
+            referencedColumns: ['selection_id'];
+          },
+          {
+            foreignKeyName: 'linkme_selection_items_selection_id_fkey';
+            columns: ['selection_id'];
+            isOneToOne: false;
+            referencedRelation: 'linkme_orders_with_margins';
+            referencedColumns: ['selection_id'];
+          },
+          {
+            foreignKeyName: 'linkme_selection_items_selection_id_fkey';
+            columns: ['selection_id'];
+            isOneToOne: false;
             referencedRelation: 'linkme_selections';
             referencedColumns: ['id'];
           },
@@ -4213,6 +4318,20 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'v_transactions_missing_invoice';
             referencedColumns: ['sales_order_id'];
+          },
+          {
+            foreignKeyName: 'linkme_tracking_selection_id_fkey';
+            columns: ['selection_id'];
+            isOneToOne: false;
+            referencedRelation: 'linkme_orders_enriched';
+            referencedColumns: ['selection_id'];
+          },
+          {
+            foreignKeyName: 'linkme_tracking_selection_id_fkey';
+            columns: ['selection_id'];
+            isOneToOne: false;
+            referencedRelation: 'linkme_orders_with_margins';
+            referencedColumns: ['selection_id'];
           },
           {
             foreignKeyName: 'linkme_tracking_selection_id_fkey';
@@ -6469,6 +6588,7 @@ export type Database = {
       };
       sales_order_items: {
         Row: {
+          base_price_ht_locked: number | null;
           created_at: string;
           discount_percentage: number;
           eco_tax: number;
@@ -6477,6 +6597,7 @@ export type Database = {
           is_sample: boolean;
           linkme_selection_item_id: string | null;
           notes: string | null;
+          price_locked_at: string | null;
           product_id: string;
           quantity: number;
           quantity_shipped: number;
@@ -6484,12 +6605,14 @@ export type Database = {
           retrocession_amount_ttc: number | null;
           retrocession_rate: number | null;
           sales_order_id: string;
+          selling_price_ht_locked: number | null;
           tax_rate: number;
           total_ht: number | null;
           unit_price_ht: number;
           updated_at: string;
         };
         Insert: {
+          base_price_ht_locked?: number | null;
           created_at?: string;
           discount_percentage?: number;
           eco_tax?: number;
@@ -6498,6 +6621,7 @@ export type Database = {
           is_sample?: boolean;
           linkme_selection_item_id?: string | null;
           notes?: string | null;
+          price_locked_at?: string | null;
           product_id: string;
           quantity: number;
           quantity_shipped?: number;
@@ -6505,12 +6629,14 @@ export type Database = {
           retrocession_amount_ttc?: number | null;
           retrocession_rate?: number | null;
           sales_order_id: string;
+          selling_price_ht_locked?: number | null;
           tax_rate?: number;
           total_ht?: number | null;
           unit_price_ht: number;
           updated_at?: string;
         };
         Update: {
+          base_price_ht_locked?: number | null;
           created_at?: string;
           discount_percentage?: number;
           eco_tax?: number;
@@ -6519,6 +6645,7 @@ export type Database = {
           is_sample?: boolean;
           linkme_selection_item_id?: string | null;
           notes?: string | null;
+          price_locked_at?: string | null;
           product_id?: string;
           quantity?: number;
           quantity_shipped?: number;
@@ -6526,6 +6653,7 @@ export type Database = {
           retrocession_amount_ttc?: number | null;
           retrocession_rate?: number | null;
           sales_order_id?: string;
+          selling_price_ht_locked?: number | null;
           tax_rate?: number;
           total_ht?: number | null;
           unit_price_ht?: number;
@@ -6948,7 +7076,6 @@ export type Database = {
           order_number: string;
           paid_amount: number | null;
           paid_at: string | null;
-          payment_status: string | null;
           payment_status_v2: string | null;
           payment_terms: string | null;
           payment_terms_notes: string | null;
@@ -7015,7 +7142,6 @@ export type Database = {
           order_number: string;
           paid_amount?: number | null;
           paid_at?: string | null;
-          payment_status?: string | null;
           payment_status_v2?: string | null;
           payment_terms?: string | null;
           payment_terms_notes?: string | null;
@@ -7082,7 +7208,6 @@ export type Database = {
           order_number?: string;
           paid_amount?: number | null;
           paid_at?: string | null;
-          payment_status?: string | null;
           payment_status_v2?: string | null;
           payment_terms?: string | null;
           payment_terms_notes?: string | null;
@@ -7133,6 +7258,20 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'contacts';
             referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'sales_orders_linkme_selection_id_fkey';
+            columns: ['linkme_selection_id'];
+            isOneToOne: false;
+            referencedRelation: 'linkme_orders_enriched';
+            referencedColumns: ['selection_id'];
+          },
+          {
+            foreignKeyName: 'sales_orders_linkme_selection_id_fkey';
+            columns: ['linkme_selection_id'];
+            isOneToOne: false;
+            referencedRelation: 'linkme_orders_with_margins';
+            referencedColumns: ['selection_id'];
           },
           {
             foreignKeyName: 'sales_orders_linkme_selection_id_fkey';
@@ -8581,6 +8720,7 @@ export type Database = {
           affiliate_type: string | null;
           applied_discount_codes: string[] | null;
           billing_address: Json | null;
+          billing_contact_id: string | null;
           cancellation_reason: string | null;
           cancelled_at: string | null;
           cancelled_by: string | null;
@@ -8597,6 +8737,7 @@ export type Database = {
           customer_type: string | null;
           delivered_at: string | null;
           delivered_by: string | null;
+          delivery_contact_id: string | null;
           eco_tax_total: number | null;
           eco_tax_vat_rate: number | null;
           expected_delivery_date: string | null;
@@ -8604,6 +8745,7 @@ export type Database = {
           handling_cost_ht: number | null;
           id: string | null;
           insurance_cost_ht: number | null;
+          invoiced_at: string | null;
           linkme_selection_id: string | null;
           manual_payment_by: string | null;
           manual_payment_date: string | null;
@@ -8613,10 +8755,10 @@ export type Database = {
             | Database['public']['Enums']['manual_payment_type']
             | null;
           notes: string | null;
+          order_date: string | null;
           order_number: string | null;
           paid_amount: number | null;
           paid_at: string | null;
-          payment_status: string | null;
           payment_status_v2: string | null;
           payment_terms: string | null;
           payment_terms_notes: string | null;
@@ -8625,6 +8767,7 @@ export type Database = {
             | null;
           pending_admin_validation: boolean | null;
           ready_for_shipment: boolean | null;
+          responsable_contact_id: string | null;
           selection_name: string | null;
           shipped_at: string | null;
           shipped_by: string | null;
@@ -8641,6 +8784,13 @@ export type Database = {
         };
         Relationships: [
           {
+            foreignKeyName: 'sales_orders_billing_contact_id_fkey';
+            columns: ['billing_contact_id'];
+            isOneToOne: false;
+            referencedRelation: 'contacts';
+            referencedColumns: ['id'];
+          },
+          {
             foreignKeyName: 'sales_orders_channel_id_fkey';
             columns: ['channel_id'];
             isOneToOne: false;
@@ -8655,10 +8805,38 @@ export type Database = {
             referencedColumns: ['id'];
           },
           {
+            foreignKeyName: 'sales_orders_delivery_contact_id_fkey';
+            columns: ['delivery_contact_id'];
+            isOneToOne: false;
+            referencedRelation: 'contacts';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'sales_orders_linkme_selection_id_fkey';
+            columns: ['linkme_selection_id'];
+            isOneToOne: false;
+            referencedRelation: 'linkme_orders_enriched';
+            referencedColumns: ['selection_id'];
+          },
+          {
+            foreignKeyName: 'sales_orders_linkme_selection_id_fkey';
+            columns: ['linkme_selection_id'];
+            isOneToOne: false;
+            referencedRelation: 'linkme_orders_with_margins';
+            referencedColumns: ['selection_id'];
+          },
+          {
             foreignKeyName: 'sales_orders_linkme_selection_id_fkey';
             columns: ['linkme_selection_id'];
             isOneToOne: false;
             referencedRelation: 'linkme_selections';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'sales_orders_responsable_contact_id_fkey';
+            columns: ['responsable_contact_id'];
+            isOneToOne: false;
+            referencedRelation: 'contacts';
             referencedColumns: ['id'];
           },
         ];
@@ -9073,13 +9251,6 @@ export type Database = {
         };
         Relationships: [
           {
-            foreignKeyName: 'linkme_selection_items_selection_id_fkey';
-            columns: ['selection_id'];
-            isOneToOne: false;
-            referencedRelation: 'linkme_selections';
-            referencedColumns: ['id'];
-          },
-          {
             foreignKeyName: 'sales_orders_channel_id_fkey';
             columns: ['channel_id'];
             isOneToOne: false;
@@ -9115,13 +9286,6 @@ export type Database = {
           updated_at: string | null;
         };
         Relationships: [
-          {
-            foreignKeyName: 'linkme_selection_items_selection_id_fkey';
-            columns: ['selection_id'];
-            isOneToOne: false;
-            referencedRelation: 'linkme_selections';
-            referencedColumns: ['id'];
-          },
           {
             foreignKeyName: 'sales_orders_channel_id_fkey';
             columns: ['channel_id'];
@@ -9175,6 +9339,20 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'stock_alerts_view';
             referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'linkme_selection_items_selection_id_fkey';
+            columns: ['selection_id'];
+            isOneToOne: false;
+            referencedRelation: 'linkme_orders_enriched';
+            referencedColumns: ['selection_id'];
+          },
+          {
+            foreignKeyName: 'linkme_selection_items_selection_id_fkey';
+            columns: ['selection_id'];
+            isOneToOne: false;
+            referencedRelation: 'linkme_orders_with_margins';
+            referencedColumns: ['selection_id'];
           },
           {
             foreignKeyName: 'linkme_selection_items_selection_id_fkey';
@@ -10161,6 +10339,7 @@ export type Database = {
           p_customer_type: string;
           p_delivery_contact_id?: string;
           p_items: Json;
+          p_linkme_details?: Json;
           p_notes?: string;
           p_responsable_contact_id?: string;
           p_selection_id: string;
@@ -10271,6 +10450,17 @@ export type Database = {
           p_reason_code?: string;
         };
         Returns: string;
+      };
+      create_notification_for_owners: {
+        Args: {
+          p_action_label?: string;
+          p_action_url?: string;
+          p_message: string;
+          p_severity: string;
+          p_title: string;
+          p_type: string;
+        };
+        Returns: number;
       };
       create_public_linkme_order:
         | {
@@ -10502,6 +10692,10 @@ export type Database = {
           sku: string;
           stock_real: number;
         }[];
+      };
+      extract_dimensions_from_name: {
+        Args: { product_name: string };
+        Returns: Json;
       };
       finalize_sourcing_to_catalog: {
         Args: { draft_id: string };
@@ -11837,6 +12031,7 @@ export type Database = {
         Args: { section_name_param: string };
         Returns: undefined;
       };
+      reconcile_linkme_commissions: { Args: never; Returns: Json };
       record_payment: {
         Args: {
           p_amount_paid: number;
@@ -11899,6 +12094,10 @@ export type Database = {
       remove_collection_tag: {
         Args: { collection_id: string; tag: string };
         Returns: undefined;
+      };
+      remove_dimensions_from_name: {
+        Args: { product_name: string };
+        Returns: string;
       };
       remove_from_google_merchant: {
         Args: { p_product_id: string };

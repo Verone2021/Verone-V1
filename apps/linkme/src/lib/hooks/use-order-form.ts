@@ -455,8 +455,84 @@ export function useOrderForm(): UseOrderFormReturn {
       }
       // Si pas de contact existant : contact inline (null pour l'instant)
 
-      // Étape 3: Créer la commande via RPC
+      // Étape 3: Construire p_linkme_details (toutes les données workflow)
+      const ownershipType =
+        formData.restaurant.mode === 'new'
+          ? formData.restaurant.newRestaurant?.ownershipType
+          : formData.restaurant.existingOwnershipType;
 
+      // Résoudre le contact de facturation (nom/email/phone)
+      let billingName = '';
+      let billingEmail = '';
+      let billingPhone = '';
+      if (formData.contacts.billingContact.mode === 'same_as_responsable') {
+        billingName =
+          `${formData.contacts.responsable.firstName} ${formData.contacts.responsable.lastName}`.trim();
+        billingEmail = formData.contacts.responsable.email;
+        billingPhone = formData.contacts.responsable.phone ?? '';
+      } else if (formData.contacts.billingContact.contact) {
+        const bc = formData.contacts.billingContact.contact;
+        billingName = `${bc.firstName} ${bc.lastName}`.trim();
+        billingEmail = bc.email;
+        billingPhone = bc.phone ?? '';
+      }
+
+      // Résoudre le contact de livraison
+      let deliveryContactName = '';
+      let deliveryContactEmail = '';
+      let deliveryContactPhone = '';
+      if (formData.contacts.delivery.sameAsResponsable) {
+        deliveryContactName =
+          `${formData.contacts.responsable.firstName} ${formData.contacts.responsable.lastName}`.trim();
+        deliveryContactEmail = formData.contacts.responsable.email;
+        deliveryContactPhone = formData.contacts.responsable.phone ?? '';
+      } else if (formData.contacts.delivery.contact) {
+        const dc = formData.contacts.delivery.contact;
+        deliveryContactName = `${dc.firstName} ${dc.lastName}`.trim();
+        deliveryContactEmail = dc.email;
+        deliveryContactPhone = dc.phone ?? '';
+      }
+
+      const linkmeDetails: Record<string, string | number | boolean | null> = {
+        // Step 5: Requester (responsable)
+        requester_type: formData.contacts.existingResponsableId
+          ? 'existing_contact'
+          : 'manual_entry',
+        requester_name:
+          `${formData.contacts.responsable.firstName} ${formData.contacts.responsable.lastName}`.trim(),
+        requester_email: formData.contacts.responsable.email,
+        requester_phone: formData.contacts.responsable.phone ?? null,
+        requester_position: formData.contacts.responsable.position ?? null,
+        is_new_restaurant: formData.restaurant.mode === 'new',
+        // Step 6: Owner type
+        owner_type: ownershipType ?? null,
+        // Step 6: Billing
+        billing_contact_source: formData.contacts.billingContact.mode,
+        billing_name: billingName || null,
+        billing_email: billingEmail || null,
+        billing_phone: billingPhone || null,
+        // Step 7: Delivery contact
+        delivery_contact_name: deliveryContactName || null,
+        delivery_contact_email: deliveryContactEmail || null,
+        delivery_contact_phone: deliveryContactPhone || null,
+        // Step 7: Delivery address
+        delivery_address: formData.delivery.address,
+        delivery_postal_code: formData.delivery.postalCode,
+        delivery_city: formData.delivery.city,
+        // Step 7: Delivery options
+        desired_delivery_date: formData.delivery.desiredDate
+          ? formData.delivery.desiredDate.toISOString().split('T')[0]
+          : null,
+        is_mall_delivery: formData.delivery.isMallDelivery,
+        mall_email: formData.delivery.mallEmail ?? null,
+        semi_trailer_accessible: formData.delivery.semiTrailerAccessible,
+        access_form_url: formData.delivery.accessFormUrl ?? null,
+        delivery_notes: formData.delivery.notes ?? null,
+        // Terms
+        delivery_terms_accepted: true,
+      };
+
+      // Étape 4: Créer la commande via RPC (atomique, avec linkme_details)
       const { data: orderId, error: orderError } = await supabase.rpc(
         'create_affiliate_order',
         {
@@ -466,10 +542,10 @@ export function useOrderForm(): UseOrderFormReturn {
           p_selection_id: formData.selection.selectionId,
           p_items: orderItems,
           p_notes: formData.delivery.notes ?? undefined,
-          // NEW: Contact IDs
           p_responsable_contact_id: responsableContactId ?? undefined,
           p_billing_contact_id: billingContactId ?? undefined,
           p_delivery_contact_id: deliveryContactId ?? undefined,
+          p_linkme_details: linkmeDetails,
         }
       );
 
@@ -479,39 +555,6 @@ export function useOrderForm(): UseOrderFormReturn {
         throw new Error(
           typedError.message ?? 'Erreur lors de la création de la commande'
         );
-      }
-
-      // Étape 4: Mettre à jour les infos de livraison sur la commande
-      // (les contacts et détails livraison seront stockés sur la commande)
-      if (orderId) {
-        const deliveryUpdate: Record<string, unknown> = {
-          shipping_address_line1: formData.delivery.address,
-          shipping_postal_code: formData.delivery.postalCode,
-          shipping_city: formData.delivery.city,
-          notes: formData.delivery.notes ?? null,
-        };
-
-        if (formData.delivery.desiredDate) {
-          deliveryUpdate.requested_delivery_date =
-            formData.delivery.desiredDate;
-        }
-
-        // Ajouter les infos de livraison supplémentaires si centre commercial
-        if (formData.delivery.isMallDelivery && formData.delivery.mallEmail) {
-          const existingNotes = (deliveryUpdate.notes as string | null) ?? '';
-          deliveryUpdate.notes =
-            `${existingNotes}\n[Centre commercial: ${formData.delivery.mallEmail}]`.trim();
-        }
-
-        const { error: updateError } = await supabase
-          .from('sales_orders')
-          .update(deliveryUpdate)
-          .eq('id', orderId);
-
-        if (updateError) {
-          console.warn('Warning: Could not update delivery info:', updateError);
-          // Ne pas bloquer la création, juste logger
-        }
       }
 
       // Invalider les caches
