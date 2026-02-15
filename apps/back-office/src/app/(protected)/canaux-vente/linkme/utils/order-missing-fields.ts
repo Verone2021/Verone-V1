@@ -15,9 +15,7 @@ import type { LinkMeOrderDetails } from '../hooks/use-linkme-order-actions';
 // ============================================
 
 export type MissingFieldCategory =
-  | 'requester'
-  | 'owner'
-  | 'kbis'
+  | 'responsable'
   | 'billing'
   | 'delivery'
   | 'custom';
@@ -54,35 +52,22 @@ export interface RequestInfoTemplate {
 
 export const REQUEST_INFO_TEMPLATES: RequestInfoTemplate[] = [
   {
-    id: 'owner_info',
-    category: 'owner',
-    label: 'Informations propriétaire',
-    description: 'Demander les informations du propriétaire/responsable',
+    id: 'responsable_info',
+    category: 'responsable',
+    label: 'Informations responsable',
+    description: 'Demander les informations du contact responsable',
     getMessage: fields => {
       const fieldsList = fields
-        .filter(f => f.category === 'owner')
+        .filter(f => f.category === 'responsable')
         .map(f => `  - ${f.label}`)
         .join('\n');
       return `Bonjour,
 
-Pour traiter votre commande, nous avons besoin des informations suivantes concernant le propriétaire/responsable du restaurant :
+Pour traiter votre commande, nous avons besoin des informations suivantes concernant le responsable :
 
-${fieldsList || '  - Nom, email et téléphone du propriétaire'}
+${fieldsList || '  - Nom, email et téléphone du responsable'}
 
 Merci de nous transmettre ces informations dans les meilleurs délais.`;
-    },
-  },
-  {
-    id: 'kbis',
-    category: 'kbis',
-    label: 'Document KBis requis',
-    description: 'Demander le KBis pour une franchise',
-    getMessage: () => {
-      return `Bonjour,
-
-Votre commande concerne un restaurant franchisé. Pour pouvoir la traiter, nous avons besoin d'une copie du KBis de la société exploitante.
-
-Merci de nous envoyer ce document (scan ou photo lisible) en réponse à cet email.`;
     },
   },
   {
@@ -194,15 +179,14 @@ export function getOrderMissingFields(
     fields.push(
       {
         key: 'requester_name',
-        label: 'Nom du demandeur',
-        category: 'requester',
+        label: 'Nom du responsable',
+        category: 'responsable',
       },
       {
         key: 'requester_email',
-        label: 'Email du demandeur',
-        category: 'requester',
+        label: 'Email du responsable',
+        category: 'responsable',
       },
-      { key: 'owner_email', label: 'Email du propriétaire', category: 'owner' },
       {
         key: 'billing_email',
         label: 'Email de facturation',
@@ -212,81 +196,30 @@ export function getOrderMissingFields(
     return buildResult(fields);
   }
 
-  // --- Demandeur (Étape 1) ---
+  // --- Responsable (Section 4) ---
   if (!details.requester_name) {
     fields.push({
       key: 'requester_name',
-      label: 'Nom du demandeur',
-      category: 'requester',
+      label: 'Nom du responsable',
+      category: 'responsable',
     });
   }
   if (!details.requester_email) {
     fields.push({
       key: 'requester_email',
-      label: 'Email du demandeur',
-      category: 'requester',
+      label: 'Email du responsable',
+      category: 'responsable',
     });
   }
   if (!details.requester_phone) {
     fields.push({
       key: 'requester_phone',
-      label: 'Téléphone du demandeur',
-      category: 'requester',
+      label: 'Téléphone du responsable',
+      category: 'responsable',
     });
   }
 
-  // --- Propriétaire (Étape 2) ---
-  if (!details.owner_contact_same_as_requester) {
-    // Si pas "identique au demandeur", les champs owner sont requis
-    if (!details.owner_name) {
-      fields.push({
-        key: 'owner_name',
-        label: 'Nom du propriétaire',
-        category: 'owner',
-      });
-    }
-    if (!details.owner_email) {
-      fields.push({
-        key: 'owner_email',
-        label: 'Email du propriétaire',
-        category: 'owner',
-      });
-    }
-    if (!details.owner_phone) {
-      fields.push({
-        key: 'owner_phone',
-        label: 'Téléphone du propriétaire',
-        category: 'owner',
-      });
-    }
-  }
-
-  // --- KBis (franchise uniquement) ---
-  if (details.owner_type === 'franchise') {
-    if (!details.owner_kbis_url) {
-      fields.push({
-        key: 'owner_kbis_url',
-        label: 'Document KBis',
-        category: 'kbis',
-      });
-    }
-    if (!details.owner_company_legal_name) {
-      fields.push({
-        key: 'owner_company_legal_name',
-        label: 'Raison sociale',
-        category: 'kbis',
-      });
-    }
-    if (!details.owner_company_trade_name) {
-      fields.push({
-        key: 'owner_company_trade_name',
-        label: 'Nom commercial',
-        category: 'kbis',
-      });
-    }
-  }
-
-  // --- Facturation (Étape 3) ---
+  // --- Facturation (Section 5) ---
   if (!details.billing_name) {
     fields.push({
       key: 'billing_name',
@@ -302,7 +235,14 @@ export function getOrderMissingFields(
     });
   }
 
-  // --- Livraison ---
+  // --- Livraison (Section 6) ---
+  if (!details.delivery_address) {
+    fields.push({
+      key: 'delivery_address',
+      label: 'Adresse de livraison',
+      category: 'delivery',
+    });
+  }
   if (!details.desired_delivery_date) {
     fields.push({
       key: 'desired_delivery_date',
@@ -319,9 +259,7 @@ export function getOrderMissingFields(
  */
 function buildResult(fields: MissingField[]): MissingFieldsResult {
   const byCategory: Record<MissingFieldCategory, MissingField[]> = {
-    requester: [],
-    owner: [],
-    kbis: [],
+    responsable: [],
     billing: [],
     delivery: [],
     custom: [],

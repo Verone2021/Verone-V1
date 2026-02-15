@@ -3,16 +3,18 @@
 /**
  * Page: Détail Commande Enseigne LinkMe
  *
- * Affiche tous les détails d'une commande Enseigne B2B avec les 4 étapes:
- * - Étape 1: Demandeur (6 champs)
- * - Étape 2: Propriétaire (8 champs)
- * - Étape 3: Facturation (8 champs)
- * - Étape 4: Livraison (4 champs post-approbation)
+ * Affiche tous les détails d'une commande Enseigne B2B avec 6 sections miroir du formulaire:
+ * - Section 1: Restaurant (org, adresse, type)
+ * - Section 2: Sélection (nom, nb produits)
+ * - Section 3: Produits (tableau articles avec commissions)
+ * - Section 4: Responsable (contact: nom, email, phone, poste)
+ * - Section 5: Facturation (contact + adresse)
+ * - Section 6: Livraison (contact + adresse + options, TOUJOURS visible)
  *
- * Chaque étape peut être modifiée via un dialog d'édition.
+ * + Encart "Demandeur" = user de la session (created_by)
  *
  * Actions:
- * - Approuver (si Étape 2 complète)
+ * - Approuver (pas de blocage propriétaire)
  * - Demander compléments
  * - Refuser
  */
@@ -75,8 +77,6 @@ import {
   Truck,
   Clock,
   Check,
-  Upload,
-  Loader2,
 } from 'lucide-react';
 
 import {
@@ -86,8 +86,6 @@ import {
   useUpdateLinkMeDetails,
   type LinkMeOrderDetails,
 } from '../../hooks/use-linkme-order-actions';
-
-import { useDocumentUpload } from '../../hooks/use-document-upload';
 
 import {
   getOrderMissingFields,
@@ -101,6 +99,12 @@ import {
 // TYPES
 // ============================================
 
+interface CreatedByProfile {
+  first_name: string | null;
+  last_name: string | null;
+  email: string | null;
+}
+
 interface OrderWithDetails {
   id: string;
   order_number: string;
@@ -113,6 +117,8 @@ interface OrderWithDetails {
   expected_delivery_date: string | null;
   created_by_affiliate_id: string | null;
   linkme_selection_id: string | null;
+  created_by: string | null;
+  createdByProfile: CreatedByProfile | null;
   organisation: {
     id: string;
     trade_name: string | null;
@@ -188,18 +194,19 @@ function getOrderChannel(
   created_by_affiliate_id: string | null,
   linkme_selection_id: string | null
 ): { label: string; color: string; bg: string } {
-  if (linkme_selection_id !== null) {
-    return {
-      label: 'Selection publique',
-      color: 'text-amber-700',
-      bg: 'bg-amber-100',
-    };
-  }
+  // B1 fix: vérifier affiliate EN PREMIER (une commande affilié a aussi une sélection)
   if (created_by_affiliate_id !== null) {
     return {
-      label: 'Affilie',
+      label: 'Affilié',
       color: 'text-teal-700',
       bg: 'bg-teal-100',
+    };
+  }
+  if (linkme_selection_id !== null) {
+    return {
+      label: 'Sélection publique',
+      color: 'text-amber-700',
+      bg: 'bg-amber-100',
     };
   }
   return {
@@ -234,8 +241,10 @@ export default function LinkMeOrderDetailPage() {
     string | null
   >(null);
 
-  // Dialogs édition (1 = Étape 1, 2 = Étape 2, etc.)
-  const [editingStep, setEditingStep] = useState<1 | 2 | 3 | 4 | null>(null);
+  // Dialogs édition par section
+  const [editingStep, setEditingStep] = useState<
+    'responsable' | 'billing' | 'delivery' | null
+  >(null);
   const [editForm, setEditForm] = useState<Partial<LinkMeOrderDetails>>({});
 
   // Mutations
@@ -243,15 +252,6 @@ export default function LinkMeOrderDetailPage() {
   const requestInfo = useRequestInfo();
   const rejectOrder = useRejectOrder();
   const updateDetails = useUpdateLinkMeDetails();
-
-  // Upload KBis
-  const kbisUpload = useDocumentUpload({
-    category: 'kbis',
-    orderId,
-    onSuccess: (url: string) => {
-      setEditForm(prev => ({ ...prev, owner_kbis_url: url }));
-    },
-  });
 
   const fetchOrder = useCallback(async () => {
     setIsLoading(true);
@@ -277,6 +277,7 @@ export default function LinkMeOrderDetailPage() {
           expected_delivery_date,
           created_by_affiliate_id,
           linkme_selection_id,
+          created_by,
           organisations!sales_orders_customer_id_fkey (
             id,
             trade_name,
@@ -308,6 +309,18 @@ export default function LinkMeOrderDetailPage() {
             desired_delivery_date,
             mall_form_required,
             mall_form_email,
+            delivery_contact_name,
+            delivery_contact_email,
+            delivery_contact_phone,
+            delivery_address,
+            delivery_postal_code,
+            delivery_city,
+            delivery_notes,
+            is_mall_delivery,
+            mall_email,
+            semi_trailer_accessible,
+            access_form_required,
+            access_form_url,
             step4_token,
             step4_token_expires_at,
             step4_completed_at,
@@ -350,6 +363,21 @@ export default function LinkMeOrderDetailPage() {
           : (linkmeDetailsRaw ?? null)
       ) as LinkMeOrderDetails | null;
 
+      // Fetch créateur (created_by → user_profiles)
+      let createdByProfile: CreatedByProfile | null = null;
+      const createdByUserId = (orderData as Record<string, unknown>)
+        .created_by as string | null;
+      if (createdByUserId) {
+        const { data: profileData } = await supabase
+          .from('user_profiles')
+          .select('first_name, last_name, email')
+          .eq('user_id', createdByUserId)
+          .single();
+        if (profileData) {
+          createdByProfile = profileData as CreatedByProfile;
+        }
+      }
+
       setOrder({
         id: orderData.id,
         order_number: orderData.order_number,
@@ -362,6 +390,8 @@ export default function LinkMeOrderDetailPage() {
         expected_delivery_date: orderData.expected_delivery_date,
         created_by_affiliate_id: orderData.created_by_affiliate_id ?? null,
         linkme_selection_id: orderData.linkme_selection_id ?? null,
+        created_by: createdByUserId,
+        createdByProfile,
         organisation: organisation,
         items: ((orderData.sales_order_items ?? []) as SalesOrderItemRaw[]).map(
           (item: SalesOrderItemRaw) => ({
@@ -499,43 +529,40 @@ export default function LinkMeOrderDetailPage() {
   };
 
   // Handlers Édition
-  const openEditDialog = (step: 1 | 2 | 3 | 4) => {
+  const openEditDialog = (step: 'responsable' | 'billing' | 'delivery') => {
     if (!order?.linkmeDetails) return;
     const d = order.linkmeDetails;
 
-    if (step === 1) {
+    if (step === 'responsable') {
       setEditForm({
         requester_type: d.requester_type,
         requester_name: d.requester_name,
         requester_email: d.requester_email,
         requester_phone: d.requester_phone,
         requester_position: d.requester_position,
-        is_new_restaurant: d.is_new_restaurant,
       });
-    } else if (step === 2) {
-      setEditForm({
-        owner_type: d.owner_type,
-        owner_contact_same_as_requester: d.owner_contact_same_as_requester,
-        owner_name: d.owner_name,
-        owner_email: d.owner_email,
-        owner_phone: d.owner_phone,
-        owner_company_legal_name: d.owner_company_legal_name,
-        owner_company_trade_name: d.owner_company_trade_name,
-        owner_kbis_url: d.owner_kbis_url,
-      });
-    } else if (step === 3) {
+    } else if (step === 'billing') {
       setEditForm({
         billing_contact_source: d.billing_contact_source,
         billing_name: d.billing_name,
         billing_email: d.billing_email,
         billing_phone: d.billing_phone,
+      });
+    } else if (step === 'delivery') {
+      setEditForm({
+        delivery_contact_name: d.delivery_contact_name,
+        delivery_contact_email: d.delivery_contact_email,
+        delivery_contact_phone: d.delivery_contact_phone,
+        delivery_address: d.delivery_address,
+        delivery_postal_code: d.delivery_postal_code,
+        delivery_city: d.delivery_city,
+        delivery_notes: d.delivery_notes,
         delivery_terms_accepted: d.delivery_terms_accepted,
         desired_delivery_date: d.desired_delivery_date,
-        mall_form_required: d.mall_form_required,
-        mall_form_email: d.mall_form_email,
-      });
-    } else if (step === 4) {
-      setEditForm({
+        is_mall_delivery: d.is_mall_delivery,
+        mall_email: d.mall_email,
+        semi_trailer_accessible: d.semi_trailer_accessible,
+        // Post-approbation fields
         reception_contact_name: d.reception_contact_name,
         reception_contact_email: d.reception_contact_email,
         reception_contact_phone: d.reception_contact_phone,
@@ -566,18 +593,6 @@ export default function LinkMeOrderDetailPage() {
   };
 
   // Helpers validation
-  const isStep2Complete = () => {
-    if (!order?.linkmeDetails) return false;
-    const d = order.linkmeDetails;
-    return !!d.owner_contact_same_as_requester || !!d.owner_email;
-  };
-
-  const isKbisMissing = () => {
-    if (!order?.linkmeDetails) return false;
-    const d = order.linkmeDetails;
-    return d.owner_type === 'franchise' && !d.owner_kbis_url;
-  };
-
   const isStep4Complete = () => {
     if (!order?.linkmeDetails) return false;
     return !!order.linkmeDetails.step4_completed_at;
@@ -716,7 +731,6 @@ export default function LinkMeOrderDetailPage() {
             </Button>
             <Button
               className="gap-2"
-              disabled={!isStep2Complete()}
               onClick={() => setShowApproveDialog(true)}
             >
               <CheckCircle2 className="h-4 w-4" />
@@ -727,37 +741,27 @@ export default function LinkMeOrderDetailPage() {
       </div>
 
       {/* ============================================ */}
-      {/* ALERTES DE VALIDATION */}
+      {/* DEMANDEUR (created_by = user session) */}
       {/* ============================================ */}
-      {order.status === 'draft' && (
-        <div className="space-y-2">
-          {!isStep2Complete() && (
-            <div className="flex items-center gap-2 p-4 bg-red-50 text-red-700 rounded-lg">
-              <AlertCircle className="h-5 w-5 flex-shrink-0" />
-              <span>
-                <strong>Étape 2 incomplète:</strong> Les informations du
-                propriétaire sont requises pour approuver.
+      {order.createdByProfile && (
+        <div className="flex items-center gap-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <User className="h-5 w-5 text-blue-600 flex-shrink-0" />
+          <div className="text-sm">
+            <span className="font-medium text-blue-800">Demandeur : </span>
+            <span className="text-blue-700">
+              {[
+                order.createdByProfile.first_name,
+                order.createdByProfile.last_name,
+              ]
+                .filter(Boolean)
+                .join(' ') || 'Utilisateur inconnu'}
+            </span>
+            {order.createdByProfile.email && (
+              <span className="text-blue-600 ml-2">
+                ({order.createdByProfile.email})
               </span>
-              <Button
-                variant="outline"
-                size="sm"
-                className="ml-auto"
-                onClick={() => openEditDialog(2)}
-              >
-                <Pencil className="h-3 w-3 mr-1" />
-                Compléter
-              </Button>
-            </div>
-          )}
-          {isKbisMissing() && isStep2Complete() && (
-            <div className="flex items-center gap-2 p-4 bg-amber-50 text-amber-700 rounded-lg">
-              <AlertTriangle className="h-5 w-5 flex-shrink-0" />
-              <span>
-                <strong>KBis manquant:</strong> Document non fourni pour la
-                franchise. L&apos;approbation reste possible.
-              </span>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       )}
 
@@ -912,28 +916,6 @@ export default function LinkMeOrderDetailPage() {
               </div>
             </div>
           </div>
-          {/* Organisation */}
-          {order.organisation && (
-            <>
-              <Separator className="my-4" />
-              <div className="flex items-center gap-2">
-                <Building2 className="h-4 w-4 text-gray-400" />
-                <span className="text-sm">
-                  Client:{' '}
-                  <strong>
-                    {order.organisation.trade_name ??
-                      order.organisation.legal_name}
-                  </strong>
-                </span>
-                {order.organisation.approval_status ===
-                  'pending_validation' && (
-                  <Badge variant="secondary" className="text-orange-600">
-                    En attente validation
-                  </Badge>
-                )}
-              </div>
-            </>
-          )}
           {/* Notes */}
           {order.notes && (
             <>
@@ -948,23 +930,107 @@ export default function LinkMeOrderDetailPage() {
       </Card>
 
       {/* ============================================ */}
-      {/* LES 4 ÉTAPES */}
+      {/* 6 SECTIONS MIROIR DU FORMULAIRE */}
       {/* ============================================ */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* ------------------------------------------ */}
-        {/* ÉTAPE 1: DEMANDEUR */}
+        {/* SECTION 1: RESTAURANT */}
+        {/* ------------------------------------------ */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Building2 className="h-5 w-5 text-orange-600" />
+              <CardTitle className="text-lg">Restaurant</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {order.organisation ? (
+              <>
+                <div>
+                  <Label className="text-xs text-gray-500">Nom</Label>
+                  <p className="font-medium">
+                    {order.organisation.trade_name ??
+                      order.organisation.legal_name}
+                  </p>
+                </div>
+                {order.organisation.approval_status ===
+                  'pending_validation' && (
+                  <Badge variant="secondary" className="text-orange-600">
+                    En attente validation
+                  </Badge>
+                )}
+                {details?.owner_type && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">Type</span>
+                    <Badge variant="outline">
+                      {details.owner_type === 'propre'
+                        ? 'Restaurant propre'
+                        : details.owner_type === 'franchise'
+                          ? 'Franchise'
+                          : details.owner_type}
+                    </Badge>
+                  </div>
+                )}
+                {details?.is_new_restaurant && (
+                  <Badge className="bg-emerald-100 text-emerald-800">
+                    Nouveau restaurant
+                  </Badge>
+                )}
+              </>
+            ) : (
+              <p className="text-gray-500">Organisation non renseignée</p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* ------------------------------------------ */}
+        {/* SECTION 2: SÉLECTION */}
+        {/* ------------------------------------------ */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <FileText className="h-5 w-5 text-indigo-600" />
+              <CardTitle className="text-lg">Sélection</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {order.linkme_selection_id ? (
+              <>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">
+                    Sélection LinkMe
+                  </span>
+                  <Badge variant="outline" className="font-mono text-xs">
+                    {order.linkme_selection_id.slice(0, 8)}...
+                  </Badge>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Produits</span>
+                  <span className="font-medium">
+                    {order.items.length} article(s)
+                  </span>
+                </div>
+              </>
+            ) : (
+              <p className="text-gray-500">Pas de sélection associée</p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* ------------------------------------------ */}
+        {/* SECTION 4: RESPONSABLE (ex-Demandeur Step 5 form) */}
         {/* ------------------------------------------ */}
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <User className="h-5 w-5 text-blue-600" />
-                <CardTitle className="text-lg">Étape 1: Demandeur</CardTitle>
+                <CardTitle className="text-lg">Responsable</CardTitle>
               </div>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => openEditDialog(1)}
+                onClick={() => openEditDialog('responsable')}
               >
                 <Pencil className="h-3 w-3 mr-1" />
                 Modifier
@@ -974,7 +1040,6 @@ export default function LinkMeOrderDetailPage() {
           <CardContent className="space-y-3">
             {details ? (
               <>
-                {/* Nom et Type */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label className="text-xs text-gray-500">Nom complet</Label>
@@ -991,7 +1056,6 @@ export default function LinkMeOrderDetailPage() {
                     </Badge>
                   </div>
                 </div>
-                {/* Email */}
                 <div className="flex items-center gap-2 text-sm">
                   <Mail className="h-4 w-4 text-gray-400" />
                   <a
@@ -1001,14 +1065,12 @@ export default function LinkMeOrderDetailPage() {
                     {details.requester_email}
                   </a>
                 </div>
-                {/* Téléphone */}
                 {details.requester_phone && (
                   <div className="flex items-center gap-2 text-sm">
                     <Phone className="h-4 w-4 text-gray-400" />
                     <span>{details.requester_phone}</span>
                   </div>
                 )}
-                {/* Poste */}
                 {details.requester_position && (
                   <div className="text-sm text-gray-600">
                     <Label className="text-xs text-gray-500">
@@ -1017,18 +1079,6 @@ export default function LinkMeOrderDetailPage() {
                     <p>{details.requester_position}</p>
                   </div>
                 )}
-                <Separator />
-                {/* Nouveau restaurant */}
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Type de restaurant</span>
-                  <Badge
-                    variant={details.is_new_restaurant ? 'default' : 'outline'}
-                  >
-                    {details.is_new_restaurant
-                      ? 'Nouveau restaurant'
-                      : 'Restaurant existant'}
-                  </Badge>
-                </div>
               </>
             ) : (
               <p className="text-gray-500">Données non disponibles</p>
@@ -1037,139 +1087,19 @@ export default function LinkMeOrderDetailPage() {
         </Card>
 
         {/* ------------------------------------------ */}
-        {/* ÉTAPE 2: PROPRIÉTAIRE */}
-        {/* ------------------------------------------ */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Building2 className="h-5 w-5 text-purple-600" />
-                <CardTitle className="text-lg">Étape 2: Propriétaire</CardTitle>
-                {renderStepBadge(isStep2Complete())}
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => openEditDialog(2)}
-              >
-                <Pencil className="h-3 w-3 mr-1" />
-                Modifier
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {details ? (
-              <>
-                {details.owner_contact_same_as_requester ? (
-                  <div className="p-3 bg-blue-50 rounded-lg text-sm text-blue-700">
-                    <Check className="h-4 w-4 inline mr-1" />
-                    Contact identique au demandeur
-                  </div>
-                ) : details.owner_email ? (
-                  <>
-                    {/* Type propriétaire */}
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label className="text-xs text-gray-500">Nom</Label>
-                        <p className="font-medium">
-                          {details.owner_name ?? '-'}
-                        </p>
-                      </div>
-                      <div>
-                        <Label className="text-xs text-gray-500">Type</Label>
-                        <Badge variant="outline" className="mt-1">
-                          {details.owner_type === 'propre'
-                            ? 'Restaurant propre'
-                            : 'Franchise'}
-                        </Badge>
-                      </div>
-                    </div>
-                    {/* Email */}
-                    <div className="flex items-center gap-2 text-sm">
-                      <Mail className="h-4 w-4 text-gray-400" />
-                      <a
-                        href={`mailto:${details.owner_email}`}
-                        className="text-blue-600 hover:underline"
-                      >
-                        {details.owner_email}
-                      </a>
-                    </div>
-                    {/* Téléphone */}
-                    {details.owner_phone && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <Phone className="h-4 w-4 text-gray-400" />
-                        <span>{details.owner_phone}</span>
-                      </div>
-                    )}
-                    {/* Infos franchise */}
-                    {details.owner_type === 'franchise' && (
-                      <>
-                        <Separator />
-                        <div className="space-y-2">
-                          <Label className="text-xs text-gray-500">
-                            Société franchisée
-                          </Label>
-                          {details.owner_company_trade_name && (
-                            <p className="text-sm">
-                              <strong>Nom commercial:</strong>{' '}
-                              {details.owner_company_trade_name}
-                            </p>
-                          )}
-                          {details.owner_company_legal_name && (
-                            <p className="text-sm">
-                              <strong>Raison sociale:</strong>{' '}
-                              {details.owner_company_legal_name}
-                            </p>
-                          )}
-                          {/* KBis */}
-                          {details.owner_kbis_url ? (
-                            <a
-                              href={details.owner_kbis_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex items-center gap-1 text-sm text-blue-600 hover:underline"
-                            >
-                              <FileText className="h-4 w-4" />
-                              Voir le KBis
-                              <ExternalLink className="h-3 w-3" />
-                            </a>
-                          ) : (
-                            <div className="flex items-center gap-1 text-sm text-amber-600">
-                              <AlertTriangle className="h-4 w-4" />
-                              KBis non fourni
-                            </div>
-                          )}
-                        </div>
-                      </>
-                    )}
-                  </>
-                ) : (
-                  <div className="p-3 bg-red-50 rounded-lg text-sm text-red-700">
-                    <AlertCircle className="h-4 w-4 inline mr-1" />
-                    Informations non renseignées
-                  </div>
-                )}
-              </>
-            ) : (
-              <p className="text-gray-500">Données non disponibles</p>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* ------------------------------------------ */}
-        {/* ÉTAPE 3: FACTURATION */}
+        {/* SECTION 5: FACTURATION */}
         {/* ------------------------------------------ */}
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <CreditCard className="h-5 w-5 text-green-600" />
-                <CardTitle className="text-lg">Étape 3: Facturation</CardTitle>
+                <CardTitle className="text-lg">Facturation</CardTitle>
               </div>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => openEditDialog(3)}
+                onClick={() => openEditDialog('billing')}
               >
                 <Pencil className="h-3 w-3 mr-1" />
                 Modifier
@@ -1179,20 +1109,18 @@ export default function LinkMeOrderDetailPage() {
           <CardContent className="space-y-3">
             {details ? (
               <>
-                {/* Source contact */}
                 <div>
                   <Label className="text-xs text-gray-500">
                     Source contact facturation
                   </Label>
                   <Badge variant="outline" className="mt-1">
                     {details.billing_contact_source === 'step1'
-                      ? 'Identique au demandeur (Étape 1)'
+                      ? 'Identique au responsable'
                       : details.billing_contact_source === 'step2'
-                        ? 'Identique au propriétaire (Étape 2)'
+                        ? 'Identique au propriétaire'
                         : 'Contact personnalisé'}
                   </Badge>
                 </div>
-                {/* Contact facturation */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label className="text-xs text-gray-500">Nom contact</Label>
@@ -1211,44 +1139,6 @@ export default function LinkMeOrderDetailPage() {
                     <span>{details.billing_phone}</span>
                   </div>
                 )}
-                <Separator />
-                {/* Modalités livraison */}
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Modalités acceptées</span>
-                  <Badge
-                    variant={
-                      details.delivery_terms_accepted ? 'default' : 'outline'
-                    }
-                  >
-                    {details.delivery_terms_accepted ? 'Oui' : 'Non'}
-                  </Badge>
-                </div>
-                {/* Date souhaitée */}
-                {details.desired_delivery_date && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <Calendar className="h-4 w-4 text-gray-400" />
-                    <span>
-                      Livraison souhaitée:{' '}
-                      {new Date(
-                        details.desired_delivery_date
-                      ).toLocaleDateString('fr-FR')}
-                    </span>
-                  </div>
-                )}
-                {/* Formulaire centre commercial */}
-                {details.mall_form_required && (
-                  <div className="p-3 bg-gray-50 rounded-lg text-sm space-y-1">
-                    <p className="font-medium">
-                      <Building2 className="h-4 w-4 inline mr-1" />
-                      Formulaire centre commercial requis
-                    </p>
-                    {details.mall_form_email && (
-                      <p className="text-gray-600">
-                        Email direction: {details.mall_form_email}
-                      </p>
-                    )}
-                  </div>
-                )}
               </>
             ) : (
               <p className="text-gray-500">Données non disponibles</p>
@@ -1257,121 +1147,222 @@ export default function LinkMeOrderDetailPage() {
         </Card>
 
         {/* ------------------------------------------ */}
-        {/* ÉTAPE 4: LIVRAISON (POST-APPROBATION) */}
+        {/* SECTION 6: LIVRAISON (TOUJOURS visible) */}
         {/* ------------------------------------------ */}
-        <Card>
+        <Card className="lg:col-span-2">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Truck className="h-5 w-5 text-cyan-600" />
-                <CardTitle className="text-lg">Étape 4: Livraison</CardTitle>
+                <CardTitle className="text-lg">Livraison</CardTitle>
                 {order.status === 'validated' &&
                   renderStepBadge(isStep4Complete())}
-                {order.status === 'draft' && (
-                  <Badge variant="secondary">Après approbation</Badge>
-                )}
               </div>
-              {order.status === 'validated' && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => openEditDialog(4)}
-                >
-                  <Pencil className="h-3 w-3 mr-1" />
-                  Modifier
-                </Button>
-              )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => openEditDialog('delivery')}
+              >
+                <Pencil className="h-3 w-3 mr-1" />
+                Modifier
+              </Button>
             </div>
           </CardHeader>
-          <CardContent className="space-y-3">
-            {order.status === 'draft' ? (
-              <div className="p-3 bg-gray-50 rounded-lg text-sm text-gray-500">
-                <Clock className="h-4 w-4 inline mr-1" />
-                Cette étape sera disponible après approbation. Un email sera
-                envoyé au propriétaire pour compléter les informations de
-                livraison.
-              </div>
-            ) : details ? (
-              <>
-                {/* Token status */}
-                {details.step4_token && (
-                  <div className="p-3 bg-blue-50 rounded-lg text-sm space-y-1">
-                    <p className="font-medium text-blue-700">
-                      Token de validation actif
-                    </p>
-                    {details.step4_token_expires_at && (
-                      <p className="text-blue-600">
-                        Expire le:{' '}
-                        {new Date(
-                          details.step4_token_expires_at
-                        ).toLocaleDateString('fr-FR')}
+          <CardContent>
+            {details ? (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Colonne gauche : adresse + contact livraison */}
+                <div className="space-y-3">
+                  <p className="text-sm font-medium text-gray-700">
+                    Informations de livraison
+                  </p>
+                  {/* Adresse */}
+                  {details.delivery_address && (
+                    <div>
+                      <Label className="text-xs text-gray-500">Adresse</Label>
+                      <p className="text-sm">
+                        {details.delivery_address}
+                        {details.delivery_postal_code &&
+                          `, ${details.delivery_postal_code}`}
+                        {details.delivery_city && ` ${details.delivery_city}`}
                       </p>
-                    )}
-                    {details.step4_completed_at && (
-                      <p className="text-green-700">
-                        <Check className="h-4 w-4 inline mr-1" />
-                        Complété le:{' '}
-                        {new Date(
-                          details.step4_completed_at
-                        ).toLocaleDateString('fr-FR', {
-                          day: 'numeric',
-                          month: 'long',
-                          year: 'numeric',
-                        })}
-                      </p>
-                    )}
-                  </div>
-                )}
-                {/* Contact réception */}
-                {details.reception_contact_name && (
-                  <div>
-                    <Label className="text-xs text-gray-500">
-                      Contact réception
-                    </Label>
-                    <p className="font-medium">
-                      {details.reception_contact_name}
-                    </p>
-                  </div>
-                )}
-                {details.reception_contact_email && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <Mail className="h-4 w-4 text-gray-400" />
-                    <a
-                      href={`mailto:${details.reception_contact_email}`}
-                      className="text-blue-600 hover:underline"
-                    >
-                      {details.reception_contact_email}
-                    </a>
-                  </div>
-                )}
-                {details.reception_contact_phone && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <Phone className="h-4 w-4 text-gray-400" />
-                    <span>{details.reception_contact_phone}</span>
-                  </div>
-                )}
-                {/* Date confirmée */}
-                {details.confirmed_delivery_date && (
-                  <div className="flex items-center gap-2 text-sm p-3 bg-green-50 rounded-lg text-green-700">
-                    <Calendar className="h-4 w-4" />
-                    <span>
-                      <strong>Date confirmée:</strong>{' '}
-                      {new Date(
-                        details.confirmed_delivery_date
-                      ).toLocaleDateString('fr-FR')}
-                    </span>
-                  </div>
-                )}
-                {!details.reception_contact_name &&
-                  !details.reception_contact_email &&
-                  !details.confirmed_delivery_date && (
-                    <div className="p-3 bg-amber-50 rounded-lg text-sm text-amber-700">
-                      <Clock className="h-4 w-4 inline mr-1" />
-                      En attente de confirmation du propriétaire via le lien
-                      email.
                     </div>
                   )}
-              </>
+                  {/* Contact livraison */}
+                  {details.delivery_contact_name && (
+                    <div>
+                      <Label className="text-xs text-gray-500">
+                        Contact livraison
+                      </Label>
+                      <p className="font-medium">
+                        {details.delivery_contact_name}
+                      </p>
+                    </div>
+                  )}
+                  {details.delivery_contact_email && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <Mail className="h-4 w-4 text-gray-400" />
+                      <a
+                        href={`mailto:${details.delivery_contact_email}`}
+                        className="text-blue-600 hover:underline"
+                      >
+                        {details.delivery_contact_email}
+                      </a>
+                    </div>
+                  )}
+                  {details.delivery_contact_phone && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <Phone className="h-4 w-4 text-gray-400" />
+                      <span>{details.delivery_contact_phone}</span>
+                    </div>
+                  )}
+                  {/* Modalités */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Modalités acceptées</span>
+                    <Badge
+                      variant={
+                        details.delivery_terms_accepted ? 'default' : 'outline'
+                      }
+                    >
+                      {details.delivery_terms_accepted ? 'Oui' : 'Non'}
+                    </Badge>
+                  </div>
+                  {/* Date souhaitée */}
+                  {details.desired_delivery_date && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <Calendar className="h-4 w-4 text-gray-400" />
+                      <span>
+                        Livraison souhaitée :{' '}
+                        {new Date(
+                          details.desired_delivery_date
+                        ).toLocaleDateString('fr-FR')}
+                      </span>
+                    </div>
+                  )}
+                  {/* Notes livraison */}
+                  {details.delivery_notes && (
+                    <div>
+                      <Label className="text-xs text-gray-500">Notes</Label>
+                      <p className="text-sm text-gray-600">
+                        {details.delivery_notes}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Colonne droite : options + post-approbation */}
+                <div className="space-y-3">
+                  <p className="text-sm font-medium text-gray-700">Options</p>
+                  {/* Centre commercial */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Centre commercial</span>
+                    <Badge
+                      variant={details.is_mall_delivery ? 'default' : 'outline'}
+                    >
+                      {details.is_mall_delivery ? 'Oui' : 'Non'}
+                    </Badge>
+                  </div>
+                  {details.is_mall_delivery && details.mall_email && (
+                    <div className="text-sm text-gray-600">
+                      Email direction : {details.mall_email}
+                    </div>
+                  )}
+                  {/* Semi-remorque */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Accès semi-remorque</span>
+                    <Badge
+                      variant={
+                        details.semi_trailer_accessible ? 'default' : 'outline'
+                      }
+                    >
+                      {details.semi_trailer_accessible ? 'Oui' : 'Non'}
+                    </Badge>
+                  </div>
+                  {/* Formulaire accès */}
+                  {details.access_form_required && (
+                    <div className="p-3 bg-gray-50 rounded-lg text-sm">
+                      <p className="font-medium">Formulaire accès requis</p>
+                      {details.access_form_url && (
+                        <a
+                          href={details.access_form_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:underline flex items-center gap-1 mt-1"
+                        >
+                          <ExternalLink className="h-3 w-3" />
+                          Voir le formulaire
+                        </a>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Post-approbation (si validée) */}
+                  {order.status === 'validated' && (
+                    <>
+                      <Separator />
+                      <p className="text-sm font-medium text-gray-700">
+                        Post-approbation
+                      </p>
+                      {details.step4_token && (
+                        <div className="p-3 bg-blue-50 rounded-lg text-sm space-y-1">
+                          <p className="font-medium text-blue-700">
+                            Token de validation actif
+                          </p>
+                          {details.step4_token_expires_at && (
+                            <p className="text-blue-600">
+                              Expire le :{' '}
+                              {new Date(
+                                details.step4_token_expires_at
+                              ).toLocaleDateString('fr-FR')}
+                            </p>
+                          )}
+                          {details.step4_completed_at && (
+                            <p className="text-green-700">
+                              <Check className="h-4 w-4 inline mr-1" />
+                              Complété le :{' '}
+                              {new Date(
+                                details.step4_completed_at
+                              ).toLocaleDateString('fr-FR', {
+                                day: 'numeric',
+                                month: 'long',
+                                year: 'numeric',
+                              })}
+                            </p>
+                          )}
+                        </div>
+                      )}
+                      {details.reception_contact_name && (
+                        <div>
+                          <Label className="text-xs text-gray-500">
+                            Contact réception
+                          </Label>
+                          <p className="font-medium">
+                            {details.reception_contact_name}
+                          </p>
+                        </div>
+                      )}
+                      {details.confirmed_delivery_date && (
+                        <div className="flex items-center gap-2 text-sm p-3 bg-green-50 rounded-lg text-green-700">
+                          <Calendar className="h-4 w-4" />
+                          <span>
+                            <strong>Date confirmée :</strong>{' '}
+                            {new Date(
+                              details.confirmed_delivery_date
+                            ).toLocaleDateString('fr-FR')}
+                          </span>
+                        </div>
+                      )}
+                      {!details.reception_contact_name &&
+                        !details.confirmed_delivery_date && (
+                          <div className="p-3 bg-amber-50 rounded-lg text-sm text-amber-700">
+                            <Clock className="h-4 w-4 inline mr-1" />
+                            En attente de confirmation via le lien email.
+                          </div>
+                        )}
+                    </>
+                  )}
+                </div>
+              </div>
             ) : (
               <p className="text-gray-500">Données non disponibles</p>
             )}
@@ -1630,20 +1621,19 @@ export default function LinkMeOrderDetailPage() {
       {/* DIALOGS ÉDITION */}
       {/* ============================================ */}
 
-      {/* Dialog: Éditer Étape 1 - Demandeur */}
+      {/* Dialog: Éditer Responsable */}
       <Dialog
-        open={editingStep === 1}
+        open={editingStep === 'responsable'}
         onOpenChange={() => setEditingStep(null)}
       >
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Modifier Étape 1: Demandeur</DialogTitle>
+            <DialogTitle>Modifier le Responsable</DialogTitle>
             <DialogDescription>
-              Modifiez les informations du demandeur.
+              Modifiez les informations du contact responsable.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto">
-            {/* Type demandeur */}
             <div className="space-y-2">
               <Label>Type de demandeur *</Label>
               <Select
@@ -1664,7 +1654,6 @@ export default function LinkMeOrderDetailPage() {
                 </SelectContent>
               </Select>
             </div>
-            {/* Nom */}
             <div className="space-y-2">
               <Label>Nom complet *</Label>
               <Input
@@ -1677,7 +1666,6 @@ export default function LinkMeOrderDetailPage() {
                 }
               />
             </div>
-            {/* Email */}
             <div className="space-y-2">
               <Label>Email *</Label>
               <Input
@@ -1691,7 +1679,6 @@ export default function LinkMeOrderDetailPage() {
                 }
               />
             </div>
-            {/* Téléphone */}
             <div className="space-y-2">
               <Label>Téléphone</Label>
               <Input
@@ -1704,7 +1691,6 @@ export default function LinkMeOrderDetailPage() {
                 }
               />
             </div>
-            {/* Poste */}
             <div className="space-y-2">
               <Label>Poste / Fonction</Label>
               <Input
@@ -1717,21 +1703,6 @@ export default function LinkMeOrderDetailPage() {
                 }
               />
             </div>
-            {/* Nouveau restaurant */}
-            <div className="flex items-center justify-between p-3 border rounded-lg">
-              <div>
-                <Label>Nouveau restaurant</Label>
-                <p className="text-xs text-gray-500">
-                  S&apos;agit-il d&apos;un nouveau restaurant ?
-                </p>
-              </div>
-              <Switch
-                checked={editForm.is_new_restaurant ?? false}
-                onCheckedChange={checked =>
-                  setEditForm(prev => ({ ...prev, is_new_restaurant: checked }))
-                }
-              />
-            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditingStep(null)}>
@@ -1751,254 +1722,19 @@ export default function LinkMeOrderDetailPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog: Éditer Étape 2 - Propriétaire */}
+      {/* Dialog: Éditer Facturation */}
       <Dialog
-        open={editingStep === 2}
+        open={editingStep === 'billing'}
         onOpenChange={() => setEditingStep(null)}
       >
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Modifier Étape 2: Propriétaire</DialogTitle>
+            <DialogTitle>Modifier la Facturation</DialogTitle>
             <DialogDescription>
-              Modifiez les informations du propriétaire/responsable.
+              Modifiez les informations de facturation.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto">
-            {/* Same as requester */}
-            <div className="flex items-center justify-between p-3 border rounded-lg">
-              <div>
-                <Label>Contact identique au demandeur</Label>
-                <p className="text-xs text-gray-500">
-                  Reprendre les infos de l&apos;Étape 1
-                </p>
-              </div>
-              <Switch
-                checked={editForm.owner_contact_same_as_requester ?? false}
-                onCheckedChange={checked =>
-                  setEditForm(prev => ({
-                    ...prev,
-                    owner_contact_same_as_requester: checked,
-                  }))
-                }
-              />
-            </div>
-            {/* Si pas identique */}
-            {!editForm.owner_contact_same_as_requester && (
-              <>
-                {/* Type */}
-                <div className="space-y-2">
-                  <Label>Type de propriétaire</Label>
-                  <Select
-                    value={editForm.owner_type ?? ''}
-                    onValueChange={v =>
-                      setEditForm(prev => ({ ...prev, owner_type: v }))
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Sélectionner" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="propre">Restaurant propre</SelectItem>
-                      <SelectItem value="franchise">Franchise</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                {/* Nom */}
-                <div className="space-y-2">
-                  <Label>Nom du propriétaire</Label>
-                  <Input
-                    value={editForm.owner_name ?? ''}
-                    onChange={e =>
-                      setEditForm(prev => ({
-                        ...prev,
-                        owner_name: e.target.value,
-                      }))
-                    }
-                  />
-                </div>
-                {/* Email */}
-                <div className="space-y-2">
-                  <Label>Email *</Label>
-                  <Input
-                    type="email"
-                    value={editForm.owner_email ?? ''}
-                    onChange={e =>
-                      setEditForm(prev => ({
-                        ...prev,
-                        owner_email: e.target.value,
-                      }))
-                    }
-                  />
-                </div>
-                {/* Téléphone */}
-                <div className="space-y-2">
-                  <Label>Téléphone</Label>
-                  <Input
-                    value={editForm.owner_phone ?? ''}
-                    onChange={e =>
-                      setEditForm(prev => ({
-                        ...prev,
-                        owner_phone: e.target.value,
-                      }))
-                    }
-                  />
-                </div>
-                {/* Franchise fields */}
-                {editForm.owner_type === 'franchise' && (
-                  <>
-                    <Separator />
-                    <p className="text-sm font-medium text-gray-700">
-                      Informations franchise
-                    </p>
-                    {/* Nom commercial */}
-                    <div className="space-y-2">
-                      <Label>Nom commercial</Label>
-                      <Input
-                        value={editForm.owner_company_trade_name ?? ''}
-                        onChange={e =>
-                          setEditForm(prev => ({
-                            ...prev,
-                            owner_company_trade_name: e.target.value,
-                          }))
-                        }
-                      />
-                    </div>
-                    {/* Raison sociale */}
-                    <div className="space-y-2">
-                      <Label>Raison sociale</Label>
-                      <Input
-                        value={editForm.owner_company_legal_name ?? ''}
-                        onChange={e =>
-                          setEditForm(prev => ({
-                            ...prev,
-                            owner_company_legal_name: e.target.value,
-                          }))
-                        }
-                      />
-                    </div>
-                    {/* KBis Upload */}
-                    <div className="space-y-2">
-                      <Label>Document KBis</Label>
-                      {editForm.owner_kbis_url ? (
-                        <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
-                          <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-green-800">
-                              KBis enregistré
-                            </p>
-                            <a
-                              href={editForm.owner_kbis_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-xs text-blue-600 hover:underline flex items-center gap-1"
-                            >
-                              <ExternalLink className="h-3 w-3" />
-                              Voir le document
-                            </a>
-                          </div>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setEditForm(prev => ({
-                                ...prev,
-                                owner_kbis_url: null,
-                              }));
-                              kbisUpload.reset();
-                            }}
-                          >
-                            Remplacer
-                          </Button>
-                        </div>
-                      ) : (
-                        <div className="space-y-2">
-                          <label
-                            htmlFor="kbis-upload"
-                            className={`flex flex-col items-center justify-center p-4 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
-                              kbisUpload.uploading
-                                ? 'border-blue-300 bg-blue-50'
-                                : 'border-gray-300 hover:border-blue-400 hover:bg-blue-50/50'
-                            }`}
-                          >
-                            {kbisUpload.uploading ? (
-                              <Loader2 className="h-6 w-6 text-blue-500 animate-spin" />
-                            ) : (
-                              <Upload className="h-6 w-6 text-gray-400" />
-                            )}
-                            <span className="text-sm text-gray-600 mt-2">
-                              {kbisUpload.uploading
-                                ? 'Upload en cours...'
-                                : 'Cliquer pour uploader le KBis'}
-                            </span>
-                            <span className="text-xs text-gray-400 mt-1">
-                              PDF, JPG, PNG ou WEBP (max 10MB)
-                            </span>
-                          </label>
-                          <input
-                            id="kbis-upload"
-                            type="file"
-                            accept=".pdf,.jpg,.jpeg,.png,.webp"
-                            className="hidden"
-                            disabled={kbisUpload.uploading}
-                            onChange={e => {
-                              const file = e.target.files?.[0];
-                              if (file) {
-                                void kbisUpload
-                                  .uploadFile(file)
-                                  .catch((err: unknown) => {
-                                    console.error('[KBis Upload] Failed:', err);
-                                  });
-                              }
-                              // Reset input pour permettre re-upload du même fichier
-                              e.target.value = '';
-                            }}
-                          />
-                          {kbisUpload.error && (
-                            <p className="text-xs text-red-600">
-                              {kbisUpload.error}
-                            </p>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </>
-                )}
-              </>
-            )}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditingStep(null)}>
-              Annuler
-            </Button>
-            <Button
-              onClick={() => {
-                void handleSaveEdit().catch(error => {
-                  console.error('[LinkMeOrderDetail] Save edit failed:', error);
-                });
-              }}
-              disabled={updateDetails.isPending}
-            >
-              {updateDetails.isPending ? 'Enregistrement...' : 'Enregistrer'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Dialog: Éditer Étape 3 - Facturation */}
-      <Dialog
-        open={editingStep === 3}
-        onOpenChange={() => setEditingStep(null)}
-      >
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Modifier Étape 3: Facturation</DialogTitle>
-            <DialogDescription>
-              Modifiez les informations de facturation et livraison.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto">
-            {/* Source contact */}
             <div className="space-y-2">
               <Label>Source du contact facturation</Label>
               <Select
@@ -2011,7 +1747,9 @@ export default function LinkMeOrderDetailPage() {
                   <SelectValue placeholder="Sélectionner" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="step1">Identique au demandeur</SelectItem>
+                  <SelectItem value="step1">
+                    Identique au responsable
+                  </SelectItem>
                   <SelectItem value="step2">
                     Identique au propriétaire
                   </SelectItem>
@@ -2019,7 +1757,6 @@ export default function LinkMeOrderDetailPage() {
                 </SelectContent>
               </Select>
             </div>
-            {/* Contact facturation */}
             <div className="space-y-2">
               <Label>Nom contact facturation</Label>
               <Input
@@ -2057,73 +1794,6 @@ export default function LinkMeOrderDetailPage() {
                 }
               />
             </div>
-            <Separator />
-            {/* Modalités */}
-            <div className="flex items-center justify-between p-3 border rounded-lg">
-              <div>
-                <Label>Modalités de livraison acceptées</Label>
-                <p className="text-xs text-gray-500">
-                  Le client a accepté les conditions
-                </p>
-              </div>
-              <Switch
-                checked={editForm.delivery_terms_accepted ?? false}
-                onCheckedChange={checked =>
-                  setEditForm(prev => ({
-                    ...prev,
-                    delivery_terms_accepted: checked,
-                  }))
-                }
-              />
-            </div>
-            {/* Date souhaitée */}
-            <div className="space-y-2">
-              <Label>Date de livraison souhaitée</Label>
-              <Input
-                type="date"
-                value={editForm.desired_delivery_date ?? ''}
-                onChange={e =>
-                  setEditForm(prev => ({
-                    ...prev,
-                    desired_delivery_date: e.target.value,
-                  }))
-                }
-              />
-            </div>
-            <Separator />
-            {/* Centre commercial */}
-            <div className="flex items-center justify-between p-3 border rounded-lg">
-              <div>
-                <Label>Formulaire centre commercial requis</Label>
-                <p className="text-xs text-gray-500">
-                  Restaurant situé dans un centre commercial
-                </p>
-              </div>
-              <Switch
-                checked={editForm.mall_form_required ?? false}
-                onCheckedChange={checked =>
-                  setEditForm(prev => ({
-                    ...prev,
-                    mall_form_required: checked,
-                  }))
-                }
-              />
-            </div>
-            {editForm.mall_form_required && (
-              <div className="space-y-2">
-                <Label>Email direction centre commercial</Label>
-                <Input
-                  type="email"
-                  value={editForm.mall_form_email ?? ''}
-                  onChange={e =>
-                    setEditForm(prev => ({
-                      ...prev,
-                      mall_form_email: e.target.value,
-                    }))
-                  }
-                />
-              </div>
-            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditingStep(null)}>
@@ -2143,73 +1813,246 @@ export default function LinkMeOrderDetailPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog: Éditer Étape 4 - Livraison */}
+      {/* Dialog: Éditer Livraison */}
       <Dialog
-        open={editingStep === 4}
+        open={editingStep === 'delivery'}
         onOpenChange={() => setEditingStep(null)}
       >
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Modifier Étape 4: Livraison</DialogTitle>
+            <DialogTitle>Modifier la Livraison</DialogTitle>
             <DialogDescription>
-              Modifiez les informations de réception/livraison.
+              Modifiez les informations de livraison et réception.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            {/* Nom contact réception */}
+          <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto">
+            <p className="text-sm font-medium text-gray-700">
+              Contact livraison
+            </p>
             <div className="space-y-2">
-              <Label>Nom du contact réception</Label>
+              <Label>Nom du contact</Label>
               <Input
-                value={editForm.reception_contact_name ?? ''}
+                value={editForm.delivery_contact_name ?? ''}
                 onChange={e =>
                   setEditForm(prev => ({
                     ...prev,
-                    reception_contact_name: e.target.value,
+                    delivery_contact_name: e.target.value,
                   }))
                 }
               />
             </div>
-            {/* Email réception */}
             <div className="space-y-2">
-              <Label>Email contact réception</Label>
+              <Label>Email</Label>
               <Input
                 type="email"
-                value={editForm.reception_contact_email ?? ''}
+                value={editForm.delivery_contact_email ?? ''}
                 onChange={e =>
                   setEditForm(prev => ({
                     ...prev,
-                    reception_contact_email: e.target.value,
+                    delivery_contact_email: e.target.value,
                   }))
                 }
               />
             </div>
-            {/* Téléphone réception */}
             <div className="space-y-2">
-              <Label>Téléphone contact réception</Label>
+              <Label>Téléphone</Label>
               <Input
-                value={editForm.reception_contact_phone ?? ''}
+                value={editForm.delivery_contact_phone ?? ''}
                 onChange={e =>
                   setEditForm(prev => ({
                     ...prev,
-                    reception_contact_phone: e.target.value,
+                    delivery_contact_phone: e.target.value,
                   }))
                 }
               />
             </div>
-            {/* Date confirmée */}
+            <Separator />
+            <p className="text-sm font-medium text-gray-700">Adresse</p>
             <div className="space-y-2">
-              <Label>Date de livraison confirmée</Label>
+              <Label>Adresse</Label>
+              <Input
+                value={editForm.delivery_address ?? ''}
+                onChange={e =>
+                  setEditForm(prev => ({
+                    ...prev,
+                    delivery_address: e.target.value,
+                  }))
+                }
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Code postal</Label>
+                <Input
+                  value={editForm.delivery_postal_code ?? ''}
+                  onChange={e =>
+                    setEditForm(prev => ({
+                      ...prev,
+                      delivery_postal_code: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Ville</Label>
+                <Input
+                  value={editForm.delivery_city ?? ''}
+                  onChange={e =>
+                    setEditForm(prev => ({
+                      ...prev,
+                      delivery_city: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+            </div>
+            <Separator />
+            <p className="text-sm font-medium text-gray-700">Options</p>
+            <div className="flex items-center justify-between p-3 border rounded-lg">
+              <div>
+                <Label>Modalités de livraison acceptées</Label>
+                <p className="text-xs text-gray-500">
+                  Le client a accepté les conditions
+                </p>
+              </div>
+              <Switch
+                checked={editForm.delivery_terms_accepted ?? false}
+                onCheckedChange={checked =>
+                  setEditForm(prev => ({
+                    ...prev,
+                    delivery_terms_accepted: checked,
+                  }))
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Date de livraison souhaitée</Label>
               <Input
                 type="date"
-                value={editForm.confirmed_delivery_date ?? ''}
+                value={editForm.desired_delivery_date ?? ''}
                 onChange={e =>
                   setEditForm(prev => ({
                     ...prev,
-                    confirmed_delivery_date: e.target.value,
+                    desired_delivery_date: e.target.value,
                   }))
                 }
               />
             </div>
+            <div className="flex items-center justify-between p-3 border rounded-lg">
+              <div>
+                <Label>Livraison en centre commercial</Label>
+              </div>
+              <Switch
+                checked={editForm.is_mall_delivery ?? false}
+                onCheckedChange={checked =>
+                  setEditForm(prev => ({
+                    ...prev,
+                    is_mall_delivery: checked,
+                  }))
+                }
+              />
+            </div>
+            {editForm.is_mall_delivery && (
+              <div className="space-y-2">
+                <Label>Email direction centre commercial</Label>
+                <Input
+                  type="email"
+                  value={editForm.mall_email ?? ''}
+                  onChange={e =>
+                    setEditForm(prev => ({
+                      ...prev,
+                      mall_email: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+            )}
+            <div className="flex items-center justify-between p-3 border rounded-lg">
+              <div>
+                <Label>Accès semi-remorque</Label>
+              </div>
+              <Switch
+                checked={editForm.semi_trailer_accessible ?? false}
+                onCheckedChange={checked =>
+                  setEditForm(prev => ({
+                    ...prev,
+                    semi_trailer_accessible: checked,
+                  }))
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Notes de livraison</Label>
+              <Textarea
+                value={editForm.delivery_notes ?? ''}
+                onChange={e =>
+                  setEditForm(prev => ({
+                    ...prev,
+                    delivery_notes: e.target.value,
+                  }))
+                }
+                rows={3}
+              />
+            </div>
+            {/* Post-approbation fields */}
+            {order.status === 'validated' && (
+              <>
+                <Separator />
+                <p className="text-sm font-medium text-gray-700">
+                  Réception (post-approbation)
+                </p>
+                <div className="space-y-2">
+                  <Label>Nom du contact réception</Label>
+                  <Input
+                    value={editForm.reception_contact_name ?? ''}
+                    onChange={e =>
+                      setEditForm(prev => ({
+                        ...prev,
+                        reception_contact_name: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Email contact réception</Label>
+                  <Input
+                    type="email"
+                    value={editForm.reception_contact_email ?? ''}
+                    onChange={e =>
+                      setEditForm(prev => ({
+                        ...prev,
+                        reception_contact_email: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Téléphone contact réception</Label>
+                  <Input
+                    value={editForm.reception_contact_phone ?? ''}
+                    onChange={e =>
+                      setEditForm(prev => ({
+                        ...prev,
+                        reception_contact_phone: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Date de livraison confirmée</Label>
+                  <Input
+                    type="date"
+                    value={editForm.confirmed_delivery_date ?? ''}
+                    onChange={e =>
+                      setEditForm(prev => ({
+                        ...prev,
+                        confirmed_delivery_date: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+              </>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditingStep(null)}>

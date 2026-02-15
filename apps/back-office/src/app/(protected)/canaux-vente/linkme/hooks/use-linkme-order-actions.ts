@@ -82,6 +82,19 @@ export interface LinkMeOrderDetails {
   reception_contact_email: string | null;
   reception_contact_phone: string | null;
   confirmed_delivery_date: string | null;
+  // Delivery fields (from form Step 7)
+  delivery_contact_name: string | null;
+  delivery_contact_email: string | null;
+  delivery_contact_phone: string | null;
+  delivery_address: string | null;
+  delivery_postal_code: string | null;
+  delivery_city: string | null;
+  delivery_notes: string | null;
+  is_mall_delivery: boolean | null;
+  mall_email: string | null;
+  semi_trailer_accessible: boolean | null;
+  access_form_required: boolean | null;
+  access_form_url: string | null;
   created_at: string | null;
   updated_at: string | null;
 }
@@ -622,10 +635,28 @@ export interface UpdateLinkMeDetailsInput {
     billing_name: string | null;
     billing_email: string | null;
     billing_phone: string | null;
+    // Livraison
     delivery_terms_accepted: boolean | null;
     desired_delivery_date: string | null;
     mall_form_required: boolean | null;
     mall_form_email: string | null;
+    delivery_contact_name: string | null;
+    delivery_contact_email: string | null;
+    delivery_contact_phone: string | null;
+    delivery_address: string | null;
+    delivery_postal_code: string | null;
+    delivery_city: string | null;
+    delivery_notes: string | null;
+    is_mall_delivery: boolean | null;
+    mall_email: string | null;
+    semi_trailer_accessible: boolean | null;
+    access_form_required: boolean | null;
+    access_form_url: string | null;
+    // Post-approbation
+    reception_contact_name: string | null;
+    reception_contact_email: string | null;
+    reception_contact_phone: string | null;
+    confirmed_delivery_date: string | null;
   }>;
 }
 
