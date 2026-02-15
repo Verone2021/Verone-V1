@@ -117,6 +117,8 @@ export const restaurantStepSchema = z
       .optional()
       .nullable(),
     existingCountry: z.string().optional().nullable(), // Pour calcul TVA (FR=20%, autres=0%)
+    existingAddressLine1: z.string().optional().nullable(), // Pour Step 7 (adresse livraison)
+    existingPostalCode: z.string().optional().nullable(), // Pour Step 7 (adresse livraison)
     newRestaurant: newRestaurantSchema.optional().nullable(),
   })
   .refine(
@@ -434,6 +436,8 @@ export const defaultRestaurantStep: RestaurantStepData = {
   existingCity: undefined,
   existingOwnershipType: null,
   existingCountry: null,
+  existingAddressLine1: null,
+  existingPostalCode: null,
   newRestaurant: null,
 };
 

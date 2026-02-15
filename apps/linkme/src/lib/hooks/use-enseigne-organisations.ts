@@ -22,6 +22,7 @@ export interface EnseigneOrganisation {
   id: string;
   legal_name: string;
   trade_name: string | null;
+  address_line1: string | null;
   city: string | null;
   postal_code: string | null;
   shipping_address_line1: string | null;
@@ -89,7 +90,7 @@ export function useEnseigneOrganisations(
       const { data: organisations, error: orgError } = await supabase
         .from('organisations')
         .select(
-          'id, legal_name, trade_name, city, postal_code, shipping_address_line1, shipping_city, shipping_postal_code, logo_url, ownership_type, latitude, longitude, country'
+          'id, legal_name, trade_name, address_line1, city, postal_code, shipping_address_line1, shipping_city, shipping_postal_code, logo_url, ownership_type, latitude, longitude, country'
         )
         .eq('enseigne_id', affiliate.enseigne_id)
         .eq('approval_status', 'approved')
