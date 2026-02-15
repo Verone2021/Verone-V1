@@ -411,6 +411,9 @@ export function useOrderForm(): UseOrderFormReturn {
             p_country: newResto.country ?? 'FR',
             p_latitude: newResto.latitude ?? undefined,
             p_longitude: newResto.longitude ?? undefined,
+            // Enseigne + ownership type (Correction 1)
+            p_enseigne_id: affiliate.enseigne_id ?? undefined,
+            p_ownership_type: newResto.ownershipType ?? undefined,
           }
         );
 
@@ -434,32 +437,112 @@ export function useOrderForm(): UseOrderFormReturn {
         quantity: item.quantity,
       }));
 
-      // Étape 2.5: Extraire les IDs de contacts
-      const responsableContactId =
+      // Étape 2.5: Déterminer ownership type pour les contacts
+      const ownerType =
+        formData.restaurant.mode === 'new'
+          ? formData.restaurant.newRestaurant?.ownershipType
+          : formData.restaurant.existingOwnershipType;
+      const enseigneId = affiliate.enseigne_id;
+
+      // Étape 2.6: Créer les contacts "nouveaux" en BD avant la commande
+      // Pour succursales, les contacts sont aussi liés à l'enseigne
+      const contactEnseigneId = ownerType === 'succursale' ? enseigneId : null;
+
+      // Responsable : créer si pas d'ID existant
+      let responsableContactId =
         formData.contacts.existingResponsableId ?? null;
 
+      if (!responsableContactId && formData.contacts.responsable.firstName) {
+        const { data: newContact, error: contactError } = await supabase
+          .from('contacts')
+          .insert({
+            organisation_id: customerId,
+            enseigne_id: contactEnseigneId,
+            first_name: formData.contacts.responsable.firstName,
+            last_name: formData.contacts.responsable.lastName,
+            email: formData.contacts.responsable.email,
+            phone: formData.contacts.responsable.phone ?? null,
+            title: formData.contacts.responsable.position ?? null,
+            is_primary_contact: true,
+            is_active: true,
+          })
+          .select('id')
+          .single();
+
+        if (contactError) {
+          console.error('Erreur création contact responsable:', contactError);
+          throw new Error('Erreur lors de la création du contact responsable');
+        }
+        responsableContactId = newContact.id;
+      }
+
+      // Billing contact : créer si mode = 'new'
       let billingContactId: string | null = null;
       if (formData.contacts.billingContact.mode === 'same_as_responsable') {
         billingContactId = responsableContactId;
       } else if (formData.contacts.billingContact.mode === 'existing') {
         billingContactId =
           formData.contacts.billingContact.existingContactId ?? null;
-      }
-      // Si mode = 'new' : contact sera créé plus tard (inline), pour l'instant null
+      } else if (
+        formData.contacts.billingContact.mode === 'new' &&
+        formData.contacts.billingContact.contact
+      ) {
+        const bc = formData.contacts.billingContact.contact;
+        const { data: newBilling, error: billingError } = await supabase
+          .from('contacts')
+          .insert({
+            organisation_id: customerId,
+            enseigne_id: contactEnseigneId,
+            first_name: bc.firstName,
+            last_name: bc.lastName,
+            email: bc.email,
+            phone: bc.phone ?? null,
+            title: bc.position ?? null,
+            is_billing_contact: true,
+            is_active: true,
+          })
+          .select('id')
+          .single();
 
+        if (billingError) {
+          console.error('Erreur création contact facturation:', billingError);
+          throw new Error('Erreur lors de la création du contact facturation');
+        }
+        billingContactId = newBilling.id;
+      }
+
+      // Delivery contact : créer si nouveau
       let deliveryContactId: string | null = null;
       if (formData.contacts.delivery.sameAsResponsable) {
         deliveryContactId = responsableContactId;
       } else if (formData.contacts.delivery.existingContactId) {
         deliveryContactId = formData.contacts.delivery.existingContactId;
+      } else if (formData.contacts.delivery.contact) {
+        const dc = formData.contacts.delivery.contact;
+        const { data: newDelivery, error: deliveryError } = await supabase
+          .from('contacts')
+          .insert({
+            organisation_id: customerId,
+            enseigne_id: contactEnseigneId,
+            first_name: dc.firstName,
+            last_name: dc.lastName,
+            email: dc.email,
+            phone: dc.phone ?? null,
+            title: dc.position ?? null,
+            is_active: true,
+          })
+          .select('id')
+          .single();
+
+        if (deliveryError) {
+          console.error('Erreur création contact livraison:', deliveryError);
+          throw new Error('Erreur lors de la création du contact livraison');
+        }
+        deliveryContactId = newDelivery.id;
       }
-      // Si pas de contact existant : contact inline (null pour l'instant)
 
       // Étape 3: Construire p_linkme_details (toutes les données workflow)
-      const ownershipType =
-        formData.restaurant.mode === 'new'
-          ? formData.restaurant.newRestaurant?.ownershipType
-          : formData.restaurant.existingOwnershipType;
+      // ownerType already computed above (step 2.5)
 
       // Résoudre le contact de facturation (nom/email/phone)
       let billingName = '';
@@ -505,7 +588,7 @@ export function useOrderForm(): UseOrderFormReturn {
         requester_position: formData.contacts.responsable.position ?? null,
         is_new_restaurant: formData.restaurant.mode === 'new',
         // Step 6: Owner type
-        owner_type: ownershipType ?? null,
+        owner_type: ownerType ?? null,
         // Step 6: Billing
         billing_contact_source: formData.contacts.billingContact.mode,
         billing_name: billingName || null,

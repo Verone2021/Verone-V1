@@ -366,13 +366,26 @@ export function useCreateOrganisationContacts() {
       organisationId: string;
       primaryContact: ContactFormData;
       billingContact: ContactFormData | null;
+      enseigneId?: string | null;
+      ownershipType?: 'propre' | 'succursale' | 'franchise' | null;
     }) => {
       const supabase = createClient();
-      const { organisationId, primaryContact, billingContact } = input;
+      const {
+        organisationId,
+        primaryContact,
+        billingContact,
+        enseigneId,
+        ownershipType,
+      } = input;
+
+      // Pour succursales, les contacts sont aussi liés à l'enseigne
+      const contactEnseigneId =
+        ownershipType === 'succursale' ? enseigneId : null;
 
       // Créer le contact propriétaire
       const { error: primaryError } = await supabase.from('contacts').insert({
         organisation_id: organisationId,
+        enseigne_id: contactEnseigneId ?? null,
         first_name: primaryContact.firstName,
         last_name: primaryContact.lastName,
         email: primaryContact.email,
@@ -389,6 +402,7 @@ export function useCreateOrganisationContacts() {
       if (billingContact !== null) {
         const { error: billingError } = await supabase.from('contacts').insert({
           organisation_id: organisationId,
+          enseigne_id: contactEnseigneId ?? null,
           first_name: billingContact.firstName,
           last_name: billingContact.lastName,
           email: billingContact.email,
