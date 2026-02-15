@@ -10,8 +10,6 @@ import {
   Phone,
   Building2,
   Store,
-  ShoppingCart,
-  Briefcase,
   Check,
   Calendar,
   Shield,
@@ -42,14 +40,7 @@ export function UserViewModal({ isOpen, user, onClose }: UserViewModalProps) {
     `${user.first_name?.[0] ?? ''}${user.last_name?.[0] ?? ''}`.toUpperCase() ??
     '?';
 
-  const RoleIcon =
-    user.linkme_role === 'enseigne_admin'
-      ? Building2
-      : user.linkme_role === 'organisation_admin'
-        ? Store
-        : user.linkme_role === 'org_independante'
-          ? Briefcase
-          : ShoppingCart;
+  const RoleIcon = user.linkme_role === 'enseigne_admin' ? Building2 : Store;
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">

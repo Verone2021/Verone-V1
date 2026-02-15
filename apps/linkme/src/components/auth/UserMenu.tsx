@@ -27,18 +27,14 @@ import { useAuth, type LinkMeRole } from '../../contexts/AuthContext';
 
 // Labels des rôles
 const ROLE_LABELS: Record<LinkMeRole, string> = {
-  enseigne_admin: 'Admin Enseigne',
-  organisation_admin: 'Organisation Enseigne',
-  org_independante: 'Org. Indépendante',
-  client: 'Client',
+  enseigne_admin: 'Enseigne',
+  organisation_admin: 'Organisation',
 };
 
 // Couleurs des badges par rôle
 const ROLE_COLORS: Record<LinkMeRole, string> = {
   enseigne_admin: 'bg-purple-100 text-purple-700',
   organisation_admin: 'bg-blue-100 text-blue-700',
-  org_independante: 'bg-orange-100 text-orange-700',
-  client: 'bg-green-100 text-green-700',
 };
 
 interface IUserMenuProps {
@@ -147,9 +143,9 @@ export function UserMenu({ className }: IUserMenuProps): JSX.Element | null {
               <User className="h-4 w-4" />
               Mon profil
             </Link>
-            {/* Lien Contacts - pour enseigne_admin et org_independante */}
+            {/* Lien Contacts - pour enseigne_admin et organisation_admin */}
             {(linkMeRole?.role === 'enseigne_admin' ||
-              linkMeRole?.role === 'org_independante') && (
+              linkMeRole?.role === 'organisation_admin') && (
               <Link
                 href="/contacts"
                 onClick={() => setIsOpen(false)}

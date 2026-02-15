@@ -552,7 +552,7 @@ export function categorizeProducts(
       continue;
     }
 
-    // Produit exclusif à une organisation (org_independante, sourcé par Verone)
+    // Produit exclusif à une organisation (organisation_admin, sourcé par Verone)
     if (product.assigned_client_id) {
       // Visible uniquement si c'est l'organisation de l'utilisateur
       if (product.assigned_client_id === userOrganisationId) {

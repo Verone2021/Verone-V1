@@ -53,11 +53,7 @@ interface UserAppRole {
 }
 
 // Types
-export type LinkMeRole =
-  | 'enseigne_admin'
-  | 'organisation_admin'
-  | 'org_independante'
-  | 'client';
+export type LinkMeRole = 'enseigne_admin' | 'organisation_admin';
 
 export interface LinkMeUserRole {
   id: string;

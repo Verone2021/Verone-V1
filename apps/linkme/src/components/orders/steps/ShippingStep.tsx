@@ -55,8 +55,6 @@ import {
 } from '@/lib/hooks/use-entity-addresses';
 import { useOrganisationContacts } from '@/lib/hooks/use-organisation-contacts';
 import type { OrganisationContact } from '@/lib/hooks/use-organisation-contacts';
-import { useParentOrganisationAddresses } from '@/lib/hooks/use-parent-organisation-addresses';
-
 import type {
   OrderFormData,
   ContactsStepData,
@@ -241,13 +239,6 @@ export function ShippingStep({
   const { data: addressesData, isLoading: addressesLoading } =
     useEntityAddresses('organisation', organisationId, 'shipping');
 
-  // Fetch parent organisation addresses (si non-franchise)
-  const {
-    parentOrg,
-    primaryAddress: parentPrimaryAddress,
-    isLoading: _parentLoading,
-  } = useParentOrganisationAddresses(!isFranchise ? enseigneId : null);
-
   // Shipping addresses
   const shippingAddresses = addressesData?.shipping ?? [];
 
@@ -267,8 +258,8 @@ export function ShippingStep({
       return {
         id: resto.existingId,
         tradeName: resto.existingName ?? null,
-        addressLine1: null, // Non disponible pour restaurant existant
-        postalCode: null, // Non disponible pour restaurant existant
+        addressLine1: resto.existingAddressLine1 ?? null,
+        postalCode: resto.existingPostalCode ?? null,
         city: resto.existingCity ?? null,
         country: resto.existingCountry ?? 'FR',
       };
@@ -314,42 +305,6 @@ export function ShippingStep({
       archivedAt: null,
     };
   }, [restaurantInfo, organisationId]);
-
-  // Convertir parentPrimaryAddress en format Address pour réutiliser AddressCard
-  const parentAddress: Address | null = useMemo(() => {
-    if (!parentPrimaryAddress || !parentOrg) return null;
-
-    const now = new Date().toISOString();
-
-    return {
-      id: 'parent',
-      ownerType: 'organisation' as const,
-      ownerId: parentOrg.id,
-      addressType: 'shipping' as const,
-      sourceApp: 'linkme',
-      label: `Adresse du siège - ${parentOrg.trade_name}`,
-      legalName: parentPrimaryAddress.legalName,
-      tradeName: parentPrimaryAddress.tradeName,
-      siret: parentPrimaryAddress.siret,
-      vatNumber: null,
-      addressLine1: parentPrimaryAddress.addressLine1 ?? '',
-      addressLine2: null,
-      postalCode: parentPrimaryAddress.postalCode ?? '',
-      city: parentPrimaryAddress.city ?? '',
-      region: null,
-      country: 'FR',
-      latitude: null,
-      longitude: null,
-      contactName: null,
-      contactEmail: null,
-      contactPhone: null,
-      isDefault: false,
-      isActive: true,
-      createdAt: now,
-      updatedAt: now,
-      archivedAt: null,
-    };
-  }, [parentPrimaryAddress, parentOrg]);
 
   // Contacts disponibles (locaux uniquement - ceux qui sont SUR PLACE)
   const localContacts = useMemo(() => {
@@ -482,24 +437,6 @@ export function ShippingStep({
     }
   }, [restaurantAddress, onUpdateDelivery]);
 
-  const handleSelectParentAddress = useCallback(() => {
-    if (parentPrimaryAddress) {
-      setSelectedAddressId('parent');
-      setShowAddressForm(false);
-      setAddressFormData({
-        addressLine1: parentPrimaryAddress.addressLine1 ?? '',
-        postalCode: parentPrimaryAddress.postalCode ?? '',
-        city: parentPrimaryAddress.city ?? '',
-        country: 'FR',
-      });
-      onUpdateDelivery({
-        address: parentPrimaryAddress.addressLine1 ?? '',
-        postalCode: parentPrimaryAddress.postalCode ?? '',
-        city: parentPrimaryAddress.city ?? '',
-      });
-    }
-  }, [parentPrimaryAddress, onUpdateDelivery]);
-
   const handleCreateNewAddress = useCallback(() => {
     setSelectedAddressId(null);
     setShowAddressForm(true);
@@ -536,6 +473,7 @@ export function ShippingStep({
   const handleContactSelect = useCallback(
     (contact: OrganisationContact) => {
       handleDeliveryContactUpdate({
+        sameAsResponsable: false,
         existingContactId: contact.id,
         contact: {
           firstName: contact.firstName,
@@ -554,6 +492,7 @@ export function ShippingStep({
   const handleCreateNew = useCallback(() => {
     setShowContactForm(true);
     handleDeliveryContactUpdate({
+      sameAsResponsable: false,
       existingContactId: null,
       contact: defaultContact,
     });
@@ -708,16 +647,6 @@ export function ShippingStep({
                         ? 'Incomplet'
                         : 'Restaurant'
                     }
-                  />
-                )}
-
-                {/* Adresse du siège (si succursale) - Réutilise AddressCard */}
-                {parentAddress && !isFranchise && (
-                  <AddressCard
-                    address={parentAddress}
-                    isSelected={selectedAddressId === 'parent'}
-                    onClick={handleSelectParentAddress}
-                    badge="Siège"
                   />
                 )}
 

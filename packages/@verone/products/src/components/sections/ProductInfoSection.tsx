@@ -13,6 +13,29 @@ import {
 } from '@verone/products/utils';
 import { cn } from '@verone/utils';
 
+/** Missing fields count per section for completion detail display */
+interface MissingFieldsBySection {
+  infosGenerales: number;
+  descriptions: number;
+  categorisation: number;
+  fournisseur: number;
+  stock: number;
+  tarification: number;
+  caracteristiques: number;
+  identifiants: number;
+}
+
+const SECTION_LABELS: Record<string, string> = {
+  infosGenerales: 'Infos generales',
+  descriptions: 'Descriptions',
+  categorisation: 'Categorisation',
+  fournisseur: 'Fournisseur',
+  stock: 'Stock',
+  tarification: 'Tarification',
+  caracteristiques: 'Caracteristiques',
+  identifiants: 'Identifiants',
+};
+
 interface ProductInfoSectionProps {
   product: {
     id: string;
@@ -26,22 +49,25 @@ interface ProductInfoSectionProps {
     variant_group_id?: string | null;
 
     // Ajouts pour calcul complétude étendu (6 champs supplémentaires)
-    variant_attributes?: Record<string, unknown> | null; // JSONB couleur, matériau, finition, etc.
-    style?: string | null; // Style décoratif (colonne products.style)
-    dimensions?: Record<string, unknown> | null; // JSONB dimensions (width, height, depth)
-    weight?: number | null; // Poids (colonne products.weight)
+    variant_attributes?: Record<string, unknown> | null;
+    style?: string | null;
+    dimensions?: Record<string, unknown> | null;
+    weight?: number | null;
     variant_group?: {
-      style?: string | null; // Style hérité du groupe
-      dimensions_length?: number | null; // Dimensions héritées
+      style?: string | null;
+      dimensions_length?: number | null;
       dimensions_width?: number | null;
       dimensions_height?: number | null;
-      common_weight?: number | null; // Poids hérité du groupe
+      common_weight?: number | null;
     } | null;
   };
   onUpdate?: (
     updates: Partial<ProductInfoSectionProps['product']>
   ) => Promise<void>;
   className?: string;
+  completionPercentage?: number;
+  /** Detailed missing fields per section (from page.tsx calculateAllMissingFields) */
+  missingFields?: MissingFieldsBySection;
 }
 
 // Helper: Calculer pourcentage complétude produit (6 champs de base + 6 caractéristiques = 12 champs)
@@ -108,12 +134,14 @@ export const ProductInfoSection = React.memo(
     product,
     onUpdate,
     className,
+    completionPercentage,
+    missingFields,
   }: ProductInfoSectionProps) {
     const [isEditingName, setIsEditingName] = React.useState(false);
     const [editedName, setEditedName] = React.useState(product.name);
     const [isSaving, setIsSaving] = React.useState(false);
 
-    const completion = calculateCompletion(product);
+    const completion = completionPercentage ?? calculateCompletion(product);
     const price = product?.cost_price; // Prix d'achat HT
     const isNameEditable = !product.variant_group_id; // Nom non éditable si dans groupe variantes
 
@@ -142,7 +170,7 @@ export const ProductInfoSection = React.memo(
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
       if (e.key === 'Enter') {
-        handleSaveName();
+        void handleSaveName().catch(console.error);
       } else if (e.key === 'Escape') {
         handleCancelEdit();
       }
@@ -163,7 +191,9 @@ export const ProductInfoSection = React.memo(
                   value={editedName}
                   onChange={e => setEditedName(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  onBlur={handleSaveName}
+                  onBlur={() => {
+                    void handleSaveName().catch(console.error);
+                  }}
                   autoFocus
                   className={cn(
                     'flex-1 px-2 py-1.5 text-sm border border-primary-500 rounded-md',
@@ -176,7 +206,9 @@ export const ProductInfoSection = React.memo(
                   size="sm"
                   variant="ghost"
                   className="h-7 w-7 p-0"
-                  onClick={handleSaveName}
+                  onClick={() => {
+                    void handleSaveName().catch(console.error);
+                  }}
                   disabled={isSaving}
                 >
                   <Check className="h-3 w-3 text-green-600" />
@@ -218,7 +250,7 @@ export const ProductInfoSection = React.memo(
           <div>
             <Label className="text-xs text-neutral-600 mb-1">SKU</Label>
             <p className="text-sm font-mono text-neutral-700 truncate">
-              {product.sku || 'Non défini'}
+              {product.sku ?? 'Non défini'}
             </p>
           </div>
         </div>
@@ -277,6 +309,17 @@ export const ProductInfoSection = React.memo(
               aria-valuemax={100}
             />
           </div>
+          {missingFields && completion < 100 && (
+            <p className="text-xs text-neutral-500 mt-1.5">
+              Champs manquants :{' '}
+              {Object.entries(missingFields)
+                .filter(([, count]) => count > 0)
+                .map(
+                  ([key, count]) => `${SECTION_LABELS[key] ?? key} (${count})`
+                )
+                .join(' · ')}
+            </p>
+          )}
         </div>
       </div>
     );
@@ -299,7 +342,9 @@ export const ProductInfoSection = React.memo(
       prevProps.product.style === nextProps.product.style &&
       prevProps.product.dimensions === nextProps.product.dimensions &&
       prevProps.product.weight === nextProps.product.weight &&
-      prevProps.product.variant_group === nextProps.product.variant_group
+      prevProps.product.variant_group === nextProps.product.variant_group &&
+      prevProps.completionPercentage === nextProps.completionPercentage &&
+      prevProps.missingFields === nextProps.missingFields
     );
   }
 );

@@ -9,7 +9,6 @@ import { useParams, useRouter } from 'next/navigation';
 
 import { CategoryHierarchySelector } from '@verone/categories';
 import { SupplierVsPricingEditSection } from '@verone/common';
-import { CompletionStatusCompact } from '@verone/products';
 import { ProductStatusCompact } from '@verone/products';
 import { SampleHistoryCompact } from '@verone/products';
 import { ProductVariantsGrid } from '@verone/products';
@@ -60,60 +59,100 @@ import {
   UserCircle2,
 } from 'lucide-react';
 
-// Champs obligatoires pour un produit complet
-const _REQUIRED_PRODUCT_FIELDS = [
-  'name',
-  'sku',
-  'supplier_id',
-  'subcategory_id',
-  'cost_price',
-  'description',
-] as const;
-
-// Mapping des champs avec leurs libellés
-const _PRODUCT_FIELD_LABELS: Record<string, string> = {
-  name: 'Nom du produit',
-  sku: 'Référence SKU',
-  supplier_id: 'Fournisseur',
-  subcategory_id: 'Sous-catégorie',
-  cost_price: "Prix d'achat HT",
-  description: 'Description',
-};
+// Nombre total de champs pour le calcul de completude
+const TOTAL_COMPLETION_FIELDS = 19;
 
 /**
- * Calcule champs obligatoires manquants par section
- * Basé sur REQUIRED_PRODUCT_FIELDS
+ * Calcule champs manquants par section (19 champs au total)
+ * Couvre TOUTES les sections de la fiche produit
  */
-function calculateMissingFields(product: Product | null) {
+function calculateAllMissingFields(product: Product | null) {
   if (!product)
     return {
       infosGenerales: 0,
       descriptions: 0,
       categorisation: 0,
       fournisseur: 0,
+      stock: 0,
+      tarification: 0,
+      caracteristiques: 0,
       identifiants: 0,
     };
 
+  const attrs = product.variant_attributes as Record<string, unknown> | null;
+
   return {
-    // Informations Générales : name, cost_price (stock_status et product_status sont NOT NULL)
+    // Informations Generales (2 champs)
     infosGenerales: [
       !product.name || product.name.trim() === '',
       !product.cost_price || product.cost_price <= 0,
     ].filter(Boolean).length,
 
-    // Descriptions : description (obligatoire seulement)
-    descriptions:
-      !product.description || product.description.trim() === '' ? 1 : 0,
+    // Descriptions (3 champs)
+    descriptions: [
+      !product.description || product.description.trim() === '',
+      !product.technical_description ||
+        product.technical_description.trim() === '',
+      !product.selling_points ||
+        (product.selling_points as string[]).length === 0,
+    ].filter(Boolean).length,
 
-    // Catégorisation : subcategory_id (hiérarchie complète)
+    // Categorisation (1 champ)
     categorisation: !product.subcategory_id ? 1 : 0,
 
-    // Fournisseur : supplier_id
-    fournisseur: !product.supplier_id ? 1 : 0,
+    // Fournisseur & References (2 champs)
+    fournisseur: [
+      !product.supplier_id,
+      !product.weight || product.weight <= 0,
+    ].filter(Boolean).length,
 
-    // Identifiants : sku
-    identifiants: !product.sku || product.sku.trim() === '' ? 1 : 0,
+    // Stock (1 champ)
+    stock: !product.condition || product.condition.trim() === '' ? 1 : 0,
+
+    // Tarification (1 champ)
+    tarification:
+      product.margin_percentage == null || product.margin_percentage <= 0
+        ? 1
+        : 0,
+
+    // Caracteristiques (6 champs - avec heritage variant_group)
+    caracteristiques: [
+      !attrs?.color,
+      !attrs?.material,
+      product.variant_group_id ? !product.variant_group?.style : !product.style,
+      !attrs?.finish,
+      product.variant_group_id
+        ? !(
+            product.variant_group?.dimensions_length ??
+            product.variant_group?.dimensions_width ??
+            product.variant_group?.dimensions_height
+          )
+        : !(
+            product.dimensions &&
+            Object.keys(product.dimensions as Record<string, unknown>).length >
+              0
+          ),
+      product.variant_group_id
+        ? !product.variant_group?.common_weight
+        : !product.weight,
+    ].filter(Boolean).length,
+
+    // Identifiants (3 champs)
+    identifiants: [
+      !product.sku || product.sku.trim() === '',
+      !product.brand || product.brand.trim() === '',
+      !product.gtin || product.gtin.trim() === '',
+    ].filter(Boolean).length,
   };
+}
+
+function calculateCompletionPercentage(
+  missing: ReturnType<typeof calculateAllMissingFields>
+): number {
+  const totalMissing = Object.values(missing).reduce((sum, n) => sum + n, 0);
+  return Math.round(
+    ((TOTAL_COMPLETION_FIELDS - totalMissing) / TOTAL_COMPLETION_FIELDS) * 100
+  );
 }
 
 // Type pour un produit avec ses relations (basé sur types Supabase générés)
@@ -199,6 +238,19 @@ export default function ProductDetailPage() {
     useState(false);
   const [showDescriptionsModal, setShowDescriptionsModal] = useState(false);
   const [isCategorizeModalOpen, setIsCategorizeModalOpen] = useState(false);
+  const [channelPricing, setChannelPricing] = useState<
+    Array<{
+      channel_id: string;
+      channel_name: string;
+      channel_code: string;
+      public_price_ht: number | null;
+      custom_price_ht: number | null;
+      discount_rate: number | null;
+      markup_rate: number | null;
+      suggested_margin_rate: number | null;
+      is_active: boolean;
+    }>
+  >([]);
 
   // Hook pour récupérer les images du produit (table product_images)
   const { images: productImages, primaryImage: _primaryImage } =
@@ -370,6 +422,56 @@ export default function ProductDetailPage() {
     });
   }, [fetchProduct]);
 
+  // Fetch channel pricing (canaux de vente) pour ce produit
+  useEffect(() => {
+    if (!productId) return;
+    const uuidRegex =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(productId)) return;
+
+    const fetchChannelPricing = async () => {
+      const supabase = createClient();
+      // Fetch all sales channels with their pricing for this product
+      const { data: channels } = await supabase
+        .from('sales_channels')
+        .select('id, name, code')
+        .eq('is_active', true)
+        .order('display_order', { ascending: true });
+
+      if (!channels) return;
+
+      const { data: pricing } = await supabase
+        .from('channel_pricing')
+        .select(
+          'channel_id, public_price_ht, custom_price_ht, discount_rate, markup_rate, suggested_margin_rate, is_active'
+        )
+        .eq('product_id', productId);
+
+      const pricingMap = new Map((pricing ?? []).map(p => [p.channel_id, p]));
+
+      const merged = channels.map(ch => {
+        const p = pricingMap.get(ch.id);
+        return {
+          channel_id: ch.id,
+          channel_name: ch.name,
+          channel_code: ch.code,
+          public_price_ht: p?.public_price_ht ?? null,
+          custom_price_ht: p?.custom_price_ht ?? null,
+          discount_rate: p?.discount_rate ?? null,
+          markup_rate: p?.markup_rate ?? null,
+          suggested_margin_rate: p?.suggested_margin_rate ?? null,
+          is_active: p?.is_active ?? false,
+        };
+      });
+
+      setChannelPricing(merged);
+    };
+
+    void fetchChannelPricing().catch(error => {
+      console.error('[ProductDetail] Channel pricing fetch failed:', error);
+    });
+  }, [productId]);
+
   // ✅ HOOKS DÉPLACÉS AVANT RETURNS CONDITIONNELS (React Rules of Hooks)
   // Breadcrumb (✅ Optimisé avec useMemo)
   const breadcrumbParts = useMemo(() => {
@@ -388,10 +490,15 @@ export default function ProductDetailPage() {
     return parts;
   }, [product]);
 
-  // Calcul complétude accordéons (✅ Optimisé avec useMemo)
+  // Calcul complétude accordéons (✅ 19 champs couvrant toutes les sections)
   const missingFields = useMemo(
-    () => calculateMissingFields(product),
+    () => calculateAllMissingFields(product),
     [product]
+  );
+
+  const completionPercentage = useMemo(
+    () => calculateCompletionPercentage(missingFields),
+    [missingFields]
   );
 
   // Calcul sourcing (interne vs client/sur mesure vs affilié)
@@ -445,6 +552,130 @@ export default function ProductDetailPage() {
     product?.enseigne,
     product?.assigned_client,
   ]);
+
+  // Previews pour les accordions (résumé visible quand fermé)
+  const previews = useMemo(() => {
+    if (!product) return {};
+
+    // Descriptions preview
+    const descParts: string[] = [];
+    if (product.description) {
+      descParts.push(
+        product.description.slice(0, 60) +
+          (product.description.length > 60 ? '...' : '')
+      );
+    }
+    if (product.technical_description) descParts.push('Technique');
+    const sellingPts = product.selling_points as string[] | null;
+    if (sellingPts?.length) descParts.push(`${sellingPts.length} pts de vente`);
+    const descriptions =
+      descParts.length > 0 ? descParts.join(' · ') : 'Aucune description';
+
+    // Categorisation preview
+    const catParts: string[] = [];
+    if (product.subcategory?.category?.family)
+      catParts.push(product.subcategory.category.family.name);
+    if (product.subcategory?.category)
+      catParts.push(product.subcategory.category.name);
+    if (product.subcategory) catParts.push(product.subcategory.name);
+    const categorisation =
+      catParts.length > 0 ? catParts.join(' › ') : 'Non categorise';
+
+    // Fournisseur preview
+    const supplierName =
+      product.supplier?.trade_name ?? product.supplier?.legal_name;
+    const fournisseur = supplierName
+      ? `${supplierName}${product.supplier_reference ? ` · Ref: ${product.supplier_reference}` : ''}`
+      : 'Aucun fournisseur';
+
+    // Stock preview
+    const stock = product.condition
+      ? `Condition: ${product.condition}${product.min_stock ? ` · Min: ${product.min_stock}` : ''}`
+      : 'Non renseigne';
+
+    // Tarification preview
+    const tarifParts: string[] = [];
+    const fmtEur = (v: number) =>
+      new Intl.NumberFormat('fr-FR', {
+        style: 'currency',
+        currency: 'EUR',
+      }).format(v);
+    if (product.cost_price && product.cost_price > 0) {
+      tarifParts.push(`Achat: ${fmtEur(product.cost_price)}`);
+    }
+    if (product.margin_percentage && product.margin_percentage > 0) {
+      tarifParts.push(`Marge: ${product.margin_percentage}%`);
+    }
+    // Prix de vente calculé (cost_price + eco_tax) * (1 + margin/100) - pas de colonne selling_price en DB
+    if (
+      product.cost_price &&
+      product.cost_price > 0 &&
+      product.margin_percentage &&
+      product.margin_percentage > 0
+    ) {
+      const ecoTax = product.eco_tax_default ?? 0;
+      const minSelling =
+        (product.cost_price + ecoTax) * (1 + product.margin_percentage / 100);
+      tarifParts.push(`Vente min: ${fmtEur(minSelling)}`);
+    }
+    const tarification =
+      tarifParts.length > 0 ? tarifParts.join(' · ') : 'Non renseigne';
+
+    // Caracteristiques preview
+    const attrs = product.variant_attributes as Record<string, unknown> | null;
+    const charParts: string[] = [];
+    if (attrs?.color) charParts.push(String(attrs.color));
+    if (attrs?.material) charParts.push(String(attrs.material));
+    const styleVal = product.variant_group_id
+      ? product.variant_group?.style
+      : product.style;
+    if (styleVal) charParts.push(String(styleVal));
+    const caracteristiques =
+      charParts.length > 0 ? charParts.join(' · ') : 'Non renseigne';
+
+    // Identifiants preview
+    const idParts: string[] = [];
+    if (product.sku) idParts.push(`SKU: ${product.sku}`);
+    if (product.brand) idParts.push(product.brand);
+    if (product.gtin) idParts.push(`GTIN: ${product.gtin}`);
+    const identifiants =
+      idParts.length > 0 ? idParts.join(' · ') : 'Non renseigne';
+
+    // Echantillons preview
+    const echantillons = product.requires_sample
+      ? 'Echantillon requis'
+      : 'Non requis';
+
+    // Visibilite LinkMe preview
+    const visibilite = product.show_on_linkme_globe
+      ? 'Visible sur le globe LinkMe'
+      : 'Non publie';
+
+    // Metadonnees preview
+    const metaParts: string[] = [];
+    if (product.created_at)
+      metaParts.push(
+        `Cree le ${new Date(product.created_at).toLocaleDateString('fr-FR')}`
+      );
+    if (product.updated_at)
+      metaParts.push(
+        `Modifie le ${new Date(product.updated_at).toLocaleDateString('fr-FR')}`
+      );
+    const metadonnees = metaParts.join(' · ');
+
+    return {
+      descriptions,
+      categorisation,
+      fournisseur,
+      stock,
+      tarification,
+      caracteristiques,
+      identifiants,
+      echantillons,
+      visibilite,
+      metadonnees,
+    };
+  }, [product]);
 
   // État de chargement
   if (loading) {
@@ -608,14 +839,6 @@ export default function ProductDetailPage() {
               }}
             />
 
-            <CompletionStatusCompact
-              product={{
-                id: product.id,
-                completion_percentage: product.completion_percentage ?? 0,
-              }}
-              missingFields={missingFields}
-            />
-
             {/* Historique échantillons commandés */}
             <SampleHistoryCompact productId={product.id} />
           </div>
@@ -646,6 +869,8 @@ export default function ProductDetailPage() {
                 subcategory_id: product.subcategory_id,
                 variant_group_id: product.variant_group_id,
               }}
+              completionPercentage={completionPercentage}
+              missingFields={missingFields}
               onUpdate={async updates => {
                 await handleProductUpdate(updates as Partial<ProductRow>);
               }}
@@ -757,11 +982,12 @@ export default function ProductDetailPage() {
             </div>
           </ProductDetailAccordion>
 
-          {/* Accordion 2: Descriptions */}
+          {/* Accordion 2: Descriptions (ouvert par defaut - critique pour boutique) */}
           <ProductDetailAccordion
             title="Descriptions"
             icon={Beaker}
-            defaultOpen={false}
+            defaultOpen
+            preview={previews.descriptions}
             badge={
               missingFields.descriptions > 0
                 ? missingFields.descriptions
@@ -786,6 +1012,7 @@ export default function ProductDetailPage() {
             title="Catégorisation"
             icon={Tag}
             defaultOpen={false}
+            preview={previews.categorisation}
             badge={
               missingFields.categorisation > 0
                 ? missingFields.categorisation
@@ -830,11 +1057,12 @@ export default function ProductDetailPage() {
             </div>
           </ProductDetailAccordion>
 
-          {/* Accordion 3: Fournisseur & Références */}
+          {/* Accordion 4: Fournisseur & Références */}
           <ProductDetailAccordion
             title="Fournisseur & Références"
             icon={Truck}
             defaultOpen={false}
+            preview={previews.fournisseur}
             badge={
               missingFields.fournisseur > 0
                 ? missingFields.fournisseur
@@ -884,11 +1112,13 @@ export default function ProductDetailPage() {
             </ProductDetailAccordion>
           )}
 
-          {/* Accordion 5: Stock */}
+          {/* Accordion 6: Stock */}
           <ProductDetailAccordion
             title="Stock"
             icon={Boxes}
             defaultOpen={false}
+            preview={previews.stock}
+            badge={missingFields.stock > 0 ? missingFields.stock : undefined}
           >
             <StockEditSection
               product={
@@ -904,11 +1134,17 @@ export default function ProductDetailPage() {
             />
           </ProductDetailAccordion>
 
-          {/* Accordion 6: Tarification */}
+          {/* Accordion 7: Tarification */}
           <ProductDetailAccordion
             title="Tarification"
             icon={DollarSign}
             defaultOpen={false}
+            preview={previews.tarification}
+            badge={
+              missingFields.tarification > 0
+                ? missingFields.tarification
+                : undefined
+            }
           >
             <SupplierVsPricingEditSection
               product={{
@@ -916,19 +1152,34 @@ export default function ProductDetailPage() {
                 cost_price: product.cost_price ?? undefined,
                 margin_percentage: product.margin_percentage ?? undefined,
                 variant_group_id: product.variant_group_id ?? undefined,
+                cost_price_avg: product.cost_price_avg,
+                cost_price_min: product.cost_price_min,
+                cost_price_max: product.cost_price_max,
+                cost_price_last: product.cost_price_last,
+                cost_price_count: product.cost_price_count,
+                target_margin_percentage: product.target_margin_percentage,
               }}
               variantGroup={product.variant_group ?? null}
+              channelPricing={channelPricing}
               onUpdate={updates => {
-                void handleProductUpdate(updates).catch(console.error);
+                void handleProductUpdate(updates as Partial<ProductRow>).catch(
+                  console.error
+                );
               }}
             />
           </ProductDetailAccordion>
 
-          {/* Accordion 7: Caractéristiques */}
+          {/* Accordion 8: Caractéristiques */}
           <ProductDetailAccordion
             title="Caractéristiques"
             icon={Settings}
             defaultOpen={false}
+            preview={previews.caracteristiques}
+            badge={
+              missingFields.caracteristiques > 0
+                ? missingFields.caracteristiques
+                : undefined
+            }
           >
             {product.variant_group_id && (
               <div className="mb-3 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-800">
@@ -961,11 +1212,12 @@ export default function ProductDetailPage() {
             </div>
           </ProductDetailAccordion>
 
-          {/* Accordion 8: Identifiants */}
+          {/* Accordion 9: Identifiants */}
           <ProductDetailAccordion
             title="Identifiants"
             icon={Hash}
             defaultOpen={false}
+            preview={previews.identifiants}
             badge={
               missingFields.identifiants > 0
                 ? missingFields.identifiants
@@ -986,11 +1238,12 @@ export default function ProductDetailPage() {
             />
           </ProductDetailAccordion>
 
-          {/* Accordion 9: Échantillons */}
+          {/* Accordion 10: Échantillons */}
           <ProductDetailAccordion
             title="Gestion Échantillons"
             icon={Beaker}
             defaultOpen={false}
+            preview={previews.echantillons}
           >
             <SampleRequirementSection
               productId={product.id}
@@ -1017,11 +1270,12 @@ export default function ProductDetailPage() {
             />
           </ProductDetailAccordion>
 
-          {/* Accordion 10: Visibilité LinkMe */}
+          {/* Accordion 11: Visibilité LinkMe */}
           <ProductDetailAccordion
             title="Visibilité LinkMe"
             icon={Globe}
             defaultOpen={false}
+            preview={previews.visibilite}
           >
             <div className="space-y-4">
               <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
@@ -1060,11 +1314,12 @@ export default function ProductDetailPage() {
             </div>
           </ProductDetailAccordion>
 
-          {/* Accordion 11: Métadonnées & Audit */}
+          {/* Accordion 12: Métadonnées & Audit */}
           <ProductDetailAccordion
             title="Métadonnées & Audit"
             icon={Clock}
             defaultOpen={false}
+            preview={previews.metadonnees}
           >
             <div className="space-y-2 text-sm">
               <div className="flex justify-between py-2 border-b border-neutral-100">

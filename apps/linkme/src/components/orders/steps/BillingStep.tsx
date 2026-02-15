@@ -1095,7 +1095,9 @@ export function BillingStep({
                     isActive={
                       formData.contacts.billingAddress.mode === 'parent_address'
                     }
-                    parentName={parentOrg?.trade_name ?? null}
+                    parentName={
+                      parentOrg?.trade_name ?? parentOrg?.legal_name ?? null
+                    }
                     legalName={parentOrg?.legal_name ?? null}
                     addressLine1={parentPrimaryAddress?.addressLine1 ?? null}
                     postalCode={parentPrimaryAddress?.postalCode ?? null}

@@ -13,8 +13,6 @@ import {
   Filter,
   Building2,
   Store,
-  ShoppingCart,
-  Briefcase,
   Mail,
   Phone,
   Check,
@@ -41,14 +39,7 @@ import {
  * Badge Rôle avec couleur
  */
 function RoleBadge({ role }: { role: LinkMeRole }) {
-  const Icon =
-    role === 'enseigne_admin'
-      ? Building2
-      : role === 'organisation_admin'
-        ? Store
-        : role === 'org_independante'
-          ? Briefcase
-          : ShoppingCart;
+  const Icon = role === 'enseigne_admin' ? Building2 : Store;
 
   return (
     <span
@@ -362,12 +353,6 @@ export function UsersSection() {
           value={stats?.byRole.organisation_admin ?? 0}
           icon={Store}
           color="bg-indigo-500"
-        />
-        <StatCard
-          title="Clients"
-          value={stats?.byRole.client ?? 0}
-          icon={ShoppingCart}
-          color="bg-green-500"
         />
       </div>
 

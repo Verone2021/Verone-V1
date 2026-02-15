@@ -23,9 +23,16 @@ export interface ApproveOrderInput {
   orderId: string;
 }
 
+export interface RequestInfoMissingField {
+  label: string;
+  category: string;
+}
+
 export interface RequestInfoInput {
   orderId: string;
   message: string;
+  /** Champs manquants détectés automatiquement (enrichit l'email) */
+  missingFields?: RequestInfoMissingField[];
 }
 
 export interface RejectOrderInput {
@@ -75,6 +82,19 @@ export interface LinkMeOrderDetails {
   reception_contact_email: string | null;
   reception_contact_phone: string | null;
   confirmed_delivery_date: string | null;
+  // Delivery fields (from form Step 7)
+  delivery_contact_name: string | null;
+  delivery_contact_email: string | null;
+  delivery_contact_phone: string | null;
+  delivery_address: string | null;
+  delivery_postal_code: string | null;
+  delivery_city: string | null;
+  delivery_notes: string | null;
+  is_mall_delivery: boolean | null;
+  mall_email: string | null;
+  semi_trailer_accessible: boolean | null;
+  access_form_required: boolean | null;
+  access_form_url: string | null;
   created_at: string | null;
   updated_at: string | null;
 }
@@ -120,6 +140,21 @@ async function approveOrder(
   input: ApproveOrderInput
 ): Promise<OrderActionResult> {
   const supabase = createClient();
+
+  // 0. Guard double-action: vérifier que la commande est bien en attente
+  const { data: currentOrder, error: guardError } = await supabase
+    .from('sales_orders')
+    .select('status, pending_admin_validation')
+    .eq('id', input.orderId)
+    .single();
+
+  if (guardError) {
+    throw new Error(`Erreur vérification commande: ${guardError.message}`);
+  }
+
+  if (!currentOrder?.pending_admin_validation) {
+    throw new Error('Cette commande a déjà été traitée (approuvée ou refusée)');
+  }
 
   // 1. Récupérer les détails LinkMe
   const details = await fetchLinkMeOrderDetails(input.orderId);
@@ -248,13 +283,17 @@ async function approveOrder(
     throw new Error(`Erreur mise à jour détails: ${detailsError.message}`);
   }
 
-  // 5. Mettre à jour le status de la commande
+  // 5. Mettre à jour le status de la commande + audit trail
+  const currentUserId = (await supabase.auth.getUser()).data.user?.id;
   const { error: orderError } = await supabase
     .from('sales_orders')
     .update({
       status: 'validated',
+      pending_admin_validation: false,
+      confirmed_at: new Date().toISOString(),
+      confirmed_by: currentUserId,
       updated_at: new Date().toISOString(),
-    })
+    } as Record<string, unknown>)
     .eq('id', input.orderId);
 
   if (orderError) {
@@ -277,8 +316,10 @@ async function approveOrder(
     | { trade_name?: string | null; legal_name?: string | null }
     | undefined;
   const organisationName = orgData?.trade_name ?? orgData?.legal_name ?? null;
+
+  let emailSent = true;
   try {
-    await fetch('/api/emails/linkme-order-approved', {
+    const emailResponse = await fetch('/api/emails/linkme-order-approved', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -290,13 +331,23 @@ async function approveOrder(
         totalTtc: orderData?.total_ttc ?? 0,
       }),
     });
+    if (!emailResponse.ok) {
+      console.error(
+        'Erreur envoi email approbation: HTTP',
+        emailResponse.status
+      );
+      emailSent = false;
+    }
   } catch (emailError) {
     console.error('Erreur envoi email approbation:', emailError);
+    emailSent = false;
   }
 
   return {
     success: true,
-    message: 'Commande approuvée. Email Étape 4 envoyé.',
+    message: emailSent
+      ? 'Commande approuvée. Email Étape 4 envoyé.'
+      : 'Commande approuvée. ATTENTION: email non envoyé (vérifier manuellement).',
     step4Token,
   };
 }
@@ -372,6 +423,7 @@ async function requestInfo(
         requesterName: details.requester_name,
         message: input.message,
         organisationName,
+        missingFields: input.missingFields ?? [],
       }),
     });
   } catch (emailError) {
@@ -394,6 +446,21 @@ async function rejectOrder(
   input: RejectOrderInput
 ): Promise<OrderActionResult> {
   const supabase = createClient();
+
+  // 0. Guard double-action: vérifier que la commande est bien en attente
+  const { data: currentOrder, error: guardError } = await supabase
+    .from('sales_orders')
+    .select('status, pending_admin_validation')
+    .eq('id', input.orderId)
+    .single();
+
+  if (guardError) {
+    throw new Error(`Erreur vérification commande: ${guardError.message}`);
+  }
+
+  if (!currentOrder?.pending_admin_validation) {
+    throw new Error('Cette commande a déjà été traitée (approuvée ou refusée)');
+  }
 
   // Paralléliser les requêtes pour éviter séquentiel (fix perf)
   const [details, orderResult] = await Promise.all([
@@ -433,14 +500,18 @@ async function rejectOrder(
   const newNote = `[${timestamp}] COMMANDE REFUSEE: ${input.reason}`;
   const updatedNotes = order.notes ? `${order.notes}\n\n${newNote}` : newNote;
 
-  // 4. Mettre à jour la commande
+  // 4. Mettre à jour la commande + audit trail
+  const rejectUserId = (await supabase.auth.getUser()).data.user?.id;
   const { error: updateError } = await supabase
     .from('sales_orders')
     .update({
       status: 'cancelled',
+      pending_admin_validation: false,
+      cancelled_at: new Date().toISOString(),
+      cancelled_by: rejectUserId,
       notes: updatedNotes,
       updated_at: new Date().toISOString(),
-    })
+    } as Record<string, unknown>)
     .eq('id', input.orderId);
 
   if (updateError) {
@@ -564,10 +635,28 @@ export interface UpdateLinkMeDetailsInput {
     billing_name: string | null;
     billing_email: string | null;
     billing_phone: string | null;
+    // Livraison
     delivery_terms_accepted: boolean | null;
     desired_delivery_date: string | null;
     mall_form_required: boolean | null;
     mall_form_email: string | null;
+    delivery_contact_name: string | null;
+    delivery_contact_email: string | null;
+    delivery_contact_phone: string | null;
+    delivery_address: string | null;
+    delivery_postal_code: string | null;
+    delivery_city: string | null;
+    delivery_notes: string | null;
+    is_mall_delivery: boolean | null;
+    mall_email: string | null;
+    semi_trailer_accessible: boolean | null;
+    access_form_required: boolean | null;
+    access_form_url: string | null;
+    // Post-approbation
+    reception_contact_name: string | null;
+    reception_contact_email: string | null;
+    reception_contact_phone: string | null;
+    confirmed_delivery_date: string | null;
   }>;
 }
 

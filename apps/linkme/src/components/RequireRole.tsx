@@ -39,7 +39,7 @@ export interface RequireRoleProps {
  *
  * // Avec fallback
  * <RequireRole
- *   roles={['enseigne_admin', 'org_independante']}
+ *   roles={['enseigne_admin', 'organisation_admin']}
  *   fallback={<p>Accès restreint</p>}
  * >
  *   <FeatureContent />

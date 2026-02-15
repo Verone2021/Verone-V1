@@ -67,7 +67,7 @@ import {
 import { formatCurrency } from '../../../../../types/analytics';
 
 // Rôles autorisés
-const AUTHORIZED_ROLES: LinkMeRole[] = ['enseigne_admin', 'org_independante'];
+const AUTHORIZED_ROLES: LinkMeRole[] = ['enseigne_admin', 'organisation_admin'];
 
 export default function SelectionProductsPage() {
   const params = useParams();

@@ -1,8 +1,9 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useToast } from '@verone/common';
+import { useActiveEnseignes } from '@verone/organisations';
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import {
@@ -44,6 +45,12 @@ import {
   Banknote,
   Hourglass,
   ArrowRightCircle,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  ChevronLeft,
+  ChevronRight,
+  X,
 } from 'lucide-react';
 
 import { PaymentRequestModalAdmin } from '../components/PaymentRequestModalAdmin';
@@ -82,7 +89,9 @@ interface Commission {
     order_number: string;
     payment_status_v2: string | null;
     customer_type: string;
+    total_ht: number | null;
     total_ttc: number | null;
+    created_at: string | null;
   } | null;
 }
 
@@ -98,6 +107,8 @@ interface Affiliate {
 // ============================================
 
 type TabType = 'en_attente' | 'payables' | 'en_cours' | 'payees';
+type SortColumn = 'date' | 'order_number' | null;
+type SortDirection = 'asc' | 'desc';
 
 const TABS_CONFIG: Record<
   TabType,
@@ -173,10 +184,16 @@ export default function LinkMeCommissionsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [affiliateFilter, setAffiliateFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [filterYear, setFilterYear] = useState<number | null>(null);
+  const [enseigneFilter, setEnseigneFilter] = useState<string>('all');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [processing, setProcessing] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>('payables');
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [pageSize, setPageSize] = useState(10);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [sortColumn, setSortColumn] = useState<SortColumn>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
   const fetchData = useCallback(async () => {
     const supabase = createClient();
@@ -190,7 +207,7 @@ export default function LinkMeCommissionsPage() {
           `
           *,
           affiliate:linkme_affiliates(display_name, enseigne_id, organisation_id),
-          sales_order:sales_orders(order_number, payment_status_v2, customer_type, total_ttc)
+          sales_order:sales_orders(order_number, payment_status_v2, customer_type, total_ht, total_ttc, created_at)
         `
         )
         .order('created_at', { ascending: false })
@@ -227,6 +244,57 @@ export default function LinkMeCommissionsPage() {
     });
   }, [fetchData]);
 
+  const { enseignes } = useActiveEnseignes();
+
+  const availableYears = useMemo(() => {
+    const years = new Set<number>();
+    commissions.forEach(c => {
+      const dateRef = c.sales_order?.created_at ?? c.created_at;
+      if (dateRef) years.add(new Date(dateRef).getFullYear());
+    });
+    return Array.from(years).sort((a, b) => b - a);
+  }, [commissions]);
+
+  const hasActiveFilters =
+    searchTerm !== '' ||
+    filterYear !== null ||
+    typeFilter !== 'all' ||
+    enseigneFilter !== 'all' ||
+    affiliateFilter !== 'all';
+
+  function resetFilters() {
+    setSearchTerm('');
+    setFilterYear(null);
+    setTypeFilter('all');
+    setEnseigneFilter('all');
+    setAffiliateFilter('all');
+    setCurrentPage(0);
+  }
+
+  // ============================================
+  // SORT HANDLERS
+  // ============================================
+
+  const handleSort = (column: SortColumn) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn(column);
+      setSortDirection('desc');
+    }
+  };
+
+  const renderSortIcon = (column: SortColumn) => {
+    if (sortColumn !== column) {
+      return <ArrowUpDown className="h-4 w-4 opacity-50" />;
+    }
+    return sortDirection === 'asc' ? (
+      <ArrowUp className="h-4 w-4" />
+    ) : (
+      <ArrowDown className="h-4 w-4" />
+    );
+  };
+
   // ============================================
   // FILTER BY TAB
   // ============================================
@@ -255,10 +323,10 @@ export default function LinkMeCommissionsPage() {
   }
 
   function applyFilters(list: Commission[]): Commission[] {
-    return list.filter(c => {
+    const filtered = list.filter(c => {
       // Search by order number
       const orderNum =
-        c.order_number ?? c.sales_order?.order_number ?? c.order_id ?? '';
+        c.sales_order?.order_number ?? c.order_number ?? c.order_id ?? '';
       const matchesSearch = orderNum
         .toLowerCase()
         .includes(searchTerm.toLowerCase());
@@ -276,8 +344,46 @@ export default function LinkMeCommissionsPage() {
           (typeFilter === 'organisation' && !isEnseigne);
       }
 
+      // Filter by year
+      if (filterYear !== null) {
+        const dateRef = c.sales_order?.created_at ?? c.created_at;
+        if (!dateRef || new Date(dateRef).getFullYear() !== filterYear)
+          return false;
+      }
+
+      // Filter by specific enseigne
+      if (enseigneFilter !== 'all') {
+        if (c.affiliate?.enseigne_id !== enseigneFilter) return false;
+      }
+
       return matchesSearch && matchesAffiliate && matchesType;
     });
+
+    // Sort
+    if (sortColumn) {
+      filtered.sort((a, b) => {
+        let comparison = 0;
+
+        switch (sortColumn) {
+          case 'date': {
+            const dateA = a.sales_order?.created_at ?? a.created_at ?? '';
+            const dateB = b.sales_order?.created_at ?? b.created_at ?? '';
+            comparison = new Date(dateA).getTime() - new Date(dateB).getTime();
+            break;
+          }
+          case 'order_number': {
+            const numA = a.sales_order?.order_number ?? a.order_number ?? '';
+            const numB = b.sales_order?.order_number ?? b.order_number ?? '';
+            comparison = numA.localeCompare(numB);
+            break;
+          }
+        }
+
+        return sortDirection === 'asc' ? comparison : -comparison;
+      });
+    }
+
+    return filtered;
   }
 
   // ============================================
@@ -373,14 +479,18 @@ export default function LinkMeCommissionsPage() {
     ];
 
     const rows = filtered.map(c => [
-      c.created_at ? new Date(c.created_at).toLocaleDateString('fr-FR') : '-',
-      c.order_number ?? c.sales_order?.order_number ?? '-',
+      (c.sales_order?.created_at ?? c.created_at)
+        ? new Date(
+            (c.sales_order?.created_at ?? c.created_at)!
+          ).toLocaleDateString('fr-FR')
+        : '-',
+      c.sales_order?.order_number ?? c.order_number ?? '-',
       c.affiliate?.display_name ?? 'N/A',
       c.affiliate?.enseigne_id ? 'Enseigne' : 'Organisation',
       c.sales_order?.payment_status_v2 === 'paid' ? 'Payé' : 'En attente',
-      c.order_amount_ht.toFixed(2),
+      (c.sales_order?.total_ht ?? c.order_amount_ht).toFixed(2),
       c.affiliate_commission.toFixed(2),
-      (c.affiliate_commission_ttc ?? c.affiliate_commission * 1.2).toFixed(2),
+      (c.affiliate_commission_ttc ?? 0).toFixed(2),
       statusConfig[(c.status ?? 'pending') as keyof typeof statusConfig]
         ?.label ?? c.status,
     ]);
@@ -423,32 +533,28 @@ export default function LinkMeCommissionsPage() {
     en_attente: {
       count: getCommissionsByTab('en_attente').length,
       total: getCommissionsByTab('en_attente').reduce(
-        (sum, c) =>
-          sum + (c.affiliate_commission_ttc ?? c.affiliate_commission * 1.2),
+        (sum, c) => sum + (c.affiliate_commission_ttc ?? 0),
         0
       ),
     },
     payables: {
       count: getCommissionsByTab('payables').length,
       total: getCommissionsByTab('payables').reduce(
-        (sum, c) =>
-          sum + (c.affiliate_commission_ttc ?? c.affiliate_commission * 1.2),
+        (sum, c) => sum + (c.affiliate_commission_ttc ?? 0),
         0
       ),
     },
     en_cours: {
       count: getCommissionsByTab('en_cours').length,
       total: getCommissionsByTab('en_cours').reduce(
-        (sum, c) =>
-          sum + (c.affiliate_commission_ttc ?? c.affiliate_commission * 1.2),
+        (sum, c) => sum + (c.affiliate_commission_ttc ?? 0),
         0
       ),
     },
     payees: {
       count: getCommissionsByTab('payees').length,
       total: getCommissionsByTab('payees').reduce(
-        (sum, c) =>
-          sum + (c.affiliate_commission_ttc ?? c.affiliate_commission * 1.2),
+        (sum, c) => sum + (c.affiliate_commission_ttc ?? 0),
         0
       ),
     },
@@ -529,6 +635,7 @@ export default function LinkMeCommissionsPage() {
         onValueChange={v => {
           setActiveTab(v as TabType);
           setSelectedIds([]);
+          setCurrentPage(0);
         }}
       >
         <TabsList className="grid w-full grid-cols-4">
@@ -549,7 +656,16 @@ export default function LinkMeCommissionsPage() {
 
         {(Object.keys(TABS_CONFIG) as TabType[]).map(tab => {
           const config = TABS_CONFIG[tab];
-          const tabCommissions = applyFilters(getCommissionsByTab(tab));
+          const allTabCommissions = applyFilters(getCommissionsByTab(tab));
+          const totalPages = Math.max(
+            1,
+            Math.ceil(allTabCommissions.length / pageSize)
+          );
+          const safePage = Math.min(currentPage, totalPages - 1);
+          const tabCommissions = allTabCommissions.slice(
+            safePage * pageSize,
+            safePage * pageSize + pageSize
+          );
           const showCheckboxes = tab === 'payables' || tab === 'en_cours';
 
           return (
@@ -602,13 +718,79 @@ export default function LinkMeCommissionsPage() {
                       <Input
                         placeholder="Rechercher par N° commande..."
                         value={searchTerm}
-                        onChange={e => setSearchTerm(e.target.value)}
+                        onChange={e => {
+                          setSearchTerm(e.target.value);
+                          setCurrentPage(0);
+                        }}
                         className="pl-10"
                       />
                     </div>
                     <Select
+                      value={filterYear === null ? 'all' : String(filterYear)}
+                      onValueChange={v => {
+                        setFilterYear(v === 'all' ? null : Number(v));
+                        setCurrentPage(0);
+                      }}
+                    >
+                      <SelectTrigger className="w-[140px]">
+                        <SelectValue placeholder="Année" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Toutes les années</SelectItem>
+                        {availableYears.map(year => (
+                          <SelectItem key={year} value={String(year)}>
+                            {year}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Select
+                      value={typeFilter}
+                      onValueChange={v => {
+                        setTypeFilter(v);
+                        setCurrentPage(0);
+                      }}
+                    >
+                      <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Tous les types</SelectItem>
+                        <SelectItem value="enseigne">Enseigne</SelectItem>
+                        <SelectItem value="organisation">
+                          Organisation
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {typeFilter !== 'organisation' && (
+                      <Select
+                        value={enseigneFilter}
+                        onValueChange={v => {
+                          setEnseigneFilter(v);
+                          setCurrentPage(0);
+                        }}
+                      >
+                        <SelectTrigger className="w-[200px]">
+                          <SelectValue placeholder="Enseigne" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">
+                            Toutes les enseignes
+                          </SelectItem>
+                          {enseignes.map(enseigne => (
+                            <SelectItem key={enseigne.id} value={enseigne.id}>
+                              {enseigne.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                    <Select
                       value={affiliateFilter}
-                      onValueChange={setAffiliateFilter}
+                      onValueChange={v => {
+                        setAffiliateFilter(v);
+                        setCurrentPage(0);
+                      }}
                     >
                       <SelectTrigger className="w-[200px]">
                         <SelectValue placeholder="Affilié" />
@@ -622,18 +804,17 @@ export default function LinkMeCommissionsPage() {
                         ))}
                       </SelectContent>
                     </Select>
-                    <Select value={typeFilter} onValueChange={setTypeFilter}>
-                      <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder="Type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Tous les types</SelectItem>
-                        <SelectItem value="enseigne">Enseigne</SelectItem>
-                        <SelectItem value="organisation">
-                          Organisation
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
+                    {hasActiveFilters && (
+                      <ButtonV2
+                        variant="ghost"
+                        size="sm"
+                        onClick={resetFilters}
+                        className="h-10 px-3 text-muted-foreground hover:text-foreground"
+                      >
+                        <X className="h-4 w-4 mr-1" />
+                        Réinitialiser
+                      </ButtonV2>
+                    )}
                   </div>
 
                   {/* TABLE */}
@@ -665,8 +846,24 @@ export default function LinkMeCommissionsPage() {
                               />
                             </TableHead>
                           )}
-                          <TableHead>Date</TableHead>
-                          <TableHead>N° Commande</TableHead>
+                          <TableHead
+                            className="cursor-pointer hover:bg-gray-50"
+                            onClick={() => handleSort('date')}
+                          >
+                            <span className="inline-flex items-center gap-1">
+                              Date
+                              {renderSortIcon('date')}
+                            </span>
+                          </TableHead>
+                          <TableHead
+                            className="cursor-pointer hover:bg-gray-50"
+                            onClick={() => handleSort('order_number')}
+                          >
+                            <span className="inline-flex items-center gap-1">
+                              N° Commande
+                              {renderSortIcon('order_number')}
+                            </span>
+                          </TableHead>
                           <TableHead>Affilié</TableHead>
                           <TableHead>Type</TableHead>
                           <TableHead>Paiement</TableHead>
@@ -688,13 +885,11 @@ export default function LinkMeCommissionsPage() {
                             ? 'Enseigne'
                             : 'Organisation';
                           const orderNumber =
-                            commission.order_number ??
                             commission.sales_order?.order_number ??
+                            commission.order_number ??
                             `#${commission.order_id.slice(0, 8)}`;
                           const commissionTTC =
-                            commission.affiliate_commission_ttc ??
-                            commission.affiliate_commission *
-                              (1 + (commission.tax_rate ?? 0.2));
+                            commission.affiliate_commission_ttc ?? 0;
 
                           return (
                             <TableRow key={commission.id}>
@@ -711,9 +906,11 @@ export default function LinkMeCommissionsPage() {
                                 </TableCell>
                               )}
                               <TableCell>
-                                {commission.created_at
+                                {(commission.sales_order?.created_at ??
+                                commission.created_at)
                                   ? new Date(
-                                      commission.created_at
+                                      (commission.sales_order?.created_at ??
+                                        commission.created_at)!
                                     ).toLocaleDateString('fr-FR', {
                                       day: '2-digit',
                                       month: '2-digit',
@@ -760,12 +957,14 @@ export default function LinkMeCommissionsPage() {
                                 </Badge>
                               </TableCell>
                               <TableCell className="text-right">
-                                {formatPrice(commission.order_amount_ht)}
+                                {formatPrice(
+                                  commission.sales_order?.total_ht ??
+                                    commission.order_amount_ht
+                                )}
                               </TableCell>
                               <TableCell className="text-right">
                                 {formatPrice(
-                                  commission.sales_order?.total_ttc ??
-                                    commission.order_amount_ht * 1.2
+                                  commission.sales_order?.total_ttc ?? 0
                                 )}
                               </TableCell>
                               <TableCell className="text-right font-medium">
@@ -788,6 +987,71 @@ export default function LinkMeCommissionsPage() {
                         })}
                       </TableBody>
                     </Table>
+                  )}
+
+                  {/* PAGINATION */}
+                  {allTabCommissions.length > 0 && (
+                    <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-muted-foreground">
+                          Afficher
+                        </span>
+                        <ButtonV2
+                          variant={pageSize === 10 ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => {
+                            setPageSize(10);
+                            setCurrentPage(0);
+                          }}
+                        >
+                          10
+                        </ButtonV2>
+                        <ButtonV2
+                          variant={pageSize === 20 ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => {
+                            setPageSize(20);
+                            setCurrentPage(0);
+                          }}
+                        >
+                          20
+                        </ButtonV2>
+                        <span className="text-sm text-muted-foreground">
+                          par page
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-muted-foreground">
+                          {safePage * pageSize + 1}–
+                          {Math.min(
+                            (safePage + 1) * pageSize,
+                            allTabCommissions.length
+                          )}{' '}
+                          sur {allTabCommissions.length}
+                        </span>
+                        <ButtonV2
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            setCurrentPage(p => Math.max(0, p - 1))
+                          }
+                          disabled={safePage === 0}
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                        </ButtonV2>
+                        <ButtonV2
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            setCurrentPage(p => Math.min(totalPages - 1, p + 1))
+                          }
+                          disabled={safePage >= totalPages - 1}
+                        >
+                          <ChevronRight className="h-4 w-4" />
+                        </ButtonV2>
+                      </div>
+                    </div>
                   )}
                 </CardContent>
               </Card>

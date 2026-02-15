@@ -67,21 +67,21 @@ export interface AffiliateProductPrice {
 }
 
 /**
- * Hook: recupere les produits crees par l'affilié (enseigne ou org independante)
+ * Hook: recupere les produits crees par l'affilié (enseigne ou organisation)
  */
 export function useAffiliateProducts() {
   const { linkMeRole } = useAuth();
   const enseigneId = linkMeRole?.enseigne_id;
   const organisationId = linkMeRole?.organisation_id;
-  const isOrgIndependante = linkMeRole?.role === 'org_independante';
+  const isOrganisationAdmin = linkMeRole?.role === 'organisation_admin';
 
   return useQuery({
     queryKey: ['affiliate-products', enseigneId, organisationId],
     queryFn: async (): Promise<AffiliateProduct[]> => {
       const supabase: SupabaseClient<Database> = createClient();
 
-      // Pour org_independante, chercher par organisation_id
-      if (isOrgIndependante && organisationId) {
+      // Pour organisation_admin, chercher par organisation_id
+      if (isOrganisationAdmin && organisationId) {
         const { data: affiliate } = await supabase
           .from('linkme_affiliates')
           .select('id')
@@ -124,7 +124,7 @@ export function useAffiliateProducts() {
 
       return (data ?? []) as unknown as AffiliateProduct[];
     },
-    enabled: !!enseigneId || (isOrgIndependante && !!organisationId),
+    enabled: !!enseigneId || (isOrganisationAdmin && !!organisationId),
     staleTime: 30000,
   });
 }
@@ -169,14 +169,14 @@ export function useAffiliateProduct(productId: string | undefined) {
 }
 
 /**
- * Hook: creer un nouveau produit affilie (enseigne ou org independante)
+ * Hook: creer un nouveau produit affilie (enseigne ou organisation)
  */
 export function useCreateAffiliateProduct() {
   const queryClient = useQueryClient();
   const { linkMeRole } = useAuth();
   const enseigneId = linkMeRole?.enseigne_id;
   const organisationId = linkMeRole?.organisation_id;
-  const isOrgIndependante = linkMeRole?.role === 'org_independante';
+  const isOrganisationAdmin = linkMeRole?.role === 'organisation_admin';
 
   return useMutation({
     mutationFn: async (
@@ -187,8 +187,8 @@ export function useCreateAffiliateProduct() {
       let affiliate: { id: string } | null = null;
       let targetEnseigneId: string | null = null;
 
-      // Pour org_independante, chercher l'affiliate par organisation_id
-      if (isOrgIndependante && organisationId) {
+      // Pour organisation_admin, chercher l'affiliate par organisation_id
+      if (isOrganisationAdmin && organisationId) {
         const { data: affData, error: affError } = await supabase
           .from('linkme_affiliates')
           .select('id, enseigne_id')
@@ -203,7 +203,7 @@ export function useCreateAffiliateProduct() {
           throw new Error('Affiliate not found for this organisation');
         }
         affiliate = { id: affData.id };
-        targetEnseigneId = affData.enseigne_id; // Can be null for org_independante
+        targetEnseigneId = affData.enseigne_id; // Can be null for organisation_admin
       } else if (enseigneId) {
         // Pour enseigne_admin
         const { data: affData, error: affError } = await supabase

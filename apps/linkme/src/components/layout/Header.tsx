@@ -18,23 +18,19 @@ import { UserMenu } from '../auth/UserMenu';
 import { useCart } from '../cart/CartProvider';
 
 // Rôles autorisés à voir le catalogue
-const CATALOG_ROLES: LinkMeRole[] = [
-  'enseigne_admin',
-  'org_independante',
-  'organisation_admin',
-];
+const CATALOG_ROLES: LinkMeRole[] = ['enseigne_admin', 'organisation_admin'];
 
 // Rôles autorisés à voir "Ma sélection"
-const SELECTION_ROLES: LinkMeRole[] = ['enseigne_admin', 'org_independante'];
+const SELECTION_ROLES: LinkMeRole[] = ['enseigne_admin', 'organisation_admin'];
 
 // Rôles autorisés à créer des produits (affiliés)
 const CREATE_PRODUCT_ROLES: LinkMeRole[] = [
   'enseigne_admin',
-  'org_independante',
+  'organisation_admin',
 ];
 
 // Rôles autorisés à voir le stockage
-const STORAGE_ROLES: LinkMeRole[] = ['enseigne_admin', 'org_independante'];
+const STORAGE_ROLES: LinkMeRole[] = ['enseigne_admin', 'organisation_admin'];
 
 export function Header() {
   const { itemCount, openCart } = useCart();

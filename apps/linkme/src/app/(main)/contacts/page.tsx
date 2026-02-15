@@ -5,7 +5,7 @@
  *
  * Affiche tous les contacts accessibles selon le rôle :
  * - enseigne_admin : Contacts de l'enseigne + utilisateurs de l'enseigne
- * - org_independante : Contacts de l'organisation + utilisateurs de l'organisation
+ * - organisation_admin : Contacts de l'organisation + utilisateurs de l'organisation
  *
  * @module contacts/page
  * @since 2026-02-04
@@ -35,7 +35,7 @@ export default function ContactsPage() {
 
   // Fetch contacts selon le rôle
   // - enseigne_admin : Contacts de l'enseigne (enseigneId set, organisationId null)
-  // - org_independante : Contacts de l'organisation (organisationId set, enseigneId null)
+  // - organisation_admin : Contacts de l'organisation (organisationId set, enseigneId null)
   const { data: contactsData, isLoading } = useOrganisationContacts(
     organisationId,
     enseigneId,

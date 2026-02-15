@@ -52,16 +52,12 @@ import {
 } from './components';
 
 // Rôles autorisés à accéder au catalogue
-const AUTHORIZED_ROLES: LinkMeRole[] = [
-  'enseigne_admin',
-  'org_independante',
-  'organisation_admin',
-];
+const AUTHORIZED_ROLES: LinkMeRole[] = ['enseigne_admin', 'organisation_admin'];
 
 // Rôles autorisés à ajouter des produits à leur sélection
 const CAN_ADD_TO_SELECTION_ROLES: LinkMeRole[] = [
   'enseigne_admin',
-  'org_independante',
+  'organisation_admin',
 ];
 
 // Wrapper avec Suspense pour useSearchParams (Next.js 15 requirement)

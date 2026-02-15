@@ -40,61 +40,61 @@ export const ROUTE_PERMISSIONS: Record<string, RoutePermission> = {
 
   // Routes accessibles à tous les rôles actifs (liste explicite pour documentation)
   '/dashboard': {
-    roles: ['enseigne_admin', 'org_independante', 'organisation_admin'],
+    roles: ['enseigne_admin', 'organisation_admin'],
     redirect: '/login',
     description: 'Tableau de bord principal',
   },
 
   '/commandes': {
-    roles: ['enseigne_admin', 'org_independante', 'organisation_admin'],
+    roles: ['enseigne_admin', 'organisation_admin'],
     redirect: '/dashboard',
     description: 'Liste des commandes',
   },
 
   '/ma-selection': {
-    roles: ['enseigne_admin', 'org_independante'],
+    roles: ['enseigne_admin', 'organisation_admin'],
     redirect: '/dashboard',
     description: 'Gestion des sélections de produits',
   },
 
   '/mes-produits': {
-    roles: ['enseigne_admin', 'org_independante'],
+    roles: ['enseigne_admin', 'organisation_admin'],
     redirect: '/dashboard',
     description: "Produits créés par l'affilié",
   },
 
   '/commissions': {
-    roles: ['enseigne_admin', 'org_independante', 'organisation_admin'],
+    roles: ['enseigne_admin', 'organisation_admin'],
     redirect: '/dashboard',
     description: 'Rémunérations et commissions',
   },
 
   '/analytiques': {
-    roles: ['enseigne_admin', 'org_independante', 'organisation_admin'],
+    roles: ['enseigne_admin', 'organisation_admin'],
     redirect: '/dashboard',
     description: 'Statistiques et analytiques',
   },
 
   '/parametres': {
-    roles: ['enseigne_admin', 'org_independante', 'organisation_admin'],
+    roles: ['enseigne_admin', 'organisation_admin'],
     redirect: '/dashboard',
     description: 'Paramètres du compte',
   },
 
   '/profil': {
-    roles: ['enseigne_admin', 'org_independante', 'organisation_admin'],
+    roles: ['enseigne_admin', 'organisation_admin'],
     redirect: '/dashboard',
     description: 'Profil utilisateur',
   },
 
   '/catalogue': {
-    roles: ['enseigne_admin', 'org_independante', 'organisation_admin'],
+    roles: ['enseigne_admin', 'organisation_admin'],
     redirect: '/dashboard',
     description: 'Catalogue global des produits',
   },
 
   '/contacts': {
-    roles: ['enseigne_admin', 'org_independante'],
+    roles: ['enseigne_admin', 'organisation_admin'],
     redirect: '/dashboard',
     description: 'Contacts et utilisateurs accessibles',
   },
@@ -151,10 +151,6 @@ export function isRestrictedRoute(pathname: string): boolean {
   if (!config) return false;
 
   // Une route est restreinte si elle n'inclut pas tous les rôles principaux
-  const allMainRoles: LinkMeRole[] = [
-    'enseigne_admin',
-    'org_independante',
-    'organisation_admin',
-  ];
+  const allMainRoles: LinkMeRole[] = ['enseigne_admin', 'organisation_admin'];
   return !allMainRoles.every(role => config.roles.includes(role));
 }

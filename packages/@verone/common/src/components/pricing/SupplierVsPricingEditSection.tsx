@@ -1,7 +1,5 @@
 'use client';
 
-import { useState } from 'react';
-
 import { ButtonV2 } from '@verone/ui';
 import { cn, formatPrice } from '@verone/utils';
 import {
@@ -17,15 +15,20 @@ import { useInlineEdit, type EditableSection } from '@verone/common/hooks';
 
 interface Product {
   id: string;
-  variant_group_id?: string; // ID du groupe de variantes (si produit fait partie d'un groupe)
-  // Tarification simplifiée 2025
-  cost_price?: number; // Prix d'achat fournisseur HT (euros)
-  eco_tax_default?: number; // ✅ Taxe éco-responsable par défaut (euros)
-  margin_percentage?: number; // Taux de marge en pourcentage (ex: 25 pour 25%)
-  tax_rate?: number; // Taux de TVA (ex: 0.2 pour 20%)
-
-  // Champs calculés automatiquement
-  selling_price?: number; // Prix minimum de vente calculé
+  variant_group_id?: string;
+  // Tarification simplifiée
+  cost_price?: number;
+  eco_tax_default?: number;
+  margin_percentage?: number;
+  tax_rate?: number;
+  selling_price?: number;
+  // Prix d'achat enrichis (historique fournisseur)
+  cost_price_avg?: number | null;
+  cost_price_min?: number | null;
+  cost_price_max?: number | null;
+  cost_price_last?: number | null;
+  cost_price_count?: number; // NOT NULL integer in DB, defaults to 0
+  target_margin_percentage?: number | null;
 }
 
 interface VariantGroup {
@@ -36,11 +39,34 @@ interface VariantGroup {
   common_eco_tax?: number | null; // ✅ Taxe éco-responsable commune (liée au prix d'achat)
 }
 
+/** Channel pricing data joined with sales channel info */
+interface ChannelPricingRow {
+  channel_id: string;
+  channel_name: string;
+  channel_code: string;
+  public_price_ht: number | null;
+  custom_price_ht: number | null;
+  discount_rate: number | null;
+  markup_rate: number | null;
+  suggested_margin_rate: number | null;
+  is_active: boolean;
+}
+
+/** Typed shape for pricing edit data (avoids unsafe `any` from useInlineEdit) */
+interface PricingEditData {
+  cost_price?: number;
+  eco_tax_default?: number;
+  margin_percentage?: number;
+  selling_price?: number;
+}
+
 interface SupplierVsPricingEditSectionProps {
   product: Product;
   variantGroup?: VariantGroup | null;
   onUpdate: (updatedProduct: Partial<Product>) => void;
   className?: string;
+  /** Channel pricing data for this product (from channel_pricing + sales_channels) */
+  channelPricing?: ChannelPricingRow[];
 }
 
 export function SupplierVsPricingEditSection({
@@ -48,6 +74,7 @@ export function SupplierVsPricingEditSection({
   variantGroup,
   onUpdate,
   className,
+  channelPricing,
 }: SupplierVsPricingEditSectionProps) {
   // Verrouillage si cost_price géré par le groupe de variantes
   const isCostPriceManagedByGroup = !!(
@@ -70,7 +97,7 @@ export function SupplierVsPricingEditSection({
   } = useInlineEdit({
     productId: product.id,
     onUpdate: updatedData => {
-      onUpdate(updatedData);
+      onUpdate(updatedData as Partial<Product>);
     },
     onError: error => {
       console.error('❌ Erreur mise à jour pricing supplier/internal:', error);
@@ -78,15 +105,15 @@ export function SupplierVsPricingEditSection({
   });
 
   const section: EditableSection = 'pricing';
-  const editData = getEditedData(section);
+  const editData = getEditedData(section) as PricingEditData | null;
   const error = getError(section);
 
   // Récupération des données de tarification simplifiée
   // Si cost_price géré par le groupe, utiliser common_cost_price
   const currentCostPrice = isCostPriceManagedByGroup
-    ? variantGroup?.common_cost_price || 0
-    : product.cost_price || 0;
-  const currentMarginPercentage = product.margin_percentage || 25; // Défaut 25%
+    ? (variantGroup?.common_cost_price ?? 0)
+    : (product.cost_price ?? 0);
+  const currentMarginPercentage = product.margin_percentage ?? 25; // Défaut 25%
 
   // Calcul automatique du prix de vente minimum
   const calculateMinSellingPrice = (
@@ -101,8 +128,8 @@ export function SupplierVsPricingEditSection({
 
   // ✅ Si éco-taxe gérée par le groupe, utiliser common_eco_tax
   const currentEcoTax = isEcoTaxManagedByGroup
-    ? variantGroup?.common_eco_tax || 0
-    : product.eco_tax_default || 0;
+    ? (variantGroup?.common_eco_tax ?? 0)
+    : (product.eco_tax_default ?? 0);
   const currentSellingPrice = calculateMinSellingPrice(
     currentCostPrice,
     currentEcoTax,
@@ -135,14 +162,14 @@ export function SupplierVsPricingEditSection({
     const sellingPrice = editData?.cost_price
       ? calculateMinSellingPrice(
           editData.cost_price,
-          editData.eco_tax_default || 0,
-          editData.margin_percentage || 25
+          editData.eco_tax_default ?? 0,
+          editData.margin_percentage ?? 25
         )
       : 0;
 
     const dataToSave = {
       cost_price: editData?.cost_price,
-      eco_tax_default: editData?.eco_tax_default || 0, // ✅ Inclure éco-taxe
+      eco_tax_default: editData?.eco_tax_default ?? 0, // ✅ Inclure éco-taxe
       margin_percentage: editData?.margin_percentage,
       selling_price: sellingPrice, // Prix calculé automatiquement
     };
@@ -151,11 +178,8 @@ export function SupplierVsPricingEditSection({
     updateEditedData(section, dataToSave);
 
     // Attendre un cycle pour que l'état soit mis à jour
-    setTimeout(async () => {
-      const success = await saveChanges(section);
-      if (success) {
-        console.log('✅ Tarification mise à jour avec succès');
-      }
+    setTimeout(() => {
+      void saveChanges(section).catch(console.error);
     }, 0);
   };
 
@@ -178,15 +202,15 @@ export function SupplierVsPricingEditSection({
   // Calculer prix de vente en temps réel pendant l'édition
   const editSellingPrice = editData
     ? calculateMinSellingPrice(
-        editData.cost_price || 0,
-        editData.eco_tax_default || 0,
-        editData.margin_percentage || 25
+        editData.cost_price ?? 0,
+        editData.eco_tax_default ?? 0,
+        editData.margin_percentage ?? 25
       )
     : currentSellingPrice;
 
   const editMarginAmount = editData
     ? editSellingPrice -
-      ((editData.cost_price || 0) + (editData.eco_tax_default || 0))
+      ((editData.cost_price ?? 0) + (editData.eco_tax_default ?? 0))
     : currentSellingPrice - (currentCostPrice + currentEcoTax);
 
   if (isEditing(section)) {
@@ -211,7 +235,9 @@ export function SupplierVsPricingEditSection({
             <ButtonV2
               variant="secondary"
               size="xs"
-              onClick={handleSave}
+              onClick={() => {
+                void handleSave().catch(console.error);
+              }}
               disabled={!hasChanges(section) || isSaving(section)}
               className="text-xs px-2 py-1"
             >
@@ -233,7 +259,7 @@ export function SupplierVsPricingEditSection({
               </label>
               <input
                 type="number"
-                value={editData?.cost_price || ''}
+                value={editData?.cost_price ?? ''}
                 onChange={e => handlePriceChange('cost_price', e.target.value)}
                 className={cn(
                   'w-full px-3 py-2 border border-red-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500',
@@ -264,7 +290,7 @@ export function SupplierVsPricingEditSection({
               </label>
               <input
                 type="number"
-                value={editData?.eco_tax_default || ''}
+                value={editData?.eco_tax_default ?? ''}
                 onChange={e =>
                   handlePriceChange('eco_tax_default', e.target.value)
                 }
@@ -305,7 +331,7 @@ export function SupplierVsPricingEditSection({
               </label>
               <input
                 type="number"
-                value={editData?.margin_percentage || ''}
+                value={editData?.margin_percentage ?? ''}
                 onChange={e =>
                   handlePriceChange('margin_percentage', e.target.value)
                 }
@@ -479,6 +505,137 @@ export function SupplierVsPricingEditSection({
               : !currentCostPrice
                 ? "Prix d'achat non renseigné"
                 : 'Taux de marge non renseigné'}
+          </div>
+        )}
+
+        {/* Prix d'achat enrichis (historique fournisseur) */}
+        {currentCostPrice > 0 &&
+          (product.cost_price_avg != null ||
+            product.cost_price_min != null ||
+            product.cost_price_last != null) && (
+            <div className="bg-neutral-50 p-3 rounded-lg border border-neutral-200">
+              <div className="text-xs text-neutral-600 font-medium mb-2">
+                <TrendingUp className="h-3 w-3 inline mr-1" />
+                HISTORIQUE PRIX D'ACHAT
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                {product.cost_price_avg != null && (
+                  <div className="flex justify-between">
+                    <span className="text-neutral-600">Prix moyen:</span>
+                    <span className="font-medium text-neutral-800">
+                      {formatPrice(product.cost_price_avg)}
+                    </span>
+                  </div>
+                )}
+                {product.cost_price_last != null && (
+                  <div className="flex justify-between">
+                    <span className="text-neutral-600">Dernier prix:</span>
+                    <span className="font-medium text-neutral-800">
+                      {formatPrice(product.cost_price_last)}
+                    </span>
+                  </div>
+                )}
+                {product.cost_price_min != null &&
+                  product.cost_price_max != null && (
+                    <div className="flex justify-between col-span-2">
+                      <span className="text-neutral-600">Min / Max:</span>
+                      <span className="font-medium text-neutral-800">
+                        {formatPrice(product.cost_price_min)} /{' '}
+                        {formatPrice(product.cost_price_max)}
+                      </span>
+                    </div>
+                  )}
+                {product.cost_price_count != null &&
+                  product.cost_price_count > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-neutral-600">Nb achats:</span>
+                      <span className="font-medium text-neutral-800">
+                        {product.cost_price_count}
+                      </span>
+                    </div>
+                  )}
+                {product.target_margin_percentage != null &&
+                  product.target_margin_percentage !==
+                    product.margin_percentage && (
+                    <div className="flex justify-between">
+                      <span className="text-neutral-600">Marge cible:</span>
+                      <span className="font-medium text-neutral-800">
+                        {product.target_margin_percentage}%
+                      </span>
+                    </div>
+                  )}
+              </div>
+            </div>
+          )}
+
+        {/* Prix par canal de vente */}
+        {channelPricing && channelPricing.length > 0 && (
+          <div className="bg-neutral-50 p-3 rounded-lg border border-neutral-200">
+            <div className="text-xs text-neutral-600 font-medium mb-2">
+              <DollarSign className="h-3 w-3 inline mr-1" />
+              PRIX PAR CANAL DE VENTE
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-xs text-neutral-500 border-b border-neutral-200">
+                    <th className="text-left py-1.5 pr-3 font-medium">Canal</th>
+                    <th className="text-right py-1.5 px-2 font-medium">
+                      Prix HT
+                    </th>
+                    <th className="text-right py-1.5 px-2 font-medium">
+                      Remise
+                    </th>
+                    <th className="text-right py-1.5 px-2 font-medium">
+                      Marge
+                    </th>
+                    <th className="text-right py-1.5 pl-2 font-medium">
+                      Statut
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {channelPricing.map(ch => {
+                    const price = ch.custom_price_ht ?? ch.public_price_ht;
+                    const hasPrice = price != null && price > 0;
+                    return (
+                      <tr
+                        key={ch.channel_id}
+                        className="border-b border-neutral-100 last:border-0"
+                      >
+                        <td className="py-1.5 pr-3 text-neutral-800">
+                          {ch.channel_name}
+                        </td>
+                        <td className="py-1.5 px-2 text-right text-neutral-700">
+                          {hasPrice ? formatPrice(price) : '--'}
+                        </td>
+                        <td className="py-1.5 px-2 text-right text-neutral-700">
+                          {ch.discount_rate != null
+                            ? `${ch.discount_rate}%`
+                            : '--'}
+                        </td>
+                        <td className="py-1.5 px-2 text-right text-neutral-700">
+                          {ch.suggested_margin_rate != null
+                            ? `${ch.suggested_margin_rate}%`
+                            : '--'}
+                        </td>
+                        <td className="py-1.5 pl-2 text-right">
+                          {ch.is_active && hasPrice ? (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700">
+                              Actif
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-neutral-100 text-neutral-500">
+                              Non configure
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>

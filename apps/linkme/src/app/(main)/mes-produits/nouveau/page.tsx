@@ -34,7 +34,7 @@ import {
 } from '../../../../lib/hooks/use-affiliate-products';
 
 // Roles qui peuvent creer des produits
-const CAN_CREATE_ROLES: LinkMeRole[] = ['enseigne_admin', 'org_independante'];
+const CAN_CREATE_ROLES: LinkMeRole[] = ['enseigne_admin', 'organisation_admin'];
 
 interface FormData {
   name: string;

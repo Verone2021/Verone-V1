@@ -295,7 +295,6 @@ export default function NewSelectionPage() {
     return users.filter(
       u =>
         u.linkme_role === 'organisation_admin' ||
-        u.linkme_role === 'org_independante' ||
         u.linkme_role === 'enseigne_admin'
     );
   }, [users]);

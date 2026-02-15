@@ -364,7 +364,6 @@ function CommandesTab() {
               {orders.map(order => {
                 const isExpanded = expandedRows.has(order.id);
                 const details = order.linkme_details;
-                const isNewRestaurant = details?.is_new_restaurant ?? false;
 
                 return (
                   <Fragment key={order.id}>
@@ -412,18 +411,37 @@ function CommandesTab() {
                           <p className="text-sm text-gray-500">
                             {order.enseigne_name ?? '-'}
                           </p>
-                          {/* Badge Nouveau / Existant */}
-                          {isNewRestaurant ? (
-                            <span className="inline-flex items-center gap-1 w-fit px-2 py-0.5 rounded-full text-xs font-medium border border-orange-300 text-orange-700 bg-orange-50">
-                              <Building2 className="h-3 w-3" />
-                              Nouveau restaurant
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1 w-fit px-2 py-0.5 rounded-full text-xs font-medium border border-green-300 text-green-700 bg-green-50">
-                              <Store className="h-3 w-3" />
-                              Restaurant existant
-                            </span>
-                          )}
+                          {/* Badges Organisation */}
+                          <div className="flex flex-wrap gap-1 mt-0.5">
+                            {/* Badge Owner Type (Propre/Franchisé) */}
+                            {details?.owner_type && (
+                              <span
+                                className={`inline-flex items-center gap-1 w-fit px-2 py-0.5 rounded-full text-xs font-medium border ${
+                                  details.owner_type === 'franchise'
+                                    ? 'border-violet-300 text-violet-700 bg-violet-50'
+                                    : 'border-blue-300 text-blue-700 bg-blue-50'
+                                }`}
+                              >
+                                <Building2 className="h-3 w-3" />
+                                {details.owner_type === 'franchise'
+                                  ? 'Franchisé'
+                                  : 'Propre'}
+                              </span>
+                            )}
+                            {/* Badge Nouveau/Existant (seulement si explicitement renseigné) */}
+                            {details?.is_new_restaurant === true && (
+                              <span className="inline-flex items-center gap-1 w-fit px-2 py-0.5 rounded-full text-xs font-medium border border-orange-300 text-orange-700 bg-orange-50">
+                                <Building2 className="h-3 w-3" />
+                                Nouveau restaurant
+                              </span>
+                            )}
+                            {details?.is_new_restaurant === false && (
+                              <span className="inline-flex items-center gap-1 w-fit px-2 py-0.5 rounded-full text-xs font-medium border border-green-300 text-green-700 bg-green-50">
+                                <Store className="h-3 w-3" />
+                                Restaurant existant
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </td>
                       <td className="px-6 py-4">

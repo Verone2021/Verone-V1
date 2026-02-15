@@ -362,7 +362,29 @@ export default function DeliveryInfoPage() {
 
       setSubmitSuccess(true);
 
-      // TODO: Send confirmation email
+      // Envoyer email de confirmation (non bloquant)
+      try {
+        await fetch('/api/emails/step4-confirmed', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            orderNumber: validation.order.order_number,
+            requesterEmail: validation.order.linkmeDetails.requester_email,
+            requesterName: validation.order.linkmeDetails.requester_name,
+            organisationName:
+              validation.order.organisation?.trade_name ??
+              validation.order.organisation?.legal_name ??
+              null,
+            receptionContactName: receptionName,
+            receptionContactEmail: receptionEmail,
+            receptionContactPhone: receptionPhone || null,
+            desiredDeliveryDate: desiredDeliveryDate || null,
+          }),
+        });
+      } catch (emailError) {
+        console.error('[DeliveryInfo] Confirmation email failed:', emailError);
+        // Non bloquant - les données sont déjà sauvegardées
+      }
     } catch (err) {
       setSubmitError(
         err instanceof Error ? err.message : 'Erreur lors de la soumission'

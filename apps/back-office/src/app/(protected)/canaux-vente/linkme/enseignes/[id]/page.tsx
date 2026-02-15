@@ -13,9 +13,17 @@ import {
   useEnseigneStats,
 } from '@verone/organisations';
 import { ProductThumbnail } from '@verone/products';
-import { Button, Badge } from '@verone/ui';
+import { Button, Badge, Input, Label } from '@verone/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@verone/ui';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@verone/ui';
+import { Checkbox } from '@verone/ui';
 import { createClient } from '@verone/utils/supabase/client';
 import {
   ArrowLeft,
@@ -29,7 +37,20 @@ import {
   ChevronRight,
   FileText,
   Users,
+  Phone,
+  Plus,
+  X,
+  Mail,
 } from 'lucide-react';
+
+import {
+  ContactCardBO,
+  CreateNewContactCard,
+} from '../../components/contacts/ContactCardBO';
+import {
+  useEnseigneContactsBO,
+  useCreateContactBO,
+} from '../../hooks/use-organisation-contacts-bo';
 
 /**
  * Type pour les sélections de l'affilié
@@ -269,6 +290,58 @@ export default function EnseigneDetailPage() {
   } = useEnseigneProducts(id);
   const { selections, loading: selectionsLoading } = useEnseigneSelections(id);
 
+  // Contacts enseigne
+  const { data: contactsData, isLoading: contactsLoading } =
+    useEnseigneContactsBO(id);
+  const createContactMutation = useCreateContactBO();
+  const [showCreateContact, setShowCreateContact] = useState(false);
+  const [newContact, setNewContact] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    title: '',
+    isBillingContact: false,
+    isPrimaryContact: false,
+    isCommercialContact: false,
+    isTechnicalContact: false,
+  });
+
+  const handleCreateContact = () => {
+    if (!newContact.firstName || !newContact.lastName || !newContact.email)
+      return;
+    void createContactMutation
+      .mutateAsync({
+        enseigneId: id,
+        firstName: newContact.firstName,
+        lastName: newContact.lastName,
+        email: newContact.email,
+        phone: newContact.phone || undefined,
+        title: newContact.title || undefined,
+        isBillingContact: newContact.isBillingContact,
+        isPrimaryContact: newContact.isPrimaryContact,
+        isCommercialContact: newContact.isCommercialContact,
+        isTechnicalContact: newContact.isTechnicalContact,
+      })
+      .then(() => {
+        setShowCreateContact(false);
+        setNewContact({
+          firstName: '',
+          lastName: '',
+          email: '',
+          phone: '',
+          title: '',
+          isBillingContact: false,
+          isPrimaryContact: false,
+          isCommercialContact: false,
+          isTechnicalContact: false,
+        });
+      })
+      .catch((error: unknown) => {
+        console.error('[EnseigneDetail] Create contact failed:', error);
+      });
+  };
+
   // État onglet actif
   const [activeTab, setActiveTab] = useState('infos');
 
@@ -313,6 +386,10 @@ export default function EnseigneDetailPage() {
             <Users className="h-4 w-4 mr-2" />
             Organisation
           </TabsTrigger>
+          <TabsTrigger value="contacts" variant="underline">
+            <Phone className="h-4 w-4 mr-2" />
+            Contacts ({contactsData?.contacts.length ?? 0})
+          </TabsTrigger>
           <TabsTrigger value="geography" variant="underline">
             <MapPin className="h-4 w-4 mr-2" />
             Géographie
@@ -340,6 +417,250 @@ export default function EnseigneDetailPage() {
               console.warn('Add organisations to enseigne:', enseigne.id);
             }}
           />
+        </TabsContent>
+
+        {/* Onglet Contacts */}
+        <TabsContent value="contacts" className="mt-6">
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Phone className="h-5 w-5 text-blue-500" />
+                  Contacts de l&apos;enseigne
+                  <span className="text-sm font-normal text-gray-500">
+                    ({contactsData?.contacts.length ?? 0})
+                  </span>
+                </CardTitle>
+                <Button size="sm" onClick={() => setShowCreateContact(true)}>
+                  <Plus className="h-4 w-4 mr-1" />
+                  Nouveau contact
+                </Button>
+              </div>
+              <p className="text-sm text-muted-foreground mt-1">
+                Ces contacts sont partagés avec tous les restaurants de
+                l&apos;enseigne et visibles dans le formulaire de commande
+                LinkMe.
+              </p>
+            </CardHeader>
+            <CardContent>
+              {contactsLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                </div>
+              ) : !contactsData?.contacts.length ? (
+                <div className="text-center py-8">
+                  <Users className="h-12 w-12 mx-auto text-gray-300 mb-4" />
+                  <p className="text-sm text-gray-500 mb-2">
+                    Aucun contact pour cette enseigne
+                  </p>
+                  <p className="text-xs text-gray-400 mb-4">
+                    Les contacts enseigne sont visibles par tous les restaurants
+                    de l&apos;enseigne lors de la création de commande.
+                  </p>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowCreateContact(true)}
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    Ajouter un contact
+                  </Button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {contactsData.contacts.map(contact => (
+                    <ContactCardBO
+                      key={contact.id}
+                      contact={contact}
+                      showBadges
+                    />
+                  ))}
+                  <CreateNewContactCard
+                    onClick={() => setShowCreateContact(true)}
+                  />
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Modal création contact */}
+          <Dialog open={showCreateContact} onOpenChange={setShowCreateContact}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Phone className="h-5 w-5 text-blue-500" />
+                  Nouveau contact enseigne
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label htmlFor="firstName">Prénom *</Label>
+                    <Input
+                      id="firstName"
+                      value={newContact.firstName}
+                      onChange={e =>
+                        setNewContact(prev => ({
+                          ...prev,
+                          firstName: e.target.value,
+                        }))
+                      }
+                      placeholder="Jean"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="lastName">Nom *</Label>
+                    <Input
+                      id="lastName"
+                      value={newContact.lastName}
+                      onChange={e =>
+                        setNewContact(prev => ({
+                          ...prev,
+                          lastName: e.target.value,
+                        }))
+                      }
+                      placeholder="Dupont"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="email">
+                    <Mail className="h-3.5 w-3.5 inline mr-1" />
+                    Email *
+                  </Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={newContact.email}
+                    onChange={e =>
+                      setNewContact(prev => ({
+                        ...prev,
+                        email: e.target.value,
+                      }))
+                    }
+                    placeholder="jean.dupont@example.com"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="phone">
+                    <Phone className="h-3.5 w-3.5 inline mr-1" />
+                    Téléphone
+                  </Label>
+                  <Input
+                    id="phone"
+                    value={newContact.phone}
+                    onChange={e =>
+                      setNewContact(prev => ({
+                        ...prev,
+                        phone: e.target.value,
+                      }))
+                    }
+                    placeholder="06 12 34 56 78"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="title">Fonction</Label>
+                  <Input
+                    id="title"
+                    value={newContact.title}
+                    onChange={e =>
+                      setNewContact(prev => ({
+                        ...prev,
+                        title: e.target.value,
+                      }))
+                    }
+                    placeholder="Directeur commercial"
+                  />
+                </div>
+                {/* Rôles */}
+                <div>
+                  <Label className="mb-2 block">Rôles</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <label className="flex items-center gap-2 text-sm">
+                      <Checkbox
+                        checked={newContact.isPrimaryContact}
+                        onCheckedChange={(checked: boolean) =>
+                          setNewContact(prev => ({
+                            ...prev,
+                            isPrimaryContact: checked,
+                          }))
+                        }
+                      />
+                      <span className="px-1.5 py-0.5 text-[10px] font-medium rounded bg-green-100 text-green-700">
+                        Responsable
+                      </span>
+                    </label>
+                    <label className="flex items-center gap-2 text-sm">
+                      <Checkbox
+                        checked={newContact.isBillingContact}
+                        onCheckedChange={(checked: boolean) =>
+                          setNewContact(prev => ({
+                            ...prev,
+                            isBillingContact: checked,
+                          }))
+                        }
+                      />
+                      <span className="px-1.5 py-0.5 text-[10px] font-medium rounded bg-blue-100 text-blue-700">
+                        Facturation
+                      </span>
+                    </label>
+                    <label className="flex items-center gap-2 text-sm">
+                      <Checkbox
+                        checked={newContact.isCommercialContact}
+                        onCheckedChange={(checked: boolean) =>
+                          setNewContact(prev => ({
+                            ...prev,
+                            isCommercialContact: checked,
+                          }))
+                        }
+                      />
+                      <span className="px-1.5 py-0.5 text-[10px] font-medium rounded bg-orange-100 text-orange-700">
+                        Commercial
+                      </span>
+                    </label>
+                    <label className="flex items-center gap-2 text-sm">
+                      <Checkbox
+                        checked={newContact.isTechnicalContact}
+                        onCheckedChange={(checked: boolean) =>
+                          setNewContact(prev => ({
+                            ...prev,
+                            isTechnicalContact: checked,
+                          }))
+                        }
+                      />
+                      <span className="px-1.5 py-0.5 text-[10px] font-medium rounded bg-violet-100 text-violet-700">
+                        Technique
+                      </span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowCreateContact(false)}
+                >
+                  <X className="h-4 w-4 mr-1" />
+                  Annuler
+                </Button>
+                <Button
+                  onClick={handleCreateContact}
+                  disabled={
+                    !newContact.firstName ||
+                    !newContact.lastName ||
+                    !newContact.email ||
+                    createContactMutation.isPending
+                  }
+                >
+                  {createContactMutation.isPending ? (
+                    <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                  ) : (
+                    <Plus className="h-4 w-4 mr-1" />
+                  )}
+                  Créer
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </TabsContent>
 
         {/* Onglet Informations personnelles */}

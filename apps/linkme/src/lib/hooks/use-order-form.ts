@@ -411,6 +411,9 @@ export function useOrderForm(): UseOrderFormReturn {
             p_country: newResto.country ?? 'FR',
             p_latitude: newResto.latitude ?? undefined,
             p_longitude: newResto.longitude ?? undefined,
+            // Enseigne + ownership type (Correction 1)
+            p_enseigne_id: affiliate.enseigne_id ?? undefined,
+            p_ownership_type: newResto.ownershipType ?? undefined,
           }
         );
 
@@ -434,29 +437,185 @@ export function useOrderForm(): UseOrderFormReturn {
         quantity: item.quantity,
       }));
 
-      // Étape 2.5: Extraire les IDs de contacts
-      const responsableContactId =
+      // Étape 2.5: Déterminer ownership type pour les contacts
+      const ownerType =
+        formData.restaurant.mode === 'new'
+          ? formData.restaurant.newRestaurant?.ownershipType
+          : formData.restaurant.existingOwnershipType;
+      const enseigneId = affiliate.enseigne_id;
+
+      // Étape 2.6: Créer les contacts "nouveaux" en BD avant la commande
+      // Pour succursales, les contacts sont aussi liés à l'enseigne
+      const contactEnseigneId = ownerType === 'succursale' ? enseigneId : null;
+
+      // Responsable : créer si pas d'ID existant
+      let responsableContactId =
         formData.contacts.existingResponsableId ?? null;
 
+      if (!responsableContactId && formData.contacts.responsable.firstName) {
+        const { data: newContact, error: contactError } = await supabase
+          .from('contacts')
+          .insert({
+            organisation_id: customerId,
+            enseigne_id: contactEnseigneId,
+            first_name: formData.contacts.responsable.firstName,
+            last_name: formData.contacts.responsable.lastName,
+            email: formData.contacts.responsable.email,
+            phone: formData.contacts.responsable.phone ?? null,
+            title: formData.contacts.responsable.position ?? null,
+            is_primary_contact: true,
+            is_active: true,
+          })
+          .select('id')
+          .single();
+
+        if (contactError) {
+          console.error('Erreur création contact responsable:', contactError);
+          throw new Error('Erreur lors de la création du contact responsable');
+        }
+        responsableContactId = newContact.id;
+      }
+
+      // Billing contact : créer si mode = 'new'
       let billingContactId: string | null = null;
       if (formData.contacts.billingContact.mode === 'same_as_responsable') {
         billingContactId = responsableContactId;
       } else if (formData.contacts.billingContact.mode === 'existing') {
         billingContactId =
           formData.contacts.billingContact.existingContactId ?? null;
-      }
-      // Si mode = 'new' : contact sera créé plus tard (inline), pour l'instant null
+      } else if (
+        formData.contacts.billingContact.mode === 'new' &&
+        formData.contacts.billingContact.contact
+      ) {
+        const bc = formData.contacts.billingContact.contact;
+        const { data: newBilling, error: billingError } = await supabase
+          .from('contacts')
+          .insert({
+            organisation_id: customerId,
+            enseigne_id: contactEnseigneId,
+            first_name: bc.firstName,
+            last_name: bc.lastName,
+            email: bc.email,
+            phone: bc.phone ?? null,
+            title: bc.position ?? null,
+            is_billing_contact: true,
+            is_active: true,
+          })
+          .select('id')
+          .single();
 
+        if (billingError) {
+          console.error('Erreur création contact facturation:', billingError);
+          throw new Error('Erreur lors de la création du contact facturation');
+        }
+        billingContactId = newBilling.id;
+      }
+
+      // Delivery contact : créer si nouveau
       let deliveryContactId: string | null = null;
       if (formData.contacts.delivery.sameAsResponsable) {
         deliveryContactId = responsableContactId;
       } else if (formData.contacts.delivery.existingContactId) {
         deliveryContactId = formData.contacts.delivery.existingContactId;
+      } else if (formData.contacts.delivery.contact) {
+        const dc = formData.contacts.delivery.contact;
+        const { data: newDelivery, error: deliveryError } = await supabase
+          .from('contacts')
+          .insert({
+            organisation_id: customerId,
+            enseigne_id: contactEnseigneId,
+            first_name: dc.firstName,
+            last_name: dc.lastName,
+            email: dc.email,
+            phone: dc.phone ?? null,
+            title: dc.position ?? null,
+            is_active: true,
+          })
+          .select('id')
+          .single();
+
+        if (deliveryError) {
+          console.error('Erreur création contact livraison:', deliveryError);
+          throw new Error('Erreur lors de la création du contact livraison');
+        }
+        deliveryContactId = newDelivery.id;
       }
-      // Si pas de contact existant : contact inline (null pour l'instant)
 
-      // Étape 3: Créer la commande via RPC
+      // Étape 3: Construire p_linkme_details (toutes les données workflow)
+      // ownerType already computed above (step 2.5)
 
+      // Résoudre le contact de facturation (nom/email/phone)
+      let billingName = '';
+      let billingEmail = '';
+      let billingPhone = '';
+      if (formData.contacts.billingContact.mode === 'same_as_responsable') {
+        billingName =
+          `${formData.contacts.responsable.firstName} ${formData.contacts.responsable.lastName}`.trim();
+        billingEmail = formData.contacts.responsable.email;
+        billingPhone = formData.contacts.responsable.phone ?? '';
+      } else if (formData.contacts.billingContact.contact) {
+        const bc = formData.contacts.billingContact.contact;
+        billingName = `${bc.firstName} ${bc.lastName}`.trim();
+        billingEmail = bc.email;
+        billingPhone = bc.phone ?? '';
+      }
+
+      // Résoudre le contact de livraison
+      let deliveryContactName = '';
+      let deliveryContactEmail = '';
+      let deliveryContactPhone = '';
+      if (formData.contacts.delivery.sameAsResponsable) {
+        deliveryContactName =
+          `${formData.contacts.responsable.firstName} ${formData.contacts.responsable.lastName}`.trim();
+        deliveryContactEmail = formData.contacts.responsable.email;
+        deliveryContactPhone = formData.contacts.responsable.phone ?? '';
+      } else if (formData.contacts.delivery.contact) {
+        const dc = formData.contacts.delivery.contact;
+        deliveryContactName = `${dc.firstName} ${dc.lastName}`.trim();
+        deliveryContactEmail = dc.email;
+        deliveryContactPhone = dc.phone ?? '';
+      }
+
+      const linkmeDetails: Record<string, string | number | boolean | null> = {
+        // Step 5: Requester (responsable)
+        requester_type: formData.contacts.existingResponsableId
+          ? 'existing_contact'
+          : 'manual_entry',
+        requester_name:
+          `${formData.contacts.responsable.firstName} ${formData.contacts.responsable.lastName}`.trim(),
+        requester_email: formData.contacts.responsable.email,
+        requester_phone: formData.contacts.responsable.phone ?? null,
+        requester_position: formData.contacts.responsable.position ?? null,
+        is_new_restaurant: formData.restaurant.mode === 'new',
+        // Step 6: Owner type
+        owner_type: ownerType ?? null,
+        // Step 6: Billing
+        billing_contact_source: formData.contacts.billingContact.mode,
+        billing_name: billingName || null,
+        billing_email: billingEmail || null,
+        billing_phone: billingPhone || null,
+        // Step 7: Delivery contact
+        delivery_contact_name: deliveryContactName || null,
+        delivery_contact_email: deliveryContactEmail || null,
+        delivery_contact_phone: deliveryContactPhone || null,
+        // Step 7: Delivery address
+        delivery_address: formData.delivery.address,
+        delivery_postal_code: formData.delivery.postalCode,
+        delivery_city: formData.delivery.city,
+        // Step 7: Delivery options
+        desired_delivery_date: formData.delivery.desiredDate
+          ? formData.delivery.desiredDate.toISOString().split('T')[0]
+          : null,
+        is_mall_delivery: formData.delivery.isMallDelivery,
+        mall_email: formData.delivery.mallEmail ?? null,
+        semi_trailer_accessible: formData.delivery.semiTrailerAccessible,
+        access_form_url: formData.delivery.accessFormUrl ?? null,
+        delivery_notes: formData.delivery.notes ?? null,
+        // Terms
+        delivery_terms_accepted: true,
+      };
+
+      // Étape 4: Créer la commande via RPC (atomique, avec linkme_details)
       const { data: orderId, error: orderError } = await supabase.rpc(
         'create_affiliate_order',
         {
@@ -466,10 +625,10 @@ export function useOrderForm(): UseOrderFormReturn {
           p_selection_id: formData.selection.selectionId,
           p_items: orderItems,
           p_notes: formData.delivery.notes ?? undefined,
-          // NEW: Contact IDs
           p_responsable_contact_id: responsableContactId ?? undefined,
           p_billing_contact_id: billingContactId ?? undefined,
           p_delivery_contact_id: deliveryContactId ?? undefined,
+          p_linkme_details: linkmeDetails,
         }
       );
 
@@ -479,39 +638,6 @@ export function useOrderForm(): UseOrderFormReturn {
         throw new Error(
           typedError.message ?? 'Erreur lors de la création de la commande'
         );
-      }
-
-      // Étape 4: Mettre à jour les infos de livraison sur la commande
-      // (les contacts et détails livraison seront stockés sur la commande)
-      if (orderId) {
-        const deliveryUpdate: Record<string, unknown> = {
-          shipping_address_line1: formData.delivery.address,
-          shipping_postal_code: formData.delivery.postalCode,
-          shipping_city: formData.delivery.city,
-          notes: formData.delivery.notes ?? null,
-        };
-
-        if (formData.delivery.desiredDate) {
-          deliveryUpdate.requested_delivery_date =
-            formData.delivery.desiredDate;
-        }
-
-        // Ajouter les infos de livraison supplémentaires si centre commercial
-        if (formData.delivery.isMallDelivery && formData.delivery.mallEmail) {
-          const existingNotes = (deliveryUpdate.notes as string | null) ?? '';
-          deliveryUpdate.notes =
-            `${existingNotes}\n[Centre commercial: ${formData.delivery.mallEmail}]`.trim();
-        }
-
-        const { error: updateError } = await supabase
-          .from('sales_orders')
-          .update(deliveryUpdate)
-          .eq('id', orderId);
-
-        if (updateError) {
-          console.warn('Warning: Could not update delivery info:', updateError);
-          // Ne pas bloquer la création, juste logger
-        }
       }
 
       // Invalider les caches

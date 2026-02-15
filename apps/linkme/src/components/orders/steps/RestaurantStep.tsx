@@ -165,6 +165,8 @@ export function RestaurantStep({
       existingCity: undefined,
       existingOwnershipType: null,
       existingCountry: null,
+      existingAddressLine1: undefined,
+      existingPostalCode: undefined,
     });
   };
 
@@ -179,6 +181,10 @@ export function RestaurantStep({
         | 'franchise'
         | null,
       existingCountry: org.country, // Pour calcul TVA (FR=20%, autres=0%)
+      existingAddressLine1:
+        org.shipping_address_line1 ?? org.address_line1 ?? undefined,
+      existingPostalCode:
+        org.shipping_postal_code ?? org.postal_code ?? undefined,
     });
   };
 
