@@ -32,6 +32,7 @@ import { updateSalesOrderStatus } from '@/app/actions/sales-orders';
 
 import { CreateLinkMeOrderModal } from '../components/CreateLinkMeOrderModal';
 import { EditLinkMeOrderModal } from '../components/EditLinkMeOrderModal';
+import { PendingOrderCards } from '../components/PendingOrderCards';
 import { usePendingOrdersCount } from '../hooks/use-linkme-order-actions';
 
 // ID du canal LinkMe
@@ -154,67 +155,68 @@ export default function LinkMeOrdersPage() {
         </p>
       </div>
 
-      {/* Table des commandes */}
-      <SalesOrdersTable
-        channelId={LINKME_CHANNEL_ID}
-        showChannelColumn={false}
-        showKPIs
-        allowValidate
-        allowShip
-        allowCancel
-        allowDelete
-        allowEdit
-        enablePagination
-        defaultItemsPerPage={10}
-        additionalColumns={additionalColumns}
-        updateStatusAction={updateSalesOrderStatus}
-        renderCreateModal={({ open, onClose, onSuccess }) => (
-          <CreateLinkMeOrderModal
-            isOpen={open}
-            onClose={() => {
-              onClose();
-              onSuccess();
-            }}
-          />
-        )}
-        renderEditModal={({ orderId, open, onClose, onSuccess }) => (
-          <EditLinkMeOrderModal
-            isOpen={open}
-            orderId={orderId}
-            onClose={() => {
-              onClose();
-              onSuccess();
-            }}
-          />
-        )}
-        renderHeaderRight={() => (
-          <Button
-            variant={filterPendingValidation ? 'default' : 'outline'}
-            onClick={() => setFilterPendingValidation(!filterPendingValidation)}
-            className={`gap-2 ${
-              pendingValidationCount > 0
-                ? filterPendingValidation
-                  ? 'bg-red-600 hover:bg-red-700 text-white'
-                  : 'border-red-300 text-red-700 hover:bg-red-50'
-                : filterPendingValidation
-                  ? 'bg-green-600 hover:bg-green-700 text-white'
-                  : 'border-green-300 text-green-700 hover:bg-green-50'
-            }`}
-          >
-            {pendingValidationCount > 0 ? (
-              <AlertCircle className="h-4 w-4" />
-            ) : (
-              <CheckCircle2 className="h-4 w-4" />
-            )}
-            {pendingValidationCount} en attente
-          </Button>
-        )}
-        customFilter={
-          filterPendingValidation
-            ? (order: SalesOrder) => !!order.pending_admin_validation
-            : undefined
-        }
-      />
+      {/* Bouton toggle filtre "En attente" */}
+      <div className="flex items-center gap-3">
+        <Button
+          variant={filterPendingValidation ? 'default' : 'outline'}
+          onClick={() => setFilterPendingValidation(!filterPendingValidation)}
+          className={`gap-2 ${
+            pendingValidationCount > 0
+              ? filterPendingValidation
+                ? 'bg-red-600 hover:bg-red-700 text-white'
+                : 'border-red-300 text-red-700 hover:bg-red-50'
+              : filterPendingValidation
+                ? 'bg-green-600 hover:bg-green-700 text-white'
+                : 'border-green-300 text-green-700 hover:bg-green-50'
+          }`}
+        >
+          {pendingValidationCount > 0 ? (
+            <AlertCircle className="h-4 w-4" />
+          ) : (
+            <CheckCircle2 className="h-4 w-4" />
+          )}
+          {pendingValidationCount} en attente d&apos;approbation
+        </Button>
+      </div>
+
+      {/* Vue conditionnelle : Cartes d'approbation OU Table complète */}
+      {filterPendingValidation ? (
+        <PendingOrderCards />
+      ) : (
+        <SalesOrdersTable
+          channelId={LINKME_CHANNEL_ID}
+          showChannelColumn={false}
+          showKPIs
+          allowValidate
+          allowShip
+          allowCancel
+          allowDelete
+          allowEdit
+          enablePagination
+          defaultItemsPerPage={10}
+          additionalColumns={additionalColumns}
+          updateStatusAction={updateSalesOrderStatus}
+          renderCreateModal={({ open, onClose, onSuccess }) => (
+            <CreateLinkMeOrderModal
+              isOpen={open}
+              onClose={() => {
+                onClose();
+                onSuccess();
+              }}
+            />
+          )}
+          renderEditModal={({ orderId, open, onClose, onSuccess }) => (
+            <EditLinkMeOrderModal
+              isOpen={open}
+              orderId={orderId}
+              onClose={() => {
+                onClose();
+                onSuccess();
+              }}
+            />
+          )}
+        />
+      )}
     </div>
   );
 }
