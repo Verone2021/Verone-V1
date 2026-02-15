@@ -14,65 +14,41 @@ export const fetchCache = 'force-no-store';
  * - Meme workflow que /commandes/clients (Valider, Expedier, Annuler)
  * - Modal de creation specifique LinkMe (CreateLinkMeOrderModal)
  * - Modal d'edition specifique LinkMe (EditLinkMeOrderModal)
- * - Colonnes additionnelles: Affilie, Selection, Marge
+ * - Colonnes additionnelles: Canal, Approbation, Marge
  * - Filtre "En attente de validation" avec badge rouge/vert
  *
  * Les triggers stock sont automatiques et identiques pour tous les canaux.
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 
 import { SalesOrdersTable } from '@verone/orders';
 import type { SalesOrder } from '@verone/orders';
 import { Badge, Button } from '@verone/ui';
 import { formatCurrency } from '@verone/utils';
-import { createClient } from '@verone/utils/supabase/client';
 import { AlertCircle, CheckCircle2 } from 'lucide-react';
 
 import { updateSalesOrderStatus } from '@/app/actions/sales-orders';
 
 import { CreateLinkMeOrderModal } from '../components/CreateLinkMeOrderModal';
 import { EditLinkMeOrderModal } from '../components/EditLinkMeOrderModal';
+import { usePendingOrdersCount } from '../hooks/use-linkme-order-actions';
 
 // ID du canal LinkMe
 const LINKME_CHANNEL_ID = '93c68db1-5a30-4168-89ec-6383152be405';
-
-// Type pour la réponse de la fonction RPC get_linkme_orders
-type LinkMeOrderRpcResult = {
-  id: string;
-  affiliate_name: string | null;
-  affiliate_type: 'enseigne' | 'organisation' | null;
-  selection_name: string | null;
-  total_affiliate_margin: number;
-  pending_admin_validation: boolean;
-  created_by_affiliate_id: string | null;
-  linkme_selection_id: string | null;
-};
-
-// Type pour les donnees enrichies LinkMe
-interface LinkMeEnrichedData {
-  [orderId: string]: {
-    affiliate_name: string | null;
-    affiliate_type: 'enseigne' | 'organisation' | null;
-    selection_name: string | null;
-    total_affiliate_margin: number;
-    pending_admin_validation: boolean;
-    created_by_affiliate_id: string | null;
-    linkme_selection_id: string | null;
-  };
-}
 
 // Fonction pour determiner le canal de la commande
 // 3 canaux mutuellement exclusifs:
 // 1. Affilié = commande créée par un affilié depuis l'app LinkMe
 // 2. Sélection publique = commande créée par client final via catalogue public
 // 3. Manuel = commande créée manuellement par admin dans le back-office
-function getOrderChannel(
-  created_by_affiliate_id: string | null,
-  linkme_selection_id: string | null
-): { label: string; color: string; bg: string } {
+function getOrderChannel(order: SalesOrder): {
+  label: string;
+  color: string;
+  bg: string;
+} {
   // Canal 1: Commande créée par un affilié depuis l'app LinkMe
-  if (created_by_affiliate_id !== null) {
+  if (order.created_by_affiliate_id) {
     return {
       label: 'Affilié',
       color: 'text-teal-700',
@@ -81,7 +57,7 @@ function getOrderChannel(
   }
 
   // Canal 2: Commande via sélection publique (client final)
-  if (linkme_selection_id !== null) {
+  if (order.linkme_selection_id) {
     return {
       label: 'Sélection publique',
       color: 'text-amber-700',
@@ -97,70 +73,20 @@ function getOrderChannel(
   };
 }
 
+// Calculer la marge affilié depuis les items de la commande
+function getAffiliateMargin(order: SalesOrder): number {
+  if (!order.sales_order_items) return 0;
+  return order.sales_order_items.reduce(
+    (sum, item) => sum + (item.retrocession_amount ?? 0),
+    0
+  );
+}
+
 export default function LinkMeOrdersPage() {
-  const [enrichedData, setEnrichedData] = useState<LinkMeEnrichedData>({});
-  const [isLoadingEnriched, setIsLoadingEnriched] = useState(true);
   const [filterPendingValidation, setFilterPendingValidation] = useState(false);
-  const supabase = createClient();
 
-  // Fetch donnees enrichies LinkMe (affilie, selection, marge)
-  useEffect(() => {
-    const supabaseClient = createClient();
-    async function fetchEnrichedData() {
-      setIsLoadingEnriched(true);
-      try {
-        // Utiliser la RPC existante pour avoir les donnees enrichies
-        const result = await supabaseClient.rpc('get_linkme_orders', {
-          // p_affiliate_id removed from RPC signature
-        });
-
-        const { data: ordersData, error } = result as {
-          data: LinkMeOrderRpcResult[] | null;
-          error: Error | null;
-        };
-
-        if (error) {
-          console.error('Erreur fetch LinkMe enriched data:', error);
-          return;
-        }
-
-        // Construire un map des donnees enrichies par order_id
-        const enriched: LinkMeEnrichedData = {};
-        (ordersData ?? []).forEach(order => {
-          enriched[order.id] = {
-            affiliate_name: order.affiliate_name ?? null,
-            affiliate_type: order.affiliate_type ?? null,
-            selection_name: order.selection_name ?? null,
-            total_affiliate_margin: order.total_affiliate_margin ?? 0,
-            pending_admin_validation: order.pending_admin_validation ?? false,
-            created_by_affiliate_id: order.created_by_affiliate_id ?? null,
-            linkme_selection_id: order.linkme_selection_id ?? null,
-          };
-        });
-
-        setEnrichedData(enriched);
-      } catch (error: unknown) {
-        const message =
-          error instanceof Error ? error.message : 'Unknown error';
-        console.error('[LinkMeOrders] Erreur fetch enriched data:', message);
-      } finally {
-        setIsLoadingEnriched(false);
-      }
-    }
-
-    void fetchEnrichedData().catch(error => {
-      console.error(
-        '[CommandesPage] useEffect fetchEnrichedData failed:',
-        error
-      );
-    });
-  }, []); // Fetch une seule fois au montage
-
-  // Compter les commandes en attente de validation
-  const pendingValidationCount = useMemo(() => {
-    return Object.values(enrichedData).filter(d => d.pending_admin_validation)
-      .length;
-  }, [enrichedData]);
+  // Compter les commandes en attente de validation via hook dédié
+  const { data: pendingValidationCount = 0 } = usePendingOrdersCount();
 
   // Colonnes additionnelles pour LinkMe (avec colonne Canal et Approbation)
   const additionalColumns = useMemo(
@@ -169,14 +95,7 @@ export default function LinkMeOrdersPage() {
         key: 'order_channel',
         header: 'Canal',
         cell: (order: SalesOrder) => {
-          const data = enrichedData[order.id];
-          if (isLoadingEnriched) {
-            return <span className="text-gray-400 text-xs">...</span>;
-          }
-          const channel = getOrderChannel(
-            data?.created_by_affiliate_id ?? null,
-            data?.linkme_selection_id ?? null
-          );
+          const channel = getOrderChannel(order);
           return (
             <span
               className={`px-2 py-1 text-xs font-medium rounded-full ${channel.bg} ${channel.color}`}
@@ -190,11 +109,7 @@ export default function LinkMeOrdersPage() {
         key: 'approval_status',
         header: 'Approbation',
         cell: (order: SalesOrder) => {
-          const data = enrichedData[order.id];
-          if (isLoadingEnriched) {
-            return <span className="text-gray-400 text-xs">...</span>;
-          }
-          return data?.pending_admin_validation ? (
+          return order.pending_admin_validation ? (
             <Badge variant="destructive" className="text-xs gap-1">
               <AlertCircle className="h-3 w-3" />
               En attente
@@ -210,18 +125,14 @@ export default function LinkMeOrdersPage() {
           );
         },
       },
-      // Colonnes Affilié et Sélection retirées pour gain de place
       {
         key: 'margin',
         header: 'Marge Affilie',
         cell: (order: SalesOrder) => {
-          const data = enrichedData[order.id];
-          if (isLoadingEnriched) {
-            return <span className="text-gray-400 text-xs">...</span>;
-          }
-          return data?.total_affiliate_margin ? (
+          const margin = getAffiliateMargin(order);
+          return margin > 0 ? (
             <span className="text-orange-600 font-medium">
-              {formatCurrency(data.total_affiliate_margin)}
+              {formatCurrency(margin)}
             </span>
           ) : (
             <span className="text-gray-400">-</span>
@@ -229,7 +140,7 @@ export default function LinkMeOrdersPage() {
         },
       },
     ],
-    [enrichedData, isLoadingEnriched]
+    []
   );
 
   return (
@@ -262,29 +173,6 @@ export default function LinkMeOrdersPage() {
             isOpen={open}
             onClose={() => {
               onClose();
-              // Rafraichir les donnees enrichies apres creation
-              setIsLoadingEnriched(true);
-              supabase
-                .rpc('get_linkme_orders', {}) // p_affiliate_id removed from RPC
-                .returns<LinkMeOrderRpcResult[]>()
-                .then(({ data }) => {
-                  const enriched: LinkMeEnrichedData = {};
-                  (data ?? []).forEach((order: LinkMeOrderRpcResult) => {
-                    enriched[order.id] = {
-                      affiliate_name: order.affiliate_name ?? null,
-                      affiliate_type: order.affiliate_type ?? null,
-                      selection_name: order.selection_name ?? null,
-                      total_affiliate_margin: order.total_affiliate_margin ?? 0,
-                      pending_admin_validation:
-                        order.pending_admin_validation ?? false,
-                      created_by_affiliate_id:
-                        order.created_by_affiliate_id ?? null,
-                      linkme_selection_id: order.linkme_selection_id ?? null,
-                    };
-                  });
-                  setEnrichedData(enriched);
-                  setIsLoadingEnriched(false);
-                });
               onSuccess();
             }}
           />
@@ -323,8 +211,7 @@ export default function LinkMeOrdersPage() {
         )}
         customFilter={
           filterPendingValidation
-            ? (order: SalesOrder) =>
-                !!enrichedData[order.id]?.pending_admin_validation
+            ? (order: SalesOrder) => !!order.pending_admin_validation
             : undefined
         }
       />

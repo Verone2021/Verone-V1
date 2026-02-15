@@ -123,6 +123,11 @@ export interface SalesOrder {
   };
   sales_order_items?: SalesOrderItem[];
 
+  // LinkMe specific fields
+  created_by_affiliate_id?: string | null;
+  linkme_selection_id?: string | null;
+  pending_admin_validation?: boolean;
+
   // Frais additionnels (HT)
   shipping_cost_ht?: number;
   insurance_cost_ht?: number;
@@ -148,6 +153,10 @@ export interface SalesOrderItem {
 
   // Échantillon
   is_sample: boolean; // Indique si cette ligne est un échantillon envoyé au client
+
+  // LinkMe retrocession
+  retrocession_amount?: number | null;
+  retrocession_rate?: number | null;
 
   // Relations jointes
   products?: {
