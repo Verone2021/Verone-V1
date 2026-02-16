@@ -65,6 +65,8 @@ import {
   AlertCircle,
   AlertTriangle,
   User,
+  UserPlus,
+  Users,
   Building2,
   CreditCard,
   Package,
@@ -97,10 +99,13 @@ import {
 import {
   useOrganisationContactsBO,
   useEnseigneContactsBO,
+  useCreateContactBO,
   type ContactBO,
 } from '../../hooks/use-organisation-contacts-bo';
 
 import { ContactCardBO } from '../../components/contacts/ContactCardBO';
+import { NewContactForm } from '../../components/contacts/NewContactForm';
+import type { NewContactFormData } from '../../components/contacts/NewContactForm';
 
 // ============================================
 // TYPES
@@ -268,6 +273,7 @@ export default function LinkMeOrderDetailPage() {
   const requestInfo = useRequestInfo();
   const rejectOrder = useRejectOrder();
   const updateDetails = useUpdateLinkMeDetails();
+  const createContactBO = useCreateContactBO();
 
   // Contacts hooks - dépendent du type de restaurant (propre = enseigne, franchise = org)
   const enseigneId = order?.organisation?.enseigne_id ?? null;
@@ -663,6 +669,53 @@ export default function LinkMeOrderDetailPage() {
     } catch (err) {
       console.error('Erreur mise à jour contact:', err);
     }
+  };
+
+  // Créer un nouveau contact ET mettre à jour la commande
+  const handleCreateAndSelectContact = async (
+    contactData: NewContactFormData
+  ) => {
+    // 1. Créer le contact en BD (lié à org ou enseigne selon type)
+    await createContactBO.mutateAsync({
+      organisationId: isSuccursale ? undefined : (organisationId ?? undefined),
+      enseigneId: isSuccursale ? (enseigneId ?? undefined) : undefined,
+      firstName: contactData.firstName,
+      lastName: contactData.lastName,
+      email: contactData.email,
+      phone: contactData.phone || undefined,
+      title: contactData.title || undefined,
+      isPrimaryContact: contactDialogFor === 'responsable',
+      isBillingContact: contactDialogFor === 'billing',
+    });
+
+    // 2. Mettre à jour la commande avec ce nouveau contact
+    const fullName = `${contactData.firstName} ${contactData.lastName}`;
+    const updates: Partial<LinkMeOrderDetails> =
+      contactDialogFor === 'responsable'
+        ? {
+            requester_name: fullName,
+            requester_email: contactData.email,
+            requester_phone: contactData.phone || undefined,
+            requester_position: contactData.title || undefined,
+          }
+        : {
+            billing_name: fullName,
+            billing_email: contactData.email,
+            billing_phone: contactData.phone || undefined,
+            billing_contact_source: 'custom',
+          };
+
+    await updateDetails.mutateAsync({ orderId, updates });
+
+    // 3. Fermer dialog + refetch
+    setContactDialogFor(null);
+    setSelectedContactId(null);
+    void fetchOrder().catch(err => {
+      console.error(
+        '[LinkMeOrderDetail] Refetch after create contact failed:',
+        err
+      );
+    });
   };
 
   // Helpers validation
@@ -1080,7 +1133,9 @@ export default function LinkMeOrderDetailPage() {
                 <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-blue-100">
                   <User className="h-4 w-4 text-blue-600" />
                 </div>
-                <CardTitle className="text-lg">Responsable</CardTitle>
+                <CardTitle className="text-lg">
+                  Responsable établissement
+                </CardTitle>
                 {details?.requester_type && (
                   <span
                     className={`px-2.5 py-1 text-xs font-semibold rounded-full ${
@@ -1171,7 +1226,9 @@ export default function LinkMeOrderDetailPage() {
                 <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-green-100">
                   <CreditCard className="h-4 w-4 text-green-600" />
                 </div>
-                <CardTitle className="text-lg">Facturation</CardTitle>
+                <CardTitle className="text-lg">
+                  Responsable facturation
+                </CardTitle>
                 {details?.billing_contact_source && (
                   <span
                     className={`px-2.5 py-1 text-xs font-semibold rounded-full ${
@@ -1485,42 +1542,68 @@ export default function LinkMeOrderDetailPage() {
           }
         }}
       >
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>
               {contactDialogFor === 'responsable'
-                ? 'Sélectionner un responsable'
-                : 'Sélectionner un contact facturation'}
+                ? 'Responsable établissement'
+                : 'Responsable facturation'}
             </DialogTitle>
             <DialogDescription>
-              {isSuccursale
-                ? "Contacts de l'enseigne"
-                : "Contacts de l'organisation"}{' '}
-              — Cliquez sur un contact puis confirmez.
+              Sélectionnez un contact existant ou créez-en un nouveau.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="py-4 space-y-3 max-h-[400px] overflow-y-auto">
-            {availableContacts.length > 0 ? (
-              availableContacts.map(contact => (
-                <ContactCardBO
-                  key={contact.id}
-                  contact={contact}
-                  isSelected={selectedContactId === contact.id}
-                  onClick={() => setSelectedContactId(contact.id)}
-                />
-              ))
-            ) : (
-              <div className="text-center py-8 text-gray-500">
-                <User className="h-10 w-10 mx-auto mb-2 text-gray-300" />
-                <p className="text-sm font-medium">Aucun contact disponible</p>
-                <p className="text-xs mt-1">
-                  {isSuccursale
-                    ? 'Aucun contact enregistré pour cette enseigne'
-                    : 'Aucun contact enregistré pour cette organisation'}
-                </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
+            {/* GAUCHE : Nouveau contact */}
+            <div className="space-y-3">
+              <h4 className="text-sm font-semibold flex items-center gap-2">
+                <UserPlus className="h-4 w-4" />
+                Nouveau contact
+              </h4>
+              <NewContactForm
+                sectionLabel={
+                  contactDialogFor === 'responsable'
+                    ? 'Créer un responsable'
+                    : 'Créer un contact facturation'
+                }
+                onSubmit={handleCreateAndSelectContact}
+                onCancel={() => {
+                  setContactDialogFor(null);
+                }}
+                isSubmitting={
+                  createContactBO.isPending || updateDetails.isPending
+                }
+              />
+            </div>
+
+            {/* DROITE : Contacts disponibles */}
+            <div className="space-y-3">
+              <h4 className="text-sm font-semibold flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                Contacts disponibles ({availableContacts.length})
+              </h4>
+              <div className="space-y-2 max-h-[350px] overflow-y-auto">
+                {availableContacts.length > 0 ? (
+                  availableContacts.map(contact => (
+                    <ContactCardBO
+                      key={contact.id}
+                      contact={contact}
+                      isSelected={selectedContactId === contact.id}
+                      onClick={() => setSelectedContactId(contact.id)}
+                    />
+                  ))
+                ) : (
+                  <div className="text-center py-6 text-gray-500">
+                    <User className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+                    <p className="text-sm">Aucun contact disponible</p>
+                    <p className="text-xs mt-1">
+                      Créez-en un via le formulaire
+                    </p>
+                  </div>
+                )}
               </div>
-            )}
+            </div>
           </div>
 
           <DialogFooter>
@@ -1544,7 +1627,9 @@ export default function LinkMeOrderDetailPage() {
                 });
               }}
             >
-              {updateDetails.isPending ? 'Enregistrement...' : 'Confirmer'}
+              {updateDetails.isPending
+                ? 'Enregistrement...'
+                : 'Confirmer la sélection'}
             </Button>
           </DialogFooter>
         </DialogContent>
