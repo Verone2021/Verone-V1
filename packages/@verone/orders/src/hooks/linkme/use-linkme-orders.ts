@@ -145,10 +145,10 @@ async function createLinkMeOrder(
   for (const item of input.items) {
     const lineTotal = roundMoney(item.quantity * item.unit_price_ht);
     totalHt = roundMoney(totalHt + lineTotal);
-    // Commission calculée sur base_price_ht (135€), pas sur unit_price_ht (168.75€)
+    // Commission = marge par unité × quantité (SSOT: selling - base)
     totalRetrocession = roundMoney(
       totalRetrocession +
-        item.quantity * item.base_price_ht * item.retrocession_rate
+        (item.unit_price_ht - item.base_price_ht) * item.quantity
     );
   }
 
@@ -215,9 +215,9 @@ async function createLinkMeOrder(
     // total_ht est GENERATED - ne pas l'insérer
     tax_rate: 0.2,
     retrocession_rate: item.retrocession_rate,
-    // CORRECTION: utiliser base_price_ht (prix catalogue) et non unit_price_ht (prix vente)
+    // Commission = (selling_price - base_price) × qty
     retrocession_amount: roundMoney(
-      item.quantity * item.base_price_ht * item.retrocession_rate
+      (item.unit_price_ht - item.base_price_ht) * item.quantity
     ),
     linkme_selection_item_id: item.linkme_selection_item_id || null,
   }));

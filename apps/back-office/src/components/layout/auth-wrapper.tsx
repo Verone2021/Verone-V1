@@ -91,7 +91,7 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
         <div className="flex flex-1 flex-col min-h-0">
           <AppHeader />
           <ChannelTabs />
-          <main className="flex-1 overflow-auto p-6">{children}</main>
+          <main className="relative flex-1 overflow-auto p-6">{children}</main>
         </div>
       </SidebarProvider>
     </TooltipProvider>

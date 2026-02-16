@@ -11,8 +11,6 @@ import {
   Phone,
   Building2,
   Store,
-  ShoppingCart,
-  Briefcase,
   Eye,
   EyeOff,
   AlertCircle,
@@ -49,16 +47,16 @@ export function UserCreateModal({ isOpen, onClose }: UserCreateModalProps) {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [phone, setPhone] = useState('');
-  const [role, setRole] = useState<LinkMeRole>('client');
+  const [role, setRole] = useState<LinkMeRole>('enseigne_admin');
   const [enseigneId, setEnseigneId] = useState<string>('');
   const [organisationId, setOrganisationId] = useState<string>('');
 
   // Fetch organisations basées sur l'enseigne sélectionnée
-  // Pour org_independante: charge TOUTES les organisations DISPONIBLES (sans filtre enseigne)
-  // Le 2ème paramètre exclut les organisations qui ont déjà un utilisateur org_independante
+  // Pour organisation_admin: charge TOUTES les organisations DISPONIBLES (sans filtre enseigne)
+  // Le 2ème paramètre exclut les organisations qui ont déjà un utilisateur organisation_admin
   const { data: organisations } = useLinkMeOrganisationsSelect(
-    role === 'org_independante' ? undefined : (enseigneId ?? undefined),
-    role === 'org_independante' // Exclure les orgs déjà utilisées pour org_independante
+    role === 'organisation_admin' ? undefined : (enseigneId ?? undefined),
+    role === 'organisation_admin'
   );
 
   // Validation
@@ -72,7 +70,7 @@ export function UserCreateModal({ isOpen, onClose }: UserCreateModalProps) {
       setFirstName('');
       setLastName('');
       setPhone('');
-      setRole('client');
+      setRole('enseigne_admin');
       setEnseigneId('');
       setOrganisationId('');
       setErrors({});
@@ -116,11 +114,6 @@ export function UserCreateModal({ isOpen, onClose }: UserCreateModalProps) {
         'Organisation requise pour un Admin Organisation';
     }
 
-    if (role === 'org_independante' && !organisationId) {
-      newErrors.organisationId =
-        'Organisation requise pour une Org. Indépendante';
-    }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -135,10 +128,10 @@ export function UserCreateModal({ isOpen, onClose }: UserCreateModalProps) {
       password,
       first_name: firstName,
       last_name: lastName,
-      phone: phone ?? undefined,
+      phone: phone || undefined,
       role,
-      enseigne_id: enseigneId ?? undefined,
-      organisation_id: organisationId ?? undefined,
+      enseigne_id: enseigneId || undefined,
+      organisation_id: organisationId || undefined,
     };
 
     try {
@@ -324,53 +317,41 @@ export function UserCreateModal({ isOpen, onClose }: UserCreateModalProps) {
                 Rôle *
               </label>
               <div className="grid grid-cols-2 gap-2">
-                {(
-                  [
-                    'enseigne_admin',
-                    'organisation_admin',
-                    'org_independante',
-                    'client',
-                  ] as LinkMeRole[]
-                ).map(r => {
-                  const Icon =
-                    r === 'enseigne_admin'
-                      ? Building2
-                      : r === 'organisation_admin'
-                        ? Store
-                        : r === 'org_independante'
-                          ? Briefcase
-                          : ShoppingCart;
-                  const isSelected = role === r;
+                {(['enseigne_admin', 'organisation_admin'] as LinkMeRole[]).map(
+                  r => {
+                    const Icon = r === 'enseigne_admin' ? Building2 : Store;
+                    const isSelected = role === r;
 
-                  return (
-                    <button
-                      key={r}
-                      type="button"
-                      onClick={() => setRole(r)}
-                      className={cn(
-                        'flex flex-col items-center gap-1 p-3 rounded-lg border-2 transition-all',
-                        isSelected
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-gray-200 hover:border-gray-300'
-                      )}
-                    >
-                      <Icon
+                    return (
+                      <button
+                        key={r}
+                        type="button"
+                        onClick={() => setRole(r)}
                         className={cn(
-                          'h-5 w-5',
-                          isSelected ? 'text-blue-600' : 'text-gray-400'
-                        )}
-                      />
-                      <span
-                        className={cn(
-                          'text-xs font-medium text-center',
-                          isSelected ? 'text-blue-700' : 'text-gray-600'
+                          'flex flex-col items-center gap-1 p-3 rounded-lg border-2 transition-all',
+                          isSelected
+                            ? 'border-blue-500 bg-blue-50'
+                            : 'border-gray-200 hover:border-gray-300'
                         )}
                       >
-                        {LINKME_ROLE_LABELS[r]}
-                      </span>
-                    </button>
-                  );
-                })}
+                        <Icon
+                          className={cn(
+                            'h-5 w-5',
+                            isSelected ? 'text-blue-600' : 'text-gray-400'
+                          )}
+                        />
+                        <span
+                          className={cn(
+                            'text-xs font-medium text-center',
+                            isSelected ? 'text-blue-700' : 'text-gray-600'
+                          )}
+                        >
+                          {LINKME_ROLE_LABELS[r]}
+                        </span>
+                      </button>
+                    );
+                  }
+                )}
               </div>
 
               {/* Permissions du rôle */}
@@ -392,8 +373,8 @@ export function UserCreateModal({ isOpen, onClose }: UserCreateModalProps) {
               </div>
             </div>
 
-            {/* Enseigne (si enseigne_admin ou organisation_admin) */}
-            {(role === 'enseigne_admin' || role === 'organisation_admin') && (
+            {/* Enseigne (si enseigne_admin) */}
+            {role === 'enseigne_admin' && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Enseigne {role === 'enseigne_admin' ? '*' : ''}
@@ -427,8 +408,8 @@ export function UserCreateModal({ isOpen, onClose }: UserCreateModalProps) {
               </div>
             )}
 
-            {/* Organisation (si organisation_admin ou org_independante) */}
-            {(role === 'organisation_admin' || role === 'org_independante') && (
+            {/* Organisation (si organisation_admin) */}
+            {role === 'organisation_admin' && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Organisation *
@@ -438,24 +419,14 @@ export function UserCreateModal({ isOpen, onClose }: UserCreateModalProps) {
                   <select
                     value={organisationId}
                     onChange={e => setOrganisationId(e.target.value)}
-                    disabled={!enseigneId && role === 'organisation_admin'}
                     className={cn(
                       'w-full pl-10 pr-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 appearance-none',
                       errors.organisationId
                         ? 'border-red-300 focus:ring-red-500'
-                        : 'border-gray-300 focus:ring-blue-500',
-                      !enseigneId &&
-                        role === 'organisation_admin' &&
-                        'bg-gray-100 cursor-not-allowed'
+                        : 'border-gray-300 focus:ring-blue-500'
                     )}
                   >
-                    <option value="">
-                      {role === 'org_independante'
-                        ? 'Sélectionner une organisation'
-                        : enseigneId
-                          ? 'Sélectionner une organisation'
-                          : "Choisir d'abord une enseigne"}
-                    </option>
+                    <option value="">Sélectionner une organisation</option>
                     {organisations?.map(o => (
                       <option key={o.id} value={o.id}>
                         {o.name}
@@ -463,11 +434,6 @@ export function UserCreateModal({ isOpen, onClose }: UserCreateModalProps) {
                     ))}
                   </select>
                 </div>
-                {role === 'org_independante' && (
-                  <p className="mt-1 text-xs text-gray-500">
-                    Organisation non liée à une enseigne
-                  </p>
-                )}
                 {errors.organisationId && (
                   <p className="mt-1 text-xs text-red-600 flex items-center gap-1">
                     <AlertCircle className="h-3 w-3" />

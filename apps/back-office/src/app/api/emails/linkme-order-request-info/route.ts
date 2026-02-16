@@ -16,12 +16,19 @@ function getResendClient(): Resend {
   return new Resend(apiKey);
 }
 
+interface MissingFieldInfo {
+  label: string;
+  category: string;
+}
+
 interface RequestInfoEmailRequest {
   orderNumber: string;
   requesterEmail: string;
   requesterName: string;
   message: string;
   organisationName: string | null;
+  /** Liste optionnelle des champs manquants détectés */
+  missingFields?: MissingFieldInfo[];
 }
 
 export async function POST(request: NextRequest) {
@@ -34,6 +41,7 @@ export async function POST(request: NextRequest) {
       requesterName,
       message,
       organisationName,
+      missingFields,
     } = body;
 
     if (!orderNumber || !requesterEmail || !message) {
@@ -44,6 +52,18 @@ export async function POST(request: NextRequest) {
     }
 
     const emailSubject = `Commande ${orderNumber} - Informations complémentaires requises`;
+
+    // Générer la section des champs manquants si fournis
+    const missingFieldsHtml =
+      missingFields && missingFields.length > 0
+        ? `
+    <div style="background-color: #fff7ed; padding: 16px; border-radius: 6px; margin: 16px 0; border: 1px solid #fed7aa;">
+      <p style="margin: 0 0 8px 0; color: #9a3412; font-weight: bold; font-size: 14px;">Informations manquantes :</p>
+      <ul style="margin: 0; padding-left: 20px; color: #1f2937;">
+        ${missingFields.map((f: MissingFieldInfo) => `<li style="margin: 4px 0; font-size: 14px;">${f.label}</li>`).join('')}
+      </ul>
+    </div>`
+        : '';
 
     const emailHtml = `
 <!DOCTYPE html>
@@ -66,6 +86,8 @@ export async function POST(request: NextRequest) {
       Concernant votre commande <strong>${orderNumber}</strong>${organisationName ? ` pour ${organisationName}` : ''},
       nous avons besoin d'informations complémentaires pour pouvoir la traiter.
     </p>
+
+    ${missingFieldsHtml}
 
     <div style="background-color: #ffffff; padding: 20px; border-radius: 6px; margin: 20px 0; border-left: 3px solid #f59e0b;">
       <p style="margin: 0; color: #78350f; font-weight: bold;">Message de notre équipe :</p>

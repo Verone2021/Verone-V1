@@ -1,13 +1,11 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 
 import { AddressInput } from '@verone/common/components/address/AddressInput';
 import { useToast } from '@verone/common/hooks';
-import { useProductPrice, formatPrice } from '@verone/finance/hooks';
 import type { SelectedProduct } from '@verone/products/components/selectors/UniversalProductSelectorV2';
 import { UniversalProductSelectorV2 } from '@verone/products/components/selectors/UniversalProductSelectorV2';
-import { useProducts } from '@verone/products/hooks';
 import { useStockMovements } from '@verone/stock/hooks';
 import type { Database } from '@verone/types';
 import { Alert, AlertDescription } from '@verone/ui';
@@ -21,7 +19,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@verone/ui';
-import { Badge } from '@verone/ui';
 import { EcoTaxVatInput } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
@@ -52,11 +49,11 @@ import {
 } from '@verone/ui';
 import { Textarea } from '@verone/ui';
 import { cn, formatCurrency } from '@verone/utils';
+import Image from 'next/image';
 import { createClient } from '@verone/utils/supabase/client';
 import {
   Plus,
   X,
-  Search,
   AlertTriangle,
   Trash2,
   Store,
@@ -77,18 +74,14 @@ import { useSalesOrders } from '@verone/orders/hooks';
 import {
   useLinkMeAffiliates,
   type AffiliateType,
-  type LinkMeAffiliate,
 } from '@verone/orders/hooks/linkme/use-linkme-affiliates';
 import {
   useCreateLinkMeOrder,
   type CreateLinkMeOrderInput,
-  type LinkMeOrderItemInput,
 } from '@verone/orders/hooks/linkme/use-linkme-orders';
 import {
   useLinkMeSelectionsByEnseigne,
   useLinkMeSelection,
-  type SelectionSummary,
-  type SelectionDetail,
   type SelectionItem,
 } from '@verone/orders/hooks/linkme/use-linkme-selections';
 
@@ -143,6 +136,33 @@ interface LinkMeCartItem {
   product_image_url?: string | null;
 }
 
+// Extended types for fields present in DB but not in SalesOrder/SalesOrderItem interfaces
+interface SalesOrderExtended {
+  payment_terms_type?: Database['public']['Enums']['payment_terms_type'] | null;
+  payment_terms_notes?: string | null;
+}
+
+interface SalesOrderItemExtended {
+  eco_tax?: number;
+  is_sample?: boolean;
+}
+
+interface ProductExtended {
+  eco_tax_default?: number;
+}
+
+// Type for pricing V2 RPC result
+interface PricingV2Result {
+  price_ht: number;
+  discount_rate: number | null;
+  price_source:
+    | 'customer_specific'
+    | 'customer_group'
+    | 'channel'
+    | 'base_catalog';
+  original_price: number;
+}
+
 interface SalesOrderFormModalProps {
   mode?: 'create' | 'edit';
   orderId?: string;
@@ -168,7 +188,7 @@ export function SalesOrderFormModal({
     useState<SalesChannelType | null>(null);
 
   // Utiliser l'état contrôlé si fourni, sinon l'état interne
-  const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
+  const open = controlledOpen ?? internalOpen;
   const setOpen = (value: boolean) => {
     if (controlledOpen !== undefined) {
       onOpenChange?.(value);
@@ -234,7 +254,7 @@ export function SalesOrderFormModal({
 
   // Hooks LinkMe
   const { data: linkmeAffiliates, isLoading: loadingAffiliates } =
-    useLinkMeAffiliates(linkmeAffiliateType || undefined);
+    useLinkMeAffiliates(linkmeAffiliateType ?? undefined);
 
   // Récupérer l'affilié sélectionné pour obtenir enseigne_id
   const selectedLinkmeAffiliate = useMemo(() => {
@@ -242,7 +262,7 @@ export function SalesOrderFormModal({
   }, [linkmeAffiliates, linkmeAffiliateId]);
 
   // Sélections par enseigne (via l'affilié)
-  const effectiveEnseigneId = selectedLinkmeAffiliate?.enseigne_id || null;
+  const effectiveEnseigneId = selectedLinkmeAffiliate?.enseigne_id ?? null;
   const { data: linkmeSelections, isLoading: loadingSelections } =
     useLinkMeSelectionsByEnseigne(effectiveEnseigneId);
   const { data: linkmeSelectionDetail, isLoading: loadingSelectionDetail } =
@@ -270,138 +290,147 @@ export function SalesOrderFormModal({
         return;
       }
 
-      setAvailableChannels(data || []);
+      setAvailableChannels(data ?? []);
     };
 
-    loadChannels();
+    void loadChannels().catch(console.error);
   }, [supabase]);
 
+  // Vérifier la disponibilité du stock pour tous les items
+  const checkAllStockAvailability = useCallback(
+    async (currentItems: OrderItem[]) => {
+      const warnings: string[] = [];
+
+      for (const item of currentItems) {
+        const stockData = await getAvailableStock(item.product_id);
+        const availableStock = stockData?.stock_available ?? 0;
+        if (availableStock < item.quantity) {
+          warnings.push(
+            `${item.product?.name} : Stock insuffisant (Disponible: ${availableStock}, Demandé: ${item.quantity})`
+          );
+        }
+      }
+
+      setStockWarnings(warnings);
+    },
+    [getAvailableStock]
+  );
+
   // Charger la commande existante en mode édition
-  const loadExistingOrder = async (orderIdToLoad: string) => {
-    setLoadingOrder(true);
-    try {
-      const order = await fetchOrder(orderIdToLoad);
-      if (!order) throw new Error('Commande non trouvée');
+  const loadExistingOrder = useCallback(
+    async (orderIdToLoad: string) => {
+      setLoadingOrder(true);
+      try {
+        const order = await fetchOrder(orderIdToLoad);
+        if (!order) throw new Error('Commande non trouvée');
 
-      // Construire l'objet customer unifié
-      const customer: UnifiedCustomer = (
-        order.customer_type === 'organization'
-          ? {
-              id: order.customer_id,
-              type: 'professional' as const,
-              name:
-                order.organisations?.trade_name ||
-                order.organisations?.legal_name ||
-                '',
-              email: order.organisations?.email as any,
-              phone: order.organisations?.phone,
-              address: [
-                order.organisations?.address_line1,
-                order.organisations?.address_line2,
-                order.organisations?.postal_code,
-                order.organisations?.city,
-              ]
-                .filter(Boolean)
-                .join(', '),
-              payment_terms: null,
-              prepayment_required: false,
-            }
-          : {
-              id: order.customer_id,
-              type: 'individual' as const,
-              name: `${order.individual_customers?.first_name} ${order.individual_customers?.last_name}`,
-              email: order.individual_customers?.email,
-              phone: order.individual_customers?.phone,
-              address: [
-                order.individual_customers?.address_line1,
-                order.individual_customers?.address_line2,
-                order.individual_customers?.postal_code,
-                order.individual_customers?.city,
-              ]
-                .filter(Boolean)
-                .join(', '),
-              payment_terms: null,
-              prepayment_required: false,
-            }
-      ) as any;
+        // Cast order pour accéder aux champs non typés dans SalesOrder
+        const orderExt = order as typeof order & SalesOrderExtended;
 
-      setSelectedCustomer(customer);
+        // Helper pour extraire l'adresse string d'un champ shipping/billing_address (typed as any)
+        const extractAddress = (addr: unknown): string => {
+          if (!addr) return '';
+          if (typeof addr === 'string') return addr;
+          if (typeof addr === 'object' && addr !== null && 'address' in addr) {
+            const val = (addr as { address: unknown }).address;
+            return typeof val === 'string' ? val : '';
+          }
+          return '';
+        };
 
-      // Charger les données de la commande
-      setExpectedDeliveryDate(order.expected_delivery_date || '');
-      setShippingAddress(
-        order.shipping_address
-          ? typeof order.shipping_address === 'string'
-            ? order.shipping_address
-            : order.shipping_address.address || ''
-          : ''
-      );
-      setBillingAddress(
-        order.billing_address
-          ? typeof order.billing_address === 'string'
-            ? order.billing_address
-            : order.billing_address.address || ''
-          : ''
-      );
-      setNotes(order.notes || '');
-      setEcoTaxVatRate(order.eco_tax_vat_rate ?? null);
-      setPaymentTermsType((order as any).payment_terms_type || '');
-      setPaymentTermsNotes((order as any).payment_terms_notes || '');
-      setChannelId((order as any).channel_id || null);
-      // Charger frais additionnels
-      setShippingCostHt((order as any).shipping_cost_ht || 0);
-      setInsuranceCostHt((order as any).insurance_cost_ht || 0);
-      setHandlingCostHt((order as any).handling_cost_ht || 0);
+        // Construire l'objet customer unifié
+        const customer: UnifiedCustomer =
+          order.customer_type === 'organization'
+            ? {
+                id: order.customer_id,
+                type: 'professional' as const,
+                name:
+                  order.organisations?.trade_name ??
+                  order.organisations?.legal_name ??
+                  '',
+                payment_terms: null,
+                prepayment_required: false,
+              }
+            : {
+                id: order.customer_id,
+                type: 'individual' as const,
+                name: `${order.individual_customers?.first_name ?? ''} ${order.individual_customers?.last_name ?? ''}`.trim(),
+                payment_terms: null,
+                prepayment_required: false,
+              };
 
-      // Transformer les items de la commande en OrderItem[]
-      const loadedItems = await Promise.all(
-        (order.sales_order_items || []).map(async item => {
-          const stockData = await getAvailableStock(item.product_id);
+        setSelectedCustomer(customer);
 
-          return {
-            id: item.id,
-            product_id: item.product_id,
-            quantity: item.quantity,
-            unit_price_ht: item.unit_price_ht,
-            tax_rate: item.tax_rate || 0.2, // Charger TVA ou 20% par défaut
-            discount_percentage: item.discount_percentage,
-            eco_tax: (item as any).eco_tax || 0, // Charger éco-taxe (cast car types Supabase non à jour)
-            expected_delivery_date: item.expected_delivery_date,
-            notes: item.notes,
-            is_sample: (item as any).is_sample || false, // Charger échantillon
-            product: item.products
-              ? {
-                  id: item.products.id,
-                  name: item.products.name,
-                  sku: item.products.sku,
-                  primary_image_url: null,
-                  stock_quantity: item.products.stock_quantity,
-                  eco_tax_default: (item.products as any).eco_tax_default || 0, // Cast car types Supabase non à jour
-                }
-              : undefined,
-            availableStock: stockData?.stock_available || 0,
-            pricing_source: 'base_catalog' as const,
-            original_price_ht: item.unit_price_ht,
-            auto_calculated: false,
-          };
-        })
-      );
+        // Charger les données de la commande
+        setExpectedDeliveryDate(order.expected_delivery_date ?? '');
+        setShippingAddress(extractAddress(order.shipping_address));
+        setBillingAddress(extractAddress(order.billing_address));
+        setNotes(order.notes ?? '');
+        setEcoTaxVatRate(order.eco_tax_vat_rate ?? null);
+        setPaymentTermsType(orderExt.payment_terms_type ?? null);
+        setPaymentTermsNotes(orderExt.payment_terms_notes ?? '');
+        setChannelId(order.channel_id ?? null);
+        // Charger frais additionnels
+        setShippingCostHt(order.shipping_cost_ht ?? 0);
+        setInsuranceCostHt(order.insurance_cost_ht ?? 0);
+        setHandlingCostHt(order.handling_cost_ht ?? 0);
 
-      setItems(loadedItems as any);
-      await checkAllStockAvailability(loadedItems as any);
-    } catch (error) {
-      console.error('Erreur lors du chargement de la commande:', error);
-    } finally {
-      setLoadingOrder(false);
-    }
-  };
+        // Transformer les items de la commande en OrderItem[]
+        const loadedItems: OrderItem[] = await Promise.all(
+          (order.sales_order_items ?? []).map(async item => {
+            const stockData = await getAvailableStock(item.product_id);
+            // Cast item pour accéder aux champs non typés dans SalesOrderItem
+            const itemExt = item as typeof item & SalesOrderItemExtended;
+            const prodExt = item.products as
+              | (typeof item.products & ProductExtended)
+              | undefined;
+
+            return {
+              id: item.id,
+              product_id: item.product_id,
+              quantity: item.quantity,
+              unit_price_ht: item.unit_price_ht,
+              tax_rate: item.tax_rate ?? 0.2, // Charger TVA ou 20% par défaut
+              discount_percentage: item.discount_percentage,
+              eco_tax: itemExt.eco_tax ?? 0, // Éco-taxe (champ non encore typé dans SalesOrderItem)
+              expected_delivery_date: item.expected_delivery_date,
+              notes: item.notes,
+              is_sample: itemExt.is_sample ?? false, // Échantillon
+              product: item.products
+                ? {
+                    id: item.products.id,
+                    name: item.products.name,
+                    sku: item.products.sku,
+                    primary_image_url: undefined,
+                    stock_quantity: item.products.stock_quantity,
+                    eco_tax_default: prodExt?.eco_tax_default ?? 0, // Champ non encore typé
+                  }
+                : undefined,
+              availableStock: stockData?.stock_available ?? 0,
+              pricing_source: 'base_catalog' as const,
+              original_price_ht: item.unit_price_ht,
+              auto_calculated: false,
+            };
+          })
+        );
+
+        setItems(loadedItems);
+        await checkAllStockAvailability(loadedItems);
+      } catch (error) {
+        console.error('Erreur lors du chargement de la commande:', error);
+      } finally {
+        setLoadingOrder(false);
+      }
+    },
+    [fetchOrder, getAvailableStock, checkAllStockAvailability]
+  );
 
   // Effet : charger la commande en mode édition quand la modal s'ouvre
   useEffect(() => {
     if (open && mode === 'edit' && orderId) {
-      loadExistingOrder(orderId);
+      void loadExistingOrder(orderId).catch(console.error);
     }
-  }, [open, mode, orderId]);
+  }, [open, mode, orderId, loadExistingOrder]);
 
   // Calculs totaux (inclut eco_tax - Migration eco_tax 2025-10-31)
   // ✅ FIX: L'écotaxe est PAR UNITÉ, donc multipliée par la quantité
@@ -409,8 +438,8 @@ export function SalesOrderFormModal({
     const itemSubtotal =
       item.quantity *
       item.unit_price_ht *
-      (1 - (item.discount_percentage || 0) / 100);
-    const itemEcoTax = (item.eco_tax || 0) * item.quantity; // Écotaxe × quantité
+      (1 - (item.discount_percentage ?? 0) / 100);
+    const itemEcoTax = (item.eco_tax ?? 0) * item.quantity; // Écotaxe × quantité
     return sum + itemSubtotal + itemEcoTax;
   }, 0);
 
@@ -418,7 +447,7 @@ export function SalesOrderFormModal({
   const totalCharges = shippingCostHt + insuranceCostHt + handlingCostHt;
 
   // Total HT global (produits + frais)
-  const totalHT = totalHTProducts + totalCharges;
+  const _totalHT = totalHTProducts + totalCharges;
 
   // TVA calculée dynamiquement par ligne avec taux spécifique + TVA sur frais (20%)
   // ✅ FIX: Inclure TVA sur écotaxe (écotaxe × quantité × taux TVA écotaxe)
@@ -427,10 +456,10 @@ export function SalesOrderFormModal({
       const lineHT =
         item.quantity *
         item.unit_price_ht *
-        (1 - (item.discount_percentage || 0) / 100);
-      const lineTVA = lineHT * (item.tax_rate || 0.2);
+        (1 - (item.discount_percentage ?? 0) / 100);
+      const lineTVA = lineHT * (item.tax_rate ?? 0.2);
       // TVA sur écotaxe: ecoTaxVatRate est en % (ex: 20), item.tax_rate est en décimal (ex: 0.2)
-      const ecoTaxHT = (item.eco_tax || 0) * item.quantity;
+      const ecoTaxHT = (item.eco_tax ?? 0) * item.quantity;
       const ecoTaxTvaRate =
         ecoTaxVatRate !== null ? ecoTaxVatRate / 100 : item.tax_rate || 0.2;
       const ecoTaxTVA = ecoTaxHT * ecoTaxTvaRate;
@@ -462,7 +491,7 @@ export function SalesOrderFormModal({
         setPaymentTermsType(
           customer.payment_terms_type as Database['public']['Enums']['payment_terms_type']
         );
-        setPaymentTermsNotes(customer.payment_terms_notes || '');
+        setPaymentTermsNotes(customer.payment_terms_notes ?? '');
       } else {
         // Fallback: essayer de déduire depuis l'ancien champ texte
         if (customer.prepayment_required) {
@@ -493,9 +522,10 @@ export function SalesOrderFormModal({
       // Formater l'adresse de livraison
       if (customer.type === 'professional') {
         // Client B2B - Utiliser adresse de livraison ou facturation
-        const useShipping = !!(
-          customer.shipping_address_line1 || customer.shipping_city
-        );
+        const useShipping =
+          (customer.shipping_address_line1 != null &&
+            customer.shipping_address_line1 !== '') ||
+          (customer.shipping_city != null && customer.shipping_city !== '');
         const shippingParts = [
           customer.name,
           useShipping
@@ -547,10 +577,11 @@ export function SalesOrderFormModal({
         setShippingAddress(shippingParts);
 
         // Adresse de facturation (spécifique ou principale)
-        const useSpecificBilling = !!(
-          customer.billing_address_line1_individual ||
-          customer.billing_city_individual
-        );
+        const useSpecificBilling =
+          (customer.billing_address_line1_individual != null &&
+            customer.billing_address_line1_individual !== '') ||
+          (customer.billing_city_individual != null &&
+            customer.billing_city_individual !== '');
         const billingParts = [
           customer.name,
           useSpecificBilling
@@ -624,16 +655,16 @@ export function SalesOrderFormModal({
     // Calculer le prix affilie HT avec TAUX DE MARQUE
     // Formule: base_price / (1 - marginRate) × (1 + commissionRate)
     // Exemple: 100 / (1 - 0.15) × (1 + 0.10) = 117.65 × 1.10 = 129.41EUR
-    const commissionRate = (item.commission_rate || 0) / 100;
-    const marginRate = (item.margin_rate || 0) / 100;
+    const commissionRate = (item.commission_rate ?? 0) / 100;
+    const marginRate = (item.margin_rate ?? 0) / 100;
     const sellingPrice =
       (item.base_price_ht / (1 - marginRate)) * (1 + commissionRate);
 
     const newItem: LinkMeCartItem = {
       id: `${item.product_id}-${Date.now()}`,
       product_id: item.product_id,
-      product_name: item.product?.name || 'Produit inconnu',
-      sku: item.product?.sku || '',
+      product_name: item.product?.name ?? 'Produit inconnu',
+      sku: item.product?.sku ?? '',
       quantity: 1,
       unit_price_ht: Math.round(sellingPrice * 100) / 100, // 168.75€
       base_price_ht: item.base_price_ht, // 135€ pour calcul commission
@@ -681,10 +712,9 @@ export function SalesOrderFormModal({
     for (const item of linkmeCart) {
       const lineTotal = item.quantity * item.unit_price_ht;
       totalHt += lineTotal;
-      // Commission calculée sur base_price_ht (135€), pas sur unit_price_ht (168.75€)
-      // Formule: base_price × margin_rate = 135 × 0.15 = 20.25€
+      // Commission = marge par unité × quantité (SSOT: selling - base)
       totalRetrocession +=
-        item.quantity * item.base_price_ht * item.retrocession_rate;
+        (item.unit_price_ht - item.base_price_ht) * item.quantity;
     }
 
     return {
@@ -701,7 +731,16 @@ export function SalesOrderFormModal({
     setWizardStep('form');
 
     // Pré-remplir le canal_id selon le type choisi
-    if (channel === 'site-internet') {
+    if (channel === 'manual') {
+      const manualChannel = availableChannels.find(
+        c =>
+          c.code === 'MANUEL' ||
+          c.code === 'manuel' ||
+          c.code === 'general' ||
+          c.code === 'GENERAL'
+      );
+      if (manualChannel) setChannelId(manualChannel.id);
+    } else if (channel === 'site-internet') {
       const siteChannel = availableChannels.find(
         c => c.code === 'SITE_INTERNET' || c.code === 'site-internet'
       );
@@ -724,23 +763,6 @@ export function SalesOrderFormModal({
   // Détermine si les prix sont modifiables selon le canal
   const isPriceEditable = selectedSalesChannel === 'manual';
 
-  // Vérifier la disponibilité du stock pour tous les items
-  const checkAllStockAvailability = async (currentItems: OrderItem[]) => {
-    const warnings: string[] = [];
-
-    for (const item of currentItems) {
-      const stockData = await getAvailableStock(item.product_id);
-      const availableStock = stockData?.stock_available || 0;
-      if (availableStock < item.quantity) {
-        warnings.push(
-          `${item.product?.name} : Stock insuffisant (Disponible: ${availableStock}, Demandé: ${item.quantity})`
-        );
-      }
-    }
-
-    setStockWarnings(warnings);
-  };
-
   // Calculer le prix d'un produit avec pricing V2
   const calculateProductPrice = async (
     productId: string,
@@ -760,8 +782,14 @@ export function SalesOrderFormModal({
 
     try {
       // Appel Supabase RPC calculate_product_price_v2
-      const { data, error } = await supabase.rpc(
-        'calculate_product_price_v2' as any,
+      // RPC non typée dans Database types - utiliser helper pour appel non typé
+      const rpcCall = supabase.rpc as unknown as (
+        fn: string,
+        params: Record<string, unknown>
+      ) => Promise<{ data: unknown; error: { message: string } | null }>;
+
+      const { data: rawData, error } = await rpcCall(
+        'calculate_product_price_v2',
         {
           p_product_id: productId,
           p_quantity: quantity,
@@ -778,7 +806,6 @@ export function SalesOrderFormModal({
       if (error) {
         console.error('Erreur calcul pricing V2:', error);
         // Fallback sur prix catalogue
-        // const product = products.find(p => p.id === productId); // DEPRECATED
         return {
           unit_price_ht: 0, // TODO: Fetch from catalogue
           discount_percentage: 0,
@@ -788,11 +815,13 @@ export function SalesOrderFormModal({
         };
       }
 
-      const pricingResult = data?.[0];
+      // Cast le résultat brut vers le type attendu
+      const pricingResults = rawData as PricingV2Result[] | null;
+      const pricingResult = pricingResults?.[0];
       if (pricingResult) {
         return {
           unit_price_ht: pricingResult.price_ht,
-          discount_percentage: (pricingResult.discount_rate || 0) * 100,
+          discount_percentage: (pricingResult.discount_rate ?? 0) * 100,
           pricing_source: pricingResult.price_source,
           original_price_ht: pricingResult.original_price,
           auto_calculated: true,
@@ -839,19 +868,19 @@ export function SalesOrderFormModal({
         const stockData = await getAvailableStock(product.id);
 
         // Calculer pricing V2 avec quantité du modal
-        const quantity = product.quantity || 1;
+        const quantity = product.quantity ?? 1;
         const pricing = await calculateProductPrice(product.id, quantity);
 
         // Fallback sur prix catalogue si pricing V2 échoue
         const finalPrice =
           pricing.unit_price_ht > 0
             ? pricing.unit_price_ht
-            : product.unit_price || 0;
+            : (product.unit_price ?? 0);
 
         const finalOriginalPrice =
           pricing.original_price_ht > 0
             ? pricing.original_price_ht
-            : product.unit_price || 0;
+            : (product.unit_price ?? 0);
 
         const newItem: OrderItem = {
           id: `temp-${Date.now()}-${product.id}`,
@@ -860,22 +889,22 @@ export function SalesOrderFormModal({
           unit_price_ht: finalPrice,
           tax_rate: 0.2,
           discount_percentage:
-            product.discount_percentage || pricing.discount_percentage,
+            product.discount_percentage ?? pricing.discount_percentage,
           eco_tax: 0, // TODO: Récupérer eco_tax du produit
-          notes: product.notes || '',
+          notes: product.notes ?? '',
           product: {
             id: product.id,
             name: product.name,
-            sku: product.sku || '',
+            sku: product.sku ?? '',
             primary_image_url: product.product_images?.[0]?.public_url,
             stock_quantity: product.stock_real,
             eco_tax_default: 0,
           },
-          availableStock: stockData?.stock_available || 0,
+          availableStock: stockData?.stock_available ?? 0,
           pricing_source: pricing.pricing_source,
           original_price_ht: finalOriginalPrice,
           auto_calculated:
-            pricing.auto_calculated || finalPrice === (product.unit_price || 0),
+            pricing.auto_calculated || finalPrice === (product.unit_price ?? 0),
         };
         newItems.push(newItem);
       }
@@ -904,7 +933,7 @@ export function SalesOrderFormModal({
   const updateItem = async (
     itemId: string,
     field: keyof OrderItem,
-    value: any
+    value: OrderItem[keyof OrderItem]
   ) => {
     const updatedItems = items.map(item =>
       item.id === itemId ? { ...item, [field]: value } : item
@@ -920,7 +949,7 @@ export function SalesOrderFormModal({
   const removeItem = (itemId: string) => {
     const updatedItems = items.filter(item => item.id !== itemId);
     setItems(updatedItems);
-    checkAllStockAvailability(updatedItems);
+    void checkAllStockAvailability(updatedItems).catch(console.error);
   };
 
   // ============================================
@@ -999,31 +1028,31 @@ export function SalesOrderFormModal({
         unit_price_ht: item.unit_price_ht,
         tax_rate: item.tax_rate, // TVA personnalisée par ligne
         discount_percentage: item.discount_percentage,
-        eco_tax: item.eco_tax || 0, // Éco-taxe par ligne
+        eco_tax: item.eco_tax ?? 0, // Éco-taxe par ligne
         expected_delivery_date: item.expected_delivery_date,
         notes: item.notes,
-        is_sample: item.is_sample || false, // Marquer comme échantillon
+        is_sample: item.is_sample ?? false, // Marquer comme échantillon
       }));
 
       if (mode === 'edit' && orderId) {
         // Mode édition : mettre à jour la commande existante
         const updateData = {
-          expected_delivery_date: expectedDeliveryDate || undefined,
+          expected_delivery_date: expectedDeliveryDate ?? undefined,
           shipping_address: shippingAddress
             ? { address: shippingAddress }
             : undefined,
           billing_address: billingAddress
             ? { address: billingAddress }
             : undefined,
-          payment_terms_type: paymentTermsType || undefined,
-          payment_terms_notes: paymentTermsNotes || undefined,
-          channel_id: channelId || undefined,
-          notes: notes || undefined,
+          payment_terms_type: paymentTermsType ?? undefined,
+          payment_terms_notes: paymentTermsNotes ?? undefined,
+          channel_id: channelId ?? undefined,
+          notes: notes ?? undefined,
           eco_tax_vat_rate: ecoTaxVatRate,
           // Frais additionnels clients
-          shipping_cost_ht: shippingCostHt || 0,
-          insurance_cost_ht: insuranceCostHt || 0,
-          handling_cost_ht: handlingCostHt || 0,
+          shipping_cost_ht: shippingCostHt ?? 0,
+          insurance_cost_ht: insuranceCostHt ?? 0,
+          handling_cost_ht: handlingCostHt ?? 0,
         };
 
         await updateOrderWithItems(orderId, updateData, itemsData);
@@ -1035,22 +1064,22 @@ export function SalesOrderFormModal({
             selectedCustomer.type === 'professional'
               ? 'organization'
               : 'individual',
-          expected_delivery_date: expectedDeliveryDate || undefined,
+          expected_delivery_date: expectedDeliveryDate ?? undefined,
           shipping_address: shippingAddress
             ? { address: shippingAddress }
             : undefined,
           billing_address: billingAddress
             ? { address: billingAddress }
             : undefined,
-          payment_terms_type: paymentTermsType || undefined,
-          payment_terms_notes: paymentTermsNotes || undefined,
-          channel_id: channelId || undefined,
-          notes: notes || undefined,
+          payment_terms_type: paymentTermsType ?? undefined,
+          payment_terms_notes: paymentTermsNotes ?? undefined,
+          channel_id: channelId ?? undefined,
+          notes: notes ?? undefined,
           eco_tax_vat_rate: ecoTaxVatRate,
           // Frais additionnels clients
-          shipping_cost_ht: shippingCostHt || 0,
-          insurance_cost_ht: insuranceCostHt || 0,
-          handling_cost_ht: handlingCostHt || 0,
+          shipping_cost_ht: shippingCostHt ?? 0,
+          insurance_cost_ht: insuranceCostHt ?? 0,
+          handling_cost_ht: handlingCostHt ?? 0,
           items: itemsData,
         };
 
@@ -1311,11 +1340,11 @@ export function SalesOrderFormModal({
                               Chargement des affiliés...
                             </span>
                           </div>
-                        ) : (linkmeAffiliates || []).length > 0 ? (
+                        ) : (linkmeAffiliates ?? []).length > 0 ? (
                           <Select
-                            value={linkmeAffiliateId || ''}
+                            value={linkmeAffiliateId ?? ''}
                             onValueChange={value => {
-                              setLinkmeAffiliateId(value || null);
+                              setLinkmeAffiliateId(value ?? null);
                               setLinkmeSelectionId(null);
                               setLinkmeCart([]);
                             }}
@@ -1325,7 +1354,7 @@ export function SalesOrderFormModal({
                               <SelectValue placeholder="Choisir un affilié" />
                             </SelectTrigger>
                             <SelectContent>
-                              {(linkmeAffiliates || []).map(affiliate => (
+                              {(linkmeAffiliates ?? []).map(affiliate => (
                                 <SelectItem
                                   key={affiliate.id}
                                   value={affiliate.id}
@@ -1368,13 +1397,13 @@ export function SalesOrderFormModal({
                               Chargement des sélections...
                             </span>
                           </div>
-                        ) : (linkmeSelections || []).length === 0 ? (
+                        ) : (linkmeSelections ?? []).length === 0 ? (
                           <div className="text-center py-4 text-muted-foreground">
                             Aucune sélection disponible pour cet affilié
                           </div>
                         ) : (
                           <div className="space-y-2 max-h-60 overflow-y-auto">
-                            {(linkmeSelections || []).map(selection => (
+                            {(linkmeSelections ?? []).map(selection => (
                               <div
                                 key={selection.id}
                                 className="flex items-center gap-2"
@@ -1399,8 +1428,8 @@ export function SalesOrderFormModal({
                                       {selection.name}
                                     </p>
                                     <p className="text-xs text-gray-500">
-                                      {selection.products_count || 0} produit
-                                      {(selection.products_count || 0) > 1
+                                      {selection.products_count ?? 0} produit
+                                      {(selection.products_count ?? 0) > 1
                                         ? 's'
                                         : ''}{' '}
                                       - {selection.affiliate_name}
@@ -1443,24 +1472,24 @@ export function SalesOrderFormModal({
                             Chargement des produits...
                           </div>
                         </div>
-                      ) : (linkmeSelectionDetail?.items || []).length === 0 ? (
+                      ) : (linkmeSelectionDetail?.items ?? []).length === 0 ? (
                         <div className="text-center py-8 text-muted-foreground">
                           Aucun produit dans cette sélection
                         </div>
                       ) : (
                         <div className="grid gap-3 max-h-80 overflow-y-auto pr-2">
-                          {(linkmeSelectionDetail?.items || []).map(item => {
+                          {(linkmeSelectionDetail?.items ?? []).map(item => {
                             // Prix affilie avec TAUX DE MARQUE
                             // Formule: base_price / (1 - marginRate) × (1 + commissionRate)
                             // commission_rate et margin_rate sont en POURCENTAGE (10 = 10%)
                             const commissionRate =
-                              (item.commission_rate || 0) / 100;
-                            const marginRate = (item.margin_rate || 0) / 100;
+                              (item.commission_rate ?? 0) / 100;
+                            const marginRate = (item.margin_rate ?? 0) / 100;
                             const sellingPrice =
                               (item.base_price_ht / (1 - marginRate)) *
                               (1 + commissionRate);
                             const marginPercent = (
-                              item.margin_rate || 0
+                              item.margin_rate ?? 0
                             ).toFixed(0);
                             const isInCart = linkmeCart.some(
                               c => c.product_id === item.product_id
@@ -1478,9 +1507,11 @@ export function SalesOrderFormModal({
                               >
                                 <div className="flex items-center gap-3">
                                   {item.product_image_url ? (
-                                    <img
+                                    <Image
                                       src={item.product_image_url}
-                                      alt={item.product?.name || 'Produit'}
+                                      alt={item.product?.name ?? 'Produit'}
+                                      width={48}
+                                      height={48}
                                       className="w-12 h-12 object-cover rounded"
                                     />
                                   ) : (
@@ -1490,10 +1521,10 @@ export function SalesOrderFormModal({
                                   )}
                                   <div>
                                     <p className="font-medium">
-                                      {item.product?.name || 'Produit inconnu'}
+                                      {item.product?.name ?? 'Produit inconnu'}
                                     </p>
                                     <p className="text-sm text-muted-foreground">
-                                      {item.product?.sku || 'N/A'}
+                                      {item.product?.sku ?? 'N/A'}
                                     </p>
                                     <p className="text-sm">
                                       <span className="font-semibold text-purple-700">
@@ -1550,9 +1581,11 @@ export function SalesOrderFormModal({
                               <TableCell>
                                 <div className="flex items-center gap-2">
                                   {item.product_image_url && (
-                                    <img
+                                    <Image
                                       src={item.product_image_url}
                                       alt={item.product_name}
+                                      width={32}
+                                      height={32}
                                       className="w-8 h-8 object-cover rounded"
                                     />
                                   )}
@@ -1664,7 +1697,9 @@ export function SalesOrderFormModal({
                   </ButtonV2>
                   <ButtonV2
                     type="button"
-                    onClick={handleLinkMeSubmit}
+                    onClick={() => {
+                      void handleLinkMeSubmit().catch(console.error);
+                    }}
                     disabled={
                       loading ||
                       !selectedCustomer ||
@@ -1743,7 +1778,7 @@ export function SalesOrderFormModal({
                           Conditions de paiement
                         </Label>
                         <Select
-                          value={paymentTermsType || undefined}
+                          value={paymentTermsType ?? undefined}
                           onValueChange={value =>
                             setPaymentTermsType(
                               value as Database['public']['Enums']['payment_terms_type']
@@ -1794,8 +1829,8 @@ export function SalesOrderFormModal({
                     <div className="space-y-2">
                       <Label htmlFor="channelId">Canal de vente</Label>
                       <Select
-                        value={channelId || ''}
-                        onValueChange={value => setChannelId(value || null)}
+                        value={channelId ?? ''}
+                        onValueChange={value => setChannelId(value ?? null)}
                         disabled={loading || !selectedCustomer}
                       >
                         <SelectTrigger id="channelId">
@@ -1963,11 +1998,11 @@ export function SalesOrderFormModal({
                               const itemSubtotal =
                                 item.quantity *
                                 item.unit_price_ht *
-                                (1 - (item.discount_percentage || 0) / 100);
+                                (1 - (item.discount_percentage ?? 0) / 100);
                               // ✅ FIX: Écotaxe × quantité
                               const itemTotal =
                                 itemSubtotal +
-                                (item.eco_tax || 0) * item.quantity;
+                                (item.eco_tax ?? 0) * item.quantity;
 
                               return (
                                 <TableRow key={item.id}>
@@ -1975,9 +2010,11 @@ export function SalesOrderFormModal({
                                   <TableCell>
                                     <div className="flex items-center gap-2">
                                       {item.product?.primary_image_url && (
-                                        <img
+                                        <Image
                                           src={item.product.primary_image_url}
                                           alt={item.product.name}
+                                          width={32}
+                                          height={32}
                                           className="w-8 h-8 object-cover rounded"
                                         />
                                       )}
@@ -1992,13 +2029,13 @@ export function SalesOrderFormModal({
                                       type="number"
                                       min="1"
                                       value={item.quantity}
-                                      onChange={e =>
-                                        updateItem(
+                                      onChange={e => {
+                                        void updateItem(
                                           item.id,
                                           'quantity',
                                           parseInt(e.target.value) || 1
-                                        )
-                                      }
+                                        ).catch(console.error);
+                                      }}
                                       className="w-16 h-8 text-sm"
                                       disabled={loading}
                                     />
@@ -2010,13 +2047,13 @@ export function SalesOrderFormModal({
                                       step="0.01"
                                       min="0"
                                       value={item.unit_price_ht}
-                                      onChange={e =>
-                                        updateItem(
+                                      onChange={e => {
+                                        void updateItem(
                                           item.id,
                                           'unit_price_ht',
                                           parseFloat(e.target.value) || 0
-                                        )
-                                      }
+                                        ).catch(console.error);
+                                      }}
                                       className={cn(
                                         'w-24 h-8 text-sm',
                                         !isPriceEditable &&
@@ -2037,14 +2074,14 @@ export function SalesOrderFormModal({
                                       step="0.01"
                                       min="0"
                                       max="100"
-                                      value={item.discount_percentage || 0}
-                                      onChange={e =>
-                                        updateItem(
+                                      value={item.discount_percentage ?? 0}
+                                      onChange={e => {
+                                        void updateItem(
                                           item.id,
                                           'discount_percentage',
                                           parseFloat(e.target.value) || 0
-                                        )
-                                      }
+                                        ).catch(console.error);
+                                      }}
                                       className="w-20 h-8 text-sm"
                                       disabled={loading}
                                     />
@@ -2055,14 +2092,14 @@ export function SalesOrderFormModal({
                                       type="number"
                                       step="0.01"
                                       min="0"
-                                      value={(item.eco_tax || 0).toFixed(2)}
-                                      onChange={e =>
-                                        updateItem(
+                                      value={(item.eco_tax ?? 0).toFixed(2)}
+                                      onChange={e => {
+                                        void updateItem(
                                           item.id,
                                           'eco_tax',
                                           parseFloat(e.target.value) || 0
-                                        )
-                                      }
+                                        ).catch(console.error);
+                                      }}
                                       className="w-20 h-8 text-sm"
                                       disabled={loading}
                                     />
@@ -2227,7 +2264,9 @@ export function SalesOrderFormModal({
           <AlertDialogFooter>
             <AlertDialogCancel disabled={loading}>Annuler</AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleSubmitConfirmed}
+              onClick={() => {
+                void handleSubmitConfirmed().catch(console.error);
+              }}
               disabled={loading}
             >
               {loading
@@ -2248,7 +2287,7 @@ export function SalesOrderFormModal({
           <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden mx-4">
             <div className="flex items-center justify-between p-4 border-b">
               <h3 className="font-semibold">
-                Aperçu : {previewSelection?.name || 'Chargement...'}
+                Aperçu : {previewSelection?.name ?? 'Chargement...'}
               </h3>
               <button
                 onClick={() => setPreviewSelectionId(null)}
@@ -2272,8 +2311,8 @@ export function SalesOrderFormModal({
                     // Prix affilie avec TAUX DE MARQUE
                     // Formule: base_price / (1 - marginRate) × (1 + commissionRate)
                     // commission_rate et margin_rate sont en POURCENTAGE (10 = 10%)
-                    const commissionRate = (item.commission_rate || 0) / 100;
-                    const marginRate = (item.margin_rate || 0) / 100;
+                    const commissionRate = (item.commission_rate ?? 0) / 100;
+                    const marginRate = (item.margin_rate ?? 0) / 100;
                     const sellingPrice =
                       (item.base_price_ht / (1 - marginRate)) *
                       (1 + commissionRate);
@@ -2284,9 +2323,11 @@ export function SalesOrderFormModal({
                       >
                         <div className="w-16 h-16 mx-auto mb-2 overflow-hidden rounded">
                           {item.product_image_url ? (
-                            <img
+                            <Image
                               src={item.product_image_url}
-                              alt={item.product?.name || 'Produit'}
+                              alt={item.product?.name ?? 'Produit'}
+                              width={64}
+                              height={64}
                               className="w-full h-full object-cover"
                             />
                           ) : (
@@ -2296,7 +2337,7 @@ export function SalesOrderFormModal({
                           )}
                         </div>
                         <p className="text-xs font-medium text-center truncate">
-                          {item.product?.name || 'Produit'}
+                          {item.product?.name ?? 'Produit'}
                         </p>
                         <p className="text-xs text-gray-500 text-center">
                           {formatCurrency(sellingPrice)}

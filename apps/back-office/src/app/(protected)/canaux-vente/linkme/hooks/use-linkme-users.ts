@@ -18,11 +18,7 @@ type UserAppRoleUpdate =
 type LinkMeUserView = Database['public']['Views']['v_linkme_users']['Row'];
 
 // Types
-export type LinkMeRole =
-  | 'enseigne_admin'
-  | 'organisation_admin'
-  | 'org_independante'
-  | 'client';
+export type LinkMeRole = 'enseigne_admin' | 'organisation_admin';
 
 export interface LinkMeUser {
   user_id: string;
@@ -223,11 +219,11 @@ async function fetchEnseignesForSelect(): Promise<EnseigneSelectOption[]> {
 /**
  * Fetch organisations pour dropdown (filtrées par enseigne si fourni)
  * @param enseigneId - Filtrer par enseigne
- * @param forOrgIndependante - Si true, exclut les organisations qui ont déjà un utilisateur org_independante
+ * @param forOrganisationAdmin - Si true, exclut les organisations qui ont déjà un utilisateur organisation_admin
  */
 async function fetchOrganisationsForSelect(
   enseigneId?: string,
-  forOrgIndependante: boolean = false
+  forOrganisationAdmin: boolean = false
 ) {
   let query = supabase
     .from('organisations')
@@ -253,13 +249,13 @@ async function fetchOrganisationsForSelect(
     enseigne_id: org.enseigne_id,
   }));
 
-  // Si création pour org_independante, exclure les orgs qui ont déjà un utilisateur
-  if (forOrgIndependante) {
+  // Si création pour organisation_admin, exclure les orgs qui ont déjà un utilisateur
+  if (forOrganisationAdmin) {
     const { data: existingRoles } = await supabase
       .from('user_app_roles')
       .select('organisation_id')
       .eq('app', 'linkme')
-      .eq('role', 'org_independante')
+      .eq('role', 'organisation_admin')
       .not('organisation_id', 'is', null);
 
     const usedOrgIds = new Set(
@@ -327,15 +323,16 @@ export function useLinkMeEnseignesSelect() {
 /**
  * Hook: organisations pour dropdown
  * @param enseigneId - Filtrer par enseigne
- * @param forOrgIndependante - Si true, exclut les organisations qui ont déjà un utilisateur org_independante
+ * @param forOrganisationAdmin - Si true, exclut les organisations qui ont déjà un utilisateur organisation_admin
  */
 export function useLinkMeOrganisationsSelect(
   enseigneId?: string,
-  forOrgIndependante: boolean = false
+  forOrganisationAdmin: boolean = false
 ) {
   return useQuery({
-    queryKey: ['linkme-organisations-select', enseigneId, forOrgIndependante],
-    queryFn: () => fetchOrganisationsForSelect(enseigneId, forOrgIndependante),
+    queryKey: ['linkme-organisations-select', enseigneId, forOrganisationAdmin],
+    queryFn: () =>
+      fetchOrganisationsForSelect(enseigneId, forOrganisationAdmin),
     staleTime: 60000,
   });
 }
@@ -357,8 +354,13 @@ export function useCreateLinkMeUser() {
       });
 
       if (!response.ok) {
-        const error = (await response.json()) as { message?: string };
-        throw new Error(error.message ?? 'Erreur lors de la création');
+        const errorData = (await response.json()) as {
+          message?: string;
+          error?: string;
+        };
+        throw new Error(
+          errorData.message ?? errorData.error ?? 'Erreur lors de la création'
+        );
       }
 
       return response.json() as Promise<{ user_id: string }>;
@@ -535,10 +537,6 @@ export function useLinkMeUsersStats() {
         organisation_admin: users.filter(
           u => u.linkme_role === 'organisation_admin'
         ).length,
-        org_independante: users.filter(
-          u => u.linkme_role === 'org_independante'
-        ).length,
-        client: users.filter(u => u.linkme_role === 'client').length,
       };
 
       const active = users.filter(u => u.is_active).length;
@@ -562,10 +560,8 @@ export function useLinkMeUsersStats() {
  * Labels des rôles pour affichage
  */
 export const LINKME_ROLE_LABELS: Record<LinkMeRole, string> = {
-  enseigne_admin: 'Admin Enseigne',
-  organisation_admin: 'Organisation Enseigne',
-  org_independante: 'Org. Indépendante',
-  client: 'Client',
+  enseigne_admin: 'Enseigne',
+  organisation_admin: 'Organisation',
 };
 
 /**
@@ -574,8 +570,6 @@ export const LINKME_ROLE_LABELS: Record<LinkMeRole, string> = {
 export const LINKME_ROLE_COLORS: Record<LinkMeRole, string> = {
   enseigne_admin: 'bg-purple-100 text-purple-800',
   organisation_admin: 'bg-blue-100 text-blue-800',
-  org_independante: 'bg-orange-100 text-orange-800',
-  client: 'bg-green-100 text-green-800',
 };
 
 /**
@@ -583,20 +577,14 @@ export const LINKME_ROLE_COLORS: Record<LinkMeRole, string> = {
  */
 export const LINKME_ROLE_PERMISSIONS: Record<LinkMeRole, string[]> = {
   enseigne_admin: [
-    'Voir les commandes de toutes les organisations du réseau',
-    'Créer et gérer les utilisateurs',
-    'Assigner des utilisateurs aux organisations',
-    'Gérer les sélections de produits du réseau',
+    'Gérer les sélections de produits',
+    'Vendre aux organisations du réseau',
+    "Voir toutes les organisations de l'enseigne",
+    'Accès aux statistiques réseau',
   ],
   organisation_admin: [
-    'Voir les commandes des clients utilisant ses sélections',
-    'Créer et modifier des sélections de produits',
-    'Définir le taux de marge par produit',
+    'Créer des sélections de produits',
+    'Voir uniquement son organisation',
+    'Formulaire de sélection limité',
   ],
-  org_independante: [
-    'Voir les commandes des clients utilisant ses sélections',
-    'Créer et modifier des sélections de produits',
-    'Définir le taux de marge par produit',
-  ],
-  client: ['Accéder aux sélections via lien partagé', 'Passer des commandes'],
 };

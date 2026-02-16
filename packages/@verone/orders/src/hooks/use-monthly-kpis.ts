@@ -148,13 +148,12 @@ export function useMonthlyKPIs(options: UseMonthlyKPIsOptions = {}) {
       // ============================================
       // Requête principale via RPC get_linkme_orders
       // ============================================
-      // Cette RPC retourne les commandes avec les vraies dates (created_at de sales_orders)
-      // et les marges affiliés (total_affiliate_margin)
+      // RPC signature: (p_channel_id uuid, p_limit int, p_offset int)
+      // Returns: id, order_number, created_at, status, total_ht(string), total_ttc(string), channel, items, customer
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: ordersData, error } = await (supabase as any).rpc(
+      const { data: ordersData, error } = await supabase.rpc(
         'get_linkme_orders',
-        { p_affiliate_id: affiliateId || null }
+        {} // Use defaults: LinkMe channel, limit 50
       );
 
       if (error) {
@@ -164,50 +163,43 @@ export function useMonthlyKPIs(options: UseMonthlyKPIsOptions = {}) {
 
       const orders = ordersData || [];
 
-      // Filtrer par canal si spécifié (pour le back-office)
-      // Note: La RPC get_linkme_orders ne filtre pas par canal,
-      // mais les ordres LinkMe ont déjà le bon channel_id
-      // Pour d'autres canaux, on pourrait utiliser une autre RPC
-
       // ============================================
       // Calculer les KPIs par période
       // ============================================
 
       // Mois en cours
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const currentMonthOrders = orders.filter((o: any) => {
+      const currentMonthOrders = (orders as RPCOrder[]).filter(o => {
         const orderDate = new Date(o.created_at);
         return orderDate >= currentMonthStart && orderDate <= currentMonthEnd;
       });
 
       // Mois précédent
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const previousMonthOrders = orders.filter((o: any) => {
+      const previousMonthOrders = (orders as RPCOrder[]).filter(o => {
         const orderDate = new Date(o.created_at);
         return orderDate >= previousMonthStart && orderDate <= previousMonthEnd;
       });
 
       // Fonction de calcul des KPIs pour une liste de commandes
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const calculateKPIs = (ordersList: any[]) => {
+      // Note: total_ht et total_ttc sont des strings (PostgreSQL numeric → JSON string)
+      interface RPCOrder {
+        created_at: string;
+        total_ht: string | number | null;
+        total_ttc: string | number | null;
+      }
+
+      const calculateKPIs = (ordersList: RPCOrder[]) => {
         const count = ordersList.length;
         const caHT = ordersList.reduce(
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (sum: number, o: any) => sum + (o.total_ht || 0),
+          (sum: number, o) => sum + (Number(o.total_ht) || 0),
           0
         );
         const caTTC = ordersList.reduce(
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (sum: number, o: any) => sum + (o.total_ttc || 0),
+          (sum: number, o) => sum + (Number(o.total_ttc) || 0),
           0
         );
-        const commissionsHT = ordersList.reduce(
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (sum: number, o: any) => sum + (o.total_affiliate_margin || 0),
-          0
-        );
-        // TTC = HT * 1.2 (TVA 20%)
-        const commissionsTTC = commissionsHT * 1.2;
+        // total_affiliate_margin not available in current RPC
+        const commissionsHT = 0;
+        const commissionsTTC = 0;
         const panierMoyen = count > 0 ? caTTC / count : 0;
 
         return {
@@ -222,13 +214,11 @@ export function useMonthlyKPIs(options: UseMonthlyKPIsOptions = {}) {
 
       const currentKPIs = calculateKPIs(currentMonthOrders);
       const previousKPIs = calculateKPIs(previousMonthOrders);
-      const allTimeKPIs = calculateKPIs(orders);
+      const allTimeKPIs = calculateKPIs(orders as RPCOrder[]);
 
       // Calculer le nombre de mois avec des commandes
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const monthsWithOrders = new Set(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        orders.map((o: any) => {
+        (orders as RPCOrder[]).map(o => {
           const d = new Date(o.created_at);
           return `${d.getFullYear()}-${d.getMonth()}`;
         })

@@ -128,6 +128,12 @@ export function CreateLinkMeOrderModal({
   const [newCustomerLastName, setNewCustomerLastName] = useState('');
   const [newCustomerEmail, setNewCustomerEmail] = useState('');
   const [newCustomerPhone, setNewCustomerPhone] = useState('');
+  const [newOrgOwnershipType, setNewOrgOwnershipType] = useState<
+    'succursale' | 'franchise' | null
+  >(null);
+  const [newOrgAddress, setNewOrgAddress] = useState('');
+  const [newOrgPostalCode, setNewOrgPostalCode] = useState('');
+  const [newOrgCity, setNewOrgCity] = useState('');
 
   // Contacts & Addresses (Step 5)
   const [contactsAddressesData, setContactsAddressesData] =
@@ -190,6 +196,10 @@ export function CreateLinkMeOrderModal({
       setNewCustomerLastName('');
       setNewCustomerEmail('');
       setNewCustomerPhone('');
+      setNewOrgOwnershipType(null);
+      setNewOrgAddress('');
+      setNewOrgPostalCode('');
+      setNewOrgCity('');
       setContactsAddressesData({
         billingContact: null,
         billingAddress: null,
@@ -311,6 +321,11 @@ export function CreateLinkMeOrderModal({
           legal_name: newCustomerName.trim(),
           email: newCustomerEmail.trim() ?? undefined,
           phone: newCustomerPhone.trim() ?? undefined,
+          logo_url: selectedAffiliate.logo_url ?? null,
+          ownership_type: newOrgOwnershipType,
+          address_line1: newOrgAddress.trim() || undefined,
+          postal_code: newOrgPostalCode.trim() || undefined,
+          city: newOrgCity.trim() || undefined,
           source_type: 'linkme',
           source_affiliate_id: selectedAffiliateId ?? undefined,
         });
@@ -340,6 +355,10 @@ export function CreateLinkMeOrderModal({
       setNewCustomerLastName('');
       setNewCustomerEmail('');
       setNewCustomerPhone('');
+      setNewOrgOwnershipType(null);
+      setNewOrgAddress('');
+      setNewOrgPostalCode('');
+      setNewOrgCity('');
     } catch (error) {
       console.error('Erreur création client:', error);
     }
@@ -898,6 +917,85 @@ export function CreateLinkMeOrderModal({
                         className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
                       />
                     </div>
+
+                    {/* Ownership type (organisation uniquement) */}
+                    {customerType === 'organization' && (
+                      <div className="space-y-1">
+                        <label className="block text-xs text-purple-700">
+                          Type de point de vente
+                        </label>
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setNewOrgOwnershipType(
+                                newOrgOwnershipType === 'succursale'
+                                  ? null
+                                  : 'succursale'
+                              )
+                            }
+                            className={cn(
+                              'px-3 py-1.5 rounded-lg border text-sm transition-all',
+                              newOrgOwnershipType === 'succursale'
+                                ? 'border-purple-500 bg-purple-100 text-purple-700 font-medium'
+                                : 'border-gray-200 hover:border-gray-300 text-gray-600'
+                            )}
+                          >
+                            Propre (succursale)
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setNewOrgOwnershipType(
+                                newOrgOwnershipType === 'franchise'
+                                  ? null
+                                  : 'franchise'
+                              )
+                            }
+                            className={cn(
+                              'px-3 py-1.5 rounded-lg border text-sm transition-all',
+                              newOrgOwnershipType === 'franchise'
+                                ? 'border-purple-500 bg-purple-100 text-purple-700 font-medium'
+                                : 'border-gray-200 hover:border-gray-300 text-gray-600'
+                            )}
+                          >
+                            Franchise
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Adresse restaurant (organisation uniquement) */}
+                    {customerType === 'organization' && (
+                      <div className="space-y-2">
+                        <label className="block text-xs text-purple-700">
+                          Adresse du restaurant
+                        </label>
+                        <input
+                          type="text"
+                          value={newOrgAddress}
+                          onChange={e => setNewOrgAddress(e.target.value)}
+                          placeholder="Adresse (rue, numéro)"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        />
+                        <div className="grid grid-cols-2 gap-2">
+                          <input
+                            type="text"
+                            value={newOrgPostalCode}
+                            onChange={e => setNewOrgPostalCode(e.target.value)}
+                            placeholder="Code postal"
+                            className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                          />
+                          <input
+                            type="text"
+                            value={newOrgCity}
+                            onChange={e => setNewOrgCity(e.target.value)}
+                            placeholder="Ville"
+                            className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                          />
+                        </div>
+                      </div>
+                    )}
 
                     <div className="flex gap-2">
                       <button

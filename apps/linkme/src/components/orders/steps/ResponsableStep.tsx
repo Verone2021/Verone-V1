@@ -14,8 +14,18 @@
 import { useState, useCallback, useMemo } from 'react';
 
 import { Card, Input, Label, cn } from '@verone/ui';
-import { User, Building2, Plus, Check, AlertCircle } from 'lucide-react';
+import {
+  User,
+  Building2,
+  Plus,
+  Check,
+  AlertCircle,
+  Save,
+  Loader2,
+} from 'lucide-react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
+import { createClient } from '@verone/utils/supabase/client';
 import { useEnseigneId } from '@/lib/hooks/use-enseigne-id';
 import { useOrganisationContacts } from '@/lib/hooks/use-organisation-contacts';
 import type { OrganisationContact } from '@/lib/hooks/use-organisation-contacts';
@@ -184,6 +194,9 @@ export function ResponsableStep({
   const [showForm, setShowForm] = useState(
     !formData.contacts.existingResponsableId
   );
+  const [savedContactName, setSavedContactName] = useState<string | null>(null);
+
+  const queryClient = useQueryClient();
 
   // Get enseigne ID
   const enseigneId = useEnseigneId();
@@ -226,13 +239,64 @@ export function ResponsableStep({
     return allContacts.filter(c => c.organisationId !== organisationId);
   }, [allContacts, organisationId]);
 
-  // Check if responsable is complete
+  // Check if responsable is complete (enough info to save)
   const isComplete = useMemo(() => {
     const r = formData.contacts.responsable;
     return (
       r.firstName.length >= 2 && r.lastName.length >= 2 && r.email.includes('@')
     );
   }, [formData.contacts.responsable]);
+
+  // Mutation to save a new contact to DB immediately
+  const saveContactMutation = useMutation({
+    mutationFn: async () => {
+      const supabase = createClient();
+      const r = formData.contacts.responsable;
+
+      // For succursales, contacts are also linked to enseigne
+      const contactEnseigneId =
+        ownershipType === 'succursale' ? (enseigneId ?? null) : null;
+
+      const { data: newContact, error } = await supabase
+        .from('contacts')
+        .insert({
+          organisation_id: organisationId,
+          enseigne_id: contactEnseigneId,
+          first_name: r.firstName,
+          last_name: r.lastName,
+          email: r.email,
+          phone: r.phone ?? null,
+          title: r.position ?? null,
+          is_primary_contact: true,
+          is_active: true,
+        })
+        .select('id')
+        .single();
+
+      if (error) throw error;
+      return newContact;
+    },
+    onSuccess: async data => {
+      // Update form data with the saved contact ID
+      onUpdate({
+        existingResponsableId: data.id,
+      });
+      setSavedContactName(
+        `${formData.contacts.responsable.firstName} ${formData.contacts.responsable.lastName}`
+      );
+      setShowForm(false);
+
+      // Invalidate contacts cache to refresh the list
+      if (organisationId) {
+        await queryClient.invalidateQueries({
+          queryKey: ['organisation-contacts', organisationId],
+        });
+      }
+    },
+    onError: (error: Error) => {
+      console.error('[ResponsableStep] Save contact failed:', error);
+    },
+  });
 
   // ========================================
   // HANDLERS
@@ -296,7 +360,9 @@ export function ResponsableStep({
         <div>
           <h3 className="font-semibold text-gray-900">
             Contact Responsable de la Commande
-            <span className="text-red-500 ml-1">*</span>
+            <span className="text-gray-400 text-sm font-normal ml-2">
+              (optionnel)
+            </span>
           </h3>
           <p className="text-sm text-gray-500">
             Personne principale a contacter pour cette commande
@@ -343,6 +409,25 @@ export function ResponsableStep({
             </div>
           )}
 
+          {/* Saved contact confirmation */}
+          {!isLoading && !showForm && savedContactName && (
+            <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
+                  <Check className="h-4 w-4 text-green-600" />
+                </div>
+                <div>
+                  <p className="font-medium text-green-800">
+                    {savedContactName}
+                  </p>
+                  <p className="text-xs text-green-600">
+                    Contact sauvegardé en base de données
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Formulaire si mode creation ou pas de contacts */}
           {!isLoading && (showForm || localContacts.length === 0) && (
             <div className={localContacts.length > 0 ? 'pt-4 border-t' : ''}>
@@ -356,6 +441,39 @@ export function ResponsableStep({
                 onChange={handleContactChange}
                 showCompany={isFranchise}
               />
+
+              {/* Save contact button */}
+              {organisationId && (
+                <div className="mt-4 flex items-center gap-3">
+                  <button
+                    type="button"
+                    disabled={!isComplete || saveContactMutation.isPending}
+                    onClick={() => {
+                      void saveContactMutation.mutateAsync().catch(() => {
+                        // Error already handled in onError
+                      });
+                    }}
+                    className={cn(
+                      'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all',
+                      isComplete && !saveContactMutation.isPending
+                        ? 'bg-blue-600 text-white hover:bg-blue-700'
+                        : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                    )}
+                  >
+                    {saveContactMutation.isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Save className="h-4 w-4" />
+                    )}
+                    Sauvegarder le contact
+                  </button>
+                  {saveContactMutation.isError && (
+                    <span className="text-sm text-red-600">
+                      Erreur lors de la sauvegarde
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </Card>

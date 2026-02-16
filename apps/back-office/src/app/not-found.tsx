@@ -13,9 +13,6 @@ import Link from 'next/link';
 
 import { AlertTriangle, Home, ArrowLeft } from 'lucide-react';
 
-// Force dynamic rendering pour éviter prerendering error avec Html import
-export const dynamic = 'force-dynamic';
-
 export default function NotFound() {
   return (
     <div className="min-h-screen bg-white flex items-center justify-center p-4">

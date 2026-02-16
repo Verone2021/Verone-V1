@@ -117,6 +117,8 @@ export const restaurantStepSchema = z
       .optional()
       .nullable(),
     existingCountry: z.string().optional().nullable(), // Pour calcul TVA (FR=20%, autres=0%)
+    existingAddressLine1: z.string().optional().nullable(), // Pour Step 7 (adresse livraison)
+    existingPostalCode: z.string().optional().nullable(), // Pour Step 7 (adresse livraison)
     newRestaurant: newRestaurantSchema.optional().nullable(),
   })
   .refine(
@@ -434,6 +436,8 @@ export const defaultRestaurantStep: RestaurantStepData = {
   existingCity: undefined,
   existingOwnershipType: null,
   existingCountry: null,
+  existingAddressLine1: null,
+  existingPostalCode: null,
   newRestaurant: null,
 };
 
@@ -570,32 +574,20 @@ export function validateStep(
         cartStepSchema.parse(data.cart);
         return true;
       case 5:
-        // Step 5: Contact Responsable uniquement
-        if (!data.contacts) return false;
-        responsableStepSchema.parse({
-          responsable: data.contacts.responsable,
-          existingResponsableId: data.contacts.existingResponsableId,
-        });
+        // Step 5: Contact Responsable — optionnel
         return true;
       case 6:
-        // Step 6: Contact + Adresse Facturation
-        if (!data.contacts) return false;
-        billingStepValidationSchema.parse({
-          billingContact: data.contacts.billingContact,
-          billingAddress: data.contacts.billingAddress,
-        });
+        // Step 6: Facturation — optionnel
         return true;
       case 7:
-        // Step 7: Contact Livraison + Adresse + Date + Options
-        if (!data.contacts || !data.delivery) return false;
-        shippingStepValidationSchema.parse({
-          contactDelivery: data.contacts.delivery,
-          delivery: data.delivery,
-        });
+        // Step 7: Livraison — optionnel
         return true;
       case 8:
-        // Validation finale
-        orderFormSchema.parse(data);
+        // Validation finale — uniquement étapes obligatoires (1-4)
+        if (!data.restaurant || !data.selection || !data.cart) return false;
+        restaurantStepSchema.parse(data.restaurant);
+        selectionStepSchema.parse(data.selection);
+        cartStepSchema.parse(data.cart);
         return true;
       default:
         return false;
@@ -638,33 +630,40 @@ export function getStepErrors(
         cartStepSchema.parse(data.cart);
         return [];
       case 5:
-        // Step 5: Contact Responsable uniquement
-        if (!data.contacts) return ['Données contacts manquantes'];
-        responsableStepSchema.parse({
-          responsable: data.contacts.responsable,
-          existingResponsableId: data.contacts.existingResponsableId,
-        });
+        // Step 5: Contact Responsable — optionnel
         return [];
       case 6:
-        // Step 6: Contact + Adresse Facturation
-        if (!data.contacts) return ['Données contacts manquantes'];
-        billingStepValidationSchema.parse({
-          billingContact: data.contacts.billingContact,
-          billingAddress: data.contacts.billingAddress,
-        });
+        // Step 6: Facturation — optionnel
         return [];
       case 7:
-        // Step 7: Contact Livraison + Adresse + Date + Options
-        if (!data.contacts) return ['Données contact livraison manquantes'];
-        if (!data.delivery) return ['Données livraison manquantes'];
-        shippingStepValidationSchema.parse({
-          contactDelivery: data.contacts.delivery,
-          delivery: data.delivery,
-        });
+        // Step 7: Livraison — optionnel
         return [];
-      case 8:
-        orderFormSchema.parse(data);
-        return [];
+      case 8: {
+        // Validation finale — uniquement étapes obligatoires (1-4)
+        if (!data.restaurant) return ['Données restaurant manquantes'];
+        if (!data.selection) return ['Données sélection manquantes'];
+        if (!data.cart) return ['Données panier manquantes'];
+        const finalErrors: string[] = [];
+        try {
+          restaurantStepSchema.parse(data.restaurant);
+        } catch (e) {
+          if (e instanceof z.ZodError)
+            finalErrors.push(...e.issues.map(i => i.message));
+        }
+        try {
+          selectionStepSchema.parse(data.selection);
+        } catch (e) {
+          if (e instanceof z.ZodError)
+            finalErrors.push(...e.issues.map(i => i.message));
+        }
+        try {
+          cartStepSchema.parse(data.cart);
+        } catch (e) {
+          if (e instanceof z.ZodError)
+            finalErrors.push(...e.issues.map(i => i.message));
+        }
+        return finalErrors;
+      }
       default:
         return [];
     }

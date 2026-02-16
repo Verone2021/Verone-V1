@@ -53,7 +53,7 @@ export interface OrderWithoutInvoice {
   total_ht: number;
   total_ttc: number;
   status: string;
-  payment_status: string | null;
+  payment_status_v2: 'pending' | 'paid' | null;
   created_at: string;
   shipped_at: string | null;
 }
@@ -110,8 +110,8 @@ function formatAddress(address: unknown): string | null {
   const addr = address as Record<string, unknown>;
 
   const parts = [
-    addr.street || addr.line1 || addr.address,
-    addr.postal_code || addr.zip,
+    addr.street ?? addr.line1 ?? addr.address,
+    addr.postal_code ?? addr.zip,
     addr.city,
   ].filter(Boolean);
 
@@ -170,11 +170,7 @@ export function useBankReconciliation() {
         ])
         .order('settled_at', { ascending: false, nullsFirst: false });
 
-      console.log('[Reconciliation] bank_transactions query:', {
-        transactionsCount: transactions?.length ?? 0,
-        error: txError,
-        firstTx: transactions?.[0],
-      });
+      // Debug logging removed (no-console)
 
       if (txError) {
         console.error('Error fetching bank_transactions:', txError);
@@ -182,14 +178,6 @@ export function useBankReconciliation() {
           throw txError;
         }
       }
-
-      // Séparer crédits (entrées) et débits (sorties)
-      const creditTransactions = (transactions || []).filter(
-        tx => tx.side === 'credit'
-      );
-      const debitTransactions = (transactions || []).filter(
-        tx => tx.side === 'debit'
-      );
 
       // 2. Fetch sales_orders (sans join - customer_name sera récupéré séparément)
       const { data: orders, error: ordersError } = await supabase
@@ -204,7 +192,7 @@ export function useBankReconciliation() {
           total_ht,
           total_ttc,
           status,
-          payment_status,
+          payment_status_v2,
           created_at,
           shipped_at
         `
@@ -212,11 +200,7 @@ export function useBankReconciliation() {
         .in('status', ['validated', 'shipped', 'delivered'])
         .order('created_at', { ascending: false });
 
-      console.log('[Reconciliation] sales_orders query:', {
-        ordersCount: orders?.length ?? 0,
-        error: ordersError,
-        firstOrder: orders?.[0],
-      });
+      // Debug logging removed (no-console)
 
       if (ordersError) {
         console.error('Error fetching sales_orders:', ordersError);
@@ -247,11 +231,11 @@ export function useBankReconciliation() {
         .not('sales_order_id', 'is', null);
 
       const invoicedOrderIds = new Set(
-        (existingInvoices || []).map(inv => inv.sales_order_id)
+        (existingInvoices ?? []).map(inv => inv.sales_order_id)
       );
 
       // 4. Transformer les transactions avec extraction des attachments
-      const allTxData = (transactions || []).map(tx => ({
+      const allTxData = (transactions ?? []).map(tx => ({
         ...tx,
         attachment_ids: extractAttachmentIds(tx.raw_data),
       })) as unknown as BankTransaction[];
@@ -268,7 +252,7 @@ export function useBankReconciliation() {
           order_number: order.order_number,
           customer_id: order.customer_id,
           customer_name: order.customer_id
-            ? orgNames[order.customer_id] || null
+            ? (orgNames[order.customer_id] ?? null)
             : null,
           billing_address: order.billing_address as Record<
             string,
@@ -281,7 +265,10 @@ export function useBankReconciliation() {
           total_ht: order.total_ht,
           total_ttc: order.total_ttc,
           status: order.status,
-          payment_status: order.payment_status,
+          payment_status_v2: order.payment_status_v2 as
+            | 'pending'
+            | 'paid'
+            | null,
           created_at: order.created_at,
           shipped_at: order.shipped_at,
         }));
@@ -380,8 +367,8 @@ export function useBankReconciliation() {
           reasons.push('Commande livrée');
         }
         if (
-          order.payment_status === 'unpaid' ||
-          order.payment_status === null
+          order.payment_status_v2 === 'pending' ||
+          order.payment_status_v2 === null
         ) {
           confidenceScore += 10;
           reasons.push('Non payée');
@@ -394,7 +381,7 @@ export function useBankReconciliation() {
             order_number: order.order_number,
             customer_name: order.customer_name,
             customer_address:
-              formatAddress(order.shipping_address) ||
+              formatAddress(order.shipping_address) ??
               formatAddress(order.billing_address),
             order_amount: order.total_ttc,
             confidence: Math.min(confidenceScore, 100),
@@ -469,8 +456,8 @@ export function useBankReconciliation() {
           reasons.push('Commande livrée');
         }
         if (
-          order.payment_status === 'unpaid' ||
-          order.payment_status === null
+          order.payment_status_v2 === 'pending' ||
+          order.payment_status_v2 === null
         ) {
           confidenceScore += 10;
           reasons.push('Non payée');
@@ -495,7 +482,9 @@ export function useBankReconciliation() {
   // ===================================================================
 
   useEffect(() => {
-    fetchData();
+    void fetchData().catch((err: unknown) => {
+      console.error('[BankReconciliation] fetchData failed:', err);
+    });
   }, [fetchData]);
 
   // ===================================================================
@@ -505,23 +494,19 @@ export function useBankReconciliation() {
   const unpaidInvoices = ordersWithoutInvoice.map(order => ({
     id: order.id,
     invoice_number: order.order_number,
-    customer_name: order.customer_name || 'Client inconnu',
+    customer_name: order.customer_name ?? 'Client inconnu',
     amount_remaining: order.total_ttc,
     due_date: order.created_at,
     days_overdue: null,
-    status: order.payment_status || 'pending',
+    status: order.payment_status_v2 ?? 'pending',
   }));
 
   const matchTransaction = async (
-    transactionId: string,
-    orderId: string,
-    matchedAmount?: number
+    _transactionId: string,
+    _orderId: string,
+    _matchedAmount?: number
   ): Promise<{ success: boolean; error?: string }> => {
-    console.log('matchTransaction called:', {
-      transactionId,
-      orderId,
-      matchedAmount,
-    });
+    // matchTransaction stub - actual matching logic TBD
     await fetchData();
     return { success: true };
   };

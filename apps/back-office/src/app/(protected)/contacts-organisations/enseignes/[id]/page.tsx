@@ -55,7 +55,21 @@ import {
   Store,
   Sparkles,
   Globe,
+  Phone,
+  Plus,
+  X,
+  Mail,
+  Users,
 } from 'lucide-react';
+
+import {
+  ContactCardBO,
+  CreateNewContactCard,
+} from '../../../canaux-vente/linkme/components/contacts/ContactCardBO';
+import {
+  useEnseigneContactsBO,
+  useCreateContactBO,
+} from '../../../canaux-vente/linkme/hooks/use-organisation-contacts-bo';
 
 // Interface pour les produits de l'enseigne
 interface EnseigneProduct {
@@ -103,6 +117,58 @@ export default function EnseigneDetailPage() {
 
   // Tab state
   const [activeTab, setActiveTab] = useState('overview');
+
+  // Contacts enseigne
+  const { data: contactsData, isLoading: contactsLoading } =
+    useEnseigneContactsBO(enseigneId);
+  const createContactMutation = useCreateContactBO();
+  const [showCreateContact, setShowCreateContact] = useState(false);
+  const [newContact, setNewContact] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    title: '',
+    isBillingContact: false,
+    isPrimaryContact: false,
+    isCommercialContact: false,
+    isTechnicalContact: false,
+  });
+
+  const handleCreateEnseigneContact = () => {
+    if (!newContact.firstName || !newContact.lastName || !newContact.email)
+      return;
+    void createContactMutation
+      .mutateAsync({
+        enseigneId,
+        firstName: newContact.firstName,
+        lastName: newContact.lastName,
+        email: newContact.email,
+        phone: newContact.phone || undefined,
+        title: newContact.title || undefined,
+        isBillingContact: newContact.isBillingContact,
+        isPrimaryContact: newContact.isPrimaryContact,
+        isCommercialContact: newContact.isCommercialContact,
+        isTechnicalContact: newContact.isTechnicalContact,
+      })
+      .then(() => {
+        setShowCreateContact(false);
+        setNewContact({
+          firstName: '',
+          lastName: '',
+          email: '',
+          phone: '',
+          title: '',
+          isBillingContact: false,
+          isPrimaryContact: false,
+          isCommercialContact: false,
+          isTechnicalContact: false,
+        });
+      })
+      .catch((err: unknown) => {
+        console.error('[EnseigneDetail] Create contact failed:', err);
+      });
+  };
 
   // Modal states
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -523,6 +589,10 @@ export default function EnseigneDetailPage() {
               <Building2 className="h-4 w-4 mr-2" />
               Vue d&apos;ensemble
             </TabsTrigger>
+            <TabsTrigger value="contacts" variant="underline">
+              <Phone className="h-4 w-4 mr-2" />
+              Contacts ({contactsData?.contacts.length ?? 0})
+            </TabsTrigger>
             <TabsTrigger value="geography" variant="underline">
               <MapPin className="h-4 w-4 mr-2" />
               Geographie
@@ -551,6 +621,194 @@ export default function EnseigneDetailPage() {
               }}
               loading={statsLoading}
             />
+          </TabsContent>
+
+          {/* Onglet Contacts */}
+          <TabsContent value="contacts" className="mt-6">
+            <Card>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Phone className="h-5 w-5 text-blue-500" />
+                    Contacts de l&apos;enseigne
+                    <span className="text-sm font-normal text-gray-500">
+                      ({contactsData?.contacts.length ?? 0})
+                    </span>
+                  </CardTitle>
+                  <ButtonV2
+                    size="sm"
+                    onClick={() => setShowCreateContact(true)}
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    Nouveau contact
+                  </ButtonV2>
+                </div>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Ces contacts sont partagés avec tous les restaurants de
+                  l&apos;enseigne et visibles dans le formulaire de commande
+                  LinkMe.
+                </p>
+              </CardHeader>
+              <CardContent>
+                {contactsLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                  </div>
+                ) : !contactsData?.contacts.length ? (
+                  <div className="text-center py-8">
+                    <Users className="h-12 w-12 mx-auto text-gray-300 mb-4" />
+                    <p className="text-sm text-gray-500 mb-2">
+                      Aucun contact pour cette enseigne
+                    </p>
+                    <p className="text-xs text-gray-400 mb-4">
+                      Les contacts enseigne sont visibles par tous les
+                      restaurants lors de la création de commande.
+                    </p>
+                    <ButtonV2
+                      variant="outline"
+                      onClick={() => setShowCreateContact(true)}
+                    >
+                      <Plus className="h-4 w-4 mr-1" />
+                      Ajouter un contact
+                    </ButtonV2>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {contactsData.contacts.map(contact => (
+                      <ContactCardBO
+                        key={contact.id}
+                        contact={contact}
+                        showBadges
+                      />
+                    ))}
+                    <CreateNewContactCard
+                      onClick={() => setShowCreateContact(true)}
+                    />
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Modal création contact enseigne */}
+            <Dialog
+              open={showCreateContact}
+              onOpenChange={setShowCreateContact}
+            >
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <Phone className="h-5 w-5 text-blue-500" />
+                    Nouveau contact enseigne
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label htmlFor="ct-firstName">Prénom *</Label>
+                      <Input
+                        id="ct-firstName"
+                        value={newContact.firstName}
+                        onChange={e =>
+                          setNewContact(prev => ({
+                            ...prev,
+                            firstName: e.target.value,
+                          }))
+                        }
+                        placeholder="Jean"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="ct-lastName">Nom *</Label>
+                      <Input
+                        id="ct-lastName"
+                        value={newContact.lastName}
+                        onChange={e =>
+                          setNewContact(prev => ({
+                            ...prev,
+                            lastName: e.target.value,
+                          }))
+                        }
+                        placeholder="Dupont"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <Label htmlFor="ct-email">
+                      <Mail className="h-3.5 w-3.5 inline mr-1" />
+                      Email *
+                    </Label>
+                    <Input
+                      id="ct-email"
+                      type="email"
+                      value={newContact.email}
+                      onChange={e =>
+                        setNewContact(prev => ({
+                          ...prev,
+                          email: e.target.value,
+                        }))
+                      }
+                      placeholder="jean.dupont@example.com"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="ct-phone">
+                      <Phone className="h-3.5 w-3.5 inline mr-1" />
+                      Téléphone
+                    </Label>
+                    <Input
+                      id="ct-phone"
+                      value={newContact.phone}
+                      onChange={e =>
+                        setNewContact(prev => ({
+                          ...prev,
+                          phone: e.target.value,
+                        }))
+                      }
+                      placeholder="06 12 34 56 78"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="ct-title">Fonction</Label>
+                    <Input
+                      id="ct-title"
+                      value={newContact.title}
+                      onChange={e =>
+                        setNewContact(prev => ({
+                          ...prev,
+                          title: e.target.value,
+                        }))
+                      }
+                      placeholder="Directeur commercial"
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <ButtonV2
+                    variant="outline"
+                    onClick={() => setShowCreateContact(false)}
+                  >
+                    <X className="h-4 w-4 mr-1" />
+                    Annuler
+                  </ButtonV2>
+                  <ButtonV2
+                    onClick={handleCreateEnseigneContact}
+                    disabled={
+                      !newContact.firstName ||
+                      !newContact.lastName ||
+                      !newContact.email ||
+                      createContactMutation.isPending
+                    }
+                  >
+                    {createContactMutation.isPending ? (
+                      <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                    ) : (
+                      <Plus className="h-4 w-4 mr-1" />
+                    )}
+                    Créer
+                  </ButtonV2>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </TabsContent>
 
           {/* Onglet Geographie */}
