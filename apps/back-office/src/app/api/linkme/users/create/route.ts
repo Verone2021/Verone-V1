@@ -41,8 +41,6 @@ const CreateLinkMeUserSchema = z.object({
   permissions: z.array(z.string()).optional().default([]),
 });
 
-type CreateLinkMeUserInput = z.infer<typeof CreateLinkMeUserSchema>;
-
 export async function POST(request: NextRequest): Promise<NextResponse> {
   // 🔐 GUARD: Vérifier authentification admin back-office
   const guardResult = await requireBackofficeAdmin(request);
