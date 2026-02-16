@@ -44,60 +44,43 @@ export interface StructuredAddress {
 }
 
 /**
- * Interface pour les données brutes retournées par la RPC get_linkme_orders
- * (utilisée pour le typage interne avant mapping vers LinkMeOrder)
+ * Interfaces pour les données brutes retournées par la RPC get_linkme_orders.
+ * Structure réelle : customer/channel = objets JSONB, items = tableau JSONB avec product imbriqué.
  */
+interface RawCustomerFromRPC {
+  id: string;
+  name: string | null;
+  type: 'organization' | 'individual';
+  email: string | null;
+}
+
+interface RawProductFromRPC {
+  id: string;
+  name: string | null;
+  sku: string | null;
+  stock_real: number | null;
+  primary_image_url: string | null;
+}
+
+interface RawItemFromRPC {
+  id: string;
+  product: RawProductFromRPC;
+  quantity: number;
+  tax_rate: number;
+  total_ht: number;
+  unit_price_ht: number;
+}
+
 interface RawOrderFromRPC {
   id: string;
   order_number: string;
-  status: string;
-  payment_status: string | null;
-  total_ht: number | null;
-  total_ttc: number | null;
-  shipping_cost_ht: number | null;
-  handling_cost_ht: number | null;
-  insurance_cost_ht: number | null;
-  total_affiliate_margin: number | null;
-  customer_name: string | null;
-  customer_type: 'organization' | 'individual';
-  customer_id: string;
-  customer_address: string | null;
-  customer_postal_code: string | null;
-  customer_city: string | null;
-  customer_email: string | null;
-  customer_phone: string | null;
-  billing_address: StructuredAddress | null;
-  shipping_address: StructuredAddress | null;
-  desired_delivery_date: string | null;
-  confirmed_delivery_date: string | null;
-  billing_name: string | null;
-  billing_email: string | null;
-  billing_phone: string | null;
-  affiliate_id: string;
-  affiliate_name: string | null;
-  affiliate_type: 'enseigne' | 'organisation' | null;
-  selection_id: string | null;
-  selection_name: string | null;
-  items_count: number | null;
   created_at: string;
-  updated_at: string;
-  pending_admin_validation: boolean | null;
-  items: Array<{
-    id: string;
-    product_id: string;
-    product_name: string | null;
-    product_sku: string | null;
-    product_image_url: string | null;
-    quantity: number | null;
-    unit_price_ht: number | null;
-    total_ht: number | null;
-    tax_rate: number | null;
-    base_price_ht: number | null;
-    margin_rate: number | null;
-    commission_rate: number | null;
-    selling_price_ht: number | null;
-    affiliate_margin: number | null;
-  }> | null;
+  status: string;
+  total_ht: string | null; // PostgreSQL numeric → string
+  total_ttc: string | null; // PostgreSQL numeric → string
+  channel: { id: string; code: string; name: string } | null;
+  customer: RawCustomerFromRPC | null;
+  items: RawItemFromRPC[] | null;
 }
 
 /**
@@ -194,66 +177,67 @@ export function useLinkMeOrders(
         return [];
       }
 
-      // Map les commandes (items deja inclus dans la RPC)
-      // TODO: Fix type mismatch after schema changes
-      return (ordersData as unknown as RawOrderFromRPC[]).map(
+      // Map les commandes (items/customer/channel = objets JSONB imbriqués)
+      const typedOrders = ordersData as unknown as RawOrderFromRPC[];
+      return typedOrders.map(
         (order): LinkMeOrder => ({
           id: order.id,
           order_number: order.order_number,
           status: order.status,
-          payment_status: order.payment_status,
-          total_ht: order.total_ht ?? 0,
-          total_ttc: order.total_ttc ?? 0,
-          shipping_cost_ht: order.shipping_cost_ht ?? 0,
-          handling_cost_ht: order.handling_cost_ht ?? 0,
-          insurance_cost_ht: order.insurance_cost_ht ?? 0,
-          total_affiliate_margin: order.total_affiliate_margin ?? 0,
-          customer_name: order.customer_name ?? 'Client inconnu',
-          customer_type: order.customer_type,
-          customer_id: order.customer_id,
-          customer_address: order.customer_address,
-          customer_postal_code: order.customer_postal_code,
-          customer_city: order.customer_city,
-          customer_email: order.customer_email,
-          customer_phone: order.customer_phone,
+          payment_status: null, // Not in current RPC
+          total_ht: Number(order.total_ht) || 0,
+          total_ttc: Number(order.total_ttc) || 0,
+          shipping_cost_ht: 0, // Not in current RPC
+          handling_cost_ht: 0, // Not in current RPC
+          insurance_cost_ht: 0, // Not in current RPC
+          total_affiliate_margin: 0, // Not in current RPC
+          // Customer from nested JSONB object
+          customer_name: order.customer?.name ?? 'Client inconnu',
+          customer_type: order.customer?.type ?? 'organization',
+          customer_id: order.customer?.id ?? '',
+          customer_address: null, // Not in current RPC
+          customer_postal_code: null, // Not in current RPC
+          customer_city: null, // Not in current RPC
+          customer_email: order.customer?.email ?? null,
+          customer_phone: null, // Not in current RPC
           // Adresses structurees
-          billing_address: order.billing_address ?? null,
-          shipping_address: order.shipping_address ?? null,
+          billing_address: null, // Not in current RPC
+          shipping_address: null, // Not in current RPC
           // Dates de livraison
-          desired_delivery_date: order.desired_delivery_date ?? null,
-          confirmed_delivery_date: order.confirmed_delivery_date ?? null,
+          desired_delivery_date: null, // Not in current RPC
+          confirmed_delivery_date: null, // Not in current RPC
           // Contact facturation
-          billing_name: order.billing_name ?? null,
-          billing_email: order.billing_email ?? null,
-          billing_phone: order.billing_phone ?? null,
+          billing_name: null, // Not in current RPC
+          billing_email: null, // Not in current RPC
+          billing_phone: null, // Not in current RPC
           // Affiliate info
-          affiliate_id: order.affiliate_id,
-          affiliate_name: order.affiliate_name,
-          affiliate_type: order.affiliate_type,
-          selection_id: order.selection_id,
-          selection_name: order.selection_name,
-          items_count: order.items_count ?? 0,
+          affiliate_id: '', // Not in current RPC
+          affiliate_name: null, // Not in current RPC
+          affiliate_type: null, // Not in current RPC
+          selection_id: null, // Not in current RPC
+          selection_name: null, // Not in current RPC
+          items_count: (order.items ?? []).length,
           created_at: order.created_at,
-          updated_at: order.updated_at,
+          updated_at: order.created_at, // RPC only returns created_at
           // Approbation
-          pending_admin_validation: order.pending_admin_validation ?? false,
-          // Items inclus directement depuis la RPC (plus de N+1)
+          pending_admin_validation: false, // Not in current RPC
+          // Items from nested JSONB with product sub-object
           items: (order.items ?? []).map(
             (item): OrderItem => ({
               id: item.id,
-              product_id: item.product_id,
-              product_name: item.product_name ?? 'Produit inconnu',
-              product_sku: item.product_sku ?? '',
-              product_image_url: item.product_image_url,
+              product_id: item.product?.id ?? '',
+              product_name: item.product?.name ?? 'Produit inconnu',
+              product_sku: item.product?.sku ?? '',
+              product_image_url: item.product?.primary_image_url ?? null,
               quantity: item.quantity ?? 0,
               unit_price_ht: item.unit_price_ht ?? 0,
               total_ht: item.total_ht ?? 0,
               tax_rate: item.tax_rate ?? 0,
-              base_price_ht: item.base_price_ht ?? 0,
-              margin_rate: item.margin_rate ?? 0,
-              commission_rate: item.commission_rate ?? 0,
-              selling_price_ht: item.selling_price_ht ?? 0,
-              affiliate_margin: item.affiliate_margin ?? 0,
+              base_price_ht: 0, // Not in current RPC
+              margin_rate: 0, // Not in current RPC
+              commission_rate: 0, // Not in current RPC
+              selling_price_ht: 0, // Not in current RPC
+              affiliate_margin: 0, // Not in current RPC
             })
           ),
         })
