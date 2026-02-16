@@ -529,7 +529,7 @@ export default function LinkMeOrderDetailPage() {
   const handleRequestInfo = async () => {
     if (!requestMessage.trim()) return;
     try {
-      const missingFields = getOrderMissingFields(details);
+      const missingFields = getOrderMissingFields({ details });
       await requestInfo.mutateAsync({
         orderId,
         message: requestMessage,
@@ -1691,7 +1691,7 @@ export default function LinkMeOrderDetailPage() {
           <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto">
             {/* Champs manquants détectés automatiquement */}
             {(() => {
-              const missingFields = getOrderMissingFields(details);
+              const missingFields = getOrderMissingFields({ details });
               const relevantTemplates = getRelevantTemplates(missingFields);
 
               return (
