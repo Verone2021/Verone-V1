@@ -101,11 +101,11 @@ function mapOrderItemToEditable(item: OrderItemData): EditableItem {
     product_id: item.product_id,
     product_name: item.product?.name ?? 'Produit inconnu',
     product_sku: item.product?.sku ?? null,
-    product_image_url: item.product?.primary_image_url ?? null,
+    product_image_url: null, // Images in separate table, placeholder used
     quantity: item.quantity,
     originalQuantity: item.quantity,
     unit_price_ht: item.unit_price_ht,
-    base_price_ht: item.base_price_ht ?? 0,
+    base_price_ht: item.base_price_ht_locked ?? 0,
     margin_rate: item.retrocession_rate ?? 0,
     tax_rate: item.tax_rate ?? 0.2,
     _delete: false,
@@ -510,7 +510,11 @@ export function EditOrderPage({ data }: EditOrderPageProps) {
                 </Badge>
               </div>
               <p className="text-sm text-gray-500 mt-0.5">
-                Client: {order.customer?.name ?? 'Inconnu'} | Cree le{' '}
+                Client:{' '}
+                {order.customer?.trade_name ??
+                  order.customer?.legal_name ??
+                  'Inconnu'}{' '}
+                | Cree le{' '}
                 {format(new Date(order.created_at), 'dd MMMM yyyy', {
                   locale: fr,
                 })}

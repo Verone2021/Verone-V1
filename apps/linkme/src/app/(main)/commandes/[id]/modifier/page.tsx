@@ -40,12 +40,14 @@ interface OrderData {
   tax_rate: number;
   billing_address: Record<string, string> | null;
   shipping_address: Record<string, string> | null;
+  linkme_selection_id: string | null;
   created_at: string;
   updated_at: string;
   // Relations
   customer: {
     id: string;
-    name: string;
+    trade_name: string | null;
+    legal_name: string;
     type: string;
   } | null;
   sales_order_items: OrderItemData[];
@@ -58,14 +60,13 @@ export interface OrderItemData {
   quantity: number;
   unit_price_ht: number;
   tax_rate: number;
-  base_price_ht: number;
+  base_price_ht_locked: number;
   retrocession_rate: number;
   retrocession_amount: number;
   product: {
     id: string;
     name: string;
     sku: string | null;
-    primary_image_url: string | null;
   } | null;
 }
 
@@ -131,11 +132,13 @@ export default function ModifierCommandePage() {
           tax_rate,
           billing_address,
           shipping_address,
+          linkme_selection_id,
           created_at,
           updated_at,
           customer:organisations!sales_orders_customer_id_fkey (
             id,
-            name,
+            trade_name,
+            legal_name,
             type
           ),
           sales_order_items (
@@ -144,14 +147,13 @@ export default function ModifierCommandePage() {
             quantity,
             unit_price_ht,
             tax_rate,
-            base_price_ht,
+            base_price_ht_locked,
             retrocession_rate,
             retrocession_amount,
             product:products!sales_order_items_product_id_fkey (
               id,
               name,
-              sku,
-              primary_image_url
+              sku
             )
           ),
           sales_order_linkme_details (
@@ -197,21 +199,13 @@ export default function ModifierCommandePage() {
         return;
       }
 
-      // 3. Get selection_id from linkme_commissions or linkme_affiliates
-      const { data: commission } = await supabase
-        .from('linkme_commissions')
-        .select('selection_id')
-        .eq('sales_order_id', orderId)
-        .limit(1)
-        .maybeSingle();
-
       const typedOrder = order as unknown as OrderData;
       const details = typedOrder.sales_order_linkme_details?.[0] ?? null;
 
       setData({
         order: typedOrder,
         details,
-        selectionId: commission?.selection_id ?? null,
+        selectionId: typedOrder.linkme_selection_id ?? null,
       });
       setIsLoading(false);
     }
