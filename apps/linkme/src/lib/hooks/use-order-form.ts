@@ -445,8 +445,34 @@ export function useOrderForm(): UseOrderFormReturn {
       const enseigneId = affiliate.enseigne_id;
 
       // Étape 2.6: Créer les contacts "nouveaux" en BD avant la commande
-      // Pour succursales, les contacts sont aussi liés à l'enseigne
-      const contactEnseigneId = ownerType === 'succursale' ? enseigneId : null;
+      // Règle métier contacts selon ownership_type :
+      //   Succursale (propre) :
+      //     - responsable → enseigne (enseigne_id only, owner_type='enseigne')
+      //     - facturation → enseigne (enseigne_id only, owner_type='enseigne')
+      //     - livraison   → organisation (organisation_id only, owner_type='organisation')
+      //   Franchise :
+      //     - tous les contacts → organisation (organisation_id only, owner_type='organisation')
+      const isSuccursale = ownerType === 'succursale';
+
+      // FK pour responsable et facturation
+      const responsableBillingFk = isSuccursale
+        ? {
+            organisation_id: null,
+            enseigne_id: enseigneId,
+            owner_type: 'enseigne' as const,
+          }
+        : {
+            organisation_id: customerId,
+            enseigne_id: null,
+            owner_type: 'organisation' as const,
+          };
+
+      // FK pour livraison (toujours lié à l'organisation)
+      const deliveryFk = {
+        organisation_id: customerId,
+        enseigne_id: null,
+        owner_type: 'organisation' as const,
+      };
 
       // Responsable : créer si pas d'ID existant
       let responsableContactId =
@@ -456,8 +482,7 @@ export function useOrderForm(): UseOrderFormReturn {
         const { data: newContact, error: contactError } = await supabase
           .from('contacts')
           .insert({
-            organisation_id: customerId,
-            enseigne_id: contactEnseigneId,
+            ...responsableBillingFk,
             first_name: formData.contacts.responsable.firstName,
             last_name: formData.contacts.responsable.lastName,
             email: formData.contacts.responsable.email,
@@ -491,8 +516,7 @@ export function useOrderForm(): UseOrderFormReturn {
         const { data: newBilling, error: billingError } = await supabase
           .from('contacts')
           .insert({
-            organisation_id: customerId,
-            enseigne_id: contactEnseigneId,
+            ...responsableBillingFk,
             first_name: bc.firstName,
             last_name: bc.lastName,
             email: bc.email,
@@ -522,8 +546,7 @@ export function useOrderForm(): UseOrderFormReturn {
         const { data: newDelivery, error: deliveryError } = await supabase
           .from('contacts')
           .insert({
-            organisation_id: customerId,
-            enseigne_id: contactEnseigneId,
+            ...deliveryFk,
             first_name: dc.firstName,
             last_name: dc.lastName,
             email: dc.email,
