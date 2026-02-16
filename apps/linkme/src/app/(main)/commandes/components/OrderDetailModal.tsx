@@ -174,20 +174,20 @@ export function OrderDetailModal({
 
   // Check if delivery text address exists (from linkme_details)
   const hasDeliveryTextAddress =
-    order.delivery_address_text ||
-    order.delivery_postal_code ||
+    order.delivery_address_text ??
+    order.delivery_postal_code ??
     order.delivery_city;
 
   // Check if any contact data exists
   const hasRequester =
-    order.requester_name || order.requester_email || order.requester_phone;
+    order.requester_name ?? order.requester_email ?? order.requester_phone;
   const hasDeliveryContact =
-    order.delivery_contact_name ||
-    order.delivery_contact_email ||
+    order.delivery_contact_name ??
+    order.delivery_contact_email ??
     order.delivery_contact_phone;
   const hasReceptionContact =
-    order.reception_contact_name ||
-    order.reception_contact_email ||
+    order.reception_contact_name ??
+    order.reception_contact_email ??
     order.reception_contact_phone;
 
   return (
@@ -266,9 +266,9 @@ export function OrderDetailModal({
           <Separator />
 
           {/* Section: Contacts (requester, billing, delivery, reception) */}
-          {(hasRequester ||
-            order.billing_name ||
-            hasDeliveryContact ||
+          {(hasRequester ??
+            order.billing_name ??
+            hasDeliveryContact ??
             hasReceptionContact) && (
             <>
               <section>
@@ -363,7 +363,7 @@ export function OrderDetailModal({
                         {order.delivery_address_text}
                       </p>
                     )}
-                    {(order.delivery_postal_code || order.delivery_city) && (
+                    {(order.delivery_postal_code ?? order.delivery_city) && (
                       <p className="text-sm text-gray-600">
                         {[order.delivery_postal_code, order.delivery_city]
                           .filter(Boolean)

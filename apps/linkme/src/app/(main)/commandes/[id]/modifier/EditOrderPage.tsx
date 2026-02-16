@@ -148,8 +148,8 @@ function findContactMatch(
   if (!name && !email) return null;
   for (const c of contacts) {
     const fullName = `${c.firstName} ${c.lastName}`.trim();
-    if (email && c.email.toLowerCase() === email.toLowerCase()) return c.id;
-    if (name && fullName.toLowerCase() === name.toLowerCase()) return c.id;
+    if (email?.toLowerCase() === c.email.toLowerCase()) return c.id;
+    if (name?.toLowerCase() === fullName.toLowerCase()) return c.id;
   }
   return null;
 }

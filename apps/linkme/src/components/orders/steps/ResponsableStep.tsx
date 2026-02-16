@@ -265,8 +265,8 @@ export function ResponsableStep({
           first_name: r.firstName,
           last_name: r.lastName,
           email: r.email,
-          phone: r.phone || null,
-          title: r.position || null,
+          phone: r.phone ?? null,
+          title: r.position ?? null,
           is_primary_contact: true,
           is_active: true,
         })

@@ -400,8 +400,8 @@ export function useOrderForm(): UseOrderFormReturn {
             p_affiliate_id: affiliate.id,
             p_legal_name: newResto.tradeName,
             p_trade_name: newResto.tradeName,
-            p_email: formData.contacts.responsable.email || undefined,
-            p_phone: formData.contacts.responsable.phone || undefined,
+            p_email: formData.contacts.responsable.email ?? undefined,
+            p_phone: formData.contacts.responsable.phone ?? undefined,
             p_address:
               newResto.address ?? formData.delivery.address ?? undefined,
             p_postal_code:
