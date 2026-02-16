@@ -125,7 +125,7 @@ interface OrderWithDetails {
   total_ht: number;
   total_ttc: number;
   notes: string | null;
-  customer_id: string;
+  customer_id: string | null;
   expected_delivery_date: string | null;
   created_by_affiliate_id: string | null;
   linkme_selection_id: string | null;

@@ -865,7 +865,8 @@ export function usePendingOrders() {
       // BATCH: Récupérer toutes les organisations en UNE SEULE requête (fix N+1)
       const organisationIds = (orders ?? [])
         .filter(o => o.customer_type === 'organization' && o.customer_id)
-        .map(o => o.customer_id);
+        .map(o => o.customer_id)
+        .filter((id): id is string => id !== null);
 
       const organisationsMap = new Map<
         string,
@@ -1109,7 +1110,8 @@ export function useAllLinkMeOrders(status?: OrderValidationStatus) {
       // BATCH: Récupérer toutes les organisations en UNE SEULE requête
       const organisationIds = (orders ?? [])
         .filter(o => o.customer_type === 'organization' && o.customer_id)
-        .map(o => o.customer_id);
+        .map(o => o.customer_id)
+        .filter((id): id is string => id !== null);
 
       const organisationsMap = new Map<
         string,
