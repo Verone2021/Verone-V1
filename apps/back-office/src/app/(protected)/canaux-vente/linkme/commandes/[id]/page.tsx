@@ -31,6 +31,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  Checkbox,
   Separator,
   Skeleton,
   Dialog,
@@ -78,6 +79,7 @@ import {
   Truck,
   Clock,
   Check,
+  MapPin,
 } from 'lucide-react';
 
 import {
@@ -90,9 +92,10 @@ import {
 
 import {
   getOrderMissingFields,
-  getRelevantTemplates,
+  generateCombinedMessage,
+  CATEGORY_LABELS,
   REJECT_REASON_TEMPLATES,
-  type RequestInfoTemplate,
+  type MissingFieldCategory,
   type RejectReasonTemplate,
 } from '../../utils/order-missing-fields';
 
@@ -137,6 +140,22 @@ interface OrderWithDetails {
     legal_name: string;
     approval_status: string | null;
     enseigne_id: string | null;
+    address_line1: string | null;
+    address_line2: string | null;
+    postal_code: string | null;
+    city: string | null;
+    billing_address_line1: string | null;
+    billing_address_line2: string | null;
+    billing_city: string | null;
+    billing_postal_code: string | null;
+    shipping_address_line1: string | null;
+    shipping_address_line2: string | null;
+    shipping_city: string | null;
+    shipping_postal_code: string | null;
+    has_different_shipping_address: boolean | null;
+    phone: string | null;
+    email: string | null;
+    siret: string | null;
   } | null;
   items: Array<{
     id: string;
@@ -150,6 +169,18 @@ interface OrderWithDetails {
     } | null;
   }>;
   linkmeDetails: LinkMeOrderDetails | null;
+  infoRequests: InfoRequest[];
+}
+
+interface InfoRequest {
+  id: string;
+  token: string;
+  recipient_email: string;
+  recipient_type: string;
+  sent_at: string;
+  completed_at: string | null;
+  cancelled_at: string | null;
+  cancelled_reason: string | null;
 }
 
 // Type pour les items enrichis avec infos commission
@@ -248,7 +279,9 @@ export default function LinkMeOrderDetailPage() {
   const [showRequestInfoDialog, setShowRequestInfoDialog] = useState(false);
   const [showRejectDialog, setShowRejectDialog] = useState(false);
   const [requestMessage, setRequestMessage] = useState('');
-  const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
+  const [selectedCategories, setSelectedCategories] = useState<
+    Set<MissingFieldCategory>
+  >(new Set());
   const [rejectReason, setRejectReason] = useState('');
   const [selectedRejectReason, setSelectedRejectReason] = useState<
     string | null
@@ -256,13 +289,13 @@ export default function LinkMeOrderDetailPage() {
 
   // Dialogs édition par section
   const [editingStep, setEditingStep] = useState<
-    'responsable' | 'billing' | 'delivery' | null
+    'responsable' | 'billing' | 'delivery_address' | 'delivery_options' | null
   >(null);
   const [editForm, setEditForm] = useState<Partial<LinkMeOrderDetails>>({});
 
-  // Dialog sélection contact (responsable / facturation)
+  // Dialog sélection contact (responsable / facturation / livraison)
   const [contactDialogFor, setContactDialogFor] = useState<
-    'responsable' | 'billing' | null
+    'responsable' | 'billing' | 'delivery' | null
   >(null);
   const [selectedContactId, setSelectedContactId] = useState<string | null>(
     null
@@ -324,7 +357,23 @@ export default function LinkMeOrderDetailPage() {
             trade_name,
             legal_name,
             approval_status,
-            enseigne_id
+            enseigne_id,
+            address_line1,
+            address_line2,
+            postal_code,
+            city,
+            billing_address_line1,
+            billing_address_line2,
+            billing_city,
+            billing_postal_code,
+            shipping_address_line1,
+            shipping_address_line2,
+            shipping_city,
+            shipping_postal_code,
+            has_different_shipping_address,
+            phone,
+            email,
+            siret
           ),
           sales_order_linkme_details (
             id,
@@ -373,6 +422,16 @@ export default function LinkMeOrderDetailPage() {
             created_at,
             updated_at
           ),
+          linkme_info_requests (
+            id,
+            token,
+            recipient_email,
+            recipient_type,
+            sent_at,
+            completed_at,
+            cancelled_at,
+            cancelled_reason
+          ),
           sales_order_items (
             id,
             product_id,
@@ -404,6 +463,13 @@ export default function LinkMeOrderDetailPage() {
           ? (linkmeDetailsRaw[0] ?? null)
           : (linkmeDetailsRaw ?? null)
       ) as LinkMeOrderDetails | null;
+
+      // Extraire info requests de la jointure
+      const infoRequestsRaw: unknown = (orderData as Record<string, unknown>)
+        .linkme_info_requests;
+      const infoRequests = (
+        Array.isArray(infoRequestsRaw) ? infoRequestsRaw : []
+      ) as InfoRequest[];
 
       // Fetch créateur (created_by → user_profiles)
       let createdByProfile: CreatedByProfile | null = null;
@@ -446,6 +512,7 @@ export default function LinkMeOrderDetailPage() {
           })
         ),
         linkmeDetails: linkmeData,
+        infoRequests,
       });
 
       // Récupérer les items enrichis avec infos commission
@@ -529,7 +596,11 @@ export default function LinkMeOrderDetailPage() {
   const handleRequestInfo = async () => {
     if (!requestMessage.trim()) return;
     try {
-      const missingFields = getOrderMissingFields({ details });
+      const missingFields = getOrderMissingFields({
+        details,
+        organisationSiret: order?.organisation?.siret,
+        ownerType: details?.owner_type,
+      });
       await requestInfo.mutateAsync({
         orderId,
         message: requestMessage,
@@ -540,7 +611,7 @@ export default function LinkMeOrderDetailPage() {
       });
       setShowRequestInfoDialog(false);
       setRequestMessage('');
-      setSelectedTemplate(null);
+      setSelectedCategories(new Set());
       void fetchOrder().catch(error => {
         console.error(
           '[LinkMeOrderDetail] Refetch after request info failed:',
@@ -571,7 +642,9 @@ export default function LinkMeOrderDetailPage() {
   };
 
   // Handlers Édition
-  const openEditDialog = (step: 'responsable' | 'billing' | 'delivery') => {
+  const openEditDialog = (
+    step: 'responsable' | 'billing' | 'delivery_address' | 'delivery_options'
+  ) => {
     if (!order?.linkmeDetails) return;
     const d = order.linkmeDetails;
 
@@ -590,21 +663,20 @@ export default function LinkMeOrderDetailPage() {
         billing_email: d.billing_email,
         billing_phone: d.billing_phone,
       });
-    } else if (step === 'delivery') {
+    } else if (step === 'delivery_address') {
       setEditForm({
-        delivery_contact_name: d.delivery_contact_name,
-        delivery_contact_email: d.delivery_contact_email,
-        delivery_contact_phone: d.delivery_contact_phone,
         delivery_address: d.delivery_address,
         delivery_postal_code: d.delivery_postal_code,
         delivery_city: d.delivery_city,
+      });
+    } else if (step === 'delivery_options') {
+      setEditForm({
         delivery_notes: d.delivery_notes,
         delivery_terms_accepted: d.delivery_terms_accepted,
         desired_delivery_date: d.desired_delivery_date,
         is_mall_delivery: d.is_mall_delivery,
         mall_email: d.mall_email,
         semi_trailer_accessible: d.semi_trailer_accessible,
-        // Post-approbation fields
         reception_contact_name: d.reception_contact_name,
         reception_contact_email: d.reception_contact_email,
         reception_contact_phone: d.reception_contact_phone,
@@ -641,20 +713,28 @@ export default function LinkMeOrderDetailPage() {
     if (!contact) return;
 
     const fullName = `${contact.firstName} ${contact.lastName}`;
-    const updates: Partial<LinkMeOrderDetails> =
-      contactDialogFor === 'responsable'
-        ? {
-            requester_name: fullName,
-            requester_email: contact.email,
-            requester_phone: contact.phone ?? undefined,
-            requester_position: contact.title ?? undefined,
-          }
-        : {
-            billing_name: fullName,
-            billing_email: contact.email,
-            billing_phone: contact.phone ?? undefined,
-            billing_contact_source: 'custom',
-          };
+    let updates: Partial<LinkMeOrderDetails>;
+    if (contactDialogFor === 'responsable') {
+      updates = {
+        requester_name: fullName,
+        requester_email: contact.email,
+        requester_phone: contact.phone ?? undefined,
+        requester_position: contact.title ?? undefined,
+      };
+    } else if (contactDialogFor === 'delivery') {
+      updates = {
+        delivery_contact_name: fullName,
+        delivery_contact_email: contact.email,
+        delivery_contact_phone: contact.phone ?? undefined,
+      };
+    } else {
+      updates = {
+        billing_name: fullName,
+        billing_email: contact.email,
+        billing_phone: contact.phone ?? undefined,
+        billing_contact_source: 'custom',
+      };
+    }
 
     try {
       await updateDetails.mutateAsync({ orderId, updates });
@@ -690,20 +770,28 @@ export default function LinkMeOrderDetailPage() {
 
     // 2. Mettre à jour la commande avec ce nouveau contact
     const fullName = `${contactData.firstName} ${contactData.lastName}`;
-    const updates: Partial<LinkMeOrderDetails> =
-      contactDialogFor === 'responsable'
-        ? {
-            requester_name: fullName,
-            requester_email: contactData.email,
-            requester_phone: contactData.phone || undefined,
-            requester_position: contactData.title || undefined,
-          }
-        : {
-            billing_name: fullName,
-            billing_email: contactData.email,
-            billing_phone: contactData.phone || undefined,
-            billing_contact_source: 'custom',
-          };
+    let updates: Partial<LinkMeOrderDetails>;
+    if (contactDialogFor === 'responsable') {
+      updates = {
+        requester_name: fullName,
+        requester_email: contactData.email,
+        requester_phone: contactData.phone || undefined,
+        requester_position: contactData.title || undefined,
+      };
+    } else if (contactDialogFor === 'delivery') {
+      updates = {
+        delivery_contact_name: fullName,
+        delivery_contact_email: contactData.email,
+        delivery_contact_phone: contactData.phone || undefined,
+      };
+    } else {
+      updates = {
+        billing_name: fullName,
+        billing_email: contactData.email,
+        billing_phone: contactData.phone || undefined,
+        billing_contact_source: 'custom',
+      };
+    }
 
     await updateDetails.mutateAsync({ orderId, updates });
 
@@ -791,6 +879,58 @@ export default function LinkMeOrderDetailPage() {
 
   const details = order.linkmeDetails;
 
+  // Calcul des champs manquants (réutilisé pour badge bouton + dialog)
+  const missingFieldsResult = details
+    ? getOrderMissingFields({
+        details,
+        organisationSiret: order.organisation?.siret,
+        ownerType: details?.owner_type,
+      })
+    : null;
+
+  // Calcul de correspondance adresse livraison vs organisation (réutilisé dans badge + bloc bleu)
+  const org = order.organisation;
+  const orgAddress = org?.has_different_shipping_address
+    ? org.shipping_address_line1
+    : org?.address_line1;
+  const orgCity = org?.has_different_shipping_address
+    ? org.shipping_city
+    : org?.city;
+  const deliveryNorm = (details?.delivery_address ?? '').toLowerCase().trim();
+  const orgNorm = (orgAddress ?? '').toLowerCase().trim();
+  const cityMatch =
+    (details?.delivery_city ?? '').toLowerCase().trim() ===
+    (orgCity ?? '').toLowerCase().trim();
+  const deliveryAddressMatchesOrg =
+    deliveryNorm.length > 0 &&
+    orgNorm.length > 0 &&
+    deliveryNorm.includes(orgNorm) &&
+    cityMatch;
+
+  // Handler : remplacer l'adresse de livraison par celle du restaurant
+  const handleUseOrgAddress = async () => {
+    if (!org) return;
+    const useShipping = org.has_different_shipping_address;
+    const updates: Partial<LinkMeOrderDetails> = {
+      delivery_address: useShipping
+        ? [org.shipping_address_line1, org.shipping_address_line2]
+            .filter(Boolean)
+            .join(', ')
+        : [org.address_line1, org.address_line2].filter(Boolean).join(', '),
+      delivery_postal_code: useShipping
+        ? org.shipping_postal_code
+        : org.postal_code,
+      delivery_city: useShipping ? org.shipping_city : org.city,
+    };
+    await updateDetails.mutateAsync({ orderId, updates });
+    void fetchOrder().catch((err: unknown) => {
+      console.error(
+        '[LinkMeOrderDetail] Refetch after use org address failed:',
+        err
+      );
+    });
+  };
+
   return (
     <div className="space-y-6 p-6">
       {/* ============================================ */}
@@ -841,11 +981,17 @@ export default function LinkMeOrderDetailPage() {
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
-              className="gap-2"
+              className="gap-2 relative"
               onClick={() => setShowRequestInfoDialog(true)}
             >
               <MessageSquare className="h-4 w-4" />
               Demander compléments
+              {missingFieldsResult &&
+                missingFieldsResult.totalCategories > 0 && (
+                  <span className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center rounded-full bg-red-500 text-white text-xs font-bold">
+                    {missingFieldsResult.totalCategories}
+                  </span>
+                )}
             </Button>
             <Button
               variant="destructive"
@@ -889,6 +1035,120 @@ export default function LinkMeOrderDetailPage() {
             )}
           </div>
         </div>
+      )}
+
+      {/* ============================================ */}
+      {/* HISTORIQUE DES DEMANDES D'INFOS */}
+      {/* ============================================ */}
+      {order.infoRequests.length > 0 && (
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-2">
+              <Mail className="h-5 w-5 text-indigo-600" />
+              <CardTitle className="text-lg">Historique des demandes</CardTitle>
+              <Badge variant="secondary" className="ml-auto">
+                {order.infoRequests.length}
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {[...order.infoRequests]
+                .sort(
+                  (a, b) =>
+                    new Date(b.sent_at).getTime() -
+                    new Date(a.sent_at).getTime()
+                )
+                .map(req => {
+                  const isPending = !req.completed_at && !req.cancelled_at;
+                  const isCompleted = !!req.completed_at;
+                  const isCancelled = !!req.cancelled_at;
+
+                  return (
+                    <div
+                      key={req.id}
+                      className={`flex items-start gap-3 p-3 rounded-lg border ${
+                        isPending
+                          ? 'border-yellow-200 bg-yellow-50'
+                          : isCompleted
+                            ? 'border-green-200 bg-green-50'
+                            : 'border-red-200 bg-red-50'
+                      }`}
+                    >
+                      {isPending && (
+                        <Clock className="h-4 w-4 text-yellow-600 mt-0.5 flex-shrink-0" />
+                      )}
+                      {isCompleted && (
+                        <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                      )}
+                      {isCancelled && (
+                        <XCircle className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
+                      )}
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm font-medium text-gray-900">
+                            {req.recipient_email}
+                          </span>
+                          <Badge variant="outline" className="text-xs">
+                            {req.recipient_type === 'requester'
+                              ? 'Demandeur'
+                              : 'Propriétaire'}
+                          </Badge>
+                          {isPending && (
+                            <Badge className="bg-yellow-100 text-yellow-800 border-yellow-300 text-xs">
+                              En attente
+                            </Badge>
+                          )}
+                          {isCompleted && (
+                            <Badge className="bg-green-100 text-green-800 border-green-300 text-xs">
+                              Complété
+                            </Badge>
+                          )}
+                          {isCancelled && (
+                            <Badge className="bg-red-100 text-red-800 border-red-300 text-xs">
+                              Annulé
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          Envoyé le{' '}
+                          {new Date(req.sent_at).toLocaleDateString('fr-FR', {
+                            day: 'numeric',
+                            month: 'long',
+                            year: 'numeric',
+                          })}{' '}
+                          à{' '}
+                          {new Date(req.sent_at).toLocaleTimeString('fr-FR', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                          {isCompleted && req.completed_at && (
+                            <span className="text-green-700 ml-2">
+                              — Complété le{' '}
+                              {new Date(req.completed_at).toLocaleDateString(
+                                'fr-FR',
+                                {
+                                  day: 'numeric',
+                                  month: 'long',
+                                  year: 'numeric',
+                                }
+                              )}
+                            </span>
+                          )}
+                          {isCancelled && req.cancelled_reason && (
+                            <span className="text-red-700 ml-2">
+                              — Raison : {req.cancelled_reason}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* ============================================ */}
@@ -1097,9 +1357,11 @@ export default function LinkMeOrderDetailPage() {
                       <Building2 className="h-3.5 w-3.5" />
                       {details.owner_type === 'propre'
                         ? 'Restaurant propre'
-                        : details.owner_type === 'franchise'
-                          ? 'Franchise'
-                          : details.owner_type}
+                        : details.owner_type === 'succursale'
+                          ? 'Succursale'
+                          : details.owner_type === 'franchise'
+                            ? 'Franchise'
+                            : details.owner_type}
                     </span>
                   )}
                   {details?.is_new_restaurant && (
@@ -1114,6 +1376,50 @@ export default function LinkMeOrderDetailPage() {
                       <AlertTriangle className="h-3.5 w-3.5" />
                       En attente validation
                     </span>
+                  )}
+                </div>
+                {/* Infos organisation */}
+                <div className="space-y-2 text-sm">
+                  {order.organisation.siret && (
+                    <div className="flex items-center gap-2 text-gray-600">
+                      <CreditCard className="h-3.5 w-3.5 text-gray-400" />
+                      <span>SIRET : {order.organisation.siret}</span>
+                    </div>
+                  )}
+                  {(order.organisation.address_line1 ??
+                    order.organisation.postal_code) && (
+                    <div className="flex items-center gap-2 text-gray-600">
+                      <MapPin className="h-3.5 w-3.5 text-gray-400" />
+                      <span>
+                        {[
+                          order.organisation.address_line1,
+                          order.organisation.address_line2,
+                        ]
+                          .filter(Boolean)
+                          .join(', ')}
+                        {order.organisation.postal_code &&
+                          `, ${order.organisation.postal_code}`}
+                        {order.organisation.city &&
+                          ` ${order.organisation.city}`}
+                      </span>
+                    </div>
+                  )}
+                  {order.organisation.email && (
+                    <div className="flex items-center gap-2 text-gray-600">
+                      <Mail className="h-3.5 w-3.5 text-gray-400" />
+                      <a
+                        href={`mailto:${order.organisation.email}`}
+                        className="text-blue-600 hover:underline"
+                      >
+                        {order.organisation.email}
+                      </a>
+                    </div>
+                  )}
+                  {order.organisation.phone && (
+                    <div className="flex items-center gap-2 text-gray-600">
+                      <Phone className="h-3.5 w-3.5 text-gray-400" />
+                      <span>{order.organisation.phone}</span>
+                    </div>
                   )}
                 </div>
               </div>
@@ -1137,20 +1443,23 @@ export default function LinkMeOrderDetailPage() {
                   Responsable établissement
                 </CardTitle>
                 {details?.requester_type && (
-                  <span
-                    className={`px-2.5 py-1 text-xs font-semibold rounded-full ${
-                      details.requester_type === 'responsable_enseigne'
-                        ? 'bg-blue-100 text-blue-700'
+                  <span className="flex items-center gap-1.5">
+                    <span className="text-xs text-gray-400">Rôle :</span>
+                    <span
+                      className={`px-2.5 py-1 text-xs font-semibold rounded-full ${
+                        details.requester_type === 'responsable_enseigne'
+                          ? 'bg-blue-100 text-blue-700'
+                          : details.requester_type === 'architecte'
+                            ? 'bg-amber-100 text-amber-700'
+                            : 'bg-violet-100 text-violet-700'
+                      }`}
+                    >
+                      {details.requester_type === 'responsable_enseigne'
+                        ? 'Resp. Enseigne'
                         : details.requester_type === 'architecte'
-                          ? 'bg-amber-100 text-amber-700'
-                          : 'bg-violet-100 text-violet-700'
-                    }`}
-                  >
-                    {details.requester_type === 'responsable_enseigne'
-                      ? 'Resp. Enseigne'
-                      : details.requester_type === 'architecte'
-                        ? 'Architecte'
-                        : 'Franchisé'}
+                          ? 'Architecte'
+                          : 'Franchisé'}
+                    </span>
                   </span>
                 )}
               </div>
@@ -1262,41 +1571,101 @@ export default function LinkMeOrderDetailPage() {
           </CardHeader>
           <CardContent>
             {details ? (
-              <div className="flex items-start gap-4 p-4 bg-gray-50 rounded-xl">
-                {/* Avatar initiales */}
-                <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
-                  <span className="text-green-700 font-bold text-lg">
-                    {(details.billing_name ?? '')
-                      .split(' ')
-                      .map(n => n[0])
-                      .join('')
-                      .slice(0, 2)
-                      .toUpperCase()}
-                  </span>
-                </div>
-                {/* Infos contact */}
-                <div className="min-w-0 flex-1 space-y-1.5">
-                  <p className="text-base font-semibold text-gray-900">
-                    {details.billing_name ?? 'Non renseigné'}
-                  </p>
-                  <div className="flex flex-wrap gap-4 mt-2">
-                    {details.billing_email && (
-                      <a
-                        href={`mailto:${details.billing_email}`}
-                        className="flex items-center gap-1.5 text-sm text-blue-600 hover:underline"
-                      >
-                        <Mail className="h-3.5 w-3.5" />
-                        {details.billing_email}
-                      </a>
-                    )}
-                    {details.billing_phone && (
-                      <span className="flex items-center gap-1.5 text-sm text-gray-600">
-                        <Phone className="h-3.5 w-3.5" />
-                        {details.billing_phone}
-                      </span>
-                    )}
+              <div className="space-y-4">
+                {/* Contact facturation */}
+                <div className="flex items-start gap-4 p-4 bg-gray-50 rounded-xl">
+                  {/* Avatar initiales */}
+                  <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                    <span className="text-green-700 font-bold text-lg">
+                      {(details.billing_name ?? '')
+                        .split(' ')
+                        .map(n => n[0])
+                        .join('')
+                        .slice(0, 2)
+                        .toUpperCase()}
+                    </span>
+                  </div>
+                  {/* Infos contact */}
+                  <div className="min-w-0 flex-1 space-y-1.5">
+                    <p className="text-base font-semibold text-gray-900">
+                      {details.billing_name ?? 'Non renseigné'}
+                    </p>
+                    <div className="flex flex-wrap gap-4 mt-2">
+                      {details.billing_email && (
+                        <a
+                          href={`mailto:${details.billing_email}`}
+                          className="flex items-center gap-1.5 text-sm text-blue-600 hover:underline"
+                        >
+                          <Mail className="h-3.5 w-3.5" />
+                          {details.billing_email}
+                        </a>
+                      )}
+                      {details.billing_phone && (
+                        <span className="flex items-center gap-1.5 text-sm text-gray-600">
+                          <Phone className="h-3.5 w-3.5" />
+                          {details.billing_phone}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
+
+                {/* Adresse de facturation (organisation) */}
+                {order.organisation && (
+                  <div className="flex items-start gap-3 p-3 bg-green-50/50 rounded-lg border border-green-100">
+                    <MapPin className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <p className="text-sm font-medium text-gray-700">
+                          {order.organisation.billing_address_line1
+                            ? 'Adresse de facturation'
+                            : 'Adresse siège'}
+                        </p>
+                        <span
+                          className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${
+                            order.organisation.billing_address_line1
+                              ? 'bg-green-100 text-green-700'
+                              : 'bg-blue-100 text-blue-700'
+                          }`}
+                        >
+                          {order.organisation.billing_address_line1
+                            ? 'Facturation'
+                            : 'Siège social'}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-600">
+                        {order.organisation.billing_address_line1
+                          ? [
+                              order.organisation.billing_address_line1,
+                              order.organisation.billing_address_line2,
+                            ]
+                              .filter(Boolean)
+                              .join(', ')
+                          : [
+                              order.organisation.address_line1,
+                              order.organisation.address_line2,
+                            ]
+                              .filter(Boolean)
+                              .join(', ')}
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        {order.organisation.billing_address_line1
+                          ? [
+                              order.organisation.billing_postal_code,
+                              order.organisation.billing_city,
+                            ]
+                              .filter(Boolean)
+                              .join(' ')
+                          : [
+                              order.organisation.postal_code,
+                              order.organisation.city,
+                            ]
+                              .filter(Boolean)
+                              .join(' ')}
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <p className="text-gray-500">Données non disponibles</p>
@@ -1309,157 +1678,286 @@ export default function LinkMeOrderDetailPage() {
         {/* ------------------------------------------ */}
         <Card className="lg:col-span-2">
           <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-cyan-100">
-                  <Truck className="h-4 w-4 text-cyan-600" />
-                </div>
-                <CardTitle className="text-lg">Livraison</CardTitle>
-                {order.status === 'validated' &&
-                  renderStepBadge(isStep4Complete())}
+            <div className="flex items-center gap-2">
+              <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-cyan-100">
+                <Truck className="h-4 w-4 text-cyan-600" />
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => openEditDialog('delivery')}
-              >
-                <Pencil className="h-3 w-3 mr-1" />
-                Modifier
-              </Button>
+              <CardTitle className="text-lg">Livraison</CardTitle>
+              {order.status === 'validated' &&
+                renderStepBadge(isStep4Complete())}
             </div>
           </CardHeader>
           <CardContent>
             {details ? (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Colonne gauche : adresse + contact livraison */}
+              <div className="space-y-6">
+                {/* ---- Sous-section 1 : Contact livraison ---- */}
                 <div className="space-y-3">
-                  <p className="text-sm font-medium text-gray-700">
-                    Informations de livraison
-                  </p>
-                  {/* Adresse */}
-                  {details.delivery_address && (
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium text-gray-700">
+                      Contact livraison
+                    </p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedContactId(null);
+                        setContactDialogFor('delivery');
+                      }}
+                    >
+                      <Pencil className="h-3 w-3 mr-1" />
+                      Changer contact
+                    </Button>
+                  </div>
+                  {details.delivery_contact_name ? (
+                    <div className="space-y-1">
+                      <p className="font-medium">
+                        {details.delivery_contact_name}
+                      </p>
+                      {details.delivery_contact_email && (
+                        <div className="flex items-center gap-2 text-sm">
+                          <Mail className="h-4 w-4 text-gray-400" />
+                          <a
+                            href={`mailto:${details.delivery_contact_email}`}
+                            className="text-blue-600 hover:underline"
+                          >
+                            {details.delivery_contact_email}
+                          </a>
+                        </div>
+                      )}
+                      {details.delivery_contact_phone && (
+                        <div className="flex items-center gap-2 text-sm">
+                          <Phone className="h-4 w-4 text-gray-400" />
+                          <span>{details.delivery_contact_phone}</span>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-400 italic">
+                      Aucun contact renseigné
+                    </p>
+                  )}
+                </div>
+
+                <Separator />
+
+                {/* ---- Sous-section 2 : Adresse livraison ---- */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium text-gray-700">
+                      Adresse de livraison
+                    </p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => openEditDialog('delivery_address')}
+                    >
+                      <Pencil className="h-3 w-3 mr-1" />
+                      Modifier
+                    </Button>
+                  </div>
+                  {details.delivery_address ? (
                     <div>
-                      <Label className="text-xs text-gray-500">Adresse</Label>
                       <p className="text-sm">
                         {details.delivery_address}
                         {details.delivery_postal_code &&
                           `, ${details.delivery_postal_code}`}
                         {details.delivery_city && ` ${details.delivery_city}`}
                       </p>
+                      {org && (
+                        <span
+                          className={`inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded text-xs font-medium ${
+                            deliveryAddressMatchesOrg
+                              ? 'bg-green-100 text-green-700'
+                              : 'bg-orange-100 text-orange-700'
+                          }`}
+                        >
+                          {deliveryAddressMatchesOrg ? (
+                            <>
+                              <CheckCircle2 className="h-3 w-3" />
+                              Adresse restaurant confirmée
+                            </>
+                          ) : (
+                            <>
+                              <AlertTriangle className="h-3 w-3" />
+                              Adresse différente du restaurant
+                            </>
+                          )}
+                        </span>
+                      )}
                     </div>
+                  ) : (
+                    <p className="text-sm text-gray-400 italic">
+                      Aucune adresse renseignée
+                    </p>
                   )}
-                  {/* Contact livraison */}
-                  {details.delivery_contact_name && (
-                    <div>
-                      <Label className="text-xs text-gray-500">
-                        Contact livraison
-                      </Label>
-                      <p className="font-medium">
-                        {details.delivery_contact_name}
-                      </p>
-                    </div>
-                  )}
-                  {details.delivery_contact_email && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <Mail className="h-4 w-4 text-gray-400" />
-                      <a
-                        href={`mailto:${details.delivery_contact_email}`}
-                        className="text-blue-600 hover:underline"
-                      >
-                        {details.delivery_contact_email}
-                      </a>
-                    </div>
-                  )}
-                  {details.delivery_contact_phone && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <Phone className="h-4 w-4 text-gray-400" />
-                      <span>{details.delivery_contact_phone}</span>
-                    </div>
-                  )}
-                  {/* Modalités */}
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Modalités acceptées</span>
-                    <Badge
-                      variant={
-                        details.delivery_terms_accepted ? 'default' : 'outline'
+                  {/* Adresse restaurant cliquable pour remplir */}
+                  {org && (org.address_line1 || org.shipping_address_line1) && (
+                    <button
+                      type="button"
+                      disabled={
+                        deliveryAddressMatchesOrg || updateDetails.isPending
                       }
+                      className={`w-full text-left p-3 rounded-lg border transition-colors ${
+                        deliveryAddressMatchesOrg
+                          ? 'bg-blue-50 border-blue-100 cursor-default'
+                          : 'bg-blue-50 border-blue-200 cursor-pointer hover:bg-blue-100 hover:border-blue-300'
+                      }`}
+                      onClick={() => {
+                        if (deliveryAddressMatchesOrg) return;
+                        void handleUseOrgAddress().catch((err: unknown) => {
+                          console.error(
+                            '[LinkMeOrderDetail] Use org address failed:',
+                            err
+                          );
+                        });
+                      }}
                     >
-                      {details.delivery_terms_accepted ? 'Oui' : 'Non'}
-                    </Badge>
-                  </div>
-                  {/* Date souhaitée */}
-                  {details.desired_delivery_date && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <Calendar className="h-4 w-4 text-gray-400" />
-                      <span>
-                        Livraison souhaitée :{' '}
-                        {new Date(
-                          details.desired_delivery_date
-                        ).toLocaleDateString('fr-FR')}
-                      </span>
-                    </div>
-                  )}
-                  {/* Notes livraison */}
-                  {details.delivery_notes && (
-                    <div>
-                      <Label className="text-xs text-gray-500">Notes</Label>
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center gap-2">
+                          <MapPin className="h-3.5 w-3.5 text-blue-600" />
+                          <p className="text-xs font-medium text-blue-700">
+                            Adresse restaurant (organisation)
+                          </p>
+                        </div>
+                        {!deliveryAddressMatchesOrg &&
+                          !updateDetails.isPending && (
+                            <span className="text-[10px] font-medium text-blue-600 bg-blue-100 px-2 py-0.5 rounded">
+                              Utiliser cette adresse
+                            </span>
+                          )}
+                        {updateDetails.isPending && (
+                          <span className="text-[10px] font-medium text-blue-600">
+                            Mise à jour...
+                          </span>
+                        )}
+                      </div>
                       <p className="text-sm text-gray-600">
-                        {details.delivery_notes}
+                        {org.has_different_shipping_address
+                          ? [
+                              org.shipping_address_line1,
+                              org.shipping_address_line2,
+                            ]
+                              .filter(Boolean)
+                              .join(', ')
+                          : [org.address_line1, org.address_line2]
+                              .filter(Boolean)
+                              .join(', ')}
                       </p>
-                    </div>
+                      <p className="text-sm text-gray-600">
+                        {org.has_different_shipping_address
+                          ? [org.shipping_postal_code, org.shipping_city]
+                              .filter(Boolean)
+                              .join(' ')
+                          : [org.postal_code, org.city]
+                              .filter(Boolean)
+                              .join(' ')}
+                      </p>
+                    </button>
                   )}
                 </div>
 
-                {/* Colonne droite : options + post-approbation */}
+                <Separator />
+
+                {/* ---- Sous-section 3 : Options livraison ---- */}
                 <div className="space-y-3">
-                  <p className="text-sm font-medium text-gray-700">Options</p>
-                  {/* Centre commercial */}
                   <div className="flex items-center justify-between">
-                    <span className="text-sm">Centre commercial</span>
-                    <Badge
-                      variant={details.is_mall_delivery ? 'default' : 'outline'}
+                    <p className="text-sm font-medium text-gray-700">Options</p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => openEditDialog('delivery_options')}
                     >
-                      {details.is_mall_delivery ? 'Oui' : 'Non'}
-                    </Badge>
+                      <Pencil className="h-3 w-3 mr-1" />
+                      Modifier
+                    </Button>
                   </div>
-                  {details.is_mall_delivery && details.mall_email && (
-                    <div className="text-sm text-gray-600">
-                      Email direction : {details.mall_email}
-                    </div>
-                  )}
-                  {/* Semi-remorque */}
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Accès semi-remorque</span>
-                    <Badge
-                      variant={
-                        details.semi_trailer_accessible ? 'default' : 'outline'
-                      }
-                    >
-                      {details.semi_trailer_accessible ? 'Oui' : 'Non'}
-                    </Badge>
-                  </div>
-                  {/* Formulaire accès */}
-                  {details.access_form_required && (
-                    <div className="p-3 bg-gray-50 rounded-lg text-sm">
-                      <p className="font-medium">Formulaire accès requis</p>
-                      {details.access_form_url && (
-                        <a
-                          href={details.access_form_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-600 hover:underline flex items-center gap-1 mt-1"
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">Modalités acceptées</span>
+                        <Badge
+                          variant={
+                            details.delivery_terms_accepted
+                              ? 'default'
+                              : 'outline'
+                          }
                         >
-                          <ExternalLink className="h-3 w-3" />
-                          Voir le formulaire
-                        </a>
+                          {details.delivery_terms_accepted ? 'Oui' : 'Non'}
+                        </Badge>
+                      </div>
+                      {details.desired_delivery_date && (
+                        <div className="flex items-center gap-2 text-sm">
+                          <Calendar className="h-4 w-4 text-gray-400" />
+                          <span>
+                            Livraison souhaitée :{' '}
+                            {new Date(
+                              details.desired_delivery_date
+                            ).toLocaleDateString('fr-FR')}
+                          </span>
+                        </div>
+                      )}
+                      {details.delivery_notes && (
+                        <div>
+                          <Label className="text-xs text-gray-500">Notes</Label>
+                          <p className="text-sm text-gray-600">
+                            {details.delivery_notes}
+                          </p>
+                        </div>
                       )}
                     </div>
-                  )}
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">Centre commercial</span>
+                        <Badge
+                          variant={
+                            details.is_mall_delivery ? 'default' : 'outline'
+                          }
+                        >
+                          {details.is_mall_delivery ? 'Oui' : 'Non'}
+                        </Badge>
+                      </div>
+                      {details.is_mall_delivery && details.mall_email && (
+                        <div className="text-sm text-gray-600">
+                          Email direction : {details.mall_email}
+                        </div>
+                      )}
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">Accès semi-remorque</span>
+                        <Badge
+                          variant={
+                            details.semi_trailer_accessible
+                              ? 'default'
+                              : 'outline'
+                          }
+                        >
+                          {details.semi_trailer_accessible ? 'Oui' : 'Non'}
+                        </Badge>
+                      </div>
+                      {details.access_form_required && (
+                        <div className="p-3 bg-gray-50 rounded-lg text-sm">
+                          <p className="font-medium">Formulaire accès requis</p>
+                          {details.access_form_url && (
+                            <a
+                              href={details.access_form_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:underline flex items-center gap-1 mt-1"
+                            >
+                              <ExternalLink className="h-3 w-3" />
+                              Voir le formulaire
+                            </a>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
 
-                  {/* Post-approbation (si validée) */}
-                  {order.status === 'validated' && (
-                    <>
-                      <Separator />
+                {/* Post-approbation (si validée) */}
+                {order.status === 'validated' && (
+                  <>
+                    <Separator />
+                    <div className="space-y-3">
                       <p className="text-sm font-medium text-gray-700">
                         Post-approbation
                       </p>
@@ -1519,9 +2017,9 @@ export default function LinkMeOrderDetailPage() {
                             En attente de confirmation via le lien email.
                           </div>
                         )}
-                    </>
-                  )}
-                </div>
+                    </div>
+                  </>
+                )}
               </div>
             ) : (
               <p className="text-gray-500">Données non disponibles</p>
@@ -1547,7 +2045,9 @@ export default function LinkMeOrderDetailPage() {
             <DialogTitle>
               {contactDialogFor === 'responsable'
                 ? 'Responsable établissement'
-                : 'Responsable facturation'}
+                : contactDialogFor === 'billing'
+                  ? 'Responsable facturation'
+                  : 'Contact livraison'}
             </DialogTitle>
             <DialogDescription>
               Sélectionnez un contact existant ou créez-en un nouveau.
@@ -1565,7 +2065,9 @@ export default function LinkMeOrderDetailPage() {
                 sectionLabel={
                   contactDialogFor === 'responsable'
                     ? 'Créer un responsable'
-                    : 'Créer un contact facturation'
+                    : contactDialogFor === 'billing'
+                      ? 'Créer un contact facturation'
+                      : 'Créer un contact livraison'
                 }
                 onSubmit={handleCreateAndSelectContact}
                 onCancel={() => {
@@ -1670,13 +2172,36 @@ export default function LinkMeOrderDetailPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog: Demander compléments (avec templates préconfigurés) */}
+      {/* Dialog: Demander compléments (auto-sélection catégories manquantes) */}
       <Dialog
         open={showRequestInfoDialog}
         onOpenChange={open => {
           setShowRequestInfoDialog(open);
-          if (!open) {
-            setSelectedTemplate(null);
+          if (open) {
+            // Auto-cocher les catégories manquantes à l'ouverture
+            const mf = getOrderMissingFields({
+              details,
+              organisationSiret: order?.organisation?.siret,
+              ownerType: details?.owner_type,
+            });
+            const cats = new Set<MissingFieldCategory>(
+              (
+                Object.entries(mf.byCategory) as [
+                  MissingFieldCategory,
+                  unknown[],
+                ][]
+              )
+                .filter(([, fields]) => fields.length > 0)
+                .map(([cat]) => cat)
+                .filter(
+                  (cat): cat is Exclude<MissingFieldCategory, 'custom'> =>
+                    cat !== 'custom'
+                )
+            );
+            setSelectedCategories(cats);
+            setRequestMessage(generateCombinedMessage(mf, cats));
+          } else {
+            setSelectedCategories(new Set());
             setRequestMessage('');
           }
         }}
@@ -1689,76 +2214,84 @@ export default function LinkMeOrderDetailPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto">
-            {/* Champs manquants détectés automatiquement */}
             {(() => {
-              const missingFields = getOrderMissingFields({ details });
-              const relevantTemplates = getRelevantTemplates(missingFields);
+              const missingFields = getOrderMissingFields({
+                details,
+                organisationSiret: order?.organisation?.siret,
+                ownerType: details?.owner_type,
+              });
+              const relevantCategories = (
+                Object.entries(missingFields.byCategory) as [
+                  MissingFieldCategory,
+                  unknown[],
+                ][]
+              )
+                .filter(
+                  ([cat, fields]) => cat !== 'custom' && fields.length > 0
+                )
+                .map(([cat]) => cat);
 
               return (
                 <>
+                  {/* Résumé champs manquants */}
                   {missingFields.total > 0 && (
                     <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                      <p className="text-sm font-medium text-amber-800 mb-2">
+                      <p className="text-sm font-medium text-amber-800">
                         <AlertTriangle className="h-4 w-4 inline mr-1" />
-                        {missingFields.total} champ(s) manquant(s) détecté(s)
+                        {missingFields.totalCategories} catégorie(s) à compléter
+                        ({missingFields.total} champs)
                       </p>
-                      <div className="flex flex-wrap gap-1">
-                        {missingFields.fields.map(f => (
-                          <Badge
-                            key={f.key}
-                            variant="outline"
-                            className="text-xs text-amber-700 border-amber-300"
-                          >
-                            {f.label}
-                          </Badge>
-                        ))}
-                      </div>
                     </div>
                   )}
 
-                  {/* Sélecteur de template */}
+                  {/* Checkboxes par catégorie */}
                   <div className="space-y-2">
-                    <Label>Type de demande</Label>
+                    <Label>Catégories à demander</Label>
                     <div className="grid grid-cols-1 gap-2">
-                      {relevantTemplates.map(
-                        (template: RequestInfoTemplate) => (
-                          <button
-                            key={template.id}
-                            type="button"
-                            className={`flex items-start gap-3 p-3 rounded-lg border text-left transition-colors ${
-                              selectedTemplate === template.id
-                                ? 'border-blue-500 bg-blue-50'
-                                : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                            }`}
-                            onClick={() => {
-                              setSelectedTemplate(template.id);
-                              const msg = template.getMessage(
-                                missingFields.fields
+                      {relevantCategories.map(category => (
+                        <label
+                          key={category}
+                          className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                            selectedCategories.has(category)
+                              ? 'border-blue-500 bg-blue-50'
+                              : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                          }`}
+                        >
+                          <Checkbox
+                            checked={selectedCategories.has(category)}
+                            onCheckedChange={checked => {
+                              const next = new Set(selectedCategories);
+                              if (checked) {
+                                next.add(category);
+                              } else {
+                                next.delete(category);
+                              }
+                              setSelectedCategories(next);
+                              setRequestMessage(
+                                generateCombinedMessage(missingFields, next)
                               );
-                              setRequestMessage(msg);
                             }}
-                          >
-                            <div className="flex-1">
-                              <p className="text-sm font-medium">
-                                {template.label}
-                              </p>
-                              <p className="text-xs text-gray-500">
-                                {template.description}
-                              </p>
-                            </div>
-                            {selectedTemplate === template.id && (
-                              <Check className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
-                            )}
-                          </button>
-                        )
-                      )}
+                            className="mt-0.5"
+                          />
+                          <div className="flex-1">
+                            <p className="text-sm font-medium">
+                              {CATEGORY_LABELS[category]}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {missingFields.byCategory[category]
+                                .map(f => f.label)
+                                .join(', ')}
+                            </p>
+                          </div>
+                        </label>
+                      ))}
                     </div>
                   </div>
                 </>
               );
             })()}
 
-            {/* Message (pré-rempli par le template ou libre) */}
+            {/* Message (auto-généré ou libre) */}
             <div className="space-y-2">
               <Label htmlFor="message">Message</Label>
               <Textarea
@@ -1766,10 +2299,10 @@ export default function LinkMeOrderDetailPage() {
                 value={requestMessage}
                 onChange={e => setRequestMessage(e.target.value)}
                 placeholder="Précisez les informations manquantes..."
-                rows={6}
+                rows={8}
               />
               <p className="text-xs text-gray-500">
-                Le message peut être modifié avant envoi.
+                Message auto-généré. Vous pouvez le modifier avant envoi.
               </p>
             </div>
           </div>
@@ -2078,61 +2611,73 @@ export default function LinkMeOrderDetailPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog: Éditer Livraison */}
+      {/* Dialog: Éditer Adresse Livraison */}
       <Dialog
-        open={editingStep === 'delivery'}
+        open={editingStep === 'delivery_address'}
         onOpenChange={() => setEditingStep(null)}
       >
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Modifier la Livraison</DialogTitle>
+            <DialogTitle>Modifier l&apos;adresse de livraison</DialogTitle>
             <DialogDescription>
-              Modifiez les informations de livraison et réception.
+              Modifiez l&apos;adresse ou sélectionnez celle du restaurant.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto">
-            <p className="text-sm font-medium text-gray-700">
-              Contact livraison
-            </p>
-            <div className="space-y-2">
-              <Label>Nom du contact</Label>
-              <Input
-                value={editForm.delivery_contact_name ?? ''}
-                onChange={e =>
+          <div className="space-y-4 py-4">
+            {/* Adresse restaurant pour pré-remplir */}
+            {org && (org.address_line1 || org.shipping_address_line1) && (
+              <button
+                type="button"
+                className="w-full text-left p-3 rounded-lg border border-blue-200 bg-blue-50 hover:bg-blue-100 hover:border-blue-300 transition-colors"
+                onClick={() => {
+                  const useShipping = org.has_different_shipping_address;
                   setEditForm(prev => ({
                     ...prev,
-                    delivery_contact_name: e.target.value,
-                  }))
-                }
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Email</Label>
-              <Input
-                type="email"
-                value={editForm.delivery_contact_email ?? ''}
-                onChange={e =>
-                  setEditForm(prev => ({
-                    ...prev,
-                    delivery_contact_email: e.target.value,
-                  }))
-                }
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Téléphone</Label>
-              <Input
-                value={editForm.delivery_contact_phone ?? ''}
-                onChange={e =>
-                  setEditForm(prev => ({
-                    ...prev,
-                    delivery_contact_phone: e.target.value,
-                  }))
-                }
-              />
-            </div>
-            <Separator />
-            <p className="text-sm font-medium text-gray-700">Adresse</p>
+                    delivery_address: useShipping
+                      ? [org.shipping_address_line1, org.shipping_address_line2]
+                          .filter(Boolean)
+                          .join(', ')
+                      : [org.address_line1, org.address_line2]
+                          .filter(Boolean)
+                          .join(', '),
+                    delivery_postal_code:
+                      (useShipping
+                        ? org.shipping_postal_code
+                        : org.postal_code) ?? '',
+                    delivery_city:
+                      (useShipping ? org.shipping_city : org.city) ?? '',
+                  }));
+                }}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="h-3.5 w-3.5 text-blue-600" />
+                    <p className="text-xs font-medium text-blue-700">
+                      Adresse restaurant
+                    </p>
+                  </div>
+                  <span className="text-[10px] font-medium text-blue-600 bg-blue-100 px-2 py-0.5 rounded">
+                    Utiliser cette adresse
+                  </span>
+                </div>
+                <p className="text-sm text-gray-600">
+                  {org.has_different_shipping_address
+                    ? [org.shipping_address_line1, org.shipping_address_line2]
+                        .filter(Boolean)
+                        .join(', ')
+                    : [org.address_line1, org.address_line2]
+                        .filter(Boolean)
+                        .join(', ')}
+                </p>
+                <p className="text-sm text-gray-600">
+                  {org.has_different_shipping_address
+                    ? [org.shipping_postal_code, org.shipping_city]
+                        .filter(Boolean)
+                        .join(' ')
+                    : [org.postal_code, org.city].filter(Boolean).join(' ')}
+                </p>
+              </button>
+            )}
             <div className="space-y-2">
               <Label>Adresse</Label>
               <Input
@@ -2171,8 +2716,38 @@ export default function LinkMeOrderDetailPage() {
                 />
               </div>
             </div>
-            <Separator />
-            <p className="text-sm font-medium text-gray-700">Options</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingStep(null)}>
+              Annuler
+            </Button>
+            <Button
+              onClick={() => {
+                void handleSaveEdit().catch(error => {
+                  console.error('[LinkMeOrderDetail] Save edit failed:', error);
+                });
+              }}
+              disabled={updateDetails.isPending}
+            >
+              {updateDetails.isPending ? 'Enregistrement...' : 'Enregistrer'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog: Éditer Options Livraison */}
+      <Dialog
+        open={editingStep === 'delivery_options'}
+        onOpenChange={() => setEditingStep(null)}
+      >
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Options de livraison</DialogTitle>
+            <DialogDescription>
+              Modifiez les options et dates de livraison.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto">
             <div className="flex items-center justify-between p-3 border rounded-lg">
               <div>
                 <Label>Modalités de livraison acceptées</Label>
