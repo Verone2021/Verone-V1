@@ -400,8 +400,8 @@ export function useOrderForm(): UseOrderFormReturn {
             p_affiliate_id: affiliate.id,
             p_legal_name: newResto.tradeName,
             p_trade_name: newResto.tradeName,
-            p_email: formData.contacts.responsable.email ?? undefined,
-            p_phone: formData.contacts.responsable.phone ?? undefined,
+            p_email: formData.contacts.responsable.email || undefined,
+            p_phone: formData.contacts.responsable.phone || undefined,
             p_address:
               newResto.address ?? formData.delivery.address ?? undefined,
             p_postal_code:
@@ -576,32 +576,40 @@ export function useOrderForm(): UseOrderFormReturn {
         deliveryContactPhone = dc.phone ?? '';
       }
 
+      // Helper: empty string → null
+      const emptyToNull = (v: string | null | undefined): string | null =>
+        v && v.trim().length > 0 ? v.trim() : null;
+
+      const requesterName =
+        `${formData.contacts.responsable.firstName} ${formData.contacts.responsable.lastName}`.trim();
+
       const linkmeDetails: Record<string, string | number | boolean | null> = {
-        // Step 5: Requester (responsable)
+        // Step 5: Requester (responsable) — optionnel
         requester_type: formData.contacts.existingResponsableId
           ? 'existing_contact'
-          : 'manual_entry',
-        requester_name:
-          `${formData.contacts.responsable.firstName} ${formData.contacts.responsable.lastName}`.trim(),
-        requester_email: formData.contacts.responsable.email,
-        requester_phone: formData.contacts.responsable.phone ?? null,
-        requester_position: formData.contacts.responsable.position ?? null,
+          : requesterName
+            ? 'manual_entry'
+            : null,
+        requester_name: emptyToNull(requesterName),
+        requester_email: emptyToNull(formData.contacts.responsable.email),
+        requester_phone: emptyToNull(formData.contacts.responsable.phone),
+        requester_position: emptyToNull(formData.contacts.responsable.position),
         is_new_restaurant: formData.restaurant.mode === 'new',
         // Step 6: Owner type
         owner_type: ownerType ?? null,
         // Step 6: Billing
         billing_contact_source: formData.contacts.billingContact.mode,
-        billing_name: billingName || null,
-        billing_email: billingEmail || null,
-        billing_phone: billingPhone || null,
+        billing_name: emptyToNull(billingName),
+        billing_email: emptyToNull(billingEmail),
+        billing_phone: emptyToNull(billingPhone),
         // Step 7: Delivery contact
-        delivery_contact_name: deliveryContactName || null,
-        delivery_contact_email: deliveryContactEmail || null,
-        delivery_contact_phone: deliveryContactPhone || null,
+        delivery_contact_name: emptyToNull(deliveryContactName),
+        delivery_contact_email: emptyToNull(deliveryContactEmail),
+        delivery_contact_phone: emptyToNull(deliveryContactPhone),
         // Step 7: Delivery address
-        delivery_address: formData.delivery.address,
-        delivery_postal_code: formData.delivery.postalCode,
-        delivery_city: formData.delivery.city,
+        delivery_address: emptyToNull(formData.delivery.address),
+        delivery_postal_code: emptyToNull(formData.delivery.postalCode),
+        delivery_city: emptyToNull(formData.delivery.city),
         // Step 7: Delivery options
         desired_delivery_date: formData.delivery.desiredDate
           ? formData.delivery.desiredDate.toISOString().split('T')[0]

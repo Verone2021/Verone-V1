@@ -346,8 +346,9 @@ export function ValidationStep({
                 <div className="text-left">
                   <h3 className="font-semibold text-gray-900">Contacts</h3>
                   <p className="text-sm text-gray-500">
-                    {formData.contacts.responsable.firstName}{' '}
-                    {formData.contacts.responsable.lastName}
+                    {formData.contacts.responsable.firstName
+                      ? `${formData.contacts.responsable.firstName} ${formData.contacts.responsable.lastName}`
+                      : 'Non renseigné'}
                   </p>
                 </div>
               </div>
@@ -367,12 +368,18 @@ export function ValidationStep({
                   <User className="h-4 w-4" />
                   Responsable
                 </div>
-                <p className="text-sm text-gray-600 ml-6">
-                  {formData.contacts.responsable.firstName}{' '}
-                  {formData.contacts.responsable.lastName}
-                  <br />
-                  {formData.contacts.responsable.email}
-                </p>
+                {formData.contacts.responsable.firstName ? (
+                  <p className="text-sm text-gray-600 ml-6">
+                    {formData.contacts.responsable.firstName}{' '}
+                    {formData.contacts.responsable.lastName}
+                    <br />
+                    {formData.contacts.responsable.email}
+                  </p>
+                ) : (
+                  <p className="text-sm text-gray-400 italic ml-6">
+                    Non renseigné — à compléter ultérieurement
+                  </p>
+                )}
               </div>
 
               {/* Facturation */}
@@ -381,13 +388,23 @@ export function ValidationStep({
                   <FileText className="h-4 w-4" />
                   Facturation
                 </div>
-                <p className="text-sm text-gray-600 ml-6">
-                  {formData.contacts.billing.sameAsResponsable
-                    ? 'Même contact que responsable'
-                    : formData.contacts.billing.useParentOrg
-                      ? 'Organisation mère'
-                      : `${formData.contacts.billing.contact?.firstName} ${formData.contacts.billing.contact?.lastName}`}
-                </p>
+                {formData.contacts.billingContact?.mode ===
+                'same_as_responsable' ? (
+                  <p className="text-sm text-gray-600 ml-6">
+                    {formData.contacts.responsable.firstName
+                      ? 'Même contact que responsable'
+                      : 'Non renseigné'}
+                  </p>
+                ) : formData.contacts.billingContact?.contact?.firstName ? (
+                  <p className="text-sm text-gray-600 ml-6">
+                    {formData.contacts.billingContact.contact.firstName}{' '}
+                    {formData.contacts.billingContact.contact.lastName}
+                  </p>
+                ) : (
+                  <p className="text-sm text-gray-400 italic ml-6">
+                    Non renseigné — à compléter ultérieurement
+                  </p>
+                )}
               </div>
 
               {/* Livraison */}
@@ -396,11 +413,22 @@ export function ValidationStep({
                   <Truck className="h-4 w-4" />
                   Livraison
                 </div>
-                <p className="text-sm text-gray-600 ml-6">
-                  {formData.contacts.delivery.sameAsResponsable
-                    ? 'Même contact que responsable'
-                    : `${formData.contacts.delivery.contact?.firstName} ${formData.contacts.delivery.contact?.lastName}`}
-                </p>
+                {formData.contacts.delivery.sameAsResponsable ? (
+                  <p className="text-sm text-gray-600 ml-6">
+                    {formData.contacts.responsable.firstName
+                      ? 'Même contact que responsable'
+                      : 'Non renseigné'}
+                  </p>
+                ) : formData.contacts.delivery.contact?.firstName ? (
+                  <p className="text-sm text-gray-600 ml-6">
+                    {formData.contacts.delivery.contact.firstName}{' '}
+                    {formData.contacts.delivery.contact.lastName}
+                  </p>
+                ) : (
+                  <p className="text-sm text-gray-400 italic ml-6">
+                    Non renseigné — à compléter ultérieurement
+                  </p>
+                )}
               </div>
             </div>
           </CollapsibleContent>
@@ -425,7 +453,7 @@ export function ValidationStep({
                 <div className="text-left">
                   <h3 className="font-semibold text-gray-900">Livraison</h3>
                   <p className="text-sm text-gray-500">
-                    {formData.delivery.city}
+                    {formData.delivery.city || 'Non renseigné'}
                   </p>
                 </div>
               </div>
@@ -439,15 +467,21 @@ export function ValidationStep({
           </CollapsibleTrigger>
           <CollapsibleContent>
             <div className="p-4 pt-0 border-t space-y-2">
-              <div className="flex items-start gap-2 text-sm">
-                <MapPin className="h-4 w-4 text-gray-400 mt-0.5" />
-                <div>
-                  <p className="text-gray-900">{formData.delivery.address}</p>
-                  <p className="text-gray-600">
-                    {formData.delivery.postalCode} {formData.delivery.city}
-                  </p>
+              {formData.delivery.address ? (
+                <div className="flex items-start gap-2 text-sm">
+                  <MapPin className="h-4 w-4 text-gray-400 mt-0.5" />
+                  <div>
+                    <p className="text-gray-900">{formData.delivery.address}</p>
+                    <p className="text-gray-600">
+                      {formData.delivery.postalCode} {formData.delivery.city}
+                    </p>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <p className="text-sm text-gray-400 italic">
+                  Adresse non renseignée — à compléter ultérieurement
+                </p>
+              )}
               {formData.delivery.desiredDate && (
                 <div className="flex items-center gap-2 text-sm">
                   <Calendar className="h-4 w-4 text-gray-400" />
