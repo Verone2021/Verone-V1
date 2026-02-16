@@ -34,6 +34,7 @@ import {
   ImageIcon,
   MapPinIcon,
   PackageIcon,
+  PhoneIcon,
   TruckIcon,
   UserIcon,
   XIcon,
@@ -122,6 +123,40 @@ function formatDate(dateStr: string | null): string {
   }
 }
 
+/**
+ * Contact info card (reusable)
+ */
+function ContactCard({
+  label,
+  name,
+  email,
+  phone,
+  position,
+}: {
+  label: string;
+  name: string | null;
+  email: string | null;
+  phone: string | null;
+  position?: string | null;
+}) {
+  if (!name && !email && !phone) return null;
+
+  return (
+    <div className="bg-gray-50 rounded-lg p-3">
+      <p className="text-xs text-gray-500 mb-1">{label}</p>
+      {name && <p className="font-medium text-[#183559] text-sm">{name}</p>}
+      {position && <p className="text-xs text-gray-500">{position}</p>}
+      {email && <p className="text-sm text-gray-600">{email}</p>}
+      {phone && (
+        <p className="text-sm text-gray-600 flex items-center gap-1">
+          <PhoneIcon className="h-3 w-3" />
+          {phone}
+        </p>
+      )}
+    </div>
+  );
+}
+
 export function OrderDetailModal({
   order,
   isOpen,
@@ -137,6 +172,24 @@ export function OrderDetailModal({
     JSON.stringify(order.billing_address) ===
     JSON.stringify(order.shipping_address);
 
+  // Check if delivery text address exists (from linkme_details)
+  const hasDeliveryTextAddress =
+    order.delivery_address_text ||
+    order.delivery_postal_code ||
+    order.delivery_city;
+
+  // Check if any contact data exists
+  const hasRequester =
+    order.requester_name || order.requester_email || order.requester_phone;
+  const hasDeliveryContact =
+    order.delivery_contact_name ||
+    order.delivery_contact_email ||
+    order.delivery_contact_phone;
+  const hasReceptionContact =
+    order.reception_contact_name ||
+    order.reception_contact_email ||
+    order.reception_contact_phone;
+
   return (
     <Dialog open={isOpen} onOpenChange={open => !open && onClose()}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -148,6 +201,14 @@ export function OrderDetailModal({
             <Badge variant="outline" className={`${statusColor} font-medium`}>
               {statusLabel}
             </Badge>
+            {order.pending_admin_validation && (
+              <Badge
+                variant="outline"
+                className="bg-orange-100 text-orange-800 border-orange-200 font-medium"
+              >
+                Validation admin requise
+              </Badge>
+            )}
           </div>
           <Button
             variant="ghost"
@@ -160,7 +221,7 @@ export function OrderDetailModal({
         </DialogHeader>
 
         <div className="space-y-6 mt-4">
-          {/* Section: Informations client */}
+          {/* Section: Informations client + Affiliate */}
           <section>
             <h3 className="flex items-center gap-2 text-sm font-semibold text-[#183559] mb-3">
               <UserIcon className="h-4 w-4 text-[#5DBEBB]" />
@@ -176,15 +237,77 @@ export function OrderDetailModal({
               {order.customer_phone && (
                 <p className="text-sm text-gray-600">{order.customer_phone}</p>
               )}
-              <Badge variant="secondary" className="mt-2 text-xs">
-                {order.customer_type === 'organization'
-                  ? 'Organisation'
-                  : 'Particulier'}
-              </Badge>
+              <div className="flex gap-2 mt-2">
+                <Badge variant="secondary" className="text-xs">
+                  {order.customer_type === 'organization'
+                    ? 'Organisation'
+                    : 'Particulier'}
+                </Badge>
+                {order.affiliate_name && (
+                  <Badge
+                    variant="outline"
+                    className="text-xs bg-teal-50 text-teal-700 border-teal-200"
+                  >
+                    Affilie: {order.affiliate_name}
+                  </Badge>
+                )}
+                {order.selection_name && (
+                  <Badge
+                    variant="outline"
+                    className="text-xs bg-blue-50 text-blue-700 border-blue-200"
+                  >
+                    {order.selection_name}
+                  </Badge>
+                )}
+              </div>
             </div>
           </section>
 
           <Separator />
+
+          {/* Section: Contacts (requester, billing, delivery, reception) */}
+          {(hasRequester ||
+            order.billing_name ||
+            hasDeliveryContact ||
+            hasReceptionContact) && (
+            <>
+              <section>
+                <h3 className="flex items-center gap-2 text-sm font-semibold text-[#183559] mb-3">
+                  <PhoneIcon className="h-4 w-4 text-[#5DBEBB]" />
+                  Contacts
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <ContactCard
+                    label="Responsable commande"
+                    name={order.requester_name}
+                    email={order.requester_email}
+                    phone={order.requester_phone}
+                    position={order.requester_position}
+                  />
+                  <ContactCard
+                    label="Contact facturation"
+                    name={order.billing_name}
+                    email={order.billing_email}
+                    phone={order.billing_phone}
+                  />
+                  <ContactCard
+                    label="Contact livraison"
+                    name={order.delivery_contact_name}
+                    email={order.delivery_contact_email}
+                    phone={order.delivery_contact_phone}
+                  />
+                  <ContactCard
+                    label="Contact reception"
+                    name={order.reception_contact_name}
+                    email={order.reception_contact_email}
+                    phone={order.reception_contact_phone}
+                  />
+                </div>
+              </section>
+
+              <Separator />
+            </>
+          )}
 
           {/* Section: Adresses */}
           <section>
@@ -224,16 +347,46 @@ export function OrderDetailModal({
                     Livraison
                   </span>
                 </div>
-                {isSameAddress ? (
+                {isSameAddress && !hasDeliveryTextAddress ? (
                   <p className="text-sm text-gray-500 italic">
                     Identique a l&apos;adresse de facturation
                   </p>
+                ) : hasDeliveryTextAddress ? (
+                  <>
+                    {order.delivery_contact_name && (
+                      <p className="text-sm font-medium text-gray-700">
+                        {order.delivery_contact_name}
+                      </p>
+                    )}
+                    {order.delivery_address_text && (
+                      <p className="text-sm text-gray-600">
+                        {order.delivery_address_text}
+                      </p>
+                    )}
+                    {(order.delivery_postal_code || order.delivery_city) && (
+                      <p className="text-sm text-gray-600">
+                        {[order.delivery_postal_code, order.delivery_city]
+                          .filter(Boolean)
+                          .join(' ')}
+                      </p>
+                    )}
+                  </>
                 ) : (
                   formatAddress(order.shipping_address).map((line, i) => (
                     <p key={i} className="text-sm text-gray-600">
                       {line}
                     </p>
                   ))
+                )}
+                {order.is_mall_delivery && (
+                  <Badge variant="secondary" className="mt-2 text-xs">
+                    Livraison en centre commercial
+                  </Badge>
+                )}
+                {order.delivery_notes && (
+                  <p className="text-xs text-gray-500 mt-2 italic">
+                    {order.delivery_notes}
+                  </p>
                 )}
               </div>
             </div>
