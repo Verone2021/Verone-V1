@@ -61,6 +61,8 @@ export interface CreateOrganisationInput {
   city?: string | null;
   postal_code?: string | null;
   country?: string;
+  logo_url?: string | null;
+  ownership_type?: 'succursale' | 'franchise' | null;
   source_type?: 'internal' | 'linkme' | 'site-internet' | 'manual';
   source_affiliate_id?: string | null;
 }
@@ -390,6 +392,20 @@ export function useCreateEnseigneOrganisation() {
           city: input.city ?? null,
           postal_code: input.postal_code ?? null,
           country: input.country ?? 'FR',
+          // Billing address = même adresse (défaut pour nouveau restaurant)
+          billing_address_line1: input.address_line1 ?? null,
+          billing_address_line2: input.address_line2 ?? null,
+          billing_city: input.city ?? null,
+          billing_postal_code: input.postal_code ?? null,
+          billing_country: input.country ?? 'FR',
+          // Shipping address = même adresse (défaut pour nouveau restaurant)
+          shipping_address_line1: input.address_line1 ?? null,
+          shipping_address_line2: input.address_line2 ?? null,
+          shipping_city: input.city ?? null,
+          shipping_postal_code: input.postal_code ?? null,
+          shipping_country: input.country ?? 'FR',
+          logo_url: input.logo_url ?? null,
+          ownership_type: input.ownership_type ?? null,
           type: 'customer', // Toujours client
           is_active: true,
           source_type: input.source_type ?? 'linkme', // Par défaut depuis CMS LinkMe

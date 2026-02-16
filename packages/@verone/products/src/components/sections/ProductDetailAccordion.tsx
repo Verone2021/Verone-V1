@@ -13,6 +13,8 @@ interface ProductDetailAccordionProps {
   icon: LucideIcon;
   defaultOpen?: boolean;
   badge?: string | number;
+  /** Preview content shown below title when accordion is collapsed */
+  preview?: React.ReactNode;
   children: React.ReactNode;
   className?: string;
 }
@@ -22,6 +24,7 @@ export function ProductDetailAccordion({
   icon: Icon,
   defaultOpen = false,
   badge,
+  preview,
   children,
   className,
 }: ProductDetailAccordionProps) {
@@ -55,22 +58,30 @@ export function ProductDetailAccordion({
             <Icon
               className={cn(
                 'h-4 w-4 flex-shrink-0 transition-colors duration-150',
-                isOpen ? 'text-primary-600' : 'text-neutral-500'
+                isOpen ? 'text-primary-600' : 'text-neutral-500',
+                preview && !isOpen && 'self-start mt-0.5'
               )}
               aria-hidden="true"
             />
-            <span
-              className={cn(
-                'text-sm font-medium transition-colors duration-150',
-                isOpen ? 'text-neutral-900' : 'text-neutral-700'
+            <div className="flex-1 min-w-0">
+              <span
+                className={cn(
+                  'text-sm font-medium transition-colors duration-150',
+                  isOpen ? 'text-neutral-900' : 'text-neutral-700'
+                )}
+              >
+                {title}
+              </span>
+              {preview && !isOpen && (
+                <div className="text-xs text-neutral-500 mt-0.5 truncate">
+                  {preview}
+                </div>
               )}
-            >
-              {title}
-            </span>
+            </div>
             {badge !== undefined && badge !== null && (
               <Badge
                 variant="secondary"
-                className="ml-auto mr-2 text-xs px-2 py-0.5 bg-primary-50 text-primary-700 border-primary-200"
+                className="ml-auto mr-2 text-xs px-2 py-0.5 bg-primary-50 text-primary-700 border-primary-200 flex-shrink-0"
               >
                 {badge}
               </Badge>

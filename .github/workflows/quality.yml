@@ -11,14 +11,33 @@ on:
       - main
       - staging
 
+permissions:
+  actions: write
+  contents: read
+
 # Annuler les workflows en cours si nouveau push
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
+  pre_job:
+    name: Check duplicate
+    runs-on: ubuntu-latest
+    outputs:
+      should_skip: ${{ steps.skip_check.outputs.should_skip }}
+    steps:
+      - id: skip_check
+        uses: fkirc/skip-duplicate-actions@v5
+        with:
+          concurrent_skipping: 'never'
+          skip_after_successful_duplicate: 'true'
+          do_not_skip: '["workflow_dispatch", "schedule"]'
+
   quality:
     name: ESLint + Type-Check + Build
+    needs: pre_job
+    if: needs.pre_job.outputs.should_skip != 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -101,9 +120,6 @@ jobs:
             echo "build_status=failure" >> $GITHUB_OUTPUT
             exit 1
           fi
-        env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
 
       - name: Comment PR on Failure
         if: failure() && github.event_name == 'pull_request'

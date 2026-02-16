@@ -5,7 +5,7 @@
  * L'utilisateur est lié à un affilié via:
  * - user_id (direct)
  * - enseigne_id (si enseigne_admin)
- * - organisation_id (si org_independante)
+ * - organisation_id (si organisation_admin)
  *
  * @module use-user-selection
  * @since 2025-12-04
@@ -138,9 +138,9 @@ export function useUserAffiliate() {
         query = query.eq('enseigne_id', linkMeRole.enseigne_id);
         queryDescription = `enseigne_id = ${linkMeRole.enseigne_id}`;
       }
-      // Chercher par organisation_id pour org_independante
+      // Chercher par organisation_id pour organisation_admin
       else if (
-        linkMeRole.role === 'org_independante' &&
+        linkMeRole.role === 'organisation_admin' &&
         linkMeRole.organisation_id
       ) {
         query = query.eq('organisation_id', linkMeRole.organisation_id);

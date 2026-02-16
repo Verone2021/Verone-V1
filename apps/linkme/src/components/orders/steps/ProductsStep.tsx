@@ -400,7 +400,7 @@ export function ProductsStep({
                       src={item.product_image_url}
                       alt={item.product_name}
                       fill
-                      className="object-cover"
+                      className="object-contain"
                     />
                   ) : (
                     <div className="absolute inset-0 flex items-center justify-center">

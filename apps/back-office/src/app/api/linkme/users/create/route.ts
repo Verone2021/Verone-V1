@@ -7,6 +7,7 @@
 
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import { createAdminClient } from '@verone/utils/supabase/server';
 
@@ -23,17 +24,22 @@ type LinkmeAffiliateInsert =
 type EnseigneRow = Database['public']['Tables']['enseignes']['Row'];
 type OrganisationRow = Database['public']['Tables']['organisations']['Row'];
 
-interface ICreateUserInput {
-  email: string;
-  password: string;
-  first_name: string;
-  last_name: string;
-  phone?: string;
-  role: 'enseigne_admin' | 'organisation_admin' | 'org_independante' | 'client';
-  enseigne_id?: string;
-  organisation_id?: string;
-  permissions?: string[];
-}
+/** Zod: empty string → null for optional fields */
+const emptyToNull = z.string().transform(val => (val === '' ? null : val));
+
+const CreateLinkMeUserSchema = z.object({
+  email: z.string().email('Email invalide'),
+  password: z.string().min(6, 'Mot de passe trop court (min 6 caractères)'),
+  first_name: z.string().min(1, 'Prénom requis'),
+  last_name: z.string().min(1, 'Nom requis'),
+  phone: emptyToNull.nullable().optional().default(null),
+  role: z.enum(['enseigne_admin', 'organisation_admin'], {
+    error: 'Rôle invalide. Doit être: enseigne_admin ou organisation_admin',
+  }),
+  enseigne_id: emptyToNull.nullable().optional().default(null),
+  organisation_id: emptyToNull.nullable().optional().default(null),
+  permissions: z.array(z.string()).optional().default([]),
+});
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   // 🔐 GUARD: Vérifier authentification admin back-office
@@ -45,7 +51,15 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   try {
     const supabaseAdmin = createAdminClient();
-    const body = (await request.json()) as ICreateUserInput;
+    const body: unknown = await request.json();
+
+    // Validation Zod (transforme "" → null automatiquement)
+    const parsed = CreateLinkMeUserSchema.safeParse(body);
+    if (!parsed.success) {
+      const firstError = parsed.error.issues[0]?.message ?? 'Données invalides';
+      return NextResponse.json({ message: firstError }, { status: 400 });
+    }
+
     const {
       email,
       password,
@@ -55,35 +69,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       role,
       enseigne_id: enseigneId,
       organisation_id: organisationId,
-      permissions = [],
-    } = body;
+      permissions,
+    } = parsed.data;
 
-    // Validation
-    if (!email || !password || !firstName || !lastName || !role) {
-      return NextResponse.json(
-        { message: 'Email, mot de passe, prénom, nom et rôle sont requis' },
-        { status: 400 }
-      );
-    }
-
-    // Validation rôle
-    const validRoles = [
-      'enseigne_admin',
-      'organisation_admin',
-      'org_independante',
-      'client',
-    ];
-    if (!validRoles.includes(role)) {
-      return NextResponse.json(
-        {
-          message:
-            'Rôle invalide. Doit être: enseigne_admin, organisation_admin, org_independante, ou client',
-        },
-        { status: 400 }
-      );
-    }
-
-    // Validation contraintes rôle
+    // Validation contraintes rôle (logique métier, pas du format)
     if (role === 'enseigne_admin' && !enseigneId) {
       return NextResponse.json(
         { message: 'Un admin enseigne doit être associé à une enseigne' },
@@ -95,16 +84,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       return NextResponse.json(
         {
           message: 'Un admin organisation doit être associé à une organisation',
-        },
-        { status: 400 }
-      );
-    }
-
-    if (role === 'org_independante' && !organisationId) {
-      return NextResponse.json(
-        {
-          message:
-            'Une org. indépendante doit être associée à une organisation',
         },
         { status: 400 }
       );
@@ -135,51 +114,18 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const userId = authData.user.id;
 
     // 2. Créer le profil utilisateur
-    // Mapper le rôle LinkMe vers l'enum user_role_type valide
-    // enseigne_admin/organisation_admin → partner_manager, client → customer
-    const profileRole = role === 'client' ? 'customer' : 'partner_manager';
-
     const profileData: UserProfileInsert = {
       user_id: userId,
       first_name: firstName,
       last_name: lastName,
-      phone: phone ?? null,
+      phone,
       app_source: 'linkme',
-      user_type: role === 'client' ? 'customer' : 'staff',
+      user_type: 'staff',
     };
 
     const { error: profileError } = await supabaseAdmin
       .from('user_profiles')
       .insert(profileData);
-
-    // Also create entry in user_app_roles
-    if (!profileError) {
-      const { error: roleError } = await supabaseAdmin
-        .from('user_app_roles')
-        .insert({
-          user_id: userId,
-          app: 'linkme',
-          role: profileRole,
-          is_active: true,
-        });
-
-      if (roleError) {
-        console.error('Erreur création rôle:', roleError);
-        // Rollback: supprimer l'utilisateur et le profil
-        await supabaseAdmin.auth.admin.deleteUser(userId);
-        await supabaseAdmin
-          .from('user_profiles')
-          .delete()
-          .eq('user_id', userId);
-        return NextResponse.json(
-          {
-            error: 'Erreur création rôle utilisateur',
-            details: roleError.message,
-          },
-          { status: 500 }
-        );
-      }
-    }
 
     if (profileError) {
       console.error('Erreur création profil:', profileError);
@@ -199,8 +145,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       user_id: userId,
       app: 'linkme',
       role: role,
-      enseigne_id: enseigneId ?? null,
-      organisation_id: organisationId ?? null,
+      enseigne_id: enseigneId,
+      organisation_id: organisationId,
       permissions: permissions,
       is_active: true,
     };
@@ -225,20 +171,17 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       first_name: firstName,
       last_name: lastName,
       email,
-      phone: phone ?? null,
+      phone,
       is_primary_contact: true, // Premier contact créé = contact principal
       is_active: true,
       notes: `Contact créé automatiquement pour utilisateur LinkMe (${role})`,
       enseigne_id: role === 'enseigne_admin' && enseigneId ? enseigneId : null,
       organisation_id:
-        (role === 'organisation_admin' || role === 'org_independante') &&
-        organisationId
-          ? organisationId
-          : null,
+        role === 'organisation_admin' && organisationId ? organisationId : null,
       owner_type:
         role === 'enseigne_admin'
           ? 'enseigne'
-          : role === 'organisation_admin' || role === 'org_independante'
+          : role === 'organisation_admin'
             ? 'organisation'
             : null,
     };
@@ -252,66 +195,88 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       console.error('Erreur création contact (non-bloquant):', contactError);
     }
 
-    // 5. Créer l'affilié LinkMe pour enseigne_admin et org_independante
-    // (organisation_admin n'a pas besoin d'affilié - ils voient via leur org)
-    if (role === 'enseigne_admin' || role === 'org_independante') {
-      // Générer un slug unique basé sur le nom
-      const baseSlug = `${firstName}-${lastName}`
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/(^-|-$)/g, '');
-      const uniqueSlug = `${baseSlug}-${Date.now().toString(36)}`;
-
-      // Récupérer le nom de l'enseigne ou organisation pour le display_name
-      let displayName = `${firstName} ${lastName}`;
+    // 5. Vérifier si un affilié LinkMe existe déjà pour cette enseigne/organisation
+    //    Un affilié est lié à une ENSEIGNE (pas à un utilisateur).
+    //    Plusieurs utilisateurs d'une même enseigne partagent le même affilié.
+    if (role === 'enseigne_admin' || role === 'organisation_admin') {
+      let existingAffiliate: { id: string } | null = null;
 
       if (role === 'enseigne_admin' && enseigneId) {
-        const { data: enseigne } = await supabaseAdmin
-          .from('enseignes')
-          .select('name')
-          .eq('id', enseigneId)
-          .single<Pick<EnseigneRow, 'name'>>();
-        if (enseigne?.name) {
-          displayName = enseigne.name;
-        }
-      } else if (role === 'org_independante' && organisationId) {
-        const { data: org } = await supabaseAdmin
-          .from('organisations')
-          .select('trade_name, legal_name')
-          .eq('id', organisationId)
-          .single<Pick<OrganisationRow, 'trade_name' | 'legal_name'>>();
-        if (org) {
-          displayName = org.trade_name ?? org.legal_name ?? displayName;
-        }
+        const { data } = await supabaseAdmin
+          .from('linkme_affiliates')
+          .select('id')
+          .eq('enseigne_id', enseigneId)
+          .maybeSingle();
+        existingAffiliate = data;
+      } else if (role === 'organisation_admin' && organisationId) {
+        const { data } = await supabaseAdmin
+          .from('linkme_affiliates')
+          .select('id')
+          .eq('organisation_id', organisationId)
+          .maybeSingle();
+        existingAffiliate = data;
       }
 
-      const affiliateData: LinkmeAffiliateInsert = {
-        affiliate_type: role === 'enseigne_admin' ? 'enseigne' : 'prescripteur',
-        display_name: displayName,
-        slug: uniqueSlug,
-        email: email,
-        phone: phone ?? null,
-        status: 'active',
-        default_margin_rate: 20,
-        linkme_commission_rate: 5,
-        enseigne_id:
-          role === 'enseigne_admin' && enseigneId ? enseigneId : null,
-        organisation_id:
-          role === 'org_independante' && organisationId ? organisationId : null,
-      };
+      // Créer l'affilié UNIQUEMENT s'il n'existe pas encore
+      if (!existingAffiliate) {
+        const baseSlug = `${firstName}-${lastName}`
+          .toLowerCase()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/(^-|-$)/g, '');
+        const uniqueSlug = `${baseSlug}-${Date.now().toString(36)}`;
 
-      const { error: affiliateError } = await supabaseAdmin
-        .from('linkme_affiliates')
-        .insert(affiliateData);
+        let displayName = `${firstName} ${lastName}`;
 
-      if (affiliateError) {
-        // Log l'erreur mais ne pas bloquer - l'affilié peut être créé manuellement
-        console.error(
-          'Erreur création affilié (non-bloquant):',
-          affiliateError
-        );
+        if (role === 'enseigne_admin' && enseigneId) {
+          const { data: enseigne } = await supabaseAdmin
+            .from('enseignes')
+            .select('name')
+            .eq('id', enseigneId)
+            .single<Pick<EnseigneRow, 'name'>>();
+          if (enseigne?.name) {
+            displayName = enseigne.name;
+          }
+        } else if (role === 'organisation_admin' && organisationId) {
+          const { data: org } = await supabaseAdmin
+            .from('organisations')
+            .select('trade_name, legal_name')
+            .eq('id', organisationId)
+            .single<Pick<OrganisationRow, 'trade_name' | 'legal_name'>>();
+          if (org) {
+            displayName = org.trade_name ?? org.legal_name ?? displayName;
+          }
+        }
+
+        const affiliateData: LinkmeAffiliateInsert = {
+          affiliate_type:
+            role === 'enseigne_admin' ? 'enseigne' : 'prescripteur',
+          display_name: displayName,
+          slug: uniqueSlug,
+          email: email,
+          phone,
+          status: 'active',
+          default_margin_rate: 20,
+          linkme_commission_rate: 5,
+          enseigne_id:
+            role === 'enseigne_admin' && enseigneId ? enseigneId : null,
+          organisation_id:
+            role === 'organisation_admin' && organisationId
+              ? organisationId
+              : null,
+        };
+
+        const { error: affiliateError } = await supabaseAdmin
+          .from('linkme_affiliates')
+          .insert(affiliateData);
+
+        if (affiliateError) {
+          console.error(
+            'Erreur création affilié (non-bloquant):',
+            affiliateError
+          );
+        }
       }
     }
 

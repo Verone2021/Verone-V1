@@ -22,31 +22,19 @@ const PERMISSION_MATRIX = {
   manageOrganisations: ['enseigne_admin'] as LinkMeRole[],
 
   // Création de produits
-  createProducts: ['enseigne_admin', 'org_independante'] as LinkMeRole[],
+  createProducts: ['enseigne_admin', 'organisation_admin'] as LinkMeRole[],
 
   // Gestion des sélections
-  manageSelections: ['enseigne_admin', 'org_independante'] as LinkMeRole[],
+  manageSelections: ['enseigne_admin', 'organisation_admin'] as LinkMeRole[],
 
   // Voir les commandes
-  viewOrders: [
-    'enseigne_admin',
-    'org_independante',
-    'organisation_admin',
-  ] as LinkMeRole[],
+  viewOrders: ['enseigne_admin', 'organisation_admin'] as LinkMeRole[],
 
   // Voir les commissions/rémunérations
-  viewCommissions: [
-    'enseigne_admin',
-    'org_independante',
-    'organisation_admin',
-  ] as LinkMeRole[],
+  viewCommissions: ['enseigne_admin', 'organisation_admin'] as LinkMeRole[],
 
   // Voir les analytiques
-  viewAnalytics: [
-    'enseigne_admin',
-    'org_independante',
-    'organisation_admin',
-  ] as LinkMeRole[],
+  viewAnalytics: ['enseigne_admin', 'organisation_admin'] as LinkMeRole[],
 
   // Accès paramètres avancés
   accessAdvancedSettings: ['enseigne_admin'] as LinkMeRole[],

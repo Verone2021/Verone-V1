@@ -11,8 +11,6 @@ import {
   Mail,
   Building2,
   Store,
-  ShoppingCart,
-  Briefcase,
   AlertCircle,
   Check,
   Loader2,
@@ -57,7 +55,7 @@ export function UserEditModal({ isOpen, user, onClose }: UserEditModalProps) {
   const [phone, setPhone] = useState('');
 
   // Form state - Section Role
-  const [role, setRole] = useState<LinkMeRole>('client');
+  const [role, setRole] = useState<LinkMeRole>('enseigne_admin');
   const [enseigneId, setEnseigneId] = useState<string>('');
   const [organisationId, setOrganisationId] = useState<string>('');
   const [isActive, setIsActive] = useState(true);
@@ -71,9 +69,9 @@ export function UserEditModal({ isOpen, user, onClose }: UserEditModalProps) {
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
 
   // Fetch organisations basées sur l'enseigne sélectionnée
-  // Pour org_independante: charge TOUTES les organisations (sans filtre enseigne)
+  // Pour organisation_admin: charge TOUTES les organisations (sans filtre enseigne)
   const { data: organisations } = useLinkMeOrganisationsSelect(
-    role === 'org_independante' ? undefined : (enseigneId ?? undefined)
+    role === 'organisation_admin' ? undefined : (enseigneId ?? undefined)
   );
 
   // Validation
@@ -122,11 +120,6 @@ export function UserEditModal({ isOpen, user, onClose }: UserEditModalProps) {
     if (role === 'organisation_admin' && !organisationId) {
       newErrors.organisationId =
         'Organisation requise pour un Admin Organisation';
-    }
-
-    if (role === 'org_independante' && !organisationId) {
-      newErrors.organisationId =
-        'Organisation requise pour une Org. Indépendante';
     }
 
     // Validation mot de passe (si rempli)
@@ -494,53 +487,41 @@ export function UserEditModal({ isOpen, user, onClose }: UserEditModalProps) {
                 Role *
               </label>
               <div className="grid grid-cols-2 gap-2">
-                {(
-                  [
-                    'enseigne_admin',
-                    'organisation_admin',
-                    'org_independante',
-                    'client',
-                  ] as LinkMeRole[]
-                ).map(r => {
-                  const Icon =
-                    r === 'enseigne_admin'
-                      ? Building2
-                      : r === 'organisation_admin'
-                        ? Store
-                        : r === 'org_independante'
-                          ? Briefcase
-                          : ShoppingCart;
-                  const isSelected = role === r;
+                {(['enseigne_admin', 'organisation_admin'] as LinkMeRole[]).map(
+                  r => {
+                    const Icon = r === 'enseigne_admin' ? Building2 : Store;
+                    const isSelected = role === r;
 
-                  return (
-                    <button
-                      key={r}
-                      type="button"
-                      onClick={() => setRole(r)}
-                      className={cn(
-                        'flex flex-col items-center gap-1 p-3 rounded-lg border-2 transition-all',
-                        isSelected
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-gray-200 hover:border-gray-300'
-                      )}
-                    >
-                      <Icon
+                    return (
+                      <button
+                        key={r}
+                        type="button"
+                        onClick={() => setRole(r)}
                         className={cn(
-                          'h-5 w-5',
-                          isSelected ? 'text-blue-600' : 'text-gray-400'
-                        )}
-                      />
-                      <span
-                        className={cn(
-                          'text-xs font-medium text-center',
-                          isSelected ? 'text-blue-700' : 'text-gray-600'
+                          'flex flex-col items-center gap-1 p-3 rounded-lg border-2 transition-all',
+                          isSelected
+                            ? 'border-blue-500 bg-blue-50'
+                            : 'border-gray-200 hover:border-gray-300'
                         )}
                       >
-                        {LINKME_ROLE_LABELS[r]}
-                      </span>
-                    </button>
-                  );
-                })}
+                        <Icon
+                          className={cn(
+                            'h-5 w-5',
+                            isSelected ? 'text-blue-600' : 'text-gray-400'
+                          )}
+                        />
+                        <span
+                          className={cn(
+                            'text-xs font-medium text-center',
+                            isSelected ? 'text-blue-700' : 'text-gray-600'
+                          )}
+                        >
+                          {LINKME_ROLE_LABELS[r]}
+                        </span>
+                      </button>
+                    );
+                  }
+                )}
               </div>
 
               {/* Permissions du role */}
@@ -592,8 +573,8 @@ export function UserEditModal({ isOpen, user, onClose }: UserEditModalProps) {
               </div>
             )}
 
-            {/* Organisation (si organisation_admin ou org_independante) */}
-            {(role === 'organisation_admin' || role === 'org_independante') && (
+            {/* Organisation (si organisation_admin) */}
+            {role === 'organisation_admin' && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   <div className="flex items-center gap-2">
@@ -610,24 +591,12 @@ export function UserEditModal({ isOpen, user, onClose }: UserEditModalProps) {
                   }
                   value={organisationId}
                   onValueChange={setOrganisationId}
-                  placeholder={
-                    role === 'org_independante'
-                      ? 'Sélectionner une organisation'
-                      : enseigneId
-                        ? 'Sélectionner une organisation'
-                        : "Choisir d'abord une enseigne"
-                  }
+                  placeholder="Sélectionner une organisation"
                   searchPlaceholder="Rechercher une organisation..."
                   emptyMessage="Aucune organisation trouvée"
-                  disabled={!enseigneId && role === 'organisation_admin'}
                   variant={errors.organisationId ? 'error' : 'default'}
                   error={errors.organisationId}
                 />
-                {role === 'org_independante' && (
-                  <p className="mt-1 text-xs text-gray-500">
-                    Organisation non liée à une enseigne
-                  </p>
-                )}
               </div>
             )}
 

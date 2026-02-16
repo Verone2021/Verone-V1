@@ -2,6 +2,45 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ========================================
+ * CSS Variables shadcn/ui (OBLIGATOIRE)
+ * Sans ces variables, les composants @verone/ui
+ * (Dialog, Card, Popover, etc.) sont transparents
+ * car bg-background, border-border, etc. ne résolvent pas.
+ * Thème LinkMe : turquoise #5DBEBB, navy #183559
+ * ======================================== */
+:root {
+  --background: 0 0% 100%;
+  --foreground: 213 56% 22%;
+
+  --card: 0 0% 100%;
+  --card-foreground: 213 56% 22%;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 213 56% 22%;
+
+  --primary: 178 37% 55%;
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 0 0% 96%;
+  --secondary-foreground: 213 56% 22%;
+
+  --muted: 0 0% 96%;
+  --muted-foreground: 0 0% 45%;
+
+  --accent: 0 0% 96%;
+  --accent-foreground: 213 56% 22%;
+
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+
+  --border: 0 0% 90%;
+  --input: 0 0% 90%;
+  --ring: 178 37% 55%;
+
+  --radius: 0.5rem;
+}
+
 /* Animation pour le carousel progress bar */
 @keyframes progress {
   from {
