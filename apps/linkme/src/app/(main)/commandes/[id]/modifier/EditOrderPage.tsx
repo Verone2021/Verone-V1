@@ -311,33 +311,33 @@ export function EditOrderPage({ data }: EditOrderPageProps) {
   // ---- Pre-selection: match existing data with contacts/addresses ----
   const [hasInitialized, setHasInitialized] = useState(false);
 
+  // Initialize form from details - does NOT require contacts to be loaded
   useEffect(() => {
     if (hasInitialized) return;
-    if (!allContacts.length && !localContacts.length) return;
+    if (!details) return;
 
-    // Match responsable
+    // Match responsable (if contacts already loaded, try matching)
     const respMatch = findContactMatch(
       allContacts,
-      details?.requester_name,
-      details?.requester_email
+      details.requester_name,
+      details.requester_email
     );
     if (respMatch) {
       setSelectedResponsableId(respMatch);
-    } else if (details?.requester_name) {
-      // No match found - pre-fill the form with existing data
+    } else if (details.requester_name) {
       const nameParts = (details.requester_name ?? '').split(' ');
       setShowResponsableForm(true);
       setResponsableForm({
         firstName: nameParts[0] ?? '',
         lastName: nameParts.slice(1).join(' '),
-        email: details?.requester_email ?? '',
-        phone: details?.requester_phone ?? '',
-        title: details?.requester_position ?? '',
+        email: details.requester_email ?? '',
+        phone: details.requester_phone ?? '',
+        title: details.requester_position ?? '',
       });
     }
 
     // Match billing contact
-    if (details?.billing_name) {
+    if (details.billing_name) {
       const billingMatch = findContactMatch(
         allContacts,
         details.billing_name,
@@ -347,8 +347,8 @@ export function EditOrderPage({ data }: EditOrderPageProps) {
         setBillingContactMode('existing');
         setSelectedBillingContactId(billingMatch);
       } else if (
-        details.billing_name === details?.requester_name &&
-        details.billing_email === details?.requester_email
+        details.billing_name === details.requester_name &&
+        details.billing_email === details.requester_email
       ) {
         setBillingContactMode('same');
       } else {
@@ -365,7 +365,7 @@ export function EditOrderPage({ data }: EditOrderPageProps) {
     }
 
     // Match delivery contact
-    if (details?.delivery_contact_name) {
+    if (details.delivery_contact_name) {
       const delMatch = findContactMatch(
         localContacts,
         details.delivery_contact_name,
@@ -388,6 +388,60 @@ export function EditOrderPage({ data }: EditOrderPageProps) {
 
     setHasInitialized(true);
   }, [allContacts, localContacts, details, hasInitialized]);
+
+  // Re-match contacts when they load AFTER initialization
+  // (e.g. org has no contacts initially, but they load async later)
+  useEffect(() => {
+    if (!hasInitialized || !details) return;
+
+    // Re-match responsable: if form is shown (no initial match), try again
+    if (showResponsableForm && !selectedResponsableId && allContacts.length) {
+      const match = findContactMatch(
+        allContacts,
+        details.requester_name,
+        details.requester_email
+      );
+      if (match) {
+        setSelectedResponsableId(match);
+        setShowResponsableForm(false);
+      }
+    }
+
+    // Re-match billing: if mode is 'new' (no initial match), try again
+    if (
+      billingContactMode === 'new' &&
+      !selectedBillingContactId &&
+      allContacts.length
+    ) {
+      const match = findContactMatch(
+        allContacts,
+        details.billing_name,
+        details.billing_email
+      );
+      if (match) {
+        setBillingContactMode('existing');
+        setSelectedBillingContactId(match);
+      }
+    }
+
+    // Re-match delivery: if form is shown (no initial match), try again
+    if (
+      showDeliveryContactForm &&
+      !selectedDeliveryContactId &&
+      localContacts.length
+    ) {
+      const match = findContactMatch(
+        localContacts,
+        details.delivery_contact_name,
+        details.delivery_contact_email
+      );
+      if (match) {
+        setSelectedDeliveryContactId(match);
+        setShowDeliveryContactForm(false);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally limited deps: only re-run when contacts load
+  }, [allContacts, localContacts]);
 
   // Match addresses after they load
   useEffect(() => {
