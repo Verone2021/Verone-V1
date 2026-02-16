@@ -1085,15 +1085,14 @@ export function useAllLinkMeOrders(status?: OrderValidationStatus) {
           )
         `
         )
-        .not('linkme_selection_id', 'is', null);
+        .not('linkme_selection_id', 'is', null)
+        .not('status', 'in', '(shipped,delivered)');
 
       // Apply status filter
       if (status === 'pending') {
         query = query.eq('pending_admin_validation', true);
       } else if (status === 'approved') {
-        query = query
-          .eq('pending_admin_validation', false)
-          .neq('status', 'cancelled');
+        query = query.not('confirmed_at', 'is', null);
       } else if (status === 'rejected') {
         query = query.eq('status', 'cancelled');
       }

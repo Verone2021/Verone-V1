@@ -36,10 +36,62 @@ export interface MissingFieldsResult {
   fields: MissingField[];
   /** Champs manquants groupés par catégorie */
   byCategory: Record<MissingFieldCategory, MissingField[]>;
-  /** Nombre total de champs manquants */
+  /** Nombre total de sous-champs manquants (pour détail technique) */
   total: number;
+  /** Nombre de catégories avec au moins 1 champ manquant (pour badge UX) */
+  totalCategories: number;
   /** true si aucun champ manquant */
   isComplete: boolean;
+}
+
+// ============================================
+// LABELS & MESSAGE COMBINÉ
+// ============================================
+
+/** Labels UI pour chaque catégorie (hors 'custom') */
+export const CATEGORY_LABELS: Record<MissingFieldCategory, string> = {
+  responsable: 'Contact responsable',
+  billing: 'Contact facturation',
+  delivery: 'Contact & adresse livraison',
+  organisation: 'Informations entreprise',
+  custom: 'Message personnalisé',
+};
+
+/**
+ * Génère un message combiné à partir des catégories sélectionnées.
+ * Chaque catégorie produit une section listant ses champs manquants.
+ */
+export function generateCombinedMessage(
+  missingFields: MissingFieldsResult,
+  selectedCategories: Set<MissingFieldCategory>
+): string {
+  const sections: string[] = [];
+
+  const categoryOrder: MissingFieldCategory[] = [
+    'responsable',
+    'billing',
+    'delivery',
+    'organisation',
+  ];
+
+  for (const cat of categoryOrder) {
+    if (!selectedCategories.has(cat)) continue;
+    const fields = missingFields.byCategory[cat];
+    if (fields.length === 0) continue;
+
+    const fieldsList = fields.map(f => `  - ${f.label}`).join('\n');
+    sections.push(`${CATEGORY_LABELS[cat]} :\n${fieldsList}`);
+  }
+
+  if (sections.length === 0) return '';
+
+  return `Bonjour,
+
+Pour traiter votre commande, nous avons besoin des informations suivantes :
+
+${sections.join('\n\n')}
+
+Merci de nous transmettre ces informations dans les meilleurs délais.`;
 }
 
 // ============================================
@@ -191,6 +243,8 @@ export interface GetOrderMissingFieldsOptions {
   details: LinkMeOrderDetails | null;
   /** SIRET from the linked organisation (pass null/undefined if unknown) */
   organisationSiret?: string | null;
+  /** Type de restaurant (propre/succursale/franchise) - owner fields requis uniquement pour franchises */
+  ownerType?: string | null;
 }
 
 /**
@@ -202,7 +256,7 @@ export interface GetOrderMissingFieldsOptions {
 export function getOrderMissingFields(
   options: GetOrderMissingFieldsOptions
 ): MissingFieldsResult {
-  const { details, organisationSiret } = options;
+  const { details, organisationSiret, ownerType } = options;
   const fields: MissingField[] = [];
 
   if (!details) {
@@ -255,8 +309,13 @@ export function getOrderMissingFields(
     });
   }
 
-  // --- Propriétaire (si différent du demandeur) ---
-  if (!details.owner_contact_same_as_requester) {
+  // --- Propriétaire (seulement pour franchises avec contact différent du demandeur) ---
+  // Succursales/propres : l'enseigne EST le propriétaire → pas de contact owner séparé
+  // null = non renseigné → on ne génère PAS de faux manquants
+  if (
+    details.owner_contact_same_as_requester === false &&
+    ownerType === 'franchise'
+  ) {
     if (!details.owner_name) {
       fields.push({
         key: 'owner_name',
@@ -366,14 +425,7 @@ export function getOrderMissingFields(
       inputType: 'text',
     });
   }
-  if (!details.desired_delivery_date) {
-    fields.push({
-      key: 'desired_delivery_date',
-      label: 'Date de livraison souhaitée',
-      category: 'delivery',
-      inputType: 'date',
-    });
-  }
+  // desired_delivery_date : champ optionnel dans Bubble (date "souhaitée"), pas obligatoire
 
   // Mall email (only if is_mall_delivery)
   if (details.is_mall_delivery && !details.mall_email) {
@@ -414,10 +466,15 @@ function buildResult(fields: MissingField[]): MissingFieldsResult {
     byCategory[field.category].push(field);
   }
 
+  const totalCategories = Object.values(byCategory).filter(
+    arr => arr.length > 0
+  ).length;
+
   return {
     fields,
     byCategory,
     total: fields.length,
+    totalCategories,
     isComplete: fields.length === 0,
   };
 }
