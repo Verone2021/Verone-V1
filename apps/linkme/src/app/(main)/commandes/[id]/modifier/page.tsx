@@ -49,6 +49,8 @@ interface OrderData {
     trade_name: string | null;
     legal_name: string;
     type: string;
+    enseigne_id: string | null;
+    ownership_type: string | null;
   } | null;
   sales_order_items: OrderItemData[];
   sales_order_linkme_details: LinkmeDetailsData[];
@@ -139,7 +141,9 @@ export default function ModifierCommandePage() {
             id,
             trade_name,
             legal_name,
-            type
+            type,
+            enseigne_id,
+            ownership_type
           ),
           sales_order_items (
             id,

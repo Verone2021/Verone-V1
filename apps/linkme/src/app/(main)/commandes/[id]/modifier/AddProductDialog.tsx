@@ -5,6 +5,7 @@
  *
  * Reutilise useSelectionItems pour charger les produits disponibles.
  * Filtre les produits deja dans la commande.
+ * Filtrage par categorie (pills) identique a ProductsStep.
  *
  * @module AddProductDialog
  * @since 2026-02-16
@@ -50,6 +51,32 @@ interface AddProductDialogProps {
 }
 
 // ============================================================================
+// HELPERS
+// ============================================================================
+
+function getMarginIndicator(marginRate: number): {
+  color: string;
+  bgColor: string;
+  label: string;
+} {
+  if (marginRate >= 30) {
+    return {
+      color: 'text-green-600',
+      bgColor: 'bg-green-100',
+      label: 'Excellente',
+    };
+  }
+  if (marginRate >= 20) {
+    return {
+      color: 'text-amber-600',
+      bgColor: 'bg-amber-100',
+      label: 'Correcte',
+    };
+  }
+  return { color: 'text-red-600', bgColor: 'bg-red-100', label: 'Faible' };
+}
+
+// ============================================================================
 // COMPONENT
 // ============================================================================
 
@@ -63,27 +90,56 @@ export function AddProductDialog({
   const { data: selectionItems, isLoading } = useSelectionItems(selectionId);
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<
+    string | undefined
+  >();
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [addedProducts, setAddedProducts] = useState<Set<string>>(new Set());
 
-  // Filter products
+  // Extract categories from selection items (same pattern as ProductsStep)
+  const categories = useMemo(() => {
+    if (!selectionItems) return [];
+
+    const categoryMap = new Map<string, number>();
+    selectionItems.forEach(item => {
+      if (item.category_name) {
+        const count = categoryMap.get(item.category_name) ?? 0;
+        categoryMap.set(item.category_name, count + 1);
+      }
+    });
+
+    return Array.from(categoryMap.entries())
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [selectionItems]);
+
+  // Filter products by category + search
   const filteredProducts = useMemo(() => {
     if (!selectionItems) return [];
 
-    return selectionItems.filter(item => {
-      // Search filter
-      if (searchQuery) {
-        const query = searchQuery.toLowerCase();
+    let filtered = selectionItems;
+
+    // Category filter
+    if (selectedCategory) {
+      filtered = filtered.filter(
+        item => item.category_name === selectedCategory
+      );
+    }
+
+    // Search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(item => {
         const matchesName = item.product_name.toLowerCase().includes(query);
         const matchesSku = item.product_reference
           ?.toLowerCase()
           .includes(query);
-        if (!matchesName && !matchesSku) return false;
-      }
+        return matchesName || matchesSku;
+      });
+    }
 
-      return true;
-    });
-  }, [selectionItems, searchQuery]);
+    return filtered;
+  }, [selectionItems, searchQuery, selectedCategory]);
 
   const handleAdd = (item: (typeof filteredProducts)[0]) => {
     const quantity = quantities[item.id] || 1;
@@ -109,6 +165,7 @@ export function AddProductDialog({
 
   const handleClose = () => {
     setSearchQuery('');
+    setSelectedCategory(undefined);
     setQuantities({});
     setAddedProducts(new Set());
     onOpenChange(false);
@@ -135,6 +192,58 @@ export function AddProductDialog({
           />
         </div>
 
+        {/* Category pills */}
+        {categories.length > 1 && (
+          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-1 mt-3">
+            <button
+              type="button"
+              onClick={() => setSelectedCategory(undefined)}
+              className={cn(
+                'flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all',
+                !selectedCategory
+                  ? 'bg-[#5DBEBB] text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              )}
+            >
+              Tous
+              <span
+                className={cn(
+                  'text-xs px-1.5 py-0.5 rounded-full',
+                  !selectedCategory ? 'bg-white/20' : 'bg-white text-gray-500'
+                )}
+              >
+                {selectionItems?.length ?? 0}
+              </span>
+            </button>
+
+            {categories.map(cat => (
+              <button
+                key={cat.name}
+                type="button"
+                onClick={() => setSelectedCategory(cat.name)}
+                className={cn(
+                  'flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all',
+                  selectedCategory === cat.name
+                    ? 'bg-[#5DBEBB] text-white'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                )}
+              >
+                {cat.name}
+                <span
+                  className={cn(
+                    'text-xs px-1.5 py-0.5 rounded-full',
+                    selectedCategory === cat.name
+                      ? 'bg-white/20'
+                      : 'bg-white text-gray-500'
+                  )}
+                >
+                  {cat.count}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* Products list */}
         <div className="flex-1 overflow-y-auto mt-4">
           {isLoading && (
@@ -156,6 +265,7 @@ export function AddProductDialog({
                 const inOrder = existingProductIds.has(item.product_id);
                 const justAdded = addedProducts.has(item.product_id);
                 const quantity = quantities[item.id] || 1;
+                const marginIndicator = getMarginIndicator(item.margin_rate);
 
                 return (
                   <div
@@ -199,13 +309,22 @@ export function AddProductDialog({
                           maximumFractionDigits: 2,
                         })}{' '}
                         EUR HT
-                        {item.margin_rate > 0 && (
-                          <span className="ml-2 text-emerald-600">
-                            Marge {item.margin_rate}%
-                          </span>
-                        )}
                       </p>
                     </div>
+
+                    {/* Margin badge */}
+                    {item.margin_rate > 0 && (
+                      <div
+                        className={cn(
+                          'px-2 py-1 rounded text-xs font-medium whitespace-nowrap',
+                          marginIndicator.bgColor,
+                          marginIndicator.color
+                        )}
+                        title={`Marge: ${item.margin_rate}% - ${marginIndicator.label}`}
+                      >
+                        {item.margin_rate}%
+                      </div>
+                    )}
 
                     {/* Badges */}
                     {inOrder && !justAdded && (

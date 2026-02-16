@@ -5,16 +5,16 @@
  *
  * Sections accordion:
  * 1. Produits (ouverte par defaut) - modifier qte, supprimer, ajouter
- * 2. Contact responsable - modifier/changer
- * 3. Facturation - contact + adresse
- * 4. Livraison - contact + adresse + options
+ * 2. Contact responsable - selection vignettes ContactCard
+ * 3. Facturation - ContactCard + AddressCard
+ * 4. Livraison - ContactCard + AddressCard + options
  * 5. Resume sticky bottom - totaux + boutons
  *
  * @module EditOrderPage
  * @since 2026-02-16
  */
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -26,11 +26,13 @@ import {
   AccordionTrigger,
   Badge,
   Button,
+  Card,
   Input,
   Label,
   Separator,
   Textarea,
   Switch,
+  cn,
 } from '@verone/ui';
 import { calculateMargin, LINKME_CONSTANTS } from '@verone/utils';
 import { format } from 'date-fns';
@@ -39,7 +41,6 @@ import {
   ArrowLeft,
   Loader2,
   Minus,
-  Package,
   Plus,
   Save,
   ShoppingBag,
@@ -50,11 +51,20 @@ import {
   ImageIcon,
   CalendarIcon,
   AlertCircle,
+  CheckCircle,
+  MapPin,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { ContactCard } from '../../../../../components/orders/steps/contacts/ContactCard';
+import { AddressCard } from '../../../../../components/orders/steps/contacts/AddressCard';
+import { useOrganisationContacts } from '../../../../../lib/hooks/use-organisation-contacts';
+import type { OrganisationContact } from '../../../../../lib/hooks/use-organisation-contacts';
+import { useEntityAddresses } from '../../../../../lib/hooks/use-entity-addresses';
+import type { Address } from '../../../../../lib/hooks/use-entity-addresses';
+import { useEnseigneId } from '../../../../../lib/hooks/use-enseigne-id';
 import { AddProductDialog } from './AddProductDialog';
-import type { FullOrderData, OrderItemData, LinkmeDetailsData } from './page';
+import type { FullOrderData, OrderItemData } from './page';
 import {
   useUpdateDraftOrder,
   type UpdateDraftOrderItemInput,
@@ -84,6 +94,14 @@ interface EditableItem {
   _isNew: boolean;
 }
 
+interface ContactFormData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  title: string;
+}
+
 // ============================================================================
 // HELPERS
 // ============================================================================
@@ -101,7 +119,7 @@ function mapOrderItemToEditable(item: OrderItemData): EditableItem {
     product_id: item.product_id,
     product_name: item.product?.name ?? 'Produit inconnu',
     product_sku: item.product?.sku ?? null,
-    product_image_url: null, // Images in separate table, placeholder used
+    product_image_url: null,
     quantity: item.quantity,
     originalQuantity: item.quantity,
     unit_price_ht: item.unit_price_ht,
@@ -111,6 +129,49 @@ function mapOrderItemToEditable(item: OrderItemData): EditableItem {
     _delete: false,
     _isNew: false,
   };
+}
+
+const emptyContactForm: ContactFormData = {
+  firstName: '',
+  lastName: '',
+  email: '',
+  phone: '',
+  title: '',
+};
+
+/** Match a contact by name/email against stored details */
+function findContactMatch(
+  contacts: OrganisationContact[],
+  name: string | null | undefined,
+  email: string | null | undefined
+): string | null {
+  if (!name && !email) return null;
+  for (const c of contacts) {
+    const fullName = `${c.firstName} ${c.lastName}`.trim();
+    if (email && c.email.toLowerCase() === email.toLowerCase()) return c.id;
+    if (name && fullName.toLowerCase() === name.toLowerCase()) return c.id;
+  }
+  return null;
+}
+
+/** Match an address by line1/postalCode/city */
+function findAddressMatch(
+  addresses: Address[],
+  line1: string | null | undefined,
+  postalCode: string | null | undefined,
+  city: string | null | undefined
+): string | null {
+  if (!line1) return null;
+  for (const a of addresses) {
+    if (
+      a.addressLine1.toLowerCase() === line1.toLowerCase() &&
+      a.postalCode === postalCode &&
+      a.city.toLowerCase() === (city ?? '').toLowerCase()
+    ) {
+      return a.id;
+    }
+  }
+  return null;
 }
 
 // ============================================================================
@@ -123,50 +184,113 @@ export function EditOrderPage({ data }: EditOrderPageProps) {
 
   const { order, details, selectionId } = data;
 
+  // ---- Hooks: contacts & addresses ----
+  const organisationId = order.customer_id;
+  const enseigneId = useEnseigneId();
+  const ownershipType =
+    (order.customer?.ownership_type as
+      | 'propre'
+      | 'succursale'
+      | 'franchise'
+      | null) ?? null;
+
+  // Contacts with enseigne (responsable + billing)
+  const { data: contactsWithEnseigne } = useOrganisationContacts(
+    organisationId,
+    enseigneId,
+    ownershipType,
+    true
+  );
+  // Contacts local only (shipping)
+  const { data: contactsLocalOnly } = useOrganisationContacts(
+    organisationId,
+    enseigneId,
+    ownershipType,
+    false
+  );
+  // Billing addresses
+  const { data: billingAddressesData } = useEntityAddresses(
+    'organisation',
+    organisationId,
+    'billing'
+  );
+  // Shipping addresses
+  const { data: shippingAddressesData } = useEntityAddresses(
+    'organisation',
+    organisationId,
+    'shipping'
+  );
+
+  const allContacts = useMemo(
+    () => contactsWithEnseigne?.contacts ?? [],
+    [contactsWithEnseigne]
+  );
+  const localContacts = useMemo(
+    () => contactsLocalOnly?.contacts ?? [],
+    [contactsLocalOnly]
+  );
+  const billingAddresses = useMemo(
+    () => billingAddressesData?.all ?? [],
+    [billingAddressesData]
+  );
+  const shippingAddresses = useMemo(
+    () => shippingAddressesData?.all ?? [],
+    [shippingAddressesData]
+  );
+
   // ---- State: Items ----
   const [items, setItems] = useState<EditableItem[]>(() =>
     order.sales_order_items.map(mapOrderItemToEditable)
   );
 
-  // ---- State: Contact responsable ----
-  const [requesterName, setRequesterName] = useState(
-    details?.requester_name ?? ''
-  );
-  const [requesterEmail, setRequesterEmail] = useState(
-    details?.requester_email ?? ''
-  );
-  const [requesterPhone, setRequesterPhone] = useState(
-    details?.requester_phone ?? ''
-  );
+  // ---- State: Responsable ----
+  const [selectedResponsableId, setSelectedResponsableId] = useState<
+    string | null
+  >(null);
+  const [showResponsableForm, setShowResponsableForm] = useState(false);
+  const [responsableForm, setResponsableForm] =
+    useState<ContactFormData>(emptyContactForm);
 
-  // ---- State: Facturation ----
-  const [billingName, setBillingName] = useState(details?.billing_name ?? '');
-  const [billingEmail, setBillingEmail] = useState(
-    details?.billing_email ?? ''
-  );
-  const [billingPhone, setBillingPhone] = useState(
-    details?.billing_phone ?? ''
-  );
+  // ---- State: Billing contact ----
+  const [billingContactMode, setBillingContactMode] = useState<
+    'same' | 'existing' | 'new'
+  >('same');
+  const [selectedBillingContactId, setSelectedBillingContactId] = useState<
+    string | null
+  >(null);
+  const [billingContactForm, setBillingContactForm] =
+    useState<ContactFormData>(emptyContactForm);
 
-  // ---- State: Livraison ----
-  const [deliveryContactName, setDeliveryContactName] = useState(
-    details?.delivery_contact_name ?? ''
-  );
-  const [deliveryContactEmail, setDeliveryContactEmail] = useState(
-    details?.delivery_contact_email ?? ''
-  );
-  const [deliveryContactPhone, setDeliveryContactPhone] = useState(
-    details?.delivery_contact_phone ?? ''
-  );
-  const [deliveryAddress, setDeliveryAddress] = useState(
-    details?.delivery_address ?? ''
-  );
-  const [deliveryPostalCode, setDeliveryPostalCode] = useState(
-    details?.delivery_postal_code ?? ''
-  );
-  const [deliveryCity, setDeliveryCity] = useState(
-    details?.delivery_city ?? ''
-  );
+  // ---- State: Billing address ----
+  const [billingAddressMode, setBillingAddressMode] = useState<
+    'restaurant' | 'existing' | 'new'
+  >('restaurant');
+  const [selectedBillingAddressId, setSelectedBillingAddressId] = useState<
+    string | null
+  >(null);
+
+  // ---- State: Delivery contact ----
+  const [selectedDeliveryContactId, setSelectedDeliveryContactId] = useState<
+    string | null
+  >(null);
+  const [showDeliveryContactForm, setShowDeliveryContactForm] = useState(false);
+  const [deliveryContactForm, setDeliveryContactForm] =
+    useState<ContactFormData>(emptyContactForm);
+
+  // ---- State: Delivery address ----
+  const [deliveryAddressMode, setDeliveryAddressMode] = useState<
+    'restaurant' | 'existing' | 'new'
+  >('restaurant');
+  const [selectedDeliveryAddressId, setSelectedDeliveryAddressId] = useState<
+    string | null
+  >(null);
+  const [newDeliveryAddress, setNewDeliveryAddress] = useState({
+    address: '',
+    postalCode: '',
+    city: '',
+  });
+
+  // ---- State: Delivery options (kept as-is) ----
   const [desiredDeliveryDate, setDesiredDeliveryDate] = useState(
     details?.desired_delivery_date ?? ''
   );
@@ -183,6 +307,236 @@ export function EditOrderPage({ data }: EditOrderPageProps) {
 
   // ---- State: Add product dialog ----
   const [isAddProductOpen, setIsAddProductOpen] = useState(false);
+
+  // ---- Pre-selection: match existing data with contacts/addresses ----
+  const [hasInitialized, setHasInitialized] = useState(false);
+
+  useEffect(() => {
+    if (hasInitialized) return;
+    if (!allContacts.length && !localContacts.length) return;
+
+    // Match responsable
+    const respMatch = findContactMatch(
+      allContacts,
+      details?.requester_name,
+      details?.requester_email
+    );
+    if (respMatch) {
+      setSelectedResponsableId(respMatch);
+    } else if (details?.requester_name) {
+      // No match found - pre-fill the form with existing data
+      const nameParts = (details.requester_name ?? '').split(' ');
+      setShowResponsableForm(true);
+      setResponsableForm({
+        firstName: nameParts[0] ?? '',
+        lastName: nameParts.slice(1).join(' '),
+        email: details?.requester_email ?? '',
+        phone: details?.requester_phone ?? '',
+        title: details?.requester_position ?? '',
+      });
+    }
+
+    // Match billing contact
+    if (details?.billing_name) {
+      const billingMatch = findContactMatch(
+        allContacts,
+        details.billing_name,
+        details.billing_email
+      );
+      if (billingMatch) {
+        setBillingContactMode('existing');
+        setSelectedBillingContactId(billingMatch);
+      } else if (
+        details.billing_name === details?.requester_name &&
+        details.billing_email === details?.requester_email
+      ) {
+        setBillingContactMode('same');
+      } else {
+        setBillingContactMode('new');
+        const nameParts = (details.billing_name ?? '').split(' ');
+        setBillingContactForm({
+          firstName: nameParts[0] ?? '',
+          lastName: nameParts.slice(1).join(' '),
+          email: details.billing_email ?? '',
+          phone: details.billing_phone ?? '',
+          title: '',
+        });
+      }
+    }
+
+    // Match delivery contact
+    if (details?.delivery_contact_name) {
+      const delMatch = findContactMatch(
+        localContacts,
+        details.delivery_contact_name,
+        details.delivery_contact_email
+      );
+      if (delMatch) {
+        setSelectedDeliveryContactId(delMatch);
+      } else {
+        setShowDeliveryContactForm(true);
+        const nameParts = (details.delivery_contact_name ?? '').split(' ');
+        setDeliveryContactForm({
+          firstName: nameParts[0] ?? '',
+          lastName: nameParts.slice(1).join(' '),
+          email: details.delivery_contact_email ?? '',
+          phone: details.delivery_contact_phone ?? '',
+          title: '',
+        });
+      }
+    }
+
+    setHasInitialized(true);
+  }, [allContacts, localContacts, details, hasInitialized]);
+
+  // Match addresses after they load
+  useEffect(() => {
+    if (!billingAddresses.length && !shippingAddresses.length) return;
+
+    // Match billing address from order.billing_address
+    const ba = order.billing_address;
+    if (ba && billingAddresses.length) {
+      const match = findAddressMatch(
+        billingAddresses,
+        ba.address_line_1 ?? ba.addressLine1,
+        ba.postal_code ?? ba.postalCode,
+        ba.city
+      );
+      if (match) {
+        setBillingAddressMode('existing');
+        setSelectedBillingAddressId(match);
+      }
+    }
+
+    // Match delivery address
+    if (details?.delivery_address && shippingAddresses.length) {
+      const match = findAddressMatch(
+        shippingAddresses,
+        details.delivery_address,
+        details.delivery_postal_code,
+        details.delivery_city
+      );
+      if (match) {
+        setDeliveryAddressMode('existing');
+        setSelectedDeliveryAddressId(match);
+      } else {
+        setDeliveryAddressMode('new');
+        setNewDeliveryAddress({
+          address: details.delivery_address ?? '',
+          postalCode: details.delivery_postal_code ?? '',
+          city: details.delivery_city ?? '',
+        });
+      }
+    }
+  }, [billingAddresses, shippingAddresses, order.billing_address, details]);
+
+  // ---- Computed: Resolve selected contacts/addresses to values ----
+  const resolvedResponsable = useMemo(() => {
+    if (selectedResponsableId) {
+      const c = allContacts.find(c => c.id === selectedResponsableId);
+      if (c)
+        return {
+          name: `${c.firstName} ${c.lastName}`,
+          email: c.email,
+          phone: c.phone ?? c.mobile ?? '',
+        };
+    }
+    if (showResponsableForm) {
+      return {
+        name: `${responsableForm.firstName} ${responsableForm.lastName}`.trim(),
+        email: responsableForm.email,
+        phone: responsableForm.phone,
+      };
+    }
+    return { name: '', email: '', phone: '' };
+  }, [
+    selectedResponsableId,
+    allContacts,
+    showResponsableForm,
+    responsableForm,
+  ]);
+
+  const resolvedBillingContact = useMemo(() => {
+    if (billingContactMode === 'same') return resolvedResponsable;
+    if (billingContactMode === 'existing' && selectedBillingContactId) {
+      const c = allContacts.find(c => c.id === selectedBillingContactId);
+      if (c)
+        return {
+          name: `${c.firstName} ${c.lastName}`,
+          email: c.email,
+          phone: c.phone ?? c.mobile ?? '',
+        };
+    }
+    if (billingContactMode === 'new') {
+      return {
+        name: `${billingContactForm.firstName} ${billingContactForm.lastName}`.trim(),
+        email: billingContactForm.email,
+        phone: billingContactForm.phone,
+      };
+    }
+    return { name: '', email: '', phone: '' };
+  }, [
+    billingContactMode,
+    selectedBillingContactId,
+    allContacts,
+    billingContactForm,
+    resolvedResponsable,
+  ]);
+
+  const resolvedDeliveryContact = useMemo(() => {
+    if (selectedDeliveryContactId) {
+      const c = localContacts.find(c => c.id === selectedDeliveryContactId);
+      if (c)
+        return {
+          name: `${c.firstName} ${c.lastName}`,
+          email: c.email,
+          phone: c.phone ?? c.mobile ?? '',
+        };
+    }
+    if (showDeliveryContactForm) {
+      return {
+        name: `${deliveryContactForm.firstName} ${deliveryContactForm.lastName}`.trim(),
+        email: deliveryContactForm.email,
+        phone: deliveryContactForm.phone,
+      };
+    }
+    return { name: '', email: '', phone: '' };
+  }, [
+    selectedDeliveryContactId,
+    localContacts,
+    showDeliveryContactForm,
+    deliveryContactForm,
+  ]);
+
+  const resolvedDeliveryAddress = useMemo(() => {
+    if (deliveryAddressMode === 'existing' && selectedDeliveryAddressId) {
+      const a = shippingAddresses.find(a => a.id === selectedDeliveryAddressId);
+      if (a)
+        return {
+          address: a.addressLine1,
+          postalCode: a.postalCode,
+          city: a.city,
+        };
+    }
+    if (deliveryAddressMode === 'new') {
+      return newDeliveryAddress;
+    }
+    // restaurant mode: use first shipping address or billing address
+    const defaultAddr =
+      shippingAddresses.find(a => a.isDefault) ?? shippingAddresses[0];
+    if (defaultAddr)
+      return {
+        address: defaultAddr.addressLine1,
+        postalCode: defaultAddr.postalCode,
+        city: defaultAddr.city,
+      };
+    return { address: '', postalCode: '', city: '' };
+  }, [
+    deliveryAddressMode,
+    selectedDeliveryAddressId,
+    shippingAddresses,
+    newDeliveryAddress,
+  ]);
 
   // ---- Computed: Totals ----
   const totals = useMemo(() => {
@@ -221,29 +575,28 @@ export function EditOrderPage({ data }: EditOrderPageProps) {
     [items]
   );
 
-  // ---- Computed: Has changes ----
+  // ---- Computed: Has changes (simplified - always true since we switched to cards) ----
   const hasChanges = useMemo(() => {
-    // Check items changes
     const itemsChanged = items.some(
       item =>
         item.quantity !== item.originalQuantity || item._delete || item._isNew
     );
 
-    // Check details changes
+    // For contacts/addresses, compare resolved values against original details
     const d = details;
     const detailsChanged =
-      requesterName !== (d?.requester_name ?? '') ||
-      requesterEmail !== (d?.requester_email ?? '') ||
-      requesterPhone !== (d?.requester_phone ?? '') ||
-      billingName !== (d?.billing_name ?? '') ||
-      billingEmail !== (d?.billing_email ?? '') ||
-      billingPhone !== (d?.billing_phone ?? '') ||
-      deliveryContactName !== (d?.delivery_contact_name ?? '') ||
-      deliveryContactEmail !== (d?.delivery_contact_email ?? '') ||
-      deliveryContactPhone !== (d?.delivery_contact_phone ?? '') ||
-      deliveryAddress !== (d?.delivery_address ?? '') ||
-      deliveryPostalCode !== (d?.delivery_postal_code ?? '') ||
-      deliveryCity !== (d?.delivery_city ?? '') ||
+      resolvedResponsable.name !== (d?.requester_name ?? '') ||
+      resolvedResponsable.email !== (d?.requester_email ?? '') ||
+      resolvedResponsable.phone !== (d?.requester_phone ?? '') ||
+      resolvedBillingContact.name !== (d?.billing_name ?? '') ||
+      resolvedBillingContact.email !== (d?.billing_email ?? '') ||
+      resolvedBillingContact.phone !== (d?.billing_phone ?? '') ||
+      resolvedDeliveryContact.name !== (d?.delivery_contact_name ?? '') ||
+      resolvedDeliveryContact.email !== (d?.delivery_contact_email ?? '') ||
+      resolvedDeliveryContact.phone !== (d?.delivery_contact_phone ?? '') ||
+      resolvedDeliveryAddress.address !== (d?.delivery_address ?? '') ||
+      resolvedDeliveryAddress.postalCode !== (d?.delivery_postal_code ?? '') ||
+      resolvedDeliveryAddress.city !== (d?.delivery_city ?? '') ||
       desiredDeliveryDate !== (d?.desired_delivery_date ?? '') ||
       isMallDelivery !== (d?.is_mall_delivery ?? false) ||
       mallEmail !== (d?.mall_email ?? '') ||
@@ -254,18 +607,10 @@ export function EditOrderPage({ data }: EditOrderPageProps) {
   }, [
     items,
     details,
-    requesterName,
-    requesterEmail,
-    requesterPhone,
-    billingName,
-    billingEmail,
-    billingPhone,
-    deliveryContactName,
-    deliveryContactEmail,
-    deliveryContactPhone,
-    deliveryAddress,
-    deliveryPostalCode,
-    deliveryCity,
+    resolvedResponsable,
+    resolvedBillingContact,
+    resolvedDeliveryContact,
+    resolvedDeliveryAddress,
     desiredDeliveryDate,
     isMallDelivery,
     mallEmail,
@@ -330,7 +675,6 @@ export function EditOrderPage({ data }: EditOrderPageProps) {
       setItems(prev => {
         const updated = [...prev];
         for (const product of newProducts) {
-          // Check if product already exists (including deleted ones - undelete)
           const existingIdx = updated.findIndex(
             i => i.product_id === product.product_id
           );
@@ -344,7 +688,6 @@ export function EditOrderPage({ data }: EditOrderPageProps) {
               _delete: false,
             };
           } else {
-            // New product
             updated.push({
               id: `new-${product.product_id}`,
               product_id: product.product_id,
@@ -368,14 +711,52 @@ export function EditOrderPage({ data }: EditOrderPageProps) {
     []
   );
 
+  // ---- Handlers: Contact selection ----
+  const handleSelectResponsable = useCallback((contactId: string) => {
+    setSelectedResponsableId(contactId);
+    setShowResponsableForm(false);
+    setResponsableForm(emptyContactForm);
+  }, []);
+
+  const handleNewResponsable = useCallback(() => {
+    setSelectedResponsableId(null);
+    setShowResponsableForm(true);
+  }, []);
+
+  const handleSelectBillingContact = useCallback((contactId: string) => {
+    setBillingContactMode('existing');
+    setSelectedBillingContactId(contactId);
+    setBillingContactForm(emptyContactForm);
+  }, []);
+
+  const handleBillingSameAsResponsable = useCallback(() => {
+    setBillingContactMode('same');
+    setSelectedBillingContactId(null);
+    setBillingContactForm(emptyContactForm);
+  }, []);
+
+  const handleNewBillingContact = useCallback(() => {
+    setBillingContactMode('new');
+    setSelectedBillingContactId(null);
+  }, []);
+
+  const handleSelectDeliveryContact = useCallback((contactId: string) => {
+    setSelectedDeliveryContactId(contactId);
+    setShowDeliveryContactForm(false);
+    setDeliveryContactForm(emptyContactForm);
+  }, []);
+
+  const handleNewDeliveryContact = useCallback(() => {
+    setSelectedDeliveryContactId(null);
+    setShowDeliveryContactForm(true);
+  }, []);
+
   // ---- Handler: Save ----
   const handleSave = useCallback(async () => {
     if (!hasChanges) return;
 
-    // Prepare items input
     const itemsInput: UpdateDraftOrderItemInput[] = items
       .filter(item => {
-        // Include: modified existing, deleted, or new
         if (item._isNew) return true;
         if (item._delete) return true;
         if (item.quantity !== item.originalQuantity) return true;
@@ -389,7 +770,6 @@ export function EditOrderPage({ data }: EditOrderPageProps) {
         _delete: item._delete,
       }));
 
-    // If no items changed, still include all to keep totals correct
     const finalItems =
       itemsInput.length > 0
         ? itemsInput
@@ -407,29 +787,28 @@ export function EditOrderPage({ data }: EditOrderPageProps) {
         items: finalItems,
         desiredDeliveryDate: desiredDeliveryDate || undefined,
         requesterInfo: {
-          name: requesterName,
-          email: requesterEmail,
-          phone: requesterPhone || undefined,
+          name: resolvedResponsable.name,
+          email: resolvedResponsable.email,
+          phone: resolvedResponsable.phone || undefined,
         },
       });
 
       if (result.success) {
-        // Also update linkme_details for billing/delivery contacts
         const supabase = (
           await import('@verone/utils/supabase/client')
         ).createClient();
         const { error: detailsError } = await supabase
           .from('sales_order_linkme_details')
           .update({
-            billing_name: billingName || null,
-            billing_email: billingEmail || null,
-            billing_phone: billingPhone || null,
-            delivery_contact_name: deliveryContactName || null,
-            delivery_contact_email: deliveryContactEmail || null,
-            delivery_contact_phone: deliveryContactPhone || null,
-            delivery_address: deliveryAddress || null,
-            delivery_postal_code: deliveryPostalCode || null,
-            delivery_city: deliveryCity || null,
+            billing_name: resolvedBillingContact.name || null,
+            billing_email: resolvedBillingContact.email || null,
+            billing_phone: resolvedBillingContact.phone || null,
+            delivery_contact_name: resolvedDeliveryContact.name || null,
+            delivery_contact_email: resolvedDeliveryContact.email || null,
+            delivery_contact_phone: resolvedDeliveryContact.phone || null,
+            delivery_address: resolvedDeliveryAddress.address || null,
+            delivery_postal_code: resolvedDeliveryAddress.postalCode || null,
+            delivery_city: resolvedDeliveryAddress.city || null,
             is_mall_delivery: isMallDelivery,
             mall_email: mallEmail || null,
             semi_trailer_accessible: semiTrailerAccessible,
@@ -458,18 +837,10 @@ export function EditOrderPage({ data }: EditOrderPageProps) {
     items,
     order.id,
     desiredDeliveryDate,
-    requesterName,
-    requesterEmail,
-    requesterPhone,
-    billingName,
-    billingEmail,
-    billingPhone,
-    deliveryContactName,
-    deliveryContactEmail,
-    deliveryContactPhone,
-    deliveryAddress,
-    deliveryPostalCode,
-    deliveryCity,
+    resolvedResponsable,
+    resolvedBillingContact,
+    resolvedDeliveryContact,
+    resolvedDeliveryAddress,
     isMallDelivery,
     mallEmail,
     semiTrailerAccessible,
@@ -731,47 +1102,139 @@ export function EditOrderPage({ data }: EditOrderPageProps) {
                     Contact responsable
                   </h2>
                   <p className="text-sm text-gray-500">
-                    {requesterName || 'Non renseigne'}
-                    {requesterEmail ? ` | ${requesterEmail}` : ''}
+                    {resolvedResponsable.name || 'Non renseigne'}
+                    {resolvedResponsable.email
+                      ? ` | ${resolvedResponsable.email}`
+                      : ''}
                   </p>
                 </div>
               </div>
             </AccordionTrigger>
             <AccordionContent className="px-6 pb-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="requester-name">
-                    Nom complet <span className="text-red-500">*</span>
-                  </Label>
-                  <Input
-                    id="requester-name"
-                    value={requesterName}
-                    onChange={e => setRequesterName(e.target.value)}
-                    placeholder="Jean Dupont"
-                  />
+              <div className="space-y-4">
+                {/* Contact cards grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {allContacts.map(contact => (
+                    <ContactCard
+                      key={contact.id}
+                      contact={contact}
+                      isSelected={selectedResponsableId === contact.id}
+                      onClick={() => handleSelectResponsable(contact.id)}
+                    />
+                  ))}
+
+                  {/* Create new card */}
+                  <Card
+                    className={cn(
+                      'p-3 cursor-pointer transition-all hover:shadow-md border-dashed',
+                      showResponsableForm
+                        ? 'border-2 border-blue-500 bg-blue-50/50'
+                        : 'hover:border-gray-400'
+                    )}
+                    onClick={handleNewResponsable}
+                  >
+                    <div className="flex items-center justify-center gap-2 h-full min-h-[60px]">
+                      <Plus
+                        className={cn(
+                          'h-5 w-5',
+                          showResponsableForm
+                            ? 'text-blue-500'
+                            : 'text-gray-400'
+                        )}
+                      />
+                      <span
+                        className={cn(
+                          'font-medium text-sm',
+                          showResponsableForm
+                            ? 'text-blue-600'
+                            : 'text-gray-600'
+                        )}
+                      >
+                        Nouveau contact
+                      </span>
+                    </div>
+                  </Card>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="requester-email">
-                    Email <span className="text-red-500">*</span>
-                  </Label>
-                  <Input
-                    id="requester-email"
-                    type="email"
-                    value={requesterEmail}
-                    onChange={e => setRequesterEmail(e.target.value)}
-                    placeholder="jean@restaurant.fr"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="requester-phone">Telephone</Label>
-                  <Input
-                    id="requester-phone"
-                    type="tel"
-                    value={requesterPhone}
-                    onChange={e => setRequesterPhone(e.target.value)}
-                    placeholder="06 12 34 56 78"
-                  />
-                </div>
+
+                {/* Inline form for new contact */}
+                {showResponsableForm && (
+                  <Card className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Prenom *</Label>
+                        <Input
+                          value={responsableForm.firstName}
+                          onChange={e =>
+                            setResponsableForm(prev => ({
+                              ...prev,
+                              firstName: e.target.value,
+                            }))
+                          }
+                          placeholder="Jean"
+                          className="h-9"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Nom *</Label>
+                        <Input
+                          value={responsableForm.lastName}
+                          onChange={e =>
+                            setResponsableForm(prev => ({
+                              ...prev,
+                              lastName: e.target.value,
+                            }))
+                          }
+                          placeholder="Dupont"
+                          className="h-9"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Email *</Label>
+                        <Input
+                          type="email"
+                          value={responsableForm.email}
+                          onChange={e =>
+                            setResponsableForm(prev => ({
+                              ...prev,
+                              email: e.target.value,
+                            }))
+                          }
+                          placeholder="jean@restaurant.fr"
+                          className="h-9"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Telephone</Label>
+                        <Input
+                          type="tel"
+                          value={responsableForm.phone}
+                          onChange={e =>
+                            setResponsableForm(prev => ({
+                              ...prev,
+                              phone: e.target.value,
+                            }))
+                          }
+                          placeholder="06 12 34 56 78"
+                          className="h-9"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Poste</Label>
+                        <Input
+                          value={responsableForm.title}
+                          onChange={e =>
+                            setResponsableForm(prev => ({
+                              ...prev,
+                              title: e.target.value,
+                            }))
+                          }
+                          placeholder="Gerant"
+                          className="h-9"
+                        />
+                      </div>
+                    </div>
+                  </Card>
+                )}
               </div>
             </AccordionContent>
           </AccordionItem>
@@ -793,46 +1256,209 @@ export function EditOrderPage({ data }: EditOrderPageProps) {
                     Facturation
                   </h2>
                   <p className="text-sm text-gray-500">
-                    {billingName || 'Non renseigne'}
-                    {billingEmail ? ` | ${billingEmail}` : ''}
+                    {resolvedBillingContact.name || 'Non renseigne'}
+                    {resolvedBillingContact.email
+                      ? ` | ${resolvedBillingContact.email}`
+                      : ''}
                   </p>
                 </div>
               </div>
             </AccordionTrigger>
             <AccordionContent className="px-6 pb-6">
-              <div className="space-y-4">
-                <h3 className="text-sm font-semibold text-gray-700">
-                  Contact facturation
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="billing-name">Nom</Label>
-                    <Input
-                      id="billing-name"
-                      value={billingName}
-                      onChange={e => setBillingName(e.target.value)}
-                      placeholder="Service comptabilite"
-                    />
+              <div className="space-y-6">
+                {/* Contact facturation */}
+                <div className="space-y-4">
+                  <h3 className="text-sm font-semibold text-gray-700">
+                    Contact facturation
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {/* Same as responsable card */}
+                    <Card
+                      className={cn(
+                        'p-3 cursor-pointer transition-all hover:shadow-md',
+                        billingContactMode === 'same'
+                          ? 'border-2 border-green-500 bg-green-50/50'
+                          : 'hover:border-gray-300'
+                      )}
+                      onClick={handleBillingSameAsResponsable}
+                    >
+                      <div className="flex items-start gap-2.5">
+                        <div
+                          className={cn(
+                            'w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0',
+                            billingContactMode === 'same'
+                              ? 'bg-green-100'
+                              : 'bg-gray-100'
+                          )}
+                        >
+                          <User
+                            className={cn(
+                              'h-4 w-4',
+                              billingContactMode === 'same'
+                                ? 'text-green-600'
+                                : 'text-gray-500'
+                            )}
+                          />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5">
+                            <h3 className="font-semibold text-gray-900 text-sm leading-tight">
+                              Meme que responsable
+                            </h3>
+                            {billingContactMode === 'same' && (
+                              <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0 ml-auto" />
+                            )}
+                          </div>
+                          <p className="text-xs text-gray-500 mt-0.5">
+                            Utiliser le contact responsable
+                          </p>
+                        </div>
+                      </div>
+                    </Card>
+
+                    {/* Existing contacts */}
+                    {allContacts.map(contact => (
+                      <ContactCard
+                        key={contact.id}
+                        contact={contact}
+                        isSelected={
+                          billingContactMode === 'existing' &&
+                          selectedBillingContactId === contact.id
+                        }
+                        onClick={() => handleSelectBillingContact(contact.id)}
+                      />
+                    ))}
+
+                    {/* Create new */}
+                    <Card
+                      className={cn(
+                        'p-3 cursor-pointer transition-all hover:shadow-md border-dashed',
+                        billingContactMode === 'new'
+                          ? 'border-2 border-blue-500 bg-blue-50/50'
+                          : 'hover:border-gray-400'
+                      )}
+                      onClick={handleNewBillingContact}
+                    >
+                      <div className="flex items-center justify-center gap-2 h-full min-h-[60px]">
+                        <Plus
+                          className={cn(
+                            'h-5 w-5',
+                            billingContactMode === 'new'
+                              ? 'text-blue-500'
+                              : 'text-gray-400'
+                          )}
+                        />
+                        <span
+                          className={cn(
+                            'font-medium text-sm',
+                            billingContactMode === 'new'
+                              ? 'text-blue-600'
+                              : 'text-gray-600'
+                          )}
+                        >
+                          Nouveau contact
+                        </span>
+                      </div>
+                    </Card>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="billing-email">Email</Label>
-                    <Input
-                      id="billing-email"
-                      type="email"
-                      value={billingEmail}
-                      onChange={e => setBillingEmail(e.target.value)}
-                      placeholder="compta@restaurant.fr"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="billing-phone">Telephone</Label>
-                    <Input
-                      id="billing-phone"
-                      type="tel"
-                      value={billingPhone}
-                      onChange={e => setBillingPhone(e.target.value)}
-                      placeholder="01 23 45 67 89"
-                    />
+
+                  {/* New billing contact form */}
+                  {billingContactMode === 'new' && (
+                    <Card className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Prenom</Label>
+                          <Input
+                            value={billingContactForm.firstName}
+                            onChange={e =>
+                              setBillingContactForm(prev => ({
+                                ...prev,
+                                firstName: e.target.value,
+                              }))
+                            }
+                            placeholder="Service"
+                            className="h-9"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Nom</Label>
+                          <Input
+                            value={billingContactForm.lastName}
+                            onChange={e =>
+                              setBillingContactForm(prev => ({
+                                ...prev,
+                                lastName: e.target.value,
+                              }))
+                            }
+                            placeholder="Comptabilite"
+                            className="h-9"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Email</Label>
+                          <Input
+                            type="email"
+                            value={billingContactForm.email}
+                            onChange={e =>
+                              setBillingContactForm(prev => ({
+                                ...prev,
+                                email: e.target.value,
+                              }))
+                            }
+                            placeholder="compta@restaurant.fr"
+                            className="h-9"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Telephone</Label>
+                          <Input
+                            type="tel"
+                            value={billingContactForm.phone}
+                            onChange={e =>
+                              setBillingContactForm(prev => ({
+                                ...prev,
+                                phone: e.target.value,
+                              }))
+                            }
+                            placeholder="01 23 45 67 89"
+                            className="h-9"
+                          />
+                        </div>
+                      </div>
+                    </Card>
+                  )}
+                </div>
+
+                <Separator />
+
+                {/* Adresse facturation */}
+                <div className="space-y-4">
+                  <h3 className="text-sm font-semibold text-gray-700">
+                    Adresse de facturation
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {/* Existing billing addresses */}
+                    {billingAddresses.map(address => (
+                      <AddressCard
+                        key={address.id}
+                        address={address}
+                        isSelected={
+                          billingAddressMode === 'existing' &&
+                          selectedBillingAddressId === address.id
+                        }
+                        onClick={() => {
+                          setBillingAddressMode('existing');
+                          setSelectedBillingAddressId(address.id);
+                        }}
+                        badge={address.isDefault ? 'Defaut' : undefined}
+                      />
+                    ))}
+
+                    {billingAddresses.length === 0 && (
+                      <p className="text-sm text-gray-400 col-span-full py-4 text-center">
+                        Aucune adresse de facturation enregistree
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -856,8 +1482,8 @@ export function EditOrderPage({ data }: EditOrderPageProps) {
                     Livraison
                   </h2>
                   <p className="text-sm text-gray-500">
-                    {deliveryAddress
-                      ? `${deliveryAddress}, ${deliveryPostalCode} ${deliveryCity}`
+                    {resolvedDeliveryAddress.address
+                      ? `${resolvedDeliveryAddress.address}, ${resolvedDeliveryAddress.postalCode} ${resolvedDeliveryAddress.city}`
                       : 'Non renseignee'}
                     {desiredDeliveryDate
                       ? ` | ${format(new Date(desiredDeliveryDate), 'dd/MM/yyyy')}`
@@ -868,42 +1494,119 @@ export function EditOrderPage({ data }: EditOrderPageProps) {
             </AccordionTrigger>
             <AccordionContent className="px-6 pb-6">
               <div className="space-y-6">
-                {/* Contact livraison */}
+                {/* Contact livraison (local contacts only) */}
                 <div className="space-y-4">
                   <h3 className="text-sm font-semibold text-gray-700">
                     Contact livraison
                   </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="delivery-contact-name">Nom</Label>
-                      <Input
-                        id="delivery-contact-name"
-                        value={deliveryContactName}
-                        onChange={e => setDeliveryContactName(e.target.value)}
-                        placeholder="Nom du destinataire"
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {localContacts.map(contact => (
+                      <ContactCard
+                        key={contact.id}
+                        contact={contact}
+                        isSelected={selectedDeliveryContactId === contact.id}
+                        onClick={() => handleSelectDeliveryContact(contact.id)}
                       />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="delivery-contact-email">Email</Label>
-                      <Input
-                        id="delivery-contact-email"
-                        type="email"
-                        value={deliveryContactEmail}
-                        onChange={e => setDeliveryContactEmail(e.target.value)}
-                        placeholder="livraison@restaurant.fr"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="delivery-contact-phone">Telephone</Label>
-                      <Input
-                        id="delivery-contact-phone"
-                        type="tel"
-                        value={deliveryContactPhone}
-                        onChange={e => setDeliveryContactPhone(e.target.value)}
-                        placeholder="06 12 34 56 78"
-                      />
-                    </div>
+                    ))}
+
+                    {/* Create new */}
+                    <Card
+                      className={cn(
+                        'p-3 cursor-pointer transition-all hover:shadow-md border-dashed',
+                        showDeliveryContactForm
+                          ? 'border-2 border-blue-500 bg-blue-50/50'
+                          : 'hover:border-gray-400'
+                      )}
+                      onClick={handleNewDeliveryContact}
+                    >
+                      <div className="flex items-center justify-center gap-2 h-full min-h-[60px]">
+                        <Plus
+                          className={cn(
+                            'h-5 w-5',
+                            showDeliveryContactForm
+                              ? 'text-blue-500'
+                              : 'text-gray-400'
+                          )}
+                        />
+                        <span
+                          className={cn(
+                            'font-medium text-sm',
+                            showDeliveryContactForm
+                              ? 'text-blue-600'
+                              : 'text-gray-600'
+                          )}
+                        >
+                          Nouveau contact
+                        </span>
+                      </div>
+                    </Card>
                   </div>
+
+                  {/* New delivery contact form */}
+                  {showDeliveryContactForm && (
+                    <Card className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Prenom</Label>
+                          <Input
+                            value={deliveryContactForm.firstName}
+                            onChange={e =>
+                              setDeliveryContactForm(prev => ({
+                                ...prev,
+                                firstName: e.target.value,
+                              }))
+                            }
+                            placeholder="Prenom"
+                            className="h-9"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Nom</Label>
+                          <Input
+                            value={deliveryContactForm.lastName}
+                            onChange={e =>
+                              setDeliveryContactForm(prev => ({
+                                ...prev,
+                                lastName: e.target.value,
+                              }))
+                            }
+                            placeholder="Nom"
+                            className="h-9"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Email</Label>
+                          <Input
+                            type="email"
+                            value={deliveryContactForm.email}
+                            onChange={e =>
+                              setDeliveryContactForm(prev => ({
+                                ...prev,
+                                email: e.target.value,
+                              }))
+                            }
+                            placeholder="livraison@restaurant.fr"
+                            className="h-9"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Telephone</Label>
+                          <Input
+                            type="tel"
+                            value={deliveryContactForm.phone}
+                            onChange={e =>
+                              setDeliveryContactForm(prev => ({
+                                ...prev,
+                                phone: e.target.value,
+                              }))
+                            }
+                            placeholder="06 12 34 56 78"
+                            className="h-9"
+                          />
+                        </div>
+                      </div>
+                    </Card>
+                  )}
                 </div>
 
                 <Separator />
@@ -913,39 +1616,108 @@ export function EditOrderPage({ data }: EditOrderPageProps) {
                   <h3 className="text-sm font-semibold text-gray-700">
                     Adresse de livraison
                   </h3>
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="delivery-address">Adresse</Label>
-                      <Input
-                        id="delivery-address"
-                        value={deliveryAddress}
-                        onChange={e => setDeliveryAddress(e.target.value)}
-                        placeholder="12 rue de la Paix"
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {/* Existing shipping addresses */}
+                    {shippingAddresses.map(address => (
+                      <AddressCard
+                        key={address.id}
+                        address={address}
+                        isSelected={
+                          deliveryAddressMode === 'existing' &&
+                          selectedDeliveryAddressId === address.id
+                        }
+                        onClick={() => {
+                          setDeliveryAddressMode('existing');
+                          setSelectedDeliveryAddressId(address.id);
+                        }}
+                        badge={address.isDefault ? 'Defaut' : undefined}
                       />
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="delivery-postal-code">
-                          Code postal
-                        </Label>
-                        <Input
-                          id="delivery-postal-code"
-                          value={deliveryPostalCode}
-                          onChange={e => setDeliveryPostalCode(e.target.value)}
-                          placeholder="75001"
+                    ))}
+
+                    {/* New address card */}
+                    <Card
+                      className={cn(
+                        'p-3 cursor-pointer transition-all hover:shadow-md border-dashed',
+                        deliveryAddressMode === 'new'
+                          ? 'border-2 border-blue-500 bg-blue-50/50'
+                          : 'hover:border-gray-400'
+                      )}
+                      onClick={() => setDeliveryAddressMode('new')}
+                    >
+                      <div className="flex items-center justify-center gap-2 h-full min-h-[60px]">
+                        <MapPin
+                          className={cn(
+                            'h-5 w-5',
+                            deliveryAddressMode === 'new'
+                              ? 'text-blue-500'
+                              : 'text-gray-400'
+                          )}
                         />
+                        <span
+                          className={cn(
+                            'font-medium text-sm',
+                            deliveryAddressMode === 'new'
+                              ? 'text-blue-600'
+                              : 'text-gray-600'
+                          )}
+                        >
+                          Nouvelle adresse
+                        </span>
                       </div>
-                      <div className="space-y-2 md:col-span-2">
-                        <Label htmlFor="delivery-city">Ville</Label>
-                        <Input
-                          id="delivery-city"
-                          value={deliveryCity}
-                          onChange={e => setDeliveryCity(e.target.value)}
-                          placeholder="Paris"
-                        />
-                      </div>
-                    </div>
+                    </Card>
                   </div>
+
+                  {/* New delivery address form */}
+                  {deliveryAddressMode === 'new' && (
+                    <Card className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200">
+                      <div className="space-y-3">
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Adresse</Label>
+                          <Input
+                            value={newDeliveryAddress.address}
+                            onChange={e =>
+                              setNewDeliveryAddress(prev => ({
+                                ...prev,
+                                address: e.target.value,
+                              }))
+                            }
+                            placeholder="12 rue de la Paix"
+                            className="h-9"
+                          />
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                          <div className="space-y-1.5">
+                            <Label className="text-xs">Code postal</Label>
+                            <Input
+                              value={newDeliveryAddress.postalCode}
+                              onChange={e =>
+                                setNewDeliveryAddress(prev => ({
+                                  ...prev,
+                                  postalCode: e.target.value,
+                                }))
+                              }
+                              placeholder="75001"
+                              className="h-9"
+                            />
+                          </div>
+                          <div className="space-y-1.5 md:col-span-2">
+                            <Label className="text-xs">Ville</Label>
+                            <Input
+                              value={newDeliveryAddress.city}
+                              onChange={e =>
+                                setNewDeliveryAddress(prev => ({
+                                  ...prev,
+                                  city: e.target.value,
+                                }))
+                              }
+                              placeholder="Paris"
+                              className="h-9"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </Card>
+                  )}
                 </div>
 
                 <Separator />
