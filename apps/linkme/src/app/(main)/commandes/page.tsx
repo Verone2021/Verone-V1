@@ -17,6 +17,7 @@
 
 import { useState, useMemo } from 'react';
 
+import Image from 'next/image';
 import Link from 'next/link';
 
 // Import direct du hook pour éviter les exports problématiques
@@ -39,7 +40,6 @@ import {
   Pencil,
 } from 'lucide-react';
 
-import { EditOrderModal } from './components/EditOrderModal';
 import { OrderDetailModal } from './components/OrderDetailModal';
 import {
   useLinkMeOrders,
@@ -83,8 +83,6 @@ export default function CommandesPage(): JSX.Element {
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<LinkMeOrder | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [orderToEdit, setOrderToEdit] = useState<LinkMeOrder | null>(null);
 
   // Data - Affilié et ses commandes
   const { data: affiliate, isLoading: affiliateLoading } = useUserAffiliate();
@@ -168,18 +166,6 @@ export default function CommandesPage(): JSX.Element {
   const closeDetailModal = () => {
     setIsDetailModalOpen(false);
     setSelectedOrder(null);
-  };
-
-  // Handler pour ouvrir le modal d'édition (commandes brouillon uniquement)
-  const openEditModal = (order: LinkMeOrder, e: React.MouseEvent) => {
-    e.stopPropagation(); // Empêcher le toggle expand
-    setOrderToEdit(order);
-    setIsEditModalOpen(true);
-  };
-
-  const closeEditModal = () => {
-    setIsEditModalOpen(false);
-    setOrderToEdit(null);
   };
 
   return (
@@ -488,13 +474,14 @@ export default function CommandesPage(): JSX.Element {
 
                             {/* Bouton Modifier (brouillon uniquement) */}
                             {order.status === 'draft' && (
-                              <button
-                                onClick={e => openEditModal(order, e)}
+                              <Link
+                                href={`/commandes/${order.id}/modifier`}
+                                onClick={e => e.stopPropagation()}
                                 className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-amber-600 hover:text-white hover:bg-amber-500 border border-amber-400 rounded-lg transition-colors"
                               >
                                 <Pencil className="h-3.5 w-3.5" />
                                 Modifier
-                              </button>
+                              </Link>
                             )}
 
                             {/* Bouton Details */}
@@ -589,14 +576,31 @@ export default function CommandesPage(): JSX.Element {
                                   {order.items.map(item => (
                                     <tr key={item.id}>
                                       <td className="px-3 py-2">
-                                        <span className="font-medium text-gray-900">
-                                          {item.product_name}
-                                        </span>
-                                        {item.product_sku && (
-                                          <span className="text-gray-400 ml-2 text-xs">
-                                            {item.product_sku}
-                                          </span>
-                                        )}
+                                        <div className="flex items-center gap-3">
+                                          {item.product_image_url ? (
+                                            <Image
+                                              src={item.product_image_url}
+                                              alt={item.product_name}
+                                              width={40}
+                                              height={40}
+                                              className="rounded-md object-cover w-10 h-10 flex-shrink-0"
+                                            />
+                                          ) : (
+                                            <div className="w-10 h-10 rounded-md bg-gray-100 flex items-center justify-center flex-shrink-0">
+                                              <Package className="h-5 w-5 text-gray-400" />
+                                            </div>
+                                          )}
+                                          <div>
+                                            <span className="font-medium text-gray-900">
+                                              {item.product_name}
+                                            </span>
+                                            {item.product_sku && (
+                                              <p className="text-gray-400 text-xs">
+                                                {item.product_sku}
+                                              </p>
+                                            )}
+                                          </div>
+                                        </div>
                                       </td>
                                       <td className="px-3 py-2 text-center text-gray-700">
                                         {item.quantity}
@@ -634,13 +638,6 @@ export default function CommandesPage(): JSX.Element {
         order={selectedOrder}
         isOpen={isDetailModalOpen}
         onClose={closeDetailModal}
-      />
-
-      {/* Modal édition commande brouillon */}
-      <EditOrderModal
-        order={orderToEdit}
-        isOpen={isEditModalOpen}
-        onClose={closeEditModal}
       />
     </div>
   );
