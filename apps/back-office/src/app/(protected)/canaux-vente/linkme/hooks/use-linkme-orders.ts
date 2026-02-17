@@ -484,6 +484,8 @@ async function createLinkMeOrder(
     total_ttc: totalTtc,
     tax_rate: 0, // TVA calculee par ligne, pas globale
     notes: input.internal_notes ?? null,
+    // Commande LinkMe doit être validée par admin avant traitement
+    pending_admin_validation: true,
     // Frais additionnels
     shipping_cost_ht: shippingCostHt,
     insurance_cost_ht: insuranceCostHt,

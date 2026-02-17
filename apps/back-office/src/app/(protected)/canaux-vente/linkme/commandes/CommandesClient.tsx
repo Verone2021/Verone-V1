@@ -106,18 +106,33 @@ export default function CommandesClient() {
         key: 'approval_status',
         header: 'Approbation',
         cell: (order: SalesOrder) => {
-          return order.pending_admin_validation ? (
-            <Badge variant="destructive" className="text-xs gap-1">
-              <AlertCircle className="h-3 w-3" />
-              En attente
-            </Badge>
-          ) : (
+          if (order.pending_admin_validation) {
+            return (
+              <Badge variant="destructive" className="text-xs gap-1">
+                <AlertCircle className="h-3 w-3" />
+                En attente
+              </Badge>
+            );
+          }
+          if (order.confirmed_at) {
+            return (
+              <Badge
+                variant="outline"
+                className="text-xs gap-1 border-green-300 text-green-700 bg-green-50"
+              >
+                <CheckCircle2 className="h-3 w-3" />
+                Approuvée
+              </Badge>
+            );
+          }
+          // pending_admin_validation = false mais confirmed_at = null
+          // = commande non soumise à validation (ex: commande directe)
+          return (
             <Badge
               variant="outline"
-              className="text-xs gap-1 border-green-300 text-green-700 bg-green-50"
+              className="text-xs gap-1 text-muted-foreground"
             >
-              <CheckCircle2 className="h-3 w-3" />
-              Approuvée
+              N/A
             </Badge>
           );
         },
