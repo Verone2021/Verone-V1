@@ -453,7 +453,7 @@ export default function CompleteInfoPage() {
 
   // Filter sections: only show sections that have at least one field with existing data or requested
   const visibleSections = SECTIONS.filter(section =>
-    section.fields.some(f => existingData[f.key] || requestedKeys.has(f.key))
+    section.fields.some(f => existingData[f.key] ?? requestedKeys.has(f.key))
   );
 
   return (
