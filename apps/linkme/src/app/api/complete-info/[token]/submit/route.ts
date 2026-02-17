@@ -9,8 +9,10 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 
+import type { Database } from '@verone/types';
+
 function getAdminClient() {
-  return createClient(
+  return createClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
@@ -188,7 +190,7 @@ export async function POST(request: Request, { params }: RouteParams) {
 
     // Fire-and-forget: send notification email to back-office
     void sendCompletionNotification(
-      infoRequest.sales_order_id as string,
+      infoRequest.sales_order_id,
       submitterEmail,
       fields
     ).catch(err => {
