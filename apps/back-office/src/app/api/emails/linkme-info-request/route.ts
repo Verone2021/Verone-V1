@@ -9,6 +9,8 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
 
+import type { Database, Json } from '@verone/types';
+
 import { buildEmailHtml } from '../_shared/email-template';
 
 function getResendClient(): Resend {
@@ -20,7 +22,7 @@ function getResendClient(): Resend {
 }
 
 function getAdminClient() {
-  return createClient(
+  return createClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
@@ -90,7 +92,7 @@ export async function POST(request: NextRequest) {
       .from('linkme_info_requests')
       .insert({
         sales_order_id: salesOrderId,
-        requested_fields: requestedFields,
+        requested_fields: requestedFields as unknown as Json,
         custom_message: customMessage ?? null,
         recipient_email: recipientEmail,
         recipient_name: recipientName,

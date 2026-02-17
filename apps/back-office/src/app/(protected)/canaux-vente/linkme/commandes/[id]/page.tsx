@@ -1793,7 +1793,7 @@ export default function LinkMeOrderDetailPage() {
                     </p>
                   )}
                   {/* Adresse restaurant cliquable pour remplir */}
-                  {org && (org.address_line1 || org.shipping_address_line1) && (
+                  {org && (org.address_line1 ?? org.shipping_address_line1) && (
                     <button
                       type="button"
                       disabled={
@@ -2627,7 +2627,7 @@ export default function LinkMeOrderDetailPage() {
           </DialogHeader>
           <div className="space-y-4 py-4">
             {/* Adresse restaurant pour pré-remplir */}
-            {org && (org.address_line1 || org.shipping_address_line1) && (
+            {org && (org.address_line1 ?? org.shipping_address_line1) && (
               <button
                 type="button"
                 className="w-full text-left p-3 rounded-lg border border-blue-200 bg-blue-50 hover:bg-blue-100 hover:border-blue-300 transition-colors"

@@ -137,7 +137,9 @@ export async function POST(request: NextRequest) {
         : null;
 
     // Send all emails
-    const promises = [requesterResult, adminResult].filter(Boolean);
+    const promises = [requesterResult, adminResult].filter(
+      (p): p is NonNullable<typeof p> => p != null
+    );
     const results = await Promise.allSettled(promises);
 
     const failures = results.filter(r => r.status === 'rejected');
