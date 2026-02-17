@@ -10,7 +10,7 @@
  * - Meme workflow que /commandes/clients (Valider, Expedier, Annuler)
  * - Modal de creation specifique LinkMe (CreateLinkMeOrderModal)
  * - Modal d'edition specifique LinkMe (EditLinkMeOrderModal)
- * - Colonnes additionnelles: Canal, Approbation, Marge
+ * - Colonnes additionnelles: indicateur validation (pastille), Canal, Marge
  * - Filtre "En attente de validation" avec badge rouge/vert
  *
  * Les triggers stock sont automatiques et identiques pour tous les canaux.
@@ -20,9 +20,9 @@ import { useState, useMemo } from 'react';
 
 import { SalesOrdersTable } from '@verone/orders';
 import type { SalesOrder } from '@verone/orders';
-import { Badge, Button } from '@verone/ui';
+import { Button } from '@verone/ui';
 import { formatCurrency } from '@verone/utils';
-import { AlertCircle, CheckCircle2 } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Circle } from 'lucide-react';
 
 import { updateSalesOrderStatus } from '@/app/actions/sales-orders';
 
@@ -103,38 +103,24 @@ export default function CommandesClient() {
         },
       },
       {
-        key: 'approval_status',
-        header: 'Approbation',
+        key: 'validation_dot',
+        header: '',
         cell: (order: SalesOrder) => {
           if (order.pending_admin_validation) {
             return (
-              <Badge variant="destructive" className="text-xs gap-1">
-                <AlertCircle className="h-3 w-3" />
-                En attente
-              </Badge>
+              <span title="En attente de validation">
+                <Circle className="h-2.5 w-2.5 fill-orange-500 text-orange-500" />
+              </span>
             );
           }
           if (order.confirmed_at) {
             return (
-              <Badge
-                variant="outline"
-                className="text-xs gap-1 border-green-300 text-green-700 bg-green-50"
-              >
-                <CheckCircle2 className="h-3 w-3" />
-                Approuvée
-              </Badge>
+              <span title="Approuvée">
+                <Circle className="h-2.5 w-2.5 fill-green-500 text-green-500" />
+              </span>
             );
           }
-          // pending_admin_validation = false mais confirmed_at = null
-          // = commande non soumise à validation (ex: commande directe)
-          return (
-            <Badge
-              variant="outline"
-              className="text-xs gap-1 text-muted-foreground"
-            >
-              N/A
-            </Badge>
-          );
+          return null;
         },
       },
       {
