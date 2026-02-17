@@ -26,7 +26,7 @@ import { AlertCircle, CheckCircle2 } from 'lucide-react';
 
 import { updateSalesOrderStatus } from '@/app/actions/sales-orders';
 
-import { CreateLinkMeOrderModal } from '../components/CreateLinkMeOrderModal';
+import { CreateLinkMeOrderModal } from '@verone/orders';
 import { EditLinkMeOrderModal } from '../components/EditLinkMeOrderModal';
 import { PendingOrderCards } from '../components/PendingOrderCards';
 import { usePendingOrdersCount } from '../hooks/use-linkme-order-actions';

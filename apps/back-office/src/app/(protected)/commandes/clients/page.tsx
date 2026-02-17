@@ -17,7 +17,7 @@ import { useState } from 'react';
 
 import Link from 'next/link';
 
-import { SalesOrdersTable } from '@verone/orders';
+import { SalesOrdersTable, CreateLinkMeOrderModal } from '@verone/orders';
 import {
   ButtonUnified,
   Select,
@@ -29,8 +29,6 @@ import {
 import { Truck } from 'lucide-react';
 
 import { updateSalesOrderStatus } from '@/app/actions/sales-orders';
-import { CreateLinkMeOrderModal } from '@/app/(protected)/canaux-vente/linkme/components/CreateLinkMeOrderModal';
-import { EditLinkMeOrderModal } from '@/app/(protected)/canaux-vente/linkme/components/EditLinkMeOrderModal';
 
 // IDs des canaux de vente
 const CHANNEL_IDS = {
@@ -98,27 +96,19 @@ export default function SalesOrdersClientsPage() {
           amount: true,
           orderNumber: true,
         }}
-        {...(channelFilter === 'linkme' && {
-          renderCreateModal: ({ open, onClose, onSuccess }) => (
-            <CreateLinkMeOrderModal
-              isOpen={open}
-              onClose={() => {
-                onClose();
-                onSuccess();
-              }}
-            />
-          ),
-          renderEditModal: ({ orderId, open, onClose, onSuccess }) => (
-            <EditLinkMeOrderModal
-              isOpen={open}
-              orderId={orderId}
-              onClose={() => {
-                onClose();
-                onSuccess();
-              }}
-            />
-          ),
-        })}
+        renderCreateModal={
+          channelFilter === 'linkme'
+            ? ({ open, onClose, onSuccess }) => (
+                <CreateLinkMeOrderModal
+                  isOpen={open}
+                  onClose={() => {
+                    onClose();
+                    onSuccess();
+                  }}
+                />
+              )
+            : undefined
+        }
       />
     </div>
   );

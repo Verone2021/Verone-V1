@@ -988,6 +988,7 @@ export function SalesOrderFormModal({
           sku: item.sku,
           quantity: item.quantity,
           unit_price_ht: item.unit_price_ht,
+          tax_rate: 0.2,
           base_price_ht: item.base_price_ht,
           retrocession_rate: item.retrocession_rate,
           linkme_selection_item_id: item.linkme_selection_item_id,
