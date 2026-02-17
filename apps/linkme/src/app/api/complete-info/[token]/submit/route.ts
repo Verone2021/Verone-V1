@@ -186,9 +186,80 @@ export async function POST(request: Request, { params }: RouteParams) {
       );
     }
 
+    // Fire-and-forget: send notification email to back-office
+    void sendCompletionNotification(
+      infoRequest.sales_order_id as string,
+      submitterEmail,
+      fields
+    ).catch(err => {
+      console.error('[API complete-info submit] notification error:', err);
+    });
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('[API complete-info submit] error:', error);
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
+  }
+}
+
+/**
+ * Send notification email to back-office that info was completed.
+ * Non-blocking (fire-and-forget from caller).
+ */
+async function sendCompletionNotification(
+  salesOrderId: string,
+  completedByEmail: string,
+  completedFields: Record<string, string>
+) {
+  const supabase = getAdminClient();
+
+  // Fetch order number and organisation name
+  type OrderRow = {
+    id: string;
+    order_number: string;
+    customer_id: string | null;
+    organisations: Array<{
+      trade_name: string | null;
+      legal_name: string;
+    }> | null;
+  };
+
+  const { data: order } = await supabase
+    .from('sales_orders')
+    .select(
+      `id, order_number, customer_id,
+       organisations!sales_orders_customer_id_fkey (trade_name, legal_name)`
+    )
+    .eq('id', salesOrderId)
+    .single<OrderRow>();
+
+  if (!order) return;
+
+  const org = order.organisations?.[0] ?? null;
+  const organisationName = org?.trade_name ?? org?.legal_name ?? null;
+
+  const backOfficeUrl = process.env.BACK_OFFICE_URL ?? 'https://app.verone.fr';
+
+  const notifyUrl = `${backOfficeUrl}/api/emails/linkme-info-completed`;
+
+  const res = await fetch(notifyUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      orderNumber: order.order_number,
+      orderId: order.id,
+      completedByEmail,
+      organisationName,
+      completedFields,
+    }),
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    console.error(
+      '[API complete-info submit] notification API error:',
+      res.status,
+      text
+    );
   }
 }

@@ -3,13 +3,15 @@
 /**
  * Centre de Messagerie LinkMe
  *
- * 2 onglets :
- * 1. Infos manquantes - Dashboard des commandes avec champs manquants + envoi de demandes
- * 2. Notifications affiliés - Broadcast notifications (contenu existant préservé)
+ * 4 onglets :
+ * 1. Infos manquantes - Commandes avec champs a completer (sans demande en cours)
+ * 2. En attente de retour - Commandes avec demande envoyee, en attente de reponse
+ * 3. Historique - Toutes les demandes d'info envoyees avec leur statut
+ * 4. Notifications affilies - Broadcast notifications
  *
  * @module MessagesPage
  * @since 2026-01-22
- * @updated 2026-02-16 - Ajout onglet Infos manquantes
+ * @updated 2026-02-17 - Refonte 4 onglets + cartes enrichies + historique
  */
 
 import { useState, useEffect, useMemo } from 'react';
@@ -43,6 +45,10 @@ import {
   DialogTitle,
   Separator,
   Skeleton,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
 } from '@verone/ui';
 import { cn, formatCurrency } from '@verone/utils';
 import { toast } from 'sonner';
@@ -61,12 +67,18 @@ import {
   Clock,
   CheckCircle2,
   MessageSquare,
+  History,
+  RotateCcw,
+  XCircle,
+  Hourglass,
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import {
   getOrderMissingFields,
+  CATEGORY_LABELS,
   type MissingFieldsResult,
+  type MissingFieldCategory,
 } from '../utils/order-missing-fields';
 import type { LinkMeOrderDetails } from '../hooks/use-linkme-order-actions';
 
@@ -76,7 +88,6 @@ import type { LinkMeOrderDetails } from '../hooks/use-linkme-order-actions';
 
 type NotificationSeverity = 'info' | 'important' | 'urgent';
 type TargetType = 'all' | 'enseigne' | 'affiliate';
-type MissingFieldsFilter = 'all' | 'no_request' | 'request_sent';
 
 interface Enseigne {
   id: string;
@@ -98,8 +109,12 @@ interface InfoRequest {
   recipient_type: string;
   sent_at: string;
   completed_at: string | null;
+  completed_by_email: string | null;
   cancelled_at: string | null;
   cancelled_reason: string | null;
+  submitted_data: Record<string, string> | null;
+  custom_message: string | null;
+  token_expires_at: string | null;
 }
 
 interface OrderWithMissing {
@@ -113,6 +128,47 @@ interface OrderWithMissing {
   details: LinkMeOrderDetails | null;
   missingFields: MissingFieldsResult;
   infoRequests: InfoRequest[];
+}
+
+// =============================================================================
+// HELPERS
+// =============================================================================
+
+const CATEGORY_BADGE_COLORS: Record<MissingFieldCategory, string> = {
+  responsable: 'bg-red-100 text-red-700 border-red-200',
+  billing: 'bg-orange-100 text-orange-700 border-orange-200',
+  delivery: 'bg-blue-100 text-blue-700 border-blue-200',
+  organisation: 'bg-purple-100 text-purple-700 border-purple-200',
+  custom: 'bg-gray-100 text-gray-700 border-gray-200',
+};
+
+function formatTimeAgo(dateStr: string): string {
+  const now = new Date();
+  const date = new Date(dateStr);
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60_000);
+  const diffHours = Math.floor(diffMs / 3_600_000);
+  const diffDays = Math.floor(diffMs / 86_400_000);
+
+  if (diffMins < 60) return `il y a ${diffMins} min`;
+  if (diffHours < 24) return `il y a ${diffHours}h`;
+  if (diffDays === 1) return 'hier';
+  return `il y a ${diffDays} jours`;
+}
+
+function getInfoRequestStatus(
+  req: InfoRequest
+): 'pending' | 'completed' | 'cancelled' | 'expired' {
+  if (req.completed_at) return 'completed';
+  if (req.cancelled_at) return 'cancelled';
+  if (req.token_expires_at && new Date(req.token_expires_at) < new Date()) {
+    return 'expired';
+  }
+  return 'pending';
+}
+
+function hasPendingRequest(order: OrderWithMissing): boolean {
+  return order.infoRequests.some(r => getInfoRequestStatus(r) === 'pending');
 }
 
 // =============================================================================
@@ -169,7 +225,8 @@ function useOrdersWithMissingFields() {
           ),
           linkme_info_requests (
             id, token, recipient_email, recipient_type, sent_at,
-            completed_at, cancelled_at, cancelled_reason
+            completed_at, completed_by_email, cancelled_at, cancelled_reason,
+            submitted_data, custom_message, token_expires_at
           )
         `
         )
@@ -214,6 +271,86 @@ function useOrdersWithMissingFields() {
       }
 
       return results;
+    },
+  });
+}
+
+// =============================================================================
+// HOOKS - INFO REQUEST HISTORY
+// =============================================================================
+
+interface InfoRequestHistoryItem {
+  id: string;
+  sales_order_id: string;
+  order_number: string;
+  recipient_email: string;
+  recipient_type: string;
+  sent_at: string;
+  completed_at: string | null;
+  completed_by_email: string | null;
+  cancelled_at: string | null;
+  cancelled_reason: string | null;
+  submitted_data: Record<string, string> | null;
+  custom_message: string | null;
+  token_expires_at: string | null;
+}
+
+function useInfoRequestHistory() {
+  return useQuery({
+    queryKey: ['info-request-history'],
+    queryFn: async () => {
+      const supabase = createClient();
+
+      type RequestRow = {
+        id: string;
+        sales_order_id: string;
+        recipient_email: string;
+        recipient_type: string;
+        sent_at: string;
+        completed_at: string | null;
+        completed_by_email: string | null;
+        cancelled_at: string | null;
+        cancelled_reason: string | null;
+        submitted_data: Record<string, string> | null;
+        custom_message: string | null;
+        token_expires_at: string | null;
+        sales_orders: { order_number: string } | null;
+      };
+
+      const { data, error } = await supabase
+        .from('linkme_info_requests')
+        .select(
+          `
+          id, sales_order_id, recipient_email, recipient_type,
+          sent_at, completed_at, completed_by_email,
+          cancelled_at, cancelled_reason,
+          submitted_data, custom_message, token_expires_at,
+          sales_orders ( order_number )
+        `
+        )
+        .order('sent_at', { ascending: false })
+        .limit(50)
+        .returns<RequestRow[]>();
+
+      if (error) throw error;
+
+      return (data ?? []).map(
+        (r): InfoRequestHistoryItem => ({
+          id: r.id,
+          sales_order_id: r.sales_order_id,
+          order_number: r.sales_orders?.order_number ?? 'N/A',
+          recipient_email: r.recipient_email,
+          recipient_type: r.recipient_type,
+          sent_at: r.sent_at,
+          completed_at: r.completed_at,
+          completed_by_email: r.completed_by_email,
+          cancelled_at: r.cancelled_at,
+          cancelled_reason: r.cancelled_reason,
+          submitted_data: r.submitted_data,
+          custom_message: r.custom_message,
+          token_expires_at: r.token_expires_at,
+        })
+      );
     },
   });
 }
@@ -402,6 +539,9 @@ function useSendInfoRequest() {
       await queryClient.invalidateQueries({
         queryKey: ['orders-missing-fields'],
       });
+      await queryClient.invalidateQueries({
+        queryKey: ['info-request-history'],
+      });
     },
     onError: (error: unknown) => {
       const msg = error instanceof Error ? error.message : 'Unknown error';
@@ -409,6 +549,49 @@ function useSendInfoRequest() {
       toast.error("Erreur lors de l'envoi de la demande");
     },
   });
+}
+
+// =============================================================================
+// COMPONENTS - CATEGORY BADGES
+// =============================================================================
+
+function CategoryBadges({
+  missingFields,
+}: {
+  missingFields: MissingFieldsResult;
+}) {
+  const categories = Object.entries(missingFields.byCategory).filter(
+    ([, fields]) => fields.length > 0
+  ) as [MissingFieldCategory, typeof missingFields.fields][];
+
+  return (
+    <TooltipProvider>
+      <div className="flex items-center gap-1.5 flex-wrap">
+        {categories.map(([cat, fields]) => (
+          <Tooltip key={cat}>
+            <TooltipTrigger asChild>
+              <Badge
+                variant="outline"
+                className={cn(
+                  'text-xs cursor-default',
+                  CATEGORY_BADGE_COLORS[cat]
+                )}
+              >
+                {CATEGORY_LABELS[cat]} ({fields.length})
+              </Badge>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="max-w-xs">
+              <ul className="text-xs space-y-0.5">
+                {fields.map(f => (
+                  <li key={f.key}>{f.label}</li>
+                ))}
+              </ul>
+            </TooltipContent>
+          </Tooltip>
+        ))}
+      </div>
+    </TooltipProvider>
+  );
 }
 
 // =============================================================================
@@ -498,7 +681,6 @@ function SendInfoRequestDialog({
   const [customMessage, setCustomMessage] = useState('');
   const sendInfoRequest = useSendInfoRequest();
 
-  // Get current user ID
   const { data: currentUser } = useQuery({
     queryKey: ['current-user'],
     queryFn: async () => {
@@ -521,10 +703,10 @@ function SendInfoRequestDialog({
   const selectedName =
     recipientType === 'requester' ? requesterName : ownerName;
 
-  // Check if request already pending for this recipient type
   const pendingRequest = order.infoRequests.find(
     r =>
-      r.recipient_type === recipientType && !r.completed_at && !r.cancelled_at
+      r.recipient_type === recipientType &&
+      getInfoRequestStatus(r) === 'pending'
   );
 
   const handleSend = async () => {
@@ -635,7 +817,10 @@ function SendInfoRequestDialog({
             <div className="bg-gray-50 rounded-lg p-3 space-y-1">
               {order.missingFields.fields.map(f => (
                 <div key={f.key} className="flex items-center gap-2 text-sm">
-                  <Badge variant="outline" className="text-xs">
+                  <Badge
+                    variant="outline"
+                    className={cn('text-xs', CATEGORY_BADGE_COLORS[f.category])}
+                  >
                     {f.category}
                   </Badge>
                   <span>{f.label}</span>
@@ -700,32 +885,114 @@ function SendInfoRequestDialog({
 }
 
 // =============================================================================
-// COMPONENTS - MISSING FIELDS TAB
+// COMPONENTS - ORDER CARD (SHARED)
 // =============================================================================
 
-function MissingFieldsTab() {
-  const { data: orders, isLoading } = useOrdersWithMissingFields();
-  const [filter, setFilter] = useState<MissingFieldsFilter>('all');
+function OrderCard({
+  order,
+  onSendRequest,
+  variant,
+}: {
+  order: OrderWithMissing;
+  onSendRequest: () => void;
+  variant: 'missing' | 'waiting';
+}) {
+  const pendingReqs = order.infoRequests.filter(
+    r => getInfoRequestStatus(r) === 'pending'
+  );
+  const latestPending = pendingReqs[0];
+
+  return (
+    <Card>
+      <CardContent className="py-4">
+        <div className="flex items-start justify-between gap-4">
+          <div className="space-y-2 min-w-0 flex-1">
+            {/* Order info */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-bold text-lg">{order.order_number}</span>
+              <Separator orientation="vertical" className="h-4" />
+              <span className="text-gray-600">
+                {order.organisationName ?? '-'}
+              </span>
+              <Separator orientation="vertical" className="h-4" />
+              <span className="font-medium text-green-600">
+                {formatCurrency(order.total_ttc)}
+              </span>
+            </div>
+
+            {/* Category badges */}
+            <CategoryBadges missingFields={order.missingFields} />
+
+            {/* Request status for waiting variant */}
+            {variant === 'waiting' && latestPending && (
+              <div className="flex items-center gap-2 text-sm bg-amber-50 rounded-lg p-2">
+                <Mail className="h-3.5 w-3.5 text-amber-600 flex-shrink-0" />
+                <span className="text-amber-700">
+                  Envoyé à <strong>{latestPending.recipient_email}</strong> (
+                  {latestPending.recipient_type === 'requester'
+                    ? 'demandeur'
+                    : 'propriétaire'}
+                  )
+                </span>
+                <Separator orientation="vertical" className="h-3" />
+                <span className="text-amber-600 flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  {formatTimeAgo(latestPending.sent_at)}
+                </span>
+              </div>
+            )}
+
+            {/* No request for missing variant */}
+            {variant === 'missing' && (
+              <div className="flex items-center gap-1 text-sm text-gray-400">
+                <Mail className="h-3.5 w-3.5" />
+                Aucune demande envoyée
+              </div>
+            )}
+          </div>
+
+          {/* Action button */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onSendRequest}
+            className="flex-shrink-0"
+          >
+            {variant === 'waiting' ? (
+              <>
+                <RotateCcw className="h-4 w-4 mr-1" />
+                Relancer
+              </>
+            ) : (
+              <>
+                <Send className="h-4 w-4 mr-1" />
+                Envoyer demande
+              </>
+            )}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// =============================================================================
+// COMPONENTS - MISSING FIELDS TAB (ONLY WITHOUT PENDING REQUESTS)
+// =============================================================================
+
+function MissingFieldsTab({
+  orders,
+  isLoading,
+}: {
+  orders: OrderWithMissing[] | undefined;
+  isLoading: boolean;
+}) {
   const [dialogOrder, setDialogOrder] = useState<OrderWithMissing | null>(null);
 
   const filteredOrders = useMemo(() => {
     if (!orders) return [];
-    return orders.filter(order => {
-      if (filter === 'no_request') {
-        return order.infoRequests.every(r => r.completed_at || r.cancelled_at);
-      }
-      if (filter === 'request_sent') {
-        return order.infoRequests.some(r => !r.completed_at && !r.cancelled_at);
-      }
-      return true;
-    });
-  }, [orders, filter]);
-
-  const pendingRequestCount = useMemo(() => {
-    if (!orders) return 0;
-    return orders.filter(o =>
-      o.infoRequests.some(r => !r.completed_at && !r.cancelled_at)
-    ).length;
+    // Only orders WITHOUT a pending info request
+    return orders.filter(order => !hasPendingRequest(order));
   }, [orders]);
 
   if (isLoading) {
@@ -740,139 +1007,35 @@ function MissingFieldsTab() {
 
   return (
     <div className="space-y-4">
-      {/* Stats */}
       <div className="flex items-center gap-4 text-sm">
-        <Badge variant="destructive">{orders?.length ?? 0} incomplète(s)</Badge>
-        {pendingRequestCount > 0 && (
-          <Badge variant="secondary">
-            <Clock className="h-3 w-3 mr-1" />
-            {pendingRequestCount} demande(s) en attente
-          </Badge>
-        )}
+        <Badge variant="destructive">
+          {filteredOrders.length} commande(s) sans demande
+        </Badge>
       </div>
 
-      {/* Filters */}
-      <div className="flex gap-2">
-        {(
-          [
-            { value: 'all', label: 'Toutes' },
-            { value: 'no_request', label: 'Sans demande' },
-            { value: 'request_sent', label: 'Demande envoyée' },
-          ] as const
-        ).map(f => (
-          <Button
-            key={f.value}
-            variant={filter === f.value ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setFilter(f.value)}
-          >
-            {f.label}
-          </Button>
-        ))}
-      </div>
-
-      {/* Orders list */}
       {filteredOrders.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center text-gray-500">
             <CheckCircle2 className="h-12 w-12 mx-auto mb-4 text-green-300" />
-            <p className="font-medium">Aucune commande avec infos manquantes</p>
+            <p className="font-medium">
+              Toutes les commandes ont une demande en cours
+            </p>
             <p className="text-sm mt-1">
-              {filter !== 'all'
-                ? 'Essayez un autre filtre'
-                : 'Toutes les commandes sont complètes'}
+              Consultez l&apos;onglet &laquo; En attente de retour &raquo;
             </p>
           </CardContent>
         </Card>
       ) : (
-        filteredOrders.map(order => {
-          const pendingReqs = order.infoRequests.filter(
-            r => !r.completed_at && !r.cancelled_at
-          );
-          const latestPending = pendingReqs[0];
-
-          return (
-            <Card key={order.id}>
-              <CardContent className="py-4">
-                <div className="flex items-start justify-between">
-                  <div className="space-y-2">
-                    {/* Order info */}
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-lg">
-                        {order.order_number}
-                      </span>
-                      <Separator orientation="vertical" className="h-4" />
-                      <span className="text-gray-600">
-                        {order.organisationName ?? '-'}
-                      </span>
-                      <Separator orientation="vertical" className="h-4" />
-                      <span className="font-medium text-green-600">
-                        {formatCurrency(order.total_ttc)}
-                      </span>
-                    </div>
-
-                    {/* Missing fields */}
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <Badge
-                        variant={
-                          order.missingFields.total > 3
-                            ? 'destructive'
-                            : 'secondary'
-                        }
-                      >
-                        {order.missingFields.total} champ(s) manquant(s)
-                      </Badge>
-                      {order.missingFields.fields.slice(0, 4).map(f => (
-                        <span key={f.key} className="text-xs text-gray-500">
-                          {f.label}
-                        </span>
-                      ))}
-                      {order.missingFields.total > 4 && (
-                        <span className="text-xs text-gray-400">
-                          +{order.missingFields.total - 4} autres
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Request status */}
-                    <div className="flex items-center gap-2 text-sm">
-                      {latestPending ? (
-                        <span className="flex items-center gap-1 text-amber-600">
-                          <Mail className="h-3.5 w-3.5" />
-                          Envoyé le{' '}
-                          {new Date(latestPending.sent_at).toLocaleDateString(
-                            'fr-FR'
-                          )}{' '}
-                          à {latestPending.recipient_email}
-                          <Clock className="h-3.5 w-3.5 ml-1" />
-                          En attente
-                        </span>
-                      ) : (
-                        <span className="flex items-center gap-1 text-gray-400">
-                          <Mail className="h-3.5 w-3.5" />
-                          Aucune demande envoyée
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Send button */}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setDialogOrder(order)}
-                  >
-                    <Send className="h-4 w-4 mr-1" />
-                    Envoyer demande
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })
+        filteredOrders.map(order => (
+          <OrderCard
+            key={order.id}
+            order={order}
+            variant="missing"
+            onSendRequest={() => setDialogOrder(order)}
+          />
+        ))
       )}
 
-      {/* Dialog */}
       {dialogOrder && (
         <SendInfoRequestDialog
           order={dialogOrder}
@@ -882,6 +1045,284 @@ function MissingFieldsTab() {
       )}
     </div>
   );
+}
+
+// =============================================================================
+// COMPONENTS - WAITING TAB (ORDERS WITH PENDING REQUESTS)
+// =============================================================================
+
+function WaitingTab({
+  orders,
+  isLoading,
+}: {
+  orders: OrderWithMissing[] | undefined;
+  isLoading: boolean;
+}) {
+  const [dialogOrder, setDialogOrder] = useState<OrderWithMissing | null>(null);
+
+  const filteredOrders = useMemo(() => {
+    if (!orders) return [];
+    // Only orders WITH a pending info request
+    return orders.filter(order => hasPendingRequest(order));
+  }, [orders]);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-12 w-full" />
+        <Skeleton className="h-32 w-full" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-4 text-sm">
+        <Badge variant="secondary">
+          <Hourglass className="h-3 w-3 mr-1" />
+          {filteredOrders.length} en attente de retour
+        </Badge>
+      </div>
+
+      {filteredOrders.length === 0 ? (
+        <Card>
+          <CardContent className="py-12 text-center text-gray-500">
+            <Mail className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+            <p className="font-medium">Aucune demande en attente</p>
+            <p className="text-sm mt-1">
+              Les demandes envoyées apparaîtront ici
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        filteredOrders.map(order => (
+          <OrderCard
+            key={order.id}
+            order={order}
+            variant="waiting"
+            onSendRequest={() => setDialogOrder(order)}
+          />
+        ))
+      )}
+
+      {dialogOrder && (
+        <SendInfoRequestDialog
+          order={dialogOrder}
+          open={!!dialogOrder}
+          onOpenChange={open => !open && setDialogOrder(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+// =============================================================================
+// COMPONENTS - HISTORY TAB
+// =============================================================================
+
+function HistoryStatusBadge({ item }: { item: InfoRequestHistoryItem }) {
+  if (item.completed_at) {
+    return (
+      <Badge className="bg-green-100 text-green-700 border-green-200">
+        <CheckCircle2 className="h-3 w-3 mr-1" />
+        Complété
+      </Badge>
+    );
+  }
+  if (item.cancelled_at) {
+    return (
+      <Badge className="bg-gray-100 text-gray-600 border-gray-200">
+        <XCircle className="h-3 w-3 mr-1" />
+        {item.cancelled_reason === 'completed_by_other'
+          ? 'Autre réponse'
+          : 'Annulé'}
+      </Badge>
+    );
+  }
+  if (item.token_expires_at && new Date(item.token_expires_at) < new Date()) {
+    return (
+      <Badge className="bg-gray-100 text-gray-500 border-gray-200">
+        <Clock className="h-3 w-3 mr-1" />
+        Expiré
+      </Badge>
+    );
+  }
+  return (
+    <Badge className="bg-amber-100 text-amber-700 border-amber-200">
+      <Hourglass className="h-3 w-3 mr-1" />
+      En attente
+    </Badge>
+  );
+}
+
+function HistoryTab() {
+  const { data: history, isLoading } = useInfoRequestHistory();
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-12 w-full" />
+        <Skeleton className="h-16 w-full" />
+        <Skeleton className="h-16 w-full" />
+        <Skeleton className="h-16 w-full" />
+      </div>
+    );
+  }
+
+  if (!history || history.length === 0) {
+    return (
+      <Card>
+        <CardContent className="py-12 text-center text-gray-500">
+          <History className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+          <p className="font-medium">Aucune demande envoyée</p>
+          <p className="text-sm mt-1">
+            L&apos;historique des demandes d&apos;informations apparaîtra ici
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="text-sm text-gray-500">
+        {history.length} demande(s) (50 dernières)
+      </div>
+
+      {history.map(item => {
+        const isExpanded = expandedId === item.id;
+        const submittedEntries = item.submitted_data
+          ? Object.entries(item.submitted_data)
+          : [];
+
+        return (
+          <Card key={item.id}>
+            <CardContent className="py-3">
+              <button
+                type="button"
+                className="w-full text-left"
+                onClick={() => setExpandedId(isExpanded ? null : item.id)}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <span className="font-semibold text-sm">
+                      {item.order_number}
+                    </span>
+                    <Separator orientation="vertical" className="h-4" />
+                    <span className="text-sm text-gray-600 truncate">
+                      {item.recipient_email}
+                    </span>
+                    <Badge variant="outline" className="text-xs">
+                      {item.recipient_type === 'requester'
+                        ? 'Demandeur'
+                        : 'Propriétaire'}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <HistoryStatusBadge item={item} />
+                    <span className="text-xs text-gray-400">
+                      {new Date(item.sent_at).toLocaleDateString('fr-FR', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </span>
+                  </div>
+                </div>
+              </button>
+
+              {/* Expanded details */}
+              {isExpanded && (
+                <div className="mt-3 pt-3 border-t space-y-2">
+                  {item.custom_message && (
+                    <div className="text-sm">
+                      <span className="font-medium text-gray-700">
+                        Message :
+                      </span>{' '}
+                      <span className="text-gray-500 italic">
+                        &laquo; {item.custom_message} &raquo;
+                      </span>
+                    </div>
+                  )}
+
+                  {item.completed_at && (
+                    <div className="text-sm space-y-1">
+                      <div className="flex items-center gap-2 text-green-700">
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        Complété le{' '}
+                        {new Date(item.completed_at).toLocaleDateString(
+                          'fr-FR'
+                        )}
+                        {item.completed_by_email &&
+                          ` par ${item.completed_by_email}`}
+                      </div>
+
+                      {submittedEntries.length > 0 && (
+                        <div className="bg-green-50 rounded-lg p-2 mt-1">
+                          <p className="text-xs font-medium text-green-800 mb-1">
+                            Champs remplis ({submittedEntries.length}) :
+                          </p>
+                          <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
+                            {submittedEntries.map(([key, val]) => (
+                              <div key={key} className="text-xs text-green-700">
+                                <span className="text-green-600">
+                                  {formatFieldLabel(key)}
+                                </span>
+                                : {val}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {item.cancelled_at && (
+                    <div className="text-sm text-gray-500 flex items-center gap-1">
+                      <XCircle className="h-3.5 w-3.5" />
+                      Annulé le{' '}
+                      {new Date(item.cancelled_at).toLocaleDateString('fr-FR')}
+                      {item.cancelled_reason === 'completed_by_other' &&
+                        ' (autre destinataire a répondu)'}
+                    </div>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        );
+      })}
+    </div>
+  );
+}
+
+/** Format a field key to a readable label */
+function formatFieldLabel(key: string): string {
+  const labels: Record<string, string> = {
+    requester_name: 'Nom demandeur',
+    requester_email: 'Email demandeur',
+    requester_phone: 'Tél. demandeur',
+    owner_name: 'Nom propriétaire',
+    owner_email: 'Email propriétaire',
+    owner_phone: 'Tél. propriétaire',
+    owner_company_legal_name: 'Raison sociale',
+    billing_name: 'Contact facturation',
+    billing_email: 'Email facturation',
+    billing_phone: 'Tél. facturation',
+    delivery_contact_name: 'Contact livraison',
+    delivery_contact_email: 'Email livraison',
+    delivery_contact_phone: 'Tél. livraison',
+    delivery_address: 'Adresse',
+    delivery_postal_code: 'Code postal',
+    delivery_city: 'Ville',
+    desired_delivery_date: 'Date souhaitée',
+    mall_email: 'Email centre commercial',
+    organisation_siret: 'SIRET',
+  };
+  return labels[key] ?? key.replace(/_/g, ' ');
 }
 
 // =============================================================================
@@ -1262,8 +1703,17 @@ function NotificationsTab() {
 // =============================================================================
 
 export default function MessagesPage() {
-  const { data: orders } = useOrdersWithMissingFields();
-  const missingCount = orders?.length ?? 0;
+  const { data: orders, isLoading } = useOrdersWithMissingFields();
+
+  const missingCount = useMemo(() => {
+    if (!orders) return 0;
+    return orders.filter(o => !hasPendingRequest(o)).length;
+  }, [orders]);
+
+  const waitingCount = useMemo(() => {
+    if (!orders) return 0;
+    return orders.filter(o => hasPendingRequest(o)).length;
+  }, [orders]);
 
   return (
     <div className="p-6 space-y-6">
@@ -1277,7 +1727,7 @@ export default function MessagesPage() {
             Centre de messagerie LinkMe
           </h1>
           <p className="text-sm text-gray-500">
-            Demandes d&apos;informations et notifications affiliés
+            Demandes d&apos;informations, suivi et notifications affiliés
           </p>
         </div>
       </div>
@@ -1297,6 +1747,22 @@ export default function MessagesPage() {
               </Badge>
             )}
           </TabsTrigger>
+          <TabsTrigger value="waiting" className="gap-2">
+            <Hourglass className="h-4 w-4" />
+            En attente de retour
+            {waitingCount > 0 && (
+              <Badge
+                variant="secondary"
+                className="ml-1 h-5 min-w-[20px] px-1.5"
+              >
+                {waitingCount}
+              </Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="history" className="gap-2">
+            <History className="h-4 w-4" />
+            Historique
+          </TabsTrigger>
           <TabsTrigger value="notifications" className="gap-2">
             <Bell className="h-4 w-4" />
             Notifications affiliés
@@ -1304,7 +1770,15 @@ export default function MessagesPage() {
         </TabsList>
 
         <TabsContent value="missing-fields" className="mt-6">
-          <MissingFieldsTab />
+          <MissingFieldsTab orders={orders} isLoading={isLoading} />
+        </TabsContent>
+
+        <TabsContent value="waiting" className="mt-6">
+          <WaitingTab orders={orders} isLoading={isLoading} />
+        </TabsContent>
+
+        <TabsContent value="history" className="mt-6">
+          <HistoryTab />
         </TabsContent>
 
         <TabsContent value="notifications" className="mt-6">
