@@ -12541,6 +12541,7 @@ export type Database = {
         | 'mezzanine'
         | 'sous_sol';
       sales_order_status:
+        | 'pending_approval'
         | 'draft'
         | 'validated'
         | 'partially_shipped'
@@ -12902,6 +12903,7 @@ export const Constants = {
         'sous_sol',
       ],
       sales_order_status: [
+        'pending_approval',
         'draft',
         'validated',
         'partially_shipped',

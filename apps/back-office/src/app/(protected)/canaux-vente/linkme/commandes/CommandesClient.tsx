@@ -85,7 +85,7 @@ export default function CommandesClient() {
   // Compter les commandes en attente de validation via hook dédié
   const { data: pendingValidationCount = 0 } = usePendingOrdersCount();
 
-  // Colonnes additionnelles pour LinkMe (avec colonne Canal et Approbation)
+  // Colonnes additionnelles pour LinkMe (colonne Canal + Marge)
   const additionalColumns = useMemo(
     () => [
       {
@@ -99,26 +99,6 @@ export default function CommandesClient() {
             >
               {channel.label}
             </span>
-          );
-        },
-      },
-      {
-        key: 'approval_status',
-        header: 'Approbation',
-        cell: (order: SalesOrder) => {
-          return order.pending_admin_validation ? (
-            <Badge variant="destructive" className="text-xs gap-1">
-              <AlertCircle className="h-3 w-3" />
-              En attente
-            </Badge>
-          ) : (
-            <Badge
-              variant="outline"
-              className="text-xs gap-1 border-green-300 text-green-700 bg-green-50"
-            >
-              <CheckCircle2 className="h-3 w-3" />
-              Approuvée
-            </Badge>
           );
         },
       },

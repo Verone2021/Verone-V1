@@ -109,6 +109,7 @@ const LINKME_CHANNEL_ID = '93c68db1-5a30-4168-89ec-6383152be405';
 const SITE_INTERNET_CHANNEL_ID = '0c2639e9-df80-41fa-84d0-9da96a128f7f';
 
 const statusLabels: Record<SalesOrderStatus, string> = {
+  pending_approval: "En attente d'approbation",
   draft: 'Brouillon',
   validated: 'Validee',
   partially_shipped: 'Partiellement expediee',
@@ -117,6 +118,7 @@ const statusLabels: Record<SalesOrderStatus, string> = {
 };
 
 const statusColors: Record<SalesOrderStatus, string> = {
+  pending_approval: 'bg-orange-100 text-orange-800',
   draft: 'bg-gray-100 text-gray-800',
   validated: 'bg-blue-100 text-blue-800',
   partially_shipped: 'bg-amber-100 text-amber-800',

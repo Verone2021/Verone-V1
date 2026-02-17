@@ -35,6 +35,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
  * mais plus utilisé dans le workflow actif (shipped = statut final)
  */
 export type SalesOrderStatus =
+  | 'pending_approval'
   | 'draft'
   | 'validated'
   | 'partially_shipped'
@@ -94,6 +95,7 @@ export interface SalesOrderData {
  * États finaux: shipped, cancelled (pas de retour arrière)
  */
 const STATUS_TRANSITIONS: Record<SalesOrderStatus, SalesOrderStatus[]> = {
+  pending_approval: ['draft', 'cancelled'],
   draft: ['validated', 'cancelled'],
   validated: ['partially_shipped', 'shipped', 'cancelled'],
   partially_shipped: ['shipped', 'cancelled'],
@@ -106,6 +108,7 @@ const STATUS_TRANSITIONS: Record<SalesOrderStatus, SalesOrderStatus[]> = {
  * Labels humains pour statuts (i18n-ready)
  */
 export const STATUS_LABELS: Record<SalesOrderStatus, string> = {
+  pending_approval: "En attente d'approbation",
   draft: 'Brouillon',
   validated: 'Validée',
   partially_shipped: 'Partiellement expédiée',
@@ -119,8 +122,9 @@ export const STATUS_LABELS: Record<SalesOrderStatus, string> = {
  */
 export const STATUS_COLORS: Record<
   SalesOrderStatus,
-  'gray' | 'blue' | 'yellow' | 'green' | 'red'
+  'gray' | 'blue' | 'yellow' | 'green' | 'red' | 'orange'
 > = {
+  pending_approval: 'orange',
   draft: 'gray',
   validated: 'blue',
   partially_shipped: 'yellow',

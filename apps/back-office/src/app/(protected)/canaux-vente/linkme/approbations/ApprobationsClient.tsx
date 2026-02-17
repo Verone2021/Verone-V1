@@ -4,7 +4,7 @@
  * Page Approbations LinkMe - Back-Office
  *
  * 3 onglets de validation:
- * - Commandes: pending_admin_validation = true
+ * - Commandes: status = 'pending_approval'
  * - Produits: affiliate_approval_status = 'pending_approval'
  * - Organisations: approval_status = 'pending_validation'
  *

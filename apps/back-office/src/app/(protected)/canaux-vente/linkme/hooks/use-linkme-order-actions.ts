@@ -144,7 +144,7 @@ async function approveOrder(
   // 0. Guard double-action: vérifier que la commande est bien en attente
   const { data: currentOrder, error: guardError } = await supabase
     .from('sales_orders')
-    .select('status, pending_admin_validation')
+    .select('status')
     .eq('id', input.orderId)
     .single();
 
@@ -152,7 +152,7 @@ async function approveOrder(
     throw new Error(`Erreur vérification commande: ${guardError.message}`);
   }
 
-  if (!currentOrder?.pending_admin_validation) {
+  if (currentOrder?.status !== 'pending_approval') {
     throw new Error('Cette commande a déjà été traitée (approuvée ou refusée)');
   }
 
@@ -288,10 +288,8 @@ async function approveOrder(
   const { error: orderError } = await supabase
     .from('sales_orders')
     .update({
-      status: 'validated',
+      status: 'draft',
       pending_admin_validation: false,
-      confirmed_at: new Date().toISOString(),
-      confirmed_by: currentUserId,
       updated_at: new Date().toISOString(),
     } as Record<string, unknown>)
     .eq('id', input.orderId);
@@ -450,7 +448,7 @@ async function rejectOrder(
   // 0. Guard double-action: vérifier que la commande est bien en attente
   const { data: currentOrder, error: guardError } = await supabase
     .from('sales_orders')
-    .select('status, pending_admin_validation')
+    .select('status')
     .eq('id', input.orderId)
     .single();
 
@@ -458,7 +456,7 @@ async function rejectOrder(
     throw new Error(`Erreur vérification commande: ${guardError.message}`);
   }
 
-  if (!currentOrder?.pending_admin_validation) {
+  if (currentOrder?.status !== 'pending_approval') {
     throw new Error('Cette commande a déjà été traitée (approuvée ou refusée)');
   }
 
@@ -506,7 +504,6 @@ async function rejectOrder(
     .from('sales_orders')
     .update({
       status: 'cancelled',
-      pending_admin_validation: false,
       cancelled_at: new Date().toISOString(),
       cancelled_by: rejectUserId,
       notes: updatedNotes,
@@ -781,7 +778,7 @@ export function usePendingOrdersCount() {
       const { count, error } = await supabase
         .from('sales_orders')
         .select('*', { count: 'exact', head: true })
-        .eq('pending_admin_validation', true);
+        .eq('status', 'pending_approval');
 
       if (error) {
         console.error('Error fetching pending orders count:', error);
@@ -806,7 +803,7 @@ export function usePendingOrders() {
     queryFn: async (): Promise<PendingOrder[]> => {
       const supabase = createClient();
 
-      // Fetch orders with pending_admin_validation = true
+      // Fetch orders with status = pending_approval
       const { data: orders, error } = await supabase
         .from('sales_orders')
         .select(
@@ -854,7 +851,7 @@ export function usePendingOrders() {
           )
         `
         )
-        .eq('pending_admin_validation', true)
+        .eq('status', 'pending_approval')
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -1025,8 +1022,8 @@ export type OrderValidationStatus = 'pending' | 'approved' | 'rejected';
 
 /**
  * Hook: récupère toutes les commandes LinkMe avec filtre par status de validation
- * - pending: pending_admin_validation = true
- * - approved: pending_admin_validation = false AND status != 'cancelled'
+ * - pending: status = 'pending_approval'
+ * - approved: status != 'pending_approval' AND status != 'cancelled'
  * - rejected: status = 'cancelled'
  */
 export function useAllLinkMeOrders(status?: OrderValidationStatus) {
@@ -1048,7 +1045,6 @@ export function useAllLinkMeOrders(status?: OrderValidationStatus) {
           created_at,
           customer_id,
           customer_type,
-          pending_admin_validation,
           sales_order_linkme_details (
             is_new_restaurant,
             requester_type,
@@ -1088,10 +1084,10 @@ export function useAllLinkMeOrders(status?: OrderValidationStatus) {
 
       // Apply status filter
       if (status === 'pending') {
-        query = query.eq('pending_admin_validation', true);
+        query = query.eq('status', 'pending_approval');
       } else if (status === 'approved') {
         query = query
-          .eq('pending_admin_validation', false)
+          .neq('status', 'pending_approval')
           .neq('status', 'cancelled');
       } else if (status === 'rejected') {
         query = query.eq('status', 'cancelled');
