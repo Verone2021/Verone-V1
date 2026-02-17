@@ -1151,6 +1151,25 @@ export function CreateLinkMeOrderModal({
                             .join(', ')}
                         </p>
                       )}
+                    {customerType === 'organization' && (
+                      <p className="text-sm">
+                        {(selectedCustomer as EnseigneOrganisationCustomer)
+                          .siret ? (
+                          <span className="text-purple-700">
+                            SIRET:{' '}
+                            {
+                              (selectedCustomer as EnseigneOrganisationCustomer)
+                                .siret
+                            }
+                          </span>
+                        ) : (
+                          <span className="text-amber-600 font-medium">
+                            <AlertCircle className="h-3 w-3 inline mr-1" />
+                            SIRET manquant
+                          </span>
+                        )}
+                      </p>
+                    )}
                   </div>
                 </div>
                 <button
