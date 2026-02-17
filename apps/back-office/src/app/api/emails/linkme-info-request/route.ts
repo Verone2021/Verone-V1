@@ -9,6 +9,8 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
 
+import { buildEmailHtml } from '../_shared/email-template';
+
 function getResendClient(): Resend {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
@@ -138,7 +140,7 @@ export async function POST(request: NextRequest) {
     const customMessageHtml = customMessage
       ? `
       <div style="background-color: #ffffff; padding: 16px; border-radius: 6px; margin: 16px 0; border-left: 3px solid #f59e0b;">
-        <p style="margin: 0 0 4px 0; color: #78350f; font-weight: bold; font-size: 14px;">Message de notre équipe :</p>
+        <p style="margin: 0 0 4px 0; color: #78350f; font-weight: bold; font-size: 14px;">Message de notre &eacute;quipe :</p>
         <p style="margin: 0; color: #1f2937; white-space: pre-wrap;">${customMessage}</p>
       </div>`
       : '';
@@ -148,61 +150,36 @@ export async function POST(request: NextRequest) {
       currency: 'EUR',
     }).format(totalTtc);
 
-    const emailHtml = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-  <div style="background-color: #fef3c7; padding: 30px; border-radius: 8px; border-left: 4px solid #f59e0b;">
-    <h1 style="color: #92400e; font-size: 22px; margin: 0 0 20px 0;">
-      Informations complémentaires requises
-    </h1>
+    const bodyHtml = `
+      <p style="margin: 0 0 16px 0;">
+        Concernant votre commande <strong>${orderNumber}</strong>${organisationName ? ` pour <strong>${organisationName}</strong>` : ''}
+        d&rsquo;un montant de <strong>${formattedTotal}</strong>,
+        nous avons besoin d&rsquo;informations compl&eacute;mentaires pour pouvoir la traiter.
+      </p>
 
-    <p style="margin-bottom: 20px;">
-      Bonjour ${recipientName ?? 'Madame, Monsieur'},
-    </p>
+      <div style="background-color: #fff7ed; padding: 16px; border-radius: 6px; margin: 16px 0; border: 1px solid #fed7aa;">
+        <p style="margin: 0 0 8px 0; color: #9a3412; font-weight: bold; font-size: 14px;">Informations manquantes :</p>
+        ${fieldsHtml}
+      </div>
 
-    <p style="margin-bottom: 10px;">
-      Concernant votre commande <strong>${orderNumber}</strong>${organisationName ? ` pour <strong>${organisationName}</strong>` : ''}
-      d'un montant de <strong>${formattedTotal}</strong>,
-      nous avons besoin d'informations complémentaires pour pouvoir la traiter.
-    </p>
+      ${customMessageHtml}`;
 
-    <div style="background-color: #fff7ed; padding: 16px; border-radius: 6px; margin: 16px 0; border: 1px solid #fed7aa;">
-      <p style="margin: 0 0 8px 0; color: #9a3412; font-weight: bold; font-size: 14px;">Informations manquantes :</p>
-      ${fieldsHtml}
-    </div>
-
-    ${customMessageHtml}
-
-    <div style="text-align: center; margin: 30px 0;">
-      <a href="${formUrl}" style="display: inline-block; background-color: #059669; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: bold;">
-        Compléter les informations
-      </a>
-    </div>
-
-    <p style="color: #92400e; font-size: 13px; text-align: center; margin-top: 20px;">
-      Ce lien est valable 30 jours.
-    </p>
-
-    <hr style="border: none; border-top: 1px solid #fcd34d; margin: 30px 0;">
-
-    <p style="color: #92400e; font-size: 12px; text-align: center;">
-      Verone - Décoration et mobilier d'intérieur
-    </p>
-  </div>
-</body>
-</html>`;
+    const emailHtml = buildEmailHtml({
+      title: 'Informations compl\u00e9mentaires requises',
+      recipientName: recipientName ?? 'Madame, Monsieur',
+      accentColor: 'orange',
+      bodyHtml,
+      ctaUrl: formUrl,
+      ctaLabel: 'Compl\u00e9ter les informations',
+      footerNote: 'Ce lien est valable 30 jours.',
+    });
 
     const resendClient = getResendClient();
     const { data: emailData, error: emailError } =
       await resendClient.emails.send({
         from: process.env.RESEND_FROM_EMAIL ?? 'commandes@verone.fr',
         to: recipientEmail,
-        subject: `Commande ${orderNumber} - Informations complémentaires requises`,
+        subject: `Commande ${orderNumber} - Informations compl\u00e9mentaires requises`,
         html: emailHtml,
         replyTo: process.env.RESEND_REPLY_TO ?? 'commandes@verone.fr',
       });

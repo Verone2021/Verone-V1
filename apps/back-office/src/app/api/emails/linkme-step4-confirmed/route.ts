@@ -1,13 +1,15 @@
 /**
  * API Route: POST /api/emails/linkme-step4-confirmed
- * Envoie un email de confirmation quand l'Étape 4 est complétée
- * Notifie l'admin et le demandeur
+ * Sends confirmation email when Step 4 is completed
+ * Notifies admin and requester
  */
 
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 import { Resend } from 'resend';
+
+import { buildEmailHtml } from '../_shared/email-template';
 
 function getResendClient(): Resend {
   const apiKey = process.env.RESEND_API_KEY;
@@ -53,8 +55,6 @@ export async function POST(request: NextRequest) {
     }
 
     const resendClient = getResendClient();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Resend SDK returns complex types
-    const emails: Promise<any>[] = [];
 
     // Format date
     const formattedDate = confirmedDeliveryDate
@@ -64,107 +64,81 @@ export async function POST(request: NextRequest) {
           month: 'long',
           year: 'numeric',
         })
-      : 'Non spécifiée';
+      : 'Non sp\u00e9cifi\u00e9e';
 
-    // 1. Email au demandeur
-    const requesterEmailHtml = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-  <div style="background-color: #ecfdf5; padding: 30px; border-radius: 8px; border-left: 4px solid #10b981;">
-    <h1 style="color: #065f46; font-size: 22px; margin: 0 0 20px 0;">
-      ✓ Livraison confirmée
-    </h1>
-
-    <p style="margin-bottom: 20px;">
-      Bonjour ${requesterName},
-    </p>
-
-    <p style="margin-bottom: 20px;">
-      Les informations de livraison pour votre commande <strong>${orderNumber}</strong>${organisationName ? ` (${organisationName})` : ''} ont été confirmées.
-    </p>
-
-    <div style="background-color: #ffffff; padding: 20px; border-radius: 6px; margin: 20px 0;">
-      <h3 style="color: #065f46; margin: 0 0 15px 0; font-size: 16px;">Détails de la livraison</h3>
-      ${
-        receptionContactName
-          ? `<p style="margin: 5px 0;"><strong>Contact réception:</strong> ${receptionContactName}</p>`
-          : ''
-      }
-      ${
-        receptionContactEmail
-          ? `<p style="margin: 5px 0;"><strong>Email:</strong> ${receptionContactEmail}</p>`
-          : ''
-      }
-      <p style="margin: 5px 0;"><strong>Date de livraison:</strong> ${formattedDate}</p>
-    </div>
-
-    <p style="margin-bottom: 20px; color: #666;">
-      Nous vous contacterons prochainement pour organiser la livraison.
-    </p>
-
-    <hr style="border: none; border-top: 1px solid #a7f3d0; margin: 30px 0;">
-
-    <p style="color: #065f46; font-size: 12px; text-align: center;">
-      Verone - Décoration et mobilier d'intérieur
-    </p>
-  </div>
-</body>
-</html>
-    `;
-
-    emails.push(
-      resendClient.emails.send({
-        from: process.env.RESEND_FROM_EMAIL ?? 'commandes@verone.fr',
-        to: requesterEmail,
-        subject: `Commande ${orderNumber} - Livraison confirmée`,
-        html: requesterEmailHtml,
-        replyTo: process.env.RESEND_REPLY_TO ?? 'commandes@verone.fr',
-      })
-    );
-
-    // 2. Notification admin (optionnel)
-    if (notifyAdmin && adminEmail) {
-      const adminEmailHtml = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-</head>
-<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333;">
-  <div style="background-color: #f0f9ff; padding: 20px; border-radius: 8px; border-left: 4px solid #0ea5e9;">
-    <h2 style="color: #0369a1; margin: 0 0 15px 0;">
-      [LinkMe] Étape 4 complétée
-    </h2>
-    <p><strong>Commande:</strong> ${orderNumber}</p>
-    ${organisationName ? `<p><strong>Client:</strong> ${organisationName}</p>` : ''}
-    <p><strong>Contact réception:</strong> ${receptionContactName ?? 'Non spécifié'}</p>
-    <p><strong>Date confirmée:</strong> ${formattedDate}</p>
-    <hr style="border: none; border-top: 1px solid #bae6fd; margin: 15px 0;">
-    <p style="font-size: 12px; color: #666;">
-      La commande est prête pour planification de la livraison.
-    </p>
-  </div>
-</body>
-</html>
-      `;
-
-      emails.push(
-        resendClient.emails.send({
-          from: process.env.RESEND_FROM_EMAIL ?? 'commandes@verone.fr',
-          to: adminEmail,
-          subject: `[LinkMe] Étape 4 complétée - ${orderNumber}`,
-          html: adminEmailHtml,
-        })
+    // Build delivery details
+    const detailLines: string[] = [];
+    if (receptionContactName) {
+      detailLines.push(
+        `<p style="margin: 5px 0;"><strong>Contact r&eacute;ception :</strong> ${receptionContactName}</p>`
       );
     }
+    if (receptionContactEmail) {
+      detailLines.push(
+        `<p style="margin: 5px 0;"><strong>Email :</strong> ${receptionContactEmail}</p>`
+      );
+    }
+    detailLines.push(
+      `<p style="margin: 5px 0;"><strong>Date de livraison :</strong> ${formattedDate}</p>`
+    );
 
-    // Envoyer tous les emails
-    const results = await Promise.allSettled(emails);
+    // 1. Email to requester
+    const requesterBody = `
+      <p style="margin: 0 0 20px 0;">
+        Les informations de livraison pour votre commande <strong>${orderNumber}</strong>${organisationName ? ` (${organisationName})` : ''} ont &eacute;t&eacute; confirm&eacute;es.
+      </p>
+
+      <div style="background-color: #ffffff; padding: 20px; border-radius: 6px; margin: 20px 0;">
+        <h3 style="color: #065f46; margin: 0 0 15px 0; font-size: 16px;">D&eacute;tails de la livraison</h3>
+        ${detailLines.join('\n')}
+      </div>
+
+      <p style="margin: 0; color: #666;">
+        Nous vous contacterons prochainement pour organiser la livraison.
+      </p>`;
+
+    const requesterHtml = buildEmailHtml({
+      title: 'Livraison confirm\u00e9e',
+      recipientName: requesterName,
+      accentColor: 'green',
+      bodyHtml: requesterBody,
+    });
+
+    // Send requester email
+    const requesterResult = resendClient.emails.send({
+      from: process.env.RESEND_FROM_EMAIL ?? 'commandes@verone.fr',
+      to: requesterEmail,
+      subject: `Commande ${orderNumber} - Livraison confirm\u00e9e`,
+      html: requesterHtml,
+      replyTo: process.env.RESEND_REPLY_TO ?? 'commandes@verone.fr',
+    });
+
+    // 2. Admin notification (optional)
+    const adminResult =
+      notifyAdmin && adminEmail
+        ? resendClient.emails.send({
+            from: process.env.RESEND_FROM_EMAIL ?? 'commandes@verone.fr',
+            to: adminEmail,
+            subject: `[LinkMe] \u00c9tape 4 compl\u00e9t\u00e9e - ${orderNumber}`,
+            html: buildEmailHtml({
+              title: '\u00c9tape 4 compl\u00e9t\u00e9e',
+              recipientName: 'Admin',
+              accentColor: 'blue',
+              bodyHtml: `
+              <p style="margin: 0 0 10px 0;"><strong>Commande :</strong> ${orderNumber}</p>
+              ${organisationName ? `<p style="margin: 0 0 10px 0;"><strong>Client :</strong> ${organisationName}</p>` : ''}
+              <p style="margin: 0 0 10px 0;"><strong>Contact r&eacute;ception :</strong> ${receptionContactName ?? 'Non sp\u00e9cifi\u00e9'}</p>
+              <p style="margin: 0 0 10px 0;"><strong>Date confirm&eacute;e :</strong> ${formattedDate}</p>
+              <p style="margin: 16px 0 0 0; font-size: 13px; color: #666;">
+                La commande est pr&ecirc;te pour planification de la livraison.
+              </p>`,
+            }),
+          })
+        : null;
+
+    // Send all emails
+    const promises = [requesterResult, adminResult].filter(Boolean);
+    const results = await Promise.allSettled(promises);
 
     const failures = results.filter(r => r.status === 'rejected');
     if (failures.length > 0) {
