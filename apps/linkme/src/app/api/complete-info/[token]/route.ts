@@ -1,6 +1,6 @@
 /**
  * API Route: GET /api/complete-info/[token]
- * Validates token and returns info request + order summary for public form
+ * Validates token and returns info request + order summary + existing data for public form
  * Uses service_role to bypass RLS (no anon policies on linkme_info_requests)
  */
 
@@ -48,7 +48,7 @@ export async function GET(_request: Request, { params }: RouteParams) {
       const expiresAt = new Date(infoRequest.token_expires_at);
       if (expiresAt < new Date()) {
         return NextResponse.json(
-          { error: 'Ce lien a expiré', code: 'EXPIRED' },
+          { error: 'Ce lien a expir\u00e9', code: 'EXPIRED' },
           { status: 410 }
         );
       }
@@ -59,7 +59,7 @@ export async function GET(_request: Request, { params }: RouteParams) {
       return NextResponse.json(
         {
           error:
-            "Ces informations ont déjà été complétées par quelqu'un d'autre",
+            "Ces informations ont d\u00e9j\u00e0 \u00e9t\u00e9 compl\u00e9t\u00e9es par quelqu'un d'autre",
           code: 'CANCELLED',
           cancelledReason: infoRequest.cancelled_reason,
         },
@@ -71,7 +71,7 @@ export async function GET(_request: Request, { params }: RouteParams) {
     if (infoRequest.completed_at) {
       return NextResponse.json(
         {
-          error: 'Ces informations ont déjà été soumises',
+          error: 'Ces informations ont d\u00e9j\u00e0 \u00e9t\u00e9 soumises',
           code: 'ALREADY_COMPLETED',
           completedAt: infoRequest.completed_at,
           completedByEmail: infoRequest.completed_by_email,
@@ -91,11 +91,20 @@ export async function GET(_request: Request, { params }: RouteParams) {
         status,
         customer_id,
         organisations!sales_orders_customer_id_fkey (
-          id, trade_name, legal_name
+          id, trade_name, legal_name, siret
         )
       `
       )
       .eq('id', infoRequest.sales_order_id)
+      .single();
+
+    // Fetch linkme details for existing data
+    const { data: linkmeDetails } = await supabase
+      .from('sales_order_linkme_details')
+      .select(
+        'requester_name, requester_email, requester_phone, requester_position, billing_name, billing_email, billing_phone, delivery_contact_name, delivery_contact_email, delivery_contact_phone, delivery_address, delivery_postal_code, delivery_city'
+      )
+      .eq('sales_order_id', infoRequest.sales_order_id)
       .single();
 
     // Build response
@@ -103,8 +112,27 @@ export async function GET(_request: Request, { params }: RouteParams) {
       id: string;
       trade_name: string | null;
       legal_name: string;
+      siret: string | null;
     }> | null;
     const organisation = orgArray?.[0] ?? null;
+
+    // Build existingData from linkme_details + organisation
+    const existingData: Record<string, string | null> = {
+      requester_name: linkmeDetails?.requester_name ?? null,
+      requester_email: linkmeDetails?.requester_email ?? null,
+      requester_phone: linkmeDetails?.requester_phone ?? null,
+      requester_position: linkmeDetails?.requester_position ?? null,
+      billing_name: linkmeDetails?.billing_name ?? null,
+      billing_email: linkmeDetails?.billing_email ?? null,
+      billing_phone: linkmeDetails?.billing_phone ?? null,
+      delivery_contact_name: linkmeDetails?.delivery_contact_name ?? null,
+      delivery_contact_email: linkmeDetails?.delivery_contact_email ?? null,
+      delivery_contact_phone: linkmeDetails?.delivery_contact_phone ?? null,
+      delivery_address: linkmeDetails?.delivery_address ?? null,
+      delivery_postal_code: linkmeDetails?.delivery_postal_code ?? null,
+      delivery_city: linkmeDetails?.delivery_city ?? null,
+      organisation_siret: organisation?.siret ?? null,
+    };
 
     return NextResponse.json({
       infoRequest: {
@@ -124,6 +152,7 @@ export async function GET(_request: Request, { params }: RouteParams) {
               organisation?.trade_name ?? organisation?.legal_name ?? null,
           }
         : null,
+      existingData,
     });
   } catch (error) {
     console.error('[API complete-info GET] error:', error);
