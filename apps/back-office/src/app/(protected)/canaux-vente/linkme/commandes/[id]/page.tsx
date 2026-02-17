@@ -603,10 +603,12 @@ export default function LinkMeOrderDetailPage() {
       });
       await requestInfo.mutateAsync({
         orderId,
-        message: requestMessage,
+        customMessage: requestMessage || undefined,
         missingFields: missingFields.fields.map(f => ({
+          key: f.key,
           label: f.label,
           category: f.category,
+          inputType: f.inputType,
         })),
       });
       setShowRequestInfoDialog(false);

@@ -24,15 +24,19 @@ export interface ApproveOrderInput {
 }
 
 export interface RequestInfoMissingField {
+  key: string;
   label: string;
   category: string;
+  inputType: string;
 }
 
 export interface RequestInfoInput {
   orderId: string;
-  message: string;
-  /** Champs manquants détectés automatiquement (enrichit l'email) */
-  missingFields?: RequestInfoMissingField[];
+  customMessage?: string;
+  /** Champs manquants détectés — envoyés au formulaire interactif */
+  missingFields: RequestInfoMissingField[];
+  /** Destinataire : demandeur ou propriétaire */
+  recipientType?: 'requester' | 'owner';
 }
 
 export interface RejectOrderInput {
@@ -363,17 +367,19 @@ async function requestInfo(
   const supabase = createClient();
 
   // Paralléliser les requêtes pour éviter séquentiel (fix perf)
-  const [details, orderResult] = await Promise.all([
+  const [details, orderResult, userResult] = await Promise.all([
     // 1. Récupérer les détails LinkMe
     fetchLinkMeOrderDetails(input.orderId),
     // 2. Récupérer la commande avec jointure organisation
     supabase
       .from('sales_orders')
       .select(
-        'order_number, notes, customer_id, customer_type, organisations!sales_orders_customer_id_fkey(trade_name, legal_name)'
+        'order_number, notes, total_ttc, customer_id, customer_type, organisations!sales_orders_customer_id_fkey(trade_name, legal_name)'
       )
       .eq('id', input.orderId)
       .single(),
+    // 3. Récupérer l'utilisateur courant (sentBy)
+    supabase.auth.getUser(),
   ]);
 
   if (!details) {
@@ -387,6 +393,11 @@ async function requestInfo(
   }
 
   const order = orderResult.data;
+  const currentUserId = userResult.data.user?.id;
+
+  if (!currentUserId) {
+    throw new Error('Utilisateur non authentifié');
+  }
 
   // Organisation récupérée via jointure (peut être array ou objet selon Supabase)
   const orgRaw = order.organisations as
@@ -396,8 +407,22 @@ async function requestInfo(
   const orgData = Array.isArray(orgRaw) ? orgRaw[0] : orgRaw;
   const organisationName = orgData?.trade_name ?? orgData?.legal_name ?? null;
 
+  // Déterminer le destinataire (requester par défaut, owner si spécifié)
+  const recipientType = input.recipientType ?? 'requester';
+  const recipientEmail =
+    recipientType === 'owner' && details.owner_email
+      ? details.owner_email
+      : details.requester_email;
+  const recipientName =
+    recipientType === 'owner' && details.owner_name
+      ? details.owner_name
+      : details.requester_name;
+
+  // Logger la demande dans les notes de la commande
   const timestamp = new Date().toLocaleString('fr-FR');
-  const newNote = `[${timestamp}] DEMANDE COMPLEMENTS: ${input.message}`;
+  const noteMessage = input.customMessage ?? 'Formulaire interactif envoyé';
+  const fieldsSummary = input.missingFields.map(f => f.label).join(', ');
+  const newNote = `[${timestamp}] DEMANDE COMPLEMENTS (formulaire): ${noteMessage} [Champs: ${fieldsSummary}]`;
   const updatedNotes = order.notes ? `${order.notes}\n\n${newNote}` : newNote;
 
   const { error: updateError } = await supabase
@@ -412,28 +437,36 @@ async function requestInfo(
     throw new Error(`Erreur mise à jour notes: ${updateError.message}`);
   }
 
-  // 4. Envoyer email au demandeur
-  try {
-    await fetch('/api/emails/linkme-order-request-info', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        orderNumber: order.order_number,
-        requesterEmail: details.requester_email,
-        requesterName: details.requester_name,
-        message: input.message,
-        organisationName,
-        missingFields: input.missingFields ?? [],
-      }),
-    });
-  } catch (emailError) {
-    console.error('Erreur envoi email request-info:', emailError);
-    // On ne bloque pas si l'email échoue
+  // Appeler le nouvel endpoint formulaire interactif
+  const emailResponse = await fetch('/api/emails/linkme-info-request', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      salesOrderId: input.orderId,
+      orderNumber: order.order_number,
+      recipientEmail,
+      recipientName,
+      recipientType,
+      organisationName,
+      totalTtc: order.total_ttc ?? 0,
+      requestedFields: input.missingFields,
+      customMessage: input.customMessage,
+      sentBy: currentUserId,
+    }),
+  });
+
+  if (!emailResponse.ok) {
+    const errorData = (await emailResponse.json().catch(() => null)) as {
+      error?: string;
+    } | null;
+    throw new Error(
+      `Erreur envoi formulaire: ${errorData?.error ?? `HTTP ${emailResponse.status}`}`
+    );
   }
 
   return {
     success: true,
-    message: `Demande de compléments envoyée à ${details.requester_email}`,
+    message: `Formulaire de compléments envoyé à ${recipientEmail}`,
   };
 }
 
