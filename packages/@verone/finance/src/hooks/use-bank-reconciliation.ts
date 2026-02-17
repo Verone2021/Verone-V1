@@ -46,7 +46,7 @@ export interface BankTransaction {
 export interface OrderWithoutInvoice {
   id: string;
   order_number: string;
-  customer_id: string;
+  customer_id: string | null;
   customer_name: string | null;
   billing_address: Record<string, unknown> | null;
   shipping_address: Record<string, unknown> | null;
@@ -209,7 +209,11 @@ export function useBankReconciliation() {
 
       // 2b. Fetch organisation names séparément
       const customerIds = [
-        ...new Set((orders || []).map(o => o.customer_id).filter(Boolean)),
+        ...new Set(
+          (orders || [])
+            .map(o => o.customer_id)
+            .filter((id): id is string => id !== null && id !== undefined)
+        ),
       ];
       let orgNames: Record<string, string> = {};
 

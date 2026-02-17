@@ -455,10 +455,12 @@ export function useSalesOrders() {
         // Collecter tous les IDs par type de client
         const orgIds = (ordersData || [])
           .filter(o => o.customer_type === 'organization' && o.customer_id)
-          .map(o => o.customer_id);
+          .map(o => o.customer_id)
+          .filter((id): id is string => id !== null);
         const individualIds = (ordersData || [])
           .filter(o => o.customer_type === 'individual' && o.customer_id)
-          .map(o => o.customer_id);
+          .map(o => o.customer_id)
+          .filter((id): id is string => id !== null);
 
         // Batch fetch organisations (1 seule requête)
         const orgsMap = new Map<string, any>();
