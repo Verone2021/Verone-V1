@@ -32,6 +32,7 @@ export interface SelectionItem {
     sku: string;
     cost_price: number | null;
     product_status: string;
+    subcategory_id?: string | null;
     description?: string | null;
     selling_points?: string[] | null;
     weight_kg?: number | null;
@@ -125,7 +126,7 @@ async function fetchSelectionById(
       `
       *,
       product:products(
-        id, name, sku, cost_price, product_status,
+        id, name, sku, cost_price, product_status, subcategory_id,
         description, selling_points, weight, dimensions,
         subcategory:subcategories(name),
         supplier:organisations!supplier_id(trade_name, legal_name)
@@ -214,6 +215,7 @@ async function fetchSelectionById(
             sku: rawProduct.sku,
             cost_price: rawProduct.cost_price,
             product_status: rawProduct.product_status,
+            subcategory_id: rawProduct.subcategory_id ?? null,
             description: rawProduct.description,
             selling_points: rawProduct.selling_points,
             weight_kg: rawProduct.weight,

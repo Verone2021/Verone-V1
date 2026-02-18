@@ -11,9 +11,12 @@
   "license": "UNLICENSED",
   "private": true,
   "dependencies": {
+    "@verone/categories": "workspace:*",
+    "@verone/organisations": "workspace:*",
     "@verone/ui": "workspace:*",
     "@verone/utils": "workspace:*",
-    "@verone/types": "workspace:*"
+    "@verone/types": "workspace:*",
+    "sonner": "^1.7.0"
   },
   "peerDependencies": {
     "react": "^18.2.0",

@@ -120,7 +120,7 @@ export default function CommandesPage(): JSX.Element {
 
     return {
       total: orders.length,
-      pendingApproval: orders.filter(o => o.pending_admin_validation === true)
+      pendingApproval: orders.filter(o => o.status === 'pending_approval')
         .length,
       draft: orders.filter(o => o.status === 'draft').length,
       validated: orders.filter(o => o.status === 'validated').length,
@@ -137,7 +137,7 @@ export default function CommandesPage(): JSX.Element {
 
     switch (activeTab) {
       case 'pending_approval':
-        return orders.filter(o => o.pending_admin_validation === true);
+        return orders.filter(o => o.status === 'pending_approval');
       case 'draft':
         return orders.filter(o => o.status === 'draft');
       case 'validated':
@@ -466,7 +466,7 @@ export default function CommandesPage(): JSX.Element {
                             </div>
 
                             {/* Badge En attente validation (si en attente) */}
-                            {order.pending_admin_validation && (
+                            {order.status === 'pending_approval' && (
                               <span className="px-3 py-1.5 text-xs font-medium text-amber-700 bg-amber-100 rounded-full">
                                 En attente validation Vérone
                               </span>
