@@ -135,6 +135,7 @@ if (isAffiliateProduct) {
 1. **JAMAIS** confondre taux de marge et taux de marque
 2. **TOUJOURS** utiliser selling_price_ht pour calcul commission
 3. **JAMAIS** supposer que margin_rate s'applique sur base_price
+4. **PAS DE SELECTION = PAS DE COMMANDE** : Toute commande LinkMe DOIT etre liee a une `linkme_selection` via `sales_orders.linkme_selection_id`. Sans selection, retrocessions et commissions = 0.
 
 ---
 

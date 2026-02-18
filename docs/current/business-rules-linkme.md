@@ -104,6 +104,22 @@ Virement bancaire recu
 Expedition + Creation commission auto
 ```
 
+### Regles de Validation Commande
+
+> **REGLE ABSOLUE** : Pas de selection = pas de commande LinkMe.
+>
+> Toute commande LinkMe DOIT etre liee a une `linkme_selection` via `linkme_selection_id` sur `sales_orders`.
+> Sans selection, les rétrocessions et commissions ne peuvent pas etre calculees.
+
+**Invariants :**
+
+- `sales_orders.linkme_selection_id` ne doit JAMAIS etre NULL pour une commande LinkMe
+- `sales_order_items.linkme_selection_item_id` doit pointer vers un item de cette selection
+- Le trigger `trg_calculate_retrocession` calcule : `(unit_price_ht - base_price_ht_locked) × quantity`
+- Si `base_price_ht_locked` est NULL, le trigger utilise `linkme_selection_items.base_price_ht`
+
+**Incident B&W (2026-02-19)** : 2 factures (F-25-034, F-25-035) avaient `linkme_selection_id = NULL` et `retrocession = 0` car l'enseigne Black & White n'avait aucune selection. Corrige en creant la selection et reliant les commandes.
+
 ### 4. Cycle Commissions
 
 ```
