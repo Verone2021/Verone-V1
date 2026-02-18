@@ -22,14 +22,7 @@ import {
 import { EcoTaxVatInput } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@verone/ui';
+// Dialog imports removed - using full-screen layout instead
 import { Input } from '@verone/ui';
 import { Label } from '@verone/ui';
 import {
@@ -1119,1110 +1112,1192 @@ export function SalesOrderFormModal({
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <ButtonV2 className="flex items-center gap-2">
+    <>
+      {/* Trigger button */}
+      {controlledOpen === undefined && (
+        <ButtonV2
+          className="flex items-center gap-2"
+          onClick={() => setOpen(true)}
+        >
           <Plus className="h-4 w-4" />
           {buttonLabel}
         </ButtonV2>
-      </DialogTrigger>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>
-            {mode === 'edit'
-              ? 'Modifier la Commande Client'
-              : wizardStep === 'channel-selection'
-                ? 'Nouvelle Commande Client'
-                : `Commande ${selectedSalesChannel === 'manual' ? 'Manuelle' : selectedSalesChannel === 'site-internet' ? 'Site Internet' : 'LinkMe'}`}
-          </DialogTitle>
-          <DialogDescription>
-            {mode === 'edit'
-              ? 'Modifier la commande existante (items, quantités, adresses, dates)'
-              : wizardStep === 'channel-selection'
-                ? 'Sélectionnez le type de commande à créer'
-                : selectedSalesChannel === 'manual'
-                  ? 'Créer une commande manuelle avec prix libres'
-                  : selectedSalesChannel === 'site-internet'
-                    ? 'Créer une commande Site Internet (prix catalogue)'
-                    : 'Créer une commande LinkMe (prix sélection)'}
-          </DialogDescription>
-        </DialogHeader>
+      )}
 
-        {/* ÉTAPE 1: Sélection du canal de vente (uniquement en mode création) */}
-        {mode === 'create' && wizardStep === 'channel-selection' && (
-          <div className="py-6">
-            <div className="grid grid-cols-1 gap-4">
-              {/* Option: Commande Manuelle */}
-              <button
-                type="button"
-                onClick={() => handleChannelSelect('manual')}
-                className="flex items-center gap-4 p-4 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all text-left group"
-              >
-                <div className="flex-shrink-0 w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200">
-                  <Store className="h-6 w-6 text-blue-600" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-gray-900">
-                    Commande Manuelle
-                  </h3>
-                  <p className="text-sm text-gray-500">
-                    Saisie directe avec prix modifiables librement
-                  </p>
-                </div>
-                <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-blue-500" />
-              </button>
-
-              {/* Option: Site Internet */}
-              <button
-                type="button"
-                onClick={() => handleChannelSelect('site-internet')}
-                className="flex items-center gap-4 p-4 border-2 border-gray-200 rounded-lg hover:border-green-500 hover:bg-green-50 transition-all text-left group"
-              >
-                <div className="flex-shrink-0 w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center group-hover:bg-green-200">
-                  <Globe className="h-6 w-6 text-green-600" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-gray-900">Site Internet</h3>
-                  <p className="text-sm text-gray-500">
-                    Commande e-commerce (prix catalogue, remises uniquement)
-                  </p>
-                </div>
-                <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-green-500" />
-              </button>
-
-              {/* Option: LinkMe */}
-              <button
-                type="button"
-                onClick={() => handleChannelSelect('linkme')}
-                className="flex items-center gap-4 p-4 border-2 border-gray-200 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition-all text-left group"
-              >
-                <div className="flex-shrink-0 w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center group-hover:bg-purple-200">
-                  <Users className="h-6 w-6 text-purple-600" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-gray-900">LinkMe</h3>
-                  <p className="text-sm text-gray-500">
-                    Commande réseau apporteurs (prix sélection, remises
-                    uniquement)
-                  </p>
-                </div>
-                <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-purple-500" />
-              </button>
-            </div>
-
-            <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
-              <p className="text-sm text-amber-800">
-                <strong>💡 Note :</strong> Seules les commandes manuelles
-                permettent de modifier librement les prix. Les commandes Site
-                Internet et LinkMe utilisent les prix définis dans le catalogue
-                ou les sélections.
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* ÉTAPE 2: Formulaire (affiché si mode=edit OU si canal sélectionné) */}
-        {(mode === 'edit' || wizardStep === 'form') && (
-          <>
-            {loadingOrder && (
-              <div className="flex justify-center py-8">
-                <div className="text-gray-500">
-                  Chargement de la commande...
-                </div>
-              </div>
-            )}
-
-            {/* Bouton retour (uniquement en mode création) */}
-            {mode === 'create' && (
-              <div className="mb-4">
-                <ButtonV2
+      {/* Full-screen overlay */}
+      {open && (
+        <div className="fixed inset-0 z-50 flex flex-col bg-white">
+          {/* Header */}
+          <div className="flex items-center justify-between px-8 py-4 border-b border-gray-200 shrink-0">
+            <div className="flex items-center gap-3">
+              {wizardStep === 'form' && mode === 'create' && (
+                <button
                   type="button"
-                  variant="ghost"
-                  size="sm"
                   onClick={handleBackToChannelSelection}
-                  className="text-gray-600"
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                 >
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Changer le type de commande
-                </ButtonV2>
+                  <ArrowLeft className="h-5 w-5" />
+                </button>
+              )}
+              <div>
+                <h2 className="text-lg font-semibold">
+                  {mode === 'edit'
+                    ? 'Modifier la Commande Client'
+                    : wizardStep === 'channel-selection'
+                      ? 'Nouvelle Commande Client'
+                      : `Commande ${selectedSalesChannel === 'manual' ? 'Manuelle' : selectedSalesChannel === 'site-internet' ? 'Site Internet' : 'LinkMe'}`}
+                </h2>
+                <p className="text-sm text-gray-500">
+                  {mode === 'edit'
+                    ? 'Modifier la commande existante (items, quantités, adresses, dates)'
+                    : wizardStep === 'channel-selection'
+                      ? 'Sélectionnez le type de commande à créer'
+                      : selectedSalesChannel === 'manual'
+                        ? 'Créer une commande manuelle avec prix libres'
+                        : selectedSalesChannel === 'site-internet'
+                          ? 'Créer une commande Site Internet (prix catalogue)'
+                          : 'Créer une commande LinkMe (prix sélection)'}
+                </p>
               </div>
-            )}
+            </div>
+            <button
+              onClick={() => setOpen(false)}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
 
-            {/* ============================================ */}
-            {/* WORKFLOW LINKME COMPLET */}
-            {/* ============================================ */}
-            {selectedSalesChannel === 'linkme' && mode === 'create' && (
-              <div className="space-y-6">
-                {/* ÉTAPE 1: Type d'affilié */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Users className="h-5 w-5 text-purple-600" />
-                      Type d&apos;affilié
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-2 gap-3">
+          {/* Content */}
+          <div className="flex-1 overflow-y-auto px-8 py-6">
+            <div className="max-w-7xl mx-auto w-full space-y-8">
+              {/* ÉTAPE 1: Sélection du canal de vente (uniquement en mode création) */}
+              {mode === 'create' && wizardStep === 'channel-selection' && (
+                <div className="flex items-center justify-center min-h-[60vh]">
+                  <div className="w-full max-w-4xl mx-auto space-y-6">
+                    <h3 className="text-lg font-semibold text-center text-gray-800">
+                      Choisissez le type de commande
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      {/* Option: Commande Manuelle */}
                       <button
                         type="button"
-                        onClick={() => {
-                          setLinkmeAffiliateType('enseigne');
-                          setLinkmeAffiliateId(null);
-                          setLinkmeSelectionId(null);
-                          setLinkmeCart([]);
-                        }}
-                        className={cn(
-                          'flex items-center gap-3 p-4 rounded-lg border-2 transition-all text-left',
-                          linkmeAffiliateType === 'enseigne'
-                            ? 'border-purple-500 bg-purple-50'
-                            : 'border-gray-200 hover:border-gray-300'
-                        )}
+                        onClick={() => handleChannelSelect('manual')}
+                        className="flex flex-col items-center gap-4 p-6 border-2 border-gray-200 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition-all text-center group"
                       >
-                        <Store
-                          className={cn(
-                            'h-5 w-5',
-                            linkmeAffiliateType === 'enseigne'
-                              ? 'text-purple-600'
-                              : 'text-gray-400'
-                          )}
-                        />
+                        <div className="w-16 h-16 bg-blue-100 rounded-xl flex items-center justify-center group-hover:bg-blue-200">
+                          <Store className="h-8 w-8 text-blue-600" />
+                        </div>
                         <div>
-                          <p className="font-medium">Enseigne</p>
-                          <p className="text-xs text-gray-500">
-                            Chaîne de magasins affiliée
+                          <h3 className="font-semibold text-gray-900 text-lg">
+                            Manuelle
+                          </h3>
+                          <p className="text-sm text-gray-500 mt-1">
+                            Prix modifiables librement
                           </p>
                         </div>
                       </button>
+
+                      {/* Option: Site Internet */}
                       <button
                         type="button"
-                        onClick={() => {
-                          setLinkmeAffiliateType('org_independante');
-                          setLinkmeAffiliateId(null);
-                          setLinkmeSelectionId(null);
-                          setLinkmeCart([]);
-                        }}
-                        className={cn(
-                          'flex items-center gap-3 p-4 rounded-lg border-2 transition-all text-left',
-                          linkmeAffiliateType === 'org_independante'
-                            ? 'border-purple-500 bg-purple-50'
-                            : 'border-gray-200 hover:border-gray-300'
-                        )}
+                        onClick={() => handleChannelSelect('site-internet')}
+                        className="flex flex-col items-center gap-4 p-6 border-2 border-gray-200 rounded-xl hover:border-green-500 hover:bg-green-50 transition-all text-center group"
                       >
-                        <Building2
-                          className={cn(
-                            'h-5 w-5',
-                            linkmeAffiliateType === 'org_independante'
-                              ? 'text-purple-600'
-                              : 'text-gray-400'
-                          )}
-                        />
+                        <div className="w-16 h-16 bg-green-100 rounded-xl flex items-center justify-center group-hover:bg-green-200">
+                          <Globe className="h-8 w-8 text-green-600" />
+                        </div>
                         <div>
-                          <p className="font-medium">
-                            Organisation indépendante
+                          <h3 className="font-semibold text-gray-900 text-lg">
+                            Site Internet
+                          </h3>
+                          <p className="text-sm text-gray-500 mt-1">
+                            Prix catalogue, remises uniquement
                           </p>
-                          <p className="text-xs text-gray-500">
-                            Entreprise affiliée autonome
+                        </div>
+                      </button>
+
+                      {/* Option: LinkMe */}
+                      <button
+                        type="button"
+                        onClick={() => handleChannelSelect('linkme')}
+                        className="flex flex-col items-center gap-4 p-6 border-2 border-gray-200 rounded-xl hover:border-purple-500 hover:bg-purple-50 transition-all text-center group"
+                      >
+                        <div className="w-16 h-16 bg-purple-100 rounded-xl flex items-center justify-center group-hover:bg-purple-200">
+                          <Users className="h-8 w-8 text-purple-600" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-gray-900 text-lg">
+                            LinkMe
+                          </h3>
+                          <p className="text-sm text-gray-500 mt-1">
+                            Réseau apporteurs, prix sélection
                           </p>
                         </div>
                       </button>
                     </div>
-                  </CardContent>
-                </Card>
 
-                {/* ÉTAPE 2: Sélection Affilié */}
-                {linkmeAffiliateType && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <Store className="h-5 w-5 text-purple-600" />
-                        Affilié
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2">
-                        <Label htmlFor="linkme-affiliate">
-                          Sélectionner l&apos;affilié *
-                        </Label>
-                        {loadingAffiliates ? (
-                          <div className="flex items-center gap-2 py-4">
-                            <Loader2 className="h-4 w-4 animate-spin text-purple-600" />
-                            <span className="text-sm text-gray-500">
-                              Chargement des affiliés...
-                            </span>
-                          </div>
-                        ) : (linkmeAffiliates ?? []).length > 0 ? (
-                          <Select
-                            value={linkmeAffiliateId ?? ''}
-                            onValueChange={value => {
-                              setLinkmeAffiliateId(value ?? null);
-                              setLinkmeSelectionId(null);
-                              setLinkmeCart([]);
-                            }}
-                            disabled={loading}
-                          >
-                            <SelectTrigger id="linkme-affiliate">
-                              <SelectValue placeholder="Choisir un affilié" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {(linkmeAffiliates ?? []).map(affiliate => (
-                                <SelectItem
-                                  key={affiliate.id}
-                                  value={affiliate.id}
-                                >
-                                  {affiliate.display_name}{' '}
-                                  <span className="text-muted-foreground">
-                                    ({affiliate.selections_count} sélection
-                                    {affiliate.selections_count > 1 ? 's' : ''})
-                                  </span>
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        ) : (
-                          <p className="text-sm text-amber-600 py-2">
-                            Aucun affilié de ce type disponible
-                          </p>
-                        )}
+                    <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                      <p className="text-sm text-amber-800">
+                        <strong>💡 Note :</strong> Seules les commandes
+                        manuelles permettent de modifier librement les prix. Les
+                        commandes Site Internet et LinkMe utilisent les prix
+                        définis dans le catalogue ou les sélections.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ÉTAPE 2: Formulaire (affiché si mode=edit OU si canal sélectionné) */}
+              {(mode === 'edit' || wizardStep === 'form') && (
+                <>
+                  {loadingOrder && (
+                    <div className="flex justify-center py-8">
+                      <div className="text-gray-500">
+                        Chargement de la commande...
                       </div>
-                    </CardContent>
-                  </Card>
-                )}
+                    </div>
+                  )}
 
-                {/* ÉTAPE 3: Sélection Mini-Boutique */}
-                {linkmeAffiliateId && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <Globe className="h-5 w-5 text-purple-600" />
-                        Sélection (Mini-boutique)
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-3">
-                        <Label>Sélectionner la sélection *</Label>
-                        {loadingSelections ? (
-                          <div className="flex items-center gap-2 py-4">
-                            <Loader2 className="h-4 w-4 animate-spin text-purple-600" />
-                            <span className="text-sm text-gray-500">
-                              Chargement des sélections...
-                            </span>
+                  {/* ============================================ */}
+                  {/* WORKFLOW LINKME COMPLET */}
+                  {/* ============================================ */}
+                  {selectedSalesChannel === 'linkme' && mode === 'create' && (
+                    <div className="space-y-6">
+                      {/* ÉTAPE 1: Type d'affilié */}
+                      <Card>
+                        <CardHeader>
+                          <CardTitle className="flex items-center gap-2">
+                            <Users className="h-5 w-5 text-purple-600" />
+                            Type d&apos;affilié
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="grid grid-cols-2 gap-3">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setLinkmeAffiliateType('enseigne');
+                                setLinkmeAffiliateId(null);
+                                setLinkmeSelectionId(null);
+                                setLinkmeCart([]);
+                              }}
+                              className={cn(
+                                'flex items-center gap-3 p-4 rounded-lg border-2 transition-all text-left',
+                                linkmeAffiliateType === 'enseigne'
+                                  ? 'border-purple-500 bg-purple-50'
+                                  : 'border-gray-200 hover:border-gray-300'
+                              )}
+                            >
+                              <Store
+                                className={cn(
+                                  'h-5 w-5',
+                                  linkmeAffiliateType === 'enseigne'
+                                    ? 'text-purple-600'
+                                    : 'text-gray-400'
+                                )}
+                              />
+                              <div>
+                                <p className="font-medium">Enseigne</p>
+                                <p className="text-xs text-gray-500">
+                                  Chaîne de magasins affiliée
+                                </p>
+                              </div>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setLinkmeAffiliateType('org_independante');
+                                setLinkmeAffiliateId(null);
+                                setLinkmeSelectionId(null);
+                                setLinkmeCart([]);
+                              }}
+                              className={cn(
+                                'flex items-center gap-3 p-4 rounded-lg border-2 transition-all text-left',
+                                linkmeAffiliateType === 'org_independante'
+                                  ? 'border-purple-500 bg-purple-50'
+                                  : 'border-gray-200 hover:border-gray-300'
+                              )}
+                            >
+                              <Building2
+                                className={cn(
+                                  'h-5 w-5',
+                                  linkmeAffiliateType === 'org_independante'
+                                    ? 'text-purple-600'
+                                    : 'text-gray-400'
+                                )}
+                              />
+                              <div>
+                                <p className="font-medium">
+                                  Organisation indépendante
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  Entreprise affiliée autonome
+                                </p>
+                              </div>
+                            </button>
                           </div>
-                        ) : (linkmeSelections ?? []).length === 0 ? (
-                          <div className="text-center py-4 text-muted-foreground">
-                            Aucune sélection disponible pour cet affilié
-                          </div>
-                        ) : (
-                          <div className="space-y-2 max-h-60 overflow-y-auto">
-                            {(linkmeSelections ?? []).map(selection => (
-                              <div
-                                key={selection.id}
-                                className="flex items-center gap-2"
-                              >
-                                {/* Bouton sélection */}
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setLinkmeSelectionId(selection.id);
+                        </CardContent>
+                      </Card>
+
+                      {/* ÉTAPE 2: Sélection Affilié */}
+                      {linkmeAffiliateType && (
+                        <Card>
+                          <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                              <Store className="h-5 w-5 text-purple-600" />
+                              Affilié
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="space-y-2">
+                              <Label htmlFor="linkme-affiliate">
+                                Sélectionner l&apos;affilié *
+                              </Label>
+                              {loadingAffiliates ? (
+                                <div className="flex items-center gap-2 py-4">
+                                  <Loader2 className="h-4 w-4 animate-spin text-purple-600" />
+                                  <span className="text-sm text-gray-500">
+                                    Chargement des affiliés...
+                                  </span>
+                                </div>
+                              ) : (linkmeAffiliates ?? []).length > 0 ? (
+                                <Select
+                                  value={linkmeAffiliateId ?? ''}
+                                  onValueChange={value => {
+                                    setLinkmeAffiliateId(value ?? null);
+                                    setLinkmeSelectionId(null);
                                     setLinkmeCart([]);
                                   }}
                                   disabled={loading}
-                                  className={cn(
-                                    'flex-1 flex items-center justify-between p-3 rounded-lg border-2 text-left transition-all',
-                                    linkmeSelectionId === selection.id
-                                      ? 'border-purple-500 bg-purple-50'
-                                      : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                                  )}
                                 >
-                                  <div>
-                                    <p className="font-medium">
-                                      {selection.name}
-                                    </p>
-                                    <p className="text-xs text-gray-500">
-                                      {selection.products_count ?? 0} produit
-                                      {(selection.products_count ?? 0) > 1
-                                        ? 's'
-                                        : ''}{' '}
-                                      - {selection.affiliate_name}
-                                    </p>
-                                  </div>
-                                  {linkmeSelectionId === selection.id && (
-                                    <ChevronRight className="h-5 w-5 text-purple-600" />
-                                  )}
-                                </button>
-                                {/* Bouton preview */}
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    setPreviewSelectionId(selection.id)
-                                  }
-                                  className="p-3 hover:bg-purple-100 rounded-lg transition-colors border border-gray-200"
-                                  title="Aperçu des produits"
-                                >
-                                  <Eye className="h-4 w-4 text-gray-500 hover:text-purple-600" />
-                                </button>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* ÉTAPE 4: Produits de la Sélection */}
-                {linkmeSelectionId && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Produits disponibles</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      {loadingSelectionDetail ? (
-                        <div className="flex justify-center py-8">
-                          <div className="text-gray-500">
-                            Chargement des produits...
-                          </div>
-                        </div>
-                      ) : (linkmeSelectionDetail?.items ?? []).length === 0 ? (
-                        <div className="text-center py-8 text-muted-foreground">
-                          Aucun produit dans cette sélection
-                        </div>
-                      ) : (
-                        <div className="grid gap-3 max-h-80 overflow-y-auto pr-2">
-                          {(linkmeSelectionDetail?.items ?? []).map(item => {
-                            // Prix affilie avec TAUX DE MARQUE
-                            // Formule: base_price / (1 - marginRate) × (1 + commissionRate)
-                            // commission_rate et margin_rate sont en POURCENTAGE (10 = 10%)
-                            const commissionRate =
-                              (item.commission_rate ?? 0) / 100;
-                            const marginRate = (item.margin_rate ?? 0) / 100;
-                            const sellingPrice =
-                              (item.base_price_ht / (1 - marginRate)) *
-                              (1 + commissionRate);
-                            const marginPercent = (
-                              item.margin_rate ?? 0
-                            ).toFixed(0);
-                            const isInCart = linkmeCart.some(
-                              c => c.product_id === item.product_id
-                            );
-
-                            return (
-                              <div
-                                key={item.id}
-                                className={cn(
-                                  'flex items-center justify-between p-3 border rounded-lg',
-                                  isInCart
-                                    ? 'bg-purple-50 border-purple-200'
-                                    : 'hover:bg-gray-50'
-                                )}
-                              >
-                                <div className="flex items-center gap-3">
-                                  {item.product_image_url ? (
-                                    <Image
-                                      src={item.product_image_url}
-                                      alt={item.product?.name ?? 'Produit'}
-                                      width={48}
-                                      height={48}
-                                      className="w-12 h-12 object-cover rounded"
-                                    />
-                                  ) : (
-                                    <div className="w-12 h-12 bg-gray-100 rounded flex items-center justify-center">
-                                      <Store className="h-6 w-6 text-gray-400" />
-                                    </div>
-                                  )}
-                                  <div>
-                                    <p className="font-medium">
-                                      {item.product?.name ?? 'Produit inconnu'}
-                                    </p>
-                                    <p className="text-sm text-muted-foreground">
-                                      {item.product?.sku ?? 'N/A'}
-                                    </p>
-                                    <p className="text-sm">
-                                      <span className="font-semibold text-purple-700">
-                                        {formatCurrency(sellingPrice)}
-                                      </span>
-                                      <span className="text-muted-foreground ml-2">
-                                        (marge {marginPercent}%)
-                                      </span>
-                                    </p>
-                                  </div>
-                                </div>
-                                <ButtonV2
-                                  type="button"
-                                  size="sm"
-                                  variant={isInCart ? 'secondary' : 'default'}
-                                  onClick={() => addLinkMeProduct(item)}
-                                  disabled={loading}
-                                >
-                                  <Plus className="h-4 w-4" />
-                                  {isInCart ? 'Ajouter +1' : 'Ajouter'}
-                                </ButtonV2>
-                              </div>
-                            );
-                          })}
-                        </div>
+                                  <SelectTrigger id="linkme-affiliate">
+                                    <SelectValue placeholder="Choisir un affilié" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {(linkmeAffiliates ?? []).map(affiliate => (
+                                      <SelectItem
+                                        key={affiliate.id}
+                                        value={affiliate.id}
+                                      >
+                                        {affiliate.display_name}{' '}
+                                        <span className="text-muted-foreground">
+                                          ({affiliate.selections_count}{' '}
+                                          sélection
+                                          {affiliate.selections_count > 1
+                                            ? 's'
+                                            : ''}
+                                          )
+                                        </span>
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              ) : (
+                                <p className="text-sm text-amber-600 py-2">
+                                  Aucun affilié de ce type disponible
+                                </p>
+                              )}
+                            </div>
+                          </CardContent>
+                        </Card>
                       )}
-                    </CardContent>
-                  </Card>
-                )}
 
-                {/* ÉTAPE 5: Panier LinkMe */}
-                {linkmeCart.length > 0 && (
-                  <Card className="border-purple-200 bg-purple-50/30">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        🛒 Panier ({linkmeCart.length} article
-                        {linkmeCart.length > 1 ? 's' : ''})
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Produit</TableHead>
-                            <TableHead className="w-24">Qté</TableHead>
-                            <TableHead className="w-28">Prix</TableHead>
-                            <TableHead className="w-28">Total</TableHead>
-                            <TableHead className="w-16" />
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {linkmeCart.map(item => (
-                            <TableRow key={item.id}>
-                              <TableCell>
-                                <div className="flex items-center gap-2">
-                                  {item.product_image_url && (
-                                    <Image
-                                      src={item.product_image_url}
-                                      alt={item.product_name}
-                                      width={32}
-                                      height={32}
-                                      className="w-8 h-8 object-cover rounded"
-                                    />
-                                  )}
-                                  <div>
-                                    <p className="font-medium text-sm">
-                                      {item.product_name}
-                                    </p>
-                                    <p className="text-xs text-muted-foreground">
-                                      {item.sku}
-                                    </p>
-                                  </div>
+                      {/* ÉTAPE 3: Sélection Mini-Boutique */}
+                      {linkmeAffiliateId && (
+                        <Card>
+                          <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                              <Globe className="h-5 w-5 text-purple-600" />
+                              Sélection (Mini-boutique)
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="space-y-3">
+                              <Label>Sélectionner la sélection *</Label>
+                              {loadingSelections ? (
+                                <div className="flex items-center gap-2 py-4">
+                                  <Loader2 className="h-4 w-4 animate-spin text-purple-600" />
+                                  <span className="text-sm text-gray-500">
+                                    Chargement des sélections...
+                                  </span>
                                 </div>
-                              </TableCell>
-                              <TableCell>
-                                <Input
-                                  type="number"
-                                  min="1"
-                                  value={item.quantity}
-                                  onChange={e =>
-                                    updateLinkMeQuantity(
-                                      item.id,
-                                      parseInt(e.target.value) || 1
-                                    )
+                              ) : (linkmeSelections ?? []).length === 0 ? (
+                                <div className="text-center py-4 text-muted-foreground">
+                                  Aucune sélection disponible pour cet affilié
+                                </div>
+                              ) : (
+                                <div className="space-y-2 max-h-60 overflow-y-auto">
+                                  {(linkmeSelections ?? []).map(selection => (
+                                    <div
+                                      key={selection.id}
+                                      className="flex items-center gap-2"
+                                    >
+                                      {/* Bouton sélection */}
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setLinkmeSelectionId(selection.id);
+                                          setLinkmeCart([]);
+                                        }}
+                                        disabled={loading}
+                                        className={cn(
+                                          'flex-1 flex items-center justify-between p-3 rounded-lg border-2 text-left transition-all',
+                                          linkmeSelectionId === selection.id
+                                            ? 'border-purple-500 bg-purple-50'
+                                            : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                                        )}
+                                      >
+                                        <div>
+                                          <p className="font-medium">
+                                            {selection.name}
+                                          </p>
+                                          <p className="text-xs text-gray-500">
+                                            {selection.products_count ?? 0}{' '}
+                                            produit
+                                            {(selection.products_count ?? 0) > 1
+                                              ? 's'
+                                              : ''}{' '}
+                                            - {selection.affiliate_name}
+                                          </p>
+                                        </div>
+                                        {linkmeSelectionId === selection.id && (
+                                          <ChevronRight className="h-5 w-5 text-purple-600" />
+                                        )}
+                                      </button>
+                                      {/* Bouton preview */}
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          setPreviewSelectionId(selection.id)
+                                        }
+                                        className="p-3 hover:bg-purple-100 rounded-lg transition-colors border border-gray-200"
+                                        title="Aperçu des produits"
+                                      >
+                                        <Eye className="h-4 w-4 text-gray-500 hover:text-purple-600" />
+                                      </button>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )}
+
+                      {/* ÉTAPE 4: Produits de la Sélection */}
+                      {linkmeSelectionId && (
+                        <Card>
+                          <CardHeader>
+                            <CardTitle>Produits disponibles</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            {loadingSelectionDetail ? (
+                              <div className="flex justify-center py-8">
+                                <div className="text-gray-500">
+                                  Chargement des produits...
+                                </div>
+                              </div>
+                            ) : (linkmeSelectionDetail?.items ?? []).length ===
+                              0 ? (
+                              <div className="text-center py-8 text-muted-foreground">
+                                Aucun produit dans cette sélection
+                              </div>
+                            ) : (
+                              <div className="grid gap-3 max-h-80 overflow-y-auto pr-2">
+                                {(linkmeSelectionDetail?.items ?? []).map(
+                                  item => {
+                                    // Prix affilie avec TAUX DE MARQUE
+                                    // Formule: base_price / (1 - marginRate) × (1 + commissionRate)
+                                    // commission_rate et margin_rate sont en POURCENTAGE (10 = 10%)
+                                    const commissionRate =
+                                      (item.commission_rate ?? 0) / 100;
+                                    const marginRate =
+                                      (item.margin_rate ?? 0) / 100;
+                                    const sellingPrice =
+                                      (item.base_price_ht / (1 - marginRate)) *
+                                      (1 + commissionRate);
+                                    const marginPercent = (
+                                      item.margin_rate ?? 0
+                                    ).toFixed(0);
+                                    const isInCart = linkmeCart.some(
+                                      c => c.product_id === item.product_id
+                                    );
+
+                                    return (
+                                      <div
+                                        key={item.id}
+                                        className={cn(
+                                          'flex items-center justify-between p-3 border rounded-lg',
+                                          isInCart
+                                            ? 'bg-purple-50 border-purple-200'
+                                            : 'hover:bg-gray-50'
+                                        )}
+                                      >
+                                        <div className="flex items-center gap-3">
+                                          {item.product_image_url ? (
+                                            <Image
+                                              src={item.product_image_url}
+                                              alt={
+                                                item.product?.name ?? 'Produit'
+                                              }
+                                              width={48}
+                                              height={48}
+                                              className="w-12 h-12 object-cover rounded"
+                                            />
+                                          ) : (
+                                            <div className="w-12 h-12 bg-gray-100 rounded flex items-center justify-center">
+                                              <Store className="h-6 w-6 text-gray-400" />
+                                            </div>
+                                          )}
+                                          <div>
+                                            <p className="font-medium">
+                                              {item.product?.name ??
+                                                'Produit inconnu'}
+                                            </p>
+                                            <p className="text-sm text-muted-foreground">
+                                              {item.product?.sku ?? 'N/A'}
+                                            </p>
+                                            <p className="text-sm">
+                                              <span className="font-semibold text-purple-700">
+                                                {formatCurrency(sellingPrice)}
+                                              </span>
+                                              <span className="text-muted-foreground ml-2">
+                                                (marge {marginPercent}%)
+                                              </span>
+                                            </p>
+                                          </div>
+                                        </div>
+                                        <ButtonV2
+                                          type="button"
+                                          size="sm"
+                                          variant={
+                                            isInCart ? 'secondary' : 'default'
+                                          }
+                                          onClick={() => addLinkMeProduct(item)}
+                                          disabled={loading}
+                                        >
+                                          <Plus className="h-4 w-4" />
+                                          {isInCart ? 'Ajouter +1' : 'Ajouter'}
+                                        </ButtonV2>
+                                      </div>
+                                    );
                                   }
-                                  className="w-16 h-8 text-sm"
-                                  disabled={loading}
-                                />
-                              </TableCell>
-                              <TableCell className="text-sm">
-                                {formatCurrency(item.unit_price_ht)}
-                              </TableCell>
-                              <TableCell className="font-medium text-sm">
-                                {formatCurrency(
-                                  item.quantity * item.unit_price_ht
                                 )}
-                              </TableCell>
-                              <TableCell>
-                                <ButtonV2
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => removeLinkMeItem(item.id)}
-                                  disabled={loading}
-                                  className="text-red-600 hover:text-red-700 hover:bg-red-50 h-8 w-8 p-0"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </ButtonV2>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
+                              </div>
+                            )}
+                          </CardContent>
+                        </Card>
+                      )}
 
-                      {/* Totaux */}
-                      <div className="mt-4 pt-4 border-t border-purple-200 space-y-2">
-                        <div className="flex justify-between text-sm">
-                          <span>Total HT :</span>
-                          <span className="font-semibold">
-                            {formatCurrency(linkmeCartTotals.totalHt)}
-                          </span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span>Total TTC (TVA 20%) :</span>
-                          <span className="font-semibold">
-                            {formatCurrency(linkmeCartTotals.totalTtc)}
-                          </span>
-                        </div>
-                        <div className="flex justify-between text-sm text-purple-700">
-                          <span>Commission LinkMe :</span>
-                          <span className="font-semibold">
-                            {formatCurrency(linkmeCartTotals.totalRetrocession)}
-                          </span>
-                        </div>
-                        <div className="flex justify-between text-sm text-green-700">
-                          <span>Bénéfice net :</span>
-                          <span className="font-semibold">
-                            {formatCurrency(linkmeCartTotals.beneficeNet)}
-                          </span>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
+                      {/* ÉTAPE 5: Panier LinkMe */}
+                      {linkmeCart.length > 0 && (
+                        <Card className="border-purple-200 bg-purple-50/30">
+                          <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                              🛒 Panier ({linkmeCart.length} article
+                              {linkmeCart.length > 1 ? 's' : ''})
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead>Produit</TableHead>
+                                  <TableHead className="w-24">Qté</TableHead>
+                                  <TableHead className="w-28">Prix</TableHead>
+                                  <TableHead className="w-28">Total</TableHead>
+                                  <TableHead className="w-16" />
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {linkmeCart.map(item => (
+                                  <TableRow key={item.id}>
+                                    <TableCell>
+                                      <div className="flex items-center gap-2">
+                                        {item.product_image_url && (
+                                          <Image
+                                            src={item.product_image_url}
+                                            alt={item.product_name}
+                                            width={32}
+                                            height={32}
+                                            className="w-8 h-8 object-cover rounded"
+                                          />
+                                        )}
+                                        <div>
+                                          <p className="font-medium text-sm">
+                                            {item.product_name}
+                                          </p>
+                                          <p className="text-xs text-muted-foreground">
+                                            {item.sku}
+                                          </p>
+                                        </div>
+                                      </div>
+                                    </TableCell>
+                                    <TableCell>
+                                      <Input
+                                        type="number"
+                                        min="1"
+                                        value={item.quantity}
+                                        onChange={e =>
+                                          updateLinkMeQuantity(
+                                            item.id,
+                                            parseInt(e.target.value) || 1
+                                          )
+                                        }
+                                        className="w-16 h-8 text-sm"
+                                        disabled={loading}
+                                      />
+                                    </TableCell>
+                                    <TableCell className="text-sm">
+                                      {formatCurrency(item.unit_price_ht)}
+                                    </TableCell>
+                                    <TableCell className="font-medium text-sm">
+                                      {formatCurrency(
+                                        item.quantity * item.unit_price_ht
+                                      )}
+                                    </TableCell>
+                                    <TableCell>
+                                      <ButtonV2
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() =>
+                                          removeLinkMeItem(item.id)
+                                        }
+                                        disabled={loading}
+                                        className="text-red-600 hover:text-red-700 hover:bg-red-50 h-8 w-8 p-0"
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                      </ButtonV2>
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
 
-                {/* Notes */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Notes (optionnel)</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <Textarea
-                      value={notes}
-                      onChange={e => setNotes(e.target.value)}
-                      placeholder="Notes internes sur la commande..."
-                      disabled={loading}
-                    />
-                  </CardContent>
-                </Card>
+                            {/* Totaux */}
+                            <div className="mt-4 pt-4 border-t border-purple-200 space-y-2">
+                              <div className="flex justify-between text-sm">
+                                <span>Total HT :</span>
+                                <span className="font-semibold">
+                                  {formatCurrency(linkmeCartTotals.totalHt)}
+                                </span>
+                              </div>
+                              <div className="flex justify-between text-sm">
+                                <span>Total TTC (TVA 20%) :</span>
+                                <span className="font-semibold">
+                                  {formatCurrency(linkmeCartTotals.totalTtc)}
+                                </span>
+                              </div>
+                              <div className="flex justify-between text-sm text-purple-700">
+                                <span>Commission LinkMe :</span>
+                                <span className="font-semibold">
+                                  {formatCurrency(
+                                    linkmeCartTotals.totalRetrocession
+                                  )}
+                                </span>
+                              </div>
+                              <div className="flex justify-between text-sm text-green-700">
+                                <span>Bénéfice net :</span>
+                                <span className="font-semibold">
+                                  {formatCurrency(linkmeCartTotals.beneficeNet)}
+                                </span>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )}
 
-                {/* Actions LinkMe */}
-                <div className="flex justify-end gap-4">
-                  <ButtonV2
-                    type="button"
-                    variant="outline"
-                    onClick={() => setOpen(false)}
-                    disabled={loading}
-                  >
-                    Annuler
-                  </ButtonV2>
-                  <ButtonV2
-                    type="button"
-                    onClick={() => {
-                      void handleLinkMeSubmit().catch(console.error);
-                    }}
-                    disabled={
-                      loading ||
-                      !selectedCustomer ||
-                      linkmeCart.length === 0 ||
-                      !linkmeSelectionDetail?.affiliate_id
-                    }
-                    className="bg-purple-600 hover:bg-purple-700"
-                  >
-                    {loading ? 'Création...' : 'Créer la commande LinkMe'}
-                  </ButtonV2>
-                </div>
-              </div>
-            )}
-
-            {/* ============================================ */}
-            {/* FORMULAIRE STANDARD (Manual + Site Internet) */}
-            {/* ============================================ */}
-            {(selectedSalesChannel !== 'linkme' || mode === 'edit') && (
-              <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Alertes de stock */}
-                {stockWarnings.length > 0 && (
-                  <Alert variant="destructive">
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertDescription>
-                      <div className="space-y-1">
-                        <p className="font-medium">
-                          Problèmes de stock détectés :
-                        </p>
-                        {stockWarnings.map((warning, index) => (
-                          <p key={index} className="text-sm">
-                            • {warning}
-                          </p>
-                        ))}
-                      </div>
-                    </AlertDescription>
-                  </Alert>
-                )}
-
-                {/* Informations générales */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Informations générales</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <CustomerSelector
-                      selectedCustomer={selectedCustomer}
-                      onCustomerChange={handleCustomerChange}
-                      disabled={loading}
-                    />
-                    {mode === 'edit' && (
-                      <p className="text-sm text-gray-500 italic">
-                        Le client ne peut pas être modifié pour une commande
-                        existante
-                      </p>
-                    )}
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="deliveryDate">
-                          Date de livraison prévue
-                        </Label>
-                        <Input
-                          id="deliveryDate"
-                          type="date"
-                          value={expectedDeliveryDate}
-                          onChange={e =>
-                            setExpectedDeliveryDate(e.target.value)
-                          }
-                          disabled={loading}
-                        />
-                      </div>
-
-                      {/* Conditions de paiement (enum + notes) */}
-                      <div className="space-y-2">
-                        <Label htmlFor="paymentTermsType">
-                          Conditions de paiement
-                        </Label>
-                        <Select
-                          value={paymentTermsType ?? undefined}
-                          onValueChange={value =>
-                            setPaymentTermsType(
-                              value as Database['public']['Enums']['payment_terms_type']
-                            )
-                          }
-                          disabled={loading || !selectedCustomer}
-                        >
-                          <SelectTrigger id="paymentTermsType">
-                            <SelectValue placeholder="Sélectionnez les conditions" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="IMMEDIATE">
-                              Paiement immédiat (comptant)
-                            </SelectItem>
-                            <SelectItem value="NET_15">Net 15 jours</SelectItem>
-                            <SelectItem value="NET_30">Net 30 jours</SelectItem>
-                            <SelectItem value="NET_45">Net 45 jours</SelectItem>
-                            <SelectItem value="NET_60">Net 60 jours</SelectItem>
-                            <SelectItem value="NET_90">Net 90 jours</SelectItem>
-                            <SelectItem value="CUSTOM">
-                              Conditions personnalisées
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-
-                        {/* Notes complémentaires si CUSTOM */}
-                        {paymentTermsType === 'CUSTOM' && (
+                      {/* Notes */}
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Notes (optionnel)</CardTitle>
+                        </CardHeader>
+                        <CardContent>
                           <Textarea
-                            placeholder="Décrivez les conditions personnalisées..."
-                            value={paymentTermsNotes}
-                            onChange={e => setPaymentTermsNotes(e.target.value)}
-                            rows={2}
+                            value={notes}
+                            onChange={e => setNotes(e.target.value)}
+                            placeholder="Notes internes sur la commande..."
                             disabled={loading}
                           />
-                        )}
+                        </CardContent>
+                      </Card>
 
-                        {selectedCustomer && (
-                          <p className="text-xs text-gray-500">
-                            {selectedCustomer.type === 'individual'
-                              ? 'Paiement immédiat requis pour les clients particuliers'
-                              : 'Auto-rempli depuis la fiche client. Modifiable si nécessaire.'}
-                          </p>
-                        )}
+                      {/* Actions LinkMe */}
+                      <div className="flex justify-end gap-4">
+                        <ButtonV2
+                          type="button"
+                          variant="outline"
+                          onClick={() => setOpen(false)}
+                          disabled={loading}
+                        >
+                          Annuler
+                        </ButtonV2>
+                        <ButtonV2
+                          type="button"
+                          onClick={() => {
+                            void handleLinkMeSubmit().catch(console.error);
+                          }}
+                          disabled={
+                            loading ||
+                            !selectedCustomer ||
+                            linkmeCart.length === 0 ||
+                            !linkmeSelectionDetail?.affiliate_id
+                          }
+                          className="bg-purple-600 hover:bg-purple-700"
+                        >
+                          {loading ? 'Création...' : 'Créer la commande LinkMe'}
+                        </ButtonV2>
                       </div>
                     </div>
+                  )}
 
-                    {/* Canal de vente */}
-                    <div className="space-y-2">
-                      <Label htmlFor="channelId">Canal de vente</Label>
-                      <Select
-                        value={channelId ?? ''}
-                        onValueChange={value => setChannelId(value ?? null)}
-                        disabled={loading || !selectedCustomer}
-                      >
-                        <SelectTrigger id="channelId">
-                          <SelectValue placeholder="Sélectionnez un canal" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {availableChannels.map(channel => (
-                            <SelectItem key={channel.id} value={channel.id}>
-                              {channel.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      {selectedCustomer && (
-                        <p className="text-xs text-gray-500">
-                          Canal utilisé pour cette commande (affecte les prix et
-                          le suivi)
-                        </p>
+                  {/* ============================================ */}
+                  {/* FORMULAIRE STANDARD (Manual + Site Internet) */}
+                  {/* ============================================ */}
+                  {(selectedSalesChannel !== 'linkme' || mode === 'edit') && (
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                      {/* Alertes de stock */}
+                      {stockWarnings.length > 0 && (
+                        <Alert variant="destructive">
+                          <AlertTriangle className="h-4 w-4" />
+                          <AlertDescription>
+                            <div className="space-y-1">
+                              <p className="font-medium">
+                                Problèmes de stock détectés :
+                              </p>
+                              {stockWarnings.map((warning, index) => (
+                                <p key={index} className="text-sm">
+                                  • {warning}
+                                </p>
+                              ))}
+                            </div>
+                          </AlertDescription>
+                        </Alert>
                       )}
-                    </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <AddressInput
-                        label="Adresse de livraison"
-                        value={shippingAddress}
-                        onChange={setShippingAddress}
-                        selectedCustomer={selectedCustomer}
-                        addressType="shipping"
-                        placeholder="Adresse complète de livraison"
-                        disabled={loading}
-                      />
-
-                      <AddressInput
-                        label="Adresse de facturation"
-                        value={billingAddress}
-                        onChange={setBillingAddress}
-                        selectedCustomer={selectedCustomer}
-                        addressType="billing"
-                        placeholder="Adresse complète de facturation"
-                        disabled={loading}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="notes">Notes</Label>
-                      <Textarea
-                        id="notes"
-                        value={notes}
-                        onChange={e => setNotes(e.target.value)}
-                        placeholder="Notes sur la commande"
-                        disabled={loading}
-                      />
-                    </div>
-
-                    <div>
-                      <EcoTaxVatInput
-                        value={ecoTaxVatRate}
-                        onChange={setEcoTaxVatRate}
-                        defaultTaxRate={20}
-                        disabled={loading}
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Frais additionnels clients */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Frais additionnels</CardTitle>
-                  </CardHeader>
-                  <CardContent className="grid grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="shippingCostHt">
-                        Frais de livraison HT (€)
-                      </Label>
-                      <Input
-                        id="shippingCostHt"
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={shippingCostHt || ''}
-                        onChange={e =>
-                          setShippingCostHt(parseFloat(e.target.value) || 0)
-                        }
-                        placeholder="0.00"
-                        disabled={loading}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="insuranceCostHt">
-                        Frais d'assurance HT (€)
-                      </Label>
-                      <Input
-                        id="insuranceCostHt"
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={insuranceCostHt || ''}
-                        onChange={e =>
-                          setInsuranceCostHt(parseFloat(e.target.value) || 0)
-                        }
-                        placeholder="0.00"
-                        disabled={loading}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="handlingCostHt">
-                        Frais de manutention HT (€)
-                      </Label>
-                      <Input
-                        id="handlingCostHt"
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={handlingCostHt || ''}
-                        onChange={e =>
-                          setHandlingCostHt(parseFloat(e.target.value) || 0)
-                        }
-                        placeholder="0.00"
-                        disabled={loading}
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Articles */}
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between">
-                    <CardTitle>Articles</CardTitle>
-                    <ButtonV2
-                      type="button"
-                      variant="outline"
-                      onClick={() => setShowProductSelector(true)}
-                      disabled={loading}
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Ajouter des produits
-                    </ButtonV2>
-                  </CardHeader>
-                  <CardContent>
-                    {items.length === 0 ? (
-                      <p className="text-center text-gray-500 py-8">
-                        Aucun produit ajouté
-                      </p>
-                    ) : (
-                      <div className="overflow-x-auto">
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>Produit</TableHead>
-                              <TableHead className="w-20">Quantité</TableHead>
-                              <TableHead className="w-28">
-                                Prix unitaire HT
-                              </TableHead>
-                              <TableHead className="w-24">Remise (%)</TableHead>
-                              <TableHead className="w-24">
-                                Éco-taxe (€)
-                              </TableHead>
-                              <TableHead className="w-28">Total HT</TableHead>
-                              <TableHead className="w-20">Actions</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {items.map(item => {
-                              const itemSubtotal =
-                                item.quantity *
-                                item.unit_price_ht *
-                                (1 - (item.discount_percentage ?? 0) / 100);
-                              // ✅ FIX: Écotaxe × quantité
-                              const itemTotal =
-                                itemSubtotal +
-                                (item.eco_tax ?? 0) * item.quantity;
-
-                              return (
-                                <TableRow key={item.id}>
-                                  {/* Produit avec image */}
-                                  <TableCell>
-                                    <div className="flex items-center gap-2">
-                                      {item.product?.primary_image_url && (
-                                        <Image
-                                          src={item.product.primary_image_url}
-                                          alt={item.product.name}
-                                          width={32}
-                                          height={32}
-                                          className="w-8 h-8 object-cover rounded"
-                                        />
-                                      )}
-                                      <span className="font-medium text-sm truncate max-w-[180px]">
-                                        {item.product?.name}
-                                      </span>
-                                    </div>
-                                  </TableCell>
-                                  {/* Quantité */}
-                                  <TableCell>
-                                    <Input
-                                      type="number"
-                                      min="1"
-                                      value={item.quantity}
-                                      onChange={e => {
-                                        void updateItem(
-                                          item.id,
-                                          'quantity',
-                                          parseInt(e.target.value) || 1
-                                        ).catch(console.error);
-                                      }}
-                                      className="w-16 h-8 text-sm"
-                                      disabled={loading}
-                                    />
-                                  </TableCell>
-                                  {/* Prix unitaire HT */}
-                                  <TableCell>
-                                    <Input
-                                      type="number"
-                                      step="0.01"
-                                      min="0"
-                                      value={item.unit_price_ht}
-                                      onChange={e => {
-                                        void updateItem(
-                                          item.id,
-                                          'unit_price_ht',
-                                          parseFloat(e.target.value) || 0
-                                        ).catch(console.error);
-                                      }}
-                                      className={cn(
-                                        'w-24 h-8 text-sm',
-                                        !isPriceEditable &&
-                                          'bg-muted cursor-not-allowed'
-                                      )}
-                                      disabled={loading || !isPriceEditable}
-                                      title={
-                                        !isPriceEditable
-                                          ? 'Prix non modifiable pour ce canal'
-                                          : undefined
-                                      }
-                                    />
-                                  </TableCell>
-                                  {/* Remise (%) */}
-                                  <TableCell>
-                                    <Input
-                                      type="number"
-                                      step="0.01"
-                                      min="0"
-                                      max="100"
-                                      value={item.discount_percentage ?? 0}
-                                      onChange={e => {
-                                        void updateItem(
-                                          item.id,
-                                          'discount_percentage',
-                                          parseFloat(e.target.value) || 0
-                                        ).catch(console.error);
-                                      }}
-                                      className="w-20 h-8 text-sm"
-                                      disabled={loading}
-                                    />
-                                  </TableCell>
-                                  {/* Éco-taxe (€) */}
-                                  <TableCell>
-                                    <Input
-                                      type="number"
-                                      step="0.01"
-                                      min="0"
-                                      value={(item.eco_tax ?? 0).toFixed(2)}
-                                      onChange={e => {
-                                        void updateItem(
-                                          item.id,
-                                          'eco_tax',
-                                          parseFloat(e.target.value) || 0
-                                        ).catch(console.error);
-                                      }}
-                                      className="w-20 h-8 text-sm"
-                                      disabled={loading}
-                                    />
-                                  </TableCell>
-                                  {/* Total HT */}
-                                  <TableCell className="font-medium text-sm whitespace-nowrap">
-                                    {formatCurrency(itemTotal)}
-                                  </TableCell>
-                                  {/* Actions */}
-                                  <TableCell>
-                                    <ButtonV2
-                                      type="button"
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => removeItem(item.id)}
-                                      disabled={loading}
-                                      title="Supprimer"
-                                      className="text-red-600 hover:text-red-700 hover:bg-red-50 h-8 w-8 p-0"
-                                    >
-                                      <Trash2 className="h-4 w-4" />
-                                    </ButtonV2>
-                                  </TableCell>
-                                </TableRow>
-                              );
-                            })}
-                          </TableBody>
-                        </Table>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-
-                {/* RFA supprimé - Migration 003 */}
-
-                {/* Totaux */}
-                {items.length > 0 && (
-                  <Card>
-                    <CardContent className="pt-6">
-                      <div className="flex justify-end space-y-2">
-                        <div className="text-right space-y-1">
-                          <p className="text-lg">
-                            <span className="font-medium">
-                              Total HT produits:
-                            </span>{' '}
-                            {formatCurrency(totalHTProducts)}
-                          </p>
-                          {totalCharges > 0 && (
-                            <p className="text-sm text-gray-600">
-                              Frais additionnels: {formatCurrency(totalCharges)}
+                      {/* Informations générales */}
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Informations générales</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                          <CustomerSelector
+                            selectedCustomer={selectedCustomer}
+                            onCustomerChange={handleCustomerChange}
+                            disabled={loading}
+                          />
+                          {mode === 'edit' && (
+                            <p className="text-sm text-gray-500 italic">
+                              Le client ne peut pas être modifié pour une
+                              commande existante
                             </p>
                           )}
-                          <p className="text-sm text-gray-600">
-                            TVA: {formatCurrency(totalTVA)}
-                          </p>
-                          <p className="text-xl font-bold">
-                            Total TTC: {formatCurrency(totalTTC)}
-                          </p>
-                        </div>
+
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="deliveryDate">
+                                Date de livraison prévue
+                              </Label>
+                              <Input
+                                id="deliveryDate"
+                                type="date"
+                                value={expectedDeliveryDate}
+                                onChange={e =>
+                                  setExpectedDeliveryDate(e.target.value)
+                                }
+                                disabled={loading}
+                              />
+                            </div>
+
+                            {/* Conditions de paiement (enum + notes) */}
+                            <div className="space-y-2">
+                              <Label htmlFor="paymentTermsType">
+                                Conditions de paiement
+                              </Label>
+                              <Select
+                                value={paymentTermsType ?? undefined}
+                                onValueChange={value =>
+                                  setPaymentTermsType(
+                                    value as Database['public']['Enums']['payment_terms_type']
+                                  )
+                                }
+                                disabled={loading || !selectedCustomer}
+                              >
+                                <SelectTrigger id="paymentTermsType">
+                                  <SelectValue placeholder="Sélectionnez les conditions" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="IMMEDIATE">
+                                    Paiement immédiat (comptant)
+                                  </SelectItem>
+                                  <SelectItem value="NET_15">
+                                    Net 15 jours
+                                  </SelectItem>
+                                  <SelectItem value="NET_30">
+                                    Net 30 jours
+                                  </SelectItem>
+                                  <SelectItem value="NET_45">
+                                    Net 45 jours
+                                  </SelectItem>
+                                  <SelectItem value="NET_60">
+                                    Net 60 jours
+                                  </SelectItem>
+                                  <SelectItem value="NET_90">
+                                    Net 90 jours
+                                  </SelectItem>
+                                  <SelectItem value="CUSTOM">
+                                    Conditions personnalisées
+                                  </SelectItem>
+                                </SelectContent>
+                              </Select>
+
+                              {/* Notes complémentaires si CUSTOM */}
+                              {paymentTermsType === 'CUSTOM' && (
+                                <Textarea
+                                  placeholder="Décrivez les conditions personnalisées..."
+                                  value={paymentTermsNotes}
+                                  onChange={e =>
+                                    setPaymentTermsNotes(e.target.value)
+                                  }
+                                  rows={2}
+                                  disabled={loading}
+                                />
+                              )}
+
+                              {selectedCustomer && (
+                                <p className="text-xs text-gray-500">
+                                  {selectedCustomer.type === 'individual'
+                                    ? 'Paiement immédiat requis pour les clients particuliers'
+                                    : 'Auto-rempli depuis la fiche client. Modifiable si nécessaire.'}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Canal de vente */}
+                          <div className="space-y-2">
+                            <Label htmlFor="channelId">Canal de vente</Label>
+                            <Select
+                              value={channelId ?? ''}
+                              onValueChange={value =>
+                                setChannelId(value ?? null)
+                              }
+                              disabled={loading || !selectedCustomer}
+                            >
+                              <SelectTrigger id="channelId">
+                                <SelectValue placeholder="Sélectionnez un canal" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {availableChannels.map(channel => (
+                                  <SelectItem
+                                    key={channel.id}
+                                    value={channel.id}
+                                  >
+                                    {channel.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            {selectedCustomer && (
+                              <p className="text-xs text-gray-500">
+                                Canal utilisé pour cette commande (affecte les
+                                prix et le suivi)
+                              </p>
+                            )}
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-4">
+                            <AddressInput
+                              label="Adresse de livraison"
+                              value={shippingAddress}
+                              onChange={setShippingAddress}
+                              selectedCustomer={selectedCustomer}
+                              addressType="shipping"
+                              placeholder="Adresse complète de livraison"
+                              disabled={loading}
+                            />
+
+                            <AddressInput
+                              label="Adresse de facturation"
+                              value={billingAddress}
+                              onChange={setBillingAddress}
+                              selectedCustomer={selectedCustomer}
+                              addressType="billing"
+                              placeholder="Adresse complète de facturation"
+                              disabled={loading}
+                            />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="notes">Notes</Label>
+                            <Textarea
+                              id="notes"
+                              value={notes}
+                              onChange={e => setNotes(e.target.value)}
+                              placeholder="Notes sur la commande"
+                              disabled={loading}
+                            />
+                          </div>
+
+                          <div>
+                            <EcoTaxVatInput
+                              value={ecoTaxVatRate}
+                              onChange={setEcoTaxVatRate}
+                              defaultTaxRate={20}
+                              disabled={loading}
+                            />
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      {/* Frais additionnels clients */}
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Frais additionnels</CardTitle>
+                        </CardHeader>
+                        <CardContent className="grid grid-cols-3 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="shippingCostHt">
+                              Frais de livraison HT (€)
+                            </Label>
+                            <Input
+                              id="shippingCostHt"
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={shippingCostHt || ''}
+                              onChange={e =>
+                                setShippingCostHt(
+                                  parseFloat(e.target.value) || 0
+                                )
+                              }
+                              placeholder="0.00"
+                              disabled={loading}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="insuranceCostHt">
+                              Frais d'assurance HT (€)
+                            </Label>
+                            <Input
+                              id="insuranceCostHt"
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={insuranceCostHt || ''}
+                              onChange={e =>
+                                setInsuranceCostHt(
+                                  parseFloat(e.target.value) || 0
+                                )
+                              }
+                              placeholder="0.00"
+                              disabled={loading}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="handlingCostHt">
+                              Frais de manutention HT (€)
+                            </Label>
+                            <Input
+                              id="handlingCostHt"
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={handlingCostHt || ''}
+                              onChange={e =>
+                                setHandlingCostHt(
+                                  parseFloat(e.target.value) || 0
+                                )
+                              }
+                              placeholder="0.00"
+                              disabled={loading}
+                            />
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      {/* Articles */}
+                      <Card>
+                        <CardHeader className="flex flex-row items-center justify-between">
+                          <CardTitle>Articles</CardTitle>
+                          <ButtonV2
+                            type="button"
+                            variant="outline"
+                            onClick={() => setShowProductSelector(true)}
+                            disabled={loading}
+                          >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Ajouter des produits
+                          </ButtonV2>
+                        </CardHeader>
+                        <CardContent>
+                          {items.length === 0 ? (
+                            <p className="text-center text-gray-500 py-8">
+                              Aucun produit ajouté
+                            </p>
+                          ) : (
+                            <div className="overflow-x-auto">
+                              <Table>
+                                <TableHeader>
+                                  <TableRow>
+                                    <TableHead>Produit</TableHead>
+                                    <TableHead className="w-20">
+                                      Quantité
+                                    </TableHead>
+                                    <TableHead className="w-28">
+                                      Prix unitaire HT
+                                    </TableHead>
+                                    <TableHead className="w-24">
+                                      Remise (%)
+                                    </TableHead>
+                                    <TableHead className="w-24">
+                                      Éco-taxe (€)
+                                    </TableHead>
+                                    <TableHead className="w-28">
+                                      Total HT
+                                    </TableHead>
+                                    <TableHead className="w-20">
+                                      Actions
+                                    </TableHead>
+                                  </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                  {items.map(item => {
+                                    const itemSubtotal =
+                                      item.quantity *
+                                      item.unit_price_ht *
+                                      (1 -
+                                        (item.discount_percentage ?? 0) / 100);
+                                    // ✅ FIX: Écotaxe × quantité
+                                    const itemTotal =
+                                      itemSubtotal +
+                                      (item.eco_tax ?? 0) * item.quantity;
+
+                                    return (
+                                      <TableRow key={item.id}>
+                                        {/* Produit avec image */}
+                                        <TableCell>
+                                          <div className="flex items-center gap-2">
+                                            {item.product
+                                              ?.primary_image_url && (
+                                              <Image
+                                                src={
+                                                  item.product.primary_image_url
+                                                }
+                                                alt={item.product.name}
+                                                width={32}
+                                                height={32}
+                                                className="w-8 h-8 object-cover rounded"
+                                              />
+                                            )}
+                                            <span className="font-medium text-sm truncate max-w-[180px]">
+                                              {item.product?.name}
+                                            </span>
+                                          </div>
+                                        </TableCell>
+                                        {/* Quantité */}
+                                        <TableCell>
+                                          <Input
+                                            type="number"
+                                            min="1"
+                                            value={item.quantity}
+                                            onChange={e => {
+                                              void updateItem(
+                                                item.id,
+                                                'quantity',
+                                                parseInt(e.target.value) || 1
+                                              ).catch(console.error);
+                                            }}
+                                            className="w-16 h-8 text-sm"
+                                            disabled={loading}
+                                          />
+                                        </TableCell>
+                                        {/* Prix unitaire HT */}
+                                        <TableCell>
+                                          <Input
+                                            type="number"
+                                            step="0.01"
+                                            min="0"
+                                            value={item.unit_price_ht}
+                                            onChange={e => {
+                                              void updateItem(
+                                                item.id,
+                                                'unit_price_ht',
+                                                parseFloat(e.target.value) || 0
+                                              ).catch(console.error);
+                                            }}
+                                            className={cn(
+                                              'w-24 h-8 text-sm',
+                                              !isPriceEditable &&
+                                                'bg-muted cursor-not-allowed'
+                                            )}
+                                            disabled={
+                                              loading || !isPriceEditable
+                                            }
+                                            title={
+                                              !isPriceEditable
+                                                ? 'Prix non modifiable pour ce canal'
+                                                : undefined
+                                            }
+                                          />
+                                        </TableCell>
+                                        {/* Remise (%) */}
+                                        <TableCell>
+                                          <Input
+                                            type="number"
+                                            step="0.01"
+                                            min="0"
+                                            max="100"
+                                            value={
+                                              item.discount_percentage ?? 0
+                                            }
+                                            onChange={e => {
+                                              void updateItem(
+                                                item.id,
+                                                'discount_percentage',
+                                                parseFloat(e.target.value) || 0
+                                              ).catch(console.error);
+                                            }}
+                                            className="w-20 h-8 text-sm"
+                                            disabled={loading}
+                                          />
+                                        </TableCell>
+                                        {/* Éco-taxe (€) */}
+                                        <TableCell>
+                                          <Input
+                                            type="number"
+                                            step="0.01"
+                                            min="0"
+                                            value={(item.eco_tax ?? 0).toFixed(
+                                              2
+                                            )}
+                                            onChange={e => {
+                                              void updateItem(
+                                                item.id,
+                                                'eco_tax',
+                                                parseFloat(e.target.value) || 0
+                                              ).catch(console.error);
+                                            }}
+                                            className="w-20 h-8 text-sm"
+                                            disabled={loading}
+                                          />
+                                        </TableCell>
+                                        {/* Total HT */}
+                                        <TableCell className="font-medium text-sm whitespace-nowrap">
+                                          {formatCurrency(itemTotal)}
+                                        </TableCell>
+                                        {/* Actions */}
+                                        <TableCell>
+                                          <ButtonV2
+                                            type="button"
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => removeItem(item.id)}
+                                            disabled={loading}
+                                            title="Supprimer"
+                                            className="text-red-600 hover:text-red-700 hover:bg-red-50 h-8 w-8 p-0"
+                                          >
+                                            <Trash2 className="h-4 w-4" />
+                                          </ButtonV2>
+                                        </TableCell>
+                                      </TableRow>
+                                    );
+                                  })}
+                                </TableBody>
+                              </Table>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+
+                      {/* RFA supprimé - Migration 003 */}
+
+                      {/* Totaux */}
+                      {items.length > 0 && (
+                        <Card>
+                          <CardContent className="pt-6">
+                            <div className="flex justify-end space-y-2">
+                              <div className="text-right space-y-1">
+                                <p className="text-lg">
+                                  <span className="font-medium">
+                                    Total HT produits:
+                                  </span>{' '}
+                                  {formatCurrency(totalHTProducts)}
+                                </p>
+                                {totalCharges > 0 && (
+                                  <p className="text-sm text-gray-600">
+                                    Frais additionnels:{' '}
+                                    {formatCurrency(totalCharges)}
+                                  </p>
+                                )}
+                                <p className="text-sm text-gray-600">
+                                  TVA: {formatCurrency(totalTVA)}
+                                </p>
+                                <p className="text-xl font-bold">
+                                  Total TTC: {formatCurrency(totalTTC)}
+                                </p>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )}
+
+                      {/* Actions */}
+                      <div className="flex justify-end gap-4">
+                        <ButtonV2
+                          type="button"
+                          variant="outline"
+                          onClick={() => setOpen(false)}
+                          disabled={loading}
+                        >
+                          Annuler
+                        </ButtonV2>
+                        <ButtonV2
+                          type="submit"
+                          disabled={
+                            loading ||
+                            loadingOrder ||
+                            !selectedCustomer ||
+                            items.length === 0
+                          }
+                        >
+                          {loading
+                            ? mode === 'edit'
+                              ? 'Mise à jour...'
+                              : 'Création...'
+                            : mode === 'edit'
+                              ? 'Mettre à jour la commande'
+                              : 'Créer la commande'}
+                        </ButtonV2>
                       </div>
-                    </CardContent>
-                  </Card>
-                )}
+                    </form>
+                  )}
+                </>
+              )}
 
-                {/* Actions */}
-                <div className="flex justify-end gap-4">
-                  <ButtonV2
-                    type="button"
-                    variant="outline"
-                    onClick={() => setOpen(false)}
-                    disabled={loading}
-                  >
-                    Annuler
-                  </ButtonV2>
-                  <ButtonV2
-                    type="submit"
-                    disabled={
-                      loading ||
-                      loadingOrder ||
-                      !selectedCustomer ||
-                      items.length === 0
-                    }
-                  >
-                    {loading
-                      ? mode === 'edit'
-                        ? 'Mise à jour...'
-                        : 'Création...'
-                      : mode === 'edit'
-                        ? 'Mettre à jour la commande'
-                        : 'Créer la commande'}
-                  </ButtonV2>
-                </div>
-              </form>
-            )}
-          </>
-        )}
-
-        {/* Modal UniversalProductSelectorV2 */}
-        {showProductSelector && (
-          <UniversalProductSelectorV2
-            open={showProductSelector}
-            onClose={() => setShowProductSelector(false)}
-            onSelect={handleProductsSelect}
-            mode="multi"
-            context="orders"
-            title="Sélectionner des produits pour la commande"
-            description="Choisissez les produits à ajouter. Vous pourrez ajuster quantités et prix après sélection."
-            excludeProductIds={excludeProductIds}
-            showImages
-            showQuantity
-            showPricing={false}
-          />
-        )}
-      </DialogContent>
+              {/* Modal UniversalProductSelectorV2 */}
+              {showProductSelector && (
+                <UniversalProductSelectorV2
+                  open={showProductSelector}
+                  onClose={() => setShowProductSelector(false)}
+                  onSelect={handleProductsSelect}
+                  mode="multi"
+                  context="orders"
+                  title="Sélectionner des produits pour la commande"
+                  description="Choisissez les produits à ajouter. Vous pourrez ajuster quantités et prix après sélection."
+                  excludeProductIds={excludeProductIds}
+                  showImages
+                  showQuantity
+                  showPricing={false}
+                />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* AlertDialog de confirmation */}
       <AlertDialog open={showConfirmation} onOpenChange={setShowConfirmation}>
@@ -2369,6 +2444,6 @@ export function SalesOrderFormModal({
           </div>
         </div>
       )}
-    </Dialog>
+    </>
   );
 }
