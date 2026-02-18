@@ -80,6 +80,7 @@ import {
 
 import type { UnifiedCustomer } from './customer-selector';
 import { CustomerSelector } from './customer-selector';
+import { OrderSummaryPanel } from './OrderSummaryPanel';
 
 interface OrderItem {
   id: string;
@@ -1170,7 +1171,7 @@ export function SalesOrderFormModal({
 
           {/* Content */}
           <div className="flex-1 overflow-y-auto px-8 py-6">
-            <div className="max-w-7xl mx-auto w-full space-y-8">
+            <div className="w-full">
               {/* ÉTAPE 1: Sélection du canal de vente (uniquement en mode création) */}
               {mode === 'create' && wizardStep === 'channel-selection' && (
                 <div className="flex items-center justify-center min-h-[60vh]">
@@ -1758,495 +1759,538 @@ export function SalesOrderFormModal({
                   {/* FORMULAIRE STANDARD (Manual + Site Internet) */}
                   {/* ============================================ */}
                   {(selectedSalesChannel !== 'linkme' || mode === 'edit') && (
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                      {/* Alertes de stock */}
-                      {stockWarnings.length > 0 && (
-                        <Alert variant="destructive">
-                          <AlertTriangle className="h-4 w-4" />
-                          <AlertDescription>
-                            <div className="space-y-1">
-                              <p className="font-medium">
-                                Problèmes de stock détectés :
-                              </p>
-                              {stockWarnings.map((warning, index) => (
-                                <p key={index} className="text-sm">
-                                  • {warning}
-                                </p>
-                              ))}
-                            </div>
-                          </AlertDescription>
-                        </Alert>
-                      )}
-
-                      {/* Informations générales */}
-                      <Card>
-                        <CardHeader>
-                          <CardTitle>Informations générales</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-6">
-                          <CustomerSelector
-                            selectedCustomer={selectedCustomer}
-                            onCustomerChange={handleCustomerChange}
-                            disabled={loading}
-                          />
-                          {mode === 'edit' && (
-                            <p className="text-sm text-gray-500 italic">
-                              Le client ne peut pas être modifié pour une
-                              commande existante
-                            </p>
+                    <form onSubmit={handleSubmit}>
+                      <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-6">
+                        {/* COLONNE GAUCHE - Formulaire (scrollable) */}
+                        <div className="space-y-6">
+                          {/* Alertes de stock */}
+                          {stockWarnings.length > 0 && (
+                            <Alert variant="destructive">
+                              <AlertTriangle className="h-4 w-4" />
+                              <AlertDescription>
+                                <div className="space-y-1">
+                                  <p className="font-medium">
+                                    Problèmes de stock détectés :
+                                  </p>
+                                  {stockWarnings.map((warning, index) => (
+                                    <p key={index} className="text-sm">
+                                      • {warning}
+                                    </p>
+                                  ))}
+                                </div>
+                              </AlertDescription>
+                            </Alert>
                           )}
 
-                          <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                              <Label htmlFor="deliveryDate">
-                                Date de livraison prévue
-                              </Label>
-                              <Input
-                                id="deliveryDate"
-                                type="date"
-                                value={expectedDeliveryDate}
-                                onChange={e =>
-                                  setExpectedDeliveryDate(e.target.value)
-                                }
+                          {/* Section Client */}
+                          <Card>
+                            <CardHeader className="pb-3">
+                              <CardTitle className="text-base font-semibold">
+                                Client
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                              <CustomerSelector
+                                selectedCustomer={selectedCustomer}
+                                onCustomerChange={handleCustomerChange}
                                 disabled={loading}
                               />
-                            </div>
+                              {mode === 'edit' && (
+                                <p className="text-sm text-gray-500 italic">
+                                  Le client ne peut pas être modifié pour une
+                                  commande existante
+                                </p>
+                              )}
+                            </CardContent>
+                          </Card>
 
-                            {/* Conditions de paiement (enum + notes) */}
-                            <div className="space-y-2">
-                              <Label htmlFor="paymentTermsType">
-                                Conditions de paiement
-                              </Label>
-                              <Select
-                                value={paymentTermsType ?? undefined}
-                                onValueChange={value =>
-                                  setPaymentTermsType(
-                                    value as Database['public']['Enums']['payment_terms_type']
-                                  )
-                                }
-                                disabled={loading || !selectedCustomer}
+                          {/* Section Articles (PRIORITAIRE - la plus grande) */}
+                          <Card>
+                            <CardHeader className="flex flex-row items-center justify-between pb-3">
+                              <CardTitle className="text-base font-semibold">
+                                Articles
+                              </CardTitle>
+                              <ButtonV2
+                                type="button"
+                                variant="outline"
+                                onClick={() => setShowProductSelector(true)}
+                                disabled={loading}
                               >
-                                <SelectTrigger id="paymentTermsType">
-                                  <SelectValue placeholder="Sélectionnez les conditions" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="IMMEDIATE">
-                                    Paiement immédiat (comptant)
-                                  </SelectItem>
-                                  <SelectItem value="NET_15">
-                                    Net 15 jours
-                                  </SelectItem>
-                                  <SelectItem value="NET_30">
-                                    Net 30 jours
-                                  </SelectItem>
-                                  <SelectItem value="NET_45">
-                                    Net 45 jours
-                                  </SelectItem>
-                                  <SelectItem value="NET_60">
-                                    Net 60 jours
-                                  </SelectItem>
-                                  <SelectItem value="NET_90">
-                                    Net 90 jours
-                                  </SelectItem>
-                                  <SelectItem value="CUSTOM">
-                                    Conditions personnalisées
-                                  </SelectItem>
-                                </SelectContent>
-                              </Select>
+                                <Plus className="h-4 w-4 mr-2" />
+                                Ajouter des produits
+                              </ButtonV2>
+                            </CardHeader>
+                            <CardContent>
+                              {items.length === 0 ? (
+                                <div className="flex flex-col items-center py-12 text-center">
+                                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-3">
+                                    <Package className="h-8 w-8 text-gray-300" />
+                                  </div>
+                                  <p className="text-gray-500 mb-1">
+                                    Aucun produit ajouté
+                                  </p>
+                                  <p className="text-sm text-gray-400">
+                                    Cliquez sur &quot;Ajouter des produits&quot;
+                                    pour commencer
+                                  </p>
+                                </div>
+                              ) : (
+                                <div className="overflow-x-auto">
+                                  <Table>
+                                    <TableHeader>
+                                      <TableRow>
+                                        <TableHead>Produit</TableHead>
+                                        <TableHead className="w-20">
+                                          Qté
+                                        </TableHead>
+                                        <TableHead className="w-28">
+                                          PU HT
+                                        </TableHead>
+                                        <TableHead className="w-24">
+                                          Remise %
+                                        </TableHead>
+                                        <TableHead className="w-24">
+                                          Éco-taxe
+                                        </TableHead>
+                                        <TableHead className="w-28">
+                                          Total HT
+                                        </TableHead>
+                                        <TableHead className="w-12" />
+                                      </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                      {items.map(item => {
+                                        const itemSubtotal =
+                                          item.quantity *
+                                          item.unit_price_ht *
+                                          (1 -
+                                            (item.discount_percentage ?? 0) /
+                                              100);
+                                        const itemTotal =
+                                          itemSubtotal +
+                                          (item.eco_tax ?? 0) * item.quantity;
 
-                              {/* Notes complémentaires si CUSTOM */}
-                              {paymentTermsType === 'CUSTOM' && (
-                                <Textarea
-                                  placeholder="Décrivez les conditions personnalisées..."
-                                  value={paymentTermsNotes}
-                                  onChange={e =>
-                                    setPaymentTermsNotes(e.target.value)
-                                  }
-                                  rows={2}
+                                        return (
+                                          <TableRow key={item.id}>
+                                            <TableCell>
+                                              <div className="flex items-center gap-3">
+                                                {item.product
+                                                  ?.primary_image_url ? (
+                                                  <Image
+                                                    src={
+                                                      item.product
+                                                        .primary_image_url
+                                                    }
+                                                    alt={item.product.name}
+                                                    width={48}
+                                                    height={48}
+                                                    className="w-12 h-12 object-cover rounded-lg flex-shrink-0"
+                                                  />
+                                                ) : (
+                                                  <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                                    <Package className="h-5 w-5 text-gray-400" />
+                                                  </div>
+                                                )}
+                                                <div className="min-w-0">
+                                                  <p className="font-medium text-sm truncate max-w-[200px]">
+                                                    {item.product?.name}
+                                                  </p>
+                                                  <p className="text-xs text-gray-400">
+                                                    {item.product?.sku}
+                                                  </p>
+                                                </div>
+                                              </div>
+                                            </TableCell>
+                                            <TableCell>
+                                              <Input
+                                                type="number"
+                                                min="1"
+                                                value={item.quantity}
+                                                onChange={e => {
+                                                  void updateItem(
+                                                    item.id,
+                                                    'quantity',
+                                                    parseInt(e.target.value) ||
+                                                      1
+                                                  ).catch(console.error);
+                                                }}
+                                                className="w-16 h-9 text-sm"
+                                                disabled={loading}
+                                              />
+                                            </TableCell>
+                                            <TableCell>
+                                              <Input
+                                                type="number"
+                                                step="0.01"
+                                                min="0"
+                                                value={item.unit_price_ht}
+                                                onChange={e => {
+                                                  void updateItem(
+                                                    item.id,
+                                                    'unit_price_ht',
+                                                    parseFloat(
+                                                      e.target.value
+                                                    ) || 0
+                                                  ).catch(console.error);
+                                                }}
+                                                className={cn(
+                                                  'w-24 h-9 text-sm',
+                                                  !isPriceEditable &&
+                                                    'bg-muted cursor-not-allowed'
+                                                )}
+                                                disabled={
+                                                  loading || !isPriceEditable
+                                                }
+                                                title={
+                                                  !isPriceEditable
+                                                    ? 'Prix non modifiable pour ce canal'
+                                                    : undefined
+                                                }
+                                              />
+                                            </TableCell>
+                                            <TableCell>
+                                              <Input
+                                                type="number"
+                                                step="0.01"
+                                                min="0"
+                                                max="100"
+                                                value={
+                                                  item.discount_percentage ?? 0
+                                                }
+                                                onChange={e => {
+                                                  void updateItem(
+                                                    item.id,
+                                                    'discount_percentage',
+                                                    parseFloat(
+                                                      e.target.value
+                                                    ) || 0
+                                                  ).catch(console.error);
+                                                }}
+                                                className="w-20 h-9 text-sm"
+                                                disabled={loading}
+                                              />
+                                            </TableCell>
+                                            <TableCell>
+                                              <Input
+                                                type="number"
+                                                step="0.01"
+                                                min="0"
+                                                value={(
+                                                  item.eco_tax ?? 0
+                                                ).toFixed(2)}
+                                                onChange={e => {
+                                                  void updateItem(
+                                                    item.id,
+                                                    'eco_tax',
+                                                    parseFloat(
+                                                      e.target.value
+                                                    ) || 0
+                                                  ).catch(console.error);
+                                                }}
+                                                className="w-20 h-9 text-sm"
+                                                disabled={loading}
+                                              />
+                                            </TableCell>
+                                            <TableCell className="font-medium text-sm whitespace-nowrap">
+                                              {formatCurrency(itemTotal)}
+                                            </TableCell>
+                                            <TableCell>
+                                              <ButtonV2
+                                                type="button"
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() =>
+                                                  removeItem(item.id)
+                                                }
+                                                disabled={loading}
+                                                title="Supprimer"
+                                                className="text-red-600 hover:text-red-700 hover:bg-red-50 h-8 w-8 p-0"
+                                              >
+                                                <Trash2 className="h-4 w-4" />
+                                              </ButtonV2>
+                                            </TableCell>
+                                          </TableRow>
+                                        );
+                                      })}
+                                    </TableBody>
+                                  </Table>
+                                </div>
+                              )}
+                            </CardContent>
+                          </Card>
+
+                          {/* Section Livraison & Facturation */}
+                          <Card>
+                            <CardHeader className="pb-3">
+                              <CardTitle className="text-base font-semibold">
+                                Livraison & Facturation
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                              <div className="grid grid-cols-2 gap-4">
+                                <AddressInput
+                                  label="Adresse de livraison"
+                                  value={shippingAddress}
+                                  onChange={setShippingAddress}
+                                  selectedCustomer={selectedCustomer}
+                                  addressType="shipping"
+                                  placeholder="Adresse complète de livraison"
                                   disabled={loading}
                                 />
-                              )}
-
-                              {selectedCustomer && (
-                                <p className="text-xs text-gray-500">
-                                  {selectedCustomer.type === 'individual'
-                                    ? 'Paiement immédiat requis pour les clients particuliers'
-                                    : 'Auto-rempli depuis la fiche client. Modifiable si nécessaire.'}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Canal de vente */}
-                          <div className="space-y-2">
-                            <Label htmlFor="channelId">Canal de vente</Label>
-                            <Select
-                              value={channelId ?? ''}
-                              onValueChange={value =>
-                                setChannelId(value ?? null)
-                              }
-                              disabled={loading || !selectedCustomer}
-                            >
-                              <SelectTrigger id="channelId">
-                                <SelectValue placeholder="Sélectionnez un canal" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {availableChannels.map(channel => (
-                                  <SelectItem
-                                    key={channel.id}
-                                    value={channel.id}
-                                  >
-                                    {channel.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            {selectedCustomer && (
-                              <p className="text-xs text-gray-500">
-                                Canal utilisé pour cette commande (affecte les
-                                prix et le suivi)
-                              </p>
-                            )}
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-4">
-                            <AddressInput
-                              label="Adresse de livraison"
-                              value={shippingAddress}
-                              onChange={setShippingAddress}
-                              selectedCustomer={selectedCustomer}
-                              addressType="shipping"
-                              placeholder="Adresse complète de livraison"
-                              disabled={loading}
-                            />
-
-                            <AddressInput
-                              label="Adresse de facturation"
-                              value={billingAddress}
-                              onChange={setBillingAddress}
-                              selectedCustomer={selectedCustomer}
-                              addressType="billing"
-                              placeholder="Adresse complète de facturation"
-                              disabled={loading}
-                            />
-                          </div>
-
-                          <div className="space-y-2">
-                            <Label htmlFor="notes">Notes</Label>
-                            <Textarea
-                              id="notes"
-                              value={notes}
-                              onChange={e => setNotes(e.target.value)}
-                              placeholder="Notes sur la commande"
-                              disabled={loading}
-                            />
-                          </div>
-
-                          <div>
-                            <EcoTaxVatInput
-                              value={ecoTaxVatRate}
-                              onChange={setEcoTaxVatRate}
-                              defaultTaxRate={20}
-                              disabled={loading}
-                            />
-                          </div>
-                        </CardContent>
-                      </Card>
-
-                      {/* Frais additionnels clients */}
-                      <Card>
-                        <CardHeader>
-                          <CardTitle>Frais additionnels</CardTitle>
-                        </CardHeader>
-                        <CardContent className="grid grid-cols-3 gap-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="shippingCostHt">
-                              Frais de livraison HT (€)
-                            </Label>
-                            <Input
-                              id="shippingCostHt"
-                              type="number"
-                              min="0"
-                              step="0.01"
-                              value={shippingCostHt || ''}
-                              onChange={e =>
-                                setShippingCostHt(
-                                  parseFloat(e.target.value) || 0
-                                )
-                              }
-                              placeholder="0.00"
-                              disabled={loading}
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="insuranceCostHt">
-                              Frais d'assurance HT (€)
-                            </Label>
-                            <Input
-                              id="insuranceCostHt"
-                              type="number"
-                              min="0"
-                              step="0.01"
-                              value={insuranceCostHt || ''}
-                              onChange={e =>
-                                setInsuranceCostHt(
-                                  parseFloat(e.target.value) || 0
-                                )
-                              }
-                              placeholder="0.00"
-                              disabled={loading}
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="handlingCostHt">
-                              Frais de manutention HT (€)
-                            </Label>
-                            <Input
-                              id="handlingCostHt"
-                              type="number"
-                              min="0"
-                              step="0.01"
-                              value={handlingCostHt || ''}
-                              onChange={e =>
-                                setHandlingCostHt(
-                                  parseFloat(e.target.value) || 0
-                                )
-                              }
-                              placeholder="0.00"
-                              disabled={loading}
-                            />
-                          </div>
-                        </CardContent>
-                      </Card>
-
-                      {/* Articles */}
-                      <Card>
-                        <CardHeader className="flex flex-row items-center justify-between">
-                          <CardTitle>Articles</CardTitle>
-                          <ButtonV2
-                            type="button"
-                            variant="outline"
-                            onClick={() => setShowProductSelector(true)}
-                            disabled={loading}
-                          >
-                            <Plus className="h-4 w-4 mr-2" />
-                            Ajouter des produits
-                          </ButtonV2>
-                        </CardHeader>
-                        <CardContent>
-                          {items.length === 0 ? (
-                            <p className="text-center text-gray-500 py-8">
-                              Aucun produit ajouté
-                            </p>
-                          ) : (
-                            <div className="overflow-x-auto">
-                              <Table>
-                                <TableHeader>
-                                  <TableRow>
-                                    <TableHead>Produit</TableHead>
-                                    <TableHead className="w-20">
-                                      Quantité
-                                    </TableHead>
-                                    <TableHead className="w-28">
-                                      Prix unitaire HT
-                                    </TableHead>
-                                    <TableHead className="w-24">
-                                      Remise (%)
-                                    </TableHead>
-                                    <TableHead className="w-24">
-                                      Éco-taxe (€)
-                                    </TableHead>
-                                    <TableHead className="w-28">
-                                      Total HT
-                                    </TableHead>
-                                    <TableHead className="w-20">
-                                      Actions
-                                    </TableHead>
-                                  </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                  {items.map(item => {
-                                    const itemSubtotal =
-                                      item.quantity *
-                                      item.unit_price_ht *
-                                      (1 -
-                                        (item.discount_percentage ?? 0) / 100);
-                                    // ✅ FIX: Écotaxe × quantité
-                                    const itemTotal =
-                                      itemSubtotal +
-                                      (item.eco_tax ?? 0) * item.quantity;
-
-                                    return (
-                                      <TableRow key={item.id}>
-                                        {/* Produit avec image */}
-                                        <TableCell>
-                                          <div className="flex items-center gap-2">
-                                            {item.product
-                                              ?.primary_image_url && (
-                                              <Image
-                                                src={
-                                                  item.product.primary_image_url
-                                                }
-                                                alt={item.product.name}
-                                                width={32}
-                                                height={32}
-                                                className="w-8 h-8 object-cover rounded"
-                                              />
-                                            )}
-                                            <span className="font-medium text-sm truncate max-w-[180px]">
-                                              {item.product?.name}
-                                            </span>
-                                          </div>
-                                        </TableCell>
-                                        {/* Quantité */}
-                                        <TableCell>
-                                          <Input
-                                            type="number"
-                                            min="1"
-                                            value={item.quantity}
-                                            onChange={e => {
-                                              void updateItem(
-                                                item.id,
-                                                'quantity',
-                                                parseInt(e.target.value) || 1
-                                              ).catch(console.error);
-                                            }}
-                                            className="w-16 h-8 text-sm"
-                                            disabled={loading}
-                                          />
-                                        </TableCell>
-                                        {/* Prix unitaire HT */}
-                                        <TableCell>
-                                          <Input
-                                            type="number"
-                                            step="0.01"
-                                            min="0"
-                                            value={item.unit_price_ht}
-                                            onChange={e => {
-                                              void updateItem(
-                                                item.id,
-                                                'unit_price_ht',
-                                                parseFloat(e.target.value) || 0
-                                              ).catch(console.error);
-                                            }}
-                                            className={cn(
-                                              'w-24 h-8 text-sm',
-                                              !isPriceEditable &&
-                                                'bg-muted cursor-not-allowed'
-                                            )}
-                                            disabled={
-                                              loading || !isPriceEditable
-                                            }
-                                            title={
-                                              !isPriceEditable
-                                                ? 'Prix non modifiable pour ce canal'
-                                                : undefined
-                                            }
-                                          />
-                                        </TableCell>
-                                        {/* Remise (%) */}
-                                        <TableCell>
-                                          <Input
-                                            type="number"
-                                            step="0.01"
-                                            min="0"
-                                            max="100"
-                                            value={
-                                              item.discount_percentage ?? 0
-                                            }
-                                            onChange={e => {
-                                              void updateItem(
-                                                item.id,
-                                                'discount_percentage',
-                                                parseFloat(e.target.value) || 0
-                                              ).catch(console.error);
-                                            }}
-                                            className="w-20 h-8 text-sm"
-                                            disabled={loading}
-                                          />
-                                        </TableCell>
-                                        {/* Éco-taxe (€) */}
-                                        <TableCell>
-                                          <Input
-                                            type="number"
-                                            step="0.01"
-                                            min="0"
-                                            value={(item.eco_tax ?? 0).toFixed(
-                                              2
-                                            )}
-                                            onChange={e => {
-                                              void updateItem(
-                                                item.id,
-                                                'eco_tax',
-                                                parseFloat(e.target.value) || 0
-                                              ).catch(console.error);
-                                            }}
-                                            className="w-20 h-8 text-sm"
-                                            disabled={loading}
-                                          />
-                                        </TableCell>
-                                        {/* Total HT */}
-                                        <TableCell className="font-medium text-sm whitespace-nowrap">
-                                          {formatCurrency(itemTotal)}
-                                        </TableCell>
-                                        {/* Actions */}
-                                        <TableCell>
-                                          <ButtonV2
-                                            type="button"
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => removeItem(item.id)}
-                                            disabled={loading}
-                                            title="Supprimer"
-                                            className="text-red-600 hover:text-red-700 hover:bg-red-50 h-8 w-8 p-0"
-                                          >
-                                            <Trash2 className="h-4 w-4" />
-                                          </ButtonV2>
-                                        </TableCell>
-                                      </TableRow>
-                                    );
-                                  })}
-                                </TableBody>
-                              </Table>
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
-
-                      {/* RFA supprimé - Migration 003 */}
-
-                      {/* Totaux */}
-                      {items.length > 0 && (
-                        <Card>
-                          <CardContent className="pt-6">
-                            <div className="flex justify-end space-y-2">
-                              <div className="text-right space-y-1">
-                                <p className="text-lg">
-                                  <span className="font-medium">
-                                    Total HT produits:
-                                  </span>{' '}
-                                  {formatCurrency(totalHTProducts)}
-                                </p>
-                                {totalCharges > 0 && (
-                                  <p className="text-sm text-gray-600">
-                                    Frais additionnels:{' '}
-                                    {formatCurrency(totalCharges)}
-                                  </p>
-                                )}
-                                <p className="text-sm text-gray-600">
-                                  TVA: {formatCurrency(totalTVA)}
-                                </p>
-                                <p className="text-xl font-bold">
-                                  Total TTC: {formatCurrency(totalTTC)}
-                                </p>
+                                <AddressInput
+                                  label="Adresse de facturation"
+                                  value={billingAddress}
+                                  onChange={setBillingAddress}
+                                  selectedCustomer={selectedCustomer}
+                                  addressType="billing"
+                                  placeholder="Adresse complète de facturation"
+                                  disabled={loading}
+                                />
                               </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      )}
+                              <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                  <Label htmlFor="deliveryDate">
+                                    Date de livraison prévue
+                                  </Label>
+                                  <Input
+                                    id="deliveryDate"
+                                    type="date"
+                                    value={expectedDeliveryDate}
+                                    onChange={e =>
+                                      setExpectedDeliveryDate(e.target.value)
+                                    }
+                                    disabled={loading}
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label htmlFor="paymentTermsType">
+                                    Conditions de paiement
+                                  </Label>
+                                  <Select
+                                    value={paymentTermsType ?? undefined}
+                                    onValueChange={value =>
+                                      setPaymentTermsType(
+                                        value as Database['public']['Enums']['payment_terms_type']
+                                      )
+                                    }
+                                    disabled={loading || !selectedCustomer}
+                                  >
+                                    <SelectTrigger id="paymentTermsType">
+                                      <SelectValue placeholder="Sélectionnez" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="IMMEDIATE">
+                                        Comptant
+                                      </SelectItem>
+                                      <SelectItem value="NET_15">
+                                        Net 15j
+                                      </SelectItem>
+                                      <SelectItem value="NET_30">
+                                        Net 30j
+                                      </SelectItem>
+                                      <SelectItem value="NET_45">
+                                        Net 45j
+                                      </SelectItem>
+                                      <SelectItem value="NET_60">
+                                        Net 60j
+                                      </SelectItem>
+                                      <SelectItem value="NET_90">
+                                        Net 90j
+                                      </SelectItem>
+                                      <SelectItem value="CUSTOM">
+                                        Personnalisé
+                                      </SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                  {paymentTermsType === 'CUSTOM' && (
+                                    <Input
+                                      placeholder="Conditions personnalisées..."
+                                      value={paymentTermsNotes}
+                                      onChange={e =>
+                                        setPaymentTermsNotes(e.target.value)
+                                      }
+                                      disabled={loading}
+                                    />
+                                  )}
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
 
-                      {/* Actions */}
-                      <div className="flex justify-end gap-4">
+                          {/* Section Options (compacte) */}
+                          <Card>
+                            <CardHeader className="pb-3">
+                              <CardTitle className="text-base font-semibold">
+                                Options
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                              {/* Frais additionnels - 3 colonnes */}
+                              <div className="grid grid-cols-3 gap-4">
+                                <div className="space-y-1">
+                                  <Label
+                                    htmlFor="shippingCostHt"
+                                    className="text-sm"
+                                  >
+                                    Frais livraison HT
+                                  </Label>
+                                  <Input
+                                    id="shippingCostHt"
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    value={shippingCostHt || ''}
+                                    onChange={e =>
+                                      setShippingCostHt(
+                                        parseFloat(e.target.value) || 0
+                                      )
+                                    }
+                                    placeholder="0.00"
+                                    disabled={loading}
+                                  />
+                                </div>
+                                <div className="space-y-1">
+                                  <Label
+                                    htmlFor="insuranceCostHt"
+                                    className="text-sm"
+                                  >
+                                    Frais assurance HT
+                                  </Label>
+                                  <Input
+                                    id="insuranceCostHt"
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    value={insuranceCostHt || ''}
+                                    onChange={e =>
+                                      setInsuranceCostHt(
+                                        parseFloat(e.target.value) || 0
+                                      )
+                                    }
+                                    placeholder="0.00"
+                                    disabled={loading}
+                                  />
+                                </div>
+                                <div className="space-y-1">
+                                  <Label
+                                    htmlFor="handlingCostHt"
+                                    className="text-sm"
+                                  >
+                                    Frais manutention HT
+                                  </Label>
+                                  <Input
+                                    id="handlingCostHt"
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    value={handlingCostHt || ''}
+                                    onChange={e =>
+                                      setHandlingCostHt(
+                                        parseFloat(e.target.value) || 0
+                                      )
+                                    }
+                                    placeholder="0.00"
+                                    disabled={loading}
+                                  />
+                                </div>
+                              </div>
+                              {/* Notes + Canal + Éco-taxe - 2 colonnes */}
+                              <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-1">
+                                  <Label htmlFor="notes" className="text-sm">
+                                    Notes
+                                  </Label>
+                                  <Textarea
+                                    id="notes"
+                                    value={notes}
+                                    onChange={e => setNotes(e.target.value)}
+                                    placeholder="Notes sur la commande"
+                                    disabled={loading}
+                                    rows={2}
+                                    className="resize-none"
+                                  />
+                                </div>
+                                <div className="space-y-3">
+                                  <div className="space-y-1">
+                                    <Label
+                                      htmlFor="channelId"
+                                      className="text-sm"
+                                    >
+                                      Canal de vente
+                                    </Label>
+                                    <Select
+                                      value={channelId ?? ''}
+                                      onValueChange={value =>
+                                        setChannelId(value ?? null)
+                                      }
+                                      disabled={loading || !selectedCustomer}
+                                    >
+                                      <SelectTrigger id="channelId">
+                                        <SelectValue placeholder="Canal" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {availableChannels.map(channel => (
+                                          <SelectItem
+                                            key={channel.id}
+                                            value={channel.id}
+                                          >
+                                            {channel.name}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                  <EcoTaxVatInput
+                                    value={ecoTaxVatRate}
+                                    onChange={setEcoTaxVatRate}
+                                    defaultTaxRate={20}
+                                    disabled={loading}
+                                  />
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </div>
+
+                        {/* COLONNE DROITE - Résumé sticky */}
+                        <div className="hidden lg:block">
+                          <OrderSummaryPanel
+                            items={items.map(item => ({
+                              name: item.product?.name ?? 'Produit',
+                              quantity: item.quantity,
+                              totalHt:
+                                item.quantity *
+                                  item.unit_price_ht *
+                                  (1 - (item.discount_percentage ?? 0) / 100) +
+                                (item.eco_tax ?? 0) * item.quantity,
+                            }))}
+                            subtotalHt={totalHTProducts}
+                            totalCharges={totalCharges}
+                            totalTva={totalTVA}
+                            totalTtc={totalTTC}
+                            onSubmit={() => {
+                              if (selectedCustomer && items.length > 0) {
+                                setShowConfirmation(true);
+                              }
+                            }}
+                            onCancel={() => setOpen(false)}
+                            submitLabel={
+                              mode === 'edit'
+                                ? 'Mettre à jour la commande'
+                                : 'Créer la commande'
+                            }
+                            submitDisabled={
+                              !selectedCustomer ||
+                              items.length === 0 ||
+                              loadingOrder
+                            }
+                            loading={loading}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Actions mobiles (visible uniquement sur petits écrans) */}
+                      <div className="lg:hidden flex justify-end gap-4 mt-6">
                         <ButtonV2
                           type="button"
                           variant="outline"
