@@ -1,6 +1,8 @@
 # Business Rules LinkMe
 
-**Derniere mise a jour:** 2026-01-09
+**Derniere mise a jour:** 2026-02-18
+
+> **Guide unifié** : Pour la documentation complète et à jour, voir `docs/current/linkme/GUIDE-COMPLET-LINKME.md`
 
 Plateforme d'affiliation B2B2C - Regles metier et workflows.
 
@@ -105,19 +107,19 @@ Expedition + Creation commission auto
 ### 4. Cycle Commissions
 
 ```
-Commande livree
+Commande expediee (status: shipped)
     │
     ▼
 Trigger SQL → Insert linkme_commissions (pending)
     │
     ▼
-Validation Verone (pending → validated)
+Client paie → automatique (pending → validated)
     │
     ▼
-Affilie demande versement (selection commissions validated)
+Commission eligible (validated → payable)
     │
     ▼
-Upload facture PDF
+Affilie demande versement + Upload facture PDF
     │
     ▼
 Virement Verone + status: paid
@@ -146,10 +148,12 @@ draft → validated → partially_shipped → shipped → delivered
 ### Commission
 
 ```
-pending ──> validated ──> in_payment ──> paid
+pending ──> validated ──> payable ──> paid
               │
               └──> cancelled
 ```
+
+> **Note** : Ce cycle est simplifié. Voir `docs/current/linkme/GUIDE-COMPLET-LINKME.md` section 10 pour le détail complet.
 
 ### Demande Paiement
 
@@ -188,12 +192,12 @@ apps/back-office/src/app/canaux-vente/linkme/
 
 ## KPIs Commissions (Affiche TTC)
 
-| KPI        | Description            |
-| ---------- | ---------------------- |
-| En attente | Commissions pending    |
-| Payables   | Commissions validated  |
-| En cours   | Commissions in_payment |
-| Payees     | Commissions paid       |
+| KPI        | Description           |
+| ---------- | --------------------- |
+| En attente | Commissions pending   |
+| Validees   | Commissions validated |
+| Payables   | Commissions payable   |
+| Payees     | Commissions paid      |
 
 ---
 

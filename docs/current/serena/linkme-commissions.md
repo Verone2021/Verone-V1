@@ -1,3 +1,6 @@
+> **Source de verite** : `docs/current/linkme/GUIDE-COMPLET-LINKME.md`
+> Ce fichier est conserve comme resume rapide. En cas de contradiction, le guide unifie fait foi.
+
 # Calcul des Commissions LinkMe
 
 ---
@@ -141,12 +144,12 @@ if (isAffiliateProduct) {
 
 **Tous les calculs de commission sont effectues en HT.**
 
-| Element | Base de calcul | TVA |
-|---------|---------------|-----|
-| Prix de base | HT | Non incluse |
-| Prix de vente affilié | HT | Non incluse |
-| Marge affilié (gain) | HT | Non incluse |
-| Commission plateforme | HT | Non incluse |
+| Element               | Base de calcul | TVA         |
+| --------------------- | -------------- | ----------- |
+| Prix de base          | HT             | Non incluse |
+| Prix de vente affilié | HT             | Non incluse |
+| Marge affilié (gain)  | HT             | Non incluse |
+| Commission plateforme | HT             | Non incluse |
 
 ### Formule commission HT
 
@@ -160,20 +163,20 @@ commission_ht = selling_price_ht × (margin_rate / 100)
 
 ### TVA sur commissions
 
-| Question | Réponse |
-|----------|---------|
-| La TVA s'applique-t-elle sur la commission? | **NON** |
-| La commission est calculée sur quel montant? | Prix de vente **HT** |
-| L'affilié reçoit sa commission en? | **HT** (il déclare ensuite selon son régime fiscal) |
+| Question                                     | Réponse                                             |
+| -------------------------------------------- | --------------------------------------------------- |
+| La TVA s'applique-t-elle sur la commission?  | **NON**                                             |
+| La commission est calculée sur quel montant? | Prix de vente **HT**                                |
+| L'affilié reçoit sa commission en?           | **HT** (il déclare ensuite selon son régime fiscal) |
 
 ### Affichage pour les affiliés
 
-| Interface | Affichage par défaut | Configurable |
-|-----------|---------------------|--------------|
-| Dashboard commissions | **HT** | Non |
-| Détail commande | HT | Non |
-| Page sélection | HT ou TTC | Oui (`price_display_mode`) |
-| Checkout client | **TTC** | Non |
+| Interface             | Affichage par défaut | Configurable               |
+| --------------------- | -------------------- | -------------------------- |
+| Dashboard commissions | **HT**               | Non                        |
+| Détail commande       | HT                   | Non                        |
+| Page sélection        | HT ou TTC            | Oui (`price_display_mode`) |
+| Checkout client       | **TTC**              | Non                        |
 
 La selection a un champ `price_display_mode` ('HT' ou 'TTC') qui permet à l'affilié de choisir comment afficher les prix à ses clients, mais les calculs internes restent toujours en HT.
 
