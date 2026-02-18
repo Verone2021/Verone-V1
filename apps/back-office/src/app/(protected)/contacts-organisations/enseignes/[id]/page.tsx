@@ -23,10 +23,11 @@ import {
   useEnseigne,
   useEnseignes,
   useEnseigneStats,
+  useEnseigneMapData,
   OrganisationSelectorModal,
   EnseigneDetailHeader,
   EnseigneKPIGrid,
-  EnseigneGeographySection,
+  EnseigneMapSection,
   EnseigneOrganisationsTable,
 } from '@verone/organisations';
 import { ButtonV2 } from '@verone/ui';
@@ -114,6 +115,7 @@ export default function EnseigneDetailPage() {
     loading: statsLoading,
     refetch: refetchStats,
   } = useEnseigneStats(enseigneId);
+  const { data: mapData, loading: mapLoading } = useEnseigneMapData(enseigneId);
 
   // Tab state
   const [activeTab, setActiveTab] = useState('overview');
@@ -813,10 +815,17 @@ export default function EnseigneDetailPage() {
 
           {/* Onglet Geographie */}
           <TabsContent value="geography" className="mt-6">
-            <EnseigneGeographySection
-              citiesDistribution={stats?.citiesDistribution ?? []}
-              loading={statsLoading}
+            <EnseigneMapSection
+              organisations={mapData?.organisations ?? []}
+              totalOrganisations={mapData?.totalOrganisations ?? 0}
+              propresCount={mapData?.propresCount ?? 0}
+              franchisesCount={mapData?.franchisesCount ?? 0}
+              withCoordinatesCount={mapData?.withCoordinatesCount ?? 0}
+              loading={mapLoading}
               className="max-w-none"
+              onViewOrganisation={orgId =>
+                router.push(`/contacts-organisations/organisations/${orgId}`)
+              }
             />
           </TabsContent>
 
