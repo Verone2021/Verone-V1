@@ -100,6 +100,7 @@ import {
 } from '../types/advanced-filters';
 import type { SalesOrder, SalesOrderStatus } from '../hooks/use-sales-orders';
 import { useSalesOrders } from '../hooks/use-sales-orders';
+import { CreateLinkMeOrderModal } from './modals/CreateLinkMeOrderModal';
 import { OrderDetailModal } from './modals/OrderDetailModal';
 import { SalesOrderFormModal } from './modals/SalesOrderFormModal';
 import { SalesOrderShipmentModal } from './modals/SalesOrderShipmentModal';
@@ -323,6 +324,7 @@ export function SalesOrdersTable({
   const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showLinkMeModal, setShowLinkMeModal] = useState(false);
   const [showShipmentModal, setShowShipmentModal] = useState(false);
   const [orderToShip, setOrderToShip] = useState<SalesOrder | null>(null);
   const [showValidateConfirmation, setShowValidateConfirmation] =
@@ -649,6 +651,8 @@ export function SalesOrdersTable({
   const tabCounts = useMemo(() => {
     return {
       all: orders.length,
+      pending_approval: orders.filter(o => o.status === 'pending_approval')
+        .length,
       draft: orders.filter(o => o.status === 'draft').length,
       validated: orders.filter(o => o.status === 'validated').length,
       shipped: orders.filter(
@@ -1074,6 +1078,7 @@ export function SalesOrdersTable({
                 <SalesOrderFormModal
                   buttonLabel="Nouvelle commande"
                   onSuccess={handleCreateSuccess}
+                  onSwitchToLinkMe={() => setShowLinkMeModal(true)}
                 />
               )}
               {renderHeaderRight?.()}
@@ -1088,8 +1093,11 @@ export function SalesOrdersTable({
               setActiveTab(value as SalesOrderStatus | 'all')
             }
           >
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className="grid w-full grid-cols-6">
               <TabsTrigger value="all">Toutes ({tabCounts.all})</TabsTrigger>
+              <TabsTrigger value="pending_approval">
+                Approbation ({tabCounts.pending_approval})
+              </TabsTrigger>
               <TabsTrigger value="draft">
                 Brouillon ({tabCounts.draft})
               </TabsTrigger>
@@ -1452,11 +1460,6 @@ export function SalesOrdersTable({
                                 {order.payment_status_v2 === 'paid' ? (
                                   <Badge className="bg-green-100 text-green-800">
                                     Payé
-                                    {order.manual_payment_type && (
-                                      <span className="ml-1 opacity-70">
-                                        (manuel)
-                                      </span>
-                                    )}
                                   </Badge>
                                 ) : (
                                   <DropdownMenu>
@@ -1898,6 +1901,15 @@ export function SalesOrdersTable({
         onClose: () => setShowCreateModal(false),
         onSuccess: handleCreateSuccess,
       })}
+
+      {/* Modal LinkMe (quand sélectionné depuis SalesOrderFormModal) */}
+      <CreateLinkMeOrderModal
+        isOpen={showLinkMeModal}
+        onClose={() => {
+          setShowLinkMeModal(false);
+          handleCreateSuccess();
+        }}
+      />
 
       {/* Modal Expedition */}
       {orderToShip && (

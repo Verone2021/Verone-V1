@@ -115,6 +115,12 @@ export interface CreateLinkMeOrderInput {
   handling_cost_ht?: number;
   /** Taux de TVA sur les frais (decimal, ex: 0.2 pour 20%) - defaut 20% */
   frais_tax_rate?: number;
+  /** Date de livraison souhaitée (format ISO YYYY-MM-DD) */
+  expected_delivery_date?: string | null;
+  /** Livraison en centre commercial (logistique spéciale) */
+  is_shopping_center_delivery?: boolean;
+  /** Le site accepte les semi-remorques */
+  accepts_semi_truck?: boolean;
 }
 
 export interface LinkMeOrder {
@@ -498,6 +504,10 @@ async function createLinkMeOrder(
           country: input.shipping_address.country ?? 'FR',
         })
       : null,
+    // Options de livraison
+    expected_delivery_date: input.expected_delivery_date ?? null,
+    is_shopping_center_delivery: input.is_shopping_center_delivery ?? false,
+    accepts_semi_truck: input.accepts_semi_truck ?? true,
   };
 
   const { data: order, error: orderError } = await supabase

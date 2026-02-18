@@ -131,7 +131,7 @@ interface LinkMeCartItem {
   quantity: number;
   unit_price_ht: number; // Prix de vente affilié (168.75€)
   base_price_ht: number; // Prix de base pour calcul commission (135€)
-  retrocession_rate: number; // Commission affilié (décimal 0.15 = 15%)
+  retrocession_rate: number; // Commission LinkMe (décimal 0.15 = 15%)
   linkme_selection_item_id: string;
   product_image_url?: string | null;
 }
@@ -170,6 +170,8 @@ interface SalesOrderFormModalProps {
   onOpenChange?: (open: boolean) => void;
   onSuccess?: () => void;
   buttonLabel?: string;
+  /** Callback pour basculer vers le formulaire LinkMe complet (CreateLinkMeOrderModal) */
+  onSwitchToLinkMe?: () => void;
 }
 
 export function SalesOrderFormModal({
@@ -179,6 +181,7 @@ export function SalesOrderFormModal({
   onOpenChange,
   onSuccess,
   buttonLabel = 'Nouvelle commande',
+  onSwitchToLinkMe,
 }: SalesOrderFormModalProps) {
   const [internalOpen, setInternalOpen] = useState(false);
 
@@ -746,6 +749,12 @@ export function SalesOrderFormModal({
       );
       if (siteChannel) setChannelId(siteChannel.id);
     } else if (channel === 'linkme') {
+      // Si callback fourni, basculer vers le formulaire LinkMe complet
+      if (onSwitchToLinkMe) {
+        setOpen(false);
+        onSwitchToLinkMe();
+        return;
+      }
       const linkmeChannel = availableChannels.find(
         c => c.code === 'LINKME' || c.code === 'linkme'
       );
@@ -1655,7 +1664,7 @@ export function SalesOrderFormModal({
                           </span>
                         </div>
                         <div className="flex justify-between text-sm text-purple-700">
-                          <span>Commission affilié :</span>
+                          <span>Commission LinkMe :</span>
                           <span className="font-semibold">
                             {formatCurrency(linkmeCartTotals.totalRetrocession)}
                           </span>
