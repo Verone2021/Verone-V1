@@ -1157,6 +1157,10 @@ export default function ProductDetailPage() {
                 cost_price_max: product.cost_price_max,
                 cost_price_last: product.cost_price_last,
                 cost_price_count: product.cost_price_count,
+                cost_net_avg: product.cost_net_avg,
+                cost_net_min: product.cost_net_min,
+                cost_net_max: product.cost_net_max,
+                cost_net_last: product.cost_net_last,
                 target_margin_percentage: product.target_margin_percentage,
               }}
               variantGroup={product.variant_group ?? null}
