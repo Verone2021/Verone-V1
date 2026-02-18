@@ -54,6 +54,8 @@ import {
   Layers,
   Tag,
   RotateCcw,
+  LayoutGrid,
+  List,
 } from 'lucide-react';
 
 import { ProductThumbnail } from '@verone/products/components/images/ProductThumbnail';
@@ -816,6 +818,7 @@ export function UniversalProductSelectorV2({
   const [creationModeFilter, setCreationModeFilter] = useState<
     'complete' | 'sourcing' | null
   >(null);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   // ============================================================================
   // HOOKS
@@ -1086,92 +1089,201 @@ export function UniversalProductSelectorV2({
                 </Select>
               </div>
 
-              {/* Filtres secondaires (Badges compacts) */}
-              <div className="flex flex-wrap gap-1.5">
-                <Badge
-                  variant={sourcingFilter === 'interne' ? 'default' : 'outline'}
-                  className={cn(
-                    'h-6 px-2 py-0.5 text-xs cursor-pointer transition-all duration-150',
-                    sourcingFilter === 'interne' &&
-                      'bg-[#3b86d1] hover:bg-[#2d6ba8]'
-                  )}
-                  onClick={() =>
-                    setSourcingFilter(
-                      sourcingFilter === 'interne' ? null : 'interne'
-                    )
-                  }
-                >
-                  Interne
-                </Badge>
-                <Badge
-                  variant={sourcingFilter === 'externe' ? 'default' : 'outline'}
-                  className={cn(
-                    'h-6 px-2 py-0.5 text-xs cursor-pointer transition-all duration-150',
-                    sourcingFilter === 'externe' &&
-                      'bg-[#3b86d1] hover:bg-[#2d6ba8]'
-                  )}
-                  onClick={() =>
-                    setSourcingFilter(
-                      sourcingFilter === 'externe' ? null : 'externe'
-                    )
-                  }
-                >
-                  Externe
-                </Badge>
-                <Badge
-                  variant={
-                    creationModeFilter === 'sourcing' ? 'default' : 'outline'
-                  }
-                  className={cn(
-                    'h-6 px-2 py-0.5 text-xs cursor-pointer transition-all duration-150',
-                    creationModeFilter === 'sourcing' &&
-                      'bg-[#844fc1] hover:bg-[#6d3da0]'
-                  )}
-                  onClick={() =>
-                    setCreationModeFilter(
-                      creationModeFilter === 'sourcing' ? null : 'sourcing'
-                    )
-                  }
-                >
-                  Sourcing
-                </Badge>
+              {/* Filtres secondaires + Toggle vue */}
+              <div className="flex items-center justify-between">
+                <div className="flex flex-wrap gap-1.5">
+                  <Badge
+                    variant={
+                      sourcingFilter === 'interne' ? 'default' : 'outline'
+                    }
+                    className={cn(
+                      'h-6 px-2 py-0.5 text-xs cursor-pointer transition-all duration-150',
+                      sourcingFilter === 'interne' &&
+                        'bg-[#3b86d1] hover:bg-[#2d6ba8]'
+                    )}
+                    onClick={() =>
+                      setSourcingFilter(
+                        sourcingFilter === 'interne' ? null : 'interne'
+                      )
+                    }
+                  >
+                    Interne
+                  </Badge>
+                  <Badge
+                    variant={
+                      sourcingFilter === 'externe' ? 'default' : 'outline'
+                    }
+                    className={cn(
+                      'h-6 px-2 py-0.5 text-xs cursor-pointer transition-all duration-150',
+                      sourcingFilter === 'externe' &&
+                        'bg-[#3b86d1] hover:bg-[#2d6ba8]'
+                    )}
+                    onClick={() =>
+                      setSourcingFilter(
+                        sourcingFilter === 'externe' ? null : 'externe'
+                      )
+                    }
+                  >
+                    Externe
+                  </Badge>
+                  <Badge
+                    variant={
+                      creationModeFilter === 'sourcing' ? 'default' : 'outline'
+                    }
+                    className={cn(
+                      'h-6 px-2 py-0.5 text-xs cursor-pointer transition-all duration-150',
+                      creationModeFilter === 'sourcing' &&
+                        'bg-[#844fc1] hover:bg-[#6d3da0]'
+                    )}
+                    onClick={() =>
+                      setCreationModeFilter(
+                        creationModeFilter === 'sourcing' ? null : 'sourcing'
+                      )
+                    }
+                  >
+                    Sourcing
+                  </Badge>
+                </div>
+                {/* Toggle Grid/List */}
+                <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('grid')}
+                    className={cn(
+                      'p-1.5 transition-colors',
+                      viewMode === 'grid'
+                        ? 'bg-[#3b86d1] text-white'
+                        : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
+                    )}
+                    title="Vue grille"
+                  >
+                    <LayoutGrid className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('list')}
+                    className={cn(
+                      'p-1.5 transition-colors',
+                      viewMode === 'list'
+                        ? 'bg-[#3b86d1] text-white'
+                        : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
+                    )}
+                    title="Vue liste"
+                  >
+                    <List className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
             </div>
 
             {/* Liste produits disponibles */}
             <div className="flex-1 flex flex-col min-h-0">
               <h3 className="font-semibold text-sm text-gray-700 mb-3">
-                Produits disponibles
+                Produits disponibles ({products.length})
               </h3>
               <div className="flex-1 overflow-y-auto pr-4 min-h-0">
-                <div className="space-y-2">
-                  {loading ? (
-                    <>
-                      {[1, 2, 3, 4, 5].map(i => (
-                        <ProductCardSkeleton key={i} />
-                      ))}
-                    </>
-                  ) : error ? (
-                    <div className="text-center py-8 text-red-600">
-                      <p className="text-sm">{error}</p>
-                    </div>
-                  ) : products.length === 0 ? (
-                    <EmptyState
-                      type="no-results"
-                      searchQuery={searchQuery}
-                      onReset={handleResetFilters}
-                    />
-                  ) : (
-                    products.map(product => (
+                {loading ? (
+                  <div className="space-y-2">
+                    {[1, 2, 3, 4, 5].map(i => (
+                      <ProductCardSkeleton key={i} />
+                    ))}
+                  </div>
+                ) : error ? (
+                  <div className="text-center py-8 text-red-600">
+                    <p className="text-sm">{error}</p>
+                  </div>
+                ) : products.length === 0 ? (
+                  <EmptyState
+                    type="no-results"
+                    searchQuery={searchQuery}
+                    onReset={handleResetFilters}
+                  />
+                ) : viewMode === 'grid' ? (
+                  /* Vue Grille - images grandes */
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {products.map(product => {
+                      const primaryImage = showImages
+                        ? getPrimaryImage(product)
+                        : null;
+                      return (
+                        <div
+                          key={product.id}
+                          className={cn(
+                            'group border rounded-lg overflow-hidden',
+                            'transition-all duration-150',
+                            'border-gray-200 bg-white',
+                            'hover:ring-2 hover:ring-[#3b86d1] hover:shadow-md'
+                          )}
+                        >
+                          {/* Image area */}
+                          <div className="aspect-square bg-gray-50 relative overflow-hidden">
+                            {primaryImage ? (
+                              <ProductThumbnail
+                                src={primaryImage}
+                                alt={product.name}
+                                size="lg"
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <Package className="h-12 w-12 text-gray-200" />
+                              </div>
+                            )}
+                            {product.creation_mode === 'sourcing' && (
+                              <Badge
+                                variant="outline"
+                                className="absolute top-2 left-2 h-5 text-xs px-1.5 py-0 bg-[#844fc1]/10 border-[#844fc1]/20 text-[#844fc1]"
+                              >
+                                Sourcing
+                              </Badge>
+                            )}
+                          </div>
+                          {/* Info + button */}
+                          <div className="p-3">
+                            <p className="font-semibold text-sm truncate text-gray-900 mb-0.5">
+                              {product.name}
+                            </p>
+                            {product.sku && (
+                              <p className="text-xs font-mono text-gray-400 truncate mb-2">
+                                {product.sku}
+                              </p>
+                            )}
+                            <button
+                              type="button"
+                              onClick={e => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleAddProduct(product);
+                              }}
+                              className={cn(
+                                'w-full flex items-center justify-center gap-1.5 py-1.5 rounded-md text-sm font-medium',
+                                'bg-[#3b86d1] text-white',
+                                'transition-colors duration-150',
+                                'hover:bg-[#2d6ba8]',
+                                'cursor-pointer'
+                              )}
+                            >
+                              <Plus className="h-3.5 w-3.5" />
+                              Ajouter
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  /* Vue Liste - images moyennes */
+                  <div className="space-y-2">
+                    {products.map(product => (
                       <AvailableProductCard
                         key={product.id}
                         product={product}
                         showImages={showImages}
                         onAdd={handleAddProduct}
                       />
-                    ))
-                  )}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>

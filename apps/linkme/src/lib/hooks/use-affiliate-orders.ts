@@ -91,7 +91,7 @@ export interface SelectionProduct {
  * Hook pour créer une commande affilié
  * Utilise la RPC create_affiliate_order qui:
  * - Valide l'affilié et la sélection
- * - Crée la commande en draft avec pending_admin_validation = true
+ * - Crée la commande avec status = 'pending_approval'
  * - Récupère la marge depuis linkme_selection_items (pas du frontend)
  */
 export function useCreateAffiliateOrder() {

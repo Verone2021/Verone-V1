@@ -49,6 +49,13 @@ export async function GET(
       );
     }
 
+    if (!order.customer_id) {
+      return NextResponse.json(
+        { error: 'Commande sans client associé', code: 'NO_CUSTOMER' },
+        { status: 400 }
+      );
+    }
+
     let address: CustomerAddress;
 
     // Guard: customer_id is required

@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { createAdminClient } from '@verone/utils/supabase/server';
 
 export type SalesOrderStatus =
+  | 'pending_approval'
   | 'draft'
   | 'validated'
   | 'partially_shipped'

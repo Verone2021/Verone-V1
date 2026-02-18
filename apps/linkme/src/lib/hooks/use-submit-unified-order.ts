@@ -5,8 +5,8 @@
  *
  * Hook unifié pour soumettre les commandes LinkMe.
  * Gère les deux workflows:
- * - Restaurant existant → brouillon (pending_admin_validation = false)
- * - Ouverture → validation (pending_admin_validation = true)
+ * - Restaurant existant → brouillon (status = 'draft')
+ * - Ouverture → validation (status = 'pending_approval')
  *
  * @module useSubmitUnifiedOrder
  * @since 2026-01-11

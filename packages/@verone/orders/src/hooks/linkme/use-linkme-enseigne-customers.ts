@@ -29,7 +29,6 @@ export interface EnseigneOrganisationCustomer {
   address_line1: string | null;
   city: string | null;
   postal_code: string | null;
-  siret: string | null;
   is_active: boolean;
   created_at: string | null;
   source_type: 'internal' | 'linkme' | 'site-internet' | 'manual' | null;
@@ -99,7 +98,7 @@ async function fetchEnseigneOrganisations(
   const { data, error } = await supabase
     .from('organisations')
     .select(
-      'id, legal_name, trade_name, email, phone, address_line1, city, postal_code, siret, is_active, created_at, source_type, source_affiliate_id'
+      'id, legal_name, trade_name, email, phone, address_line1, city, postal_code, is_active, created_at, source_type, source_affiliate_id'
     )
     .eq('enseigne_id', enseigneId)
     .eq('type', 'customer') // Uniquement les clients, pas les fournisseurs
@@ -120,7 +119,6 @@ async function fetchEnseigneOrganisations(
     address_line1: org.address_line1,
     city: org.city,
     postal_code: org.postal_code,
-    siret: org.siret ?? null,
     is_active: org.is_active ?? true,
     created_at: org.created_at,
     source_type: org.source_type,

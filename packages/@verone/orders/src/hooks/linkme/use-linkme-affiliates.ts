@@ -225,3 +225,33 @@ export function useLinkMeAffiliate(affiliateId: string | null) {
     staleTime: 300000, // 5 minutes
   });
 }
+
+/**
+ * Hook: récupère les sélections d'un affilié
+ * Réutilise le hook existant mais via affiliate_id
+ */
+export function useLinkMeSelectionsByAffiliate(affiliateId: string | null) {
+  return useQuery({
+    queryKey: ['linkme-selections-by-affiliate', affiliateId],
+    queryFn: async () => {
+      if (!affiliateId) return [];
+
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from('linkme_selections')
+        .select('id, name, slug, products_count, archived_at')
+        .eq('affiliate_id', affiliateId)
+        .is('archived_at', null)
+        .order('name');
+
+      if (error) {
+        console.error('Erreur fetch selections:', error);
+        throw error;
+      }
+
+      return data ?? [];
+    },
+    enabled: !!affiliateId,
+    staleTime: 30000,
+  });
+}
