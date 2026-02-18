@@ -1092,7 +1092,6 @@ export function SalesOrdersTable({
                 <SalesOrderFormModal
                   buttonLabel="Nouvelle commande"
                   onSuccess={handleCreateSuccess}
-                  onSwitchToLinkMe={() => setShowLinkMeModal(true)}
                 />
               )}
               {renderHeaderRight?.()}

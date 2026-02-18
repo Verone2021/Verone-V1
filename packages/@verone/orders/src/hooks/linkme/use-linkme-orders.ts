@@ -46,6 +46,35 @@ export interface CreateLinkMeOrderInput {
   affiliate_id: string;
   /** Lignes de commande */
   items: LinkMeOrderItemInput[];
+  /** Date de la commande (format YYYY-MM-DD) */
+  order_date?: string;
+  /** Frais de livraison HT */
+  shipping_cost_ht?: number;
+  /** Frais de manutention HT */
+  handling_cost_ht?: number;
+  /** Frais d'assurance HT */
+  insurance_cost_ht?: number;
+  /** Taux TVA pour frais */
+  frais_tax_rate?: number;
+  /** Date de livraison prévue */
+  expected_delivery_date?: string | null;
+  /** Livraison en centre commercial */
+  is_shopping_center_delivery?: boolean;
+  /** Accepte semi-remorque */
+  accepts_semi_truck?: boolean;
+  /** ID de la sélection LinkMe */
+  linkme_selection_id?: string | null;
+  /** Contact de facturation */
+  billing_contact_id?: string | null;
+  /** Adresse de facturation custom */
+  billing_address?: {
+    address_line1: string;
+    city: string;
+    postal_code: string;
+    country: string;
+  };
+  /** Détails LinkMe (contacts/adresses) */
+  linkme_details?: Record<string, unknown> | null;
   /** Notes internes */
   internal_notes?: string;
   /** Adresse de livraison */

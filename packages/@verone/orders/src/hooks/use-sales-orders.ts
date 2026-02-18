@@ -14,6 +14,7 @@ import { createClient } from '@verone/utils/supabase/client';
 
 // Types pour les commandes clients
 export type SalesOrderStatus =
+  | 'pending_approval'
   | 'draft'
   | 'validated'
   | 'partially_shipped'
@@ -257,6 +258,7 @@ interface SalesOrderStats {
  * Dévalidation (validated → draft) autorisée si aucune expédition
  */
 const STATUS_TRANSITIONS: Record<SalesOrderStatus, SalesOrderStatus[]> = {
+  pending_approval: ['draft', 'cancelled'],
   draft: ['validated', 'cancelled'],
   validated: ['draft', 'partially_shipped', 'shipped', 'cancelled'], // 'draft' pour dévalidation
   partially_shipped: ['shipped', 'cancelled'],
