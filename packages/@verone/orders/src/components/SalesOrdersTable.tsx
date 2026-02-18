@@ -542,13 +542,27 @@ export function SalesOrdersTable({
                 ? a.organisations?.trade_name ||
                   a.organisations?.legal_name ||
                   ''
-                : `${a.individual_customers?.first_name} ${a.individual_customers?.last_name}`;
+                : a.individual_customers
+                  ? [
+                      a.individual_customers.first_name,
+                      a.individual_customers.last_name,
+                    ]
+                      .filter(Boolean)
+                      .join(' ')
+                  : '';
             const nameB =
               b.customer_type === 'organization'
                 ? b.organisations?.trade_name ||
                   b.organisations?.legal_name ||
                   ''
-                : `${b.individual_customers?.first_name} ${b.individual_customers?.last_name}`;
+                : b.individual_customers
+                  ? [
+                      b.individual_customers.first_name,
+                      b.individual_customers.last_name,
+                    ]
+                      .filter(Boolean)
+                      .join(' ')
+                  : '';
             comparison = nameA.localeCompare(nameB);
             break;
           }
@@ -1393,8 +1407,16 @@ export function SalesOrdersTable({
                       const customerName =
                         order.customer_type === 'organization'
                           ? order.organisations?.trade_name ||
-                            order.organisations?.legal_name
-                          : `${order.individual_customers?.first_name} ${order.individual_customers?.last_name}`;
+                            order.organisations?.legal_name ||
+                            ''
+                          : order.individual_customers
+                            ? [
+                                order.individual_customers.first_name,
+                                order.individual_customers.last_name,
+                              ]
+                                .filter(Boolean)
+                                .join(' ')
+                            : '';
 
                       const canDelete =
                         order.status === 'draft' ||
@@ -1961,7 +1983,15 @@ export function SalesOrdersTable({
                 order_number: selectedOrderForLink.order_number,
                 customer_name:
                   selectedOrderForLink.organisations?.legal_name ||
-                  `${selectedOrderForLink.individual_customers?.first_name} ${selectedOrderForLink.individual_customers?.last_name}`,
+                  (selectedOrderForLink.individual_customers
+                    ? [
+                        selectedOrderForLink.individual_customers.first_name,
+                        selectedOrderForLink.individual_customers.last_name,
+                      ]
+                        .filter(Boolean)
+                        .join(' ')
+                    : '') ||
+                  'Non défini',
                 total_ttc: selectedOrderForLink.total_ttc,
                 created_at: selectedOrderForLink.created_at,
                 shipped_at: selectedOrderForLink.shipped_at,
