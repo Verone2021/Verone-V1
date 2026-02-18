@@ -11,9 +11,12 @@
   "license": "UNLICENSED",
   "private": true,
   "dependencies": {
+    "@verone/types": "workspace:*",
     "@verone/ui": "workspace:*",
     "@verone/utils": "workspace:*",
-    "@verone/types": "workspace:*"
+    "maplibre-gl": "^4.7.1",
+    "react-map-gl": "^7.1.9",
+    "supercluster": "^8.0.1"
   },
   "peerDependencies": {
     "react": "^18.2.0",
@@ -35,5 +38,9 @@
       "import": "./src/components/*/index.ts",
       "require": "./src/components/*/index.ts"
     }
+  },
+  "devDependencies": {
+    "@types/geojson": "^7946.0.16",
+    "@types/supercluster": "^7.1.3"
   }
 }
