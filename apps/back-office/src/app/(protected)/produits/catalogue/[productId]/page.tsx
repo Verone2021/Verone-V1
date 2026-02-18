@@ -21,6 +21,7 @@ import { IdentifiersCompleteEditSection } from '@verone/products';
 import { ProductDescriptionsEditSection } from '@verone/products';
 import { ProductDetailAccordion } from '@verone/products';
 import { ProductInfoSection } from '@verone/products';
+import { ProductProfitabilitySection } from '@verone/products';
 import { SampleRequirementSection } from '@verone/products';
 import { SupplierEditSection } from '@verone/products';
 import { WeightEditSection } from '@verone/products';
@@ -56,6 +57,7 @@ import {
   Sparkles,
   Globe,
   AlertCircle,
+  TrendingUp,
   UserCircle2,
 } from 'lucide-react';
 
@@ -1173,7 +1175,20 @@ export default function ProductDetailPage() {
             />
           </ProductDetailAccordion>
 
-          {/* Accordion 8: Caractéristiques */}
+          {/* Accordion 8: Rentabilité */}
+          <ProductDetailAccordion
+            title="Rentabilite"
+            icon={TrendingUp}
+            defaultOpen={false}
+          >
+            <ProductProfitabilitySection
+              productId={product.id}
+              costNetAvg={product.cost_net_avg ?? null}
+              stockReal={product.stock_real ?? null}
+            />
+          </ProductDetailAccordion>
+
+          {/* Accordion 9: Caractéristiques */}
           <ProductDetailAccordion
             title="Caractéristiques"
             icon={Settings}
