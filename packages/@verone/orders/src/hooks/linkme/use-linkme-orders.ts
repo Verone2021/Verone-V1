@@ -121,6 +121,30 @@ export interface CreateLinkMeOrderInput {
   is_shopping_center_delivery?: boolean;
   /** Le site accepte les semi-remorques */
   accepts_semi_truck?: boolean;
+  /** Adresse de facturation (jsonb) */
+  billing_address?: {
+    address_line1: string;
+    address_line2?: string;
+    city: string;
+    postal_code: string;
+    country: string;
+  } | null;
+  /** ID du contact de facturation */
+  billing_contact_id?: string | null;
+  /** ID de la sélection LinkMe */
+  linkme_selection_id?: string | null;
+  /** Contacts et adresses pour sales_order_linkme_details */
+  linkme_details?: {
+    delivery_contact_name?: string | null;
+    delivery_contact_email?: string | null;
+    delivery_contact_phone?: string | null;
+    delivery_address?: string | null;
+    delivery_postal_code?: string | null;
+    delivery_city?: string | null;
+    billing_name?: string | null;
+    billing_email?: string | null;
+    billing_phone?: string | null;
+  } | null;
 }
 
 export interface LinkMeOrder {
@@ -508,6 +532,20 @@ async function createLinkMeOrder(
     expected_delivery_date: input.expected_delivery_date ?? null,
     is_shopping_center_delivery: input.is_shopping_center_delivery ?? false,
     accepts_semi_truck: input.accepts_semi_truck ?? true,
+    // Adresse de facturation (JSON)
+    billing_address: input.billing_address
+      ? JSON.stringify({
+          address_line1: input.billing_address.address_line1,
+          address_line2: input.billing_address.address_line2 ?? '',
+          city: input.billing_address.city,
+          postal_code: input.billing_address.postal_code,
+          country: input.billing_address.country ?? 'FR',
+        })
+      : null,
+    // Contact de facturation
+    billing_contact_id: input.billing_contact_id ?? null,
+    // Sélection LinkMe
+    linkme_selection_id: input.linkme_selection_id ?? null,
   };
 
   const { data: order, error: orderError } = await supabase
@@ -550,6 +588,42 @@ async function createLinkMeOrder(
     // Rollback: supprimer la commande
     await supabase.from('sales_orders').delete().eq('id', order.id);
     throw itemsError;
+  }
+
+  // 6. Creer les details LinkMe (contacts/adresses livraison/facturation)
+  if (input.linkme_details) {
+    const details = input.linkme_details;
+    const { error: detailsError } = await supabase
+      .from('sales_order_linkme_details')
+      .insert({
+        sales_order_id: order.id,
+        // Champs obligatoires avec valeurs par defaut
+        requester_type: 'back_office',
+        requester_name: user.email ?? 'Staff BO',
+        requester_email: user.email ?? '',
+        is_new_restaurant: false,
+        delivery_terms_accepted: true,
+        // Contact livraison
+        delivery_contact_name: details.delivery_contact_name ?? null,
+        delivery_contact_email: details.delivery_contact_email ?? null,
+        delivery_contact_phone: details.delivery_contact_phone ?? null,
+        // Adresse livraison
+        delivery_address: details.delivery_address ?? null,
+        delivery_postal_code: details.delivery_postal_code ?? null,
+        delivery_city: details.delivery_city ?? null,
+        // Contact facturation
+        billing_name: details.billing_name ?? null,
+        billing_email: details.billing_email ?? null,
+        billing_phone: details.billing_phone ?? null,
+      });
+
+    if (detailsError) {
+      console.error(
+        'Erreur creation details LinkMe (non bloquant):',
+        detailsError
+      );
+      // Non bloquant: la commande est creee, les details peuvent etre ajoutés plus tard
+    }
   }
 
   // Supabase insert returns a subset of columns; LinkMeOrder includes joined fields

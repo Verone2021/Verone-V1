@@ -79,6 +79,42 @@ interface CartItem extends LinkMeOrderItemInput {
 }
 
 /**
+ * Transforme les données contacts/adresses du formulaire en format DB linkme_details
+ */
+function buildLinkMeDetails(data: ContactsAddressesData) {
+  const deliveryContact = data.deliverySameAsBillingContact
+    ? data.billingContact
+    : data.deliveryContact;
+  const deliveryAddr = data.deliverySameAsBillingAddress
+    ? data.billingAddress
+    : data.deliveryAddress;
+
+  const hasAnyData =
+    deliveryContact ??
+    deliveryAddr ??
+    data.billingContact ??
+    data.billingAddress;
+
+  if (!hasAnyData) return null;
+
+  return {
+    delivery_contact_name: deliveryContact
+      ? `${deliveryContact.firstName} ${deliveryContact.lastName}`.trim()
+      : null,
+    delivery_contact_email: deliveryContact?.email ?? null,
+    delivery_contact_phone: deliveryContact?.phone ?? null,
+    delivery_address: deliveryAddr?.customAddress?.addressLine1 ?? null,
+    delivery_postal_code: deliveryAddr?.customAddress?.postalCode ?? null,
+    delivery_city: deliveryAddr?.customAddress?.city ?? null,
+    billing_name: data.billingContact
+      ? `${data.billingContact.firstName} ${data.billingContact.lastName}`.trim()
+      : null,
+    billing_email: data.billingContact?.email ?? null,
+    billing_phone: data.billingContact?.phone ?? null,
+  };
+}
+
+/**
  * Modal de création de commande LinkMe
  * Formulaire tout-en-un (style SalesOrderFormModal)
  * Workflow: Type affilié → Affilié → Sélection → Client → Produits → Validation
@@ -520,6 +556,24 @@ export function CreateLinkMeOrderModal({
       expected_delivery_date: expectedDeliveryDate || null,
       is_shopping_center_delivery: isShoppingCenterDelivery,
       accepts_semi_truck: acceptsSemiTruck,
+      // Sélection LinkMe
+      linkme_selection_id: selectedSelectionId || null,
+      // Contact et adresse de facturation
+      billing_contact_id: contactsAddressesData.billingContact?.id ?? null,
+      billing_address: contactsAddressesData.billingAddress?.customAddress
+        ? {
+            address_line1:
+              contactsAddressesData.billingAddress.customAddress.addressLine1,
+            city: contactsAddressesData.billingAddress.customAddress.city,
+            postal_code:
+              contactsAddressesData.billingAddress.customAddress.postalCode,
+            country:
+              contactsAddressesData.billingAddress.customAddress.country ??
+              'FR',
+          }
+        : undefined,
+      // Détails LinkMe (contacts/adresses pour sales_order_linkme_details)
+      linkme_details: buildLinkMeDetails(contactsAddressesData),
     };
 
     try {

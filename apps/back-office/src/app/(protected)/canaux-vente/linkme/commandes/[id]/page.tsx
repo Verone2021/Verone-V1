@@ -867,6 +867,40 @@ export default function LinkMeOrderDetailPage() {
       </div>
 
       {/* ============================================ */}
+      {/* BANNER INFOS MANQUANTES (draft uniquement) */}
+      {/* ============================================ */}
+      {order.status === 'draft' &&
+        (() => {
+          const missingFields = getOrderMissingFields(details);
+          if (missingFields.isComplete) return null;
+          return (
+            <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+              <AlertTriangle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-amber-800">
+                  {missingFields.total} information(s) manquante(s)
+                </p>
+                <div className="flex flex-wrap gap-1 mt-1.5">
+                  {missingFields.fields.map(f => (
+                    <Badge
+                      key={f.key}
+                      variant="outline"
+                      className="text-xs text-amber-700 border-amber-300 bg-amber-100/50"
+                    >
+                      {f.label}
+                    </Badge>
+                  ))}
+                </div>
+                <p className="text-xs text-amber-600 mt-1.5">
+                  Utilisez &quot;Demander compléments&quot; pour contacter le
+                  demandeur, ou approuvez la commande pour traitement ultérieur.
+                </p>
+              </div>
+            </div>
+          );
+        })()}
+
+      {/* ============================================ */}
       {/* DEMANDEUR (created_by = user session) */}
       {/* ============================================ */}
       {order.createdByProfile && (
@@ -1639,7 +1673,7 @@ export default function LinkMeOrderDetailPage() {
       {/* DIALOGS ACTIONS */}
       {/* ============================================ */}
 
-      {/* Dialog: Approuver */}
+      {/* Dialog: Approuver (avec warning infos manquantes) */}
       <Dialog open={showApproveDialog} onOpenChange={setShowApproveDialog}>
         <DialogContent>
           <DialogHeader>
@@ -1649,6 +1683,28 @@ export default function LinkMeOrderDetailPage() {
               l&apos;Étape 4 (informations de livraison).
             </DialogDescription>
           </DialogHeader>
+          {/* Warning infos manquantes */}
+          {(() => {
+            const missingFields = getOrderMissingFields(details);
+            if (missingFields.total === 0) return null;
+            return (
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                <p className="text-sm font-medium text-amber-800 mb-2">
+                  <AlertTriangle className="h-4 w-4 inline mr-1" />
+                  {missingFields.total} information(s) manquante(s)
+                </p>
+                <ul className="text-xs text-amber-700 space-y-0.5 ml-5 list-disc">
+                  {missingFields.fields.map(f => (
+                    <li key={f.key}>{f.label}</li>
+                  ))}
+                </ul>
+                <p className="text-xs text-amber-600 mt-2 italic">
+                  Ces informations pourront être complétées ultérieurement.
+                  Voulez-vous approuver malgré tout ?
+                </p>
+              </div>
+            );
+          })()}
           <DialogFooter>
             <Button
               variant="outline"
@@ -1664,7 +1720,11 @@ export default function LinkMeOrderDetailPage() {
               }}
               disabled={approveOrder.isPending}
             >
-              {approveOrder.isPending ? 'En cours...' : 'Confirmer'}
+              {approveOrder.isPending
+                ? 'En cours...'
+                : getOrderMissingFields(details).total > 0
+                  ? 'Approuver malgré tout'
+                  : 'Confirmer'}
             </Button>
           </DialogFooter>
         </DialogContent>
