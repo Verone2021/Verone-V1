@@ -202,30 +202,13 @@ interface ProductWithAffiliate {
   created_by_affiliate: string | null;
 }
 
-// Fonction pour determiner le canal de la commande
-function getOrderChannel(
-  created_by_affiliate_id: string | null,
-  linkme_selection_id: string | null
-): { label: string; color: string; bg: string } {
-  // B1 fix: vérifier affiliate EN PREMIER (une commande affilié a aussi une sélection)
-  if (created_by_affiliate_id !== null) {
-    return {
-      label: 'Affilié',
-      color: 'text-teal-700',
-      bg: 'bg-teal-100',
-    };
-  }
-  if (linkme_selection_id !== null) {
-    return {
-      label: 'Sélection publique',
-      color: 'text-amber-700',
-      bg: 'bg-amber-100',
-    };
-  }
+// Canal de vente : toujours "LinkMe" car cette page est filtrée par channel_id = LinkMe
+// Aligné avec la colonne Canal des commandes clients (/commandes/clients)
+function getOrderChannel(): { label: string; color: string; bg: string } {
   return {
-    label: 'Back-office',
-    color: 'text-blue-700',
-    bg: 'bg-blue-100',
+    label: 'LinkMe',
+    color: 'text-purple-700',
+    bg: 'bg-purple-100',
   };
 }
 
@@ -813,10 +796,7 @@ export default function LinkMeOrderDetailPage() {
               {getStatusBadge(order.status)}
               {/* Badge Canal */}
               {(() => {
-                const channel = getOrderChannel(
-                  order.created_by_affiliate_id,
-                  order.linkme_selection_id
-                );
+                const channel = getOrderChannel();
                 return (
                   <span
                     className={`px-2 py-0.5 text-xs font-medium rounded-full ${channel.bg} ${channel.color}`}

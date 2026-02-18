@@ -149,6 +149,11 @@ export function CreateLinkMeOrderModal({
   const [insuranceCostHt, setInsuranceCostHt] = useState<number>(0);
   const [fraisTaxRate, setFraisTaxRate] = useState<number>(0.2); // TVA frais (defaut 20%)
 
+  // Date de commande (défaut: aujourd'hui)
+  const [orderDate, setOrderDate] = useState<string>(
+    new Date().toISOString().split('T')[0]
+  );
+
   // Options de livraison
   const [expectedDeliveryDate, setExpectedDeliveryDate] = useState<string>('');
   const [isShoppingCenterDelivery, setIsShoppingCenterDelivery] =
@@ -546,6 +551,7 @@ export function CreateLinkMeOrderModal({
         retrocession_rate: item.retrocession_rate,
         linkme_selection_item_id: item.linkme_selection_item_id,
       })),
+      order_date: orderDate || undefined,
       internal_notes: internalNotes ?? undefined,
       // Frais additionnels
       shipping_cost_ht: shippingCostHt ?? 0,
@@ -1701,6 +1707,21 @@ export function CreateLinkMeOrderModal({
               </div>
             )}
             {/* end Row 4 */}
+
+            {/* Date de commande */}
+            {selectedSelectionId && (
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Date de commande
+                </label>
+                <input
+                  type="date"
+                  value={orderDate}
+                  onChange={e => setOrderDate(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                />
+              </div>
+            )}
 
             {/* Notes internes */}
             {selectedSelectionId && (

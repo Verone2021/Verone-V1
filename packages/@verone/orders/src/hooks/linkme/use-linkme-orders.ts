@@ -97,6 +97,8 @@ export interface CreateLinkMeOrderInput {
   affiliate_id: string;
   /** Lignes de commande (avec tax_rate par ligne) */
   items: LinkMeOrderItemInput[];
+  /** Date de commande (format ISO YYYY-MM-DD) - défaut: aujourd'hui */
+  order_date?: string;
   /** Notes internes */
   internal_notes?: string;
   /** Adresse de livraison */
@@ -504,6 +506,7 @@ async function createLinkMeOrder(
   // Note: tax_rate au niveau commande = 0 car TVA calculee par ligne
   const orderData = {
     order_number: orderNumber,
+    order_date: input.order_date ?? new Date().toISOString().split('T')[0],
     channel_id: LINKME_CHANNEL_ID,
     customer_id: customerId,
     customer_type: input.customer_type,
