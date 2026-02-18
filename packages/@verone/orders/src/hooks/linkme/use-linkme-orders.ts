@@ -2,68 +2,19 @@
  * Hook: useLinkMeOrders
  * Gestion des commandes LinkMe
  * =====================================================
- * CORRECTIF 2025-12-07 : Mapping DB corrige
+ * CORRECTIF 2025-12-07 : Mapping DB corrigé
  * - customer_id au lieu de customer_organisation_id/individual_customer_id
- * - order_number genere via generate_so_number
- * - created_by recupere depuis la session
+ * - order_number généré via generate_so_number
+ * - created_by récupéré depuis la session
  * =====================================================
  */
 
 'use client';
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-
-import type { Database } from '@verone/types';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createClient } from '@verone/utils/supabase/client';
 
-// Types Supabase
-type SalesOrderRow = Database['public']['Tables']['sales_orders']['Row'];
-type SalesOrderItemRow =
-  Database['public']['Tables']['sales_order_items']['Row'];
-
-// Type pour les orders retournes par fetchLinkMeOrders (avec customer_id polymorphique)
-type SalesOrderWithCustomer = Pick<
-  SalesOrderRow,
-  | 'id'
-  | 'order_number'
-  | 'channel_id'
-  | 'customer_id'
-  | 'customer_type'
-  | 'status'
-  | 'payment_status_v2'
-  | 'total_ht'
-  | 'total_ttc'
-  | 'created_at'
-  | 'updated_at'
->;
-
-// Type pour fetchLinkMeOrderById avec relations
-type SalesOrderItemWithProduct = {
-  id: string;
-  product_id: string;
-  quantity: number;
-  unit_price_ht: number;
-  total_ht: number;
-  retrocession_rate: number;
-  retrocession_amount: number;
-  linkme_selection_item_id: string | null;
-  products: {
-    id: string;
-    name: string;
-    sku: string;
-  } | null;
-};
-
-type SalesOrderWithItems = SalesOrderWithCustomer & {
-  tax_rate: number;
-  shipping_cost_ht: number;
-  insurance_cost_ht: number;
-  handling_cost_ht: number;
-  notes: string | null;
-  sales_order_items: SalesOrderItemWithProduct[];
-};
-
-// ID du canal LinkMe (recupere depuis les sales_channels)
+// ID du canal LinkMe (récupéré depuis les sales_channels)
 export const LINKME_CHANNEL_ID = '93c68db1-5a30-4168-89ec-6383152be405';
 
 // ============================================
@@ -76,13 +27,11 @@ export interface LinkMeOrderItemInput {
   sku: string;
   quantity: number;
   unit_price_ht: number;
-  /** Taux de TVA par ligne (0.20 = 20%) */
-  tax_rate: number;
-  /** Taux de retrocession (commission affilie) en decimal */
+  /** Taux de rétrocession (commission affilié) en décimal */
   retrocession_rate: number;
-  /** ID de l'item de selection (pour tracabilite) */
+  /** ID de l'item de sélection (pour traçabilité) */
   linkme_selection_item_id?: string;
-  /** Prix de base HT pour calcul commission (avant majoration affilie) */
+  /** Prix de base HT pour calcul commission (avant majoration affilié) */
   base_price_ht: number;
 }
 
@@ -93,12 +42,10 @@ export interface CreateLinkMeOrderInput {
   customer_organisation_id?: string | null;
   /** ID du particulier (si customer_type = 'individual') */
   individual_customer_id?: string | null;
-  /** ID de l'affilie (pour les commissions) */
+  /** ID de l'affilié (pour les commissions) */
   affiliate_id: string;
-  /** Lignes de commande (avec tax_rate par ligne) */
+  /** Lignes de commande */
   items: LinkMeOrderItemInput[];
-  /** Date de commande (format ISO YYYY-MM-DD) - défaut: aujourd'hui */
-  order_date?: string;
   /** Notes internes */
   internal_notes?: string;
   /** Adresse de livraison */
@@ -109,65 +56,21 @@ export interface CreateLinkMeOrderInput {
     postal_code: string;
     country: string;
   };
-  /** Frais de livraison HT (optionnel) */
-  shipping_cost_ht?: number;
-  /** Frais d'assurance HT (optionnel) */
-  insurance_cost_ht?: number;
-  /** Frais de manutention HT (optionnel) */
-  handling_cost_ht?: number;
-  /** Taux de TVA sur les frais (decimal, ex: 0.2 pour 20%) - defaut 20% */
-  frais_tax_rate?: number;
-  /** Date de livraison souhaitée (format ISO YYYY-MM-DD) */
-  expected_delivery_date?: string | null;
-  /** Livraison en centre commercial (logistique spéciale) */
-  is_shopping_center_delivery?: boolean;
-  /** Le site accepte les semi-remorques */
-  accepts_semi_truck?: boolean;
-  /** Adresse de facturation (jsonb) */
-  billing_address?: {
-    address_line1: string;
-    address_line2?: string;
-    city: string;
-    postal_code: string;
-    country: string;
-  } | null;
-  /** ID du contact de facturation */
-  billing_contact_id?: string | null;
-  /** ID de la sélection LinkMe */
-  linkme_selection_id?: string | null;
-  /** Contacts et adresses pour sales_order_linkme_details */
-  linkme_details?: {
-    delivery_contact_name?: string | null;
-    delivery_contact_email?: string | null;
-    delivery_contact_phone?: string | null;
-    delivery_address?: string | null;
-    delivery_postal_code?: string | null;
-    delivery_city?: string | null;
-    billing_name?: string | null;
-    billing_email?: string | null;
-    billing_phone?: string | null;
-  } | null;
 }
 
 export interface LinkMeOrder {
   id: string;
   order_number: string;
-  channel_id: string | null;
-  customer_type: string;
+  channel_id: string;
+  customer_type: 'organization' | 'individual';
   customer_organisation_id: string | null;
   individual_customer_id: string | null;
-  status: string | null;
-  payment_status_v2: string | null;
+  status: string;
+  payment_status_v2: string;
   total_ht: number;
   total_ttc: number;
-  tax_rate: number;
-  shipping_cost_ht: number;
-  insurance_cost_ht: number;
-  handling_cost_ht: number;
-  notes: string | null;
   created_at: string;
   updated_at: string;
-  // Relations
   organisation?: {
     id: string;
     trade_name: string | null;
@@ -179,28 +82,6 @@ export interface LinkMeOrder {
     last_name: string;
   } | null;
   items?: LinkMeOrderItem[];
-}
-
-export interface UpdateLinkMeOrderInput {
-  /** ID de la commande */
-  id: string;
-  /** Taux de TVA (decimal) */
-  tax_rate?: number;
-  /** Notes internes */
-  internal_notes?: string;
-  /** Frais de livraison HT */
-  shipping_cost_ht?: number;
-  /** Frais d'assurance HT */
-  insurance_cost_ht?: number;
-  /** Frais de manutention HT */
-  handling_cost_ht?: number;
-  /** Lignes de commande (mise a jour des quantites) */
-  items?: Array<{
-    id?: string;
-    product_id: string;
-    quantity: number;
-    unit_price_ht: number;
-  }>;
 }
 
 export interface LinkMeOrderItem {
@@ -221,224 +102,13 @@ export interface LinkMeOrderItem {
 // ============================================
 
 /**
- * Recupere les commandes LinkMe (canal = LinkMe)
- * Note: customer_id est polymorphique (organisation OU individual)
- */
-async function fetchLinkMeOrders(): Promise<LinkMeOrder[]> {
-  const supabase = createClient();
-  const { data, error } = await supabase
-    .from('sales_orders')
-    .select(
-      `
-      id,
-      order_number,
-      channel_id,
-      customer_id,
-      customer_type,
-      status,
-      payment_status_v2,
-      total_ht,
-      total_ttc,
-      created_at,
-      updated_at
-    `
-    )
-    .eq('channel_id', LINKME_CHANNEL_ID)
-    .order('created_at', { ascending: false });
-
-  if (error) {
-    console.error('Erreur fetch commandes LinkMe:', error);
-    throw error;
-  }
-
-  // Mapper les donnees pour compatibilite avec l'interface LinkMeOrder
-  return (data ?? []).map(
-    (order: SalesOrderWithCustomer): LinkMeOrder => ({
-      ...order,
-      // Champs manquants de l'interface LinkMeOrder (non retournes par cette query)
-      tax_rate: 0,
-      shipping_cost_ht: 0,
-      insurance_cost_ht: 0,
-      handling_cost_ht: 0,
-      notes: null,
-      // Pour compatibilite avec l'ancienne interface
-      customer_organisation_id:
-        order.customer_type === 'organization' ? order.customer_id : null,
-      individual_customer_id:
-        order.customer_type === 'individual' ? order.customer_id : null,
-    })
-  );
-}
-
-/**
- * Recupere une commande LinkMe par ID avec tous ses details
- */
-async function fetchLinkMeOrderById(orderId: string): Promise<LinkMeOrder> {
-  const supabase = createClient();
-  const { data, error } = await supabase
-    .from('sales_orders')
-    .select(
-      `
-      id,
-      order_number,
-      channel_id,
-      customer_id,
-      customer_type,
-      status,
-      payment_status_v2,
-      total_ht,
-      total_ttc,
-      tax_rate,
-      shipping_cost_ht,
-      insurance_cost_ht,
-      handling_cost_ht,
-      notes,
-      created_at,
-      updated_at,
-      sales_order_items (
-        id,
-        product_id,
-        quantity,
-        unit_price_ht,
-        total_ht,
-        retrocession_rate,
-        retrocession_amount,
-        linkme_selection_item_id,
-        products (
-          id,
-          name,
-          sku
-        )
-      )
-    `
-    )
-    .eq('id', orderId)
-    .single();
-
-  if (error) {
-    console.error('Erreur fetch commande LinkMe:', error);
-    throw error;
-  }
-
-  // Mapper les donnees
-  const order = data as SalesOrderWithItems;
-  return {
-    ...order,
-    customer_organisation_id:
-      order.customer_type === 'organization' ? order.customer_id : null,
-    individual_customer_id:
-      order.customer_type === 'individual' ? order.customer_id : null,
-    items: (order.sales_order_items ?? []).map(
-      (item: SalesOrderItemWithProduct): LinkMeOrderItem => ({
-        id: item.id,
-        sales_order_id: orderId,
-        product_id: item.product_id,
-        product_name: item.products?.name ?? 'Produit inconnu',
-        quantity: item.quantity,
-        unit_price_ht: item.unit_price_ht,
-        total_ht: item.total_ht,
-        retrocession_rate: item.retrocession_rate,
-        retrocession_amount: item.retrocession_amount,
-        linkme_selection_item_id: item.linkme_selection_item_id,
-      })
-    ),
-  };
-}
-
-/**
- * Met a jour une commande LinkMe
- */
-async function updateLinkMeOrder(
-  input: UpdateLinkMeOrderInput
-): Promise<LinkMeOrder> {
-  const supabase = createClient();
-
-  // 1. Recuperer la commande actuelle pour calcul
-  const { data: currentOrder, error: fetchError } = await supabase
-    .from('sales_orders')
-    .select('*, sales_order_items(*)')
-    .eq('id', input.id)
-    .single();
-
-  if (fetchError || !currentOrder) {
-    throw new Error('Commande non trouvee');
-  }
-
-  // 2. Calculer les nouveaux totaux
-  const taxRate = input.tax_rate ?? currentOrder.tax_rate ?? 0.2;
-  const shippingCostHt =
-    input.shipping_cost_ht ?? currentOrder.shipping_cost_ht ?? 0;
-  const insuranceCostHt =
-    input.insurance_cost_ht ?? currentOrder.insurance_cost_ht ?? 0;
-  const handlingCostHt =
-    input.handling_cost_ht ?? currentOrder.handling_cost_ht ?? 0;
-
-  // Calculer total produits (si items fournis, sinon garder l'existant)
-  let productsHt = 0;
-  if (input.items && input.items.length > 0) {
-    for (const item of input.items) {
-      productsHt += item.quantity * item.unit_price_ht;
-    }
-  } else {
-    // Garder le total existant des produits
-    const items = currentOrder.sales_order_items as SalesOrderItemRow[] | null;
-    for (const item of items ?? []) {
-      productsHt += item.quantity * item.unit_price_ht;
-    }
-  }
-
-  const totalHt =
-    productsHt + shippingCostHt + insuranceCostHt + handlingCostHt;
-  const totalTtc = totalHt * (1 + taxRate);
-
-  // 3. Mettre a jour la commande
-  const { error: updateError } = await supabase
-    .from('sales_orders')
-    .update({
-      tax_rate: taxRate,
-      shipping_cost_ht: shippingCostHt,
-      insurance_cost_ht: insuranceCostHt,
-      handling_cost_ht: handlingCostHt,
-      notes: input.internal_notes ?? currentOrder.notes,
-      total_ht: totalHt,
-      total_ttc: totalTtc,
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', input.id);
-
-  if (updateError) {
-    console.error('Erreur mise a jour commande:', updateError);
-    throw updateError;
-  }
-
-  // 4. Mettre a jour les lignes si fournies
-  if (input.items && input.items.length > 0) {
-    for (const item of input.items) {
-      if (item.id) {
-        // Mise a jour ligne existante
-        await supabase
-          .from('sales_order_items')
-          .update({
-            quantity: item.quantity,
-            unit_price_ht: item.unit_price_ht,
-          })
-          .eq('id', item.id);
-      }
-    }
-  }
-
-  // 5. Retourner la commande mise a jour
-  return fetchLinkMeOrderById(input.id);
-}
-
-/**
- * Cree une commande LinkMe
+ * Crée une commande LinkMe
  * =====================================================
- * MAPPING DB CORRIGE :
+ * MAPPING DB CORRIGÉ :
  * - customer_id : ID unique du client (org OU individual)
  * - customer_type : 'organization' ou 'individual'
- * - order_number : genere via generate_so_number
- * - created_by : ID de l'utilisateur connecte
+ * - order_number : généré via generate_so_number
+ * - created_by : ID de l'utilisateur connecté
  * =====================================================
  */
 async function createLinkMeOrder(
@@ -446,53 +116,46 @@ async function createLinkMeOrder(
 ): Promise<LinkMeOrder> {
   const supabase = createClient();
 
-  // 0. Recuperer l'utilisateur connecte (OBLIGATOIRE pour created_by)
+  // 0. Récupérer l'utilisateur connecté (OBLIGATOIRE pour created_by)
   const {
     data: { user },
     error: authError,
   } = await supabase.auth.getUser();
 
   if (authError || !user) {
-    throw new Error('Utilisateur non connecte. Veuillez vous reconnecter.');
+    throw new Error('Utilisateur non connecté. Veuillez vous reconnecter.');
   }
 
-  // 1. Generer le numero de commande via RPC
+  // 1. Générer le numéro de commande via RPC
   const { data: orderNumber, error: numberError } =
     await supabase.rpc('generate_so_number');
 
   if (numberError) {
-    console.error('Erreur generation numero commande:', numberError);
-    throw new Error('Impossible de generer le numero de commande');
+    console.error('Erreur génération numéro commande:', numberError);
+    throw new Error('Impossible de générer le numéro de commande');
   }
 
-  // 2. Calculer les totaux avec TVA par ligne
-  let productsHt = 0;
-  let totalTva = 0;
-  let _totalRetrocession = 0;
+  // 2. Calculer les totaux avec précision à 2 décimales
+  // Helper pour arrondir les montants monétaires
+  const roundMoney = (value: number): number => Math.round(value * 100) / 100;
+
+  let totalHt = 0;
+  let totalRetrocession = 0;
 
   for (const item of input.items) {
-    const lineTotal = item.quantity * item.unit_price_ht;
-    const lineTva = lineTotal * (item.tax_rate ?? 0.2);
-    productsHt += lineTotal;
-    totalTva += lineTva;
-    // Commission calculee sur base_price_ht (135EUR), pas sur unit_price_ht (168.75EUR)
-    _totalRetrocession +=
-      item.quantity * item.base_price_ht * item.retrocession_rate;
+    const lineTotal = roundMoney(item.quantity * item.unit_price_ht);
+    totalHt = roundMoney(totalHt + lineTotal);
+    // Commission = marge par unité × quantité (SSOT: selling - base)
+    totalRetrocession = roundMoney(
+      totalRetrocession +
+        (item.unit_price_ht - item.base_price_ht) * item.quantity
+    );
   }
 
-  // Frais additionnels avec TVA configurable
-  const shippingCostHt = input.shipping_cost_ht ?? 0;
-  const insuranceCostHt = input.insurance_cost_ht ?? 0;
-  const handlingCostHt = input.handling_cost_ht ?? 0;
-  const fraisTaxRate = input.frais_tax_rate ?? 0.2; // Defaut 20%
-  const totalFrais = shippingCostHt + insuranceCostHt + handlingCostHt;
-  const totalHt = productsHt + totalFrais;
+  // TVA 20% avec arrondi
+  const totalTtc = roundMoney(totalHt * 1.2);
 
-  // TVA totale = TVA produits (par ligne) + TVA frais (configurable)
-  const totalTvaFrais = totalFrais * fraisTaxRate;
-  const totalTtc = totalHt + totalTva + totalTvaFrais;
-
-  // 3. Determiner le customer_id (organisation OU individual)
+  // 3. Déterminer le customer_id (organisation OU individual)
   const customerId =
     input.customer_type === 'organization'
       ? input.customer_organisation_id
@@ -502,11 +165,9 @@ async function createLinkMeOrder(
     throw new Error('ID client requis');
   }
 
-  // 4. Creer la commande avec les VRAIS champs de la table sales_orders
-  // Note: tax_rate au niveau commande = 0 car TVA calculee par ligne
+  // 4. Créer la commande avec les VRAIS champs de la table sales_orders
   const orderData = {
     order_number: orderNumber,
-    order_date: input.order_date ?? new Date().toISOString().split('T')[0],
     channel_id: LINKME_CHANNEL_ID,
     customer_id: customerId,
     customer_type: input.customer_type,
@@ -515,40 +176,18 @@ async function createLinkMeOrder(
     payment_status_v2: 'pending',
     total_ht: totalHt,
     total_ttc: totalTtc,
-    tax_rate: 0, // TVA calculee par ligne, pas globale
-    notes: input.internal_notes ?? null,
-    // Frais additionnels
-    shipping_cost_ht: shippingCostHt,
-    insurance_cost_ht: insuranceCostHt,
-    handling_cost_ht: handlingCostHt,
+    tax_rate: 0.2,
+    notes: input.internal_notes || null,
     // Adresse de livraison (JSON)
     shipping_address: input.shipping_address
       ? JSON.stringify({
           address_line1: input.shipping_address.address_line1,
-          address_line2: input.shipping_address.address_line2 ?? '',
+          address_line2: input.shipping_address.address_line2 || '',
           city: input.shipping_address.city,
           postal_code: input.shipping_address.postal_code,
-          country: input.shipping_address.country ?? 'FR',
+          country: input.shipping_address.country || 'FR',
         })
       : null,
-    // Options de livraison
-    expected_delivery_date: input.expected_delivery_date ?? null,
-    is_shopping_center_delivery: input.is_shopping_center_delivery ?? false,
-    accepts_semi_truck: input.accepts_semi_truck ?? true,
-    // Adresse de facturation (JSON)
-    billing_address: input.billing_address
-      ? JSON.stringify({
-          address_line1: input.billing_address.address_line1,
-          address_line2: input.billing_address.address_line2 ?? '',
-          city: input.billing_address.city,
-          postal_code: input.billing_address.postal_code,
-          country: input.billing_address.country ?? 'FR',
-        })
-      : null,
-    // Contact de facturation
-    billing_contact_id: input.billing_contact_id ?? null,
-    // Sélection LinkMe
-    linkme_selection_id: input.linkme_selection_id ?? null,
   };
 
   const { data: order, error: orderError } = await supabase
@@ -558,28 +197,29 @@ async function createLinkMeOrder(
     .single();
 
   if (orderError) {
-    console.error('Erreur creation commande:', orderError);
+    console.error('Erreur création commande:', orderError);
     throw new Error(
-      `Erreur creation commande: ${orderError.message ?? 'Erreur inconnue'}`
+      `Erreur création commande: ${orderError.message || 'Erreur inconnue'}`
     );
   }
 
-  // 5. Creer les lignes de commande
+  // 5. Créer les lignes de commande
   // Note: product_name, sku et total_ht ne sont PAS des colonnes inserables
-  // - product_name/sku : recuperes via jointure products
-  // - total_ht : colonne GENERATED (calculee automatiquement)
+  // - product_name/sku : récupérés via jointure products
+  // - total_ht : colonne GENERATED (calculée automatiquement)
   const orderItems = input.items.map(item => ({
     sales_order_id: order.id,
     product_id: item.product_id,
     quantity: item.quantity,
-    unit_price_ht: item.unit_price_ht,
-    // total_ht est GENERATED - ne pas l'inserer
-    tax_rate: item.tax_rate ?? 0.2, // TVA par ligne (defaut 20%)
+    unit_price_ht: roundMoney(item.unit_price_ht),
+    // total_ht est GENERATED - ne pas l'insérer
+    tax_rate: 0.2,
     retrocession_rate: item.retrocession_rate,
-    // CORRECTION: utiliser base_price_ht (prix catalogue) et non unit_price_ht (prix vente)
-    retrocession_amount:
-      item.quantity * item.base_price_ht * item.retrocession_rate,
-    linkme_selection_item_id: item.linkme_selection_item_id ?? null,
+    // Commission = (selling_price - base_price) × qty
+    retrocession_amount: roundMoney(
+      (item.unit_price_ht - item.base_price_ht) * item.quantity
+    ),
+    linkme_selection_item_id: item.linkme_selection_item_id || null,
   }));
 
   const { error: itemsError } = await supabase
@@ -587,49 +227,14 @@ async function createLinkMeOrder(
     .insert(orderItems);
 
   if (itemsError) {
-    console.error('Erreur creation lignes commande:', itemsError);
+    console.error('Erreur création lignes commande:', itemsError);
     // Rollback: supprimer la commande
     await supabase.from('sales_orders').delete().eq('id', order.id);
-    throw itemsError;
+    throw new Error(
+      `Erreur création lignes: ${itemsError.message || 'Erreur inconnue'}`
+    );
   }
 
-  // 6. Creer les details LinkMe (contacts/adresses livraison/facturation)
-  if (input.linkme_details) {
-    const details = input.linkme_details;
-    const { error: detailsError } = await supabase
-      .from('sales_order_linkme_details')
-      .insert({
-        sales_order_id: order.id,
-        // Champs obligatoires avec valeurs par defaut
-        requester_type: 'back_office',
-        requester_name: user.email ?? 'Staff BO',
-        requester_email: user.email ?? '',
-        is_new_restaurant: false,
-        delivery_terms_accepted: true,
-        // Contact livraison
-        delivery_contact_name: details.delivery_contact_name ?? null,
-        delivery_contact_email: details.delivery_contact_email ?? null,
-        delivery_contact_phone: details.delivery_contact_phone ?? null,
-        // Adresse livraison
-        delivery_address: details.delivery_address ?? null,
-        delivery_postal_code: details.delivery_postal_code ?? null,
-        delivery_city: details.delivery_city ?? null,
-        // Contact facturation
-        billing_name: details.billing_name ?? null,
-        billing_email: details.billing_email ?? null,
-        billing_phone: details.billing_phone ?? null,
-      });
-
-    if (detailsError) {
-      console.error(
-        'Erreur creation details LinkMe (non bloquant):',
-        detailsError
-      );
-      // Non bloquant: la commande est creee, les details peuvent etre ajoutés plus tard
-    }
-  }
-
-  // Supabase insert returns a subset of columns; LinkMeOrder includes joined fields
   return order as unknown as LinkMeOrder;
 }
 
@@ -638,63 +243,16 @@ async function createLinkMeOrder(
 // ============================================
 
 /**
- * Hook: recupere les commandes LinkMe
- */
-export function useLinkMeOrders() {
-  return useQuery({
-    queryKey: ['linkme-orders'],
-    queryFn: fetchLinkMeOrders,
-    staleTime: 30000,
-  });
-}
-
-/**
- * Hook: creer une commande LinkMe
+ * Hook: créer une commande LinkMe
  */
 export function useCreateLinkMeOrder() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: createLinkMeOrder,
-    onSuccess: async () => {
-      // Invalider le cache pour rafraichir les listes
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['linkme-orders'] }),
-        queryClient.invalidateQueries({ queryKey: ['sales-orders'] }),
-      ]);
-    },
-  });
-}
-
-/**
- * Hook: recupere une commande LinkMe par ID
- */
-export function useLinkMeOrder(orderId: string | null) {
-  return useQuery({
-    queryKey: ['linkme-order', orderId],
-    queryFn: () => fetchLinkMeOrderById(orderId!),
-    enabled: !!orderId,
-    staleTime: 30000,
-  });
-}
-
-/**
- * Hook: mettre a jour une commande LinkMe
- */
-export function useUpdateLinkMeOrder() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: updateLinkMeOrder,
-    onSuccess: async (_, variables) => {
-      // Invalider le cache pour rafraichir les listes
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['linkme-orders'] }),
-        queryClient.invalidateQueries({
-          queryKey: ['linkme-order', variables.id],
-        }),
-        queryClient.invalidateQueries({ queryKey: ['sales-orders'] }),
-      ]);
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['linkme-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['sales-orders'] });
     },
   });
 }

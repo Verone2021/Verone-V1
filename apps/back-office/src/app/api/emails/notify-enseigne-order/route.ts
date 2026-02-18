@@ -1,14 +1,16 @@
 /**
  * API Route: POST /api/emails/notify-enseigne-order
- * Envoie une notification email quand une commande Enseigne est soumise
+ * Sends notification email when an Enseigne order is submitted
  *
- * Destinataires: équipe back-office Vérone
+ * Recipients: Verone back-office team
  */
 
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 import { Resend } from 'resend';
+
+import { buildEmailHtml } from '../_shared/email-template';
 
 function getResendClient(): Resend {
   const apiKey = process.env.RESEND_API_KEY;
@@ -18,13 +20,11 @@ function getResendClient(): Resend {
   return new Resend(apiKey);
 }
 
-// Destinataires des notifications (à configurer via env var)
 function getNotificationRecipients(): string[] {
   const recipients = process.env.LINKME_NOTIFICATION_EMAILS;
   if (recipients) {
     return recipients.split(',').map(e => e.trim());
   }
-  // Fallback: email par défaut
   return ['backoffice@verone.fr'];
 }
 
@@ -37,16 +37,11 @@ interface NotifyEnseigneOrderRequest {
   organisationName: string | null;
   isNewRestaurant: boolean;
   totalTtc: number;
-  source: 'client' | 'affiliate'; // client = via sélection publique, affiliate = via back-office affilié
+  source: 'client' | 'affiliate';
   affiliateName?: string;
   selectionName?: string;
 }
 
-/**
- * POST /api/emails/notify-enseigne-order
- *
- * Body: NotifyEnseigneOrderRequest
- */
 export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as NotifyEnseigneOrderRequest;
@@ -74,117 +69,102 @@ export async function POST(request: NextRequest) {
 
     const recipients = getNotificationRecipients();
 
-    // Labels
     const requesterTypeLabels: Record<string, string> = {
       responsable_enseigne: 'Responsable Enseigne',
       architecte: 'Architecte',
-      franchisee: 'Franchisé',
+      franchisee: 'Franchis\u00e9',
     };
 
     const sourceLabel =
       source === 'client'
-        ? 'Client (via sélection publique)'
-        : 'Affilié (via back-office)';
+        ? 'Client (via s\u00e9lection publique)'
+        : 'Affili\u00e9 (via back-office)';
 
-    const emailSubject = `[LinkMe] Nouvelle commande Enseigne ${orderNumber}`;
+    const formattedTotal = new Intl.NumberFormat('fr-FR', {
+      style: 'currency',
+      currency: 'EUR',
+    }).format(totalTtc);
 
-    const emailHtml = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-  <div style="background-color: #fef3c7; padding: 30px; border-radius: 8px; border-left: 4px solid #f59e0b;">
-    <h1 style="color: #92400e; font-size: 22px; margin: 0 0 20px 0;">
-      Nouvelle commande Enseigne
-    </h1>
+    const newRestaurantBadge = isNewRestaurant
+      ? '<br><span style="background: #dbeafe; color: #1e40af; padding: 2px 8px; border-radius: 4px; font-size: 12px;">Nouveau restaurant</span>'
+      : '';
 
-    <p style="margin-bottom: 20px; color: #78350f;">
-      Une nouvelle commande B2B a été soumise via <strong>${sourceLabel}</strong>.
-    </p>
+    const bodyHtml = `
+      <p style="margin: 0 0 20px 0; color: #1e40af;">
+        Une nouvelle commande B2B a &eacute;t&eacute; soumise via <strong>${sourceLabel}</strong>.
+      </p>
 
-    <div style="background-color: #ffffff; padding: 20px; border-radius: 6px; margin: 20px 0;">
-      <table style="width: 100%; border-collapse: collapse;">
-        <tr>
-          <td style="padding: 10px 0; color: #666; border-bottom: 1px solid #eee;">N° Commande</td>
-          <td style="padding: 10px 0; text-align: right; font-weight: bold; border-bottom: 1px solid #eee;">
-            ${orderNumber}
-          </td>
-        </tr>
-        <tr>
-          <td style="padding: 10px 0; color: #666; border-bottom: 1px solid #eee;">Demandeur</td>
-          <td style="padding: 10px 0; text-align: right; border-bottom: 1px solid #eee;">
-            ${requesterName}<br>
-            <span style="color: #888; font-size: 13px;">${requesterTypeLabels[requesterType] ?? requesterType}</span>
-          </td>
-        </tr>
-        <tr>
-          <td style="padding: 10px 0; color: #666; border-bottom: 1px solid #eee;">Email demandeur</td>
-          <td style="padding: 10px 0; text-align: right; border-bottom: 1px solid #eee;">
-            <a href="mailto:${requesterEmail}" style="color: #2563eb;">${requesterEmail}</a>
-          </td>
-        </tr>
-        <tr>
-          <td style="padding: 10px 0; color: #666; border-bottom: 1px solid #eee;">Restaurant</td>
-          <td style="padding: 10px 0; text-align: right; border-bottom: 1px solid #eee;">
-            ${organisationName ?? '<em style="color: #888;">Non défini</em>'}
-            ${isNewRestaurant ? '<br><span style="background: #dbeafe; color: #1e40af; padding: 2px 8px; border-radius: 4px; font-size: 12px;">Nouveau restaurant</span>' : ''}
-          </td>
-        </tr>
-        ${
-          affiliateName
-            ? `
-        <tr>
-          <td style="padding: 10px 0; color: #666; border-bottom: 1px solid #eee;">Affilié</td>
-          <td style="padding: 10px 0; text-align: right; border-bottom: 1px solid #eee;">${affiliateName}</td>
-        </tr>
-        `
-            : ''
-        }
-        ${
-          selectionName
-            ? `
-        <tr>
-          <td style="padding: 10px 0; color: #666; border-bottom: 1px solid #eee;">Sélection</td>
-          <td style="padding: 10px 0; text-align: right; border-bottom: 1px solid #eee;">${selectionName}</td>
-        </tr>
-        `
-            : ''
-        }
-        <tr>
-          <td style="padding: 12px 0; color: #666; font-size: 16px;">Montant TTC</td>
-          <td style="padding: 12px 0; text-align: right; font-size: 18px; font-weight: bold; color: #059669;">
-            ${new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(totalTtc)}
-          </td>
-        </tr>
-      </table>
-    </div>
+      <div style="background-color: #ffffff; padding: 20px; border-radius: 6px; margin: 20px 0;">
+        <table style="width: 100%; border-collapse: collapse;">
+          <tr>
+            <td style="padding: 10px 0; color: #666; border-bottom: 1px solid #eee;">N&deg; Commande</td>
+            <td style="padding: 10px 0; text-align: right; font-weight: bold; border-bottom: 1px solid #eee;">${orderNumber}</td>
+          </tr>
+          <tr>
+            <td style="padding: 10px 0; color: #666; border-bottom: 1px solid #eee;">Demandeur</td>
+            <td style="padding: 10px 0; text-align: right; border-bottom: 1px solid #eee;">
+              ${requesterName}<br>
+              <span style="color: #888; font-size: 13px;">${requesterTypeLabels[requesterType] ?? requesterType}</span>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 10px 0; color: #666; border-bottom: 1px solid #eee;">Email demandeur</td>
+            <td style="padding: 10px 0; text-align: right; border-bottom: 1px solid #eee;">
+              <a href="mailto:${requesterEmail}" style="color: #2563eb;">${requesterEmail}</a>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 10px 0; color: #666; border-bottom: 1px solid #eee;">Restaurant</td>
+            <td style="padding: 10px 0; text-align: right; border-bottom: 1px solid #eee;">
+              ${organisationName ?? '<em style="color: #888;">Non d&eacute;fini</em>'}
+              ${newRestaurantBadge}
+            </td>
+          </tr>
+          ${
+            affiliateName
+              ? `<tr>
+            <td style="padding: 10px 0; color: #666; border-bottom: 1px solid #eee;">Affili&eacute;</td>
+            <td style="padding: 10px 0; text-align: right; border-bottom: 1px solid #eee;">${affiliateName}</td>
+          </tr>`
+              : ''
+          }
+          ${
+            selectionName
+              ? `<tr>
+            <td style="padding: 10px 0; color: #666; border-bottom: 1px solid #eee;">S&eacute;lection</td>
+            <td style="padding: 10px 0; text-align: right; border-bottom: 1px solid #eee;">${selectionName}</td>
+          </tr>`
+              : ''
+          }
+          <tr>
+            <td style="padding: 12px 0; color: #666; font-size: 16px;">Montant TTC</td>
+            <td style="padding: 12px 0; text-align: right; font-size: 18px; font-weight: bold; color: #059669;">
+              ${formattedTotal}
+            </td>
+          </tr>
+        </table>
+      </div>
 
-    <div style="text-align: center; margin-top: 25px;">
-      <a href="${process.env.NEXT_PUBLIC_APP_URL ?? 'https://app.verone.fr'}/canaux-vente/linkme/commandes/${orderId}"
-         style="display: inline-block; background-color: #f59e0b; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold;">
-        Voir la commande
-      </a>
-    </div>
+      <p style="margin: 0; font-size: 13px; color: #666; text-align: center;">
+        Cette commande est en attente de validation dans le back-office.
+      </p>`;
 
-    <hr style="border: none; border-top: 1px solid #fcd34d; margin: 30px 0;">
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://app.verone.fr';
 
-    <p style="color: #92400e; font-size: 13px; text-align: center; margin: 0;">
-      Cette commande est en attente de validation dans le back-office.
-    </p>
-  </div>
-</body>
-</html>
-    `;
+    const emailHtml = buildEmailHtml({
+      title: 'Nouvelle commande Enseigne',
+      recipientName: '\u00c9quipe Verone',
+      accentColor: 'blue',
+      bodyHtml,
+      ctaUrl: `${appUrl}/canaux-vente/linkme/commandes/${orderId}`,
+      ctaLabel: 'Voir la commande',
+    });
 
-    // Envoyer l'email via Resend
     const resendClient = getResendClient();
     const { data, error } = await resendClient.emails.send({
       from: process.env.RESEND_FROM_EMAIL ?? 'notifications@verone.fr',
       to: recipients,
-      subject: emailSubject,
+      subject: `[LinkMe] Nouvelle commande Enseigne ${orderNumber}`,
       html: emailHtml,
     });
 

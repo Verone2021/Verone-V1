@@ -14,7 +14,6 @@ import { createClient } from '@verone/utils/supabase/client';
 
 // Types pour les commandes clients
 export type SalesOrderStatus =
-  | 'pending_approval'
   | 'draft'
   | 'validated'
   | 'partially_shipped'
@@ -258,7 +257,6 @@ interface SalesOrderStats {
  * Dévalidation (validated → draft) autorisée si aucune expédition
  */
 const STATUS_TRANSITIONS: Record<SalesOrderStatus, SalesOrderStatus[]> = {
-  pending_approval: ['draft', 'cancelled'],
   draft: ['validated', 'cancelled'],
   validated: ['draft', 'partially_shipped', 'shipped', 'cancelled'], // 'draft' pour dévalidation
   partially_shipped: ['shipped', 'cancelled'],
@@ -458,11 +456,11 @@ export function useSalesOrders() {
         const orgIds = (ordersData || [])
           .filter(o => o.customer_type === 'organization' && o.customer_id)
           .map(o => o.customer_id)
-          .filter((id): id is string => id != null);
+          .filter((id): id is string => id !== null);
         const individualIds = (ordersData || [])
           .filter(o => o.customer_type === 'individual' && o.customer_id)
           .map(o => o.customer_id)
-          .filter((id): id is string => id != null);
+          .filter((id): id is string => id !== null);
 
         // Batch fetch organisations (1 seule requête)
         const orgsMap = new Map<string, any>();

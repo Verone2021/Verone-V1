@@ -10,7 +10,7 @@
  * - Meme workflow que /commandes/clients (Valider, Expedier, Annuler)
  * - Modal de creation specifique LinkMe (CreateLinkMeOrderModal)
  * - Modal d'edition specifique LinkMe (EditLinkMeOrderModal)
- * - Colonnes additionnelles: Canal, Approbation, Marge
+ * - Colonnes additionnelles: indicateur validation (pastille), Canal, Marge
  * - Filtre "En attente de validation" avec badge rouge/vert
  *
  * Les triggers stock sont automatiques et identiques pour tous les canaux.
@@ -22,11 +22,11 @@ import { SalesOrdersTable } from '@verone/orders';
 import type { SalesOrder } from '@verone/orders';
 import { Button } from '@verone/ui';
 import { formatCurrency } from '@verone/utils';
-import { AlertCircle, CheckCircle2 } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Circle } from 'lucide-react';
 
 import { updateSalesOrderStatus } from '@/app/actions/sales-orders';
 
-import { CreateLinkMeOrderModal } from '@verone/orders';
+import { CreateLinkMeOrderModal } from '../components/CreateLinkMeOrderModal';
 import { EditLinkMeOrderModal } from '../components/EditLinkMeOrderModal';
 import { PendingOrderCards } from '../components/PendingOrderCards';
 import { usePendingOrdersCount } from '../hooks/use-linkme-order-actions';
@@ -34,17 +34,39 @@ import { usePendingOrdersCount } from '../hooks/use-linkme-order-actions';
 // ID du canal LinkMe
 const LINKME_CHANNEL_ID = '93c68db1-5a30-4168-89ec-6383152be405';
 
-// Canal de vente : toujours "LinkMe" car ces commandes sont filtrées par channel_id = LinkMe
-// Aligné avec la colonne Canal des commandes clients (/commandes/clients)
-function getOrderChannel(): {
+// Fonction pour determiner le canal de la commande
+// 3 canaux mutuellement exclusifs:
+// 1. Affilié = commande créée par un affilié depuis l'app LinkMe
+// 2. Sélection publique = commande créée par client final via catalogue public
+// 3. Manuel = commande créée manuellement par admin dans le back-office
+function getOrderChannel(order: SalesOrder): {
   label: string;
   color: string;
   bg: string;
 } {
+  // Canal 1: Commande créée par un affilié depuis l'app LinkMe
+  if (order.created_by_affiliate_id) {
+    return {
+      label: 'Affilié',
+      color: 'text-teal-700',
+      bg: 'bg-teal-100',
+    };
+  }
+
+  // Canal 2: Commande via sélection publique (client final)
+  if (order.linkme_selection_id) {
+    return {
+      label: 'Sélection publique',
+      color: 'text-amber-700',
+      bg: 'bg-amber-100',
+    };
+  }
+
+  // Canal 3: Créée manuellement par admin dans le back-office
   return {
-    label: 'LinkMe',
-    color: 'text-purple-700',
-    bg: 'bg-purple-100',
+    label: 'Manuel',
+    color: 'text-blue-700',
+    bg: 'bg-blue-100',
   };
 }
 
@@ -63,14 +85,14 @@ export default function CommandesClient() {
   // Compter les commandes en attente de validation via hook dédié
   const { data: pendingValidationCount = 0 } = usePendingOrdersCount();
 
-  // Colonnes additionnelles pour LinkMe (colonne Canal + Marge)
+  // Colonnes additionnelles pour LinkMe (avec colonne Canal et Approbation)
   const additionalColumns = useMemo(
     () => [
       {
         key: 'order_channel',
         header: 'Canal',
-        cell: (_order: SalesOrder) => {
-          const channel = getOrderChannel();
+        cell: (order: SalesOrder) => {
+          const channel = getOrderChannel(order);
           return (
             <span
               className={`px-2 py-1 text-xs font-medium rounded-full ${channel.bg} ${channel.color}`}
@@ -78,6 +100,27 @@ export default function CommandesClient() {
               {channel.label}
             </span>
           );
+        },
+      },
+      {
+        key: 'validation_dot',
+        header: '',
+        cell: (order: SalesOrder) => {
+          if (order.pending_admin_validation) {
+            return (
+              <span title="En attente de validation">
+                <Circle className="h-2.5 w-2.5 fill-orange-500 text-orange-500" />
+              </span>
+            );
+          }
+          if (order.confirmed_at) {
+            return (
+              <span title="Approuvée">
+                <Circle className="h-2.5 w-2.5 fill-green-500 text-green-500" />
+              </span>
+            );
+          }
+          return null;
         },
       },
       {

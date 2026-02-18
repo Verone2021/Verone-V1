@@ -5843,7 +5843,6 @@ export type Database = {
           purchase_order_item_id: string;
           purchased_at: string;
           quantity: number;
-          unit_cost_net: number | null;
           unit_price_ht: number;
         };
         Insert: {
@@ -5854,7 +5853,6 @@ export type Database = {
           purchase_order_item_id: string;
           purchased_at: string;
           quantity: number;
-          unit_cost_net?: number | null;
           unit_price_ht: number;
         };
         Update: {
@@ -5865,7 +5863,6 @@ export type Database = {
           purchase_order_item_id?: string;
           purchased_at?: string;
           quantity?: number;
-          unit_cost_net?: number | null;
           unit_price_ht?: number;
         };
         Relationships: [
@@ -5996,10 +5993,6 @@ export type Database = {
           completion_percentage: number | null;
           completion_status: string | null;
           condition: string | null;
-          cost_net_avg: number | null;
-          cost_net_last: number | null;
-          cost_net_max: number | null;
-          cost_net_min: number | null;
           cost_price: number | null;
           cost_price_avg: number | null;
           cost_price_count: number;
@@ -6076,10 +6069,6 @@ export type Database = {
           completion_percentage?: number | null;
           completion_status?: string | null;
           condition?: string | null;
-          cost_net_avg?: number | null;
-          cost_net_last?: number | null;
-          cost_net_max?: number | null;
-          cost_net_min?: number | null;
           cost_price?: number | null;
           cost_price_avg?: number | null;
           cost_price_count?: number;
@@ -6156,10 +6145,6 @@ export type Database = {
           completion_percentage?: number | null;
           completion_status?: string | null;
           condition?: string | null;
-          cost_net_avg?: number | null;
-          cost_net_last?: number | null;
-          cost_net_max?: number | null;
-          cost_net_min?: number | null;
           cost_price?: number | null;
           cost_price_avg?: number | null;
           cost_price_count?: number;
@@ -7147,7 +7132,6 @@ export type Database = {
       };
       sales_orders: {
         Row: {
-          accepts_semi_truck: boolean;
           affiliate_total_ht: number | null;
           affiliate_total_ttc: number | null;
           applied_discount_codes: string[] | null;
@@ -7178,7 +7162,6 @@ export type Database = {
           id: string;
           insurance_cost_ht: number | null;
           invoiced_at: string | null;
-          is_shopping_center_delivery: boolean;
           linkme_selection_id: string | null;
           manual_payment_by: string | null;
           manual_payment_date: string | null;
@@ -7215,7 +7198,6 @@ export type Database = {
           warehouse_exit_by: string | null;
         };
         Insert: {
-          accepts_semi_truck?: boolean;
           affiliate_total_ht?: number | null;
           affiliate_total_ttc?: number | null;
           applied_discount_codes?: string[] | null;
@@ -7246,7 +7228,6 @@ export type Database = {
           id?: string;
           insurance_cost_ht?: number | null;
           invoiced_at?: string | null;
-          is_shopping_center_delivery?: boolean;
           linkme_selection_id?: string | null;
           manual_payment_by?: string | null;
           manual_payment_date?: string | null;
@@ -7283,7 +7264,6 @@ export type Database = {
           warehouse_exit_by?: string | null;
         };
         Update: {
-          accepts_semi_truck?: boolean;
           affiliate_total_ht?: number | null;
           affiliate_total_ttc?: number | null;
           applied_discount_codes?: string[] | null;
@@ -7314,7 +7294,6 @@ export type Database = {
           id?: string;
           insurance_cost_ht?: number | null;
           invoiced_at?: string | null;
-          is_shopping_center_delivery?: boolean;
           linkme_selection_id?: string | null;
           manual_payment_by?: string | null;
           manual_payment_date?: string | null;
@@ -7370,6 +7349,13 @@ export type Database = {
             columns: ['created_by_affiliate_id'];
             isOneToOne: false;
             referencedRelation: 'linkme_affiliates';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'sales_orders_customer_id_fkey';
+            columns: ['customer_id'];
+            isOneToOne: false;
+            referencedRelation: 'organisations';
             referencedColumns: ['id'];
           },
           {
@@ -8833,7 +8819,6 @@ export type Database = {
     Views: {
       affiliate_pending_orders: {
         Row: {
-          accepts_semi_truck: boolean | null;
           affiliate_email: string | null;
           affiliate_name: string | null;
           affiliate_total_ht: number | null;
@@ -8867,7 +8852,6 @@ export type Database = {
           id: string | null;
           insurance_cost_ht: number | null;
           invoiced_at: string | null;
-          is_shopping_center_delivery: boolean | null;
           linkme_selection_id: string | null;
           manual_payment_by: string | null;
           manual_payment_date: string | null;
@@ -8924,6 +8908,13 @@ export type Database = {
             columns: ['created_by_affiliate_id'];
             isOneToOne: false;
             referencedRelation: 'linkme_affiliates';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'sales_orders_customer_id_fkey';
+            columns: ['customer_id'];
+            isOneToOne: false;
+            referencedRelation: 'organisations';
             referencedColumns: ['id'];
           },
           {
@@ -9379,6 +9370,13 @@ export type Database = {
             referencedRelation: 'sales_channels';
             referencedColumns: ['id'];
           },
+          {
+            foreignKeyName: 'sales_orders_customer_id_fkey';
+            columns: ['customer_id'];
+            isOneToOne: false;
+            referencedRelation: 'organisations';
+            referencedColumns: ['id'];
+          },
         ];
       };
       linkme_orders_with_margins: {
@@ -9413,6 +9411,13 @@ export type Database = {
             columns: ['channel_id'];
             isOneToOne: false;
             referencedRelation: 'sales_channels';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'sales_orders_customer_id_fkey';
+            columns: ['customer_id'];
+            isOneToOne: false;
+            referencedRelation: 'organisations';
             referencedColumns: ['id'];
           },
         ];
@@ -9977,6 +9982,13 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'v_transactions_missing_invoice';
             referencedColumns: ['financial_document_id'];
+          },
+          {
+            foreignKeyName: 'sales_orders_customer_id_fkey';
+            columns: ['customer_id'];
+            isOneToOne: false;
+            referencedRelation: 'organisations';
+            referencedColumns: ['id'];
           },
         ];
       };
@@ -12700,7 +12712,6 @@ export type Database = {
         | 'mezzanine'
         | 'sous_sol';
       sales_order_status:
-        | 'pending_approval'
         | 'draft'
         | 'validated'
         | 'partially_shipped'
@@ -13062,7 +13073,6 @@ export const Constants = {
         'sous_sol',
       ],
       sales_order_status: [
-        'pending_approval',
         'draft',
         'validated',
         'partially_shipped',

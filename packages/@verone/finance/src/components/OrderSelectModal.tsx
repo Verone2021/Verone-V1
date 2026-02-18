@@ -152,13 +152,13 @@ export function OrderSelectModal({
 
       // Collecter les IDs de clients par type
       const orgIds = ordersData
-        .filter(o => o.customer_type === 'organisation' && o.customer_id)
+        .filter(o => o.customer_type === 'organisation')
         .map(o => o.customer_id)
-        .filter((id): id is string => id != null);
+        .filter((id): id is string => id !== null);
       const indivIds = ordersData
-        .filter(o => o.customer_type === 'individual' && o.customer_id)
+        .filter(o => o.customer_type === 'individual')
         .map(o => o.customer_id)
-        .filter((id): id is string => id != null);
+        .filter((id): id is string => id !== null);
 
       // Fetch organisations
       const orgMap = new Map<string, { name: string; email: string | null }>();

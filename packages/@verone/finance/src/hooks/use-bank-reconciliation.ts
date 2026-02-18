@@ -212,7 +212,7 @@ export function useBankReconciliation() {
         ...new Set(
           (orders || [])
             .map(o => o.customer_id)
-            .filter((id): id is string => id != null)
+            .filter((id): id is string => id !== null && id !== undefined)
         ),
       ];
       let orgNames: Record<string, string> = {};

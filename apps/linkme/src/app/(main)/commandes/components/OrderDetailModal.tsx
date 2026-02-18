@@ -201,7 +201,7 @@ export function OrderDetailModal({
             <Badge variant="outline" className={`${statusColor} font-medium`}>
               {statusLabel}
             </Badge>
-            {order.status === 'pending_approval' && (
+            {order.pending_admin_validation && (
               <Badge
                 variant="outline"
                 className="bg-orange-100 text-orange-800 border-orange-200 font-medium"

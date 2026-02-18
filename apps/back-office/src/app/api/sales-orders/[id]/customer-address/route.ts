@@ -58,6 +58,14 @@ export async function GET(
 
     let address: CustomerAddress;
 
+    // Guard: customer_id is required
+    if (!order.customer_id) {
+      return NextResponse.json(
+        { error: 'Commande sans client associé', code: 'NO_CUSTOMER' },
+        { status: 400 }
+      );
+    }
+
     // 2. Si customer_type = 'organization'
     if (order.customer_type === 'organization') {
       const { data: org, error: orgError } = await supabase

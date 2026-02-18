@@ -28,11 +28,6 @@ interface Product {
   cost_price_max?: number | null;
   cost_price_last?: number | null;
   cost_price_count?: number; // NOT NULL integer in DB, defaults to 0
-  // Prix d'achat NET (HT + frais alloués : shipping, customs, insurance)
-  cost_net_avg?: number | null;
-  cost_net_min?: number | null;
-  cost_net_max?: number | null;
-  cost_net_last?: number | null;
   target_margin_percentage?: number | null;
 }
 
@@ -521,86 +516,52 @@ export function SupplierVsPricingEditSection({
             <div className="bg-neutral-50 p-3 rounded-lg border border-neutral-200">
               <div className="text-xs text-neutral-600 font-medium mb-2">
                 <TrendingUp className="h-3 w-3 inline mr-1" />
-                HISTORIQUE PRIX D&apos;ACHAT
+                HISTORIQUE PRIX D'ACHAT
               </div>
-              {/* Header row when NET data is available */}
-              {(product.cost_net_avg != null ||
-                product.cost_net_last != null) && (
-                <div className="grid grid-cols-[1fr_auto_auto] gap-x-3 mb-1 text-xs text-neutral-500">
-                  <span />
-                  <span className="text-right">HT brut</span>
-                  <span className="text-right">NET (+ frais)</span>
-                </div>
-              )}
-              <div className="space-y-1 text-sm">
+              <div className="grid grid-cols-2 gap-2 text-sm">
                 {product.cost_price_avg != null && (
-                  <div className="grid grid-cols-[1fr_auto_auto] gap-x-3">
-                    <span className="text-neutral-600">Moyen:</span>
-                    <span className="font-medium text-neutral-800 text-right">
+                  <div className="flex justify-between">
+                    <span className="text-neutral-600">Prix moyen:</span>
+                    <span className="font-medium text-neutral-800">
                       {formatPrice(product.cost_price_avg)}
                     </span>
-                    {product.cost_net_avg != null ? (
-                      <span className="font-medium text-neutral-800 text-right">
-                        {formatPrice(product.cost_net_avg)}
-                      </span>
-                    ) : (
-                      <span className="text-neutral-400 text-right">—</span>
-                    )}
                   </div>
                 )}
                 {product.cost_price_last != null && (
-                  <div className="grid grid-cols-[1fr_auto_auto] gap-x-3">
-                    <span className="text-neutral-600">Dernier:</span>
-                    <span className="font-medium text-neutral-800 text-right">
+                  <div className="flex justify-between">
+                    <span className="text-neutral-600">Dernier prix:</span>
+                    <span className="font-medium text-neutral-800">
                       {formatPrice(product.cost_price_last)}
                     </span>
-                    {product.cost_net_last != null ? (
-                      <span className="font-medium text-neutral-800 text-right">
-                        {formatPrice(product.cost_net_last)}
-                      </span>
-                    ) : (
-                      <span className="text-neutral-400 text-right">—</span>
-                    )}
                   </div>
                 )}
                 {product.cost_price_min != null &&
                   product.cost_price_max != null && (
-                    <div className="grid grid-cols-[1fr_auto_auto] gap-x-3">
+                    <div className="flex justify-between col-span-2">
                       <span className="text-neutral-600">Min / Max:</span>
-                      <span className="font-medium text-neutral-800 text-right">
+                      <span className="font-medium text-neutral-800">
                         {formatPrice(product.cost_price_min)} /{' '}
                         {formatPrice(product.cost_price_max)}
                       </span>
-                      {product.cost_net_min != null &&
-                      product.cost_net_max != null ? (
-                        <span className="font-medium text-neutral-800 text-right">
-                          {formatPrice(product.cost_net_min)} /{' '}
-                          {formatPrice(product.cost_net_max)}
-                        </span>
-                      ) : (
-                        <span className="text-neutral-400 text-right">—</span>
-                      )}
                     </div>
                   )}
                 {product.cost_price_count != null &&
                   product.cost_price_count > 0 && (
-                    <div className="grid grid-cols-[1fr_auto_auto] gap-x-3">
+                    <div className="flex justify-between">
                       <span className="text-neutral-600">Nb achats:</span>
-                      <span className="font-medium text-neutral-800 text-right">
+                      <span className="font-medium text-neutral-800">
                         {product.cost_price_count}
                       </span>
-                      <span />
                     </div>
                   )}
                 {product.target_margin_percentage != null &&
                   product.target_margin_percentage !==
                     product.margin_percentage && (
-                    <div className="grid grid-cols-[1fr_auto_auto] gap-x-3">
+                    <div className="flex justify-between">
                       <span className="text-neutral-600">Marge cible:</span>
-                      <span className="font-medium text-neutral-800 text-right">
+                      <span className="font-medium text-neutral-800">
                         {product.target_margin_percentage}%
                       </span>
-                      <span />
                     </div>
                   )}
               </div>

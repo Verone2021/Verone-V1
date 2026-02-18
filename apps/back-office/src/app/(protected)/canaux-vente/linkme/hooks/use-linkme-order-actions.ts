@@ -24,15 +24,19 @@ export interface ApproveOrderInput {
 }
 
 export interface RequestInfoMissingField {
+  key: string;
   label: string;
   category: string;
+  inputType: string;
 }
 
 export interface RequestInfoInput {
   orderId: string;
-  message: string;
-  /** Champs manquants détectés automatiquement (enrichit l'email) */
-  missingFields?: RequestInfoMissingField[];
+  customMessage?: string;
+  /** Champs manquants détectés — envoyés au formulaire interactif */
+  missingFields: RequestInfoMissingField[];
+  /** Destinataire : demandeur ou propriétaire */
+  recipientType?: 'requester' | 'owner';
 }
 
 export interface RejectOrderInput {
@@ -144,7 +148,7 @@ async function approveOrder(
   // 0. Guard double-action: vérifier que la commande est bien en attente
   const { data: currentOrder, error: guardError } = await supabase
     .from('sales_orders')
-    .select('status')
+    .select('status, pending_admin_validation')
     .eq('id', input.orderId)
     .single();
 
@@ -152,7 +156,7 @@ async function approveOrder(
     throw new Error(`Erreur vérification commande: ${guardError.message}`);
   }
 
-  if (currentOrder?.status !== 'pending_approval') {
+  if (!currentOrder?.pending_admin_validation) {
     throw new Error('Cette commande a déjà été traitée (approuvée ou refusée)');
   }
 
@@ -288,8 +292,10 @@ async function approveOrder(
   const { error: orderError } = await supabase
     .from('sales_orders')
     .update({
-      status: 'draft',
+      status: 'validated',
       pending_admin_validation: false,
+      confirmed_at: new Date().toISOString(),
+      confirmed_by: currentUserId,
       updated_at: new Date().toISOString(),
     } as Record<string, unknown>)
     .eq('id', input.orderId);
@@ -361,17 +367,19 @@ async function requestInfo(
   const supabase = createClient();
 
   // Paralléliser les requêtes pour éviter séquentiel (fix perf)
-  const [details, orderResult] = await Promise.all([
+  const [details, orderResult, userResult] = await Promise.all([
     // 1. Récupérer les détails LinkMe
     fetchLinkMeOrderDetails(input.orderId),
     // 2. Récupérer la commande avec jointure organisation
     supabase
       .from('sales_orders')
       .select(
-        'order_number, notes, customer_id, customer_type, organisations!sales_orders_customer_id_fkey(trade_name, legal_name)'
+        'order_number, notes, total_ttc, customer_id, customer_type, organisations!sales_orders_customer_id_fkey(trade_name, legal_name)'
       )
       .eq('id', input.orderId)
       .single(),
+    // 3. Récupérer l'utilisateur courant (sentBy)
+    supabase.auth.getUser(),
   ]);
 
   if (!details) {
@@ -385,6 +393,11 @@ async function requestInfo(
   }
 
   const order = orderResult.data;
+  const currentUserId = userResult.data.user?.id;
+
+  if (!currentUserId) {
+    throw new Error('Utilisateur non authentifié');
+  }
 
   // Organisation récupérée via jointure (peut être array ou objet selon Supabase)
   const orgRaw = order.organisations as
@@ -394,8 +407,22 @@ async function requestInfo(
   const orgData = Array.isArray(orgRaw) ? orgRaw[0] : orgRaw;
   const organisationName = orgData?.trade_name ?? orgData?.legal_name ?? null;
 
+  // Déterminer le destinataire (requester par défaut, owner si spécifié)
+  const recipientType = input.recipientType ?? 'requester';
+  const recipientEmail =
+    recipientType === 'owner' && details.owner_email
+      ? details.owner_email
+      : details.requester_email;
+  const recipientName =
+    recipientType === 'owner' && details.owner_name
+      ? details.owner_name
+      : details.requester_name;
+
+  // Logger la demande dans les notes de la commande
   const timestamp = new Date().toLocaleString('fr-FR');
-  const newNote = `[${timestamp}] DEMANDE COMPLEMENTS: ${input.message}`;
+  const noteMessage = input.customMessage ?? 'Formulaire interactif envoyé';
+  const fieldsSummary = input.missingFields.map(f => f.label).join(', ');
+  const newNote = `[${timestamp}] DEMANDE COMPLEMENTS (formulaire): ${noteMessage} [Champs: ${fieldsSummary}]`;
   const updatedNotes = order.notes ? `${order.notes}\n\n${newNote}` : newNote;
 
   const { error: updateError } = await supabase
@@ -410,28 +437,36 @@ async function requestInfo(
     throw new Error(`Erreur mise à jour notes: ${updateError.message}`);
   }
 
-  // 4. Envoyer email au demandeur
-  try {
-    await fetch('/api/emails/linkme-order-request-info', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        orderNumber: order.order_number,
-        requesterEmail: details.requester_email,
-        requesterName: details.requester_name,
-        message: input.message,
-        organisationName,
-        missingFields: input.missingFields ?? [],
-      }),
-    });
-  } catch (emailError) {
-    console.error('Erreur envoi email request-info:', emailError);
-    // On ne bloque pas si l'email échoue
+  // Appeler le nouvel endpoint formulaire interactif
+  const emailResponse = await fetch('/api/emails/linkme-info-request', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      salesOrderId: input.orderId,
+      orderNumber: order.order_number,
+      recipientEmail,
+      recipientName,
+      recipientType,
+      organisationName,
+      totalTtc: order.total_ttc ?? 0,
+      requestedFields: input.missingFields,
+      customMessage: input.customMessage,
+      sentBy: currentUserId,
+    }),
+  });
+
+  if (!emailResponse.ok) {
+    const errorData = (await emailResponse.json().catch(() => null)) as {
+      error?: string;
+    } | null;
+    throw new Error(
+      `Erreur envoi formulaire: ${errorData?.error ?? `HTTP ${emailResponse.status}`}`
+    );
   }
 
   return {
     success: true,
-    message: `Demande de compléments envoyée à ${details.requester_email}`,
+    message: `Formulaire de compléments envoyé à ${recipientEmail}`,
   };
 }
 
@@ -448,7 +483,7 @@ async function rejectOrder(
   // 0. Guard double-action: vérifier que la commande est bien en attente
   const { data: currentOrder, error: guardError } = await supabase
     .from('sales_orders')
-    .select('status')
+    .select('status, pending_admin_validation')
     .eq('id', input.orderId)
     .single();
 
@@ -456,7 +491,7 @@ async function rejectOrder(
     throw new Error(`Erreur vérification commande: ${guardError.message}`);
   }
 
-  if (currentOrder?.status !== 'pending_approval') {
+  if (!currentOrder?.pending_admin_validation) {
     throw new Error('Cette commande a déjà été traitée (approuvée ou refusée)');
   }
 
@@ -504,6 +539,7 @@ async function rejectOrder(
     .from('sales_orders')
     .update({
       status: 'cancelled',
+      pending_admin_validation: false,
       cancelled_at: new Date().toISOString(),
       cancelled_by: rejectUserId,
       notes: updatedNotes,
@@ -778,7 +814,7 @@ export function usePendingOrdersCount() {
       const { count, error } = await supabase
         .from('sales_orders')
         .select('*', { count: 'exact', head: true })
-        .eq('status', 'pending_approval');
+        .eq('pending_admin_validation', true);
 
       if (error) {
         console.error('Error fetching pending orders count:', error);
@@ -803,7 +839,7 @@ export function usePendingOrders() {
     queryFn: async (): Promise<PendingOrder[]> => {
       const supabase = createClient();
 
-      // Fetch orders with status = pending_approval
+      // Fetch orders with pending_admin_validation = true
       const { data: orders, error } = await supabase
         .from('sales_orders')
         .select(
@@ -851,7 +887,7 @@ export function usePendingOrders() {
           )
         `
         )
-        .eq('status', 'pending_approval')
+        .eq('pending_admin_validation', true)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -863,7 +899,7 @@ export function usePendingOrders() {
       const organisationIds = (orders ?? [])
         .filter(o => o.customer_type === 'organization' && o.customer_id)
         .map(o => o.customer_id)
-        .filter((id): id is string => id != null);
+        .filter((id): id is string => id !== null);
 
       const organisationsMap = new Map<
         string,
@@ -1023,8 +1059,8 @@ export type OrderValidationStatus = 'pending' | 'approved' | 'rejected';
 
 /**
  * Hook: récupère toutes les commandes LinkMe avec filtre par status de validation
- * - pending: status = 'pending_approval'
- * - approved: status != 'pending_approval' AND status != 'cancelled'
+ * - pending: pending_admin_validation = true
+ * - approved: pending_admin_validation = false AND status != 'cancelled'
  * - rejected: status = 'cancelled'
  */
 export function useAllLinkMeOrders(status?: OrderValidationStatus) {
@@ -1046,6 +1082,7 @@ export function useAllLinkMeOrders(status?: OrderValidationStatus) {
           created_at,
           customer_id,
           customer_type,
+          pending_admin_validation,
           sales_order_linkme_details (
             is_new_restaurant,
             requester_type,
@@ -1081,15 +1118,14 @@ export function useAllLinkMeOrders(status?: OrderValidationStatus) {
           )
         `
         )
-        .not('linkme_selection_id', 'is', null);
+        .not('linkme_selection_id', 'is', null)
+        .not('status', 'in', '(shipped,delivered)');
 
       // Apply status filter
       if (status === 'pending') {
-        query = query.eq('status', 'pending_approval');
+        query = query.eq('pending_admin_validation', true);
       } else if (status === 'approved') {
-        query = query
-          .neq('status', 'pending_approval')
-          .neq('status', 'cancelled');
+        query = query.not('confirmed_at', 'is', null);
       } else if (status === 'rejected') {
         query = query.eq('status', 'cancelled');
       }
@@ -1107,7 +1143,7 @@ export function useAllLinkMeOrders(status?: OrderValidationStatus) {
       const organisationIds = (orders ?? [])
         .filter(o => o.customer_type === 'organization' && o.customer_id)
         .map(o => o.customer_id)
-        .filter((id): id is string => id != null);
+        .filter((id): id is string => id !== null);
 
       const organisationsMap = new Map<
         string,
