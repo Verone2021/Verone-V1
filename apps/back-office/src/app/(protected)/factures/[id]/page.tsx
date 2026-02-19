@@ -299,6 +299,8 @@ export default function DocumentDetailPage({
         ? [typeParam]
         : ['invoice', 'quote', 'credit_note'];
 
+      let lastError: string | null = null;
+
       for (const type of typesToTry) {
         try {
           const endpoint =
@@ -313,17 +315,32 @@ export default function DocumentDetailPage({
 
           if (data.success) {
             const doc = data.invoice ?? data.quote ?? data.credit_note ?? null;
-            setDocument(doc);
-            setDocumentType(type);
-            setLoading(false);
-            return;
+            if (doc) {
+              setDocument(doc);
+              setDocumentType(type);
+              setLoading(false);
+              return;
+            }
           }
-        } catch {
-          // Continue to next type
+
+          lastError =
+            data.error ??
+            `Réponse invalide pour ${type} (success=${String(data.success)})`;
+          console.error(
+            `[DocumentDetail] API error for ${type}/${id}:`,
+            lastError
+          );
+        } catch (fetchError) {
+          lastError =
+            fetchError instanceof Error ? fetchError.message : 'Erreur réseau';
+          console.error(
+            `[DocumentDetail] Fetch failed for ${type}/${id}:`,
+            fetchError
+          );
         }
       }
 
-      setError('Document non trouvé');
+      setError(lastError ?? 'Document non trouvé');
       setLoading(false);
     }
 
