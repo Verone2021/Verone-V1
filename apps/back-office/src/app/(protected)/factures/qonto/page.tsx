@@ -122,6 +122,9 @@ function StatusBadge({
     accepted: 'default',
     declined: 'destructive',
     expired: 'outline',
+    pending_approval: 'secondary',
+    to_review: 'secondary',
+    to_pay: 'default',
   };
 
   const labels: Record<string, string> = {
@@ -135,6 +138,9 @@ function StatusBadge({
     accepted: 'Accepte',
     declined: 'Refuse',
     expired: 'Expire',
+    pending_approval: 'En attente',
+    to_review: 'A examiner',
+    to_pay: 'A payer',
   };
 
   return (
@@ -362,52 +368,60 @@ export default function QontoDocumentsPage(): React.ReactNode {
           {!loadingInvoices && invoices.length > 0 && (
             <div className="space-y-4">
               {invoices.map(invoice => (
-                <Card
+                <Link
                   key={invoice.id}
-                  className={
-                    invoice.status === 'canceled' ||
-                    invoice.status === 'cancelled'
-                      ? 'border-red-200 bg-red-50'
-                      : undefined
-                  }
+                  href={`/factures/${invoice.id}?type=invoice`}
+                  className="block"
                 >
-                  <CardHeader className="pb-2">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg">
-                        {invoice.number}
-                      </CardTitle>
-                      <StatusBadge status={invoice.status} type="invoice" />
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-1">
-                        <p className="text-sm text-muted-foreground">
-                          Client: {invoice.client?.name ?? 'N/A'}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          Date: {invoice.issue_date} | Echeance:{' '}
-                          {invoice.due_date}
-                        </p>
+                  <Card
+                    className={`cursor-pointer transition-shadow hover:shadow-md${
+                      invoice.status === 'canceled' ||
+                      invoice.status === 'cancelled'
+                        ? ' border-red-200 bg-red-50'
+                        : ''
+                    }`}
+                  >
+                    <CardHeader className="pb-2">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-lg">
+                          {invoice.number}
+                        </CardTitle>
+                        <StatusBadge status={invoice.status} type="invoice" />
                       </div>
-                      <div className="flex items-center gap-4">
-                        <p className="text-lg font-bold">
-                          {formatAmount(invoice.total_amount.value)}
-                        </p>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleDownloadInvoicePdf(invoice.id)}
-                          >
-                            <Download className="mr-2 h-4 w-4" />
-                            PDF
-                          </Button>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-1">
+                          <p className="text-sm text-muted-foreground">
+                            Client: {invoice.client?.name ?? 'N/A'}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            Date: {invoice.issue_date} | Echeance:{' '}
+                            {invoice.due_date}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <p className="text-lg font-bold">
+                            {formatAmount(invoice.total_amount.value)}
+                          </p>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={e => {
+                                e.preventDefault();
+                                handleDownloadInvoicePdf(invoice.id);
+                              }}
+                            >
+                              <Download className="mr-2 h-4 w-4" />
+                              PDF
+                            </Button>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                    </CardContent>
+                  </Card>
+                </Link>
               ))}
             </div>
           )}
@@ -442,50 +456,59 @@ export default function QontoDocumentsPage(): React.ReactNode {
           {!loadingQuotes && quotes.length > 0 && (
             <div className="space-y-4">
               {quotes.map(quote => (
-                <Card
+                <Link
                   key={quote.id}
-                  className={
-                    quote.status === 'declined' || quote.status === 'expired'
-                      ? 'border-red-200 bg-red-50'
-                      : undefined
-                  }
+                  href={`/factures/${quote.id}?type=quote`}
+                  className="block"
                 >
-                  <CardHeader className="pb-2">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg">
-                        {quote.quote_number}
-                      </CardTitle>
-                      <StatusBadge status={quote.status} type="quote" />
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-1">
-                        <p className="text-sm text-muted-foreground">
-                          Client: {quote.client?.name ?? 'N/A'}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          Date: {quote.issue_date} | Expire: {quote.expiry_date}
-                        </p>
+                  <Card
+                    className={`cursor-pointer transition-shadow hover:shadow-md${
+                      quote.status === 'declined' || quote.status === 'expired'
+                        ? ' border-red-200 bg-red-50'
+                        : ''
+                    }`}
+                  >
+                    <CardHeader className="pb-2">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-lg">
+                          {quote.quote_number}
+                        </CardTitle>
+                        <StatusBadge status={quote.status} type="quote" />
                       </div>
-                      <div className="flex items-center gap-4">
-                        <p className="text-lg font-bold">
-                          {formatAmount(quote.total_amount, quote.currency)}
-                        </p>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleDownloadQuotePdf(quote.id)}
-                          >
-                            <Download className="mr-2 h-4 w-4" />
-                            PDF
-                          </Button>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-1">
+                          <p className="text-sm text-muted-foreground">
+                            Client: {quote.client?.name ?? 'N/A'}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            Date: {quote.issue_date} | Expire:{' '}
+                            {quote.expiry_date}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <p className="text-lg font-bold">
+                            {formatAmount(quote.total_amount, quote.currency)}
+                          </p>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={e => {
+                                e.preventDefault();
+                                handleDownloadQuotePdf(quote.id);
+                              }}
+                            >
+                              <Download className="mr-2 h-4 w-4" />
+                              PDF
+                            </Button>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                    </CardContent>
+                  </Card>
+                </Link>
               ))}
             </div>
           )}
@@ -520,59 +543,66 @@ export default function QontoDocumentsPage(): React.ReactNode {
           {!loadingCreditNotes && creditNotes.length > 0 && (
             <div className="space-y-4">
               {creditNotes.map(creditNote => (
-                <Card key={creditNote.id}>
-                  <CardHeader className="pb-2">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg">
-                        {creditNote.credit_note_number ??
-                          creditNote.number ??
-                          'N/A'}
-                      </CardTitle>
-                      <StatusBadge
-                        status={creditNote.status}
-                        type="credit_note"
-                      />
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-1">
-                        <p className="text-sm text-muted-foreground">
-                          Client: {creditNote.client?.name ?? 'N/A'}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          Date: {creditNote.issue_date}
-                          {creditNote.invoice_id && (
-                            <> | Ref facture: {creditNote.invoice_id}</>
-                          )}
-                        </p>
+                <Link
+                  key={creditNote.id}
+                  href={`/factures/${creditNote.id}?type=credit_note`}
+                  className="block"
+                >
+                  <Card className="cursor-pointer transition-shadow hover:shadow-md">
+                    <CardHeader className="pb-2">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-lg">
+                          {creditNote.credit_note_number ??
+                            creditNote.number ??
+                            'N/A'}
+                        </CardTitle>
+                        <StatusBadge
+                          status={creditNote.status}
+                          type="credit_note"
+                        />
                       </div>
-                      <div className="flex items-center gap-4">
-                        <p className="text-lg font-bold">
-                          {creditNote.total_amount
-                            ? formatAmount(creditNote.total_amount.value)
-                            : creditNote.total_amount_cents
-                              ? formatAmount(
-                                  creditNote.total_amount_cents / 100
-                                )
-                              : '-'}
-                        </p>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() =>
-                              handleDownloadCreditNotePdf(creditNote.id)
-                            }
-                          >
-                            <Download className="mr-2 h-4 w-4" />
-                            PDF
-                          </Button>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-1">
+                          <p className="text-sm text-muted-foreground">
+                            Client: {creditNote.client?.name ?? 'N/A'}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            Date: {creditNote.issue_date}
+                            {creditNote.invoice_id && (
+                              <> | Ref facture: {creditNote.invoice_id}</>
+                            )}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <p className="text-lg font-bold">
+                            {creditNote.total_amount
+                              ? formatAmount(creditNote.total_amount.value)
+                              : creditNote.total_amount_cents
+                                ? formatAmount(
+                                    creditNote.total_amount_cents / 100
+                                  )
+                                : '-'}
+                          </p>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={e => {
+                                e.preventDefault();
+                                handleDownloadCreditNotePdf(creditNote.id);
+                              }}
+                            >
+                              <Download className="mr-2 h-4 w-4" />
+                              PDF
+                            </Button>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                    </CardContent>
+                  </Card>
+                </Link>
               ))}
             </div>
           )}

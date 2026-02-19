@@ -1231,57 +1231,9 @@ export class QontoClient {
     return response.credit_note;
   }
 
-  /**
-   * Crée un nouvel avoir client
-   * IMPORTANT: Toujours créé en brouillon (draft)
-   */
-  async createClientCreditNote(
-    params: CreateClientCreditNoteParams,
-    idempotencyKey?: string
-  ): Promise<QontoClientCreditNote> {
-    const key = idempotencyKey || generateIdempotencyKey();
-
-    const response = await this.requestWithIdempotency<
-      QontoApiResponse<{ credit_note: QontoClientCreditNote }>
-    >(
-      'POST',
-      '/v2/credit_notes',
-      {
-        client_id: params.clientId,
-        currency: params.currency || 'EUR',
-        issue_date: params.issueDate,
-        invoice_id: params.invoiceId,
-        reason: params.reason,
-        items: params.items.map(item => ({
-          title: item.title,
-          description: item.description,
-          quantity: item.quantity,
-          unit: item.unit || 'unit',
-          unit_price: {
-            value: item.unitPrice.value,
-            currency: item.unitPrice.currency,
-          },
-          vat_rate: item.vatRate,
-        })),
-      },
-      key
-    );
-
-    return response.credit_note;
-  }
-
-  /**
-   * Finalise un avoir (draft → finalized)
-   * ATTENTION: Action IRRÉVERSIBLE
-   */
-  async finalizeClientCreditNote(
-    creditNoteId: string
-  ): Promise<QontoClientCreditNote> {
-    const response = await this.request<
-      QontoApiResponse<{ credit_note: QontoClientCreditNote }>
-    >('POST', `/v2/credit_notes/${creditNoteId}/finalize`);
-    return response.credit_note;
-  }
+  // NOTE: createClientCreditNote and finalizeClientCreditNote were removed.
+  // The Qonto API does NOT support POST /v2/credit_notes or POST /v2/credit_notes/{id}/finalize.
+  // Credit notes must be created via the Qonto dashboard.
 
   /**
    * Supprime un avoir brouillon
