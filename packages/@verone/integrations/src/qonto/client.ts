@@ -683,7 +683,7 @@ export class QontoClient {
 
     const response = await this.request<
       QontoApiResponse<{ client_invoice: QontoClientInvoice }>
-    >('PATCH' as any, `/v2/client_invoices/${invoiceId}`, updateData);
+    >('PATCH', `/v2/client_invoices/${invoiceId}`, updateData);
 
     return response.client_invoice;
   }
@@ -1322,7 +1322,7 @@ export class QontoClient {
 
     const response = await this.request<
       QontoApiResponse<{ credit_note: QontoClientCreditNote }>
-    >('PATCH' as any, `/v2/credit_notes/${creditNoteId}`, updateData);
+    >('PATCH', `/v2/credit_notes/${creditNoteId}`, updateData);
 
     return response.credit_note;
   }
@@ -1467,7 +1467,7 @@ export class QontoClient {
     // Qonto API uses /v2/quotes (not /v2/client_quotes)
     const response = await this.request<
       QontoApiResponse<{ quote: QontoClientQuote }>
-    >('PATCH' as any, `/v2/quotes/${quoteId}`, updateData);
+    >('PATCH', `/v2/quotes/${quoteId}`, updateData);
 
     return response.quote;
   }
@@ -1542,9 +1542,13 @@ export class QontoClient {
   // HELPERS
   // ===================================================================
 
-  private createErrorFromResponse(status: number, data: any): QontoError {
-    const message =
-      data?.message || data?.error || `Qonto API error (${status})`;
+  private createErrorFromResponse(
+    status: number,
+    data: Record<string, unknown>
+  ): QontoError {
+    const message = String(
+      data?.message || data?.error || `Qonto API error (${status})`
+    );
 
     switch (status) {
       case 400:
