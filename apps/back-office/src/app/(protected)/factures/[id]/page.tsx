@@ -5,7 +5,12 @@ import { useState, useEffect, useMemo, use } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 
-import { PaymentRecordModal, ReconcileTransactionModal } from '@verone/finance';
+import {
+  CreditNoteCreateModal,
+  PaymentRecordModal,
+  ReconcileTransactionModal,
+} from '@verone/finance';
+import type { IInvoiceForCreditNote } from '@verone/finance';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -431,35 +436,6 @@ export default function DocumentDetailPage({
     }
   };
 
-  const handleCreateCreditNote = async () => {
-    if (!document || documentType !== 'invoice') return;
-    setActionLoading('creditNote');
-    setShowCreditNoteDialog(false);
-
-    try {
-      const response = await fetch('/api/qonto/credit-notes', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          invoiceId: id,
-          reason: `Avoir sur facture ${document.invoice_number}`,
-        }),
-      });
-      const data = (await response.json()) as QontoApiResponse;
-
-      if (!data.success) throw new Error(data.error);
-
-      toast.success('Avoir créé en brouillon');
-      if (data.credit_note?.id) {
-        router.push(`/factures/${data.credit_note.id}?type=credit_note`);
-      }
-    } catch (err) {
-      toast.error(getFriendlyErrorMessage(err));
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
   const handleAcceptQuote = async () => {
     if (!document || documentType !== 'quote') return;
     setActionLoading('accept');
@@ -623,6 +599,37 @@ export default function DocumentDetailPage({
     // Calculate from items
     return calculateTotalsFromItems(document.items);
   }, [document]);
+
+  // Build invoice data for CreditNoteCreateModal
+  const invoiceForCreditNote: IInvoiceForCreditNote | null =
+    document && documentType === 'invoice'
+      ? {
+          id: document.id,
+          invoice_number:
+            document.invoice_number ?? document.number ?? document.id,
+          status: document.status,
+          total_amount:
+            (document.total_amount_cents ?? computedTotals.totalCents) / 100,
+          total_vat_amount:
+            (document.total_vat_amount_cents ?? computedTotals.vatCents) / 100,
+          subtotal_amount:
+            (document.subtotal_amount_cents ?? computedTotals.subtotalCents) /
+            100,
+          currency: document.currency ?? 'EUR',
+          client_id: document.client_id ?? '',
+          client: document.client
+            ? { name: document.client.name, email: document.client.email }
+            : null,
+          items: document.items?.map(item => ({
+            title: item.title,
+            description: item.description,
+            quantity: parseFloat(item.quantity) || 1,
+            unit: item.unit ?? 'piece',
+            unit_price: parseFloat(item.unit_price?.value ?? '0'),
+            vat_rate: parseFloat(item.vat_rate ?? '0'),
+          })),
+        }
+      : null;
 
   // ===== RENDER =====
 
@@ -846,13 +853,8 @@ export default function DocumentDetailPage({
             <Button
               variant="outline"
               onClick={() => setShowCreditNoteDialog(true)}
-              disabled={actionLoading === 'creditNote'}
             >
-              {actionLoading === 'creditNote' ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <MinusCircle className="h-4 w-4 mr-2" />
-              )}
+              <MinusCircle className="h-4 w-4 mr-2" />
               Créer un avoir
             </Button>
           )}
@@ -1298,36 +1300,15 @@ export default function DocumentDetailPage({
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Create credit note dialog */}
-      <AlertDialog
+      {/* Create credit note modal */}
+      <CreditNoteCreateModal
+        invoice={invoiceForCreditNote}
         open={showCreditNoteDialog}
         onOpenChange={setShowCreditNoteDialog}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Créer un avoir ?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Cette action créera un avoir en brouillon lié à cette facture.
-              L&apos;avoir devra être finalisé séparément.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                void handleCreateCreditNote().catch(error => {
-                  console.error(
-                    '[DocumentDetail] Create credit note failed:',
-                    error
-                  );
-                });
-              }}
-            >
-              Créer l&apos;avoir
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        onSuccess={(creditNoteId: string) => {
+          router.push(`/factures/${creditNoteId}?type=credit_note`);
+        }}
+      />
 
       {/* Accept quote dialog */}
       <AlertDialog open={showAcceptDialog} onOpenChange={setShowAcceptDialog}>
