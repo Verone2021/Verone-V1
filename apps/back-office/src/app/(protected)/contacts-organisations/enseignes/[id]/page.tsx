@@ -97,7 +97,10 @@ export default function EnseigneDetailPage() {
 
   const supabase = createClient();
 
-  // Hooks données
+  // Filtre annee pour KPIs
+  const [selectedYear, setSelectedYear] = useState<number | null>(null);
+
+  // Hooks donnees
   const {
     enseigne,
     loading,
@@ -114,7 +117,7 @@ export default function EnseigneDetailPage() {
     stats,
     loading: statsLoading,
     refetch: refetchStats,
-  } = useEnseigneStats(enseigneId);
+  } = useEnseigneStats(enseigneId, selectedYear);
   const { data: mapData, loading: mapLoading } = useEnseigneMapData(enseigneId);
 
   // Tab state
@@ -485,7 +488,7 @@ export default function EnseigneDetailPage() {
       />
 
       {/* Contenu principal */}
-      <div className="container mx-auto p-6 space-y-6">
+      <div className="container mx-auto px-6 pt-4 space-y-4">
         {/* Section Canaux de Vente */}
         {enseigneChannels.length > 0 && (
           <Card className="border-purple-200 bg-purple-50/30">
@@ -578,7 +581,26 @@ export default function EnseigneDetailPage() {
           </Card>
         )}
 
-        {/* KPIs */}
+        {/* Filtre annee + KPIs */}
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-medium text-gray-600">Indicateurs</h2>
+          <div className="flex items-center gap-2">
+            {[null, 2024, 2025, 2026].map(y => (
+              <button
+                key={y ?? 'all'}
+                onClick={() => setSelectedYear(y)}
+                className={cn(
+                  'px-3 py-1 text-xs font-medium rounded-full transition-colors',
+                  selectedYear === y
+                    ? 'bg-gray-900 text-white'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                )}
+              >
+                {y ?? 'Toutes'}
+              </button>
+            ))}
+          </div>
+        </div>
         <EnseigneKPIGrid stats={stats} loading={statsLoading} />
 
         {/* Onglets */}
@@ -606,7 +628,7 @@ export default function EnseigneDetailPage() {
           </TabsList>
 
           {/* Onglet Vue d'ensemble */}
-          <TabsContent value="overview" className="mt-6">
+          <TabsContent value="overview" className="mt-4">
             <EnseigneOrganisationsTable
               organisations={stats?.organisationsWithRevenue ?? []}
               parentOrganisation={stats?.parentOrganisation ?? null}
@@ -626,7 +648,7 @@ export default function EnseigneDetailPage() {
           </TabsContent>
 
           {/* Onglet Contacts */}
-          <TabsContent value="contacts" className="mt-6">
+          <TabsContent value="contacts" className="mt-4">
             <Card>
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
@@ -813,24 +835,11 @@ export default function EnseigneDetailPage() {
             </Dialog>
           </TabsContent>
 
-          {/* Onglet Geographie */}
-          <TabsContent value="geography" className="mt-6">
-            <EnseigneMapSection
-              organisations={mapData?.organisations ?? []}
-              totalOrganisations={mapData?.totalOrganisations ?? 0}
-              propresCount={mapData?.propresCount ?? 0}
-              franchisesCount={mapData?.franchisesCount ?? 0}
-              withCoordinatesCount={mapData?.withCoordinatesCount ?? 0}
-              loading={mapLoading}
-              className="max-w-none"
-              onViewOrganisation={orgId =>
-                router.push(`/contacts-organisations/organisations/${orgId}`)
-              }
-            />
-          </TabsContent>
+          {/* Onglet Geographie - contenu rendu hors container, voir ci-dessous */}
+          <TabsContent value="geography" className="mt-0" />
 
           {/* Onglet Produits sources */}
-          <TabsContent value="products" className="mt-6">
+          <TabsContent value="products" className="mt-4">
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-base flex items-center">
@@ -889,6 +898,24 @@ export default function EnseigneDetailPage() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Onglet Geographie - HORS container pour pleine largeur */}
+      {activeTab === 'geography' && (
+        <div className="px-6 pb-6">
+          <EnseigneMapSection
+            organisations={mapData?.organisations ?? []}
+            totalOrganisations={mapData?.totalOrganisations ?? 0}
+            propresCount={mapData?.propresCount ?? 0}
+            franchisesCount={mapData?.franchisesCount ?? 0}
+            withCoordinatesCount={mapData?.withCoordinatesCount ?? 0}
+            loading={mapLoading}
+            enseigneName={enseigne.name}
+            onViewOrganisation={orgId =>
+              router.push(`/contacts-organisations/organisations/${orgId}`)
+            }
+          />
+        </div>
+      )}
 
       {/* Modal Gestion Organisations (deux colonnes) */}
       <OrganisationSelectorModal

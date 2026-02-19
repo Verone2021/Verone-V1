@@ -1,20 +1,23 @@
 'use client';
 
 /**
- * EnseigneKPIGrid - Grille de KPIs pour page détail enseigne
+ * EnseigneKPIGrid - Grille de KPIs pour page detail enseigne
  *
- * Affiche :
- * - Nombre d'organisations
- * - CA Total
- * - CA Moyen
- * - Nombre de villes
+ * Affiche 5 KPIs :
+ * - Organisations, Commandes, CA Total, CA Moyen, Villes
  *
  * @module EnseigneKPIGrid
  */
 
 import { StockKPICard } from '@verone/ui';
 import { cn } from '@verone/utils';
-import { Building2, TrendingUp, BarChart3, MapPin } from 'lucide-react';
+import {
+  Building2,
+  ShoppingCart,
+  TrendingUp,
+  BarChart3,
+  MapPin,
+} from 'lucide-react';
 
 import type { EnseigneStats } from '../../hooks/use-enseigne-stats';
 
@@ -55,8 +58,7 @@ function KPISkeleton() {
 }
 
 /**
- * Grille de 4 KPIs pour enseigne
- * Pattern inspiré de StockKPICard
+ * Grille de 5 KPIs pour enseigne
  */
 export function EnseigneKPIGrid({
   stats,
@@ -65,7 +67,8 @@ export function EnseigneKPIGrid({
 }: EnseigneKPIGridProps) {
   if (loading) {
     return (
-      <div className={cn('grid grid-cols-4 gap-4', className)}>
+      <div className={cn('grid grid-cols-3 lg:grid-cols-5 gap-3', className)}>
+        <KPISkeleton />
         <KPISkeleton />
         <KPISkeleton />
         <KPISkeleton />
@@ -75,12 +78,13 @@ export function EnseigneKPIGrid({
   }
 
   const totalOrganisations = stats?.totalOrganisations ?? 0;
+  const totalOrders = stats?.totalOrders ?? 0;
   const totalRevenue = stats?.totalRevenue ?? 0;
   const averageRevenue = stats?.averageRevenue ?? 0;
   const citiesCount = stats?.citiesCount ?? 0;
 
   return (
-    <div className={cn('grid grid-cols-4 gap-4', className)}>
+    <div className={cn('grid grid-cols-3 lg:grid-cols-5 gap-3', className)}>
       {/* Organisations */}
       <StockKPICard
         title="Organisations"
@@ -90,13 +94,22 @@ export function EnseigneKPIGrid({
         subtitle={`${totalOrganisations > 1 ? 'membres' : 'membre'}`}
       />
 
+      {/* Commandes */}
+      <StockKPICard
+        title="Commandes"
+        value={totalOrders}
+        icon={ShoppingCart}
+        variant="default"
+        subtitle="validees"
+      />
+
       {/* CA Total */}
       <StockKPICard
         title="CA Total"
         value={formatCurrency(totalRevenue)}
         icon={TrendingUp}
         variant="success"
-        subtitle="Commandes validées"
+        subtitle="Commandes validees"
       />
 
       {/* CA Moyen */}
