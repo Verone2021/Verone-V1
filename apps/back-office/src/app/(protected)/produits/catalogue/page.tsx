@@ -40,6 +40,7 @@ import {
   CommandPaletteSearch as CommandPalette,
   type SearchItem,
 } from '@verone/ui-business/components/utils/CommandPaletteSearch';
+import { useToast } from '@verone/common/hooks';
 import { checkSLOCompliance, debounce } from '@verone/utils';
 import { cn } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
@@ -75,6 +76,7 @@ export default function CataloguePage() {
   const startTime = Date.now();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { toast } = useToast();
 
   // Hook Supabase pour les données réelles
   const {
@@ -430,13 +432,22 @@ export default function CataloguePage() {
           .eq('id', quickEditTarget.product.id);
         if (error) throw error;
         await handleProductUpdated();
+        toast({
+          title: 'Fournisseur assigné',
+          description: `Le fournisseur a été enregistré pour ${quickEditTarget.product.name ?? 'ce produit'}.`,
+        });
       } catch (err) {
         console.error('[QuickEdit] Supplier save failed:', err);
+        toast({
+          title: 'Erreur',
+          description: "Impossible d'assigner le fournisseur.",
+          variant: 'destructive',
+        });
       } finally {
         setQuickEditSaving(false);
       }
     },
-    [quickEditTarget, handleProductUpdated]
+    [quickEditTarget, handleProductUpdated, toast]
   );
 
   // Quick-Complete: save prix inline
@@ -453,17 +464,30 @@ export default function CataloguePage() {
         .eq('id', quickEditTarget.product.id);
       if (error) throw error;
       await handleProductUpdated();
+      toast({
+        title: 'Prix enregistré',
+        description: `Prix d'achat mis à jour pour ${quickEditTarget.product.name ?? 'ce produit'}.`,
+      });
     } catch (err) {
       console.error('[QuickEdit] Price save failed:', err);
+      toast({
+        title: 'Erreur',
+        description: "Impossible d'enregistrer le prix.",
+        variant: 'destructive',
+      });
     } finally {
       setQuickEditSaving(false);
     }
-  }, [quickEditTarget, quickEditPrice, handleProductUpdated]);
+  }, [quickEditTarget, quickEditPrice, handleProductUpdated, toast]);
 
   // Quick-Complete: callback après CategorizeModal
   const handleQuickEditSubcategory = useCallback(async () => {
     await handleProductUpdated();
-  }, [handleProductUpdated]);
+    toast({
+      title: 'Sous-catégorie assignée',
+      description: 'La catégorisation a été enregistrée.',
+    });
+  }, [handleProductUpdated, toast]);
 
   // Gestion des actions produits
   const handleArchiveProduct = async (product: Product) => {
@@ -1151,9 +1175,16 @@ export default function CataloguePage() {
               : 'product'
           }
           onImagesUpdated={() => {
-            void handleProductUpdated().catch(err => {
-              console.error('[QuickEdit] Photos updated failed:', err);
-            });
+            void handleProductUpdated()
+              .then(() => {
+                toast({
+                  title: 'Photo enregistrée',
+                  description: 'La photo du produit a été mise à jour.',
+                });
+              })
+              .catch(err => {
+                console.error('[QuickEdit] Photos updated failed:', err);
+              });
           }}
         />
       )}
