@@ -26,11 +26,12 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
 } from '@verone/ui';
-import { StatusPill } from '@verone/ui-business';
+import { StatusPill, qontoInvoiceStatusConfig } from '@verone/ui-business';
 import { featureFlags } from '@verone/utils/feature-flags';
 import {
   AlertTriangle,
@@ -93,6 +94,7 @@ interface QontoInvoiceItem {
 
 interface QontoDocument {
   id: string;
+  number?: string;
   // Common fields
   status: string;
   currency: string;
@@ -188,6 +190,28 @@ function calculateTotalsFromItems(items: QontoInvoiceItem[]): {
   };
 }
 
+function getFriendlyErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    const msg = error.message;
+    if (msg.includes('422') || msg.includes('unprocessable'))
+      return 'Action impossible : le document est dans un état incompatible avec cette opération.';
+    if (msg.includes('404') || msg.includes('not found'))
+      return 'Document introuvable.';
+    if (msg.includes('403') || msg.includes('forbidden'))
+      return "Vous n'avez pas les permissions pour cette action.";
+    return msg;
+  }
+  return 'Erreur inconnue';
+}
+
+function isTechnicalEmail(email: string): boolean {
+  return (
+    email.endsWith('@notprovided.qonto.com') ||
+    email.endsWith('@placeholder.qonto.com') ||
+    email === 'noreply@qonto.com'
+  );
+}
+
 function getDocumentTypeLabel(type: DocumentType): string {
   const labels: Record<DocumentType, string> = {
     invoice: 'Facture',
@@ -200,13 +224,13 @@ function getDocumentTypeLabel(type: DocumentType): string {
 function getDocumentNumber(doc: QontoDocument, type: DocumentType): string {
   switch (type) {
     case 'invoice':
-      return doc.invoice_number ?? doc.id;
+      return doc.number ?? doc.invoice_number ?? doc.id;
     case 'quote':
-      return doc.quote_number ?? doc.id;
+      return doc.number ?? doc.quote_number ?? doc.id;
     case 'credit_note':
-      return doc.credit_note_number ?? doc.id;
+      return doc.number ?? doc.credit_note_number ?? doc.id;
     default:
-      return doc.id;
+      return doc.number ?? doc.id;
   }
 }
 
@@ -331,9 +355,7 @@ export default function DocumentDetailPage({
       toast.success('Document finalisé avec succès');
       window.location.reload();
     } catch (err) {
-      toast.error(
-        `Erreur: ${err instanceof Error ? err.message : 'Erreur inconnue'}`
-      );
+      toast.error(getFriendlyErrorMessage(err));
     } finally {
       setActionLoading(null);
     }
@@ -360,9 +382,7 @@ export default function DocumentDetailPage({
       toast.success('Document supprimé');
       router.push('/factures');
     } catch (err) {
-      toast.error(
-        `Erreur: ${err instanceof Error ? err.message : 'Erreur inconnue'}`
-      );
+      toast.error(getFriendlyErrorMessage(err));
     } finally {
       setActionLoading(null);
     }
@@ -388,9 +408,7 @@ export default function DocumentDetailPage({
         window.location.reload();
       }
     } catch (err) {
-      toast.error(
-        `Erreur: ${err instanceof Error ? err.message : 'Erreur inconnue'}`
-      );
+      toast.error(getFriendlyErrorMessage(err));
     } finally {
       setActionLoading(null);
     }
@@ -419,9 +437,7 @@ export default function DocumentDetailPage({
         router.push(`/factures/${data.credit_note.id}?type=credit_note`);
       }
     } catch (err) {
-      toast.error(
-        `Erreur: ${err instanceof Error ? err.message : 'Erreur inconnue'}`
-      );
+      toast.error(getFriendlyErrorMessage(err));
     } finally {
       setActionLoading(null);
     }
@@ -443,9 +459,7 @@ export default function DocumentDetailPage({
       toast.success('Devis accepté');
       window.location.reload();
     } catch (err) {
-      toast.error(
-        `Erreur: ${err instanceof Error ? err.message : 'Erreur inconnue'}`
-      );
+      toast.error(getFriendlyErrorMessage(err));
     } finally {
       setActionLoading(null);
     }
@@ -467,9 +481,7 @@ export default function DocumentDetailPage({
       toast.success('Devis refusé');
       window.location.reload();
     } catch (err) {
-      toast.error(
-        `Erreur: ${err instanceof Error ? err.message : 'Erreur inconnue'}`
-      );
+      toast.error(getFriendlyErrorMessage(err));
     } finally {
       setActionLoading(null);
     }
@@ -494,9 +506,7 @@ export default function DocumentDetailPage({
 
       toast.success('Email envoyé au client');
     } catch (err) {
-      toast.error(
-        `Erreur: ${err instanceof Error ? err.message : 'Erreur inconnue'}`
-      );
+      toast.error(getFriendlyErrorMessage(err));
     } finally {
       setActionLoading(null);
     }
@@ -528,9 +538,7 @@ export default function DocumentDetailPage({
       toast.success('Facture marquée comme payée');
       window.location.reload();
     } catch (err) {
-      toast.error(
-        `Erreur: ${err instanceof Error ? err.message : 'Erreur inconnue'}`
-      );
+      toast.error(getFriendlyErrorMessage(err));
     } finally {
       setActionLoading(null);
     }
@@ -552,9 +560,7 @@ export default function DocumentDetailPage({
       toast.success('Facture archivée avec succès');
       router.push('/factures');
     } catch (err) {
-      toast.error(
-        `Erreur: ${err instanceof Error ? err.message : 'Erreur inconnue'}`
-      );
+      toast.error(getFriendlyErrorMessage(err));
     } finally {
       setActionLoading(null);
     }
@@ -675,7 +681,11 @@ export default function DocumentDetailPage({
           <div>
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-bold">{docNumber}</h1>
-              <StatusPill status={document.status} size="md" />
+              <StatusPill
+                status={document.status}
+                config={qontoInvoiceStatusConfig}
+                size="md"
+              />
               {isOverdue && (
                 <Badge variant="destructive" className="gap-1">
                   <Clock className="h-3 w-3" />
@@ -885,7 +895,11 @@ export default function DocumentDetailPage({
                 <div>
                   <InfoRow label="Numéro">{docNumber}</InfoRow>
                   <InfoRow label="Statut">
-                    <StatusPill status={document.status} size="sm" />
+                    <StatusPill
+                      status={document.status}
+                      config={qontoInvoiceStatusConfig}
+                      size="sm"
+                    />
                   </InfoRow>
                   <InfoRow label="Date d'émission">
                     {formatDate(document.issue_date)}
@@ -994,12 +1008,53 @@ export default function DocumentDetailPage({
                           {formatVatRate(item.vat_rate)}
                         </TableCell>
                         <TableCell className="text-right font-medium">
-                          {item.total_amount?.value}{' '}
-                          {item.total_amount?.currency}
+                          {(
+                            parseFloat(item.quantity || '0') *
+                            parseFloat(item.unit_price?.value || '0')
+                          ).toFixed(2)}{' '}
+                          {item.unit_price?.currency ?? document.currency}
                         </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
+                  <TableFooter>
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-right font-medium">
+                        Sous-total HT
+                      </TableCell>
+                      <TableCell className="text-right font-bold">
+                        {formatAmount(
+                          computedTotals.subtotalCents,
+                          document.currency
+                        )}
+                      </TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-right font-medium">
+                        TVA
+                      </TableCell>
+                      <TableCell className="text-right font-bold">
+                        {formatAmount(
+                          computedTotals.vatCents,
+                          document.currency
+                        )}
+                      </TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell
+                        colSpan={4}
+                        className="text-right font-semibold text-base"
+                      >
+                        Total TTC
+                      </TableCell>
+                      <TableCell className="text-right font-bold text-base">
+                        {formatAmount(
+                          computedTotals.totalCents,
+                          document.currency
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  </TableFooter>
                 </Table>
               </CardContent>
             </Card>
@@ -1020,11 +1075,12 @@ export default function DocumentDetailPage({
               <CardContent>
                 <div className="space-y-2">
                   <p className="font-medium">{document.client.name}</p>
-                  {document.client.email && (
-                    <p className="text-sm text-slate-600">
-                      {document.client.email}
-                    </p>
-                  )}
+                  {document.client.email &&
+                    !isTechnicalEmail(document.client.email) && (
+                      <p className="text-sm text-slate-600">
+                        {document.client.email}
+                      </p>
+                    )}
                   {document.client.billing_address && (
                     <div className="text-sm text-slate-600">
                       {document.client.billing_address.street_address && (
@@ -1059,7 +1115,11 @@ export default function DocumentDetailPage({
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-slate-600">Statut</span>
-                  <StatusPill status={document.status} size="sm" />
+                  <StatusPill
+                    status={document.status}
+                    config={qontoInvoiceStatusConfig}
+                    size="sm"
+                  />
                 </div>
                 {document.paid_at && (
                   <div className="flex justify-between items-center">
