@@ -16,6 +16,9 @@ import {
   Eye,
   ImagePlus,
   AlertTriangle,
+  Ruler,
+  Weight,
+  Camera,
 } from 'lucide-react';
 
 import { useProductImages } from '@verone/products/hooks';
@@ -23,7 +26,13 @@ import type { Database } from '@verone/utils/supabase/types';
 
 type ProductImage = Database['public']['Tables']['product_images']['Row'];
 
-export type QuickEditField = 'supplier' | 'subcategory' | 'price' | 'photo';
+export type QuickEditField =
+  | 'supplier'
+  | 'subcategory'
+  | 'price'
+  | 'photo'
+  | 'dimensions'
+  | 'weight';
 
 interface ProductCardProps {
   product: Product;
@@ -277,6 +286,45 @@ export const ProductCardV2 = memo(function ProductCardV2({
               >
                 <AlertTriangle className="h-3 w-3" />
                 Prix d&apos;achat
+              </button>
+            )}
+            {product.has_images === false && (
+              <button
+                type="button"
+                onClick={e => {
+                  e.stopPropagation();
+                  onQuickEdit(product, 'photo');
+                }}
+                className="inline-flex items-center gap-1 rounded-full bg-orange-50 border border-orange-200 px-2 py-0.5 text-[10px] font-medium text-orange-700 hover:bg-orange-100 transition-colors"
+              >
+                <Camera className="h-3 w-3" />
+                Photo
+              </button>
+            )}
+            {product.dimensions == null && (
+              <button
+                type="button"
+                onClick={e => {
+                  e.stopPropagation();
+                  onQuickEdit(product, 'dimensions');
+                }}
+                className="inline-flex items-center gap-1 rounded-full bg-orange-50 border border-orange-200 px-2 py-0.5 text-[10px] font-medium text-orange-700 hover:bg-orange-100 transition-colors"
+              >
+                <Ruler className="h-3 w-3" />
+                Dimensions
+              </button>
+            )}
+            {product.weight == null && (
+              <button
+                type="button"
+                onClick={e => {
+                  e.stopPropagation();
+                  onQuickEdit(product, 'weight');
+                }}
+                className="inline-flex items-center gap-1 rounded-full bg-orange-50 border border-orange-200 px-2 py-0.5 text-[10px] font-medium text-orange-700 hover:bg-orange-100 transition-colors"
+              >
+                <Weight className="h-3 w-3" />
+                Poids
               </button>
             )}
           </div>

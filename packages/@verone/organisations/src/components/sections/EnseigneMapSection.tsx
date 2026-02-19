@@ -1,13 +1,10 @@
 'use client';
 
 /**
- * EnseigneMapSection - Carte interactive des organisations d'une enseigne
+ * EnseigneMapSection - Carte interactive pleine largeur des organisations
  *
- * Remplace EnseigneGeographySection (badges + barres CA) par une carte MapLibre
- * avec panneau latéral, recherche, clustering, et popups détaillés.
- *
- * Layout : panneau latéral (380px) + carte pleine largeur
- * Features : Supercluster clustering, markers bleu/orange, KPIs, recherche
+ * Layout : carte pleine largeur (600px) + FAB pour ouvrir le modal OrgBrowseModal
+ * Features : Supercluster clustering, markers bleu/orange, KPIs, popups
  *
  * @module EnseigneMapSection
  * @since 2026-02-19
@@ -15,15 +12,14 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { Card } from '@verone/ui';
 import { cn } from '@verone/utils';
 import {
   Building2,
   ChevronRight,
+  List,
   Mail,
   MapPin,
   Phone,
-  Search,
   X,
 } from 'lucide-react';
 import maplibregl from 'maplibre-gl';
@@ -38,6 +34,7 @@ import Supercluster from 'supercluster';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
 import type { MapOrganisation } from '../../hooks/use-enseigne-map-data';
+import { OrgBrowseModal } from '../modals/OrgBrowseModal';
 
 // ============================================
 // TYPES
@@ -51,6 +48,7 @@ interface EnseigneMapSectionProps {
   withCoordinatesCount: number;
   loading?: boolean;
   className?: string;
+  enseigneName?: string;
   /** Callback when clicking "Voir détails" on an org */
   onViewOrganisation?: (organisationId: string) => void;
 }
@@ -77,13 +75,7 @@ const DEFAULT_ZOOM = 5.5;
 const MAX_ZOOM = 18;
 const MIN_ZOOM = 3;
 const ZOOM_BONUS = 3;
-const PANEL_WIDTH = 380;
-const FITBOUNDS_PADDING = {
-  top: 60,
-  bottom: 60,
-  left: PANEL_WIDTH + 40,
-  right: 60,
-};
+const FITBOUNDS_PADDING = 60;
 
 const MAP_STYLE =
   'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json';
@@ -167,71 +159,7 @@ function ClusterMarker({
 }
 
 // ============================================
-// PANEL LIST ITEM
-// ============================================
-
-function OrgListItem({
-  org,
-  isSelected,
-  onClick,
-}: {
-  org: MapOrganisation;
-  isSelected: boolean;
-  onClick: () => void;
-}) {
-  const displayName = org.trade_name ?? org.legal_name;
-  const isPropre =
-    org.ownership_type === 'propre' || org.ownership_type === 'succursale';
-  const hasCoordinates = org.latitude !== null && org.longitude !== null;
-
-  return (
-    <button
-      onClick={onClick}
-      className={cn(
-        'w-full p-3 text-left transition-colors border-b border-gray-100',
-        isSelected
-          ? 'bg-blue-50 border-l-2 border-l-blue-500'
-          : 'hover:bg-gray-50',
-        !hasCoordinates && 'opacity-50'
-      )}
-    >
-      <div className="flex items-center gap-3">
-        <div className="flex-shrink-0">
-          <div
-            className={cn(
-              'h-8 w-8 rounded-full flex items-center justify-center',
-              isPropre ? 'bg-blue-100' : 'bg-orange-100'
-            )}
-          >
-            <Building2
-              className={cn(
-                'h-4 w-4',
-                isPropre ? 'text-blue-600' : 'text-orange-600'
-              )}
-            />
-          </div>
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="font-medium text-sm text-gray-900 truncate">
-            {displayName}
-          </p>
-          <p className="text-xs text-gray-500 truncate">
-            {org.shipping_postal_code ?? ''}{' '}
-            {org.shipping_city ?? org.city ?? ''}
-          </p>
-        </div>
-        {!hasCoordinates && (
-          <span className="text-[10px] text-gray-400 flex-shrink-0">
-            Pas de GPS
-          </span>
-        )}
-      </div>
-    </button>
-  );
-}
-
-// ============================================
-// MAP POPUP (back-office version - more details)
+// MAP POPUP
 // ============================================
 
 function OrgPopup({
@@ -356,7 +284,7 @@ function KPICards({
     total > 0 ? Math.round((franchises / total) * 100) : 0;
 
   return (
-    <div className="flex items-center gap-3 px-4 py-3 bg-gray-50 border-b border-gray-200">
+    <div className="flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-t-lg border border-gray-200 border-b-0">
       <div className="flex items-center gap-1.5">
         <span className="text-sm font-semibold text-gray-900">{total}</span>
         <span className="text-xs text-gray-500">organisations</span>
@@ -390,14 +318,14 @@ function KPICards({
 
 function MapSkeleton() {
   return (
-    <Card className="overflow-hidden">
-      <div className="h-[600px] bg-gray-100 animate-pulse flex items-center justify-center">
+    <div className="rounded-lg overflow-hidden border border-gray-200">
+      <div className="h-[400px] bg-gray-100 animate-pulse flex items-center justify-center">
         <div className="text-center">
           <MapPin className="h-12 w-12 text-gray-300 mx-auto mb-2" />
           <p className="text-sm text-gray-400">Chargement de la carte...</p>
         </div>
       </div>
-    </Card>
+    </div>
   );
 }
 
@@ -413,6 +341,7 @@ export function EnseigneMapSection({
   withCoordinatesCount,
   loading = false,
   className,
+  enseigneName = "l'enseigne",
   onViewOrganisation,
 }: EnseigneMapSectionProps): React.JSX.Element {
   const mapRef = useRef<MapRef>(null);
@@ -422,8 +351,7 @@ export function EnseigneMapSection({
     zoom: DEFAULT_ZOOM,
   });
   const [selectedOrg, setSelectedOrg] = useState<MapOrganisation | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isPanelOpen, setIsPanelOpen] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Filter organisations with valid coordinates for the map
   const validOrganisations = useMemo(
@@ -433,20 +361,6 @@ export function EnseigneMapSection({
       ),
     [organisations]
   );
-
-  // Filter by search query (all orgs, for panel list)
-  const filteredOrganisations = useMemo(() => {
-    if (!searchQuery.trim()) return organisations;
-    const q = searchQuery.toLowerCase().trim();
-    return organisations.filter(
-      org =>
-        (org.trade_name?.toLowerCase().includes(q) ?? false) ||
-        org.legal_name.toLowerCase().includes(q) ||
-        (org.city?.toLowerCase().includes(q) ?? false) ||
-        (org.shipping_city?.toLowerCase().includes(q) ?? false) ||
-        (org.shipping_postal_code?.toLowerCase().includes(q) ?? false)
-    );
-  }, [organisations, searchQuery]);
 
   // GeoJSON points for Supercluster
   const points = useMemo<GeoJSON.Feature<GeoJSON.Point, PointProperties>[]>(
@@ -507,7 +421,7 @@ export function EnseigneMapSection({
     });
 
     map.fitBounds(bounds, {
-      padding: isPanelOpen ? FITBOUNDS_PADDING : 60,
+      padding: FITBOUNDS_PADDING,
       maxZoom: 12,
       duration: 1000,
     });
@@ -540,8 +454,8 @@ export function EnseigneMapSection({
     [viewState.zoom]
   );
 
-  // List item click -> flyTo + popup
-  const handleListItemClick = useCallback(
+  // FlyTo handler from modal
+  const handleFlyToOrganisation = useCallback(
     (org: MapOrganisation) => {
       if (org.latitude !== null && org.longitude !== null) {
         setSelectedOrg(org);
@@ -562,7 +476,12 @@ export function EnseigneMapSection({
   // Empty state
   if (validOrganisations.length === 0) {
     return (
-      <Card className={cn('overflow-hidden', className)}>
+      <div
+        className={cn(
+          'rounded-lg overflow-hidden border border-gray-200',
+          className
+        )}
+      >
         <div className="h-[400px] flex flex-col items-center justify-center bg-gray-50">
           <MapPin className="h-12 w-12 text-gray-300 mb-4" />
           <h3 className="text-lg font-medium text-gray-600 mb-2">
@@ -574,12 +493,12 @@ export function EnseigneMapSection({
               : "Aucune organisation n'est rattachée à cette enseigne."}
           </p>
         </div>
-      </Card>
+      </div>
     );
   }
 
   return (
-    <Card className={cn('overflow-hidden', className)}>
+    <div className={cn('', className)}>
       {/* KPIs */}
       <KPICards
         total={totalOrganisations}
@@ -588,8 +507,15 @@ export function EnseigneMapSection({
         withGPS={withCoordinatesCount}
       />
 
-      {/* Map + Panel container */}
-      <div className="relative" style={{ height: 600 }}>
+      {/* Map container */}
+      <div
+        className="relative rounded-b-lg overflow-hidden border border-gray-200"
+        style={{
+          height: 'calc(100vh - 320px)',
+          minHeight: 400,
+          maxHeight: 600,
+        }}
+      >
         {/* Full-width map */}
         <Map
           ref={mapRef}
@@ -668,95 +594,31 @@ export function EnseigneMapSection({
           )}
         </Map>
 
-        {/* Side panel overlay */}
-        {isPanelOpen && (
-          <div
-            className="absolute top-3 left-3 bottom-3 z-10 flex flex-col bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden"
-            style={{ width: PANEL_WIDTH }}
-          >
-            {/* Panel header */}
-            <div className="p-4 pb-3 border-b border-gray-100">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-semibold text-gray-900">
-                  Organisations ({filteredOrganisations.length})
-                </h3>
-                <button
-                  onClick={() => setIsPanelOpen(false)}
-                  className="p-1 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
-                  aria-label="Fermer le panneau"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-
-              {/* Search */}
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Rechercher ville, nom..."
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-8 py-2 rounded-lg text-sm text-gray-900 placeholder-gray-400 border border-gray-200 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                />
-                {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery('')}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full text-gray-400 hover:text-gray-600"
-                    aria-label="Effacer la recherche"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Legend */}
-            <div className="px-4 py-2 flex items-center gap-4 border-b border-gray-100 bg-gray-50">
-              <div className="flex items-center gap-1.5">
-                <div className="h-2 w-2 rounded-full bg-blue-500" />
-                <span className="text-[10px] text-gray-500">Propre</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <div className="h-2 w-2 rounded-full bg-orange-500" />
-                <span className="text-[10px] text-gray-500">Franchise</span>
-              </div>
-            </div>
-
-            {/* Org list */}
-            <div className="flex-1 overflow-y-auto">
-              {filteredOrganisations.length === 0 ? (
-                <div className="p-4 text-center text-gray-400 text-sm">
-                  Aucun résultat pour &quot;{searchQuery}&quot;
-                </div>
-              ) : (
-                filteredOrganisations.map(org => (
-                  <OrgListItem
-                    key={org.id}
-                    org={org}
-                    isSelected={selectedOrg?.id === org.id}
-                    onClick={() => handleListItemClick(org)}
-                  />
-                ))
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Toggle button when panel is closed */}
-        {!isPanelOpen && (
-          <button
-            onClick={() => setIsPanelOpen(true)}
-            className="absolute top-3 left-3 z-10 flex items-center gap-2 px-4 py-2.5 bg-white rounded-lg text-gray-900 text-sm font-medium shadow-lg border border-gray-200 hover:bg-gray-50 transition-colors"
-          >
-            <Building2 className="h-4 w-4" />
-            <span>
-              {totalOrganisations} organisation
-              {totalOrganisations > 1 ? 's' : ''}
-            </span>
-          </button>
-        )}
+        {/* FAB - Open organisations list */}
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="absolute bottom-4 right-4 z-10 flex items-center gap-2 px-4 py-2.5 bg-white rounded-lg text-gray-900 text-sm font-medium shadow-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+        >
+          <List className="h-4 w-4" />
+          <span>
+            {totalOrganisations} organisation
+            {totalOrganisations > 1 ? 's' : ''}
+          </span>
+        </button>
       </div>
-    </Card>
+
+      {/* Browse Modal */}
+      <OrgBrowseModal
+        open={isModalOpen}
+        onOpenChange={setIsModalOpen}
+        organisations={organisations}
+        totalOrganisations={totalOrganisations}
+        propresCount={propresCount}
+        franchisesCount={franchisesCount}
+        enseigneName={enseigneName}
+        onFlyToOrganisation={handleFlyToOrganisation}
+        onViewOrganisation={onViewOrganisation}
+      />
+    </div>
   );
 }

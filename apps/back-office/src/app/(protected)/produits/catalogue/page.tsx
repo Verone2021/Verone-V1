@@ -40,7 +40,7 @@ import {
   CommandPaletteSearch as CommandPalette,
   type SearchItem,
 } from '@verone/ui-business/components/utils/CommandPaletteSearch';
-import { useToast } from '@verone/common/hooks';
+import { toast } from 'sonner';
 import { checkSLOCompliance, debounce } from '@verone/utils';
 import { cn } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
@@ -52,6 +52,8 @@ import {
   X,
   RotateCcw,
   AlertTriangle,
+  Ruler,
+  Weight,
 } from 'lucide-react';
 
 import {
@@ -76,8 +78,6 @@ export default function CataloguePage() {
   const startTime = Date.now();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { toast } = useToast();
-
   // Hook Supabase pour les données réelles
   const {
     products,
@@ -146,6 +146,15 @@ export default function CataloguePage() {
   const [incompleteProducts, setIncompleteProducts] = useState<Product[]>([]);
   const [incompleteTotal, setIncompleteTotal] = useState(0);
   const [incompleteLoading, setIncompleteLoading] = useState(false);
+  const [incompletePage, setIncompletePage] = useState(1);
+
+  // Batch fetch images pour produits incomplets (onglet "À compléter")
+  const incompleteProductIds = useMemo(
+    () => incompleteProducts.map(p => p.id),
+    [incompleteProducts]
+  );
+  const { getPrimaryImage: getIncompletePrimaryImage } =
+    useProductImagesBatch(incompleteProductIds);
   const [paletteOpen, setPaletteOpen] = useState(false);
   // État local pour la recherche (contrôlé) - initialisé depuis URL
   const [searchInput, setSearchInput] = useState(
@@ -161,6 +170,12 @@ export default function CataloguePage() {
   } | null>(null);
   const [quickEditPrice, setQuickEditPrice] = useState('');
   const [quickEditSaving, setQuickEditSaving] = useState(false);
+  const [quickEditWeight, setQuickEditWeight] = useState('');
+  const [quickEditDimensions, setQuickEditDimensions] = useState({
+    length: '',
+    width: '',
+    height: '',
+  });
 
   // Helper pour synchroniser filtres vers URL (router.replace pour ne pas polluer l'historique)
   const syncFiltersToUrl = useCallback(
@@ -330,9 +345,10 @@ export default function CataloguePage() {
       const loadData = async () => {
         setIncompleteLoading(true);
         try {
-          const result = await loadIncompleteProductsRef.current(
-            filtersRef.current
-          );
+          const result = await loadIncompleteProductsRef.current({
+            ...filtersRef.current,
+            page: incompletePage,
+          });
           setIncompleteProducts(result.products as Product[]);
           setIncompleteTotal(result.total);
         } catch (error) {
@@ -346,7 +362,7 @@ export default function CataloguePage() {
         console.error('[Catalogue] loadIncomplete failed:', error);
       });
     }
-  }, [activeTab]);
+  }, [activeTab, incompletePage]);
 
   // Listener global ⌘K pour CommandPalette
   useEffect(() => {
@@ -399,6 +415,12 @@ export default function CataloguePage() {
       if (field === 'price') {
         setQuickEditPrice('');
       }
+      if (field === 'weight') {
+        setQuickEditWeight('');
+      }
+      if (field === 'dimensions') {
+        setQuickEditDimensions({ length: '', width: '', height: '' });
+      }
     },
     []
   );
@@ -408,16 +430,17 @@ export default function CataloguePage() {
     setQuickEditTarget(null);
     if (activeTab === 'incomplete') {
       try {
-        const result = await loadIncompleteProductsRef.current(
-          filtersRef.current
-        );
+        const result = await loadIncompleteProductsRef.current({
+          ...filtersRef.current,
+          page: incompletePage,
+        });
         setIncompleteProducts(result.products as Product[]);
         setIncompleteTotal(result.total);
       } catch (err) {
         console.error('[Catalogue] Refresh incompletes failed:', err);
       }
     }
-  }, [activeTab]);
+  }, [activeTab, incompletePage]);
 
   // Quick-Complete: save fournisseur inline
   const handleQuickEditSupplier = useCallback(
@@ -432,27 +455,34 @@ export default function CataloguePage() {
           .eq('id', quickEditTarget.product.id);
         if (error) throw error;
         await handleProductUpdated();
-        toast({
-          title: 'Fournisseur assigné',
-          description: `Le fournisseur a été enregistré pour ${quickEditTarget.product.name ?? 'ce produit'}.`,
+        const supplierName =
+          allSuppliers.find(s => s.id === supplierId)?.trade_name ??
+          allSuppliers.find(s => s.id === supplierId)?.legal_name ??
+          'Fournisseur';
+        toast.success('Fournisseur assigné', {
+          description: `${supplierName} assigné à ${quickEditTarget.product.name ?? 'ce produit'}.`,
         });
       } catch (err) {
         console.error('[QuickEdit] Supplier save failed:', err);
-        toast({
-          title: 'Erreur',
-          description: "Impossible d'assigner le fournisseur.",
-          variant: 'destructive',
-        });
+        toast.error("Impossible d'assigner le fournisseur.");
       } finally {
         setQuickEditSaving(false);
       }
     },
-    [quickEditTarget, handleProductUpdated, toast]
+    [quickEditTarget, handleProductUpdated, allSuppliers]
   );
 
-  // Quick-Complete: save prix inline
+  // Quick-Complete: save prix inline (bloqué si PMP calculé via PO)
   const handleQuickEditPriceSave = useCallback(async () => {
     if (!quickEditTarget) return;
+    // Garde-fou : bloquer si le prix est calculé automatiquement par PMP
+    if ((quickEditTarget.product.cost_price_count ?? 0) > 0) {
+      toast.error('Prix verrouillé', {
+        description:
+          'Ce prix est calculé automatiquement depuis les commandes fournisseur (PMP).',
+      });
+      return;
+    }
     const priceValue = parseFloat(quickEditPrice);
     if (isNaN(priceValue) || priceValue < 0) return;
     setQuickEditSaving(true);
@@ -464,30 +494,98 @@ export default function CataloguePage() {
         .eq('id', quickEditTarget.product.id);
       if (error) throw error;
       await handleProductUpdated();
-      toast({
-        title: 'Prix enregistré',
+      toast.success('Prix enregistré', {
         description: `Prix d'achat mis à jour pour ${quickEditTarget.product.name ?? 'ce produit'}.`,
       });
     } catch (err) {
       console.error('[QuickEdit] Price save failed:', err);
-      toast({
-        title: 'Erreur',
-        description: "Impossible d'enregistrer le prix.",
-        variant: 'destructive',
-      });
+      toast.error("Impossible d'enregistrer le prix.");
     } finally {
       setQuickEditSaving(false);
     }
-  }, [quickEditTarget, quickEditPrice, handleProductUpdated, toast]);
+  }, [quickEditTarget, quickEditPrice, handleProductUpdated]);
 
-  // Quick-Complete: callback après CategorizeModal
-  const handleQuickEditSubcategory = useCallback(async () => {
-    await handleProductUpdated();
-    toast({
-      title: 'Sous-catégorie assignée',
-      description: 'La catégorisation a été enregistrée.',
-    });
-  }, [handleProductUpdated, toast]);
+  // Quick-Complete: save poids inline
+  const handleQuickEditWeightSave = useCallback(async () => {
+    if (!quickEditTarget) return;
+    const weightValue = parseFloat(quickEditWeight);
+    if (isNaN(weightValue) || weightValue <= 0) return;
+    setQuickEditSaving(true);
+    try {
+      const supabase = createClient();
+      const { error } = await supabase
+        .from('products')
+        .update({ weight: weightValue })
+        .eq('id', quickEditTarget.product.id);
+      if (error) throw error;
+      await handleProductUpdated();
+      toast.success('Poids enregistré', {
+        description: `${weightValue} kg pour ${quickEditTarget.product.name ?? 'ce produit'}.`,
+      });
+    } catch (err) {
+      console.error('[QuickEdit] Weight save failed:', err);
+      toast.error("Impossible d'enregistrer le poids.");
+    } finally {
+      setQuickEditSaving(false);
+    }
+  }, [quickEditTarget, quickEditWeight, handleProductUpdated]);
+
+  // Quick-Complete: save dimensions inline
+  const handleQuickEditDimensionsSave = useCallback(async () => {
+    if (!quickEditTarget) return;
+    const l = parseFloat(quickEditDimensions.length);
+    const w = parseFloat(quickEditDimensions.width);
+    const h = parseFloat(quickEditDimensions.height);
+    if (isNaN(l) || isNaN(w) || isNaN(h) || l <= 0 || w <= 0 || h <= 0) return;
+    setQuickEditSaving(true);
+    try {
+      const supabase = createClient();
+      const { error } = await supabase
+        .from('products')
+        .update({ dimensions: { length_cm: l, width_cm: w, height_cm: h } })
+        .eq('id', quickEditTarget.product.id);
+      if (error) throw error;
+      await handleProductUpdated();
+      const volume = ((l * w * h) / 1_000_000).toFixed(4);
+      toast.success('Dimensions enregistrées', {
+        description: `${l} × ${w} × ${h} cm (${volume} m³) pour ${quickEditTarget.product.name ?? 'ce produit'}.`,
+      });
+    } catch (err) {
+      console.error('[QuickEdit] Dimensions save failed:', err);
+      toast.error("Impossible d'enregistrer les dimensions.");
+    } finally {
+      setQuickEditSaving(false);
+    }
+  }, [quickEditTarget, quickEditDimensions, handleProductUpdated]);
+
+  // Quick-Complete: callback après CategorizeModal — persist subcategory to DB
+  const handleQuickEditSubcategory = useCallback(
+    async (updatedProduct: Product) => {
+      if (!updatedProduct.subcategory_id) return;
+      setQuickEditSaving(true);
+      try {
+        const supabase = createClient();
+        const { error: dbError } = await supabase
+          .from('products')
+          .update({ subcategory_id: updatedProduct.subcategory_id })
+          .eq('id', updatedProduct.id);
+        if (dbError) throw dbError;
+        await handleProductUpdated();
+        const subcatName =
+          subcategories.find(s => s.id === updatedProduct.subcategory_id)
+            ?.name ?? 'Sous-catégorie';
+        toast.success('Sous-catégorie assignée', {
+          description: `${subcatName} assignée à ${updatedProduct.name ?? 'ce produit'}.`,
+        });
+      } catch (err) {
+        console.error('[QuickEdit] Subcategory save failed:', err);
+        toast.error("Impossible d'enregistrer la sous-catégorie.");
+      } finally {
+        setQuickEditSaving(false);
+      }
+    },
+    [handleProductUpdated, subcategories]
+  );
 
   // Gestion des actions produits
   const handleArchiveProduct = async (product: Product) => {
@@ -505,6 +603,10 @@ export default function CataloguePage() {
       } else {
         await archiveProduct(product.id);
         console.warn('✅ Produit archivé:', product.name);
+        // Retirer le produit de la liste incomplete si on est sur cet onglet
+        if (activeTab === 'incomplete') {
+          setIncompleteProducts(prev => prev.filter(p => p.id !== product.id));
+        }
         // Rafraîchir la liste des archivés après archivage
         if (activeTab === 'archived') {
           const result = await loadArchivedProductsRef.current(
@@ -512,9 +614,13 @@ export default function CataloguePage() {
           );
           setArchivedProducts(result.products as Product[]);
         }
+        toast.success('Produit archivé', {
+          description: `${product.name ?? 'Ce produit'} a été archivé.`,
+        });
       }
     } catch (error) {
       console.error('❌ Erreur archivage produit:', error);
+      toast.error("Impossible d'archiver le produit.");
     }
   };
 
@@ -532,6 +638,14 @@ export default function CataloguePage() {
       }
     }
   };
+
+  // Pagination incomplete tab (client-side, même ITEMS_PER_PAGE=24 que le hook)
+  const incompleteTotalPages = Math.max(
+    1,
+    Math.ceil(incompleteTotal / itemsPerPage)
+  );
+  const incompleteHasNextPage = incompletePage < incompleteTotalPages;
+  const incompleteHasPreviousPage = incompletePage > 1;
 
   // Validation SLO dashboard
   const dashboardSLO = checkSLOCompliance(startTime, 'dashboard');
@@ -617,6 +731,7 @@ export default function CataloguePage() {
           <button
             onClick={() => {
               setActiveTab('incomplete');
+              setIncompletePage(1);
               syncFiltersToUrl(filters, 'incomplete');
             }}
             className={`px-6 py-3 font-medium transition-colors flex items-center gap-2 ${
@@ -734,9 +849,9 @@ export default function CataloguePage() {
               {/* Texte explicatif pour onglet incomplets */}
               {activeTab === 'incomplete' && (
                 <p className="text-sm text-orange-700 bg-orange-50 border border-orange-200 rounded px-3 py-2 mb-3">
-                  Produits sans fournisseur, sous-catégorie ou prix
-                  d&apos;achat. Complétez-les pour améliorer la qualité du
-                  catalogue.
+                  Produits sans fournisseur, sous-catégorie, prix d&apos;achat,
+                  photo, dimensions ou poids. Complétez-les pour améliorer la
+                  qualité du catalogue.
                 </p>
               )}
 
@@ -745,7 +860,7 @@ export default function CataloguePage() {
                   {activeTab === 'active' &&
                     `${total} produit${total > 1 ? 's' : ''} actif${total > 1 ? 's' : ''} - Page ${currentPage} sur ${totalPages}`}
                   {activeTab === 'incomplete' &&
-                    `${incompleteTotal} produit${incompleteTotal > 1 ? 's' : ''} à compléter`}
+                    `${incompleteTotal} produit${incompleteTotal > 1 ? 's' : ''} à compléter${incompleteTotalPages > 1 ? ` - Page ${incompletePage} sur ${incompleteTotalPages}` : ''}`}
                   {activeTab === 'archived' &&
                     `${archivedProducts.length} produit${archivedProducts.length > 1 ? 's' : ''} archivé${archivedProducts.length > 1 ? 's' : ''}`}
                 </span>
@@ -755,6 +870,13 @@ export default function CataloguePage() {
                     <span className="text-xs">
                       Affichage {(currentPage - 1) * itemsPerPage + 1}-
                       {Math.min(currentPage * itemsPerPage, total)} sur {total}
+                    </span>
+                  )}
+                  {activeTab === 'incomplete' && incompleteTotalPages > 1 && (
+                    <span className="text-xs">
+                      Affichage {(incompletePage - 1) * itemsPerPage + 1}-
+                      {Math.min(incompletePage * itemsPerPage, incompleteTotal)}{' '}
+                      sur {incompleteTotal}
                     </span>
                   )}
                 </span>
@@ -776,7 +898,9 @@ export default function CataloguePage() {
                       const preloadedImage =
                         activeTab === 'active'
                           ? getPrimaryImage(product.id)
-                          : null;
+                          : activeTab === 'incomplete'
+                            ? getIncompletePrimaryImage(product.id)
+                            : null;
 
                       return (
                         <ProductCard
@@ -929,7 +1053,7 @@ export default function CataloguePage() {
                   incomplete: {
                     title: 'Tous les produits sont complets',
                     subtitle:
-                      'Aucun produit ne manque de fournisseur, sous-catégorie ou prix',
+                      'Aucun produit ne manque de fournisseur, sous-catégorie, prix, photo, dimensions ou poids',
                   },
                   archived: {
                     title: 'Aucun produit archivé trouvé',
@@ -1058,6 +1182,121 @@ export default function CataloguePage() {
                   </Pagination>
                 </div>
               )}
+
+              {/* Pagination incomplete */}
+              {activeTab === 'incomplete' && incompleteTotalPages > 1 && (
+                <div className="mt-8 pb-4">
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious
+                          onClick={() =>
+                            incompleteHasPreviousPage &&
+                            setIncompletePage(p => p - 1)
+                          }
+                          className={cn(
+                            'cursor-pointer',
+                            !incompleteHasPreviousPage &&
+                              'pointer-events-none opacity-50'
+                          )}
+                        />
+                      </PaginationItem>
+
+                      {incompletePage > 2 && (
+                        <>
+                          <PaginationItem>
+                            <PaginationLink
+                              onClick={() => setIncompletePage(1)}
+                              isActive={incompletePage === 1}
+                            >
+                              1
+                            </PaginationLink>
+                          </PaginationItem>
+                          {incompletePage > 3 && (
+                            <PaginationItem>
+                              <PaginationEllipsis />
+                            </PaginationItem>
+                          )}
+                        </>
+                      )}
+
+                      {Array.from(
+                        { length: Math.min(5, incompleteTotalPages) },
+                        (_, i) => {
+                          let pageNum: number;
+                          if (incompleteTotalPages <= 5) {
+                            pageNum = i + 1;
+                          } else if (incompletePage <= 3) {
+                            pageNum = i + 1;
+                          } else if (
+                            incompletePage >=
+                            incompleteTotalPages - 2
+                          ) {
+                            pageNum = incompleteTotalPages - 4 + i;
+                          } else {
+                            pageNum = incompletePage - 2 + i;
+                          }
+
+                          if (pageNum < 1 || pageNum > incompleteTotalPages)
+                            return null;
+                          if (pageNum === 1 && incompletePage > 2) return null;
+                          if (
+                            pageNum === incompleteTotalPages &&
+                            incompletePage < incompleteTotalPages - 1
+                          )
+                            return null;
+
+                          return (
+                            <PaginationItem key={pageNum}>
+                              <PaginationLink
+                                onClick={() => setIncompletePage(pageNum)}
+                                isActive={incompletePage === pageNum}
+                                className="cursor-pointer"
+                              >
+                                {pageNum}
+                              </PaginationLink>
+                            </PaginationItem>
+                          );
+                        }
+                      )}
+
+                      {incompletePage < incompleteTotalPages - 1 && (
+                        <>
+                          {incompletePage < incompleteTotalPages - 2 && (
+                            <PaginationItem>
+                              <PaginationEllipsis />
+                            </PaginationItem>
+                          )}
+                          <PaginationItem>
+                            <PaginationLink
+                              onClick={() =>
+                                setIncompletePage(incompleteTotalPages)
+                              }
+                              isActive={incompletePage === incompleteTotalPages}
+                            >
+                              {incompleteTotalPages}
+                            </PaginationLink>
+                          </PaginationItem>
+                        </>
+                      )}
+
+                      <PaginationItem>
+                        <PaginationNext
+                          onClick={() =>
+                            incompleteHasNextPage &&
+                            setIncompletePage(p => p + 1)
+                          }
+                          className={cn(
+                            'cursor-pointer',
+                            !incompleteHasNextPage &&
+                              'pointer-events-none opacity-50'
+                          )}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                </div>
+              )}
             </>
           )}
         </div>
@@ -1108,36 +1347,258 @@ export default function CataloguePage() {
               {quickEditTarget?.product.name}
             </DialogDescription>
           </DialogHeader>
+          {(quickEditTarget?.product.cost_price_count ?? 0) > 0 ? (
+            /* Prix verrouillé — calculé automatiquement par PMP */
+            <div className="space-y-3">
+              <div className="bg-blue-50 border border-blue-200 rounded px-3 py-2 text-sm text-blue-800">
+                Prix calculé automatiquement depuis{' '}
+                {quickEditTarget?.product.cost_price_count} commande
+                {(quickEditTarget?.product.cost_price_count ?? 0) > 1
+                  ? 's'
+                  : ''}{' '}
+                fournisseur (PMP).
+              </div>
+              {quickEditTarget?.product.cost_price != null && (
+                <div className="text-center text-lg font-semibold text-black">
+                  {quickEditTarget.product.cost_price.toFixed(2)} € HT
+                </div>
+              )}
+            </div>
+          ) : (
+            /* Prix modifiable manuellement */
+            <>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={quickEditPrice}
+                  onChange={e => setQuickEditPrice(e.target.value)}
+                  placeholder="0.00"
+                  className="flex-1 border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+                  autoFocus
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') {
+                      void handleQuickEditPriceSave().catch(err => {
+                        console.error('[QuickEdit] Price save failed:', err);
+                      });
+                    }
+                  }}
+                />
+                <span className="text-sm text-gray-500">€ HT</span>
+              </div>
+              <ButtonUnified
+                onClick={() => {
+                  void handleQuickEditPriceSave().catch(err => {
+                    console.error('[QuickEdit] Price save failed:', err);
+                  });
+                }}
+                disabled={
+                  quickEditSaving ||
+                  !quickEditPrice ||
+                  isNaN(parseFloat(quickEditPrice))
+                }
+                variant="default"
+                size="sm"
+                className="w-full"
+              >
+                {quickEditSaving ? 'Enregistrement...' : 'Enregistrer'}
+              </ButtonUnified>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Quick-Complete: Dialog poids */}
+      <Dialog
+        open={quickEditTarget?.field === 'weight'}
+        onOpenChange={open => {
+          if (!open) setQuickEditTarget(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Weight className="h-5 w-5" />
+              Poids du produit
+            </DialogTitle>
+            <DialogDescription>
+              {quickEditTarget?.product.name}
+            </DialogDescription>
+          </DialogHeader>
           <div className="flex items-center gap-2">
             <input
               type="number"
               min="0"
               step="0.01"
-              value={quickEditPrice}
-              onChange={e => setQuickEditPrice(e.target.value)}
+              value={quickEditWeight}
+              onChange={e => setQuickEditWeight(e.target.value)}
               placeholder="0.00"
               className="flex-1 border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
               autoFocus
               onKeyDown={e => {
                 if (e.key === 'Enter') {
-                  void handleQuickEditPriceSave().catch(err => {
-                    console.error('[QuickEdit] Price save failed:', err);
+                  void handleQuickEditWeightSave().catch(err => {
+                    console.error('[QuickEdit] Weight save failed:', err);
                   });
                 }
               }}
             />
-            <span className="text-sm text-gray-500">€ HT</span>
+            <span className="text-sm text-gray-500">kg</span>
           </div>
           <ButtonUnified
             onClick={() => {
-              void handleQuickEditPriceSave().catch(err => {
-                console.error('[QuickEdit] Price save failed:', err);
+              void handleQuickEditWeightSave().catch(err => {
+                console.error('[QuickEdit] Weight save failed:', err);
               });
             }}
             disabled={
               quickEditSaving ||
-              !quickEditPrice ||
-              isNaN(parseFloat(quickEditPrice))
+              !quickEditWeight ||
+              isNaN(parseFloat(quickEditWeight)) ||
+              parseFloat(quickEditWeight) <= 0
+            }
+            variant="default"
+            size="sm"
+            className="w-full"
+          >
+            {quickEditSaving ? 'Enregistrement...' : 'Enregistrer'}
+          </ButtonUnified>
+        </DialogContent>
+      </Dialog>
+
+      {/* Quick-Complete: Dialog dimensions */}
+      <Dialog
+        open={quickEditTarget?.field === 'dimensions'}
+        onOpenChange={open => {
+          if (!open) setQuickEditTarget(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Ruler className="h-5 w-5" />
+              Dimensions du produit
+            </DialogTitle>
+            <DialogDescription>
+              {quickEditTarget?.product.name}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <label className="text-xs text-gray-500 mb-1 block">
+                  Longueur
+                </label>
+                <div className="flex items-center gap-1">
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.1"
+                    value={quickEditDimensions.length}
+                    onChange={e =>
+                      setQuickEditDimensions(prev => ({
+                        ...prev,
+                        length: e.target.value,
+                      }))
+                    }
+                    placeholder="0"
+                    className="w-full border border-gray-300 rounded px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+                    autoFocus
+                  />
+                  <span className="text-xs text-gray-400">cm</span>
+                </div>
+              </div>
+              <div>
+                <label className="text-xs text-gray-500 mb-1 block">
+                  Largeur
+                </label>
+                <div className="flex items-center gap-1">
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.1"
+                    value={quickEditDimensions.width}
+                    onChange={e =>
+                      setQuickEditDimensions(prev => ({
+                        ...prev,
+                        width: e.target.value,
+                      }))
+                    }
+                    placeholder="0"
+                    className="w-full border border-gray-300 rounded px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+                  />
+                  <span className="text-xs text-gray-400">cm</span>
+                </div>
+              </div>
+              <div>
+                <label className="text-xs text-gray-500 mb-1 block">
+                  Hauteur
+                </label>
+                <div className="flex items-center gap-1">
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.1"
+                    value={quickEditDimensions.height}
+                    onChange={e =>
+                      setQuickEditDimensions(prev => ({
+                        ...prev,
+                        height: e.target.value,
+                      }))
+                    }
+                    placeholder="0"
+                    className="w-full border border-gray-300 rounded px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        void handleQuickEditDimensionsSave().catch(err => {
+                          console.error(
+                            '[QuickEdit] Dimensions save failed:',
+                            err
+                          );
+                        });
+                      }
+                    }}
+                  />
+                  <span className="text-xs text-gray-400">cm</span>
+                </div>
+              </div>
+            </div>
+            {/* Volume calculé en temps réel */}
+            {quickEditDimensions.length &&
+              quickEditDimensions.width &&
+              quickEditDimensions.height && (
+                <div className="bg-gray-50 border border-gray-200 rounded px-3 py-2 text-sm text-gray-700 text-center">
+                  Volume :{' '}
+                  <span className="font-semibold">
+                    {(
+                      (parseFloat(quickEditDimensions.length) *
+                        parseFloat(quickEditDimensions.width) *
+                        parseFloat(quickEditDimensions.height)) /
+                      1_000_000
+                    ).toFixed(4)}
+                  </span>{' '}
+                  m³
+                </div>
+              )}
+          </div>
+          <ButtonUnified
+            onClick={() => {
+              void handleQuickEditDimensionsSave().catch(err => {
+                console.error('[QuickEdit] Dimensions save failed:', err);
+              });
+            }}
+            disabled={
+              quickEditSaving ||
+              !quickEditDimensions.length ||
+              !quickEditDimensions.width ||
+              !quickEditDimensions.height ||
+              isNaN(parseFloat(quickEditDimensions.length)) ||
+              isNaN(parseFloat(quickEditDimensions.width)) ||
+              isNaN(parseFloat(quickEditDimensions.height)) ||
+              parseFloat(quickEditDimensions.length) <= 0 ||
+              parseFloat(quickEditDimensions.width) <= 0 ||
+              parseFloat(quickEditDimensions.height) <= 0
             }
             variant="default"
             size="sm"
@@ -1154,10 +1615,12 @@ export default function CataloguePage() {
           isOpen={true}
           onClose={() => setQuickEditTarget(null)}
           product={quickEditTarget.product}
-          onUpdate={() => {
-            void handleQuickEditSubcategory().catch(err => {
-              console.error('[QuickEdit] Subcategory update failed:', err);
-            });
+          onUpdate={updatedProduct => {
+            void handleQuickEditSubcategory(updatedProduct as Product).catch(
+              err => {
+                console.error('[QuickEdit] Subcategory update failed:', err);
+              }
+            );
           }}
         />
       )}
@@ -1177,8 +1640,7 @@ export default function CataloguePage() {
           onImagesUpdated={() => {
             void handleProductUpdated()
               .then(() => {
-                toast({
-                  title: 'Photo enregistrée',
+                toast.success('Photo enregistrée', {
                   description: 'La photo du produit a été mise à jour.',
                 });
               })
