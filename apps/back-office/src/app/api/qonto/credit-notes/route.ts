@@ -121,13 +121,13 @@ export async function POST(request: NextRequest): Promise<
       invoice.items.map(item => ({
         title: item.title,
         description: item.description,
-        quantity: item.quantity,
+        quantity: String(item.quantity),
         unit: item.unit,
         unitPrice: {
-          value: item.unit_price.value,
-          currency: item.unit_price.currency,
+          value: String(item.unit_price),
+          currency: invoice.currency,
         },
-        vatRate: item.vat_rate,
+        vatRate: String(item.vat_rate),
       }));
 
     // Créer l'avoir (TOUJOURS en brouillon)

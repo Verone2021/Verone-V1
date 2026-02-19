@@ -267,11 +267,11 @@ export interface QontoInvoiceItem {
   id?: string;
   title: string;
   description?: string;
-  quantity: string; // Décimal en string, ex: "2"
+  quantity: number;
   unit: string;
-  unit_price: QontoAmount; // Objet { value: string, currency: string }
-  vat_rate: string; // Décimal en string, ex: "0.20"
-  total_amount?: QontoAmount; // Objet { value: string, currency: string }
+  unit_price: number;
+  vat_rate: number;
+  total_amount?: number;
   total_amount_cents?: number;
 }
 
@@ -536,11 +536,11 @@ export interface QontoCreditNoteItem {
   id?: string;
   title: string;
   description?: string;
-  quantity: string; // Décimal en string, ex: "2"
+  quantity: number;
   unit: string;
-  unit_price: QontoAmount; // Objet { value: string, currency: string }
-  vat_rate: string; // Décimal en string, ex: "0.20"
-  total_amount?: QontoAmount; // Objet { value: string, currency: string }
+  unit_price: number;
+  vat_rate: number;
+  total_amount?: number;
   total_amount_cents?: number;
 }
 
@@ -632,11 +632,11 @@ export interface QontoQuoteItem {
   id?: string;
   title: string;
   description?: string;
-  quantity: string; // Décimal en string, ex: "2"
+  quantity: number;
   unit: string;
-  unit_price: QontoAmount; // Objet { value: string, currency: string }
-  vat_rate: string; // Décimal en string, ex: "0.20"
-  total_amount?: QontoAmount; // Objet { value: string, currency: string }
+  unit_price: number;
+  vat_rate: number;
+  total_amount?: number;
   total_amount_cents?: number;
 }
 

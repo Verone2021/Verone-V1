@@ -67,13 +67,13 @@ export async function POST(
     const quoteItems = invoice.items.map(item => ({
       title: item.title,
       description: item.description,
-      quantity: item.quantity,
+      quantity: String(item.quantity),
       unit: item.unit ?? 'unit',
       unitPrice: {
-        value: item.unit_price.value,
-        currency: item.unit_price.currency,
+        value: String(item.unit_price),
+        currency: invoice.currency,
       },
-      vatRate: item.vat_rate,
+      vatRate: String(item.vat_rate),
     }));
 
     // Creer le devis avec les donnees de la facture
