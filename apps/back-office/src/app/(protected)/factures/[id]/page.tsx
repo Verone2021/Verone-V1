@@ -22,27 +22,39 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
   Separator,
   Table,
   TableBody,
   TableCell,
+  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
+  TooltipProvider,
 } from '@verone/ui';
-import { StatusPill } from '@verone/ui-business';
+import { qontoInvoiceStatusConfig, StatusPill } from '@verone/ui-business';
 import { featureFlags } from '@verone/utils/feature-flags';
 import {
   AlertTriangle,
   ArrowLeft,
   Building2,
+  CalendarDays,
+  ChevronRight,
   FileText,
   CreditCard,
   Clock,
+  Hash,
   Lock,
   Loader2,
   ExternalLink,
+  MapPin,
   MinusCircle,
+  MoreVertical,
   Send,
   Trash2,
   Mail,
@@ -94,6 +106,7 @@ interface QontoInvoiceItem {
 interface QontoDocument {
   id: string;
   // Common fields
+  number?: string; // Qonto API returns 'number' (e.g. "F-2026-002")
   status: string;
   currency: string;
   issue_date: string;
@@ -198,36 +211,47 @@ function getDocumentTypeLabel(type: DocumentType): string {
 }
 
 function getDocumentNumber(doc: QontoDocument, type: DocumentType): string {
+  // Qonto API returns 'number' field (e.g. "F-2026-002")
+  // Legacy mapping also checks type-specific fields
   switch (type) {
     case 'invoice':
-      return doc.invoice_number ?? doc.id;
+      return doc.number ?? doc.invoice_number ?? doc.id;
     case 'quote':
-      return doc.quote_number ?? doc.id;
+      return doc.number ?? doc.quote_number ?? doc.id;
     case 'credit_note':
-      return doc.credit_note_number ?? doc.id;
+      return doc.number ?? doc.credit_note_number ?? doc.id;
     default:
-      return doc.id;
+      return doc.number ?? doc.id;
   }
+}
+
+// Helper: check if email is a technical/generated email (not a real client email)
+function isTechnicalEmail(email: string): boolean {
+  return email.includes('noreply') || email.endsWith('@verone.app');
+}
+
+// Friendly error messages for Qonto API errors
+function getFriendlyErrorMessage(action: string, errorMessage: string): string {
+  if (errorMessage.includes('422')) {
+    switch (action) {
+      case 'email':
+        return "L'email du client n'est pas configuré ou est invalide dans Qonto. Veuillez vérifier la fiche client sur Qonto avant d'envoyer.";
+      case 'reconcile':
+        return 'Impossible de charger les transactions bancaires. Vérifiez la connexion Qonto et les paramètres du compte bancaire.';
+      case 'finalize':
+        return 'Impossible de finaliser ce document. Vérifiez que tous les champs obligatoires sont remplis dans Qonto.';
+      case 'creditNote':
+        return "Impossible de créer l'avoir. Vérifiez que la facture est bien finalisée dans Qonto.";
+      default:
+        return `Erreur de validation Qonto. Vérifiez la configuration dans Qonto. (${errorMessage})`;
+    }
+  }
+  return errorMessage;
 }
 
 // =====================================================================
 // COMPOSANTS
 // =====================================================================
-
-function InfoRow({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="flex justify-between py-2 border-b border-slate-100 last:border-0">
-      <span className="text-sm text-slate-600">{label}</span>
-      <span className="text-sm font-medium text-slate-900">{children}</span>
-    </div>
-  );
-}
 
 // =====================================================================
 // PAGE COMPONENT
@@ -331,9 +355,8 @@ export default function DocumentDetailPage({
       toast.success('Document finalisé avec succès');
       window.location.reload();
     } catch (err) {
-      toast.error(
-        `Erreur: ${err instanceof Error ? err.message : 'Erreur inconnue'}`
-      );
+      const msg = err instanceof Error ? err.message : 'Erreur inconnue';
+      toast.error(getFriendlyErrorMessage('finalize', msg));
     } finally {
       setActionLoading(null);
     }
@@ -419,9 +442,8 @@ export default function DocumentDetailPage({
         router.push(`/factures/${data.credit_note.id}?type=credit_note`);
       }
     } catch (err) {
-      toast.error(
-        `Erreur: ${err instanceof Error ? err.message : 'Erreur inconnue'}`
-      );
+      const msg = err instanceof Error ? err.message : 'Erreur inconnue';
+      toast.error(getFriendlyErrorMessage('creditNote', msg));
     } finally {
       setActionLoading(null);
     }
@@ -494,9 +516,8 @@ export default function DocumentDetailPage({
 
       toast.success('Email envoyé au client');
     } catch (err) {
-      toast.error(
-        `Erreur: ${err instanceof Error ? err.message : 'Erreur inconnue'}`
-      );
+      const msg = err instanceof Error ? err.message : 'Erreur inconnue';
+      toast.error(getFriendlyErrorMessage('email', msg));
     } finally {
       setActionLoading(null);
     }
@@ -570,7 +591,8 @@ export default function DocumentDetailPage({
     document?.status === 'overdue' ||
     document?.status === 'pending';
   const isPaid = document?.status === 'paid';
-  const isCancelled = document?.status === 'cancelled';
+  const isCancelled =
+    document?.status === 'cancelled' || document?.status === 'canceled';
   const isOverdue =
     documentType === 'invoice' &&
     document?.payment_deadline &&
@@ -660,22 +682,62 @@ export default function DocumentDetailPage({
   }
 
   const docNumber = getDocumentNumber(document, documentType);
+  const clientEmail = document.client?.email;
+  const showClientEmail = clientEmail && !isTechnicalEmail(clientEmail);
+
+  // Extended status config for StatusPill
+  const statusConfig = {
+    ...qontoInvoiceStatusConfig,
+    canceled: { label: 'Annulée', variant: 'secondary' as const }, // US spelling from Qonto API
+    finalized: { label: 'Finalisée', variant: 'default' as const },
+    pending: { label: 'En attente', variant: 'warning' as const },
+    sent: { label: 'Envoyée', variant: 'default' as const },
+    accepted: { label: 'Accepté', variant: 'success' as const },
+    declined: { label: 'Refusé', variant: 'destructive' as const },
+  };
+
+  // Client initials for avatar
+  const clientInitials = document.client?.name
+    ? document.client.name
+        .split(' ')
+        .map(w => w[0])
+        .join('')
+        .slice(0, 2)
+        .toUpperCase()
+    : '??';
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link href="/factures">
-            <Button variant="outline" size="sm">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Retour
-            </Button>
+    <TooltipProvider>
+      <div className="space-y-6">
+        {/* Breadcrumb */}
+        <nav className="flex items-center gap-1.5 text-sm text-muted-foreground">
+          <Link
+            href="/factures"
+            className="hover:text-foreground transition-colors"
+          >
+            Finance
           </Link>
-          <div>
+          <ChevronRight className="h-3.5 w-3.5" />
+          <Link
+            href="/factures"
+            className="hover:text-foreground transition-colors"
+          >
+            Factures
+          </Link>
+          <ChevronRight className="h-3.5 w-3.5" />
+          <span className="text-foreground font-medium">{docNumber}</span>
+        </nav>
+
+        {/* Header */}
+        <div className="flex items-start justify-between gap-4">
+          <div className="space-y-1">
             <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold">{docNumber}</h1>
-              <StatusPill status={document.status} size="md" />
+              <h1 className="text-2xl font-bold tracking-tight">{docNumber}</h1>
+              <StatusPill
+                status={document.status}
+                config={statusConfig}
+                size="md"
+              />
               {isOverdue && (
                 <Badge variant="destructive" className="gap-1">
                   <Clock className="h-3 w-3" />
@@ -685,68 +747,48 @@ export default function DocumentDetailPage({
             </div>
             <p className="text-muted-foreground">
               {getDocumentTypeLabel(documentType)} Qonto
+              {document.issue_date &&
+                ` · Émise le ${formatDate(document.issue_date)}`}
             </p>
           </div>
-        </div>
 
-        {/* Action buttons */}
-        <div className="flex items-center gap-2 flex-wrap">
-          {/* PDF */}
-          <Button variant="outline" onClick={handleDownloadPdf}>
-            <FileText className="h-4 w-4 mr-2" />
-            Voir PDF
-          </Button>
-
-          {/* Edit (drafts only) */}
-          {isDraft && (
-            <Button variant="outline" asChild>
-              <Link href={`/factures/${id}/edit?type=${documentType}`}>
-                <Pencil className="h-4 w-4 mr-2" />
-                Modifier
-              </Link>
+          {/* Action buttons */}
+          <div className="flex items-center gap-2 shrink-0">
+            {/* PDF - Primary action */}
+            <Button onClick={handleDownloadPdf}>
+              <FileText className="h-4 w-4 mr-2" />
+              Voir PDF
             </Button>
-          )}
 
-          {/* Finalize (drafts only) */}
-          {isDraft && (
-            <Button
-              variant="outline"
-              onClick={() => setShowFinalizeDialog(true)}
-              disabled={actionLoading === 'finalize'}
-              className="border-amber-300 text-amber-700 hover:bg-amber-50"
-            >
-              {actionLoading === 'finalize' ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <Send className="h-4 w-4 mr-2" />
-              )}
-              Finaliser
-            </Button>
-          )}
+            {/* Edit (drafts only) */}
+            {isDraft && (
+              <Button variant="outline" asChild>
+                <Link href={`/factures/${id}/edit?type=${documentType}`}>
+                  <Pencil className="h-4 w-4 mr-2" />
+                  Modifier
+                </Link>
+              </Button>
+            )}
 
-          {/* Send email (finalized only) */}
-          {isFinalized && (
-            <Button
-              variant="outline"
-              onClick={() => {
-                void handleSendEmail().catch(error => {
-                  console.error('[DocumentDetail] Send email failed:', error);
-                });
-              }}
-              disabled={actionLoading === 'email'}
-            >
-              {actionLoading === 'email' ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <Mail className="h-4 w-4 mr-2" />
-              )}
-              Envoyer par email
-            </Button>
-          )}
+            {/* Finalize (drafts only) */}
+            {isDraft && (
+              <Button
+                variant="outline"
+                onClick={() => setShowFinalizeDialog(true)}
+                disabled={actionLoading === 'finalize'}
+                className="border-amber-300 text-amber-700 hover:bg-amber-50"
+              >
+                {actionLoading === 'finalize' ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4 mr-2" />
+                )}
+                Finaliser
+              </Button>
+            )}
 
-          {/* Payment actions (invoices, finalized, not paid) */}
-          {documentType === 'invoice' && isFinalized && !isPaid && (
-            <>
+            {/* Payment actions (invoices, finalized, not paid) */}
+            {documentType === 'invoice' && isFinalized && !isPaid && (
               <Button
                 variant="outline"
                 onClick={() => setShowPaymentModal(true)}
@@ -754,622 +796,788 @@ export default function DocumentDetailPage({
                 <CreditCard className="h-4 w-4 mr-2" />
                 Enregistrer paiement
               </Button>
-              <Button
-                variant="outline"
-                onClick={() => setShowReconcileModal(true)}
-              >
-                <Landmark className="h-4 w-4 mr-2" />
-                Rapprochement bancaire
-              </Button>
-            </>
-          )}
-
-          {/* Convert to invoice (quotes) */}
-          {documentType === 'quote' &&
-            (document.status === 'finalized' ||
-              document.status === 'accepted') && (
-              <Button
-                variant="outline"
-                onClick={() => setShowConvertDialog(true)}
-                disabled={actionLoading === 'convert'}
-              >
-                {actionLoading === 'convert' ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <ArrowRightLeft className="h-4 w-4 mr-2" />
-                )}
-                Convertir en facture
-              </Button>
             )}
 
-          {/* Accept/Decline (quotes, finalized) */}
-          {documentType === 'quote' && document.status === 'finalized' && (
-            <>
-              <Button
-                variant="outline"
-                onClick={() => setShowAcceptDialog(true)}
-                disabled={actionLoading === 'accept'}
-                className="border-green-300 text-green-700 hover:bg-green-50"
-              >
-                {actionLoading === 'accept' ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <CheckCircle className="h-4 w-4 mr-2" />
+            {/* More actions dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon">
+                  <MoreVertical className="h-4 w-4" />
+                  <span className="sr-only">Plus d&apos;actions</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {/* Send email */}
+                {isFinalized && (
+                  <DropdownMenuItem
+                    disabled={actionLoading === 'email'}
+                    onClick={() => {
+                      void handleSendEmail().catch(err => {
+                        console.error(
+                          '[DocumentDetail] Send email failed:',
+                          err
+                        );
+                      });
+                    }}
+                  >
+                    <Mail className="h-4 w-4 mr-2" />
+                    Envoyer par email
+                  </DropdownMenuItem>
                 )}
-                Accepter
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => setShowDeclineDialog(true)}
-                disabled={actionLoading === 'decline'}
-                className="border-red-300 text-red-700 hover:bg-red-50"
-              >
-                {actionLoading === 'decline' ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <XCircle className="h-4 w-4 mr-2" />
+
+                {/* Reconcile */}
+                {documentType === 'invoice' && isFinalized && !isPaid && (
+                  <DropdownMenuItem onClick={() => setShowReconcileModal(true)}>
+                    <Landmark className="h-4 w-4 mr-2" />
+                    Rapprochement bancaire
+                  </DropdownMenuItem>
                 )}
-                Refuser
-              </Button>
-            </>
-          )}
 
-          {/* Create credit note (invoices, finalized) */}
-          {documentType === 'invoice' && isFinalized && (
-            <Button
-              variant="outline"
-              onClick={() => setShowCreditNoteDialog(true)}
-              disabled={actionLoading === 'creditNote'}
-            >
-              {actionLoading === 'creditNote' ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <MinusCircle className="h-4 w-4 mr-2" />
-              )}
-              Créer un avoir
-            </Button>
-          )}
-
-          {/* Archive (validated invoices only) */}
-          {documentType === 'invoice' &&
-            !isCancelled &&
-            ['draft_validated', 'finalized', 'sent', 'paid'].includes(
-              document?.workflow_status ?? ''
-            ) && (
-              <Button
-                variant="outline"
-                onClick={() => setShowArchiveDialog(true)}
-                disabled={actionLoading === 'archive'}
-              >
-                {actionLoading === 'archive' ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <Archive className="h-4 w-4 mr-2" />
-                )}
-                Archiver
-              </Button>
-            )}
-
-          {/* Delete (drafts only) */}
-          {isDraft && (
-            <Button
-              variant="outline"
-              onClick={() => setShowDeleteDialog(true)}
-              disabled={actionLoading === 'delete'}
-              className="border-red-300 text-red-700 hover:bg-red-50"
-            >
-              {actionLoading === 'delete' ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <Trash2 className="h-4 w-4 mr-2" />
-              )}
-              Supprimer
-            </Button>
-          )}
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main content */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Document info */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                Informations {getDocumentTypeLabel(documentType).toLowerCase()}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-x-8">
-                <div>
-                  <InfoRow label="Numéro">{docNumber}</InfoRow>
-                  <InfoRow label="Statut">
-                    <StatusPill status={document.status} size="sm" />
-                  </InfoRow>
-                  <InfoRow label="Date d'émission">
-                    {formatDate(document.issue_date)}
-                  </InfoRow>
-                  {documentType === 'invoice' && document.payment_deadline && (
-                    <InfoRow label="Échéance">
-                      <span className={isOverdue ? 'text-red-600' : ''}>
-                        {formatDate(document.payment_deadline)}
-                      </span>
-                    </InfoRow>
+                {/* Convert to invoice (quotes) */}
+                {documentType === 'quote' &&
+                  (document.status === 'finalized' ||
+                    document.status === 'accepted') && (
+                    <DropdownMenuItem
+                      disabled={actionLoading === 'convert'}
+                      onClick={() => setShowConvertDialog(true)}
+                    >
+                      <ArrowRightLeft className="h-4 w-4 mr-2" />
+                      Convertir en facture
+                    </DropdownMenuItem>
                   )}
-                  {documentType === 'quote' && document.expiry_date && (
-                    <InfoRow label="Validité">
-                      {formatDate(document.expiry_date)}
-                    </InfoRow>
-                  )}
-                  {documentType === 'credit_note' && document.invoice_id && (
-                    <InfoRow label="Facture liée">
-                      <Link
-                        href={`/factures/${document.invoice_id}?type=invoice`}
-                        className="text-primary hover:underline"
+
+                {/* Accept/Decline (quotes) */}
+                {documentType === 'quote' &&
+                  document.status === 'finalized' && (
+                    <>
+                      <DropdownMenuItem
+                        disabled={actionLoading === 'accept'}
+                        onClick={() => setShowAcceptDialog(true)}
                       >
-                        Voir la facture
-                      </Link>
-                    </InfoRow>
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                        Accepter
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        disabled={actionLoading === 'decline'}
+                        onClick={() => setShowDeclineDialog(true)}
+                      >
+                        <XCircle className="h-4 w-4 mr-2" />
+                        Refuser
+                      </DropdownMenuItem>
+                    </>
                   )}
-                </div>
-                <div>
-                  <InfoRow label="Montant HT">
-                    {formatAmount(
-                      computedTotals.subtotalCents,
-                      document.currency
-                    )}
-                  </InfoRow>
-                  <InfoRow label="Montant TVA">
-                    {formatAmount(computedTotals.vatCents, document.currency)}
-                  </InfoRow>
-                  <InfoRow label="Montant TTC">
-                    <span className="font-bold">
-                      {formatAmount(
-                        documentType === 'credit_note'
-                          ? Math.abs(computedTotals.totalCents)
-                          : computedTotals.totalCents,
-                        document.currency
-                      )}
-                    </span>
-                  </InfoRow>
-                </div>
-              </div>
 
-              {document.reason && (
-                <>
-                  <Separator className="my-4" />
-                  <div>
-                    <p className="text-sm text-slate-600 mb-1">
-                      Motif de l&apos;avoir
-                    </p>
-                    <p className="text-sm">{document.reason}</p>
-                  </div>
-                </>
-              )}
-            </CardContent>
-          </Card>
+                {/* Create credit note */}
+                {documentType === 'invoice' && isFinalized && (
+                  <DropdownMenuItem
+                    disabled={actionLoading === 'creditNote'}
+                    onClick={() => setShowCreditNoteDialog(true)}
+                  >
+                    <MinusCircle className="h-4 w-4 mr-2" />
+                    Créer un avoir
+                  </DropdownMenuItem>
+                )}
 
-          {/* Items table */}
-          {document.items && document.items.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Lignes</CardTitle>
-                <CardDescription>
-                  {document.items.length} ligne
-                  {document.items.length > 1 ? 's' : ''}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Description</TableHead>
-                      <TableHead className="text-right">Qté</TableHead>
-                      <TableHead className="text-right">P.U. HT</TableHead>
-                      <TableHead className="text-right">TVA</TableHead>
-                      <TableHead className="text-right">Total HT</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {document.items.map((item, index) => (
-                      <TableRow key={index}>
-                        <TableCell>
-                          <div>
-                            <p className="font-medium">{item.title}</p>
-                            {item.description && (
-                              <p className="text-sm text-muted-foreground">
-                                {item.description}
-                              </p>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {item.quantity} {item.unit ?? ''}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {item.unit_price?.value} {item.unit_price?.currency}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {formatVatRate(item.vat_rate)}
-                        </TableCell>
-                        <TableCell className="text-right font-medium">
-                          {item.total_amount?.value}{' '}
-                          {item.total_amount?.currency}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          )}
+                {/* Archive */}
+                {documentType === 'invoice' &&
+                  !isCancelled &&
+                  ['draft_validated', 'finalized', 'sent', 'paid'].includes(
+                    document?.workflow_status ?? ''
+                  ) && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        disabled={actionLoading === 'archive'}
+                        onClick={() => setShowArchiveDialog(true)}
+                      >
+                        <Archive className="h-4 w-4 mr-2" />
+                        Archiver
+                      </DropdownMenuItem>
+                    </>
+                  )}
+
+                {/* Delete (drafts only) */}
+                {isDraft && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      disabled={actionLoading === 'delete'}
+                      onClick={() => setShowDeleteDialog(true)}
+                      className="text-red-600 focus:text-red-600"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Supprimer
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
 
-        {/* Sidebar */}
-        <div className="space-y-6">
-          {/* Client info */}
-          {document.client && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Main content */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Document info */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Building2 className="h-5 w-5" />
-                  Client
+                  <FileText className="h-5 w-5 text-muted-foreground" />
+                  Informations
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-2">
-                  <p className="font-medium">{document.client.name}</p>
-                  {document.client.email && (
-                    <p className="text-sm text-slate-600">
-                      {document.client.email}
-                    </p>
-                  )}
-                  {document.client.billing_address && (
-                    <div className="text-sm text-slate-600">
-                      {document.client.billing_address.street_address && (
-                        <p>{document.client.billing_address.street_address}</p>
-                      )}
-                      <p>
-                        {document.client.billing_address.zip_code}{' '}
-                        {document.client.billing_address.city}
-                      </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <div className="flex items-start gap-3">
+                      <Hash className="h-4 w-4 mt-0.5 text-muted-foreground" />
+                      <div>
+                        <p className="text-xs text-muted-foreground">Numéro</p>
+                        <p className="font-medium">{docNumber}</p>
+                      </div>
                     </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Payment summary (invoices only) */}
-          {documentType === 'invoice' && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Paiement</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-600">Total TTC</span>
-                  <span className="font-bold">
-                    {formatAmount(
-                      document.total_amount_cents,
-                      document.currency
+                    <div className="flex items-start gap-3">
+                      <CalendarDays className="h-4 w-4 mt-0.5 text-muted-foreground" />
+                      <div>
+                        <p className="text-xs text-muted-foreground">
+                          Date d&apos;émission
+                        </p>
+                        <p className="font-medium">
+                          {formatDate(document.issue_date)}
+                        </p>
+                      </div>
+                    </div>
+                    {documentType === 'invoice' &&
+                      document.payment_deadline && (
+                        <div className="flex items-start gap-3">
+                          <Clock className="h-4 w-4 mt-0.5 text-muted-foreground" />
+                          <div>
+                            <p className="text-xs text-muted-foreground">
+                              Échéance
+                            </p>
+                            <p
+                              className={`font-medium ${isOverdue ? 'text-red-600' : ''}`}
+                            >
+                              {formatDate(document.payment_deadline)}
+                              {isOverdue && ' (en retard)'}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    {documentType === 'quote' && document.expiry_date && (
+                      <div className="flex items-start gap-3">
+                        <Clock className="h-4 w-4 mt-0.5 text-muted-foreground" />
+                        <div>
+                          <p className="text-xs text-muted-foreground">
+                            Validité
+                          </p>
+                          <p className="font-medium">
+                            {formatDate(document.expiry_date)}
+                          </p>
+                        </div>
+                      </div>
                     )}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-600">Statut</span>
-                  <StatusPill status={document.status} size="sm" />
-                </div>
-                {document.paid_at && (
-                  <div className="flex justify-between items-center">
-                    <span className="text-slate-600">Payée le</span>
-                    <span className="text-green-600 font-medium">
-                      {formatDate(document.paid_at)}
-                    </span>
+                    {documentType === 'credit_note' && document.invoice_id && (
+                      <div className="flex items-start gap-3">
+                        <FileText className="h-4 w-4 mt-0.5 text-muted-foreground" />
+                        <div>
+                          <p className="text-xs text-muted-foreground">
+                            Facture liée
+                          </p>
+                          <Link
+                            href={`/factures/${document.invoice_id}?type=invoice`}
+                            className="font-medium text-primary hover:underline"
+                          >
+                            Voir la facture
+                          </Link>
+                        </div>
+                      </div>
+                    )}
                   </div>
+                  <div className="space-y-3">
+                    <div className="flex justify-between py-2 border-b border-slate-100">
+                      <span className="text-sm text-muted-foreground">
+                        Montant HT
+                      </span>
+                      <span className="text-sm font-medium">
+                        {formatAmount(
+                          computedTotals.subtotalCents,
+                          document.currency
+                        )}
+                      </span>
+                    </div>
+                    <div className="flex justify-between py-2 border-b border-slate-100">
+                      <span className="text-sm text-muted-foreground">TVA</span>
+                      <span className="text-sm font-medium">
+                        {formatAmount(
+                          computedTotals.vatCents,
+                          document.currency
+                        )}
+                      </span>
+                    </div>
+                    <div className="flex justify-between py-2">
+                      <span className="text-sm font-semibold">Total TTC</span>
+                      <span className="text-lg font-bold">
+                        {formatAmount(
+                          documentType === 'credit_note'
+                            ? Math.abs(computedTotals.totalCents)
+                            : computedTotals.totalCents,
+                          document.currency
+                        )}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {document.reason && (
+                  <>
+                    <Separator className="my-4" />
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">
+                        Motif de l&apos;avoir
+                      </p>
+                      <p className="text-sm">{document.reason}</p>
+                    </div>
+                  </>
                 )}
               </CardContent>
             </Card>
-          )}
 
-          {/* Related invoice (credit notes) */}
-          {documentType === 'credit_note' && document.invoice_id && (
+            {/* Items table */}
+            {document.items && document.items.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Lignes</CardTitle>
+                  <CardDescription>
+                    {document.items.length} ligne
+                    {document.items.length > 1 ? 's' : ''}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Description</TableHead>
+                        <TableHead className="text-right">Qté</TableHead>
+                        <TableHead className="text-right">P.U. HT</TableHead>
+                        <TableHead className="text-right">TVA</TableHead>
+                        <TableHead className="text-right">Total HT</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {document.items.map((item, index) => {
+                        // Calculate real HT = unit_price * quantity
+                        const qty = parseFloat(item.quantity) || 0;
+                        const unitPrice = parseFloat(
+                          item.unit_price?.value ?? '0'
+                        );
+                        const lineHt = qty * unitPrice;
+                        return (
+                          <TableRow
+                            key={index}
+                            className={index % 2 === 1 ? 'bg-muted/50' : ''}
+                          >
+                            <TableCell>
+                              <div>
+                                <p className="font-medium">{item.title}</p>
+                                {item.description && (
+                                  <p className="text-sm text-muted-foreground">
+                                    {item.description}
+                                  </p>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-right tabular-nums">
+                              {item.quantity} {item.unit ?? ''}
+                            </TableCell>
+                            <TableCell className="text-right tabular-nums">
+                              {formatAmount(
+                                Math.round(unitPrice * 100),
+                                item.unit_price?.currency ?? document.currency
+                              )}
+                            </TableCell>
+                            <TableCell className="text-right tabular-nums">
+                              {formatVatRate(item.vat_rate)}
+                            </TableCell>
+                            <TableCell className="text-right font-medium tabular-nums">
+                              {formatAmount(
+                                Math.round(lineHt * 100),
+                                document.currency
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                    <TableFooter>
+                      <TableRow>
+                        <TableCell
+                          colSpan={4}
+                          className="text-right font-medium"
+                        >
+                          Sous-total HT
+                        </TableCell>
+                        <TableCell className="text-right font-medium tabular-nums">
+                          {formatAmount(
+                            computedTotals.subtotalCents,
+                            document.currency
+                          )}
+                        </TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell
+                          colSpan={4}
+                          className="text-right text-muted-foreground"
+                        >
+                          TVA
+                        </TableCell>
+                        <TableCell className="text-right text-muted-foreground tabular-nums">
+                          {formatAmount(
+                            computedTotals.vatCents,
+                            document.currency
+                          )}
+                        </TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell colSpan={4} className="text-right font-bold">
+                          Total TTC
+                        </TableCell>
+                        <TableCell className="text-right font-bold tabular-nums">
+                          {formatAmount(
+                            documentType === 'credit_note'
+                              ? Math.abs(computedTotals.totalCents)
+                              : computedTotals.totalCents,
+                            document.currency
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    </TableFooter>
+                  </Table>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Client info */}
+            {document.client && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Building2 className="h-5 w-5 text-muted-foreground" />
+                    Client
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-sm font-semibold text-slate-600">
+                      {clientInitials}
+                    </div>
+                    <div className="space-y-1 min-w-0">
+                      <p className="font-medium leading-tight">
+                        {document.client.name}
+                      </p>
+                      {showClientEmail && (
+                        <p className="text-sm text-muted-foreground flex items-center gap-1">
+                          <Mail className="h-3 w-3 shrink-0" />
+                          <span className="truncate">{clientEmail}</span>
+                        </p>
+                      )}
+                      {document.client.billing_address && (
+                        <div className="text-sm text-muted-foreground flex items-start gap-1 pt-1">
+                          <MapPin className="h-3 w-3 shrink-0 mt-0.5" />
+                          <div>
+                            {document.client.billing_address.street_address && (
+                              <p>
+                                {document.client.billing_address.street_address}
+                              </p>
+                            )}
+                            <p>
+                              {document.client.billing_address.zip_code}{' '}
+                              {document.client.billing_address.city}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Payment summary (invoices only) */}
+            {documentType === 'invoice' && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <CreditCard className="h-5 w-5 text-muted-foreground" />
+                    Paiement
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Payment progress bar */}
+                  <div>
+                    <div className="flex justify-between text-sm mb-2">
+                      <span className="text-muted-foreground">
+                        {isPaid ? 'Payé' : 'Restant à payer'}
+                      </span>
+                      <span className="font-bold">
+                        {formatAmount(
+                          document.total_amount_cents,
+                          document.currency
+                        )}
+                      </span>
+                    </div>
+                    <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all ${
+                          isPaid
+                            ? 'bg-green-500 w-full'
+                            : isOverdue
+                              ? 'bg-red-400 w-0'
+                              : 'bg-amber-400 w-0'
+                        }`}
+                      />
+                    </div>
+                  </div>
+                  <Separator />
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">
+                      Statut
+                    </span>
+                    <StatusPill
+                      status={document.status}
+                      config={statusConfig}
+                      size="sm"
+                    />
+                  </div>
+                  {document.paid_at && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">
+                        Payée le
+                      </span>
+                      <span className="text-sm text-green-600 font-medium">
+                        {formatDate(document.paid_at)}
+                      </span>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Related invoice (credit notes) */}
+            {documentType === 'credit_note' && document.invoice_id && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Facture d&apos;origine</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Link
+                    href={`/factures/${document.invoice_id}?type=invoice`}
+                    className="inline-flex items-center gap-1 text-primary hover:underline"
+                  >
+                    Voir la facture
+                    <ExternalLink className="h-3 w-3" />
+                  </Link>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Converted invoice (quotes) */}
+            {documentType === 'quote' && document.converted_to_invoice_id && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Facture créée</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Link
+                    href={`/factures/${document.converted_to_invoice_id}?type=invoice`}
+                    className="inline-flex items-center gap-1 text-primary hover:underline"
+                  >
+                    Voir la facture
+                    <ExternalLink className="h-3 w-3" />
+                  </Link>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Metadata */}
             <Card>
-              <CardHeader>
-                <CardTitle>Facture d&apos;origine</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Link
-                  href={`/factures/${document.invoice_id}?type=invoice`}
-                  className="inline-flex items-center gap-1 text-primary hover:underline"
-                >
-                  Voir la facture
-                  <ExternalLink className="h-3 w-3" />
-                </Link>
+              <CardContent className="pt-6">
+                <p className="text-xs font-medium text-muted-foreground mb-2">
+                  Métadonnées
+                </p>
+                <div className="text-xs text-muted-foreground space-y-1">
+                  <p>Créé le {formatDate(document.created_at)}</p>
+                  <p>Modifié le {formatDate(document.updated_at)}</p>
+                  {document.finalized_at && (
+                    <p>Finalisé le {formatDate(document.finalized_at)}</p>
+                  )}
+                  <p className="font-mono text-[10px] text-slate-400 pt-2 break-all">
+                    ID: {document.id}
+                  </p>
+                </div>
               </CardContent>
             </Card>
-          )}
-
-          {/* Converted invoice (quotes) */}
-          {documentType === 'quote' && document.converted_to_invoice_id && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Facture créée</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Link
-                  href={`/factures/${document.converted_to_invoice_id}?type=invoice`}
-                  className="inline-flex items-center gap-1 text-primary hover:underline"
-                >
-                  Voir la facture
-                  <ExternalLink className="h-3 w-3" />
-                </Link>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Metadata */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm">Métadonnées</CardTitle>
-            </CardHeader>
-            <CardContent className="text-xs text-slate-500 space-y-1">
-              <p>Créé le {formatDate(document.created_at)}</p>
-              <p>Modifié le {formatDate(document.updated_at)}</p>
-              {document.finalized_at && (
-                <p>Finalisé le {formatDate(document.finalized_at)}</p>
-              )}
-              <p className="font-mono text-[10px] text-slate-400 mt-2">
-                ID: {document.id}
-              </p>
-            </CardContent>
-          </Card>
+          </div>
         </div>
+
+        {/* ===== DIALOGS ===== */}
+
+        {/* Finalize dialog */}
+        <AlertDialog
+          open={showFinalizeDialog}
+          onOpenChange={setShowFinalizeDialog}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2 text-amber-600">
+                <AlertTriangle className="h-5 w-5" />
+                Finaliser ce document ?
+              </AlertDialogTitle>
+              <AlertDialogDescription className="space-y-3">
+                <p className="font-semibold text-foreground">
+                  Cette action est IRRÉVERSIBLE.
+                </p>
+                <p>
+                  Une fois finalisé, le document ne pourra plus être modifié ni
+                  supprimé. Il recevra un numéro officiel et sera enregistré
+                  définitivement.
+                </p>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Annuler</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-amber-600 text-white hover:bg-amber-700"
+                onClick={() => {
+                  void handleFinalize().catch(error => {
+                    console.error('[DocumentDetail] Finalize failed:', error);
+                  });
+                }}
+              >
+                Oui, finaliser
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Delete dialog */}
+        <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2 text-red-600">
+                <Trash2 className="h-5 w-5" />
+                Supprimer ce document ?
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                Cette action est définitive et ne peut pas être annulée.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Annuler</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-red-600 text-white hover:bg-red-700"
+                onClick={() => {
+                  void handleDelete().catch(error => {
+                    console.error('[DocumentDetail] Delete failed:', error);
+                  });
+                }}
+              >
+                Supprimer
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Convert to invoice dialog */}
+        <AlertDialog
+          open={showConvertDialog}
+          onOpenChange={setShowConvertDialog}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Convertir en facture ?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Cette action créera une facture basée sur ce devis. Le devis
+                sera marqué comme converti.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Annuler</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  void handleConvertToInvoice().catch(error => {
+                    console.error('[DocumentDetail] Convert failed:', error);
+                  });
+                }}
+              >
+                Convertir en facture
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Create credit note dialog */}
+        <AlertDialog
+          open={showCreditNoteDialog}
+          onOpenChange={setShowCreditNoteDialog}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Créer un avoir ?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Cette action créera un avoir en brouillon lié à cette facture.
+                L&apos;avoir devra être finalisé séparément.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Annuler</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  void handleCreateCreditNote().catch(error => {
+                    console.error(
+                      '[DocumentDetail] Create credit note failed:',
+                      error
+                    );
+                  });
+                }}
+              >
+                Créer l&apos;avoir
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Accept quote dialog */}
+        <AlertDialog open={showAcceptDialog} onOpenChange={setShowAcceptDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2 text-green-600">
+                <CheckCircle className="h-5 w-5" />
+                Accepter ce devis ?
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                Le devis sera marqué comme accepté par le client.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Annuler</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-green-600 text-white hover:bg-green-700"
+                onClick={() => {
+                  void handleAcceptQuote().catch(error => {
+                    console.error(
+                      '[DocumentDetail] Accept quote failed:',
+                      error
+                    );
+                  });
+                }}
+              >
+                Marquer accepté
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Decline quote dialog */}
+        <AlertDialog
+          open={showDeclineDialog}
+          onOpenChange={setShowDeclineDialog}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2 text-red-600">
+                <XCircle className="h-5 w-5" />
+                Refuser ce devis ?
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                Le devis sera marqué comme refusé par le client.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Annuler</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-red-600 text-white hover:bg-red-700"
+                onClick={() => {
+                  void handleDeclineQuote().catch(error => {
+                    console.error(
+                      '[DocumentDetail] Decline quote failed:',
+                      error
+                    );
+                  });
+                }}
+              >
+                Marquer refusé
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Archive dialog */}
+        <AlertDialog
+          open={showArchiveDialog}
+          onOpenChange={setShowArchiveDialog}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2">
+                <Archive className="h-5 w-5" />
+                Archiver cette facture ?
+              </AlertDialogTitle>
+              <AlertDialogDescription className="space-y-3">
+                <p>
+                  Cette facture sera masquée de la liste principale et déplacée
+                  dans les archives.
+                </p>
+                <p>
+                  Vous pourrez la restaurer depuis l&apos;onglet
+                  &quot;Archives&quot; si nécessaire.
+                </p>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Annuler</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  void handleArchive().catch(error => {
+                    console.error('[DocumentDetail] Archive failed:', error);
+                  });
+                }}
+              >
+                Archiver
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Payment Record Modal */}
+        {documentType === 'invoice' && (
+          <PaymentRecordModal
+            open={showPaymentModal}
+            onOpenChange={setShowPaymentModal}
+            invoiceId={id}
+            invoiceNumber={docNumber}
+            totalAmount={computedTotals.totalCents / 100}
+            currency={document.currency}
+            onSuccess={() => window.location.reload()}
+          />
+        )}
+
+        {/* Reconcile Transaction Modal */}
+        {documentType === 'invoice' && (
+          <ReconcileTransactionModal
+            open={showReconcileModal}
+            onOpenChange={setShowReconcileModal}
+            invoiceId={id}
+            invoiceNumber={docNumber}
+            invoiceAmount={computedTotals.totalCents}
+            currency={document.currency}
+            onSuccess={() => window.location.reload()}
+          />
+        )}
       </div>
-
-      {/* ===== DIALOGS ===== */}
-
-      {/* Finalize dialog */}
-      <AlertDialog
-        open={showFinalizeDialog}
-        onOpenChange={setShowFinalizeDialog}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2 text-amber-600">
-              <AlertTriangle className="h-5 w-5" />
-              Finaliser ce document ?
-            </AlertDialogTitle>
-            <AlertDialogDescription className="space-y-3">
-              <p className="font-semibold text-foreground">
-                Cette action est IRRÉVERSIBLE.
-              </p>
-              <p>
-                Une fois finalisé, le document ne pourra plus être modifié ni
-                supprimé. Il recevra un numéro officiel et sera enregistré
-                définitivement.
-              </p>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-amber-600 text-white hover:bg-amber-700"
-              onClick={() => {
-                void handleFinalize().catch(error => {
-                  console.error('[DocumentDetail] Finalize failed:', error);
-                });
-              }}
-            >
-              Oui, finaliser
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Delete dialog */}
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2 text-red-600">
-              <Trash2 className="h-5 w-5" />
-              Supprimer ce document ?
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              Cette action est définitive et ne peut pas être annulée.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-red-600 text-white hover:bg-red-700"
-              onClick={() => {
-                void handleDelete().catch(error => {
-                  console.error('[DocumentDetail] Delete failed:', error);
-                });
-              }}
-            >
-              Supprimer
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Convert to invoice dialog */}
-      <AlertDialog open={showConvertDialog} onOpenChange={setShowConvertDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Convertir en facture ?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Cette action créera une facture basée sur ce devis. Le devis sera
-              marqué comme converti.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                void handleConvertToInvoice().catch(error => {
-                  console.error('[DocumentDetail] Convert failed:', error);
-                });
-              }}
-            >
-              Convertir en facture
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Create credit note dialog */}
-      <AlertDialog
-        open={showCreditNoteDialog}
-        onOpenChange={setShowCreditNoteDialog}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Créer un avoir ?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Cette action créera un avoir en brouillon lié à cette facture.
-              L&apos;avoir devra être finalisé séparément.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                void handleCreateCreditNote().catch(error => {
-                  console.error(
-                    '[DocumentDetail] Create credit note failed:',
-                    error
-                  );
-                });
-              }}
-            >
-              Créer l&apos;avoir
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Accept quote dialog */}
-      <AlertDialog open={showAcceptDialog} onOpenChange={setShowAcceptDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2 text-green-600">
-              <CheckCircle className="h-5 w-5" />
-              Accepter ce devis ?
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              Le devis sera marqué comme accepté par le client.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-green-600 text-white hover:bg-green-700"
-              onClick={() => {
-                void handleAcceptQuote().catch(error => {
-                  console.error('[DocumentDetail] Accept quote failed:', error);
-                });
-              }}
-            >
-              Marquer accepté
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Decline quote dialog */}
-      <AlertDialog open={showDeclineDialog} onOpenChange={setShowDeclineDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2 text-red-600">
-              <XCircle className="h-5 w-5" />
-              Refuser ce devis ?
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              Le devis sera marqué comme refusé par le client.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-red-600 text-white hover:bg-red-700"
-              onClick={() => {
-                void handleDeclineQuote().catch(error => {
-                  console.error(
-                    '[DocumentDetail] Decline quote failed:',
-                    error
-                  );
-                });
-              }}
-            >
-              Marquer refusé
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Archive dialog */}
-      <AlertDialog open={showArchiveDialog} onOpenChange={setShowArchiveDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <Archive className="h-5 w-5" />
-              Archiver cette facture ?
-            </AlertDialogTitle>
-            <AlertDialogDescription className="space-y-3">
-              <p>
-                Cette facture sera masquée de la liste principale et déplacée
-                dans les archives.
-              </p>
-              <p>
-                Vous pourrez la restaurer depuis l&apos;onglet
-                &quot;Archives&quot; si nécessaire.
-              </p>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                void handleArchive().catch(error => {
-                  console.error('[DocumentDetail] Archive failed:', error);
-                });
-              }}
-            >
-              Archiver
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Payment Record Modal */}
-      {documentType === 'invoice' && (
-        <PaymentRecordModal
-          open={showPaymentModal}
-          onOpenChange={setShowPaymentModal}
-          invoiceId={id}
-          invoiceNumber={document.invoice_number ?? docNumber}
-          totalAmount={computedTotals.totalCents / 100}
-          currency={document.currency}
-          onSuccess={() => window.location.reload()}
-        />
-      )}
-
-      {/* Reconcile Transaction Modal */}
-      {documentType === 'invoice' && (
-        <ReconcileTransactionModal
-          open={showReconcileModal}
-          onOpenChange={setShowReconcileModal}
-          invoiceId={id}
-          invoiceNumber={document.invoice_number ?? docNumber}
-          invoiceAmount={computedTotals.totalCents}
-          currency={document.currency}
-          onSuccess={() => window.location.reload()}
-        />
-      )}
-    </div>
+    </TooltipProvider>
   );
 }
