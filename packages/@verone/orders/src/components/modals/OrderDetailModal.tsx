@@ -451,14 +451,70 @@ export function OrderDetailModal({
                     </div>
                   )}
                   {/* Adresses condensées */}
+                  {order.billing_address && (
+                    <div className="flex items-start gap-2 text-gray-600 pt-1 border-t mt-2">
+                      <FileText className="h-3 w-3 mt-0.5 flex-shrink-0" />
+                      <div className="text-xs">
+                        <p className="font-medium text-gray-700 mb-0.5">
+                          Facturation
+                        </p>
+                        <p>
+                          {typeof order.billing_address === 'string'
+                            ? order.billing_address
+                            : [
+                                order.billing_address.address,
+                                order.billing_address.address_line1,
+                                order.billing_address.address_line2,
+                              ]
+                                .filter(Boolean)
+                                .join(', ')}
+                        </p>
+                        {typeof order.billing_address === 'object' &&
+                          (order.billing_address.postal_code ||
+                            order.billing_address.city) && (
+                            <p>
+                              {[
+                                order.billing_address.postal_code,
+                                order.billing_address.city,
+                              ]
+                                .filter(Boolean)
+                                .join(' ')}
+                            </p>
+                          )}
+                      </div>
+                    </div>
+                  )}
                   {order.shipping_address && (
                     <div className="flex items-start gap-2 text-gray-600 pt-1 border-t mt-2">
                       <MapPin className="h-3 w-3 mt-0.5 flex-shrink-0" />
-                      <span className="text-xs">
-                        {typeof order.shipping_address === 'string'
-                          ? order.shipping_address
-                          : order.shipping_address.address}
-                      </span>
+                      <div className="text-xs">
+                        <p className="font-medium text-gray-700 mb-0.5">
+                          Livraison
+                        </p>
+                        <p>
+                          {typeof order.shipping_address === 'string'
+                            ? order.shipping_address
+                            : [
+                                order.shipping_address.address,
+                                order.shipping_address.address_line1,
+                                order.shipping_address.address_line2,
+                              ]
+                                .filter(Boolean)
+                                .join(', ')}
+                        </p>
+                        {typeof order.shipping_address === 'object' &&
+                          (order.shipping_address.postal_code ||
+                            order.shipping_address.city) && (
+                            <p>
+                              {[
+                                order.shipping_address.postal_code,
+                                order.shipping_address.city,
+                              ]
+                                .filter(Boolean)
+                                .join(' ')}
+                            </p>
+                          )}
+                      </div>
                     </div>
                   )}
                 </CardContent>
@@ -614,12 +670,26 @@ export function OrderDetailModal({
                     >
                       Livrée le {formatDate(order.delivered_at)}
                     </Badge>
+                  ) : (order.status as string) === 'delivered' ? (
+                    <Badge
+                      variant="secondary"
+                      className="w-full justify-center bg-green-100 text-green-800 border-green-200"
+                    >
+                      Livrée
+                    </Badge>
                   ) : order.shipped_at ? (
                     <Badge
                       variant="secondary"
                       className="w-full justify-center bg-blue-100 text-blue-800 border-blue-200"
                     >
                       Expédiée le {formatDate(order.shipped_at)}
+                    </Badge>
+                  ) : order.status === 'shipped' ? (
+                    <Badge
+                      variant="secondary"
+                      className="w-full justify-center bg-blue-100 text-blue-800 border-blue-200"
+                    >
+                      Expédiée
                     </Badge>
                   ) : order.status === 'partially_shipped' ? (
                     <Badge
@@ -684,31 +754,7 @@ export function OrderDetailModal({
                     </ButtonV2>
                   )}
 
-                  {/* Actions de gestion (masquées si readOnly) */}
-                  {!readOnly && (
-                    <>
-                      <ButtonV2
-                        variant="outline"
-                        size="sm"
-                        className="w-full justify-start opacity-50 text-xs"
-                        disabled
-                        title="Fonctionnalité disponible en Phase 2"
-                      >
-                        <FileText className="h-3 w-3 mr-1" />
-                        Télécharger BC
-                      </ButtonV2>
-                      <ButtonV2
-                        variant="outline"
-                        size="sm"
-                        className="w-full justify-start opacity-50 text-xs"
-                        disabled
-                        title="Fonctionnalité disponible en Phase 2"
-                      >
-                        <FileText className="h-3 w-3 mr-1" />
-                        Générer facture
-                      </ButtonV2>
-                    </>
-                  )}
+                  {/* Actions de gestion redirigent vers la page détail */}
 
                   {/* Message mode lecture seule */}
                   {readOnly && !channelRedirectUrl && (
