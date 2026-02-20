@@ -576,7 +576,8 @@ export function OrderDetailModal({
               {/* Card Facturation */}
               {!readOnly &&
                 order.status !== 'draft' &&
-                order.status !== 'cancelled' && (
+                order.status !== 'cancelled' &&
+                order.payment_status_v2 !== 'paid' && (
                   <Card>
                     <CardHeader className="pb-3">
                       <CardTitle className="text-sm font-medium flex items-center gap-2">
@@ -736,6 +737,14 @@ export function OrderDetailModal({
                 tax_rate: order.tax_rate,
                 currency: order.currency,
                 payment_terms: order.payment_terms || 'net_30',
+                customer_id: order.customer_id,
+                customer_type: order.customer_type,
+                billing_address: order.billing_address,
+                shipping_address: order.shipping_address,
+                shipping_cost_ht: order.shipping_cost_ht,
+                handling_cost_ht: order.handling_cost_ht,
+                insurance_cost_ht: order.insurance_cost_ht,
+                fees_vat_rate: order.fees_vat_rate,
                 organisations: order.organisations,
                 individual_customers: order.individual_customers,
                 sales_order_items: order.sales_order_items,

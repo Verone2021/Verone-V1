@@ -36,8 +36,10 @@ interface OrderWithRelations {
   order_number: string;
   status: string;
   payment_status: string | null;
+  payment_status_v2: string | null;
   customer_id: string | null;
   customer_type: string | null;
+  billing_address: unknown;
   shipping_address: unknown;
   total_ht: number | null;
   total_ttc: number | null;
@@ -92,8 +94,10 @@ export default async function OrderDetailPage({
       order_number,
       status,
       payment_status,
+      payment_status_v2,
       customer_id,
       customer_type,
+      billing_address,
       shipping_address,
       total_ht,
       total_ttc,
@@ -161,8 +165,10 @@ export default async function OrderDetailPage({
           order_number: linkmeOrder.order_number,
           status: linkmeOrder.status,
           payment_status: linkmeOrder.payment_status,
+          payment_status_v2: null,
           customer_id: linkmeOrder.customer_id,
           customer_type: linkmeOrder.customer_type,
+          billing_address: null,
           shipping_address: linkmeOrder.shipping_address,
           total_ht: linkmeOrder.total_ht,
           total_ttc: linkmeOrder.total_ttc,
@@ -545,13 +551,25 @@ export default async function OrderDetailPage({
               taxRate={20}
               currency="EUR"
               paymentTerms="immediate"
-              paymentStatus={order.payment_status ?? 'pending'}
+              paymentStatus={
+                order.payment_status_v2 ?? order.payment_status ?? 'pending'
+              }
               customerName={customerName}
               customerEmail={customerEmail ?? null}
               customerType={
                 order.customer_type === 'organization'
                   ? 'organization'
                   : 'individual'
+              }
+              shippingCostHt={order.shipping_cost_ht ?? 0}
+              handlingCostHt={order.handling_cost_ht ?? 0}
+              insuranceCostHt={order.insurance_cost_ht ?? 0}
+              feesVatRate={order.fees_vat_rate ?? 0.2}
+              billingAddress={
+                order.billing_address as Record<string, string> | null
+              }
+              shippingAddress={
+                order.shipping_address as Record<string, string> | null
               }
               orderItems={items.map((item: OrderItem) => ({
                 id: item.id,
