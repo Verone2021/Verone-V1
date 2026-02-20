@@ -611,6 +611,7 @@ export class QontoClient {
       {
         client_id: params.clientId,
         currency: params.currency || 'EUR',
+        status: params.status || 'draft',
         issue_date: params.issueDate,
         due_date: params.dueDate,
         payment_methods: {
@@ -862,6 +863,11 @@ export class QontoClient {
   async findClientByEmail(email: string): Promise<QontoClientEntity | null> {
     const { clients } = await this.getClients({ perPage: 100 });
     return clients.find(c => c.email === email) || null;
+  }
+
+  async findClientByName(name: string): Promise<QontoClientEntity | null> {
+    const { clients } = await this.getClients({ perPage: 100 });
+    return clients.find(c => c.name === name) || null;
   }
 
   async findClientByVatNumber(
