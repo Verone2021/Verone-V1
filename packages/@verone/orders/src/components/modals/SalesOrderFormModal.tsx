@@ -1778,56 +1778,73 @@ export function SalesOrderFormModal({
                       </p>
                     )}
 
-                    {/* Conditions de paiement (enum + notes) */}
-                    <div className="space-y-2">
-                      <Label htmlFor="paymentTermsType">
-                        Conditions de paiement
-                      </Label>
-                      <Select
-                        value={paymentTermsType ?? undefined}
-                        onValueChange={value =>
-                          setPaymentTermsType(
-                            value as Database['public']['Enums']['payment_terms_type']
-                          )
-                        }
-                        disabled={loading || !selectedCustomer}
-                      >
-                        <SelectTrigger id="paymentTermsType">
-                          <SelectValue placeholder="Sélectionnez les conditions" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="IMMEDIATE">
-                            Paiement immédiat (comptant)
-                          </SelectItem>
-                          <SelectItem value="NET_15">Net 15 jours</SelectItem>
-                          <SelectItem value="NET_30">Net 30 jours</SelectItem>
-                          <SelectItem value="NET_45">Net 45 jours</SelectItem>
-                          <SelectItem value="NET_60">Net 60 jours</SelectItem>
-                          <SelectItem value="NET_90">Net 90 jours</SelectItem>
-                          <SelectItem value="CUSTOM">
-                            Conditions personnalisées
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-
-                      {/* Notes complémentaires si CUSTOM */}
-                      {paymentTermsType === 'CUSTOM' && (
-                        <Textarea
-                          placeholder="Décrivez les conditions personnalisées..."
-                          value={paymentTermsNotes}
-                          onChange={e => setPaymentTermsNotes(e.target.value)}
-                          rows={2}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="deliveryDate">
+                          Date de livraison prévue
+                        </Label>
+                        <Input
+                          id="deliveryDate"
+                          type="date"
+                          value={expectedDeliveryDate ?? ''}
+                          onChange={e =>
+                            setExpectedDeliveryDate(e.target.value || null)
+                          }
                           disabled={loading}
                         />
-                      )}
+                      </div>
 
-                      {selectedCustomer && (
-                        <p className="text-xs text-gray-500">
-                          {selectedCustomer.type === 'individual'
-                            ? 'Paiement immédiat requis pour les clients particuliers'
-                            : 'Auto-rempli depuis la fiche client. Modifiable si nécessaire.'}
-                        </p>
-                      )}
+                      {/* Conditions de paiement (enum + notes) */}
+                      <div className="space-y-2">
+                        <Label htmlFor="paymentTermsType">
+                          Conditions de paiement
+                        </Label>
+                        <Select
+                          value={paymentTermsType ?? undefined}
+                          onValueChange={value =>
+                            setPaymentTermsType(
+                              value as Database['public']['Enums']['payment_terms_type']
+                            )
+                          }
+                          disabled={loading || !selectedCustomer}
+                        >
+                          <SelectTrigger id="paymentTermsType">
+                            <SelectValue placeholder="Sélectionnez les conditions" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="IMMEDIATE">
+                              Paiement immédiat (comptant)
+                            </SelectItem>
+                            <SelectItem value="NET_15">Net 15 jours</SelectItem>
+                            <SelectItem value="NET_30">Net 30 jours</SelectItem>
+                            <SelectItem value="NET_45">Net 45 jours</SelectItem>
+                            <SelectItem value="NET_60">Net 60 jours</SelectItem>
+                            <SelectItem value="NET_90">Net 90 jours</SelectItem>
+                            <SelectItem value="CUSTOM">
+                              Conditions personnalisées
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+
+                        {/* Notes complémentaires si CUSTOM */}
+                        {paymentTermsType === 'CUSTOM' && (
+                          <Textarea
+                            placeholder="Décrivez les conditions personnalisées..."
+                            value={paymentTermsNotes}
+                            onChange={e => setPaymentTermsNotes(e.target.value)}
+                            rows={2}
+                            disabled={loading}
+                          />
+                        )}
+
+                        {selectedCustomer && (
+                          <p className="text-xs text-gray-500">
+                            {selectedCustomer.type === 'individual'
+                              ? 'Paiement immédiat requis pour les clients particuliers'
+                              : 'Auto-rempli depuis la fiche client. Modifiable si nécessaire.'}
+                          </p>
+                        )}
+                      </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
