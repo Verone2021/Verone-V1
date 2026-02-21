@@ -202,12 +202,19 @@ export const ProductCardV2 = memo(function ProductCardV2({
           )}
         </div>
 
-        {/* Badge type produit (top-left) */}
-        {product.product_type === 'custom' && (
-          <div className="absolute top-1.5 left-1.5">
-            <Badge className="bg-purple-600 text-white text-[9px] font-medium px-1 py-0.5">
-              Sur mesure
-            </Badge>
+        {/* Badges top-left : fournisseur + type produit */}
+        {(product.supplier != null || product.product_type === 'custom') && (
+          <div className="absolute top-1.5 left-1.5 flex flex-col gap-1">
+            {product.supplier && (
+              <Badge className="bg-white/90 backdrop-blur-sm text-gray-700 border border-gray-300 text-[9px] font-medium px-1 py-0.5 max-w-[80px] truncate">
+                {product.supplier.trade_name ?? product.supplier.legal_name}
+              </Badge>
+            )}
+            {product.product_type === 'custom' && (
+              <Badge className="bg-purple-600 text-white text-[9px] font-medium px-1 py-0.5">
+                Sur mesure
+              </Badge>
+            )}
           </div>
         )}
       </div>
