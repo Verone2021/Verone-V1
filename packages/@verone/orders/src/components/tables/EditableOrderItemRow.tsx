@@ -65,24 +65,25 @@ export function EditableOrderItemRow({
   onDelete,
   readonly = false,
 }: EditableOrderItemRowProps) {
-  // États locaux pour édition fluide (évite re-render à chaque keystroke)
-  const [localPrice, setLocalPrice] = useState(item.unit_price_ht);
+  // États locaux en string pour permettre la saisie libre (effacer, taper librement)
+  // Parse/validation uniquement sur onBlur
+  const [localPrice, setLocalPrice] = useState(String(item.unit_price_ht));
   const [localDiscount, setLocalDiscount] = useState(
-    item.discount_percentage || 0
+    String(item.discount_percentage || 0)
   );
-  const [localEcoTax, setLocalEcoTax] = useState(item.eco_tax || 0);
+  const [localEcoTax, setLocalEcoTax] = useState(String(item.eco_tax || 0));
   const [localTaxRate, setLocalTaxRate] = useState(
-    (item.tax_rate || 0.2) * 100
+    String((item.tax_rate || 0.2) * 100)
   );
-  const [localQuantity, setLocalQuantity] = useState(item.quantity);
+  const [localQuantity, setLocalQuantity] = useState(String(item.quantity));
 
   // Synchroniser si item change de l'extérieur (changement d'item sélectionné)
   useEffect(() => {
-    setLocalPrice(item.unit_price_ht);
-    setLocalDiscount(item.discount_percentage || 0);
-    setLocalEcoTax(item.eco_tax || 0);
-    setLocalTaxRate((item.tax_rate || 0.2) * 100);
-    setLocalQuantity(item.quantity);
+    setLocalPrice(String(item.unit_price_ht));
+    setLocalDiscount(String(item.discount_percentage || 0));
+    setLocalEcoTax(String(item.eco_tax || 0));
+    setLocalTaxRate(String((item.tax_rate || 0.2) * 100));
+    setLocalQuantity(String(item.quantity));
   }, [item.id]);
 
   // Calculer total ligne HT
@@ -105,37 +106,45 @@ export function EditableOrderItemRow({
     );
   };
 
-  // ========== HANDLERS QUANTITÉ (état local + onBlur) ==========
+  // ========== HANDLERS QUANTITÉ (état local string + onBlur) ==========
   const handleQuantityInputChange = (value: string) => {
-    setLocalQuantity(parseInt(value) || 1);
+    setLocalQuantity(value);
   };
 
   const handleQuantityBlur = () => {
-    const validQuantity = Math.max(1, localQuantity);
+    const parsed = parseInt(localQuantity);
+    const validQuantity = isNaN(parsed) || parsed < 1 ? 1 : parsed;
+    setLocalQuantity(String(validQuantity));
     if (validQuantity !== item.quantity && onUpdate && !readonly) {
       onUpdate(item.id, { quantity: validQuantity });
     }
   };
 
-  // ========== HANDLERS PRIX (état local + onBlur) ==========
+  // ========== HANDLERS PRIX (état local string + onBlur) ==========
   const handlePriceChange = (value: string) => {
-    setLocalPrice(parseFloat(value) || 0);
+    setLocalPrice(value);
   };
 
   const handlePriceBlur = () => {
-    const validPrice = Math.max(0, localPrice);
+    const parsed = parseFloat(localPrice);
+    const validPrice = isNaN(parsed) || parsed < 0 ? 0 : parsed;
+    setLocalPrice(String(validPrice));
     if (validPrice !== item.unit_price_ht && onUpdate && !readonly) {
       onUpdate(item.id, { unit_price_ht: validPrice });
     }
   };
 
-  // ========== HANDLERS REMISE (état local + onBlur) ==========
+  // ========== HANDLERS REMISE (état local string + onBlur) ==========
   const handleDiscountChange = (value: string) => {
-    setLocalDiscount(parseFloat(value) || 0);
+    setLocalDiscount(value);
   };
 
   const handleDiscountBlur = () => {
-    const validDiscount = Math.min(100, Math.max(0, localDiscount));
+    const parsed = parseFloat(localDiscount);
+    const validDiscount = isNaN(parsed)
+      ? 0
+      : Math.min(100, Math.max(0, parsed));
+    setLocalDiscount(String(validDiscount));
     if (
       validDiscount !== (item.discount_percentage || 0) &&
       onUpdate &&
@@ -145,25 +154,29 @@ export function EditableOrderItemRow({
     }
   };
 
-  // ========== HANDLERS ÉCO-TAXE (état local + onBlur) ==========
+  // ========== HANDLERS ÉCO-TAXE (état local string + onBlur) ==========
   const handleEcoTaxChange = (value: string) => {
-    setLocalEcoTax(parseFloat(value) || 0);
+    setLocalEcoTax(value);
   };
 
   const handleEcoTaxBlur = () => {
-    const validEcoTax = Math.max(0, localEcoTax);
+    const parsed = parseFloat(localEcoTax);
+    const validEcoTax = isNaN(parsed) || parsed < 0 ? 0 : parsed;
+    setLocalEcoTax(String(validEcoTax));
     if (validEcoTax !== (item.eco_tax || 0) && onUpdate && !readonly) {
       onUpdate(item.id, { eco_tax: validEcoTax });
     }
   };
 
-  // ========== HANDLERS TVA (ventes uniquement, état local + onBlur) ==========
+  // ========== HANDLERS TVA (ventes uniquement, état local string + onBlur) ==========
   const handleTaxRateChange = (value: string) => {
-    setLocalTaxRate(parseFloat(value) || 20);
+    setLocalTaxRate(value);
   };
 
   const handleTaxRateBlur = () => {
-    const validTaxRate = Math.max(0, localTaxRate) / 100;
+    const parsed = parseFloat(localTaxRate);
+    const validTaxRate = (isNaN(parsed) || parsed < 0 ? 20 : parsed) / 100;
+    setLocalTaxRate(String(validTaxRate * 100));
     if (
       validTaxRate !== (item.tax_rate || 0.2) &&
       onUpdate &&
