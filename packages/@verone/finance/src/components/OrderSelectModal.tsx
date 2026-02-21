@@ -27,6 +27,17 @@ import {
  * Interface unifiée pour les commandes utilisées dans les documents
  * (factures, devis, avoirs). Remplace IOrderForInvoice et IOrderForQuote.
  */
+/**
+ * Adresse structurée pour facturation/livraison
+ */
+export interface IDocumentAddress {
+  address_line1: string;
+  address_line2?: string;
+  postal_code: string;
+  city: string;
+  country: string;
+}
+
 export interface IOrderForDocument {
   id: string;
   order_number: string;
@@ -35,6 +46,11 @@ export interface IOrderForDocument {
   tax_rate: number;
   currency: string;
   payment_terms?: string; // Optionnel pour compatibilité avec devis
+  customer_id?: string | null;
+  customer_type?: string | null;
+  // Adresses (JSONB de la commande)
+  billing_address?: IDocumentAddress | null;
+  shipping_address?: IDocumentAddress | null;
   // Frais de service
   shipping_cost_ht?: number | null;
   handling_cost_ht?: number | null;
@@ -42,7 +58,25 @@ export interface IOrderForDocument {
   fees_vat_rate?: number | null;
   organisations?: {
     name?: string;
+    trade_name?: string | null;
+    legal_name?: string | null;
     email?: string | null;
+    // Adresses organisation (fallback)
+    address_line1?: string | null;
+    city?: string | null;
+    postal_code?: string | null;
+    country?: string | null;
+    billing_address_line1?: string | null;
+    billing_city?: string | null;
+    billing_postal_code?: string | null;
+    billing_country?: string | null;
+    shipping_address_line1?: string | null;
+    shipping_city?: string | null;
+    shipping_postal_code?: string | null;
+    shipping_country?: string | null;
+    has_different_shipping_address?: boolean | null;
+    siret?: string | null;
+    vat_number?: string | null;
   } | null;
   individual_customers?: {
     first_name?: string | null;
@@ -98,6 +132,7 @@ interface OrderListItem {
   customer_type: string;
   customer_name: string;
   customer_email: string | null;
+  payment_status_v2: string | null;
 }
 
 export function OrderSelectModal({
@@ -132,10 +167,12 @@ export function OrderSelectModal({
           status,
           created_at,
           customer_id,
-          customer_type
+          customer_type,
+          payment_status_v2
         `
         )
-        .eq('status', 'validated')
+        .in('status', ['validated', 'shipped'])
+        .or('payment_status_v2.is.null,payment_status_v2.neq.paid')
         .order('created_at', { ascending: false })
         .limit(100);
 
@@ -152,7 +189,7 @@ export function OrderSelectModal({
 
       // Collecter les IDs de clients par type
       const orgIds = ordersData
-        .filter(o => o.customer_type === 'organisation')
+        .filter(o => o.customer_type === 'organization')
         .map(o => o.customer_id)
         .filter((id): id is string => id !== null);
       const indivIds = ordersData
@@ -199,11 +236,54 @@ export function OrderSelectModal({
         }
       }
 
+      // Filter out already-invoiced orders (unless credit note cancels them)
+      const orderIds = ordersData.map(o => o.id);
+      const invoicedOrderIds = new Set<string>();
+
+      if (orderIds.length > 0) {
+        const { data: docs } = await supabase
+          .from('financial_documents')
+          .select('sales_order_id, document_type')
+          .in('sales_order_id', orderIds)
+          .is('deleted_at', null)
+          .neq('workflow_status', 'cancelled');
+
+        // Count invoices and credit notes per order
+        const invoiceCount = new Map<string, number>();
+        const creditNoteCount = new Map<string, number>();
+
+        for (const doc of docs || []) {
+          const orderId = doc.sales_order_id;
+          if (!orderId) continue;
+          if (doc.document_type === 'customer_invoice') {
+            invoiceCount.set(orderId, (invoiceCount.get(orderId) || 0) + 1);
+          } else if (doc.document_type === 'customer_credit_note') {
+            creditNoteCount.set(
+              orderId,
+              (creditNoteCount.get(orderId) || 0) + 1
+            );
+          }
+        }
+
+        // Order is NOT available if it has more invoices than credit notes
+        for (const [orderId, count] of invoiceCount) {
+          const credits = creditNoteCount.get(orderId) || 0;
+          if (count > credits) {
+            invoicedOrderIds.add(orderId);
+          }
+        }
+      }
+
+      // Filter: exclude already-invoiced orders
+      const availableOrders = ordersData.filter(
+        o => !invoicedOrderIds.has(o.id)
+      );
+
       // Transformer les commandes avec les infos client
-      const allOrders: OrderListItem[] = ordersData.map(order => {
+      const allOrders: OrderListItem[] = availableOrders.map(order => {
         let customerInfo = { name: 'Client', email: null as string | null };
 
-        if (order.customer_type === 'organisation' && order.customer_id) {
+        if (order.customer_type === 'organization' && order.customer_id) {
           customerInfo = orgMap.get(order.customer_id) || customerInfo;
         } else if (order.customer_type === 'individual' && order.customer_id) {
           customerInfo = indivMap.get(order.customer_id) || customerInfo;
@@ -223,6 +303,7 @@ export function OrderSelectModal({
           customer_type: order.customer_type,
           customer_name: customerInfo.name,
           customer_email: customerInfo.email,
+          payment_status_v2: order.payment_status_v2 ?? null,
         };
       });
 
@@ -260,7 +341,7 @@ export function OrderSelectModal({
     setSelectedOrderId(orderId);
 
     try {
-      // Charger les details complets de la commande
+      // Charger les details complets de la commande (avec adresses)
       const { data: order, error } = await supabase
         .from('sales_orders')
         .select(
@@ -274,6 +355,12 @@ export function OrderSelectModal({
           payment_terms,
           customer_type,
           customer_id,
+          billing_address,
+          shipping_address,
+          shipping_cost_ht,
+          handling_cost_ht,
+          insurance_cost_ht,
+          fees_vat_rate,
           sales_order_items(
             id,
             quantity,
@@ -292,23 +379,42 @@ export function OrderSelectModal({
       }
 
       // Fetch customer info based on type
-      let customerOrg: { name?: string; email?: string | null } | null = null;
+      let customerOrg: IOrderForDocument['organisations'] = null;
       let customerIndiv: {
         first_name?: string | null;
         last_name?: string | null;
         email?: string | null;
       } | null = null;
 
-      if (order.customer_type === 'organisation' && order.customer_id) {
+      if (order.customer_type === 'organization' && order.customer_id) {
         const { data: org } = await supabase
           .from('organisations')
-          .select('legal_name, trade_name, email')
+          .select(
+            'legal_name, trade_name, email, address_line1, city, postal_code, country, billing_address_line1, billing_city, billing_postal_code, billing_country, shipping_address_line1, shipping_city, shipping_postal_code, shipping_country, has_different_shipping_address, siret, vat_number'
+          )
           .eq('id', order.customer_id)
           .single();
         if (org) {
           customerOrg = {
             name: org.trade_name || org.legal_name,
+            legal_name: org.legal_name,
+            trade_name: org.trade_name,
             email: org.email,
+            address_line1: org.address_line1,
+            city: org.city,
+            postal_code: org.postal_code,
+            country: org.country,
+            billing_address_line1: org.billing_address_line1,
+            billing_city: org.billing_city,
+            billing_postal_code: org.billing_postal_code,
+            billing_country: org.billing_country,
+            shipping_address_line1: org.shipping_address_line1,
+            shipping_city: org.shipping_city,
+            shipping_postal_code: org.shipping_postal_code,
+            shipping_country: org.shipping_country,
+            has_different_shipping_address: org.has_different_shipping_address,
+            siret: org.siret,
+            vat_number: org.vat_number,
           };
         }
       } else if (order.customer_type === 'individual' && order.customer_id) {
@@ -335,6 +441,14 @@ export function OrderSelectModal({
         tax_rate: order.tax_rate || 20,
         currency: order.currency || 'EUR',
         payment_terms: order.payment_terms || 'immediate',
+        customer_id: order.customer_id,
+        customer_type: order.customer_type,
+        billing_address: order.billing_address as IDocumentAddress | null,
+        shipping_address: order.shipping_address as IDocumentAddress | null,
+        shipping_cost_ht: order.shipping_cost_ht ?? null,
+        handling_cost_ht: order.handling_cost_ht ?? null,
+        insurance_cost_ht: order.insurance_cost_ht ?? null,
+        fees_vat_rate: order.fees_vat_rate ?? null,
         organisations: customerOrg,
         individual_customers: customerIndiv,
         sales_order_items: order.sales_order_items || [],
@@ -365,7 +479,7 @@ export function OrderSelectModal({
             Selectionner une commande
           </DialogTitle>
           <DialogDescription>
-            Seules les commandes validees peuvent etre facturees
+            Commandes validees sans facture active (hors payees)
           </DialogDescription>
         </DialogHeader>
 
@@ -430,9 +544,16 @@ export function OrderSelectModal({
                       <p className="font-medium">
                         {formatAmount(order.total_ttc, order.currency)}
                       </p>
-                      <p className="text-xs text-muted-foreground capitalize">
-                        {order.status}
-                      </p>
+                      <div className="flex items-center justify-end gap-1.5">
+                        <span className="text-xs text-muted-foreground capitalize">
+                          {order.status}
+                        </span>
+                        {order.payment_status_v2 === 'partially_paid' && (
+                          <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-800">
+                            Partiel. payée
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </Card>

@@ -40,17 +40,46 @@ export async function GET(
   NextResponse<{
     success: boolean;
     invoice?: unknown;
+    localData?: {
+      billing_address?: Record<string, unknown>;
+      shipping_address?: Record<string, unknown>;
+    } | null;
     error?: string;
   }>
 > {
   try {
     const { id } = await params;
     const client = getQontoClient();
+    const supabase = await createServerClient();
     const invoice = await client.getClientInvoiceById(id);
+
+    // Enrich with local data (addresses stored locally)
+    let localData: {
+      billing_address?: Record<string, unknown>;
+      shipping_address?: Record<string, unknown>;
+    } | null = null;
+
+    const { data: localDoc } = await supabase
+      .from('financial_documents')
+      .select('billing_address, shipping_address')
+      .eq('qonto_invoice_id', id)
+      .single();
+
+    if (localDoc) {
+      localData = {
+        billing_address: localDoc.billing_address as
+          | Record<string, unknown>
+          | undefined,
+        shipping_address: localDoc.shipping_address as
+          | Record<string, unknown>
+          | undefined,
+      };
+    }
 
     return NextResponse.json({
       success: true,
       invoice,
+      localData,
     });
   } catch (error) {
     console.error('[API Qonto Invoice] GET error:', error);
@@ -86,6 +115,7 @@ interface ILocalItem {
 
 interface IPatchRequestBody {
   // Donnees Qonto
+  issueDate?: string;
   dueDate?: string;
   header?: string;
   footer?: string;
@@ -173,12 +203,14 @@ export async function PATCH(
 
     // 1. Mettre a jour Qonto avec les donnees compatibles
     const qontoUpdateData: {
+      issueDate?: string;
       dueDate?: string;
       header?: string;
       footer?: string;
       termsAndConditions?: string;
       items?: IQontoItem[];
     } = {};
+    if (body.issueDate) qontoUpdateData.issueDate = body.issueDate;
     if (body.dueDate) qontoUpdateData.dueDate = body.dueDate;
     if (body.header) qontoUpdateData.header = body.header;
     if (body.footer) qontoUpdateData.footer = body.footer;
@@ -202,6 +234,7 @@ export async function PATCH(
       };
 
       // Champs editables
+      if (body.issueDate) localUpdateData.document_date = body.issueDate;
       if (body.dueDate) localUpdateData.due_date = body.dueDate;
       if (body.notes !== undefined) localUpdateData.notes = body.notes;
       if (body.billing_address)

@@ -88,7 +88,7 @@ export async function GET(request: NextRequest): Promise<
         } | null = null;
 
         if (order?.customer_id && order?.customer_type) {
-          if (order.customer_type === 'organisation') {
+          if (order.customer_type === 'organization') {
             const { data: org } = await supabase
               .from('organisations')
               .select('id, legal_name, trade_name, email, phone')

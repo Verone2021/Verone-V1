@@ -200,7 +200,7 @@ export function QuoteCreateServiceModal({
       // Map customer type for API
       const clientType =
         selectedCustomer.type === 'professional'
-          ? 'organisation'
+          ? 'organization'
           : 'individual';
 
       const response = await fetch('/api/qonto/quotes/service', {

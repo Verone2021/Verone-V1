@@ -82,6 +82,8 @@ import {
   Loader2,
   Archive,
   ArchiveRestore,
+  Pencil,
+  CheckCircle2,
 } from 'lucide-react';
 
 // =====================================================================
@@ -354,16 +356,20 @@ function InvoicesTable({
   onView: _onView,
   onDownloadPdf,
   isArchived,
+  isDraft,
   onArchive,
   onUnarchive,
+  onFinalize,
 }: {
   invoices: Invoice[];
   loading: boolean;
   onView: (id: string) => void;
   onDownloadPdf: (invoice: Invoice) => void;
   isArchived?: boolean;
+  isDraft?: boolean;
   onArchive?: (invoice: Invoice) => Promise<void>;
   onUnarchive?: (invoice: Invoice) => Promise<void>;
+  onFinalize?: (invoice: Invoice) => Promise<void>;
 }) {
   if (loading) {
     return (
@@ -437,6 +443,31 @@ function InvoicesTable({
             </TableCell>
             <TableCell className="text-right">
               <div className="flex justify-end gap-1">
+                {/* Draft actions: Edit + Finalize */}
+                {isDraft && (
+                  <>
+                    <Button variant="ghost" size="icon" asChild>
+                      <Link
+                        href={`/factures/${invoice.id}/edit?type=invoice`}
+                        title="Modifier le brouillon"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Link>
+                    </Button>
+                    {onFinalize && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => void onFinalize(invoice)}
+                        title="Finaliser"
+                        className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                      >
+                        <CheckCircle2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </>
+                )}
+                {/* Common: View detail */}
                 <Button variant="ghost" size="icon" asChild>
                   <Link
                     href={`/factures/${invoice.id}?type=invoice`}
@@ -445,29 +476,36 @@ function InvoicesTable({
                     <Eye className="h-4 w-4" />
                   </Link>
                 </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() =>
-                    window.open(
-                      `/api/qonto/invoices/${invoice.id}/pdf`,
-                      '_blank'
-                    )
-                  }
-                  title="Voir PDF"
-                  className="text-primary hover:text-primary hover:bg-primary/10"
-                >
-                  <FileText className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => onDownloadPdf(invoice)}
-                  title="Télécharger PDF"
-                >
-                  <Download className="h-4 w-4" />
-                </Button>
+                {/* Finalized: PDF actions */}
+                {!isDraft && (
+                  <>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() =>
+                        window.open(
+                          `/api/qonto/invoices/${invoice.id}/pdf`,
+                          '_blank'
+                        )
+                      }
+                      title="Voir PDF"
+                      className="text-primary hover:text-primary hover:bg-primary/10"
+                    >
+                      <FileText className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => onDownloadPdf(invoice)}
+                      title="Télécharger PDF"
+                    >
+                      <Download className="h-4 w-4" />
+                    </Button>
+                  </>
+                )}
+                {/* Archive action */}
                 {!isArchived &&
+                  !isDraft &&
                   ['draft_validated', 'finalized', 'sent', 'paid'].includes(
                     invoice.workflow_status ?? ''
                   ) &&
@@ -620,9 +658,9 @@ function MissingInvoicesTable({
 
 export default function FacturationPage() {
   const [activeTab, setActiveTab] = useState<TabType>('factures');
-  const [invoiceView, setInvoiceView] = useState<'active' | 'archived'>(
-    'active'
-  );
+  const [invoiceView, setInvoiceView] = useState<
+    'drafts' | 'finalized' | 'archived'
+  >('finalized');
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [showUploadModal, setShowUploadModal] = useState(false);
@@ -1296,19 +1334,100 @@ export default function FacturationPage() {
 
         {/* Contenu des tabs */}
         <TabsContent value="factures" className="mt-4 space-y-4">
-          {/* Sub-tabs for Active/Archived invoices */}
+          {/* Sub-tabs: Brouillons / Finalisées / Archives */}
           <Tabs
             value={invoiceView}
-            onValueChange={v => setInvoiceView(v as 'active' | 'archived')}
+            onValueChange={v =>
+              setInvoiceView(v as 'drafts' | 'finalized' | 'archived')
+            }
           >
             <TabsList>
-              <TabsTrigger value="active">Factures actives</TabsTrigger>
-              <TabsTrigger value="archived">Archives</TabsTrigger>
+              <TabsTrigger value="drafts">
+                Brouillons
+                <Badge variant="secondary" className="ml-2">
+                  {
+                    invoices.filter(
+                      inv => inv.status === 'draft' && !inv.deleted_at
+                    ).length
+                  }
+                </Badge>
+              </TabsTrigger>
+              <TabsTrigger value="finalized">
+                Finalisées
+                <Badge variant="secondary" className="ml-2">
+                  {
+                    invoices.filter(
+                      inv => inv.status !== 'draft' && !inv.deleted_at
+                    ).length
+                  }
+                </Badge>
+              </TabsTrigger>
+              <TabsTrigger value="archived">
+                Archives
+                <Badge variant="secondary" className="ml-2">
+                  {invoices.filter(inv => inv.deleted_at).length}
+                </Badge>
+              </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="active" className="mt-4">
+            <TabsContent value="drafts" className="mt-4">
               <InvoicesTable
-                invoices={invoices.filter(inv => !inv.deleted_at)}
+                invoices={invoices.filter(
+                  inv =>
+                    inv.status === 'draft' &&
+                    !inv.deleted_at &&
+                    (statusFilter === 'all' || inv.status === statusFilter)
+                )}
+                loading={loadingInvoices}
+                onView={handleView}
+                onDownloadPdf={invoice => {
+                  void handleDownloadInvoicePdf(invoice).catch(error => {
+                    console.error(
+                      '[Factures] handleDownloadInvoicePdf failed:',
+                      error
+                    );
+                  });
+                }}
+                isDraft
+                onFinalize={async invoice => {
+                  try {
+                    const response = await fetch(
+                      `/api/qonto/invoices/${invoice.id}/finalize`,
+                      { method: 'POST' }
+                    );
+                    const data =
+                      (await response.json()) as ApiResponse<unknown>;
+                    if (!data.success) throw new Error(data.error);
+                    void fetchInvoices();
+                  } catch (error) {
+                    console.error('Finalize error:', error);
+                  }
+                }}
+                onArchive={async invoice => {
+                  try {
+                    const response = await fetch(
+                      `/api/financial-documents/${invoice.id}/archive`,
+                      { method: 'POST' }
+                    );
+                    const data =
+                      (await response.json()) as ApiResponse<unknown>;
+                    if (!data.success) throw new Error(data.error);
+                    void fetchInvoices();
+                  } catch (error) {
+                    console.error('Archive error:', error);
+                  }
+                }}
+              />
+            </TabsContent>
+
+            <TabsContent value="finalized" className="mt-4">
+              <InvoicesTable
+                invoices={invoices.filter(
+                  inv =>
+                    inv.status !== 'draft' &&
+                    !inv.deleted_at &&
+                    (statusFilter === 'all' || inv.status === statusFilter)
+                )}
                 loading={loadingInvoices}
                 onView={handleView}
                 onDownloadPdf={invoice => {
