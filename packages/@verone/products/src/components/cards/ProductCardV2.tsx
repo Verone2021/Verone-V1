@@ -229,16 +229,14 @@ export const ProductCardV2 = memo(function ProductCardV2({
         {/* SKU + Stock sur la même ligne */}
         <div className="flex items-center justify-between">
           <p className="text-[10px] text-gray-500 font-mono">{product.sku}</p>
-          {product.stock_quantity != null && (
+          {product.stock_real != null && (
             <span
               className={cn(
                 'text-[10px] font-semibold',
-                product.stock_quantity > 10
-                  ? 'text-green-600'
-                  : 'text-orange-600'
+                product.stock_real > 10 ? 'text-green-600' : 'text-orange-600'
               )}
             >
-              Stock: {product.stock_quantity}
+              Stock: {product.stock_real}
             </span>
           )}
         </div>

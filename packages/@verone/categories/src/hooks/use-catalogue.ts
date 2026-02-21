@@ -236,7 +236,7 @@ export const useCatalogue = () => {
     let query = supabase.from('products').select(
       `
         id, sku, name, slug,
-        cost_price, cost_price_count, product_type, stock_quantity, stock_real,
+        cost_price, cost_price_count, product_type, stock_real,
         stock_status, product_status, condition,
         subcategory_id, supplier_id, brand,
         has_images, dimensions, weight,
@@ -315,7 +315,7 @@ export const useCatalogue = () => {
     // 🚀 PERF FIX 2026-01-30: Supprimer LEFT JOIN product_images (chargé séparément en batch)
     let query = supabase.from('products').select(`
         id, sku, name, slug,
-        cost_price, cost_price_count, product_type, stock_quantity, stock_real,
+        cost_price, cost_price_count, product_type, stock_real,
         stock_status, product_status, condition,
         subcategory_id, supplier_id, brand,
         has_images, dimensions, weight,
@@ -387,7 +387,7 @@ export const useCatalogue = () => {
     let query = supabase.from('products').select(
       `
         id, sku, name, slug,
-        cost_price, cost_price_count, product_type, stock_quantity, stock_real,
+        cost_price, cost_price_count, product_type, stock_real,
         stock_status, product_status, condition,
         subcategory_id, supplier_id, brand,
         has_images, dimensions, weight,
@@ -596,14 +596,15 @@ export const useCatalogue = () => {
   };
 
   // ✅ FIX P0-2: setFilters utilise maintenant state séparé
-  const setFilters = (newFilters: Partial<CatalogueFilters>) => {
+  // ✅ FIX SEARCH: useCallback pour référence stable (évite recréation debounce à chaque render)
+  const setFilters = useCallback((newFilters: Partial<CatalogueFilters>) => {
     setFiltersState(prev => ({ ...prev, ...newFilters }));
-  };
+  }, []);
 
   // ✅ FIX P0-2: resetFilters utilise maintenant state séparé
-  const resetFilters = () => {
+  const resetFilters = useCallback(() => {
     setFiltersState({});
-  };
+  }, []);
 
   // ✅ PAGINATION: Calculs de pagination
   const currentPage = filters.page ?? 1;
