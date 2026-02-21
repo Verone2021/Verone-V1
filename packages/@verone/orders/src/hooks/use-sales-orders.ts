@@ -1152,7 +1152,7 @@ export function useSalesOrders() {
               customer_id: data.customer_id,
               customer_type: data.customer_type,
               channel_id: data.channel_id || null, // 🆕 Canal vente pour traçabilité stock
-              expected_delivery_date: data.expected_delivery_date,
+              expected_delivery_date: data.expected_delivery_date || null,
               shipping_address: data.shipping_address,
               billing_address: data.billing_address,
               payment_terms: data.payment_terms,
@@ -1184,7 +1184,7 @@ export function useSalesOrders() {
               tax_rate: item.tax_rate ?? 0.2, // TVA par défaut 20%
               discount_percentage: item.discount_percentage || 0,
               eco_tax: item.eco_tax ?? 0, // Éco-taxe (défaut 0)
-              expected_delivery_date: item.expected_delivery_date,
+              expected_delivery_date: item.expected_delivery_date || null,
               notes: item.notes,
               is_sample: item.is_sample ?? false, // Échantillon (défaut false)
             }))

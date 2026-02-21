@@ -236,7 +236,9 @@ export function SalesOrderFormModal({
   // Form data
   const [selectedCustomer, setSelectedCustomer] =
     useState<UnifiedCustomer | null>(null);
-  const [expectedDeliveryDate, setExpectedDeliveryDate] = useState('');
+  const [expectedDeliveryDate, setExpectedDeliveryDate] = useState<
+    string | null
+  >(null);
   const [shippingAddress, setShippingAddress] = useState('');
   const [billingAddress, setBillingAddress] = useState('');
   const [notes, setNotes] = useState('');
@@ -395,7 +397,7 @@ export function SalesOrderFormModal({
         setSelectedCustomer(customer);
 
         // Charger les données de la commande
-        setExpectedDeliveryDate(order.expected_delivery_date ?? '');
+        setExpectedDeliveryDate(order.expected_delivery_date ?? null);
         setShippingAddress(extractAddress(order.shipping_address));
         setBillingAddress(extractAddress(order.billing_address));
         setNotes(order.notes ?? '');
@@ -655,7 +657,7 @@ export function SalesOrderFormModal({
     setSelectedSalesChannel(null);
     // Reset form data
     setSelectedCustomer(null);
-    setExpectedDeliveryDate('');
+    setExpectedDeliveryDate(null);
     setShippingAddress('');
     setBillingAddress('');
     setNotes('');
@@ -1784,9 +1786,9 @@ export function SalesOrderFormModal({
                         <Input
                           id="deliveryDate"
                           type="date"
-                          value={expectedDeliveryDate}
+                          value={expectedDeliveryDate ?? ''}
                           onChange={e =>
-                            setExpectedDeliveryDate(e.target.value)
+                            setExpectedDeliveryDate(e.target.value || null)
                           }
                           disabled={loading}
                         />
