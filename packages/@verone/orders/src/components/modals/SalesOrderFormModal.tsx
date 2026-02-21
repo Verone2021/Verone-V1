@@ -788,20 +788,29 @@ export function SalesOrderFormModal({
         params: Record<string, unknown>
       ) => Promise<{ data: unknown; error: { message: string } | null }>;
 
-      const { data: rawData, error } = await rpcCall(
-        'calculate_product_price_v2',
-        {
-          p_product_id: productId,
-          p_quantity: quantity,
-          p_channel_id: channelId, // Canal sélectionné dans le formulaire
-          p_customer_id: selectedCustomer.id,
-          p_customer_type:
-            selectedCustomer.type === 'professional'
-              ? 'organization'
-              : 'individual',
-          p_date: new Date().toISOString().split('T')[0],
-        }
-      );
+      const rpcResult = await rpcCall('calculate_product_price_v2', {
+        p_product_id: productId,
+        p_quantity: quantity,
+        p_channel_id: channelId, // Canal sélectionné dans le formulaire
+        p_customer_id: selectedCustomer.id,
+        p_customer_type:
+          selectedCustomer.type === 'professional'
+            ? 'organization'
+            : 'individual',
+        p_date: new Date().toISOString().split('T')[0],
+      });
+
+      if (!rpcResult) {
+        return {
+          unit_price_ht: 0,
+          discount_percentage: 0,
+          pricing_source: 'base_catalog' as const,
+          original_price_ht: 0,
+          auto_calculated: false,
+        };
+      }
+
+      const { data: rawData, error } = rpcResult;
 
       if (error) {
         console.error('Erreur calcul pricing V2:', error);
@@ -2036,7 +2045,7 @@ export function SalesOrderFormModal({
                                           parseInt(e.target.value) || 1
                                         ).catch(console.error);
                                       }}
-                                      className="w-16 h-8 text-sm"
+                                      className="w-full h-8 text-sm"
                                       disabled={loading}
                                     />
                                   </TableCell>
@@ -2055,7 +2064,7 @@ export function SalesOrderFormModal({
                                         ).catch(console.error);
                                       }}
                                       className={cn(
-                                        'w-24 h-8 text-sm',
+                                        'w-full h-8 text-sm',
                                         !isPriceEditable &&
                                           'bg-muted cursor-not-allowed'
                                       )}
@@ -2082,7 +2091,7 @@ export function SalesOrderFormModal({
                                           parseFloat(e.target.value) || 0
                                         ).catch(console.error);
                                       }}
-                                      className="w-20 h-8 text-sm"
+                                      className="w-full h-8 text-sm"
                                       disabled={loading}
                                     />
                                   </TableCell>
@@ -2100,7 +2109,7 @@ export function SalesOrderFormModal({
                                           parseFloat(e.target.value) || 0
                                         ).catch(console.error);
                                       }}
-                                      className="w-20 h-8 text-sm"
+                                      className="w-full h-8 text-sm"
                                       disabled={loading}
                                     />
                                   </TableCell>
