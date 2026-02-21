@@ -178,30 +178,11 @@ export const ProductInfoSection = React.memo(
 
     return (
       <div className={cn('space-y-3', className)}>
-        {/* Row 1: Nom + SKU */}
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <Label className="text-xs text-neutral-600 mb-1">
-              Nom du produit
-            </Label>
+        {/* Header row with Modifier button */}
+        {isNameEditable && onUpdate && (
+          <div className="flex items-center justify-end">
             {isEditingName ? (
               <div className="flex items-center gap-1">
-                <input
-                  type="text"
-                  value={editedName}
-                  onChange={e => setEditedName(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  onBlur={() => {
-                    void handleSaveName().catch(console.error);
-                  }}
-                  autoFocus
-                  className={cn(
-                    'flex-1 px-2 py-1.5 text-sm border border-primary-500 rounded-md',
-                    'focus:outline-none focus:ring-2 focus:ring-primary-500',
-                    'transition-all duration-150'
-                  )}
-                  disabled={isSaving}
-                />
                 <ButtonV2
                   size="sm"
                   variant="ghost"
@@ -211,7 +192,7 @@ export const ProductInfoSection = React.memo(
                   }}
                   disabled={isSaving}
                 >
-                  <Check className="h-3 w-3 text-green-600" />
+                  <Check className="h-3.5 w-3.5 text-green-600" />
                 </ButtonV2>
                 <ButtonV2
                   size="sm"
@@ -220,25 +201,46 @@ export const ProductInfoSection = React.memo(
                   onClick={handleCancelEdit}
                   disabled={isSaving}
                 >
-                  <X className="h-3 w-3 text-red-600" />
+                  <X className="h-3.5 w-3.5 text-red-500" />
                 </ButtonV2>
               </div>
             ) : (
-              <div className="flex items-center gap-2">
-                <p className="text-sm font-medium text-neutral-900 flex-1 truncate">
-                  {product.name || 'Sans nom'}
-                </p>
-                {isNameEditable && onUpdate && (
-                  <ButtonV2
-                    size="sm"
-                    variant="ghost"
-                    className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                    onClick={() => setIsEditingName(true)}
-                  >
-                    <Edit2 className="h-3 w-3" />
-                  </ButtonV2>
+              <ButtonV2
+                size="sm"
+                variant="outline"
+                onClick={() => setIsEditingName(true)}
+              >
+                <Edit2 className="h-3.5 w-3.5 mr-1.5" />
+                Modifier
+              </ButtonV2>
+            )}
+          </div>
+        )}
+
+        {/* Row 1: Nom + SKU */}
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <Label className="text-xs text-neutral-600 mb-1">
+              Nom du produit
+            </Label>
+            {isEditingName ? (
+              <input
+                type="text"
+                value={editedName}
+                onChange={e => setEditedName(e.target.value)}
+                onKeyDown={handleKeyDown}
+                autoFocus
+                className={cn(
+                  'w-full px-2 py-1.5 text-sm border border-primary-500 rounded-md',
+                  'focus:outline-none focus:ring-2 focus:ring-primary-500',
+                  'transition-all duration-150'
                 )}
-              </div>
+                disabled={isSaving}
+              />
+            ) : (
+              <p className="text-sm font-medium text-neutral-900 truncate">
+                {product.name || 'Sans nom'}
+              </p>
             )}
             {product.variant_group_id && (
               <p className="text-xs text-blue-600 mt-0.5">
