@@ -236,6 +236,9 @@ export function SalesOrderFormModal({
   // Form data
   const [selectedCustomer, setSelectedCustomer] =
     useState<UnifiedCustomer | null>(null);
+  const [orderDate, setOrderDate] = useState<string>(
+    new Date().toISOString().split('T')[0]
+  );
   const [expectedDeliveryDate, setExpectedDeliveryDate] = useState<
     string | null
   >(null);
@@ -397,6 +400,9 @@ export function SalesOrderFormModal({
         setSelectedCustomer(customer);
 
         // Charger les données de la commande
+        setOrderDate(
+          order.order_date ?? new Date().toISOString().split('T')[0]
+        );
         setExpectedDeliveryDate(order.expected_delivery_date ?? null);
         setShippingAddress(extractAddress(order.shipping_address));
         setBillingAddress(extractAddress(order.billing_address));
@@ -657,6 +663,7 @@ export function SalesOrderFormModal({
     setSelectedSalesChannel(null);
     // Reset form data
     setSelectedCustomer(null);
+    setOrderDate(new Date().toISOString().split('T')[0]);
     setExpectedDeliveryDate(null);
     setShippingAddress('');
     setBillingAddress('');
@@ -1065,6 +1072,7 @@ export function SalesOrderFormModal({
       if (mode === 'edit' && orderId) {
         // Mode édition : mettre à jour la commande existante
         const updateData = {
+          order_date: orderDate,
           expected_delivery_date: expectedDeliveryDate ?? undefined,
           shipping_address: shippingAddress
             ? { address: shippingAddress }
@@ -1092,6 +1100,7 @@ export function SalesOrderFormModal({
             selectedCustomer.type === 'professional'
               ? 'organization'
               : 'individual',
+          order_date: orderDate,
           expected_delivery_date: expectedDeliveryDate ?? undefined,
           shipping_address: shippingAddress
             ? { address: shippingAddress }
@@ -1779,6 +1788,17 @@ export function SalesOrderFormModal({
                     )}
 
                     <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="orderDate">Date de commande *</Label>
+                        <Input
+                          id="orderDate"
+                          type="date"
+                          value={orderDate}
+                          onChange={e => setOrderDate(e.target.value)}
+                          disabled={loading}
+                        />
+                      </div>
+
                       <div className="space-y-2">
                         <Label htmlFor="deliveryDate">
                           Date de livraison prévue

@@ -205,6 +205,7 @@ export interface SalesOrderItem {
 export interface CreateSalesOrderData {
   customer_id: string;
   customer_type: 'organization' | 'individual';
+  order_date?: string | null;
   channel_id?: string | null; // 🆕 Canal vente (optional - si null, pas de traçabilité stock)
   eco_tax_vat_rate?: number | null;
   expected_delivery_date?: string;
@@ -1151,6 +1152,7 @@ export function useSalesOrders() {
               order_number: soNumber,
               customer_id: data.customer_id,
               customer_type: data.customer_type,
+              order_date: data.order_date || null,
               channel_id: data.channel_id || null, // 🆕 Canal vente pour traçabilité stock
               expected_delivery_date: data.expected_delivery_date || null,
               shipping_address: data.shipping_address,
