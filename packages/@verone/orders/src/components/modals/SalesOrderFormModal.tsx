@@ -814,36 +814,20 @@ export function SalesOrderFormModal({
     }
 
     try {
-      // Appel Supabase RPC calculate_product_price_v2
-      // RPC non typée dans Database types - utiliser helper pour appel non typé
-      const rpcCall = supabase.rpc as unknown as (
-        fn: string,
-        params: Record<string, unknown>
-      ) => Promise<{ data: unknown; error: { message: string } | null }>;
-
-      const rpcResult = await rpcCall('calculate_product_price_v2', {
-        p_product_id: productId,
-        p_quantity: quantity,
-        p_channel_id: channelId, // Canal sélectionné dans le formulaire
-        p_customer_id: selectedCustomer.id,
-        p_customer_type:
-          selectedCustomer.type === 'professional'
-            ? 'organization'
-            : 'individual',
-        p_date: new Date().toISOString().split('T')[0],
-      });
-
-      if (!rpcResult) {
-        return {
-          unit_price_ht: 0,
-          discount_percentage: 0,
-          pricing_source: 'base_catalog' as const,
-          original_price_ht: 0,
-          auto_calculated: false,
-        };
-      }
-
-      const { data: rawData, error } = rpcResult;
+      const { data: rawData, error } = await supabase.rpc(
+        'calculate_product_price_v2',
+        {
+          p_product_id: productId,
+          p_quantity: quantity,
+          p_channel_id: channelId ?? undefined,
+          p_customer_id: selectedCustomer.id,
+          p_customer_type:
+            selectedCustomer.type === 'professional'
+              ? 'organization'
+              : 'individual',
+          p_date: new Date().toISOString().split('T')[0],
+        }
+      );
 
       if (error) {
         console.error('Erreur calcul pricing V2:', error);
