@@ -3915,6 +3915,105 @@ export type Database = {
           },
         ];
       };
+      linkme_info_requests: {
+        Row: {
+          cancelled_at: string | null;
+          cancelled_reason: string | null;
+          completed_at: string | null;
+          completed_by_email: string | null;
+          created_at: string | null;
+          custom_message: string | null;
+          id: string;
+          recipient_email: string;
+          recipient_name: string | null;
+          recipient_type: string;
+          requested_fields: Json;
+          sales_order_id: string;
+          sent_at: string;
+          sent_by: string | null;
+          submitted_data: Json | null;
+          token: string;
+          token_expires_at: string;
+          updated_at: string | null;
+        };
+        Insert: {
+          cancelled_at?: string | null;
+          cancelled_reason?: string | null;
+          completed_at?: string | null;
+          completed_by_email?: string | null;
+          created_at?: string | null;
+          custom_message?: string | null;
+          id?: string;
+          recipient_email: string;
+          recipient_name?: string | null;
+          recipient_type: string;
+          requested_fields: Json;
+          sales_order_id: string;
+          sent_at?: string;
+          sent_by?: string | null;
+          submitted_data?: Json | null;
+          token?: string;
+          token_expires_at?: string;
+          updated_at?: string | null;
+        };
+        Update: {
+          cancelled_at?: string | null;
+          cancelled_reason?: string | null;
+          completed_at?: string | null;
+          completed_by_email?: string | null;
+          created_at?: string | null;
+          custom_message?: string | null;
+          id?: string;
+          recipient_email?: string;
+          recipient_name?: string | null;
+          recipient_type?: string;
+          requested_fields?: Json;
+          sales_order_id?: string;
+          sent_at?: string;
+          sent_by?: string | null;
+          submitted_data?: Json | null;
+          token?: string;
+          token_expires_at?: string;
+          updated_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'linkme_info_requests_sales_order_id_fkey';
+            columns: ['sales_order_id'];
+            isOneToOne: false;
+            referencedRelation: 'affiliate_pending_orders';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'linkme_info_requests_sales_order_id_fkey';
+            columns: ['sales_order_id'];
+            isOneToOne: false;
+            referencedRelation: 'linkme_orders_enriched';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'linkme_info_requests_sales_order_id_fkey';
+            columns: ['sales_order_id'];
+            isOneToOne: false;
+            referencedRelation: 'linkme_orders_with_margins';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'linkme_info_requests_sales_order_id_fkey';
+            columns: ['sales_order_id'];
+            isOneToOne: false;
+            referencedRelation: 'sales_orders';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'linkme_info_requests_sales_order_id_fkey';
+            columns: ['sales_order_id'];
+            isOneToOne: false;
+            referencedRelation: 'v_transactions_missing_invoice';
+            referencedColumns: ['sales_order_id'];
+          },
+        ];
+      };
       linkme_page_configurations: {
         Row: {
           config: Json;
@@ -7050,7 +7149,7 @@ export type Database = {
           created_by: string;
           created_by_affiliate_id: string | null;
           currency: string;
-          customer_id: string;
+          customer_id: string | null;
           customer_type: string;
           delivered_at: string | null;
           delivered_by: string | null;
@@ -7116,7 +7215,7 @@ export type Database = {
           created_by: string;
           created_by_affiliate_id?: string | null;
           currency?: string;
-          customer_id: string;
+          customer_id?: string | null;
           customer_type: string;
           delivered_at?: string | null;
           delivered_by?: string | null;
@@ -7182,7 +7281,7 @@ export type Database = {
           created_by?: string;
           created_by_affiliate_id?: string | null;
           currency?: string;
-          customer_id?: string;
+          customer_id?: string | null;
           customer_type?: string;
           delivered_at?: string | null;
           delivered_by?: string | null;
@@ -7250,6 +7349,13 @@ export type Database = {
             columns: ['created_by_affiliate_id'];
             isOneToOne: false;
             referencedRelation: 'linkme_affiliates';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'sales_orders_customer_id_fkey';
+            columns: ['customer_id'];
+            isOneToOne: false;
+            referencedRelation: 'organisations';
             referencedColumns: ['id'];
           },
           {
@@ -8805,6 +8911,13 @@ export type Database = {
             referencedColumns: ['id'];
           },
           {
+            foreignKeyName: 'sales_orders_customer_id_fkey';
+            columns: ['customer_id'];
+            isOneToOne: false;
+            referencedRelation: 'organisations';
+            referencedColumns: ['id'];
+          },
+          {
             foreignKeyName: 'sales_orders_delivery_contact_id_fkey';
             columns: ['delivery_contact_id'];
             isOneToOne: false;
@@ -9257,6 +9370,13 @@ export type Database = {
             referencedRelation: 'sales_channels';
             referencedColumns: ['id'];
           },
+          {
+            foreignKeyName: 'sales_orders_customer_id_fkey';
+            columns: ['customer_id'];
+            isOneToOne: false;
+            referencedRelation: 'organisations';
+            referencedColumns: ['id'];
+          },
         ];
       };
       linkme_orders_with_margins: {
@@ -9291,6 +9411,13 @@ export type Database = {
             columns: ['channel_id'];
             isOneToOne: false;
             referencedRelation: 'sales_channels';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'sales_orders_customer_id_fkey';
+            columns: ['customer_id'];
+            isOneToOne: false;
+            referencedRelation: 'organisations';
             referencedColumns: ['id'];
           },
         ];
@@ -9855,6 +9982,13 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'v_transactions_missing_invoice';
             referencedColumns: ['financial_document_id'];
+          },
+          {
+            foreignKeyName: 'sales_orders_customer_id_fkey';
+            columns: ['customer_id'];
+            isOneToOne: false;
+            referencedRelation: 'organisations';
+            referencedColumns: ['id'];
           },
         ];
       };
@@ -10430,10 +10564,12 @@ export type Database = {
           p_city?: string;
           p_country?: string;
           p_email?: string;
+          p_enseigne_id?: string;
           p_is_new_restaurant?: boolean;
           p_latitude?: number;
           p_legal_name: string;
           p_longitude?: number;
+          p_ownership_type?: string;
           p_phone?: string;
           p_postal_code?: string;
           p_trade_name?: string;
@@ -11198,15 +11334,50 @@ export type Database = {
       get_linkme_orders: {
         Args: { p_channel_id?: string; p_limit?: number; p_offset?: number };
         Returns: {
+          affiliate_display_name: string;
+          affiliate_id: string;
+          affiliate_total_ht: number;
+          affiliate_type: string;
+          billing_address: Json;
           channel: Json;
           created_at: string;
           customer: Json;
+          handling_cost_ht: number;
           id: string;
+          insurance_cost_ht: number;
           items: Json;
+          ld_billing_email: string;
+          ld_billing_name: string;
+          ld_billing_phone: string;
+          ld_confirmed_delivery_date: string;
+          ld_delivery_address: string;
+          ld_delivery_city: string;
+          ld_delivery_contact_email: string;
+          ld_delivery_contact_name: string;
+          ld_delivery_contact_phone: string;
+          ld_delivery_notes: string;
+          ld_delivery_postal_code: string;
+          ld_desired_delivery_date: string;
+          ld_is_mall_delivery: boolean;
+          ld_owner_type: string;
+          ld_reception_contact_email: string;
+          ld_reception_contact_name: string;
+          ld_reception_contact_phone: string;
+          ld_requester_email: string;
+          ld_requester_name: string;
+          ld_requester_phone: string;
+          ld_requester_position: string;
           order_number: string;
+          payment_status: string;
+          pending_admin_validation: boolean;
+          selection_id: string;
+          selection_name: string;
+          shipping_address: Json;
+          shipping_cost_ht: number;
           status: Database['public']['Enums']['sales_order_status'];
           total_ht: number;
           total_ttc: number;
+          updated_at: string;
         }[];
       };
       get_linkme_products_by_year: {
@@ -12541,6 +12712,7 @@ export type Database = {
         | 'mezzanine'
         | 'sous_sol';
       sales_order_status:
+        | 'pending_approval'
         | 'draft'
         | 'validated'
         | 'partially_shipped'
@@ -12902,6 +13074,7 @@ export const Constants = {
         'sous_sol',
       ],
       sales_order_status: [
+        'pending_approval',
         'draft',
         'validated',
         'partially_shipped',

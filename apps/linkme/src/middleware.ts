@@ -32,7 +32,10 @@ const PUBLIC_ROUTES: RegExp[] = [
   // Routes dynamiques publiques (catalogues white-label, delivery links)
   /^\/s\//,
   /^\/delivery-info\//,
+  // Formulaire web infos manquantes (magic link, pas besoin de login)
+  /^\/complete-info\//,
   // API publiques
+  /^\/api\/complete-info\//,
   /^\/api\/auth/,
   /^\/api\/health/,
   /^\/api\/globe-items/,

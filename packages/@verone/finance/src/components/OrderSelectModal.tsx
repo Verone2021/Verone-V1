@@ -94,7 +94,7 @@ interface OrderListItem {
   payment_terms: string;
   status: string;
   created_at: string;
-  customer_id: string;
+  customer_id: string | null;
   customer_type: string;
   customer_name: string;
   customer_email: string | null;
@@ -153,10 +153,12 @@ export function OrderSelectModal({
       // Collecter les IDs de clients par type
       const orgIds = ordersData
         .filter(o => o.customer_type === 'organisation')
-        .map(o => o.customer_id);
+        .map(o => o.customer_id)
+        .filter((id): id is string => id !== null);
       const indivIds = ordersData
         .filter(o => o.customer_type === 'individual')
-        .map(o => o.customer_id);
+        .map(o => o.customer_id)
+        .filter((id): id is string => id !== null);
 
       // Fetch organisations
       const orgMap = new Map<string, { name: string; email: string | null }>();
@@ -201,9 +203,9 @@ export function OrderSelectModal({
       const allOrders: OrderListItem[] = ordersData.map(order => {
         let customerInfo = { name: 'Client', email: null as string | null };
 
-        if (order.customer_type === 'organisation') {
+        if (order.customer_type === 'organisation' && order.customer_id) {
           customerInfo = orgMap.get(order.customer_id) || customerInfo;
-        } else if (order.customer_type === 'individual') {
+        } else if (order.customer_type === 'individual' && order.customer_id) {
           customerInfo = indivMap.get(order.customer_id) || customerInfo;
         }
 

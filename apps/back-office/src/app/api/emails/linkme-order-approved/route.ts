@@ -1,12 +1,14 @@
 /**
  * API Route: POST /api/emails/linkme-order-approved
- * Envoie l'email d'approbation avec le lien Étape 4
+ * Sends approval email with Step 4 link
  */
 
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 import { Resend } from 'resend';
+
+import { buildEmailHtml } from '../_shared/email-template';
 
 function getResendClient(): Resend {
   const apiKey = process.env.RESEND_API_KEY;
@@ -49,89 +51,61 @@ export async function POST(request: NextRequest) {
       process.env.LINKME_PUBLIC_URL ?? 'https://linkme.verone.fr';
     const step4Url = `${linkmeUrl}/delivery-info/${step4Token}`;
 
-    const emailSubject = `Votre commande ${orderNumber} a été approuvée - Action requise`;
+    const formattedTotal = new Intl.NumberFormat('fr-FR', {
+      style: 'currency',
+      currency: 'EUR',
+    }).format(totalTtc);
 
-    const emailHtml = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-  <div style="background-color: #ecfdf5; padding: 30px; border-radius: 8px; border-left: 4px solid #10b981;">
-    <h1 style="color: #065f46; font-size: 22px; margin: 0 0 20px 0;">
-      Commande approuvée
-    </h1>
-
-    <p style="margin-bottom: 20px;">
-      Bonjour ${ownerName},
-    </p>
-
-    <p style="margin-bottom: 20px;">
-      Votre commande <strong>${orderNumber}</strong>${organisationName ? ` pour ${organisationName}` : ''} a été approuvée.
-    </p>
-
-    <div style="background-color: #ffffff; padding: 20px; border-radius: 6px; margin: 20px 0;">
-      <table style="width: 100%; border-collapse: collapse;">
-        <tr>
-          <td style="padding: 10px 0; color: #666;">Numéro de commande</td>
-          <td style="padding: 10px 0; text-align: right; font-weight: bold;">${orderNumber}</td>
-        </tr>
-        ${
-          organisationName
-            ? `
-        <tr>
-          <td style="padding: 10px 0; color: #666;">Restaurant</td>
-          <td style="padding: 10px 0; text-align: right;">${organisationName}</td>
-        </tr>
-        `
-            : ''
-        }
-        <tr style="border-top: 1px solid #eee;">
-          <td style="padding: 12px 0; color: #666;">Montant TTC</td>
-          <td style="padding: 12px 0; text-align: right; font-size: 18px; font-weight: bold; color: #059669;">
-            ${new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(totalTtc)}
-          </td>
-        </tr>
-      </table>
-    </div>
-
-    <div style="background-color: #fef3c7; border: 1px solid #fcd34d; padding: 15px; border-radius: 6px; margin: 20px 0;">
-      <p style="margin: 0; color: #92400e; font-weight: bold;">
-        Action requise
+    const bodyHtml = `
+      <p style="margin: 0 0 20px 0;">
+        Votre commande <strong>${orderNumber}</strong>${organisationName ? ` pour <strong>${organisationName}</strong>` : ''} a &eacute;t&eacute; approuv&eacute;e.
       </p>
-      <p style="margin: 10px 0 0 0; color: #78350f;">
-        Veuillez compléter les informations de livraison en cliquant sur le bouton ci-dessous.
-      </p>
-    </div>
 
-    <div style="text-align: center; margin: 30px 0;">
-      <a href="${step4Url}"
-         style="display: inline-block; background-color: #10b981; color: white; padding: 14px 28px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 16px;">
-        Compléter les informations de livraison
-      </a>
-    </div>
+      <div style="background-color: #ffffff; padding: 20px; border-radius: 6px; margin: 20px 0;">
+        <table style="width: 100%; border-collapse: collapse;">
+          <tr>
+            <td style="padding: 10px 0; color: #666;">Num&eacute;ro de commande</td>
+            <td style="padding: 10px 0; text-align: right; font-weight: bold;">${orderNumber}</td>
+          </tr>
+          ${
+            organisationName
+              ? `<tr>
+            <td style="padding: 10px 0; color: #666;">Restaurant</td>
+            <td style="padding: 10px 0; text-align: right;">${organisationName}</td>
+          </tr>`
+              : ''
+          }
+          <tr style="border-top: 1px solid #eee;">
+            <td style="padding: 12px 0; color: #666;">Montant TTC</td>
+            <td style="padding: 12px 0; text-align: right; font-size: 18px; font-weight: bold; color: #059669;">
+              ${formattedTotal}
+            </td>
+          </tr>
+        </table>
+      </div>
 
-    <p style="color: #666; font-size: 14px;">
-      Ce lien est valable 30 jours. Si vous avez des questions, n'hésitez pas à nous contacter.
-    </p>
+      <div style="background-color: #fef3c7; border: 1px solid #fcd34d; padding: 15px; border-radius: 6px; margin: 20px 0;">
+        <p style="margin: 0; color: #92400e; font-weight: bold;">Action requise</p>
+        <p style="margin: 10px 0 0 0; color: #78350f;">
+          Veuillez compl&eacute;ter les informations de livraison en cliquant sur le bouton ci-dessous.
+        </p>
+      </div>`;
 
-    <hr style="border: none; border-top: 1px solid #a7f3d0; margin: 30px 0;">
-
-    <p style="color: #065f46; font-size: 12px; text-align: center;">
-      Verone - Décoration et mobilier d'intérieur
-    </p>
-  </div>
-</body>
-</html>
-    `;
+    const emailHtml = buildEmailHtml({
+      title: 'Commande approuv\u00e9e',
+      recipientName: ownerName,
+      accentColor: 'green',
+      bodyHtml,
+      ctaUrl: step4Url,
+      ctaLabel: 'Compl\u00e9ter les informations de livraison',
+      footerNote: 'Ce lien est valable 30 jours.',
+    });
 
     const resendClient = getResendClient();
     const { data, error } = await resendClient.emails.send({
       from: process.env.RESEND_FROM_EMAIL ?? 'commandes@verone.fr',
       to: ownerEmail,
-      subject: emailSubject,
+      subject: `Votre commande ${orderNumber} a \u00e9t\u00e9 approuv\u00e9e - Action requise`,
       html: emailHtml,
     });
 

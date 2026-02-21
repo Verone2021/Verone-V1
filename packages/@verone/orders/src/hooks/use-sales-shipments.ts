@@ -154,7 +154,7 @@ export function useSalesShipments() {
         let customerName = 'Client inconnu';
         let organisationData: any = null;
 
-        if (data.customer_type === 'organization') {
+        if (data.customer_type === 'organization' && data.customer_id) {
           const { data: org } = await supabase
             .from('organisations')
             .select(
@@ -167,7 +167,10 @@ export function useSalesShipments() {
             customerName = getOrganisationDisplayName(org);
             organisationData = org;
           }
-        } else if (data.customer_type === 'individual_customer') {
+        } else if (
+          data.customer_type === 'individual_customer' &&
+          data.customer_id
+        ) {
           const { data: indiv } = await supabase
             .from('individual_customers')
             .select('first_name, last_name')

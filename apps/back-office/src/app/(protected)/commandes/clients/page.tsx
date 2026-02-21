@@ -17,7 +17,7 @@ import { useState } from 'react';
 
 import Link from 'next/link';
 
-import { SalesOrdersTable } from '@verone/orders';
+import { SalesOrdersTable, CreateLinkMeOrderModal } from '@verone/orders';
 import {
   ButtonUnified,
   Select,
@@ -96,6 +96,19 @@ export default function SalesOrdersClientsPage() {
           amount: true,
           orderNumber: true,
         }}
+        renderCreateModal={
+          channelFilter === 'linkme'
+            ? ({ open, onClose, onSuccess }) => (
+                <CreateLinkMeOrderModal
+                  isOpen={open}
+                  onClose={() => {
+                    onClose();
+                    onSuccess();
+                  }}
+                />
+              )
+            : undefined
+        }
       />
     </div>
   );

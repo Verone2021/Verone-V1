@@ -18,12 +18,17 @@ export type MissingFieldCategory =
   | 'responsable'
   | 'billing'
   | 'delivery'
+  | 'organisation'
   | 'custom';
+
+export type MissingFieldInputType = 'text' | 'email' | 'tel' | 'date';
 
 export interface MissingField {
   key: string;
   label: string;
   category: MissingFieldCategory;
+  /** Input type for dynamic form rendering */
+  inputType: MissingFieldInputType;
 }
 
 export interface MissingFieldsResult {
@@ -31,10 +36,62 @@ export interface MissingFieldsResult {
   fields: MissingField[];
   /** Champs manquants groupés par catégorie */
   byCategory: Record<MissingFieldCategory, MissingField[]>;
-  /** Nombre total de champs manquants */
+  /** Nombre total de sous-champs manquants (pour détail technique) */
   total: number;
+  /** Nombre de catégories avec au moins 1 champ manquant (pour badge UX) */
+  totalCategories: number;
   /** true si aucun champ manquant */
   isComplete: boolean;
+}
+
+// ============================================
+// LABELS & MESSAGE COMBINÉ
+// ============================================
+
+/** Labels UI pour chaque catégorie (hors 'custom') */
+export const CATEGORY_LABELS: Record<MissingFieldCategory, string> = {
+  responsable: 'Contact responsable',
+  billing: 'Contact facturation',
+  delivery: 'Contact & adresse livraison',
+  organisation: 'Informations entreprise',
+  custom: 'Message personnalisé',
+};
+
+/**
+ * Génère un message combiné à partir des catégories sélectionnées.
+ * Chaque catégorie produit une section listant ses champs manquants.
+ */
+export function generateCombinedMessage(
+  missingFields: MissingFieldsResult,
+  selectedCategories: Set<MissingFieldCategory>
+): string {
+  const sections: string[] = [];
+
+  const categoryOrder: MissingFieldCategory[] = [
+    'responsable',
+    'billing',
+    'delivery',
+    'organisation',
+  ];
+
+  for (const cat of categoryOrder) {
+    if (!selectedCategories.has(cat)) continue;
+    const fields = missingFields.byCategory[cat];
+    if (fields.length === 0) continue;
+
+    const fieldsList = fields.map(f => `  - ${f.label}`).join('\n');
+    sections.push(`${CATEGORY_LABELS[cat]} :\n${fieldsList}`);
+  }
+
+  if (sections.length === 0) return '';
+
+  return `Bonjour,
+
+Pour traiter votre commande, nous avons besoin des informations suivantes :
+
+${sections.join('\n\n')}
+
+Merci de nous transmettre ces informations dans les meilleurs délais.`;
 }
 
 // ============================================
@@ -109,6 +166,25 @@ Merci de nous transmettre ces informations dans les meilleurs délais.`;
     },
   },
   {
+    id: 'organisation_info',
+    category: 'organisation',
+    label: 'Informations entreprise',
+    description: "Demander les informations légales de l'entreprise",
+    getMessage: fields => {
+      const fieldsList = fields
+        .filter(f => f.category === 'organisation')
+        .map(f => `  - ${f.label}`)
+        .join('\n');
+      return `Bonjour,
+
+Pour finaliser le dossier de votre commande, nous avons besoin des informations suivantes concernant votre entreprise :
+
+${fieldsList || '  - SIRET'}
+
+Merci de nous transmettre ces informations dans les meilleurs délais.`;
+    },
+  },
+  {
     id: 'custom',
     category: 'custom',
     label: 'Message personnalisé',
@@ -163,68 +239,124 @@ export const REJECT_REASON_TEMPLATES: RejectReasonTemplate[] = [
 // ANALYSE DES CHAMPS MANQUANTS
 // ============================================
 
+export interface GetOrderMissingFieldsOptions {
+  details: LinkMeOrderDetails | null;
+  /** SIRET from the linked organisation (pass null/undefined if unknown) */
+  organisationSiret?: string | null;
+  /** Type de restaurant (propre/succursale/franchise) - owner fields requis uniquement pour franchises */
+  ownerType?: string | null;
+}
+
 /**
  * Analyse les détails LinkMe d'une commande et retourne les champs manquants.
  *
- * @param details - Les détails LinkMe (peut être null si pas encore créés)
+ * @param options - Détails LinkMe + contexte organisation
  * @returns Résultat structuré avec champs manquants par catégorie
  */
 export function getOrderMissingFields(
-  details: LinkMeOrderDetails | null
+  options: GetOrderMissingFieldsOptions
 ): MissingFieldsResult {
+  const { details, organisationSiret, ownerType } = options;
   const fields: MissingField[] = [];
 
   if (!details) {
-    // Si pas de détails du tout, tout est manquant
     fields.push(
       {
         key: 'requester_name',
-        label: 'Nom du responsable',
+        label: 'Nom du demandeur',
         category: 'responsable',
+        inputType: 'text',
       },
       {
         key: 'requester_email',
-        label: 'Email du responsable',
+        label: 'Email du demandeur',
         category: 'responsable',
+        inputType: 'email',
       },
       {
         key: 'billing_email',
-        label: 'Email de facturation',
+        label: 'Email facturation',
         category: 'billing',
+        inputType: 'email',
       }
     );
     return buildResult(fields);
   }
 
-  // --- Responsable (Section 4) ---
+  // --- Responsable / Demandeur ---
   if (!details.requester_name) {
     fields.push({
       key: 'requester_name',
-      label: 'Nom du responsable',
+      label: 'Nom du demandeur',
       category: 'responsable',
+      inputType: 'text',
     });
   }
   if (!details.requester_email) {
     fields.push({
       key: 'requester_email',
-      label: 'Email du responsable',
+      label: 'Email du demandeur',
       category: 'responsable',
+      inputType: 'email',
     });
   }
   if (!details.requester_phone) {
     fields.push({
       key: 'requester_phone',
-      label: 'Téléphone du responsable',
+      label: 'Téléphone du demandeur',
       category: 'responsable',
+      inputType: 'tel',
     });
   }
 
-  // --- Facturation (Section 5) ---
+  // --- Propriétaire (seulement pour franchises avec contact différent du demandeur) ---
+  // Succursales/propres : l'enseigne EST le propriétaire → pas de contact owner séparé
+  // null = non renseigné → on ne génère PAS de faux manquants
+  if (
+    details.owner_contact_same_as_requester === false &&
+    ownerType === 'franchise'
+  ) {
+    if (!details.owner_name) {
+      fields.push({
+        key: 'owner_name',
+        label: 'Nom du propriétaire',
+        category: 'responsable',
+        inputType: 'text',
+      });
+    }
+    if (!details.owner_email) {
+      fields.push({
+        key: 'owner_email',
+        label: 'Email du propriétaire',
+        category: 'responsable',
+        inputType: 'email',
+      });
+    }
+    if (!details.owner_phone) {
+      fields.push({
+        key: 'owner_phone',
+        label: 'Téléphone du propriétaire',
+        category: 'responsable',
+        inputType: 'tel',
+      });
+    }
+    if (!details.owner_company_legal_name) {
+      fields.push({
+        key: 'owner_company_legal_name',
+        label: 'Raison sociale du propriétaire',
+        category: 'responsable',
+        inputType: 'text',
+      });
+    }
+  }
+
+  // --- Facturation ---
   if (!details.billing_name) {
     fields.push({
       key: 'billing_name',
       label: 'Nom contact facturation',
       category: 'billing',
+      inputType: 'text',
     });
   }
   if (!details.billing_email) {
@@ -232,22 +364,86 @@ export function getOrderMissingFields(
       key: 'billing_email',
       label: 'Email facturation',
       category: 'billing',
+      inputType: 'email',
+    });
+  }
+  if (!details.billing_phone) {
+    fields.push({
+      key: 'billing_phone',
+      label: 'Téléphone facturation',
+      category: 'billing',
+      inputType: 'tel',
     });
   }
 
-  // --- Livraison (Section 6) ---
+  // --- Livraison ---
+  if (!details.delivery_contact_name) {
+    fields.push({
+      key: 'delivery_contact_name',
+      label: 'Nom contact livraison',
+      category: 'delivery',
+      inputType: 'text',
+    });
+  }
+  if (!details.delivery_contact_email) {
+    fields.push({
+      key: 'delivery_contact_email',
+      label: 'Email contact livraison',
+      category: 'delivery',
+      inputType: 'email',
+    });
+  }
+  if (!details.delivery_contact_phone) {
+    fields.push({
+      key: 'delivery_contact_phone',
+      label: 'Téléphone contact livraison',
+      category: 'delivery',
+      inputType: 'tel',
+    });
+  }
   if (!details.delivery_address) {
     fields.push({
       key: 'delivery_address',
       label: 'Adresse de livraison',
       category: 'delivery',
+      inputType: 'text',
     });
   }
-  if (!details.desired_delivery_date) {
+  if (!details.delivery_postal_code) {
     fields.push({
-      key: 'desired_delivery_date',
-      label: 'Date de livraison souhaitée',
+      key: 'delivery_postal_code',
+      label: 'Code postal livraison',
       category: 'delivery',
+      inputType: 'text',
+    });
+  }
+  if (!details.delivery_city) {
+    fields.push({
+      key: 'delivery_city',
+      label: 'Ville livraison',
+      category: 'delivery',
+      inputType: 'text',
+    });
+  }
+  // desired_delivery_date : champ optionnel dans Bubble (date "souhaitée"), pas obligatoire
+
+  // Mall email (only if is_mall_delivery)
+  if (details.is_mall_delivery && !details.mall_email) {
+    fields.push({
+      key: 'mall_email',
+      label: 'Email centre commercial',
+      category: 'delivery',
+      inputType: 'email',
+    });
+  }
+
+  // --- Organisation ---
+  if (!organisationSiret) {
+    fields.push({
+      key: 'organisation_siret',
+      label: 'SIRET',
+      category: 'organisation',
+      inputType: 'text',
     });
   }
 
@@ -262,6 +458,7 @@ function buildResult(fields: MissingField[]): MissingFieldsResult {
     responsable: [],
     billing: [],
     delivery: [],
+    organisation: [],
     custom: [],
   };
 
@@ -269,10 +466,15 @@ function buildResult(fields: MissingField[]): MissingFieldsResult {
     byCategory[field.category].push(field);
   }
 
+  const totalCategories = Object.values(byCategory).filter(
+    arr => arr.length > 0
+  ).length;
+
   return {
     fields,
     byCategory,
     total: fields.length,
+    totalCategories,
     isComplete: fields.length === 0,
   };
 }

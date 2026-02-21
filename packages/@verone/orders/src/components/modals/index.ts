@@ -19,3 +19,4 @@ export {
   type CustomerType,
 } from './customer-selector';
 export { CreateIndividualCustomerModal } from './create-individual-customer-modal';
+export { CreateLinkMeOrderModal } from './CreateLinkMeOrderModal';

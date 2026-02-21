@@ -73,6 +73,12 @@ const nextConfig = {
         destination: '/finance/transactions',
         permanent: true, // 308 redirect (permanent)
       },
+      // Trésorerie: Ancienne URL redirige vers nouvelle structure
+      {
+        source: '/tresorerie',
+        destination: '/finance/tresorerie',
+        permanent: true,
+      },
     ];
   },
 

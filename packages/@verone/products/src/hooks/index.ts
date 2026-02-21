@@ -14,3 +14,4 @@ export * from './use-product-status';
 export * from './use-products';
 export * from './use-product-primary-image';
 export * from './use-archived-products';
+export * from './use-product-profitability';

@@ -4,3 +4,4 @@
  */
 
 export * from './pdf-utils';
+export * from './linkme-missing-info';

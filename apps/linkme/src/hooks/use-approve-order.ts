@@ -2,7 +2,7 @@
  * Hook: useApproveOrder
  * Approbation des commandes depuis LinkMe
  *
- * Même source de vérité que le back-office (sales_orders.pending_admin_validation)
+ * Même source de vérité que le back-office (sales_orders.status = 'pending_approval')
  * Bidirectionnel: approuvé ici = approuvé dans back-office et vice-versa
  *
  * @module use-approve-order
@@ -33,8 +33,7 @@ export interface IApproveOrderResult {
 
 /**
  * Approuve une commande en attente de validation
- * - Met à jour pending_admin_validation = false
- * - Met à jour status = 'validated'
+ * - Transition: pending_approval -> draft
  */
 async function approveOrderFn(
   input: IApproveOrderInput
@@ -44,7 +43,7 @@ async function approveOrderFn(
   // Vérifier que la commande existe et est en attente
   const { data: order, error: fetchError } = await supabase
     .from('sales_orders')
-    .select('id, order_number, pending_admin_validation, status')
+    .select('id, order_number, status')
     .eq('id', input.orderId)
     .single();
 
@@ -52,16 +51,16 @@ async function approveOrderFn(
     throw new Error(`Commande non trouvée: ${fetchError.message}`);
   }
 
-  if (!order.pending_admin_validation) {
+  if (order.status !== 'pending_approval') {
     throw new Error("Cette commande n'est pas en attente d'approbation");
   }
 
-  // Mettre à jour la commande
+  // Mettre à jour la commande: pending_approval -> draft
   const { error: updateError } = await supabase
     .from('sales_orders')
     .update({
+      status: 'draft',
       pending_admin_validation: false,
-      status: 'validated',
       updated_at: new Date().toISOString(),
     })
     .eq('id', input.orderId);

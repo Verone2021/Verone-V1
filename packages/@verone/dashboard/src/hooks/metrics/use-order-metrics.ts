@@ -104,7 +104,8 @@ export function useOrderMetrics() {
       // Pour les clients individuels seulement, on fait une requête groupée (pas N+1)
       const individualCustomerIds = ordersToFormat
         .filter(o => o.customer_type === 'individual' && o.customer_id)
-        .map(o => o.customer_id);
+        .map(o => o.customer_id)
+        .filter((id): id is string => id !== null);
 
       let individualsMap: Record<
         string,

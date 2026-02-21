@@ -100,6 +100,7 @@ import {
 } from '../types/advanced-filters';
 import type { SalesOrder, SalesOrderStatus } from '../hooks/use-sales-orders';
 import { useSalesOrders } from '../hooks/use-sales-orders';
+import { CreateLinkMeOrderModal } from './modals/CreateLinkMeOrderModal';
 import { OrderDetailModal } from './modals/OrderDetailModal';
 import { SalesOrderFormModal } from './modals/SalesOrderFormModal';
 import { SalesOrderShipmentModal } from './modals/SalesOrderShipmentModal';
@@ -109,6 +110,7 @@ const LINKME_CHANNEL_ID = '93c68db1-5a30-4168-89ec-6383152be405';
 const SITE_INTERNET_CHANNEL_ID = '0c2639e9-df80-41fa-84d0-9da96a128f7f';
 
 const statusLabels: Record<SalesOrderStatus, string> = {
+  pending_approval: "En attente d'approbation",
   draft: 'Brouillon',
   validated: 'Validee',
   partially_shipped: 'Partiellement expediee',
@@ -117,6 +119,7 @@ const statusLabels: Record<SalesOrderStatus, string> = {
 };
 
 const statusColors: Record<SalesOrderStatus, string> = {
+  pending_approval: 'bg-orange-100 text-orange-800',
   draft: 'bg-gray-100 text-gray-800',
   validated: 'bg-blue-100 text-blue-800',
   partially_shipped: 'bg-amber-100 text-amber-800',
@@ -321,6 +324,7 @@ export function SalesOrdersTable({
   const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showLinkMeModal, setShowLinkMeModal] = useState(false);
   const [showShipmentModal, setShowShipmentModal] = useState(false);
   const [orderToShip, setOrderToShip] = useState<SalesOrder | null>(null);
   const [showValidateConfirmation, setShowValidateConfirmation] =
@@ -538,13 +542,27 @@ export function SalesOrdersTable({
                 ? a.organisations?.trade_name ||
                   a.organisations?.legal_name ||
                   ''
-                : `${a.individual_customers?.first_name} ${a.individual_customers?.last_name}`;
+                : a.individual_customers
+                  ? [
+                      a.individual_customers.first_name,
+                      a.individual_customers.last_name,
+                    ]
+                      .filter(Boolean)
+                      .join(' ')
+                  : '';
             const nameB =
               b.customer_type === 'organization'
                 ? b.organisations?.trade_name ||
                   b.organisations?.legal_name ||
                   ''
-                : `${b.individual_customers?.first_name} ${b.individual_customers?.last_name}`;
+                : b.individual_customers
+                  ? [
+                      b.individual_customers.first_name,
+                      b.individual_customers.last_name,
+                    ]
+                      .filter(Boolean)
+                      .join(' ')
+                  : '';
             comparison = nameA.localeCompare(nameB);
             break;
           }
@@ -647,6 +665,8 @@ export function SalesOrdersTable({
   const tabCounts = useMemo(() => {
     return {
       all: orders.length,
+      pending_approval: orders.filter(o => o.status === 'pending_approval')
+        .length,
       draft: orders.filter(o => o.status === 'draft').length,
       validated: orders.filter(o => o.status === 'validated').length,
       shipped: orders.filter(
@@ -1086,8 +1106,11 @@ export function SalesOrdersTable({
               setActiveTab(value as SalesOrderStatus | 'all')
             }
           >
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className="grid w-full grid-cols-6">
               <TabsTrigger value="all">Toutes ({tabCounts.all})</TabsTrigger>
+              <TabsTrigger value="pending_approval">
+                Approbation ({tabCounts.pending_approval})
+              </TabsTrigger>
               <TabsTrigger value="draft">
                 Brouillon ({tabCounts.draft})
               </TabsTrigger>
@@ -1383,8 +1406,16 @@ export function SalesOrdersTable({
                       const customerName =
                         order.customer_type === 'organization'
                           ? order.organisations?.trade_name ||
-                            order.organisations?.legal_name
-                          : `${order.individual_customers?.first_name} ${order.individual_customers?.last_name}`;
+                            order.organisations?.legal_name ||
+                            ''
+                          : order.individual_customers
+                            ? [
+                                order.individual_customers.first_name,
+                                order.individual_customers.last_name,
+                              ]
+                                .filter(Boolean)
+                                .join(' ')
+                            : '';
 
                       const canDelete =
                         order.status === 'draft' ||
@@ -1450,11 +1481,6 @@ export function SalesOrdersTable({
                                 {order.payment_status_v2 === 'paid' ? (
                                   <Badge className="bg-green-100 text-green-800">
                                     Payé
-                                    {order.manual_payment_type && (
-                                      <span className="ml-1 opacity-70">
-                                        (manuel)
-                                      </span>
-                                    )}
                                   </Badge>
                                 ) : (
                                   <DropdownMenu>
@@ -1897,6 +1923,15 @@ export function SalesOrdersTable({
         onSuccess: handleCreateSuccess,
       })}
 
+      {/* Modal LinkMe (quand sélectionné depuis SalesOrderFormModal) */}
+      <CreateLinkMeOrderModal
+        isOpen={showLinkMeModal}
+        onClose={() => {
+          setShowLinkMeModal(false);
+          handleCreateSuccess();
+        }}
+      />
+
       {/* Modal Expedition */}
       {orderToShip && (
         <SalesOrderShipmentModal
@@ -1947,7 +1982,15 @@ export function SalesOrdersTable({
                 order_number: selectedOrderForLink.order_number,
                 customer_name:
                   selectedOrderForLink.organisations?.legal_name ||
-                  `${selectedOrderForLink.individual_customers?.first_name} ${selectedOrderForLink.individual_customers?.last_name}`,
+                  (selectedOrderForLink.individual_customers
+                    ? [
+                        selectedOrderForLink.individual_customers.first_name,
+                        selectedOrderForLink.individual_customers.last_name,
+                      ]
+                        .filter(Boolean)
+                        .join(' ')
+                    : '') ||
+                  'Non défini',
                 total_ttc: selectedOrderForLink.total_ttc,
                 created_at: selectedOrderForLink.created_at,
                 shipped_at: selectedOrderForLink.shipped_at,

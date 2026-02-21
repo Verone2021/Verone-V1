@@ -8,6 +8,7 @@ export * from './components/sections';
 export * from './components/forms';
 export * from './components/charts';
 export * from './components/modals';
+export * from './components/linkme-contacts';
 export type * from './components/shipments';
 
 // SalesOrdersTable - Composant réutilisable pour toutes les pages commandes
