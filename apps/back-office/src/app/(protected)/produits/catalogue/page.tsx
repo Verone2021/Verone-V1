@@ -211,6 +211,7 @@ export default function CataloguePage() {
         subcategories: newFilters.subcategories,
         suppliers: newFilters.suppliers,
         statuses: newFilters.statuses,
+        page: 1, // Reset pagination quand les filtres changent
       });
       syncFiltersToUrl(newFilters, tab ?? activeTab);
     },
@@ -651,7 +652,9 @@ export default function CataloguePage() {
   const dashboardSLO = checkSLOCompliance(startTime, 'dashboard');
 
   // Gestion des états de chargement et erreur
-  if (loading) {
+  // FIX: Ne montrer le spinner plein écran que pour le chargement initial.
+  // Sinon, chaque recherche/filtre démonte l'input et bloque la saisie.
+  if (loading && products.length === 0) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-black opacity-70">Chargement du catalogue...</div>
@@ -1638,15 +1641,23 @@ export default function CataloguePage() {
               : 'product'
           }
           onImagesUpdated={() => {
-            void handleProductUpdated()
-              .then(() => {
-                toast.success('Photo enregistrée', {
-                  description: 'La photo du produit a été mise à jour.',
+            // Ne PAS appeler handleProductUpdated() ici : il ferme le modal via setQuickEditTarget(null).
+            // Le modal doit rester ouvert pour permettre l'ajout de plusieurs photos.
+            // Rafraîchir silencieusement la liste si on est en mode incomplets.
+            if (activeTab === 'incomplete') {
+              void loadIncompleteProductsRef
+                .current({ ...filtersRef.current, page: incompletePage })
+                .then(result => {
+                  setIncompleteProducts(result.products as Product[]);
+                  setIncompleteTotal(result.total);
+                })
+                .catch(err => {
+                  console.error('[QuickEdit] Refresh incompletes failed:', err);
                 });
-              })
-              .catch(err => {
-                console.error('[QuickEdit] Photos updated failed:', err);
-              });
+            }
+            toast.success('Photo enregistrée', {
+              description: 'La photo du produit a été mise à jour.',
+            });
           }}
         />
       )}
