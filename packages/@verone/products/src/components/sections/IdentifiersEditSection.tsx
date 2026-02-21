@@ -191,12 +191,9 @@ export function IdentifiersEditSection({
             <input
               type="text"
               value={editData?.sku || ''}
-              onChange={e =>
-                handleFieldChange('sku', e.target.value.toUpperCase())
-              }
-              className="w-full px-3 py-2 font-mono text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
+              readOnly
+              className="w-full px-3 py-2 font-mono text-sm border border-gray-200 rounded-md bg-gray-50 text-gray-500 cursor-not-allowed"
               placeholder="FAU-0001"
-              required
             />
             <div className="text-xs text-gray-500 mt-1">
               Format Vérone: [3 lettres sous-catégorie]-[4 chiffres] (ex:

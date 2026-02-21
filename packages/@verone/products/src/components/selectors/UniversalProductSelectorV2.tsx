@@ -652,6 +652,37 @@ interface SelectedProductCardProps {
   onUpdateQuantity: (productId: string, quantity: number) => void;
 }
 
+function QuantityInput({
+  value,
+  onChange,
+}: {
+  value: number;
+  onChange: (val: number) => void;
+}) {
+  const [localVal, setLocalVal] = useState(String(value));
+
+  useEffect(() => {
+    setLocalVal(String(value));
+  }, [value]);
+
+  return (
+    <Input
+      type="number"
+      min="1"
+      value={localVal}
+      onChange={e => setLocalVal(e.target.value)}
+      onBlur={() => {
+        const parsed = parseInt(localVal);
+        const final = isNaN(parsed) || parsed < 1 ? 1 : parsed;
+        setLocalVal(String(final));
+        onChange(final);
+      }}
+      onClick={e => e.stopPropagation()}
+      className="w-24 h-7 text-xs"
+    />
+  );
+}
+
 function SelectedProductCard({
   product,
   index,
@@ -699,15 +730,9 @@ function SelectedProductCard({
           {showQuantity && product.quantity && (
             <div className="flex items-center gap-2">
               <Label className="text-xs text-[#6c7293]">Quantité:</Label>
-              <Input
-                type="number"
-                min="1"
+              <QuantityInput
                 value={product.quantity}
-                onChange={e =>
-                  onUpdateQuantity(product.id, parseInt(e.target.value) || 1)
-                }
-                className="w-16 h-7 text-xs"
-                onClick={e => e.stopPropagation()}
+                onChange={val => onUpdateQuantity(product.id, val)}
               />
             </div>
           )}

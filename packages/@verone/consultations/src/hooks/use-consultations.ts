@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 import { useToast } from '@verone/common/hooks';
 import { createClient } from '@verone/utils/supabase/client';
@@ -144,57 +144,61 @@ export function useConsultations() {
   const { toast } = useToast();
 
   // Charger toutes les consultations
-  const fetchConsultations = async (filters?: ConsultationFilters) => {
-    try {
-      setLoading(true);
-      setError(null);
+  const fetchConsultations = useCallback(
+    async (filters?: ConsultationFilters) => {
+      try {
+        setLoading(true);
+        setError(null);
 
-      let query = supabase
-        .from('client_consultations')
-        .select('*')
-        .order('created_at', { ascending: false });
+        let query = supabase
+          .from('client_consultations')
+          .select('*')
+          .is('deleted_at', null)
+          .order('created_at', { ascending: false });
 
-      // Appliquer les filtres
-      if (filters?.status && filters.status !== 'all') {
-        query = query.eq('status', filters.status);
-      }
-      if (filters?.assigned_to) {
-        query = query.eq('assigned_to', filters.assigned_to);
-      }
-      if (filters?.priority_level && filters.priority_level !== 'all') {
-        query = query.eq('priority_level', filters.priority_level);
-      }
-      if (filters?.organisation_name) {
-        query = query.ilike(
-          'organisation_name',
-          `%${filters.organisation_name}%`
-        );
-      }
-      if (filters?.source_channel && filters.source_channel !== 'all') {
-        query = query.eq('source_channel', filters.source_channel);
-      }
-      if (filters?.date_range) {
-        query = query
-          .gte('created_at', filters.date_range.start)
-          .lte('created_at', filters.date_range.end);
-      }
+        // Appliquer les filtres
+        if (filters?.status && filters.status !== 'all') {
+          query = query.eq('status', filters.status);
+        }
+        if (filters?.assigned_to) {
+          query = query.eq('assigned_to', filters.assigned_to);
+        }
+        if (filters?.priority_level && filters.priority_level !== 'all') {
+          query = query.eq('priority_level', filters.priority_level);
+        }
+        if (filters?.organisation_name) {
+          query = query.ilike(
+            'organisation_name',
+            `%${filters.organisation_name}%`
+          );
+        }
+        if (filters?.source_channel && filters.source_channel !== 'all') {
+          query = query.eq('source_channel', filters.source_channel);
+        }
+        if (filters?.date_range) {
+          query = query
+            .gte('created_at', filters.date_range.start)
+            .lte('created_at', filters.date_range.end);
+        }
 
-      const { data, error } = await query;
+        const { data, error } = await query;
 
-      if (error) throw error;
+        if (error) throw error;
 
-      setConsultations((data || []) as any);
-    } catch (err) {
-      const message =
-        err instanceof Error
-          ? err.message
-          : 'Erreur lors du chargement des consultations';
-      setError(message);
-      console.error('Erreur fetchConsultations:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+        setConsultations((data || []) as any);
+      } catch (err) {
+        const message =
+          err instanceof Error
+            ? err.message
+            : 'Erreur lors du chargement des consultations';
+        setError(message);
+        console.error('Erreur fetchConsultations:', err);
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
 
   // Créer une nouvelle consultation
   const createConsultation = async (
@@ -451,13 +455,10 @@ export function useConsultations() {
   };
 
   // Supprimer une consultation (soft delete)
+  // La confirmation doit être gérée par le composant appelant
   const deleteConsultation = async (
     consultationId: string
   ): Promise<boolean> => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer cette consultation ?')) {
-      return false;
-    }
-
     try {
       setError(null);
 

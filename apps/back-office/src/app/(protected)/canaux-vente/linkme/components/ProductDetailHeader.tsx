@@ -2,7 +2,16 @@
 
 import { ProductThumbnail } from '@verone/products';
 import { Badge, Switch, Label } from '@verone/ui';
-import { Package, Eye, Star, Scale, Ruler, Home } from 'lucide-react';
+import {
+  Package,
+  Eye,
+  Star,
+  Scale,
+  Ruler,
+  Home,
+  ExternalLink,
+} from 'lucide-react';
+import Link from 'next/link';
 
 import type { LinkMeProductDetail } from '../types';
 
@@ -30,8 +39,19 @@ export function ProductDetailHeader({
           className="rounded-lg"
         />
         <div className="flex-1 space-y-2">
-          <h1 className="text-2xl font-bold">{product.name}</h1>
-          <p className="text-muted-foreground font-mono">{product.sku}</p>
+          <div className="flex items-start justify-between">
+            <div>
+              <h1 className="text-2xl font-bold">{product.name}</h1>
+              <p className="text-muted-foreground font-mono">{product.sku}</p>
+            </div>
+            <Link
+              href={`/produits/catalogue/${product.product_id}`}
+              className="inline-flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 hover:underline transition-colors shrink-0"
+            >
+              Voir fiche produit
+              <ExternalLink className="h-4 w-4" />
+            </Link>
+          </div>
 
           <div className="flex gap-2 flex-wrap">
             {/* Badge stock */}

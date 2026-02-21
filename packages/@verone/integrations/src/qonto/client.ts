@@ -611,6 +611,7 @@ export class QontoClient {
       {
         client_id: params.clientId,
         currency: params.currency || 'EUR',
+        status: params.status || 'draft',
         issue_date: params.issueDate,
         due_date: params.dueDate,
         payment_methods: {
@@ -683,7 +684,7 @@ export class QontoClient {
 
     const response = await this.request<
       QontoApiResponse<{ client_invoice: QontoClientInvoice }>
-    >('PATCH' as any, `/v2/client_invoices/${invoiceId}`, updateData);
+    >('PATCH', `/v2/client_invoices/${invoiceId}`, updateData);
 
     return response.client_invoice;
   }
@@ -862,6 +863,11 @@ export class QontoClient {
   async findClientByEmail(email: string): Promise<QontoClientEntity | null> {
     const { clients } = await this.getClients({ perPage: 100 });
     return clients.find(c => c.email === email) || null;
+  }
+
+  async findClientByName(name: string): Promise<QontoClientEntity | null> {
+    const { clients } = await this.getClients({ perPage: 100 });
+    return clients.find(c => c.name === name) || null;
   }
 
   async findClientByVatNumber(
@@ -1231,57 +1237,9 @@ export class QontoClient {
     return response.credit_note;
   }
 
-  /**
-   * Crée un nouvel avoir client
-   * IMPORTANT: Toujours créé en brouillon (draft)
-   */
-  async createClientCreditNote(
-    params: CreateClientCreditNoteParams,
-    idempotencyKey?: string
-  ): Promise<QontoClientCreditNote> {
-    const key = idempotencyKey || generateIdempotencyKey();
-
-    const response = await this.requestWithIdempotency<
-      QontoApiResponse<{ credit_note: QontoClientCreditNote }>
-    >(
-      'POST',
-      '/v2/credit_notes',
-      {
-        client_id: params.clientId,
-        currency: params.currency || 'EUR',
-        issue_date: params.issueDate,
-        invoice_id: params.invoiceId,
-        reason: params.reason,
-        items: params.items.map(item => ({
-          title: item.title,
-          description: item.description,
-          quantity: item.quantity,
-          unit: item.unit || 'unit',
-          unit_price: {
-            value: item.unitPrice.value,
-            currency: item.unitPrice.currency,
-          },
-          vat_rate: item.vatRate,
-        })),
-      },
-      key
-    );
-
-    return response.credit_note;
-  }
-
-  /**
-   * Finalise un avoir (draft → finalized)
-   * ATTENTION: Action IRRÉVERSIBLE
-   */
-  async finalizeClientCreditNote(
-    creditNoteId: string
-  ): Promise<QontoClientCreditNote> {
-    const response = await this.request<
-      QontoApiResponse<{ credit_note: QontoClientCreditNote }>
-    >('POST', `/v2/credit_notes/${creditNoteId}/finalize`);
-    return response.credit_note;
-  }
+  // NOTE: createClientCreditNote and finalizeClientCreditNote were removed.
+  // The Qonto API does NOT support POST /v2/credit_notes or POST /v2/credit_notes/{id}/finalize.
+  // Credit notes must be created via the Qonto dashboard.
 
   /**
    * Supprime un avoir brouillon
@@ -1322,7 +1280,7 @@ export class QontoClient {
 
     const response = await this.request<
       QontoApiResponse<{ credit_note: QontoClientCreditNote }>
-    >('PATCH' as any, `/v2/credit_notes/${creditNoteId}`, updateData);
+    >('PATCH', `/v2/credit_notes/${creditNoteId}`, updateData);
 
     return response.credit_note;
   }
@@ -1467,7 +1425,7 @@ export class QontoClient {
     // Qonto API uses /v2/quotes (not /v2/client_quotes)
     const response = await this.request<
       QontoApiResponse<{ quote: QontoClientQuote }>
-    >('PATCH' as any, `/v2/quotes/${quoteId}`, updateData);
+    >('PATCH', `/v2/quotes/${quoteId}`, updateData);
 
     return response.quote;
   }
@@ -1542,9 +1500,13 @@ export class QontoClient {
   // HELPERS
   // ===================================================================
 
-  private createErrorFromResponse(status: number, data: any): QontoError {
-    const message =
-      data?.message || data?.error || `Qonto API error (${status})`;
+  private createErrorFromResponse(
+    status: number,
+    data: Record<string, unknown>
+  ): QontoError {
+    const message = String(
+      data?.message || data?.error || `Qonto API error (${status})`
+    );
 
     switch (status) {
       case 400:

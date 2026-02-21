@@ -19,6 +19,13 @@
     "@verone/types": "workspace:*",
     "html2canvas": "^1.4.1",
     "jspdf": "^4.0.0",
-    "resend": "^6.6.0"
+    "maplibre-gl": "^4.7.1",
+    "react-map-gl": "^7.1.9",
+    "resend": "^6.6.0",
+    "supercluster": "^8.0.1"
+  },
+  "devDependencies": {
+    "@types/geojson": "^7946.0.16",
+    "@types/supercluster": "^7.1.3"
   }
 }

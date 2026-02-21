@@ -20,6 +20,15 @@ interface MapPopupCardProps {
   onClose: () => void;
 }
 
+function isValidImageUrl(url: string | null): url is string {
+  if (!url) return false;
+  return (
+    url.startsWith('http://') ||
+    url.startsWith('https://') ||
+    url.startsWith('/')
+  );
+}
+
 function formatAddress(org: MapPopupCardProps['organisation']): {
   line1: string | null;
   line2: string | null;
@@ -56,7 +65,7 @@ export function MapPopupCard({
       <div className="flex items-center gap-3 pr-6">
         {/* Logo */}
         <div className="flex-shrink-0">
-          {organisation.logo_url ? (
+          {isValidImageUrl(organisation.logo_url) ? (
             <div className="relative h-10 w-10 rounded-full overflow-hidden bg-gray-100">
               <Image
                 src={organisation.logo_url}

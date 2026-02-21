@@ -7,4 +7,5 @@ export { CommercialEditSection } from './CommercialEditSection';
 export { EnseigneDetailHeader } from './EnseigneDetailHeader';
 export { EnseigneKPIGrid } from './EnseigneKPIGrid';
 export { EnseigneGeographySection } from './EnseigneGeographySection';
+export { EnseigneMapSection } from './EnseigneMapSection';
 export { EnseigneOrganisationsTable } from './EnseigneOrganisationsTable';

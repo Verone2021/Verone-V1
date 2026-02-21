@@ -1,3 +1,6 @@
+> **Source de verite** : `docs/current/linkme/GUIDE-COMPLET-LINKME.md`
+> Ce fichier est conserve comme resume rapide. En cas de contradiction, le guide unifie fait foi.
+
 # Architecture LinkMe
 
 ---

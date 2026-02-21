@@ -5,7 +5,12 @@ import { useState, useEffect, useMemo, use } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 
-import { PaymentRecordModal, ReconcileTransactionModal } from '@verone/finance';
+import {
+  CreditNoteCreateModal,
+  PaymentRecordModal,
+  ReconcileTransactionModal,
+} from '@verone/finance';
+import type { IInvoiceForCreditNote } from '@verone/finance';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,11 +31,12 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
 } from '@verone/ui';
-import { StatusPill } from '@verone/ui-business';
+import { StatusPill, qontoInvoiceStatusConfig } from '@verone/ui-business';
 import { featureFlags } from '@verone/utils/feature-flags';
 import {
   AlertTriangle,
@@ -93,6 +99,7 @@ interface QontoInvoiceItem {
 
 interface QontoDocument {
   id: string;
+  number?: string;
   // Common fields
   status: string;
   currency: string;
@@ -188,6 +195,28 @@ function calculateTotalsFromItems(items: QontoInvoiceItem[]): {
   };
 }
 
+function getFriendlyErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    const msg = error.message;
+    if (msg.includes('422') || msg.includes('unprocessable'))
+      return 'Action impossible : le document est dans un état incompatible avec cette opération.';
+    if (msg.includes('404') || msg.includes('not found'))
+      return 'Document introuvable.';
+    if (msg.includes('403') || msg.includes('forbidden'))
+      return "Vous n'avez pas les permissions pour cette action.";
+    return msg;
+  }
+  return 'Erreur inconnue';
+}
+
+function isTechnicalEmail(email: string): boolean {
+  return (
+    email.endsWith('@notprovided.qonto.com') ||
+    email.endsWith('@placeholder.qonto.com') ||
+    email === 'noreply@qonto.com'
+  );
+}
+
 function getDocumentTypeLabel(type: DocumentType): string {
   const labels: Record<DocumentType, string> = {
     invoice: 'Facture',
@@ -200,13 +229,13 @@ function getDocumentTypeLabel(type: DocumentType): string {
 function getDocumentNumber(doc: QontoDocument, type: DocumentType): string {
   switch (type) {
     case 'invoice':
-      return doc.invoice_number ?? doc.id;
+      return doc.number ?? doc.invoice_number ?? doc.id;
     case 'quote':
-      return doc.quote_number ?? doc.id;
+      return doc.number ?? doc.quote_number ?? doc.id;
     case 'credit_note':
-      return doc.credit_note_number ?? doc.id;
+      return doc.number ?? doc.credit_note_number ?? doc.id;
     default:
-      return doc.id;
+      return doc.number ?? doc.id;
   }
 }
 
@@ -275,6 +304,8 @@ export default function DocumentDetailPage({
         ? [typeParam]
         : ['invoice', 'quote', 'credit_note'];
 
+      let lastError: string | null = null;
+
       for (const type of typesToTry) {
         try {
           const endpoint =
@@ -289,17 +320,32 @@ export default function DocumentDetailPage({
 
           if (data.success) {
             const doc = data.invoice ?? data.quote ?? data.credit_note ?? null;
-            setDocument(doc);
-            setDocumentType(type);
-            setLoading(false);
-            return;
+            if (doc) {
+              setDocument(doc);
+              setDocumentType(type);
+              setLoading(false);
+              return;
+            }
           }
-        } catch {
-          // Continue to next type
+
+          lastError =
+            data.error ??
+            `Réponse invalide pour ${type} (success=${String(data.success)})`;
+          console.error(
+            `[DocumentDetail] API error for ${type}/${id}:`,
+            lastError
+          );
+        } catch (fetchError) {
+          lastError =
+            fetchError instanceof Error ? fetchError.message : 'Erreur réseau';
+          console.error(
+            `[DocumentDetail] Fetch failed for ${type}/${id}:`,
+            fetchError
+          );
         }
       }
 
-      setError('Document non trouvé');
+      setError(lastError ?? 'Document non trouvé');
       setLoading(false);
     }
 
@@ -331,9 +377,7 @@ export default function DocumentDetailPage({
       toast.success('Document finalisé avec succès');
       window.location.reload();
     } catch (err) {
-      toast.error(
-        `Erreur: ${err instanceof Error ? err.message : 'Erreur inconnue'}`
-      );
+      toast.error(getFriendlyErrorMessage(err));
     } finally {
       setActionLoading(null);
     }
@@ -360,9 +404,7 @@ export default function DocumentDetailPage({
       toast.success('Document supprimé');
       router.push('/factures');
     } catch (err) {
-      toast.error(
-        `Erreur: ${err instanceof Error ? err.message : 'Erreur inconnue'}`
-      );
+      toast.error(getFriendlyErrorMessage(err));
     } finally {
       setActionLoading(null);
     }
@@ -388,40 +430,7 @@ export default function DocumentDetailPage({
         window.location.reload();
       }
     } catch (err) {
-      toast.error(
-        `Erreur: ${err instanceof Error ? err.message : 'Erreur inconnue'}`
-      );
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
-  const handleCreateCreditNote = async () => {
-    if (!document || documentType !== 'invoice') return;
-    setActionLoading('creditNote');
-    setShowCreditNoteDialog(false);
-
-    try {
-      const response = await fetch('/api/qonto/credit-notes', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          invoiceId: id,
-          reason: `Avoir sur facture ${document.invoice_number}`,
-        }),
-      });
-      const data = (await response.json()) as QontoApiResponse;
-
-      if (!data.success) throw new Error(data.error);
-
-      toast.success('Avoir créé en brouillon');
-      if (data.credit_note?.id) {
-        router.push(`/factures/${data.credit_note.id}?type=credit_note`);
-      }
-    } catch (err) {
-      toast.error(
-        `Erreur: ${err instanceof Error ? err.message : 'Erreur inconnue'}`
-      );
+      toast.error(getFriendlyErrorMessage(err));
     } finally {
       setActionLoading(null);
     }
@@ -443,9 +452,7 @@ export default function DocumentDetailPage({
       toast.success('Devis accepté');
       window.location.reload();
     } catch (err) {
-      toast.error(
-        `Erreur: ${err instanceof Error ? err.message : 'Erreur inconnue'}`
-      );
+      toast.error(getFriendlyErrorMessage(err));
     } finally {
       setActionLoading(null);
     }
@@ -467,9 +474,7 @@ export default function DocumentDetailPage({
       toast.success('Devis refusé');
       window.location.reload();
     } catch (err) {
-      toast.error(
-        `Erreur: ${err instanceof Error ? err.message : 'Erreur inconnue'}`
-      );
+      toast.error(getFriendlyErrorMessage(err));
     } finally {
       setActionLoading(null);
     }
@@ -494,9 +499,7 @@ export default function DocumentDetailPage({
 
       toast.success('Email envoyé au client');
     } catch (err) {
-      toast.error(
-        `Erreur: ${err instanceof Error ? err.message : 'Erreur inconnue'}`
-      );
+      toast.error(getFriendlyErrorMessage(err));
     } finally {
       setActionLoading(null);
     }
@@ -528,9 +531,7 @@ export default function DocumentDetailPage({
       toast.success('Facture marquée comme payée');
       window.location.reload();
     } catch (err) {
-      toast.error(
-        `Erreur: ${err instanceof Error ? err.message : 'Erreur inconnue'}`
-      );
+      toast.error(getFriendlyErrorMessage(err));
     } finally {
       setActionLoading(null);
     }
@@ -552,9 +553,7 @@ export default function DocumentDetailPage({
       toast.success('Facture archivée avec succès');
       router.push('/factures');
     } catch (err) {
-      toast.error(
-        `Erreur: ${err instanceof Error ? err.message : 'Erreur inconnue'}`
-      );
+      toast.error(getFriendlyErrorMessage(err));
     } finally {
       setActionLoading(null);
     }
@@ -600,6 +599,37 @@ export default function DocumentDetailPage({
     // Calculate from items
     return calculateTotalsFromItems(document.items);
   }, [document]);
+
+  // Build invoice data for CreditNoteCreateModal
+  const invoiceForCreditNote: IInvoiceForCreditNote | null =
+    document && documentType === 'invoice'
+      ? {
+          id: document.id,
+          invoice_number:
+            document.invoice_number ?? document.number ?? document.id,
+          status: document.status,
+          total_amount:
+            (document.total_amount_cents ?? computedTotals.totalCents) / 100,
+          total_vat_amount:
+            (document.total_vat_amount_cents ?? computedTotals.vatCents) / 100,
+          subtotal_amount:
+            (document.subtotal_amount_cents ?? computedTotals.subtotalCents) /
+            100,
+          currency: document.currency ?? 'EUR',
+          client_id: document.client_id ?? '',
+          client: document.client
+            ? { name: document.client.name, email: document.client.email }
+            : null,
+          items: document.items?.map(item => ({
+            title: item.title,
+            description: item.description,
+            quantity: parseFloat(item.quantity) || 1,
+            unit: item.unit ?? 'piece',
+            unit_price: parseFloat(item.unit_price?.value ?? '0'),
+            vat_rate: parseFloat(item.vat_rate ?? '0'),
+          })),
+        }
+      : null;
 
   // ===== RENDER =====
 
@@ -675,7 +705,11 @@ export default function DocumentDetailPage({
           <div>
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-bold">{docNumber}</h1>
-              <StatusPill status={document.status} size="md" />
+              <StatusPill
+                status={document.status}
+                config={qontoInvoiceStatusConfig}
+                size="md"
+              />
               {isOverdue && (
                 <Badge variant="destructive" className="gap-1">
                   <Clock className="h-3 w-3" />
@@ -819,13 +853,8 @@ export default function DocumentDetailPage({
             <Button
               variant="outline"
               onClick={() => setShowCreditNoteDialog(true)}
-              disabled={actionLoading === 'creditNote'}
             >
-              {actionLoading === 'creditNote' ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <MinusCircle className="h-4 w-4 mr-2" />
-              )}
+              <MinusCircle className="h-4 w-4 mr-2" />
               Créer un avoir
             </Button>
           )}
@@ -885,7 +914,11 @@ export default function DocumentDetailPage({
                 <div>
                   <InfoRow label="Numéro">{docNumber}</InfoRow>
                   <InfoRow label="Statut">
-                    <StatusPill status={document.status} size="sm" />
+                    <StatusPill
+                      status={document.status}
+                      config={qontoInvoiceStatusConfig}
+                      size="sm"
+                    />
                   </InfoRow>
                   <InfoRow label="Date d'émission">
                     {formatDate(document.issue_date)}
@@ -994,12 +1027,53 @@ export default function DocumentDetailPage({
                           {formatVatRate(item.vat_rate)}
                         </TableCell>
                         <TableCell className="text-right font-medium">
-                          {item.total_amount?.value}{' '}
-                          {item.total_amount?.currency}
+                          {(
+                            parseFloat(item.quantity || '0') *
+                            parseFloat(item.unit_price?.value || '0')
+                          ).toFixed(2)}{' '}
+                          {item.unit_price?.currency ?? document.currency}
                         </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
+                  <TableFooter>
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-right font-medium">
+                        Sous-total HT
+                      </TableCell>
+                      <TableCell className="text-right font-bold">
+                        {formatAmount(
+                          computedTotals.subtotalCents,
+                          document.currency
+                        )}
+                      </TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-right font-medium">
+                        TVA
+                      </TableCell>
+                      <TableCell className="text-right font-bold">
+                        {formatAmount(
+                          computedTotals.vatCents,
+                          document.currency
+                        )}
+                      </TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell
+                        colSpan={4}
+                        className="text-right font-semibold text-base"
+                      >
+                        Total TTC
+                      </TableCell>
+                      <TableCell className="text-right font-bold text-base">
+                        {formatAmount(
+                          computedTotals.totalCents,
+                          document.currency
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  </TableFooter>
                 </Table>
               </CardContent>
             </Card>
@@ -1020,11 +1094,12 @@ export default function DocumentDetailPage({
               <CardContent>
                 <div className="space-y-2">
                   <p className="font-medium">{document.client.name}</p>
-                  {document.client.email && (
-                    <p className="text-sm text-slate-600">
-                      {document.client.email}
-                    </p>
-                  )}
+                  {document.client.email &&
+                    !isTechnicalEmail(document.client.email) && (
+                      <p className="text-sm text-slate-600">
+                        {document.client.email}
+                      </p>
+                    )}
                   {document.client.billing_address && (
                     <div className="text-sm text-slate-600">
                       {document.client.billing_address.street_address && (
@@ -1059,7 +1134,11 @@ export default function DocumentDetailPage({
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-slate-600">Statut</span>
-                  <StatusPill status={document.status} size="sm" />
+                  <StatusPill
+                    status={document.status}
+                    config={qontoInvoiceStatusConfig}
+                    size="sm"
+                  />
                 </div>
                 {document.paid_at && (
                   <div className="flex justify-between items-center">
@@ -1221,36 +1300,15 @@ export default function DocumentDetailPage({
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Create credit note dialog */}
-      <AlertDialog
+      {/* Create credit note modal */}
+      <CreditNoteCreateModal
+        invoice={invoiceForCreditNote}
         open={showCreditNoteDialog}
         onOpenChange={setShowCreditNoteDialog}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Créer un avoir ?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Cette action créera un avoir en brouillon lié à cette facture.
-              L&apos;avoir devra être finalisé séparément.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                void handleCreateCreditNote().catch(error => {
-                  console.error(
-                    '[DocumentDetail] Create credit note failed:',
-                    error
-                  );
-                });
-              }}
-            >
-              Créer l&apos;avoir
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        onSuccess={(creditNoteId: string) => {
+          router.push(`/factures/${creditNoteId}?type=credit_note`);
+        }}
+      />
 
       {/* Accept quote dialog */}
       <AlertDialog open={showAcceptDialog} onOpenChange={setShowAcceptDialog}>

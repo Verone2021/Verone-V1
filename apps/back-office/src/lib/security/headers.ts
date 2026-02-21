@@ -32,8 +32,11 @@ const securityHeaders = {
         'https://aorroydfjsrygmosnzrl.supabase.co',
         'https://*.supabase.co',
         'https://*.gstatic.com', // Google static resources (Fonts)
+        'https://basemaps.cartocdn.com', // CartoDB map tile images
+        'https://*.basemaps.cartocdn.com', // CartoDB tile subdomains
       ],
       fontSrc: ["'self'", 'https://fonts.gstatic.com'],
+      workerSrc: ["'self'", 'blob:'], // MapLibre GL web workers
       connectSrc: [
         "'self'",
         'http://localhost:*', // Development localhost
@@ -45,6 +48,8 @@ const securityHeaders = {
         'https://vitals.vercel-insights.com', // Vercel Analytics
         'https://api-adresse.data.gouv.fr', // API BAN (Base Adresse Nationale - France)
         'https://api.geoapify.com', // API Geoapify (Geocoding international)
+        'https://basemaps.cartocdn.com', // CartoDB Voyager map tiles
+        'https://*.basemaps.cartocdn.com', // CartoDB tile subdomains (a/b/c/d)
       ],
       mediaSrc: ["'self'", 'https://aorroydfjsrygmosnzrl.supabase.co'],
       objectSrc: ["'none'"],

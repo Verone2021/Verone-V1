@@ -389,7 +389,7 @@ export function RuleModal({
         const supabase = createClient();
         let queryBuilder = supabase.rpc('search_organisations_unaccent', {
           p_query: query,
-          p_type: 'supplier',
+          p_type: 'supplier,partner',
         });
 
         if (signal) {

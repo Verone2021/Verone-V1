@@ -35,7 +35,7 @@ export interface SalesOrder {
   customer_id: string;
   customer_type: 'organization' | 'individual';
   status: SalesOrderStatus;
-  payment_status_v2?: 'pending' | 'paid' | null; // Statut calculé via rapprochement bancaire
+  payment_status_v2?: 'pending' | 'partially_paid' | 'paid' | null; // Statut calculé via rapprochement bancaire
   // 🆕 Paiement manuel
   manual_payment_type?: ManualPaymentType | null;
   manual_payment_date?: string | null;
@@ -110,6 +110,8 @@ export interface SalesOrder {
     city?: string;
     region?: string;
     enseigne_id?: string | null; // 🆕 AJOUTÉ - Pour filtrer organisations indépendantes vs enseignes
+    siret?: string | null;
+    vat_number?: string | null;
   };
   individual_customers?: {
     id: string;
@@ -123,6 +125,34 @@ export interface SalesOrder {
     city?: string;
   };
   sales_order_items?: SalesOrderItem[];
+
+  // Contact IDs (FK vers table contacts)
+  billing_contact_id?: string | null;
+  delivery_contact_id?: string | null;
+  responsable_contact_id?: string | null;
+
+  // Relations contacts (jointes)
+  billing_contact?: {
+    id: string;
+    first_name: string;
+    last_name: string;
+    email?: string | null;
+    phone?: string | null;
+  } | null;
+  delivery_contact?: {
+    id: string;
+    first_name: string;
+    last_name: string;
+    email?: string | null;
+    phone?: string | null;
+  } | null;
+  responsable_contact?: {
+    id: string;
+    first_name: string;
+    last_name: string;
+    email?: string | null;
+    phone?: string | null;
+  } | null;
 
   // LinkMe specific fields
   created_by_affiliate_id?: string | null;
@@ -175,6 +205,7 @@ export interface SalesOrderItem {
 export interface CreateSalesOrderData {
   customer_id: string;
   customer_type: 'organization' | 'individual';
+  order_date?: string | null;
   channel_id?: string | null; // 🆕 Canal vente (optional - si null, pas de traçabilité stock)
   eco_tax_vat_rate?: number | null;
   expected_delivery_date?: string;
@@ -323,6 +354,9 @@ export function useSalesOrders() {
             `
           *,
           sales_channel:sales_channels!left(id, name, code),
+          billing_contact:contacts!sales_orders_billing_contact_id_fkey(id, first_name, last_name, email, phone),
+          delivery_contact:contacts!sales_orders_delivery_contact_id_fkey(id, first_name, last_name, email, phone),
+          responsable_contact:contacts!sales_orders_responsable_contact_id_fkey(id, first_name, last_name, email, phone),
           sales_order_items (
             *,
             products (
@@ -470,7 +504,7 @@ export function useSalesOrders() {
           const { data: orgs } = await supabase
             .from('organisations')
             .select(
-              'id, legal_name, trade_name, email, phone, website, address_line1, address_line2, postal_code, city, region, enseigne_id'
+              'id, legal_name, trade_name, email, phone, website, address_line1, address_line2, postal_code, city, region, enseigne_id, siret, vat_number'
             )
             .in('id', orgIds);
           for (const org of orgs || []) {
@@ -581,6 +615,9 @@ export function useSalesOrders() {
             `
           *,
           sales_channel:sales_channels!left(id, name, code),
+          billing_contact:contacts!sales_orders_billing_contact_id_fkey(id, first_name, last_name, email, phone),
+          delivery_contact:contacts!sales_orders_delivery_contact_id_fkey(id, first_name, last_name, email, phone),
+          responsable_contact:contacts!sales_orders_responsable_contact_id_fkey(id, first_name, last_name, email, phone),
           sales_order_items (
             *,
             products (
@@ -614,7 +651,7 @@ export function useSalesOrders() {
           const { data: org } = await supabase
             .from('organisations')
             .select(
-              'id, legal_name, trade_name, email, phone, website, address_line1, address_line2, postal_code, city, region'
+              'id, legal_name, trade_name, email, phone, website, address_line1, address_line2, postal_code, city, region, siret, vat_number'
             )
             .eq('id', orderData.customer_id)
             .single();
@@ -924,11 +961,13 @@ export function useSalesOrders() {
         if (currentOrderRef.current?.id === orderId) {
           await fetchOrder(orderId);
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
+        const message =
+          error instanceof Error ? error.message : 'Erreur inconnue';
         console.error("Erreur lors de l'enregistrement du paiement:", error);
         toast({
           title: 'Erreur',
-          description: error.message || "Impossible d'enregistrer le paiement",
+          description: message || "Impossible d'enregistrer le paiement",
           variant: 'destructive',
         });
         throw error;
@@ -939,11 +978,12 @@ export function useSalesOrders() {
     [supabase, toast, fetchOrders, fetchOrder]
   );
 
-  // Marquer comme payé manuellement
+  // Marquer comme payé manuellement (avec mise à jour payment_status_v2 via RPC)
   const markAsManuallyPaid = useCallback(
     async (
       orderId: string,
       paymentType: ManualPaymentType,
+      amount: number,
       options?: {
         reference?: string;
         note?: string;
@@ -952,9 +992,19 @@ export function useSalesOrders() {
     ) => {
       setLoading(true);
       try {
-        // Type assertion car les colonnes manual_payment_* sont nouvelles
-        // et pas encore dans les types Supabase générés
-        const { error } = await supabase
+        // 1. Appeler la RPC pour mettre à jour payment_status_v2 et paid_amount
+        const { error: rpcError } = await supabase.rpc(
+          'mark_payment_received',
+          {
+            p_order_id: orderId,
+            p_amount: amount,
+          }
+        );
+
+        if (rpcError) throw rpcError;
+
+        // 2. Mettre à jour les champs manuels (type, date, référence, note)
+        const { error: updateError } = await supabase
           .from('sales_orders')
           .update({
             manual_payment_type: paymentType,
@@ -965,7 +1015,7 @@ export function useSalesOrders() {
           } as Record<string, unknown>)
           .eq('id', orderId);
 
-        if (error) throw error;
+        if (updateError) throw updateError;
 
         const paymentLabels: Record<ManualPaymentType, string> = {
           cash: 'Espèces',
@@ -978,19 +1028,20 @@ export function useSalesOrders() {
 
         toast({
           title: 'Paiement manuel enregistré',
-          description: `Type: ${paymentLabels[paymentType]}`,
+          description: `Type: ${paymentLabels[paymentType]} — ${amount.toFixed(2)} €`,
         });
 
         await fetchOrders();
         if (currentOrderRef.current?.id === orderId) {
           await fetchOrder(orderId);
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
+        const message =
+          error instanceof Error ? error.message : 'Erreur inconnue';
         console.error('Erreur lors du paiement manuel:', error);
         toast({
           title: 'Erreur',
-          description:
-            error.message || "Impossible d'enregistrer le paiement manuel",
+          description: message || "Impossible d'enregistrer le paiement manuel",
           variant: 'destructive',
         });
         throw error;
@@ -1101,8 +1152,9 @@ export function useSalesOrders() {
               order_number: soNumber,
               customer_id: data.customer_id,
               customer_type: data.customer_type,
+              order_date: data.order_date || null,
               channel_id: data.channel_id || null, // 🆕 Canal vente pour traçabilité stock
-              expected_delivery_date: data.expected_delivery_date,
+              expected_delivery_date: data.expected_delivery_date || null,
               shipping_address: data.shipping_address,
               billing_address: data.billing_address,
               payment_terms: data.payment_terms,
@@ -1110,6 +1162,7 @@ export function useSalesOrders() {
               total_ht: totalHT,
               total_ttc: totalTTC,
               created_by: (await supabase.auth.getUser()).data.user?.id,
+              tax_rate: 0.2, // TVA FR par defaut (triggers utilisent item.tax_rate pour TTC)
               // Frais additionnels clients
               shipping_cost_ht: data.shipping_cost_ht || 0,
               insurance_cost_ht: data.insurance_cost_ht || 0,
@@ -1133,7 +1186,7 @@ export function useSalesOrders() {
               tax_rate: item.tax_rate ?? 0.2, // TVA par défaut 20%
               discount_percentage: item.discount_percentage || 0,
               eco_tax: item.eco_tax ?? 0, // Éco-taxe (défaut 0)
-              expected_delivery_date: item.expected_delivery_date,
+              expected_delivery_date: item.expected_delivery_date || null,
               notes: item.notes,
               is_sample: item.is_sample ?? false, // Échantillon (défaut false)
             }))
@@ -1245,13 +1298,29 @@ export function useSalesOrders() {
           description: `Commande ${soNumber} créée avec succès`,
         });
 
-        await fetchOrders();
+        // Refresh liste en best-effort (non bloquant)
+        try {
+          await fetchOrders();
+        } catch (refreshError) {
+          // Log pour debug, mais ne pas faire échouer createOrder
+          console.warn(
+            '[createOrder] fetchOrders refresh failed (non-blocking):',
+            refreshError
+          );
+        }
         return order;
-      } catch (error: any) {
-        console.error('Erreur lors de la création de la commande:', error);
+      } catch (error: unknown) {
+        // PostgREST errors ne se sérialisent pas avec JSON.stringify → logguer les propriétés
+        const errMsg =
+          error instanceof Error
+            ? error.message
+            : typeof error === 'object' && error !== null && 'message' in error
+              ? String((error as Record<string, unknown>).message)
+              : String(error);
+        console.error('[createOrder] Erreur:', errMsg, error);
         toast({
           title: 'Erreur',
-          description: error.message || 'Impossible de créer la commande',
+          description: errMsg || 'Impossible de créer la commande',
           variant: 'destructive',
         });
         throw error;

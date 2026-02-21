@@ -15,7 +15,7 @@ import { NextResponse } from 'next/server';
 
 import { QontoClient } from '@verone/integrations/qonto';
 import type { CreateClientInvoiceParams } from '@verone/integrations/qonto';
-import type { Database } from '@verone/types';
+import type { Database, Json } from '@verone/types';
 import { withRateLimit, RATE_LIMIT_PRESETS } from '@verone/utils/security';
 import { createAdminClient } from '@verone/utils/supabase/server';
 
@@ -181,9 +181,24 @@ interface ICustomLine {
   vat_rate: number;
 }
 
+/**
+ * Interface pour les adresses envoyées depuis le modal
+ */
+interface IAddressData {
+  address_line1?: string;
+  address_line2?: string;
+  postal_code: string;
+  city: string;
+  country?: string;
+}
+
 interface _IPostRequestBody {
   salesOrderId: string;
   autoFinalize?: boolean;
+  issueDate?: string;
+  label?: string;
+  billingAddress?: IAddressData;
+  shippingAddress?: IAddressData;
   fees?: IFeesData;
   customLines?: ICustomLine[];
 }
@@ -220,11 +235,24 @@ export async function POST(request: NextRequest): Promise<
     const body = (await request.json()) as {
       salesOrderId: string;
       autoFinalize?: boolean;
+      issueDate?: string;
+      label?: string;
+      billingAddress?: IAddressData;
+      shippingAddress?: IAddressData;
       fees?: IFeesData;
       customLines?: ICustomLine[];
     };
 
-    const { salesOrderId, autoFinalize = false, fees, customLines } = body;
+    const {
+      salesOrderId,
+      autoFinalize = false,
+      issueDate: customIssueDate,
+      label,
+      billingAddress: bodyBillingAddress,
+      shippingAddress: bodyShippingAddress,
+      fees,
+      customLines,
+    } = body;
 
     // Basic validation
     if (!salesOrderId) {
@@ -234,9 +262,34 @@ export async function POST(request: NextRequest): Promise<
       );
     }
 
-    // Récupérer la commande avec ses lignes (sans jointures polymorphiques)
     // Utilise createAdminClient pour bypasser RLS (API route sans contexte user)
     const supabase = createAdminClient();
+
+    // Guard anti-doublon : vérifier si une facture active existe déjà pour cette commande
+    const { data: existingInvoices, error: checkError } = await supabase
+      .from('financial_documents')
+      .select('id, document_number, workflow_status')
+      .eq('sales_order_id', salesOrderId)
+      .eq('document_type', 'customer_invoice')
+      .is('deleted_at', null)
+      .not('workflow_status', 'eq', 'cancelled');
+
+    if (checkError) {
+      console.error('[API Qonto Invoices] Duplicate check failed:', checkError);
+      // Continue anyway - Qonto will be the fallback guard
+    } else if (existingInvoices && existingInvoices.length > 0) {
+      const existing = existingInvoices[0];
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Une facture existe déjà pour cette commande : ${existing.document_number ?? existing.id}. Annulez-la d'abord si vous souhaitez en créer une nouvelle.`,
+          existingInvoiceId: existing.id,
+        },
+        { status: 409 }
+      );
+    }
+
+    // Récupérer la commande avec ses lignes (sans jointures polymorphiques)
     const { data: order, error: orderError } = await supabase
       .from('sales_orders')
       .select(
@@ -266,7 +319,7 @@ export async function POST(request: NextRequest): Promise<
     let customer: Organisation | IndividualCustomer | null = null;
 
     if (orderWithItems.customer_id && orderWithItems.customer_type) {
-      if (orderWithItems.customer_type === 'organisation') {
+      if (orderWithItems.customer_type === 'organization') {
         const { data: org } = await supabase
           .from('organisations')
           .select('*')
@@ -297,10 +350,15 @@ export async function POST(request: NextRequest): Promise<
     let customerEmail: string | null = null;
     let customerName = 'Client';
 
-    if (typedOrder.customer_type === 'organisation' && typedOrder.customer) {
+    // Tax identification number (SIRET/TVA) for Qonto client creation
+    let vatNumber: string | undefined;
+
+    if (typedOrder.customer_type === 'organization' && typedOrder.customer) {
       const org = typedOrder.customer as Organisation;
       customerEmail = org.email ?? null;
       customerName = org.trade_name ?? org.legal_name ?? 'Client';
+      // Priority: vat_number (TVA intra-communautaire), then siret
+      vatNumber = org.vat_number ?? org.siret ?? undefined;
     } else if (
       typedOrder.customer_type === 'individual' &&
       typedOrder.customer
@@ -311,76 +369,99 @@ export async function POST(request: NextRequest): Promise<
         `${indiv.first_name ?? ''} ${indiv.last_name ?? ''}`.trim() || 'Client';
     }
 
-    if (customerEmail) {
-      // Construire une adresse valide pour Qonto
-      // Note: billing_address peut avoir différents formats (legacy vs nouveau)
-      const billingAddress = typedOrder.billing_address as Record<
-        string,
-        string
-      > | null;
-
-      // Valider que l'adresse de facturation est présente
-      const city = billingAddress?.city;
-      const zipCode = billingAddress?.postal_code;
-
-      if (!city || !zipCode) {
-        console.warn(
-          '[API Qonto Invoices] Missing billing address for order:',
-          salesOrderId
-        );
-        return NextResponse.json(
-          {
-            success: false,
-            error:
-              'Adresse de facturation incomplète. Ville et code postal requis.',
-            details: {
-              hasCity: !!city,
-              hasZipCode: !!zipCode,
-              billingAddress: billingAddress,
-            },
-          },
-          { status: 400 }
-        );
-      }
-
-      const qontoAddress = {
-        streetAddress: billingAddress?.street ?? billingAddress?.address ?? '',
-        city,
-        zipCode,
-        countryCode: billingAddress?.country ?? 'FR',
-      };
-
-      // Mapper customer_type vers type Qonto
-      const qontoClientType =
-        typedOrder.customer_type === 'organisation' ? 'company' : 'individual';
-
-      // Chercher le client par email
-      const existingClient = await qontoClient.findClientByEmail(customerEmail);
-      if (existingClient) {
-        // Client existant - mettre à jour son adresse pour s'assurer qu'elle est présente
-        // (Qonto requiert billing_address pour la facturation)
-        await qontoClient.updateClient(existingClient.id, {
-          name: customerName ?? existingClient.name,
-          type: qontoClientType,
-          address: qontoAddress,
-        });
-        qontoClientId = existingClient.id;
-      } else {
-        // Créer un nouveau client
-        const newClient = await qontoClient.createClient({
-          name: customerName ?? 'Client',
-          type: qontoClientType,
-          email: customerEmail,
-          currency: 'EUR',
-          address: qontoAddress,
-        });
-        qontoClientId = newClient.id;
-      }
-    } else {
+    // Validate: organisations MUST have a tax identification number for invoicing
+    if (typedOrder.customer_type === 'organization' && !vatNumber) {
       return NextResponse.json(
-        { success: false, error: 'Customer email is required' },
+        {
+          success: false,
+          error:
+            "Le SIRET ou numéro de TVA de l'organisation est requis pour créer une facture. Veuillez le renseigner dans la fiche organisation.",
+        },
         { status: 400 }
       );
+    }
+
+    // Résoudre l'adresse de facturation :
+    // Priorité 1: adresse envoyée depuis le modal (body)
+    // Priorité 2: billing_address JSONB de la commande en DB
+    const dbBillingAddress = typedOrder.billing_address as Record<
+      string,
+      string
+    > | null;
+
+    const city = bodyBillingAddress?.city ?? dbBillingAddress?.city;
+    const zipCode =
+      bodyBillingAddress?.postal_code ?? dbBillingAddress?.postal_code;
+
+    if (!city || !zipCode) {
+      console.warn(
+        '[API Qonto Invoices] Missing billing address for order:',
+        salesOrderId
+      );
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            'Adresse de facturation incomplète. Ville et code postal requis.',
+          details: {
+            hasCity: !!city,
+            hasZipCode: !!zipCode,
+            bodyBillingAddress,
+            dbBillingAddress,
+          },
+        },
+        { status: 400 }
+      );
+    }
+
+    const streetAddress =
+      bodyBillingAddress?.address_line1 ??
+      dbBillingAddress?.street ??
+      dbBillingAddress?.address ??
+      dbBillingAddress?.address_line1 ??
+      '';
+    const countryCode =
+      bodyBillingAddress?.country ?? dbBillingAddress?.country ?? 'FR';
+
+    const qontoAddress = {
+      streetAddress,
+      city,
+      zipCode,
+      countryCode,
+    };
+
+    // Mapper customer_type vers type Qonto
+    const qontoClientType =
+      typedOrder.customer_type === 'organization' ? 'company' : 'individual';
+
+    // Trouver ou créer le client Qonto
+    // Stratégie : chercher par email SI disponible, sinon par nom
+    let existingClient = customerEmail
+      ? await qontoClient.findClientByEmail(customerEmail)
+      : null;
+
+    existingClient ??= await qontoClient.findClientByName(customerName);
+
+    if (existingClient) {
+      // Client existant - mettre à jour son adresse
+      await qontoClient.updateClient(existingClient.id, {
+        name: customerName ?? existingClient.name,
+        type: qontoClientType,
+        address: qontoAddress,
+        vatNumber,
+      });
+      qontoClientId = existingClient.id;
+    } else {
+      // Créer un nouveau client (email optionnel)
+      const newClient = await qontoClient.createClient({
+        name: customerName ?? 'Client',
+        type: qontoClientType,
+        email: customerEmail ?? undefined,
+        currency: 'EUR',
+        address: qontoAddress,
+        vatNumber,
+      });
+      qontoClientId = newClient.id;
     }
 
     // Récupérer l'IBAN Qonto pour les méthodes de paiement
@@ -512,30 +593,33 @@ export async function POST(request: NextRequest): Promise<
       }
     }
 
+    // Utiliser la date du body ou la date du jour
+    const issueDate = customIssueDate ?? new Date().toISOString().split('T')[0];
+    const issueDateMs = new Date(issueDate).getTime();
+
     // Calculer la date d'échéance selon les termes de paiement
-    const issueDate = new Date().toISOString().split('T')[0];
     let dueDate: string;
     switch (typedOrder.payment_terms) {
       case 'immediate':
         dueDate = issueDate;
         break;
       case 'net_15':
-        dueDate = new Date(Date.now() + 15 * 24 * 60 * 60 * 1000)
+        dueDate = new Date(issueDateMs + 15 * 24 * 60 * 60 * 1000)
           .toISOString()
           .split('T')[0];
         break;
       case 'net_30':
-        dueDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+        dueDate = new Date(issueDateMs + 30 * 24 * 60 * 60 * 1000)
           .toISOString()
           .split('T')[0];
         break;
       case 'net_60':
-        dueDate = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000)
+        dueDate = new Date(issueDateMs + 60 * 24 * 60 * 60 * 1000)
           .toISOString()
           .split('T')[0];
         break;
       default:
-        dueDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+        dueDate = new Date(issueDateMs + 30 * 24 * 60 * 60 * 1000)
           .toISOString()
           .split('T')[0];
     }
@@ -549,12 +633,25 @@ export async function POST(request: NextRequest): Promise<
       paymentMethods: {
         iban: mainAccount.iban,
       },
-
+      header: label ?? undefined,
       purchaseOrderNumber: typedOrder.order_number ?? undefined,
       items,
     };
 
-    const invoice = await qontoClient.createClientInvoice(invoiceParams);
+    let invoice = await qontoClient.createClientInvoice(invoiceParams);
+
+    // Vérifier que Qonto a respecté la date envoyée
+    // Si Qonto a overridé la date (ex: lors de la création), on corrige via update
+    const qontoIssueDate = (invoice as { issue_date?: string }).issue_date;
+    if (qontoIssueDate && qontoIssueDate !== issueDate) {
+      console.warn(
+        `[API Qonto Invoices] Date mismatch: sent ${issueDate}, got ${qontoIssueDate}. Correcting...`
+      );
+      invoice = await qontoClient.updateClientInvoice(invoice.id, {
+        issueDate,
+      });
+      console.warn(`[API Qonto Invoices] Date corrected to ${issueDate}`);
+    }
 
     // Finaliser automatiquement si demandé
     let finalizedInvoice = invoice;
@@ -579,7 +676,7 @@ export async function POST(request: NextRequest): Promise<
 
     // Déterminer le partner_id (organisation uniquement pour l'instant)
     let partnerId: string | null = null;
-    if (typedOrder.customer_type === 'organisation' && typedOrder.customer_id) {
+    if (typedOrder.customer_type === 'organization' && typedOrder.customer_id) {
       partnerId = typedOrder.customer_id;
     }
 
@@ -590,9 +687,8 @@ export async function POST(request: NextRequest): Promise<
     // INSERT dans financial_documents (avec données sync de la commande)
     let localDocumentId: string | null = null;
     if (partnerId) {
-      const { data: insertedDoc, error: insertDocError } = await supabase
-        .from('financial_documents')
-        .insert({
+      const insertPayload: Database['public']['Tables']['financial_documents']['Insert'] =
+        {
           document_type: 'customer_invoice',
           document_direction: 'inbound',
           document_number: finalizedInvoice.invoice_number,
@@ -609,13 +705,14 @@ export async function POST(request: NextRequest): Promise<
           qonto_invoice_id: finalizedInvoice.id,
           qonto_pdf_url: finalizedInvoice.pdf_url ?? null,
           qonto_public_url: finalizedInvoice.public_url ?? null,
-          qonto_sync_status: 'synced',
           workflow_status: autoFinalize ? 'finalized' : 'synchronized',
           synchronized_at: new Date().toISOString(),
           created_by: systemUserId,
-          // Données synchronisées depuis la commande (Phase 5)
-          billing_address: typedOrder.billing_address,
-          shipping_address: typedOrder.shipping_address,
+          // Données synchronisées : body (édité par l'utilisateur) > commande DB
+          billing_address: (bodyBillingAddress ??
+            typedOrder.billing_address) as Json,
+          shipping_address: (bodyShippingAddress ??
+            typedOrder.shipping_address) as Json,
           shipping_cost_ht: shippingCost,
           handling_cost_ht: handlingCost,
           insurance_cost_ht: insuranceCost,
@@ -623,7 +720,10 @@ export async function POST(request: NextRequest): Promise<
           billing_contact_id: typedOrder.billing_contact_id ?? null,
           delivery_contact_id: typedOrder.delivery_contact_id ?? null,
           responsable_contact_id: typedOrder.responsable_contact_id ?? null,
-        })
+        };
+      const { data: insertedDoc, error: insertDocError } = await supabase
+        .from('financial_documents')
+        .insert(insertPayload)
         .select('id')
         .single();
 

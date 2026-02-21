@@ -30,6 +30,7 @@ export interface Product {
   name: string;
   slug: string;
   cost_price: number; // Prix en centimes
+  cost_price_count: number; // Nombre de PO ayant calculé le prix (PMP)
   tax_rate: number;
   stock_status: 'in_stock' | 'out_of_stock' | 'coming_soon';
   product_status: 'active' | 'preorder' | 'discontinued' | 'draft';
@@ -49,6 +50,7 @@ export interface Product {
   subcategory_id?: string;
   brand?: string;
   supplier_id?: string;
+  product_type?: 'standard' | 'custom';
   supplier?: {
     id: string;
     legal_name: string;
@@ -58,6 +60,9 @@ export interface Product {
     id: string;
     name: string;
   };
+
+  // Completeness tracking
+  has_images?: boolean; // Denormalized: true if product has at least one image
 
   // ✅ STOCK - Propriétés manquantes alignées avec DB
   stock_real?: number; // Stock réel physique
@@ -231,8 +236,10 @@ export const useCatalogue = () => {
     let query = supabase.from('products').select(
       `
         id, sku, name, slug,
+        cost_price, cost_price_count, product_type, stock_real,
         stock_status, product_status, condition,
         subcategory_id, supplier_id, brand,
+        has_images, dimensions, weight,
         archived_at, created_at, updated_at,
         supplier:organisations!supplier_id(id, legal_name, trade_name),
         subcategories!subcategory_id(id, name)
@@ -308,8 +315,10 @@ export const useCatalogue = () => {
     // 🚀 PERF FIX 2026-01-30: Supprimer LEFT JOIN product_images (chargé séparément en batch)
     let query = supabase.from('products').select(`
         id, sku, name, slug,
+        cost_price, cost_price_count, product_type, stock_real,
         stock_status, product_status, condition,
         subcategory_id, supplier_id, brand,
+        has_images, dimensions, weight,
         archived_at, created_at, updated_at,
         supplier:organisations!supplier_id(id, legal_name, trade_name),
         subcategories!subcategory_id(id, name)
@@ -371,6 +380,83 @@ export const useCatalogue = () => {
     return {
       products: data || [],
       total: (data || []).length,
+    };
+  };
+
+  const loadIncompleteProducts = async (filters: CatalogueFilters = {}) => {
+    let query = supabase.from('products').select(
+      `
+        id, sku, name, slug,
+        cost_price, cost_price_count, product_type, stock_real,
+        stock_status, product_status, condition,
+        subcategory_id, supplier_id, brand,
+        has_images, dimensions, weight,
+        archived_at, created_at, updated_at,
+        supplier:organisations!supplier_id(id, legal_name, trade_name),
+        subcategories!subcategory_id(id, name)
+      `,
+      { count: 'exact' }
+    );
+
+    // Exclure archivés et sourcing
+    query = query.is('archived_at', null);
+    query = query.neq('creation_mode', 'sourcing');
+
+    // Filtre principal : produits incomplets (6 critères)
+    // Fournisseur, sous-catégorie, prix d'achat, photo, dimensions, poids
+    query = query.or(
+      'supplier_id.is.null,subcategory_id.is.null,cost_price.is.null,has_images.eq.false,dimensions.is.null,weight.is.null'
+    );
+
+    // Filtres utilisateur
+    if (filters.search) {
+      query = query.or(
+        `name.ilike.%${filters.search}%,sku.ilike.%${filters.search}%`
+      );
+    }
+
+    if (filters.statuses && filters.statuses.length > 0) {
+      query = query.in(
+        'product_status',
+        filters.statuses as Array<
+          'active' | 'preorder' | 'discontinued' | 'draft'
+        >
+      );
+    }
+
+    const hasHierarchyFilter =
+      (filters.families?.length ?? 0) > 0 ||
+      (filters.categories?.length ?? 0) > 0 ||
+      (filters.subcategories?.length ?? 0) > 0;
+
+    if (hasHierarchyFilter) {
+      const resolvedSubcategoryIds = await resolveSubcategoryIds(filters);
+      if (resolvedSubcategoryIds.length > 0) {
+        query = query.in('subcategory_id', resolvedSubcategoryIds);
+      } else {
+        return { products: [], total: 0 };
+      }
+    }
+
+    if (filters.suppliers && filters.suppliers.length > 0) {
+      query = query.in('supplier_id', filters.suppliers);
+    }
+
+    // Pagination
+    const limit = filters.limit ?? ITEMS_PER_PAGE;
+    const page = filters.page ?? 1;
+    const offset = filters.offset ?? (page - 1) * limit;
+    query = query.range(offset, offset + limit - 1);
+
+    query = query.order('updated_at', { ascending: false });
+
+    const { data, error, count } = await query;
+
+    if (error) throw error;
+
+    return {
+      products: data ?? [],
+      total: count ?? 0,
     };
   };
 
@@ -510,14 +596,15 @@ export const useCatalogue = () => {
   };
 
   // ✅ FIX P0-2: setFilters utilise maintenant state séparé
-  const setFilters = (newFilters: Partial<CatalogueFilters>) => {
+  // ✅ FIX SEARCH: useCallback pour référence stable (évite recréation debounce à chaque render)
+  const setFilters = useCallback((newFilters: Partial<CatalogueFilters>) => {
     setFiltersState(prev => ({ ...prev, ...newFilters }));
-  };
+  }, []);
 
   // ✅ FIX P0-2: resetFilters utilise maintenant state séparé
-  const resetFilters = () => {
+  const resetFilters = useCallback(() => {
     setFiltersState({});
-  };
+  }, []);
 
   // ✅ PAGINATION: Calculs de pagination
   const currentPage = filters.page ?? 1;
@@ -554,6 +641,7 @@ export const useCatalogue = () => {
     // Actions
     loadCatalogueData,
     loadArchivedProducts,
+    loadIncompleteProducts,
     createProduct,
     updateProduct,
     archiveProduct,

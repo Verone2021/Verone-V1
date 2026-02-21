@@ -1501,7 +1501,8 @@ export function SalesOrdersTable({
                                         onClick={() =>
                                           void markAsManuallyPaid(
                                             order.id,
-                                            'cash'
+                                            'cash',
+                                            order.total_ttc || 0
                                           )
                                         }
                                       >
@@ -1512,7 +1513,8 @@ export function SalesOrdersTable({
                                         onClick={() =>
                                           void markAsManuallyPaid(
                                             order.id,
-                                            'check'
+                                            'check',
+                                            order.total_ttc || 0
                                           )
                                         }
                                       >
@@ -1523,7 +1525,8 @@ export function SalesOrdersTable({
                                         onClick={() =>
                                           void markAsManuallyPaid(
                                             order.id,
-                                            'transfer_other'
+                                            'transfer_other',
+                                            order.total_ttc || 0
                                           )
                                         }
                                       >
@@ -1534,7 +1537,8 @@ export function SalesOrdersTable({
                                         onClick={() =>
                                           void markAsManuallyPaid(
                                             order.id,
-                                            'card'
+                                            'card',
+                                            order.total_ttc || 0
                                           )
                                         }
                                       >
@@ -1546,7 +1550,8 @@ export function SalesOrdersTable({
                                         onClick={() =>
                                           void markAsManuallyPaid(
                                             order.id,
-                                            'compensation'
+                                            'compensation',
+                                            order.total_ttc || 0
                                           )
                                         }
                                       >
@@ -1557,7 +1562,8 @@ export function SalesOrdersTable({
                                         onClick={() =>
                                           void markAsManuallyPaid(
                                             order.id,
-                                            'verified_bubble'
+                                            'verified_bubble',
+                                            order.total_ttc || 0
                                           )
                                         }
                                       >

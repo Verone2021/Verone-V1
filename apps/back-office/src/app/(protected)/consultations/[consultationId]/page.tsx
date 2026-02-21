@@ -148,9 +148,16 @@ export default function ConsultationDetailPage() {
   };
 
   const handleDeleteConsultation = async () => {
+    if (
+      !window.confirm(
+        'Êtes-vous sûr de vouloir supprimer définitivement cette consultation ?'
+      )
+    ) {
+      return;
+    }
     const success = await deleteConsultation(consultationId);
     if (success) {
-      router.push('/consultations'); // Rediriger après suppression
+      router.push('/consultations');
     }
   };
 

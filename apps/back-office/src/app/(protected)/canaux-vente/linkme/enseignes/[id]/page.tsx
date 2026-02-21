@@ -7,13 +7,15 @@ import { useParams, useRouter } from 'next/navigation';
 import {
   EnseigneDetailHeader,
   EnseigneKPIGrid,
-  EnseigneGeographySection,
+  EnseigneMapSection,
   EnseigneOrganisationsTable,
   useEnseigne,
   useEnseigneStats,
+  useEnseigneMapData,
 } from '@verone/organisations';
 import { ProductThumbnail } from '@verone/products';
 import { Button, Badge, Input, Label } from '@verone/ui';
+import { cn } from '@verone/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
 import {
   Dialog,
@@ -276,13 +278,17 @@ export default function EnseigneDetailPage() {
   const router = useRouter();
   const id = params.id as string;
 
-  // Hooks pour données enseigne
+  // Filtre annee pour KPIs
+  const [selectedYear, setSelectedYear] = useState<number | null>(null);
+
+  // Hooks pour donnees enseigne
   const {
     enseigne,
     loading: enseigneLoading,
     error: enseigneError,
   } = useEnseigne(id);
-  const { stats, loading: statsLoading } = useEnseigneStats(id);
+  const { stats, loading: statsLoading } = useEnseigneStats(id, selectedYear);
+  const { data: mapData, loading: mapLoading } = useEnseigneMapData(id);
   const {
     surMesure,
     affilies,
@@ -368,11 +374,30 @@ export default function EnseigneDetailPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       {/* Header avec bouton retour (sans bouton Modifier pour LinkMe) */}
       <EnseigneDetailHeader enseigne={enseigne} onBack={() => router.back()} />
 
-      {/* KPIs */}
+      {/* Filtre annee + KPIs */}
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-medium text-gray-600">Indicateurs</h2>
+        <div className="flex items-center gap-2">
+          {[null, 2024, 2025, 2026].map(y => (
+            <button
+              key={y ?? 'all'}
+              onClick={() => setSelectedYear(y)}
+              className={cn(
+                'px-3 py-1 text-xs font-medium rounded-full transition-colors',
+                selectedYear === y
+                  ? 'bg-gray-900 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              )}
+            >
+              {y ?? 'Toutes'}
+            </button>
+          ))}
+        </div>
+      </div>
       <EnseigneKPIGrid stats={stats} loading={statsLoading} />
 
       {/* Onglets */}
@@ -405,7 +430,7 @@ export default function EnseigneDetailPage() {
         </TabsList>
 
         {/* Onglet Organisations */}
-        <TabsContent value="organisations" className="mt-6">
+        <TabsContent value="organisations" className="mt-4">
           {/* Tableau organisations membres */}
           <EnseigneOrganisationsTable
             organisations={stats?.organisationsWithRevenue ?? []}
@@ -420,7 +445,7 @@ export default function EnseigneDetailPage() {
         </TabsContent>
 
         {/* Onglet Contacts */}
-        <TabsContent value="contacts" className="mt-6">
+        <TabsContent value="contacts" className="mt-4">
           <Card>
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
@@ -664,7 +689,7 @@ export default function EnseigneDetailPage() {
         </TabsContent>
 
         {/* Onglet Informations personnelles */}
-        <TabsContent value="infos" className="mt-6">
+        <TabsContent value="infos" className="mt-4">
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
@@ -775,17 +800,11 @@ export default function EnseigneDetailPage() {
           </Card>
         </TabsContent>
 
-        {/* Onglet Géographie */}
-        <TabsContent value="geography" className="mt-6">
-          <EnseigneGeographySection
-            citiesDistribution={stats?.citiesDistribution ?? []}
-            loading={statsLoading}
-            className="max-w-none"
-          />
-        </TabsContent>
+        {/* Onglet Géographie - contenu rendu hors Tabs pour pleine largeur */}
+        <TabsContent value="geography" className="mt-0" />
 
         {/* Onglet Produits avec sous-onglets */}
-        <TabsContent value="products" className="mt-6">
+        <TabsContent value="products" className="mt-4">
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center">
@@ -887,7 +906,7 @@ export default function EnseigneDetailPage() {
         </TabsContent>
 
         {/* Onglet Sélections */}
-        <TabsContent value="selections" className="mt-6">
+        <TabsContent value="selections" className="mt-4">
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center">
@@ -983,6 +1002,22 @@ export default function EnseigneDetailPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Onglet Géographie - HORS Tabs pour pleine largeur */}
+      {activeTab === 'geography' && (
+        <EnseigneMapSection
+          organisations={mapData?.organisations ?? []}
+          totalOrganisations={mapData?.totalOrganisations ?? 0}
+          propresCount={mapData?.propresCount ?? 0}
+          franchisesCount={mapData?.franchisesCount ?? 0}
+          withCoordinatesCount={mapData?.withCoordinatesCount ?? 0}
+          loading={mapLoading}
+          enseigneName={enseigne.name}
+          onViewOrganisation={orgId =>
+            router.push(`/contacts-organisations/organisations/${orgId}`)
+          }
+        />
+      )}
     </div>
   );
 }

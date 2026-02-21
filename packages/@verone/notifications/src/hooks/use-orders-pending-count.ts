@@ -174,8 +174,8 @@ export function useOrdersPendingCount(options?: {
             if (status === 'SUBSCRIBED') {
               // Realtime subscribed successfully
             } else if (status === 'CHANNEL_ERROR') {
-              console.error(
-                '[useOrdersPendingCount] Realtime error - falling back to polling'
+              console.warn(
+                '[useOrdersPendingCount] Realtime unavailable - falling back to polling'
               );
               // Fallback : activer polling si Realtime fail
               if (!intervalRef.current && refetchInterval > 0) {

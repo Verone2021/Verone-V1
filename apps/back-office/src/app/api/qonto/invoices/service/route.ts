@@ -36,10 +36,11 @@ interface IServiceItem {
 
 interface IPostRequestBody {
   clientId: string;
-  clientType: 'organisation' | 'individual';
+  clientType: 'organization' | 'individual';
   items: IServiceItem[];
   paymentTerms?: 'immediate' | 'net_15' | 'net_30' | 'net_60';
   reference?: string;
+  issueDate?: string;
   autoFinalize?: boolean;
 }
 
@@ -71,6 +72,7 @@ export async function POST(request: NextRequest): Promise<
       items,
       paymentTerms = 'net_30',
       reference,
+      issueDate: customIssueDate,
       autoFinalize = false, // DÉFAUT: brouillon
     } = body;
 
@@ -82,11 +84,11 @@ export async function POST(request: NextRequest): Promise<
       );
     }
 
-    if (!clientType || !['organisation', 'individual'].includes(clientType)) {
+    if (!clientType || !['organization', 'individual'].includes(clientType)) {
       return NextResponse.json(
         {
           success: false,
-          error: 'clientType must be organisation or individual',
+          error: 'clientType must be organization or individual',
         },
         { status: 400 }
       );
@@ -105,7 +107,7 @@ export async function POST(request: NextRequest): Promise<
     let customerEmail: string | null = null;
     let customerName = 'Client';
 
-    if (clientType === 'organisation') {
+    if (clientType === 'organization') {
       const { data: org, error: orgError } = await supabase
         .from('organisations')
         .select('*')
@@ -187,7 +189,7 @@ export async function POST(request: NextRequest): Promise<
       countryCode: string;
     };
 
-    if (clientType === 'organisation') {
+    if (clientType === 'organization') {
       const org = customer as Organisation;
       qontoAddress = {
         streetAddress: org.billing_address_line1 ?? org.address_line1 ?? '',
@@ -207,11 +209,11 @@ export async function POST(request: NextRequest): Promise<
 
     // Mapper customer_type vers type Qonto
     const qontoClientType =
-      clientType === 'organisation' ? 'company' : 'individual';
+      clientType === 'organization' ? 'company' : 'individual';
 
     // Récupérer le numéro TVA/SIRET pour les entreprises
     let vatNumber: string | undefined;
-    if (clientType === 'organisation') {
+    if (clientType === 'organization') {
       const org = customer as Organisation;
       // Priorité: vat_number (TVA intra), sinon siret
       vatNumber = org.vat_number ?? org.siret ?? undefined;
@@ -264,30 +266,31 @@ export async function POST(request: NextRequest): Promise<
       vatRate: String(item.vatRate),
     }));
 
-    // Calculer les dates
-    const issueDate = new Date().toISOString().split('T')[0];
+    // Calculer les dates (utiliser date custom si fournie, sinon aujourd'hui)
+    const issueDate = customIssueDate ?? new Date().toISOString().split('T')[0];
+    const issueDateMs = new Date(issueDate).getTime();
     let dueDate: string;
     switch (paymentTerms) {
       case 'immediate':
         dueDate = issueDate;
         break;
       case 'net_15':
-        dueDate = new Date(Date.now() + 15 * 24 * 60 * 60 * 1000)
+        dueDate = new Date(issueDateMs + 15 * 24 * 60 * 60 * 1000)
           .toISOString()
           .split('T')[0];
         break;
       case 'net_30':
-        dueDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+        dueDate = new Date(issueDateMs + 30 * 24 * 60 * 60 * 1000)
           .toISOString()
           .split('T')[0];
         break;
       case 'net_60':
-        dueDate = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000)
+        dueDate = new Date(issueDateMs + 60 * 24 * 60 * 60 * 1000)
           .toISOString()
           .split('T')[0];
         break;
       default:
-        dueDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+        dueDate = new Date(issueDateMs + 30 * 24 * 60 * 60 * 1000)
           .toISOString()
           .split('T')[0];
     }

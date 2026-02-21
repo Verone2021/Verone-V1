@@ -163,6 +163,39 @@ interface PricingV2Result {
   original_price: number;
 }
 
+function QuantityInput({
+  value,
+  onChange,
+  disabled,
+}: {
+  value: number;
+  onChange: (val: number) => void;
+  disabled?: boolean;
+}) {
+  const [localVal, setLocalVal] = useState(String(value));
+
+  useEffect(() => {
+    setLocalVal(String(value));
+  }, [value]);
+
+  return (
+    <Input
+      type="number"
+      min="1"
+      value={localVal}
+      onChange={e => setLocalVal(e.target.value)}
+      onBlur={() => {
+        const parsed = parseInt(localVal);
+        const final = isNaN(parsed) || parsed < 1 ? 1 : parsed;
+        setLocalVal(String(final));
+        onChange(final);
+      }}
+      disabled={disabled}
+      className="w-full h-8 text-sm"
+    />
+  );
+}
+
 interface SalesOrderFormModalProps {
   mode?: 'create' | 'edit';
   orderId?: string;
@@ -203,7 +236,12 @@ export function SalesOrderFormModal({
   // Form data
   const [selectedCustomer, setSelectedCustomer] =
     useState<UnifiedCustomer | null>(null);
-  const [expectedDeliveryDate, setExpectedDeliveryDate] = useState('');
+  const [orderDate, setOrderDate] = useState<string>(
+    new Date().toISOString().split('T')[0]
+  );
+  const [expectedDeliveryDate, setExpectedDeliveryDate] = useState<
+    string | null
+  >(null);
   const [shippingAddress, setShippingAddress] = useState('');
   const [billingAddress, setBillingAddress] = useState('');
   const [notes, setNotes] = useState('');
@@ -362,7 +400,10 @@ export function SalesOrderFormModal({
         setSelectedCustomer(customer);
 
         // Charger les données de la commande
-        setExpectedDeliveryDate(order.expected_delivery_date ?? '');
+        setOrderDate(
+          order.order_date ?? new Date().toISOString().split('T')[0]
+        );
+        setExpectedDeliveryDate(order.expected_delivery_date ?? null);
         setShippingAddress(extractAddress(order.shipping_address));
         setBillingAddress(extractAddress(order.billing_address));
         setNotes(order.notes ?? '');
@@ -622,7 +663,8 @@ export function SalesOrderFormModal({
     setSelectedSalesChannel(null);
     // Reset form data
     setSelectedCustomer(null);
-    setExpectedDeliveryDate('');
+    setOrderDate(new Date().toISOString().split('T')[0]);
+    setExpectedDeliveryDate(null);
     setShippingAddress('');
     setBillingAddress('');
     setNotes('');
@@ -781,19 +823,12 @@ export function SalesOrderFormModal({
     }
 
     try {
-      // Appel Supabase RPC calculate_product_price_v2
-      // RPC non typée dans Database types - utiliser helper pour appel non typé
-      const rpcCall = supabase.rpc as unknown as (
-        fn: string,
-        params: Record<string, unknown>
-      ) => Promise<{ data: unknown; error: { message: string } | null }>;
-
-      const { data: rawData, error } = await rpcCall(
+      const { data: rawData, error } = await supabase.rpc(
         'calculate_product_price_v2',
         {
           p_product_id: productId,
           p_quantity: quantity,
-          p_channel_id: channelId, // Canal sélectionné dans le formulaire
+          p_channel_id: channelId ?? undefined,
           p_customer_id: selectedCustomer.id,
           p_customer_type:
             selectedCustomer.type === 'professional'
@@ -1037,6 +1072,7 @@ export function SalesOrderFormModal({
       if (mode === 'edit' && orderId) {
         // Mode édition : mettre à jour la commande existante
         const updateData = {
+          order_date: orderDate,
           expected_delivery_date: expectedDeliveryDate ?? undefined,
           shipping_address: shippingAddress
             ? { address: shippingAddress }
@@ -1064,6 +1100,7 @@ export function SalesOrderFormModal({
             selectedCustomer.type === 'professional'
               ? 'organization'
               : 'individual',
+          order_date: orderDate,
           expected_delivery_date: expectedDeliveryDate ?? undefined,
           shipping_address: shippingAddress
             ? { address: shippingAddress }
@@ -1569,9 +1606,9 @@ export function SalesOrderFormModal({
                         <TableHeader>
                           <TableRow>
                             <TableHead>Produit</TableHead>
-                            <TableHead className="w-24">Qté</TableHead>
-                            <TableHead className="w-28">Prix</TableHead>
-                            <TableHead className="w-28">Total</TableHead>
+                            <TableHead className="w-36">Qté</TableHead>
+                            <TableHead className="w-32">Prix</TableHead>
+                            <TableHead className="w-32">Total</TableHead>
                             <TableHead className="w-16" />
                           </TableRow>
                         </TableHeader>
@@ -1600,17 +1637,11 @@ export function SalesOrderFormModal({
                                 </div>
                               </TableCell>
                               <TableCell>
-                                <Input
-                                  type="number"
-                                  min="1"
+                                <QuantityInput
                                   value={item.quantity}
-                                  onChange={e =>
-                                    updateLinkMeQuantity(
-                                      item.id,
-                                      parseInt(e.target.value) || 1
-                                    )
+                                  onChange={val =>
+                                    updateLinkMeQuantity(item.id, val)
                                   }
-                                  className="w-16 h-8 text-sm"
                                   disabled={loading}
                                 />
                               </TableCell>
@@ -1758,15 +1789,26 @@ export function SalesOrderFormModal({
 
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
+                        <Label htmlFor="orderDate">Date de commande *</Label>
+                        <Input
+                          id="orderDate"
+                          type="date"
+                          value={orderDate}
+                          onChange={e => setOrderDate(e.target.value)}
+                          disabled={loading}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
                         <Label htmlFor="deliveryDate">
                           Date de livraison prévue
                         </Label>
                         <Input
                           id="deliveryDate"
                           type="date"
-                          value={expectedDeliveryDate}
+                          value={expectedDeliveryDate ?? ''}
                           onChange={e =>
-                            setExpectedDeliveryDate(e.target.value)
+                            setExpectedDeliveryDate(e.target.value || null)
                           }
                           disabled={loading}
                         />
@@ -1823,33 +1865,6 @@ export function SalesOrderFormModal({
                           </p>
                         )}
                       </div>
-                    </div>
-
-                    {/* Canal de vente */}
-                    <div className="space-y-2">
-                      <Label htmlFor="channelId">Canal de vente</Label>
-                      <Select
-                        value={channelId ?? ''}
-                        onValueChange={value => setChannelId(value ?? null)}
-                        disabled={loading || !selectedCustomer}
-                      >
-                        <SelectTrigger id="channelId">
-                          <SelectValue placeholder="Sélectionnez un canal" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {availableChannels.map(channel => (
-                            <SelectItem key={channel.id} value={channel.id}>
-                              {channel.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      {selectedCustomer && (
-                        <p className="text-xs text-gray-500">
-                          Canal utilisé pour cette commande (affecte les prix et
-                          le suivi)
-                        </p>
-                      )}
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
@@ -1981,15 +1996,15 @@ export function SalesOrderFormModal({
                           <TableHeader>
                             <TableRow>
                               <TableHead>Produit</TableHead>
-                              <TableHead className="w-20">Quantité</TableHead>
-                              <TableHead className="w-28">
+                              <TableHead className="w-36">Quantité</TableHead>
+                              <TableHead className="w-36">
                                 Prix unitaire HT
                               </TableHead>
-                              <TableHead className="w-24">Remise (%)</TableHead>
-                              <TableHead className="w-24">
+                              <TableHead className="w-28">Remise (%)</TableHead>
+                              <TableHead className="w-28">
                                 Éco-taxe (€)
                               </TableHead>
-                              <TableHead className="w-28">Total HT</TableHead>
+                              <TableHead className="w-32">Total HT</TableHead>
                               <TableHead className="w-20">Actions</TableHead>
                             </TableRow>
                           </TableHeader>
@@ -2025,18 +2040,15 @@ export function SalesOrderFormModal({
                                   </TableCell>
                                   {/* Quantité */}
                                   <TableCell>
-                                    <Input
-                                      type="number"
-                                      min="1"
+                                    <QuantityInput
                                       value={item.quantity}
-                                      onChange={e => {
+                                      onChange={val => {
                                         void updateItem(
                                           item.id,
                                           'quantity',
-                                          parseInt(e.target.value) || 1
+                                          val
                                         ).catch(console.error);
                                       }}
-                                      className="w-16 h-8 text-sm"
                                       disabled={loading}
                                     />
                                   </TableCell>
@@ -2055,7 +2067,7 @@ export function SalesOrderFormModal({
                                         ).catch(console.error);
                                       }}
                                       className={cn(
-                                        'w-24 h-8 text-sm',
+                                        'w-full h-8 text-sm',
                                         !isPriceEditable &&
                                           'bg-muted cursor-not-allowed'
                                       )}
@@ -2082,7 +2094,7 @@ export function SalesOrderFormModal({
                                           parseFloat(e.target.value) || 0
                                         ).catch(console.error);
                                       }}
-                                      className="w-20 h-8 text-sm"
+                                      className="w-full h-8 text-sm"
                                       disabled={loading}
                                     />
                                   </TableCell>
@@ -2100,7 +2112,7 @@ export function SalesOrderFormModal({
                                           parseFloat(e.target.value) || 0
                                         ).catch(console.error);
                                       }}
-                                      className="w-20 h-8 text-sm"
+                                      className="w-full h-8 text-sm"
                                       disabled={loading}
                                     />
                                   </TableCell>

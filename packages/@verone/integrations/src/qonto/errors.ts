@@ -21,14 +21,14 @@ export type QontoErrorCode =
 export class QontoError extends Error {
   public readonly code: QontoErrorCode;
   public readonly statusCode: number;
-  public readonly details?: any;
+  public readonly details?: unknown;
   public readonly isRetryable: boolean;
 
   constructor(
     message: string,
     code: QontoErrorCode,
     statusCode: number = 0,
-    details?: any
+    details?: unknown
   ) {
     super(message);
     this.name = 'QontoError';
@@ -127,12 +127,13 @@ export class QontoError extends Error {
  */
 export function createQontoErrorFromResponse(
   status: number,
-  responseData?: any
+  responseData?: Record<string, unknown>
 ): QontoError {
-  const message =
+  const message = String(
     responseData?.message ||
-    responseData?.error ||
-    `Qonto API error (${status})`;
+      responseData?.error ||
+      `Qonto API error (${status})`
+  );
 
   switch (status) {
     case 400:

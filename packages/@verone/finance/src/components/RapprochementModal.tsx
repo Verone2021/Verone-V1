@@ -72,6 +72,9 @@ interface SalesOrder {
   organisation_id?: string;
   created_at: string;
   status: string;
+  payment_status_v2?: string;
+  amount_paid: number;
+  remaining: number;
   // Score de matching (calculé côté client)
   matchScore?: number;
   matchReasons?: string[];
@@ -293,7 +296,8 @@ export function RapprochementModal({
           created_at,
           status,
           customer_id,
-          customer_type
+          customer_type,
+          payment_status_v2
         `
         )
         .in('status', ['validated', 'delivered', 'shipped'])
@@ -317,11 +321,30 @@ export function RapprochementModal({
           status: string;
           customer_id: string;
           customer_type: string;
+          payment_status_v2: string | null;
         };
+
+        // Charger les montants déjà alloués par commande via transaction_document_links
+        const orderIds = (ordersData as OrderRow[]).map(o => o.id);
+        const allocatedByOrder = new Map<string, number>();
+        if (orderIds.length > 0) {
+          const { data: allocatedData } = await supabase
+            .from('transaction_document_links')
+            .select('sales_order_id, allocated_amount')
+            .in('sales_order_id', orderIds);
+          allocatedData?.forEach(link => {
+            const key = link.sales_order_id as string;
+            const current = allocatedByOrder.get(key) ?? 0;
+            allocatedByOrder.set(
+              key,
+              current + (Number(link.allocated_amount) || 0)
+            );
+          });
+        }
 
         // Récupérer les noms des organisations pour les commandes B2B
         const orgOrders = (ordersData as OrderRow[]).filter(
-          o => o.customer_type === 'organisation'
+          o => o.customer_type === 'organization'
         );
         const orgIds = orgOrders.map(o => o.customer_id);
 
@@ -337,21 +360,28 @@ export function RapprochementModal({
         }
 
         setOrders(
-          (ordersData as OrderRow[]).map(o => ({
-            id: o.id,
-            order_number: o.order_number,
-            total_ht: Number(o.total_ht) || 0,
-            // FIX: Forcer conversion en number (Supabase peut retourner string pour numeric)
-            total_ttc: Number(o.total_ttc) || Number(o.total_ht) * 1.2, // Fallback si pas de TTC
-            created_at: o.created_at,
-            status: o.status,
-            organisation_id:
-              o.customer_type === 'organisation' ? o.customer_id : undefined,
-            customer_name:
-              o.customer_type === 'organisation'
-                ? orgNames[o.customer_id]
-                : 'Client particulier',
-          }))
+          (ordersData as OrderRow[]).map(o => {
+            const ttc = Number(o.total_ttc) || Number(o.total_ht) * 1.2;
+            const paid = allocatedByOrder.get(o.id) ?? 0;
+            return {
+              id: o.id,
+              order_number: o.order_number,
+              total_ht: Number(o.total_ht) || 0,
+              // FIX: Forcer conversion en number (Supabase peut retourner string pour numeric)
+              total_ttc: ttc,
+              created_at: o.created_at,
+              status: o.status,
+              payment_status_v2: o.payment_status_v2 ?? undefined,
+              amount_paid: paid,
+              remaining: ttc - paid,
+              organisation_id:
+                o.customer_type === 'organization' ? o.customer_id : undefined,
+              customer_name:
+                o.customer_type === 'organization'
+                  ? orgNames[o.customer_id]
+                  : 'Client particulier',
+            };
+          })
         );
       }
 
@@ -948,6 +978,12 @@ export function RapprochementModal({
                             <span className="font-semibold text-sm">
                               {formatAmount(order.total_ttc)}
                             </span>
+                            {order.amount_paid > 0 && (
+                              <p className="text-xs text-slate-500">
+                                Payé: {formatAmount(order.amount_paid)} — Reste:{' '}
+                                {formatAmount(order.remaining)}
+                              </p>
+                            )}
                             {(order.matchScore || 0) > 0 && (
                               <Badge
                                 variant="outline"

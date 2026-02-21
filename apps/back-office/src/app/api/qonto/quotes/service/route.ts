@@ -36,7 +36,7 @@ interface IServiceItem {
 
 interface IPostRequestBody {
   clientId: string;
-  clientType: 'organisation' | 'individual';
+  clientType: 'organization' | 'individual';
   items: IServiceItem[];
   validityDays?: number; // Durée de validité en jours (défaut: 30)
   reference?: string;
@@ -74,11 +74,11 @@ export async function POST(request: NextRequest): Promise<
       );
     }
 
-    if (!clientType || !['organisation', 'individual'].includes(clientType)) {
+    if (!clientType || !['organization', 'individual'].includes(clientType)) {
       return NextResponse.json(
         {
           success: false,
-          error: 'clientType must be organisation or individual',
+          error: 'clientType must be organization or individual',
         },
         { status: 400 }
       );
@@ -97,7 +97,7 @@ export async function POST(request: NextRequest): Promise<
     let customerEmail: string | null = null;
     let customerName = 'Client';
 
-    if (clientType === 'organisation') {
+    if (clientType === 'organization') {
       const { data: org, error: orgError } = await supabase
         .from('organisations')
         .select('*')
@@ -177,7 +177,7 @@ export async function POST(request: NextRequest): Promise<
       countryCode: string;
     };
 
-    if (clientType === 'organisation') {
+    if (clientType === 'organization') {
       const org = customer as Organisation;
       qontoAddress = {
         streetAddress: org.billing_address_line1 ?? org.address_line1 ?? '',
@@ -197,11 +197,11 @@ export async function POST(request: NextRequest): Promise<
 
     // Mapper customer_type vers type Qonto
     const qontoClientType =
-      clientType === 'organisation' ? 'company' : 'individual';
+      clientType === 'organization' ? 'company' : 'individual';
 
     // Récupérer le numéro TVA/SIRET pour les entreprises
     let vatNumber: string | undefined;
-    if (clientType === 'organisation') {
+    if (clientType === 'organization') {
       const org = customer as Organisation;
       // Priorité: vat_number (TVA intra), sinon siret
       vatNumber = org.vat_number ?? org.siret ?? undefined;
