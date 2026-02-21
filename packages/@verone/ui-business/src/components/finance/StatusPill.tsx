@@ -143,6 +143,12 @@ export const qontoInvoiceStatusConfig: Record<string, StatusConfig> = {
   paid: { label: 'Payée', variant: 'success' },
   overdue: { label: 'En retard', variant: 'destructive' },
   cancelled: { label: 'Annulée', variant: 'secondary' },
+  canceled: { label: 'Annulée', variant: 'secondary' },
+  finalized: { label: 'Finalisée', variant: 'default' },
+  pending: { label: 'En attente', variant: 'warning' },
+  sent: { label: 'Envoyée', variant: 'default' },
+  accepted: { label: 'Accepté', variant: 'success' },
+  declined: { label: 'Refusé', variant: 'destructive' },
 };
 
 // Export de la config par défaut pour personnalisation

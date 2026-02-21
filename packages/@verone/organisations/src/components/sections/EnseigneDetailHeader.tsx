@@ -54,12 +54,12 @@ export function EnseigneDetailHeader({
 }: EnseigneDetailHeaderProps) {
   return (
     <div className={cn('border-b bg-white', className)}>
-      <div className="px-6 py-4">
+      <div className="px-6 py-3">
         {/* Breadcrumb / Back */}
         {onBack ? (
           <button
             onClick={onBack}
-            className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4 transition-colors"
+            className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-2 transition-colors"
           >
             <ArrowLeft className="h-4 w-4 mr-1" />
             Retour
@@ -67,7 +67,7 @@ export function EnseigneDetailHeader({
         ) : (
           <Link
             href={backUrl}
-            className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4 transition-colors"
+            className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-2 transition-colors"
           >
             <ArrowLeft className="h-4 w-4 mr-1" />
             Retour aux enseignes

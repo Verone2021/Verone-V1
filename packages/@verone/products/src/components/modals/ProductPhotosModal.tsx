@@ -202,8 +202,10 @@ export function ProductPhotosModal({
     setDragActive(false);
 
     const files = e.dataTransfer.files;
-    if (files) {
-      handleFilesDrop(files);
+    if (files && files.length > 0) {
+      void handleFilesDrop(files).catch(err => {
+        console.error('[ProductPhotosModal] Drop upload failed:', err);
+      });
     }
   };
 
@@ -290,7 +292,7 @@ export function ProductPhotosModal({
               onDragOver={handleDrag}
               onDrop={handleDrop}
             >
-              {/* Input file invisible qui couvre toute la zone - cliquable directement */}
+              {/* Input file invisible qui couvre toute la zone - cliquable ET draggable */}
               <input
                 ref={fileInputRef}
                 type="file"
@@ -299,6 +301,10 @@ export function ProductPhotosModal({
                 onChange={handleInputChange}
                 disabled={uploading}
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
+                onDragEnter={handleDragIn}
+                onDragLeave={handleDragOut}
+                onDragOver={handleDrag}
+                onDrop={handleDrop}
               />
 
               <div className="flex flex-col items-center space-y-3">

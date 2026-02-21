@@ -11,6 +11,16 @@ import {
   type ClientConsultation,
 } from '@verone/consultations';
 import { useConsultationImages } from '@verone/consultations';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@verone/ui';
 import { Badge } from '@verone/ui';
 import { ButtonUnified } from '@verone/ui';
 import {
@@ -19,6 +29,12 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+} from '@verone/ui';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
 } from '@verone/ui';
 import { Input } from '@verone/ui';
 import { Label } from '@verone/ui';
@@ -29,6 +45,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@verone/ui';
+import { Switch } from '@verone/ui';
 import {
   Users,
   ArrowLeft,
@@ -43,6 +60,10 @@ import {
   Calendar,
   XCircle,
   Camera,
+  MoreVertical,
+  Archive,
+  ArchiveRestore,
+  Trash2,
 } from 'lucide-react';
 
 import { ConsultationImageViewerModal } from '@/components/business/consultation-image-viewer-modal';
@@ -66,12 +87,18 @@ interface ConsultationRowProps {
   consultation: ClientConsultation;
   onOpenPhotoModal: (id: string, title: string) => void;
   onViewDetails: () => void;
+  onArchive: () => void;
+  onUnarchive: () => void;
+  onDelete: () => void;
 }
 
 function ConsultationRow({
   consultation,
   onOpenPhotoModal,
   onViewDetails,
+  onArchive,
+  onUnarchive,
+  onDelete,
 }: ConsultationRowProps) {
   const { primaryImage, hasImages, loading } = useConsultationImages({
     consultationId: consultation.id,
@@ -178,12 +205,49 @@ function ConsultationRow({
           </div>
         </div>
 
-        {/* Bouton voir détails */}
+        {/* Boutons actions */}
         <div className="flex items-center space-x-2">
+          {consultation.archived_at && (
+            <Badge
+              variant="outline"
+              className="border-gray-400 text-gray-500 text-xs"
+            >
+              Archivée
+            </Badge>
+          )}
           <ButtonUnified variant="outline" size="sm" onClick={onViewDetails}>
             <Eye className="h-4 w-4 mr-1" />
             Voir détails
           </ButtonUnified>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <ButtonUnified variant="ghost" size="sm" className="h-8 w-8 p-0">
+                <MoreVertical className="h-4 w-4" />
+              </ButtonUnified>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {!consultation.archived_at ? (
+                <DropdownMenuItem onClick={onArchive}>
+                  <Archive className="h-4 w-4 mr-2" />
+                  Archiver
+                </DropdownMenuItem>
+              ) : (
+                <>
+                  <DropdownMenuItem onClick={onUnarchive}>
+                    <ArchiveRestore className="h-4 w-4 mr-2" />
+                    Désarchiver
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={onDelete}
+                    className="text-red-600 focus:text-red-600"
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Supprimer
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </div>
@@ -228,16 +292,28 @@ function ConsultationPhotoModal({
 export default function ConsultationsPage() {
   const router = useRouter();
   const { toast: _toast } = useToast();
-  const { consultations, loading, fetchConsultations } = useConsultations();
+  const {
+    consultations,
+    loading,
+    fetchConsultations,
+    archiveConsultation,
+    unarchiveConsultation,
+    deleteConsultation,
+  } = useConsultations();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [priorityFilter, setPriorityFilter] = useState('all');
+  const [showArchived, setShowArchived] = useState(false);
   const [photoModalOpen, setPhotoModalOpen] = useState(false);
   const [selectedConsultationId, setSelectedConsultationId] = useState<
     string | null
   >(null);
   const [selectedConsultationTitle, setSelectedConsultationTitle] =
     useState('');
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [consultationToDelete, setConsultationToDelete] = useState<
+    string | null
+  >(null);
 
   useEffect(() => {
     void fetchConsultations().catch(error => {
@@ -248,8 +324,42 @@ export default function ConsultationsPage() {
     });
   }, [fetchConsultations]);
 
+  const handleArchive = async (id: string) => {
+    const success = await archiveConsultation(id);
+    if (success) {
+      await fetchConsultations();
+    }
+  };
+
+  const handleUnarchive = async (id: string) => {
+    const success = await unarchiveConsultation(id);
+    if (success) {
+      await fetchConsultations();
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!consultationToDelete) return;
+    const success = await deleteConsultation(consultationToDelete);
+    if (success) {
+      await fetchConsultations();
+    }
+    setDeleteDialogOpen(false);
+    setConsultationToDelete(null);
+  };
+
+  const handleRequestDelete = (id: string) => {
+    setConsultationToDelete(id);
+    setDeleteDialogOpen(true);
+  };
+
   // Filtrer les consultations
   const filteredConsultations = consultations.filter(consultation => {
+    // Masquer les archivées par défaut
+    if (!showArchived && consultation.archived_at) {
+      return false;
+    }
+
     const matchesSearch =
       getClientName(consultation)
         .toLowerCase()
@@ -456,18 +566,32 @@ export default function ConsultationsPage() {
                 </Select>
               </div>
 
-              <div className="flex items-end">
+              <div className="flex flex-col justify-end space-y-2">
                 <ButtonUnified
                   variant="outline"
                   onClick={() => {
                     setSearchTerm('');
                     setStatusFilter('all');
                     setPriorityFilter('all');
+                    setShowArchived(false);
                   }}
                   className="w-full"
                 >
                   Réinitialiser
                 </ButtonUnified>
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="show-archived"
+                    checked={showArchived}
+                    onCheckedChange={setShowArchived}
+                  />
+                  <Label
+                    htmlFor="show-archived"
+                    className="text-sm cursor-pointer"
+                  >
+                    Inclure les archivées
+                  </Label>
+                </div>
               </div>
             </div>
           </CardContent>
@@ -502,6 +626,23 @@ export default function ConsultationsPage() {
                     onViewDetails={() =>
                       router.push(`/consultations/${consultation.id}`)
                     }
+                    onArchive={() => {
+                      void handleArchive(consultation.id).catch(error => {
+                        console.error(
+                          '[ConsultationsPage] Archive failed:',
+                          error
+                        );
+                      });
+                    }}
+                    onUnarchive={() => {
+                      void handleUnarchive(consultation.id).catch(error => {
+                        console.error(
+                          '[ConsultationsPage] Unarchive failed:',
+                          error
+                        );
+                      });
+                    }}
+                    onDelete={() => handleRequestDelete(consultation.id)}
                   />
                 ))}
               </div>
@@ -523,6 +664,32 @@ export default function ConsultationsPage() {
           }}
         />
       )}
+
+      {/* Dialog confirmation suppression */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer la consultation ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cette action est irréversible. La consultation sera définitivement
+              supprimée.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                void handleConfirmDelete().catch(error => {
+                  console.error('[ConsultationsPage] Delete failed:', error);
+                });
+              }}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

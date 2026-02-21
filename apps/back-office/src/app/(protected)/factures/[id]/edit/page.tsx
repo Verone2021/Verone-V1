@@ -23,6 +23,7 @@ import {
 } from '@verone/ui';
 import {
   ArrowLeft,
+  Copy,
   Loader2,
   Plus,
   Save,
@@ -75,6 +76,20 @@ interface QontoDocument {
   terms_and_conditions?: string;
 }
 
+interface IAddress {
+  street: string;
+  city: string;
+  zip_code: string;
+  country: string;
+}
+
+const emptyAddress: IAddress = {
+  street: '',
+  city: '',
+  zip_code: '',
+  country: '',
+};
+
 // API Response types
 interface QontoApiResponse {
   success: boolean;
@@ -82,6 +97,10 @@ interface QontoApiResponse {
   quote?: QontoDocument;
   credit_note?: QontoDocument;
   creditNote?: QontoDocument;
+  localData?: {
+    billing_address?: IAddress | null;
+    shipping_address?: IAddress | null;
+  } | null;
   error?: string;
 }
 
@@ -247,12 +266,19 @@ export default function EditDraftPage({ params }: IPageProps) {
 
   // Editable fields
   const [items, setItems] = useState<IEditableItem[]>([]);
+  const [issueDate, setIssueDate] = useState('');
   const [header, setHeader] = useState('');
   const [footer, setFooter] = useState('');
   const [termsAndConditions, setTermsAndConditions] = useState('');
   const [dueDate, setDueDate] = useState('');
   const [expiryDate, setExpiryDate] = useState('');
   const [reason, setReason] = useState('');
+  const [billingAddress, setBillingAddress] = useState<IAddress>({
+    ...emptyAddress,
+  });
+  const [shippingAddress, setShippingAddress] = useState<IAddress>({
+    ...emptyAddress,
+  });
 
   // Load document
   useEffect(() => {
@@ -316,12 +342,31 @@ export default function EditDraftPage({ params }: IPageProps) {
                 ]);
               }
 
+              setIssueDate(doc.issue_date ?? '');
               setHeader(doc.header ?? '');
               setFooter(doc.footer ?? '');
               setTermsAndConditions(doc.terms_and_conditions ?? '');
               setDueDate(doc.payment_deadline ?? '');
               setExpiryDate(doc.expiry_date ?? '');
               setReason(doc.reason ?? '');
+
+              // Initialize addresses from local data
+              if (data.localData?.billing_address) {
+                setBillingAddress({
+                  street: data.localData.billing_address.street ?? '',
+                  city: data.localData.billing_address.city ?? '',
+                  zip_code: data.localData.billing_address.zip_code ?? '',
+                  country: data.localData.billing_address.country ?? '',
+                });
+              }
+              if (data.localData?.shipping_address) {
+                setShippingAddress({
+                  street: data.localData.shipping_address.street ?? '',
+                  city: data.localData.shipping_address.city ?? '',
+                  zip_code: data.localData.shipping_address.zip_code ?? '',
+                  country: data.localData.shipping_address.country ?? '',
+                });
+              }
 
               setLoading(false);
               return;
@@ -407,10 +452,16 @@ export default function EditDraftPage({ params }: IPageProps) {
 
       // Type-specific fields
       if (documentType === 'invoice') {
+        if (issueDate) body.issueDate = issueDate;
         if (header) body.header = header;
         if (footer) body.footer = footer;
         if (termsAndConditions) body.termsAndConditions = termsAndConditions;
         if (dueDate) body.dueDate = dueDate;
+        // Addresses (local only)
+        const hasBilling = billingAddress.street || billingAddress.city;
+        const hasShipping = shippingAddress.street || shippingAddress.city;
+        if (hasBilling) body.billing_address = billingAddress;
+        if (hasShipping) body.shipping_address = shippingAddress;
       } else if (documentType === 'quote') {
         if (header) body.header = header;
         if (footer) body.footer = footer;
@@ -557,6 +608,131 @@ export default function EditDraftPage({ params }: IPageProps) {
         </CardContent>
       </Card>
 
+      {/* Addresses (invoices only) */}
+      {documentType === 'invoice' && (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Adresses</CardTitle>
+            <CardDescription>
+              Adresses de facturation et de livraison
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Billing address */}
+              <div className="space-y-3">
+                <h4 className="font-medium text-sm">Adresse de facturation</h4>
+                <div className="space-y-2">
+                  <Input
+                    placeholder="Rue"
+                    value={billingAddress.street}
+                    onChange={e =>
+                      setBillingAddress(prev => ({
+                        ...prev,
+                        street: e.target.value,
+                      }))
+                    }
+                  />
+                  <div className="grid grid-cols-2 gap-2">
+                    <Input
+                      placeholder="Code postal"
+                      value={billingAddress.zip_code}
+                      onChange={e =>
+                        setBillingAddress(prev => ({
+                          ...prev,
+                          zip_code: e.target.value,
+                        }))
+                      }
+                    />
+                    <Input
+                      placeholder="Ville"
+                      value={billingAddress.city}
+                      onChange={e =>
+                        setBillingAddress(prev => ({
+                          ...prev,
+                          city: e.target.value,
+                        }))
+                      }
+                    />
+                  </div>
+                  <Input
+                    placeholder="Pays"
+                    value={billingAddress.country}
+                    onChange={e =>
+                      setBillingAddress(prev => ({
+                        ...prev,
+                        country: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+              </div>
+
+              {/* Shipping address */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-medium text-sm">Adresse de livraison</h4>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="text-xs"
+                    onClick={() => setShippingAddress({ ...billingAddress })}
+                  >
+                    <Copy className="h-3 w-3 mr-1" />
+                    Copier facturation
+                  </Button>
+                </div>
+                <div className="space-y-2">
+                  <Input
+                    placeholder="Rue"
+                    value={shippingAddress.street}
+                    onChange={e =>
+                      setShippingAddress(prev => ({
+                        ...prev,
+                        street: e.target.value,
+                      }))
+                    }
+                  />
+                  <div className="grid grid-cols-2 gap-2">
+                    <Input
+                      placeholder="Code postal"
+                      value={shippingAddress.zip_code}
+                      onChange={e =>
+                        setShippingAddress(prev => ({
+                          ...prev,
+                          zip_code: e.target.value,
+                        }))
+                      }
+                    />
+                    <Input
+                      placeholder="Ville"
+                      value={shippingAddress.city}
+                      onChange={e =>
+                        setShippingAddress(prev => ({
+                          ...prev,
+                          city: e.target.value,
+                        }))
+                      }
+                    />
+                  </div>
+                  <Input
+                    placeholder="Pays"
+                    value={shippingAddress.country}
+                    onChange={e =>
+                      setShippingAddress(prev => ({
+                        ...prev,
+                        country: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Items */}
       <Card className="mb-6">
         <CardHeader>
@@ -630,15 +806,26 @@ export default function EditDraftPage({ params }: IPageProps) {
         <CardContent className="space-y-4">
           {/* Invoice specific */}
           {documentType === 'invoice' && (
-            <div className="space-y-2">
-              <Label htmlFor="dueDate">Date d&apos;échéance</Label>
-              <Input
-                id="dueDate"
-                type="date"
-                value={dueDate}
-                onChange={e => setDueDate(e.target.value)}
-              />
-            </div>
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="issueDate">Date d&apos;émission</Label>
+                <Input
+                  id="issueDate"
+                  type="date"
+                  value={issueDate}
+                  onChange={e => setIssueDate(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="dueDate">Date d&apos;échéance</Label>
+                <Input
+                  id="dueDate"
+                  type="date"
+                  value={dueDate}
+                  onChange={e => setDueDate(e.target.value)}
+                />
+              </div>
+            </>
           )}
 
           {/* Quote specific */}

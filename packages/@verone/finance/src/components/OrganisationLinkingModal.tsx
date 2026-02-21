@@ -208,8 +208,10 @@ export function OrganisationLinkingModal({
         } else {
           // Search in organisations table using unaccent RPC
           // Permet de trouver "AMÉRICO" en cherchant "americo"
-          const orgType: 'customer' | 'supplier' =
-            counterpartyType === 'customer_pro' ? 'customer' : 'supplier';
+          const orgType: string =
+            counterpartyType === 'customer_pro'
+              ? 'customer'
+              : 'supplier,partner';
 
           const { data, error } = await supabase
             .rpc('search_organisations_unaccent', {

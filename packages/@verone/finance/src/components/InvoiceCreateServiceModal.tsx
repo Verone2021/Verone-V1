@@ -30,6 +30,7 @@ import {
   DialogTitle,
 } from '@verone/ui';
 import {
+  Calendar,
   CheckCircle2,
   Download,
   ExternalLink,
@@ -110,6 +111,11 @@ export function InvoiceCreateServiceModal({
   const [paymentTerms, setPaymentTerms] = useState<string>('net_30');
   const [reference, setReference] = useState<string>('');
 
+  // Date de facture (défaut: aujourd'hui)
+  const [issueDate, setIssueDate] = useState<string>(
+    new Date().toISOString().split('T')[0]
+  );
+
   const resetState = useCallback((): void => {
     setStatus('idle');
     setCreatedInvoice(null);
@@ -126,6 +132,7 @@ export function InvoiceCreateServiceModal({
     ]);
     setPaymentTerms('net_30');
     setReference('');
+    setIssueDate(new Date().toISOString().split('T')[0]);
   }, []);
 
   const handleClose = useCallback((): void => {
@@ -203,7 +210,7 @@ export function InvoiceCreateServiceModal({
       // Map customer type for API
       const clientType =
         selectedCustomer.type === 'professional'
-          ? 'organisation'
+          ? 'organization'
           : 'individual';
 
       const response = await fetch('/api/qonto/invoices/service', {
@@ -221,6 +228,7 @@ export function InvoiceCreateServiceModal({
           })),
           paymentTerms,
           reference: reference || undefined,
+          issueDate,
           // FORCÉ: autoFinalize = false - TOUJOURS brouillon
           autoFinalize: false,
         }),
@@ -470,12 +478,24 @@ export function InvoiceCreateServiceModal({
               </CardContent>
             </Card>
 
-            {/* Options */}
+            {/* Date + Options */}
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm">Options</CardTitle>
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Calendar className="h-4 w-4" />
+                  Date et options
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
+                <div className="space-y-1">
+                  <Label className="text-xs">Date de facture *</Label>
+                  <Input
+                    type="date"
+                    value={issueDate}
+                    onChange={e => setIssueDate(e.target.value)}
+                    className="h-8"
+                  />
+                </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <Label className="text-xs">Conditions de paiement</Label>

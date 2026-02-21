@@ -16,6 +16,10 @@
     "@verone/ui": "workspace:*",
     "@verone/utils": "workspace:*",
     "@verone/types": "workspace:*",
+    "@verone/finance": "workspace:*",
+    "@tanstack/react-query": "^5.20.1",
+    "lucide-react": "^0.300.0",
+    "next": "^15.0.0",
     "sonner": "^1.7.0"
   },
   "peerDependencies": {
@@ -32,6 +36,11 @@
       "types": "./src/hooks/index.ts",
       "import": "./src/hooks/index.ts",
       "require": "./src/hooks/index.ts"
+    },
+    "./hooks/linkme": {
+      "types": "./src/hooks/linkme/index.ts",
+      "import": "./src/hooks/linkme/index.ts",
+      "require": "./src/hooks/linkme/index.ts"
     },
     "./components/*": {
       "types": "./src/components/*/index.ts",

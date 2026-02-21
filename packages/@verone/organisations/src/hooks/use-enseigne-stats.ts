@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@verone/utils/supabase/client';
 
 /**
- * Distribution géographique par ville
+ * Distribution geographique par ville
  */
 export interface CityDistribution {
   city: string;
@@ -25,7 +25,7 @@ export interface OrganisationWithRevenue {
   city: string | null;
   country: string | null;
   revenue: number;
-  // Champs additionnels pour l'organisation mère
+  // Champs additionnels pour l'organisation mere
   siret?: string | null;
   siren?: string | null;
   billing_address_line1?: string | null;
@@ -35,7 +35,7 @@ export interface OrganisationWithRevenue {
 }
 
 /**
- * Statistiques complètes d'une enseigne
+ * Statistiques completes d'une enseigne
  */
 export interface EnseigneStats {
   totalOrganisations: number;
@@ -45,13 +45,21 @@ export interface EnseigneStats {
   citiesDistribution: CityDistribution[];
   organisationsWithRevenue: OrganisationWithRevenue[];
   parentOrganisation: OrganisationWithRevenue | null;
+  totalOrders: number;
 }
 
 /**
- * Hook pour récupérer les statistiques d'une enseigne
- * Inclut: nombre d'organisations, CA total, CA moyen, distribution géographique
+ * Hook pour recuperer les statistiques d'une enseigne
+ * Inclut: nombre d'organisations, CA total, CA moyen, distribution geographique,
+ * nombre de commandes
+ *
+ * @param enseigneId - ID de l'enseigne
+ * @param year - Annee de filtrage (null = toutes les annees)
  */
-export function useEnseigneStats(enseigneId: string | null) {
+export function useEnseigneStats(
+  enseigneId: string | null,
+  year: number | null = null
+) {
   const [stats, setStats] = useState<EnseigneStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -69,8 +77,8 @@ export function useEnseigneStats(enseigneId: string | null) {
     setError(null);
 
     try {
-      // 1. Récupérer les organisations de l'enseigne
-      const { data: organisations, error: orgsError } = await (supabase as any)
+      // 1. Recuperer les organisations de l'enseigne
+      const { data: organisations, error: orgsError } = await supabase
         .from('organisations')
         .select(
           'id, legal_name, trade_name, is_enseigne_parent, is_active, city, country, logo_url, siret, siren, billing_address_line1, billing_address_line2, billing_postal_code, billing_city'
@@ -90,29 +98,42 @@ export function useEnseigneStats(enseigneId: string | null) {
           citiesDistribution: [],
           organisationsWithRevenue: [],
           parentOrganisation: null,
+          totalOrders: 0,
         });
         setLoading(false);
         return;
       }
 
-      // 2. Récupérer le CA de chaque organisation (sales_orders validées)
+      // 2. Recuperer le CA de chaque organisation (sales_orders validees)
       // La table sales_orders utilise le pattern polymorphique: customer_id + customer_type
       const orgIds = organisations.map(o => o.id);
 
-      const { data: revenueData, error: revenueError } = await supabase
+      let revenueQuery = supabase
         .from('sales_orders')
-        .select('customer_id, total_ttc')
-        .eq('customer_type', 'organisation')
+        .select('id, customer_id, total_ttc')
+        .eq('customer_type', 'organization')
         .in('customer_id', orgIds)
         .not('status', 'in', '("cancelled","draft")');
 
-      if (revenueError) {
-        console.warn('Erreur récupération CA:', revenueError);
+      // Filtre par annee si specifie
+      if (year !== null) {
+        revenueQuery = revenueQuery
+          .gte('order_date', `${year}-01-01`)
+          .lt('order_date', `${year + 1}-01-01`);
       }
+
+      const { data: revenueData, error: revenueError } = await revenueQuery;
+
+      if (revenueError) {
+        console.warn('Erreur recuperation CA:', revenueError);
+      }
+
+      const orders = revenueData ?? [];
+      const totalOrders = orders.length;
 
       // Calculer le CA par organisation
       const revenueByOrg: Record<string, number> = {};
-      (revenueData || []).forEach(order => {
+      orders.forEach(order => {
         if (order.customer_id) {
           revenueByOrg[order.customer_id] =
             (revenueByOrg[order.customer_id] || 0) + (order.total_ttc || 0);
@@ -126,7 +147,7 @@ export function useEnseigneStats(enseigneId: string | null) {
           revenue: revenueByOrg[org.id] || 0,
         }));
 
-      // 4. Calculer les stats globales
+      // 5. Calculer les stats globales
       const totalRevenue = organisationsWithRevenue.reduce(
         (sum, org) => sum + org.revenue,
         0
@@ -135,10 +156,10 @@ export function useEnseigneStats(enseigneId: string | null) {
       const averageRevenue =
         totalOrganisations > 0 ? totalRevenue / totalOrganisations : 0;
 
-      // 5. Distribution par ville
+      // 6. Distribution par ville
       const cityMap: Record<string, { count: number; revenue: number }> = {};
       organisationsWithRevenue.forEach(org => {
-        const cityKey = org.city || 'Non renseigné';
+        const cityKey = org.city || 'Non renseigne';
         if (!cityMap[cityKey]) {
           cityMap[cityKey] = { count: 0, revenue: 0 };
         }
@@ -155,10 +176,10 @@ export function useEnseigneStats(enseigneId: string | null) {
         .sort((a, b) => b.count - a.count);
 
       const citiesCount = citiesDistribution.filter(
-        c => c.city !== 'Non renseigné'
+        c => c.city !== 'Non renseigne'
       ).length;
 
-      // 6. Identifier la société mère
+      // 7. Identifier la societe mere
       const parentOrganisation =
         organisationsWithRevenue.find(org => org.is_enseigne_parent) || null;
 
@@ -170,21 +191,24 @@ export function useEnseigneStats(enseigneId: string | null) {
         citiesDistribution,
         organisationsWithRevenue,
         parentOrganisation,
+        totalOrders,
       });
     } catch (err) {
-      console.error('Erreur récupération stats enseigne:', err);
+      console.error('Erreur recuperation stats enseigne:', err);
       setError(
         err instanceof Error
           ? err.message
-          : 'Erreur lors de la récupération des statistiques'
+          : 'Erreur lors de la recuperation des statistiques'
       );
     } finally {
       setLoading(false);
     }
-  }, [enseigneId]);
+  }, [enseigneId, year]);
 
   useEffect(() => {
-    fetchStats();
+    void fetchStats().catch(error => {
+      console.error('[useEnseigneStats] fetchStats failed:', error);
+    });
   }, [fetchStats]);
 
   return {

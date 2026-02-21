@@ -5,6 +5,13 @@
 
 ---
 
+## Guide Unifie LinkMe (SOURCE DE VERITE)
+
+> **`docs/current/linkme/GUIDE-COMPLET-LINKME.md`** : Documentation exhaustive et a jour de LinkMe.
+> En cas de contradiction avec les memories ci-dessous, le guide unifie fait foi.
+
+---
+
 ## 16 Memories CRITICAL
 
 Ces memories sont **stables, transverses, et essentielles** pour le bon fonctionnement de Claude Code.
@@ -114,4 +121,4 @@ Les memories suivantes restent dans `.serena/memories/` (gitignored) :
 ---
 
 _Créé : 2026-01-10_
-_Dernière mise à jour : 2026-01-10_
+_Dernière mise à jour : 2026-02-18_

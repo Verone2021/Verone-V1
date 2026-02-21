@@ -388,6 +388,7 @@ export interface CreateClientInvoiceParams {
   footer?: string;
   termsAndConditions?: string;
   items: CreateInvoiceItemParams[];
+  status?: 'draft' | 'unpaid'; // Défaut Qonto = 'unpaid' si absent. Forcer 'draft' pour workflow brouillon.
 }
 
 /**

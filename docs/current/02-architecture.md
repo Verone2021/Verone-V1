@@ -54,7 +54,7 @@ verone-back-office-V1/
 │   ├── stock/                     # Composants stock
 │   ├── customers/                 # Composants clients
 │   ├── organisations/             # Composants organisations
-│   ├── integrations/              # Google Merchant, Qonto, Abby
+│   ├── integrations/              # Google Merchant, Qonto
 │   └── ...                        # 17 autres packages
 │
 ├── supabase/                      # Database

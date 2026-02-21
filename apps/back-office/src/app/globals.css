@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* MapLibre GL - CSS requis pour le rendu des tuiles cartographiques */
+@import 'maplibre-gl/dist/maplibre-gl.css';
+
 @layer base {
   * {
     @apply border-border;

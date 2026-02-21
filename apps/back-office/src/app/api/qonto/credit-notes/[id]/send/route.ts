@@ -1,26 +1,15 @@
 /**
  * API Route: POST /api/qonto/credit-notes/[id]/send
  * Envoie un avoir par email au client via Qonto
+ *
+ * NOTE: L'endpoint POST /v2/credit_notes/:id/send n'est PAS documente
+ * par Qonto. Si l'envoi echoue, on propose le lien public en fallback.
  */
 
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
-import type { QontoClientCreditNote } from '@verone/integrations/qonto';
-import { QontoClient } from '@verone/integrations/qonto';
-
-interface QontoSendCreditNoteResponse {
-  credit_note?: QontoClientCreditNote;
-}
-
-function getQontoClient(): QontoClient {
-  return new QontoClient({
-    authMode: (process.env.QONTO_AUTH_MODE as 'oauth' | 'api_key') ?? 'oauth',
-    organizationId: process.env.QONTO_ORGANIZATION_ID,
-    apiKey: process.env.QONTO_API_KEY,
-    accessToken: process.env.QONTO_ACCESS_TOKEN,
-  });
-}
+import { getQontoClient, QontoError } from '@verone/integrations/qonto';
 
 export async function POST(
   request: NextRequest,
@@ -30,7 +19,7 @@ export async function POST(
     const { id } = await params;
     const client = getQontoClient();
 
-    // Récupérer l'avoir pour vérifier son état
+    // Recuperer l'avoir pour verifier son etat
     const creditNote = await client.getClientCreditNoteById(id);
 
     if (creditNote.status === 'draft') {
@@ -44,52 +33,41 @@ export async function POST(
       );
     }
 
-    // Essayer d'envoyer l'avoir via l'API Qonto
-    // Note: L'endpoint peut varier selon l'API Qonto
-    const response = await fetch(
-      `https://thirdparty.qonto.com/v2/credit_notes/${id}/send`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${process.env.QONTO_ACCESS_TOKEN}`,
-          'Content-Type': 'application/json',
-        },
-      }
-    );
-
-    if (!response.ok) {
-      // Si l'endpoint n'existe pas ou échoue, on informe l'utilisateur
-      // que l'avoir peut être partagé via son URL publique
-      if (creditNote.public_url) {
-        return NextResponse.json({
-          success: true,
-          creditNote,
-          message:
-            "L'avoir est disponible via son lien public. Vous pouvez le partager manuellement.",
-          publicUrl: creditNote.public_url,
-        });
-      }
-
-      const errorText = await response.text();
-      console.error('[API Qonto Credit Note Send] Qonto API error:', errorText);
-      throw new Error(
-        `Erreur Qonto: ${response.status} ${response.statusText}`
-      );
+    // L'avoir est finalise - proposer le lien public
+    // L'endpoint /send n'est pas documente par Qonto pour credit notes
+    if (creditNote.public_url) {
+      return NextResponse.json({
+        success: true,
+        credit_note: creditNote,
+        message:
+          "L'avoir est disponible via son lien public. Partagez ce lien avec le client.",
+        publicUrl: creditNote.public_url,
+      });
     }
 
-    const data = (await response.json()) as QontoSendCreditNoteResponse;
-
-    return NextResponse.json({
-      success: true,
-      creditNote: data.credit_note ?? creditNote,
-      message: 'Avoir envoyé au client',
-    });
-  } catch (error) {
-    console.error('[API Qonto Credit Note Send] POST error:', error);
+    // Pas de public_url disponible
     return NextResponse.json(
       {
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error:
+          'Aucun lien public disponible pour cet avoir. Utilisez le PDF pour le partager.',
+      },
+      { status: 404 }
+    );
+  } catch (error) {
+    console.error('[API Qonto Credit Note Send] POST error:', error);
+
+    const message =
+      error instanceof QontoError
+        ? error.getUserMessage()
+        : error instanceof Error
+          ? error.message
+          : 'Unknown error';
+
+    return NextResponse.json(
+      {
+        success: false,
+        error: message,
       },
       { status: 500 }
     );

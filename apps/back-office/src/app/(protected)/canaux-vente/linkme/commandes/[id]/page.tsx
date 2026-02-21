@@ -108,6 +108,7 @@ import {
 
 import { ContactCardBO } from '../../components/contacts/ContactCardBO';
 import { NewContactForm } from '../../components/contacts/NewContactForm';
+import { PaymentSection } from '@/app/(protected)/commandes/clients/[id]/PaymentSection';
 import type { NewContactFormData } from '../../components/contacts/NewContactForm';
 
 // ============================================
@@ -133,6 +134,15 @@ interface OrderWithDetails {
   created_by_affiliate_id: string | null;
   linkme_selection_id: string | null;
   created_by: string | null;
+  payment_status: string | null;
+  payment_status_v2: string | null;
+  payment_terms: string | null;
+  currency: string | null;
+  tax_rate: number | null;
+  shipping_cost_ht: number | null;
+  handling_cost_ht: number | null;
+  insurance_cost_ht: number | null;
+  fees_vat_rate: number | null;
   createdByProfile: CreatedByProfile | null;
   organisation: {
     id: string;
@@ -352,6 +362,14 @@ export default function LinkMeOrderDetailPage() {
           created_by_affiliate_id,
           linkme_selection_id,
           created_by,
+          payment_status_v2,
+          payment_terms,
+          currency,
+          tax_rate,
+          shipping_cost_ht,
+          handling_cost_ht,
+          insurance_cost_ht,
+          fees_vat_rate,
           organisations!sales_orders_customer_id_fkey (
             id,
             trade_name,
@@ -450,11 +468,18 @@ export default function LinkMeOrderDetailPage() {
 
       if (orderError) throw orderError;
 
-      // Extraire organisation de la jointure (peut être array ou objet selon Supabase)
-      const orgRaw: unknown = orderData.organisations;
-      const organisation = (
-        Array.isArray(orgRaw) ? (orgRaw[0] ?? null) : (orgRaw ?? null)
-      ) as OrderWithDetails['organisation'];
+      // Requête séparée pour l'organisation (pas de FK car customer_id est polymorphique)
+      let organisation: OrderWithDetails['organisation'] = null;
+      if (orderData.customer_type === 'organization' && orderData.customer_id) {
+        const { data: orgData } = await supabase
+          .from('organisations')
+          .select(
+            'id, trade_name, legal_name, approval_status, enseigne_id, address_line1, address_line2, postal_code, city, billing_address_line1, billing_address_line2, billing_city, billing_postal_code, shipping_address_line1, shipping_address_line2, shipping_city, shipping_postal_code, has_different_shipping_address, phone, email, siret'
+          )
+          .eq('id', orderData.customer_id)
+          .single();
+        organisation = (orgData ?? null) as OrderWithDetails['organisation'];
+      }
 
       // Extraire linkme details de la jointure (peut être array ou objet selon Supabase)
       const linkmeDetailsRaw: unknown = orderData.sales_order_linkme_details;
@@ -499,6 +524,15 @@ export default function LinkMeOrderDetailPage() {
         created_by_affiliate_id: orderData.created_by_affiliate_id ?? null,
         linkme_selection_id: orderData.linkme_selection_id ?? null,
         created_by: createdByUserId,
+        payment_status: null,
+        payment_status_v2: orderData.payment_status_v2 ?? null,
+        payment_terms: orderData.payment_terms ?? null,
+        currency: orderData.currency ?? null,
+        tax_rate: orderData.tax_rate ?? null,
+        shipping_cost_ht: orderData.shipping_cost_ht ?? null,
+        handling_cost_ht: orderData.handling_cost_ht ?? null,
+        insurance_cost_ht: orderData.insurance_cost_ht ?? null,
+        fees_vat_rate: orderData.fees_vat_rate ?? null,
         createdByProfile,
         organisation: organisation,
         items: ((orderData.sales_order_items ?? []) as SalesOrderItemRaw[]).map(
@@ -2029,6 +2063,41 @@ export default function LinkMeOrderDetailPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* ============================================ */}
+      {/* SECTION PAIEMENT (symétrie avec page commandes clients) */}
+      {/* ============================================ */}
+      <PaymentSection
+        orderId={order.id}
+        orderNumber={order.order_number}
+        orderStatus={order.status}
+        totalHt={order.total_ht ?? 0}
+        totalTtc={order.total_ttc ?? 0}
+        taxRate={order.tax_rate ?? 20}
+        currency={order.currency ?? 'EUR'}
+        paymentTerms={order.payment_terms ?? 'immediate'}
+        paymentStatus={
+          order.payment_status_v2 ?? order.payment_status ?? 'pending'
+        }
+        customerName={
+          order.organisation?.trade_name ??
+          order.organisation?.legal_name ??
+          'Client inconnu'
+        }
+        customerEmail={order.organisation?.email ?? null}
+        customerType="organization"
+        shippingCostHt={order.shipping_cost_ht ?? 0}
+        handlingCostHt={order.handling_cost_ht ?? 0}
+        insuranceCostHt={order.insurance_cost_ht ?? 0}
+        feesVatRate={order.fees_vat_rate ?? 0.2}
+        orderItems={order.items.map(item => ({
+          id: item.id,
+          quantity: item.quantity,
+          unit_price_ht: item.unit_price_ht,
+          tax_rate: order.tax_rate ?? 20,
+          products: item.product ? { name: item.product.name } : null,
+        }))}
+      />
 
       {/* ============================================ */}
       {/* DIALOG: SÉLECTION CONTACT (Responsable / Facturation) */}
