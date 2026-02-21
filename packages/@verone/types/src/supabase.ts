@@ -7424,6 +7424,13 @@ export type Database = {
             referencedColumns: ['id'];
           },
           {
+            foreignKeyName: 'sales_orders_customer_id_fkey';
+            columns: ['customer_id'];
+            isOneToOne: false;
+            referencedRelation: 'organisations';
+            referencedColumns: ['id'];
+          },
+          {
             foreignKeyName: 'sales_orders_delivery_contact_id_fkey';
             columns: ['delivery_contact_id'];
             isOneToOne: false;
@@ -8978,6 +8985,13 @@ export type Database = {
             referencedColumns: ['id'];
           },
           {
+            foreignKeyName: 'sales_orders_customer_id_fkey';
+            columns: ['customer_id'];
+            isOneToOne: false;
+            referencedRelation: 'organisations';
+            referencedColumns: ['id'];
+          },
+          {
             foreignKeyName: 'sales_orders_delivery_contact_id_fkey';
             columns: ['delivery_contact_id'];
             isOneToOne: false;
@@ -9430,6 +9444,13 @@ export type Database = {
             referencedRelation: 'sales_channels';
             referencedColumns: ['id'];
           },
+          {
+            foreignKeyName: 'sales_orders_customer_id_fkey';
+            columns: ['customer_id'];
+            isOneToOne: false;
+            referencedRelation: 'organisations';
+            referencedColumns: ['id'];
+          },
         ];
       };
       linkme_orders_with_margins: {
@@ -9464,6 +9485,13 @@ export type Database = {
             columns: ['channel_id'];
             isOneToOne: false;
             referencedRelation: 'sales_channels';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'sales_orders_customer_id_fkey';
+            columns: ['customer_id'];
+            isOneToOne: false;
+            referencedRelation: 'organisations';
             referencedColumns: ['id'];
           },
         ];
@@ -10028,6 +10056,13 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'v_transactions_missing_invoice';
             referencedColumns: ['financial_document_id'];
+          },
+          {
+            foreignKeyName: 'sales_orders_customer_id_fkey';
+            columns: ['customer_id'];
+            isOneToOne: false;
+            referencedRelation: 'organisations';
+            referencedColumns: ['id'];
           },
         ];
       };
