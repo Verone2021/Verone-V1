@@ -1615,7 +1615,7 @@ export default function CataloguePage() {
       {/* Quick-Complete: CategorizeModal (sous-catégorie) */}
       {quickEditTarget?.field === 'subcategory' && (
         <CategoryHierarchyModal
-          isOpen={true}
+          isOpen
           onClose={() => setQuickEditTarget(null)}
           product={quickEditTarget.product}
           onUpdate={updatedProduct => {
@@ -1631,7 +1631,7 @@ export default function CataloguePage() {
       {/* Quick-Complete: ProductPhotosModal */}
       {quickEditTarget?.field === 'photo' && (
         <ProductPhotosModal
-          isOpen={true}
+          isOpen
           onClose={() => setQuickEditTarget(null)}
           productId={quickEditTarget.product.id}
           productName={quickEditTarget.product.name}

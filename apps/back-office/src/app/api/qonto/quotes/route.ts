@@ -224,7 +224,7 @@ export async function POST(request: NextRequest): Promise<
     let customer: Organisation | IndividualCustomer | null = null;
 
     if (orderWithItems.customer_id && orderWithItems.customer_type) {
-      if (orderWithItems.customer_type === 'organisation') {
+      if (orderWithItems.customer_type === 'organization') {
         const { data: org } = await supabase
           .from('organisations')
           .select('*')
@@ -252,10 +252,15 @@ export async function POST(request: NextRequest): Promise<
     let customerEmail: string | null = null;
     let customerName = 'Client';
 
-    if (typedOrder.customer_type === 'organisation' && typedOrder.customer) {
+    // Tax identification number (SIRET/TVA) for Qonto client creation
+    let vatNumber: string | undefined;
+
+    if (typedOrder.customer_type === 'organization' && typedOrder.customer) {
       const org = typedOrder.customer as Organisation;
       customerEmail = org.email ?? null;
       customerName = org.trade_name ?? org.legal_name ?? 'Client';
+      // Priority: vat_number (TVA intra-communautaire), then siret
+      vatNumber = org.vat_number ?? org.siret ?? undefined;
     } else if (
       typedOrder.customer_type === 'individual' &&
       typedOrder.customer
@@ -266,9 +271,14 @@ export async function POST(request: NextRequest): Promise<
         `${indiv.first_name ?? ''} ${indiv.last_name ?? ''}`.trim() || 'Client';
     }
 
-    if (!customerEmail) {
+    // Validate: organisations MUST have a tax identification number for quotes
+    if (typedOrder.customer_type === 'organization' && !vatNumber) {
       return NextResponse.json(
-        { success: false, error: 'Customer email is required' },
+        {
+          success: false,
+          error:
+            "Le SIRET ou numéro de TVA de l'organisation est requis pour créer un devis. Veuillez le renseigner dans la fiche organisation.",
+        },
         { status: 400 }
       );
     }
@@ -288,23 +298,31 @@ export async function POST(request: NextRequest): Promise<
     };
 
     const qontoClientType =
-      typedOrder.customer_type === 'organisation' ? 'company' : 'individual';
+      typedOrder.customer_type === 'organization' ? 'company' : 'individual';
 
-    const existingClient = await qontoClient.findClientByEmail(customerEmail);
+    // Stratégie : chercher par email SI disponible, sinon par nom
+    let existingClient = customerEmail
+      ? await qontoClient.findClientByEmail(customerEmail)
+      : null;
+
+    existingClient ??= await qontoClient.findClientByName(customerName);
+
     if (existingClient) {
       await qontoClient.updateClient(existingClient.id, {
         name: customerName ?? existingClient.name,
         type: qontoClientType,
         address: qontoAddress,
+        vatNumber,
       });
       qontoClientId = existingClient.id;
     } else {
       const newClient = await qontoClient.createClient({
         name: customerName ?? 'Client',
         type: qontoClientType,
-        email: customerEmail,
+        email: customerEmail ?? undefined,
         currency: 'EUR',
         address: qontoAddress,
+        vatNumber,
       });
       qontoClientId = newClient.id;
     }
