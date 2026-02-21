@@ -2635,18 +2635,24 @@ export type Database = {
           abby_pdf_url: string | null;
           abby_public_url: string | null;
           amount_paid: number;
+          billing_address: Json | null;
+          billing_contact_id: string | null;
           created_at: string;
           created_by: string;
           deleted_at: string | null;
+          delivery_contact_id: string | null;
           description: string | null;
           document_date: string;
           document_direction: Database['public']['Enums']['document_direction'];
           document_number: string;
           document_type: Database['public']['Enums']['document_type'];
           due_date: string | null;
+          fees_vat_rate: number | null;
           finalized_at: string | null;
           finalized_by: string | null;
+          handling_cost_ht: number | null;
           id: string;
+          insurance_cost_ht: number | null;
           invoice_source: string | null;
           last_synced_from_abby_at: string | null;
           local_pdf_path: string | null;
@@ -2661,8 +2667,11 @@ export type Database = {
           qonto_invoice_id: string | null;
           qonto_pdf_url: string | null;
           qonto_public_url: string | null;
+          responsable_contact_id: string | null;
           sales_order_id: string | null;
           sent_at: string | null;
+          shipping_address: Json | null;
+          shipping_cost_ht: number | null;
           status: Database['public']['Enums']['document_status'];
           sync_errors: Json | null;
           synced_to_abby_at: string | null;
@@ -2686,18 +2695,24 @@ export type Database = {
           abby_pdf_url?: string | null;
           abby_public_url?: string | null;
           amount_paid?: number;
+          billing_address?: Json | null;
+          billing_contact_id?: string | null;
           created_at?: string;
           created_by: string;
           deleted_at?: string | null;
+          delivery_contact_id?: string | null;
           description?: string | null;
           document_date: string;
           document_direction: Database['public']['Enums']['document_direction'];
           document_number: string;
           document_type: Database['public']['Enums']['document_type'];
           due_date?: string | null;
+          fees_vat_rate?: number | null;
           finalized_at?: string | null;
           finalized_by?: string | null;
+          handling_cost_ht?: number | null;
           id?: string;
+          insurance_cost_ht?: number | null;
           invoice_source?: string | null;
           last_synced_from_abby_at?: string | null;
           local_pdf_path?: string | null;
@@ -2712,8 +2727,11 @@ export type Database = {
           qonto_invoice_id?: string | null;
           qonto_pdf_url?: string | null;
           qonto_public_url?: string | null;
+          responsable_contact_id?: string | null;
           sales_order_id?: string | null;
           sent_at?: string | null;
+          shipping_address?: Json | null;
+          shipping_cost_ht?: number | null;
           status?: Database['public']['Enums']['document_status'];
           sync_errors?: Json | null;
           synced_to_abby_at?: string | null;
@@ -2737,18 +2755,24 @@ export type Database = {
           abby_pdf_url?: string | null;
           abby_public_url?: string | null;
           amount_paid?: number;
+          billing_address?: Json | null;
+          billing_contact_id?: string | null;
           created_at?: string;
           created_by?: string;
           deleted_at?: string | null;
+          delivery_contact_id?: string | null;
           description?: string | null;
           document_date?: string;
           document_direction?: Database['public']['Enums']['document_direction'];
           document_number?: string;
           document_type?: Database['public']['Enums']['document_type'];
           due_date?: string | null;
+          fees_vat_rate?: number | null;
           finalized_at?: string | null;
           finalized_by?: string | null;
+          handling_cost_ht?: number | null;
           id?: string;
+          insurance_cost_ht?: number | null;
           invoice_source?: string | null;
           last_synced_from_abby_at?: string | null;
           local_pdf_path?: string | null;
@@ -2763,8 +2787,11 @@ export type Database = {
           qonto_invoice_id?: string | null;
           qonto_pdf_url?: string | null;
           qonto_public_url?: string | null;
+          responsable_contact_id?: string | null;
           sales_order_id?: string | null;
           sent_at?: string | null;
+          shipping_address?: Json | null;
+          shipping_cost_ht?: number | null;
           status?: Database['public']['Enums']['document_status'];
           sync_errors?: Json | null;
           synced_to_abby_at?: string | null;
@@ -2837,6 +2864,27 @@ export type Database = {
             columns: ['partner_id'];
             isOneToOne: false;
             referencedRelation: 'organisations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'financial_documents_billing_contact_id_fkey';
+            columns: ['billing_contact_id'];
+            isOneToOne: false;
+            referencedRelation: 'contacts';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'financial_documents_delivery_contact_id_fkey';
+            columns: ['delivery_contact_id'];
+            isOneToOne: false;
+            referencedRelation: 'contacts';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'financial_documents_responsable_contact_id_fkey';
+            columns: ['responsable_contact_id'];
+            isOneToOne: false;
+            referencedRelation: 'contacts';
             referencedColumns: ['id'];
           },
         ];

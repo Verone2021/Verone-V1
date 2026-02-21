@@ -734,9 +734,15 @@ importers:
 
   packages/@verone/orders:
     dependencies:
+      '@tanstack/react-query':
+        specifier: ^5.20.1
+        version: 5.90.7(react@18.3.1)
       '@verone/categories':
         specifier: workspace:*
         version: link:../categories
+      '@verone/finance':
+        specifier: workspace:*
+        version: link:../finance
       '@verone/organisations':
         specifier: workspace:*
         version: link:../organisations
@@ -749,6 +755,12 @@ importers:
       '@verone/utils':
         specifier: workspace:*
         version: link:../utils
+      lucide-react:
+        specifier: ^0.300.0
+        version: 0.300.0(react@18.3.1)
+      next:
+        specifier: ^15.0.0
+        version: 15.5.9(@babel/core@7.28.5)(@opentelemetry/api@1.9.0)(@playwright/test@1.56.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react:
         specifier: ^18.2.0
         version: 18.3.1
@@ -5752,6 +5764,11 @@ packages:
   lru-cache@5.1.1:
     resolution: {integrity: sha512-KpNARQA3Iwv+jTA0utUVVbrh+Jlrr1Fv0e56GGzAFOXN7dk/FviaDW8LHmK52DlcH4WP2n6gI8vN1aesBFgo9w==}
 
+  lucide-react@0.300.0:
+    resolution: {integrity: sha512-rQxUUCmWAvNLoAsMZ5j04b2+OJv6UuNLYMY7VK0eVlm4aTwUEjEEHc09/DipkNIlhXUSDn2xoyIzVT0uh7dRsg==}
+    peerDependencies:
+      react: ^16.5.1 || ^17.0.0 || ^18.0.0
+
   lucide-react@0.309.0:
     resolution: {integrity: sha512-zNVPczuwFrCfksZH3zbd1UDE6/WYhYAdbe2k7CImVyPAkXLgIwbs6eXQ4loigqDnUFjyFYCI5jZ1y10Kqal0dg==}
     peerDependencies:
@@ -7398,7 +7415,6 @@ packages:
   whatwg-encoding@3.1.1:
     resolution: {integrity: sha512-6qN4hJdMwfYBtE3YBTTHhoeuUrDBPZmbQaxWAqSALV/MeEnR5z1xd8UKud2RAkFoPkmB+hli1TZSnyi84xz1vQ==}
     engines: {node: '>=18'}
-    deprecated: Use @exodus/bytes instead for a more spec-conformant and faster implementation
 
   whatwg-mimetype@4.0.0:
     resolution: {integrity: sha512-QaKxh0eNIi2mE9p2vEdzfagOKHCcj1pJ56EEHGQOVxp8r9/iszLUUV7v89x9O1p/T+NlTM5W7jW6+cz4Fq1YVg==}
@@ -10833,8 +10849,7 @@ snapshots:
 
   caniuse-lite@1.0.30001754: {}
 
-  caniuse-lite@1.0.30001764:
-    optional: true
+  caniuse-lite@1.0.30001764: {}
 
   canvg@3.0.11:
     dependencies:
@@ -12890,6 +12905,10 @@ snapshots:
     dependencies:
       yallist: 3.1.1
 
+  lucide-react@0.300.0(react@18.3.1):
+    dependencies:
+      react: 18.3.1
+
   lucide-react@0.309.0(react@18.3.1):
     dependencies:
       react: 18.3.1
@@ -13062,7 +13081,7 @@ snapshots:
     dependencies:
       '@next/env': 15.5.9
       '@swc/helpers': 0.5.15
-      caniuse-lite: 1.0.30001754
+      caniuse-lite: 1.0.30001764
       postcss: 8.4.31
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
