@@ -163,6 +163,39 @@ interface PricingV2Result {
   original_price: number;
 }
 
+function QuantityInput({
+  value,
+  onChange,
+  disabled,
+}: {
+  value: number;
+  onChange: (val: number) => void;
+  disabled?: boolean;
+}) {
+  const [localVal, setLocalVal] = useState(String(value));
+
+  useEffect(() => {
+    setLocalVal(String(value));
+  }, [value]);
+
+  return (
+    <Input
+      type="number"
+      min="1"
+      value={localVal}
+      onChange={e => setLocalVal(e.target.value)}
+      onBlur={() => {
+        const parsed = parseInt(localVal);
+        const final = isNaN(parsed) || parsed < 1 ? 1 : parsed;
+        setLocalVal(String(final));
+        onChange(final);
+      }}
+      disabled={disabled}
+      className="w-full h-8 text-sm"
+    />
+  );
+}
+
 interface SalesOrderFormModalProps {
   mode?: 'create' | 'edit';
   orderId?: string;
@@ -1578,9 +1611,9 @@ export function SalesOrderFormModal({
                         <TableHeader>
                           <TableRow>
                             <TableHead>Produit</TableHead>
-                            <TableHead className="w-24">Qté</TableHead>
-                            <TableHead className="w-28">Prix</TableHead>
-                            <TableHead className="w-28">Total</TableHead>
+                            <TableHead className="w-36">Qté</TableHead>
+                            <TableHead className="w-32">Prix</TableHead>
+                            <TableHead className="w-32">Total</TableHead>
                             <TableHead className="w-16" />
                           </TableRow>
                         </TableHeader>
@@ -1609,17 +1642,11 @@ export function SalesOrderFormModal({
                                 </div>
                               </TableCell>
                               <TableCell>
-                                <Input
-                                  type="number"
-                                  min="1"
+                                <QuantityInput
                                   value={item.quantity}
-                                  onChange={e =>
-                                    updateLinkMeQuantity(
-                                      item.id,
-                                      parseInt(e.target.value) || 1
-                                    )
+                                  onChange={val =>
+                                    updateLinkMeQuantity(item.id, val)
                                   }
-                                  className="w-16 h-8 text-sm"
                                   disabled={loading}
                                 />
                               </TableCell>
@@ -1990,15 +2017,15 @@ export function SalesOrderFormModal({
                           <TableHeader>
                             <TableRow>
                               <TableHead>Produit</TableHead>
-                              <TableHead className="w-20">Quantité</TableHead>
-                              <TableHead className="w-28">
+                              <TableHead className="w-36">Quantité</TableHead>
+                              <TableHead className="w-36">
                                 Prix unitaire HT
                               </TableHead>
-                              <TableHead className="w-24">Remise (%)</TableHead>
-                              <TableHead className="w-24">
+                              <TableHead className="w-28">Remise (%)</TableHead>
+                              <TableHead className="w-28">
                                 Éco-taxe (€)
                               </TableHead>
-                              <TableHead className="w-28">Total HT</TableHead>
+                              <TableHead className="w-32">Total HT</TableHead>
                               <TableHead className="w-20">Actions</TableHead>
                             </TableRow>
                           </TableHeader>
@@ -2034,18 +2061,15 @@ export function SalesOrderFormModal({
                                   </TableCell>
                                   {/* Quantité */}
                                   <TableCell>
-                                    <Input
-                                      type="number"
-                                      min="1"
+                                    <QuantityInput
                                       value={item.quantity}
-                                      onChange={e => {
+                                      onChange={val => {
                                         void updateItem(
                                           item.id,
                                           'quantity',
-                                          parseInt(e.target.value) || 1
+                                          val
                                         ).catch(console.error);
                                       }}
-                                      className="w-full h-8 text-sm"
                                       disabled={loading}
                                     />
                                   </TableCell>
