@@ -1,0 +1,16 @@
+-- Migration: Move personal emails from organisations to contacts table
+-- Date: 2026-02-20
+-- Context: 21 organisations had personal emails (gmail, hotmail, etc.) stored
+-- directly in organisations.email/phone. These should be proper contacts.
+--
+-- NOTE: This migration was already applied via mcp__supabase__execute_sql.
+-- This file exists for tracking purposes only.
+--
+-- Constraints encountered:
+-- - contacts.email has UNIQUE constraint, so Renaud Amblard (2 orgs) and
+--   B. Mauxion (2 orgs) could only be created once. Their contact is linked
+--   to the primary org; the secondary org just had email/phone cleared.
+--
+-- 20 contacts created, 21 organisations cleaned (email/phone set to NULL).
+-- Pokawa Valenciennes (phone only, no email) was NOT migrated per plan.
+-- Enterprise emails (contact@, service@, info@) were NOT migrated per plan.
