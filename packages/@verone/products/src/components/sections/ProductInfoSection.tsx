@@ -143,7 +143,7 @@ export const ProductInfoSection = React.memo(
 
     const completion = completionPercentage ?? calculateCompletion(product);
     const price = product?.cost_price; // Prix d'achat HT
-    const isNameEditable = !product.variant_group_id; // Nom non éditable si dans groupe variantes
+    const isNameEditable = true; // Nom éditable pour tous les produits, y compris les variantes
 
     const handleSaveName = async () => {
       if (!onUpdate || editedName === product.name) {
