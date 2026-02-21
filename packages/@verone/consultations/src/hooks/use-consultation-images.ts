@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from 'react';
 
 import { createClient } from '@verone/utils/supabase/client';
 
+const supabase = createClient();
+
 export interface ConsultationImage {
   id: string;
   consultation_id: string;
@@ -58,8 +60,6 @@ export function useConsultationImages({
     hasImages: false,
   });
 
-  const supabase = createClient();
-
   // Calculer les propriétés dérivées
   const updateDerivedState = useCallback((images: ConsultationImage[]) => {
     const primaryImage = images.find(img => img.is_primary) || null;
@@ -106,7 +106,7 @@ export function useConsultationImages({
     } finally {
       setState(prev => ({ ...prev, loading: false }));
     }
-  }, [consultationId, supabase, updateDerivedState]);
+  }, [consultationId, updateDerivedState]);
 
   // Upload d'une nouvelle image
   const uploadImage = useCallback(
@@ -186,7 +186,7 @@ export function useConsultationImages({
         setState(prev => ({ ...prev, uploading: false }));
       }
     },
-    [consultationId, state.images, supabase, updateDerivedState]
+    [consultationId, state.images, updateDerivedState]
   );
 
   // Supprimer une image
@@ -234,7 +234,7 @@ export function useConsultationImages({
         return false;
       }
     },
-    [state.images, supabase, updateDerivedState]
+    [state.images, updateDerivedState]
   );
 
   // Définir l'image principale
@@ -268,7 +268,7 @@ export function useConsultationImages({
         return false;
       }
     },
-    [supabase, fetchImages]
+    [fetchImages]
   );
 
   // Réorganiser l'ordre des images
@@ -295,7 +295,7 @@ export function useConsultationImages({
         return false;
       }
     },
-    [supabase, fetchImages]
+    [fetchImages]
   );
 
   // Auto-fetch au montage si demandé

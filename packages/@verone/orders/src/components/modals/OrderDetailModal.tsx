@@ -4,11 +4,23 @@ import { useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
-import { InvoiceCreateFromOrderModal } from '@verone/finance/components';
+import {
+  InvoiceCreateFromOrderModal,
+  RapprochementContent,
+} from '@verone/finance/components';
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@verone/ui';
+import { Input } from '@verone/ui';
+import { Label } from '@verone/ui';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@verone/ui';
 import { Separator } from '@verone/ui';
 import {
   Table,
@@ -18,6 +30,7 @@ import {
   TableHeader,
   TableRow,
 } from '@verone/ui';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@verone/ui';
 import { formatCurrency } from '@verone/utils';
 import {
   X,
@@ -30,11 +43,12 @@ import {
   Store,
   ExternalLink,
   Link2,
+  Banknote,
 } from 'lucide-react';
 
 // NOTE: SalesOrderShipmentModal supprimé - sera recréé ultérieurement
 import { useSalesOrders } from '@verone/orders/hooks';
-import type { SalesOrder } from '@verone/orders/hooks';
+import type { SalesOrder, ManualPaymentType } from '@verone/orders/hooks';
 
 // ✅ Type Safety: Interface ProductImage stricte (IDENTIQUE à PurchaseOrderDetailModal)
 interface ProductImage {
@@ -79,9 +93,19 @@ export function OrderDetailModal({
   channelRedirectUrl,
 }: OrderDetailModalProps) {
   // NOTE: showShippingModal supprimé - modal sera recréé ultérieurement
-  const { markAsPaid } = useSalesOrders();
+  const { markAsManuallyPaid } = useSalesOrders();
   const router = useRouter();
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [paymentSubmitting, setPaymentSubmitting] = useState(false);
+
+  // Form state for manual payment
+  const [manualPaymentType, setManualPaymentType] =
+    useState<ManualPaymentType>('transfer_other');
+  const [manualPaymentAmount, setManualPaymentAmount] = useState('');
+  const [manualPaymentDate, setManualPaymentDate] = useState('');
+  const [manualPaymentRef, setManualPaymentRef] = useState('');
+  const [manualPaymentNote, setManualPaymentNote] = useState('');
 
   if (!order) return null;
 
@@ -113,14 +137,46 @@ export function OrderDetailModal({
       : 'Particulier';
   };
 
-  const handleMarkAsPaid = async () => {
-    await markAsPaid(order.id);
-    onUpdate?.();
-  };
+  const remainingAmount = Math.max(
+    0,
+    (order.total_ttc || 0) - (order.paid_amount || 0)
+  );
 
   const canMarkAsPaid =
     ['validated', 'partially_shipped', 'shipped'].includes(order.status) &&
     order.payment_status_v2 !== 'paid';
+
+  const openPaymentDialog = () => {
+    // Pre-fill form with defaults
+    setManualPaymentType('transfer_other');
+    setManualPaymentAmount(remainingAmount.toFixed(2));
+    setManualPaymentDate(new Date().toISOString().split('T')[0]);
+    setManualPaymentRef('');
+    setManualPaymentNote('');
+    setShowPaymentDialog(true);
+  };
+
+  const handleManualPaymentSubmit = () => {
+    const amount = parseFloat(manualPaymentAmount);
+    if (isNaN(amount) || amount <= 0) return;
+
+    setPaymentSubmitting(true);
+    void markAsManuallyPaid(order.id, manualPaymentType, amount, {
+      reference: manualPaymentRef || undefined,
+      note: manualPaymentNote || undefined,
+      date: manualPaymentDate ? new Date(manualPaymentDate) : undefined,
+    })
+      .then(() => {
+        setShowPaymentDialog(false);
+        onUpdate?.();
+      })
+      .catch((err: unknown) => {
+        console.error('[OrderDetailModal] Manual payment failed:', err);
+      })
+      .finally(() => {
+        setPaymentSubmitting(false);
+      });
+  };
 
   // Workflow Odoo-inspired: Permettre expédition pour validated + partially_shipped
   const canShip = ['validated', 'partially_shipped'].includes(order.status);
@@ -533,11 +589,19 @@ export function OrderDetailModal({
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-gray-600">Statut :</span>
                       <Badge
-                        className={`text-xs ${order.payment_status_v2 === 'paid' ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'}`}
+                        className={`text-xs ${
+                          order.payment_status_v2 === 'paid'
+                            ? 'bg-green-100 text-green-800'
+                            : order.payment_status_v2 === 'partially_paid'
+                              ? 'bg-yellow-100 text-yellow-800'
+                              : 'bg-orange-100 text-orange-800'
+                        }`}
                       >
                         {order.payment_status_v2 === 'paid'
                           ? 'Payé'
-                          : 'En attente'}
+                          : order.payment_status_v2 === 'partially_paid'
+                            ? 'Partiellement payé'
+                            : 'En attente'}
                       </Badge>
                     </div>
                   )}
@@ -567,12 +631,12 @@ export function OrderDetailModal({
 
                   {!readOnly && canMarkAsPaid && (
                     <ButtonV2
-                      onClick={handleMarkAsPaid}
+                      onClick={openPaymentDialog}
                       size="sm"
                       className="w-full bg-green-600 hover:bg-green-700"
                     >
-                      <CreditCard className="h-3 w-3 mr-1" />
-                      Marquer comme payé
+                      <Banknote className="h-3 w-3 mr-1" />
+                      Enregistrer un paiement
                     </ButtonV2>
                   )}
                 </CardContent>
@@ -770,6 +834,143 @@ export function OrderDetailModal({
       </Dialog>
 
       {/* NOTE: Modal Gestion Expédition supprimé - sera recréé ultérieurement */}
+
+      {/* Dialog Enregistrer un paiement (2 onglets) */}
+      <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Enregistrer un paiement</DialogTitle>
+            <p className="text-sm text-gray-500">
+              Commande {order.order_number} — Total :{' '}
+              {formatCurrency(order.total_ttc || 0)}
+            </p>
+            {(order.paid_amount || 0) > 0 && (
+              <p className="text-sm text-gray-500">
+                Déjà payé : {formatCurrency(order.paid_amount || 0)} — Reste :{' '}
+                {formatCurrency(remainingAmount)}
+              </p>
+            )}
+          </DialogHeader>
+
+          <Tabs defaultValue="manual" className="mt-2">
+            <TabsList className="w-full">
+              <TabsTrigger value="rapprochement" className="flex-1">
+                Rapprochement bancaire
+              </TabsTrigger>
+              <TabsTrigger value="manual" className="flex-1">
+                Paiement manuel
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="rapprochement" className="mt-4">
+              <RapprochementContent
+                order={{
+                  id: order.id,
+                  order_number: order.order_number,
+                  customer_name: getCustomerName(),
+                  total_ttc: order.total_ttc || 0,
+                  created_at: order.created_at,
+                  shipped_at: order.shipped_at ?? null,
+                }}
+                onSuccess={() => {
+                  setShowPaymentDialog(false);
+                  onUpdate?.();
+                }}
+              />
+            </TabsContent>
+
+            <TabsContent value="manual" className="mt-4 space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="payment-type">Type de paiement</Label>
+                <Select
+                  value={manualPaymentType}
+                  onValueChange={v =>
+                    setManualPaymentType(v as ManualPaymentType)
+                  }
+                >
+                  <SelectTrigger id="payment-type">
+                    <SelectValue placeholder="Sélectionner..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="transfer_other">
+                      Virement bancaire
+                    </SelectItem>
+                    <SelectItem value="cash">Espèces</SelectItem>
+                    <SelectItem value="check">Chèque</SelectItem>
+                    <SelectItem value="card">Carte bancaire</SelectItem>
+                    <SelectItem value="compensation">Compensation</SelectItem>
+                    <SelectItem value="verified_bubble">
+                      Vérifié Bubble (legacy)
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="payment-amount">Montant (€)</Label>
+                <Input
+                  id="payment-amount"
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  value={manualPaymentAmount}
+                  onChange={e => setManualPaymentAmount(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="payment-date">Date du paiement</Label>
+                <Input
+                  id="payment-date"
+                  type="date"
+                  value={manualPaymentDate}
+                  onChange={e => setManualPaymentDate(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="payment-ref">
+                  Référence{' '}
+                  <span className="text-gray-400 font-normal">(optionnel)</span>
+                </Label>
+                <Input
+                  id="payment-ref"
+                  placeholder="N° chèque, réf. virement..."
+                  value={manualPaymentRef}
+                  onChange={e => setManualPaymentRef(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="payment-note">
+                  Note{' '}
+                  <span className="text-gray-400 font-normal">(optionnel)</span>
+                </Label>
+                <Input
+                  id="payment-note"
+                  placeholder="Commentaire..."
+                  value={manualPaymentNote}
+                  onChange={e => setManualPaymentNote(e.target.value)}
+                />
+              </div>
+
+              <ButtonV2
+                onClick={handleManualPaymentSubmit}
+                disabled={
+                  paymentSubmitting ||
+                  !manualPaymentAmount ||
+                  parseFloat(manualPaymentAmount) <= 0
+                }
+                className="w-full bg-green-600 hover:bg-green-700"
+              >
+                {paymentSubmitting
+                  ? 'Enregistrement...'
+                  : 'Enregistrer le paiement'}
+              </ButtonV2>
+            </TabsContent>
+          </Tabs>
+        </DialogContent>
+      </Dialog>
 
       {/* Modal Création Facture */}
       <InvoiceCreateFromOrderModal
