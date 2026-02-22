@@ -213,6 +213,9 @@ export interface SalesOrdersTableProps {
     amount?: boolean;
     orderNumber?: boolean;
   };
+
+  /** Callback custom pour le bouton "Voir" (remplace le modal par défaut) */
+  onViewOrder?: (order: SalesOrder) => void;
 }
 
 const isOrderEditable = (order: SalesOrder, channelId?: string | null) => {
@@ -257,6 +260,7 @@ export function SalesOrdersTable({
   defaultItemsPerPage = 10,
   preloadedOrders,
   sortableColumns,
+  onViewOrder,
 }: SalesOrdersTableProps) {
   const {
     loading: hookLoading,
@@ -1628,7 +1632,11 @@ export function SalesOrdersTable({
                                   variant="outline"
                                   size="sm"
                                   label="Voir details"
-                                  onClick={() => openOrderDetail(order)}
+                                  onClick={() =>
+                                    onViewOrder
+                                      ? onViewOrder(order)
+                                      : openOrderDetail(order)
+                                  }
                                 />
 
                                 {/* Lien externe pour commandes de canaux (si pas filtre) */}
