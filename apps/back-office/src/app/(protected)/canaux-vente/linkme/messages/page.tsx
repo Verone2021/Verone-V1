@@ -233,7 +233,6 @@ function useOrdersWithMissingFields() {
           total_ttc,
           status,
           customer_id,
-          created_by_affiliate_id,
           organisations!sales_orders_customer_id_fkey (
             id, trade_name, legal_name, siret
           ),
@@ -274,9 +273,7 @@ function useOrdersWithMissingFields() {
           'validated',
           'partially_shipped',
         ])
-        .or(
-          `channel_id.eq.${LINKME_CHANNEL_ID},created_by_affiliate_id.not.is.null`
-        )
+        .eq('channel_id', LINKME_CHANNEL_ID)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
