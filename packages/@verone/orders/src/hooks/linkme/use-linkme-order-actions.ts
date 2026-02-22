@@ -101,6 +101,8 @@ export interface LinkMeOrderDetails {
   access_form_url: string | null;
   created_at: string | null;
   updated_at: string | null;
+  /** Field keys explicitly ignored by back-office staff for this order */
+  ignored_missing_fields: string[];
 }
 
 /**

@@ -6927,6 +6927,7 @@ export type Database = {
           delivery_terms_accepted: boolean;
           desired_delivery_date: string | null;
           id: string;
+          ignored_missing_fields: Json;
           is_mall_delivery: boolean | null;
           is_new_restaurant: boolean;
           mall_email: string | null;
@@ -6977,6 +6978,7 @@ export type Database = {
           delivery_terms_accepted?: boolean;
           desired_delivery_date?: string | null;
           id?: string;
+          ignored_missing_fields?: Json;
           is_mall_delivery?: boolean | null;
           is_new_restaurant?: boolean;
           mall_email?: string | null;
@@ -7027,6 +7029,7 @@ export type Database = {
           delivery_terms_accepted?: boolean;
           desired_delivery_date?: string | null;
           id?: string;
+          ignored_missing_fields?: Json;
           is_mall_delivery?: boolean | null;
           is_new_restaurant?: boolean;
           mall_email?: string | null;

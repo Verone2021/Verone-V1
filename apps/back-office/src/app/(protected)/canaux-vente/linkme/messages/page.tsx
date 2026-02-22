@@ -71,6 +71,7 @@ import {
   RotateCcw,
   XCircle,
   Hourglass,
+  EyeOff,
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -81,6 +82,7 @@ import {
   type MissingFieldCategory,
 } from '../utils/order-missing-fields';
 import type { LinkMeOrderDetails } from '../hooks/use-linkme-order-actions';
+import { LINKME_CHANNEL_ID } from '../hooks/use-linkme-orders';
 
 // =============================================================================
 // TYPES
@@ -126,6 +128,8 @@ interface OrderWithMissing {
   organisationName: string | null;
   organisationSiret: string | null;
   details: LinkMeOrderDetails | null;
+  detailsId: string | null;
+  ignoredFields: string[];
   missingFields: MissingFieldsResult;
   infoRequests: InfoRequest[];
 }
@@ -141,6 +145,38 @@ const CATEGORY_BADGE_COLORS: Record<MissingFieldCategory, string> = {
   organisation: 'bg-purple-100 text-purple-700 border-purple-200',
   custom: 'bg-gray-100 text-gray-700 border-gray-200',
 };
+
+const ORDER_STATUS_LABELS: Record<
+  string,
+  { label: string; className: string }
+> = {
+  pending_approval: {
+    label: 'En attente approbation',
+    className: 'bg-yellow-100 text-yellow-700 border-yellow-200',
+  },
+  draft: {
+    label: 'Brouillon',
+    className: 'bg-gray-100 text-gray-600 border-gray-200',
+  },
+  validated: {
+    label: 'Validée',
+    className: 'bg-blue-100 text-blue-700 border-blue-200',
+  },
+  partially_shipped: {
+    label: 'Partiellement expédiée',
+    className: 'bg-orange-100 text-orange-700 border-orange-200',
+  },
+};
+
+function OrderStatusBadge({ status }: { status: string }) {
+  const config = ORDER_STATUS_LABELS[status];
+  if (!config) return null;
+  return (
+    <Badge variant="outline" className={cn('text-xs', config.className)}>
+      {config.label}
+    </Badge>
+  );
+}
 
 function formatTimeAgo(dateStr: string): string {
   const now = new Date();
@@ -197,6 +233,7 @@ function useOrdersWithMissingFields() {
           total_ttc,
           status,
           customer_id,
+          created_by_affiliate_id,
           organisations!sales_orders_customer_id_fkey (
             id, trade_name, legal_name, siret
           ),
@@ -221,6 +258,7 @@ function useOrdersWithMissingFields() {
             delivery_date, delivery_latitude, delivery_longitude,
             access_form_required, access_form_url,
             semi_trailer_accessible, delivery_notes,
+            ignored_missing_fields,
             created_at, updated_at
           ),
           linkme_info_requests (
@@ -230,7 +268,15 @@ function useOrdersWithMissingFields() {
           )
         `
         )
-        .in('status', ['validated'])
+        .in('status', [
+          'pending_approval',
+          'draft',
+          'validated',
+          'partially_shipped',
+        ])
+        .or(
+          `channel_id.eq.${LINKME_CHANNEL_ID},created_by_affiliate_id.not.is.null`
+        )
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -244,14 +290,21 @@ function useOrdersWithMissingFields() {
         const details = (detailsArray?.[0] ??
           null) as LinkMeOrderDetails | null;
 
-        if (!details) continue;
-
+        // After backfill, details should always exist for LinkMe orders.
+        // If still null (edge case), getOrderMissingFields handles it gracefully.
         const orgArray = order.organisations as unknown as OrgRow[] | null;
         const org = orgArray?.[0] ?? null;
+
+        const rawIgnored = (details as unknown as Record<string, unknown>)
+          ?.ignored_missing_fields;
+        const ignoredFields = Array.isArray(rawIgnored)
+          ? (rawIgnored as string[])
+          : [];
 
         const missingFields = getOrderMissingFields({
           details,
           organisationSiret: org?.siret,
+          ignoredFields,
         });
 
         if (!missingFields.isComplete) {
@@ -264,6 +317,11 @@ function useOrdersWithMissingFields() {
             organisationName: org?.trade_name ?? org?.legal_name ?? null,
             organisationSiret: org?.siret ?? null,
             details,
+            detailsId:
+              ((details as unknown as Record<string, unknown>)?.id as
+                | string
+                | null) ?? null,
+            ignoredFields,
             missingFields,
             infoRequests: (order.linkme_info_requests ?? []) as InfoRequest[],
           });
@@ -552,6 +610,48 @@ function useSendInfoRequest() {
 }
 
 // =============================================================================
+// IGNORE FIELD MUTATION
+// =============================================================================
+
+function useIgnoreField() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      detailsId,
+      currentIgnored,
+      fieldKey,
+    }: {
+      detailsId: string;
+      currentIgnored: string[];
+      fieldKey: string;
+    }) => {
+      const supabase = createClient();
+      const updated = currentIgnored.includes(fieldKey)
+        ? currentIgnored.filter(k => k !== fieldKey)
+        : [...currentIgnored, fieldKey];
+
+      const { error } = await supabase
+        .from('sales_order_linkme_details')
+        .update({ ignored_missing_fields: updated })
+        .eq('id', detailsId);
+
+      if (error) throw error;
+      return updated;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ['orders-missing-fields'],
+      });
+    },
+    onError: (error: unknown) => {
+      const msg = error instanceof Error ? error.message : 'Unknown error';
+      console.error('[Messages] Erreur ignore field:', msg);
+      toast.error('Erreur lors de la mise à jour');
+    },
+  });
+}
+
+// =============================================================================
 // COMPONENTS - CATEGORY BADGES
 // =============================================================================
 
@@ -680,6 +780,7 @@ function SendInfoRequestDialog({
   );
   const [customMessage, setCustomMessage] = useState('');
   const sendInfoRequest = useSendInfoRequest();
+  const ignoreField = useIgnoreField();
 
   const { data: currentUser } = useQuery({
     queryKey: ['current-user'],
@@ -809,23 +910,104 @@ function SendInfoRequestDialog({
 
           <Separator />
 
-          {/* Missing fields (read-only) */}
+          {/* Missing fields with ignore buttons */}
           <div className="space-y-2">
             <Label className="font-semibold">
               Champs manquants ({order.missingFields.total})
             </Label>
-            <div className="bg-gray-50 rounded-lg p-3 space-y-1">
+            <div className="bg-gray-50 rounded-lg p-3 space-y-1.5">
               {order.missingFields.fields.map(f => (
-                <div key={f.key} className="flex items-center gap-2 text-sm">
+                <div
+                  key={f.key}
+                  className="flex items-center gap-2 text-sm group"
+                >
                   <Badge
                     variant="outline"
-                    className={cn('text-xs', CATEGORY_BADGE_COLORS[f.category])}
+                    className={cn(
+                      'text-xs flex-shrink-0',
+                      CATEGORY_BADGE_COLORS[f.category]
+                    )}
                   >
                     {f.category}
                   </Badge>
-                  <span>{f.label}</span>
+                  <span className="flex-1">{f.label}</span>
+                  {order.detailsId && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (!order.detailsId) return;
+                              void ignoreField
+                                .mutateAsync({
+                                  detailsId: order.detailsId,
+                                  currentIgnored: order.ignoredFields,
+                                  fieldKey: f.key,
+                                })
+                                .catch(err => {
+                                  console.error(
+                                    '[SendInfoRequestDialog] ignoreField failed:',
+                                    err
+                                  );
+                                });
+                            }}
+                            disabled={ignoreField.isPending}
+                            className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-gray-200 text-gray-400 hover:text-gray-600"
+                          >
+                            <EyeOff className="h-3.5 w-3.5" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="right" className="text-xs">
+                          Ignorer ce champ pour cette commande
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
                 </div>
               ))}
+              {order.ignoredFields.length > 0 && (
+                <div className="pt-2 border-t border-gray-200 mt-2">
+                  <p className="text-xs text-gray-500 mb-1">
+                    Champs ignorés ({order.ignoredFields.length}) :
+                  </p>
+                  {order.ignoredFields.map(key => (
+                    <div
+                      key={key}
+                      className="flex items-center gap-2 text-xs text-gray-400 group"
+                    >
+                      <EyeOff className="h-3 w-3 flex-shrink-0" />
+                      <span className="line-through flex-1">
+                        {key.replace(/_/g, ' ')}
+                      </span>
+                      {order.detailsId && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!order.detailsId) return;
+                            void ignoreField
+                              .mutateAsync({
+                                detailsId: order.detailsId,
+                                currentIgnored: order.ignoredFields,
+                                fieldKey: key,
+                              })
+                              .catch(err => {
+                                console.error(
+                                  '[SendInfoRequestDialog] restoreField failed:',
+                                  err
+                                );
+                              });
+                          }}
+                          disabled={ignoreField.isPending}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity text-xs text-blue-500 hover:underline"
+                        >
+                          Restaurer
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
@@ -918,6 +1100,7 @@ function OrderCard({
               <span className="font-medium text-green-600">
                 {formatCurrency(order.total_ttc)}
               </span>
+              <OrderStatusBadge status={order.status} />
             </div>
 
             {/* Category badges */}

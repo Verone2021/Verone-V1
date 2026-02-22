@@ -552,6 +552,29 @@ async function createLinkMeOrder(
     throw itemsError;
   }
 
+  // 6. Creer le record sales_order_linkme_details (requis pour le centre de messagerie)
+  // Les champs NOT NULL utilisent des valeurs placeholder vides - ils apparaîtront
+  // comme "manquants" dans le centre de messagerie et devront être complétés.
+  const { error: detailsError } = await supabase
+    .from('sales_order_linkme_details')
+    .insert({
+      sales_order_id: order.id,
+      requester_type: 'manual_entry' as const,
+      requester_name: '',
+      requester_email: '',
+      is_new_restaurant: false,
+      delivery_terms_accepted: false,
+    });
+
+  if (detailsError) {
+    // Non-fatal: log l'erreur mais ne bloque pas la création de commande.
+    // Le backfill peut être relancé manuellement si nécessaire.
+    console.error(
+      '[createLinkMeOrder] Erreur création sales_order_linkme_details:',
+      detailsError
+    );
+  }
+
   // Supabase insert returns a subset of columns; LinkMeOrder includes joined fields
   return order as unknown as LinkMeOrder;
 }
