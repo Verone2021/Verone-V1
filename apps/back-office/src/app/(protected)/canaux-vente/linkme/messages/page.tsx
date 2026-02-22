@@ -49,6 +49,12 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+  SheetFooter,
 } from '@verone/ui';
 import { cn, formatCurrency } from '@verone/utils';
 import { toast } from 'sonner';
@@ -72,6 +78,10 @@ import {
   XCircle,
   Hourglass,
   EyeOff,
+  Eye,
+  Pencil,
+  Truck,
+  MapPin,
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -90,6 +100,11 @@ import { LINKME_CHANNEL_ID } from '../hooks/use-linkme-orders';
 
 type NotificationSeverity = 'info' | 'important' | 'urgent';
 type TargetType = 'all' | 'enseigne' | 'affiliate';
+type EditStep =
+  | 'responsable'
+  | 'billing'
+  | 'delivery_contact'
+  | 'delivery_address';
 
 interface Enseigne {
   id: string;
@@ -298,9 +313,13 @@ function useOrdersWithMissingFields() {
           ? (rawIgnored as string[])
           : [];
 
+        const ownerType =
+          (detailsArray?.[0]?.owner_type as string | null) ?? null;
+
         const missingFields = getOrderMissingFields({
           details,
           organisationSiret: org?.siret,
+          ownerType,
           ignoredFields,
         });
 
@@ -646,6 +665,614 @@ function useIgnoreField() {
       toast.error('Erreur lors de la mise à jour');
     },
   });
+}
+
+// =============================================================================
+// HOOK - UPDATE DETAILS
+// =============================================================================
+
+function useUpdateDetails() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      detailsId,
+      updates,
+    }: {
+      detailsId: string;
+      updates: Record<string, unknown>;
+    }) => {
+      const supabase = createClient();
+      const { error } = await supabase
+        .from('sales_order_linkme_details')
+        .update(updates)
+        .eq('id', detailsId);
+      if (error) throw error;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ['orders-missing-fields'],
+      });
+      toast.success('Informations mises à jour');
+    },
+    onError: (error: unknown) => {
+      const msg = error instanceof Error ? error.message : 'Unknown error';
+      console.error('[Messages] Erreur mise à jour details:', msg);
+      toast.error(`Erreur: ${msg}`);
+    },
+  });
+}
+
+// =============================================================================
+// COMPONENTS - FIELD ROW + SECTION HEADER (HELPERS)
+// =============================================================================
+
+function FieldRow({
+  label,
+  value,
+}: {
+  label: string;
+  value: string | null | undefined;
+}) {
+  const isMissing = !value;
+  return (
+    <div className="space-y-0.5">
+      <span className="text-xs text-gray-500">{label}</span>
+      <div
+        className={cn(
+          'text-sm',
+          isMissing ? 'text-red-400 italic' : 'text-gray-900'
+        )}
+      >
+        {isMissing ? '—' : value}
+      </div>
+    </div>
+  );
+}
+
+function SectionHeader({
+  icon: Icon,
+  title,
+  missingCount,
+  onEdit,
+}: {
+  icon: React.ElementType;
+  title: string;
+  missingCount: number;
+  onEdit: () => void;
+}) {
+  return (
+    <div className="flex items-center justify-between">
+      <h4 className="font-medium text-sm flex items-center gap-2">
+        <Icon className="h-4 w-4 text-gray-500" />
+        {title}
+        {missingCount > 0 && (
+          <Badge variant="destructive" className="text-xs h-5 px-1.5">
+            {missingCount} manquant{missingCount > 1 ? 's' : ''}
+          </Badge>
+        )}
+      </h4>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={onEdit}
+        className="h-7 text-xs gap-1"
+      >
+        <Pencil className="h-3 w-3" />
+        Modifier
+      </Button>
+    </div>
+  );
+}
+
+// =============================================================================
+// COMPONENTS - EDIT SUB-DIALOG
+// =============================================================================
+
+function EditSubDialog({
+  step,
+  form,
+  onFormChange,
+  onSave,
+  onClose,
+  isPending,
+}: {
+  step: EditStep;
+  form: Record<string, string>;
+  onFormChange: (form: Record<string, string>) => void;
+  onSave: () => void;
+  onClose: () => void;
+  isPending: boolean;
+}) {
+  const updateField = (key: string, value: string) => {
+    onFormChange({ ...form, [key]: value });
+  };
+
+  const STEP_LABELS: Record<EditStep, string> = {
+    responsable: 'Contact responsable',
+    billing: 'Contact facturation',
+    delivery_contact: 'Contact livraison',
+    delivery_address: 'Adresse livraison',
+  };
+
+  return (
+    <Dialog open onOpenChange={open => !open && onClose()}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Modifier — {STEP_LABELS[step]}</DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-4 py-4">
+          {step === 'responsable' && (
+            <>
+              <div className="space-y-2">
+                <Label>Type de demandeur</Label>
+                <Select
+                  value={form.requester_type ?? ''}
+                  onValueChange={v => updateField('requester_type', v)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sélectionner..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="individual">Particulier</SelectItem>
+                    <SelectItem value="company">Entreprise</SelectItem>
+                    <SelectItem value="franchise">Franchise</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Nom</Label>
+                <Input
+                  value={form.requester_name ?? ''}
+                  onChange={e => updateField('requester_name', e.target.value)}
+                  placeholder="Nom complet"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Email</Label>
+                <Input
+                  type="email"
+                  value={form.requester_email ?? ''}
+                  onChange={e => updateField('requester_email', e.target.value)}
+                  placeholder="email@example.com"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Téléphone</Label>
+                <Input
+                  type="tel"
+                  value={form.requester_phone ?? ''}
+                  onChange={e => updateField('requester_phone', e.target.value)}
+                  placeholder="+33 6 XX XX XX XX"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Fonction</Label>
+                <Input
+                  value={form.requester_position ?? ''}
+                  onChange={e =>
+                    updateField('requester_position', e.target.value)
+                  }
+                  placeholder="Directeur, Gérant..."
+                />
+              </div>
+            </>
+          )}
+
+          {step === 'billing' && (
+            <>
+              <div className="space-y-2">
+                <Label>Source du contact</Label>
+                <Select
+                  value={form.billing_contact_source ?? ''}
+                  onValueChange={v => updateField('billing_contact_source', v)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sélectionner..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="same_as_requester">
+                      Même que le demandeur
+                    </SelectItem>
+                    <SelectItem value="same_as_owner">
+                      Même que le propriétaire
+                    </SelectItem>
+                    <SelectItem value="other">Autre contact</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Nom</Label>
+                <Input
+                  value={form.billing_name ?? ''}
+                  onChange={e => updateField('billing_name', e.target.value)}
+                  placeholder="Nom du contact facturation"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Email</Label>
+                <Input
+                  type="email"
+                  value={form.billing_email ?? ''}
+                  onChange={e => updateField('billing_email', e.target.value)}
+                  placeholder="facturation@example.com"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Téléphone</Label>
+                <Input
+                  type="tel"
+                  value={form.billing_phone ?? ''}
+                  onChange={e => updateField('billing_phone', e.target.value)}
+                  placeholder="+33 X XX XX XX XX"
+                />
+              </div>
+            </>
+          )}
+
+          {step === 'delivery_contact' && (
+            <>
+              <div className="space-y-2">
+                <Label>Nom du contact livraison</Label>
+                <Input
+                  value={form.delivery_contact_name ?? ''}
+                  onChange={e =>
+                    updateField('delivery_contact_name', e.target.value)
+                  }
+                  placeholder="Nom du réceptionnaire"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Email</Label>
+                <Input
+                  type="email"
+                  value={form.delivery_contact_email ?? ''}
+                  onChange={e =>
+                    updateField('delivery_contact_email', e.target.value)
+                  }
+                  placeholder="livraison@example.com"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Téléphone</Label>
+                <Input
+                  type="tel"
+                  value={form.delivery_contact_phone ?? ''}
+                  onChange={e =>
+                    updateField('delivery_contact_phone', e.target.value)
+                  }
+                  placeholder="+33 X XX XX XX XX"
+                />
+              </div>
+            </>
+          )}
+
+          {step === 'delivery_address' && (
+            <>
+              <div className="space-y-2">
+                <Label>Adresse</Label>
+                <Input
+                  value={form.delivery_address ?? ''}
+                  onChange={e =>
+                    updateField('delivery_address', e.target.value)
+                  }
+                  placeholder="15 rue de la Paix"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Code postal</Label>
+                  <Input
+                    value={form.delivery_postal_code ?? ''}
+                    onChange={e =>
+                      updateField('delivery_postal_code', e.target.value)
+                    }
+                    placeholder="75001"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Ville</Label>
+                  <Input
+                    value={form.delivery_city ?? ''}
+                    onChange={e => updateField('delivery_city', e.target.value)}
+                    placeholder="Paris"
+                  />
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
+            Annuler
+          </Button>
+          <Button onClick={onSave} disabled={isPending}>
+            {isPending ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Enregistrement...
+              </>
+            ) : (
+              'Enregistrer'
+            )}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// =============================================================================
+// COMPONENTS - ORDER DETAIL DIALOG (SHEET)
+// =============================================================================
+
+function OrderDetailDialog({
+  order,
+  open,
+  onOpenChange,
+}: {
+  order: OrderWithMissing | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const [editingStep, setEditingStep] = useState<EditStep | null>(null);
+  const [editForm, setEditForm] = useState<Record<string, string>>({});
+  const updateDetails = useUpdateDetails();
+
+  if (!order) return null;
+
+  const details = order.details;
+
+  const missingKeys = new Set(order.missingFields.fields.map(f => f.key));
+
+  const missingBySection = {
+    responsable: [
+      'requester_name',
+      'requester_email',
+      'requester_phone',
+    ].filter(k => missingKeys.has(k)).length,
+    billing: ['billing_name', 'billing_email', 'billing_phone'].filter(k =>
+      missingKeys.has(k)
+    ).length,
+    delivery_contact: [
+      'delivery_contact_name',
+      'delivery_contact_email',
+      'delivery_contact_phone',
+    ].filter(k => missingKeys.has(k)).length,
+    delivery_address: [
+      'delivery_address',
+      'delivery_postal_code',
+      'delivery_city',
+    ].filter(k => missingKeys.has(k)).length,
+  };
+
+  const handleStartEdit = (step: EditStep) => {
+    const prefill: Record<string, string> = {};
+    if (step === 'responsable') {
+      prefill.requester_type = details?.requester_type ?? '';
+      prefill.requester_name = details?.requester_name ?? '';
+      prefill.requester_email = details?.requester_email ?? '';
+      prefill.requester_phone = details?.requester_phone ?? '';
+      prefill.requester_position = details?.requester_position ?? '';
+    } else if (step === 'billing') {
+      prefill.billing_contact_source = details?.billing_contact_source ?? '';
+      prefill.billing_name = details?.billing_name ?? '';
+      prefill.billing_email = details?.billing_email ?? '';
+      prefill.billing_phone = details?.billing_phone ?? '';
+    } else if (step === 'delivery_contact') {
+      prefill.delivery_contact_name = details?.delivery_contact_name ?? '';
+      prefill.delivery_contact_email = details?.delivery_contact_email ?? '';
+      prefill.delivery_contact_phone = details?.delivery_contact_phone ?? '';
+    } else if (step === 'delivery_address') {
+      prefill.delivery_address = details?.delivery_address ?? '';
+      prefill.delivery_postal_code = details?.delivery_postal_code ?? '';
+      prefill.delivery_city = details?.delivery_city ?? '';
+    }
+    setEditForm(prefill);
+    setEditingStep(step);
+  };
+
+  const handleSaveEdit = () => {
+    if (!editingStep || !order.detailsId) return;
+    void updateDetails
+      .mutateAsync({
+        detailsId: order.detailsId,
+        updates: editForm,
+      })
+      .then(() => {
+        setEditingStep(null);
+        setEditForm({});
+      })
+      .catch(e => {
+        console.error('[OrderDetailDialog] save failed:', e);
+      });
+  };
+
+  const showOwnerSection = details?.owner_contact_same_as_requester === false;
+
+  return (
+    <>
+      <Sheet open={open} onOpenChange={onOpenChange}>
+        <SheetContent
+          side="right"
+          className="w-[560px] sm:max-w-[560px] overflow-y-auto"
+        >
+          <SheetHeader>
+            <SheetTitle className="flex items-center gap-2">
+              {order.order_number}
+              <OrderStatusBadge status={order.status} />
+            </SheetTitle>
+            <SheetDescription>
+              {order.organisationName ?? '-'} —{' '}
+              {formatCurrency(order.total_ttc)}
+            </SheetDescription>
+          </SheetHeader>
+
+          <div className="mt-6 space-y-6">
+            {/* Section Responsable */}
+            <div className="space-y-3">
+              <SectionHeader
+                icon={User}
+                title="Contact responsable"
+                missingCount={missingBySection.responsable}
+                onEdit={() => handleStartEdit('responsable')}
+              />
+              <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm pl-6">
+                <FieldRow label="Nom" value={details?.requester_name} />
+                <FieldRow label="Email" value={details?.requester_email} />
+                <FieldRow label="Téléphone" value={details?.requester_phone} />
+                <FieldRow
+                  label="Fonction"
+                  value={details?.requester_position}
+                />
+                <FieldRow label="Type" value={details?.requester_type} />
+              </div>
+            </div>
+
+            {/* Section Propriétaire (conditionnel) */}
+            {showOwnerSection && (
+              <>
+                <Separator />
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Building2 className="h-4 w-4 text-gray-500" />
+                    <h4 className="font-medium text-sm">Propriétaire</h4>
+                  </div>
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm pl-6">
+                    <FieldRow label="Nom" value={details?.owner_name} />
+                    <FieldRow label="Email" value={details?.owner_email} />
+                    <FieldRow label="Téléphone" value={details?.owner_phone} />
+                    <FieldRow
+                      label="Raison sociale"
+                      value={details?.owner_company_legal_name}
+                    />
+                  </div>
+                </div>
+              </>
+            )}
+
+            <Separator />
+
+            {/* Section Facturation */}
+            <div className="space-y-3">
+              <SectionHeader
+                icon={FileText}
+                title="Contact facturation"
+                missingCount={missingBySection.billing}
+                onEdit={() => handleStartEdit('billing')}
+              />
+              <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm pl-6">
+                <FieldRow label="Nom" value={details?.billing_name} />
+                <FieldRow label="Email" value={details?.billing_email} />
+                <FieldRow label="Téléphone" value={details?.billing_phone} />
+                <FieldRow
+                  label="Source"
+                  value={details?.billing_contact_source}
+                />
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Section Contact Livraison */}
+            <div className="space-y-3">
+              <SectionHeader
+                icon={Truck}
+                title="Contact livraison"
+                missingCount={missingBySection.delivery_contact}
+                onEdit={() => handleStartEdit('delivery_contact')}
+              />
+              <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm pl-6">
+                <FieldRow label="Nom" value={details?.delivery_contact_name} />
+                <FieldRow
+                  label="Email"
+                  value={details?.delivery_contact_email}
+                />
+                <FieldRow
+                  label="Téléphone"
+                  value={details?.delivery_contact_phone}
+                />
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Section Adresse Livraison */}
+            <div className="space-y-3">
+              <SectionHeader
+                icon={MapPin}
+                title="Adresse livraison"
+                missingCount={missingBySection.delivery_address}
+                onEdit={() => handleStartEdit('delivery_address')}
+              />
+              <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm pl-6">
+                <div className="col-span-2">
+                  <FieldRow label="Adresse" value={details?.delivery_address} />
+                </div>
+                <FieldRow
+                  label="Code postal"
+                  value={details?.delivery_postal_code}
+                />
+                <FieldRow label="Ville" value={details?.delivery_city} />
+                {details?.is_mall_delivery && (
+                  <div className="col-span-2">
+                    <FieldRow
+                      label="Email centre commercial"
+                      value={details?.mall_email}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Section Organisation (read-only) */}
+            {order.organisationSiret !== undefined && (
+              <>
+                <Separator />
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Building2 className="h-4 w-4 text-gray-500" />
+                    <h4 className="font-medium text-sm">Organisation</h4>
+                    <Badge variant="outline" className="text-xs">
+                      Lecture seule
+                    </Badge>
+                  </div>
+                  <div className="pl-6">
+                    <FieldRow label="SIRET" value={order.organisationSiret} />
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+
+          <SheetFooter className="mt-8">
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => onOpenChange(false)}
+            >
+              Fermer
+            </Button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
+
+      {editingStep && (
+        <EditSubDialog
+          step={editingStep}
+          form={editForm}
+          onFormChange={setEditForm}
+          onSave={handleSaveEdit}
+          onClose={() => {
+            setEditingStep(null);
+            setEditForm({});
+          }}
+          isPending={updateDetails.isPending}
+        />
+      )}
+    </>
+  );
 }
 
 // =============================================================================
@@ -1070,10 +1697,12 @@ function SendInfoRequestDialog({
 function OrderCard({
   order,
   onSendRequest,
+  onViewDetails,
   variant,
 }: {
   order: OrderWithMissing;
   onSendRequest: () => void;
+  onViewDetails: () => void;
   variant: 'missing' | 'waiting';
 }) {
   const pendingReqs = order.infoRequests.filter(
@@ -1131,25 +1760,31 @@ function OrderCard({
             )}
           </div>
 
-          {/* Action button */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onSendRequest}
-            className="flex-shrink-0"
-          >
-            {variant === 'waiting' ? (
-              <>
-                <RotateCcw className="h-4 w-4 mr-1" />
-                Relancer
-              </>
-            ) : (
-              <>
-                <Send className="h-4 w-4 mr-1" />
-                Envoyer demande
-              </>
-            )}
-          </Button>
+          {/* Action buttons */}
+          <div className="flex flex-col gap-2 flex-shrink-0">
+            <Button variant="outline" size="sm" onClick={onSendRequest}>
+              {variant === 'waiting' ? (
+                <>
+                  <RotateCcw className="h-4 w-4 mr-1" />
+                  Relancer
+                </>
+              ) : (
+                <>
+                  <Send className="h-4 w-4 mr-1" />
+                  Envoyer demande
+                </>
+              )}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onViewDetails}
+              className="gap-1 text-gray-500 hover:text-gray-900"
+            >
+              <Eye className="h-3.5 w-3.5" />
+              Voir détails
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>
@@ -1168,6 +1803,7 @@ function MissingFieldsTab({
   isLoading: boolean;
 }) {
   const [dialogOrder, setDialogOrder] = useState<OrderWithMissing | null>(null);
+  const [detailOrder, setDetailOrder] = useState<OrderWithMissing | null>(null);
 
   const filteredOrders = useMemo(() => {
     if (!orders) return [];
@@ -1212,6 +1848,7 @@ function MissingFieldsTab({
             order={order}
             variant="missing"
             onSendRequest={() => setDialogOrder(order)}
+            onViewDetails={() => setDetailOrder(order)}
           />
         ))
       )}
@@ -1223,6 +1860,16 @@ function MissingFieldsTab({
           onOpenChange={open => !open && setDialogOrder(null)}
         />
       )}
+
+      <OrderDetailDialog
+        order={
+          detailOrder
+            ? (orders?.find(o => o.id === detailOrder.id) ?? detailOrder)
+            : null
+        }
+        open={!!detailOrder}
+        onOpenChange={open => !open && setDetailOrder(null)}
+      />
     </div>
   );
 }
@@ -1239,6 +1886,7 @@ function WaitingTab({
   isLoading: boolean;
 }) {
   const [dialogOrder, setDialogOrder] = useState<OrderWithMissing | null>(null);
+  const [detailOrder, setDetailOrder] = useState<OrderWithMissing | null>(null);
 
   const filteredOrders = useMemo(() => {
     if (!orders) return [];
@@ -1281,6 +1929,7 @@ function WaitingTab({
             order={order}
             variant="waiting"
             onSendRequest={() => setDialogOrder(order)}
+            onViewDetails={() => setDetailOrder(order)}
           />
         ))
       )}
@@ -1292,6 +1941,16 @@ function WaitingTab({
           onOpenChange={open => !open && setDialogOrder(null)}
         />
       )}
+
+      <OrderDetailDialog
+        order={
+          detailOrder
+            ? (orders?.find(o => o.id === detailOrder.id) ?? detailOrder)
+            : null
+        }
+        open={!!detailOrder}
+        onOpenChange={open => !open && setDetailOrder(null)}
+      />
     </div>
   );
 }
