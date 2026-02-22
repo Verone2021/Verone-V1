@@ -2,11 +2,22 @@
 
 import { useState, useMemo, useEffect } from 'react';
 
+import { RapprochementContent } from '@verone/finance/components';
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@verone/ui';
+import { Input } from '@verone/ui';
+import { Label } from '@verone/ui';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@verone/ui';
 import { Separator } from '@verone/ui';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@verone/ui';
 import {
   Table,
   TableBody,
@@ -20,17 +31,22 @@ import {
   X,
   Package,
   CreditCard,
+  Banknote,
   Truck,
   Calendar,
-  User,
   FileText,
   CheckCircle2,
   XCircle,
   AlertTriangle,
   History,
+  Link2,
+  Receipt,
+  Loader2,
 } from 'lucide-react';
 
-import type { PurchaseOrder } from '@verone/orders/hooks';
+import { createClient } from '@verone/utils/supabase/client';
+
+import type { PurchaseOrder, ManualPaymentType } from '@verone/orders/hooks';
 import { usePurchaseOrders, usePurchaseReceptions } from '@verone/orders/hooks';
 
 import { PurchaseOrderReceptionModal } from './PurchaseOrderReceptionModal';
@@ -77,6 +93,29 @@ const paymentTermsLabels: Record<string, string> = {
   NET_90: '90 jours net',
 };
 
+// Types for invoices and linked transactions
+interface SupplierInvoice {
+  id: string;
+  document_number: string;
+  workflow_status: string;
+  status: string;
+  total_ttc: number;
+  amount_paid: number;
+  document_date: string;
+  due_date: string | null;
+}
+
+interface LinkedTransaction {
+  id: string;
+  allocated_amount: number;
+  bank_transactions: {
+    label: string;
+    amount: number;
+    settled_at: string | null;
+    emitted_at: string;
+  } | null;
+}
+
 export function PurchaseOrderDetailModal({
   order,
   open,
@@ -84,7 +123,24 @@ export function PurchaseOrderDetailModal({
   onUpdate,
 }: PurchaseOrderDetailModalProps) {
   const [showReceivingModal, setShowReceivingModal] = useState(false);
-  const [receptionHistory, setReceptionHistory] = useState<any[]>([]);
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [paymentSubmitting, setPaymentSubmitting] = useState(false);
+  const [manualPaymentType, setManualPaymentType] =
+    useState<ManualPaymentType>('transfer_other');
+  const [manualPaymentAmount, setManualPaymentAmount] = useState('');
+  const [manualPaymentDate, setManualPaymentDate] = useState('');
+  const [manualPaymentRef, setManualPaymentRef] = useState('');
+  const [manualPaymentNote, setManualPaymentNote] = useState('');
+  const [receptionHistory, setReceptionHistory] = useState<
+    Array<{
+      received_at: string;
+      items?: Array<{
+        product_name: string;
+        product_sku: string;
+        quantity_received: number;
+      }>;
+    }>
+  >([]);
   const [cancellations, setCancellations] = useState<
     Array<{
       id: string;
@@ -96,6 +152,17 @@ export function PurchaseOrderDetailModal({
     }>
   >([]);
 
+  // Invoices & transactions state
+  const [invoices, setInvoices] = useState<SupplierInvoice[]>([]);
+  const [linkedTransactions, setLinkedTransactions] = useState<
+    LinkedTransaction[]
+  >([]);
+  const [isLoadingFinance, setIsLoadingFinance] = useState(false);
+
+  const supabase = createClient();
+
+  const { markAsManuallyPaid } = usePurchaseOrders();
+
   // Hook pour charger historique
   const { loadReceptionHistory, loadCancellationHistory } =
     usePurchaseReceptions();
@@ -103,10 +170,73 @@ export function PurchaseOrderDetailModal({
   // Charger historique quand modal ouvert
   useEffect(() => {
     if (open && order?.id) {
-      loadReceptionHistory(order.id).then(setReceptionHistory);
-      loadCancellationHistory(order.id).then(setCancellations);
+      void loadReceptionHistory(order.id)
+        .then(setReceptionHistory)
+        .catch((err: unknown) => {
+          console.error(
+            '[PurchaseOrderDetailModal] Load reception history failed:',
+            err
+          );
+        });
+      void loadCancellationHistory(order.id)
+        .then(setCancellations)
+        .catch((err: unknown) => {
+          console.error(
+            '[PurchaseOrderDetailModal] Load cancellation history failed:',
+            err
+          );
+        });
     }
   }, [open, order?.id, loadReceptionHistory, loadCancellationHistory]);
+
+  // Charger factures fournisseur et transactions liées
+  useEffect(() => {
+    if (!open || !order?.id) return;
+
+    const loadFinanceData = async () => {
+      setIsLoadingFinance(true);
+      try {
+        // Fetch supplier invoices via API
+        const invoiceRes = await fetch(
+          `/api/qonto/invoices/by-order/${order.id}`
+        );
+        if (invoiceRes.ok) {
+          const invoiceData = (await invoiceRes.json()) as {
+            success: boolean;
+            invoices?: SupplierInvoice[];
+          };
+          if (invoiceData.success && invoiceData.invoices) {
+            setInvoices(invoiceData.invoices);
+          }
+        }
+
+        // Fetch linked transactions
+        const { data: links } = await supabase
+          .from('transaction_document_links')
+          .select(
+            `
+            id,
+            allocated_amount,
+            bank_transactions (label, amount, settled_at, emitted_at)
+          `
+          )
+          .eq('purchase_order_id', order.id);
+
+        if (links) {
+          setLinkedTransactions(links as unknown as LinkedTransaction[]);
+        }
+      } catch (err) {
+        console.error(
+          '[PurchaseOrderDetailModal] Finance data fetch failed:',
+          err
+        );
+      } finally {
+        setIsLoadingFinance(false);
+      }
+    };
+
+    void loadFinanceData();
+  }, [open, order?.id, supabase]);
 
   // ✅ Calcul éco-taxe totale en useMemo (performance)
   // L'écotaxe est TOUJOURS par unité, donc on multiplie par la quantité
@@ -135,6 +265,45 @@ export function PurchaseOrderDetailModal({
       return order.organisations.trade_name || order.organisations.legal_name;
     }
     return 'Fournisseur inconnu';
+  };
+
+  // Payment calculations
+  const remainingAmount = Math.max(
+    0,
+    (order.total_ttc || 0) - (order.paid_amount || 0)
+  );
+  const canMarkAsPaid =
+    order.status !== 'draft' && order.payment_status_v2 !== 'paid';
+
+  const openPaymentDialog = () => {
+    setManualPaymentType('transfer_other');
+    setManualPaymentAmount(remainingAmount.toFixed(2));
+    setManualPaymentDate(new Date().toISOString().split('T')[0]);
+    setManualPaymentRef('');
+    setManualPaymentNote('');
+    setShowPaymentDialog(true);
+  };
+
+  const handleManualPaymentSubmit = () => {
+    const amount = parseFloat(manualPaymentAmount);
+    if (isNaN(amount) || amount <= 0) return;
+
+    setPaymentSubmitting(true);
+    void markAsManuallyPaid(order.id, manualPaymentType, amount, {
+      reference: manualPaymentRef || undefined,
+      note: manualPaymentNote || undefined,
+      date: manualPaymentDate ? new Date(manualPaymentDate) : undefined,
+    })
+      .then(() => {
+        setShowPaymentDialog(false);
+        onUpdate?.();
+      })
+      .catch((err: unknown) => {
+        console.error('[PurchaseOrderDetailModal] Manual payment failed:', err);
+      })
+      .finally(() => {
+        setPaymentSubmitting(false);
+      });
   };
 
   // ✅ Workflow Achats: Permettre réception pour validated + partially_received
@@ -425,7 +594,7 @@ export function PurchaseOrderDetailModal({
                 </CardContent>
               </Card>
 
-              {/* Card Conditions Paiement */}
+              {/* Card Paiement (enrichie — alignée avec OrderDetailModal) */}
               <Card>
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-medium flex items-center gap-2">
@@ -433,8 +602,29 @@ export function PurchaseOrderDetailModal({
                     Paiement
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  {paymentTerms ? (
+                <CardContent className="space-y-2">
+                  {order.payment_status_v2 && (
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-gray-600">Statut :</span>
+                      <Badge
+                        className={`text-xs ${
+                          order.payment_status_v2 === 'paid'
+                            ? 'bg-green-100 text-green-800'
+                            : order.payment_status_v2 === 'partially_paid'
+                              ? 'bg-yellow-100 text-yellow-800'
+                              : 'bg-orange-100 text-orange-800'
+                        }`}
+                      >
+                        {order.payment_status_v2 === 'paid'
+                          ? 'Payé'
+                          : order.payment_status_v2 === 'partially_paid'
+                            ? 'Partiellement payé'
+                            : 'En attente'}
+                      </Badge>
+                    </div>
+                  )}
+
+                  {paymentTerms && (
                     <div className="bg-green-50 p-2 rounded border border-green-200">
                       <p className="text-xs font-medium text-green-800">
                         {paymentTermsLabels[paymentTerms] || paymentTerms}
@@ -445,11 +635,158 @@ export function PurchaseOrderDetailModal({
                           : 'Hérité du fournisseur'}
                       </p>
                     </div>
+                  )}
+
+                  {order.paid_amount !== undefined && order.paid_amount > 0 && (
+                    <div className="bg-green-50 p-2 rounded border border-green-200">
+                      <p className="text-xs text-gray-600">Montant payé</p>
+                      <p className="text-sm font-bold text-green-700">
+                        {formatCurrency(order.paid_amount)} /{' '}
+                        {formatCurrency(order.total_ttc || 0)}
+                      </p>
+                      {order.paid_at && (
+                        <p className="text-xs text-gray-600 mt-1">
+                          Le {formatDate(order.paid_at)}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {canMarkAsPaid && (
+                    <ButtonV2
+                      onClick={openPaymentDialog}
+                      size="sm"
+                      className="w-full bg-green-600 hover:bg-green-700"
+                    >
+                      <Banknote className="h-3 w-3 mr-1" />
+                      Enregistrer un paiement
+                    </ButtonV2>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Card Factures Fournisseur */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium flex items-center gap-2">
+                    <Receipt className="h-3 w-3" />
+                    Factures fournisseur
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {isLoadingFinance ? (
+                    <div className="flex items-center justify-center py-2">
+                      <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
+                    </div>
+                  ) : invoices.length > 0 ? (
+                    invoices.map(inv => (
+                      <div
+                        key={inv.id}
+                        className="bg-slate-50 p-2 rounded border text-xs space-y-1"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium">
+                            {inv.document_number}
+                          </span>
+                          <Badge
+                            variant="outline"
+                            className={
+                              inv.workflow_status === 'paid'
+                                ? 'bg-green-50 text-green-700 border-green-300'
+                                : 'bg-amber-50 text-amber-700 border-amber-300'
+                            }
+                          >
+                            {inv.workflow_status === 'paid'
+                              ? 'Payée'
+                              : 'En attente'}
+                          </Badge>
+                        </div>
+                        <div className="flex justify-between text-gray-500">
+                          <span>
+                            {new Date(inv.document_date).toLocaleDateString(
+                              'fr-FR'
+                            )}
+                          </span>
+                          <span className="font-semibold text-red-600">
+                            -{formatCurrency(inv.total_ttc)}
+                          </span>
+                        </div>
+                      </div>
+                    ))
                   ) : (
                     <p className="text-xs text-gray-500 text-center py-2">
-                      Non spécifié
+                      Aucune facture liée
                     </p>
                   )}
+                </CardContent>
+              </Card>
+
+              {/* Card Rapprochement bancaire */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium flex items-center gap-2">
+                    <Link2 className="h-3 w-3" />
+                    Rapprochement
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {isLoadingFinance ? (
+                    <div className="flex items-center justify-center py-2">
+                      <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
+                    </div>
+                  ) : linkedTransactions.length > 0 ? (
+                    <>
+                      {linkedTransactions.map(link => (
+                        <div
+                          key={link.id}
+                          className="bg-green-50 p-2 rounded border border-green-200 text-xs space-y-1"
+                        >
+                          <div className="flex items-center gap-1">
+                            <Link2 className="h-3 w-3 text-green-600" />
+                            <span className="font-medium text-green-800">
+                              Transaction liée
+                            </span>
+                          </div>
+                          <p className="text-gray-700 truncate">
+                            {link.bank_transactions?.label || 'Transaction'}
+                          </p>
+                          <div className="flex justify-between">
+                            <span className="text-gray-500">
+                              {link.bank_transactions?.settled_at
+                                ? new Date(
+                                    link.bank_transactions.settled_at
+                                  ).toLocaleDateString('fr-FR')
+                                : link.bank_transactions?.emitted_at
+                                  ? new Date(
+                                      link.bank_transactions.emitted_at
+                                    ).toLocaleDateString('fr-FR')
+                                  : ''}
+                            </span>
+                            <span className="font-semibold text-red-600">
+                              -{formatCurrency(Math.abs(link.allocated_amount))}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </>
+                  ) : (
+                    <p className="text-center text-xs text-gray-500 py-2">
+                      Non rapprochée
+                    </p>
+                  )}
+
+                  {/* Bouton rapprochement — ouvre Dialog paiement onglet rapprochement */}
+                  <ButtonV2
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => {
+                      setShowPaymentDialog(true);
+                    }}
+                  >
+                    <Link2 className="h-3 w-3 mr-1" />
+                    Rapprocher une transaction
+                  </ButtonV2>
                 </CardContent>
               </Card>
 
@@ -662,6 +999,147 @@ export function PurchaseOrderDetailModal({
           onUpdate?.();
         }}
       />
+
+      {/* Dialog Enregistrer un paiement (2 onglets — aligné avec OrderDetailModal) */}
+      <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Enregistrer un paiement</DialogTitle>
+            <p className="text-sm text-gray-500">
+              Commande {order.po_number} — Total :{' '}
+              {formatCurrency(order.total_ttc || 0)}
+            </p>
+            {(order.paid_amount || 0) > 0 && (
+              <p className="text-sm text-gray-500">
+                Déjà payé : {formatCurrency(order.paid_amount || 0)} — Reste :{' '}
+                {formatCurrency(remainingAmount)}
+              </p>
+            )}
+          </DialogHeader>
+
+          <Tabs defaultValue="manual" className="mt-2">
+            <TabsList className="w-full">
+              <TabsTrigger value="rapprochement" className="flex-1">
+                Rapprochement bancaire
+              </TabsTrigger>
+              <TabsTrigger value="manual" className="flex-1">
+                Paiement manuel
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="rapprochement" className="mt-4">
+              <RapprochementContent
+                order={{
+                  id: order.id,
+                  order_number: order.po_number,
+                  customer_name: getSupplierName(),
+                  total_ttc:
+                    order.total_ttc ||
+                    (order.total_ht || 0) * (1 + (order.tax_rate || 0.2)),
+                  created_at: order.created_at,
+                  order_date: order.order_date ?? null,
+                  shipped_at: null,
+                }}
+                orderType="purchase_order"
+                onSuccess={() => {
+                  setShowPaymentDialog(false);
+                  onUpdate?.();
+                }}
+              />
+            </TabsContent>
+
+            <TabsContent value="manual" className="mt-4 space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="po-payment-type">Type de paiement</Label>
+                <Select
+                  value={manualPaymentType}
+                  onValueChange={v =>
+                    setManualPaymentType(v as ManualPaymentType)
+                  }
+                >
+                  <SelectTrigger id="po-payment-type">
+                    <SelectValue placeholder="Sélectionner..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="transfer_other">
+                      Virement bancaire
+                    </SelectItem>
+                    <SelectItem value="cash">Espèces</SelectItem>
+                    <SelectItem value="check">Chèque</SelectItem>
+                    <SelectItem value="card">Carte bancaire</SelectItem>
+                    <SelectItem value="compensation">Compensation</SelectItem>
+                    <SelectItem value="verified_bubble">
+                      Vérifié Bubble (legacy)
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="po-payment-amount">Montant (€)</Label>
+                <Input
+                  id="po-payment-amount"
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  value={manualPaymentAmount}
+                  onChange={e => setManualPaymentAmount(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="po-payment-date">Date du paiement</Label>
+                <Input
+                  id="po-payment-date"
+                  type="date"
+                  value={manualPaymentDate}
+                  onChange={e => setManualPaymentDate(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="po-payment-ref">
+                  Référence{' '}
+                  <span className="text-gray-400 font-normal">(optionnel)</span>
+                </Label>
+                <Input
+                  id="po-payment-ref"
+                  placeholder="N° chèque, réf. virement..."
+                  value={manualPaymentRef}
+                  onChange={e => setManualPaymentRef(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="po-payment-note">
+                  Note{' '}
+                  <span className="text-gray-400 font-normal">(optionnel)</span>
+                </Label>
+                <Input
+                  id="po-payment-note"
+                  placeholder="Commentaire..."
+                  value={manualPaymentNote}
+                  onChange={e => setManualPaymentNote(e.target.value)}
+                />
+              </div>
+
+              <ButtonV2
+                onClick={handleManualPaymentSubmit}
+                disabled={
+                  paymentSubmitting ||
+                  !manualPaymentAmount ||
+                  parseFloat(manualPaymentAmount) <= 0
+                }
+                className="w-full bg-green-600 hover:bg-green-700"
+              >
+                {paymentSubmitting
+                  ? 'Enregistrement...'
+                  : 'Enregistrer le paiement'}
+              </ButtonV2>
+            </TabsContent>
+          </Tabs>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

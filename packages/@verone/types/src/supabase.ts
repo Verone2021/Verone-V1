@@ -14,27 +14,6 @@ export type Database = {
   };
   public: {
     Tables: {
-      _migration_payment_status_backup: {
-        Row: {
-          id: string | null;
-          payment_status: string | null;
-          payment_status_v2: string | null;
-          updated_at: string | null;
-        };
-        Insert: {
-          id?: string | null;
-          payment_status?: string | null;
-          payment_status_v2?: string | null;
-          updated_at?: string | null;
-        };
-        Update: {
-          id?: string | null;
-          payment_status?: string | null;
-          payment_status_v2?: string | null;
-          updated_at?: string | null;
-        };
-        Relationships: [];
-      };
       addresses: {
         Row: {
           address_line1: string;
@@ -2524,6 +2503,104 @@ export type Database = {
         };
         Relationships: [];
       };
+      financial_document_items: {
+        Row: {
+          created_at: string;
+          description: string;
+          document_id: string;
+          id: string;
+          product_id: string | null;
+          quantity: number;
+          sort_order: number;
+          total_ht: number;
+          total_ttc: number;
+          tva_amount: number;
+          tva_rate: number;
+          unit_price_ht: number;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          description: string;
+          document_id: string;
+          id?: string;
+          product_id?: string | null;
+          quantity?: number;
+          sort_order?: number;
+          total_ht?: number;
+          total_ttc?: number;
+          tva_amount?: number;
+          tva_rate?: number;
+          unit_price_ht?: number;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          description?: string;
+          document_id?: string;
+          id?: string;
+          product_id?: string | null;
+          quantity?: number;
+          sort_order?: number;
+          total_ht?: number;
+          total_ttc?: number;
+          tva_amount?: number;
+          tva_rate?: number;
+          unit_price_ht?: number;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'financial_document_items_document_id_fkey';
+            columns: ['document_id'];
+            isOneToOne: false;
+            referencedRelation: 'financial_documents';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'financial_document_items_document_id_fkey';
+            columns: ['document_id'];
+            isOneToOne: false;
+            referencedRelation: 'v_pending_invoice_uploads';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'financial_document_items_document_id_fkey';
+            columns: ['document_id'];
+            isOneToOne: false;
+            referencedRelation: 'v_transactions_missing_invoice';
+            referencedColumns: ['financial_document_id'];
+          },
+          {
+            foreignKeyName: 'financial_document_items_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'product_prices_summary';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'financial_document_items_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'products';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'financial_document_items_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'stock_alerts_unified_view';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'financial_document_items_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'stock_alerts_view';
+            referencedColumns: ['product_id'];
+          },
+        ];
+      };
       financial_document_lines: {
         Row: {
           created_at: string;
@@ -2811,6 +2888,20 @@ export type Database = {
         };
         Relationships: [
           {
+            foreignKeyName: 'financial_documents_billing_contact_id_fkey';
+            columns: ['billing_contact_id'];
+            isOneToOne: false;
+            referencedRelation: 'contacts';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'financial_documents_delivery_contact_id_fkey';
+            columns: ['delivery_contact_id'];
+            isOneToOne: false;
+            referencedRelation: 'contacts';
+            referencedColumns: ['id'];
+          },
+          {
             foreignKeyName: 'financial_documents_partner_id_fkey';
             columns: ['partner_id'];
             isOneToOne: false;
@@ -2822,6 +2913,13 @@ export type Database = {
             columns: ['purchase_order_id'];
             isOneToOne: false;
             referencedRelation: 'purchase_orders';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'financial_documents_responsable_contact_id_fkey';
+            columns: ['responsable_contact_id'];
+            isOneToOne: false;
+            referencedRelation: 'contacts';
             referencedColumns: ['id'];
           },
           {
@@ -2864,27 +2962,6 @@ export type Database = {
             columns: ['partner_id'];
             isOneToOne: false;
             referencedRelation: 'organisations';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'financial_documents_billing_contact_id_fkey';
-            columns: ['billing_contact_id'];
-            isOneToOne: false;
-            referencedRelation: 'contacts';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'financial_documents_delivery_contact_id_fkey';
-            columns: ['delivery_contact_id'];
-            isOneToOne: false;
-            referencedRelation: 'contacts';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'financial_documents_responsable_contact_id_fkey';
-            columns: ['responsable_contact_id'];
-            isOneToOne: false;
-            referencedRelation: 'contacts';
             referencedColumns: ['id'];
           },
         ];
@@ -6559,6 +6636,8 @@ export type Database = {
             | null;
           notes: string | null;
           order_date: string | null;
+          paid_amount: number | null;
+          paid_at: string | null;
           payment_status_v2: string | null;
           payment_terms: string | null;
           payment_terms_notes: string | null;
@@ -6602,6 +6681,8 @@ export type Database = {
             | null;
           notes?: string | null;
           order_date?: string | null;
+          paid_amount?: number | null;
+          paid_at?: string | null;
           payment_status_v2?: string | null;
           payment_terms?: string | null;
           payment_terms_notes?: string | null;
@@ -6645,6 +6726,8 @@ export type Database = {
             | null;
           notes?: string | null;
           order_date?: string | null;
+          paid_amount?: number | null;
+          paid_at?: string | null;
           payment_status_v2?: string | null;
           payment_terms?: string | null;
           payment_terms_notes?: string | null;
@@ -10582,18 +10665,24 @@ export type Database = {
           abby_pdf_url: string | null;
           abby_public_url: string | null;
           amount_paid: number;
+          billing_address: Json | null;
+          billing_contact_id: string | null;
           created_at: string;
           created_by: string;
           deleted_at: string | null;
+          delivery_contact_id: string | null;
           description: string | null;
           document_date: string;
           document_direction: Database['public']['Enums']['document_direction'];
           document_number: string;
           document_type: Database['public']['Enums']['document_type'];
           due_date: string | null;
+          fees_vat_rate: number | null;
           finalized_at: string | null;
           finalized_by: string | null;
+          handling_cost_ht: number | null;
           id: string;
+          insurance_cost_ht: number | null;
           invoice_source: string | null;
           last_synced_from_abby_at: string | null;
           local_pdf_path: string | null;
@@ -10608,8 +10697,11 @@ export type Database = {
           qonto_invoice_id: string | null;
           qonto_pdf_url: string | null;
           qonto_public_url: string | null;
+          responsable_contact_id: string | null;
           sales_order_id: string | null;
           sent_at: string | null;
+          shipping_address: Json | null;
+          shipping_cost_ht: number | null;
           status: Database['public']['Enums']['document_status'];
           sync_errors: Json | null;
           synced_to_abby_at: string | null;
@@ -10752,6 +10844,8 @@ export type Database = {
             | null;
           notes: string | null;
           order_date: string | null;
+          paid_amount: number | null;
+          paid_at: string | null;
           payment_status_v2: string | null;
           payment_terms: string | null;
           payment_terms_notes: string | null;
@@ -10829,18 +10923,24 @@ export type Database = {
           abby_pdf_url: string | null;
           abby_public_url: string | null;
           amount_paid: number;
+          billing_address: Json | null;
+          billing_contact_id: string | null;
           created_at: string;
           created_by: string;
           deleted_at: string | null;
+          delivery_contact_id: string | null;
           description: string | null;
           document_date: string;
           document_direction: Database['public']['Enums']['document_direction'];
           document_number: string;
           document_type: Database['public']['Enums']['document_type'];
           due_date: string | null;
+          fees_vat_rate: number | null;
           finalized_at: string | null;
           finalized_by: string | null;
+          handling_cost_ht: number | null;
           id: string;
+          insurance_cost_ht: number | null;
           invoice_source: string | null;
           last_synced_from_abby_at: string | null;
           local_pdf_path: string | null;
@@ -10855,8 +10955,11 @@ export type Database = {
           qonto_invoice_id: string | null;
           qonto_pdf_url: string | null;
           qonto_public_url: string | null;
+          responsable_contact_id: string | null;
           sales_order_id: string | null;
           sent_at: string | null;
+          shipping_address: Json | null;
+          shipping_cost_ht: number | null;
           status: Database['public']['Enums']['document_status'];
           sync_errors: Json | null;
           synced_to_abby_at: string | null;
@@ -12181,6 +12284,10 @@ export type Database = {
         Args: { p_amount: number; p_order_id: string; p_user_id?: string };
         Returns: undefined;
       };
+      mark_po_payment_received: {
+        Args: { p_amount: number; p_order_id: string };
+        Returns: undefined;
+      };
       mark_sample_delivered: {
         Args: { p_draft_id: string };
         Returns: {
@@ -12540,6 +12647,10 @@ export type Database = {
           error: string;
           success: boolean;
         }[];
+      };
+      update_product_pmp_on_po_received: {
+        Args: { p_po_id: string };
+        Returns: undefined;
       };
       update_stock_on_shipment: {
         Args: { p_product_id: string; p_quantity: number };

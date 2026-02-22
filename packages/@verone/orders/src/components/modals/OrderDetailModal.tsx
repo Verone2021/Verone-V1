@@ -870,6 +870,7 @@ export function OrderDetailModal({
                   customer_name: getCustomerName(),
                   total_ttc: order.total_ttc || 0,
                   created_at: order.created_at,
+                  order_date: order.order_date ?? null,
                   shipped_at: order.shipped_at ?? null,
                 }}
                 onSuccess={() => {

@@ -1228,7 +1228,8 @@ export default function PurchaseOrdersPage() {
                                       onClick={() =>
                                         void markAsManuallyPaid(
                                           order.id,
-                                          'cash'
+                                          'cash',
+                                          order.total_ttc || 0
                                         )
                                       }
                                     >
@@ -1239,7 +1240,8 @@ export default function PurchaseOrdersPage() {
                                       onClick={() =>
                                         void markAsManuallyPaid(
                                           order.id,
-                                          'check'
+                                          'check',
+                                          order.total_ttc || 0
                                         )
                                       }
                                     >
@@ -1250,7 +1252,8 @@ export default function PurchaseOrdersPage() {
                                       onClick={() =>
                                         void markAsManuallyPaid(
                                           order.id,
-                                          'transfer_other'
+                                          'transfer_other',
+                                          order.total_ttc || 0
                                         )
                                       }
                                     >
@@ -1261,7 +1264,8 @@ export default function PurchaseOrdersPage() {
                                       onClick={() =>
                                         void markAsManuallyPaid(
                                           order.id,
-                                          'card'
+                                          'card',
+                                          order.total_ttc || 0
                                         )
                                       }
                                     >
@@ -1273,7 +1277,8 @@ export default function PurchaseOrdersPage() {
                                       onClick={() =>
                                         void markAsManuallyPaid(
                                           order.id,
-                                          'compensation'
+                                          'compensation',
+                                          order.total_ttc || 0
                                         )
                                       }
                                     >
@@ -1284,7 +1289,8 @@ export default function PurchaseOrdersPage() {
                                       onClick={() =>
                                         void markAsManuallyPaid(
                                           order.id,
-                                          'verified_bubble'
+                                          'verified_bubble',
+                                          order.total_ttc || 0
                                         )
                                       }
                                     >
@@ -1742,6 +1748,7 @@ export default function PurchaseOrdersPage() {
               null,
             total_ttc: rapprochementOrder.total_ttc,
             created_at: rapprochementOrder.created_at,
+            order_date: rapprochementOrder.order_date ?? null,
           }}
           orderType="purchase_order"
           onSuccess={() => {
