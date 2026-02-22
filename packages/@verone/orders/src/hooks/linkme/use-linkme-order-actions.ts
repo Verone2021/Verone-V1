@@ -76,6 +76,7 @@ export interface LinkMeOrderDetails {
   billing_email: string | null;
   billing_phone: string | null;
   delivery_terms_accepted: boolean | null;
+  delivery_date: string | null;
   desired_delivery_date: string | null;
   mall_form_required: boolean | null;
   mall_form_email: string | null;
