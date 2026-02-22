@@ -14,7 +14,8 @@
  * @updated 2026-02-17 - Refonte 4 onglets + cartes enrichies + historique
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import Link from 'next/link';
 
 import { createClient } from '@verone/utils/supabase/client';
 import {
@@ -49,12 +50,8 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-  SheetFooter,
+  AddressAutocomplete,
+  type AddressResult,
 } from '@verone/ui';
 import { cn, formatCurrency } from '@verone/utils';
 import { toast } from 'sonner';
@@ -78,10 +75,9 @@ import {
   XCircle,
   Hourglass,
   EyeOff,
-  Eye,
-  Pencil,
-  Truck,
+  UserPlus,
   MapPin,
+  ExternalLink,
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -92,6 +88,16 @@ import {
   type MissingFieldCategory,
 } from '../utils/order-missing-fields';
 import type { LinkMeOrderDetails } from '../hooks/use-linkme-order-actions';
+import { useUpdateLinkMeDetails } from '../hooks/use-linkme-order-actions';
+import {
+  useOrganisationContactsBO,
+  useEnseigneContactsBO,
+  useCreateContactBO,
+  type ContactBO,
+} from '../hooks/use-organisation-contacts-bo';
+import { ContactCardBO } from '../components/contacts/ContactCardBO';
+import { NewContactForm } from '../components/contacts/NewContactForm';
+import type { NewContactFormData } from '../components/contacts/NewContactForm';
 import { LINKME_CHANNEL_ID } from '../hooks/use-linkme-orders';
 
 // =============================================================================
@@ -100,11 +106,12 @@ import { LINKME_CHANNEL_ID } from '../hooks/use-linkme-orders';
 
 type NotificationSeverity = 'info' | 'important' | 'urgent';
 type TargetType = 'all' | 'enseigne' | 'affiliate';
-type EditStep =
+type ClickableCategory =
   | 'responsable'
   | 'billing'
   | 'delivery_contact'
-  | 'delivery_address';
+  | 'delivery_address'
+  | 'organisation';
 
 interface Enseigne {
   id: string;
@@ -142,6 +149,9 @@ interface OrderWithMissing {
   customer_id: string | null;
   organisationName: string | null;
   organisationSiret: string | null;
+  organisationId: string | null;
+  enseigneId: string | null;
+  ownerType: string | null;
   details: LinkMeOrderDetails | null;
   detailsId: string | null;
   ignoredFields: string[];
@@ -237,6 +247,7 @@ function useOrdersWithMissingFields() {
         trade_name: string | null;
         legal_name: string;
         siret: string | null;
+        enseigne_id: string | null;
       };
 
       const { data: orders, error } = await supabase
@@ -249,7 +260,7 @@ function useOrdersWithMissingFields() {
           status,
           customer_id,
           organisations!sales_orders_customer_id_fkey (
-            id, trade_name, legal_name, siret
+            id, trade_name, legal_name, siret, enseigne_id
           ),
           sales_order_linkme_details (
             id, sales_order_id,
@@ -332,6 +343,9 @@ function useOrdersWithMissingFields() {
             customer_id: order.customer_id,
             organisationName: org?.trade_name ?? org?.legal_name ?? null,
             organisationSiret: org?.siret ?? null,
+            organisationId: org?.id ?? null,
+            enseigneId: org?.enseigne_id ?? null,
+            ownerType: ownerType,
             details,
             detailsId:
               ((details as unknown as Record<string, unknown>)?.id as
@@ -668,327 +682,433 @@ function useIgnoreField() {
 }
 
 // =============================================================================
-// HOOK - UPDATE DETAILS
+// COMPONENTS - CONTACT EDIT DIALOG
 // =============================================================================
 
-function useUpdateDetails() {
+function ContactEditDialog({
+  order,
+  contactFor,
+  open,
+  onOpenChange,
+}: {
+  order: OrderWithMissing;
+  contactFor: 'responsable' | 'billing' | 'delivery_contact';
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
   const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async ({
-      detailsId,
-      updates,
-    }: {
-      detailsId: string;
-      updates: Record<string, unknown>;
-    }) => {
-      const supabase = createClient();
-      const { error } = await supabase
-        .from('sales_order_linkme_details')
-        .update(updates)
-        .eq('id', detailsId);
-      if (error) throw error;
-    },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: ['orders-missing-fields'],
-      });
-      toast.success('Informations mises à jour');
-    },
-    onError: (error: unknown) => {
-      const msg = error instanceof Error ? error.message : 'Unknown error';
-      console.error('[Messages] Erreur mise à jour details:', msg);
-      toast.error(`Erreur: ${msg}`);
-    },
-  });
-}
-
-// =============================================================================
-// COMPONENTS - FIELD ROW + SECTION HEADER (HELPERS)
-// =============================================================================
-
-function FieldRow({
-  label,
-  value,
-}: {
-  label: string;
-  value: string | null | undefined;
-}) {
-  const isMissing = !value;
-  return (
-    <div className="space-y-0.5">
-      <span className="text-xs text-gray-500">{label}</span>
-      <div
-        className={cn(
-          'text-sm',
-          isMissing ? 'text-red-400 italic' : 'text-gray-900'
-        )}
-      >
-        {isMissing ? '—' : value}
-      </div>
-    </div>
+  const [selectedContactId, setSelectedContactId] = useState<string | null>(
+    null
   );
-}
+  const [showNewForm, setShowNewForm] = useState(false);
 
-function SectionHeader({
-  icon: Icon,
-  title,
-  missingCount,
-  onEdit,
-}: {
-  icon: React.ElementType;
-  title: string;
-  missingCount: number;
-  onEdit: () => void;
-}) {
-  return (
-    <div className="flex items-center justify-between">
-      <h4 className="font-medium text-sm flex items-center gap-2">
-        <Icon className="h-4 w-4 text-gray-500" />
-        {title}
-        {missingCount > 0 && (
-          <Badge variant="destructive" className="text-xs h-5 px-1.5">
-            {missingCount} manquant{missingCount > 1 ? 's' : ''}
-          </Badge>
-        )}
-      </h4>
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={onEdit}
-        className="h-7 text-xs gap-1"
-      >
-        <Pencil className="h-3 w-3" />
-        Modifier
-      </Button>
-    </div>
+  const isSuccursale =
+    order.ownerType === 'propre' || order.ownerType === 'succursale';
+  const { data: enseigneData } = useEnseigneContactsBO(
+    isSuccursale ? order.enseigneId : null
   );
-}
+  const { data: orgData } = useOrganisationContactsBO(
+    !isSuccursale ? order.organisationId : null
+  );
+  const availableContacts: ContactBO[] =
+    (isSuccursale ? enseigneData?.contacts : orgData?.contacts) ?? [];
 
-// =============================================================================
-// COMPONENTS - EDIT SUB-DIALOG
-// =============================================================================
+  const updateDetails = useUpdateLinkMeDetails();
+  const createContactBO = useCreateContactBO();
 
-function EditSubDialog({
-  step,
-  form,
-  onFormChange,
-  onSave,
-  onClose,
-  isPending,
-}: {
-  step: EditStep;
-  form: Record<string, string>;
-  onFormChange: (form: Record<string, string>) => void;
-  onSave: () => void;
-  onClose: () => void;
-  isPending: boolean;
-}) {
-  const updateField = (key: string, value: string) => {
-    onFormChange({ ...form, [key]: value });
-  };
-
-  const STEP_LABELS: Record<EditStep, string> = {
+  const DIALOG_TITLES: Record<typeof contactFor, string> = {
     responsable: 'Contact responsable',
     billing: 'Contact facturation',
     delivery_contact: 'Contact livraison',
-    delivery_address: 'Adresse livraison',
   };
 
+  const handleConfirmContact = useCallback(async () => {
+    if (!selectedContactId) return;
+    const contact = availableContacts.find(c => c.id === selectedContactId);
+    if (!contact) return;
+
+    const fullName = `${contact.firstName} ${contact.lastName}`;
+    let updates: Record<string, string | null>;
+    if (contactFor === 'responsable') {
+      updates = {
+        requester_name: fullName,
+        requester_email: contact.email,
+        requester_phone: contact.phone ?? null,
+        requester_position: contact.title ?? null,
+      };
+    } else if (contactFor === 'delivery_contact') {
+      updates = {
+        delivery_contact_name: fullName,
+        delivery_contact_email: contact.email,
+        delivery_contact_phone: contact.phone ?? null,
+      };
+    } else {
+      updates = {
+        billing_name: fullName,
+        billing_email: contact.email,
+        billing_phone: contact.phone ?? null,
+        billing_contact_source: 'custom',
+      };
+    }
+
+    await updateDetails.mutateAsync({ orderId: order.id, updates });
+    await queryClient.invalidateQueries({
+      queryKey: ['orders-missing-fields'],
+    });
+    toast.success('Contact mis à jour');
+    setSelectedContactId(null);
+    onOpenChange(false);
+  }, [
+    selectedContactId,
+    availableContacts,
+    contactFor,
+    updateDetails,
+    order.id,
+    queryClient,
+    onOpenChange,
+  ]);
+
+  const handleCreateAndSelectContact = useCallback(
+    async (contactData: NewContactFormData) => {
+      await createContactBO.mutateAsync({
+        organisationId: isSuccursale
+          ? undefined
+          : (order.organisationId ?? undefined),
+        enseigneId: isSuccursale ? (order.enseigneId ?? undefined) : undefined,
+        firstName: contactData.firstName,
+        lastName: contactData.lastName,
+        email: contactData.email,
+        phone: contactData.phone || undefined,
+        title: contactData.title || undefined,
+        isPrimaryContact: contactFor === 'responsable',
+        isBillingContact: contactFor === 'billing',
+      });
+
+      const fullName = `${contactData.firstName} ${contactData.lastName}`;
+      let updates: Record<string, string | null>;
+      if (contactFor === 'responsable') {
+        updates = {
+          requester_name: fullName,
+          requester_email: contactData.email,
+          requester_phone: contactData.phone || null,
+          requester_position: contactData.title || null,
+        };
+      } else if (contactFor === 'delivery_contact') {
+        updates = {
+          delivery_contact_name: fullName,
+          delivery_contact_email: contactData.email,
+          delivery_contact_phone: contactData.phone || null,
+        };
+      } else {
+        updates = {
+          billing_name: fullName,
+          billing_email: contactData.email,
+          billing_phone: contactData.phone || null,
+          billing_contact_source: 'custom',
+        };
+      }
+
+      await updateDetails.mutateAsync({ orderId: order.id, updates });
+      await queryClient.invalidateQueries({
+        queryKey: ['orders-missing-fields'],
+      });
+      toast.success('Contact créé et assigné');
+      setShowNewForm(false);
+      onOpenChange(false);
+    },
+    [
+      createContactBO,
+      isSuccursale,
+      order.organisationId,
+      order.enseigneId,
+      order.id,
+      contactFor,
+      updateDetails,
+      queryClient,
+      onOpenChange,
+    ]
+  );
+
   return (
-    <Dialog open onOpenChange={open => !open && onClose()}>
-      <DialogContent className="max-w-md">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Modifier — {STEP_LABELS[step]}</DialogTitle>
+          <DialogTitle>{DIALOG_TITLES[contactFor]}</DialogTitle>
+          <DialogDescription>
+            {order.order_number} — {order.organisationName ?? '-'}
+            <br />
+            Sélectionnez un contact existant ou créez-en un nouveau.
+          </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
-          {step === 'responsable' && (
-            <>
-              <div className="space-y-2">
-                <Label>Type de demandeur</Label>
-                <Select
-                  value={form.requester_type ?? ''}
-                  onValueChange={v => updateField('requester_type', v)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sélectionner..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="individual">Particulier</SelectItem>
-                    <SelectItem value="company">Entreprise</SelectItem>
-                    <SelectItem value="franchise">Franchise</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Nom</Label>
-                <Input
-                  value={form.requester_name ?? ''}
-                  onChange={e => updateField('requester_name', e.target.value)}
-                  placeholder="Nom complet"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Email</Label>
-                <Input
-                  type="email"
-                  value={form.requester_email ?? ''}
-                  onChange={e => updateField('requester_email', e.target.value)}
-                  placeholder="email@example.com"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Téléphone</Label>
-                <Input
-                  type="tel"
-                  value={form.requester_phone ?? ''}
-                  onChange={e => updateField('requester_phone', e.target.value)}
-                  placeholder="+33 6 XX XX XX XX"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Fonction</Label>
-                <Input
-                  value={form.requester_position ?? ''}
-                  onChange={e =>
-                    updateField('requester_position', e.target.value)
-                  }
-                  placeholder="Directeur, Gérant..."
-                />
-              </div>
-            </>
-          )}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
+          {/* Left: New contact form */}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <UserPlus className="h-4 w-4 text-purple-600" />
+              <h4 className="font-semibold text-sm">Nouveau contact</h4>
+            </div>
+            {showNewForm ? (
+              <NewContactForm
+                onSubmit={handleCreateAndSelectContact}
+                onCancel={() => setShowNewForm(false)}
+                isSubmitting={
+                  createContactBO.isPending || updateDetails.isPending
+                }
+                sectionLabel="Créer et assigner"
+              />
+            ) : (
+              <Button
+                variant="outline"
+                className="w-full border-dashed h-20"
+                onClick={() => {
+                  setShowNewForm(true);
+                  setSelectedContactId(null);
+                }}
+              >
+                <UserPlus className="h-4 w-4 mr-2" />
+                Créer un nouveau contact
+              </Button>
+            )}
+          </div>
 
-          {step === 'billing' && (
-            <>
-              <div className="space-y-2">
-                <Label>Source du contact</Label>
-                <Select
-                  value={form.billing_contact_source ?? ''}
-                  onValueChange={v => updateField('billing_contact_source', v)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sélectionner..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="same_as_requester">
-                      Même que le demandeur
-                    </SelectItem>
-                    <SelectItem value="same_as_owner">
-                      Même que le propriétaire
-                    </SelectItem>
-                    <SelectItem value="other">Autre contact</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Nom</Label>
-                <Input
-                  value={form.billing_name ?? ''}
-                  onChange={e => updateField('billing_name', e.target.value)}
-                  placeholder="Nom du contact facturation"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Email</Label>
-                <Input
-                  type="email"
-                  value={form.billing_email ?? ''}
-                  onChange={e => updateField('billing_email', e.target.value)}
-                  placeholder="facturation@example.com"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Téléphone</Label>
-                <Input
-                  type="tel"
-                  value={form.billing_phone ?? ''}
-                  onChange={e => updateField('billing_phone', e.target.value)}
-                  placeholder="+33 X XX XX XX XX"
-                />
-              </div>
-            </>
-          )}
-
-          {step === 'delivery_contact' && (
-            <>
-              <div className="space-y-2">
-                <Label>Nom du contact livraison</Label>
-                <Input
-                  value={form.delivery_contact_name ?? ''}
-                  onChange={e =>
-                    updateField('delivery_contact_name', e.target.value)
-                  }
-                  placeholder="Nom du réceptionnaire"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Email</Label>
-                <Input
-                  type="email"
-                  value={form.delivery_contact_email ?? ''}
-                  onChange={e =>
-                    updateField('delivery_contact_email', e.target.value)
-                  }
-                  placeholder="livraison@example.com"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Téléphone</Label>
-                <Input
-                  type="tel"
-                  value={form.delivery_contact_phone ?? ''}
-                  onChange={e =>
-                    updateField('delivery_contact_phone', e.target.value)
-                  }
-                  placeholder="+33 X XX XX XX XX"
-                />
-              </div>
-            </>
-          )}
-
-          {step === 'delivery_address' && (
-            <>
-              <div className="space-y-2">
-                <Label>Adresse</Label>
-                <Input
-                  value={form.delivery_address ?? ''}
-                  onChange={e =>
-                    updateField('delivery_address', e.target.value)
-                  }
-                  placeholder="15 rue de la Paix"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Code postal</Label>
-                  <Input
-                    value={form.delivery_postal_code ?? ''}
-                    onChange={e =>
-                      updateField('delivery_postal_code', e.target.value)
-                    }
-                    placeholder="75001"
+          {/* Right: Existing contacts */}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <User className="h-4 w-4 text-gray-600" />
+              <h4 className="font-semibold text-sm">
+                Contacts disponibles ({availableContacts.length})
+              </h4>
+            </div>
+            <div className="space-y-2 max-h-[350px] overflow-y-auto pr-1">
+              {availableContacts.length === 0 ? (
+                <p className="text-sm text-gray-400 text-center py-8">
+                  Aucun contact trouvé
+                </p>
+              ) : (
+                availableContacts.map(contact => (
+                  <ContactCardBO
+                    key={contact.id}
+                    contact={contact}
+                    isSelected={selectedContactId === contact.id}
+                    onClick={() => {
+                      setSelectedContactId(
+                        selectedContactId === contact.id ? null : contact.id
+                      );
+                      setShowNewForm(false);
+                    }}
                   />
-                </div>
-                <div className="space-y-2">
-                  <Label>Ville</Label>
-                  <Input
-                    value={form.delivery_city ?? ''}
-                    onChange={e => updateField('delivery_city', e.target.value)}
-                    placeholder="Paris"
-                  />
-                </div>
-              </div>
-            </>
-          )}
+                ))
+              )}
+            </div>
+          </div>
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
             Annuler
           </Button>
-          <Button onClick={onSave} disabled={isPending}>
-            {isPending ? (
+          <Button
+            onClick={() => {
+              void handleConfirmContact().catch(err => {
+                console.error('[ContactEditDialog] confirm failed:', err);
+              });
+            }}
+            disabled={
+              !selectedContactId ||
+              updateDetails.isPending ||
+              createContactBO.isPending
+            }
+          >
+            {updateDetails.isPending ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Enregistrement...
+              </>
+            ) : (
+              'Confirmer la sélection'
+            )}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// =============================================================================
+// COMPONENTS - ADDRESS EDIT DIALOG
+// =============================================================================
+
+function AddressEditDialog({
+  order,
+  open,
+  onOpenChange,
+}: {
+  order: OrderWithMissing;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const queryClient = useQueryClient();
+  const updateDetails = useUpdateLinkMeDetails();
+
+  const [addressForm, setAddressForm] = useState({
+    delivery_address: order.details?.delivery_address ?? '',
+    delivery_postal_code: order.details?.delivery_postal_code ?? '',
+    delivery_city: order.details?.delivery_city ?? '',
+  });
+
+  // Fetch org address on demand for "Utiliser adresse restaurant" button
+  const { data: orgAddress } = useQuery({
+    queryKey: ['org-address', order.organisationId],
+    queryFn: async () => {
+      if (!order.organisationId) return null;
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from('organisations')
+        .select('address_line1, postal_code, city')
+        .eq('id', order.organisationId)
+        .single();
+      if (error) return null;
+      return data as {
+        address_line1: string | null;
+        postal_code: string | null;
+        city: string | null;
+      };
+    },
+    enabled: open && !!order.organisationId,
+  });
+
+  const handleAddressSelect = useCallback((addr: AddressResult) => {
+    setAddressForm({
+      delivery_address: addr.streetAddress,
+      delivery_postal_code: addr.postalCode,
+      delivery_city: addr.city,
+    });
+  }, []);
+
+  const handleUseOrgAddress = useCallback(() => {
+    if (!orgAddress) return;
+    setAddressForm({
+      delivery_address: orgAddress.address_line1 ?? '',
+      delivery_postal_code: orgAddress.postal_code ?? '',
+      delivery_city: orgAddress.city ?? '',
+    });
+  }, [orgAddress]);
+
+  const handleSave = useCallback(async () => {
+    await updateDetails.mutateAsync({
+      orderId: order.id,
+      updates: addressForm,
+    });
+    await queryClient.invalidateQueries({
+      queryKey: ['orders-missing-fields'],
+    });
+    toast.success('Adresse mise à jour');
+    onOpenChange(false);
+  }, [updateDetails, order.id, addressForm, queryClient, onOpenChange]);
+
+  const hasOrgAddress = orgAddress?.address_line1 || orgAddress?.city;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Adresse de livraison</DialogTitle>
+          <DialogDescription>
+            {order.order_number} — {order.organisationName ?? '-'}
+            <br />
+            Recherchez une adresse ou saisissez-la manuellement.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4 py-4">
+          {/* Button "Utiliser adresse restaurant" */}
+          {hasOrgAddress && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full text-sm"
+              onClick={handleUseOrgAddress}
+            >
+              <Building2 className="h-4 w-4 mr-2" />
+              Utiliser adresse restaurant
+              <span className="ml-2 text-xs text-gray-400 truncate max-w-[200px]">
+                ({orgAddress?.address_line1}, {orgAddress?.city})
+              </span>
+            </Button>
+          )}
+
+          {/* AddressAutocomplete */}
+          <div className="space-y-2">
+            <Label>Recherche d&apos;adresse</Label>
+            <AddressAutocomplete
+              value=""
+              onSelect={handleAddressSelect}
+              placeholder="Tapez une adresse pour rechercher..."
+            />
+          </div>
+
+          <Separator />
+
+          {/* Manual fields */}
+          <div className="space-y-3">
+            <div className="space-y-2">
+              <Label>Adresse</Label>
+              <Input
+                value={addressForm.delivery_address}
+                onChange={e =>
+                  setAddressForm(prev => ({
+                    ...prev,
+                    delivery_address: e.target.value,
+                  }))
+                }
+                placeholder="15 rue de la Paix"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Code postal</Label>
+                <Input
+                  value={addressForm.delivery_postal_code}
+                  onChange={e =>
+                    setAddressForm(prev => ({
+                      ...prev,
+                      delivery_postal_code: e.target.value,
+                    }))
+                  }
+                  placeholder="75001"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Ville</Label>
+                <Input
+                  value={addressForm.delivery_city}
+                  onChange={e =>
+                    setAddressForm(prev => ({
+                      ...prev,
+                      delivery_city: e.target.value,
+                    }))
+                  }
+                  placeholder="Paris"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Annuler
+          </Button>
+          <Button
+            onClick={() => {
+              void handleSave().catch(err => {
+                console.error('[AddressEditDialog] save failed:', err);
+              });
+            }}
+            disabled={updateDetails.isPending}
+          >
+            {updateDetails.isPending ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 Enregistrement...
@@ -1004,309 +1124,113 @@ function EditSubDialog({
 }
 
 // =============================================================================
-// COMPONENTS - ORDER DETAIL DIALOG (SHEET)
-// =============================================================================
-
-function OrderDetailDialog({
-  order,
-  open,
-  onOpenChange,
-}: {
-  order: OrderWithMissing | null;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}) {
-  const [editingStep, setEditingStep] = useState<EditStep | null>(null);
-  const [editForm, setEditForm] = useState<Record<string, string>>({});
-  const updateDetails = useUpdateDetails();
-
-  if (!order) return null;
-
-  const details = order.details;
-
-  const missingKeys = new Set(order.missingFields.fields.map(f => f.key));
-
-  const missingBySection = {
-    responsable: [
-      'requester_name',
-      'requester_email',
-      'requester_phone',
-    ].filter(k => missingKeys.has(k)).length,
-    billing: ['billing_name', 'billing_email', 'billing_phone'].filter(k =>
-      missingKeys.has(k)
-    ).length,
-    delivery_contact: [
-      'delivery_contact_name',
-      'delivery_contact_email',
-      'delivery_contact_phone',
-    ].filter(k => missingKeys.has(k)).length,
-    delivery_address: [
-      'delivery_address',
-      'delivery_postal_code',
-      'delivery_city',
-    ].filter(k => missingKeys.has(k)).length,
-  };
-
-  const handleStartEdit = (step: EditStep) => {
-    const prefill: Record<string, string> = {};
-    if (step === 'responsable') {
-      prefill.requester_type = details?.requester_type ?? '';
-      prefill.requester_name = details?.requester_name ?? '';
-      prefill.requester_email = details?.requester_email ?? '';
-      prefill.requester_phone = details?.requester_phone ?? '';
-      prefill.requester_position = details?.requester_position ?? '';
-    } else if (step === 'billing') {
-      prefill.billing_contact_source = details?.billing_contact_source ?? '';
-      prefill.billing_name = details?.billing_name ?? '';
-      prefill.billing_email = details?.billing_email ?? '';
-      prefill.billing_phone = details?.billing_phone ?? '';
-    } else if (step === 'delivery_contact') {
-      prefill.delivery_contact_name = details?.delivery_contact_name ?? '';
-      prefill.delivery_contact_email = details?.delivery_contact_email ?? '';
-      prefill.delivery_contact_phone = details?.delivery_contact_phone ?? '';
-    } else if (step === 'delivery_address') {
-      prefill.delivery_address = details?.delivery_address ?? '';
-      prefill.delivery_postal_code = details?.delivery_postal_code ?? '';
-      prefill.delivery_city = details?.delivery_city ?? '';
-    }
-    setEditForm(prefill);
-    setEditingStep(step);
-  };
-
-  const handleSaveEdit = () => {
-    if (!editingStep || !order.detailsId) return;
-    void updateDetails
-      .mutateAsync({
-        detailsId: order.detailsId,
-        updates: editForm,
-      })
-      .then(() => {
-        setEditingStep(null);
-        setEditForm({});
-      })
-      .catch(e => {
-        console.error('[OrderDetailDialog] save failed:', e);
-      });
-  };
-
-  const showOwnerSection = details?.owner_contact_same_as_requester === false;
-
-  return (
-    <>
-      <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent
-          side="right"
-          className="w-[560px] sm:max-w-[560px] overflow-y-auto"
-        >
-          <SheetHeader>
-            <SheetTitle className="flex items-center gap-2">
-              {order.order_number}
-              <OrderStatusBadge status={order.status} />
-            </SheetTitle>
-            <SheetDescription>
-              {order.organisationName ?? '-'} —{' '}
-              {formatCurrency(order.total_ttc)}
-            </SheetDescription>
-          </SheetHeader>
-
-          <div className="mt-6 space-y-6">
-            {/* Section Responsable */}
-            <div className="space-y-3">
-              <SectionHeader
-                icon={User}
-                title="Contact responsable"
-                missingCount={missingBySection.responsable}
-                onEdit={() => handleStartEdit('responsable')}
-              />
-              <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm pl-6">
-                <FieldRow label="Nom" value={details?.requester_name} />
-                <FieldRow label="Email" value={details?.requester_email} />
-                <FieldRow label="Téléphone" value={details?.requester_phone} />
-                <FieldRow
-                  label="Fonction"
-                  value={details?.requester_position}
-                />
-                <FieldRow label="Type" value={details?.requester_type} />
-              </div>
-            </div>
-
-            {/* Section Propriétaire (conditionnel) */}
-            {showOwnerSection && (
-              <>
-                <Separator />
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Building2 className="h-4 w-4 text-gray-500" />
-                    <h4 className="font-medium text-sm">Propriétaire</h4>
-                  </div>
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm pl-6">
-                    <FieldRow label="Nom" value={details?.owner_name} />
-                    <FieldRow label="Email" value={details?.owner_email} />
-                    <FieldRow label="Téléphone" value={details?.owner_phone} />
-                    <FieldRow
-                      label="Raison sociale"
-                      value={details?.owner_company_legal_name}
-                    />
-                  </div>
-                </div>
-              </>
-            )}
-
-            <Separator />
-
-            {/* Section Facturation */}
-            <div className="space-y-3">
-              <SectionHeader
-                icon={FileText}
-                title="Contact facturation"
-                missingCount={missingBySection.billing}
-                onEdit={() => handleStartEdit('billing')}
-              />
-              <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm pl-6">
-                <FieldRow label="Nom" value={details?.billing_name} />
-                <FieldRow label="Email" value={details?.billing_email} />
-                <FieldRow label="Téléphone" value={details?.billing_phone} />
-                <FieldRow
-                  label="Source"
-                  value={details?.billing_contact_source}
-                />
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* Section Contact Livraison */}
-            <div className="space-y-3">
-              <SectionHeader
-                icon={Truck}
-                title="Contact livraison"
-                missingCount={missingBySection.delivery_contact}
-                onEdit={() => handleStartEdit('delivery_contact')}
-              />
-              <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm pl-6">
-                <FieldRow label="Nom" value={details?.delivery_contact_name} />
-                <FieldRow
-                  label="Email"
-                  value={details?.delivery_contact_email}
-                />
-                <FieldRow
-                  label="Téléphone"
-                  value={details?.delivery_contact_phone}
-                />
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* Section Adresse Livraison */}
-            <div className="space-y-3">
-              <SectionHeader
-                icon={MapPin}
-                title="Adresse livraison"
-                missingCount={missingBySection.delivery_address}
-                onEdit={() => handleStartEdit('delivery_address')}
-              />
-              <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm pl-6">
-                <div className="col-span-2">
-                  <FieldRow label="Adresse" value={details?.delivery_address} />
-                </div>
-                <FieldRow
-                  label="Code postal"
-                  value={details?.delivery_postal_code}
-                />
-                <FieldRow label="Ville" value={details?.delivery_city} />
-                {details?.is_mall_delivery && (
-                  <div className="col-span-2">
-                    <FieldRow
-                      label="Email centre commercial"
-                      value={details?.mall_email}
-                    />
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Section Organisation (read-only) */}
-            {order.organisationSiret !== undefined && (
-              <>
-                <Separator />
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Building2 className="h-4 w-4 text-gray-500" />
-                    <h4 className="font-medium text-sm">Organisation</h4>
-                    <Badge variant="outline" className="text-xs">
-                      Lecture seule
-                    </Badge>
-                  </div>
-                  <div className="pl-6">
-                    <FieldRow label="SIRET" value={order.organisationSiret} />
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-
-          <SheetFooter className="mt-8">
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => onOpenChange(false)}
-            >
-              Fermer
-            </Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
-
-      {editingStep && (
-        <EditSubDialog
-          step={editingStep}
-          form={editForm}
-          onFormChange={setEditForm}
-          onSave={handleSaveEdit}
-          onClose={() => {
-            setEditingStep(null);
-            setEditForm({});
-          }}
-          isPending={updateDetails.isPending}
-        />
-      )}
-    </>
-  );
-}
-
-// =============================================================================
 // COMPONENTS - CATEGORY BADGES
 // =============================================================================
 
+const DELIVERY_CONTACT_KEYS = [
+  'delivery_contact_name',
+  'delivery_contact_email',
+  'delivery_contact_phone',
+];
+const DELIVERY_ADDRESS_KEYS = [
+  'delivery_address',
+  'delivery_postal_code',
+  'delivery_city',
+  'mall_email',
+];
+
 function CategoryBadges({
   missingFields,
+  onCategoryClick,
 }: {
   missingFields: MissingFieldsResult;
+  onCategoryClick?: (category: ClickableCategory) => void;
 }) {
-  const categories = Object.entries(missingFields.byCategory).filter(
-    ([, fields]) => fields.length > 0
-  ) as [MissingFieldCategory, typeof missingFields.fields][];
+  const isClickable = !!onCategoryClick;
+
+  // Build badge entries, splitting 'delivery' into contact + address
+  const badges: Array<{
+    key: string;
+    label: string;
+    color: string;
+    count: number;
+    fields: typeof missingFields.fields;
+    clickCategory: ClickableCategory | null;
+  }> = [];
+
+  for (const [cat, fields] of Object.entries(missingFields.byCategory) as [
+    MissingFieldCategory,
+    typeof missingFields.fields,
+  ][]) {
+    if (fields.length === 0) continue;
+
+    if (cat === 'delivery') {
+      const contactFields = fields.filter(f =>
+        DELIVERY_CONTACT_KEYS.includes(f.key)
+      );
+      const addressFields = fields.filter(f =>
+        DELIVERY_ADDRESS_KEYS.includes(f.key)
+      );
+
+      if (contactFields.length > 0) {
+        badges.push({
+          key: 'delivery_contact',
+          label: `Contact livraison (${contactFields.length})`,
+          color: CATEGORY_BADGE_COLORS.delivery,
+          count: contactFields.length,
+          fields: contactFields,
+          clickCategory: 'delivery_contact',
+        });
+      }
+      if (addressFields.length > 0) {
+        badges.push({
+          key: 'delivery_address',
+          label: `Adresse livraison (${addressFields.length})`,
+          color: 'bg-teal-100 text-teal-700 border-teal-200',
+          count: addressFields.length,
+          fields: addressFields,
+          clickCategory: 'delivery_address',
+        });
+      }
+    } else {
+      badges.push({
+        key: cat,
+        label: `${CATEGORY_LABELS[cat]} (${fields.length})`,
+        color: CATEGORY_BADGE_COLORS[cat],
+        count: fields.length,
+        fields,
+        clickCategory: cat as ClickableCategory,
+      });
+    }
+  }
 
   return (
     <TooltipProvider>
       <div className="flex items-center gap-1.5 flex-wrap">
-        {categories.map(([cat, fields]) => (
-          <Tooltip key={cat}>
+        {badges.map(badge => (
+          <Tooltip key={badge.key}>
             <TooltipTrigger asChild>
               <Badge
                 variant="outline"
                 className={cn(
-                  'text-xs cursor-default',
-                  CATEGORY_BADGE_COLORS[cat]
+                  'text-xs',
+                  badge.color,
+                  isClickable
+                    ? 'cursor-pointer hover:opacity-80 transition-opacity'
+                    : 'cursor-default'
                 )}
+                onClick={
+                  isClickable && badge.clickCategory
+                    ? () => onCategoryClick(badge.clickCategory!)
+                    : undefined
+                }
               >
-                {CATEGORY_LABELS[cat]} ({fields.length})
+                {badge.label}
               </Badge>
             </TooltipTrigger>
             <TooltipContent side="bottom" className="max-w-xs">
               <ul className="text-xs space-y-0.5">
-                {fields.map(f => (
+                {badge.fields.map(f => (
                   <li key={f.key}>{f.label}</li>
                 ))}
               </ul>
@@ -1697,12 +1621,12 @@ function SendInfoRequestDialog({
 function OrderCard({
   order,
   onSendRequest,
-  onViewDetails,
+  onCategoryClick,
   variant,
 }: {
   order: OrderWithMissing;
   onSendRequest: () => void;
-  onViewDetails: () => void;
+  onCategoryClick: (category: ClickableCategory) => void;
   variant: 'missing' | 'waiting';
 }) {
   const pendingReqs = order.infoRequests.filter(
@@ -1729,8 +1653,11 @@ function OrderCard({
               <OrderStatusBadge status={order.status} />
             </div>
 
-            {/* Category badges */}
-            <CategoryBadges missingFields={order.missingFields} />
+            {/* Category badges (clickable) */}
+            <CategoryBadges
+              missingFields={order.missingFields}
+              onCategoryClick={onCategoryClick}
+            />
 
             {/* Request status for waiting variant */}
             {variant === 'waiting' && latestPending && (
@@ -1760,7 +1687,7 @@ function OrderCard({
             )}
           </div>
 
-          {/* Action buttons */}
+          {/* Actions */}
           <div className="flex flex-col gap-2 flex-shrink-0">
             <Button variant="outline" size="sm" onClick={onSendRequest}>
               {variant === 'waiting' ? (
@@ -1775,15 +1702,13 @@ function OrderCard({
                 </>
               )}
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onViewDetails}
-              className="gap-1 text-gray-500 hover:text-gray-900"
+            <Link
+              href={`/canaux-vente/linkme/commandes/${order.id}`}
+              className="text-xs text-blue-600 hover:text-blue-800 hover:underline flex items-center justify-center gap-1"
             >
-              <Eye className="h-3.5 w-3.5" />
+              <ExternalLink className="h-3 w-3" />
               Voir détails
-            </Button>
+            </Link>
           </div>
         </div>
       </CardContent>
@@ -1803,13 +1728,27 @@ function MissingFieldsTab({
   isLoading: boolean;
 }) {
   const [dialogOrder, setDialogOrder] = useState<OrderWithMissing | null>(null);
-  const [detailOrder, setDetailOrder] = useState<OrderWithMissing | null>(null);
+  const [editOrder, setEditOrder] = useState<OrderWithMissing | null>(null);
+  const [editCategory, setEditCategory] = useState<ClickableCategory | null>(
+    null
+  );
 
   const filteredOrders = useMemo(() => {
     if (!orders) return [];
-    // Only orders WITHOUT a pending info request
     return orders.filter(order => !hasPendingRequest(order));
   }, [orders]);
+
+  const handleCategoryClick = (
+    order: OrderWithMissing,
+    cat: ClickableCategory
+  ) => {
+    if (cat === 'organisation') {
+      toast.info('Modifiez le SIRET depuis la fiche organisation');
+      return;
+    }
+    setEditOrder(order);
+    setEditCategory(cat);
+  };
 
   if (isLoading) {
     return (
@@ -1848,7 +1787,7 @@ function MissingFieldsTab({
             order={order}
             variant="missing"
             onSendRequest={() => setDialogOrder(order)}
-            onViewDetails={() => setDetailOrder(order)}
+            onCategoryClick={cat => handleCategoryClick(order, cat)}
           />
         ))
       )}
@@ -1861,15 +1800,34 @@ function MissingFieldsTab({
         />
       )}
 
-      <OrderDetailDialog
-        order={
-          detailOrder
-            ? (orders?.find(o => o.id === detailOrder.id) ?? detailOrder)
-            : null
-        }
-        open={!!detailOrder}
-        onOpenChange={open => !open && setDetailOrder(null)}
-      />
+      {editOrder &&
+        editCategory &&
+        (editCategory === 'delivery_address' ? (
+          <AddressEditDialog
+            order={orders?.find(o => o.id === editOrder.id) ?? editOrder}
+            open
+            onOpenChange={open => {
+              if (!open) {
+                setEditOrder(null);
+                setEditCategory(null);
+              }
+            }}
+          />
+        ) : (
+          <ContactEditDialog
+            order={orders?.find(o => o.id === editOrder.id) ?? editOrder}
+            contactFor={
+              editCategory as 'responsable' | 'billing' | 'delivery_contact'
+            }
+            open
+            onOpenChange={open => {
+              if (!open) {
+                setEditOrder(null);
+                setEditCategory(null);
+              }
+            }}
+          />
+        ))}
     </div>
   );
 }
@@ -1886,13 +1844,27 @@ function WaitingTab({
   isLoading: boolean;
 }) {
   const [dialogOrder, setDialogOrder] = useState<OrderWithMissing | null>(null);
-  const [detailOrder, setDetailOrder] = useState<OrderWithMissing | null>(null);
+  const [editOrder, setEditOrder] = useState<OrderWithMissing | null>(null);
+  const [editCategory, setEditCategory] = useState<ClickableCategory | null>(
+    null
+  );
 
   const filteredOrders = useMemo(() => {
     if (!orders) return [];
-    // Only orders WITH a pending info request
     return orders.filter(order => hasPendingRequest(order));
   }, [orders]);
+
+  const handleCategoryClick = (
+    order: OrderWithMissing,
+    cat: ClickableCategory
+  ) => {
+    if (cat === 'organisation') {
+      toast.info('Modifiez le SIRET depuis la fiche organisation');
+      return;
+    }
+    setEditOrder(order);
+    setEditCategory(cat);
+  };
 
   if (isLoading) {
     return (
@@ -1929,7 +1901,7 @@ function WaitingTab({
             order={order}
             variant="waiting"
             onSendRequest={() => setDialogOrder(order)}
-            onViewDetails={() => setDetailOrder(order)}
+            onCategoryClick={cat => handleCategoryClick(order, cat)}
           />
         ))
       )}
@@ -1942,15 +1914,34 @@ function WaitingTab({
         />
       )}
 
-      <OrderDetailDialog
-        order={
-          detailOrder
-            ? (orders?.find(o => o.id === detailOrder.id) ?? detailOrder)
-            : null
-        }
-        open={!!detailOrder}
-        onOpenChange={open => !open && setDetailOrder(null)}
-      />
+      {editOrder &&
+        editCategory &&
+        (editCategory === 'delivery_address' ? (
+          <AddressEditDialog
+            order={orders?.find(o => o.id === editOrder.id) ?? editOrder}
+            open
+            onOpenChange={open => {
+              if (!open) {
+                setEditOrder(null);
+                setEditCategory(null);
+              }
+            }}
+          />
+        ) : (
+          <ContactEditDialog
+            order={orders?.find(o => o.id === editOrder.id) ?? editOrder}
+            contactFor={
+              editCategory as 'responsable' | 'billing' | 'delivery_contact'
+            }
+            open
+            onOpenChange={open => {
+              if (!open) {
+                setEditOrder(null);
+                setEditCategory(null);
+              }
+            }}
+          />
+        ))}
     </div>
   );
 }

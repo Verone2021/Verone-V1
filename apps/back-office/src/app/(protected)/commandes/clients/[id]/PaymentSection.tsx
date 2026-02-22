@@ -310,8 +310,8 @@ export function PaymentSection({
               </p>
             ) : null}
 
-            {/* Bouton Associer un paiement */}
-            {paymentStatus !== 'paid' && (
+            {/* Bouton Associer un paiement (masqué en draft) */}
+            {paymentStatus !== 'paid' && orderStatus !== 'draft' && (
               <Link
                 href={`/finance/rapprochement?orderId=${orderId}&amount=${totalTtc}`}
               >
