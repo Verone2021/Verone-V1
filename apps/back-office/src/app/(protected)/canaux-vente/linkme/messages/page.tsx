@@ -76,7 +76,6 @@ import {
   Hourglass,
   EyeOff,
   UserPlus,
-  MapPin,
   ExternalLink,
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -710,8 +709,10 @@ function ContactEditDialog({
   const { data: orgData } = useOrganisationContactsBO(
     !isSuccursale ? order.organisationId : null
   );
-  const availableContacts: ContactBO[] =
-    (isSuccursale ? enseigneData?.contacts : orgData?.contacts) ?? [];
+  const availableContacts: ContactBO[] = useMemo(
+    () => (isSuccursale ? enseigneData?.contacts : orgData?.contacts) ?? [],
+    [isSuccursale, enseigneData?.contacts, orgData?.contacts]
+  );
 
   const updateDetails = useUpdateLinkMeDetails();
   const createContactBO = useCreateContactBO();
@@ -1007,7 +1008,7 @@ function AddressEditDialog({
     onOpenChange(false);
   }, [updateDetails, order.id, addressForm, queryClient, onOpenChange]);
 
-  const hasOrgAddress = orgAddress?.address_line1 || orgAddress?.city;
+  const hasOrgAddress = orgAddress?.address_line1 ?? orgAddress?.city;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
