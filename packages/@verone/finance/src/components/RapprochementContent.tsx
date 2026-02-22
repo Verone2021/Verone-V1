@@ -345,7 +345,7 @@ export function RapprochementContent({
               transaction_id: transactionId,
               purchase_order_id: order.id,
               link_type: 'purchase_order',
-              allocated_amount: order.total_ttc,
+              allocated_amount: -order.total_ttc,
             }
           : {
               transaction_id: transactionId,
