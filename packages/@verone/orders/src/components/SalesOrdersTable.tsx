@@ -2007,6 +2007,7 @@ export function SalesOrdersTable({
                   'Non défini',
                 total_ttc: selectedOrderForLink.total_ttc,
                 created_at: selectedOrderForLink.created_at,
+                order_date: selectedOrderForLink.order_date ?? null,
                 shipped_at: selectedOrderForLink.shipped_at,
               }
             : null

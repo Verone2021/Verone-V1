@@ -62,8 +62,17 @@ export async function GET(
       );
     }
 
+    // Détecter le type de commande (vente ou achat)
+    const { data: salesOrder } = await supabase
+      .from('sales_orders')
+      .select('id')
+      .eq('id', orderId)
+      .maybeSingle();
+
+    const isPurchaseOrder = !salesOrder;
+
     // Récupérer factures liées à la commande
-    const { data: invoices, error } = await supabase
+    let query = supabase
       .from('financial_documents')
       .select(
         `
@@ -83,10 +92,20 @@ export async function GET(
         sent_at
       `
       )
-      .eq('sales_order_id', orderId)
-      .eq('document_type', 'customer_invoice')
       .is('deleted_at', null)
       .order('created_at', { ascending: false });
+
+    if (isPurchaseOrder) {
+      query = query
+        .eq('purchase_order_id', orderId)
+        .eq('document_type', 'supplier_invoice');
+    } else {
+      query = query
+        .eq('sales_order_id', orderId)
+        .eq('document_type', 'customer_invoice');
+    }
+
+    const { data: invoices, error } = await query;
 
     if (error) {
       console.error('[Invoices by order] Query failed:', error);
