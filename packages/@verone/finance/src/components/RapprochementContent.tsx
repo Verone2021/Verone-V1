@@ -10,7 +10,7 @@
  * around this component (API unchanged = 0 regressions).
  */
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 
 import { Badge, Input, ScrollArea } from '@verone/ui';
 import { formatCurrency } from '@verone/utils';
@@ -179,10 +179,13 @@ export function RapprochementContent({
   orderType = 'sales_order',
 }: RapprochementContentProps) {
   const [transactions, setTransactions] = useState<CreditTransaction[]>([]);
+  const [searchResults, setSearchResults] = useState<CreditTransaction[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
   const [isLinking, setIsLinking] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const supabase = createClient();
 
@@ -223,10 +226,68 @@ export function RapprochementContent({
     }
   }, [order, fetchTransactions]);
 
-  const suggestions = useMemo(() => {
-    if (!order || transactions.length === 0) return [];
+  // Server-side search: when user types >= 3 chars, search ALL transactions in DB
+  useEffect(() => {
+    if (searchTimerRef.current) {
+      clearTimeout(searchTimerRef.current);
+    }
 
-    const withScores: TransactionSuggestion[] = transactions
+    if (searchQuery.length < 3) {
+      setSearchResults([]);
+      setIsSearching(false);
+      return;
+    }
+
+    setIsSearching(true);
+    const transactionSide = orderType === 'purchase_order' ? 'debit' : 'credit';
+
+    searchTimerRef.current = setTimeout(() => {
+      const runSearch = async () => {
+        try {
+          const pattern = `%${searchQuery}%`;
+          const { data, error: searchError } = await supabase
+            .from('v_transactions_unified')
+            .select(
+              'id, transaction_id, label, amount, counterparty_name, emitted_at, settled_at, unified_status'
+            )
+            .eq('side', transactionSide)
+            .in('unified_status', ['to_process', 'classified'])
+            .or(`label.ilike.${pattern},counterparty_name.ilike.${pattern}`)
+            .order('settled_at', { ascending: false, nullsFirst: false })
+            .limit(50);
+
+          if (searchError) throw searchError;
+          setSearchResults((data as CreditTransaction[]) || []);
+        } catch (err) {
+          console.error('[RapprochementContent] Server search failed:', err);
+        } finally {
+          setIsSearching(false);
+        }
+      };
+
+      void runSearch();
+    }, 300);
+
+    return () => {
+      if (searchTimerRef.current) {
+        clearTimeout(searchTimerRef.current);
+      }
+    };
+  }, [searchQuery, orderType, supabase]);
+
+  // Merge recent transactions + search results, deduplicate by id
+  const allTransactions = useMemo(() => {
+    if (searchResults.length === 0) return transactions;
+
+    const recentIds = new Set(transactions.map(t => t.id));
+    const extras = searchResults.filter(t => !recentIds.has(t.id));
+    return [...transactions, ...extras];
+  }, [transactions, searchResults]);
+
+  const suggestions = useMemo(() => {
+    if (!order || allTransactions.length === 0) return [];
+
+    const withScores: TransactionSuggestion[] = allTransactions
       .map(tx => {
         const { priority, reasons, sortOrder } = calculateMatch(order, tx);
         return {
@@ -241,7 +302,7 @@ export function RapprochementContent({
       );
 
     return withScores.sort((a, b) => a.sortOrder - b.sortOrder);
-  }, [order, transactions]);
+  }, [order, allTransactions]);
 
   const filteredSuggestions = useMemo(() => {
     if (!searchQuery) return suggestions;
@@ -254,6 +315,23 @@ export function RapprochementContent({
         tx.transaction_id?.toLowerCase().includes(query)
     );
   }, [suggestions, searchQuery]);
+
+  // Transactions restantes (pas dans les suggestions) pour navigation manuelle
+  const otherTransactions = useMemo(() => {
+    const suggestionIds = new Set(suggestions.map(s => s.id));
+    let others = allTransactions.filter(tx => !suggestionIds.has(tx.id));
+
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      others = others.filter(
+        tx =>
+          tx.label?.toLowerCase().includes(query) ||
+          tx.counterparty_name?.toLowerCase().includes(query) ||
+          tx.transaction_id?.toLowerCase().includes(query)
+      );
+    }
+    return others;
+  }, [allTransactions, suggestions, searchQuery]);
 
   const handleLink = async (transactionId: string) => {
     if (!order) return;
@@ -324,7 +402,10 @@ export function RapprochementContent({
                 ` • Expédiée ${new Date(order.shipped_at).toLocaleDateString('fr-FR')}`}
             </p>
           </div>
-          <span className="text-base font-bold text-green-600">
+          <span
+            className={`text-base font-bold ${orderType === 'purchase_order' ? 'text-red-600' : 'text-green-600'}`}
+          >
+            {orderType === 'purchase_order' ? '-' : ''}
             {formatCurrency(order.total_ttc)}
           </span>
         </div>
@@ -378,8 +459,11 @@ export function RapprochementContent({
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-green-600">
-                      +{formatCurrency(Math.abs(tx.amount))}
+                    <span
+                      className={`text-sm font-semibold ${orderType === 'purchase_order' ? 'text-red-600' : 'text-green-600'}`}
+                    >
+                      {orderType === 'purchase_order' ? '-' : '+'}
+                      {formatCurrency(Math.abs(tx.amount))}
                     </span>
                     <Badge
                       variant="outline"
@@ -402,7 +486,11 @@ export function RapprochementContent({
 
       {/* Search */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+        {isSearching ? (
+          <Loader2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 animate-spin" />
+        ) : (
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+        )}
         <Input
           placeholder="Rechercher une transaction..."
           value={searchQuery}
@@ -420,21 +508,24 @@ export function RapprochementContent({
       )}
 
       {/* Rest of transactions */}
-      <ScrollArea className="h-[180px]">
+      <ScrollArea className="h-[280px]">
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
             <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
           </div>
-        ) : restSuggestions.length === 0 && topSuggestions.length === 0 ? (
+        ) : allTransactions.length === 0 ? (
           <div className="text-center py-6 text-slate-500">
             <Package className="h-8 w-8 mx-auto mb-2 opacity-50" />
             <p className="text-sm">Aucune transaction disponible</p>
             <p className="text-xs mt-1">
-              Les transactions crédit non rapprochées apparaîtront ici
+              Les transactions{' '}
+              {orderType === 'purchase_order' ? 'débit' : 'crédit'} non
+              rapprochées apparaîtront ici
             </p>
           </div>
-        ) : restSuggestions.length > 0 ? (
+        ) : (
           <div className="space-y-2">
+            {/* Suggestions restantes (avec badge match) */}
             {restSuggestions.map(tx => {
               const badge = getMatchLabel(tx.matchPriority);
               const isGreen =
@@ -478,8 +569,11 @@ export function RapprochementContent({
                       </div>
                     </div>
                     <div className="text-right flex items-center gap-2">
-                      <span className="font-semibold text-sm text-green-600">
-                        +{formatCurrency(Math.abs(tx.amount))}
+                      <span
+                        className={`font-semibold text-sm ${orderType === 'purchase_order' ? 'text-red-600' : 'text-green-600'}`}
+                      >
+                        {orderType === 'purchase_order' ? '-' : '+'}
+                        {formatCurrency(Math.abs(tx.amount))}
                       </span>
                       {badge.label && (
                         <Badge
@@ -498,14 +592,86 @@ export function RapprochementContent({
                 </div>
               );
             })}
+
+            {/* Separator between suggestions and other transactions */}
+            {restSuggestions.length > 0 && otherTransactions.length > 0 && (
+              <div className="flex items-center gap-2 py-1">
+                <div className="flex-1 border-t border-slate-200" />
+                <span className="text-xs text-slate-400">
+                  Autres transactions
+                </span>
+                <div className="flex-1 border-t border-slate-200" />
+              </div>
+            )}
+
+            {/* Section header when no suggestions at all */}
+            {filteredSuggestions.length === 0 &&
+              otherTransactions.length > 0 && (
+                <div className="flex items-center gap-2 pb-1">
+                  <span className="text-xs font-medium text-slate-500">
+                    Toutes les transactions{' '}
+                    {orderType === 'purchase_order' ? 'débit' : 'crédit'} (
+                    {otherTransactions.length})
+                  </span>
+                </div>
+              )}
+
+            {/* Other transactions (no match badge, neutral style) */}
+            {otherTransactions.map(tx => (
+              <div
+                key={tx.id}
+                className="p-3 rounded-lg border border-slate-200 cursor-pointer transition-colors hover:border-slate-400 hover:bg-slate-50"
+                onClick={() => {
+                  void handleLink(tx.id).catch((err: unknown) => {
+                    console.error('[RapprochementContent] Link failed:', err);
+                  });
+                }}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="h-8 w-8 rounded-full flex items-center justify-center bg-slate-100">
+                      <Package className="h-4 w-4 text-slate-500" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-sm">{tx.label}</p>
+                      <p className="text-xs text-slate-500">
+                        {new Date(
+                          tx.settled_at || tx.emitted_at
+                        ).toLocaleDateString('fr-FR')}
+                        {tx.counterparty_name && ` • ${tx.counterparty_name}`}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <span
+                      className={`font-semibold text-sm ${orderType === 'purchase_order' ? 'text-red-600' : 'text-green-600'}`}
+                    >
+                      {orderType === 'purchase_order' ? '-' : '+'}
+                      {formatCurrency(Math.abs(tx.amount))}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            {/* Empty search result */}
+            {restSuggestions.length === 0 &&
+              otherTransactions.length === 0 &&
+              searchQuery && (
+                <div className="text-center py-4 text-slate-500">
+                  <p className="text-sm">
+                    Aucun résultat pour &quot;{searchQuery}&quot;
+                  </p>
+                </div>
+              )}
           </div>
-        ) : null}
+        )}
       </ScrollArea>
 
       {/* Footer info */}
       <div className="text-xs text-slate-500 text-center pt-2 border-t">
-        {filteredSuggestions.length} transaction(s) correspondante(s) • Triées
-        par pertinence
+        {filteredSuggestions.length} suggestion(s) • {otherTransactions.length}{' '}
+        autre(s) transaction(s)
       </div>
     </div>
   );
