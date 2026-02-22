@@ -35,7 +35,9 @@ export interface PurchaseOrder {
   po_number: string;
   supplier_id: string;
   status: PurchaseOrderStatus;
-  payment_status_v2?: 'pending' | 'paid' | null;
+  payment_status_v2?: 'pending' | 'paid' | 'partially_paid' | null;
+  paid_amount?: number;
+  paid_at?: string | null;
   // 🆕 Paiement manuel
   manual_payment_type?: ManualPaymentType | null;
   manual_payment_date?: string | null;
@@ -212,6 +214,8 @@ export function usePurchaseOrders() {
           supplier_id,
           status,
           payment_status_v2,
+          paid_amount,
+          paid_at,
           manual_payment_type,
           manual_payment_date,
           manual_payment_reference,
@@ -417,6 +421,13 @@ export function usePurchaseOrders() {
           expected_delivery_date,
           delivery_address,
           payment_terms,
+          payment_status_v2,
+          paid_amount,
+          paid_at,
+          manual_payment_type,
+          manual_payment_date,
+          manual_payment_reference,
+          manual_payment_note,
           notes,
           created_by,
           validated_by,
@@ -943,6 +954,7 @@ export function usePurchaseOrders() {
     async (
       orderId: string,
       paymentType: ManualPaymentType,
+      amount: number,
       options?: {
         reference?: string;
         note?: string;
@@ -951,9 +963,19 @@ export function usePurchaseOrders() {
     ) => {
       setLoading(true);
       try {
-        // Type assertion car les colonnes manual_payment_* sont nouvelles
-        // et pas encore dans les types Supabase générés
-        const { error } = await supabase
+        // 1. Appeler la RPC pour mettre à jour payment_status_v2 et paid_amount
+        const { error: rpcError } = await supabase.rpc(
+          'mark_po_payment_received',
+          {
+            p_order_id: orderId,
+            p_amount: amount,
+          }
+        );
+
+        if (rpcError) throw rpcError;
+
+        // 2. Mettre à jour les champs manuels (type, date, référence, note)
+        const { error: updateError } = await supabase
           .from('purchase_orders')
           .update({
             manual_payment_type: paymentType,
@@ -964,7 +986,7 @@ export function usePurchaseOrders() {
           } as Record<string, unknown>)
           .eq('id', orderId);
 
-        if (error) throw error;
+        if (updateError) throw updateError;
 
         const paymentLabels: Record<ManualPaymentType, string> = {
           cash: 'Espèces',
@@ -977,19 +999,20 @@ export function usePurchaseOrders() {
 
         toast({
           title: 'Paiement manuel enregistré',
-          description: `Type: ${paymentLabels[paymentType]}`,
+          description: `Type: ${paymentLabels[paymentType]} — ${amount.toFixed(2)} €`,
         });
 
         await fetchOrders();
         if (currentOrder?.id === orderId) {
           await fetchOrder(orderId);
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
+        const message =
+          error instanceof Error ? error.message : 'Erreur inconnue';
         console.error('Erreur lors du paiement manuel:', error);
         toast({
           title: 'Erreur',
-          description:
-            error.message || "Impossible d'enregistrer le paiement manuel",
+          description: message || "Impossible d'enregistrer le paiement manuel",
           variant: 'destructive',
         });
         throw error;
