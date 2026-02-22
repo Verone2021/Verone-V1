@@ -245,6 +245,8 @@ export interface GetOrderMissingFieldsOptions {
   organisationSiret?: string | null;
   /** Type de restaurant (propre/succursale/franchise) - owner fields requis uniquement pour franchises */
   ownerType?: string | null;
+  /** Field keys explicitly ignored by back-office staff for this order */
+  ignoredFields?: string[];
 }
 
 /**
@@ -256,11 +258,12 @@ export interface GetOrderMissingFieldsOptions {
 export function getOrderMissingFields(
   options: GetOrderMissingFieldsOptions
 ): MissingFieldsResult {
-  const { details, organisationSiret, ownerType } = options;
+  const { details, organisationSiret, ownerType, ignoredFields } = options;
+  const ignored = new Set(ignoredFields ?? []);
   const fields: MissingField[] = [];
 
   if (!details) {
-    fields.push(
+    const allFields: MissingField[] = [
       {
         key: 'requester_name',
         label: 'Nom du demandeur',
@@ -278,9 +281,9 @@ export function getOrderMissingFields(
         label: 'Email facturation',
         category: 'billing',
         inputType: 'email',
-      }
-    );
-    return buildResult(fields);
+      },
+    ];
+    return buildResult(allFields.filter(f => !ignored.has(f.key)));
   }
 
   // --- Responsable / Demandeur ---
@@ -447,7 +450,7 @@ export function getOrderMissingFields(
     });
   }
 
-  return buildResult(fields);
+  return buildResult(fields.filter(f => !ignored.has(f.key)));
 }
 
 /**

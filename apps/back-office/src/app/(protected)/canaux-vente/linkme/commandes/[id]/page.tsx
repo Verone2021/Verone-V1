@@ -415,6 +415,7 @@ export default function LinkMeOrderDetailPage() {
             billing_email,
             billing_phone,
             delivery_terms_accepted,
+            delivery_date,
             desired_delivery_date,
             mall_form_required,
             mall_form_email,
@@ -1932,6 +1933,19 @@ export default function LinkMeOrderDetailPage() {
                           </span>
                         </div>
                       )}
+                      {details.delivery_date &&
+                        details.delivery_date !==
+                          details.desired_delivery_date && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <Calendar className="h-4 w-4 text-gray-400" />
+                            <span>
+                              Date de livraison :{' '}
+                              {new Date(
+                                details.delivery_date
+                              ).toLocaleDateString('fr-FR')}
+                            </span>
+                          </div>
+                        )}
                       {details.delivery_notes && (
                         <div>
                           <Label className="text-xs text-gray-500">Notes</Label>
@@ -1982,6 +1996,18 @@ export default function LinkMeOrderDetailPage() {
                               <ExternalLink className="h-3 w-3" />
                               Voir le formulaire
                             </a>
+                          )}
+                        </div>
+                      )}
+                      {details.mall_form_required && (
+                        <div className="p-3 bg-gray-50 rounded-lg text-sm">
+                          <p className="font-medium">
+                            Formulaire centre commercial requis
+                          </p>
+                          {details.mall_form_email && (
+                            <p className="text-gray-600 mt-1">
+                              Email : {details.mall_form_email}
+                            </p>
                           )}
                         </div>
                       )}

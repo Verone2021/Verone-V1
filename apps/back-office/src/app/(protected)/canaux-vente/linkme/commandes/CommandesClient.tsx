@@ -16,7 +16,8 @@
  * Les triggers stock sont automatiques et identiques pour tous les canaux.
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 
 import { SalesOrdersTable } from '@verone/orders';
 import type { SalesOrder } from '@verone/orders';
@@ -80,7 +81,16 @@ function getAffiliateMargin(order: SalesOrder): number {
 }
 
 export default function CommandesClient() {
+  const router = useRouter();
   const [filterPendingValidation, setFilterPendingValidation] = useState(false);
+
+  // Navigation vers page détail LinkMe au lieu du modal générique
+  const handleViewOrder = useCallback(
+    (order: SalesOrder) => {
+      router.push(`/canaux-vente/linkme/commandes/${order.id}/details`);
+    },
+    [router]
+  );
 
   // Compter les commandes en attente de validation via hook dédié
   const { data: pendingValidationCount = 0 } = usePendingOrdersCount();
@@ -182,6 +192,7 @@ export default function CommandesClient() {
       ) : (
         <SalesOrdersTable
           channelId={LINKME_CHANNEL_ID}
+          onViewOrder={handleViewOrder}
           showChannelColumn={false}
           showKPIs
           allowValidate

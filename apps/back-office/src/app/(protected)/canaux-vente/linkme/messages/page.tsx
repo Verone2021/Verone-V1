@@ -14,7 +14,8 @@
  * @updated 2026-02-17 - Refonte 4 onglets + cartes enrichies + historique
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import Link from 'next/link';
 
 import { createClient } from '@verone/utils/supabase/client';
 import {
@@ -49,6 +50,8 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
+  AddressAutocomplete,
+  type AddressResult,
 } from '@verone/ui';
 import { cn, formatCurrency } from '@verone/utils';
 import { toast } from 'sonner';
@@ -71,6 +74,9 @@ import {
   RotateCcw,
   XCircle,
   Hourglass,
+  EyeOff,
+  UserPlus,
+  ExternalLink,
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -81,6 +87,17 @@ import {
   type MissingFieldCategory,
 } from '../utils/order-missing-fields';
 import type { LinkMeOrderDetails } from '../hooks/use-linkme-order-actions';
+import { useUpdateLinkMeDetails } from '../hooks/use-linkme-order-actions';
+import {
+  useOrganisationContactsBO,
+  useEnseigneContactsBO,
+  useCreateContactBO,
+  type ContactBO,
+} from '../hooks/use-organisation-contacts-bo';
+import { ContactCardBO } from '../components/contacts/ContactCardBO';
+import { NewContactForm } from '../components/contacts/NewContactForm';
+import type { NewContactFormData } from '../components/contacts/NewContactForm';
+import { LINKME_CHANNEL_ID } from '../hooks/use-linkme-orders';
 
 // =============================================================================
 // TYPES
@@ -88,6 +105,12 @@ import type { LinkMeOrderDetails } from '../hooks/use-linkme-order-actions';
 
 type NotificationSeverity = 'info' | 'important' | 'urgent';
 type TargetType = 'all' | 'enseigne' | 'affiliate';
+type ClickableCategory =
+  | 'responsable'
+  | 'billing'
+  | 'delivery_contact'
+  | 'delivery_address'
+  | 'organisation';
 
 interface Enseigne {
   id: string;
@@ -125,7 +148,12 @@ interface OrderWithMissing {
   customer_id: string | null;
   organisationName: string | null;
   organisationSiret: string | null;
+  organisationId: string | null;
+  enseigneId: string | null;
+  ownerType: string | null;
   details: LinkMeOrderDetails | null;
+  detailsId: string | null;
+  ignoredFields: string[];
   missingFields: MissingFieldsResult;
   infoRequests: InfoRequest[];
 }
@@ -141,6 +169,38 @@ const CATEGORY_BADGE_COLORS: Record<MissingFieldCategory, string> = {
   organisation: 'bg-purple-100 text-purple-700 border-purple-200',
   custom: 'bg-gray-100 text-gray-700 border-gray-200',
 };
+
+const ORDER_STATUS_LABELS: Record<
+  string,
+  { label: string; className: string }
+> = {
+  pending_approval: {
+    label: 'En attente approbation',
+    className: 'bg-yellow-100 text-yellow-700 border-yellow-200',
+  },
+  draft: {
+    label: 'Brouillon',
+    className: 'bg-gray-100 text-gray-600 border-gray-200',
+  },
+  validated: {
+    label: 'Validée',
+    className: 'bg-blue-100 text-blue-700 border-blue-200',
+  },
+  partially_shipped: {
+    label: 'Partiellement expédiée',
+    className: 'bg-orange-100 text-orange-700 border-orange-200',
+  },
+};
+
+function OrderStatusBadge({ status }: { status: string }) {
+  const config = ORDER_STATUS_LABELS[status];
+  if (!config) return null;
+  return (
+    <Badge variant="outline" className={cn('text-xs', config.className)}>
+      {config.label}
+    </Badge>
+  );
+}
 
 function formatTimeAgo(dateStr: string): string {
   const now = new Date();
@@ -186,6 +246,7 @@ function useOrdersWithMissingFields() {
         trade_name: string | null;
         legal_name: string;
         siret: string | null;
+        enseigne_id: string | null;
       };
 
       const { data: orders, error } = await supabase
@@ -198,7 +259,7 @@ function useOrdersWithMissingFields() {
           status,
           customer_id,
           organisations!sales_orders_customer_id_fkey (
-            id, trade_name, legal_name, siret
+            id, trade_name, legal_name, siret, enseigne_id
           ),
           sales_order_linkme_details (
             id, sales_order_id,
@@ -221,6 +282,7 @@ function useOrdersWithMissingFields() {
             delivery_date, delivery_latitude, delivery_longitude,
             access_form_required, access_form_url,
             semi_trailer_accessible, delivery_notes,
+            ignored_missing_fields,
             created_at, updated_at
           ),
           linkme_info_requests (
@@ -230,7 +292,13 @@ function useOrdersWithMissingFields() {
           )
         `
         )
-        .in('status', ['validated'])
+        .in('status', [
+          'pending_approval',
+          'draft',
+          'validated',
+          'partially_shipped',
+        ])
+        .eq('channel_id', LINKME_CHANNEL_ID)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -244,14 +312,25 @@ function useOrdersWithMissingFields() {
         const details = (detailsArray?.[0] ??
           null) as LinkMeOrderDetails | null;
 
-        if (!details) continue;
-
+        // After backfill, details should always exist for LinkMe orders.
+        // If still null (edge case), getOrderMissingFields handles it gracefully.
         const orgArray = order.organisations as unknown as OrgRow[] | null;
         const org = orgArray?.[0] ?? null;
+
+        const rawIgnored = (details as unknown as Record<string, unknown>)
+          ?.ignored_missing_fields;
+        const ignoredFields = Array.isArray(rawIgnored)
+          ? (rawIgnored as string[])
+          : [];
+
+        const ownerType =
+          (detailsArray?.[0]?.owner_type as string | null) ?? null;
 
         const missingFields = getOrderMissingFields({
           details,
           organisationSiret: org?.siret,
+          ownerType,
+          ignoredFields,
         });
 
         if (!missingFields.isComplete) {
@@ -263,7 +342,15 @@ function useOrdersWithMissingFields() {
             customer_id: order.customer_id,
             organisationName: org?.trade_name ?? org?.legal_name ?? null,
             organisationSiret: org?.siret ?? null,
+            organisationId: org?.id ?? null,
+            enseigneId: org?.enseigne_id ?? null,
+            ownerType: ownerType,
             details,
+            detailsId:
+              ((details as unknown as Record<string, unknown>)?.id as
+                | string
+                | null) ?? null,
+            ignoredFields,
             missingFields,
             infoRequests: (order.linkme_info_requests ?? []) as InfoRequest[],
           });
@@ -552,37 +639,599 @@ function useSendInfoRequest() {
 }
 
 // =============================================================================
+// IGNORE FIELD MUTATION
+// =============================================================================
+
+function useIgnoreField() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      detailsId,
+      currentIgnored,
+      fieldKey,
+    }: {
+      detailsId: string;
+      currentIgnored: string[];
+      fieldKey: string;
+    }) => {
+      const supabase = createClient();
+      const updated = currentIgnored.includes(fieldKey)
+        ? currentIgnored.filter(k => k !== fieldKey)
+        : [...currentIgnored, fieldKey];
+
+      const { error } = await supabase
+        .from('sales_order_linkme_details')
+        .update({ ignored_missing_fields: updated })
+        .eq('id', detailsId);
+
+      if (error) throw error;
+      return updated;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ['orders-missing-fields'],
+      });
+    },
+    onError: (error: unknown) => {
+      const msg = error instanceof Error ? error.message : 'Unknown error';
+      console.error('[Messages] Erreur ignore field:', msg);
+      toast.error('Erreur lors de la mise à jour');
+    },
+  });
+}
+
+// =============================================================================
+// COMPONENTS - CONTACT EDIT DIALOG
+// =============================================================================
+
+function ContactEditDialog({
+  order,
+  contactFor,
+  open,
+  onOpenChange,
+}: {
+  order: OrderWithMissing;
+  contactFor: 'responsable' | 'billing' | 'delivery_contact';
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const queryClient = useQueryClient();
+  const [selectedContactId, setSelectedContactId] = useState<string | null>(
+    null
+  );
+  const [showNewForm, setShowNewForm] = useState(false);
+
+  const isSuccursale =
+    order.ownerType === 'propre' || order.ownerType === 'succursale';
+  const { data: enseigneData } = useEnseigneContactsBO(
+    isSuccursale ? order.enseigneId : null
+  );
+  const { data: orgData } = useOrganisationContactsBO(
+    !isSuccursale ? order.organisationId : null
+  );
+  const availableContacts: ContactBO[] = useMemo(
+    () => (isSuccursale ? enseigneData?.contacts : orgData?.contacts) ?? [],
+    [isSuccursale, enseigneData?.contacts, orgData?.contacts]
+  );
+
+  const updateDetails = useUpdateLinkMeDetails();
+  const createContactBO = useCreateContactBO();
+
+  const DIALOG_TITLES: Record<typeof contactFor, string> = {
+    responsable: 'Contact responsable',
+    billing: 'Contact facturation',
+    delivery_contact: 'Contact livraison',
+  };
+
+  const handleConfirmContact = useCallback(async () => {
+    if (!selectedContactId) return;
+    const contact = availableContacts.find(c => c.id === selectedContactId);
+    if (!contact) return;
+
+    const fullName = `${contact.firstName} ${contact.lastName}`;
+    let updates: Record<string, string | null>;
+    if (contactFor === 'responsable') {
+      updates = {
+        requester_name: fullName,
+        requester_email: contact.email,
+        requester_phone: contact.phone ?? null,
+        requester_position: contact.title ?? null,
+      };
+    } else if (contactFor === 'delivery_contact') {
+      updates = {
+        delivery_contact_name: fullName,
+        delivery_contact_email: contact.email,
+        delivery_contact_phone: contact.phone ?? null,
+      };
+    } else {
+      updates = {
+        billing_name: fullName,
+        billing_email: contact.email,
+        billing_phone: contact.phone ?? null,
+        billing_contact_source: 'custom',
+      };
+    }
+
+    await updateDetails.mutateAsync({ orderId: order.id, updates });
+    await queryClient.invalidateQueries({
+      queryKey: ['orders-missing-fields'],
+    });
+    toast.success('Contact mis à jour');
+    setSelectedContactId(null);
+    onOpenChange(false);
+  }, [
+    selectedContactId,
+    availableContacts,
+    contactFor,
+    updateDetails,
+    order.id,
+    queryClient,
+    onOpenChange,
+  ]);
+
+  const handleCreateAndSelectContact = useCallback(
+    async (contactData: NewContactFormData) => {
+      await createContactBO.mutateAsync({
+        organisationId: isSuccursale
+          ? undefined
+          : (order.organisationId ?? undefined),
+        enseigneId: isSuccursale ? (order.enseigneId ?? undefined) : undefined,
+        firstName: contactData.firstName,
+        lastName: contactData.lastName,
+        email: contactData.email,
+        phone: contactData.phone || undefined,
+        title: contactData.title || undefined,
+        isPrimaryContact: contactFor === 'responsable',
+        isBillingContact: contactFor === 'billing',
+      });
+
+      const fullName = `${contactData.firstName} ${contactData.lastName}`;
+      let updates: Record<string, string | null>;
+      if (contactFor === 'responsable') {
+        updates = {
+          requester_name: fullName,
+          requester_email: contactData.email,
+          requester_phone: contactData.phone || null,
+          requester_position: contactData.title || null,
+        };
+      } else if (contactFor === 'delivery_contact') {
+        updates = {
+          delivery_contact_name: fullName,
+          delivery_contact_email: contactData.email,
+          delivery_contact_phone: contactData.phone || null,
+        };
+      } else {
+        updates = {
+          billing_name: fullName,
+          billing_email: contactData.email,
+          billing_phone: contactData.phone || null,
+          billing_contact_source: 'custom',
+        };
+      }
+
+      await updateDetails.mutateAsync({ orderId: order.id, updates });
+      await queryClient.invalidateQueries({
+        queryKey: ['orders-missing-fields'],
+      });
+      toast.success('Contact créé et assigné');
+      setShowNewForm(false);
+      onOpenChange(false);
+    },
+    [
+      createContactBO,
+      isSuccursale,
+      order.organisationId,
+      order.enseigneId,
+      order.id,
+      contactFor,
+      updateDetails,
+      queryClient,
+      onOpenChange,
+    ]
+  );
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{DIALOG_TITLES[contactFor]}</DialogTitle>
+          <DialogDescription>
+            {order.order_number} — {order.organisationName ?? '-'}
+            <br />
+            Sélectionnez un contact existant ou créez-en un nouveau.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
+          {/* Left: New contact form */}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <UserPlus className="h-4 w-4 text-purple-600" />
+              <h4 className="font-semibold text-sm">Nouveau contact</h4>
+            </div>
+            {showNewForm ? (
+              <NewContactForm
+                onSubmit={handleCreateAndSelectContact}
+                onCancel={() => setShowNewForm(false)}
+                isSubmitting={
+                  createContactBO.isPending || updateDetails.isPending
+                }
+                sectionLabel="Créer et assigner"
+              />
+            ) : (
+              <Button
+                variant="outline"
+                className="w-full border-dashed h-20"
+                onClick={() => {
+                  setShowNewForm(true);
+                  setSelectedContactId(null);
+                }}
+              >
+                <UserPlus className="h-4 w-4 mr-2" />
+                Créer un nouveau contact
+              </Button>
+            )}
+          </div>
+
+          {/* Right: Existing contacts */}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <User className="h-4 w-4 text-gray-600" />
+              <h4 className="font-semibold text-sm">
+                Contacts disponibles ({availableContacts.length})
+              </h4>
+            </div>
+            <div className="space-y-2 max-h-[350px] overflow-y-auto pr-1">
+              {availableContacts.length === 0 ? (
+                <p className="text-sm text-gray-400 text-center py-8">
+                  Aucun contact trouvé
+                </p>
+              ) : (
+                availableContacts.map(contact => (
+                  <ContactCardBO
+                    key={contact.id}
+                    contact={contact}
+                    isSelected={selectedContactId === contact.id}
+                    onClick={() => {
+                      setSelectedContactId(
+                        selectedContactId === contact.id ? null : contact.id
+                      );
+                      setShowNewForm(false);
+                    }}
+                  />
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Annuler
+          </Button>
+          <Button
+            onClick={() => {
+              void handleConfirmContact().catch(err => {
+                console.error('[ContactEditDialog] confirm failed:', err);
+              });
+            }}
+            disabled={
+              !selectedContactId ||
+              updateDetails.isPending ||
+              createContactBO.isPending
+            }
+          >
+            {updateDetails.isPending ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Enregistrement...
+              </>
+            ) : (
+              'Confirmer la sélection'
+            )}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// =============================================================================
+// COMPONENTS - ADDRESS EDIT DIALOG
+// =============================================================================
+
+function AddressEditDialog({
+  order,
+  open,
+  onOpenChange,
+}: {
+  order: OrderWithMissing;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const queryClient = useQueryClient();
+  const updateDetails = useUpdateLinkMeDetails();
+
+  const [addressForm, setAddressForm] = useState({
+    delivery_address: order.details?.delivery_address ?? '',
+    delivery_postal_code: order.details?.delivery_postal_code ?? '',
+    delivery_city: order.details?.delivery_city ?? '',
+  });
+
+  // Fetch org address on demand for "Utiliser adresse restaurant" button
+  const { data: orgAddress } = useQuery({
+    queryKey: ['org-address', order.organisationId],
+    queryFn: async () => {
+      if (!order.organisationId) return null;
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from('organisations')
+        .select('address_line1, postal_code, city')
+        .eq('id', order.organisationId)
+        .single();
+      if (error) return null;
+      return data as {
+        address_line1: string | null;
+        postal_code: string | null;
+        city: string | null;
+      };
+    },
+    enabled: open && !!order.organisationId,
+  });
+
+  const handleAddressSelect = useCallback((addr: AddressResult) => {
+    setAddressForm({
+      delivery_address: addr.streetAddress,
+      delivery_postal_code: addr.postalCode,
+      delivery_city: addr.city,
+    });
+  }, []);
+
+  const handleUseOrgAddress = useCallback(() => {
+    if (!orgAddress) return;
+    setAddressForm({
+      delivery_address: orgAddress.address_line1 ?? '',
+      delivery_postal_code: orgAddress.postal_code ?? '',
+      delivery_city: orgAddress.city ?? '',
+    });
+  }, [orgAddress]);
+
+  const handleSave = useCallback(async () => {
+    await updateDetails.mutateAsync({
+      orderId: order.id,
+      updates: addressForm,
+    });
+    await queryClient.invalidateQueries({
+      queryKey: ['orders-missing-fields'],
+    });
+    toast.success('Adresse mise à jour');
+    onOpenChange(false);
+  }, [updateDetails, order.id, addressForm, queryClient, onOpenChange]);
+
+  const hasOrgAddress = orgAddress?.address_line1 ?? orgAddress?.city;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Adresse de livraison</DialogTitle>
+          <DialogDescription>
+            {order.order_number} — {order.organisationName ?? '-'}
+            <br />
+            Recherchez une adresse ou saisissez-la manuellement.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4 py-4">
+          {/* Button "Utiliser adresse restaurant" */}
+          {hasOrgAddress && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full text-sm"
+              onClick={handleUseOrgAddress}
+            >
+              <Building2 className="h-4 w-4 mr-2" />
+              Utiliser adresse restaurant
+              <span className="ml-2 text-xs text-gray-400 truncate max-w-[200px]">
+                ({orgAddress?.address_line1}, {orgAddress?.city})
+              </span>
+            </Button>
+          )}
+
+          {/* AddressAutocomplete */}
+          <div className="space-y-2">
+            <Label>Recherche d&apos;adresse</Label>
+            <AddressAutocomplete
+              value=""
+              onSelect={handleAddressSelect}
+              placeholder="Tapez une adresse pour rechercher..."
+            />
+          </div>
+
+          <Separator />
+
+          {/* Manual fields */}
+          <div className="space-y-3">
+            <div className="space-y-2">
+              <Label>Adresse</Label>
+              <Input
+                value={addressForm.delivery_address}
+                onChange={e =>
+                  setAddressForm(prev => ({
+                    ...prev,
+                    delivery_address: e.target.value,
+                  }))
+                }
+                placeholder="15 rue de la Paix"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Code postal</Label>
+                <Input
+                  value={addressForm.delivery_postal_code}
+                  onChange={e =>
+                    setAddressForm(prev => ({
+                      ...prev,
+                      delivery_postal_code: e.target.value,
+                    }))
+                  }
+                  placeholder="75001"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Ville</Label>
+                <Input
+                  value={addressForm.delivery_city}
+                  onChange={e =>
+                    setAddressForm(prev => ({
+                      ...prev,
+                      delivery_city: e.target.value,
+                    }))
+                  }
+                  placeholder="Paris"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Annuler
+          </Button>
+          <Button
+            onClick={() => {
+              void handleSave().catch(err => {
+                console.error('[AddressEditDialog] save failed:', err);
+              });
+            }}
+            disabled={updateDetails.isPending}
+          >
+            {updateDetails.isPending ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Enregistrement...
+              </>
+            ) : (
+              'Enregistrer'
+            )}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// =============================================================================
 // COMPONENTS - CATEGORY BADGES
 // =============================================================================
 
+const DELIVERY_CONTACT_KEYS = [
+  'delivery_contact_name',
+  'delivery_contact_email',
+  'delivery_contact_phone',
+];
+const DELIVERY_ADDRESS_KEYS = [
+  'delivery_address',
+  'delivery_postal_code',
+  'delivery_city',
+  'mall_email',
+];
+
 function CategoryBadges({
   missingFields,
+  onCategoryClick,
 }: {
   missingFields: MissingFieldsResult;
+  onCategoryClick?: (category: ClickableCategory) => void;
 }) {
-  const categories = Object.entries(missingFields.byCategory).filter(
-    ([, fields]) => fields.length > 0
-  ) as [MissingFieldCategory, typeof missingFields.fields][];
+  const isClickable = !!onCategoryClick;
+
+  // Build badge entries, splitting 'delivery' into contact + address
+  const badges: Array<{
+    key: string;
+    label: string;
+    color: string;
+    count: number;
+    fields: typeof missingFields.fields;
+    clickCategory: ClickableCategory | null;
+  }> = [];
+
+  for (const [cat, fields] of Object.entries(missingFields.byCategory) as [
+    MissingFieldCategory,
+    typeof missingFields.fields,
+  ][]) {
+    if (fields.length === 0) continue;
+
+    if (cat === 'delivery') {
+      const contactFields = fields.filter(f =>
+        DELIVERY_CONTACT_KEYS.includes(f.key)
+      );
+      const addressFields = fields.filter(f =>
+        DELIVERY_ADDRESS_KEYS.includes(f.key)
+      );
+
+      if (contactFields.length > 0) {
+        badges.push({
+          key: 'delivery_contact',
+          label: `Contact livraison (${contactFields.length})`,
+          color: CATEGORY_BADGE_COLORS.delivery,
+          count: contactFields.length,
+          fields: contactFields,
+          clickCategory: 'delivery_contact',
+        });
+      }
+      if (addressFields.length > 0) {
+        badges.push({
+          key: 'delivery_address',
+          label: `Adresse livraison (${addressFields.length})`,
+          color: 'bg-teal-100 text-teal-700 border-teal-200',
+          count: addressFields.length,
+          fields: addressFields,
+          clickCategory: 'delivery_address',
+        });
+      }
+    } else {
+      badges.push({
+        key: cat,
+        label: `${CATEGORY_LABELS[cat]} (${fields.length})`,
+        color: CATEGORY_BADGE_COLORS[cat],
+        count: fields.length,
+        fields,
+        clickCategory: cat as ClickableCategory,
+      });
+    }
+  }
 
   return (
     <TooltipProvider>
       <div className="flex items-center gap-1.5 flex-wrap">
-        {categories.map(([cat, fields]) => (
-          <Tooltip key={cat}>
+        {badges.map(badge => (
+          <Tooltip key={badge.key}>
             <TooltipTrigger asChild>
               <Badge
                 variant="outline"
                 className={cn(
-                  'text-xs cursor-default',
-                  CATEGORY_BADGE_COLORS[cat]
+                  'text-xs',
+                  badge.color,
+                  isClickable
+                    ? 'cursor-pointer hover:opacity-80 transition-opacity'
+                    : 'cursor-default'
                 )}
+                onClick={
+                  isClickable && badge.clickCategory
+                    ? () => onCategoryClick(badge.clickCategory!)
+                    : undefined
+                }
               >
-                {CATEGORY_LABELS[cat]} ({fields.length})
+                {badge.label}
               </Badge>
             </TooltipTrigger>
             <TooltipContent side="bottom" className="max-w-xs">
               <ul className="text-xs space-y-0.5">
-                {fields.map(f => (
+                {badge.fields.map(f => (
                   <li key={f.key}>{f.label}</li>
                 ))}
               </ul>
@@ -680,6 +1329,7 @@ function SendInfoRequestDialog({
   );
   const [customMessage, setCustomMessage] = useState('');
   const sendInfoRequest = useSendInfoRequest();
+  const ignoreField = useIgnoreField();
 
   const { data: currentUser } = useQuery({
     queryKey: ['current-user'],
@@ -809,23 +1459,104 @@ function SendInfoRequestDialog({
 
           <Separator />
 
-          {/* Missing fields (read-only) */}
+          {/* Missing fields with ignore buttons */}
           <div className="space-y-2">
             <Label className="font-semibold">
               Champs manquants ({order.missingFields.total})
             </Label>
-            <div className="bg-gray-50 rounded-lg p-3 space-y-1">
+            <div className="bg-gray-50 rounded-lg p-3 space-y-1.5">
               {order.missingFields.fields.map(f => (
-                <div key={f.key} className="flex items-center gap-2 text-sm">
+                <div
+                  key={f.key}
+                  className="flex items-center gap-2 text-sm group"
+                >
                   <Badge
                     variant="outline"
-                    className={cn('text-xs', CATEGORY_BADGE_COLORS[f.category])}
+                    className={cn(
+                      'text-xs flex-shrink-0',
+                      CATEGORY_BADGE_COLORS[f.category]
+                    )}
                   >
                     {f.category}
                   </Badge>
-                  <span>{f.label}</span>
+                  <span className="flex-1">{f.label}</span>
+                  {order.detailsId && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (!order.detailsId) return;
+                              void ignoreField
+                                .mutateAsync({
+                                  detailsId: order.detailsId,
+                                  currentIgnored: order.ignoredFields,
+                                  fieldKey: f.key,
+                                })
+                                .catch(err => {
+                                  console.error(
+                                    '[SendInfoRequestDialog] ignoreField failed:',
+                                    err
+                                  );
+                                });
+                            }}
+                            disabled={ignoreField.isPending}
+                            className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-gray-200 text-gray-400 hover:text-gray-600"
+                          >
+                            <EyeOff className="h-3.5 w-3.5" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="right" className="text-xs">
+                          Ignorer ce champ pour cette commande
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
                 </div>
               ))}
+              {order.ignoredFields.length > 0 && (
+                <div className="pt-2 border-t border-gray-200 mt-2">
+                  <p className="text-xs text-gray-500 mb-1">
+                    Champs ignorés ({order.ignoredFields.length}) :
+                  </p>
+                  {order.ignoredFields.map(key => (
+                    <div
+                      key={key}
+                      className="flex items-center gap-2 text-xs text-gray-400 group"
+                    >
+                      <EyeOff className="h-3 w-3 flex-shrink-0" />
+                      <span className="line-through flex-1">
+                        {key.replace(/_/g, ' ')}
+                      </span>
+                      {order.detailsId && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!order.detailsId) return;
+                            void ignoreField
+                              .mutateAsync({
+                                detailsId: order.detailsId,
+                                currentIgnored: order.ignoredFields,
+                                fieldKey: key,
+                              })
+                              .catch(err => {
+                                console.error(
+                                  '[SendInfoRequestDialog] restoreField failed:',
+                                  err
+                                );
+                              });
+                          }}
+                          disabled={ignoreField.isPending}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity text-xs text-blue-500 hover:underline"
+                        >
+                          Restaurer
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
@@ -891,10 +1622,12 @@ function SendInfoRequestDialog({
 function OrderCard({
   order,
   onSendRequest,
+  onCategoryClick,
   variant,
 }: {
   order: OrderWithMissing;
   onSendRequest: () => void;
+  onCategoryClick: (category: ClickableCategory) => void;
   variant: 'missing' | 'waiting';
 }) {
   const pendingReqs = order.infoRequests.filter(
@@ -918,10 +1651,14 @@ function OrderCard({
               <span className="font-medium text-green-600">
                 {formatCurrency(order.total_ttc)}
               </span>
+              <OrderStatusBadge status={order.status} />
             </div>
 
-            {/* Category badges */}
-            <CategoryBadges missingFields={order.missingFields} />
+            {/* Category badges (clickable) */}
+            <CategoryBadges
+              missingFields={order.missingFields}
+              onCategoryClick={onCategoryClick}
+            />
 
             {/* Request status for waiting variant */}
             {variant === 'waiting' && latestPending && (
@@ -951,25 +1688,29 @@ function OrderCard({
             )}
           </div>
 
-          {/* Action button */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onSendRequest}
-            className="flex-shrink-0"
-          >
-            {variant === 'waiting' ? (
-              <>
-                <RotateCcw className="h-4 w-4 mr-1" />
-                Relancer
-              </>
-            ) : (
-              <>
-                <Send className="h-4 w-4 mr-1" />
-                Envoyer demande
-              </>
-            )}
-          </Button>
+          {/* Actions */}
+          <div className="flex flex-col gap-2 flex-shrink-0">
+            <Button variant="outline" size="sm" onClick={onSendRequest}>
+              {variant === 'waiting' ? (
+                <>
+                  <RotateCcw className="h-4 w-4 mr-1" />
+                  Relancer
+                </>
+              ) : (
+                <>
+                  <Send className="h-4 w-4 mr-1" />
+                  Envoyer demande
+                </>
+              )}
+            </Button>
+            <Link
+              href={`/canaux-vente/linkme/commandes/${order.id}`}
+              className="text-xs text-blue-600 hover:text-blue-800 hover:underline flex items-center justify-center gap-1"
+            >
+              <ExternalLink className="h-3 w-3" />
+              Voir détails
+            </Link>
+          </div>
         </div>
       </CardContent>
     </Card>
@@ -988,12 +1729,27 @@ function MissingFieldsTab({
   isLoading: boolean;
 }) {
   const [dialogOrder, setDialogOrder] = useState<OrderWithMissing | null>(null);
+  const [editOrder, setEditOrder] = useState<OrderWithMissing | null>(null);
+  const [editCategory, setEditCategory] = useState<ClickableCategory | null>(
+    null
+  );
 
   const filteredOrders = useMemo(() => {
     if (!orders) return [];
-    // Only orders WITHOUT a pending info request
     return orders.filter(order => !hasPendingRequest(order));
   }, [orders]);
+
+  const handleCategoryClick = (
+    order: OrderWithMissing,
+    cat: ClickableCategory
+  ) => {
+    if (cat === 'organisation') {
+      toast.info('Modifiez le SIRET depuis la fiche organisation');
+      return;
+    }
+    setEditOrder(order);
+    setEditCategory(cat);
+  };
 
   if (isLoading) {
     return (
@@ -1032,6 +1788,7 @@ function MissingFieldsTab({
             order={order}
             variant="missing"
             onSendRequest={() => setDialogOrder(order)}
+            onCategoryClick={cat => handleCategoryClick(order, cat)}
           />
         ))
       )}
@@ -1043,6 +1800,35 @@ function MissingFieldsTab({
           onOpenChange={open => !open && setDialogOrder(null)}
         />
       )}
+
+      {editOrder &&
+        editCategory &&
+        (editCategory === 'delivery_address' ? (
+          <AddressEditDialog
+            order={orders?.find(o => o.id === editOrder.id) ?? editOrder}
+            open
+            onOpenChange={open => {
+              if (!open) {
+                setEditOrder(null);
+                setEditCategory(null);
+              }
+            }}
+          />
+        ) : (
+          <ContactEditDialog
+            order={orders?.find(o => o.id === editOrder.id) ?? editOrder}
+            contactFor={
+              editCategory as 'responsable' | 'billing' | 'delivery_contact'
+            }
+            open
+            onOpenChange={open => {
+              if (!open) {
+                setEditOrder(null);
+                setEditCategory(null);
+              }
+            }}
+          />
+        ))}
     </div>
   );
 }
@@ -1059,12 +1845,27 @@ function WaitingTab({
   isLoading: boolean;
 }) {
   const [dialogOrder, setDialogOrder] = useState<OrderWithMissing | null>(null);
+  const [editOrder, setEditOrder] = useState<OrderWithMissing | null>(null);
+  const [editCategory, setEditCategory] = useState<ClickableCategory | null>(
+    null
+  );
 
   const filteredOrders = useMemo(() => {
     if (!orders) return [];
-    // Only orders WITH a pending info request
     return orders.filter(order => hasPendingRequest(order));
   }, [orders]);
+
+  const handleCategoryClick = (
+    order: OrderWithMissing,
+    cat: ClickableCategory
+  ) => {
+    if (cat === 'organisation') {
+      toast.info('Modifiez le SIRET depuis la fiche organisation');
+      return;
+    }
+    setEditOrder(order);
+    setEditCategory(cat);
+  };
 
   if (isLoading) {
     return (
@@ -1101,6 +1902,7 @@ function WaitingTab({
             order={order}
             variant="waiting"
             onSendRequest={() => setDialogOrder(order)}
+            onCategoryClick={cat => handleCategoryClick(order, cat)}
           />
         ))
       )}
@@ -1112,6 +1914,35 @@ function WaitingTab({
           onOpenChange={open => !open && setDialogOrder(null)}
         />
       )}
+
+      {editOrder &&
+        editCategory &&
+        (editCategory === 'delivery_address' ? (
+          <AddressEditDialog
+            order={orders?.find(o => o.id === editOrder.id) ?? editOrder}
+            open
+            onOpenChange={open => {
+              if (!open) {
+                setEditOrder(null);
+                setEditCategory(null);
+              }
+            }}
+          />
+        ) : (
+          <ContactEditDialog
+            order={orders?.find(o => o.id === editOrder.id) ?? editOrder}
+            contactFor={
+              editCategory as 'responsable' | 'billing' | 'delivery_contact'
+            }
+            open
+            onOpenChange={open => {
+              if (!open) {
+                setEditOrder(null);
+                setEditCategory(null);
+              }
+            }}
+          />
+        ))}
     </div>
   );
 }
