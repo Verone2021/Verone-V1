@@ -13,7 +13,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
 // NOTE: ShipmentsSection supprimée - sera recréée ultérieurement
-import { Badge, Card } from '@verone/ui';
+import { Badge, Card, OrganisationNameDisplay } from '@verone/ui';
 import { createClient } from '@verone/utils/supabase/server';
 import {
   ArrowLeft,
@@ -218,6 +218,8 @@ export default async function OrderDetailPage({
 
   // 2. Récupérer customer selon type
   let customerName = 'Client inconnu';
+  let customerLegalName: string | null = null;
+  let customerTradeName: string | null = null;
   let customerEmail = '';
   let customerPhone = '';
   let isOrganisation = false;
@@ -239,7 +241,12 @@ export default async function OrderDetailPage({
       .returns<OrganisationData>();
 
     if (org) {
-      customerName = org.trade_name ?? org.legal_name;
+      customerLegalName = org.legal_name;
+      customerTradeName =
+        org.trade_name && org.trade_name !== org.legal_name
+          ? org.trade_name
+          : null;
+      customerName = org.legal_name;
       customerEmail = org.email ?? '';
       customerPhone = org.phone ?? '';
       isOrganisation = true;
@@ -370,8 +377,15 @@ export default async function OrderDetailPage({
                   <p className="text-sm text-muted-foreground">
                     Nom {isOrganisation ? '(Raison sociale)' : ''}
                   </p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <p className="font-medium">{customerName}</p>
+                  <div className="flex items-start gap-2 mt-1">
+                    {isOrganisation && customerLegalName ? (
+                      <OrganisationNameDisplay
+                        legalName={customerLegalName}
+                        tradeName={customerTradeName}
+                      />
+                    ) : (
+                      <p className="font-medium">{customerName}</p>
+                    )}
                     <CopyButton text={customerName} label="Copier" />
                   </div>
                 </div>

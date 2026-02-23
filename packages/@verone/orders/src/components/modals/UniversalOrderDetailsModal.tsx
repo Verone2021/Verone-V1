@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { useInlineEdit } from '@verone/common/hooks';
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
+import { OrganisationNameDisplay } from '@verone/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
 import {
   Dialog,
@@ -51,6 +52,7 @@ interface OrderHeader {
   expected_delivery_date: string | null;
   total_ttc: number;
   customer_name?: string;
+  customer_trade_name?: string | null;
   supplier_name?: string;
   billing_address?: string | null;
   shipping_address?: string | null;
@@ -236,14 +238,19 @@ export function UniversalOrderDetailsModal({
           // Récupérer nom client selon type (jointure manuelle polymorphe)
           let customerName = 'Client inconnu';
 
+          let customerTradeName: string | null = null;
+
           if (order.customer_type === 'organization' && order.customer_id) {
             const { data: org } = await supabase
               .from('organisations')
               .select('legal_name, trade_name')
               .eq('id', order.customer_id)
               .single();
-            customerName =
-              org?.trade_name || org?.legal_name || 'Organisation inconnue';
+            customerName = org?.legal_name || 'Organisation inconnue';
+            customerTradeName =
+              org?.trade_name && org.trade_name !== org?.legal_name
+                ? org.trade_name
+                : null;
           } else if (
             order.customer_type === 'individual' &&
             order.individual_customer_id
@@ -287,6 +294,7 @@ export function UniversalOrderDetailsModal({
             expected_delivery_date: order.expected_delivery_date,
             total_ttc: order.total_ttc,
             customer_name: customerName,
+            customer_trade_name: customerTradeName,
             billing_address: order.billing_address
               ? JSON.stringify(order.billing_address)
               : null,
@@ -497,9 +505,12 @@ export function UniversalOrderDetailsModal({
                           <p className="text-sm font-medium text-gray-700">
                             Client
                           </p>
-                          <p className="text-sm text-gray-900">
-                            {orderHeader.customer_name}
-                          </p>
+                          <OrganisationNameDisplay
+                            legalName={orderHeader.customer_name}
+                            tradeName={orderHeader.customer_trade_name}
+                            variant="compact"
+                            className="text-sm text-gray-900"
+                          />
                         </div>
                       </div>
                     )}

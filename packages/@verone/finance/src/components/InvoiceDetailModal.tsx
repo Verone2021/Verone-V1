@@ -18,6 +18,7 @@ import {
   Separator,
   Input,
   Label,
+  OrganisationNameDisplay,
   Textarea,
 } from '@verone/ui';
 import {
@@ -531,8 +532,8 @@ export function InvoiceDetailModal({
         client: invoice.partner
           ? {
               name:
-                invoice.partner.trade_name ||
                 invoice.partner.legal_name ||
+                invoice.partner.trade_name ||
                 'Client',
               email: invoice.partner.email,
             }
@@ -741,19 +742,12 @@ export function InvoiceDetailModal({
               <CardContent>
                 {invoice.partner ? (
                   <div className="space-y-3">
-                    <div>
-                      <p className="font-semibold text-base">
-                        {invoice.partner.trade_name ||
-                          invoice.partner.legal_name ||
-                          'Client sans nom'}
-                      </p>
-                      {invoice.partner.trade_name &&
-                        invoice.partner.legal_name && (
-                          <p className="text-sm text-muted-foreground">
-                            {invoice.partner.legal_name}
-                          </p>
-                        )}
-                    </div>
+                    <OrganisationNameDisplay
+                      legalName={
+                        invoice.partner.legal_name || 'Client sans nom'
+                      }
+                      tradeName={invoice.partner.trade_name}
+                    />
 
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       {invoice.partner.siret && (
