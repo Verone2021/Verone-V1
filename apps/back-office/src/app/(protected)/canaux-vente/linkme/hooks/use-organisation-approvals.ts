@@ -274,6 +274,7 @@ export function useApproveOrganisation() {
         .from('organisations')
         .update({
           approval_status: 'approved',
+          is_active: true,
           approved_at: new Date().toISOString(),
           approved_by: user?.id ?? null,
           updated_at: new Date().toISOString(),
@@ -326,9 +327,10 @@ export function useRejectOrganisation() {
         .from('organisations')
         .update({
           approval_status: 'rejected',
+          is_active: false,
+          archived_at: new Date().toISOString(),
           approved_at: new Date().toISOString(),
           approved_by: user?.id ?? null,
-          // Store rejection reason in notes or a dedicated field if exists
           updated_at: new Date().toISOString(),
         })
         .eq('id', organisationId);
