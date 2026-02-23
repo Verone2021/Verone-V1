@@ -8,6 +8,7 @@ export * from './use-orders-status';
 export * from './use-draft-purchase-order';
 export * from './use-sales-dashboard';
 export * from './use-sales-shipments';
+export * from './use-sales-returns';
 export * from './use-purchase-receptions';
 export * from './use-sales-orders';
 export * from './use-sample-order';
