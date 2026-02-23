@@ -57,7 +57,6 @@ import {
   TableRow,
 } from '@verone/ui';
 import { Tabs, TabsList, TabsTrigger } from '@verone/ui';
-import { OrganisationNameDisplay } from '@verone/ui';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -1408,22 +1407,16 @@ export function SalesOrdersTable({
                   </TableHeader>
                   <TableBody>
                     {paginatedOrders.map(order => {
-                      const orgLegalName =
-                        order.customer_type === 'organization'
-                          ? order.organisations?.legal_name || ''
-                          : null;
-                      const orgTradeName =
+                      const customerDisplayName =
                         order.customer_type === 'organization' &&
-                        order.organisations?.trade_name &&
-                        order.organisations.trade_name !==
-                          order.organisations?.legal_name
-                          ? order.organisations.trade_name
-                          : null;
-                      const customerName =
-                        order.customer_type === 'organization'
-                          ? order.organisations?.legal_name ||
-                            order.organisations?.trade_name ||
-                            ''
+                        order.organisations
+                          ? order.organisations.trade_name &&
+                            order.organisations.trade_name !==
+                              order.organisations.legal_name
+                            ? `${order.organisations.trade_name} (${order.organisations.legal_name})`
+                            : order.organisations.legal_name ||
+                              order.organisations.trade_name ||
+                              ''
                           : order.individual_customers
                             ? [
                                 order.individual_customers.first_name,
@@ -1467,17 +1460,9 @@ export function SalesOrdersTable({
                             </TableCell>
                             <TableCell>
                               <div>
-                                {orgLegalName ? (
-                                  <OrganisationNameDisplay
-                                    legalName={orgLegalName}
-                                    tradeName={orgTradeName}
-                                    variant="compact"
-                                  />
-                                ) : (
-                                  <div className="font-medium">
-                                    {customerName || 'Non defini'}
-                                  </div>
-                                )}
+                                <div className="font-medium">
+                                  {customerDisplayName || 'Non defini'}
+                                </div>
                                 <div className="text-xs text-gray-500 mt-0.5">
                                   {order.customer_type === 'organization'
                                     ? 'Professionnel'
