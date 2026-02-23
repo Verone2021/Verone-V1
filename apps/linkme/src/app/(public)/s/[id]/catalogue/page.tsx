@@ -1,16 +1,18 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Image from 'next/image';
 
 import { Minus, Package, Plus, Star } from 'lucide-react';
 
+import { ProductDetailModal } from '@/components/catalogue/ProductDetailModal';
 import {
   Pagination,
   SelectionCategoryBar,
 } from '@/components/public-selection';
 
+import type { ISelectionItem } from '../selection-context';
 import { useSelection } from '../selection-context';
 
 const ITEMS_PER_PAGE = 12;
@@ -23,8 +25,15 @@ function formatPrice(price: number): string {
 }
 
 export default function CataloguePage() {
-  const { items, branding, cart, categories, addToCart, updateQuantity } =
-    useSelection();
+  const {
+    selection,
+    items,
+    branding,
+    cart,
+    categories,
+    addToCart,
+    updateQuantity,
+  } = useSelection();
 
   const [_isSearchOpen, _setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -33,6 +42,11 @@ export default function CataloguePage() {
     null
   );
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedItem, setSelectedItem] = useState<ISelectionItem | null>(null);
+
+  const handleCardClick = useCallback((item: ISelectionItem) => {
+    setSelectedItem(item);
+  }, []);
 
   // Filter items
   const filteredItems = useMemo(() => {
@@ -118,16 +132,26 @@ export default function CataloguePage() {
                 return (
                   <div
                     key={item.id}
-                    className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow border border-gray-100"
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => handleCardClick(item)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleCardClick(item);
+                      }
+                    }}
+                    className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow border border-gray-100 cursor-pointer"
                   >
                     {/* Image */}
-                    <div className="relative aspect-square bg-gray-100">
+                    <div className="relative aspect-square bg-gray-50">
                       {item.product_image ? (
                         <Image
                           src={item.product_image}
                           alt={item.product_name}
                           fill
-                          className="object-cover"
+                          sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
+                          className="object-contain p-3"
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
@@ -171,7 +195,10 @@ export default function CataloguePage() {
                         {inCart ? (
                           <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
                             <button
-                              onClick={() => updateQuantity(item.id, -1)}
+                              onClick={e => {
+                                e.stopPropagation();
+                                updateQuantity(item.id, -1);
+                              }}
                               className="p-1.5 hover:bg-gray-200 rounded-md transition-colors"
                             >
                               <Minus className="h-4 w-4" />
@@ -180,7 +207,10 @@ export default function CataloguePage() {
                               {inCart.quantity}
                             </span>
                             <button
-                              onClick={() => updateQuantity(item.id, 1)}
+                              onClick={e => {
+                                e.stopPropagation();
+                                updateQuantity(item.id, 1);
+                              }}
                               className="p-1.5 hover:bg-gray-200 rounded-md transition-colors"
                             >
                               <Plus className="h-4 w-4" />
@@ -188,7 +218,10 @@ export default function CataloguePage() {
                           </div>
                         ) : (
                           <button
-                            onClick={() => addToCart(item)}
+                            onClick={e => {
+                              e.stopPropagation();
+                              addToCart(item);
+                            }}
                             className="flex items-center gap-1 text-white py-1.5 px-2.5 rounded-lg text-xs transition-colors hover:opacity-90"
                             style={{
                               backgroundColor: branding.primary_color,
@@ -239,6 +272,20 @@ export default function CataloguePage() {
           )}
         </div>
       </div>
+
+      {/* Product Detail Modal */}
+      {selection && (
+        <ProductDetailModal
+          item={selectedItem}
+          selectionId={selection.id}
+          isOpen={selectedItem !== null}
+          onClose={() => setSelectedItem(null)}
+          branding={branding}
+          cart={cart}
+          onAddToCart={addToCart}
+          onUpdateQuantity={updateQuantity}
+        />
+      )}
     </div>
   );
 }

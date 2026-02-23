@@ -361,9 +361,9 @@ export default function SelectionDetailPage({
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {selection.archived_at === null && selection.share_token && (
+          {selection.archived_at === null && selection.slug && (
             <a
-              href={`https://linkme.verone.fr/s/${selection.share_token}`}
+              href={`https://linkme.verone.fr/s/${selection.slug}`}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center px-4 py-2 rounded-lg border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 transition-colors"

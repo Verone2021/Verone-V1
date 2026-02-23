@@ -3,23 +3,22 @@
 /**
  * BillingStep - Etape 6 du formulaire de commande
  *
- * Layout split-screen pour contact et adresse de facturation:
+ * Formulaire simplifie pour contact et adresse de facturation:
  *
- * SECTION 1: ADRESSE FACTURATION (Split-Screen)
- * | GAUCHE (50%)                    | DROITE (50%)                        |
- * | Formulaire pre-rempli           | Adresses existantes:                |
- * | + Design distinctif             | - Adresse du restaurant             |
- * | + Bouton Sauvegarder (si modif) | - Adresse maison mère (si propre)   |
+ * SECTION 1: ADRESSE FACTURATION
+ * - Adresse restaurant (pre-remplie)
+ * - Adresse maison mere (succursales uniquement)
+ * - Nouvelle adresse (saisie directe)
  *
- * SECTION 2: CONTACT FACTURATION (Split-Screen)
- * | GAUCHE (50%)                    | DROITE (50%)                        |
- * | Contacts locaux du restaurant   | Contacts enseigne avec badge        |
- * | + Formulaire nouveau contact    | "Facturation" (filtrés isBilling)   |
- * | + Option "Même que responsable" | Si aucun badge → tous               |
+ * SECTION 2: CONTACT FACTURATION
+ * - "Meme que responsable" (checkbox)
+ * - Saisie directe (nouveau contact)
+ *
+ * Pas de consultation des contacts/adresses existants en BD (securite).
  *
  * @module BillingStep
  * @since 2026-01-24
- * @updated 2026-01-24 - Refonte UX: auto-remplissage, bouton sauvegarde, design distinctif
+ * @updated 2026-02-23 - Simplification: suppression contacts/adresses existants
  */
 
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
@@ -30,7 +29,6 @@ import {
   MapPin,
   Building2,
   User,
-  Plus,
   Check,
   AlertCircle,
   AlertTriangle,
@@ -39,12 +37,6 @@ import {
 } from 'lucide-react';
 
 import { useEnseigneId } from '@/lib/hooks/use-enseigne-id';
-import {
-  useEntityAddresses,
-  type Address,
-} from '@/lib/hooks/use-entity-addresses';
-import { useOrganisationContacts } from '@/lib/hooks/use-organisation-contacts';
-import type { OrganisationContact } from '@/lib/hooks/use-organisation-contacts';
 import { useOrganisationDetail } from '@/lib/hooks/use-organisation-detail';
 import { useParentOrganisationAddresses } from '@/lib/hooks/use-parent-organisation-addresses';
 import { useUpdateOrganisationAddress } from '@/lib/hooks/use-update-organisation-address';
@@ -58,9 +50,7 @@ import type {
   PartialAddressData,
 } from '../schemas/order-form.schema';
 import { defaultContact } from '../schemas/order-form.schema';
-import { AddressCard } from './contacts/AddressCard';
 import { AddressForm } from './contacts/AddressForm';
-import { ContactCard } from './contacts/ContactCard';
 
 // ============================================================================
 // TYPES
@@ -72,7 +62,7 @@ interface BillingStepProps {
   onUpdate: (data: Partial<ContactsStepData>) => void;
 }
 
-/** Type pour stocker les valeurs initiales et détecter les modifications */
+/** Type pour stocker les valeurs initiales et detecter les modifications */
 interface InitialAddressValues {
   tradeName: string;
   legalName: string;
@@ -85,7 +75,7 @@ interface InitialAddressValues {
 }
 
 // ============================================================================
-// SUB-COMPONENT: Contact Form (inline)
+// SUB-COMPONENTS
 // ============================================================================
 
 interface ContactFormProps {
@@ -136,7 +126,9 @@ function ContactForm({ contact, onChange }: ContactFormProps) {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="billingContact-phone">Telephone</Label>
+        <Label htmlFor="billingContact-phone">
+          Telephone <span className="text-red-500">*</span>
+        </Label>
         <Input
           id="billingContact-phone"
           type="tel"
@@ -159,109 +151,6 @@ function ContactForm({ contact, onChange }: ContactFormProps) {
     </div>
   );
 }
-
-// ============================================================================
-// SUB-COMPONENT: Create New Card
-// ============================================================================
-
-interface CreateNewCardProps {
-  onClick: () => void;
-  isActive: boolean;
-  label?: string;
-  icon?: 'contact' | 'address';
-}
-
-function CreateNewCard({
-  onClick,
-  isActive,
-  label = 'Nouveau',
-  icon: _icon = 'contact',
-}: CreateNewCardProps) {
-  return (
-    <Card
-      className={cn(
-        'p-3 cursor-pointer transition-all hover:shadow-md border-dashed',
-        isActive
-          ? 'border-2 border-blue-500 bg-blue-50/50'
-          : 'hover:border-gray-400'
-      )}
-      onClick={onClick}
-    >
-      <div className="flex items-center justify-center gap-2 h-full min-h-[60px]">
-        <Plus
-          className={cn(
-            'h-5 w-5',
-            isActive ? 'text-blue-500' : 'text-gray-400'
-          )}
-        />
-        <span
-          className={cn(
-            'font-medium text-sm',
-            isActive ? 'text-blue-600' : 'text-gray-600'
-          )}
-        >
-          {label}
-        </span>
-      </div>
-    </Card>
-  );
-}
-
-// ============================================================================
-// SUB-COMPONENT: Same As Responsable Card
-// ============================================================================
-
-interface SameAsCardProps {
-  onClick: () => void;
-  isActive: boolean;
-}
-
-function SameAsCard({ onClick, isActive }: SameAsCardProps) {
-  return (
-    <Card
-      className={cn(
-        'p-3 cursor-pointer transition-all hover:shadow-md',
-        isActive
-          ? 'border-2 border-green-500 bg-green-50/50'
-          : 'hover:border-gray-300'
-      )}
-      onClick={onClick}
-    >
-      <div className="flex items-start gap-2.5">
-        <div
-          className={cn(
-            'w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0',
-            isActive ? 'bg-green-100' : 'bg-gray-100'
-          )}
-        >
-          <User
-            className={cn(
-              'h-4 w-4',
-              isActive ? 'text-green-600' : 'text-gray-500'
-            )}
-          />
-        </div>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1.5">
-            <h3 className="font-semibold text-gray-900 text-sm leading-tight">
-              Meme que responsable
-            </h3>
-            {isActive && (
-              <Check className="h-4 w-4 text-green-500 flex-shrink-0 ml-auto" />
-            )}
-          </div>
-          <p className="text-xs text-gray-500 mt-0.5">
-            Utiliser le contact responsable
-          </p>
-        </div>
-      </div>
-    </Card>
-  );
-}
-
-// ============================================================================
-// SUB-COMPONENT: Restaurant Address Card (Simplified - no check icon)
-// ============================================================================
 
 interface RestaurantAddressCardProps {
   onClick: () => void;
@@ -346,10 +235,6 @@ function RestaurantAddressCard({
     </Card>
   );
 }
-
-// ============================================================================
-// SUB-COMPONENT: Parent Address Card (Simplified - no check icon)
-// ============================================================================
 
 interface ParentAddressCardProps {
   onClick: () => void;
@@ -442,6 +327,42 @@ function ParentAddressCard({
   );
 }
 
+interface NewAddressCardProps {
+  onClick: () => void;
+  isActive: boolean;
+}
+
+function NewAddressCard({ onClick, isActive }: NewAddressCardProps) {
+  return (
+    <Card
+      className={cn(
+        'p-3 cursor-pointer transition-all hover:shadow-md border-dashed',
+        isActive
+          ? 'border-2 border-blue-500 bg-blue-50/50'
+          : 'hover:border-gray-400'
+      )}
+      onClick={onClick}
+    >
+      <div className="flex items-center justify-center gap-2 h-full min-h-[60px]">
+        <MapPin
+          className={cn(
+            'h-5 w-5',
+            isActive ? 'text-blue-500' : 'text-gray-400'
+          )}
+        />
+        <span
+          className={cn(
+            'font-medium text-sm',
+            isActive ? 'text-blue-600' : 'text-gray-600'
+          )}
+        >
+          Nouvelle adresse
+        </span>
+      </div>
+    </Card>
+  );
+}
+
 // ============================================================================
 // MAIN COMPONENT
 // ============================================================================
@@ -455,7 +376,7 @@ export function BillingStep({
     formData.contacts.billingContact.mode === 'new'
   );
 
-  // Ref pour stocker les valeurs initiales (pour détecter les modifications)
+  // Ref pour stocker les valeurs initiales (pour detecter les modifications)
   const initialAddressRef = useRef<InitialAddressValues | null>(null);
 
   // Get enseigne ID
@@ -478,19 +399,6 @@ export function BillingStep({
   // Is franchise? (no parent address for franchises)
   const isFranchise = ownershipType === 'franchise';
 
-  // Fetch contacts - Local + Enseigne (pour afficher dans les 2 colonnes)
-  const { data: contactsData, isLoading: contactsLoading } =
-    useOrganisationContacts(
-      organisationId,
-      enseigneId ?? null,
-      ownershipType,
-      true // Inclure contacts enseigne
-    );
-
-  // Fetch billing addresses for the restaurant
-  const { data: addressesData, isLoading: addressesLoading } =
-    useEntityAddresses('organisation', organisationId, 'billing');
-
   // Fetch parent organisation addresses (for succursales only)
   const {
     parentOrg,
@@ -506,25 +414,7 @@ export function BillingStep({
   const { mutate: updateOrganisation, isPending: isSaving } =
     useUpdateOrganisationAddress();
 
-  // Contacts disponibles - Séparés en locaux et enseigne
-  const allContacts = useMemo(() => {
-    return contactsData?.allContacts ?? [];
-  }, [contactsData]);
-
-  const localContacts = useMemo(() => {
-    return allContacts.filter(c => c.organisationId === organisationId);
-  }, [allContacts, organisationId]);
-
-  // Contacts enseigne - Filtrer par isBillingContact si disponibles, sinon tous
-  const enseigneContacts = useMemo(() => {
-    const enseigne = allContacts.filter(
-      c => c.organisationId !== organisationId
-    );
-    const billingOnly = enseigne.filter(c => c.isBillingContact);
-    return billingOnly.length > 0 ? billingOnly : enseigne;
-  }, [allContacts, organisationId]);
-
-  // Restaurant info for display (enhanced with full details)
+  // Restaurant info for display
   const restaurantInfo = useMemo(() => {
     if (
       formData.restaurant.mode !== 'existing' ||
@@ -538,7 +428,6 @@ export function BillingStep({
       name: formData.restaurant.existingName ?? null,
       city: formData.restaurant.existingCity ?? null,
       country: formData.restaurant.existingCountry ?? null,
-      // Enhanced data from useOrganisationDetail
       legalName: org?.legal_name ?? null,
       tradeName: org?.trade_name ?? null,
       addressLine1:
@@ -549,9 +438,6 @@ export function BillingStep({
       vatNumber: org?.vat_number ?? null,
     };
   }, [formData.restaurant, restaurantDetail]);
-
-  // Existing billing addresses
-  const billingAddresses = addressesData?.billing ?? [];
 
   // Show parent address only for non-franchises with valid parent data
   const showParentAddress = !isFranchise && parentOrg && parentPrimaryAddress;
@@ -587,7 +473,6 @@ export function BillingStep({
   const isBillingContactComplete = useMemo(() => {
     const bc = formData.contacts.billingContact;
     if (bc.mode === 'same_as_responsable') return true;
-    if (bc.existingContactId) return true;
     return !!(
       bc.contact?.firstName &&
       bc.contact?.lastName &&
@@ -601,8 +486,6 @@ export function BillingStep({
       case 'restaurant_address':
       case 'parent_address':
         return true;
-      case 'existing_billing':
-        return !!ba.existingAddressId;
       case 'new_billing':
         return !!(
           ba.customAddress?.addressLine1 &&
@@ -628,24 +511,6 @@ export function BillingStep({
       });
     },
     [formData.contacts.billingContact, onUpdate]
-  );
-
-  const handleBillingContactSelect = useCallback(
-    (contact: OrganisationContact) => {
-      handleBillingContactUpdate({
-        mode: 'existing',
-        existingContactId: contact.id,
-        contact: {
-          firstName: contact.firstName,
-          lastName: contact.lastName,
-          email: contact.email,
-          phone: contact.phone ?? contact.mobile ?? '',
-          position: contact.title ?? '',
-        },
-      });
-      setShowContactForm(false);
-    },
-    [handleBillingContactUpdate]
   );
 
   const handleBillingContactSameAsResponsable = useCallback(() => {
@@ -711,7 +576,6 @@ export function BillingStep({
       vatNumber: restaurantInfo?.vatNumber ?? '',
     };
 
-    // Stocker les valeurs initiales
     initialAddressRef.current = {
       tradeName: newAddress.tradeName ?? '',
       legalName: newAddress.legalName ?? '',
@@ -731,7 +595,7 @@ export function BillingStep({
     });
   }, [handleBillingAddressUpdate, restaurantInfo]);
 
-  // Auto-remplissage: Adresse maison mère
+  // Auto-remplissage: Adresse maison mere
   const handleSelectParentAddress = useCallback(() => {
     const newAddress: PartialAddressData = {
       tradeName: parentOrg?.trade_name ?? '',
@@ -739,12 +603,11 @@ export function BillingStep({
       addressLine1: parentPrimaryAddress?.addressLine1 ?? '',
       postalCode: parentPrimaryAddress?.postalCode ?? '',
       city: parentPrimaryAddress?.city ?? '',
-      country: 'FR', // Défaut FR pour la maison mère
+      country: 'FR',
       siret: parentPrimaryAddress?.siret ?? '',
-      vatNumber: '', // Non disponible dans le parent address
+      vatNumber: '',
     };
 
-    // Stocker les valeurs initiales
     initialAddressRef.current = {
       tradeName: newAddress.tradeName ?? '',
       legalName: newAddress.legalName ?? '',
@@ -764,19 +627,6 @@ export function BillingStep({
     });
   }, [handleBillingAddressUpdate, parentOrg, parentPrimaryAddress]);
 
-  const handleSelectExistingAddress = useCallback(
-    (address: Address) => {
-      handleBillingAddressUpdate({
-        mode: 'existing_billing',
-        existingAddressId: address.id,
-        customAddress: null,
-      });
-      // Reset initial values
-      initialAddressRef.current = null;
-    },
-    [handleBillingAddressUpdate]
-  );
-
   const handleCreateNewAddress = useCallback(() => {
     const emptyAddress: PartialAddressData = {
       addressLine1: '',
@@ -789,7 +639,6 @@ export function BillingStep({
       vatNumber: '',
     };
 
-    // Pour nouvelle adresse, pas de valeurs initiales (tout est "modifié")
     initialAddressRef.current = null;
 
     handleBillingAddressUpdate({
@@ -847,7 +696,6 @@ export function BillingStep({
       },
       {
         onSuccess: () => {
-          // Mettre à jour les valeurs initiales après sauvegarde réussie
           if (currentAddress) {
             initialAddressRef.current = {
               tradeName: currentAddress.tradeName ?? '',
@@ -869,7 +717,7 @@ export function BillingStep({
   // EFFETS
   // ========================================
 
-  // Auto-sélection de l'adresse restaurant au montage si aucune sélection
+  // Auto-selection de l'adresse restaurant au montage si aucune selection
   useEffect(() => {
     if (
       restaurantInfo &&
@@ -887,13 +735,9 @@ export function BillingStep({
     handleSelectRestaurantAddress,
   ]);
 
-  const isLoading =
-    contactsLoading ||
-    addressesLoading ||
-    parentLoading ||
-    restaurantDetailLoading;
+  const isLoading = parentLoading || restaurantDetailLoading;
 
-  // Déterminer si le formulaire est en mode édition (pas new_billing)
+  // Determiner si le formulaire est en mode edition (pas new_billing)
   const isEditMode =
     formData.contacts.billingAddress.mode !== 'new_billing' &&
     formData.contacts.billingAddress.customAddress !== null;
@@ -901,7 +745,7 @@ export function BillingStep({
   return (
     <div className="space-y-8">
       {/* ================================================================
-          SECTION 1: ADRESSE DE FACTURATION (Split-Screen)
+          SECTION 1: ADRESSE DE FACTURATION
           ================================================================ */}
       <Card className="p-5">
         <div className="flex items-center gap-3 mb-4">
@@ -940,7 +784,7 @@ export function BillingStep({
                 : 'bg-gray-50 border-dashed border-gray-300'
             )}
           >
-            {/* En-tête distinctif */}
+            {/* En-tete distinctif */}
             {(isEditMode ||
               formData.contacts.billingAddress.mode === 'new_billing') && (
               <div className="flex items-center gap-3 pb-4 border-b border-blue-200 mb-4">
@@ -958,7 +802,7 @@ export function BillingStep({
               </div>
             )}
 
-            {/* Message si aucune sélection */}
+            {/* Message si aucune selection */}
             {!isEditMode &&
               formData.contacts.billingAddress.mode !== 'new_billing' && (
                 <div className="flex flex-col items-center justify-center py-8 text-center">
@@ -1020,7 +864,7 @@ export function BillingStep({
                   </div>
                 )}
 
-                {/* Bouton Sauvegarder - UNIQUEMENT si modifications détectées */}
+                {/* Bouton Sauvegarder - UNIQUEMENT si modifications detectees */}
                 {hasUnsavedChanges &&
                   formData.contacts.billingAddress.sourceOrganisationId && (
                     <div className="mt-4 pt-4 border-t border-blue-200">
@@ -1051,7 +895,7 @@ export function BillingStep({
             )}
           </Card>
 
-          {/* DROITE: Adresses existantes */}
+          {/* DROITE: Choix d'adresse (restaurant, maison mere, nouvelle) */}
           <Card className="p-4">
             <div className="flex items-center gap-2 pb-3 border-b mb-4">
               <Building2 className="h-4 w-4 text-blue-600" />
@@ -1107,37 +951,13 @@ export function BillingStep({
                   />
                 )}
 
-                {/* Adresses existantes */}
-                {billingAddresses.map(address => (
-                  <AddressCard
-                    key={address.id}
-                    address={address}
-                    isSelected={
-                      formData.contacts.billingAddress.mode ===
-                        'existing_billing' &&
-                      formData.contacts.billingAddress.existingAddressId ===
-                        address.id
-                    }
-                    onClick={() => handleSelectExistingAddress(address)}
-                  />
-                ))}
-
-                {/* Carte nouvelle adresse */}
-                <CreateNewCard
+                {/* Nouvelle adresse */}
+                <NewAddressCard
                   onClick={handleCreateNewAddress}
                   isActive={
                     formData.contacts.billingAddress.mode === 'new_billing'
                   }
-                  label="Nouvelle adresse"
-                  icon="address"
                 />
-
-                {/* Info si aucune adresse */}
-                {billingAddresses.length === 0 && !showParentAddress && (
-                  <p className="text-xs text-gray-400 text-center py-2">
-                    Aucune adresse de facturation enregistree
-                  </p>
-                )}
               </div>
             )}
           </Card>
@@ -1145,7 +965,7 @@ export function BillingStep({
       </Card>
 
       {/* ================================================================
-          SECTION 2: CONTACT FACTURATION (Split-Screen)
+          SECTION 2: CONTACT FACTURATION (simplifie)
           ================================================================ */}
       <Card className="p-5">
         <div className="flex items-center gap-3 mb-4">
@@ -1177,170 +997,88 @@ export function BillingStep({
             <AlertTriangle className="h-4 w-4 text-amber-600 flex-shrink-0" />
             <span className="text-sm text-amber-700">
               La facturation doit etre geree par le proprietaire du restaurant
-              ou ses employes (contacts locaux uniquement).
+              ou ses employes.
             </span>
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* GAUCHE: Contacts locaux + Form */}
-          <Card className="p-4">
-            <div className="flex items-center gap-2 pb-3 border-b mb-4">
-              <User className="h-4 w-4 text-gray-500" />
-              <h4 className="font-medium text-gray-700">
-                Contacts du restaurant
-              </h4>
+        <Card className="p-4">
+          <div className="space-y-4">
+            {/* Option "Meme que responsable" */}
+            <div className="flex items-center gap-3">
+              <Checkbox
+                id="billing-same-as-responsable"
+                checked={
+                  formData.contacts.billingContact.mode ===
+                  'same_as_responsable'
+                }
+                onCheckedChange={() => handleBillingContactSameAsResponsable()}
+              />
+              <Label
+                htmlFor="billing-same-as-responsable"
+                className="text-sm font-medium cursor-pointer"
+              >
+                Meme contact que le responsable de commande
+              </Label>
             </div>
 
-            {contactsLoading && (
-              <div className="flex items-center justify-center py-8">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600" />
-              </div>
-            )}
-
-            {!contactsLoading && (
-              <div className="space-y-3">
-                {/* Option "Même que responsable" */}
-                <SameAsCard
-                  onClick={handleBillingContactSameAsResponsable}
-                  isActive={
-                    formData.contacts.billingContact.mode ===
-                    'same_as_responsable'
-                  }
-                />
-
-                {/* Contacts locaux */}
-                {localContacts.map(contact => (
-                  <ContactCard
-                    key={contact.id}
-                    contact={contact}
-                    isSelected={
-                      formData.contacts.billingContact.existingContactId ===
-                        contact.id &&
-                      formData.contacts.billingContact.mode === 'existing'
-                    }
-                    onClick={() => handleBillingContactSelect(contact)}
-                  />
-                ))}
-
-                {/* Carte nouveau contact */}
-                <CreateNewCard
-                  onClick={handleBillingContactCreateNew}
-                  isActive={
-                    showContactForm &&
-                    formData.contacts.billingContact.mode === 'new'
-                  }
-                  label="Nouveau contact"
-                  icon="contact"
-                />
-              </div>
-            )}
-
-            {/* Formulaire nouveau contact */}
-            {showContactForm &&
-              formData.contacts.billingContact.mode === 'new' && (
-                <div className="pt-4 mt-4 border-t">
-                  <h5 className="text-sm font-medium text-gray-700 mb-4">
-                    Nouveau contact facturation
-                  </h5>
-                  <ContactForm
-                    contact={
-                      formData.contacts.billingContact.contact ?? defaultContact
-                    }
-                    onChange={handleBillingContactChange}
-                  />
-                </div>
-              )}
-
-            {/* Same as responsable info */}
+            {/* Info same as responsable */}
             {formData.contacts.billingContact.mode ===
               'same_as_responsable' && (
-              <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+              <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
                 <div className="flex items-start gap-2">
                   <Check className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
                   <div className="text-sm text-green-700">
                     <p className="font-medium">
                       Contact identique au responsable commande
                     </p>
-                    <p className="mt-1">
-                      {formData.contacts.responsable.firstName}{' '}
-                      {formData.contacts.responsable.lastName} -{' '}
-                      {formData.contacts.responsable.email}
-                    </p>
+                    {formData.contacts.responsable.firstName && (
+                      <p className="mt-1">
+                        {formData.contacts.responsable.firstName}{' '}
+                        {formData.contacts.responsable.lastName} -{' '}
+                        {formData.contacts.responsable.email}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
             )}
-          </Card>
 
-          {/* DROITE: Contacts enseigne (si non franchise) */}
-          {!isFranchise && (
-            <Card className="p-4">
-              <div className="flex items-center gap-2 pb-3 border-b mb-4">
-                <Building2 className="h-4 w-4 text-blue-600" />
-                <h4 className="font-medium text-gray-700">
-                  Contacts de l&apos;Enseigne
-                </h4>
-                {enseigneContacts.some(c => c.isBillingContact) && (
-                  <Badge variant="info" size="sm" className="ml-auto">
-                    Facturation
-                  </Badge>
+            {/* Formulaire nouveau contact */}
+            {formData.contacts.billingContact.mode !==
+              'same_as_responsable' && (
+              <div className="pt-2">
+                {!showContactForm && (
+                  <button
+                    type="button"
+                    onClick={handleBillingContactCreateNew}
+                    className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                  >
+                    + Saisir un contact facturation different
+                  </button>
+                )}
+
+                {showContactForm && (
+                  <div className="pt-2">
+                    <div className="flex items-center gap-2 pb-3 border-b mb-4">
+                      <User className="h-4 w-4 text-gray-500" />
+                      <h5 className="text-sm font-medium text-gray-700">
+                        Contact facturation
+                      </h5>
+                    </div>
+                    <ContactForm
+                      contact={
+                        formData.contacts.billingContact.contact ??
+                        defaultContact
+                      }
+                      onChange={handleBillingContactChange}
+                    />
+                  </div>
                 )}
               </div>
-
-              {contactsLoading && (
-                <div className="flex items-center justify-center py-8">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600" />
-                </div>
-              )}
-
-              {!contactsLoading && enseigneContacts.length > 0 ? (
-                <div className="space-y-3">
-                  {enseigneContacts.map(contact => (
-                    <ContactCard
-                      key={contact.id}
-                      contact={contact}
-                      isSelected={
-                        formData.contacts.billingContact.existingContactId ===
-                          contact.id &&
-                        formData.contacts.billingContact.mode === 'existing'
-                      }
-                      onClick={() => handleBillingContactSelect(contact)}
-                    />
-                  ))}
-                </div>
-              ) : (
-                !contactsLoading && (
-                  <div className="text-center py-8 text-gray-500">
-                    <User className="h-12 w-12 mx-auto mb-2 text-gray-300" />
-                    <p className="text-sm">Aucun contact enseigne disponible</p>
-                    <p className="text-xs text-gray-400 mt-1">
-                      Les contacts enseigne seront affiches ici s&apos;ils
-                      existent
-                    </p>
-                  </div>
-                )
-              )}
-            </Card>
-          )}
-
-          {/* Si franchise, afficher un placeholder explicatif */}
-          {isFranchise && (
-            <Card className="p-4 bg-gray-50">
-              <div className="flex items-center gap-2 pb-3 border-b border-gray-200 mb-4">
-                <AlertCircle className="h-4 w-4 text-gray-400" />
-                <h4 className="font-medium text-gray-500">Contacts enseigne</h4>
-              </div>
-              <div className="text-center py-8 text-gray-500">
-                <Building2 className="h-12 w-12 mx-auto mb-2 text-gray-300" />
-                <p className="text-sm">Non disponible pour les franchises</p>
-                <p className="text-xs text-gray-400 mt-1">
-                  Seuls les contacts locaux peuvent gerer la facturation
-                </p>
-              </div>
-            </Card>
-          )}
-        </div>
+            )}
+          </div>
+        </Card>
       </Card>
 
       {/* ================================================================

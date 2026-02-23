@@ -325,8 +325,8 @@ export default function SelectionLayout({
         data: data,
       });
 
-      if (result.success && result.orderNumber) {
-        setOrderNumber(result.orderNumber);
+      if (result.success && (result.orderNumber ?? result.orderId)) {
+        setOrderNumber(result.orderNumber ?? result.orderId ?? null);
       }
     },
     [selection, submitOrder]

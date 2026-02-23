@@ -1,16 +1,21 @@
 'use client';
 
 /**
- * NewOrderForm - Formulaire de commande en 8 étapes
+ * NewOrderForm - Formulaire authentifie de commande LinkMe (dashboard)
  *
- * Composant orchestrateur qui :
- * - Affiche le stepper sidebar
- * - Rend l'étape courante
- * - Gère la navigation et validation
+ * Formulaire accessible aux utilisateurs connectes via /commandes/nouvelle.
+ * 8 etapes : Restaurant, Selection, Produits, Panier, Responsable, Facturation, Livraison, Validation.
+ * Schema Zod : order-form.schema.ts | Hook : use-order-form.ts
  *
+ * ATTENTION : Ce formulaire n'est PAS aligne avec OrderFormUnified (public).
+ * Divergences documentees dans docs/current/linkme/formulaires-commande-comparaison.md
+ * Principales divergences : firstName/lastName vs name, date livraison type, conditions absentes.
+ *
+ * @see OrderFormUnified (formulaire public) - components/OrderFormUnified.tsx
+ * @see docs/current/linkme/formulaires-commande-comparaison.md
  * @module NewOrderForm
  * @since 2026-01-20
- * @updated 2026-01-24 - Refonte 7→8 étapes
+ * @updated 2026-02-22 - Audit comparaison avec formulaire public
  */
 
 import { useCallback } from 'react';
@@ -131,6 +136,7 @@ export function NewOrderForm() {
             {...commonProps}
             onSubmit={handleSubmit}
             isSubmitting={isSubmitting}
+            onUpdateDelivery={updateDelivery}
           />
         );
       default:
