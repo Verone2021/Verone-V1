@@ -7304,7 +7304,6 @@ export type Database = {
           currency: string;
           customer_id: string | null;
           customer_type: string;
-          individual_customer_id: string | null;
           delivered_at: string | null;
           delivered_by: string | null;
           delivery_contact_id: string | null;
@@ -7314,6 +7313,7 @@ export type Database = {
           fees_vat_rate: number | null;
           handling_cost_ht: number | null;
           id: string;
+          individual_customer_id: string | null;
           insurance_cost_ht: number | null;
           invoiced_at: string | null;
           is_shopping_center_delivery: boolean;
@@ -7338,6 +7338,7 @@ export type Database = {
             | null;
           pending_admin_validation: boolean | null;
           ready_for_shipment: boolean | null;
+          related_order_id: string | null;
           responsable_contact_id: string | null;
           shipped_at: string | null;
           shipped_by: string | null;
@@ -7373,7 +7374,6 @@ export type Database = {
           currency?: string;
           customer_id?: string | null;
           customer_type: string;
-          individual_customer_id?: string | null;
           delivered_at?: string | null;
           delivered_by?: string | null;
           delivery_contact_id?: string | null;
@@ -7383,6 +7383,7 @@ export type Database = {
           fees_vat_rate?: number | null;
           handling_cost_ht?: number | null;
           id?: string;
+          individual_customer_id?: string | null;
           insurance_cost_ht?: number | null;
           invoiced_at?: string | null;
           is_shopping_center_delivery?: boolean;
@@ -7407,6 +7408,7 @@ export type Database = {
             | null;
           pending_admin_validation?: boolean | null;
           ready_for_shipment?: boolean | null;
+          related_order_id?: string | null;
           responsable_contact_id?: string | null;
           shipped_at?: string | null;
           shipped_by?: string | null;
@@ -7442,7 +7444,6 @@ export type Database = {
           currency?: string;
           customer_id?: string | null;
           customer_type?: string;
-          individual_customer_id?: string | null;
           delivered_at?: string | null;
           delivered_by?: string | null;
           delivery_contact_id?: string | null;
@@ -7452,6 +7453,7 @@ export type Database = {
           fees_vat_rate?: number | null;
           handling_cost_ht?: number | null;
           id?: string;
+          individual_customer_id?: string | null;
           insurance_cost_ht?: number | null;
           invoiced_at?: string | null;
           is_shopping_center_delivery?: boolean;
@@ -7476,6 +7478,7 @@ export type Database = {
             | null;
           pending_admin_validation?: boolean | null;
           ready_for_shipment?: boolean | null;
+          related_order_id?: string | null;
           responsable_contact_id?: string | null;
           shipped_at?: string | null;
           shipped_by?: string | null;
@@ -7527,6 +7530,13 @@ export type Database = {
             referencedColumns: ['id'];
           },
           {
+            foreignKeyName: 'sales_orders_individual_customer_id_fkey';
+            columns: ['individual_customer_id'];
+            isOneToOne: false;
+            referencedRelation: 'individual_customers';
+            referencedColumns: ['id'];
+          },
+          {
             foreignKeyName: 'sales_orders_linkme_selection_id_fkey';
             columns: ['linkme_selection_id'];
             isOneToOne: false;
@@ -7546,6 +7556,41 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'linkme_selections';
             referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'sales_orders_related_order_id_fkey';
+            columns: ['related_order_id'];
+            isOneToOne: false;
+            referencedRelation: 'affiliate_pending_orders';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'sales_orders_related_order_id_fkey';
+            columns: ['related_order_id'];
+            isOneToOne: false;
+            referencedRelation: 'linkme_orders_enriched';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'sales_orders_related_order_id_fkey';
+            columns: ['related_order_id'];
+            isOneToOne: false;
+            referencedRelation: 'linkme_orders_with_margins';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'sales_orders_related_order_id_fkey';
+            columns: ['related_order_id'];
+            isOneToOne: false;
+            referencedRelation: 'sales_orders';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'sales_orders_related_order_id_fkey';
+            columns: ['related_order_id'];
+            isOneToOne: false;
+            referencedRelation: 'v_transactions_missing_invoice';
+            referencedColumns: ['sales_order_id'];
           },
           {
             foreignKeyName: 'sales_orders_responsable_contact_id_fkey';
@@ -10770,32 +10815,19 @@ export type Database = {
         };
         Returns: number;
       };
-      create_public_linkme_order:
-        | {
-            Args: {
-              p_affiliate_id: string;
-              p_billing: Json;
-              p_cart: Json;
-              p_organisation: Json;
-              p_owner: Json;
-              p_requester: Json;
-              p_selection_id: string;
-            };
-            Returns: Json;
-          }
-        | {
-            Args: {
-              p_affiliate_id: string;
-              p_billing: Json;
-              p_cart: Json;
-              p_delivery: Json;
-              p_organisation: Json;
-              p_owner: Json;
-              p_requester: Json;
-              p_selection_id: string;
-            };
-            Returns: Json;
-          };
+      create_public_linkme_order: {
+        Args: {
+          p_affiliate_id: string;
+          p_billing: Json;
+          p_cart: Json;
+          p_delivery: Json;
+          p_organisation: Json;
+          p_owner: Json;
+          p_requester: Json;
+          p_selection_id: string;
+        };
+        Returns: Json;
+      };
       create_public_order:
         | {
             Args: {
@@ -11694,6 +11726,10 @@ export type Database = {
         Args: { p_product_id: string };
         Returns: Json;
       };
+      get_product_detail_public: {
+        Args: { p_product_id: string; p_selection_id: string };
+        Returns: Json;
+      };
       get_product_margin_analysis: {
         Args: {
           p_end_date?: string;
@@ -11756,10 +11792,6 @@ export type Database = {
         }[];
       };
       get_products_status_metrics: { Args: never; Returns: Json };
-      get_product_detail_public: {
-        Args: { p_product_id: string; p_selection_id: string };
-        Returns: Json;
-      };
       get_public_selection:
         | { Args: { p_selection_id: string }; Returns: Json }
         | { Args: { p_share_token?: string; p_slug: string }; Returns: Json };

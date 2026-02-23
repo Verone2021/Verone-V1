@@ -168,6 +168,7 @@ export function OrderSelectModal({
           created_at,
           customer_id,
           customer_type,
+          individual_customer_id,
           payment_status_v2
         `
         )
@@ -359,6 +360,7 @@ export function OrderSelectModal({
           payment_terms,
           customer_type,
           customer_id,
+          individual_customer_id,
           billing_address,
           shipping_address,
           shipping_cost_ht,
