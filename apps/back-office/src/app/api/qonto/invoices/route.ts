@@ -330,7 +330,7 @@ export async function POST(request: NextRequest): Promise<
         const { data: indiv } = await supabase
           .from('individual_customers')
           .select('*')
-          .eq('id', orderWithItems.customer_id)
+          .eq('id', orderWithItems.individual_customer_id)
           .single();
         customer = indiv;
       }

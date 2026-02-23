@@ -239,7 +239,9 @@ async function fetchLinkMeOrders(): Promise<LinkMeOrder[]> {
       customer_organisation_id:
         order.customer_type === 'organization' ? order.customer_id : null,
       individual_customer_id:
-        order.customer_type === 'individual' ? order.customer_id : null,
+        order.customer_type === 'individual'
+          ? order.individual_customer_id
+          : null,
     })
   );
 }
@@ -301,7 +303,9 @@ async function fetchLinkMeOrderById(orderId: string): Promise<LinkMeOrder> {
     customer_organisation_id:
       order.customer_type === 'organization' ? order.customer_id : null,
     individual_customer_id:
-      order.customer_type === 'individual' ? order.customer_id : null,
+      order.customer_type === 'individual'
+        ? order.individual_customer_id
+        : null,
     items: (order.sales_order_items ?? []).map(
       (item: SalesOrderItemWithProduct): LinkMeOrderItem => ({
         id: item.id,

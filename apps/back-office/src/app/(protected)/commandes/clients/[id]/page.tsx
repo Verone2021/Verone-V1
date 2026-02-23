@@ -243,7 +243,10 @@ export default async function OrderDetailPage({
       customerPhone = org.phone ?? '';
       isOrganisation = true;
     }
-  } else if (order.customer_type === 'individual' && order.customer_id) {
+  } else if (
+    order.customer_type === 'individual' &&
+    order.individual_customer_id
+  ) {
     type IndividualCustomerData = {
       id: string;
       first_name: string;
@@ -255,7 +258,7 @@ export default async function OrderDetailPage({
     const { data: individual } = await supabase
       .from('individual_customers')
       .select('id, first_name, last_name, email, phone')
-      .eq('id', order.customer_id)
+      .eq('id', order.individual_customer_id)
       .single()
       .returns<IndividualCustomerData>();
 

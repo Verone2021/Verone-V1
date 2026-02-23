@@ -470,11 +470,14 @@ export function useStockDashboard() {
 
           customerName =
             org?.trade_name || org?.legal_name || 'Organisation inconnue';
-        } else if (so.customer_type === 'individual' && so.customer_id) {
+        } else if (
+          so.customer_type === 'individual' &&
+          so.individual_customer_id
+        ) {
           const { data: individual } = await supabase
             .from('individual_customers')
             .select('first_name, last_name')
-            .eq('id', so.customer_id)
+            .eq('id', so.individual_customer_id)
             .single();
 
           customerName = individual

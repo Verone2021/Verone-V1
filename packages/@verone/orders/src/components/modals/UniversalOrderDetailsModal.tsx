@@ -246,12 +246,12 @@ export function UniversalOrderDetailsModal({
               org?.trade_name || org?.legal_name || 'Organisation inconnue';
           } else if (
             order.customer_type === 'individual' &&
-            order.customer_id
+            order.individual_customer_id
           ) {
             const { data: individual } = await supabase
               .from('individual_customers')
               .select('first_name, last_name')
-              .eq('id', order.customer_id)
+              .eq('id', order.individual_customer_id)
               .single();
             customerName = individual
               ? `${individual.first_name} ${individual.last_name}`

@@ -194,8 +194,8 @@ export function OrderSelectModal({
         .filter((id): id is string => id !== null);
       const indivIds = ordersData
         .filter(o => o.customer_type === 'individual')
-        .map(o => o.customer_id)
-        .filter((id): id is string => id !== null);
+        .map(o => o.individual_customer_id)
+        .filter((id): id is string => id !== null && id !== undefined);
 
       // Fetch organisations
       const orgMap = new Map<string, { name: string; email: string | null }>();
@@ -285,8 +285,12 @@ export function OrderSelectModal({
 
         if (order.customer_type === 'organization' && order.customer_id) {
           customerInfo = orgMap.get(order.customer_id) || customerInfo;
-        } else if (order.customer_type === 'individual' && order.customer_id) {
-          customerInfo = indivMap.get(order.customer_id) || customerInfo;
+        } else if (
+          order.customer_type === 'individual' &&
+          order.individual_customer_id
+        ) {
+          customerInfo =
+            indivMap.get(order.individual_customer_id) || customerInfo;
         }
 
         return {
@@ -417,11 +421,14 @@ export function OrderSelectModal({
             vat_number: org.vat_number,
           };
         }
-      } else if (order.customer_type === 'individual' && order.customer_id) {
+      } else if (
+        order.customer_type === 'individual' &&
+        order.individual_customer_id
+      ) {
         const { data: indiv } = await supabase
           .from('individual_customers')
           .select('first_name, last_name, email')
-          .eq('id', order.customer_id)
+          .eq('id', order.individual_customer_id)
           .single();
         if (indiv) {
           customerIndiv = {

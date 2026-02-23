@@ -45,7 +45,7 @@ export interface SalesOrderForShipment {
 
   // Customer (polymorphic)
   customer_id: string;
-  customer_type: string; // 'organization' | 'individual_customer'
+  customer_type: string; // 'organization' | 'individual'
   customer_name?: string; // Chargé dynamiquement selon customer_type
 
   // Shipping address (pré-remplir formulaire)
@@ -116,6 +116,7 @@ export function useSalesShipments() {
           shipping_address,
           customer_id,
           customer_type,
+          individual_customer_id,
           sales_order_items (
             id,
             product_id,
@@ -168,13 +169,13 @@ export function useSalesShipments() {
             organisationData = org;
           }
         } else if (
-          data.customer_type === 'individual_customer' &&
-          data.customer_id
+          data.customer_type === 'individual' &&
+          data.individual_customer_id
         ) {
           const { data: indiv } = await supabase
             .from('individual_customers')
             .select('first_name, last_name')
-            .eq('id', data.customer_id)
+            .eq('id', data.individual_customer_id)
             .single();
 
           if (indiv) {
@@ -227,7 +228,7 @@ export function useSalesShipments() {
           quantity_ordered: quantityOrdered,
           quantity_already_shipped: quantityAlreadyShipped,
           quantity_remaining: quantityRemaining,
-          quantity_to_ship: Math.min(quantityRemaining, stockAvailable), // Défaut: minimum entre restant et stock
+          quantity_to_ship: quantityRemaining, // Défaut: quantité restante (le trigger DB ajuste le stock)
           stock_available: stockAvailable,
           unit_price_ht: item.unit_price_ht,
         };
@@ -270,72 +271,100 @@ export function useSalesShipments() {
   );
 
   /**
-   * Charger historique expéditions (mouvements stock liés)
+   * Charger historique expéditions
+   * Source primaire: sales_order_shipments (nouvelles expéditions)
+   * Fallback: stock_movements avec reference_type='sale' (legacy)
    */
   const loadShipmentHistory = useCallback(
     async (soId: string): Promise<ShipmentHistory[]> => {
       try {
-        // Récupérer mouvements stock OUT (affects_forecast=false) pour ce SO
+        // 1. Source primaire : sales_order_shipments (nouvelles expéditions)
+        const { data: shipments, error: shipmentsError } = await supabase
+          .from('sales_order_shipments')
+          .select(
+            `
+            id, shipped_at, tracking_number, notes, quantity_shipped, product_id,
+            products:product_id (name, sku)
+          `
+          )
+          .eq('sales_order_id', soId)
+          .order('shipped_at', { ascending: false });
+
+        if (!shipmentsError && shipments && shipments.length > 0) {
+          const grouped = new Map<string, ShipmentHistory>();
+          for (const s of shipments) {
+            const key = s.shipped_at;
+            const product = s.products as unknown as {
+              name: string;
+              sku: string;
+            } | null;
+            if (!grouped.has(key)) {
+              grouped.set(key, {
+                shipment_id: s.id,
+                shipped_at: s.shipped_at,
+                carrier_name: 'Manuel',
+                items: [],
+                total_quantity: 0,
+                delivery_status: 'delivered',
+                tracking_number: s.tracking_number || undefined,
+              });
+            }
+            const h = grouped.get(key)!;
+            h.items.push({
+              product_name: product?.name || 'Produit inconnu',
+              product_sku: product?.sku || '-',
+              quantity_shipped: s.quantity_shipped,
+            });
+            h.total_quantity += s.quantity_shipped;
+          }
+          return Array.from(grouped.values());
+        }
+
+        // 2. Fallback : stock_movements legacy (reference_type = 'sale')
         const { data: movements, error: movementsError } = await supabase
           .from('stock_movements')
           .select(
             `
-          id,
-          quantity_change,
-          performed_at,
-          notes,
-          performed_by,
-          product_id,
-          carrier_name,
-          tracking_number,
-          shipped_by_name,
-          products (
-            name,
-            sku
+            id, quantity_change, performed_at, notes, product_id,
+            carrier_name, tracking_number,
+            products (name, sku)
+          `
           )
-        `
-          )
-          .eq('reference_type', 'sales_order')
+          .eq('reference_type', 'sale')
           .eq('reference_id', soId)
-          .or('affects_forecast.is.null,affects_forecast.is.false')
           .eq('movement_type', 'OUT')
           .order('performed_at', { ascending: false });
 
         if (movementsError) {
-          console.error('Erreur chargement historique:', movementsError);
+          console.error('Erreur chargement historique legacy:', movementsError);
           return [];
         }
 
-        // Grouper par performed_at (même expédition)
         const grouped = new Map<string, ShipmentHistory>();
-
-        movements?.forEach(movement => {
-          const key = movement.performed_at;
-
+        movements?.forEach(m => {
+          const key = m.performed_at;
+          const product = m.products as unknown as {
+            name: string;
+            sku: string;
+          };
           if (!grouped.has(key)) {
             grouped.set(key, {
-              shipment_id: movement.id,
-              shipped_at: movement.performed_at,
-              delivered_at: undefined,
-              carrier_name: movement.carrier_name || 'Manuel',
-              service_name: undefined,
-              tracking_number: movement.tracking_number || undefined,
-              tracking_url: undefined,
+              shipment_id: m.id,
+              shipped_at: m.performed_at,
+              carrier_name: m.carrier_name || 'Manuel',
+              tracking_number: m.tracking_number || undefined,
               items: [],
               total_quantity: 0,
-              cost_paid_eur: undefined,
-              cost_charged_eur: undefined,
-              delivery_status: 'in_transit',
+              delivery_status: 'delivered',
             });
           }
-
-          const history = grouped.get(key)!;
-          history.items.push({
-            product_name: (movement.products as any).name,
-            product_sku: (movement.products as any).sku,
-            quantity_shipped: Math.abs(movement.quantity_change), // OUT = négatif
+          const h = grouped.get(key)!;
+          h.items.push({
+            product_name: product.name,
+            product_sku: product.sku,
+            quantity_shipped: Math.abs(m.quantity_change),
           });
-          history.total_quantity += Math.abs(movement.quantity_change);
+          h.total_quantity += Math.abs(m.quantity_change);
         });
 
         return Array.from(grouped.values());
@@ -443,6 +472,7 @@ export function useSalesShipments() {
           shipped_at,
           customer_id,
           customer_type,
+          individual_customer_id,
           sales_order_items (
             id,
             product_id,
@@ -483,6 +513,7 @@ export function useSalesShipments() {
             shipped_at,
             customer_id,
             customer_type,
+            individual_customer_id,
             sales_order_items (
               id,
               product_id,
@@ -528,12 +559,17 @@ export function useSalesShipments() {
 
         // Charger noms clients selon customer_type (relation polymorphique)
         const orgIds = orders
-          .filter((o: any) => o.customer_type === 'organization')
+          .filter(
+            (o: any) => o.customer_type === 'organization' && o.customer_id
+          )
           .map((o: any) => o.customer_id);
 
         const indivIds = orders
-          .filter((o: any) => o.customer_type === 'individual_customer')
-          .map((o: any) => o.customer_id);
+          .filter(
+            (o: any) =>
+              o.customer_type === 'individual' && o.individual_customer_id
+          )
+          .map((o: any) => o.individual_customer_id);
 
         // Query organisations si nécessaire
         const organisationsMap = new Map();
@@ -575,7 +611,10 @@ export function useSalesShipments() {
             order.customer_type === 'organization'
               ? organisationsMap.get(order.customer_id) ||
                 'Organisation inconnue'
-              : individualsMap.get(order.customer_id) || 'Client inconnu',
+              : order.individual_customer_id
+                ? individualsMap.get(order.individual_customer_id) ||
+                  'Client inconnu'
+                : 'Particulier',
         }));
 
         return enrichedOrders;
@@ -620,6 +659,7 @@ export function useSalesShipments() {
             delivered_at,
             customer_id,
             customer_type,
+            individual_customer_id,
             sales_order_items (
               id,
               product_id,
@@ -660,12 +700,17 @@ export function useSalesShipments() {
 
         // Charger noms clients selon customer_type (relation polymorphique)
         const orgIds = orders
-          .filter((o: any) => o.customer_type === 'organization')
+          .filter(
+            (o: any) => o.customer_type === 'organization' && o.customer_id
+          )
           .map((o: any) => o.customer_id);
 
         const indivIds = orders
-          .filter((o: any) => o.customer_type === 'individual_customer')
-          .map((o: any) => o.customer_id);
+          .filter(
+            (o: any) =>
+              o.customer_type === 'individual' && o.individual_customer_id
+          )
+          .map((o: any) => o.individual_customer_id);
 
         // Query organisations si nécessaire
         const organisationsMap = new Map();
@@ -707,7 +752,10 @@ export function useSalesShipments() {
             order.customer_type === 'organization'
               ? organisationsMap.get(order.customer_id) ||
                 'Organisation inconnue'
-              : individualsMap.get(order.customer_id) || 'Client inconnu',
+              : order.individual_customer_id
+                ? individualsMap.get(order.individual_customer_id) ||
+                  'Client inconnu'
+                : 'Particulier',
         }));
 
         return enrichedOrders;

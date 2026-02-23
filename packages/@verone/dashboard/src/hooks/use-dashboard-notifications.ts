@@ -110,7 +110,7 @@ export function useDashboardNotifications(
             `
             id, order_number, created_at, total_ttc, customer_type, customer_id,
             customer_org:organisations!customer_id(id, legal_name, trade_name, city, country),
-            customer_ind:individual_customers!customer_id(id, first_name, last_name),
+            customer_ind:individual_customers!individual_customer_id(id, first_name, last_name),
             sales_order_items(id, product_id, products(id, name))
           `
           )
@@ -272,7 +272,7 @@ export function useDashboardNotifications(
             `
             id, order_number, created_at, customer_type,
             customer_org:organisations!customer_id(id, legal_name, trade_name),
-            customer_ind:individual_customers!customer_id(id, first_name, last_name),
+            customer_ind:individual_customers!individual_customer_id(id, first_name, last_name),
             sales_order_items(id, products(name))
           `
           )
