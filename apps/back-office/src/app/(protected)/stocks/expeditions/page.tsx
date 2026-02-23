@@ -100,10 +100,14 @@ interface ShipmentHistoryItem {
   service_name?: string;
   cost_paid_eur?: number;
   cost_charged_eur?: number;
+  shipped_by_name?: string;
+  notes?: string;
+  total_quantity?: number;
   items?: Array<{
     product_name: string;
     product_sku: string;
     quantity_shipped: number;
+    product_image_url?: string;
   }>;
 }
 
@@ -971,6 +975,12 @@ export default function ExpeditionsPage() {
                 </div>
               ) : (
                 <div className="space-y-6">
+                  {/* Section titre avec icône et compteur */}
+                  <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                    <Truck className="h-5 w-5 text-green-500" />
+                    Expéditions ({shipmentHistory.length})
+                  </h3>
+
                   {shipmentHistory.map(
                     (shipment: ShipmentHistoryItem, index: number) => (
                       <Card
@@ -989,14 +999,33 @@ export default function ExpeditionsPage() {
                                   : 'Date non disponible'}
                               </CardDescription>
                             </div>
-                            {shipment.tracking_number && (
-                              <Badge variant="outline">
-                                Suivi: {shipment.tracking_number}
-                              </Badge>
-                            )}
+                            <div className="flex items-center gap-2">
+                              {shipment.shipped_by_name && (
+                                <Badge variant="outline">
+                                  Par: {shipment.shipped_by_name}
+                                </Badge>
+                              )}
+                              {shipment.tracking_number && (
+                                <Badge variant="outline">
+                                  Suivi: {shipment.tracking_number}
+                                </Badge>
+                              )}
+                            </div>
                           </div>
                         </CardHeader>
                         <CardContent>
+                          {/* Notes expédition */}
+                          {shipment.notes && (
+                            <div className="mb-4 p-3 bg-gray-50 rounded">
+                              <p className="text-sm font-medium text-gray-700">
+                                Notes:
+                              </p>
+                              <p className="text-sm text-gray-600">
+                                {shipment.notes}
+                              </p>
+                            </div>
+                          )}
+
                           {/* Infos transporteur */}
                           {shipment.carrier_name && (
                             <div className="mb-4 p-3 bg-gray-50 rounded">
@@ -1025,6 +1054,7 @@ export default function ExpeditionsPage() {
                           <Table>
                             <TableHeader>
                               <TableRow>
+                                <TableHead className="w-[50px]" />
                                 <TableHead>Produit</TableHead>
                                 <TableHead>SKU</TableHead>
                                 <TableHead className="text-right">
@@ -1035,20 +1065,36 @@ export default function ExpeditionsPage() {
                             <TableBody>
                               {shipment.items?.map((item, idx: number) => (
                                 <TableRow key={idx}>
+                                  <TableCell className="w-[50px] p-1">
+                                    <ProductThumbnail
+                                      src={item.product_image_url}
+                                      alt={item.product_name}
+                                      size="xs"
+                                    />
+                                  </TableCell>
                                   <TableCell>{item.product_name}</TableCell>
                                   <TableCell className="font-mono text-sm">
                                     {item.product_sku}
                                   </TableCell>
-                                  <TableCell className="text-right font-medium">
-                                    {item.quantity_shipped}
+                                  <TableCell className="text-right font-medium text-green-600">
+                                    +{item.quantity_shipped}
                                   </TableCell>
                                 </TableRow>
                               ))}
                             </TableBody>
                           </Table>
 
+                          {/* Total expédié */}
+                          <div className="mt-4 pt-4 border-t">
+                            <p className="text-sm font-medium text-gray-700">
+                              Total expédié:{' '}
+                              <span className="text-verone-success font-bold">
+                                {shipment.total_quantity ?? 0} unités
+                              </span>
+                            </p>
+                          </div>
+
                           {/* Coûts */}
-                          {}
                           {(!!shipment.cost_paid_eur ||
                             !!shipment.cost_charged_eur) && (
                             <div className="mt-4 pt-4 border-t space-y-1">

@@ -283,21 +283,59 @@ export function useSalesShipments() {
           .from('sales_order_shipments')
           .select(
             `
-            id, shipped_at, tracking_number, notes, quantity_shipped, product_id,
-            products:product_id (name, sku)
+            id, shipped_at, tracking_number, notes, quantity_shipped, product_id, shipped_by,
+            products:product_id (name, sku, product_images!left(public_url, is_primary))
           `
           )
           .eq('sales_order_id', soId)
           .order('shipped_at', { ascending: false });
 
         if (!shipmentsError && shipments && shipments.length > 0) {
+          // Résoudre les noms des expéditeurs (shipped_by UUID → nom)
+          const shippedByIds = [
+            ...new Set(
+              shipments
+                .filter(s => s.shipped_by)
+                .map(s => s.shipped_by as string)
+            ),
+          ];
+          const profilesMap = new Map<string, string>();
+          if (shippedByIds.length > 0) {
+            const { data: profiles } = await supabase
+              .from('user_profiles')
+              .select('user_id, first_name, last_name')
+              .in('user_id', shippedByIds);
+            if (profiles) {
+              for (const p of profiles) {
+                profilesMap.set(
+                  p.user_id,
+                  `${p.first_name ?? ''} ${p.last_name ?? ''}`.trim()
+                );
+              }
+            }
+          }
+
           const grouped = new Map<string, ShipmentHistory>();
           for (const s of shipments) {
             const key = s.shipped_at;
             const product = s.products as unknown as {
               name: string;
               sku: string;
+              product_images?: Array<{
+                public_url: string;
+                is_primary: boolean;
+              }>;
             } | null;
+
+            // Extraire image principale
+            const primaryImage = product?.product_images?.find(
+              img => img.is_primary
+            );
+            const imageUrl =
+              primaryImage?.public_url ||
+              product?.product_images?.[0]?.public_url ||
+              undefined;
+
             if (!grouped.has(key)) {
               grouped.set(key, {
                 shipment_id: s.id,
@@ -307,6 +345,10 @@ export function useSalesShipments() {
                 total_quantity: 0,
                 delivery_status: 'delivered',
                 tracking_number: s.tracking_number || undefined,
+                shipped_by_name: s.shipped_by
+                  ? profilesMap.get(s.shipped_by) || undefined
+                  : undefined,
+                notes: s.notes || undefined,
               });
             }
             const h = grouped.get(key)!;
@@ -314,6 +356,7 @@ export function useSalesShipments() {
               product_name: product?.name || 'Produit inconnu',
               product_sku: product?.sku || '-',
               quantity_shipped: s.quantity_shipped,
+              product_image_url: imageUrl,
             });
             h.total_quantity += s.quantity_shipped;
           }
