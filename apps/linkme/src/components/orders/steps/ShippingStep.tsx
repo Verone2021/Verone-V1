@@ -3,36 +3,31 @@
 /**
  * ShippingStep - Etape 7 du formulaire de commande
  *
- * Layout split-screen pour adresse et contact livraison:
+ * Layout simplifie pour adresse et contact livraison:
  *
  * SECTION 1: ADRESSE DE LIVRAISON (Split-Screen)
- * | GAUCHE (50%)                    | DROITE (50%)                        |
- * | Formulaire adresse              | Adresses existantes shipping        |
- * | + Auto-rempli lors selection    | + Nouvelle adresse                  |
+ * - Adresse du restaurant
+ * - Adresses shipping existantes
+ * - Nouvelle adresse
  *
- * SECTION 2: CONTACT LIVRAISON (Split-Screen)
- * | GAUCHE (50%)                    | DROITE (50%)                        |
- * | Formulaire pre-rempli           | FRANCHISE:                          |
- * | + Design distinctif             | - "Meme que responsable"            |
- * | + Auto-rempli lors selection    | - Contacts locaux                   |
- * |                                 | - + Nouveau contact                 |
- * |                                 | SUCCURSALE:                         |
- * |                                 | - Contacts locaux (SUR PLACE)       |
- * |                                 | - + Nouveau contact                 |
- * |                                 | (PAS responsable ni enseigne)       |
+ * SECTION 2: CONTACT LIVRAISON (simplifie)
+ * - Checkbox "Meme que responsable"
+ * - Sinon: saisie directe (formulaire)
  *
- * SECTION 3: OPTIONS DE LIVRAISON (centre commercial + semi-remorque)
- * SECTION 4: DATE SOUHAITEE
+ * SECTION 3: OPTIONS (centre commercial + semi-remorque)
+ * SECTION 4: DATE SOUHAITEE (requise)
  * SECTION 5: NOTES
+ *
+ * Pas de consultation des contacts existants en BD (securite).
  *
  * @module ShippingStep
  * @since 2026-01-24
- * @updated 2026-01-24 - Phase 2: Split-screen adresse, messages semi-remorque
+ * @updated 2026-02-23 - Simplification: suppression contacts existants, date requise
  */
 
 import { useEffect, useMemo, useCallback, useState } from 'react';
 
-import { Card, Input, Label, Textarea, Switch, cn } from '@verone/ui';
+import { Card, Input, Label, Textarea, Switch, Checkbox, cn } from '@verone/ui';
 import {
   Truck,
   MapPin,
@@ -44,17 +39,14 @@ import {
   AlertTriangle,
   Check,
   User,
-  Plus,
   Package,
 } from 'lucide-react';
 
-import { useEnseigneId } from '@/lib/hooks/use-enseigne-id';
 import {
   useEntityAddresses,
   type Address,
 } from '@/lib/hooks/use-entity-addresses';
-import { useOrganisationContacts } from '@/lib/hooks/use-organisation-contacts';
-import type { OrganisationContact } from '@/lib/hooks/use-organisation-contacts';
+
 import type {
   OrderFormData,
   ContactsStepData,
@@ -66,7 +58,6 @@ import type {
 import { defaultContact } from '../schemas/order-form.schema';
 import { AddressCard } from './contacts/AddressCard';
 import { AddressForm } from './contacts/AddressForm';
-import { ContactCard } from './contacts/ContactCard';
 
 // ============================================================================
 // TYPES
@@ -80,7 +71,7 @@ interface ShippingStepProps {
 }
 
 // ============================================================================
-// SUB-COMPONENT: Contact Form (inline)
+// SUB-COMPONENTS
 // ============================================================================
 
 interface ContactFormProps {
@@ -131,7 +122,9 @@ function ContactForm({ contact, onChange }: ContactFormProps) {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="delivery-phone">Telephone</Label>
+        <Label htmlFor="delivery-phone">
+          Telephone <span className="text-red-500">*</span>
+        </Label>
         <Input
           id="delivery-phone"
           type="tel"
@@ -145,51 +138,6 @@ function ContactForm({ contact, onChange }: ContactFormProps) {
 }
 
 // ============================================================================
-// SUB-COMPONENT: Create New Card
-// ============================================================================
-
-interface CreateNewCardProps {
-  onClick: () => void;
-  isActive: boolean;
-  label?: string;
-}
-
-function CreateNewCard({
-  onClick,
-  isActive,
-  label = 'Nouveau contact livraison',
-}: CreateNewCardProps) {
-  return (
-    <Card
-      className={cn(
-        'p-3 cursor-pointer transition-all hover:shadow-md border-dashed',
-        isActive
-          ? 'border-2 border-blue-500 bg-blue-50/50'
-          : 'hover:border-gray-400'
-      )}
-      onClick={onClick}
-    >
-      <div className="flex items-center justify-center gap-2 h-full min-h-[60px]">
-        <Plus
-          className={cn(
-            'h-5 w-5',
-            isActive ? 'text-blue-500' : 'text-gray-400'
-          )}
-        />
-        <span
-          className={cn(
-            'font-medium text-sm',
-            isActive ? 'text-blue-600' : 'text-gray-600'
-          )}
-        >
-          {label}
-        </span>
-      </div>
-    </Card>
-  );
-}
-
-// ============================================================================
 // MAIN COMPONENT
 // ============================================================================
 
@@ -199,7 +147,10 @@ export function ShippingStep({
   onUpdate,
   onUpdateDelivery,
 }: ShippingStepProps) {
-  const [showContactForm, setShowContactForm] = useState(false);
+  const [_showContactForm, setShowContactForm] = useState(
+    !formData.contacts.delivery.sameAsResponsable &&
+      !!formData.contacts.delivery.contact?.firstName
+  );
   const [showAddressForm, setShowAddressForm] = useState(false);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(
     null
@@ -207,33 +158,11 @@ export function ShippingStep({
 
   const delivery = formData.delivery;
 
-  // Get enseigne ID
-  const enseigneId = useEnseigneId();
-
-  // Fetch organisation contacts
+  // Fetch organisation info
   const organisationId =
     formData.restaurant.mode === 'existing'
       ? (formData.restaurant.existingId ?? null)
       : null;
-
-  // Determine ownership type
-  const ownershipType = useMemo(() => {
-    if (formData.restaurant.mode === 'new') {
-      return formData.restaurant.newRestaurant?.ownershipType ?? null;
-    }
-    return formData.restaurant.existingOwnershipType ?? null;
-  }, [formData.restaurant]);
-
-  // Is franchise?
-  const isFranchise = ownershipType === 'franchise';
-
-  // Fetch contacts - SANS contacts enseigne pour livraison
-  const { data: contactsData, isLoading } = useOrganisationContacts(
-    organisationId,
-    enseigneId ?? null,
-    ownershipType,
-    false // PAS de contacts enseigne pour livraison
-  );
 
   // Fetch shipping addresses
   const { data: addressesData, isLoading: addressesLoading } =
@@ -242,7 +171,7 @@ export function ShippingStep({
   // Shipping addresses
   const shippingAddresses = addressesData?.shipping ?? [];
 
-  // Restaurant info (enrichi avec adresse complète)
+  // Restaurant info
   const restaurantInfo = useMemo(() => {
     const resto = formData.restaurant;
     if (resto.mode === 'new' && resto.newRestaurant) {
@@ -267,12 +196,9 @@ export function ShippingStep({
     return null;
   }, [formData.restaurant]);
 
-  // Convertir restaurantInfo en format Address pour réutiliser AddressCard
+  // Convertir restaurantInfo en format Address pour reutiliser AddressCard
   const restaurantAddress: Address | null = useMemo(() => {
-    if (!restaurantInfo) return null;
-
-    // Seulement créer l'objet Address si on a au moins la ville
-    if (!restaurantInfo.city) return null;
+    if (!restaurantInfo?.city) return null;
 
     const now = new Date().toISOString();
 
@@ -306,13 +232,6 @@ export function ShippingStep({
     };
   }, [restaurantInfo, organisationId]);
 
-  // Contacts disponibles (locaux uniquement - ceux qui sont SUR PLACE)
-  const localContacts = useMemo(() => {
-    const allContacts = contactsData?.allContacts ?? [];
-    // Pour tous les types, on ne montre que les contacts locaux du restaurant
-    return allContacts.filter(c => c.organisationId === organisationId);
-  }, [contactsData?.allContacts, organisationId]);
-
   // Auto-remplir adresse depuis le restaurant (si nouveau)
   useEffect(() => {
     if (
@@ -343,7 +262,7 @@ export function ShippingStep({
     country: 'FR',
   });
 
-  // Sync address form data when delivery changes (e.g., selection)
+  // Sync address form data when delivery changes
   useEffect(() => {
     if (delivery.address || delivery.postalCode || delivery.city) {
       setAddressFormData({
@@ -360,28 +279,10 @@ export function ShippingStep({
     return !!(delivery.address && delivery.postalCode && delivery.city);
   }, [delivery.address, delivery.postalCode, delivery.city]);
 
-  // Is in edit mode (address selected or creating new)
+  // Is in edit mode
   const isAddressEditMode = useMemo(() => {
     return selectedAddressId !== null || showAddressForm || isAddressComplete;
   }, [selectedAddressId, showAddressForm, isAddressComplete]);
-
-  // ========================================
-  // COMPLETION CHECKS
-  // ========================================
-
-  const isContactComplete = useMemo(() => {
-    const hasContact =
-      formData.contacts.delivery.existingContactId ??
-      (formData.contacts.delivery.contact?.firstName &&
-        formData.contacts.delivery.contact?.lastName &&
-        formData.contacts.delivery.contact?.email);
-    return !!hasContact;
-  }, [formData.contacts.delivery]);
-
-  // Determine if contact form is in edit mode
-  const isContactEditMode = useMemo(() => {
-    return formData.contacts.delivery.existingContactId ?? showContactForm;
-  }, [formData.contacts.delivery.existingContactId, showContactForm]);
 
   // ========================================
   // ADDRESS HANDLERS
@@ -390,7 +291,6 @@ export function ShippingStep({
   const handleAddressFormChange = useCallback(
     (newAddress: PartialAddressData) => {
       setAddressFormData(newAddress);
-      // Sync with delivery data
       onUpdateDelivery({
         address: newAddress.addressLine1 ?? '',
         postalCode: newAddress.postalCode ?? '',
@@ -469,34 +369,21 @@ export function ShippingStep({
     [formData.contacts.delivery, onUpdate]
   );
 
-  // Pour selection d'un contact existant
-  const handleContactSelect = useCallback(
-    (contact: OrganisationContact) => {
+  const handleSameAsResponsable = useCallback(
+    (checked: boolean) => {
       handleDeliveryContactUpdate({
-        sameAsResponsable: false,
-        existingContactId: contact.id,
-        contact: {
-          firstName: contact.firstName,
-          lastName: contact.lastName,
-          email: contact.email,
-          phone: contact.phone ?? contact.mobile ?? '',
-          position: contact.title ?? '',
-        },
+        sameAsResponsable: checked,
+        existingContactId: null,
+        contact: checked ? null : defaultContact,
       });
-      setShowContactForm(false);
+      if (!checked) {
+        setShowContactForm(true);
+      } else {
+        setShowContactForm(false);
+      }
     },
     [handleDeliveryContactUpdate]
   );
-
-  // Pour nouveau contact
-  const handleCreateNew = useCallback(() => {
-    setShowContactForm(true);
-    handleDeliveryContactUpdate({
-      sameAsResponsable: false,
-      existingContactId: null,
-      contact: defaultContact,
-    });
-  }, [handleDeliveryContactUpdate]);
 
   const handleContactChange = useCallback(
     (field: keyof ContactBase, value: string) => {
@@ -566,7 +453,7 @@ export function ShippingStep({
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* GAUCHE: Formulaire adresse avec design distinctif */}
+          {/* GAUCHE: Formulaire adresse */}
           <Card
             className={cn(
               'p-4 transition-all',
@@ -575,7 +462,6 @@ export function ShippingStep({
                 : 'bg-gray-50 border-dashed border-gray-300'
             )}
           >
-            {/* En-tete distinctif */}
             {isAddressEditMode && (
               <div className="flex items-center gap-3 pb-4 border-b border-purple-200 mb-4">
                 <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
@@ -592,7 +478,6 @@ export function ShippingStep({
               </div>
             )}
 
-            {/* Message si aucune selection */}
             {!isAddressEditMode && (
               <div className="flex flex-col items-center justify-center py-8 text-center">
                 <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-3">
@@ -607,7 +492,6 @@ export function ShippingStep({
               </div>
             )}
 
-            {/* Formulaire adresse */}
             {isAddressEditMode && (
               <AddressForm
                 address={addressFormData}
@@ -635,7 +519,7 @@ export function ShippingStep({
 
             {!addressesLoading && (
               <div className="space-y-3">
-                {/* Adresse du restaurant - Réutilise AddressCard */}
+                {/* Adresse du restaurant */}
                 {restaurantAddress && (
                   <AddressCard
                     address={restaurantAddress}
@@ -661,13 +545,33 @@ export function ShippingStep({
                 ))}
 
                 {/* Nouvelle adresse */}
-                <CreateNewCard
+                <Card
+                  className={cn(
+                    'p-3 cursor-pointer transition-all hover:shadow-md border-dashed',
+                    showAddressForm
+                      ? 'border-2 border-blue-500 bg-blue-50/50'
+                      : 'hover:border-gray-400'
+                  )}
                   onClick={handleCreateNewAddress}
-                  isActive={showAddressForm}
-                  label="+ Nouvelle adresse"
-                />
+                >
+                  <div className="flex items-center justify-center gap-2 h-full min-h-[60px]">
+                    <MapPin
+                      className={cn(
+                        'h-5 w-5',
+                        showAddressForm ? 'text-blue-500' : 'text-gray-400'
+                      )}
+                    />
+                    <span
+                      className={cn(
+                        'font-medium text-sm',
+                        showAddressForm ? 'text-blue-600' : 'text-gray-600'
+                      )}
+                    >
+                      + Nouvelle adresse
+                    </span>
+                  </div>
+                </Card>
 
-                {/* Info */}
                 <div className="mt-3 p-3 bg-purple-50 border border-purple-200 rounded-lg">
                   <div className="flex items-start gap-2">
                     <AlertCircle className="h-4 w-4 text-purple-600 flex-shrink-0 mt-0.5" />
@@ -684,23 +588,12 @@ export function ShippingStep({
       </Card>
 
       {/* ================================================================
-          SECTION 2: CONTACT LIVRAISON (Split-Screen)
+          SECTION 2: CONTACT LIVRAISON (simplifie)
           ================================================================ */}
       <Card className="p-5">
         <div className="flex items-center gap-3 mb-4">
-          <div
-            className={cn(
-              'w-10 h-10 rounded-full flex items-center justify-center',
-              isContactComplete
-                ? 'bg-green-100 text-green-600'
-                : 'bg-purple-100 text-purple-600'
-            )}
-          >
-            {isContactComplete ? (
-              <Check className="h-5 w-5" />
-            ) : (
-              <User className="h-5 w-5" />
-            )}
+          <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
+            <User className="h-5 w-5 text-purple-600" />
           </div>
           <div>
             <h3 className="font-semibold text-gray-900">
@@ -712,172 +605,63 @@ export function ShippingStep({
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* GAUCHE: Formulaire avec design distinctif */}
-          <Card
-            className={cn(
-              'p-4 transition-all',
-              isContactEditMode
-                ? 'bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200'
-                : 'bg-gray-50 border-dashed border-gray-300'
-            )}
-          >
-            {/* En-tete distinctif */}
-            {isContactEditMode && (
-              <div className="flex items-center gap-3 pb-4 border-b border-purple-200 mb-4">
-                <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
-                  <Package className="h-5 w-5 text-purple-600" />
-                </div>
-                <div>
-                  <h4 className="font-semibold text-purple-900">
-                    Contact livraison
-                  </h4>
-                  <p className="text-xs text-purple-600">
-                    Personne a contacter pour la livraison
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* Message si aucune selection */}
-            {!isContactEditMode && (
-              <div className="flex flex-col items-center justify-center py-8 text-center">
-                <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-3">
-                  <User className="h-6 w-6 text-gray-400" />
-                </div>
-                <p className="text-sm text-gray-500 mb-1">
-                  Aucun contact selectionne
-                </p>
-                <p className="text-xs text-gray-400">
-                  Cliquez sur un contact a droite pour le selectionner
-                </p>
-              </div>
-            )}
-
-            {/* Affichage contact existant selectionne */}
-            {formData.contacts.delivery.existingContactId && (
-              <div className="space-y-4">
-                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                  <div className="flex items-start gap-2">
-                    <User className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
-                    <div className="text-sm text-blue-700">
-                      <p className="font-medium">Contact selectionne</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <Label className="text-xs text-gray-500">Prenom</Label>
-                    <p className="text-sm font-medium">
-                      {formData.contacts.delivery.contact?.firstName ?? '-'}
-                    </p>
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs text-gray-500">Nom</Label>
-                    <p className="text-sm font-medium">
-                      {formData.contacts.delivery.contact?.lastName ?? '-'}
-                    </p>
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs text-gray-500">Email</Label>
-                    <p className="text-sm font-medium">
-                      {formData.contacts.delivery.contact?.email ?? '-'}
-                    </p>
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs text-gray-500">Telephone</Label>
-                    <p className="text-sm font-medium">
-                      {formData.contacts.delivery.contact?.phone ?? '-'}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Formulaire nouveau contact */}
-            {showContactForm &&
-              !formData.contacts.delivery.existingContactId && (
-                <div className="space-y-4">
-                  <h5 className="text-sm font-medium text-gray-700">
-                    Nouveau contact livraison
-                  </h5>
-                  <ContactForm
-                    contact={
-                      formData.contacts.delivery.contact ?? defaultContact
-                    }
-                    onChange={handleContactChange}
-                  />
-                </div>
-              )}
-          </Card>
-
-          {/* DROITE: Contacts filtres */}
-          <Card className="p-4">
-            <div className="flex items-center gap-2 pb-3 border-b mb-4">
-              <User className="h-4 w-4 text-purple-600" />
-              <h4 className="font-medium text-gray-700">
-                Contacts disponibles
-              </h4>
+        <Card className="p-4">
+          <div className="space-y-4">
+            {/* Checkbox "Meme que responsable" */}
+            <div className="flex items-center gap-3">
+              <Checkbox
+                id="delivery-same-as-responsable"
+                checked={formData.contacts.delivery.sameAsResponsable}
+                onCheckedChange={(checked: boolean) =>
+                  handleSameAsResponsable(checked)
+                }
+              />
+              <Label
+                htmlFor="delivery-same-as-responsable"
+                className="text-sm font-medium cursor-pointer"
+              >
+                Meme contact que le responsable de commande
+              </Label>
             </div>
 
-            {isLoading && (
-              <div className="flex items-center justify-center py-8">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-600" />
-              </div>
-            )}
-
-            {!isLoading && (
-              <div className="space-y-3">
-                {/* TOUS: Contacts locaux du restaurant (SUR PLACE) */}
-                {localContacts.map(contact => (
-                  <ContactCard
-                    key={contact.id}
-                    contact={contact}
-                    isSelected={
-                      formData.contacts.delivery.existingContactId ===
-                      contact.id
-                    }
-                    onClick={() => handleContactSelect(contact)}
-                  />
-                ))}
-
-                {/* TOUS: Nouveau contact */}
-                <CreateNewCard
-                  onClick={handleCreateNew}
-                  isActive={
-                    showContactForm &&
-                    !formData.contacts.delivery.existingContactId
-                  }
-                  label="Nouveau contact livraison"
-                />
-
-                {/* Info si aucun contact local */}
-                {localContacts.length === 0 && (
-                  <p className="text-xs text-gray-400 text-center py-2">
-                    Aucun contact local enregistre pour ce restaurant
-                  </p>
-                )}
-
-                {/* Info pour succursales */}
-                {!isFranchise && (
-                  <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                    <div className="flex items-start gap-2">
-                      <AlertCircle className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
-                      <div className="text-xs text-blue-700">
-                        <p className="font-medium">Restaurant en propre</p>
-                        <p className="mt-0.5">
-                          Seuls les contacts locaux (presents sur place) sont
-                          affiches. Le responsable et les contacts enseigne sont
-                          au bureau.
-                        </p>
-                      </div>
-                    </div>
+            {/* Info same as responsable */}
+            {formData.contacts.delivery.sameAsResponsable && (
+              <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                <div className="flex items-start gap-2">
+                  <Check className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
+                  <div className="text-sm text-green-700">
+                    <p className="font-medium">
+                      Contact identique au responsable commande
+                    </p>
+                    {formData.contacts.responsable.firstName && (
+                      <p className="mt-1">
+                        {formData.contacts.responsable.firstName}{' '}
+                        {formData.contacts.responsable.lastName} -{' '}
+                        {formData.contacts.responsable.email}
+                      </p>
+                    )}
                   </div>
-                )}
+                </div>
               </div>
             )}
-          </Card>
-        </div>
+
+            {/* Formulaire contact livraison */}
+            {!formData.contacts.delivery.sameAsResponsable && (
+              <div className="pt-2">
+                <div className="flex items-center gap-2 pb-3 border-b mb-4">
+                  <Package className="h-4 w-4 text-gray-500" />
+                  <h5 className="text-sm font-medium text-gray-700">
+                    Contact livraison
+                  </h5>
+                </div>
+                <ContactForm
+                  contact={formData.contacts.delivery.contact ?? defaultContact}
+                  onChange={handleContactChange}
+                />
+              </div>
+            )}
+          </div>
+        </Card>
       </Card>
 
       {/* ================================================================
@@ -922,10 +706,8 @@ export function ShippingStep({
               />
             </div>
 
-            {/* Bloc centre commercial avec email ET formulaire d'acces */}
             {delivery.isMallDelivery && (
               <div className="ml-8 p-4 bg-amber-50 border border-amber-200 rounded-lg space-y-4">
-                {/* Email centre commercial */}
                 <div className="space-y-2">
                   <Label htmlFor="mallEmail">
                     Email du centre commercial{' '}
@@ -945,7 +727,6 @@ export function ShippingStep({
                   </p>
                 </div>
 
-                {/* Formulaire d'acces - UNIQUEMENT si centre commercial */}
                 <div className="pt-3 border-t border-amber-200">
                   <div className="flex items-center gap-3 mb-3">
                     <FileUp className="h-5 w-5 text-amber-600" />
@@ -1009,9 +790,7 @@ export function ShippingStep({
               />
             </div>
 
-            {/* Message conditionnel semi-remorque */}
             {delivery.semiTrailerAccessible ? (
-              // Si COCHE (acces possible) - Message info bleu
               <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                 <div className="flex items-start gap-2">
                   <AlertCircle className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
@@ -1023,7 +802,6 @@ export function ShippingStep({
                 </div>
               </div>
             ) : (
-              // Si NON COCHE (pas d'acces) - Message warning orange
               <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
                 <div className="flex items-start gap-2">
                   <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
@@ -1048,19 +826,31 @@ export function ShippingStep({
       </Card>
 
       {/* ================================================================
-          SECTION 4: DATE SOUHAITEE
+          SECTION 4: DATE SOUHAITEE (requise)
           ================================================================ */}
       <Card className="p-5">
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-            <Calendar className="h-5 w-5 text-blue-600" />
+          <div
+            className={cn(
+              'w-10 h-10 rounded-full flex items-center justify-center',
+              delivery.desiredDate
+                ? 'bg-green-100 text-green-600'
+                : 'bg-blue-100 text-blue-600'
+            )}
+          >
+            {delivery.desiredDate ? (
+              <Check className="h-5 w-5" />
+            ) : (
+              <Calendar className="h-5 w-5" />
+            )}
           </div>
           <div>
             <h3 className="font-semibold text-gray-900">
-              Date de livraison souhaitee
+              Date de livraison souhaitee{' '}
+              <span className="text-red-500">*</span>
             </h3>
             <p className="text-sm text-gray-500">
-              Optionnel - Sous reserve de disponibilite
+              Sous reserve de disponibilite
             </p>
           </div>
         </div>
@@ -1073,6 +863,11 @@ export function ShippingStep({
             onChange={handleDateChange}
             min={new Date().toISOString().split('T')[0]}
           />
+          {!delivery.desiredDate && (
+            <p className="text-xs text-amber-600">
+              Veuillez indiquer une date de livraison souhaitee.
+            </p>
+          )}
           <p className="text-xs text-gray-500">
             La date finale sera confirmee par notre equipe apres validation de
             la commande.

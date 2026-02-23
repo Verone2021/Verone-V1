@@ -21,9 +21,11 @@ import Image from 'next/image';
 
 import {
   Card,
+  Checkbox,
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
+  Label,
   cn,
 } from '@verone/ui';
 import {
@@ -43,7 +45,10 @@ import {
   Loader2 as _Loader2,
 } from 'lucide-react';
 
-import type { OrderFormData } from '../schemas/order-form.schema';
+import type {
+  OrderFormData,
+  DeliveryStepData,
+} from '../schemas/order-form.schema';
 
 // ============================================================================
 // TYPES
@@ -61,6 +66,7 @@ interface ValidationStepProps {
     effectiveTaxRate: number;
   };
   onSubmit: () => Promise<void>;
+  onUpdateDelivery: (data: Partial<DeliveryStepData>) => void;
   isSubmitting: boolean;
 }
 
@@ -95,6 +101,7 @@ export function ValidationStep({
   errors: _errors,
   cartTotals,
   onSubmit: _onSubmit,
+  onUpdateDelivery,
   isSubmitting: _isSubmitting,
 }: ValidationStepProps) {
   const [openSections, setOpenSections] = useState<string[]>([
@@ -581,6 +588,41 @@ export function ValidationStep({
           </CollapsibleContent>
         </Card>
       </Collapsible>
+
+      {/* Conditions de livraison */}
+      <Card className="p-5">
+        <div className="space-y-4">
+          <div className="flex items-start gap-3">
+            <Checkbox
+              id="deliveryTermsAccepted"
+              checked={formData.delivery.deliveryTermsAccepted}
+              onCheckedChange={(checked: boolean) =>
+                onUpdateDelivery({ deliveryTermsAccepted: checked })
+              }
+            />
+            <div>
+              <Label
+                htmlFor="deliveryTermsAccepted"
+                className="text-sm font-medium cursor-pointer"
+              >
+                J&apos;accepte les conditions generales de livraison{' '}
+                <span className="text-red-500">*</span>
+              </Label>
+              <p className="text-xs text-gray-500 mt-1">
+                En cochant cette case, vous confirmez avoir pris connaissance
+                des conditions de livraison et les accepter.
+              </p>
+            </div>
+          </div>
+
+          {!formData.delivery.deliveryTermsAccepted && (
+            <p className="text-xs text-amber-600 ml-7">
+              Vous devez accepter les conditions de livraison pour valider la
+              commande.
+            </p>
+          )}
+        </div>
+      </Card>
 
       {/* Note importante */}
       <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
