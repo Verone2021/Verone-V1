@@ -29,6 +29,7 @@ import { CopyButton } from './CopyButton';
 import { FeesSection } from './FeesSection';
 import { InvoicesSection } from './InvoicesSection';
 import { PaymentSection } from './PaymentSection';
+import { ReturnSection } from './ReturnSection';
 
 // Types pour order avec jointures
 interface OrderWithRelations {
@@ -38,6 +39,7 @@ interface OrderWithRelations {
   payment_status: string | null;
   payment_status_v2: string | null;
   customer_id: string | null;
+  individual_customer_id: string | null;
   customer_type: string | null;
   billing_address: unknown;
   shipping_address: unknown;
@@ -168,6 +170,7 @@ export default async function OrderDetailPage({
           payment_status: linkmeOrder.payment_status,
           payment_status_v2: null,
           customer_id: linkmeOrder.customer_id,
+          individual_customer_id: null,
           customer_type: linkmeOrder.customer_type,
           billing_address: null,
           shipping_address: linkmeOrder.shipping_address,
@@ -586,6 +589,13 @@ export default async function OrderDetailPage({
 
             {/* Section Factures liées - Workflow 3 statuts */}
             <InvoicesSection orderId={order.id} />
+
+            {/* Section Retours - visible uniquement si shipped/delivered */}
+            <ReturnSection
+              orderId={order.id}
+              orderNumber={order.order_number}
+              orderStatus={order.status}
+            />
           </div>
         </div>
 
