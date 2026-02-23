@@ -11753,6 +11753,10 @@ export type Database = {
         }[];
       };
       get_products_status_metrics: { Args: never; Returns: Json };
+      get_product_detail_public: {
+        Args: { p_product_id: string; p_selection_id: string };
+        Returns: Json;
+      };
       get_public_selection:
         | { Args: { p_selection_id: string }; Returns: Json }
         | { Args: { p_share_token?: string; p_slug: string }; Returns: Json };
