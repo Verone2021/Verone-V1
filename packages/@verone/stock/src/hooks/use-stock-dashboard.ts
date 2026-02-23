@@ -382,6 +382,7 @@ export function useStockDashboard() {
           status,
           customer_id,
           customer_type,
+          individual_customer_id,
           total_ht,
           sales_order_items(quantity)
         `
@@ -448,7 +449,8 @@ export function useStockDashboard() {
           order_type: 'purchase',
           supplier_name: supplierName,
           total_quantity: (po.purchase_order_items || []).reduce(
-            (sum: number, item: any) => sum + (item.quantity || 0),
+            (sum: number, item: { quantity: number | null }) =>
+              sum + (item.quantity || 0),
             0
           ),
           expected_date: po.expected_delivery_date || '',
@@ -491,7 +493,8 @@ export function useStockDashboard() {
           order_type: 'sales',
           client_name: customerName,
           total_quantity: (so.sales_order_items || []).reduce(
-            (sum: number, item: any) => sum + (item.quantity || 0),
+            (sum: number, item: { quantity: number | null }) =>
+              sum + (item.quantity || 0),
             0
           ),
           expected_date: so.expected_delivery_date || '',
