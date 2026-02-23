@@ -39,6 +39,7 @@ export async function GET(request: NextRequest): Promise<
           id,
           order_number,
           customer_id,
+          individual_customer_id,
           customer_type,
           shipping_address,
           billing_address

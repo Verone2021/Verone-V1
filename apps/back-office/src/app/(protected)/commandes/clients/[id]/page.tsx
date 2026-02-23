@@ -96,6 +96,7 @@ export default async function OrderDetailPage({
       payment_status,
       payment_status_v2,
       customer_id,
+      individual_customer_id,
       customer_type,
       billing_address,
       shipping_address,

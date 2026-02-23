@@ -38,7 +38,7 @@ export async function GET(
     // 1. Récupérer la commande
     const { data: order, error: orderError } = await supabase
       .from('sales_orders')
-      .select('customer_id, customer_type')
+      .select('customer_id, individual_customer_id, customer_type')
       .eq('id', id)
       .single();
 
