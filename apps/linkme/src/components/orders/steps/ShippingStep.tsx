@@ -147,7 +147,7 @@ export function ShippingStep({
   onUpdate,
   onUpdateDelivery,
 }: ShippingStepProps) {
-  const [showContactForm, setShowContactForm] = useState(
+  const [_showContactForm, setShowContactForm] = useState(
     !formData.contacts.delivery.sameAsResponsable &&
       !!formData.contacts.delivery.contact?.firstName
   );

@@ -275,7 +275,7 @@ export function ProductDetailModal({
                   <Skeleton className="h-6 w-24 rounded-full" />
                 </div>
               ) : (
-                (detail?.brand || detail?.style) && (
+                (detail?.brand ?? detail?.style) && (
                   <div className="flex flex-wrap gap-2 mb-4">
                     {detail.brand && (
                       <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-gray-100 text-xs font-medium text-gray-700">
@@ -312,7 +312,7 @@ export function ProductDetailModal({
               {isLoading ? (
                 <Skeleton className="h-5 w-40 mb-4" />
               ) : (
-                (detail?.category_name || item.category_name) && (
+                (detail?.category_name ?? item.category_name) && (
                   <p className="text-sm text-gray-500 mb-6">
                     {detail?.category_name ?? item.category_name}
                     {(detail?.subcategory_name ?? item.subcategory_name) && (
@@ -334,7 +334,7 @@ export function ProductDetailModal({
                   <Skeleton className="h-10 w-full" />
                 </div>
               ) : (
-                (dimensionsText || detail?.weight || rooms.length > 0) && (
+                (dimensionsText ?? detail?.weight ?? rooms.length > 0) && (
                   <div className="mb-6">
                     <h3
                       className="text-sm font-semibold mb-3 uppercase tracking-wide"
