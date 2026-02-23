@@ -382,7 +382,6 @@ export function useStockDashboard() {
           status,
           customer_id,
           customer_type,
-          individual_customer_id,
           total_ht,
           sales_order_items(quantity)
         `

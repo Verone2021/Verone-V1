@@ -72,7 +72,6 @@ export async function GET(
       id: string;
       order_number: string;
       customer_id: string;
-      individual_customer_id: string | null;
       customer_type: string;
       shipping_address: unknown;
       billing_address: unknown;
@@ -136,7 +135,7 @@ export async function GET(
           .select(
             'id, first_name, last_name, email, phone, address_line1, city, postal_code, country'
           )
-          .eq('id', order.individual_customer_id ?? '')
+          .eq('id', order.individual_customer_id)
           .single();
         customer = indiv
           ? {

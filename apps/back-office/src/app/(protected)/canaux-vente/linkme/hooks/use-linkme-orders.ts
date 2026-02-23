@@ -28,7 +28,6 @@ type SalesOrderWithCustomer = Pick<
   | 'order_number'
   | 'channel_id'
   | 'customer_id'
-  | 'individual_customer_id'
   | 'customer_type'
   | 'status'
   | 'payment_status_v2'
@@ -209,7 +208,6 @@ async function fetchLinkMeOrders(): Promise<LinkMeOrder[]> {
       order_number,
       channel_id,
       customer_id,
-      individual_customer_id,
       customer_type,
       status,
       payment_status_v2,
@@ -261,7 +259,6 @@ async function fetchLinkMeOrderById(orderId: string): Promise<LinkMeOrder> {
       order_number,
       channel_id,
       customer_id,
-      individual_customer_id,
       customer_type,
       status,
       payment_status_v2,

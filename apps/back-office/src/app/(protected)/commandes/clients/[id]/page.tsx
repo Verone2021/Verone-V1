@@ -29,16 +29,15 @@ import { CopyButton } from './CopyButton';
 import { FeesSection } from './FeesSection';
 import { InvoicesSection } from './InvoicesSection';
 import { PaymentSection } from './PaymentSection';
-import { ReturnSection } from './ReturnSection';
 
 // Types pour order avec jointures
 interface OrderWithRelations {
   id: string;
   order_number: string;
   status: string;
+  payment_status: string | null;
   payment_status_v2: string | null;
   customer_id: string | null;
-  individual_customer_id: string | null;
   customer_type: string | null;
   billing_address: unknown;
   shipping_address: unknown;
@@ -94,6 +93,7 @@ export default async function OrderDetailPage({
       id,
       order_number,
       status,
+      payment_status,
       payment_status_v2,
       customer_id,
       individual_customer_id,
@@ -136,6 +136,7 @@ export default async function OrderDetailPage({
       id: string;
       order_number: string;
       status: string;
+      payment_status: string | null;
       customer_id: string | null;
       customer_type: string | null;
       shipping_address: unknown;
@@ -164,9 +165,9 @@ export default async function OrderDetailPage({
           id: linkmeOrder.id,
           order_number: linkmeOrder.order_number,
           status: linkmeOrder.status,
+          payment_status: linkmeOrder.payment_status,
           payment_status_v2: null,
           customer_id: linkmeOrder.customer_id,
-          individual_customer_id: null,
           customer_type: linkmeOrder.customer_type,
           billing_address: null,
           shipping_address: linkmeOrder.shipping_address,
@@ -554,7 +555,9 @@ export default async function OrderDetailPage({
               taxRate={20}
               currency="EUR"
               paymentTerms="immediate"
-              paymentStatus={order.payment_status_v2 ?? 'pending'}
+              paymentStatus={
+                order.payment_status_v2 ?? order.payment_status ?? 'pending'
+              }
               customerName={customerName}
               customerEmail={customerEmail ?? null}
               customerType={
@@ -583,13 +586,6 @@ export default async function OrderDetailPage({
 
             {/* Section Factures liées - Workflow 3 statuts */}
             <InvoicesSection orderId={order.id} />
-
-            {/* Section Retours - visible uniquement si shipped/delivered */}
-            <ReturnSection
-              orderId={order.id}
-              orderNumber={order.order_number}
-              orderStatus={order.status}
-            />
           </div>
         </div>
 

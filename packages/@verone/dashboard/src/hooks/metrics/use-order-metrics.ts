@@ -49,7 +49,6 @@ export function useOrderMetrics() {
           created_at,
           customer_type,
           customer_id,
-          individual_customer_id,
           organisations:customer_id(legal_name, trade_name)
         `
         )

@@ -75,7 +75,6 @@ export async function GET(request: NextRequest): Promise<
           id: string;
           order_number: string;
           customer_id: string;
-          individual_customer_id: string | null;
           customer_type: string;
           shipping_address: unknown;
           billing_address: unknown;
@@ -109,7 +108,7 @@ export async function GET(request: NextRequest): Promise<
             const { data: indiv } = await supabase
               .from('individual_customers')
               .select('id, first_name, last_name, email, phone')
-              .eq('id', order.individual_customer_id ?? '')
+              .eq('id', order.individual_customer_id)
               .single();
             customer = indiv
               ? {

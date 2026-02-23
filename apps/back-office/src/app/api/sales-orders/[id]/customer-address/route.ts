@@ -103,7 +103,7 @@ export async function GET(
         .select(
           'first_name, last_name, email, phone, address_line1, city, postal_code, country'
         )
-        .eq('id', order.individual_customer_id ?? '')
+        .eq('id', order.individual_customer_id)
         .single();
 
       if (customerError || !customer) {
