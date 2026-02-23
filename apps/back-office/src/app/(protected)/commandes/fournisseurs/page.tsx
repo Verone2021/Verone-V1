@@ -1513,6 +1513,16 @@ export default function PurchaseOrdersPage() {
                                       <Link2 className="h-3 w-3 mr-1 text-green-600" />
                                       Rapprochée
                                     </Badge>
+                                  ) : (order as PurchaseOrderExtended)
+                                      .payment_status_v2 === 'paid' ? (
+                                    <Badge
+                                      variant="outline"
+                                      className="text-xs bg-gray-100 text-gray-500 border-gray-300 cursor-help"
+                                      title="Rapprochement non nécessaire : commande payée manuellement"
+                                    >
+                                      <Link2 className="h-3 w-3 mr-1 text-gray-400" />
+                                      Payé
+                                    </Badge>
                                   ) : (
                                     <IconButton
                                       icon={Link2}
