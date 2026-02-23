@@ -42,7 +42,7 @@ export interface GenericOrderData {
   id: string;
   order_number: string;
   status: string;
-  payment_status: string | null;
+  payment_status_v2: string | null;
   customer_type: string | null;
   billing_address: unknown;
   shipping_address: unknown;
@@ -322,7 +322,7 @@ export function GenericOrderLayout({ order }: { order: GenericOrderData }) {
             taxRate={20}
             currency="EUR"
             paymentTerms="immediate"
-            paymentStatus={order.payment_status ?? 'pending'}
+            paymentStatus={order.payment_status_v2 ?? 'pending'}
             customerName={order.customerName}
             customerEmail={order.customerEmail || null}
             customerType={
