@@ -29,6 +29,11 @@ interface Product {
   cost_price_last?: number | null;
   cost_price_count?: number; // NOT NULL integer in DB, defaults to 0
   target_margin_percentage?: number | null;
+  // Prix nets (achat + shipping + insurance par unité)
+  cost_net_avg?: number | null;
+  cost_net_min?: number | null;
+  cost_net_max?: number | null;
+  cost_net_last?: number | null;
 }
 
 interface VariantGroup {
@@ -524,6 +529,11 @@ export function SupplierVsPricingEditSection({
                     <span className="text-neutral-600">Prix moyen:</span>
                     <span className="font-medium text-neutral-800">
                       {formatPrice(product.cost_price_avg)}
+                      {product.cost_net_avg != null && (
+                        <span className="text-neutral-500 font-normal text-xs ml-1">
+                          ({formatPrice(product.cost_net_avg)} net)
+                        </span>
+                      )}
                     </span>
                   </div>
                 )}
@@ -532,6 +542,11 @@ export function SupplierVsPricingEditSection({
                     <span className="text-neutral-600">Dernier prix:</span>
                     <span className="font-medium text-neutral-800">
                       {formatPrice(product.cost_price_last)}
+                      {product.cost_net_last != null && (
+                        <span className="text-neutral-500 font-normal text-xs ml-1">
+                          ({formatPrice(product.cost_net_last)} net)
+                        </span>
+                      )}
                     </span>
                   </div>
                 )}
@@ -540,8 +555,19 @@ export function SupplierVsPricingEditSection({
                     <div className="flex justify-between col-span-2">
                       <span className="text-neutral-600">Min / Max:</span>
                       <span className="font-medium text-neutral-800">
-                        {formatPrice(product.cost_price_min)} /{' '}
+                        {formatPrice(product.cost_price_min)}
+                        {product.cost_net_min != null && (
+                          <span className="text-neutral-500 font-normal text-xs ml-1">
+                            ({formatPrice(product.cost_net_min)})
+                          </span>
+                        )}
+                        {' / '}
                         {formatPrice(product.cost_price_max)}
+                        {product.cost_net_max != null && (
+                          <span className="text-neutral-500 font-normal text-xs ml-1">
+                            ({formatPrice(product.cost_net_max)})
+                          </span>
+                        )}
                       </span>
                     </div>
                   )}
