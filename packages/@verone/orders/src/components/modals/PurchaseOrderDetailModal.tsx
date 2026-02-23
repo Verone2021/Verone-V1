@@ -288,6 +288,9 @@ export function PurchaseOrderDetailModal({
     const amount = parseFloat(manualPaymentAmount);
     if (isNaN(amount) || amount <= 0) return;
 
+    // Reject if amount exceeds remaining
+    if (amount > remainingAmount + 0.01) return;
+
     setPaymentSubmitting(true);
     void markAsManuallyPaid(order.id, manualPaymentType, amount, {
       reference: manualPaymentRef || undefined,
@@ -1076,15 +1079,29 @@ export function PurchaseOrderDetailModal({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="po-payment-amount">Montant (€)</Label>
+                <Label htmlFor="po-payment-amount">
+                  Montant (€)
+                  {remainingAmount > 0 && (
+                    <span className="text-muted-foreground font-normal ml-1">
+                      — Reste à payer : {remainingAmount.toFixed(2)} €
+                    </span>
+                  )}
+                </Label>
                 <Input
                   id="po-payment-amount"
                   type="number"
                   step="0.01"
                   min="0.01"
+                  max={remainingAmount}
                   value={manualPaymentAmount}
                   onChange={e => setManualPaymentAmount(e.target.value)}
                 />
+                {parseFloat(manualPaymentAmount) > remainingAmount + 0.01 && (
+                  <p className="text-sm text-destructive">
+                    Le montant dépasse le reste à payer (
+                    {remainingAmount.toFixed(2)} €)
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -1128,7 +1145,9 @@ export function PurchaseOrderDetailModal({
                 disabled={
                   paymentSubmitting ||
                   !manualPaymentAmount ||
-                  parseFloat(manualPaymentAmount) <= 0
+                  parseFloat(manualPaymentAmount) <= 0 ||
+                  parseFloat(manualPaymentAmount) > remainingAmount + 0.01 ||
+                  remainingAmount <= 0
                 }
                 className="w-full bg-green-600 hover:bg-green-700"
               >

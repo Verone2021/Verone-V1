@@ -222,6 +222,20 @@ export default function PurchaseOrdersPage() {
   const [rapprochementOrder, setRapprochementOrder] =
     useState<PurchaseOrder | null>(null);
 
+  // État pour confirmation paiement manuel (évite double-clic)
+  const [pendingPayment, setPendingPayment] = useState<{
+    orderId: string;
+    poNumber: string;
+    type:
+      | 'cash'
+      | 'check'
+      | 'transfer_other'
+      | 'card'
+      | 'compensation'
+      | 'verified_bubble';
+    amount: number;
+  } | null>(null);
+
   const toggleRow = (orderId: string) => {
     setExpandedRows(prev => {
       const next = new Set(prev);
@@ -1226,11 +1240,14 @@ export default function PurchaseOrdersPage() {
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem
                                       onClick={() =>
-                                        void markAsManuallyPaid(
-                                          order.id,
-                                          'cash',
-                                          order.total_ttc || 0
-                                        )
+                                        setPendingPayment({
+                                          orderId: order.id,
+                                          poNumber:
+                                            order.po_number ||
+                                            order.id.slice(0, 8),
+                                          type: 'cash',
+                                          amount: order.total_ttc || 0,
+                                        })
                                       }
                                     >
                                       <Banknote className="h-4 w-4 mr-2" />
@@ -1238,11 +1255,14 @@ export default function PurchaseOrdersPage() {
                                     </DropdownMenuItem>
                                     <DropdownMenuItem
                                       onClick={() =>
-                                        void markAsManuallyPaid(
-                                          order.id,
-                                          'check',
-                                          order.total_ttc || 0
-                                        )
+                                        setPendingPayment({
+                                          orderId: order.id,
+                                          poNumber:
+                                            order.po_number ||
+                                            order.id.slice(0, 8),
+                                          type: 'check',
+                                          amount: order.total_ttc || 0,
+                                        })
                                       }
                                     >
                                       <Receipt className="h-4 w-4 mr-2" />
@@ -1250,11 +1270,14 @@ export default function PurchaseOrdersPage() {
                                     </DropdownMenuItem>
                                     <DropdownMenuItem
                                       onClick={() =>
-                                        void markAsManuallyPaid(
-                                          order.id,
-                                          'transfer_other',
-                                          order.total_ttc || 0
-                                        )
+                                        setPendingPayment({
+                                          orderId: order.id,
+                                          poNumber:
+                                            order.po_number ||
+                                            order.id.slice(0, 8),
+                                          type: 'transfer_other',
+                                          amount: order.total_ttc || 0,
+                                        })
                                       }
                                     >
                                       <Building2 className="h-4 w-4 mr-2" />
@@ -1262,11 +1285,14 @@ export default function PurchaseOrdersPage() {
                                     </DropdownMenuItem>
                                     <DropdownMenuItem
                                       onClick={() =>
-                                        void markAsManuallyPaid(
-                                          order.id,
-                                          'card',
-                                          order.total_ttc || 0
-                                        )
+                                        setPendingPayment({
+                                          orderId: order.id,
+                                          poNumber:
+                                            order.po_number ||
+                                            order.id.slice(0, 8),
+                                          type: 'card',
+                                          amount: order.total_ttc || 0,
+                                        })
                                       }
                                     >
                                       <CreditCard className="h-4 w-4 mr-2" />
@@ -1275,11 +1301,14 @@ export default function PurchaseOrdersPage() {
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem
                                       onClick={() =>
-                                        void markAsManuallyPaid(
-                                          order.id,
-                                          'compensation',
-                                          order.total_ttc || 0
-                                        )
+                                        setPendingPayment({
+                                          orderId: order.id,
+                                          poNumber:
+                                            order.po_number ||
+                                            order.id.slice(0, 8),
+                                          type: 'compensation',
+                                          amount: order.total_ttc || 0,
+                                        })
                                       }
                                     >
                                       <CheckSquare className="h-4 w-4 mr-2" />
@@ -1287,11 +1316,14 @@ export default function PurchaseOrdersPage() {
                                     </DropdownMenuItem>
                                     <DropdownMenuItem
                                       onClick={() =>
-                                        void markAsManuallyPaid(
-                                          order.id,
-                                          'verified_bubble',
-                                          order.total_ttc || 0
-                                        )
+                                        setPendingPayment({
+                                          orderId: order.id,
+                                          poNumber:
+                                            order.po_number ||
+                                            order.id.slice(0, 8),
+                                          type: 'verified_bubble',
+                                          amount: order.total_ttc || 0,
+                                        })
                                       }
                                     >
                                       <CheckCircle className="h-4 w-4 mr-2" />
@@ -1763,6 +1795,55 @@ export default function PurchaseOrdersPage() {
           }}
         />
       )}
+
+      {/* AlertDialog Confirmation Paiement Manuel */}
+      <AlertDialog
+        open={pendingPayment !== null}
+        onOpenChange={open => {
+          if (!open) setPendingPayment(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmer le paiement manuel</AlertDialogTitle>
+            <AlertDialogDescription>
+              Marquer la commande <strong>{pendingPayment?.poNumber}</strong>{' '}
+              comme payée par{' '}
+              <strong>
+                {pendingPayment?.type === 'cash' && 'Espèces'}
+                {pendingPayment?.type === 'check' && 'Chèque'}
+                {pendingPayment?.type === 'transfer_other' &&
+                  'Virement autre banque'}
+                {pendingPayment?.type === 'card' && 'Carte bancaire'}
+                {pendingPayment?.type === 'compensation' && 'Compensation'}
+                {pendingPayment?.type === 'verified_bubble' && 'Vérifié Bubble'}
+              </strong>{' '}
+              pour <strong>{pendingPayment?.amount.toFixed(2)} €</strong> ?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (!pendingPayment) return;
+                void markAsManuallyPaid(
+                  pendingPayment.orderId,
+                  pendingPayment.type,
+                  pendingPayment.amount
+                ).catch(error => {
+                  console.error(
+                    '[PurchaseOrders] Manual payment failed:',
+                    error
+                  );
+                });
+                setPendingPayment(null);
+              }}
+            >
+              Confirmer le paiement
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
