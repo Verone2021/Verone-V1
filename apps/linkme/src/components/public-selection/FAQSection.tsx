@@ -21,7 +21,7 @@ interface IContactInfo {
 
 interface IFAQItem {
   question: string;
-  answer: string;
+  answer: React.ReactNode;
 }
 
 interface IFAQSectionProps {
@@ -33,34 +33,64 @@ interface IFAQSectionProps {
 // Static FAQ items - same for all selections
 const FAQ_ITEMS: IFAQItem[] = [
   {
-    question: 'Comment passer une commande ?',
+    question: 'Comment passer commande ?',
     answer:
-      'Parcourez notre catalogue, ajoutez les produits souhaités à votre panier, puis cliquez sur le bouton Panier pour finaliser votre commande. Vous pourrez renseigner vos informations de livraison et valider votre commande en quelques clics.',
+      'Parcourez le catalogue et ajoutez les produits souhaités à votre panier. Validez ensuite votre commande via le formulaire en renseignant les informations de votre établissement, un contact responsable, les coordonnées de facturation et l\u2019adresse de livraison. Votre commande sera examinée par notre équipe avant confirmation.',
   },
   {
-    question: 'Quels sont les délais de livraison ?',
-    answer:
-      'Les délais de livraison varient selon les produits et votre localisation. En général, comptez entre 2 et 4 semaines pour les articles en stock. Pour les articles sur-mesure ou en pré-commande, les délais peuvent être plus longs. Vous serez informé du délai exact lors de la confirmation de votre commande.',
+    question: 'Quelles informations préparer avant de commander ?',
+    answer: (
+      <>
+        Pour faciliter le traitement de votre commande, munissez-vous de :
+        <ul className="list-disc pl-5 mt-2 space-y-1">
+          <li>Le nom et l&apos;adresse de votre établissement</li>
+          <li>Si franchise : la raison sociale et le SIRET de votre société</li>
+          <li>Les coordonnées du responsable (nom, email, téléphone)</li>
+          <li>
+            L&apos;adresse de livraison et l&apos;accessibilité du site
+            (semi-remorque, centre commercial)
+          </li>
+        </ul>
+        <p className="mt-2">
+          En cas d&apos;informations manquantes, notre équipe vous contactera
+          par email pour les compléter.
+        </p>
+      </>
+    ),
   },
   {
-    question: 'Comment fonctionne le paiement ?',
-    answer:
-      "Le paiement s'effectue à la livraison ou selon les modalités convenues avec notre équipe. Nous acceptons les virements bancaires et les paiements par carte. Une facture détaillée vous sera envoyée avec votre commande.",
+    question: 'Comment se passe la livraison ?',
+    answer: (
+      <>
+        La livraison est assurée par transporteur professionnel. Merci de bien
+        renseigner lors de votre commande :
+        <ul className="list-disc pl-5 mt-2 space-y-1">
+          <li>
+            <strong>Accessibilité semi-remorque</strong> : si votre site
+            n&apos;est pas accessible en semi-remorque, des frais
+            supplémentaires peuvent s&apos;appliquer.
+          </li>
+          <li>
+            <strong>Centre commercial</strong> : l&apos;email du gestionnaire
+            sera requis pour coordonner l&apos;accès.
+          </li>
+        </ul>
+        <p className="mt-2">
+          Les délais vous seront communiqués lors de la confirmation de
+          commande.
+        </p>
+      </>
+    ),
   },
   {
     question: 'Puis-je modifier ou annuler ma commande ?',
     answer:
-      "Vous pouvez modifier ou annuler votre commande tant qu'elle n'a pas été expédiée. Contactez-nous rapidement après votre commande pour toute modification. Une fois la commande expédiée, les modifications ne sont plus possibles.",
+      'Vous pouvez demander une modification ou une annulation tant que votre commande n\u2019a pas été expédiée. Pensez à bien noter votre numéro de commande lors de la confirmation, puis rendez-vous sur la page Contact pour soumettre votre demande via le formulaire.',
   },
   {
-    question: 'Les produits sont-ils garantis ?',
+    question: 'Comment effectuer un retour ?',
     answer:
-      'Tous nos produits bénéficient de la garantie légale de conformité. De plus, la plupart de nos articles sont couverts par une garantie fabricant. Les détails de garantie sont précisés dans la fiche produit.',
-  },
-  {
-    question: 'Comment retourner un produit ?',
-    answer:
-      "Si vous n'êtes pas satisfait de votre achat, vous disposez d'un délai de 14 jours pour nous le signaler. Contactez notre équipe pour organiser le retour. Le produit doit être retourné dans son emballage d'origine, en parfait état.",
+      'Contactez directement notre équipe via les coordonnées disponibles sur cette page. Nous organiserons ensemble les modalités de retour.',
   },
 ];
 
@@ -138,10 +168,8 @@ export function FAQSection({
                   />
                 </button>
                 {openItems.has(index) && (
-                  <div className="px-5 pb-4">
-                    <p className="text-gray-600 text-sm leading-relaxed">
-                      {item.answer}
-                    </p>
+                  <div className="px-5 pb-4 text-gray-600 text-sm leading-relaxed">
+                    {item.answer}
                   </div>
                 )}
               </div>

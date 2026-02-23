@@ -1,18 +1,22 @@
 'use client';
 
 /**
- * OrderFormUnified - Formulaire unifié pour les commandes LinkMe
+ * OrderFormUnified - Formulaire public de commande LinkMe (enseignes)
  *
- * Ce composant remplace CreateOrderModal et EnseigneStepper.
- * Il unifie les deux workflows en un seul avec la question
- * "Est-ce une ouverture de restaurant ?" comme point de départ.
+ * Formulaire accessible sans authentification via les pages publiques /s/[id]/catalogue.
+ * Scope : enseignes uniquement (orgs independantes = formulaire separe a creer).
  *
- * Workflow:
- * - Restaurant existant → formulaire simple → BROUILLON
- * - Nouveau restaurant → stepper 3 étapes → APPROBATION
+ * Question initiale : "Est-ce une ouverture de restaurant ?"
+ * - Oui (nouveau) → stepper 6 etapes → status PENDING_APPROVAL
+ *   1. Demandeur, 2. Restaurant, 3. Responsable, 4. Facturation, 5. Livraison, 6. Validation
+ * - Non (existant) → formulaire simple (sélecteur restaurant + notes) → status PENDING_APPROVAL
  *
+ * Soumission : use-submit-unified-order.ts (RPCs create_public_linkme_order / create_affiliate_order)
+ *
+ * @see NewOrderForm (formulaire auth dashboard) - docs/current/linkme/formulaires-commande-comparaison.md
  * @module OrderFormUnified
  * @since 2026-01-11
+ * @updated 2026-02-22 - Audit comparaison avec formulaire auth
  */
 
 import { useState, useMemo, useCallback, useEffect } from 'react';
@@ -53,13 +57,16 @@ import {
   Trash2,
   ChevronLeft,
   ChevronRight,
-  Search,
   CheckCircle,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { RestaurantSelectorModal } from './orders/RestaurantSelectorModal';
 import { useEnseigneIdFromAffiliate } from '../lib/hooks/use-enseigne-id-from-affiliate';
-import { useEnseigneOrganisations } from '../lib/hooks/use-enseigne-organisations';
+import {
+  useEnseigneOrganisations,
+  type OrganisationOwnershipType,
+} from '../lib/hooks/use-enseigne-organisations';
 import { useEnseigneParentOrganisation } from '../lib/hooks/use-enseigne-parent-organisation';
 import { useOrganisationContacts } from '../lib/hooks/use-organisation-contacts';
 
@@ -194,6 +201,16 @@ interface Organisation {
   legal_name: string;
   trade_name: string | null;
   city: string | null;
+  address_line1: string | null;
+  postal_code: string | null;
+  shipping_address_line1: string | null;
+  shipping_city: string | null;
+  shipping_postal_code: string | null;
+  logo_url: string | null;
+  ownership_type: OrganisationOwnershipType | null;
+  latitude: number | null;
+  longitude: number | null;
+  country: string | null;
 }
 
 // Interface pour le cache localStorage des utilisateurs publics
@@ -849,52 +866,15 @@ export function OrderFormUnified({
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Restaurant *
                 </label>
-                {isLoadingOrganisations ? (
-                  <div className="flex items-center gap-2 py-3 text-gray-500">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span className="text-sm">Chargement...</span>
-                  </div>
-                ) : organisations.length === 0 ? (
-                  <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
-                    <p className="text-sm text-amber-800">
-                      Aucun restaurant disponible.{' '}
-                      <button
-                        type="button"
-                        onClick={() => updateData({ isNewRestaurant: true })}
-                        className="underline font-medium"
-                      >
-                        Créer un nouveau restaurant
-                      </button>
-                    </p>
-                  </div>
-                ) : (
-                  <select
-                    value={data.existingOrganisationId ?? ''}
-                    onChange={e =>
-                      updateData({
-                        existingOrganisationId: e.target.value || null,
-                      })
-                    }
-                    className={`w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                      errors.existingOrganisationId
-                        ? 'border-red-500'
-                        : 'border-gray-300'
-                    }`}
-                  >
-                    <option value="">-- Choisir un restaurant --</option>
-                    {organisations.map(org => (
-                      <option key={org.id} value={org.id}>
-                        {org.trade_name ?? org.legal_name}
-                        {org.city ? ` (${org.city})` : ''}
-                      </option>
-                    ))}
-                  </select>
-                )}
-                {errors.existingOrganisationId && (
-                  <p className="mt-1 text-xs text-red-600">
-                    {errors.existingOrganisationId}
-                  </p>
-                )}
+                <RestaurantSelectorModal
+                  organisations={organisations}
+                  selectedId={data.existingOrganisationId}
+                  onSelect={org =>
+                    updateData({ existingOrganisationId: org.id })
+                  }
+                  isLoading={isLoadingOrganisations}
+                  error={errors.existingOrganisationId}
+                />
               </div>
 
               {/* Notes */}
@@ -915,10 +895,12 @@ export function OrderFormUnified({
               <div className="flex items-start gap-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                 <AlertCircle className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-medium text-blue-800">Brouillon</p>
+                  <p className="font-medium text-blue-800">
+                    Validation requise
+                  </p>
                   <p className="text-sm text-blue-700 mt-0.5">
-                    Cette commande sera créée en brouillon et pourra être
-                    modifiée avant validation.
+                    Cette commande sera soumise pour validation par
+                    l&apos;équipe Verone.
                   </p>
                 </div>
               </div>
@@ -935,7 +917,7 @@ export function OrderFormUnified({
           <Footer
             onBack={() => updateData({ isNewRestaurant: null })}
             onNext={() => void handleSubmitExisting()}
-            nextLabel="Créer le brouillon"
+            nextLabel="Soumettre la commande"
             isSubmitting={isSubmitting}
             cartTotals={cartTotals}
             formatPrice={formatPrice}
@@ -1518,21 +1500,10 @@ function OpeningStep2Restaurant({
   affiliateId,
 }: StepProps) {
   const { data: organisations } = useEnseigneOrganisations(affiliateId);
-  const [searchQuery, setSearchQuery] = useState('');
-
-  // Filtrer organisations par recherche
-  const filteredOrgs = organisations?.filter(
-    org =>
-      (org.trade_name?.toLowerCase().includes(searchQuery.toLowerCase()) ??
-        false) ||
-      (org.legal_name?.toLowerCase().includes(searchQuery.toLowerCase()) ??
-        false) ||
-      (org.city?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false)
-  );
 
   if (data.isNewRestaurant === false) {
     // ========================================
-    // RESTAURANT EXISTANT : Recherche + Cartes
+    // RESTAURANT EXISTANT : Modal sélection
     // ========================================
     return (
       <div className="max-w-2xl space-y-6">
@@ -1545,79 +1516,13 @@ function OpeningStep2Restaurant({
           </p>
         </div>
 
-        {/* Barre de recherche */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <Input
-            type="search"
-            placeholder="Rechercher par nom, ville..."
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-
-        {/* Liste cartes restaurants */}
-        <div className="space-y-3 max-h-96 overflow-y-auto">
-          {filteredOrgs?.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <Store className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-              <p>Aucun restaurant trouvé</p>
-            </div>
-          ) : (
-            filteredOrgs?.map(org => (
-              <Card
-                key={org.id}
-                className={cn(
-                  'cursor-pointer transition-all hover:shadow-md',
-                  data.existingOrganisationId === org.id &&
-                    'ring-2 ring-blue-500 bg-blue-50'
-                )}
-                onClick={() => updateData({ existingOrganisationId: org.id })}
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <h4 className="font-medium">
-                          {org.trade_name ?? org.legal_name}
-                        </h4>
-                        {org.ownership_type && (
-                          <Badge
-                            variant={
-                              org.ownership_type === 'succursale'
-                                ? 'default'
-                                : 'secondary'
-                            }
-                          >
-                            {org.ownership_type === 'succursale'
-                              ? 'Propre'
-                              : 'Franchisé'}
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-sm text-gray-600 mt-1">
-                        {org.shipping_address_line1 ?? 'Adresse non renseignée'}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        {org.postal_code} {org.city}
-                      </p>
-                    </div>
-                    {data.existingOrganisationId === org.id && (
-                      <CheckCircle className="h-5 w-5 text-blue-600 flex-shrink-0" />
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          )}
-        </div>
-
-        {errors['existingOrganisationId'] && (
-          <p className="text-sm text-red-600">
-            {errors['existingOrganisationId']}
-          </p>
-        )}
+        <RestaurantSelectorModal
+          organisations={organisations ?? []}
+          selectedId={data.existingOrganisationId}
+          onSelect={org => updateData({ existingOrganisationId: org.id })}
+          isLoading={!organisations}
+          error={errors['existingOrganisationId']}
+        />
       </div>
     );
   }
@@ -2835,6 +2740,7 @@ interface Step6Props extends StepProps {
 function OpeningStep6Validation({
   data,
   errors,
+  updateData,
   cart,
   cartTotals,
   formatPrice,
@@ -3012,12 +2918,14 @@ function OpeningStep6Validation({
             type="checkbox"
             id="deliveryTerms"
             checked={data.deliveryTermsAccepted}
+            onChange={e =>
+              updateData({ deliveryTermsAccepted: e.target.checked })
+            }
             className={`h-4 w-4 text-blue-600 rounded mt-0.5 ${
               errors.deliveryTermsAccepted
                 ? 'border-red-500'
                 : 'border-gray-300'
             }`}
-            readOnly
           />
           <label htmlFor="deliveryTerms" className="text-sm text-gray-700">
             J'accepte les{' '}

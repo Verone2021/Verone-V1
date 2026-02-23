@@ -29,7 +29,7 @@ export const contactBaseSchema = z.object({
   firstName: z.string().min(2, 'Prénom requis (min. 2 caractères)'),
   lastName: z.string().min(2, 'Nom requis (min. 2 caractères)'),
   email: z.string().email('Email invalide'),
-  phone: z.string().optional(),
+  phone: z.string().min(1, 'Le téléphone est requis'),
   position: z.string().optional(),
   company: z.string().optional(), // Si franchise
 });
@@ -297,11 +297,24 @@ export const deliverySectionSchema = z.object({
 
 export type DeliverySectionData = z.infer<typeof deliverySectionSchema>;
 
+/**
+ * Informations franchise (conditionnelles si ownershipType === 'franchise')
+ */
+export const franchiseInfoSchema = z.object({
+  companyLegalName: z.string().optional().nullable(),
+  siret: z.string().optional().nullable(),
+});
+
+export type FranchiseInfo = z.infer<typeof franchiseInfoSchema>;
+
 export const contactsStepSchema = z
   .object({
     // Contact responsable restaurant (obligatoire)
     responsable: contactBaseSchema,
     existingResponsableId: z.string().uuid().optional().nullable(),
+
+    // Informations franchise (si ownershipType === 'franchise')
+    franchiseInfo: franchiseInfoSchema.optional().nullable(),
 
     // Contact de facturation (PERSONNE)
     billingContact: billingContactSchema,
@@ -388,6 +401,9 @@ export const deliveryStepSchema = z
 
     // Notes
     notes: z.string().optional(),
+
+    // Conditions de livraison
+    deliveryTermsAccepted: z.boolean().default(false),
   })
   .refine(
     data => {
@@ -463,6 +479,8 @@ export const defaultContact: ContactBase = {
 export const defaultContactsStep: ContactsStepData = {
   responsable: defaultContact,
   existingResponsableId: null,
+  // Informations franchise
+  franchiseInfo: null,
   // Contact facturation (PERSONNE)
   billingContact: {
     mode: 'same_as_responsable',
@@ -513,6 +531,7 @@ export const defaultDeliveryStep: DeliveryStepData = {
   accessFormUrl: null,
   accessFormFile: null,
   notes: '',
+  deliveryTermsAccepted: false,
 };
 
 export const defaultOrderFormData: OrderFormData = {

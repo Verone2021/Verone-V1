@@ -264,6 +264,11 @@ export function useOrderForm(): UseOrderFormReturn {
         newContacts.existingResponsableId = data.existingResponsableId;
       }
 
+      // Handle franchise info
+      if (data.franchiseInfo !== undefined) {
+        newContacts.franchiseInfo = data.franchiseInfo;
+      }
+
       // Handle billing (deep merge) - LEGACY
       if (data.billing !== undefined) {
         newContacts.billing = {
@@ -643,7 +648,11 @@ export function useOrderForm(): UseOrderFormReturn {
         access_form_url: formData.delivery.accessFormUrl ?? null,
         delivery_notes: formData.delivery.notes ?? null,
         // Terms
-        delivery_terms_accepted: true,
+        delivery_terms_accepted: formData.delivery.deliveryTermsAccepted,
+        // Franchise info
+        franchise_legal_name:
+          formData.contacts.franchiseInfo?.companyLegalName ?? null,
+        franchise_siret: formData.contacts.franchiseInfo?.siret ?? null,
       };
 
       // Étape 4: Créer la commande via RPC (atomique, avec linkme_details)

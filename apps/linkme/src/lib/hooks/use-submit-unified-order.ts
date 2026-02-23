@@ -5,7 +5,7 @@
  *
  * Hook unifié pour soumettre les commandes LinkMe.
  * Gère les deux workflows:
- * - Restaurant existant → brouillon (status = 'draft')
+ * - Restaurant existant → validation (status = 'pending_approval')
  * - Ouverture → validation (status = 'pending_approval')
  *
  * @module useSubmitUnifiedOrder
@@ -74,7 +74,7 @@ export function useSubmitUnifiedOrder() {
 
       try {
         // =============================================================
-        // CAS 1: Restaurant existant → Brouillon simple
+        // CAS 1: Restaurant existant → pending_approval (même statut que nouveau)
         // =============================================================
         if (!data.isNewRestaurant && data.existingOrganisationId) {
           const items = cart.map(item => ({
@@ -107,20 +107,31 @@ export function useSubmitUnifiedOrder() {
             orderId
           );
 
+          // Fetch order_number (create_affiliate_order only returns UUID)
+          let orderNumber: string | undefined;
+          if (orderId) {
+            const { data: orderData } = await supabase
+              .from('sales_orders')
+              .select('order_number')
+              .eq('id', orderId)
+              .single();
+            orderNumber = orderData?.order_number ?? undefined;
+          }
+
           // Invalider les caches
           await queryClient.invalidateQueries({ queryKey: ['linkme-orders'] });
           await queryClient.invalidateQueries({
             queryKey: ['affiliate-orders', affiliateId],
           });
 
-          toast.success('Brouillon créé !', {
-            description: 'La commande a été créée en brouillon.',
+          toast.success('Commande soumise !', {
+            description: 'Votre commande est en attente de validation.',
           });
 
           return {
             success: true,
             orderId,
-            orderNumber: undefined, // Explicitly undefined for consistency
+            orderNumber,
             customerId: data.existingOrganisationId,
           };
         }
@@ -139,6 +150,7 @@ export function useSubmitUnifiedOrder() {
 
           // Demandeur (Step 1)
           const p_requester = {
+            type: 'responsable_enseigne',
             name: data.requester.name,
             email: data.requester.email,
             phone: data.requester.phone ?? null,
