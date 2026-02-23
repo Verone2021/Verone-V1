@@ -1154,7 +1154,7 @@ export default function PurchaseOrdersPage() {
                       Date création {renderSortIcon('date')}
                     </TableHead>
                     <TableHead>Date commande</TableHead>
-                    <TableHead>Date livraison</TableHead>
+                    <TableHead>Livraison</TableHead>
                     <TableHead
                       className="cursor-pointer hover:bg-gray-50"
                       onClick={() => handleSort('amount')}
@@ -1348,9 +1348,19 @@ export default function PurchaseOrdersPage() {
                               : '-'}
                           </TableCell>
                           <TableCell>
-                            {order.expected_delivery_date
-                              ? formatDate(order.expected_delivery_date)
-                              : 'Non définie'}
+                            {['received', 'partially_received'].includes(
+                              order.status
+                            ) && order.received_at ? (
+                              <span className="text-green-700">
+                                {formatDate(order.received_at)}
+                              </span>
+                            ) : order.expected_delivery_date ? (
+                              formatDate(order.expected_delivery_date)
+                            ) : (
+                              <span className="text-muted-foreground">
+                                Non définie
+                              </span>
+                            )}
                           </TableCell>
                           <TableCell>
                             {formatCurrency(order.total_ttc)}
