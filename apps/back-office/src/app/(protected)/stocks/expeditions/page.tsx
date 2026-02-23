@@ -569,7 +569,7 @@ export default function ExpeditionsPage() {
                                 <div className="flex items-center gap-2">
                                   <div className="flex-1 bg-gray-200 rounded-full h-2">
                                     <div
-                                      className="bg-verone-success h-2 rounded-full transition-all"
+                                      className="bg-green-500 h-2 rounded-full transition-all"
                                       style={{ width: `${progressPercent}%` }}
                                     />
                                   </div>
@@ -796,7 +796,7 @@ export default function ExpeditionsPage() {
                                 <Badge
                                   className={
                                     order.status === 'shipped'
-                                      ? 'bg-verone-success text-white'
+                                      ? 'bg-green-500 text-white'
                                       : 'bg-blue-500 text-white'
                                   }
                                 >

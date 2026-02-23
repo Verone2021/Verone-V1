@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import { useRouter } from 'next/navigation';
 
@@ -44,10 +44,13 @@ import {
   ExternalLink,
   Link2,
   Banknote,
+  History,
+  CheckCircle2,
 } from 'lucide-react';
 
 // NOTE: SalesOrderShipmentModal supprimé - sera recréé ultérieurement
 import { useSalesOrders } from '@verone/orders/hooks';
+import { createClient } from '@verone/utils/supabase/client';
 import type { SalesOrder, ManualPaymentType } from '@verone/orders/hooks';
 
 // ✅ Type Safety: Interface ProductImage stricte (IDENTIQUE à PurchaseOrderDetailModal)
@@ -106,6 +109,96 @@ export function OrderDetailModal({
   const [manualPaymentDate, setManualPaymentDate] = useState('');
   const [manualPaymentRef, setManualPaymentRef] = useState('');
   const [manualPaymentNote, setManualPaymentNote] = useState('');
+
+  // Historique expéditions
+  const [shipmentHistory, setShipmentHistory] = useState<
+    Array<{
+      shipped_at: string;
+      tracking_number: string | null;
+      notes: string | null;
+      items: Array<{
+        product_name: string;
+        product_sku: string;
+        quantity_shipped: number;
+      }>;
+    }>
+  >([]);
+
+  // Charger historique expéditions quand modal ouvert
+  useEffect(() => {
+    if (!open || !order?.id) return;
+
+    const supabase = createClient();
+
+    void supabase
+      .from('sales_order_shipments')
+      .select(
+        `
+        shipped_at,
+        tracking_number,
+        notes,
+        quantity_shipped,
+        product_id,
+        products:product_id (name, sku)
+      `
+      )
+      .eq('sales_order_id', order.id)
+      .order('shipped_at', { ascending: true })
+      .then(({ data, error: queryError }) => {
+        if (queryError) {
+          console.error(
+            '[OrderDetailModal] Load shipment history failed:',
+            queryError
+          );
+          return;
+        }
+
+        if (!data || data.length === 0) {
+          setShipmentHistory([]);
+          return;
+        }
+
+        // Grouper par shipped_at (même timestamp = même expédition)
+        const grouped = new Map<
+          string,
+          {
+            shipped_at: string;
+            tracking_number: string | null;
+            notes: string | null;
+            items: Array<{
+              product_name: string;
+              product_sku: string;
+              quantity_shipped: number;
+            }>;
+          }
+        >();
+
+        for (const row of data) {
+          const key = row.shipped_at;
+          const product = row.products as unknown as {
+            name: string;
+            sku: string;
+          } | null;
+
+          if (!grouped.has(key)) {
+            grouped.set(key, {
+              shipped_at: row.shipped_at,
+              tracking_number: row.tracking_number,
+              notes: row.notes,
+              items: [],
+            });
+          }
+
+          grouped.get(key)!.items.push({
+            product_name: product?.name || 'Produit inconnu',
+            product_sku: product?.sku || '-',
+            quantity_shipped: row.quantity_shipped,
+          });
+        }
+
+        setShipmentHistory(Array.from(grouped.values()));
+      });
+  }, [open, order?.id]);
 
   if (!order) return null;
 
@@ -781,6 +874,71 @@ export function OrderDetailModal({
                   )}
                 </CardContent>
               </Card>
+
+              {/* Card Historique Expéditions (si existe) */}
+              {shipmentHistory.length > 0 && (
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm font-medium flex items-center gap-2">
+                      <History className="h-3 w-3" />
+                      Historique ({shipmentHistory.length})
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2 max-h-[320px] overflow-y-auto">
+                    {shipmentHistory.map((h, idx) => (
+                      <div
+                        key={`shipment-${idx}`}
+                        className="border rounded p-2 bg-gray-50 text-xs"
+                      >
+                        <div className="flex items-center gap-1 mb-1">
+                          <CheckCircle2 className="h-3 w-3 text-blue-600" />
+                          <span className="font-semibold text-gray-800">
+                            Expédition #{idx + 1}
+                          </span>
+                          <span className="text-gray-400">—</span>
+                          <span className="text-gray-600">
+                            {formatDate(h.shipped_at)}
+                          </span>
+                        </div>
+                        {h.tracking_number && (
+                          <p className="text-[10px] text-gray-500 ml-4 mb-1">
+                            Tracking : {h.tracking_number}
+                          </p>
+                        )}
+                        <div className="ml-4 space-y-0.5">
+                          {h.items.map((item, itemIdx) => {
+                            const orderItem = order.sales_order_items?.find(
+                              i => i.products?.sku === item.product_sku
+                            );
+                            const qtyOrdered = orderItem?.quantity || '?';
+                            return (
+                              <div
+                                key={itemIdx}
+                                className="flex items-center justify-between"
+                              >
+                                <span className="text-gray-600 truncate max-w-[120px]">
+                                  {item.product_name}
+                                </span>
+                                <Badge
+                                  variant="outline"
+                                  className="text-[10px] px-1 py-0"
+                                >
+                                  {item.quantity_shipped}/{qtyOrdered}
+                                </Badge>
+                              </div>
+                            );
+                          })}
+                        </div>
+                        {h.notes && (
+                          <p className="text-[10px] text-gray-500 ml-4 mt-1 italic">
+                            {h.notes}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Card Notes (si existe) */}
               {order.notes && (
