@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { OrderDetailModal } from '@verone/orders/components/modals';
 import { useSalesOrders } from '@verone/orders/hooks';
 import type { SalesOrder } from '@verone/orders/hooks';
+import { OrganisationQuickViewModal } from '@verone/organisations';
 
 import {
   useMissingInvoices,
@@ -93,6 +94,7 @@ import {
   CheckCircle2,
   Link2,
   Banknote,
+  ExternalLink,
 } from 'lucide-react';
 
 // =====================================================================
@@ -176,7 +178,14 @@ interface CreditNote {
 interface Invoice {
   id: string;
   number: string; // Qonto uses 'number' not 'invoice_number'
-  status: 'draft' | 'pending' | 'paid' | 'unpaid' | 'overdue' | 'canceled';
+  status:
+    | 'draft'
+    | 'pending'
+    | 'paid'
+    | 'unpaid'
+    | 'overdue'
+    | 'canceled'
+    | 'partially_paid';
   currency: string;
   total_amount: {
     value: string;
@@ -197,6 +206,8 @@ interface Invoice {
   deleted_at?: string | null;
   sales_order_id?: string | null;
   order_number?: string | null;
+  local_amount_paid?: number | null;
+  partner_id?: string | null;
 }
 
 // =====================================================================
@@ -277,6 +288,7 @@ function InvoiceStatusBadge({ status }: { status: string }): React.ReactNode {
     pending: 'outline',
     unpaid: 'outline',
     paid: 'default',
+    partially_paid: 'secondary',
     overdue: 'destructive',
     cancelled: 'destructive',
     canceled: 'destructive', // Qonto uses 'canceled' (US spelling)
@@ -287,13 +299,19 @@ function InvoiceStatusBadge({ status }: { status: string }): React.ReactNode {
     pending: 'En attente',
     unpaid: 'Non payée',
     paid: 'Payée',
+    partially_paid: 'Partiellement payée',
     overdue: 'En retard',
     cancelled: 'Annulée',
     canceled: 'Annulée', // Qonto uses 'canceled' (US spelling)
   };
 
+  const isOverdue = status === 'overdue';
+
   return (
-    <Badge variant={variants[status] ?? 'outline'}>
+    <Badge
+      variant={variants[status] ?? 'outline'}
+      className={isOverdue ? 'animate-pulse' : undefined}
+    >
       {labels[status] ?? status}
     </Badge>
   );
@@ -384,6 +402,7 @@ function InvoicesTable({
   onFinalize,
   onOpenOrder,
   onRapprochement,
+  onOpenOrg,
 }: {
   invoices: Invoice[];
   loading: boolean;
@@ -396,6 +415,7 @@ function InvoicesTable({
   onFinalize?: (invoice: Invoice) => Promise<void>;
   onOpenOrder?: (orderId: string) => void;
   onRapprochement?: (invoice: Invoice) => void;
+  onOpenOrg?: (orgId: string) => void;
 }) {
   if (loading) {
     return (
@@ -439,16 +459,32 @@ function InvoicesTable({
         {invoices.map(invoice => (
           <TableRow key={invoice.id}>
             <TableCell className="font-mono">{invoice.number}</TableCell>
-            <TableCell>{invoice.client?.name ?? '-'}</TableCell>
+            <TableCell>
+              {invoice.partner_id && invoice.client?.name ? (
+                <button
+                  onClick={() => onOpenOrg?.(invoice.partner_id!)}
+                  className="inline-flex items-center gap-1 text-left text-primary hover:underline cursor-pointer"
+                >
+                  {invoice.client.name}
+                  <ExternalLink className="h-3 w-3 opacity-60" />
+                </button>
+              ) : (
+                <span>{invoice.client?.name ?? '-'}</span>
+              )}
+            </TableCell>
             <TableCell>
               {invoice.sales_order_id && invoice.order_number ? (
-                <button onClick={() => onOpenOrder?.(invoice.sales_order_id!)}>
+                <button
+                  onClick={() => onOpenOrder?.(invoice.sales_order_id!)}
+                  className="inline-flex items-center gap-1"
+                >
                   <Badge
                     variant="outline"
                     className="cursor-pointer hover:bg-accent"
                   >
                     {invoice.order_number}
                   </Badge>
+                  <ExternalLink className="h-3 w-3 text-muted-foreground opacity-60" />
                 </button>
               ) : (
                 <span className="text-muted-foreground text-sm">-</span>
@@ -785,6 +821,10 @@ export default function FacturationPage() {
   const [selectedOrderForModal, setSelectedOrderForModal] =
     useState<SalesOrder | null>(null);
   const [showOrderModal, setShowOrderModal] = useState(false);
+
+  // État pour ouverture modale organisation (depuis nom client cliquable)
+  const [selectedOrgId, setSelectedOrgId] = useState<string | null>(null);
+  const [showOrgModal, setShowOrgModal] = useState(false);
   const { fetchOrder } = useSalesOrders();
 
   const handleOpenOrderModal = useCallback(
@@ -1153,8 +1193,15 @@ export default function FacturationPage() {
       ) / 100;
     const totalPaye =
       invoices
-        .filter(inv => inv.status === 'paid')
-        .reduce((sum, inv) => sum + (inv.total_amount_cents ?? 0), 0) / 100;
+        .filter(inv => inv.status === 'paid' || inv.status === 'partially_paid')
+        .reduce(
+          (sum, inv) =>
+            sum +
+            (inv.local_amount_paid != null
+              ? inv.local_amount_paid * 100
+              : (inv.total_amount_cents ?? 0)),
+          0
+        ) / 100;
     const enRetard = invoices.filter(
       inv =>
         inv.due_date &&
@@ -1551,6 +1598,10 @@ export default function FacturationPage() {
                 onOpenOrder={orderId => {
                   void handleOpenOrderModal(orderId).catch(console.error);
                 }}
+                onOpenOrg={orgId => {
+                  setSelectedOrgId(orgId);
+                  setShowOrgModal(true);
+                }}
                 onDownloadPdf={invoice => {
                   void handleDownloadInvoicePdf(invoice).catch(error => {
                     console.error(
@@ -1604,6 +1655,10 @@ export default function FacturationPage() {
                 onOpenOrder={orderId => {
                   void handleOpenOrderModal(orderId).catch(console.error);
                 }}
+                onOpenOrg={orgId => {
+                  setSelectedOrgId(orgId);
+                  setShowOrgModal(true);
+                }}
                 onDownloadPdf={invoice => {
                   void handleDownloadInvoicePdf(invoice).catch(error => {
                     console.error(
@@ -1640,6 +1695,10 @@ export default function FacturationPage() {
                 onView={handleView}
                 onOpenOrder={orderId => {
                   void handleOpenOrderModal(orderId).catch(console.error);
+                }}
+                onOpenOrg={orgId => {
+                  setSelectedOrgId(orgId);
+                  setShowOrgModal(true);
                 }}
                 onDownloadPdf={invoice => {
                   void handleDownloadInvoicePdf(invoice).catch(error => {
@@ -1902,10 +1961,11 @@ export default function FacturationPage() {
                           {creditNote.invoice_id ? (
                             <Link
                               href={`/factures/${creditNote.invoice_id}?type=invoice`}
-                              className="text-primary hover:underline font-mono text-sm"
+                              className="inline-flex items-center gap-1 text-primary hover:underline font-mono text-sm"
                             >
                               {creditNote.invoice?.invoice_number ??
                                 'Voir facture'}
+                              <ExternalLink className="h-3 w-3 opacity-60" />
                             </Link>
                           ) : (
                             <span className="text-muted-foreground">-</span>
@@ -2144,6 +2204,16 @@ export default function FacturationPage() {
           setShowRapprochementModal(false);
           setRapprochementOrder(null);
           void fetchInvoices();
+        }}
+      />
+
+      {/* Modal quick view organisation (depuis nom client cliquable) */}
+      <OrganisationQuickViewModal
+        organisationId={selectedOrgId}
+        open={showOrgModal}
+        onOpenChange={open => {
+          setShowOrgModal(open);
+          if (!open) setSelectedOrgId(null);
         }}
       />
     </div>

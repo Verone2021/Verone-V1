@@ -136,3 +136,10 @@ export * from './address-autocomplete';
 // ORGANISATION COMPONENTS
 // ========================================
 export * from './organisation-name-display';
+
+// ========================================
+// INTERACTIVE TABLE COMPONENTS
+// ========================================
+export * from './clickable-cell';
+export * from './status-dot';
+export * from './animated-tabs';

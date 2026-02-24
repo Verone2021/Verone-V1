@@ -231,7 +231,10 @@ export async function POST(request: NextRequest): Promise<
           .eq('id', orderWithItems.customer_id)
           .single();
         customer = org;
-      } else if (orderWithItems.customer_type === 'individual') {
+      } else if (
+        orderWithItems.customer_type === 'individual' &&
+        orderWithItems.individual_customer_id
+      ) {
         const { data: indiv } = await supabase
           .from('individual_customers')
           .select('*')
