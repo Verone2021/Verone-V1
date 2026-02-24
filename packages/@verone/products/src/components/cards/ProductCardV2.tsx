@@ -248,6 +248,12 @@ export const ProductCardV2 = memo(function ProductCardV2({
             <span className="text-[10px] font-normal text-gray-500 ml-0.5">
               HT
             </span>
+            {product.cost_net_avg != null &&
+              product.cost_net_avg !== product.cost_price && (
+                <span className="text-[10px] font-normal text-gray-400 ml-1">
+                  ({product.cost_net_avg.toFixed(2)} € net)
+                </span>
+              )}
           </div>
         )}
 

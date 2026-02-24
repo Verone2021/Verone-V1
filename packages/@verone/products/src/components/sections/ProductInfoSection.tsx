@@ -42,6 +42,7 @@ interface ProductInfoSectionProps {
     name: string;
     sku?: string | null;
     cost_price?: number | null;
+    cost_net_avg?: number | null;
     stock_status?: 'in_stock' | 'out_of_stock' | 'coming_soon';
     product_status?: 'active' | 'preorder' | 'discontinued' | 'draft';
     supplier_id?: string | null;
@@ -270,6 +271,12 @@ export const ProductInfoSection = React.memo(
               )}
             >
               {formatPrice(price)}
+              {product.cost_net_avg != null &&
+                product.cost_net_avg !== product.cost_price && (
+                  <span className="text-sm font-normal text-neutral-500 ml-1">
+                    ({formatPrice(product.cost_net_avg)} net)
+                  </span>
+                )}
             </p>
           </div>
 
@@ -334,6 +341,7 @@ export const ProductInfoSection = React.memo(
       prevProps.product.name === nextProps.product.name &&
       prevProps.product.sku === nextProps.product.sku &&
       prevProps.product.cost_price === nextProps.product.cost_price &&
+      prevProps.product.cost_net_avg === nextProps.product.cost_net_avg &&
       prevProps.product.stock_status === nextProps.product.stock_status &&
       prevProps.product.product_status === nextProps.product.product_status &&
       prevProps.product.supplier_id === nextProps.product.supplier_id &&

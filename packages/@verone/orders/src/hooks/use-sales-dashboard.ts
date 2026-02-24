@@ -124,8 +124,11 @@ export function useSalesDashboard() {
         .filter((o: any) => o.customer_type === 'organization' && o.customer_id)
         .map((o: any) => o.customer_id);
       const indivCustomerIds = (orders || [])
-        .filter((o: any) => o.customer_type === 'individual' && o.customer_id)
-        .map((o: any) => o.customer_id);
+        .filter(
+          (o: any) =>
+            o.customer_type === 'individual' && o.individual_customer_id
+        )
+        .map((o: any) => o.individual_customer_id);
 
       const [orgsResult, indivsResult] = await Promise.all([
         orgCustomerIds.length > 0
@@ -180,9 +183,13 @@ export function useSalesDashboard() {
         if (order.customer_type === 'organization' && order.customer_id) {
           customerName =
             orgsMap.get(order.customer_id) || 'Organisation inconnue';
-        } else if (order.customer_type === 'individual' && order.customer_id) {
+        } else if (
+          order.customer_type === 'individual' &&
+          order.individual_customer_id
+        ) {
           customerName =
-            indivsMap.get(order.customer_id) || 'Particulier inconnu';
+            indivsMap.get(order.individual_customer_id) ||
+            'Particulier inconnu';
         }
         return {
           id: order.id,

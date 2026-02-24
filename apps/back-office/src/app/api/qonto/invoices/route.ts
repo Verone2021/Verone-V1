@@ -91,6 +91,11 @@ export async function GET(request: NextRequest): Promise<
       local_pdf_path: string | null;
       local_document_id: string;
       deleted_at: string | null;
+      sales_order_id: string | null;
+      order_number: string | null;
+      local_status: string | null;
+      local_amount_paid: number | null;
+      partner_id: string | null;
     }
 
     let localDataMap: Record<string, ILocalDocData> = {};
@@ -99,7 +104,9 @@ export async function GET(request: NextRequest): Promise<
       // Note: local_pdf_path sera disponible après migration 20260122_005
       const { data: localDocs } = await supabase
         .from('financial_documents')
-        .select('id, qonto_invoice_id, workflow_status, deleted_at')
+        .select(
+          'id, qonto_invoice_id, workflow_status, deleted_at, sales_order_id, status, amount_paid, partner_id, sales_orders!financial_documents_sales_order_id_fkey(order_number)'
+        )
         .in('qonto_invoice_id', qontoInvoiceIds);
 
       if (localDocs) {
@@ -110,6 +117,11 @@ export async function GET(request: NextRequest): Promise<
           workflow_status: string | null;
           local_pdf_path?: string | null;
           deleted_at: string | null;
+          sales_order_id?: string | null;
+          status?: string | null;
+          amount_paid?: number | null;
+          partner_id?: string | null;
+          sales_orders?: { order_number: string | null } | null;
         };
 
         localDataMap = (localDocs as DocWithExtras[]).reduce(
@@ -120,6 +132,13 @@ export async function GET(request: NextRequest): Promise<
                 local_pdf_path: doc.local_pdf_path ?? null,
                 local_document_id: doc.id,
                 deleted_at: doc.deleted_at,
+                sales_order_id: doc.sales_order_id ?? null,
+                order_number: doc.sales_orders?.order_number ?? null,
+                local_status: doc.status ?? null,
+                local_amount_paid: doc.amount_paid
+                  ? parseFloat(String(doc.amount_paid))
+                  : null,
+                partner_id: doc.partner_id ?? null,
               };
             }
             return acc;
@@ -131,15 +150,30 @@ export async function GET(request: NextRequest): Promise<
 
     // Fusionner les données
     const enrichedInvoices = result.client_invoices.map(
-      (invoice: { id: string }) => ({
-        ...invoice,
-        // Données locales
-        workflow_status: localDataMap[invoice.id]?.workflow_status ?? null,
-        local_pdf_path: localDataMap[invoice.id]?.local_pdf_path ?? null,
-        local_document_id: localDataMap[invoice.id]?.local_document_id ?? null,
-        has_local_pdf: !!localDataMap[invoice.id]?.local_pdf_path,
-        deleted_at: localDataMap[invoice.id]?.deleted_at ?? null,
-      })
+      (invoice: { id: string; status: string }) => {
+        const localData = localDataMap[invoice.id];
+        // Si le rapprochement local a marqué la facture comme payée, utiliser ce statut
+        const localStatus = localData?.local_status;
+        const effectiveStatus =
+          localStatus === 'paid' || localStatus === 'partially_paid'
+            ? localStatus
+            : invoice.status;
+
+        return {
+          ...invoice,
+          status: effectiveStatus,
+          // Données locales
+          workflow_status: localData?.workflow_status ?? null,
+          local_pdf_path: localData?.local_pdf_path ?? null,
+          local_document_id: localData?.local_document_id ?? null,
+          has_local_pdf: !!localData?.local_pdf_path,
+          deleted_at: localData?.deleted_at ?? null,
+          sales_order_id: localData?.sales_order_id ?? null,
+          order_number: localData?.order_number ?? null,
+          local_amount_paid: localData?.local_amount_paid ?? null,
+          partner_id: localData?.partner_id ?? null,
+        };
+      }
     );
 
     return NextResponse.json({
@@ -326,11 +360,14 @@ export async function POST(request: NextRequest): Promise<
           .eq('id', orderWithItems.customer_id)
           .single();
         customer = org;
-      } else if (orderWithItems.customer_type === 'individual') {
+      } else if (
+        orderWithItems.customer_type === 'individual' &&
+        orderWithItems.individual_customer_id
+      ) {
         const { data: indiv } = await supabase
           .from('individual_customers')
           .select('*')
-          .eq('id', orderWithItems.customer_id)
+          .eq('id', orderWithItems.individual_customer_id)
           .single();
         customer = indiv;
       }

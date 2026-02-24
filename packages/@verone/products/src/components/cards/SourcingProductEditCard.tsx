@@ -41,6 +41,7 @@ interface SourcingProduct {
   sku: string;
   supplier_page_url: string | null;
   cost_price: number | null;
+  cost_net_avg?: number | null;
   eco_tax_default?: number | null;
   supplier_id: string | null;
   sourcing_type: 'client' | 'interne' | null;
@@ -512,6 +513,12 @@ export function SourcingProductEditCard({
                     {product.cost_price
                       ? formatPrice(product.cost_price)
                       : 'Non défini'}
+                    {product.cost_net_avg != null &&
+                      product.cost_net_avg !== product.cost_price && (
+                        <span className="text-sm font-normal text-red-600 ml-1">
+                          ({formatPrice(product.cost_net_avg)} net)
+                        </span>
+                      )}
                   </p>
                 </div>
                 <div className="bg-orange-50 rounded-lg p-3 border border-orange-200">

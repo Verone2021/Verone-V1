@@ -10,7 +10,7 @@ const cardVariants = cva('rounded-xl transition-all duration-200', {
       flat: 'border border-slate-200 bg-white shadow-none',
       outline: 'border-2 border-slate-300 bg-white shadow-none',
       interactive:
-        'border border-slate-200 bg-white shadow-sm hover:shadow-md hover:border-slate-300 cursor-pointer',
+        'border border-slate-200 bg-white shadow-sm hover:shadow-md hover:border-slate-300 hover:-translate-y-0.5 cursor-pointer',
       glass: 'border border-white/20 bg-white/10 backdrop-blur-lg shadow-lg',
       gradient:
         'border border-transparent bg-gradient-to-br from-slate-50 to-white shadow-md',

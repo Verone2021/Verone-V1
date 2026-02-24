@@ -172,7 +172,7 @@ export default function DeliveryNoteDetailPage(): React.ReactNode {
         <div className="flex gap-2">
           {deliveryNote.order && (
             <Button variant="outline" asChild>
-              <Link href={`/commandes/clients/${deliveryNote.order.id}`}>
+              <Link href={`/commandes/clients?id=${deliveryNote.order.id}`}>
                 <ExternalLink className="mr-2 h-4 w-4" />
                 Voir la commande
               </Link>
@@ -319,12 +319,7 @@ export default function DeliveryNoteDetailPage(): React.ReactNode {
       {deliveryNote.order && (
         <div className="text-sm text-muted-foreground">
           Commande de référence:{' '}
-          <Link
-            href={`/commandes/clients/${deliveryNote.order.id}`}
-            className="font-mono text-primary hover:underline"
-          >
-            {deliveryNote.order.order_number}
-          </Link>
+          <code className="font-mono">{deliveryNote.order.order_number}</code>
         </div>
       )}
     </div>

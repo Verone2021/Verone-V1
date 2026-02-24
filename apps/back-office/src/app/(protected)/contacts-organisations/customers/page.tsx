@@ -11,6 +11,7 @@ import { OrganisationLogo } from '@verone/organisations';
 import { ConfirmDeleteOrganisationModal } from '@verone/organisations';
 import {
   useOrganisations,
+  getOrganisationCardName,
   getOrganisationDisplayName,
   useActiveEnseignes,
   type Organisation,
@@ -627,14 +628,14 @@ export default function CustomersPage() {
                                   style={{ color: colors.text.DEFAULT }}
                                   data-testid="customer-name"
                                 >
-                                  {getOrganisationDisplayName(customer)}
+                                  {getOrganisationCardName(customer)}
                                 </a>
                               ) : (
                                 <span
                                   style={{ color: colors.text.DEFAULT }}
                                   data-testid="customer-name"
                                 >
-                                  {getOrganisationDisplayName(customer)}
+                                  {getOrganisationCardName(customer)}
                                 </span>
                               )}
                             </CardTitle>
@@ -911,7 +912,7 @@ export default function CustomersPage() {
                                 className="font-medium hover:underline flex items-center gap-1"
                                 style={{ color: colors.text.DEFAULT }}
                               >
-                                {getOrganisationDisplayName(customer)}
+                                {getOrganisationCardName(customer)}
                                 <ExternalLink
                                   className="h-3 w-3"
                                   style={{ color: colors.text.muted }}
@@ -922,7 +923,7 @@ export default function CustomersPage() {
                                 className="font-medium"
                                 style={{ color: colors.text.DEFAULT }}
                               >
-                                {getOrganisationDisplayName(customer)}
+                                {getOrganisationCardName(customer)}
                               </span>
                             )}
                             {customer.archived_at && (

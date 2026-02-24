@@ -14,6 +14,7 @@ import { ButtonV2 } from '@verone/ui';
 import { Card } from '@verone/ui';
 import { Input } from '@verone/ui';
 import { Label } from '@verone/ui';
+import { SuccessDialog } from '@verone/ui';
 import {
   Table,
   TableBody,
@@ -41,6 +42,17 @@ import {
 } from '@verone/orders/hooks';
 
 import { CancelRemainderModal } from '../modals';
+
+interface ReceptionResultSummary {
+  isComplete: boolean;
+  poNumber: string;
+  items: Array<{
+    product_name: string;
+    product_sku: string;
+    quantity_received: number;
+  }>;
+  totalValue: number;
+}
 
 interface PurchaseOrderReceptionFormProps {
   purchaseOrder: PurchaseOrderForReception;
@@ -80,6 +92,8 @@ export function PurchaseOrderReceptionForm({
   >([]);
   const [showCancelRemainderModal, setShowCancelRemainderModal] =
     useState(false);
+  const [receptionResult, setReceptionResult] =
+    useState<ReceptionResultSummary | null>(null);
 
   // Initialiser items
   useEffect(() => {
@@ -217,7 +231,20 @@ export function PurchaseOrderReceptionForm({
     });
 
     if (result.success) {
-      onSuccess();
+      const receivedItems = items
+        .filter(item => item.quantity_to_receive > 0)
+        .map(item => ({
+          product_name: item.product_name,
+          product_sku: item.product_sku,
+          quantity_received: item.quantity_to_receive,
+        }));
+
+      setReceptionResult({
+        isComplete: totals.allFullyReceived,
+        poNumber: purchaseOrder.po_number,
+        items: receivedItems,
+        totalValue: totals.totalValue,
+      });
     } else {
       alert(`Erreur: ${result.error}`);
     }
@@ -621,6 +648,61 @@ export function PurchaseOrderReceptionForm({
         remainderItems={remainderItems}
         onSuccess={onSuccess}
       />
+
+      {/* Modal Confirmation Réception */}
+      <SuccessDialog
+        open={receptionResult !== null}
+        onOpenChange={open => {
+          if (!open) {
+            setReceptionResult(null);
+            onSuccess();
+          }
+        }}
+        title={
+          receptionResult?.isComplete
+            ? 'Réception complète validée'
+            : 'Réception partielle validée'
+        }
+        description={`La réception de la commande ${receptionResult?.poNumber ?? ''} a été enregistrée.`}
+      >
+        {receptionResult && (
+          <div className="space-y-3">
+            <div className="rounded-lg border bg-gray-50 p-3">
+              <div className="text-xs font-semibold text-gray-500 uppercase mb-2">
+                Produits reçus
+              </div>
+              <div className="space-y-1.5">
+                {receptionResult.items.map(item => (
+                  <div
+                    key={item.product_sku}
+                    className="flex items-center justify-between text-sm"
+                  >
+                    <div>
+                      <span className="font-medium text-gray-800">
+                        {item.product_name}
+                      </span>
+                      <span className="text-gray-400 ml-1.5 text-xs">
+                        {item.product_sku}
+                      </span>
+                    </div>
+                    <span className="font-semibold text-green-700">
+                      ×{item.quantity_received}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="flex items-center justify-between rounded-lg border bg-emerald-50 p-3">
+              <span className="text-sm font-medium text-emerald-700">
+                Valeur totale HT
+              </span>
+              <span className="text-lg font-bold text-emerald-700">
+                {formatCurrency(receptionResult.totalValue)}
+              </span>
+            </div>
+          </div>
+        )}
+      </SuccessDialog>
     </div>
   );
 }

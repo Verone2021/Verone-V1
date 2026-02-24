@@ -11,6 +11,7 @@ import {
   ReconcileTransactionModal,
 } from '@verone/finance';
 import type { IInvoiceForCreditNote } from '@verone/finance';
+import { OrganisationQuickViewModal } from '@verone/organisations';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,6 +38,7 @@ import {
   TableRow,
 } from '@verone/ui';
 import { StatusPill, qontoInvoiceStatusConfig } from '@verone/ui-business';
+import { createClient } from '@verone/utils/supabase/client';
 import { featureFlags } from '@verone/utils/feature-flags';
 import {
   AlertTriangle,
@@ -50,6 +52,7 @@ import {
   ExternalLink,
   MinusCircle,
   Send,
+  ShoppingCart,
   Trash2,
   Mail,
   ArrowRightLeft,
@@ -73,6 +76,12 @@ interface QontoApiResponse {
   invoice?: QontoDocument;
   quote?: QontoDocument;
   credit_note?: QontoDocument;
+  localData?: {
+    billing_address?: Record<string, unknown>;
+    shipping_address?: Record<string, unknown>;
+    sales_order_id?: string | null;
+    order_number?: string | null;
+  } | null;
 }
 
 interface QontoClient {
@@ -281,6 +290,10 @@ export default function DocumentDetailPage({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [orderLink, setOrderLink] = useState<{
+    sales_order_id: string;
+    order_number: string | null;
+  } | null>(null);
 
   // Dialog states
   const [showFinalizeDialog, setShowFinalizeDialog] = useState(false);
@@ -292,6 +305,8 @@ export default function DocumentDetailPage({
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showReconcileModal, setShowReconcileModal] = useState(false);
   const [showArchiveDialog, setShowArchiveDialog] = useState(false);
+  const [showOrgModal, setShowOrgModal] = useState(false);
+  const [organisationId, setOrganisationId] = useState<string | null>(null);
 
   // Fetch document data
   useEffect(() => {
@@ -323,6 +338,12 @@ export default function DocumentDetailPage({
             if (doc) {
               setDocument(doc);
               setDocumentType(type);
+              if (type === 'invoice' && data.localData?.sales_order_id) {
+                setOrderLink({
+                  sales_order_id: data.localData.sales_order_id,
+                  order_number: data.localData.order_number ?? null,
+                });
+              }
               setLoading(false);
               return;
             }
@@ -353,6 +374,28 @@ export default function DocumentDetailPage({
       console.error('[DocumentDetail] Fetch failed:', error);
     });
   }, [id, typeParam]);
+
+  // Resolve organisation ID from linked sales order
+  useEffect(() => {
+    if (!orderLink?.sales_order_id) return;
+
+    const supabase = createClient();
+    const loadCustomerId = async () => {
+      const { data } = await supabase
+        .from('sales_orders')
+        .select('customer_id')
+        .eq('id', orderLink.sales_order_id)
+        .single();
+
+      if (data?.customer_id) {
+        setOrganisationId(data.customer_id);
+      }
+    };
+
+    void loadCustomerId().catch((err: unknown) => {
+      console.error('[DocumentDetail] Failed to load customer_id:', err);
+    });
+  }, [orderLink]);
 
   // ===== ACTION HANDLERS =====
 
@@ -1093,7 +1136,17 @@ export default function DocumentDetailPage({
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  <p className="font-medium">{document.client.name}</p>
+                  {organisationId ? (
+                    <button
+                      type="button"
+                      onClick={() => setShowOrgModal(true)}
+                      className="font-medium text-primary hover:underline text-left"
+                    >
+                      {document.client.name}
+                    </button>
+                  ) : (
+                    <p className="font-medium">{document.client.name}</p>
+                  )}
                   {document.client.email &&
                     !isTechnicalEmail(document.client.email) && (
                       <p className="text-sm text-slate-600">
@@ -1148,6 +1201,30 @@ export default function DocumentDetailPage({
                     </span>
                   </div>
                 )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Commande liée (invoices only) */}
+          {documentType === 'invoice' && orderLink && (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <ShoppingCart className="h-4 w-4" />
+                  Commande liée
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Link
+                  href={`/commandes/clients?id=${orderLink.sales_order_id}`}
+                >
+                  <Badge
+                    variant="outline"
+                    className="cursor-pointer hover:bg-muted"
+                  >
+                    {orderLink.order_number ?? orderLink.sales_order_id}
+                  </Badge>
+                </Link>
               </CardContent>
             </Card>
           )}
@@ -1428,6 +1505,13 @@ export default function DocumentDetailPage({
           onSuccess={() => window.location.reload()}
         />
       )}
+
+      {/* Organisation Quick View Modal */}
+      <OrganisationQuickViewModal
+        organisationId={organisationId}
+        open={showOrgModal}
+        onOpenChange={setShowOrgModal}
+      />
     </div>
   );
 }

@@ -34,6 +34,7 @@ export interface SalesOrder {
   order_number: string;
   customer_id: string;
   customer_type: 'organization' | 'individual';
+  individual_customer_id?: string | null;
   status: SalesOrderStatus;
   payment_status_v2?: 'pending' | 'partially_paid' | 'paid' | null; // Statut calculé via rapprochement bancaire
   // 🆕 Paiement manuel
@@ -205,6 +206,7 @@ export interface SalesOrderItem {
 export interface CreateSalesOrderData {
   customer_id: string;
   customer_type: 'organization' | 'individual';
+  individual_customer_id?: string | null;
   order_date?: string | null;
   channel_id?: string | null; // 🆕 Canal vente (optional - si null, pas de traçabilité stock)
   eco_tax_vat_rate?: number | null;
@@ -494,8 +496,10 @@ export function useSalesOrders() {
           .map(o => o.customer_id)
           .filter((id): id is string => id !== null);
         const individualIds = (ordersData || [])
-          .filter(o => o.customer_type === 'individual' && o.customer_id)
-          .map(o => o.customer_id)
+          .filter(
+            o => o.customer_type === 'individual' && o.individual_customer_id
+          )
+          .map(o => o.individual_customer_id)
           .filter((id): id is string => id !== null);
 
         // Batch fetch organisations (1 seule requête)
@@ -535,9 +539,9 @@ export function useSalesOrders() {
             customerData = org ? { organisations: org } : null;
           } else if (
             order.customer_type === 'individual' &&
-            order.customer_id
+            order.individual_customer_id
           ) {
-            const individual = individualsMap.get(order.customer_id);
+            const individual = individualsMap.get(order.individual_customer_id);
             customerData = individual
               ? { individual_customers: individual }
               : null;
@@ -658,14 +662,14 @@ export function useSalesOrders() {
           customerData = { organisations: org };
         } else if (
           orderData.customer_type === 'individual' &&
-          orderData.customer_id
+          orderData.individual_customer_id
         ) {
           const { data: individual } = await supabase
             .from('individual_customers')
             .select(
               'id, first_name, last_name, email, phone, address_line1, address_line2, postal_code, city'
             )
-            .eq('id', orderData.customer_id)
+            .eq('id', orderData.individual_customer_id)
             .single();
           customerData = { individual_customers: individual };
         }
@@ -1150,8 +1154,13 @@ export function useSalesOrders() {
           .insert([
             {
               order_number: soNumber,
-              customer_id: data.customer_id,
+              customer_id:
+                data.customer_type === 'organization' ? data.customer_id : null,
               customer_type: data.customer_type,
+              individual_customer_id:
+                data.customer_type === 'individual'
+                  ? data.individual_customer_id || data.customer_id
+                  : null,
               order_date: data.order_date || null,
               channel_id: data.channel_id || null, // 🆕 Canal vente pour traçabilité stock
               expected_delivery_date: data.expected_delivery_date || null,
