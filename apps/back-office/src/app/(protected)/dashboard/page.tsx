@@ -40,6 +40,8 @@ import {
   Users,
   FileText,
   Bell,
+  Building2,
+  Truck,
 } from 'lucide-react';
 
 // New Components
@@ -131,7 +133,7 @@ export default function DashboardPage() {
     },
   ];
 
-  // Quick Actions (4 essential actions)
+  // Quick Actions (7 essential actions)
   const quickActions = [
     {
       id: 'new-product',
@@ -144,6 +146,24 @@ export default function DashboardPage() {
       label: 'Nouvelle Commande',
       icon: ShoppingCart,
       href: '/commandes/clients/nouvelle',
+    },
+    {
+      id: 'new-organisation',
+      label: 'Créer Organisation',
+      icon: Building2,
+      href: '/contacts-organisations/nouveau?type=organisation',
+    },
+    {
+      id: 'new-supplier-order',
+      label: 'Commande Fournisseur',
+      icon: Truck,
+      href: '/commandes/fournisseurs',
+    },
+    {
+      id: 'new-invoice',
+      label: 'Nouvelle Facture',
+      icon: FileText,
+      href: '/factures',
     },
     {
       id: 'new-contact',
@@ -163,14 +183,14 @@ export default function DashboardPage() {
   // Sales section KPIs
   const salesKPIs = [
     {
-      title: 'Commandes LinkMe',
+      title: 'Commandes LinkMe actives',
       value: data.sales.ordersLinkme,
       icon: Link2,
       color: 'accent' as const,
       description:
         data.sales.ordersLinkme > 0
-          ? `${data.sales.ordersLinkme} commande${data.sales.ordersLinkme > 1 ? 's' : ''} affilié${data.sales.ordersLinkme > 1 ? 's' : ''}`
-          : 'Aucune commande',
+          ? `${data.sales.ordersLinkme} commande${data.sales.ordersLinkme > 1 ? 's' : ''} en cours`
+          : 'Aucune commande active',
     },
     {
       title: 'Commissions Pending',

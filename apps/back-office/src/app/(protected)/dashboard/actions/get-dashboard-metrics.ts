@@ -140,12 +140,18 @@ export const getDashboardMetrics = cache(
           .is('delivered_at', null)
           .is('cancelled_at', null),
 
-        // 3. LinkMe Pending Orders - draft seulement
+        // 3. LinkMe Active Orders - toutes commandes actives (non livrées, non annulées)
         supabase
           .from('sales_orders')
           .select('id', { count: 'exact' })
-          .eq('status', 'draft')
-          .not('created_by_affiliate_id', 'is', null),
+          .in('status', [
+            'draft',
+            'pending_approval',
+            'validated',
+            'partially_shipped',
+          ])
+          .not('created_by_affiliate_id', 'is', null)
+          .is('cancelled_at', null),
 
         // 4. Total Products + New 30 days
         supabase
@@ -201,12 +207,13 @@ export const getDashboardMetrics = cache(
           .order('created_at', { ascending: false })
           .limit(10),
 
-        // 12. Revenue Last 30 Days (delivered orders only)
+        // 12. Revenue Last 30 Days (delivered orders, using created_at window)
+        // Note: delivered_at often not populated → use status='delivered' + created_at for robustness
         supabase
           .from('sales_orders')
           .select('total_ttc')
-          .not('delivered_at', 'is', null)
-          .gte('delivered_at', thirtyDaysAgoISO)
+          .eq('status', 'delivered')
+          .gte('created_at', thirtyDaysAgoISO)
           .is('cancelled_at', null),
       ]);
 
