@@ -570,20 +570,6 @@ export function RapprochementContent({
     }
   }, [order, fetchTransactions, fetchLinkedIds]);
 
-  // Auto-fill search with customer/supplier name on mount
-  // Priority: altName first (shorter, more discriminant for bank labels)
-  useEffect(() => {
-    if (!order) return;
-
-    const keyword = extractSearchKeyword(
-      order.customer_name ?? '',
-      order.customer_name_alt
-    );
-    if (keyword) {
-      setSearchQuery(keyword);
-    }
-  }, [order]);
-
   // Server-side search: when user types >= 3 chars, search ALL transactions in DB
   useEffect(() => {
     if (searchTimerRef.current) {
