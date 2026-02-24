@@ -19,6 +19,8 @@ import {
   X,
   ChevronDown,
   ChevronRight,
+  Share2,
+  Users,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -55,6 +57,9 @@ type SidebarItem = SidebarLink | SidebarGroup;
 // Hrefs appartenant au groupe Produits (pour auto-open)
 const PRODUITS_HREFS = ['/catalogue', '/ma-selection', '/mes-produits'];
 
+// Hrefs appartenant au groupe Réseau (pour auto-open)
+const RESEAU_HREFS = ['/organisations', '/contacts'];
+
 const sidebarItems: SidebarItem[] = [
   { icon: LayoutDashboard, label: 'Dashboard', href: '/dashboard' },
   {
@@ -86,16 +91,35 @@ const sidebarItems: SidebarItem[] = [
   { icon: Coins, label: 'Commissions', href: '/commissions' },
   { icon: BarChart3, label: 'Statistiques', href: '/statistiques' },
   {
-    icon: Building2,
-    label: 'Organisations',
-    href: '/organisations',
-    roles: ROUTE_PERMISSIONS['/organisations']?.roles,
+    type: 'group',
+    label: 'Réseau',
+    icon: Share2,
+    subLinks: [
+      {
+        label: 'Organisations',
+        href: '/organisations',
+        icon: Building2,
+        roles: ROUTE_PERMISSIONS['/organisations']?.roles,
+      },
+      {
+        label: 'Contacts',
+        href: '/contacts',
+        icon: Users,
+        roles: ROUTE_PERMISSIONS['/contacts']?.roles,
+      },
+    ],
   },
   { icon: Settings, label: 'Paramètres', href: '/parametres' },
 ];
 
 function isProduitsPath(pathname: string): boolean {
   return PRODUITS_HREFS.some(
+    href => pathname === href || pathname.startsWith(`${href}/`)
+  );
+}
+
+function isReseauPath(pathname: string): boolean {
+  return RESEAU_HREFS.some(
     href => pathname === href || pathname.startsWith(`${href}/`)
   );
 }
@@ -122,9 +146,12 @@ export function AppSidebar(): JSX.Element | null {
   const roleToUse = linkMeRole ?? cachedRole;
 
   // État ouverture des groupes collapsibles
-  const [openGroups, setOpenGroups] = useState<Set<string>>(
-    () => new Set(isProduitsPath(pathname) ? ['Produits'] : [])
-  );
+  const [openGroups, setOpenGroups] = useState<Set<string>>(() => {
+    const initial: string[] = [];
+    if (isProduitsPath(pathname)) initial.push('Produits');
+    if (isReseauPath(pathname)) initial.push('Réseau');
+    return new Set(initial);
+  });
 
   // Auto-open groupe Produits quand pathname correspond
   useEffect(() => {
@@ -132,6 +159,16 @@ export function AppSidebar(): JSX.Element | null {
       setOpenGroups(prev => {
         if (prev.has('Produits')) return prev;
         return new Set([...prev, 'Produits']);
+      });
+    }
+  }, [pathname]);
+
+  // Auto-open groupe Réseau quand pathname correspond
+  useEffect(() => {
+    if (isReseauPath(pathname)) {
+      setOpenGroups(prev => {
+        if (prev.has('Réseau')) return prev;
+        return new Set([...prev, 'Réseau']);
       });
     }
   }, [pathname]);
