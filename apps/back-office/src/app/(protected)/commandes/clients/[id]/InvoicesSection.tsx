@@ -30,7 +30,8 @@ interface InvoiceLinked {
     | 'draft_validated'
     | 'finalized'
     | 'sent'
-    | 'paid';
+    | 'paid'
+    | null;
   status: string;
   total_ttc: number;
   amount_paid: number;
@@ -58,7 +59,7 @@ interface ApiSuccessResponse {
 }
 
 const WORKFLOW_STATUS_LABELS: Record<
-  InvoiceLinked['workflow_status'],
+  NonNullable<InvoiceLinked['workflow_status']>,
   { label: string; color: string }
 > = {
   synchronized: { label: 'Synchronisé', color: 'bg-blue-100 text-blue-700' },
@@ -204,10 +205,14 @@ export function InvoicesSection({ orderId }: { orderId: string }) {
                   </div>
                   <Badge
                     className={
-                      WORKFLOW_STATUS_LABELS[invoice.workflow_status].color
+                      invoice.workflow_status
+                        ? WORKFLOW_STATUS_LABELS[invoice.workflow_status].color
+                        : 'bg-gray-100 text-gray-600'
                     }
                   >
-                    {WORKFLOW_STATUS_LABELS[invoice.workflow_status].label}
+                    {invoice.workflow_status
+                      ? WORKFLOW_STATUS_LABELS[invoice.workflow_status].label
+                      : '—'}
                   </Badge>
                 </div>
 
