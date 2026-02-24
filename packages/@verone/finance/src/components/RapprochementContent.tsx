@@ -671,14 +671,6 @@ export function RapprochementContent({
   const suggestions = useMemo(() => {
     if (!order || allTransactions.length === 0) return [];
 
-    // Extract name keywords for grouping (same logic as extractSearchKeyword)
-    const allNames = [order.customer_name, order.customer_name_alt]
-      .filter(Boolean)
-      .map(n => (n as string).toLowerCase().trim());
-    const nameWords = allNames.flatMap(name =>
-      name.split(/[\s,.-]+/).filter(w => w.length >= 3 && !GENERIC_WORDS.has(w))
-    );
-
     const withScores: TransactionSuggestion[] = allTransactions
       .map(tx => {
         const { priority, score, reasons, sortOrder } = calculateMatch(
@@ -698,21 +690,8 @@ export function RapprochementContent({
         tx => tx.matchPriority !== 'none' && tx.matchPriority !== 'excluded'
       );
 
-    // Group: name-matched transactions first, then others — both sorted by score
-    const hasNameMatch = (tx: TransactionSuggestion) => {
-      if (nameWords.length === 0) return false;
-      const label = (tx.label || '').toLowerCase();
-      const counterparty = (tx.counterparty_name || '').toLowerCase();
-      return nameWords.some(w => label.includes(w) || counterparty.includes(w));
-    };
-
-    const nameMatched = withScores.filter(hasNameMatch);
-    const others = withScores.filter(tx => !hasNameMatch(tx));
-
-    return [
-      ...nameMatched.sort((a, b) => a.sortOrder - b.sortOrder),
-      ...others.sort((a, b) => a.sortOrder - b.sortOrder),
-    ];
+    // Sort purely by score — exact amount match always first
+    return withScores.sort((a, b) => a.sortOrder - b.sortOrder);
   }, [order, allTransactions]);
 
   const filteredSuggestions = useMemo(() => {

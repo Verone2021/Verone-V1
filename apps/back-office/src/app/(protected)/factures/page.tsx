@@ -852,8 +852,11 @@ export default function FacturationPage() {
           id: order.id,
           order_number: order.order_number,
           customer_name: customerName ?? null,
+          customer_name_alt: order.organisations?.trade_name ?? null,
           total_ttc: order.total_ttc,
           created_at: order.created_at,
+          order_date: order.order_date ?? null,
+          shipped_at: order.shipped_at ?? null,
         });
         setShowRapprochementModal(true);
       }
