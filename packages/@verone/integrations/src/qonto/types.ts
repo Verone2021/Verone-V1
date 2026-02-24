@@ -304,7 +304,8 @@ export interface QontoClientInvoice {
   items: QontoInvoiceItem[];
 
   // Références
-  purchase_order_number?: string;
+  purchase_order_number?: string; // Utilisé en création (paramètre envoyé à Qonto)
+  purchase_order?: string; // Retourné par l'API Qonto dans les réponses GET
 
   // PDF - attachment_id est la clé pour télécharger via /v2/attachments/{id}
   attachment_id?: string;

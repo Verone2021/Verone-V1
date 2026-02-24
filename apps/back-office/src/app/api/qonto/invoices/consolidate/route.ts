@@ -142,7 +142,10 @@ export async function POST(
         }
 
         // Pas de référence commande → skip
-        if (!invoice.purchase_order_number) {
+        // Qonto retourne `purchase_order` dans les GET, mais on envoie `purchase_order_number` à la création
+        const orderRef =
+          invoice.purchase_order ?? invoice.purchase_order_number;
+        if (!orderRef) {
           report.skipped_no_order_ref++;
           continue;
         }
@@ -151,7 +154,7 @@ export async function POST(
         const { data: order, error: orderError } = await supabase
           .from('sales_orders')
           .select('id, customer_id, individual_customer_id, customer_type')
-          .eq('order_number', invoice.purchase_order_number)
+          .eq('order_number', orderRef)
           .single();
 
         if (orderError ?? !order) {
