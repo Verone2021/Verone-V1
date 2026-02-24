@@ -14,13 +14,11 @@
 import { useEffect, useState, useMemo, Suspense } from 'react';
 
 import dynamic from 'next/dynamic';
-import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 import { ConfirmDialog } from '@verone/ui';
 import {
   Building2,
-  ArrowLeft,
   Loader2,
   Search,
   ChevronLeft,
@@ -271,14 +269,6 @@ function OrganisationsPageContent(): JSX.Element | null {
       <div className="max-w-6xl mx-auto px-4 py-6">
         {/* Header */}
         <div className="mb-6">
-          <Link
-            href="/dashboard"
-            className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 mb-3"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Retour au dashboard
-          </Link>
-
           <div className="flex items-center justify-between gap-4">
             <div>
               <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
