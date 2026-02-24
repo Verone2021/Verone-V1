@@ -53,6 +53,13 @@ import { useSalesOrders } from '@verone/orders/hooks';
 import { createClient } from '@verone/utils/supabase/client';
 import type { SalesOrder, ManualPaymentType } from '@verone/orders/hooks';
 
+interface ILinkedInvoice {
+  id: string;
+  document_number: string | null;
+  workflow_status: string | null;
+  total_ttc: number;
+}
+
 // ✅ Type Safety: Interface ProductImage stricte (IDENTIQUE à PurchaseOrderDetailModal)
 interface ProductImage {
   id?: string;
@@ -101,6 +108,8 @@ export function OrderDetailModal({
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [paymentSubmitting, setPaymentSubmitting] = useState(false);
+  const [linkedInvoices, setLinkedInvoices] = useState<ILinkedInvoice[]>([]);
+  const [loadingLinkedInvoices, setLoadingLinkedInvoices] = useState(false);
 
   // Form state for manual payment
   const [manualPaymentType, setManualPaymentType] =
@@ -200,6 +209,19 @@ export function OrderDetailModal({
       });
   }, [open, order?.id]);
 
+  // Charger les factures liées à cette commande
+  useEffect(() => {
+    if (!order?.id || !open) return;
+    setLoadingLinkedInvoices(true);
+    void fetch(`/api/qonto/invoices/by-order/${order.id}`)
+      .then(r => r.json())
+      .then((data: { invoices?: ILinkedInvoice[] }) => {
+        setLinkedInvoices(data.invoices ?? []);
+      })
+      .catch(() => setLinkedInvoices([]))
+      .finally(() => setLoadingLinkedInvoices(false));
+  }, [order?.id, open]);
+
   if (!order) return null;
 
   const formatDate = (date: string | null) => {
@@ -273,6 +295,11 @@ export function OrderDetailModal({
 
   // Workflow Odoo-inspired: Permettre expédition pour validated + partially_shipped
   const canShip = ['validated', 'partially_shipped'].includes(order.status);
+
+  const activeInvoices = linkedInvoices.filter(
+    inv => inv.workflow_status !== 'cancelled'
+  );
+  const hasActiveInvoice = activeInvoices.length > 0;
 
   return (
     <>
@@ -789,8 +816,7 @@ export function OrderDetailModal({
               {/* Card Facturation */}
               {!readOnly &&
                 order.status !== 'draft' &&
-                order.status !== 'cancelled' &&
-                order.payment_status_v2 !== 'paid' && (
+                order.status !== 'cancelled' && (
                   <Card>
                     <CardHeader className="pb-3">
                       <CardTitle className="text-sm font-medium flex items-center gap-2">
@@ -799,14 +825,51 @@ export function OrderDetailModal({
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <ButtonV2
-                        size="sm"
-                        className="w-full"
-                        onClick={() => setShowInvoiceModal(true)}
-                      >
-                        <FileText className="h-3 w-3 mr-1" />
-                        Générer facture
-                      </ButtonV2>
+                      {loadingLinkedInvoices ? (
+                        <ButtonV2 size="sm" className="w-full" disabled>
+                          <FileText className="h-3 w-3 mr-1 animate-pulse" />
+                          Chargement...
+                        </ButtonV2>
+                      ) : hasActiveInvoice ? (
+                        <div className="space-y-1">
+                          {activeInvoices.map(inv => (
+                            <div
+                              key={inv.id}
+                              className="flex items-center gap-2 text-sm p-2 rounded border bg-muted/30"
+                            >
+                              <FileText className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                              <span className="font-mono text-xs flex-1">
+                                {inv.document_number ?? inv.id.slice(0, 8)}
+                              </span>
+                              {inv.workflow_status && (
+                                <Badge
+                                  variant="outline"
+                                  className="text-xs px-1.5 py-0"
+                                >
+                                  {inv.workflow_status === 'synchronized'
+                                    ? 'Synchronisé'
+                                    : inv.workflow_status === 'finalized'
+                                      ? 'Définitif'
+                                      : inv.workflow_status === 'sent'
+                                        ? 'Envoyé'
+                                        : inv.workflow_status === 'paid'
+                                          ? 'Payé'
+                                          : inv.workflow_status}
+                                </Badge>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <ButtonV2
+                          size="sm"
+                          className="w-full"
+                          onClick={() => setShowInvoiceModal(true)}
+                        >
+                          <FileText className="h-3 w-3 mr-1" />
+                          Générer facture
+                        </ButtonV2>
+                      )}
                     </CardContent>
                   </Card>
                 )}

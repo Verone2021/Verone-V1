@@ -175,6 +175,8 @@ interface Invoice {
   local_document_id?: string | null;
   has_local_pdf?: boolean;
   deleted_at?: string | null;
+  sales_order_id?: string | null;
+  order_number?: string | null;
 }
 
 // =====================================================================
@@ -399,6 +401,7 @@ function InvoicesTable({
         <TableRow>
           <TableHead>N° Facture</TableHead>
           <TableHead>Client</TableHead>
+          <TableHead>Commande</TableHead>
           <TableHead>Date</TableHead>
           <TableHead>Échéance</TableHead>
           <TableHead>Statut</TableHead>
@@ -412,6 +415,15 @@ function InvoicesTable({
           <TableRow key={invoice.id}>
             <TableCell className="font-mono">{invoice.number}</TableCell>
             <TableCell>{invoice.client?.name ?? '-'}</TableCell>
+            <TableCell>
+              {invoice.sales_order_id && invoice.order_number ? (
+                <Link href={`/commandes/clients/${invoice.sales_order_id}`}>
+                  <Badge variant="outline">{invoice.order_number}</Badge>
+                </Link>
+              ) : (
+                <span className="text-muted-foreground text-sm">-</span>
+              )}
+            </TableCell>
             <TableCell>{formatDate(invoice.issue_date)}</TableCell>
             <TableCell>
               <span

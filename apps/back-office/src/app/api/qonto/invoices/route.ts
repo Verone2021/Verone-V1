@@ -91,6 +91,8 @@ export async function GET(request: NextRequest): Promise<
       local_pdf_path: string | null;
       local_document_id: string;
       deleted_at: string | null;
+      sales_order_id: string | null;
+      order_number: string | null;
     }
 
     let localDataMap: Record<string, ILocalDocData> = {};
@@ -99,7 +101,9 @@ export async function GET(request: NextRequest): Promise<
       // Note: local_pdf_path sera disponible après migration 20260122_005
       const { data: localDocs } = await supabase
         .from('financial_documents')
-        .select('id, qonto_invoice_id, workflow_status, deleted_at')
+        .select(
+          'id, qonto_invoice_id, workflow_status, deleted_at, sales_order_id, sales_orders!financial_documents_sales_order_id_fkey(order_number)'
+        )
         .in('qonto_invoice_id', qontoInvoiceIds);
 
       if (localDocs) {
@@ -110,6 +114,8 @@ export async function GET(request: NextRequest): Promise<
           workflow_status: string | null;
           local_pdf_path?: string | null;
           deleted_at: string | null;
+          sales_order_id?: string | null;
+          sales_orders?: { order_number: string | null } | null;
         };
 
         localDataMap = (localDocs as DocWithExtras[]).reduce(
@@ -120,6 +126,8 @@ export async function GET(request: NextRequest): Promise<
                 local_pdf_path: doc.local_pdf_path ?? null,
                 local_document_id: doc.id,
                 deleted_at: doc.deleted_at,
+                sales_order_id: doc.sales_order_id ?? null,
+                order_number: doc.sales_orders?.order_number ?? null,
               };
             }
             return acc;
@@ -139,6 +147,8 @@ export async function GET(request: NextRequest): Promise<
         local_document_id: localDataMap[invoice.id]?.local_document_id ?? null,
         has_local_pdf: !!localDataMap[invoice.id]?.local_pdf_path,
         deleted_at: localDataMap[invoice.id]?.deleted_at ?? null,
+        sales_order_id: localDataMap[invoice.id]?.sales_order_id ?? null,
+        order_number: localDataMap[invoice.id]?.order_number ?? null,
       })
     );
 
