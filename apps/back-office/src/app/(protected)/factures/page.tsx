@@ -59,6 +59,7 @@ import {
   SyncButton,
 } from '@verone/ui-business';
 import { featureFlags } from '@verone/utils/feature-flags';
+import { toast } from 'sonner';
 import {
   FileText,
   Plus,
@@ -84,6 +85,7 @@ import {
   ArchiveRestore,
   Pencil,
   CheckCircle2,
+  Link2,
 } from 'lucide-react';
 
 // =====================================================================
@@ -91,6 +93,17 @@ import {
 // =====================================================================
 
 type TabType = 'factures' | 'devis' | 'avoirs' | 'manquantes';
+
+interface ConsolidateReport {
+  success: boolean;
+  synced: number;
+  skipped_existing: number;
+  skipped_no_order_ref: number;
+  skipped_no_match: number;
+  skipped_no_partner: number;
+  skipped_individual_customer: number;
+  errors: string[];
+}
 
 // Types pour réponses API
 interface ApiResponse<T> {
@@ -704,6 +717,9 @@ export default function FacturationPage() {
     null
   );
 
+  // État consolidation liaisons
+  const [isConsolidating, setIsConsolidating] = useState(false);
+
   // États pour les avoirs
   const [creditNotes, setCreditNotes] = useState<CreditNote[]>([]);
   const [loadingCreditNotes, setLoadingCreditNotes] = useState(false);
@@ -1117,6 +1133,32 @@ export default function FacturationPage() {
     }
   };
 
+  // Handler consolidation historique liaisons commandes ↔ factures Qonto
+  const handleConsolidate = () => {
+    setIsConsolidating(true);
+    void fetch('/api/qonto/invoices/consolidate', { method: 'POST' })
+      .then(r => r.json())
+      .then((report: ConsolidateReport) => {
+        toast.success(
+          `${report.synced.toString()} liaisons créées · ${report.skipped_existing.toString()} déjà existantes`
+        );
+        if (report.errors.length > 0) {
+          toast.error(
+            `${report.errors.length.toString()} erreur(s) lors de la consolidation`
+          );
+        }
+        if (report.synced > 0) {
+          void fetchInvoices();
+        }
+      })
+      .catch(() => {
+        toast.error('Erreur de consolidation');
+      })
+      .finally(() => {
+        setIsConsolidating(false);
+      });
+  };
+
   // FEATURE FLAG: Finance module disabled for Phase 1
   if (!featureFlags.financeEnabled) {
     return (
@@ -1178,6 +1220,19 @@ export default function FacturationPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleConsolidate}
+            disabled={isConsolidating}
+          >
+            {isConsolidating ? (
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            ) : (
+              <Link2 className="h-4 w-4 mr-2" />
+            )}
+            Consolider liaisons
+          </Button>
           <Link href="/factures/qonto">
             <Button variant="outline">
               <Eye className="h-4 w-4 mr-2" />
