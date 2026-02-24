@@ -34,6 +34,7 @@ export interface OrderForLink {
   id: string;
   order_number: string;
   customer_name?: string | null;
+  customer_name_alt?: string | null;
   total_ttc: number;
   created_at: string;
   order_date?: string | null;
@@ -99,19 +100,48 @@ const GENERIC_WORDS = new Set([
 ]);
 
 /**
- * Extract the most significant keyword from a customer/supplier name.
- * "Zentrada Europe GmbH" → "zentrada"
- * "DGFIP - Trésor Public" → "dgfip"
+ * Extract the best search keyword from customer names.
+ *
+ * Priority:
+ *   1. altName if provided (trade name, usually short and discriminant: "PK Prado")
+ *   2. name if short enough (< 20 chars → use as-is minus generic words)
+ *   3. Longest meaningful word from name (fallback)
  */
-function extractSearchKeyword(name: string): string {
+function extractSearchKeyword(name: string, altName?: string | null): string {
+  // Priority 1: altName (trade name / short commercial name)
+  if (altName) {
+    const altWords = altName
+      .toLowerCase()
+      .replace(/[^a-zà-ÿ0-9\s]/g, ' ')
+      .split(/\s+/)
+      .filter(w => w.length >= 2 && !GENERIC_WORDS.has(w));
+    if (altWords.length > 0) {
+      // If altName is short, use it entirely (most discriminant)
+      if (altWords.join(' ').length <= 20) {
+        return altWords.join(' ');
+      }
+      // Otherwise pick longest word
+      return altWords.reduce(
+        (best, w) => (w.length > best.length ? w : best),
+        altWords[0]
+      );
+    }
+  }
+
+  // Priority 2 & 3: primary name
   const words = name
     .toLowerCase()
     .replace(/[^a-zà-ÿ0-9\s]/g, ' ')
     .split(/\s+/)
     .filter(w => w.length >= 3 && !GENERIC_WORDS.has(w));
 
-  // Return the longest meaningful word (most discriminating)
   if (words.length === 0) return '';
+
+  // If short enough, return all meaningful words joined
+  const joined = words.join(' ');
+  if (joined.length <= 20) return joined;
+
+  // Fallback: longest meaningful word
   return words.reduce(
     (best, w) => (w.length > best.length ? w : best),
     words[0]
@@ -167,20 +197,26 @@ function calculateMatch(
   }
 
   // --- NAME MATCHING (boolean: matches or not) ---
-  const orderName = (order.customer_name || '').toLowerCase().trim();
+  const orderNames = [order.customer_name, order.customer_name_alt]
+    .filter(Boolean)
+    .map(n => (n as string).toLowerCase().trim());
   const txLabel = (transaction.label || '').toLowerCase().trim();
   const txCounterparty = (transaction.counterparty_name || '')
     .toLowerCase()
     .trim();
 
   let nameMatches = false;
-  if (orderName.length >= 3) {
+  for (const orderName of orderNames) {
+    if (orderName.length < 3) continue;
     const nameWords = orderName.split(/[\s,.-]+/).filter(w => w.length >= 3);
     const matchedInLabel = nameWords.some(w => txLabel.includes(w));
     const matchedInCounterparty =
       txCounterparty.length > 0 &&
       nameWords.some(w => txCounterparty.includes(w));
-    nameMatches = matchedInLabel || matchedInCounterparty;
+    if (matchedInLabel || matchedInCounterparty) {
+      nameMatches = true;
+      break;
+    }
   }
 
   if (nameMatches) {
@@ -213,14 +249,19 @@ function calculateMatch(
 
   // --- STEP 2: Among exact-amount, how many match the supplier name? ---
   const exactAmountAndNameTxs = exactAmountTxs.filter(tx => {
-    if (orderName.length < 3) return false;
-    const nameWords = orderName.split(/[\s,.-]+/).filter(w => w.length >= 3);
     const label = (tx.label || '').toLowerCase().trim();
     const counterparty = (tx.counterparty_name || '').toLowerCase().trim();
-    return (
-      nameWords.some(w => label.includes(w)) ||
-      (counterparty.length > 0 && nameWords.some(w => counterparty.includes(w)))
-    );
+    for (const oName of orderNames) {
+      if (oName.length < 3) continue;
+      const nameWords = oName.split(/[\s,.-]+/).filter(w => w.length >= 3);
+      if (
+        nameWords.some(w => label.includes(w)) ||
+        (counterparty.length > 0 &&
+          nameWords.some(w => counterparty.includes(w)))
+      )
+        return true;
+    }
+    return false;
   });
   const nName = exactAmountAndNameTxs.length;
 
@@ -462,20 +503,43 @@ export function RapprochementContent({
     try {
       const transactionSide =
         orderType === 'purchase_order' ? 'debit' : 'credit';
+      const fields =
+        'id, transaction_id, label, amount, counterparty_name, emitted_at, settled_at, unified_status';
 
-      const { data, error: fetchError } = await supabase
+      // Two parallel queries: recent transactions + amount-matched transactions
+      const recentQuery = supabase
         .from('v_transactions_unified')
-        .select(
-          'id, transaction_id, label, amount, counterparty_name, emitted_at, settled_at, unified_status'
-        )
+        .select(fields)
         .eq('side', transactionSide)
         .in('unified_status', ['to_process', 'classified'])
         .order('settled_at', { ascending: false, nullsFirst: false })
         .limit(100);
 
-      if (fetchError) throw fetchError;
+      // Amount-first search: find transactions matching order amount (±1€)
+      const amountQuery = supabase
+        .from('v_transactions_unified')
+        .select(fields)
+        .eq('side', transactionSide)
+        .in('unified_status', ['to_process', 'classified'])
+        .gte('amount', order.total_ttc - 1)
+        .lte('amount', order.total_ttc + 1)
+        .order('settled_at', { ascending: false, nullsFirst: false })
+        .limit(30);
 
-      setTransactions((data as CreditTransaction[]) || []);
+      const [recentResult, amountResult] = await Promise.all([
+        recentQuery,
+        amountQuery,
+      ]);
+
+      if (recentResult.error) throw recentResult.error;
+
+      // Merge and deduplicate: amount-matched first (higher relevance)
+      const recentTxs = (recentResult.data as CreditTransaction[]) || [];
+      const amountTxs = (amountResult.data as CreditTransaction[]) || [];
+      const recentIds = new Set(recentTxs.map(t => t.id));
+      const extraAmountTxs = amountTxs.filter(t => !recentIds.has(t.id));
+
+      setTransactions([...recentTxs, ...extraAmountTxs]);
     } catch (err) {
       console.error('Error fetching transactions:', err);
       setError('Erreur lors du chargement des transactions');
@@ -507,12 +571,16 @@ export function RapprochementContent({
   }, [order, fetchTransactions, fetchLinkedIds]);
 
   // Auto-fill search with customer/supplier name on mount
+  // Priority: altName first (shorter, more discriminant for bank labels)
   useEffect(() => {
-    if (order?.customer_name) {
-      const keyword = extractSearchKeyword(order.customer_name);
-      if (keyword) {
-        setSearchQuery(keyword);
-      }
+    if (!order) return;
+
+    const keyword = extractSearchKeyword(
+      order.customer_name ?? '',
+      order.customer_name_alt
+    );
+    if (keyword) {
+      setSearchQuery(keyword);
     }
   }, [order]);
 
@@ -535,6 +603,22 @@ export function RapprochementContent({
       const runSearch = async () => {
         try {
           const pattern = `%${searchQuery}%`;
+
+          // Build OR filter: search query + altName keyword (if different)
+          let orFilter = `label.ilike.${pattern},counterparty_name.ilike.${pattern}`;
+
+          // Also search with altName if available and different from current query
+          if (order?.customer_name_alt) {
+            const altKeyword = extractSearchKeyword(
+              '',
+              order.customer_name_alt
+            );
+            if (altKeyword && altKeyword !== searchQuery.toLowerCase()) {
+              const altPattern = `%${altKeyword}%`;
+              orFilter += `,label.ilike.${altPattern},counterparty_name.ilike.${altPattern}`;
+            }
+          }
+
           const { data, error: searchError } = await supabase
             .from('v_transactions_unified')
             .select(
@@ -542,7 +626,7 @@ export function RapprochementContent({
             )
             .eq('side', transactionSide)
             .in('unified_status', ['to_process', 'classified'])
-            .or(`label.ilike.${pattern},counterparty_name.ilike.${pattern}`)
+            .or(orFilter)
             .order('settled_at', { ascending: false, nullsFirst: false })
             .limit(50);
 
@@ -563,7 +647,7 @@ export function RapprochementContent({
         clearTimeout(searchTimerRef.current);
       }
     };
-  }, [searchQuery, orderType, supabase]);
+  }, [searchQuery, orderType, supabase, order]);
 
   // Merge recent transactions + search results, deduplicate by id,
   // and EXCLUDE transactions already linked to another order
@@ -588,10 +672,12 @@ export function RapprochementContent({
     if (!order || allTransactions.length === 0) return [];
 
     // Extract name keywords for grouping (same logic as extractSearchKeyword)
-    const orderName = (order.customer_name || '').toLowerCase().trim();
-    const nameWords = orderName
-      .split(/[\s,.-]+/)
-      .filter(w => w.length >= 3 && !GENERIC_WORDS.has(w));
+    const allNames = [order.customer_name, order.customer_name_alt]
+      .filter(Boolean)
+      .map(n => (n as string).toLowerCase().trim());
+    const nameWords = allNames.flatMap(name =>
+      name.split(/[\s,.-]+/).filter(w => w.length >= 3 && !GENERIC_WORDS.has(w))
+    );
 
     const withScores: TransactionSuggestion[] = allTransactions
       .map(tx => {

@@ -11,6 +11,7 @@ import {
   ReconcileTransactionModal,
 } from '@verone/finance';
 import type { IInvoiceForCreditNote } from '@verone/finance';
+import { OrganisationQuickViewModal } from '@verone/organisations';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,6 +38,7 @@ import {
   TableRow,
 } from '@verone/ui';
 import { StatusPill, qontoInvoiceStatusConfig } from '@verone/ui-business';
+import { createClient } from '@verone/utils/supabase/client';
 import { featureFlags } from '@verone/utils/feature-flags';
 import {
   AlertTriangle,
@@ -303,6 +305,8 @@ export default function DocumentDetailPage({
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showReconcileModal, setShowReconcileModal] = useState(false);
   const [showArchiveDialog, setShowArchiveDialog] = useState(false);
+  const [showOrgModal, setShowOrgModal] = useState(false);
+  const [organisationId, setOrganisationId] = useState<string | null>(null);
 
   // Fetch document data
   useEffect(() => {
@@ -370,6 +374,28 @@ export default function DocumentDetailPage({
       console.error('[DocumentDetail] Fetch failed:', error);
     });
   }, [id, typeParam]);
+
+  // Resolve organisation ID from linked sales order
+  useEffect(() => {
+    if (!orderLink?.sales_order_id) return;
+
+    const supabase = createClient();
+    const loadCustomerId = async () => {
+      const { data } = await supabase
+        .from('sales_orders')
+        .select('customer_id')
+        .eq('id', orderLink.sales_order_id)
+        .single();
+
+      if (data?.customer_id) {
+        setOrganisationId(data.customer_id);
+      }
+    };
+
+    void loadCustomerId().catch((err: unknown) => {
+      console.error('[DocumentDetail] Failed to load customer_id:', err);
+    });
+  }, [orderLink]);
 
   // ===== ACTION HANDLERS =====
 
@@ -1110,7 +1136,17 @@ export default function DocumentDetailPage({
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  <p className="font-medium">{document.client.name}</p>
+                  {organisationId ? (
+                    <button
+                      type="button"
+                      onClick={() => setShowOrgModal(true)}
+                      className="font-medium text-primary hover:underline text-left"
+                    >
+                      {document.client.name}
+                    </button>
+                  ) : (
+                    <p className="font-medium">{document.client.name}</p>
+                  )}
                   {document.client.email &&
                     !isTechnicalEmail(document.client.email) && (
                       <p className="text-sm text-slate-600">
@@ -1469,6 +1505,13 @@ export default function DocumentDetailPage({
           onSuccess={() => window.location.reload()}
         />
       )}
+
+      {/* Organisation Quick View Modal */}
+      <OrganisationQuickViewModal
+        organisationId={organisationId}
+        open={showOrgModal}
+        onOpenChange={setShowOrgModal}
+      />
     </div>
   );
 }
