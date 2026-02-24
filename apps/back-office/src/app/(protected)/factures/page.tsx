@@ -1,8 +1,12 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 
 import Link from 'next/link';
+
+import { OrderDetailModal } from '@verone/orders/components/modals';
+import { useSalesOrders } from '@verone/orders/hooks';
+import type { SalesOrder } from '@verone/orders/hooks';
 
 import {
   useMissingInvoices,
@@ -15,9 +19,11 @@ import {
   OrderSelectModal,
   QuoteCreateFromOrderModal,
   QuoteCreateServiceModal,
+  RapprochementFromOrderModal,
   type TransactionForUpload,
   type IOrderForInvoice,
   type IOrderForDocument,
+  type OrderForLink,
 } from '@verone/finance/components';
 import {
   Card,
@@ -86,6 +92,7 @@ import {
   Pencil,
   CheckCircle2,
   Link2,
+  Banknote,
 } from 'lucide-react';
 
 // =====================================================================
@@ -375,6 +382,8 @@ function InvoicesTable({
   onArchive,
   onUnarchive,
   onFinalize,
+  onOpenOrder,
+  onRapprochement,
 }: {
   invoices: Invoice[];
   loading: boolean;
@@ -385,6 +394,8 @@ function InvoicesTable({
   onArchive?: (invoice: Invoice) => Promise<void>;
   onUnarchive?: (invoice: Invoice) => Promise<void>;
   onFinalize?: (invoice: Invoice) => Promise<void>;
+  onOpenOrder?: (orderId: string) => void;
+  onRapprochement?: (invoice: Invoice) => void;
 }) {
   if (loading) {
     return (
@@ -418,6 +429,7 @@ function InvoicesTable({
           <TableHead>Date</TableHead>
           <TableHead>Échéance</TableHead>
           <TableHead>Statut</TableHead>
+          <TableHead>Paiement</TableHead>
           <TableHead>Workflow</TableHead>
           <TableHead className="text-right">Montant</TableHead>
           <TableHead className="text-right">Actions</TableHead>
@@ -430,9 +442,14 @@ function InvoicesTable({
             <TableCell>{invoice.client?.name ?? '-'}</TableCell>
             <TableCell>
               {invoice.sales_order_id && invoice.order_number ? (
-                <Link href={`/commandes/clients?id=${invoice.sales_order_id}`}>
-                  <Badge variant="outline">{invoice.order_number}</Badge>
-                </Link>
+                <button onClick={() => onOpenOrder?.(invoice.sales_order_id!)}>
+                  <Badge
+                    variant="outline"
+                    className="cursor-pointer hover:bg-accent"
+                  >
+                    {invoice.order_number}
+                  </Badge>
+                </button>
               ) : (
                 <span className="text-muted-foreground text-sm">-</span>
               )}
@@ -453,6 +470,45 @@ function InvoicesTable({
             </TableCell>
             <TableCell>
               <InvoiceStatusBadge status={invoice.status} />
+            </TableCell>
+            <TableCell>
+              {invoice.status !== 'draft' && invoice.status !== 'canceled' ? (
+                <div className="flex items-center gap-1">
+                  {invoice.status === 'paid' ? (
+                    <Badge
+                      variant="default"
+                      className="bg-green-100 text-green-700 border-green-200 hover:bg-green-100"
+                    >
+                      <CheckCircle className="h-3 w-3 mr-1" />
+                      Payée
+                    </Badge>
+                  ) : (
+                    <>
+                      <Badge
+                        variant="outline"
+                        className="text-amber-600 border-amber-200"
+                      >
+                        <Clock className="h-3 w-3 mr-1" />
+                        Non payée
+                      </Badge>
+                      {onRapprochement && invoice.sales_order_id && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 px-2 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                          onClick={() => onRapprochement(invoice)}
+                          title="Rapprocher avec une transaction"
+                        >
+                          <Banknote className="h-3 w-3 mr-1" />
+                          Rapprocher
+                        </Button>
+                      )}
+                    </>
+                  )}
+                </div>
+              ) : (
+                <span className="text-muted-foreground text-sm">-</span>
+              )}
             </TableCell>
             <TableCell>
               <WorkflowStatusBadge
@@ -724,6 +780,51 @@ export default function FacturationPage() {
   const [creditNotes, setCreditNotes] = useState<CreditNote[]>([]);
   const [loadingCreditNotes, setLoadingCreditNotes] = useState(false);
   const [errorCreditNotes, setErrorCreditNotes] = useState<string | null>(null);
+
+  // État pour ouverture modale commande en place (depuis lien facture)
+  const [selectedOrderForModal, setSelectedOrderForModal] =
+    useState<SalesOrder | null>(null);
+  const [showOrderModal, setShowOrderModal] = useState(false);
+  const { fetchOrder } = useSalesOrders();
+
+  const handleOpenOrderModal = useCallback(
+    async (orderId: string) => {
+      const order = await fetchOrder(orderId);
+      if (order) {
+        setSelectedOrderForModal(order);
+        setShowOrderModal(true);
+      }
+    },
+    [fetchOrder]
+  );
+
+  const handleRapprochement = useCallback(
+    async (invoice: Invoice) => {
+      if (!invoice.sales_order_id) return;
+      const order = await fetchOrder(invoice.sales_order_id);
+      if (order) {
+        const customerName =
+          order.organisations?.legal_name ??
+          (order.individual_customers
+            ? `${order.individual_customers.first_name} ${order.individual_customers.last_name}`
+            : null);
+        setRapprochementOrder({
+          id: order.id,
+          order_number: order.order_number,
+          customer_name: customerName ?? null,
+          total_ttc: order.total_ttc,
+          created_at: order.created_at,
+        });
+        setShowRapprochementModal(true);
+      }
+    },
+    [fetchOrder]
+  );
+
+  // État pour rapprochement depuis facture
+  const [showRapprochementModal, setShowRapprochementModal] = useState(false);
+  const [rapprochementOrder, setRapprochementOrder] =
+    useState<OrderForLink | null>(null);
 
   // États pour les factures (Qonto)
   const [invoices, setInvoices] = useState<Invoice[]>([]);
@@ -1447,6 +1548,9 @@ export default function FacturationPage() {
                 )}
                 loading={loadingInvoices}
                 onView={handleView}
+                onOpenOrder={orderId => {
+                  void handleOpenOrderModal(orderId).catch(console.error);
+                }}
                 onDownloadPdf={invoice => {
                   void handleDownloadInvoicePdf(invoice).catch(error => {
                     console.error(
@@ -1497,6 +1601,9 @@ export default function FacturationPage() {
                 )}
                 loading={loadingInvoices}
                 onView={handleView}
+                onOpenOrder={orderId => {
+                  void handleOpenOrderModal(orderId).catch(console.error);
+                }}
                 onDownloadPdf={invoice => {
                   void handleDownloadInvoicePdf(invoice).catch(error => {
                     console.error(
@@ -1504,6 +1611,9 @@ export default function FacturationPage() {
                       error
                     );
                   });
+                }}
+                onRapprochement={invoice => {
+                  void handleRapprochement(invoice).catch(console.error);
                 }}
                 isArchived={false}
                 onArchive={async invoice => {
@@ -1528,6 +1638,9 @@ export default function FacturationPage() {
                 invoices={invoices.filter(inv => inv.deleted_at)}
                 loading={loadingInvoices}
                 onView={handleView}
+                onOpenOrder={orderId => {
+                  void handleOpenOrderModal(orderId).catch(console.error);
+                }}
                 onDownloadPdf={invoice => {
                   void handleDownloadInvoicePdf(invoice).catch(error => {
                     console.error(
@@ -2010,6 +2123,29 @@ export default function FacturationPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Modal detail commande (ouverture en place depuis lien facture) */}
+      <OrderDetailModal
+        order={selectedOrderForModal}
+        open={showOrderModal}
+        onClose={() => {
+          setShowOrderModal(false);
+          setSelectedOrderForModal(null);
+        }}
+        readOnly
+      />
+
+      {/* Modal rapprochement depuis facture */}
+      <RapprochementFromOrderModal
+        open={showRapprochementModal}
+        onOpenChange={setShowRapprochementModal}
+        order={rapprochementOrder}
+        onSuccess={() => {
+          setShowRapprochementModal(false);
+          setRapprochementOrder(null);
+          void fetchInvoices();
+        }}
+      />
     </div>
   );
 }
