@@ -27,12 +27,15 @@ import {
   Settings,
   Eye,
   Share2,
+  Check,
   Sparkles,
   ArrowRight,
   Layers,
   MousePointerClick,
   Link2,
 } from 'lucide-react';
+
+import { toast } from 'sonner';
 
 import { useAuth, type LinkMeRole } from '../../../contexts/AuthContext';
 import { useAffiliateAnalytics } from '../../../lib/hooks/use-affiliate-analytics';
@@ -339,6 +342,7 @@ interface ISelectionCardProps {
 
 function SelectionCard({ selection }: ISelectionCardProps): React.JSX.Element {
   const [isHovered, setIsHovered] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   return (
     <div
@@ -417,13 +421,27 @@ function SelectionCard({ selection }: ISelectionCardProps): React.JSX.Element {
                 <button
                   onClick={e => {
                     e.preventDefault();
-                    void navigator.clipboard.writeText(
-                      `${window.location.origin}/s/${selection.slug ?? selection.id}`
-                    );
+                    void navigator.clipboard
+                      .writeText(
+                        `${window.location.origin}/s/${selection.slug ?? selection.id}`
+                      )
+                      .then(() => {
+                        setLinkCopied(true);
+                        toast.success('Lien copié !');
+                        setTimeout(() => setLinkCopied(false), 2000);
+                      })
+                      .catch((err: unknown) => {
+                        console.error('[SelectionCard] Copy failed:', err);
+                        toast.error('Impossible de copier le lien');
+                      });
                   }}
                   className="flex items-center justify-center px-3 py-2 bg-white/20 text-white rounded-lg text-sm font-medium hover:bg-white/30 transition-colors backdrop-blur-sm"
                 >
-                  <Share2 className="h-4 w-4" />
+                  {linkCopied ? (
+                    <Check className="h-4 w-4 text-green-400" />
+                  ) : (
+                    <Share2 className="h-4 w-4" />
+                  )}
                 </button>
               </>
             )}

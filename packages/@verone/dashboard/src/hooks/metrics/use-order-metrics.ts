@@ -49,6 +49,7 @@ export function useOrderMetrics() {
           created_at,
           customer_type,
           customer_id,
+          individual_customer_id,
           organisations:customer_id(legal_name, trade_name)
         `
         )
@@ -103,8 +104,10 @@ export function useOrderMetrics() {
 
       // Pour les clients individuels seulement, on fait une requête groupée (pas N+1)
       const individualCustomerIds = ordersToFormat
-        .filter(o => o.customer_type === 'individual' && o.customer_id)
-        .map(o => o.customer_id)
+        .filter(
+          o => o.customer_type === 'individual' && o.individual_customer_id
+        )
+        .map(o => o.individual_customer_id)
         .filter((id): id is string => id !== null);
 
       let individualsMap: Record<
@@ -142,8 +145,11 @@ export function useOrderMetrics() {
           } | null;
           customerName =
             org?.trade_name || org?.legal_name || 'Organisation inconnue';
-        } else if (order.customer_type === 'individual' && order.customer_id) {
-          const individual = individualsMap[order.customer_id];
+        } else if (
+          order.customer_type === 'individual' &&
+          order.individual_customer_id
+        ) {
+          const individual = individualsMap[order.individual_customer_id];
           if (individual) {
             customerName = `${individual.first_name} ${individual.last_name}`;
           }

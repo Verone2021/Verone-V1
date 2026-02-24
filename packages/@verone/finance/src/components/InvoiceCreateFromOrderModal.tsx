@@ -62,7 +62,7 @@ interface IInvoiceCreateFromOrderModalProps {
   order: IOrderForDocument | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSuccess?: (invoiceId: string) => void;
+  onSuccess?: (invoiceId: string, invoiceNumber: string) => void;
 }
 
 type CreateStatus = 'idle' | 'creating' | 'success' | 'error';
@@ -428,7 +428,7 @@ export function InvoiceCreateFromOrderModal({
         title: 'Facture créée',
         description: `Facture ${data.invoice.invoice_number} créée en brouillon`,
       });
-      onSuccess?.(data.invoice.id);
+      onSuccess?.(data.invoice.id, data.invoice.invoice_number ?? '');
     } catch (error) {
       setStatus('error');
       toast({

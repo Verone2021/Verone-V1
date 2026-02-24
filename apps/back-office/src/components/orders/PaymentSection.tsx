@@ -3,12 +3,13 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 import {
   InvoiceCreateFromOrderModal,
   type IOrderForInvoice,
 } from '@verone/finance/components';
-import { Badge, Button, Card, Skeleton } from '@verone/ui';
+import { Badge, Button, Card, Skeleton, SuccessDialog } from '@verone/ui';
 import {
   AlertCircle,
   CheckCircle,
@@ -120,9 +121,12 @@ export function PaymentSection({
   shippingAddress,
   orderItems,
 }: PaymentSectionProps): React.ReactNode {
+  const router = useRouter();
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [linkedInvoices, setLinkedInvoices] = useState<ILinkedInvoice[]>([]);
   const [loadingInvoices, setLoadingInvoices] = useState(true);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [createdInvoiceNumber, setCreatedInvoiceNumber] = useState('');
 
   // Fetch linked invoices from financial_documents
   const fetchLinkedInvoices = useCallback(async () => {
@@ -154,6 +158,11 @@ export function PaymentSection({
     inv => inv.workflow_status !== 'cancelled'
   );
   const hasActiveInvoice = activeInvoices.length > 0;
+
+  // Draft invoice = synchronized or draft_validated (not yet finalized)
+  const hasDraftInvoice = activeInvoices.some(inv =>
+    ['synchronized', 'draft_validated', 'draft'].includes(inv.workflow_status)
+  );
 
   // Can create invoice if: not draft, not paid, AND no active invoice exists
   const canCreateInvoice =
@@ -189,8 +198,17 @@ export function PaymentSection({
     sales_order_items: orderItems,
   };
 
-  const handleInvoiceCreated = (_invoiceId: string): void => {
-    // Refresh linked invoices after creation
+  const handleInvoiceCreated = (
+    _invoiceId: string,
+    invoiceNumber: string
+  ): void => {
+    setCreatedInvoiceNumber(invoiceNumber);
+    setShowSuccessDialog(true);
+  };
+
+  const handleSuccessDialogClose = (): void => {
+    setShowSuccessDialog(false);
+    router.refresh();
     void fetchLinkedInvoices();
   };
 
@@ -285,7 +303,7 @@ export function PaymentSection({
 
           {/* Boutons d'action */}
           <div className="pt-2 space-y-2">
-            {/* Bouton Creer facture - uniquement si aucune facture active */}
+            {/* Bouton Générer facture */}
             {!loadingInvoices && canCreateInvoice ? (
               <Button
                 variant="default"
@@ -293,12 +311,17 @@ export function PaymentSection({
                 onClick={() => setShowInvoiceModal(true)}
               >
                 <FileText className="h-4 w-4 mr-2" />
-                Creer une facture
+                Générer facture
               </Button>
             ) : loadingInvoices ? (
               <Button variant="default" className="w-full" disabled>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 Chargement...
+              </Button>
+            ) : !loadingInvoices && hasDraftInvoice ? (
+              <Button variant="default" className="w-full" disabled>
+                <FileText className="h-4 w-4 mr-2" />
+                Générer facture
               </Button>
             ) : !hasActiveInvoice && orderStatus === 'draft' ? (
               <p className="text-xs text-muted-foreground text-center">
@@ -331,6 +354,17 @@ export function PaymentSection({
         open={showInvoiceModal}
         onOpenChange={setShowInvoiceModal}
         onSuccess={handleInvoiceCreated}
+      />
+
+      {/* Modal confirmation après création */}
+      <SuccessDialog
+        open={showSuccessDialog}
+        onOpenChange={open => {
+          if (!open) handleSuccessDialogClose();
+        }}
+        title="Facture créée"
+        description={`La facture ${createdInvoiceNumber} a été créée en brouillon dans Qonto.`}
+        closeText="OK"
       />
     </>
   );

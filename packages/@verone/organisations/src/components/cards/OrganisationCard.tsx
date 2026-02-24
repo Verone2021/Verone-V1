@@ -15,7 +15,10 @@ import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import { Card, CardContent } from '@verone/ui';
 import { colors } from '@verone/ui';
-import { getOrganisationDisplayName } from '@verone/utils/utils/organisation-helpers';
+import {
+  getOrganisationCardName,
+  getOrganisationDisplayName,
+} from '@verone/utils/utils/organisation-helpers';
 import { SupplierCategoryBadge } from '@verone/categories/components/badges/SupplierCategoryBadge';
 import { OrganisationLogo } from '@verone/organisations/components/display/OrganisationLogo';
 import { SupplierSegmentBadge } from '../suppliers/SupplierSegmentBadge';
@@ -153,7 +156,7 @@ export function OrganisationCard({
                 style={{ color: colors.text.DEFAULT }}
               >
                 <span className="truncate">
-                  {getOrganisationDisplayName(organisation)}
+                  {getOrganisationCardName(organisation)}
                 </span>
                 <ExternalLink className="h-3 w-3 flex-shrink-0 opacity-60" />
               </a>
@@ -162,7 +165,7 @@ export function OrganisationCard({
                 className="truncate text-sm font-medium leading-tight"
                 style={{ color: colors.text.DEFAULT }}
               >
-                {getOrganisationDisplayName(organisation)}
+                {getOrganisationCardName(organisation)}
               </span>
             )}
           </div>

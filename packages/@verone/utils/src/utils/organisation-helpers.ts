@@ -40,6 +40,27 @@ export function getOrganisationDisplayName(
 }
 
 /**
+ * Format compact pour cartes/listes : "trade_name (legal_name)" si différents
+ *
+ * @example
+ * // Franchise avec nom commercial différent
+ * getOrganisationCardName({ legal_name: "ANK", trade_name: "Pokawa Aix-La-Pioline" })
+ * // "Pokawa Aix-La-Pioline (ANK)"
+ *
+ * // Organisation sans nom commercial
+ * getOrganisationCardName({ legal_name: "Pokawa Amiens", trade_name: null })
+ * // "Pokawa Amiens"
+ */
+export function getOrganisationCardName(
+  org: Pick<Organisation, 'legal_name' | 'trade_name'>
+): string {
+  if (org.trade_name && org.trade_name !== org.legal_name) {
+    return `${org.trade_name} (${org.legal_name})`;
+  }
+  return org.trade_name ?? org.legal_name;
+}
+
+/**
  * Retourne le nom légal (raison sociale) de l'organisation
  *
  * @param org Organisation

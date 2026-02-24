@@ -187,10 +187,14 @@ export async function POST(_request: NextRequest): Promise<
         // Verifier si la facture existe deja (par document_number)
         const { data: existing } = await supabase
           .from('financial_documents')
-          .select('id, updated_at')
+          .select('id, updated_at, status, amount_paid')
           .eq('document_number', invoiceNumber)
           .eq('document_type', 'customer_invoice')
           .maybeSingle();
+
+        // Ne pas écraser le statut/montant si un rapprochement local a déjà marqué la facture comme payée
+        const existingIsPaidLocally =
+          existing?.status === 'paid' || existing?.status === 'partially_paid';
 
         const documentData = {
           document_type: 'customer_invoice' as const,
@@ -201,8 +205,14 @@ export async function POST(_request: NextRequest): Promise<
           total_ht: totalHt,
           total_ttc: totalTtc,
           tva_amount: tvaAmount,
-          amount_paid: invoice.status === 'paid' ? totalTtc : 0,
-          status: mapQontoStatus(invoice.status),
+          amount_paid: existingIsPaidLocally
+            ? (existing.amount_paid ?? 0)
+            : invoice.status === 'paid'
+              ? totalTtc
+              : 0,
+          status: existingIsPaidLocally
+            ? existing.status
+            : mapQontoStatus(invoice.status),
           partner_id: partnerId,
           partner_type: 'customer' as const,
           // Stocker l'ID Qonto dans les champs abby (requis par contrainte DB)

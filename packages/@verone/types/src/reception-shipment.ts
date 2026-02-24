@@ -336,11 +336,18 @@ export interface ShipmentHistory {
   tracking_number?: string;
   tracking_url?: string;
 
+  /** Expéditeur (nom résolu depuis user_profiles) */
+  shipped_by_name?: string;
+
+  /** Notes expédition */
+  notes?: string;
+
   /** Items expédiés */
   items: Array<{
     product_name: string;
     product_sku: string;
     quantity_shipped: number;
+    product_image_url?: string;
   }>;
 
   /** Total quantité */

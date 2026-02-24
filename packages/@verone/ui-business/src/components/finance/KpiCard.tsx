@@ -2,7 +2,13 @@
 
 import * as React from 'react';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
+import {
+  AnimatedNumber,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@verone/ui';
 import { cn } from '@verone/utils';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
@@ -36,6 +42,8 @@ export interface KpiCardProps extends React.HTMLAttributes<HTMLDivElement> {
   compact?: boolean;
   /** En chargement */
   loading?: boolean;
+  /** Animer le compteur (AnimatedNumber) - défaut: true */
+  animated?: boolean;
 }
 
 /**
@@ -96,6 +104,7 @@ export function KpiCard({
   variant = 'default',
   compact = false,
   loading = false,
+  animated = true,
   className,
   ...props
 }: KpiCardProps) {
@@ -123,6 +132,49 @@ export function KpiCard({
       return <div className="h-8 w-24 bg-muted animate-pulse rounded" />;
     }
 
+    // AnimatedNumber for animated counters
+    if (animated && typeof numericValue === 'number') {
+      switch (valueType) {
+        case 'money':
+          return (
+            <AnimatedNumber
+              value={numericValue}
+              formatOptions={{
+                style: 'currency',
+                currency,
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              }}
+              className={cn(
+                'font-mono font-semibold',
+                compact ? 'text-lg' : 'text-2xl'
+              )}
+            />
+          );
+        case 'percent':
+          return (
+            <AnimatedNumber
+              value={numericValue}
+              formatOptions={{
+                minimumFractionDigits: 1,
+                maximumFractionDigits: 1,
+              }}
+              suffix="%"
+              className={cn('font-bold', compact ? 'text-lg' : 'text-2xl')}
+            />
+          );
+        default:
+          return (
+            <AnimatedNumber
+              value={numericValue}
+              formatOptions={{ maximumFractionDigits: 0 }}
+              className={cn('font-bold', compact ? 'text-lg' : 'text-2xl')}
+            />
+          );
+      }
+    }
+
+    // Static fallback (animated=false or string value)
     switch (valueType) {
       case 'money':
         return (
@@ -225,16 +277,20 @@ export function KpiCard({
 }
 
 /**
- * Grid de KPI cards
+ * Grid de KPI cards with stagger animation
+ * Each child fades in with an incremental delay for a polished entrance.
  */
 export function KpiGrid({
   children,
   columns = 4,
   className,
+  stagger = true,
 }: {
   children: React.ReactNode;
   columns?: 2 | 3 | 4;
   className?: string;
+  /** Enable stagger animation on children (default: true) */
+  stagger?: boolean;
 }) {
   const colClasses = {
     2: 'grid-cols-1 sm:grid-cols-2',
@@ -244,7 +300,19 @@ export function KpiGrid({
 
   return (
     <div className={cn('grid gap-4', colClasses[columns], className)}>
-      {children}
+      {stagger
+        ? React.Children.map(children, (child, index) => {
+            if (!React.isValidElement(child)) return child;
+            return (
+              <div
+                className="animate-in fade-in-0 slide-in-from-bottom-2 duration-300 fill-mode-both"
+                style={{ animationDelay: `${index * 100}ms` }}
+              >
+                {child}
+              </div>
+            );
+          })
+        : children}
     </div>
   );
 }

@@ -117,10 +117,9 @@ export async function validateSalesShipment(
       }
 
       if ((product.stock_real || 0) < item.quantity_to_ship) {
-        return {
-          success: false,
-          error: `Stock insuffisant pour ${product.name}: ${product.stock_real || 0} disponibles, ${item.quantity_to_ship} demandés`,
-        };
+        console.warn(
+          `[Shipment] Stock bas pour ${product.name}: ${product.stock_real || 0} disponibles, ${item.quantity_to_ship} expédiés. Le stock sera ajusté par le trigger.`
+        );
       }
 
       // ✅ INSERT INTO sales_order_shipments (triggers existants gèrent stock)

@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from 'react';
 
 import { RapprochementContent } from '@verone/finance/components';
+import { OrganisationQuickViewModal } from '@verone/organisations';
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
@@ -123,6 +124,7 @@ export function PurchaseOrderDetailModal({
   onUpdate,
 }: PurchaseOrderDetailModalProps) {
   const [showReceivingModal, setShowReceivingModal] = useState(false);
+  const [showOrgModal, setShowOrgModal] = useState(false);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [paymentSubmitting, setPaymentSubmitting] = useState(false);
   const [manualPaymentType, setManualPaymentType] =
@@ -287,6 +289,9 @@ export function PurchaseOrderDetailModal({
   const handleManualPaymentSubmit = () => {
     const amount = parseFloat(manualPaymentAmount);
     if (isNaN(amount) || amount <= 0) return;
+
+    // Reject if amount exceeds remaining
+    if (amount > remainingAmount + 0.01) return;
 
     setPaymentSubmitting(true);
     void markAsManuallyPaid(order.id, manualPaymentType, amount, {
@@ -564,7 +569,17 @@ export function PurchaseOrderDetailModal({
                   <div className="flex items-start justify-between">
                     <div>
                       <CardTitle className="text-base">
-                        {getSupplierName()}
+                        {order.supplier_id ? (
+                          <button
+                            type="button"
+                            onClick={() => setShowOrgModal(true)}
+                            className="text-left text-primary hover:underline cursor-pointer"
+                          >
+                            {getSupplierName()}
+                          </button>
+                        ) : (
+                          getSupplierName()
+                        )}
                       </CardTitle>
                       <Badge variant="outline" className="mt-1 text-xs">
                         Fournisseur
@@ -989,6 +1004,15 @@ export function PurchaseOrderDetailModal({
         </DialogContent>
       </Dialog>
 
+      {/* Modal Quick View Organisation (fournisseur) */}
+      {order.supplier_id && (
+        <OrganisationQuickViewModal
+          organisationId={order.supplier_id}
+          open={showOrgModal}
+          onOpenChange={setShowOrgModal}
+        />
+      )}
+
       {/* ✅ Modal Gestion Réception */}
       <PurchaseOrderReceptionModal
         order={order}
@@ -1033,6 +1057,12 @@ export function PurchaseOrderDetailModal({
                   id: order.id,
                   order_number: order.po_number,
                   customer_name: getSupplierName(),
+                  customer_name_alt:
+                    order.organisations?.trade_name &&
+                    order.organisations?.legal_name !==
+                      order.organisations?.trade_name
+                      ? order.organisations.legal_name
+                      : null,
                   total_ttc:
                     order.total_ttc ||
                     (order.total_ht || 0) * (1 + (order.tax_rate || 0.2)),
@@ -1076,15 +1106,29 @@ export function PurchaseOrderDetailModal({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="po-payment-amount">Montant (€)</Label>
+                <Label htmlFor="po-payment-amount">
+                  Montant (€)
+                  {remainingAmount > 0 && (
+                    <span className="text-muted-foreground font-normal ml-1">
+                      — Reste à payer : {remainingAmount.toFixed(2)} €
+                    </span>
+                  )}
+                </Label>
                 <Input
                   id="po-payment-amount"
                   type="number"
                   step="0.01"
                   min="0.01"
+                  max={remainingAmount}
                   value={manualPaymentAmount}
                   onChange={e => setManualPaymentAmount(e.target.value)}
                 />
+                {parseFloat(manualPaymentAmount) > remainingAmount + 0.01 && (
+                  <p className="text-sm text-destructive">
+                    Le montant dépasse le reste à payer (
+                    {remainingAmount.toFixed(2)} €)
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -1128,7 +1172,9 @@ export function PurchaseOrderDetailModal({
                 disabled={
                   paymentSubmitting ||
                   !manualPaymentAmount ||
-                  parseFloat(manualPaymentAmount) <= 0
+                  parseFloat(manualPaymentAmount) <= 0 ||
+                  parseFloat(manualPaymentAmount) > remainingAmount + 0.01 ||
+                  remainingAmount <= 0
                 }
                 className="w-full bg-green-600 hover:bg-green-700"
               >

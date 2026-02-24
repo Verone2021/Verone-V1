@@ -1,13 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 import {
   InvoiceCreateFromOrderModal,
   RapprochementContent,
 } from '@verone/finance/components';
+import { OrganisationQuickViewModal } from '@verone/organisations';
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
@@ -44,18 +46,28 @@ import {
   ExternalLink,
   Link2,
   Banknote,
+  History,
+  CheckCircle2,
+  Pencil,
 } from 'lucide-react';
 
 // NOTE: SalesOrderShipmentModal supprimé - sera recréé ultérieurement
-import { useSalesOrders } from '@verone/orders/hooks';
-import type { SalesOrder, ManualPaymentType } from '@verone/orders/hooks';
+import { useSalesOrders, useOrderItems } from '@verone/orders/hooks';
+import { createClient } from '@verone/utils/supabase/client';
+import type {
+  SalesOrder,
+  ManualPaymentType,
+  OrderItem,
+} from '@verone/orders/hooks';
+import { EditableOrderItemRow } from '../tables/EditableOrderItemRow';
+import { AddProductToOrderModal } from './AddProductToOrderModal';
 
-// ✅ Type Safety: Interface ProductImage stricte (IDENTIQUE à PurchaseOrderDetailModal)
-interface ProductImage {
-  id?: string;
-  public_url: string;
-  is_primary: boolean;
-  display_order?: number;
+interface ILinkedInvoice {
+  id: string;
+  document_number: string | null;
+  workflow_status: string | null;
+  total_ttc: number;
+  qonto_invoice_id: string | null;
 }
 
 interface OrderDetailModalProps {
@@ -94,10 +106,19 @@ export function OrderDetailModal({
 }: OrderDetailModalProps) {
   // NOTE: showShippingModal supprimé - modal sera recréé ultérieurement
   const { markAsManuallyPaid } = useSalesOrders();
+  const { addItem, updateItem, removeItem } = useOrderItems({
+    orderId: order?.id ?? '',
+    orderType: 'sales',
+  });
   const router = useRouter();
+  const [isEditing, setIsEditing] = useState(false);
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+  const [showAddProductModal, setShowAddProductModal] = useState(false);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [paymentSubmitting, setPaymentSubmitting] = useState(false);
+  const [linkedInvoices, setLinkedInvoices] = useState<ILinkedInvoice[]>([]);
+  const [loadingLinkedInvoices, setLoadingLinkedInvoices] = useState(false);
+  const [showOrgModal, setShowOrgModal] = useState(false);
 
   // Form state for manual payment
   const [manualPaymentType, setManualPaymentType] =
@@ -106,6 +127,137 @@ export function OrderDetailModal({
   const [manualPaymentDate, setManualPaymentDate] = useState('');
   const [manualPaymentRef, setManualPaymentRef] = useState('');
   const [manualPaymentNote, setManualPaymentNote] = useState('');
+
+  // Fees editable state
+  const [shippingCostHt, setShippingCostHt] = useState(
+    order?.shipping_cost_ht ?? 0
+  );
+  const [handlingCostHt, setHandlingCostHt] = useState(
+    order?.handling_cost_ht ?? 0
+  );
+  const [insuranceCostHt, setInsuranceCostHt] = useState(
+    order?.insurance_cost_ht ?? 0
+  );
+  const [feesVatRate, setFeesVatRate] = useState(order?.fees_vat_rate ?? 0.2);
+  const [feesSaving, setFeesSaving] = useState(false);
+
+  // Historique expéditions
+  const [shipmentHistory, setShipmentHistory] = useState<
+    Array<{
+      shipped_at: string;
+      tracking_number: string | null;
+      notes: string | null;
+      items: Array<{
+        product_name: string;
+        product_sku: string;
+        quantity_shipped: number;
+      }>;
+    }>
+  >([]);
+
+  // Reset editing mode when modal closes
+  useEffect(() => {
+    if (!open) {
+      setIsEditing(false);
+    }
+  }, [open]);
+
+  // Charger historique expéditions quand modal ouvert
+  useEffect(() => {
+    if (!open || !order?.id) return;
+
+    const supabase = createClient();
+
+    void supabase
+      .from('sales_order_shipments')
+      .select(
+        `
+        shipped_at,
+        tracking_number,
+        notes,
+        quantity_shipped,
+        product_id,
+        products:product_id (name, sku)
+      `
+      )
+      .eq('sales_order_id', order.id)
+      .order('shipped_at', { ascending: true })
+      .then(({ data, error: queryError }) => {
+        if (queryError) {
+          console.error(
+            '[OrderDetailModal] Load shipment history failed:',
+            queryError
+          );
+          return;
+        }
+
+        if (!data || data.length === 0) {
+          setShipmentHistory([]);
+          return;
+        }
+
+        // Grouper par shipped_at (même timestamp = même expédition)
+        const grouped = new Map<
+          string,
+          {
+            shipped_at: string;
+            tracking_number: string | null;
+            notes: string | null;
+            items: Array<{
+              product_name: string;
+              product_sku: string;
+              quantity_shipped: number;
+            }>;
+          }
+        >();
+
+        for (const row of data) {
+          const key = row.shipped_at;
+          const product = row.products as unknown as {
+            name: string;
+            sku: string;
+          } | null;
+
+          if (!grouped.has(key)) {
+            grouped.set(key, {
+              shipped_at: row.shipped_at,
+              tracking_number: row.tracking_number,
+              notes: row.notes,
+              items: [],
+            });
+          }
+
+          grouped.get(key)!.items.push({
+            product_name: product?.name || 'Produit inconnu',
+            product_sku: product?.sku || '-',
+            quantity_shipped: row.quantity_shipped,
+          });
+        }
+
+        setShipmentHistory(Array.from(grouped.values()));
+      });
+  }, [open, order?.id]);
+
+  // Charger les factures liées à cette commande
+  useEffect(() => {
+    if (!order?.id || !open) return;
+    setLoadingLinkedInvoices(true);
+    void fetch(`/api/qonto/invoices/by-order/${order.id}`)
+      .then(r => r.json())
+      .then((data: { invoices?: ILinkedInvoice[] }) => {
+        setLinkedInvoices(data.invoices ?? []);
+      })
+      .catch(() => setLinkedInvoices([]))
+      .finally(() => setLoadingLinkedInvoices(false));
+  }, [order?.id, open]);
+
+  // Sync fees state when order changes
+  useEffect(() => {
+    setShippingCostHt(order?.shipping_cost_ht ?? 0);
+    setHandlingCostHt(order?.handling_cost_ht ?? 0);
+    setInsuranceCostHt(order?.insurance_cost_ht ?? 0);
+    setFeesVatRate(order?.fees_vat_rate ?? 0.2);
+  }, [order?.id]);
 
   if (!order) return null;
 
@@ -129,6 +281,16 @@ export function OrderDetailModal({
       return `${customer.first_name} ${customer.last_name}`;
     }
     return 'Client inconnu';
+  };
+
+  const getCustomerNameAlt = (): string | null => {
+    if (order.customer_type === 'organization' && order.organisations) {
+      // Si trade_name est le principal, retourner legal_name comme alt
+      if (order.organisations.trade_name) {
+        return order.organisations.legal_name;
+      }
+    }
+    return null;
   };
 
   const getCustomerType = () => {
@@ -178,8 +340,31 @@ export function OrderDetailModal({
       });
   };
 
+  const saveFees = async () => {
+    setFeesSaving(true);
+    const supabase = createClient();
+    await supabase
+      .from('sales_orders')
+      .update({
+        shipping_cost_ht: shippingCostHt,
+        handling_cost_ht: handlingCostHt,
+        insurance_cost_ht: insuranceCostHt,
+        fees_vat_rate: feesVatRate,
+      })
+      .eq('id', order.id);
+    setFeesSaving(false);
+    onUpdate?.();
+  };
+
   // Workflow Odoo-inspired: Permettre expédition pour validated + partially_shipped
   const canShip = ['validated', 'partially_shipped'].includes(order.status);
+
+  const activeInvoices = linkedInvoices.filter(
+    inv => inv.workflow_status !== 'cancelled'
+  );
+  const hasActiveInvoice = activeInvoices.length > 0;
+
+  const isLocked = readOnly || order.status === 'shipped' || hasActiveInvoice;
 
   return (
     <>
@@ -216,11 +401,42 @@ export function OrderDetailModal({
             <div className="flex-1 order-2 lg:order-1">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Package className="h-4 w-4" />
-                    Produits ({order.sales_order_items?.length || 0} article
-                    {(order.sales_order_items?.length || 0) > 1 ? 's' : ''})
-                  </CardTitle>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <Package className="h-4 w-4" />
+                      Produits ({order.sales_order_items?.length || 0} article
+                      {(order.sales_order_items?.length || 0) > 1 ? 's' : ''})
+                    </CardTitle>
+                    {isLocked ? (
+                      <Badge variant="secondary" className="text-xs">
+                        {order.status === 'shipped'
+                          ? '🔒 Expédiée — lecture seule'
+                          : hasActiveInvoice
+                            ? '🔒 Facture émise — lecture seule'
+                            : '🔒 Lecture seule'}
+                      </Badge>
+                    ) : isEditing ? (
+                      <ButtonV2
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsEditing(false)}
+                        className="h-7 text-xs"
+                      >
+                        <X className="h-3 w-3 mr-1" />
+                        Terminer l&apos;édition
+                      </ButtonV2>
+                    ) : (
+                      <ButtonV2
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsEditing(true)}
+                        className="h-7 text-xs"
+                      >
+                        <Pencil className="h-3 w-3 mr-1" />
+                        Modifier
+                      </ButtonV2>
+                    )}
+                  </div>
                 </CardHeader>
                 <CardContent>
                   {/* TABLE RESPONSIVE avec scroll horizontal mobile + hauteur limitée */}
@@ -243,98 +459,128 @@ export function OrderDetailModal({
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {order.sales_order_items?.map(item => {
-                          // ✅ BR-TECH-002: Récupérer image via product_images
-                          const productImages = (item.products as any)
-                            ?.product_images as ProductImage[] | undefined;
-                          const primaryImageUrl =
-                            productImages?.find(img => img.is_primary)
-                              ?.public_url ||
-                            productImages?.[0]?.public_url ||
-                            null;
+                        {isEditing
+                          ? order.sales_order_items?.map(item => (
+                              <EditableOrderItemRow
+                                key={item.id}
+                                item={item as unknown as OrderItem}
+                                orderType="sales"
+                                readonly={false}
+                                onUpdate={(itemId, data) =>
+                                  void updateItem(itemId, data)
+                                    .then(() => onUpdate?.())
+                                    .catch((err: unknown) =>
+                                      console.error(
+                                        '[OrderDetailModal] Update item failed:',
+                                        err
+                                      )
+                                    )
+                                }
+                                onDelete={itemId =>
+                                  void removeItem(itemId)
+                                    .then(() => onUpdate?.())
+                                    .catch((err: unknown) =>
+                                      console.error(
+                                        '[OrderDetailModal] Delete item failed:',
+                                        err
+                                      )
+                                    )
+                                }
+                              />
+                            ))
+                          : order.sales_order_items?.map(item => {
+                              const primaryImage =
+                                item.products?.primary_image_url ?? null;
+                              const lineHT =
+                                item.quantity *
+                                item.unit_price_ht *
+                                (1 - (item.discount_percentage || 0) / 100);
+                              const shippedQty =
+                                (
+                                  item as unknown as {
+                                    quantity_shipped?: number;
+                                  }
+                                ).quantity_shipped ?? 0;
 
-                          // Calcul total HT avec remise
-                          const totalHT =
-                            item.quantity *
-                            item.unit_price_ht *
-                            (1 - (item.discount_percentage || 0) / 100);
-
-                          return (
-                            <TableRow
-                              key={item.id}
-                              className="hover:bg-gray-50"
-                            >
-                              {/* IMAGE PRODUIT */}
-                              <TableCell>
-                                {primaryImageUrl ? (
-                                  <img
-                                    src={primaryImageUrl}
-                                    alt={item?.products?.name ?? 'Produit'}
-                                    className="w-12 h-12 object-cover rounded border"
-                                  />
-                                ) : (
-                                  <div className="w-12 h-12 bg-gray-100 rounded border flex items-center justify-center">
-                                    <Package className="h-5 w-5 text-gray-400" />
-                                  </div>
-                                )}
-                              </TableCell>
-
-                              {/* NOM + SKU + BADGES */}
-                              <TableCell>
-                                <p className="font-medium text-sm">
-                                  {item.products?.name}
-                                </p>
-                                <p className="text-xs text-gray-500">
-                                  SKU: {item.products?.sku}
-                                </p>
-                                {/* Badges inline (remise) */}
-                                {item.discount_percentage > 0 && (
-                                  <Badge
-                                    variant="secondary"
-                                    className="mt-1 text-xs bg-green-100 text-green-800 border-green-200"
-                                  >
-                                    -{item.discount_percentage.toFixed(1)}%
-                                  </Badge>
-                                )}
-                              </TableCell>
-
-                              {/* QUANTITÉ */}
-                              <TableCell className="text-right font-medium">
-                                {item.quantity}
-                              </TableCell>
-
-                              {/* PRIX UNITAIRE HT */}
-                              <TableCell className="text-right">
-                                {formatCurrency(item.unit_price_ht)}
-                              </TableCell>
-
-                              {/* TOTAL HT */}
-                              <TableCell className="text-right font-semibold">
-                                {formatCurrency(totalHT)}
-                              </TableCell>
-
-                              {/* EXPÉDITION */}
-                              <TableCell className="text-center">
-                                {(item as any).quantity_shipped > 0 ? (
-                                  <Badge
-                                    variant="secondary"
-                                    className="text-xs bg-blue-100 text-blue-800 border-blue-200"
-                                  >
-                                    {(item as any).quantity_shipped}/
+                              return (
+                                <TableRow
+                                  key={item.id}
+                                  className="hover:bg-gray-50"
+                                >
+                                  <TableCell>
+                                    {primaryImage ? (
+                                      <img
+                                        src={primaryImage}
+                                        alt={item.products?.name ?? 'Produit'}
+                                        className="w-12 h-12 object-cover rounded border"
+                                      />
+                                    ) : (
+                                      <div className="w-12 h-12 bg-gray-100 rounded border flex items-center justify-center">
+                                        <Package className="h-6 w-6 text-gray-400" />
+                                      </div>
+                                    )}
+                                  </TableCell>
+                                  <TableCell>
+                                    <div>
+                                      <p className="font-medium text-sm">
+                                        {item.products?.name ?? 'Produit'}
+                                      </p>
+                                      <p className="text-xs text-gray-500">
+                                        {item.products?.sku ?? '—'}
+                                      </p>
+                                      {(item.discount_percentage || 0) > 0 && (
+                                        <Badge
+                                          variant="outline"
+                                          className="text-[10px] mt-0.5 text-orange-600 border-orange-200"
+                                        >
+                                          -{item.discount_percentage}%
+                                        </Badge>
+                                      )}
+                                    </div>
+                                  </TableCell>
+                                  <TableCell className="text-right font-medium">
                                     {item.quantity}
-                                  </Badge>
-                                ) : (
-                                  <span className="text-gray-400 text-sm">
-                                    -
-                                  </span>
-                                )}
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })}
+                                  </TableCell>
+                                  <TableCell className="text-right">
+                                    {formatCurrency(item.unit_price_ht)}
+                                  </TableCell>
+                                  <TableCell className="text-right font-semibold">
+                                    {formatCurrency(lineHT)}
+                                  </TableCell>
+                                  <TableCell className="text-center">
+                                    {shippedQty > 0 ? (
+                                      <Badge
+                                        variant="outline"
+                                        className={`text-[10px] ${shippedQty >= item.quantity ? 'bg-green-50 text-green-700 border-green-200' : 'bg-yellow-50 text-yellow-700 border-yellow-200'}`}
+                                      >
+                                        {shippedQty}/{item.quantity}
+                                      </Badge>
+                                    ) : (
+                                      <span className="text-xs text-gray-400">
+                                        —
+                                      </span>
+                                    )}
+                                  </TableCell>
+                                </TableRow>
+                              );
+                            })}
                       </TableBody>
                     </Table>
                   </div>
+
+                  {/* BOUTON AJOUTER PRODUIT */}
+                  {isEditing && (
+                    <div className="mt-2">
+                      <ButtonV2
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowAddProductModal(true)}
+                        className="w-full border-dashed"
+                      >
+                        <Package className="h-3 w-3 mr-1" />+ Ajouter un produit
+                      </ButtonV2>
+                    </div>
+                  )}
 
                   {/* TOTAUX (bas de table) */}
                   <Separator className="my-4" />
@@ -375,15 +621,26 @@ export function OrderDetailModal({
                       0
                     );
 
-                    // === FRAIS (toujours affichés, même à 0) ===
-                    const shippingHT = order.shipping_cost_ht || 0;
-                    const insuranceHT = order.insurance_cost_ht || 0;
-                    const handlingHT = order.handling_cost_ht || 0;
-                    const totalFeesHT = shippingHT + insuranceHT + handlingHT;
+                    // === FRAIS — en mode édition: states locaux, sinon: order.xxx ===
+                    const displayShippingHt = isEditing
+                      ? shippingCostHt
+                      : (order.shipping_cost_ht ?? 0);
+                    const displayInsuranceHt = isEditing
+                      ? insuranceCostHt
+                      : (order.insurance_cost_ht ?? 0);
+                    const displayHandlingHt = isEditing
+                      ? handlingCostHt
+                      : (order.handling_cost_ht ?? 0);
+                    const displayFeesVatRate = isEditing
+                      ? feesVatRate
+                      : (order.fees_vat_rate ?? 0.2);
+                    const totalFeesHT =
+                      displayShippingHt +
+                      displayInsuranceHt +
+                      displayHandlingHt;
 
                     // TVA des frais (taux unique pour tous les frais)
-                    const feesVatRate = order.fees_vat_rate || 0.2;
-                    const feesTVA = totalFeesHT * feesVatRate;
+                    const feesTVA = totalFeesHT * displayFeesVatRate;
 
                     // === TOTAUX GLOBAUX ===
                     const totalHT = productsHT + totalFeesHT;
@@ -402,20 +659,102 @@ export function OrderDetailModal({
                           </span>
                         </div>
 
-                        {/* Frais additionnels - TOUJOURS affichés */}
-                        <div className="pt-2 mt-2 border-t border-dashed space-y-1">
-                          <div className="flex justify-between text-sm text-gray-600">
-                            <span>Frais de livraison HT :</span>
-                            <span>{formatCurrency(shippingHT)}</span>
+                        {/* Frais additionnels — éditables inline si !isLocked */}
+                        <div className="pt-2 mt-2 border-t border-dashed space-y-2">
+                          {/* Livraison */}
+                          <div className="flex justify-between items-center text-sm text-gray-600">
+                            <span className="flex-shrink-0">
+                              Frais de livraison HT :
+                            </span>
+                            {isEditing ? (
+                              <Input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                value={shippingCostHt}
+                                onChange={e =>
+                                  setShippingCostHt(
+                                    parseFloat(e.target.value) || 0
+                                  )
+                                }
+                                className="w-24 h-6 text-xs text-right"
+                              />
+                            ) : (
+                              <span>{formatCurrency(displayShippingHt)}</span>
+                            )}
                           </div>
-                          <div className="flex justify-between text-sm text-gray-600">
-                            <span>Frais d'assurance HT :</span>
-                            <span>{formatCurrency(insuranceHT)}</span>
+                          {/* Assurance */}
+                          <div className="flex justify-between items-center text-sm text-gray-600">
+                            <span className="flex-shrink-0">
+                              Frais d&apos;assurance HT :
+                            </span>
+                            {isEditing ? (
+                              <Input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                value={insuranceCostHt}
+                                onChange={e =>
+                                  setInsuranceCostHt(
+                                    parseFloat(e.target.value) || 0
+                                  )
+                                }
+                                className="w-24 h-6 text-xs text-right"
+                              />
+                            ) : (
+                              <span>{formatCurrency(displayInsuranceHt)}</span>
+                            )}
                           </div>
-                          <div className="flex justify-between text-sm text-gray-600">
-                            <span>Frais de manutention HT :</span>
-                            <span>{formatCurrency(handlingHT)}</span>
+                          {/* Manutention */}
+                          <div className="flex justify-between items-center text-sm text-gray-600">
+                            <span className="flex-shrink-0">
+                              Frais de manutention HT :
+                            </span>
+                            {isEditing ? (
+                              <Input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                value={handlingCostHt}
+                                onChange={e =>
+                                  setHandlingCostHt(
+                                    parseFloat(e.target.value) || 0
+                                  )
+                                }
+                                className="w-24 h-6 text-xs text-right"
+                              />
+                            ) : (
+                              <span>{formatCurrency(displayHandlingHt)}</span>
+                            )}
                           </div>
+                          {/* Sélecteur TVA frais + bouton save (si éditable) */}
+                          {isEditing && (
+                            <div className="flex items-center justify-between gap-2 pt-1">
+                              <div className="flex gap-1">
+                                {[0, 0.055, 0.1, 0.2].map(rate => (
+                                  <button
+                                    key={rate}
+                                    type="button"
+                                    onClick={() => setFeesVatRate(rate)}
+                                    className={`text-xs py-0.5 px-1.5 rounded border ${feesVatRate === rate ? 'bg-primary text-primary-foreground' : 'bg-white hover:bg-gray-50'}`}
+                                  >
+                                    {(rate * 100).toFixed(1).replace('.0', '')}%
+                                  </button>
+                                ))}
+                              </div>
+                              <ButtonV2
+                                size="sm"
+                                variant="outline"
+                                onClick={() =>
+                                  void saveFees().catch(console.error)
+                                }
+                                disabled={feesSaving}
+                                className="h-6 text-xs px-2"
+                              >
+                                {feesSaving ? 'Sauvegarde...' : 'Sauvegarder'}
+                              </ButtonV2>
+                            </div>
+                          )}
                         </div>
 
                         {/* Total HT global */}
@@ -443,7 +782,8 @@ export function OrderDetailModal({
                           {totalFeesHT > 0 && (
                             <div className="flex justify-between text-sm text-gray-600">
                               <span>
-                                TVA {(feesVatRate * 100).toFixed(0)}% (frais) :
+                                TVA {(displayFeesVatRate * 100).toFixed(0)}%
+                                (frais) :
                               </span>
                               <span>{formatCurrency(feesTVA)}</span>
                             </div>
@@ -473,7 +813,18 @@ export function OrderDetailModal({
                   <div className="flex items-start justify-between">
                     <div>
                       <CardTitle className="text-base">
-                        {getCustomerName()}
+                        {order.customer_id &&
+                        order.customer_type === 'organization' ? (
+                          <button
+                            type="button"
+                            onClick={() => setShowOrgModal(true)}
+                            className="text-left text-primary hover:underline cursor-pointer"
+                          >
+                            {getCustomerName()}
+                          </button>
+                        ) : (
+                          getCustomerName()
+                        )}
                       </CardTitle>
                       <Badge variant="outline" className="mt-1 text-xs">
                         {getCustomerType()}
@@ -696,8 +1047,7 @@ export function OrderDetailModal({
               {/* Card Facturation */}
               {!readOnly &&
                 order.status !== 'draft' &&
-                order.status !== 'cancelled' &&
-                order.payment_status_v2 !== 'paid' && (
+                order.status !== 'cancelled' && (
                   <Card>
                     <CardHeader className="pb-3">
                       <CardTitle className="text-sm font-medium flex items-center gap-2">
@@ -706,14 +1056,61 @@ export function OrderDetailModal({
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <ButtonV2
-                        size="sm"
-                        className="w-full"
-                        onClick={() => setShowInvoiceModal(true)}
-                      >
-                        <FileText className="h-3 w-3 mr-1" />
-                        Générer facture
-                      </ButtonV2>
+                      {loadingLinkedInvoices ? (
+                        <ButtonV2 size="sm" className="w-full" disabled>
+                          <FileText className="h-3 w-3 mr-1 animate-pulse" />
+                          Chargement...
+                        </ButtonV2>
+                      ) : hasActiveInvoice ? (
+                        <div className="space-y-1">
+                          {activeInvoices.map(inv => (
+                            <div
+                              key={inv.id}
+                              className="flex items-center gap-2 text-sm p-2 rounded border bg-muted/30"
+                            >
+                              <FileText className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                              {inv.qonto_invoice_id ? (
+                                <Link
+                                  href={`/factures/${inv.qonto_invoice_id}?type=invoice`}
+                                  target="_blank"
+                                  className="font-mono text-xs flex-1 text-blue-600 hover:underline"
+                                >
+                                  {inv.document_number ?? inv.id.slice(0, 8)}
+                                </Link>
+                              ) : (
+                                <span className="font-mono text-xs flex-1">
+                                  {inv.document_number ?? inv.id.slice(0, 8)}
+                                </span>
+                              )}
+                              {inv.workflow_status && (
+                                <Badge
+                                  variant="outline"
+                                  className="text-xs px-1.5 py-0"
+                                >
+                                  {inv.workflow_status === 'synchronized'
+                                    ? 'Synchronisé'
+                                    : inv.workflow_status === 'finalized'
+                                      ? 'Définitif'
+                                      : inv.workflow_status === 'sent'
+                                        ? 'Envoyé'
+                                        : inv.workflow_status === 'paid'
+                                          ? 'Payé'
+                                          : inv.workflow_status}
+                                </Badge>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <ButtonV2
+                          size="sm"
+                          className="w-full"
+                          onClick={() => setShowInvoiceModal(true)}
+                        >
+                          <FileText className="h-3 w-3 mr-1" />
+                          Générer facture
+                        </ButtonV2>
+                      )}
                     </CardContent>
                   </Card>
                 )}
@@ -782,6 +1179,71 @@ export function OrderDetailModal({
                 </CardContent>
               </Card>
 
+              {/* Card Historique Expéditions (si existe) */}
+              {shipmentHistory.length > 0 && (
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm font-medium flex items-center gap-2">
+                      <History className="h-3 w-3" />
+                      Historique ({shipmentHistory.length})
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2 max-h-[320px] overflow-y-auto">
+                    {shipmentHistory.map((h, idx) => (
+                      <div
+                        key={`shipment-${idx}`}
+                        className="border rounded p-2 bg-gray-50 text-xs"
+                      >
+                        <div className="flex items-center gap-1 mb-1">
+                          <CheckCircle2 className="h-3 w-3 text-blue-600" />
+                          <span className="font-semibold text-gray-800">
+                            Expédition #{idx + 1}
+                          </span>
+                          <span className="text-gray-400">—</span>
+                          <span className="text-gray-600">
+                            {formatDate(h.shipped_at)}
+                          </span>
+                        </div>
+                        {h.tracking_number && (
+                          <p className="text-[10px] text-gray-500 ml-4 mb-1">
+                            Tracking : {h.tracking_number}
+                          </p>
+                        )}
+                        <div className="ml-4 space-y-0.5">
+                          {h.items.map((item, itemIdx) => {
+                            const orderItem = order.sales_order_items?.find(
+                              i => i.products?.sku === item.product_sku
+                            );
+                            const qtyOrdered = orderItem?.quantity || '?';
+                            return (
+                              <div
+                                key={itemIdx}
+                                className="flex items-center justify-between"
+                              >
+                                <span className="text-gray-600 truncate max-w-[120px]">
+                                  {item.product_name}
+                                </span>
+                                <Badge
+                                  variant="outline"
+                                  className="text-[10px] px-1 py-0"
+                                >
+                                  {item.quantity_shipped}/{qtyOrdered}
+                                </Badge>
+                              </div>
+                            );
+                          })}
+                        </div>
+                        {h.notes && (
+                          <p className="text-[10px] text-gray-500 ml-4 mt-1 italic">
+                            {h.notes}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+              )}
+
               {/* Card Notes (si existe) */}
               {order.notes && (
                 <Card>
@@ -835,6 +1297,18 @@ export function OrderDetailModal({
 
       {/* NOTE: Modal Gestion Expédition supprimé - sera recréé ultérieurement */}
 
+      {/* Modal Ajout Produit */}
+      <AddProductToOrderModal
+        open={showAddProductModal}
+        onClose={() => setShowAddProductModal(false)}
+        orderType="sales"
+        onAdd={async data => {
+          await addItem(data);
+          onUpdate?.();
+          setShowAddProductModal(false);
+        }}
+      />
+
       {/* Dialog Enregistrer un paiement (2 onglets) */}
       <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
         <DialogContent className="max-w-2xl">
@@ -868,6 +1342,7 @@ export function OrderDetailModal({
                   id: order.id,
                   order_number: order.order_number,
                   customer_name: getCustomerName(),
+                  customer_name_alt: getCustomerNameAlt(),
                   total_ttc: order.total_ttc || 0,
                   created_at: order.created_at,
                   order_date: order.order_date ?? null,
@@ -972,6 +1447,15 @@ export function OrderDetailModal({
           </Tabs>
         </DialogContent>
       </Dialog>
+
+      {/* Modal Quick View Organisation */}
+      {order.customer_id && order.customer_type === 'organization' && (
+        <OrganisationQuickViewModal
+          organisationId={order.customer_id}
+          open={showOrgModal}
+          onOpenChange={setShowOrgModal}
+        />
+      )}
 
       {/* Modal Création Facture */}
       <InvoiceCreateFromOrderModal
