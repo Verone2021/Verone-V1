@@ -119,6 +119,19 @@ export function OrderDetailModal({
   const [manualPaymentRef, setManualPaymentRef] = useState('');
   const [manualPaymentNote, setManualPaymentNote] = useState('');
 
+  // Fees editable state
+  const [shippingCostHt, setShippingCostHt] = useState(
+    order?.shipping_cost_ht ?? 0
+  );
+  const [handlingCostHt, setHandlingCostHt] = useState(
+    order?.handling_cost_ht ?? 0
+  );
+  const [insuranceCostHt, setInsuranceCostHt] = useState(
+    order?.insurance_cost_ht ?? 0
+  );
+  const [feesVatRate, setFeesVatRate] = useState(order?.fees_vat_rate ?? 0.2);
+  const [feesSaving, setFeesSaving] = useState(false);
+
   // Historique expéditions
   const [shipmentHistory, setShipmentHistory] = useState<
     Array<{
@@ -222,6 +235,14 @@ export function OrderDetailModal({
       .finally(() => setLoadingLinkedInvoices(false));
   }, [order?.id, open]);
 
+  // Sync fees state when order changes
+  useEffect(() => {
+    setShippingCostHt(order?.shipping_cost_ht ?? 0);
+    setHandlingCostHt(order?.handling_cost_ht ?? 0);
+    setInsuranceCostHt(order?.insurance_cost_ht ?? 0);
+    setFeesVatRate(order?.fees_vat_rate ?? 0.2);
+  }, [order?.id]);
+
   if (!order) return null;
 
   const formatDate = (date: string | null) => {
@@ -291,6 +312,22 @@ export function OrderDetailModal({
       .finally(() => {
         setPaymentSubmitting(false);
       });
+  };
+
+  const saveFees = async () => {
+    setFeesSaving(true);
+    const supabase = createClient();
+    await supabase
+      .from('sales_orders')
+      .update({
+        shipping_cost_ht: shippingCostHt,
+        handling_cost_ht: handlingCostHt,
+        insurance_cost_ht: insuranceCostHt,
+        fees_vat_rate: feesVatRate,
+      })
+      .eq('id', order.id);
+    setFeesSaving(false);
+    onUpdate?.();
   };
 
   // Workflow Odoo-inspired: Permettre expédition pour validated + partially_shipped
@@ -761,6 +798,73 @@ export function OrderDetailModal({
                   )}
                 </CardContent>
               </Card>
+
+              {/* Card Frais éditables */}
+              {!readOnly && (
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm font-medium flex items-center gap-2">
+                      <Truck className="h-3 w-3" />
+                      Frais
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="space-y-2">
+                      <Label className="text-xs">Livraison HT (€)</Label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={shippingCostHt}
+                        onChange={e =>
+                          setShippingCostHt(parseFloat(e.target.value) || 0)
+                        }
+                      />
+                      <Label className="text-xs">Assurance HT (€)</Label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={insuranceCostHt}
+                        onChange={e =>
+                          setInsuranceCostHt(parseFloat(e.target.value) || 0)
+                        }
+                      />
+                      <Label className="text-xs">Manutention HT (€)</Label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={handlingCostHt}
+                        onChange={e =>
+                          setHandlingCostHt(parseFloat(e.target.value) || 0)
+                        }
+                      />
+                    </div>
+                    <div className="flex gap-1">
+                      {[0, 0.055, 0.1, 0.2].map(rate => (
+                        <button
+                          key={rate}
+                          onClick={() => setFeesVatRate(rate)}
+                          className={`flex-1 text-xs py-1 px-2 rounded border ${feesVatRate === rate ? 'bg-primary text-primary-foreground' : 'bg-white'}`}
+                        >
+                          {(rate * 100).toFixed(1).replace('.0', '')}%
+                        </button>
+                      ))}
+                    </div>
+                    <ButtonV2
+                      size="sm"
+                      className="w-full"
+                      onClick={() => void saveFees().catch(console.error)}
+                      disabled={feesSaving}
+                    >
+                      {feesSaving
+                        ? 'Enregistrement...'
+                        : 'Sauvegarder les frais'}
+                    </ButtonV2>
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Card Rapprochement Bancaire */}
               <Card>
