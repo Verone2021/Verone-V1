@@ -9,6 +9,7 @@ import {
   InvoiceCreateFromOrderModal,
   RapprochementContent,
 } from '@verone/finance/components';
+import { OrganisationQuickViewModal } from '@verone/organisations';
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
@@ -117,6 +118,7 @@ export function OrderDetailModal({
   const [paymentSubmitting, setPaymentSubmitting] = useState(false);
   const [linkedInvoices, setLinkedInvoices] = useState<ILinkedInvoice[]>([]);
   const [loadingLinkedInvoices, setLoadingLinkedInvoices] = useState(false);
+  const [showOrgModal, setShowOrgModal] = useState(false);
 
   // Form state for manual payment
   const [manualPaymentType, setManualPaymentType] =
@@ -279,6 +281,16 @@ export function OrderDetailModal({
       return `${customer.first_name} ${customer.last_name}`;
     }
     return 'Client inconnu';
+  };
+
+  const getCustomerNameAlt = (): string | null => {
+    if (order.customer_type === 'organization' && order.organisations) {
+      // Si trade_name est le principal, retourner legal_name comme alt
+      if (order.organisations.trade_name) {
+        return order.organisations.legal_name;
+      }
+    }
+    return null;
   };
 
   const getCustomerType = () => {
@@ -801,7 +813,18 @@ export function OrderDetailModal({
                   <div className="flex items-start justify-between">
                     <div>
                       <CardTitle className="text-base">
-                        {getCustomerName()}
+                        {order.customer_id &&
+                        order.customer_type === 'organization' ? (
+                          <button
+                            type="button"
+                            onClick={() => setShowOrgModal(true)}
+                            className="text-left text-primary hover:underline cursor-pointer"
+                          >
+                            {getCustomerName()}
+                          </button>
+                        ) : (
+                          getCustomerName()
+                        )}
                       </CardTitle>
                       <Badge variant="outline" className="mt-1 text-xs">
                         {getCustomerType()}
@@ -1049,6 +1072,7 @@ export function OrderDetailModal({
                               {inv.qonto_invoice_id ? (
                                 <Link
                                   href={`/factures/${inv.qonto_invoice_id}?type=invoice`}
+                                  target="_blank"
                                   className="font-mono text-xs flex-1 text-blue-600 hover:underline"
                                 >
                                   {inv.document_number ?? inv.id.slice(0, 8)}
@@ -1318,6 +1342,7 @@ export function OrderDetailModal({
                   id: order.id,
                   order_number: order.order_number,
                   customer_name: getCustomerName(),
+                  customer_name_alt: getCustomerNameAlt(),
                   total_ttc: order.total_ttc || 0,
                   created_at: order.created_at,
                   order_date: order.order_date ?? null,
@@ -1422,6 +1447,15 @@ export function OrderDetailModal({
           </Tabs>
         </DialogContent>
       </Dialog>
+
+      {/* Modal Quick View Organisation */}
+      {order.customer_id && order.customer_type === 'organization' && (
+        <OrganisationQuickViewModal
+          organisationId={order.customer_id}
+          open={showOrgModal}
+          onOpenChange={setShowOrgModal}
+        />
+      )}
 
       {/* Modal Création Facture */}
       <InvoiceCreateFromOrderModal

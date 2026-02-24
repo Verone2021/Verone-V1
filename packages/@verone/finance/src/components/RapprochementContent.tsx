@@ -750,34 +750,27 @@ export function RapprochementContent({
     setIsLinking(true);
 
     try {
-      const insertData =
+      // Use RPC to ensure cross-references (document_id, amount_paid, payment_status)
+      // are properly updated — matching the pattern in RapprochementModal.handleLinkOrder()
+      const rpcParams =
         orderType === 'purchase_order'
           ? {
-              transaction_id: transactionId,
-              purchase_order_id: order.id,
-              link_type: 'purchase_order',
-              allocated_amount: -order.total_ttc,
+              p_transaction_id: transactionId,
+              p_purchase_order_id: order.id,
+              p_allocated_amount: order.total_ttc,
             }
           : {
-              transaction_id: transactionId,
-              sales_order_id: order.id,
-              link_type: 'sales_order',
-              allocated_amount: order.total_ttc,
+              p_transaction_id: transactionId,
+              p_sales_order_id: order.id,
+              p_allocated_amount: order.total_ttc,
             };
 
-      const { error: linkError } = await supabase
-        .from('transaction_document_links')
-        .insert(insertData);
+      const { error: linkError } = await (supabase.rpc as CallableFunction)(
+        'link_transaction_to_document',
+        rpcParams
+      );
 
       if (linkError) throw linkError;
-
-      await supabase
-        .from('bank_transactions')
-        .update({
-          matching_status: 'manual_matched',
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', transactionId);
 
       // Immediately add to linked set so it disappears from suggestions
       setLinkedTxIds(prev => new Set([...prev, transactionId]));

@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from 'react';
 
 import { RapprochementContent } from '@verone/finance/components';
+import { OrganisationQuickViewModal } from '@verone/organisations';
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
@@ -123,6 +124,7 @@ export function PurchaseOrderDetailModal({
   onUpdate,
 }: PurchaseOrderDetailModalProps) {
   const [showReceivingModal, setShowReceivingModal] = useState(false);
+  const [showOrgModal, setShowOrgModal] = useState(false);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [paymentSubmitting, setPaymentSubmitting] = useState(false);
   const [manualPaymentType, setManualPaymentType] =
@@ -567,7 +569,17 @@ export function PurchaseOrderDetailModal({
                   <div className="flex items-start justify-between">
                     <div>
                       <CardTitle className="text-base">
-                        {getSupplierName()}
+                        {order.supplier_id ? (
+                          <button
+                            type="button"
+                            onClick={() => setShowOrgModal(true)}
+                            className="text-left text-primary hover:underline cursor-pointer"
+                          >
+                            {getSupplierName()}
+                          </button>
+                        ) : (
+                          getSupplierName()
+                        )}
                       </CardTitle>
                       <Badge variant="outline" className="mt-1 text-xs">
                         Fournisseur
@@ -992,6 +1004,15 @@ export function PurchaseOrderDetailModal({
         </DialogContent>
       </Dialog>
 
+      {/* Modal Quick View Organisation (fournisseur) */}
+      {order.supplier_id && (
+        <OrganisationQuickViewModal
+          organisationId={order.supplier_id}
+          open={showOrgModal}
+          onOpenChange={setShowOrgModal}
+        />
+      )}
+
       {/* ✅ Modal Gestion Réception */}
       <PurchaseOrderReceptionModal
         order={order}
@@ -1036,6 +1057,12 @@ export function PurchaseOrderDetailModal({
                   id: order.id,
                   order_number: order.po_number,
                   customer_name: getSupplierName(),
+                  customer_name_alt:
+                    order.organisations?.trade_name &&
+                    order.organisations?.legal_name !==
+                      order.organisations?.trade_name
+                      ? order.organisations.legal_name
+                      : null,
                   total_ttc:
                     order.total_ttc ||
                     (order.total_ht || 0) * (1 + (order.tax_rate || 0.2)),
