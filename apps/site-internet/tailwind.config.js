@@ -58,9 +58,14 @@ module.exports = {
         'fade-in': 'fadeIn 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
         'fade-in-up': 'fadeInUp 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
         'slide-in-right': 'slideInRight 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+        shimmer: 'shimmer 2s ease-in-out infinite',
       },
 
       keyframes: {
+        shimmer: {
+          '0%': { transform: 'translateX(-100%)' },
+          '100%': { transform: 'translateX(100%)' },
+        },
         fadeIn: {
           '0%': { opacity: '0' },
           '100%': { opacity: '1' },

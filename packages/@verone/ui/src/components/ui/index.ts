@@ -143,3 +143,4 @@ export * from './organisation-name-display';
 export * from './clickable-cell';
 export * from './status-dot';
 export * from './animated-tabs';
+export * from './animated-number';

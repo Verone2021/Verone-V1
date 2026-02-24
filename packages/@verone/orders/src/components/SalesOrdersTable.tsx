@@ -14,7 +14,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 
 import { useToast } from '@verone/common';
 import { RapprochementFromOrderModal } from '@verone/finance/components';
@@ -279,6 +279,7 @@ export function SalesOrdersTable({
 
   const { toast } = useToast();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
   const { enseignes } = useActiveEnseignes();
 
@@ -325,6 +326,7 @@ export function SalesOrdersTable({
   // Etats modals
   const [selectedOrder, setSelectedOrder] = useState<SalesOrder | null>(null);
   const [showOrderDetail, setShowOrderDetail] = useState(false);
+  const [dismissedOrderId, setDismissedOrderId] = useState<string | null>(null);
   const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -367,14 +369,19 @@ export function SalesOrdersTable({
   // Ouvrir automatiquement le modal si query param ?id= present
   useEffect(() => {
     const orderId = searchParams.get('id');
-    if (orderId && orders.length > 0 && !showOrderDetail) {
+    if (
+      orderId &&
+      orders.length > 0 &&
+      !showOrderDetail &&
+      orderId !== dismissedOrderId
+    ) {
       const order = orders.find(o => o.id === orderId);
       if (order) {
         setSelectedOrder(order);
         setShowOrderDetail(true);
       }
     }
-  }, [searchParams, orders, showOrderDetail]);
+  }, [searchParams, orders, showOrderDetail, dismissedOrderId]);
 
   // Filtrage des commandes
   const filteredOrders = useMemo(() => {
@@ -986,6 +993,22 @@ export function SalesOrdersTable({
     setShowLinkTransactionModal(false);
     setSelectedOrderForLink(null);
   };
+
+  // Fermeture du modal detail : nettoyer ?id= de l'URL pour eviter la boucle de reouverture
+  const handleCloseOrderDetail = useCallback(() => {
+    setShowOrderDetail(false);
+    setSelectedOrder(null);
+    const orderId = searchParams.get('id');
+    if (orderId) {
+      setDismissedOrderId(orderId);
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete('id');
+      const newUrl = params.toString()
+        ? `?${params.toString()}`
+        : window.location.pathname;
+      router.replace(newUrl, { scroll: false });
+    }
+  }, [searchParams, router]);
 
   return (
     <div className="space-y-6">
@@ -1899,7 +1922,7 @@ export function SalesOrdersTable({
       <OrderDetailModal
         order={selectedOrder}
         open={showOrderDetail}
-        onClose={() => setShowOrderDetail(false)}
+        onClose={handleCloseOrderDetail}
         onUpdate={() => {
           const filters = channelId ? { channel_id: channelId } : undefined;
           fetchOrders(filters);
