@@ -49,9 +49,15 @@ import {
 } from 'lucide-react';
 
 // NOTE: SalesOrderShipmentModal supprimé - sera recréé ultérieurement
-import { useSalesOrders } from '@verone/orders/hooks';
+import { useSalesOrders, useOrderItems } from '@verone/orders/hooks';
 import { createClient } from '@verone/utils/supabase/client';
-import type { SalesOrder, ManualPaymentType } from '@verone/orders/hooks';
+import type {
+  SalesOrder,
+  ManualPaymentType,
+  OrderItem,
+} from '@verone/orders/hooks';
+import { EditableOrderItemRow } from '../tables/EditableOrderItemRow';
+import { AddProductToOrderModal } from './AddProductToOrderModal';
 
 interface ILinkedInvoice {
   id: string;
@@ -104,8 +110,13 @@ export function OrderDetailModal({
 }: OrderDetailModalProps) {
   // NOTE: showShippingModal supprimé - modal sera recréé ultérieurement
   const { markAsManuallyPaid } = useSalesOrders();
+  const { addItem, updateItem, removeItem } = useOrderItems({
+    orderId: order?.id ?? '',
+    orderType: 'sales',
+  });
   const router = useRouter();
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+  const [showAddProductModal, setShowAddProductModal] = useState(false);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [paymentSubmitting, setPaymentSubmitting] = useState(false);
   const [linkedInvoices, setLinkedInvoices] = useState<ILinkedInvoice[]>([]);
@@ -338,6 +349,8 @@ export function OrderDetailModal({
   );
   const hasActiveInvoice = activeInvoices.length > 0;
 
+  const isLocked = readOnly || order.status === 'shipped' || hasActiveInvoice;
+
   return (
     <>
       <Dialog open={open} onOpenChange={onClose}>
@@ -373,11 +386,22 @@ export function OrderDetailModal({
             <div className="flex-1 order-2 lg:order-1">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Package className="h-4 w-4" />
-                    Produits ({order.sales_order_items?.length || 0} article
-                    {(order.sales_order_items?.length || 0) > 1 ? 's' : ''})
-                  </CardTitle>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <Package className="h-4 w-4" />
+                      Produits ({order.sales_order_items?.length || 0} article
+                      {(order.sales_order_items?.length || 0) > 1 ? 's' : ''})
+                    </CardTitle>
+                    {isLocked && (
+                      <Badge variant="secondary" className="text-xs">
+                        {order.status === 'shipped'
+                          ? '🔒 Expédiée — lecture seule'
+                          : hasActiveInvoice
+                            ? '🔒 Facture émise — lecture seule'
+                            : '🔒 Lecture seule'}
+                      </Badge>
+                    )}
+                  </div>
                 </CardHeader>
                 <CardContent>
                   {/* TABLE RESPONSIVE avec scroll horizontal mobile + hauteur limitée */}
@@ -400,98 +424,51 @@ export function OrderDetailModal({
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {order.sales_order_items?.map(item => {
-                          // ✅ BR-TECH-002: Récupérer image via product_images
-                          const productImages = (item.products as any)
-                            ?.product_images as ProductImage[] | undefined;
-                          const primaryImageUrl =
-                            productImages?.find(img => img.is_primary)
-                              ?.public_url ||
-                            productImages?.[0]?.public_url ||
-                            null;
-
-                          // Calcul total HT avec remise
-                          const totalHT =
-                            item.quantity *
-                            item.unit_price_ht *
-                            (1 - (item.discount_percentage || 0) / 100);
-
-                          return (
-                            <TableRow
-                              key={item.id}
-                              className="hover:bg-gray-50"
-                            >
-                              {/* IMAGE PRODUIT */}
-                              <TableCell>
-                                {primaryImageUrl ? (
-                                  <img
-                                    src={primaryImageUrl}
-                                    alt={item?.products?.name ?? 'Produit'}
-                                    className="w-12 h-12 object-cover rounded border"
-                                  />
-                                ) : (
-                                  <div className="w-12 h-12 bg-gray-100 rounded border flex items-center justify-center">
-                                    <Package className="h-5 w-5 text-gray-400" />
-                                  </div>
-                                )}
-                              </TableCell>
-
-                              {/* NOM + SKU + BADGES */}
-                              <TableCell>
-                                <p className="font-medium text-sm">
-                                  {item.products?.name}
-                                </p>
-                                <p className="text-xs text-gray-500">
-                                  SKU: {item.products?.sku}
-                                </p>
-                                {/* Badges inline (remise) */}
-                                {item.discount_percentage > 0 && (
-                                  <Badge
-                                    variant="secondary"
-                                    className="mt-1 text-xs bg-green-100 text-green-800 border-green-200"
-                                  >
-                                    -{item.discount_percentage.toFixed(1)}%
-                                  </Badge>
-                                )}
-                              </TableCell>
-
-                              {/* QUANTITÉ */}
-                              <TableCell className="text-right font-medium">
-                                {item.quantity}
-                              </TableCell>
-
-                              {/* PRIX UNITAIRE HT */}
-                              <TableCell className="text-right">
-                                {formatCurrency(item.unit_price_ht)}
-                              </TableCell>
-
-                              {/* TOTAL HT */}
-                              <TableCell className="text-right font-semibold">
-                                {formatCurrency(totalHT)}
-                              </TableCell>
-
-                              {/* EXPÉDITION */}
-                              <TableCell className="text-center">
-                                {(item as any).quantity_shipped > 0 ? (
-                                  <Badge
-                                    variant="secondary"
-                                    className="text-xs bg-blue-100 text-blue-800 border-blue-200"
-                                  >
-                                    {(item as any).quantity_shipped}/
-                                    {item.quantity}
-                                  </Badge>
-                                ) : (
-                                  <span className="text-gray-400 text-sm">
-                                    -
-                                  </span>
-                                )}
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })}
+                        {order.sales_order_items?.map(item => (
+                          <EditableOrderItemRow
+                            key={item.id}
+                            item={item as unknown as OrderItem}
+                            orderType="sales"
+                            readonly={isLocked}
+                            onUpdate={(itemId, data) =>
+                              void updateItem(itemId, data)
+                                .then(() => onUpdate?.())
+                                .catch((err: unknown) =>
+                                  console.error(
+                                    '[OrderDetailModal] Update item failed:',
+                                    err
+                                  )
+                                )
+                            }
+                            onDelete={itemId =>
+                              void removeItem(itemId)
+                                .then(() => onUpdate?.())
+                                .catch((err: unknown) =>
+                                  console.error(
+                                    '[OrderDetailModal] Delete item failed:',
+                                    err
+                                  )
+                                )
+                            }
+                          />
+                        ))}
                       </TableBody>
                     </Table>
                   </div>
+
+                  {/* BOUTON AJOUTER PRODUIT */}
+                  {!isLocked && (
+                    <div className="mt-2">
+                      <ButtonV2
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowAddProductModal(true)}
+                        className="w-full border-dashed"
+                      >
+                        <Package className="h-3 w-3 mr-1" />+ Ajouter un produit
+                      </ButtonV2>
+                    </div>
+                  )}
 
                   {/* TOTAUX (bas de table) */}
                   <Separator className="my-4" />
@@ -532,14 +509,11 @@ export function OrderDetailModal({
                       0
                     );
 
-                    // === FRAIS (toujours affichés, même à 0) ===
-                    const shippingHT = order.shipping_cost_ht || 0;
-                    const insuranceHT = order.insurance_cost_ht || 0;
-                    const handlingHT = order.handling_cost_ht || 0;
-                    const totalFeesHT = shippingHT + insuranceHT + handlingHT;
+                    // === FRAIS — utilise les states locaux éditables ===
+                    const totalFeesHT =
+                      shippingCostHt + insuranceCostHt + handlingCostHt;
 
                     // TVA des frais (taux unique pour tous les frais)
-                    const feesVatRate = order.fees_vat_rate || 0.2;
                     const feesTVA = totalFeesHT * feesVatRate;
 
                     // === TOTAUX GLOBAUX ===
@@ -559,20 +533,102 @@ export function OrderDetailModal({
                           </span>
                         </div>
 
-                        {/* Frais additionnels - TOUJOURS affichés */}
-                        <div className="pt-2 mt-2 border-t border-dashed space-y-1">
-                          <div className="flex justify-between text-sm text-gray-600">
-                            <span>Frais de livraison HT :</span>
-                            <span>{formatCurrency(shippingHT)}</span>
+                        {/* Frais additionnels — éditables inline si !isLocked */}
+                        <div className="pt-2 mt-2 border-t border-dashed space-y-2">
+                          {/* Livraison */}
+                          <div className="flex justify-between items-center text-sm text-gray-600">
+                            <span className="flex-shrink-0">
+                              Frais de livraison HT :
+                            </span>
+                            {isLocked ? (
+                              <span>{formatCurrency(shippingCostHt)}</span>
+                            ) : (
+                              <Input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                value={shippingCostHt}
+                                onChange={e =>
+                                  setShippingCostHt(
+                                    parseFloat(e.target.value) || 0
+                                  )
+                                }
+                                className="w-24 h-6 text-xs text-right"
+                              />
+                            )}
                           </div>
-                          <div className="flex justify-between text-sm text-gray-600">
-                            <span>Frais d'assurance HT :</span>
-                            <span>{formatCurrency(insuranceHT)}</span>
+                          {/* Assurance */}
+                          <div className="flex justify-between items-center text-sm text-gray-600">
+                            <span className="flex-shrink-0">
+                              Frais d&apos;assurance HT :
+                            </span>
+                            {isLocked ? (
+                              <span>{formatCurrency(insuranceCostHt)}</span>
+                            ) : (
+                              <Input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                value={insuranceCostHt}
+                                onChange={e =>
+                                  setInsuranceCostHt(
+                                    parseFloat(e.target.value) || 0
+                                  )
+                                }
+                                className="w-24 h-6 text-xs text-right"
+                              />
+                            )}
                           </div>
-                          <div className="flex justify-between text-sm text-gray-600">
-                            <span>Frais de manutention HT :</span>
-                            <span>{formatCurrency(handlingHT)}</span>
+                          {/* Manutention */}
+                          <div className="flex justify-between items-center text-sm text-gray-600">
+                            <span className="flex-shrink-0">
+                              Frais de manutention HT :
+                            </span>
+                            {isLocked ? (
+                              <span>{formatCurrency(handlingCostHt)}</span>
+                            ) : (
+                              <Input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                value={handlingCostHt}
+                                onChange={e =>
+                                  setHandlingCostHt(
+                                    parseFloat(e.target.value) || 0
+                                  )
+                                }
+                                className="w-24 h-6 text-xs text-right"
+                              />
+                            )}
                           </div>
+                          {/* Sélecteur TVA frais + bouton save (si éditable) */}
+                          {!isLocked && (
+                            <div className="flex items-center justify-between gap-2 pt-1">
+                              <div className="flex gap-1">
+                                {[0, 0.055, 0.1, 0.2].map(rate => (
+                                  <button
+                                    key={rate}
+                                    type="button"
+                                    onClick={() => setFeesVatRate(rate)}
+                                    className={`text-xs py-0.5 px-1.5 rounded border ${feesVatRate === rate ? 'bg-primary text-primary-foreground' : 'bg-white hover:bg-gray-50'}`}
+                                  >
+                                    {(rate * 100).toFixed(1).replace('.0', '')}%
+                                  </button>
+                                ))}
+                              </div>
+                              <ButtonV2
+                                size="sm"
+                                variant="outline"
+                                onClick={() =>
+                                  void saveFees().catch(console.error)
+                                }
+                                disabled={feesSaving}
+                                className="h-6 text-xs px-2"
+                              >
+                                {feesSaving ? 'Sauvegarde...' : 'Sauvegarder'}
+                              </ButtonV2>
+                            </div>
+                          )}
                         </div>
 
                         {/* Total HT global */}
@@ -798,73 +854,6 @@ export function OrderDetailModal({
                   )}
                 </CardContent>
               </Card>
-
-              {/* Card Frais éditables */}
-              {!readOnly && (
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-sm font-medium flex items-center gap-2">
-                      <Truck className="h-3 w-3" />
-                      Frais
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="space-y-2">
-                      <Label className="text-xs">Livraison HT (€)</Label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={shippingCostHt}
-                        onChange={e =>
-                          setShippingCostHt(parseFloat(e.target.value) || 0)
-                        }
-                      />
-                      <Label className="text-xs">Assurance HT (€)</Label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={insuranceCostHt}
-                        onChange={e =>
-                          setInsuranceCostHt(parseFloat(e.target.value) || 0)
-                        }
-                      />
-                      <Label className="text-xs">Manutention HT (€)</Label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={handlingCostHt}
-                        onChange={e =>
-                          setHandlingCostHt(parseFloat(e.target.value) || 0)
-                        }
-                      />
-                    </div>
-                    <div className="flex gap-1">
-                      {[0, 0.055, 0.1, 0.2].map(rate => (
-                        <button
-                          key={rate}
-                          onClick={() => setFeesVatRate(rate)}
-                          className={`flex-1 text-xs py-1 px-2 rounded border ${feesVatRate === rate ? 'bg-primary text-primary-foreground' : 'bg-white'}`}
-                        >
-                          {(rate * 100).toFixed(1).replace('.0', '')}%
-                        </button>
-                      ))}
-                    </div>
-                    <ButtonV2
-                      size="sm"
-                      className="w-full"
-                      onClick={() => void saveFees().catch(console.error)}
-                      disabled={feesSaving}
-                    >
-                      {feesSaving
-                        ? 'Enregistrement...'
-                        : 'Sauvegarder les frais'}
-                    </ButtonV2>
-                  </CardContent>
-                </Card>
-              )}
 
               {/* Card Rapprochement Bancaire */}
               <Card>
@@ -1159,6 +1148,18 @@ export function OrderDetailModal({
       </Dialog>
 
       {/* NOTE: Modal Gestion Expédition supprimé - sera recréé ultérieurement */}
+
+      {/* Modal Ajout Produit */}
+      <AddProductToOrderModal
+        open={showAddProductModal}
+        onClose={() => setShowAddProductModal(false)}
+        orderType="sales"
+        onAdd={async data => {
+          await addItem(data);
+          onUpdate?.();
+          setShowAddProductModal(false);
+        }}
+      />
 
       {/* Dialog Enregistrer un paiement (2 onglets) */}
       <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
