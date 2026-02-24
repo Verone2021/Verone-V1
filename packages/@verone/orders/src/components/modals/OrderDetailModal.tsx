@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 import {
   InvoiceCreateFromOrderModal,
@@ -65,6 +66,7 @@ interface ILinkedInvoice {
   document_number: string | null;
   workflow_status: string | null;
   total_ttc: number;
+  qonto_invoice_id: string | null;
 }
 
 interface OrderDetailModalProps {
@@ -1044,9 +1046,18 @@ export function OrderDetailModal({
                               className="flex items-center gap-2 text-sm p-2 rounded border bg-muted/30"
                             >
                               <FileText className="h-3 w-3 text-muted-foreground flex-shrink-0" />
-                              <span className="font-mono text-xs flex-1">
-                                {inv.document_number ?? inv.id.slice(0, 8)}
-                              </span>
+                              {inv.qonto_invoice_id ? (
+                                <Link
+                                  href={`/factures/${inv.qonto_invoice_id}?type=invoice`}
+                                  className="font-mono text-xs flex-1 text-blue-600 hover:underline"
+                                >
+                                  {inv.document_number ?? inv.id.slice(0, 8)}
+                                </Link>
+                              ) : (
+                                <span className="font-mono text-xs flex-1">
+                                  {inv.document_number ?? inv.id.slice(0, 8)}
+                                </span>
+                              )}
                               {inv.workflow_status && (
                                 <Badge
                                   variant="outline"
