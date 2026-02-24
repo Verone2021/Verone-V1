@@ -46,6 +46,7 @@ import {
   Banknote,
   History,
   CheckCircle2,
+  Pencil,
 } from 'lucide-react';
 
 // NOTE: SalesOrderShipmentModal supprimé - sera recréé ultérieurement
@@ -64,14 +65,6 @@ interface ILinkedInvoice {
   document_number: string | null;
   workflow_status: string | null;
   total_ttc: number;
-}
-
-// ✅ Type Safety: Interface ProductImage stricte (IDENTIQUE à PurchaseOrderDetailModal)
-interface ProductImage {
-  id?: string;
-  public_url: string;
-  is_primary: boolean;
-  display_order?: number;
 }
 
 interface OrderDetailModalProps {
@@ -115,6 +108,7 @@ export function OrderDetailModal({
     orderType: 'sales',
   });
   const router = useRouter();
+  const [isEditing, setIsEditing] = useState(false);
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [showAddProductModal, setShowAddProductModal] = useState(false);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
@@ -156,6 +150,13 @@ export function OrderDetailModal({
       }>;
     }>
   >([]);
+
+  // Reset editing mode when modal closes
+  useEffect(() => {
+    if (!open) {
+      setIsEditing(false);
+    }
+  }, [open]);
 
   // Charger historique expéditions quand modal ouvert
   useEffect(() => {
@@ -392,7 +393,7 @@ export function OrderDetailModal({
                       Produits ({order.sales_order_items?.length || 0} article
                       {(order.sales_order_items?.length || 0) > 1 ? 's' : ''})
                     </CardTitle>
-                    {isLocked && (
+                    {isLocked ? (
                       <Badge variant="secondary" className="text-xs">
                         {order.status === 'shipped'
                           ? '🔒 Expédiée — lecture seule'
@@ -400,6 +401,26 @@ export function OrderDetailModal({
                             ? '🔒 Facture émise — lecture seule'
                             : '🔒 Lecture seule'}
                       </Badge>
+                    ) : isEditing ? (
+                      <ButtonV2
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsEditing(false)}
+                        className="h-7 text-xs"
+                      >
+                        <X className="h-3 w-3 mr-1" />
+                        Terminer l&apos;édition
+                      </ButtonV2>
+                    ) : (
+                      <ButtonV2
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsEditing(true)}
+                        className="h-7 text-xs"
+                      >
+                        <Pencil className="h-3 w-3 mr-1" />
+                        Modifier
+                      </ButtonV2>
                     )}
                   </div>
                 </CardHeader>
@@ -424,40 +445,117 @@ export function OrderDetailModal({
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {order.sales_order_items?.map(item => (
-                          <EditableOrderItemRow
-                            key={item.id}
-                            item={item as unknown as OrderItem}
-                            orderType="sales"
-                            readonly={isLocked}
-                            onUpdate={(itemId, data) =>
-                              void updateItem(itemId, data)
-                                .then(() => onUpdate?.())
-                                .catch((err: unknown) =>
-                                  console.error(
-                                    '[OrderDetailModal] Update item failed:',
-                                    err
-                                  )
-                                )
-                            }
-                            onDelete={itemId =>
-                              void removeItem(itemId)
-                                .then(() => onUpdate?.())
-                                .catch((err: unknown) =>
-                                  console.error(
-                                    '[OrderDetailModal] Delete item failed:',
-                                    err
-                                  )
-                                )
-                            }
-                          />
-                        ))}
+                        {isEditing
+                          ? order.sales_order_items?.map(item => (
+                              <EditableOrderItemRow
+                                key={item.id}
+                                item={item as unknown as OrderItem}
+                                orderType="sales"
+                                readonly={false}
+                                onUpdate={(itemId, data) =>
+                                  void updateItem(itemId, data)
+                                    .then(() => onUpdate?.())
+                                    .catch((err: unknown) =>
+                                      console.error(
+                                        '[OrderDetailModal] Update item failed:',
+                                        err
+                                      )
+                                    )
+                                }
+                                onDelete={itemId =>
+                                  void removeItem(itemId)
+                                    .then(() => onUpdate?.())
+                                    .catch((err: unknown) =>
+                                      console.error(
+                                        '[OrderDetailModal] Delete item failed:',
+                                        err
+                                      )
+                                    )
+                                }
+                              />
+                            ))
+                          : order.sales_order_items?.map(item => {
+                              const primaryImage =
+                                item.products?.primary_image_url ?? null;
+                              const lineHT =
+                                item.quantity *
+                                item.unit_price_ht *
+                                (1 - (item.discount_percentage || 0) / 100);
+                              const shippedQty =
+                                (
+                                  item as unknown as {
+                                    quantity_shipped?: number;
+                                  }
+                                ).quantity_shipped ?? 0;
+
+                              return (
+                                <TableRow
+                                  key={item.id}
+                                  className="hover:bg-gray-50"
+                                >
+                                  <TableCell>
+                                    {primaryImage ? (
+                                      <img
+                                        src={primaryImage}
+                                        alt={item.products?.name ?? 'Produit'}
+                                        className="w-12 h-12 object-cover rounded border"
+                                      />
+                                    ) : (
+                                      <div className="w-12 h-12 bg-gray-100 rounded border flex items-center justify-center">
+                                        <Package className="h-6 w-6 text-gray-400" />
+                                      </div>
+                                    )}
+                                  </TableCell>
+                                  <TableCell>
+                                    <div>
+                                      <p className="font-medium text-sm">
+                                        {item.products?.name ?? 'Produit'}
+                                      </p>
+                                      <p className="text-xs text-gray-500">
+                                        {item.products?.sku ?? '—'}
+                                      </p>
+                                      {(item.discount_percentage || 0) > 0 && (
+                                        <Badge
+                                          variant="outline"
+                                          className="text-[10px] mt-0.5 text-orange-600 border-orange-200"
+                                        >
+                                          -{item.discount_percentage}%
+                                        </Badge>
+                                      )}
+                                    </div>
+                                  </TableCell>
+                                  <TableCell className="text-right font-medium">
+                                    {item.quantity}
+                                  </TableCell>
+                                  <TableCell className="text-right">
+                                    {formatCurrency(item.unit_price_ht)}
+                                  </TableCell>
+                                  <TableCell className="text-right font-semibold">
+                                    {formatCurrency(lineHT)}
+                                  </TableCell>
+                                  <TableCell className="text-center">
+                                    {shippedQty > 0 ? (
+                                      <Badge
+                                        variant="outline"
+                                        className={`text-[10px] ${shippedQty >= item.quantity ? 'bg-green-50 text-green-700 border-green-200' : 'bg-yellow-50 text-yellow-700 border-yellow-200'}`}
+                                      >
+                                        {shippedQty}/{item.quantity}
+                                      </Badge>
+                                    ) : (
+                                      <span className="text-xs text-gray-400">
+                                        —
+                                      </span>
+                                    )}
+                                  </TableCell>
+                                </TableRow>
+                              );
+                            })}
                       </TableBody>
                     </Table>
                   </div>
 
                   {/* BOUTON AJOUTER PRODUIT */}
-                  {!isLocked && (
+                  {isEditing && (
                     <div className="mt-2">
                       <ButtonV2
                         variant="outline"
@@ -509,12 +607,26 @@ export function OrderDetailModal({
                       0
                     );
 
-                    // === FRAIS — utilise les states locaux éditables ===
+                    // === FRAIS — en mode édition: states locaux, sinon: order.xxx ===
+                    const displayShippingHt = isEditing
+                      ? shippingCostHt
+                      : (order.shipping_cost_ht ?? 0);
+                    const displayInsuranceHt = isEditing
+                      ? insuranceCostHt
+                      : (order.insurance_cost_ht ?? 0);
+                    const displayHandlingHt = isEditing
+                      ? handlingCostHt
+                      : (order.handling_cost_ht ?? 0);
+                    const displayFeesVatRate = isEditing
+                      ? feesVatRate
+                      : (order.fees_vat_rate ?? 0.2);
                     const totalFeesHT =
-                      shippingCostHt + insuranceCostHt + handlingCostHt;
+                      displayShippingHt +
+                      displayInsuranceHt +
+                      displayHandlingHt;
 
                     // TVA des frais (taux unique pour tous les frais)
-                    const feesTVA = totalFeesHT * feesVatRate;
+                    const feesTVA = totalFeesHT * displayFeesVatRate;
 
                     // === TOTAUX GLOBAUX ===
                     const totalHT = productsHT + totalFeesHT;
@@ -540,9 +652,7 @@ export function OrderDetailModal({
                             <span className="flex-shrink-0">
                               Frais de livraison HT :
                             </span>
-                            {isLocked ? (
-                              <span>{formatCurrency(shippingCostHt)}</span>
-                            ) : (
+                            {isEditing ? (
                               <Input
                                 type="number"
                                 step="0.01"
@@ -555,6 +665,8 @@ export function OrderDetailModal({
                                 }
                                 className="w-24 h-6 text-xs text-right"
                               />
+                            ) : (
+                              <span>{formatCurrency(displayShippingHt)}</span>
                             )}
                           </div>
                           {/* Assurance */}
@@ -562,9 +674,7 @@ export function OrderDetailModal({
                             <span className="flex-shrink-0">
                               Frais d&apos;assurance HT :
                             </span>
-                            {isLocked ? (
-                              <span>{formatCurrency(insuranceCostHt)}</span>
-                            ) : (
+                            {isEditing ? (
                               <Input
                                 type="number"
                                 step="0.01"
@@ -577,6 +687,8 @@ export function OrderDetailModal({
                                 }
                                 className="w-24 h-6 text-xs text-right"
                               />
+                            ) : (
+                              <span>{formatCurrency(displayInsuranceHt)}</span>
                             )}
                           </div>
                           {/* Manutention */}
@@ -584,9 +696,7 @@ export function OrderDetailModal({
                             <span className="flex-shrink-0">
                               Frais de manutention HT :
                             </span>
-                            {isLocked ? (
-                              <span>{formatCurrency(handlingCostHt)}</span>
-                            ) : (
+                            {isEditing ? (
                               <Input
                                 type="number"
                                 step="0.01"
@@ -599,10 +709,12 @@ export function OrderDetailModal({
                                 }
                                 className="w-24 h-6 text-xs text-right"
                               />
+                            ) : (
+                              <span>{formatCurrency(displayHandlingHt)}</span>
                             )}
                           </div>
                           {/* Sélecteur TVA frais + bouton save (si éditable) */}
-                          {!isLocked && (
+                          {isEditing && (
                             <div className="flex items-center justify-between gap-2 pt-1">
                               <div className="flex gap-1">
                                 {[0, 0.055, 0.1, 0.2].map(rate => (
@@ -656,7 +768,8 @@ export function OrderDetailModal({
                           {totalFeesHT > 0 && (
                             <div className="flex justify-between text-sm text-gray-600">
                               <span>
-                                TVA {(feesVatRate * 100).toFixed(0)}% (frais) :
+                                TVA {(displayFeesVatRate * 100).toFixed(0)}%
+                                (frais) :
                               </span>
                               <span>{formatCurrency(feesTVA)}</span>
                             </div>
