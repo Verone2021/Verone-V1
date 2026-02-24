@@ -59,6 +59,7 @@ import {
   useExpeditionsPendingCount,
   useTransactionsUnreconciledCount,
   useLinkmeApprovalsCount,
+  useFormSubmissionsCount,
   StockAlertsDropdown,
   ConsultationsDropdown,
   LinkmePendingDropdown,
@@ -89,7 +90,8 @@ const getNavItems = (
   ordersPendingCount: number,
   expeditionsPendingCount: number,
   transactionsUnreconciledCount: number,
-  _linkmeApprovalsCount: number
+  _linkmeApprovalsCount: number,
+  formSubmissionsCount: number
 ): NavItem[] => [
   {
     title: 'Dashboard',
@@ -100,6 +102,8 @@ const getNavItems = (
     title: 'Contacts & Clients',
     href: '/contacts-organisations',
     icon: Building2,
+    badge: formSubmissionsCount,
+    badgeVariant: formSubmissionsCount > 0 ? 'urgent' : undefined,
     children: [
       {
         title: 'Enseignes',
@@ -115,6 +119,13 @@ const getNavItems = (
         title: 'Clients Particuliers',
         href: '/contacts-organisations/clients-particuliers',
         icon: User,
+      },
+      {
+        title: 'Prises de contact',
+        href: '/prises-contact',
+        icon: MessageCircle,
+        badge: formSubmissionsCount,
+        badgeVariant: formSubmissionsCount > 0 ? 'urgent' : undefined,
       },
     ],
   },
@@ -339,6 +350,7 @@ function SidebarContent() {
   const { count: transactionsUnreconciledCount } =
     useTransactionsUnreconciledCount();
   const { count: linkmeApprovalsCount } = useLinkmeApprovalsCount();
+  const { count: formSubmissionsCount } = useFormSubmissionsCount();
 
   /**
    * Render badge avec dropdown interactif selon le module
@@ -479,7 +491,8 @@ function SidebarContent() {
       ordersPendingCount,
       expeditionsPendingCount,
       transactionsUnreconciledCount,
-      linkmeApprovalsCount
+      linkmeApprovalsCount,
+      formSubmissionsCount
     );
 
     // Masquer Finance si financeEnabled = false (module fusionné)
@@ -497,6 +510,7 @@ function SidebarContent() {
     expeditionsPendingCount,
     transactionsUnreconciledCount,
     linkmeApprovalsCount,
+    formSubmissionsCount,
   ]);
 
   // Fonction récursive pour rendre les enfants (support multi-niveaux) - Reserved
