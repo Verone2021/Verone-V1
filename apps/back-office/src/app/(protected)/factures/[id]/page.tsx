@@ -1179,7 +1179,9 @@ export default function DocumentDetailPage({
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <Link href={`/commandes/clients/${orderLink.sales_order_id}`}>
+                <Link
+                  href={`/commandes/clients?id=${orderLink.sales_order_id}`}
+                >
                   <Badge
                     variant="outline"
                     className="cursor-pointer hover:bg-muted"

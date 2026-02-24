@@ -430,7 +430,7 @@ function InvoicesTable({
             <TableCell>{invoice.client?.name ?? '-'}</TableCell>
             <TableCell>
               {invoice.sales_order_id && invoice.order_number ? (
-                <Link href={`/commandes/clients/${invoice.sales_order_id}`}>
+                <Link href={`/commandes/clients?id=${invoice.sales_order_id}`}>
                   <Badge variant="outline">{invoice.order_number}</Badge>
                 </Link>
               ) : (

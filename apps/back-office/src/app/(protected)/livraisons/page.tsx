@@ -173,7 +173,7 @@ export default function LivraisonsPage(): React.ReactNode {
                     <TableCell>
                       {note.order ? (
                         <Link
-                          href={`/commandes/clients/${note.order.id}`}
+                          href={`/commandes/clients?id=${note.order.id}`}
                           className="font-mono text-primary hover:underline"
                         >
                           {note.order.order_number}
