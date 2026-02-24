@@ -77,11 +77,11 @@ export function useFormSubmissionsCount(options?: {
         return;
       }
 
+      // Note: form_submissions has no deleted_at column — filter on status only
       const { count: totalCount, error: countError } = await supabase
         .from('form_submissions')
         .select('*', { count: 'exact', head: true })
-        .eq('status', 'new')
-        .is('deleted_at', null);
+        .eq('status', 'new');
 
       if (countError) {
         console.error('[useFormSubmissionsCount] Count error:', countError);
