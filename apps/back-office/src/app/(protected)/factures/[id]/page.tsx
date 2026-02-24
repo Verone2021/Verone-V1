@@ -50,6 +50,7 @@ import {
   ExternalLink,
   MinusCircle,
   Send,
+  ShoppingCart,
   Trash2,
   Mail,
   ArrowRightLeft,
@@ -73,6 +74,12 @@ interface QontoApiResponse {
   invoice?: QontoDocument;
   quote?: QontoDocument;
   credit_note?: QontoDocument;
+  localData?: {
+    billing_address?: Record<string, unknown>;
+    shipping_address?: Record<string, unknown>;
+    sales_order_id?: string | null;
+    order_number?: string | null;
+  } | null;
 }
 
 interface QontoClient {
@@ -281,6 +288,10 @@ export default function DocumentDetailPage({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [orderLink, setOrderLink] = useState<{
+    sales_order_id: string;
+    order_number: string | null;
+  } | null>(null);
 
   // Dialog states
   const [showFinalizeDialog, setShowFinalizeDialog] = useState(false);
@@ -323,6 +334,12 @@ export default function DocumentDetailPage({
             if (doc) {
               setDocument(doc);
               setDocumentType(type);
+              if (type === 'invoice' && data.localData?.sales_order_id) {
+                setOrderLink({
+                  sales_order_id: data.localData.sales_order_id,
+                  order_number: data.localData.order_number ?? null,
+                });
+              }
               setLoading(false);
               return;
             }
@@ -1148,6 +1165,28 @@ export default function DocumentDetailPage({
                     </span>
                   </div>
                 )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Commande liée (invoices only) */}
+          {documentType === 'invoice' && orderLink && (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <ShoppingCart className="h-4 w-4" />
+                  Commande liée
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Link href={`/commandes/clients/${orderLink.sales_order_id}`}>
+                  <Badge
+                    variant="outline"
+                    className="cursor-pointer hover:bg-muted"
+                  >
+                    {orderLink.order_number ?? orderLink.sales_order_id}
+                  </Badge>
+                </Link>
               </CardContent>
             </Card>
           )}
