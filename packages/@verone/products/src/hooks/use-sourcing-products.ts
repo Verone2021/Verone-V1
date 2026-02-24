@@ -84,6 +84,7 @@ export function useSourcingProducts(filters?: SourcingFilters) {
           name,
           supplier_page_url,
           cost_price,
+          cost_net_avg,
           eco_tax_default,
           stock_status,
           product_status,

@@ -869,7 +869,7 @@ function SidebarContent() {
     <aside
       className={cn(
         'flex h-screen flex-col border-r border-black bg-white',
-        'transition-all duration-200 ease-in-out',
+        'transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]',
         isExpanded ? 'w-60' : 'w-16'
       )}
       onMouseEnter={onMouseEnter}

@@ -110,8 +110,9 @@ function formatDate(dateString: string): string {
 }
 
 /**
- * Calcule un score de matching entre une transaction et une commande
- * Score de 0 à 100, plus c'est élevé meilleur est le match
+ * Calcule un score de matching entre une transaction et une commande.
+ * Scoring à PRIORITÉ : montant exact = toujours en haut.
+ * customer_name peut contenir plusieurs noms séparés par ' | ' (trade_name | legal_name).
  */
 function calculateMatchScore(
   transactionAmount: number,
@@ -125,64 +126,90 @@ function calculateMatchScore(
   },
   counterpartyName?: string | null
 ): { score: number; reasons: string[] } {
-  let score = 0;
   const reasons: string[] = [];
   const absAmount = Math.abs(transactionAmount);
-
-  // 1. Matching par montant (max 50 points)
   const amountDiff = Math.abs(absAmount - order.total_ttc);
-  // FIX: Tolérance hybride - le plus généreux entre 5% ou 10€
-  const amountTolerancePercent = absAmount * 0.05;
-  const amountToleranceFixed = 10; // 10€ minimum
-  const amountTolerance = Math.max(
-    amountTolerancePercent,
-    amountToleranceFixed
-  );
+  const isExactAmount = amountDiff < 0.01;
 
-  if (amountDiff === 0) {
-    score += 50;
-    reasons.push('Montant exact');
-  } else if (amountDiff <= amountTolerance) {
-    score += 40;
-    reasons.push('Montant proche (±5%)');
-  } else if (amountDiff <= absAmount * 0.1) {
-    score += 20;
-    reasons.push('Montant similaire (±10%)');
+  // NAME MATCHING: split customer_name par ' | ' pour tester legal ET trade
+  let nameMatches = false;
+  if (order.customer_name && counterpartyName) {
+    const names = order.customer_name
+      .split(' | ')
+      .map(n => n.toLowerCase().trim());
+    const cpLower = counterpartyName.toLowerCase().trim();
+    // Bidirectionnel : counterparty ⊂ nom OU mot du nom ⊂ counterparty
+    nameMatches = names.some(name => {
+      if (name.length < 3) return false;
+      const words = name.split(/[\s,.-]+/).filter(w => w.length >= 3);
+      return (
+        cpLower.includes(name) ||
+        name.includes(cpLower) ||
+        words.some(w => cpLower.includes(w))
+      );
+    });
   }
-
-  // 2. Matching par date (max 30 points)
-  if (transactionDate) {
-    const txDate = new Date(transactionDate);
-    const orderDate = new Date(order.created_at);
-    const daysDiff = Math.abs(
-      (txDate.getTime() - orderDate.getTime()) / (1000 * 60 * 60 * 24)
-    );
-
-    if (daysDiff <= 3) {
-      score += 30;
-      reasons.push('Date très proche');
-    } else if (daysDiff <= 7) {
-      score += 25;
-      reasons.push('Date proche (±7j)');
-    } else if (daysDiff <= 30) {
-      score += 15;
-      reasons.push('Date dans le mois');
-    }
-  }
-
-  // 3. Matching par organisation (max 20 points)
-  if (transactionOrgId && order.organisation_id === transactionOrgId) {
-    score += 20;
-    reasons.push('Même organisation');
-  } else if (
-    counterpartyName &&
-    order.customer_name?.toLowerCase().includes(counterpartyName.toLowerCase())
+  // Fallback: org ID match
+  if (
+    !nameMatches &&
+    transactionOrgId &&
+    order.organisation_id === transactionOrgId
   ) {
-    score += 15;
-    reasons.push('Nom client similaire');
+    nameMatches = true;
+  }
+  if (nameMatches) reasons.push('Nom correspondant');
+
+  // DATE proximity
+  let dateClose = false;
+  if (transactionDate) {
+    const daysDiff = Math.abs(
+      (new Date(transactionDate).getTime() -
+        new Date(order.created_at).getTime()) /
+        86400000
+    );
+    if (daysDiff <= 30) dateClose = true;
   }
 
-  return { score, reasons };
+  // PRIORITY SCORING (montant exact = TOP)
+  if (isExactAmount && nameMatches) {
+    reasons.push('Montant exact');
+    return { score: 100, reasons };
+  }
+  if (isExactAmount) {
+    reasons.push('Montant exact');
+    return { score: 90, reasons };
+  }
+
+  // Montant proche (±5%) + nom
+  const pct = order.total_ttc > 0 ? (amountDiff / order.total_ttc) * 100 : 100;
+  if (pct <= 5 && nameMatches) {
+    reasons.push(`±${pct.toFixed(1)}%`);
+    return { score: 80, reasons };
+  }
+  if (pct <= 5) {
+    reasons.push(`±${pct.toFixed(1)}%`);
+    return { score: 70, reasons };
+  }
+
+  // Montant ±10% + nom + date
+  if (pct <= 10 && nameMatches && dateClose) {
+    reasons.push(`±${pct.toFixed(1)}%`);
+    return { score: 60, reasons };
+  }
+  if (pct <= 10 && nameMatches) {
+    reasons.push(`±${pct.toFixed(1)}%`);
+    return { score: 55, reasons };
+  }
+  if (pct <= 10) {
+    reasons.push(`±${pct.toFixed(1)}%`);
+    return { score: 45, reasons };
+  }
+
+  // Nom seul + date
+  if (nameMatches && dateClose) return { score: 35, reasons };
+  if (nameMatches) return { score: 25, reasons };
+
+  return { score: 0, reasons };
 }
 
 export function RapprochementModal({
@@ -252,7 +279,7 @@ export function RapprochementModal({
           amount_paid,
           document_date,
           partner_id,
-          organisations!partner_id(legal_name)
+          organisations!partner_id(legal_name, trade_name)
         `
         )
         .in('status', ['sent', 'received', 'partially_paid'])
@@ -268,7 +295,10 @@ export function RapprochementModal({
           amount_paid: number;
           document_date: string;
           partner_id: string;
-          organisations: { legal_name: string } | null;
+          organisations: {
+            legal_name: string;
+            trade_name: string | null;
+          } | null;
         };
         setDocuments(
           (docs as DocRow[]).map(d => ({
@@ -277,7 +307,8 @@ export function RapprochementModal({
             document_number: d.document_number,
             total_ttc: d.total_ttc,
             amount_paid: d.amount_paid || 0,
-            partner_name: d.organisations?.legal_name,
+            partner_name:
+              d.organisations?.trade_name || d.organisations?.legal_name,
             document_date: d.document_date,
           }))
         );
@@ -348,14 +379,17 @@ export function RapprochementModal({
         );
         const orgIds = orgOrders.map(o => o.customer_id);
 
-        let orgNames: Record<string, string> = {};
+        type OrgNamePair = { legal: string; trade: string | null };
+        const orgNamePairs: Record<string, OrgNamePair> = {};
         if (orgIds.length > 0) {
           const { data: orgs } = await supabase
             .from('organisations')
-            .select('id, legal_name')
+            .select('id, legal_name, trade_name')
             .in('id', orgIds);
           if (orgs) {
-            orgNames = Object.fromEntries(orgs.map(o => [o.id, o.legal_name]));
+            orgs.forEach(o => {
+              orgNamePairs[o.id] = { legal: o.legal_name, trade: o.trade_name };
+            });
           }
         }
 
@@ -378,7 +412,12 @@ export function RapprochementModal({
                 o.customer_type === 'organization' ? o.customer_id : undefined,
               customer_name:
                 o.customer_type === 'organization'
-                  ? orgNames[o.customer_id]
+                  ? [
+                      orgNamePairs[o.customer_id]?.trade,
+                      orgNamePairs[o.customer_id]?.legal,
+                    ]
+                      .filter(Boolean)
+                      .join(' | ')
                   : 'Client particulier',
             };
           })
@@ -397,7 +436,7 @@ export function RapprochementModal({
           created_at,
           status,
           supplier_id,
-          organisations!supplier_id(legal_name)
+          organisations!supplier_id(legal_name, trade_name)
         `
         )
         .in('status', ['validated', 'partially_received', 'received'])
@@ -413,7 +452,10 @@ export function RapprochementModal({
           created_at: string;
           status: string;
           supplier_id: string;
-          organisations: { legal_name: string } | null;
+          organisations: {
+            legal_name: string;
+            trade_name: string | null;
+          } | null;
         };
 
         setPurchaseOrders(
@@ -425,7 +467,12 @@ export function RapprochementModal({
             created_at: po.created_at,
             status: po.status,
             supplier_id: po.supplier_id,
-            supplier_name: po.organisations?.legal_name,
+            supplier_name: [
+              po.organisations?.trade_name,
+              po.organisations?.legal_name,
+            ]
+              .filter(Boolean)
+              .join(' | '),
           }))
         );
       }

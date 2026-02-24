@@ -53,6 +53,7 @@ export * from './table';
 export * from './alert';
 export * from './alert-dialog';
 export * from './confirm-dialog';
+export * from './success-dialog';
 export * from './error-state-card';
 export * from './skeleton';
 export * from './badge';
@@ -130,3 +131,16 @@ export * from './help-lexique-section';
 // ADDRESS COMPONENTS
 // ========================================
 export * from './address-autocomplete';
+
+// ========================================
+// ORGANISATION COMPONENTS
+// ========================================
+export * from './organisation-name-display';
+
+// ========================================
+// INTERACTIVE TABLE COMPONENTS
+// ========================================
+export * from './clickable-cell';
+export * from './status-dot';
+export * from './animated-tabs';
+export * from './animated-number';

@@ -88,6 +88,15 @@ module.exports = {
           },
         },
       },
+      animation: {
+        shimmer: 'shimmer 2s ease-in-out infinite',
+      },
+      keyframes: {
+        shimmer: {
+          '0%': { transform: 'translateX(-100%)' },
+          '100%': { transform: 'translateX(100%)' },
+        },
+      },
       // shadcn/ui border radius
       borderRadius: {
         lg: 'var(--radius)',

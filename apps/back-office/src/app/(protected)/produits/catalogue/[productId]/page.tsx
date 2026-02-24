@@ -863,6 +863,7 @@ export default function ProductDetailPage() {
                 name: product.name,
                 sku: product.sku,
                 cost_price: product.cost_price,
+                cost_net_avg: product.cost_net_avg,
                 stock_status: product.stock_status,
                 product_status: product.product_status,
                 supplier_id: product.supplier_id,
@@ -1158,6 +1159,10 @@ export default function ProductDetailPage() {
                 cost_price_last: product.cost_price_last,
                 cost_price_count: product.cost_price_count,
                 target_margin_percentage: product.target_margin_percentage,
+                cost_net_avg: product.cost_net_avg,
+                cost_net_min: product.cost_net_min,
+                cost_net_max: product.cost_net_max,
+                cost_net_last: product.cost_net_last,
               }}
               variantGroup={product.variant_group ?? null}
               channelPricing={channelPricing}

@@ -90,9 +90,9 @@ import {
 
 import { ContactCardBO } from '../../../components/contacts/ContactCardBO';
 import { NewContactForm } from '../../../components/contacts/NewContactForm';
-import { PaymentSection } from '@/app/(protected)/commandes/clients/[id]/PaymentSection';
-import { FeesSection } from '@/app/(protected)/commandes/clients/[id]/FeesSection';
-import { InvoicesSection } from '@/app/(protected)/commandes/clients/[id]/InvoicesSection';
+import { PaymentSection } from '@/components/orders/PaymentSection';
+import { FeesSection } from '@/components/orders/FeesSection';
+import { InvoicesSection } from '@/components/orders/InvoicesSection';
 import { updateSalesOrderStatus } from '@/app/actions/sales-orders';
 import type { NewContactFormData } from '../../../components/contacts/NewContactForm';
 

@@ -70,6 +70,12 @@ export interface Product {
   stock_quantity?: number; // Stock quantity (legacy)
   stock_forecasted_in?: number;
   stock_forecasted_out?: number;
+
+  // ✅ COST NET - Prix net (achat + shipping + insurance par unité)
+  cost_net_avg?: number | null;
+  cost_net_last?: number | null;
+  cost_net_min?: number | null;
+  cost_net_max?: number | null;
 }
 
 export interface Category {
@@ -237,6 +243,7 @@ export const useCatalogue = () => {
       `
         id, sku, name, slug,
         cost_price, cost_price_count, product_type, stock_real,
+        cost_net_avg, cost_net_last, cost_net_min, cost_net_max,
         stock_status, product_status, condition,
         subcategory_id, supplier_id, brand,
         has_images, dimensions, weight,
@@ -316,6 +323,7 @@ export const useCatalogue = () => {
     let query = supabase.from('products').select(`
         id, sku, name, slug,
         cost_price, cost_price_count, product_type, stock_real,
+        cost_net_avg, cost_net_last, cost_net_min, cost_net_max,
         stock_status, product_status, condition,
         subcategory_id, supplier_id, brand,
         has_images, dimensions, weight,
@@ -388,6 +396,7 @@ export const useCatalogue = () => {
       `
         id, sku, name, slug,
         cost_price, cost_price_count, product_type, stock_real,
+        cost_net_avg, cost_net_last, cost_net_min, cost_net_max,
         stock_status, product_status, condition,
         subcategory_id, supplier_id, brand,
         has_images, dimensions, weight,

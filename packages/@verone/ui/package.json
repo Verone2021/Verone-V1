@@ -69,6 +69,7 @@
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
     "lucide-react": "^0.309.0",
+    "motion": "^12.34.3",
     "tailwind-merge": "^2.2.1"
   }
 }

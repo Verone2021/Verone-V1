@@ -14,7 +14,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 
 import { useToast } from '@verone/common';
 import { RapprochementFromOrderModal } from '@verone/finance/components';
@@ -279,6 +279,7 @@ export function SalesOrdersTable({
 
   const { toast } = useToast();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
   const { enseignes } = useActiveEnseignes();
 
@@ -325,6 +326,7 @@ export function SalesOrdersTable({
   // Etats modals
   const [selectedOrder, setSelectedOrder] = useState<SalesOrder | null>(null);
   const [showOrderDetail, setShowOrderDetail] = useState(false);
+  const [dismissedOrderId, setDismissedOrderId] = useState<string | null>(null);
   const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -367,14 +369,19 @@ export function SalesOrdersTable({
   // Ouvrir automatiquement le modal si query param ?id= present
   useEffect(() => {
     const orderId = searchParams.get('id');
-    if (orderId && orders.length > 0 && !showOrderDetail) {
+    if (
+      orderId &&
+      orders.length > 0 &&
+      !showOrderDetail &&
+      orderId !== dismissedOrderId
+    ) {
       const order = orders.find(o => o.id === orderId);
       if (order) {
         setSelectedOrder(order);
         setShowOrderDetail(true);
       }
     }
-  }, [searchParams, orders, showOrderDetail]);
+  }, [searchParams, orders, showOrderDetail, dismissedOrderId]);
 
   // Filtrage des commandes
   const filteredOrders = useMemo(() => {
@@ -987,6 +994,22 @@ export function SalesOrdersTable({
     setSelectedOrderForLink(null);
   };
 
+  // Fermeture du modal detail : nettoyer ?id= de l'URL pour eviter la boucle de reouverture
+  const handleCloseOrderDetail = useCallback(() => {
+    setShowOrderDetail(false);
+    setSelectedOrder(null);
+    const orderId = searchParams.get('id');
+    if (orderId) {
+      setDismissedOrderId(orderId);
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete('id');
+      const newUrl = params.toString()
+        ? `?${params.toString()}`
+        : window.location.pathname;
+      router.replace(newUrl, { scroll: false });
+    }
+  }, [searchParams, router]);
+
   return (
     <div className="space-y-6">
       {/* Statistiques KPI */}
@@ -1407,11 +1430,16 @@ export function SalesOrdersTable({
                   </TableHeader>
                   <TableBody>
                     {paginatedOrders.map(order => {
-                      const customerName =
-                        order.customer_type === 'organization'
-                          ? order.organisations?.trade_name ||
-                            order.organisations?.legal_name ||
-                            ''
+                      const customerDisplayName =
+                        order.customer_type === 'organization' &&
+                        order.organisations
+                          ? order.organisations.trade_name &&
+                            order.organisations.trade_name !==
+                              order.organisations.legal_name
+                            ? `${order.organisations.trade_name} (${order.organisations.legal_name})`
+                            : order.organisations.legal_name ||
+                              order.organisations.trade_name ||
+                              ''
                           : order.individual_customers
                             ? [
                                 order.individual_customers.first_name,
@@ -1456,9 +1484,9 @@ export function SalesOrdersTable({
                             <TableCell>
                               <div>
                                 <div className="font-medium">
-                                  {customerName || 'Non defini'}
+                                  {customerDisplayName || 'Non defini'}
                                 </div>
-                                <div className="text-xs text-gray-500">
+                                <div className="text-xs text-gray-500 mt-0.5">
                                   {order.customer_type === 'organization'
                                     ? 'Professionnel'
                                     : 'Particulier'}
@@ -1894,7 +1922,7 @@ export function SalesOrdersTable({
       <OrderDetailModal
         order={selectedOrder}
         open={showOrderDetail}
-        onClose={() => setShowOrderDetail(false)}
+        onClose={handleCloseOrderDetail}
         onUpdate={() => {
           const filters = channelId ? { channel_id: channelId } : undefined;
           fetchOrders(filters);

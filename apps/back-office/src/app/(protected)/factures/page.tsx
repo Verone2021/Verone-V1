@@ -1,8 +1,13 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 
 import Link from 'next/link';
+
+import { OrderDetailModal } from '@verone/orders/components/modals';
+import { useSalesOrders } from '@verone/orders/hooks';
+import type { SalesOrder } from '@verone/orders/hooks';
+import { OrganisationQuickViewModal } from '@verone/organisations';
 
 import {
   useMissingInvoices,
@@ -15,9 +20,11 @@ import {
   OrderSelectModal,
   QuoteCreateFromOrderModal,
   QuoteCreateServiceModal,
+  RapprochementFromOrderModal,
   type TransactionForUpload,
   type IOrderForInvoice,
   type IOrderForDocument,
+  type OrderForLink,
 } from '@verone/finance/components';
 import {
   Card,
@@ -59,6 +66,7 @@ import {
   SyncButton,
 } from '@verone/ui-business';
 import { featureFlags } from '@verone/utils/feature-flags';
+import { toast } from 'sonner';
 import {
   FileText,
   Plus,
@@ -84,6 +92,9 @@ import {
   ArchiveRestore,
   Pencil,
   CheckCircle2,
+  Link2,
+  Banknote,
+  ExternalLink,
 } from 'lucide-react';
 
 // =====================================================================
@@ -91,6 +102,17 @@ import {
 // =====================================================================
 
 type TabType = 'factures' | 'devis' | 'avoirs' | 'manquantes';
+
+interface ConsolidateReport {
+  success: boolean;
+  synced: number;
+  skipped_existing: number;
+  skipped_no_order_ref: number;
+  skipped_no_match: number;
+  skipped_no_partner: number;
+  skipped_individual_customer: number;
+  errors: string[];
+}
 
 // Types pour réponses API
 interface ApiResponse<T> {
@@ -156,7 +178,14 @@ interface CreditNote {
 interface Invoice {
   id: string;
   number: string; // Qonto uses 'number' not 'invoice_number'
-  status: 'draft' | 'pending' | 'paid' | 'unpaid' | 'overdue' | 'canceled';
+  status:
+    | 'draft'
+    | 'pending'
+    | 'paid'
+    | 'unpaid'
+    | 'overdue'
+    | 'canceled'
+    | 'partially_paid';
   currency: string;
   total_amount: {
     value: string;
@@ -175,6 +204,10 @@ interface Invoice {
   local_document_id?: string | null;
   has_local_pdf?: boolean;
   deleted_at?: string | null;
+  sales_order_id?: string | null;
+  order_number?: string | null;
+  local_amount_paid?: number | null;
+  partner_id?: string | null;
 }
 
 // =====================================================================
@@ -255,6 +288,7 @@ function InvoiceStatusBadge({ status }: { status: string }): React.ReactNode {
     pending: 'outline',
     unpaid: 'outline',
     paid: 'default',
+    partially_paid: 'secondary',
     overdue: 'destructive',
     cancelled: 'destructive',
     canceled: 'destructive', // Qonto uses 'canceled' (US spelling)
@@ -265,13 +299,19 @@ function InvoiceStatusBadge({ status }: { status: string }): React.ReactNode {
     pending: 'En attente',
     unpaid: 'Non payée',
     paid: 'Payée',
+    partially_paid: 'Partiellement payée',
     overdue: 'En retard',
     cancelled: 'Annulée',
     canceled: 'Annulée', // Qonto uses 'canceled' (US spelling)
   };
 
+  const isOverdue = status === 'overdue';
+
   return (
-    <Badge variant={variants[status] ?? 'outline'}>
+    <Badge
+      variant={variants[status] ?? 'outline'}
+      className={isOverdue ? 'animate-pulse' : undefined}
+    >
       {labels[status] ?? status}
     </Badge>
   );
@@ -360,6 +400,9 @@ function InvoicesTable({
   onArchive,
   onUnarchive,
   onFinalize,
+  onOpenOrder,
+  onRapprochement,
+  onOpenOrg,
 }: {
   invoices: Invoice[];
   loading: boolean;
@@ -370,6 +413,9 @@ function InvoicesTable({
   onArchive?: (invoice: Invoice) => Promise<void>;
   onUnarchive?: (invoice: Invoice) => Promise<void>;
   onFinalize?: (invoice: Invoice) => Promise<void>;
+  onOpenOrder?: (orderId: string) => void;
+  onRapprochement?: (invoice: Invoice) => void;
+  onOpenOrg?: (orgId: string) => void;
 }) {
   if (loading) {
     return (
@@ -399,9 +445,11 @@ function InvoicesTable({
         <TableRow>
           <TableHead>N° Facture</TableHead>
           <TableHead>Client</TableHead>
+          <TableHead>Commande</TableHead>
           <TableHead>Date</TableHead>
           <TableHead>Échéance</TableHead>
           <TableHead>Statut</TableHead>
+          <TableHead>Paiement</TableHead>
           <TableHead>Workflow</TableHead>
           <TableHead className="text-right">Montant</TableHead>
           <TableHead className="text-right">Actions</TableHead>
@@ -411,7 +459,37 @@ function InvoicesTable({
         {invoices.map(invoice => (
           <TableRow key={invoice.id}>
             <TableCell className="font-mono">{invoice.number}</TableCell>
-            <TableCell>{invoice.client?.name ?? '-'}</TableCell>
+            <TableCell>
+              {invoice.partner_id && invoice.client?.name ? (
+                <button
+                  onClick={() => onOpenOrg?.(invoice.partner_id!)}
+                  className="inline-flex items-center gap-1 text-left text-primary hover:underline cursor-pointer"
+                >
+                  {invoice.client.name}
+                  <ExternalLink className="h-3 w-3 opacity-60" />
+                </button>
+              ) : (
+                <span>{invoice.client?.name ?? '-'}</span>
+              )}
+            </TableCell>
+            <TableCell>
+              {invoice.sales_order_id && invoice.order_number ? (
+                <button
+                  onClick={() => onOpenOrder?.(invoice.sales_order_id!)}
+                  className="inline-flex items-center gap-1"
+                >
+                  <Badge
+                    variant="outline"
+                    className="cursor-pointer hover:bg-accent"
+                  >
+                    {invoice.order_number}
+                  </Badge>
+                  <ExternalLink className="h-3 w-3 text-muted-foreground opacity-60" />
+                </button>
+              ) : (
+                <span className="text-muted-foreground text-sm">-</span>
+              )}
+            </TableCell>
             <TableCell>{formatDate(invoice.issue_date)}</TableCell>
             <TableCell>
               <span
@@ -428,6 +506,45 @@ function InvoicesTable({
             </TableCell>
             <TableCell>
               <InvoiceStatusBadge status={invoice.status} />
+            </TableCell>
+            <TableCell>
+              {invoice.status !== 'draft' && invoice.status !== 'canceled' ? (
+                <div className="flex items-center gap-1">
+                  {invoice.status === 'paid' ? (
+                    <Badge
+                      variant="default"
+                      className="bg-green-100 text-green-700 border-green-200 hover:bg-green-100"
+                    >
+                      <CheckCircle className="h-3 w-3 mr-1" />
+                      Payée
+                    </Badge>
+                  ) : (
+                    <>
+                      <Badge
+                        variant="outline"
+                        className="text-amber-600 border-amber-200"
+                      >
+                        <Clock className="h-3 w-3 mr-1" />
+                        Non payée
+                      </Badge>
+                      {onRapprochement && invoice.sales_order_id && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 px-2 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                          onClick={() => onRapprochement(invoice)}
+                          title="Rapprocher avec une transaction"
+                        >
+                          <Banknote className="h-3 w-3 mr-1" />
+                          Rapprocher
+                        </Button>
+                      )}
+                    </>
+                  )}
+                </div>
+              ) : (
+                <span className="text-muted-foreground text-sm">-</span>
+              )}
             </TableCell>
             <TableCell>
               <WorkflowStatusBadge
@@ -692,10 +809,62 @@ export default function FacturationPage() {
     null
   );
 
+  // État consolidation liaisons
+  const [isConsolidating, setIsConsolidating] = useState(false);
+
   // États pour les avoirs
   const [creditNotes, setCreditNotes] = useState<CreditNote[]>([]);
   const [loadingCreditNotes, setLoadingCreditNotes] = useState(false);
   const [errorCreditNotes, setErrorCreditNotes] = useState<string | null>(null);
+
+  // État pour ouverture modale commande en place (depuis lien facture)
+  const [selectedOrderForModal, setSelectedOrderForModal] =
+    useState<SalesOrder | null>(null);
+  const [showOrderModal, setShowOrderModal] = useState(false);
+
+  // État pour ouverture modale organisation (depuis nom client cliquable)
+  const [selectedOrgId, setSelectedOrgId] = useState<string | null>(null);
+  const [showOrgModal, setShowOrgModal] = useState(false);
+  const { fetchOrder } = useSalesOrders();
+
+  const handleOpenOrderModal = useCallback(
+    async (orderId: string) => {
+      const order = await fetchOrder(orderId);
+      if (order) {
+        setSelectedOrderForModal(order);
+        setShowOrderModal(true);
+      }
+    },
+    [fetchOrder]
+  );
+
+  const handleRapprochement = useCallback(
+    async (invoice: Invoice) => {
+      if (!invoice.sales_order_id) return;
+      const order = await fetchOrder(invoice.sales_order_id);
+      if (order) {
+        const customerName =
+          order.organisations?.legal_name ??
+          (order.individual_customers
+            ? `${order.individual_customers.first_name} ${order.individual_customers.last_name}`
+            : null);
+        setRapprochementOrder({
+          id: order.id,
+          order_number: order.order_number,
+          customer_name: customerName ?? null,
+          total_ttc: order.total_ttc,
+          created_at: order.created_at,
+        });
+        setShowRapprochementModal(true);
+      }
+    },
+    [fetchOrder]
+  );
+
+  // État pour rapprochement depuis facture
+  const [showRapprochementModal, setShowRapprochementModal] = useState(false);
+  const [rapprochementOrder, setRapprochementOrder] =
+    useState<OrderForLink | null>(null);
 
   // États pour les factures (Qonto)
   const [invoices, setInvoices] = useState<Invoice[]>([]);
@@ -1024,8 +1193,15 @@ export default function FacturationPage() {
       ) / 100;
     const totalPaye =
       invoices
-        .filter(inv => inv.status === 'paid')
-        .reduce((sum, inv) => sum + (inv.total_amount_cents ?? 0), 0) / 100;
+        .filter(inv => inv.status === 'paid' || inv.status === 'partially_paid')
+        .reduce(
+          (sum, inv) =>
+            sum +
+            (inv.local_amount_paid != null
+              ? inv.local_amount_paid * 100
+              : (inv.total_amount_cents ?? 0)),
+          0
+        ) / 100;
     const enRetard = invoices.filter(
       inv =>
         inv.due_date &&
@@ -1105,6 +1281,32 @@ export default function FacturationPage() {
     }
   };
 
+  // Handler consolidation historique liaisons commandes ↔ factures Qonto
+  const handleConsolidate = () => {
+    setIsConsolidating(true);
+    void fetch('/api/qonto/invoices/consolidate', { method: 'POST' })
+      .then(r => r.json())
+      .then((report: ConsolidateReport) => {
+        toast.success(
+          `${report.synced.toString()} liaisons créées · ${report.skipped_existing.toString()} déjà existantes`
+        );
+        if (report.errors.length > 0) {
+          toast.error(
+            `${report.errors.length.toString()} erreur(s) lors de la consolidation`
+          );
+        }
+        if (report.synced > 0) {
+          void fetchInvoices();
+        }
+      })
+      .catch(() => {
+        toast.error('Erreur de consolidation');
+      })
+      .finally(() => {
+        setIsConsolidating(false);
+      });
+  };
+
   // FEATURE FLAG: Finance module disabled for Phase 1
   if (!featureFlags.financeEnabled) {
     return (
@@ -1166,6 +1368,19 @@ export default function FacturationPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleConsolidate}
+            disabled={isConsolidating}
+          >
+            {isConsolidating ? (
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            ) : (
+              <Link2 className="h-4 w-4 mr-2" />
+            )}
+            Consolider liaisons
+          </Button>
           <Link href="/factures/qonto">
             <Button variant="outline">
               <Eye className="h-4 w-4 mr-2" />
@@ -1380,6 +1595,13 @@ export default function FacturationPage() {
                 )}
                 loading={loadingInvoices}
                 onView={handleView}
+                onOpenOrder={orderId => {
+                  void handleOpenOrderModal(orderId).catch(console.error);
+                }}
+                onOpenOrg={orgId => {
+                  setSelectedOrgId(orgId);
+                  setShowOrgModal(true);
+                }}
                 onDownloadPdf={invoice => {
                   void handleDownloadInvoicePdf(invoice).catch(error => {
                     console.error(
@@ -1430,6 +1652,13 @@ export default function FacturationPage() {
                 )}
                 loading={loadingInvoices}
                 onView={handleView}
+                onOpenOrder={orderId => {
+                  void handleOpenOrderModal(orderId).catch(console.error);
+                }}
+                onOpenOrg={orgId => {
+                  setSelectedOrgId(orgId);
+                  setShowOrgModal(true);
+                }}
                 onDownloadPdf={invoice => {
                   void handleDownloadInvoicePdf(invoice).catch(error => {
                     console.error(
@@ -1437,6 +1666,9 @@ export default function FacturationPage() {
                       error
                     );
                   });
+                }}
+                onRapprochement={invoice => {
+                  void handleRapprochement(invoice).catch(console.error);
                 }}
                 isArchived={false}
                 onArchive={async invoice => {
@@ -1461,6 +1693,13 @@ export default function FacturationPage() {
                 invoices={invoices.filter(inv => inv.deleted_at)}
                 loading={loadingInvoices}
                 onView={handleView}
+                onOpenOrder={orderId => {
+                  void handleOpenOrderModal(orderId).catch(console.error);
+                }}
+                onOpenOrg={orgId => {
+                  setSelectedOrgId(orgId);
+                  setShowOrgModal(true);
+                }}
                 onDownloadPdf={invoice => {
                   void handleDownloadInvoicePdf(invoice).catch(error => {
                     console.error(
@@ -1722,10 +1961,11 @@ export default function FacturationPage() {
                           {creditNote.invoice_id ? (
                             <Link
                               href={`/factures/${creditNote.invoice_id}?type=invoice`}
-                              className="text-primary hover:underline font-mono text-sm"
+                              className="inline-flex items-center gap-1 text-primary hover:underline font-mono text-sm"
                             >
                               {creditNote.invoice?.invoice_number ??
                                 'Voir facture'}
+                              <ExternalLink className="h-3 w-3 opacity-60" />
                             </Link>
                           ) : (
                             <span className="text-muted-foreground">-</span>
@@ -1943,6 +2183,39 @@ export default function FacturationPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Modal detail commande (ouverture en place depuis lien facture) */}
+      <OrderDetailModal
+        order={selectedOrderForModal}
+        open={showOrderModal}
+        onClose={() => {
+          setShowOrderModal(false);
+          setSelectedOrderForModal(null);
+        }}
+        readOnly
+      />
+
+      {/* Modal rapprochement depuis facture */}
+      <RapprochementFromOrderModal
+        open={showRapprochementModal}
+        onOpenChange={setShowRapprochementModal}
+        order={rapprochementOrder}
+        onSuccess={() => {
+          setShowRapprochementModal(false);
+          setRapprochementOrder(null);
+          void fetchInvoices();
+        }}
+      />
+
+      {/* Modal quick view organisation (depuis nom client cliquable) */}
+      <OrganisationQuickViewModal
+        organisationId={selectedOrgId}
+        open={showOrgModal}
+        onOpenChange={open => {
+          setShowOrgModal(open);
+          if (!open) setSelectedOrgId(null);
+        }}
+      />
     </div>
   );
 }

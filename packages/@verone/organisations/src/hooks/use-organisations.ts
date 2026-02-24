@@ -606,6 +606,22 @@ export function getOrganisationDisplayName(
   return organisation.legal_name;
 }
 
+/**
+ * Format compact pour cartes/listes : "trade_name (legal_name)" si différents
+ * Exemple : "Pokawa Aix-La-Pioline (ANK)"
+ */
+export function getOrganisationCardName(
+  organisation: Organisation | null | undefined
+): string {
+  if (!organisation) return '';
+
+  if (organisation.has_different_trade_name && organisation.trade_name) {
+    return `${organisation.trade_name} (${organisation.legal_name})`;
+  }
+
+  return organisation.trade_name ?? organisation.legal_name;
+}
+
 export function useSuppliers(filters?: Omit<OrganisationFilters, 'type'>) {
   return useOrganisations({ ...filters, type: 'supplier' });
 }

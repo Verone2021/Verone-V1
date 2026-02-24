@@ -7304,6 +7304,7 @@ export type Database = {
           currency: string;
           customer_id: string | null;
           customer_type: string;
+          individual_customer_id: string | null;
           delivered_at: string | null;
           delivered_by: string | null;
           delivery_contact_id: string | null;
@@ -7372,6 +7373,7 @@ export type Database = {
           currency?: string;
           customer_id?: string | null;
           customer_type: string;
+          individual_customer_id?: string | null;
           delivered_at?: string | null;
           delivered_by?: string | null;
           delivery_contact_id?: string | null;
@@ -7440,6 +7442,7 @@ export type Database = {
           currency?: string;
           customer_id?: string | null;
           customer_type?: string;
+          individual_customer_id?: string | null;
           delivered_at?: string | null;
           delivered_by?: string | null;
           delivery_contact_id?: string | null;

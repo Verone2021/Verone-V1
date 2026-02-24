@@ -43,6 +43,8 @@ export async function GET(
     localData?: {
       billing_address?: Record<string, unknown>;
       shipping_address?: Record<string, unknown>;
+      sales_order_id?: string | null;
+      order_number?: string | null;
     } | null;
     error?: string;
   }>
@@ -53,19 +55,26 @@ export async function GET(
     const supabase = await createServerClient();
     const invoice = await client.getClientInvoiceById(id);
 
-    // Enrich with local data (addresses stored locally)
+    // Enrich with local data (addresses + linked order)
     let localData: {
       billing_address?: Record<string, unknown>;
       shipping_address?: Record<string, unknown>;
+      sales_order_id?: string | null;
+      order_number?: string | null;
     } | null = null;
 
     const { data: localDoc } = await supabase
       .from('financial_documents')
-      .select('billing_address, shipping_address')
+      .select(
+        'billing_address, shipping_address, sales_order_id, sales_orders!financial_documents_sales_order_id_fkey(order_number)'
+      )
       .eq('qonto_invoice_id', id)
-      .single();
+      .maybeSingle();
 
     if (localDoc) {
+      const linkedOrder = localDoc.sales_orders as {
+        order_number: string | null;
+      } | null;
       localData = {
         billing_address: localDoc.billing_address as
           | Record<string, unknown>
@@ -73,6 +82,8 @@ export async function GET(
         shipping_address: localDoc.shipping_address as
           | Record<string, unknown>
           | undefined,
+        sales_order_id: localDoc.sales_order_id ?? null,
+        order_number: linkedOrder?.order_number ?? null,
       };
     }
 
