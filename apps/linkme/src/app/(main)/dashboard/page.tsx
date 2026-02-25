@@ -38,6 +38,7 @@ import {
 } from 'lucide-react';
 
 import { CommissionKPICard } from '../../../components/dashboard';
+import { OnboardingChecklist } from '../../../components/onboarding/OnboardingChecklist';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useAffiliateDashboard } from '../../../lib/hooks/use-affiliate-dashboard';
 
@@ -139,6 +140,9 @@ export default function DashboardPage(): JSX.Element | null {
           </h1>
           <p className="text-gray-500 mt-1">Votre tableau de bord</p>
         </section>
+
+        {/* Checklist Onboarding */}
+        <OnboardingChecklist />
 
         {/* 4 KPIs Commissions */}
         <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
