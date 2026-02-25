@@ -1,139 +1,190 @@
-/**
- * Page Mon Stockage - LinkMe
- *
- * Affiche pour l'affilié :
- * - KPIs de stockage (volume total, facturable, unités, coût estimé)
- * - Grille tarifaire en lecture seule
- * - Liste des produits stockés (tous, avec prix conditionnel)
- *
- * @module StockagePage
- * @since 2025-12-22
- */
-
 'use client';
 
-import { useMemo } from 'react';
+/**
+ * Page Mon Stockage — LinkMe (Refonte 4 onglets)
+ *
+ * 4 onglets :
+ * - Vue d'ensemble : KPIs + grille tarifaire + produits
+ * - Historique mensuel : graphique + table mois par mois
+ * - Historique annuel : comparaison année par année
+ * - Détail produits : table filtrable avec lignes extensibles
+ *
+ * @module StockagePage
+ * @since 2026-02-25
+ */
 
-import { Box, TrendingUp, Package, Euro, Warehouse } from 'lucide-react';
+import { useState, Suspense } from 'react';
 
 import {
-  StorageKPICard,
-  PricingGridReadOnly,
-  StorageProductCard,
-} from '../../../components/storage';
+  Warehouse,
+  LayoutDashboard,
+  CalendarDays,
+  CalendarRange,
+  Package,
+  RefreshCw,
+  AlertCircle,
+  Send,
+} from 'lucide-react';
+
 import {
   useAffiliateStorageSummary,
   useAffiliateStorageDetails,
   useStoragePricingTiers,
-  formatVolume,
-  formatPrice,
-  calculateStoragePrice,
-} from '../../../lib/hooks/use-affiliate-storage';
+  useStorageMonthlyHistory,
+} from '@/lib/hooks/use-affiliate-storage';
 
-export default function StockagePage() {
+import { StorageOverviewTab } from './components/StorageOverviewTab';
+import { StorageMonthlyTab } from './components/StorageMonthlyTab';
+import { StorageYearlyTab } from './components/StorageYearlyTab';
+import { StorageProductsTab } from './components/StorageProductsTab';
+import { StorageRequestsTab } from './components/StorageRequestsTab';
+
+// ─── Types ─────────────────────────────────────────────────────────────────────
+
+type StorageTab = 'overview' | 'monthly' | 'yearly' | 'products' | 'requests';
+
+const TABS: { id: StorageTab; label: string; icon: typeof LayoutDashboard }[] =
+  [
+    { id: 'overview', label: "Vue d'ensemble", icon: LayoutDashboard },
+    { id: 'monthly', label: 'Mensuel', icon: CalendarDays },
+    { id: 'yearly', label: 'Annuel', icon: CalendarRange },
+    { id: 'products', label: 'Produits', icon: Package },
+    { id: 'requests', label: 'Mes demandes', icon: Send },
+  ];
+
+// ─── Contenu ──────────────────────────────────────────────────────────────────
+
+function StockageContent(): JSX.Element {
+  const [activeTab, setActiveTab] = useState<StorageTab>('overview');
+
   const { data: summary, isLoading: summaryLoading } =
     useAffiliateStorageSummary();
   const { data: products, isLoading: productsLoading } =
     useAffiliateStorageDetails();
   const { data: pricingTiers, isLoading: tiersLoading } =
     useStoragePricingTiers();
+  const {
+    data: monthlyData,
+    isLoading: monthlyLoading,
+    error: monthlyError,
+  } = useStorageMonthlyHistory(24);
 
   const isLoading = summaryLoading || productsLoading || tiersLoading;
 
-  // Calcul du coût estimé (uniquement sur volume facturable)
-  const estimatedCost = useMemo(() => {
-    if (!summary || !pricingTiers) return 0;
-    return calculateStoragePrice(summary.billable_volume_m3, pricingTiers);
-  }, [summary, pricingTiers]);
-
   return (
-    <div className="space-y-5 p-4">
-      {/* Header */}
-      <div>
-        <h1 className="text-xl font-bold text-gray-900">Mon Stockage</h1>
-        <p className="text-gray-500 text-sm">
-          Visualisez vos produits stockes et la tarification
-        </p>
-      </div>
-
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StorageKPICard
-          icon={Box}
-          label="Volume total"
-          value={formatVolume(summary?.total_volume_m3 ?? 0)}
-          color="blue"
-          subtitle="Tous produits"
-          isLoading={isLoading}
-        />
-        <StorageKPICard
-          icon={TrendingUp}
-          label="Volume facturable"
-          value={formatVolume(summary?.billable_volume_m3 ?? 0)}
-          color="green"
-          subtitle="Comptabilise"
-          isLoading={isLoading}
-        />
-        <StorageKPICard
-          icon={Package}
-          label="Unites stockees"
-          value={`${summary?.total_units ?? 0}`}
-          color="purple"
-          subtitle={`${summary?.products_count ?? 0} produits`}
-          isLoading={isLoading}
-        />
-        <StorageKPICard
-          icon={Euro}
-          label="Cout estime"
-          value={formatPrice(estimatedCost)}
-          color="orange"
-          subtitle="Par mois"
-          isLoading={isLoading}
-        />
-      </div>
-
-      {/* Grille tarifaire */}
-      <PricingGridReadOnly
-        tiers={pricingTiers ?? []}
-        currentVolume={summary?.billable_volume_m3}
-        isLoading={tiersLoading}
-      />
-
-      {/* Produits stockés */}
-      <div>
-        <div className="flex items-center gap-2 mb-4">
-          <Package className="h-5 w-5 text-gray-600" />
-          <h3 className="text-base font-semibold text-gray-900">
-            Mes produits stockes ({products?.length ?? 0})
-          </h3>
-        </div>
-
-        {/* Empty state */}
-        {!isLoading && (!products || products.length === 0) && (
-          <div className="bg-white rounded-xl border p-8 text-center">
-            <Warehouse className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-            <h4 className="text-sm font-semibold text-gray-700 mb-1">
-              Aucun produit stocke
-            </h4>
-            <p className="text-xs text-gray-500">
-              Vos produits approuves avec stockage apparaitront ici
+    <div className="min-h-screen bg-gray-50/50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+        {/* Header */}
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-gradient-to-br from-[#5DBEBB] to-[#3976BB] rounded-lg shadow-lg">
+            <Warehouse className="h-5 w-5 text-white" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-[#183559]">Mon Stockage</h1>
+            <p className="text-gray-500 text-sm">
+              Suivi de vos produits stockés et historique
             </p>
           </div>
-        )}
+        </div>
 
-        {/* Grid de produits */}
-        {products && products.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {products.map(product => (
-              <StorageProductCard
-                key={product.allocation_id}
-                product={product}
-                pricingTiers={pricingTiers ?? []}
-              />
-            ))}
+        {/* Erreur */}
+        {monthlyError && (
+          <div className="p-3 border-l-4 border-red-500 bg-red-50 rounded-r-lg">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="h-4 w-4 text-red-500" />
+              <p className="text-sm text-red-800">
+                Erreur de chargement historique :{' '}
+                {monthlyError instanceof Error
+                  ? monthlyError.message
+                  : 'Erreur inconnue'}
+              </p>
+            </div>
           </div>
         )}
+
+        {/* Onglets */}
+        <div className="border-b border-gray-200">
+          <nav className="flex gap-1" aria-label="Onglets stockage">
+            {TABS.map(tab => {
+              const isActive = activeTab === tab.id;
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+                    isActive
+                      ? 'border-[#5DBEBB] text-[#183559]'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                  aria-current={isActive ? 'page' : undefined}
+                >
+                  <Icon
+                    className={`h-4 w-4 ${isActive ? 'text-[#5DBEBB]' : ''}`}
+                  />
+                  {tab.label}
+                </button>
+              );
+            })}
+          </nav>
+        </div>
+
+        {/* Contenu onglet */}
+        {activeTab === 'overview' && (
+          <StorageOverviewTab
+            summary={summary}
+            products={products}
+            pricingTiers={pricingTiers}
+            isLoading={isLoading}
+          />
+        )}
+        {activeTab === 'monthly' && (
+          <StorageMonthlyTab
+            monthlyData={monthlyData}
+            pricingTiers={pricingTiers}
+            isLoading={monthlyLoading}
+          />
+        )}
+        {activeTab === 'yearly' && (
+          <StorageYearlyTab
+            monthlyData={monthlyData}
+            pricingTiers={pricingTiers}
+            isLoading={monthlyLoading}
+          />
+        )}
+        {activeTab === 'products' && (
+          <StorageProductsTab
+            products={products}
+            pricingTiers={pricingTiers}
+            monthlyData={monthlyData}
+            isLoading={isLoading}
+          />
+        )}
+        {activeTab === 'requests' && <StorageRequestsTab />}
+
+        <div className="text-center text-xs text-gray-400 pb-2">
+          <p suppressHydrationWarning>
+            Données actualisées en temps réel · Dernière mise à jour :{' '}
+            {new Date().toLocaleString('fr-FR')}
+          </p>
+        </div>
       </div>
     </div>
+  );
+}
+
+// ─── Export ────────────────────────────────────────────────────────────────────
+
+export default function StockagePage(): JSX.Element {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <RefreshCw className="h-6 w-6 animate-spin text-[#5DBEBB]" />
+        </div>
+      }
+    >
+      <StockageContent />
+    </Suspense>
   );
 }

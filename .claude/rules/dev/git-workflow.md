@@ -102,6 +102,7 @@ git diff --staged
 ```
 
 **Vérifier** :
+
 - ✅ Seuls les fichiers pertinents sont inclus
 - ✅ Pas de fichiers `.claude/`, `CLAUDE.md` (sauf si explicitement demandé)
 - ✅ Pas de fichiers secrets (`.env`, credentials)
@@ -127,6 +128,7 @@ git diff --staged --name-only -- '*.ts' '*.tsx' | xargs pnpm eslint --max-warnin
 ```
 
 **Règle** :
+
 - Erreurs ESLint → CORRIGER avant commit
 - Warnings sur code EXISTANT → OK (pré-existants, hors scope)
 - Warnings sur code NOUVEAU → CORRIGER avant commit
@@ -213,6 +215,45 @@ gh pr create \
 - step 4: update tests
 "
 ```
+
+## Règle : Rebase Staging sur Main après Déploiement (OBLIGATOIRE)
+
+**Contexte** : Les squash merges créent des commits avec des hashes différents même si le code est identique. Après chaque merge staging→main, staging "diverge" de main d'un commit → conflits sur les PRs suivantes.
+
+**Règle** : Après chaque merge de la PR staging→main, Claude DOIT immédiatement rebase staging sur main.
+
+```bash
+# Immédiatement après gh pr merge (staging → main) :
+git checkout staging
+git stash  # Si fichiers non commités
+git rebase origin/main
+git push --force-with-lease
+git stash pop  # Si stash
+git checkout main
+git pull
+```
+
+**Résultat** : staging et main pointent sur le même commit. Zéro divergence.
+
+**Responsabilité** : C'est le job de Claude, pas de Romeo. Automatique, sans demande.
+
+---
+
+## Règle : Créer les branches feature depuis main (TOUJOURS)
+
+```bash
+# ✅ CORRECT
+git checkout main && git pull
+git checkout -b feat/BO-XXX-description
+
+# ❌ INCORRECT - embarque des commits staging pas encore dans main
+git checkout staging
+git checkout -b feat/BO-XXX-description
+```
+
+**Pourquoi** : Une branche créée depuis staging contient les commits squashés de staging (hash X) qui seront re-squashés différemment dans main (hash Y) → conflits inévitables.
+
+---
 
 ## Exceptions
 

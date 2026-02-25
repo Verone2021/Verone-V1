@@ -6,7 +6,8 @@
  * @since 2025-12-22
  */
 
-import { Package, Box as _Box, CheckCircle, XCircle } from 'lucide-react';
+import Image from 'next/image';
+import { Package, CheckCircle, XCircle } from 'lucide-react';
 
 import type {
   StorageAllocation,
@@ -37,9 +38,19 @@ export function StorageProductCard({
     <div className="bg-white rounded-xl border p-4 hover:shadow-sm transition-shadow">
       {/* Header avec image et nom */}
       <div className="flex items-start gap-3 mb-3">
-        <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-          <Package className="h-6 w-6 text-gray-400" />
-        </div>
+        {product.product_image_url ? (
+          <Image
+            src={product.product_image_url}
+            alt={product.product_name}
+            width={48}
+            height={48}
+            className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
+          />
+        ) : (
+          <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+            <Package className="h-6 w-6 text-gray-400" />
+          </div>
+        )}
         <div className="flex-1 min-w-0">
           <h4 className="text-sm font-semibold text-gray-900 truncate">
             {product.product_name}
