@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Page Statistiques — 3 onglets : Commandes, Commissions, Produits & Sélections
+ * Page Statistiques — 4 onglets : Commandes, Commissions, Produits, Sélections
  *
  * Source de données unique : useAffiliateAnalytics
  * Chaque onglet réutilise les composants analytics existants
@@ -22,6 +22,7 @@ import {
   ShoppingCart,
   Coins,
   Package,
+  Star,
 } from 'lucide-react';
 
 import { useAffiliateAnalytics } from '@/lib/hooks/use-affiliate-analytics';
@@ -30,6 +31,7 @@ import type { AnalyticsPeriod } from '@/types/analytics';
 import { StatsCommissionsTab } from './components/StatsCommissionsTab';
 import { StatsOrdersTab } from './components/StatsOrdersTab';
 import { StatsProductsTab } from './components/StatsProductsTab';
+import { StatsSelectionsTab } from './components/StatsSelectionsTab';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -40,7 +42,7 @@ type FilterPreset =
   | 'this_year'
   | 'custom';
 
-type StatsTab = 'orders' | 'commissions' | 'products';
+type StatsTab = 'orders' | 'commissions' | 'products' | 'selections';
 
 interface PeriodFilter {
   preset: FilterPreset;
@@ -59,7 +61,8 @@ const PRESET_TO_PERIOD: Record<FilterPreset, AnalyticsPeriod> = {
 const TABS: { id: StatsTab; label: string; icon: typeof ShoppingCart }[] = [
   { id: 'orders', label: 'Commandes', icon: ShoppingCart },
   { id: 'commissions', label: 'Commissions', icon: Coins },
-  { id: 'products', label: 'Produits & Sélections', icon: Package },
+  { id: 'products', label: 'Produits', icon: Package },
+  { id: 'selections', label: 'Sélections', icon: Star },
 ];
 
 // ─── Contenu ──────────────────────────────────────────────────────────────────
@@ -239,6 +242,9 @@ function StatistiquesContent(): JSX.Element {
         )}
         {activeTab === 'products' && (
           <StatsProductsTab data={data} isLoading={isLoading} />
+        )}
+        {activeTab === 'selections' && (
+          <StatsSelectionsTab data={data} isLoading={isLoading} />
         )}
 
         <div className="text-center text-xs text-gray-400 pb-2">
