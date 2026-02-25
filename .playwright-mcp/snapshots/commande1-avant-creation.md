@@ -1,0 +1,867 @@
+- generic:
+  - generic:
+    - complementary:
+      - generic:
+        - link:
+          - /url: /dashboard
+          - generic: V
+      - navigation:
+        - menubar:
+          - listitem:
+            - link:
+              - /url: /dashboard
+              - img
+          - listitem:
+            - button:
+              - img
+              - text: "0"
+          - listitem:
+            - button:
+              - img
+              - generic: 9+
+          - listitem:
+            - button:
+              - img
+              - text: "0"
+          - listitem:
+            - button:
+              - img
+              - generic: "4"
+          - listitem:
+            - link:
+              - /url: /ventes
+              - img
+          - listitem:
+            - link:
+              - /url: /consultations
+              - img
+              - text: "0"
+          - listitem:
+            - button:
+              - img
+              - generic: "4"
+          - listitem:
+            - button:
+              - img
+              - generic: 9+
+          - listitem:
+            - link:
+              - /url: /livraisons
+              - img
+          - listitem:
+            - link:
+              - /url: /parametres
+              - img
+      - generic:
+        - button:
+          - img
+    - generic:
+      - banner:
+        - generic:
+          - generic: jeu. 26 févr.
+          - button:
+            - img
+            - generic: "50"
+            - generic: 50 Notifications
+          - button:
+            - img
+            - generic: Menu profil
+      - main:
+        - generic:
+          - generic:
+            - generic:
+              - heading [level=1]: Commandes Fournisseurs
+              - paragraph: Gestion des commandes et approvisionnements
+            - generic:
+              - link:
+                - /url: /stocks/receptions
+                - button:
+                  - img
+                  - text: Réceptions
+              - button [expanded]:
+                - img
+                - text: Nouvelle commande
+          - generic:
+            - generic:
+              - generic:
+                - heading [level=3]: Total commandes
+              - generic:
+                - generic: "22"
+            - generic:
+              - generic:
+                - heading [level=3]: Chiffre d'affaires
+              - generic:
+                - generic: 53 851,93 €
+                - generic:
+                  - generic: "HT: 40 500,12 €"
+                  - generic: "TVA: 13 351,81 €"
+            - generic:
+              - generic:
+                - heading [level=3]: En cours
+              - generic:
+                - generic: "0"
+            - generic:
+              - generic:
+                - heading [level=3]: Reçues
+              - generic:
+                - generic: "22"
+            - generic:
+              - generic:
+                - heading [level=3]: Annulées
+              - generic:
+                - generic: "0"
+          - generic:
+            - generic:
+              - heading [level=3]: Filtres
+            - generic:
+              - generic:
+                - tablist:
+                  - tab [selected]: Toutes (22)
+                  - tab: Brouillon (0)
+                  - tab: Validée (0)
+                  - tab: Part. reçue (0)
+                  - tab: Reçue (22)
+                  - tab: Annulée (0)
+              - generic:
+                - img
+                - generic:
+                  - generic:
+                    - textbox:
+                      - /placeholder: Rechercher par numéro de commande ou fournisseur...
+              - generic:
+                - generic:
+                  - generic: "Fournisseur :"
+                  - combobox:
+                    - generic: Tous les fournisseurs
+                    - img
+                - generic:
+                  - generic: "Année :"
+                  - combobox:
+                    - generic: Toutes
+                    - img
+                - generic:
+                  - generic: "Période :"
+                  - combobox:
+                    - generic: Toute
+                    - img
+                - generic:
+                  - generic: "Rapprochement :"
+                  - combobox:
+                    - generic: Tous
+                    - img
+          - generic:
+            - generic:
+              - heading [level=3]: Commandes Fournisseurs
+              - paragraph: 22 commande(s) trouvée(s)
+            - generic:
+              - generic:
+                - generic:
+                  - table:
+                    - rowgroup:
+                      - row:
+                        - columnheader
+                        - columnheader:
+                          - text: N° Commande
+                          - img
+                        - columnheader: Fournisseur
+                        - columnheader: Statut
+                        - columnheader: Paiement
+                        - columnheader: Articles
+                        - columnheader:
+                          - text: Date création
+                          - img
+                        - columnheader: Date commande
+                        - columnheader: Livraison
+                        - columnheader:
+                          - text: Montant TTC
+                          - img
+                        - columnheader: Actions
+                    - rowgroup:
+                      - row:
+                        - cell:
+                          - button:
+                            - img
+                        - cell: ALI-216371043501022407
+                        - cell: Linhai Newlanston Arts And Crafts
+                        - cell:
+                          - generic:
+                            - generic: Reçue
+                        - cell:
+                          - generic:
+                            - button:
+                              - generic:
+                                - text: En attente
+                                - img
+                        - cell: 3réf.
+                        - cell: 23 février 2026
+                        - cell: 4 juillet 2024
+                        - cell: 23 février 2026
+                        - cell: 3 326,20 €
+                        - cell:
+                          - generic:
+                            - button:
+                              - img
+                            - button:
+                              - img
+                      - row:
+                        - cell:
+                          - button:
+                            - img
+                        - cell: ALI-207300830501022407
+                        - cell: Linhai Newlanston Arts And Crafts
+                        - cell:
+                          - generic:
+                            - generic: Reçue
+                        - cell:
+                          - generic:
+                            - button:
+                              - generic:
+                                - text: En attente
+                                - img
+                        - cell: 1réf.
+                        - cell: 23 février 2026
+                        - cell: 2 avril 2024
+                        - cell: 20 mai 2024
+                        - cell: 1 157,22 €
+                        - cell:
+                          - generic:
+                            - button:
+                              - img
+                            - button:
+                              - img
+                      - row:
+                        - cell:
+                          - button:
+                            - img
+                        - cell: PO-2026-00036
+                        - cell: CAO COUNTY HUIY ARTS AND CRAFTS FACTORY
+                        - cell:
+                          - generic:
+                            - generic: Reçue
+                        - cell:
+                          - generic:
+                            - button:
+                              - generic:
+                                - text: En attente
+                                - img
+                        - cell: 1réf.
+                        - cell: 23 février 2026
+                        - cell: 29 mars 2024
+                        - cell: 29 mars 2024
+                        - cell: 6 190,00 €
+                        - cell:
+                          - generic:
+                            - button:
+                              - img
+                            - button:
+                              - img
+                      - row:
+                        - cell:
+                          - button:
+                            - img
+                        - cell: ALI-10752588501022407
+                        - cell: Bridge Trading
+                        - cell:
+                          - generic:
+                            - generic: Reçue
+                        - cell:
+                          - generic:
+                            - button:
+                              - generic:
+                                - text: En attente
+                                - img
+                        - cell: 1réf.
+                        - cell: 23 février 2026
+                        - cell: 11 septembre 2025
+                        - cell: 17 novembre 2025
+                        - cell: 4 933,02 €
+                        - cell:
+                          - generic:
+                            - button:
+                              - img
+                            - button:
+                              - img
+                      - row:
+                        - cell:
+                          - button:
+                            - img
+                        - cell: ALI-10689100501022407
+                        - cell: Jingtong
+                        - cell:
+                          - generic:
+                            - generic: Reçue
+                        - cell:
+                          - generic:
+                            - button:
+                              - generic:
+                                - text: En attente
+                                - img
+                        - cell: 1réf.
+                        - cell: 23 février 2026
+                        - cell: 10 septembre 2025
+                        - cell: 17 novembre 2025
+                        - cell: 5 997,30 €
+                        - cell:
+                          - generic:
+                            - button:
+                              - img
+                            - button:
+                              - img
+                      - row:
+                        - cell:
+                          - button:
+                            - img
+                        - cell: ALI-10689268501022407
+                        - cell: Xiamen Youlike
+                        - cell:
+                          - generic:
+                            - generic: Reçue
+                        - cell:
+                          - generic:
+                            - button:
+                              - generic:
+                                - text: En attente
+                                - img
+                        - cell: 1réf.
+                        - cell: 23 février 2026
+                        - cell: 10 septembre 2025
+                        - cell: 17 novembre 2025
+                        - cell: 1 991,47 €
+                        - cell:
+                          - generic:
+                            - button:
+                              - img
+                            - button:
+                              - img
+                      - row:
+                        - cell:
+                          - button:
+                            - img
+                        - cell: ALI-10691732501022407
+                        - cell: Enten Science
+                        - cell:
+                          - generic:
+                            - generic: Reçue
+                        - cell:
+                          - generic:
+                            - button:
+                              - generic:
+                                - text: En attente
+                                - img
+                        - cell: 3réf.
+                        - cell: 23 février 2026
+                        - cell: 10 septembre 2025
+                        - cell: 17 novembre 2025
+                        - cell: 1 464,92 €
+                        - cell:
+                          - generic:
+                            - button:
+                              - img
+                            - button:
+                              - img
+                      - row:
+                        - cell:
+                          - button:
+                            - img
+                        - cell: PO-2026-00034
+                        - cell: Zentrada
+                        - cell:
+                          - generic:
+                            - generic: Reçue
+                        - cell:
+                          - generic:
+                            - generic: Payé
+                        - cell: 21réf.
+                        - cell: 22 février 2026
+                        - cell: 28 octobre 2025
+                        - cell: 17 novembre 2025
+                        - cell: 2 926,94 €
+                        - cell:
+                          - generic:
+                            - button:
+                              - img
+                            - generic:
+                              - img
+                              - text: Rapprochée
+                      - row:
+                        - cell:
+                          - button:
+                            - img
+                        - cell: PO-2026-00035
+                        - cell: Jekang Technology
+                        - cell:
+                          - generic:
+                            - generic: Reçue
+                        - cell:
+                          - generic:
+                            - button:
+                              - generic:
+                                - text: En attente
+                                - img
+                        - cell: 1réf.
+                        - cell: 21 février 2026
+                        - cell: 10 septembre 2025
+                        - cell: 1 décembre 2025
+                        - cell: 3 944,25 €
+                        - cell:
+                          - generic:
+                            - button:
+                              - img
+                            - button:
+                              - img
+                      - row:
+                        - cell:
+                          - button:
+                            - img
+                        - cell: "20151406"
+                        - cell: Opjet
+                        - cell:
+                          - generic:
+                            - generic: Reçue
+                        - cell:
+                          - generic:
+                            - generic: Payé
+                        - cell: 7réf.
+                        - cell: 9 février 2026
+                        - cell: 13 mai 2025
+                        - cell: 13 mai 2025
+                        - cell: 1 373,09 €
+                        - cell:
+                          - generic:
+                            - button:
+                              - img
+                            - generic:
+                              - img
+                              - text: Rapprochée
+                      - row:
+                        - cell:
+                          - button:
+                            - img
+                        - cell: "20150896"
+                        - cell: Opjet
+                        - cell:
+                          - generic:
+                            - generic: Reçue
+                        - cell:
+                          - generic:
+                            - generic: Payé
+                        - cell: 23réf.
+                        - cell: 9 février 2026
+                        - cell: 24 avril 2025
+                        - cell: 24 avril 2025
+                        - cell: 2 620,54 €
+                        - cell:
+                          - generic:
+                            - button:
+                              - img
+                            - generic:
+                              - img
+                              - text: Rapprochée
+                      - row:
+                        - cell:
+                          - button:
+                            - img
+                        - cell: "20149892"
+                        - cell: Opjet
+                        - cell:
+                          - generic:
+                            - generic: Reçue
+                        - cell:
+                          - generic:
+                            - generic: Payé
+                        - cell: 19réf.
+                        - cell: 9 février 2026
+                        - cell: 26 mars 2025
+                        - cell: 26 mars 2025
+                        - cell: 2 425,57 €
+                        - cell:
+                          - generic:
+                            - button:
+                              - img
+                            - generic:
+                              - img
+                              - text: Rapprochée
+                      - row:
+                        - cell:
+                          - button:
+                            - img
+                        - cell: "20147448"
+                        - cell: Opjet
+                        - cell:
+                          - generic:
+                            - generic: Reçue
+                        - cell:
+                          - generic:
+                            - generic: Payé
+                        - cell: 10réf.
+                        - cell: 9 février 2026
+                        - cell: 3 janvier 2025
+                        - cell: 3 janvier 2025
+                        - cell: 1 221,31 €
+                        - cell:
+                          - generic:
+                            - button:
+                              - img
+                            - generic:
+                              - img
+                              - text: Rapprochée
+                      - row:
+                        - cell:
+                          - button:
+                            - img
+                        - cell: "20146946"
+                        - cell: Opjet
+                        - cell:
+                          - generic:
+                            - generic: Reçue
+                        - cell:
+                          - generic:
+                            - generic: Payé
+                        - cell: 6réf.
+                        - cell: 9 février 2026
+                        - cell: 9 décembre 2024
+                        - cell: 9 décembre 2024
+                        - cell: 1 067,92 €
+                        - cell:
+                          - generic:
+                            - button:
+                              - img
+                            - generic:
+                              - img
+                              - text: Rapprochée
+                      - row:
+                        - cell:
+                          - button:
+                            - img
+                        - cell: "20146675"
+                        - cell: Opjet
+                        - cell:
+                          - generic:
+                            - generic: Reçue
+                        - cell:
+                          - generic:
+                            - generic: Payé
+                        - cell: 6réf.
+                        - cell: 9 février 2026
+                        - cell: 3 décembre 2024
+                        - cell: 3 décembre 2024
+                        - cell: 648,74 €
+                        - cell:
+                          - generic:
+                            - button:
+                              - img
+                            - generic:
+                              - img
+                              - text: Rapprochée
+                      - row:
+                        - cell:
+                          - button:
+                            - img
+                        - cell: "20146427"
+                        - cell: Opjet
+                        - cell:
+                          - generic:
+                            - generic: Reçue
+                        - cell:
+                          - generic:
+                            - generic: Payé
+                        - cell: 5réf.
+                        - cell: 9 février 2026
+                        - cell: 25 novembre 2024
+                        - cell: 25 novembre 2024
+                        - cell: 608,46 €
+                        - cell:
+                          - generic:
+                            - button:
+                              - img
+                            - generic:
+                              - img
+                              - text: Rapprochée
+                      - row:
+                        - cell:
+                          - button:
+                            - img
+                        - cell: "20146236"
+                        - cell: Opjet
+                        - cell:
+                          - generic:
+                            - generic: Reçue
+                        - cell:
+                          - generic:
+                            - generic: Payé
+                        - cell: 17réf.
+                        - cell: 9 février 2026
+                        - cell: 18 novembre 2024
+                        - cell: 18 novembre 2024
+                        - cell: 1 674,56 €
+                        - cell:
+                          - generic:
+                            - button:
+                              - img
+                            - generic:
+                              - img
+                              - text: Rapprochée
+                      - row:
+                        - cell:
+                          - button:
+                            - img
+                        - cell: "20146095"
+                        - cell: Opjet
+                        - cell:
+                          - generic:
+                            - generic: Reçue
+                        - cell:
+                          - generic:
+                            - generic: Payé
+                        - cell: 14réf.
+                        - cell: 8 février 2026
+                        - cell: 14 novembre 2024
+                        - cell: 14 novembre 2024
+                        - cell: 1 648,75 €
+                        - cell:
+                          - generic:
+                            - button:
+                              - img
+                            - generic:
+                              - img
+                              - text: Rapprochée
+                      - row:
+                        - cell:
+                          - button:
+                            - img
+                        - cell: "20145600"
+                        - cell: Opjet
+                        - cell:
+                          - generic:
+                            - generic: Reçue
+                        - cell:
+                          - generic:
+                            - generic: Payé
+                        - cell: 5réf.
+                        - cell: 8 février 2026
+                        - cell: 30 octobre 2024
+                        - cell: 30 octobre 2024
+                        - cell: 642,83 €
+                        - cell:
+                          - generic:
+                            - button:
+                              - img
+                            - generic:
+                              - img
+                              - text: Rapprochée
+                      - row:
+                        - cell:
+                          - button:
+                            - img
+                        - cell: "20145539"
+                        - cell: Opjet
+                        - cell:
+                          - generic:
+                            - generic: Reçue
+                        - cell:
+                          - generic:
+                            - generic: Payé
+                        - cell: 17réf.
+                        - cell: 8 février 2026
+                        - cell: 29 octobre 2024
+                        - cell: 29 octobre 2024
+                        - cell: 2 440,04 €
+                        - cell:
+                          - generic:
+                            - button:
+                              - img
+                            - generic:
+                              - img
+                              - text: Rapprochée
+                      - row:
+                        - cell:
+                          - button:
+                            - img
+                        - cell: "20142160"
+                        - cell: Opjet
+                        - cell:
+                          - generic:
+                            - generic: Reçue
+                        - cell:
+                          - generic:
+                            - generic: Payé
+                        - cell: 14réf.
+                        - cell: 8 février 2026
+                        - cell: 7 juin 2024
+                        - cell: 7 juin 2024
+                        - cell: 2 935,46 €
+                        - cell:
+                          - generic:
+                            - button:
+                              - img
+                            - generic:
+                              - img
+                              - text: Rapprochée
+                      - row:
+                        - cell:
+                          - button:
+                            - img
+                        - cell: "20135179"
+                        - cell: Opjet
+                        - cell:
+                          - generic:
+                            - generic: Reçue
+                        - cell:
+                          - generic:
+                            - generic:
+                              - text: Payé
+                              - generic: (manuel)
+                        - cell: 14réf.
+                        - cell: 6 février 2026
+                        - cell: 19 juin 2023
+                        - cell: 19 juin 2023
+                        - cell: 2 613,34 €
+                        - cell:
+                          - generic:
+                            - button:
+                              - img
+                            - generic:
+                              - img
+                              - text: Payé
+  - region "Notifications alt+T"
+  - button "Open Next.js Dev Tools" [ref=e859] [cursor=pointer]:
+    - img [ref=e860]
+  - alert
+  - dialog "Nouvelle Commande Fournisseur" [ref=e864]:
+    - generic [ref=e865]:
+      - heading "Nouvelle Commande Fournisseur" [level=2] [ref=e866]
+      - paragraph [ref=e867]: Créer une nouvelle commande d'approvisionnement
+    - generic [ref=e868]:
+      - generic [ref=e869]:
+        - heading "Informations générales" [level=3] [ref=e871]
+        - generic [ref=e872]:
+          - generic [ref=e874]:
+            - generic [ref=e876]:
+              - generic [ref=e878]:
+                - text: Fournisseur
+                - generic [ref=e879]: "*"
+              - combobox [ref=e880] [cursor=pointer]:
+                - generic:
+                  - generic:
+                    - generic: AMÉRICO MARTINS TAVARES
+                    - generic: (supplier)
+                - img [ref=e881]
+              - combobox [ref=e883]
+              - generic [ref=e1059]: "Sélectionné: AMÉRICO MARTINS TAVARES"
+            - button "Nouveau fournisseur" [ref=e884] [cursor=pointer]:
+              - img [ref=e885]
+              - text: Nouveau fournisseur
+          - generic [ref=e886]:
+            - generic [ref=e888]: Date de livraison prévue
+            - textbox "Date de livraison prévue" [ref=e891]
+          - generic [ref=e892]:
+            - generic [ref=e894]: Adresse de livraison (Entrepôt)
+            - textbox "Adresse de livraison (Entrepôt)" [ref=e896]: Groupe DSA - (Verone) 4, rue du Pérou 91300 Massy France
+          - generic [ref=e898]:
+            - generic [ref=e899]:
+              - generic [ref=e901]: TVA Éco-taxe
+              - img [ref=e902]
+            - generic [ref=e904]:
+              - spinbutton "TVA Éco-taxe" [ref=e907]
+              - generic: "%"
+            - paragraph [ref=e908]: Utilise la TVA commande par défaut (20%)
+          - generic [ref=e909]:
+            - generic [ref=e911]: Conditions de paiement
+            - paragraph [ref=e913]: Aucune condition définie pour ce fournisseur
+          - generic [ref=e914]:
+            - generic [ref=e916]: Notes
+            - textbox "Notes" [ref=e918]:
+              - /placeholder: Notes additionnelles...
+              - text: Facture Nº 2551/000035 du 03/11/2025 - Intracommunautaire TVA 0%
+      - generic [ref=e919]:
+        - generic [ref=e920]:
+          - heading "Frais additionnels" [level=3] [ref=e921]
+          - paragraph [ref=e922]: Frais de transport, douane et assurance (optionnels)
+        - generic [ref=e923]:
+          - generic [ref=e924]:
+            - generic [ref=e926]: Frais de livraison HT (€)
+            - spinbutton "Frais de livraison HT (€)" [ref=e929]
+          - generic [ref=e930]:
+            - generic [ref=e932]: Frais de douane HT (€)
+            - spinbutton "Frais de douane HT (€)" [ref=e935]
+          - generic [ref=e936]:
+            - generic [ref=e938]: Frais d'assurance HT (€)
+            - spinbutton "Frais d'assurance HT (€)" [ref=e941]
+      - generic [ref=e942]:
+        - generic [ref=e944]:
+          - generic [ref=e945]:
+            - heading "Articles" [level=3] [ref=e946]
+            - paragraph [ref=e947]: 2 article(s) à ajouter
+          - button "Ajouter des produits" [ref=e948] [cursor=pointer]:
+            - img [ref=e949]
+            - text: Ajouter des produits
+        - table [ref=e1361]:
+          - rowgroup [ref=e1362]:
+            - row "Produit Quantité Prix unitaire HT Remise (%) Éco-taxe (€) Total HT Actions" [ref=e1363]:
+              - columnheader "Produit" [ref=e1364]
+              - columnheader "Quantité" [ref=e1365]
+              - columnheader "Prix unitaire HT" [ref=e1366]
+              - columnheader "Remise (%)" [ref=e1367]
+              - columnheader "Éco-taxe (€)" [ref=e1368]
+              - columnheader "Total HT" [ref=e1369]
+              - columnheader "Actions" [ref=e1370]
+          - rowgroup [ref=e1371]:
+            - row "Présentoir extérieur B&W Burgers SEP-0002 6 232 0 0 1 392,00 €" [ref=e1457]:
+              - cell "Présentoir extérieur B&W Burgers SEP-0002" [ref=e1373]:
+                - generic [ref=e1374]:
+                  - img [ref=e1377]
+                  - generic [ref=e1381]:
+                    - paragraph [ref=e1382]: Présentoir extérieur B&W Burgers
+                    - paragraph [ref=e1383]: SEP-0002
+              - cell "6" [ref=e1384]:
+                - spinbutton [ref=e1387]: "6"
+              - cell "232" [ref=e1458]:
+                - spinbutton [ref=e1391]: "232"
+              - cell "0" [ref=e1392]:
+                - spinbutton [ref=e1395]: "0"
+              - cell "0" [ref=e1396]:
+                - spinbutton [ref=e1399]: "0"
+              - cell "1 392,00 €" [ref=e1459]
+              - cell [ref=e1401]:
+                - button "Supprimer ce produit" [ref=e1402] [cursor=pointer]:
+                  - img [ref=e1403]
+            - row "Séparateur de terrasse B&W Burger SEP-BW01 5 450 0 0 2 250,00 €" [ref=e1406]:
+              - cell "Séparateur de terrasse B&W Burger SEP-BW01" [ref=e1407]:
+                - generic [ref=e1408]:
+                  - img [ref=e1411]
+                  - generic [ref=e1415]:
+                    - paragraph [ref=e1416]: Séparateur de terrasse B&W Burger
+                    - paragraph [ref=e1417]: SEP-BW01
+              - cell "5" [ref=e1418]:
+                - spinbutton [ref=e1421]: "5"
+              - cell "450" [ref=e1422]:
+                - spinbutton [active] [ref=e1425]: "216"
+              - cell "0" [ref=e1426]:
+                - spinbutton [ref=e1429]: "0"
+              - cell "0" [ref=e1430]:
+                - spinbutton [ref=e1433]: "0"
+              - cell "2 250,00 €" [ref=e1434]
+              - cell [ref=e1435]:
+                - button "Supprimer ce produit" [ref=e1436] [cursor=pointer]:
+                  - img [ref=e1437]
+      - generic [ref=e1440]:
+        - heading "Récapitulatif" [level=3] [ref=e1442]
+        - generic [ref=e1444]:
+          - generic [ref=e1445]:
+            - paragraph [ref=e1446]: Total HT produits
+            - paragraph [ref=e1447]: 3 642,00 €
+          - generic [ref=e1448]:
+            - paragraph [ref=e1449]: Frais additionnels
+            - paragraph [ref=e1450]: 0,00 €
+          - generic [ref=e1451]:
+            - paragraph [ref=e1452]: TVA (20%)
+            - paragraph [ref=e1453]: 728,40 €
+          - generic [ref=e1454]:
+            - paragraph [ref=e1455]: Total TTC
+            - paragraph [ref=e1456]: 4 370,40 €
+      - generic [ref=e952]:
+        - button "Annuler" [ref=e953] [cursor=pointer]
+        - button "Créer la commande" [ref=e954] [cursor=pointer]
+    - button "Close" [ref=e955] [cursor=pointer]:
+      - img [ref=e956]
+      - generic [ref=e958]: Close
