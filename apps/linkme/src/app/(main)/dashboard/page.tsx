@@ -39,7 +39,6 @@ import {
 
 import { CommissionKPICard } from '../../../components/dashboard';
 import { OnboardingChecklist } from '../../../components/onboarding/OnboardingChecklist';
-import { WelcomeTourTrigger } from '../../../components/onboarding/WelcomeTourTrigger';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useAffiliateDashboard } from '../../../lib/hooks/use-affiliate-dashboard';
 
@@ -134,11 +133,8 @@ export default function DashboardPage(): JSX.Element | null {
     <div className="min-h-screen bg-gray-50/50">
       {/* Container centré */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
-        {/* Tour de bienvenue (auto-start au premier login) */}
-        <WelcomeTourTrigger />
-
         {/* Section Bienvenue */}
-        <section className="mb-8" data-tour="dashboard-welcome">
+        <section className="mb-8">
           <h1 className="text-2xl font-bold text-[#183559]">
             Bonjour, {firstName}
           </h1>
@@ -149,10 +145,7 @@ export default function DashboardPage(): JSX.Element | null {
         <OnboardingChecklist />
 
         {/* 4 KPIs Commissions */}
-        <section
-          className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6"
-          data-tour="kpi-cards"
-        >
+        <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
           {/* Total TTC - Turquoise */}
           <CommissionKPICard
             label="Total"
@@ -195,10 +188,10 @@ export default function DashboardPage(): JSX.Element | null {
         </section>
 
         {/* Lien vers Analytics */}
-        <section className="mb-8" data-tour="analytics-link">
+        <section className="mb-8">
           <Link
             href="/statistiques"
-            className="flex items-center justify-center gap-2 w-full py-3 px-4 bg-linkme-turquoise text-white rounded-lg text-sm font-medium hover:bg-linkme-turquoise/90 transition-all shadow-sm"
+            className="flex items-center justify-center gap-2 w-full py-3 px-4 bg-white border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 hover:border-[#5DBEBB] hover:text-[#5DBEBB] transition-all"
           >
             <BarChart3 className="h-4 w-4" />
             Voir les statistiques détaillées
@@ -207,12 +200,12 @@ export default function DashboardPage(): JSX.Element | null {
         </section>
 
         {/* Actions rapides */}
-        <section className="mb-8" data-tour="quick-actions">
+        <section className="mb-8">
           <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">
             Actions rapides
           </h2>
           <div className="grid grid-cols-3 gap-3">
-            {/* Mes sélections */}
+            {/* Ma sélection */}
             <Link
               href="/ma-selection"
               className="flex flex-col items-center gap-2 p-4 bg-white border border-gray-100 rounded-lg hover:bg-amber-50 hover:border-amber-200 transition-colors group"
@@ -221,7 +214,7 @@ export default function DashboardPage(): JSX.Element | null {
                 <Star className="h-5 w-5 text-amber-600" />
               </div>
               <span className="text-sm font-medium text-gray-700 text-center">
-                Mes sélections
+                Ma sélection
               </span>
             </Link>
 

@@ -152,10 +152,7 @@ export function OnboardingChecklist(): JSX.Element | null {
   }
 
   return (
-    <section
-      className="bg-white rounded-2xl border border-gray-100 shadow-sm mb-8 overflow-hidden"
-      data-tour="onboarding-checklist"
-    >
+    <section className="bg-white rounded-2xl border border-gray-100 shadow-sm mb-8 overflow-hidden">
       {/* Header */}
       <div className="p-5 pb-0">
         <div className="flex items-center justify-between mb-4">
