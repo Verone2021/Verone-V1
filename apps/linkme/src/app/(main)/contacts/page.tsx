@@ -3,9 +3,10 @@
 /**
  * Page Contacts LinkMe
  *
- * Affiche tous les contacts accessibles selon le rôle :
- * - enseigne_admin : Contacts de l'enseigne + utilisateurs de l'enseigne
- * - organisation_admin : Contacts de l'organisation + utilisateurs de l'organisation
+ * Répertoire des contacts enseigne avec badges de rôle colorés.
+ * Affiche uniquement les contacts pertinents au workflow commandes :
+ * - Principal (responsable/décisionnaire)
+ * - Facturation (reçoit les factures)
  *
  * @module contacts/page
  * @since 2026-02-04
@@ -13,7 +14,7 @@
 
 import { useState } from 'react';
 
-import { Button, Card } from '@verone/ui';
+import { Button } from '@verone/ui';
 import { Plus, Users, Loader2, Building2 } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
@@ -34,13 +35,11 @@ export default function ContactsPage() {
   const organisationId = linkMeRole?.organisation_id ?? null;
 
   // Fetch contacts selon le rôle
-  // - enseigne_admin : Contacts de l'enseigne (enseigneId set, organisationId null)
-  // - organisation_admin : Contacts de l'organisation (organisationId set, enseigneId null)
   const { data: contactsData, isLoading } = useOrganisationContacts(
     organisationId,
     enseigneId,
     null,
-    true // Inclure tous les contacts accessibles
+    true
   );
 
   const contacts = contactsData?.contacts ?? [];
@@ -64,16 +63,9 @@ export default function ContactsPage() {
     );
   }
 
-  // Titre selon le rôle
-  const pageTitle =
-    linkMeRole.role === 'enseigne_admin'
-      ? "Contacts de l'Enseigne"
-      : 'Mes Contacts';
-
-  const pageDescription =
-    linkMeRole.role === 'enseigne_admin'
-      ? 'Contacts disponibles pour tous les restaurants propres (succursales)'
-      : 'Contacts de votre organisation et utilisateurs';
+  // Nom de l'entité
+  const entityName =
+    linkMeRole.enseigne_name ?? linkMeRole.organisation_name ?? '';
 
   return (
     <div className="space-y-6 p-6">
@@ -82,24 +74,24 @@ export default function ContactsPage() {
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-3">
             <Users className="h-8 w-8 text-linkme-turquoise" />
-            {pageTitle}
+            Contacts
           </h1>
-          <p className="text-sm text-gray-500 mt-2">{pageDescription}</p>
-          {linkMeRole.enseigne_name && (
-            <div className="flex items-center gap-2 mt-2 text-sm text-gray-600">
-              <Building2 className="h-4 w-4" />
-              <span>{linkMeRole.enseigne_name}</span>
-            </div>
-          )}
-          {linkMeRole.organisation_name && !linkMeRole.enseigne_name && (
-            <div className="flex items-center gap-2 mt-2 text-sm text-gray-600">
-              <Building2 className="h-4 w-4" />
-              <span>{linkMeRole.organisation_name}</span>
-            </div>
-          )}
+          <div className="flex items-center gap-2 mt-2 text-sm text-gray-500">
+            <Building2 className="h-4 w-4" />
+            <span>
+              {entityName}
+              {contacts.length > 0 && (
+                <>
+                  {' '}
+                  &middot; {contacts.length} contact
+                  {contacts.length > 1 ? 's' : ''}
+                </>
+              )}
+            </span>
+          </div>
         </div>
 
-        {/* Bouton création - uniquement pour enseigne_admin */}
+        {/* Bouton création — uniquement pour enseigne_admin */}
         {linkMeRole.role === 'enseigne_admin' && enseigneId && (
           <Button onClick={() => setShowCreateModal(true)}>
             <Plus className="mr-2 h-4 w-4" />
@@ -108,52 +100,22 @@ export default function ContactsPage() {
         )}
       </div>
 
-      {/* Stats Cards */}
-      <Card className="p-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="flex-1">
-            <p className="text-sm text-gray-500 mb-1">Total Contacts</p>
-            <p className="text-2xl font-bold text-gray-900">
-              {contacts.length}
-            </p>
-          </div>
-          <div className="flex-1">
-            <p className="text-sm text-gray-500 mb-1">Facturation</p>
-            <p className="text-2xl font-bold text-blue-600">
-              {contacts.filter(c => c.isBillingContact).length}
-            </p>
-          </div>
-          <div className="flex-1">
-            <p className="text-sm text-gray-500 mb-1">Commercial</p>
-            <p className="text-2xl font-bold text-green-600">
-              {contacts.filter(c => c.isCommercialContact).length}
-            </p>
-          </div>
-          <div className="flex-1">
-            <p className="text-sm text-gray-500 mb-1">Technique</p>
-            <p className="text-2xl font-bold text-purple-600">
-              {contacts.filter(c => c.isTechnicalContact).length}
-            </p>
-          </div>
-        </div>
-      </Card>
-
-      {/* Contact Grid */}
+      {/* Contact Grid / Empty State */}
       {contacts.length === 0 ? (
-        <div className="text-center py-12 border-2 border-dashed rounded-lg bg-gray-50">
+        <div className="text-center py-16 border-2 border-dashed rounded-lg bg-gray-50">
           <Users className="h-16 w-16 mx-auto text-gray-300 mb-4" />
           <h3 className="text-lg font-semibold text-gray-700 mb-2">
             Aucun contact
           </h3>
           <p className="text-sm text-gray-500 mb-6 max-w-md mx-auto">
             {linkMeRole.role === 'enseigne_admin'
-              ? 'Les contacts enseigne sont partagés avec tous les restaurants propres. Ajoutez un contact pour commencer.'
+              ? 'Les contacts enseigne sont partagés avec tous vos restaurants. Ajoutez un contact pour commencer.'
               : 'Aucun contact trouvé pour votre organisation.'}
           </p>
           {linkMeRole.role === 'enseigne_admin' && enseigneId && (
             <Button onClick={() => setShowCreateModal(true)}>
               <Plus className="mr-2 h-4 w-4" />
-              Créer le premier contact
+              Ajouter un contact
             </Button>
           )}
         </div>
