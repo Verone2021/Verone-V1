@@ -143,6 +143,7 @@ export function useSubmitEnseigneOrder(): UseSubmitEnseigneOrderReturn {
             p_organisation: p_organisation,
             p_owner: p_owner,
             p_billing: p_billing,
+            p_delivery: {},
           }
         );
 
