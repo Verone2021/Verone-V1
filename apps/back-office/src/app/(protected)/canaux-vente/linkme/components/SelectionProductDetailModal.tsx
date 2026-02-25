@@ -108,19 +108,38 @@ export function SelectionProductDetailModal({
     mode === 'edit' ? localCustomPriceHT : (item?.base_price_ht ?? 0);
   const commissionRate = (item?.commission_rate ?? 0) / 100; // Conversion % → décimal (5.00 → 0.05)
 
+  // Produit affilié = créé par l'affilié (revendeur)
+  // Commission DÉDUITE du revenu, PAS ajoutée au prix client
+  const isAffiliateProduct = !!item?.product?.created_by_affiliate;
+
   // Prix de vente avec taux de marque
   // Note: sellingPriceWithMargin = ce que l'affilié gagne (basePrice / (1 - tauxMarque))
   // Taux de marque: PVHT = PAHT / (1 - taux%)
   const sellingPriceWithMargin = basePrice / (1 - localMarginRate);
 
-  // FORMULE TAUX DE MARQUE + COMMISSION:
-  // 1. D'abord le taux de marque: PVHT = basePrice / (1 - margeAffilie)
-  // 2. Puis la commission: PrixFinal = PVHT × (1 + commission)
-  const finalPriceWithCommission =
-    (basePrice / (1 - localMarginRate)) * (1 + commissionRate);
+  // FORMULE SELON TYPE DE PRODUIT:
+  // Catalogue: PrixFinal = PVHT × (1 + commission) → commission ajoutée au prix
+  // Affilié: PrixFinal = basePrice → commission déduite du revenu affilié
+  const finalPriceWithCommission = isAffiliateProduct
+    ? basePrice
+    : (basePrice / (1 - localMarginRate)) * (1 + commissionRate);
 
-  // Prix client LinkMe (calculé) = base × (1 + commission)
-  const prixClientLinkMe = basePrice * (1 + commissionRate);
+  // Prix client LinkMe (calculé)
+  // Catalogue: base × (1 + commission%) → client paie plus
+  // Affilié: base tel quel → client paie le prix fixé par l'affilié
+  const prixClientLinkMe = isAffiliateProduct
+    ? basePrice
+    : basePrice * (1 + commissionRate);
+
+  // Commission Vérone déduite du revenu affilié (uniquement produits affiliés)
+  const affiliateCommissionRate =
+    item?.product?.affiliate_commission_rate ?? 15;
+  const affiliateCommissionAmount = isAffiliateProduct
+    ? basePrice * (affiliateCommissionRate / 100)
+    : 0;
+  const affiliateNetRevenue = isAffiliateProduct
+    ? basePrice - affiliateCommissionAmount
+    : 0;
 
   // Prix client LinkMe catalogue NITMI (pour comparaison)
   // C'est le prix que le client paie si on utilise le prix catalogue standard
@@ -410,16 +429,28 @@ export function SelectionProductDetailModal({
               {/* Prix client LinkMe (calculé) */}
               <div className="space-y-2">
                 <p className="text-sm font-medium text-blue-600">
-                  Prix client (calculé)
+                  {isAffiliateProduct ? 'Prix client' : 'Prix client (calculé)'}
                 </p>
                 <div className="flex items-center gap-2">
                   <span className="text-2xl font-bold text-blue-600">
                     {prixClientLinkMe.toFixed(2)} €
                   </span>
-                  <span className="text-xs text-muted-foreground">
-                    (× {((1 + commissionRate) * 100).toFixed(0)}%)
-                  </span>
+                  {isAffiliateProduct ? (
+                    <span className="text-xs text-muted-foreground">
+                      (prix fixé par l&apos;affilié)
+                    </span>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">
+                      (× {((1 + commissionRate) * 100).toFixed(0)}%)
+                    </span>
+                  )}
                 </div>
+                {isAffiliateProduct && (
+                  <p className="text-xs text-amber-600">
+                    Commission Vérone : -{affiliateCommissionAmount.toFixed(2)}{' '}
+                    € | Net affilié : {affiliateNetRevenue.toFixed(2)} €
+                  </p>
+                )}
               </div>
             </div>
 
@@ -474,9 +505,15 @@ export function SelectionProductDetailModal({
             {/* Prix de vente final */}
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium">Prix de vente final HT</p>
+                <p className="text-sm font-medium">
+                  {isAffiliateProduct
+                    ? 'Prix client final HT'
+                    : 'Prix de vente final HT'}
+                </p>
                 <p className="text-xs text-muted-foreground">
-                  (base + marge + commission)
+                  {isAffiliateProduct
+                    ? '(prix affilié, commission déduite du revenu)'
+                    : '(base + marge + commission)'}
                 </p>
               </div>
               <p className="text-3xl font-bold text-primary">
@@ -497,17 +534,40 @@ export function SelectionProductDetailModal({
                 {basePrice.toFixed(2)} €
               </span>
 
-              <span>
-                Commission LinkMe ({(item?.commission_rate ?? 0).toFixed(0)}%)
-              </span>
-              <span className="font-mono text-right">
-                {(basePrice * commissionRate).toFixed(2)} €
-              </span>
+              {isAffiliateProduct ? (
+                <>
+                  <span>Commission Vérone ({affiliateCommissionRate}%)</span>
+                  <span className="font-mono text-right text-amber-600">
+                    -{affiliateCommissionAmount.toFixed(2)} €
+                  </span>
 
-              <span>Marge affilié ({(localMarginRate * 100).toFixed(1)}%)</span>
-              <span className="font-mono text-right">
-                {(sellingPriceWithMargin - basePrice).toFixed(2)} €
-              </span>
+                  <Separator className="col-span-2 my-2" />
+
+                  <span className="font-medium text-foreground">
+                    Revenu net affilié
+                  </span>
+                  <span className="font-mono text-right font-bold text-green-600">
+                    {affiliateNetRevenue.toFixed(2)} €
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span>
+                    Commission LinkMe ({(item?.commission_rate ?? 0).toFixed(0)}
+                    %)
+                  </span>
+                  <span className="font-mono text-right">
+                    {(basePrice * commissionRate).toFixed(2)} €
+                  </span>
+
+                  <span>
+                    Marge affilié ({(localMarginRate * 100).toFixed(1)}%)
+                  </span>
+                  <span className="font-mono text-right">
+                    {(sellingPriceWithMargin - basePrice).toFixed(2)} €
+                  </span>
+                </>
+              )}
 
               {item?.public_price_ht && (
                 <>

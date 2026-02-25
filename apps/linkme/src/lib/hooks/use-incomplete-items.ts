@@ -46,7 +46,11 @@ export function useIncompleteItems() {
     affiliate?.id ?? null
   );
   const { data: selections } = useUserSelections();
-  const { data: orders } = useLinkMeOrders(affiliate?.id ?? null, false);
+  const { orders } = useLinkMeOrders({
+    page: 0,
+    pageSize: 100, // Fetch enough to check for drafts
+    statusFilter: 'draft', // Only need drafts for incomplete items
+  });
   const { data: commissionStats } = useAffiliateCommissionStats();
 
   // Aggregate incomplete items
@@ -82,7 +86,8 @@ export function useIncompleteItems() {
     });
 
     // 3. Commandes en brouillon (MEDIUM priority)
-    const draftOrders = orders?.filter(o => o.status === 'draft') ?? [];
+    // Already filtered server-side via statusFilter='draft'
+    const draftOrders = orders ?? [];
     draftOrders.forEach(order => {
       items.push({
         id: `order-${order.id}`,
