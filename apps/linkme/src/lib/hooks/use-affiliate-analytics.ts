@@ -104,8 +104,8 @@ export function useAffiliateAnalytics(period: AnalyticsPeriod = 'all') {
       // 1-2. Requêtes parallèles
       // ============================================
       const [allCommissionsResult, selectionsResult] = await Promise.all([
-        // 1. Commissions (sans jointure sales_orders pour éviter erreurs RLS)
-        // PERF: Limiter à 500 dernières commissions pour éviter chargement 15+ secondes
+        // 1. Commissions + jointure sales_orders pour récupérer la vraie date commande
+        // order_date = date réelle de la commande (vs created_at = date de saisie/import)
         supabase
           .from('linkme_commissions')
           .select(
@@ -122,12 +122,12 @@ export function useAffiliateAnalytics(period: AnalyticsPeriod = 'all') {
             status,
             created_at,
             validated_at,
-            paid_at
+            paid_at,
+            sales_order:order_id(order_date)
           `
           )
           .eq('affiliate_id', affiliate.id)
-          .order('created_at', { ascending: false })
-          .limit(500),
+          .order('created_at', { ascending: false }),
 
         // 2. Sélections de l'affilié
         supabase
@@ -156,12 +156,16 @@ export function useAffiliateAnalytics(period: AnalyticsPeriod = 'all') {
       const allCommissions = allCommissionsResult.data ?? [];
 
       // ============================================
-      // FILTRAGE PAR PÉRIODE (basé sur created_at de la commission)
+      // FILTRAGE PAR PÉRIODE (basé sur sales_orders.order_date = vraie date commande)
+      // Fallback sur linkme_commissions.created_at si order_date indisponible
       // ============================================
       const commissions = periodStartISO
-        ? allCommissions.filter(
-            c => c.created_at && c.created_at >= periodStartISO
-          )
+        ? allCommissions.filter(c => {
+            const orderDate =
+              (c.sales_order as { order_date: string | null } | null)
+                ?.order_date ?? c.created_at;
+            return orderDate && orderDate >= periodStartISO;
+          })
         : allCommissions;
 
       // ============================================
@@ -302,15 +306,18 @@ export function useAffiliateAnalytics(period: AnalyticsPeriod = 'all') {
       // ============================================
       // 5. Revenue par période (graphique) - CA CUMULATIF
       // ============================================
-      // IMPORTANT: Utiliser sales_orders.created_at (date commande, pas commission)
+      // IMPORTANT: Utiliser sales_orders.order_date (date réelle commande, pas date de saisie)
+      // Fallback sur linkme_commissions.created_at si order_date indisponible
       const revenueMap = new Map<
         string,
         { revenue: number; orders: number; label: string }
       >();
 
       commissions.forEach(c => {
-        // Utiliser la date de création de la commission
-        const orderDate = c.created_at;
+        // Vraie date commande (sales_orders.order_date) avec fallback sur created_at
+        const orderDate =
+          (c.sales_order as { order_date: string | null } | null)?.order_date ??
+          c.created_at;
 
         if (orderDate) {
           const date = new Date(orderDate);
