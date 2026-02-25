@@ -2,22 +2,25 @@
 
 /**
  * Page: Mes Commandes
- * Dashboard affilié avec KPIs, pagination server-side et filtre année
+ * Dashboard affilié avec KPIs et historique des commandes
  *
- * KPIs:
- * - Commandes, CA TTC, Panier Moyen : depuis useMonthlyKPIs (query directe RLS-aware)
- * - Commissions TTC : depuis useAffiliateCommissionStats (source de vérité)
+ * KPIs alignes avec le Back-Office (source de verite):
+ * - Total commandes
+ * - Livrees (status = delivered)
+ * - Commissions en attente (commission status = pending)
+ * - Commissions totales
  *
  * @module CommandesPage
  * @since 2025-12-19
- * @updated 2026-02-25 - Pagination server-side, filtre année, KPIs corrigés
+ * @updated 2025-12-19 - Alignement KPIs avec Back-Office
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useMemo } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
 
+// Import direct du hook pour éviter les exports problématiques
 import {
   useMonthlyKPIs,
   formatVariation as _formatVariation,
@@ -31,15 +34,12 @@ import {
   ShoppingBag,
   ChevronDown,
   ChevronRight,
-  ChevronLeft,
   User,
   MapPin,
   Wallet,
   Pencil,
-  Calendar,
 } from 'lucide-react';
 
-import { PageTourTrigger } from '../../../components/onboarding/PageTourTrigger';
 import { HelpTooltip } from '../../../components/ui/help-tooltip';
 import { OrderDetailModal } from './components/OrderDetailModal';
 import {
@@ -47,6 +47,7 @@ import {
   type LinkMeOrder,
 } from '../../../hooks/use-linkme-orders';
 import { useAffiliateCommissionStats } from '../../../lib/hooks/use-affiliate-commission-stats';
+import { useUserAffiliate } from '../../../lib/hooks/use-user-selection';
 
 // Mapping des statuts DB → Labels
 const STATUS_LABELS: Record<string, string> = {
@@ -68,7 +69,7 @@ const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
   partially_shipped: { bg: 'bg-indigo-100', text: 'text-indigo-700' },
 };
 
-// Onglets alignes avec Back-Office
+// Onglets alignes avec Back-Office (source de verite)
 type TabType =
   | 'all'
   | 'pending_approval'
@@ -77,71 +78,88 @@ type TabType =
   | 'shipped'
   | 'cancelled';
 
-const PAGE_SIZE = 20;
-
-// Available years for filter
-const YEAR_OPTIONS = [
-  { value: 'all', label: 'Toutes les années' },
-  { value: '2026', label: '2026' },
-  { value: '2025', label: '2025' },
-];
-
 export default function CommandesPage(): JSX.Element {
   // State
   const [activeTab, setActiveTab] = useState<TabType>('all');
-  const [page, setPage] = useState(0);
-  const [yearFilter, setYearFilter] = useState('all');
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<LinkMeOrder | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
-  // Data - Commandes avec pagination server-side
+  // Data - Affilié et ses commandes
+  const { data: affiliate, isLoading: affiliateLoading } = useUserAffiliate();
   const {
-    orders,
-    totalCount,
+    data: orders,
     isLoading: ordersLoading,
     error,
-    statusCounts,
-  } = useLinkMeOrders({
-    page,
-    pageSize: PAGE_SIZE,
-    yearFilter,
-    statusFilter: activeTab,
-  });
+  } = useLinkMeOrders(affiliate?.id ?? null, false); // false = commandes de l'affilié uniquement
 
-  // KPIs mensuels (query directe, RLS-aware)
+  // KPIs mensuels avec variations (hook partagé avec le back-office)
   const { data: monthlyKPIs, isLoading: kpisLoading } = useMonthlyKPIs({
-    enabled: true,
+    affiliateId: affiliate?.id,
+    enabled: !!affiliate?.id,
   });
 
   // SOURCE DE VÉRITÉ: Statistiques commissions depuis linkme_commissions
   const { data: commissionStats, isLoading: commissionStatsLoading } =
     useAffiliateCommissionStats();
 
-  const isLoading = ordersLoading || kpisLoading || commissionStatsLoading;
+  const isLoading =
+    affiliateLoading || ordersLoading || kpisLoading || commissionStatsLoading;
 
-  const totalPages = Math.ceil(totalCount / PAGE_SIZE);
+  // KPIs par statut (comptages locaux depuis les commandes)
+  const statusKpis = useMemo(() => {
+    const defaults = {
+      total: 0,
+      pendingApproval: 0,
+      draft: 0,
+      validated: 0,
+      shipped: 0,
+      cancelled: 0,
+    };
 
-  // Handlers
-  const handleTabChange = useCallback((tab: TabType) => {
-    setActiveTab(tab);
-    setPage(0); // Reset pagination on tab change
-  }, []);
+    if (!orders) return defaults;
 
-  const handleYearChange = useCallback(
-    (e: React.ChangeEvent<HTMLSelectElement>) => {
-      setYearFilter(e.target.value);
-      setPage(0); // Reset pagination on filter change
-    },
-    []
-  );
+    return {
+      total: orders.length,
+      pendingApproval: orders.filter(o => o.status === 'pending_approval')
+        .length,
+      draft: orders.filter(o => o.status === 'draft').length,
+      validated: orders.filter(o => o.status === 'validated').length,
+      shipped: orders.filter(o =>
+        ['shipped', 'partially_shipped', 'delivered'].includes(o.status)
+      ).length,
+      cancelled: orders.filter(o => o.status === 'cancelled').length,
+    };
+  }, [orders]);
+
+  // Filtrer les commandes selon l'onglet actif - aligne avec Back-Office
+  const filteredOrders = useMemo(() => {
+    if (!orders) return [];
+
+    switch (activeTab) {
+      case 'pending_approval':
+        return orders.filter(o => o.status === 'pending_approval');
+      case 'draft':
+        return orders.filter(o => o.status === 'draft');
+      case 'validated':
+        return orders.filter(o => o.status === 'validated');
+      case 'shipped':
+        return orders.filter(o =>
+          ['shipped', 'partially_shipped', 'delivered'].includes(o.status)
+        );
+      case 'cancelled':
+        return orders.filter(o => o.status === 'cancelled');
+      default:
+        return orders;
+    }
+  }, [orders, activeTab]);
 
   const toggleOrder = (orderId: string) => {
     setExpandedOrderId(prev => (prev === orderId ? null : orderId));
   };
 
   const openDetailModal = (order: LinkMeOrder, e: React.MouseEvent) => {
-    e.stopPropagation();
+    e.stopPropagation(); // Empecher le toggle expand
     setSelectedOrder(order);
     setIsDetailModalOpen(true);
   };
@@ -151,18 +169,10 @@ export default function CommandesPage(): JSX.Element {
     setSelectedOrder(null);
   };
 
-  // Tab count helper
-  const getTabCount = (tabId: TabType): number => {
-    if (tabId === 'all') return statusCounts['all'] ?? 0;
-    if (tabId === 'shipped') return statusCounts['shipped_tab'] ?? 0;
-    return statusCounts[tabId] ?? 0;
-  };
-
   return (
     <div className="min-h-screen bg-gray-50">
-      <PageTourTrigger tourId="tour_order" />
       {/* Header */}
-      <div data-tour="orders-header" className="bg-white border-b px-6 py-4">
+      <div className="bg-white border-b px-6 py-4">
         <div className="flex items-center justify-between">
           <div>
             <div className="flex items-center gap-2">
@@ -177,7 +187,6 @@ export default function CommandesPage(): JSX.Element {
           </div>
           <Link
             href="/commandes/nouvelle"
-            data-tour="orders-create"
             className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-sm"
           >
             <Plus className="h-5 w-5" />
@@ -270,65 +279,50 @@ export default function CommandesPage(): JSX.Element {
           </div>
         </div>
 
-        {/* Filtre année */}
-        <div className="flex items-center justify-end gap-3">
-          <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-gray-400" />
-            <select
-              value={yearFilter}
-              onChange={handleYearChange}
-              className="text-sm border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              {YEAR_OPTIONS.map(opt => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {/* Tabs de filtrage */}
-        <div
-          data-tour="orders-filters"
-          className="bg-white rounded-xl border shadow-sm"
-        >
+        {/* Tabs de filtrage - Alignes avec Back-Office */}
+        <div className="bg-white rounded-xl border shadow-sm">
           <div className="border-b overflow-x-auto">
             <nav className="flex min-w-max">
               {[
                 {
                   id: 'all' as const,
                   label: 'Toutes',
+                  count: statusKpis.total,
                   color: 'blue',
                 },
                 {
                   id: 'pending_approval' as const,
                   label: 'En approbation',
+                  count: statusKpis.pendingApproval,
                   color: 'teal',
                 },
                 {
                   id: 'draft' as const,
                   label: 'Brouillon',
+                  count: statusKpis.draft,
                   color: 'orange',
                 },
                 {
                   id: 'validated' as const,
                   label: 'Validée',
+                  count: statusKpis.validated,
                   color: 'blue',
                 },
                 {
                   id: 'shipped' as const,
                   label: 'Expédiée',
+                  count: statusKpis.shipped,
                   color: 'green',
                 },
                 {
                   id: 'cancelled' as const,
                   label: 'Annulée',
+                  count: statusKpis.cancelled,
                   color: 'gray',
                 },
               ].map(tab => {
                 const isActive = activeTab === tab.id;
-                const count = getTabCount(tab.id);
+                // Couleur du badge selon le type - aligne avec Back-Office
                 const badgeColor =
                   tab.color === 'orange'
                     ? 'bg-amber-100 text-amber-600'
@@ -345,7 +339,7 @@ export default function CommandesPage(): JSX.Element {
                 return (
                   <button
                     key={tab.id}
-                    onClick={() => handleTabChange(tab.id)}
+                    onClick={() => setActiveTab(tab.id)}
                     className={`px-4 py-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                       isActive
                         ? 'border-blue-600 text-blue-600'
@@ -356,7 +350,7 @@ export default function CommandesPage(): JSX.Element {
                     <span
                       className={`ml-2 px-2 py-0.5 text-xs rounded-full ${badgeColor}`}
                     >
-                      {count}
+                      {tab.count}
                     </span>
                   </button>
                 );
@@ -365,7 +359,7 @@ export default function CommandesPage(): JSX.Element {
           </div>
 
           {/* Liste des commandes */}
-          <div data-tour="orders-list" className="p-4">
+          <div className="p-4">
             {isLoading && (
               <div className="flex items-center justify-center py-16">
                 <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
@@ -380,7 +374,7 @@ export default function CommandesPage(): JSX.Element {
               </div>
             )}
 
-            {!isLoading && !error && orders.length === 0 && (
+            {!isLoading && !error && filteredOrders.length === 0 && (
               <div className="text-center py-16">
                 <ShoppingBag className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                 <p className="text-gray-500 text-lg">Aucune commande</p>
@@ -401,9 +395,9 @@ export default function CommandesPage(): JSX.Element {
               </div>
             )}
 
-            {!isLoading && !error && orders.length > 0 && (
+            {!isLoading && !error && filteredOrders.length > 0 && (
               <div className="space-y-3">
-                {orders.map(order => {
+                {filteredOrders.map(order => {
                   const isExpanded = expandedOrderId === order.id;
                   const statusColor =
                     STATUS_COLORS[order.status] || STATUS_COLORS.draft;
@@ -420,6 +414,7 @@ export default function CommandesPage(): JSX.Element {
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-4">
+                            {/* Chevron */}
                             <div className="text-gray-400">
                               {isExpanded ? (
                                 <ChevronDown className="h-5 w-5" />
@@ -428,6 +423,7 @@ export default function CommandesPage(): JSX.Element {
                               )}
                             </div>
 
+                            {/* Numéro commande */}
                             <div>
                               <p className="font-semibold text-gray-900">
                                 {order.order_number}
@@ -444,6 +440,7 @@ export default function CommandesPage(): JSX.Element {
                               </p>
                             </div>
 
+                            {/* Badge statut */}
                             <span
                               className={`px-3 py-1 text-xs font-medium rounded-full ${statusColor.bg} ${statusColor.text}`}
                             >
@@ -451,6 +448,7 @@ export default function CommandesPage(): JSX.Element {
                             </span>
                           </div>
 
+                          {/* Montants */}
                           <div className="flex items-center gap-8 text-right">
                             <div>
                               <p className="text-sm text-gray-500">Client</p>
@@ -473,12 +471,14 @@ export default function CommandesPage(): JSX.Element {
                               </p>
                             </div>
 
+                            {/* Badge En attente validation (si en attente) */}
                             {order.status === 'pending_approval' && (
                               <span className="px-3 py-1.5 text-xs font-medium text-amber-700 bg-amber-100 rounded-full">
                                 En attente validation Vérone
                               </span>
                             )}
 
+                            {/* Bouton Modifier (brouillon uniquement) */}
                             {order.status === 'draft' && (
                               <Link
                                 href={`/commandes/${order.id}/modifier`}
@@ -490,6 +490,7 @@ export default function CommandesPage(): JSX.Element {
                               </Link>
                             )}
 
+                            {/* Bouton Details */}
                             <button
                               onClick={e => openDetailModal(order, e)}
                               className="px-3 py-1.5 text-sm font-medium text-[#5DBEBB] hover:text-white hover:bg-[#5DBEBB] border border-[#5DBEBB] rounded-lg transition-colors"
@@ -500,10 +501,12 @@ export default function CommandesPage(): JSX.Element {
                         </div>
                       </div>
 
-                      {/* Détails de la commande (expanded) */}
+                      {/* Détails de la commande (expanded) - Version compacte */}
                       {isExpanded && (
                         <div className="border-t bg-gray-50 px-4 py-3">
+                          {/* Info client + adresse en ligne */}
                           <div className="flex flex-wrap items-start gap-6 text-sm mb-4">
+                            {/* Client */}
                             <div className="flex items-start gap-2">
                               <User className="h-4 w-4 text-gray-400 mt-0.5" />
                               <div>
@@ -518,6 +521,7 @@ export default function CommandesPage(): JSX.Element {
                               </div>
                             </div>
 
+                            {/* Adresse */}
                             {(Boolean(order.customer_address) ||
                               Boolean(order.customer_city)) && (
                               <div className="flex items-start gap-2">
@@ -531,6 +535,7 @@ export default function CommandesPage(): JSX.Element {
                               </div>
                             )}
 
+                            {/* Totaux inline */}
                             <div className="flex items-center gap-4 ml-auto text-sm">
                               <span className="text-gray-500">
                                 HT:{' '}
@@ -550,6 +555,7 @@ export default function CommandesPage(): JSX.Element {
                             </div>
                           </div>
 
+                          {/* Lignes de commande - compact */}
                           {order.items && order.items.length > 0 && (
                             <div className="bg-white rounded-lg border overflow-hidden">
                               <table className="w-full text-sm">
@@ -627,38 +633,6 @@ export default function CommandesPage(): JSX.Element {
                     </div>
                   );
                 })}
-              </div>
-            )}
-
-            {/* Pagination */}
-            {!isLoading && !error && totalCount > PAGE_SIZE && (
-              <div className="flex items-center justify-between pt-4 border-t mt-4">
-                <p className="text-sm text-gray-500">
-                  {totalCount} commande{totalCount > 1 ? 's' : ''} au total
-                </p>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setPage(p => Math.max(0, p - 1))}
-                    disabled={page === 0}
-                    className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium border rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                    Précédent
-                  </button>
-                  <span className="text-sm text-gray-600 px-2">
-                    Page {page + 1} sur {totalPages}
-                  </span>
-                  <button
-                    onClick={() =>
-                      setPage(p => Math.min(totalPages - 1, p + 1))
-                    }
-                    disabled={page >= totalPages - 1}
-                    className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium border rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50"
-                  >
-                    Suivant
-                    <ChevronRight className="h-4 w-4" />
-                  </button>
-                </div>
               </div>
             )}
           </div>
