@@ -44,7 +44,9 @@ export interface OrderForLink {
 export interface RapprochementContentProps {
   order: OrderForLink | null;
   onSuccess?: () => void;
-  orderType?: 'sales_order' | 'purchase_order';
+  // 'avoir' = credit note (negative total_ttc): uses debit transactions like purchase_order
+  // but links via p_sales_order_id (not p_purchase_order_id)
+  orderType?: 'sales_order' | 'purchase_order' | 'avoir';
 }
 
 interface CreditTransaction {
@@ -172,7 +174,9 @@ function calculateMatch(
 ): { priority: string; score: number; reasons: string[]; sortOrder: number } {
   const reasons: string[] = [];
 
-  const orderAmount = order.total_ttc;
+  // Use absolute value: avoirs have negative total_ttc but debit transactions are also
+  // stored as negative amounts — compare absolute values for correct matching
+  const orderAmount = Math.abs(order.total_ttc);
   const txAmount = Math.abs(transaction.amount);
   const amountDiff = Math.abs(txAmount - orderAmount);
   const amountPct = orderAmount > 0 ? (amountDiff / orderAmount) * 100 : 100;
@@ -482,6 +486,9 @@ export function RapprochementContent({
   onSuccess,
   orderType = 'sales_order',
 }: RapprochementContentProps) {
+  // Avoirs (credit notes) behave like purchase orders for display: debit side, red color, '-' sign
+  const isDebitSide = orderType === 'purchase_order' || orderType === 'avoir';
+
   const [transactions, setTransactions] = useState<CreditTransaction[]>([]);
   const [searchResults, setSearchResults] = useState<CreditTransaction[]>([]);
   const [linkedTxIds, setLinkedTxIds] = useState<Set<string>>(new Set());
@@ -501,8 +508,13 @@ export function RapprochementContent({
     setError(null);
 
     try {
-      const transactionSide =
-        orderType === 'purchase_order' ? 'debit' : 'credit';
+      // Avoirs (credit notes) use debit transactions — same side as purchase orders
+      const isDebitOrder =
+        orderType === 'purchase_order' || orderType === 'avoir';
+      const transactionSide = isDebitOrder ? 'debit' : 'credit';
+      // For avoirs, total_ttc is negative — use negative amount range for debit matching
+      const amountForRange =
+        orderType === 'avoir' ? order.total_ttc : Math.abs(order.total_ttc);
       const fields =
         'id, transaction_id, label, amount, counterparty_name, emitted_at, settled_at, unified_status';
 
@@ -521,8 +533,8 @@ export function RapprochementContent({
         .select(fields)
         .eq('side', transactionSide)
         .in('unified_status', ['to_process', 'classified'])
-        .gte('amount', order.total_ttc - 1)
-        .lte('amount', order.total_ttc + 1)
+        .gte('amount', amountForRange - 1)
+        .lte('amount', amountForRange + 1)
         .order('settled_at', { ascending: false, nullsFirst: false })
         .limit(30);
 
@@ -570,20 +582,6 @@ export function RapprochementContent({
     }
   }, [order, fetchTransactions, fetchLinkedIds]);
 
-  // Auto-fill search with customer/supplier name on mount
-  // Priority: altName first (shorter, more discriminant for bank labels)
-  useEffect(() => {
-    if (!order) return;
-
-    const keyword = extractSearchKeyword(
-      order.customer_name ?? '',
-      order.customer_name_alt
-    );
-    if (keyword) {
-      setSearchQuery(keyword);
-    }
-  }, [order]);
-
   // Server-side search: when user types >= 3 chars, search ALL transactions in DB
   useEffect(() => {
     if (searchTimerRef.current) {
@@ -597,7 +595,10 @@ export function RapprochementContent({
     }
 
     setIsSearching(true);
-    const transactionSide = orderType === 'purchase_order' ? 'debit' : 'credit';
+    const transactionSide =
+      orderType === 'purchase_order' || orderType === 'avoir'
+        ? 'debit'
+        : 'credit';
 
     searchTimerRef.current = setTimeout(() => {
       const runSearch = async () => {
@@ -671,14 +672,6 @@ export function RapprochementContent({
   const suggestions = useMemo(() => {
     if (!order || allTransactions.length === 0) return [];
 
-    // Extract name keywords for grouping (same logic as extractSearchKeyword)
-    const allNames = [order.customer_name, order.customer_name_alt]
-      .filter(Boolean)
-      .map(n => (n as string).toLowerCase().trim());
-    const nameWords = allNames.flatMap(name =>
-      name.split(/[\s,.-]+/).filter(w => w.length >= 3 && !GENERIC_WORDS.has(w))
-    );
-
     const withScores: TransactionSuggestion[] = allTransactions
       .map(tx => {
         const { priority, score, reasons, sortOrder } = calculateMatch(
@@ -698,21 +691,8 @@ export function RapprochementContent({
         tx => tx.matchPriority !== 'none' && tx.matchPriority !== 'excluded'
       );
 
-    // Group: name-matched transactions first, then others — both sorted by score
-    const hasNameMatch = (tx: TransactionSuggestion) => {
-      if (nameWords.length === 0) return false;
-      const label = (tx.label || '').toLowerCase();
-      const counterparty = (tx.counterparty_name || '').toLowerCase();
-      return nameWords.some(w => label.includes(w) || counterparty.includes(w));
-    };
-
-    const nameMatched = withScores.filter(hasNameMatch);
-    const others = withScores.filter(tx => !hasNameMatch(tx));
-
-    return [
-      ...nameMatched.sort((a, b) => a.sortOrder - b.sortOrder),
-      ...others.sort((a, b) => a.sortOrder - b.sortOrder),
-    ];
+    // Sort purely by score — exact amount match always first
+    return withScores.sort((a, b) => a.sortOrder - b.sortOrder);
   }, [order, allTransactions]);
 
   const filteredSuggestions = useMemo(() => {
@@ -757,12 +737,13 @@ export function RapprochementContent({
           ? {
               p_transaction_id: transactionId,
               p_purchase_order_id: order.id,
-              p_allocated_amount: order.total_ttc,
+              p_allocated_amount: Math.abs(order.total_ttc),
             }
           : {
+              // sales_order and avoir both link via p_sales_order_id
               p_transaction_id: transactionId,
               p_sales_order_id: order.id,
-              p_allocated_amount: order.total_ttc,
+              p_allocated_amount: Math.abs(order.total_ttc),
             };
 
       const { error: linkError } = await (supabase.rpc as CallableFunction)(
@@ -812,10 +793,10 @@ export function RapprochementContent({
             </p>
           </div>
           <span
-            className={`text-base font-bold ${orderType === 'purchase_order' ? 'text-red-600' : 'text-green-600'}`}
+            className={`text-base font-bold ${isDebitSide ? 'text-red-600' : 'text-green-600'}`}
           >
-            {orderType === 'purchase_order' ? '-' : ''}
-            {formatCurrency(order.total_ttc)}
+            {isDebitSide ? '-' : ''}
+            {formatCurrency(Math.abs(order.total_ttc))}
           </span>
         </div>
       </div>
@@ -865,9 +846,9 @@ export function RapprochementContent({
                   </div>
                   <div className="flex items-center gap-2">
                     <span
-                      className={`text-sm font-semibold ${orderType === 'purchase_order' ? 'text-red-600' : 'text-green-600'}`}
+                      className={`text-sm font-semibold ${isDebitSide ? 'text-red-600' : 'text-green-600'}`}
                     >
-                      {orderType === 'purchase_order' ? '-' : '+'}
+                      {isDebitSide ? '-' : '+'}
                       {formatCurrency(Math.abs(tx.amount))}
                     </span>
                     <Badge
@@ -923,8 +904,7 @@ export function RapprochementContent({
             <Package className="h-8 w-8 mx-auto mb-2 opacity-50" />
             <p className="text-sm">Aucune transaction disponible</p>
             <p className="text-xs mt-1">
-              Les transactions{' '}
-              {orderType === 'purchase_order' ? 'débit' : 'crédit'} non
+              Les transactions {isDebitSide ? 'débit' : 'crédit'} non
               rapprochées apparaîtront ici
             </p>
           </div>
@@ -971,9 +951,9 @@ export function RapprochementContent({
                     </div>
                     <div className="text-right flex items-center gap-2">
                       <span
-                        className={`font-semibold text-sm ${orderType === 'purchase_order' ? 'text-red-600' : 'text-green-600'}`}
+                        className={`font-semibold text-sm ${isDebitSide ? 'text-red-600' : 'text-green-600'}`}
                       >
-                        {orderType === 'purchase_order' ? '-' : '+'}
+                        {isDebitSide ? '-' : '+'}
                         {formatCurrency(Math.abs(tx.amount))}
                       </span>
                       {badge.label && (
@@ -1010,8 +990,7 @@ export function RapprochementContent({
               otherTransactions.length > 0 && (
                 <div className="flex items-center gap-2 pb-1">
                   <span className="text-xs font-medium text-slate-500">
-                    Toutes les transactions{' '}
-                    {orderType === 'purchase_order' ? 'débit' : 'crédit'} (
+                    Toutes les transactions {isDebitSide ? 'débit' : 'crédit'} (
                     {otherTransactions.length})
                   </span>
                 </div>
@@ -1045,9 +1024,9 @@ export function RapprochementContent({
                   </div>
                   <div className="text-right">
                     <span
-                      className={`font-semibold text-sm ${orderType === 'purchase_order' ? 'text-red-600' : 'text-green-600'}`}
+                      className={`font-semibold text-sm ${isDebitSide ? 'text-red-600' : 'text-green-600'}`}
                     >
-                      {orderType === 'purchase_order' ? '-' : '+'}
+                      {isDebitSide ? '-' : '+'}
                       {formatCurrency(Math.abs(tx.amount))}
                     </span>
                   </div>

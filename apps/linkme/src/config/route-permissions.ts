@@ -69,12 +69,6 @@ export const ROUTE_PERMISSIONS: Record<string, RoutePermission> = {
     description: 'Rémunérations et commissions',
   },
 
-  '/analytiques': {
-    roles: ['enseigne_admin', 'organisation_admin'],
-    redirect: '/dashboard',
-    description: 'Statistiques et analytiques',
-  },
-
   '/parametres': {
     roles: ['enseigne_admin', 'organisation_admin'],
     redirect: '/dashboard',
@@ -97,6 +91,18 @@ export const ROUTE_PERMISSIONS: Record<string, RoutePermission> = {
     roles: ['enseigne_admin', 'organisation_admin'],
     redirect: '/dashboard',
     description: 'Contacts et utilisateurs accessibles',
+  },
+
+  '/stockage': {
+    roles: ['enseigne_admin', 'organisation_admin'],
+    redirect: '/dashboard',
+    description: 'Produits stockés et tarification',
+  },
+
+  '/statistiques': {
+    roles: ['enseigne_admin', 'organisation_admin'],
+    redirect: '/dashboard',
+    description: 'Statistiques et performances',
   },
 } as const;
 

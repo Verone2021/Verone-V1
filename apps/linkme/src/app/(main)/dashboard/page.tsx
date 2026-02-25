@@ -186,7 +186,7 @@ export default function DashboardPage(): JSX.Element | null {
         {/* Lien vers Analytics */}
         <section className="mb-8">
           <Link
-            href="/analytics"
+            href="/statistiques"
             className="flex items-center justify-center gap-2 w-full py-3 px-4 bg-white border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 hover:border-[#5DBEBB] hover:text-[#5DBEBB] transition-all"
           >
             <BarChart3 className="h-4 w-4" />
@@ -259,7 +259,7 @@ export default function DashboardPage(): JSX.Element | null {
                   </div>
                 </div>
                 <Link
-                  href="/analytics"
+                  href="/statistiques"
                   className="text-sm text-gray-500 hover:text-[#5DBEBB] transition-colors"
                 >
                   Tout voir

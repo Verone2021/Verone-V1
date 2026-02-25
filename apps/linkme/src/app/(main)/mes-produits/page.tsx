@@ -13,8 +13,9 @@
  * @updated 2026-01
  */
 
-import { Suspense, useEffect } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
@@ -31,6 +32,7 @@ import {
   XCircle,
   FileEdit,
   AlertCircle,
+  Warehouse,
 } from 'lucide-react';
 
 import { useAuth, type LinkMeRole } from '@/contexts/AuthContext';
@@ -40,6 +42,7 @@ import {
   type AffiliateProductApprovalStatus,
 } from '@/lib/hooks/use-affiliate-products';
 import { cn } from '@/lib/utils';
+import { SendToStorageDialog } from './components/SendToStorageDialog';
 
 // Roles qui peuvent creer des produits
 const CAN_CREATE_ROLES: LinkMeRole[] = ['enseigne_admin', 'organisation_admin'];
@@ -229,6 +232,9 @@ function MesProduitsContent(): JSX.Element | null {
               <table className="w-full">
                 <thead className="bg-gray-50/50 border-b border-gray-100">
                   <tr>
+                    <th className="text-left px-6 py-4 text-sm font-medium text-gray-500 w-14">
+                      Photo
+                    </th>
                     <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
                       Produit
                     </th>
@@ -264,10 +270,12 @@ function MesProduitsContent(): JSX.Element | null {
 }
 
 function ProductRow({ product }: { product: AffiliateProduct }): JSX.Element {
+  const [showStorageDialog, setShowStorageDialog] = useState(false);
   const config = STATUS_CONFIG[product.affiliate_approval_status];
   const Icon = config.icon;
   const canEdit = product.affiliate_approval_status === 'draft';
   const isRejected = product.affiliate_approval_status === 'rejected';
+  const isApproved = product.affiliate_approval_status === 'approved';
 
   // Calcul du prix de vente HT pour les produits AFFILIÉS
   // Le modèle est: l'affilié fixe son payout, Vérone AJOUTE sa commission
@@ -279,6 +287,21 @@ function ProductRow({ product }: { product: AffiliateProduct }): JSX.Element {
 
   return (
     <tr className="hover:bg-gray-50/50 transition-colors">
+      <td className="px-6 py-4">
+        {product.product_image_url ? (
+          <Image
+            src={product.product_image_url}
+            alt={product.name}
+            width={40}
+            height={40}
+            className="w-10 h-10 rounded-lg object-cover"
+          />
+        ) : (
+          <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+            <Package className="h-5 w-5 text-gray-400" />
+          </div>
+        )}
+      </td>
       <td className="px-6 py-4">
         <div>
           <p className="font-medium text-linkme-marine">{product.name}</p>
@@ -352,7 +375,28 @@ function ProductRow({ product }: { product: AffiliateProduct }): JSX.Element {
               Corriger
             </Link>
           )}
+
+          {/* Envoyer au stock - uniquement approved */}
+          {isApproved && (
+            <button
+              onClick={() => setShowStorageDialog(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition-colors font-medium"
+              title="Envoyer au stock Verone"
+            >
+              <Warehouse className="h-3.5 w-3.5" />
+              Stock
+            </button>
+          )}
         </div>
+
+        {/* Dialog envoi au stock */}
+        {showStorageDialog && (
+          <SendToStorageDialog
+            product={{ id: product.id, name: product.name, sku: product.sku }}
+            isOpen={showStorageDialog}
+            onClose={() => setShowStorageDialog(false)}
+          />
+        )}
       </td>
     </tr>
   );

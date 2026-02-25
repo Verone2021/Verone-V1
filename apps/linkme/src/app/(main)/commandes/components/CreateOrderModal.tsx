@@ -678,6 +678,7 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
           p_organisation: p_organisation,
           p_owner: p_owner,
           p_billing: p_billing,
+          p_delivery: {},
         }
       )) as { data: CreatePublicLinkmeOrderResult | null; error: Error | null };
 

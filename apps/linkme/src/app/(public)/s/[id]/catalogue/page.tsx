@@ -1,9 +1,10 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Image from 'next/image';
 
+import { createClient } from '@verone/utils/supabase/client';
 import { Minus, Package, Plus, Star } from 'lucide-react';
 
 import { ProductDetailModal } from '@/components/catalogue/ProductDetailModal';
@@ -34,6 +35,20 @@ export default function CataloguePage() {
     addToCart,
     updateQuantity,
   } = useSelection();
+
+  // Track selection view (once per page load) — public visitors
+  const hasTrackedView = useRef(false);
+  useEffect(() => {
+    if (selection?.id && !hasTrackedView.current) {
+      hasTrackedView.current = true;
+      const supabase = createClient();
+      void supabase
+        .rpc('track_selection_view', { p_selection_id: selection.id })
+        .then(null, (err: unknown) =>
+          console.warn('Failed to track view:', err)
+        );
+    }
+  }, [selection?.id]);
 
   const [_isSearchOpen, _setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');

@@ -14,13 +14,11 @@
 import { useEffect, useState, useMemo, Suspense } from 'react';
 
 import dynamic from 'next/dynamic';
-import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 import { ConfirmDialog } from '@verone/ui';
 import {
   Building2,
-  ArrowLeft,
   Loader2,
   Search,
   ChevronLeft,
@@ -36,7 +34,6 @@ import {
   OrganisationFilterTabs,
   QuickEditShippingAddressModal,
   QuickEditOwnershipTypeModal,
-  EnseigneContactsTab,
 } from '../../../components/organisations';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useArchiveOrganisation } from '../../../lib/hooks/use-archive-organisation';
@@ -44,7 +41,6 @@ import {
   useEnseigneOrganisations,
   type EnseigneOrganisation,
 } from '../../../lib/hooks/use-enseigne-organisations';
-import { useOrganisationContacts } from '../../../lib/hooks/use-organisation-contacts';
 import { useOrganisationStats } from '../../../lib/hooks/use-organisation-stats';
 import { useUserAffiliate } from '../../../lib/hooks/use-user-selection';
 
@@ -82,19 +78,6 @@ function OrganisationsPageContent(): JSX.Element | null {
   const enseigneId = affiliate?.enseigne_id ?? null;
   const { data: statsMap } = useOrganisationStats(enseigneId);
 
-  // Contacts enseigne (pour l'onglet Contacts)
-  const { data: enseigneContactsData } = useOrganisationContacts(
-    null,
-    enseigneId,
-    null,
-    true // Include enseigne contacts
-  );
-
-  // Déterminer si l'onglet Contacts doit être affiché
-  // Visible uniquement pour enseigne_admin
-  const showContactsTab = linkMeRole?.role === 'enseigne_admin' && !!enseigneId;
-  const contactsCount = enseigneContactsData?.contacts.length ?? 0;
-
   // Mutation archivage
   const { mutate: archiveOrg, isPending: isArchiving } =
     useArchiveOrganisation();
@@ -103,7 +86,7 @@ function OrganisationsPageContent(): JSX.Element | null {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [activeTab, setActiveTab] = useState<
-    'all' | 'succursale' | 'franchise' | 'incomplete' | 'map' | 'contacts'
+    'all' | 'succursale' | 'franchise' | 'incomplete' | 'map'
   >('all');
   const [detailSheetOrgId, setDetailSheetOrgId] = useState<string | null>(null);
   const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
@@ -271,14 +254,6 @@ function OrganisationsPageContent(): JSX.Element | null {
       <div className="max-w-6xl mx-auto px-4 py-6">
         {/* Header */}
         <div className="mb-6">
-          <Link
-            href="/dashboard"
-            className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 mb-3"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Retour au dashboard
-          </Link>
-
           <div className="flex items-center justify-between gap-4">
             <div>
               <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
@@ -315,8 +290,6 @@ function OrganisationsPageContent(): JSX.Element | null {
           activeTab={activeTab}
           onTabChange={setActiveTab}
           stats={tabStats}
-          showContactsTab={showContactsTab}
-          contactsCount={contactsCount}
         />
 
         {/* Barre de recherche + info pagination */}
@@ -338,24 +311,8 @@ function OrganisationsPageContent(): JSX.Element | null {
           )}
         </div>
 
-        {/* Contenu principal : Carte, Grille ou Contacts */}
-        {activeTab === 'contacts' ? (
-          /* Onglet Contacts Enseigne */
-          <div className="bg-white rounded-xl border border-gray-200 p-6">
-            {enseigneId && affiliate?.id ? (
-              <EnseigneContactsTab
-                enseigneId={enseigneId}
-                parentOrgId={affiliate.id}
-              />
-            ) : (
-              <div className="text-center py-12">
-                <p className="text-gray-500">
-                  Impossible de charger les contacts enseigne
-                </p>
-              </div>
-            )}
-          </div>
-        ) : activeTab === 'map' ? (
+        {/* Contenu principal : Carte ou Grille */}
+        {activeTab === 'map' ? (
           /* Vue Carte */
           <>
             {/* KPI Cards pour la carte */}

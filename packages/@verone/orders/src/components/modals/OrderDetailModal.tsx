@@ -1348,6 +1348,7 @@ export function OrderDetailModal({
                   order_date: order.order_date ?? null,
                   shipped_at: order.shipped_at ?? null,
                 }}
+                orderType={(order.total_ttc ?? 0) < 0 ? 'avoir' : 'sales_order'}
                 onSuccess={() => {
                   setShowPaymentDialog(false);
                   onUpdate?.();

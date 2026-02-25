@@ -7,7 +7,6 @@ import { usePathname } from 'next/navigation';
 
 import {
   LayoutDashboard,
-  ShoppingBag,
   Star,
   Package,
   ShoppingCart,
@@ -17,6 +16,11 @@ import {
   Building2,
   LogOut,
   X,
+  ChevronDown,
+  ChevronRight,
+  Share2,
+  Users,
+  Warehouse,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -27,47 +31,93 @@ import { cn } from '@/lib/utils';
 import { useSidebar } from './SidebarProvider';
 
 interface SidebarLink {
+  type?: 'link';
   icon: LucideIcon;
   label: string;
   href: string;
-  /** Si défini, le lien n'est visible que pour ces rôles (utilise ROUTE_PERMISSIONS comme source de vérité) */
   roles?: LinkMeRole[];
 }
 
-/**
- * Configuration des liens sidebar avec permissions synchronisées depuis ROUTE_PERMISSIONS
- * Les rôles sont extraits automatiquement de la config centralisée
- */
-const sidebarLinks: SidebarLink[] = [
+interface SidebarSubLink {
+  label: string;
+  href: string;
+  icon: LucideIcon;
+  roles?: LinkMeRole[];
+}
+
+interface SidebarGroup {
+  type: 'group';
+  label: string;
+  icon: LucideIcon;
+  subLinks: SidebarSubLink[];
+}
+
+type SidebarItem = SidebarLink | SidebarGroup;
+
+// Hrefs appartenant au groupe Produits (pour auto-open)
+const PRODUITS_HREFS = ['/ma-selection', '/mes-produits'];
+
+// Hrefs appartenant au groupe Réseau (pour auto-open)
+const RESEAU_HREFS = ['/organisations', '/contacts'];
+
+const sidebarItems: SidebarItem[] = [
   { icon: LayoutDashboard, label: 'Dashboard', href: '/dashboard' },
-  { icon: ShoppingBag, label: 'Catalogue', href: '/catalogue' },
   {
-    icon: Star,
-    label: 'Ma Sélection',
-    href: '/ma-selection',
-    roles: ROUTE_PERMISSIONS['/ma-selection']?.roles,
-  },
-  {
+    type: 'group',
+    label: 'Produits',
     icon: Package,
-    label: 'Mes Produits',
-    href: '/mes-produits',
-    roles: ROUTE_PERMISSIONS['/mes-produits']?.roles,
+    subLinks: [
+      {
+        label: 'Mes Sélections',
+        href: '/ma-selection',
+        icon: Star,
+        roles: ROUTE_PERMISSIONS['/ma-selection']?.roles,
+      },
+      {
+        label: 'Mes Produits',
+        href: '/mes-produits',
+        icon: Package,
+        roles: ROUTE_PERMISSIONS['/mes-produits']?.roles,
+      },
+    ],
   },
   { icon: ShoppingCart, label: 'Commandes', href: '/commandes' },
   { icon: Coins, label: 'Commissions', href: '/commissions' },
+  { icon: BarChart3, label: 'Statistiques', href: '/statistiques' },
+  { icon: Warehouse, label: 'Stockage', href: '/stockage' },
   {
-    icon: BarChart3,
-    label: 'Stats Produits',
-    href: '/statistiques/produits',
-  },
-  {
-    icon: Building2,
-    label: 'Organisations',
-    href: '/organisations',
-    roles: ROUTE_PERMISSIONS['/organisations']?.roles,
+    type: 'group',
+    label: 'Réseau',
+    icon: Share2,
+    subLinks: [
+      {
+        label: 'Organisations',
+        href: '/organisations',
+        icon: Building2,
+        roles: ROUTE_PERMISSIONS['/organisations']?.roles,
+      },
+      {
+        label: 'Contacts',
+        href: '/contacts',
+        icon: Users,
+        roles: ROUTE_PERMISSIONS['/contacts']?.roles,
+      },
+    ],
   },
   { icon: Settings, label: 'Paramètres', href: '/parametres' },
 ];
+
+function isProduitsPath(pathname: string): boolean {
+  return PRODUITS_HREFS.some(
+    href => pathname === href || pathname.startsWith(`${href}/`)
+  );
+}
+
+function isReseauPath(pathname: string): boolean {
+  return RESEAU_HREFS.some(
+    href => pathname === href || pathname.startsWith(`${href}/`)
+  );
+}
 
 export function AppSidebar(): JSX.Element | null {
   const pathname = usePathname();
@@ -75,7 +125,6 @@ export function AppSidebar(): JSX.Element | null {
   const { user, linkMeRole, signOut } = useAuth();
 
   // Mémoriser le dernier rôle valide pour éviter les flashes visuels
-  // Utilise sessionStorage pour persister entre les navigations
   const [cachedRole, setCachedRole] = useState<typeof linkMeRole>(() => {
     if (typeof window === 'undefined') return null;
     const stored = sessionStorage.getItem('linkme_role_cache');
@@ -89,14 +138,61 @@ export function AppSidebar(): JSX.Element | null {
     }
   }, [linkMeRole]);
 
-  // Utiliser le rôle actuel ou le dernier rôle connu
   const roleToUse = linkMeRole ?? cachedRole;
 
-  // Filtrer les liens selon le rôle de l'utilisateur
-  const filteredLinks = sidebarLinks.filter(link => {
-    if (!link.roles) return true; // Pas de restriction
-    if (!roleToUse) return false; // Pas de rôle = pas d'accès aux liens restreints
-    return link.roles.includes(roleToUse.role);
+  // État ouverture des groupes collapsibles
+  const [openGroups, setOpenGroups] = useState<Set<string>>(() => {
+    const initial: string[] = [];
+    if (isProduitsPath(pathname)) initial.push('Produits');
+    if (isReseauPath(pathname)) initial.push('Réseau');
+    return new Set(initial);
+  });
+
+  // Auto-open groupe Produits quand pathname correspond
+  useEffect(() => {
+    if (isProduitsPath(pathname)) {
+      setOpenGroups(prev => {
+        if (prev.has('Produits')) return prev;
+        return new Set([...prev, 'Produits']);
+      });
+    }
+  }, [pathname]);
+
+  // Auto-open groupe Réseau quand pathname correspond
+  useEffect(() => {
+    if (isReseauPath(pathname)) {
+      setOpenGroups(prev => {
+        if (prev.has('Réseau')) return prev;
+        return new Set([...prev, 'Réseau']);
+      });
+    }
+  }, [pathname]);
+
+  const toggleGroup = useCallback((label: string): void => {
+    setOpenGroups(prev => {
+      const next = new Set(prev);
+      if (next.has(label)) {
+        next.delete(label);
+      } else {
+        next.add(label);
+      }
+      return next;
+    });
+  }, []);
+
+  // Filtrer les items selon le rôle
+  const filteredItems = sidebarItems.filter(item => {
+    if (item.type === 'group') {
+      // Afficher le groupe si au moins un sous-lien est accessible
+      return item.subLinks.some(sub => {
+        if (!sub.roles) return true;
+        if (!roleToUse) return false;
+        return sub.roles.includes(roleToUse.role);
+      });
+    }
+    if (!item.roles) return true;
+    if (!roleToUse) return false;
+    return item.roles.includes(roleToUse.role);
   });
 
   // État pour le hover (desktop) - collapsible
@@ -124,19 +220,17 @@ export function AppSidebar(): JSX.Element | null {
   }, [pathname, isMobile, close]);
 
   const handleSignOut = useCallback(async (): Promise<void> => {
-    await signOut('/'); // Redirige vers la page d'accueil
+    await signOut('/');
   }, [signOut]);
 
-  // Ne pas afficher la sidebar si l'utilisateur n'est pas connecté
   if (!user) {
     return null;
   }
 
-  // Mobile: comportement slide-in/out
+  // ─── MOBILE ───────────────────────────────────────────────────────────────
   if (isMobile) {
     return (
       <>
-        {/* Overlay for mobile */}
         {isOpen && (
           <div
             className="fixed inset-0 bg-black/50 z-40 lg:hidden"
@@ -144,14 +238,12 @@ export function AppSidebar(): JSX.Element | null {
           />
         )}
 
-        {/* Mobile Sidebar - Full width */}
         <aside
           className={cn(
             'fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-100 flex flex-col transition-transform duration-300 ease-in-out',
             !isOpen && '-translate-x-full'
           )}
         >
-          {/* Header mobile avec bouton fermer */}
           <div className="h-16 flex items-center justify-end px-4 border-b border-gray-100">
             <button
               onClick={close}
@@ -161,16 +253,89 @@ export function AppSidebar(): JSX.Element | null {
             </button>
           </div>
 
-          {/* Navigation Links */}
           <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-            {filteredLinks.map(link => {
-              const isActive =
-                pathname === link.href || pathname.startsWith(`${link.href}/`);
+            {filteredItems.map(item => {
+              if (item.type === 'group') {
+                const isGroupOpen = openGroups.has(item.label);
+                const accessibleSubLinks = item.subLinks.filter(sub => {
+                  if (!sub.roles) return true;
+                  if (!roleToUse) return false;
+                  return sub.roles.includes(roleToUse.role);
+                });
+                const isGroupActive = accessibleSubLinks.some(
+                  sub =>
+                    pathname === sub.href || pathname.startsWith(`${sub.href}/`)
+                );
 
+                return (
+                  <div key={item.label}>
+                    <button
+                      onClick={() => toggleGroup(item.label)}
+                      className={cn(
+                        'flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200',
+                        isGroupActive
+                          ? 'bg-linkme-turquoise/15 text-linkme-marine border-l-3 border-linkme-turquoise'
+                          : 'text-gray-600 hover:bg-gray-50 hover:text-linkme-marine'
+                      )}
+                    >
+                      <item.icon
+                        className={cn(
+                          'h-5 w-5 flex-shrink-0',
+                          isGroupActive
+                            ? 'text-linkme-turquoise'
+                            : 'text-gray-400'
+                        )}
+                      />
+                      <span className="flex-1 text-left">{item.label}</span>
+                      {isGroupOpen ? (
+                        <ChevronDown className="h-4 w-4 text-gray-400" />
+                      ) : (
+                        <ChevronRight className="h-4 w-4 text-gray-400" />
+                      )}
+                    </button>
+
+                    {isGroupOpen && (
+                      <div className="mt-1 space-y-1">
+                        {accessibleSubLinks.map(sub => {
+                          const isActive =
+                            pathname === sub.href ||
+                            pathname.startsWith(`${sub.href}/`);
+                          return (
+                            <Link
+                              key={sub.href}
+                              href={sub.href}
+                              className={cn(
+                                'flex items-center gap-3 pl-8 pr-3 py-2 rounded-lg text-sm font-medium transition-all duration-200',
+                                isActive
+                                  ? 'bg-linkme-turquoise/10 text-linkme-marine'
+                                  : 'text-gray-500 hover:bg-gray-50 hover:text-linkme-marine'
+                              )}
+                            >
+                              <sub.icon
+                                className={cn(
+                                  'h-3.5 w-3.5 flex-shrink-0',
+                                  isActive
+                                    ? 'text-linkme-turquoise'
+                                    : 'text-gray-400'
+                                )}
+                              />
+                              <span>{sub.label}</span>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              }
+
+              // Lien simple
+              const isActive =
+                pathname === item.href || pathname.startsWith(`${item.href}/`);
               return (
                 <Link
-                  key={link.href}
-                  href={link.href}
+                  key={item.href}
+                  href={item.href}
                   className={cn(
                     'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200',
                     isActive
@@ -178,19 +343,18 @@ export function AppSidebar(): JSX.Element | null {
                       : 'text-gray-600 hover:bg-gray-50 hover:text-linkme-marine'
                   )}
                 >
-                  <link.icon
+                  <item.icon
                     className={cn(
                       'h-5 w-5 flex-shrink-0',
                       isActive ? 'text-linkme-turquoise' : 'text-gray-400'
                     )}
                   />
-                  <span>{link.label}</span>
+                  <span>{item.label}</span>
                 </Link>
               );
             })}
           </nav>
 
-          {/* Logout Section */}
           <div className="p-3 border-t border-gray-100">
             <button
               onClick={() => {
@@ -209,8 +373,7 @@ export function AppSidebar(): JSX.Element | null {
     );
   }
 
-  // Desktop: Sidebar collapsible (icônes seules → expand on hover)
-  // z-20 pour permettre aux dropdowns (z-50) de s'afficher au-dessus
+  // ─── DESKTOP ──────────────────────────────────────────────────────────────
   return (
     <aside
       onMouseEnter={() => setIsExpanded(true)}
@@ -220,20 +383,105 @@ export function AppSidebar(): JSX.Element | null {
         isExpanded ? 'w-56' : 'w-16'
       )}
     >
-      {/* Spacer pour aligner avec header */}
       <div className="h-16 border-b border-gray-100" />
 
-      {/* Navigation Links */}
       <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto overflow-x-hidden">
-        {filteredLinks.map(link => {
-          const isActive =
-            pathname === link.href || pathname.startsWith(`${link.href}/`);
+        {filteredItems.map(item => {
+          if (item.type === 'group') {
+            const isGroupOpen = openGroups.has(item.label);
+            const accessibleSubLinks = item.subLinks.filter(sub => {
+              if (!sub.roles) return true;
+              if (!roleToUse) return false;
+              return sub.roles.includes(roleToUse.role);
+            });
+            const isGroupActive = accessibleSubLinks.some(
+              sub =>
+                pathname === sub.href || pathname.startsWith(`${sub.href}/`)
+            );
 
+            return (
+              <div key={item.label}>
+                <button
+                  onClick={() => {
+                    if (!isExpanded) {
+                      // En mode compact, expand la sidebar ET ouvre le groupe
+                      setIsExpanded(true);
+                    }
+                    toggleGroup(item.label);
+                  }}
+                  title={!isExpanded ? item.label : undefined}
+                  className={cn(
+                    'flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200',
+                    isGroupActive
+                      ? 'bg-linkme-turquoise/15 text-linkme-marine'
+                      : 'text-gray-600 hover:bg-gray-50 hover:text-linkme-marine'
+                  )}
+                >
+                  <item.icon
+                    className={cn(
+                      'h-5 w-5 flex-shrink-0',
+                      isGroupActive ? 'text-linkme-turquoise' : 'text-gray-400'
+                    )}
+                  />
+                  {isExpanded && (
+                    <>
+                      <span className="flex-1 whitespace-nowrap overflow-hidden text-left">
+                        {item.label}
+                      </span>
+                      {isGroupOpen ? (
+                        <ChevronDown className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                      ) : (
+                        <ChevronRight className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                      )}
+                    </>
+                  )}
+                </button>
+
+                {isExpanded && isGroupOpen && (
+                  <div className="mt-1 space-y-1">
+                    {accessibleSubLinks.map(sub => {
+                      const isActive =
+                        pathname === sub.href ||
+                        pathname.startsWith(`${sub.href}/`);
+                      return (
+                        <Link
+                          key={sub.href}
+                          href={sub.href}
+                          className={cn(
+                            'flex items-center gap-3 pl-8 pr-3 py-2 rounded-lg text-sm font-medium transition-all duration-200',
+                            isActive
+                              ? 'bg-linkme-turquoise/10 text-linkme-marine'
+                              : 'text-gray-500 hover:bg-gray-50 hover:text-linkme-marine'
+                          )}
+                        >
+                          <sub.icon
+                            className={cn(
+                              'h-3.5 w-3.5 flex-shrink-0',
+                              isActive
+                                ? 'text-linkme-turquoise'
+                                : 'text-gray-400'
+                            )}
+                          />
+                          <span className="whitespace-nowrap overflow-hidden">
+                            {sub.label}
+                          </span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          }
+
+          // Lien simple
+          const isActive =
+            pathname === item.href || pathname.startsWith(`${item.href}/`);
           return (
             <Link
-              key={link.href}
-              href={link.href}
-              title={!isExpanded ? link.label : undefined}
+              key={item.href}
+              href={item.href}
+              title={!isExpanded ? item.label : undefined}
               className={cn(
                 'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200',
                 isActive
@@ -241,7 +489,7 @@ export function AppSidebar(): JSX.Element | null {
                   : 'text-gray-600 hover:bg-gray-50 hover:text-linkme-marine'
               )}
             >
-              <link.icon
+              <item.icon
                 className={cn(
                   'h-5 w-5 flex-shrink-0',
                   isActive ? 'text-linkme-turquoise' : 'text-gray-400'
@@ -249,7 +497,7 @@ export function AppSidebar(): JSX.Element | null {
               />
               {isExpanded && (
                 <span className="whitespace-nowrap overflow-hidden">
-                  {link.label}
+                  {item.label}
                 </span>
               )}
             </Link>
@@ -257,7 +505,6 @@ export function AppSidebar(): JSX.Element | null {
         })}
       </nav>
 
-      {/* Logout Section */}
       <div className="p-2 border-t border-gray-100">
         <button
           onClick={() => {

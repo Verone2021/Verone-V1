@@ -15,3 +15,6 @@ export * from './use-orders-pending-count';
 export * from './use-expeditions-pending-count';
 export * from './use-transactions-unreconciled-count';
 export * from './use-linkme-approvals-count';
+
+// Badge count hooks - Phase 3 (2026-02-24)
+export * from './use-form-submissions-count';

@@ -24,6 +24,7 @@ export interface ProductForStorage {
   volume_m3: number;
   image_url: string | null;
   product_type: 'sur_mesure' | 'affiliate';
+  stock_quantity: number;
 }
 
 // Supabase query return type
@@ -32,6 +33,7 @@ interface ProductStorageRow {
   name: string | null;
   sku: string | null;
   dimensions: ProductForStorage['dimensions'];
+  stock_quantity: number | null;
   enseigne_id: string | null;
   assigned_client_id: string | null;
   created_by_affiliate: string | null;
@@ -77,6 +79,7 @@ export function useProductsForStorage(
           name,
           sku,
           dimensions,
+          stock_quantity,
           enseigne_id,
           assigned_client_id,
           created_by_affiliate,
@@ -124,6 +127,7 @@ export function useProductsForStorage(
           volume_m3: calcVolumeM3(productData.dimensions),
           image_url: imageUrl,
           product_type: productType,
+          stock_quantity: productData.stock_quantity ?? 0,
         };
       });
     },

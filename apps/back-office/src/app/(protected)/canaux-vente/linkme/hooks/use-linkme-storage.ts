@@ -39,6 +39,8 @@ export interface StorageAllocation {
   total_volume_m3: number;
   billable_in_storage: boolean;
   allocated_at: string;
+  storage_start_date: string;
+  product_image_url: string | null;
 }
 
 /**
@@ -192,7 +194,7 @@ export function useUpdateAllocationBillable() {
       const supabase = createClient();
 
       const { error } = await supabase
-        .from('affiliate_storage_allocations')
+        .from('storage_allocations')
         .update({ billable_in_storage: billable })
         .eq('id', allocationId);
 
@@ -232,21 +234,18 @@ export function useCreateStorageAllocation() {
     }): Promise<void> => {
       const supabase = createClient();
 
-      const { error } = await supabase
-        .from('affiliate_storage_allocations')
-        .upsert(
-          {
-            product_id: productId,
-            owner_enseigne_id: ownerType === 'enseigne' ? ownerId : null,
-            owner_organisation_id:
-              ownerType === 'organisation' ? ownerId : null,
-            stock_quantity: quantity,
-            billable_in_storage: billable,
-          },
-          {
-            onConflict: 'product_id,owner_enseigne_id,owner_organisation_id',
-          }
-        );
+      const { error } = await supabase.from('storage_allocations').upsert(
+        {
+          product_id: productId,
+          owner_enseigne_id: ownerType === 'enseigne' ? ownerId : null,
+          owner_organisation_id: ownerType === 'organisation' ? ownerId : null,
+          stock_quantity: quantity,
+          billable_in_storage: billable,
+        },
+        {
+          onConflict: 'product_id,owner_enseigne_id,owner_organisation_id',
+        }
+      );
 
       if (error) {
         console.warn('Error creating allocation:', error.message);
@@ -279,7 +278,7 @@ export function useUpdateStorageQuantity() {
       const supabase = createClient();
 
       const { error } = await supabase
-        .from('affiliate_storage_allocations')
+        .from('storage_allocations')
         .update({ stock_quantity: quantity })
         .eq('id', allocationId);
 
@@ -292,6 +291,56 @@ export function useUpdateStorageQuantity() {
       await queryClient.invalidateQueries({ queryKey: ['storage-overview'] });
       await queryClient.invalidateQueries({
         queryKey: ['affiliate-storage-detail'],
+      });
+    },
+  });
+}
+
+/**
+ * Hook: mettre a jour la date de debut de stockage
+ */
+export function useUpdateStorageStartDate() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      allocationId,
+      startDate,
+    }: {
+      allocationId: string;
+      startDate: string | null;
+    }): Promise<void> => {
+      const supabase = createClient();
+
+      // storage_start_date not yet in generated types — use typed cast
+      const { error } = await (
+        supabase as unknown as {
+          from(table: string): {
+            update(data: Record<string, unknown>): {
+              eq(
+                col: string,
+                val: string
+              ): PromiseLike<{ error: { message: string } | null }>;
+            };
+          };
+        }
+      )
+        .from('storage_allocations')
+        .update({ storage_start_date: startDate })
+        .eq('id', allocationId);
+
+      if (error) {
+        console.warn('Error updating storage start date:', error.message);
+        throw error;
+      }
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['storage-overview'] });
+      await queryClient.invalidateQueries({
+        queryKey: ['affiliate-storage-detail'],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ['global-storage-overview'],
       });
     },
   });
