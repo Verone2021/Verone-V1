@@ -1,157 +1,183 @@
 'use client';
 
 /**
- * Page Statistiques - Stats produits (quantités + CA)
+ * Page Statistiques — Performances produits
  *
- * Affiche les performances produits :
- * - 4 KPIs : nb produits, quantité vendue, CA HT, CA TTC
- * - Graphiques par produit/source
- * - Tableau paginé avec export CSV
+ * Affiche les stats de ventes produits de l'affilié :
+ * - 2 KPIs : CA HT + Quantité vendue
+ * - Graphique évolution du CA
+ * - Top 10 produits vendus
+ *
+ * Source de données : useAffiliateAnalytics (linkme_commissions + order_items)
  *
  * @module StatistiquesPage
  * @since 2026-02-25
  */
 
-import { useState, useMemo, useCallback, Suspense } from 'react';
+import { useState, useMemo, Suspense } from 'react';
 
-import { Card } from '@tremor/react';
+import { Card, AreaChart } from '@tremor/react';
 import {
   BarChart3,
   RefreshCw,
   AlertCircle,
-  Package,
+  TrendingUp,
   ShoppingCart,
   DollarSign,
-  Receipt,
-  Download,
+  Filter,
+  Calendar,
 } from 'lucide-react';
 
-import { ProductStatsTable } from '@/components/analytics/ProductStatsTable';
-import {
-  useAllProductsStats,
-  type ProductStatsFilters,
-} from '@/lib/hooks/use-all-products-stats';
+import { TopProductsTable } from '@/components/analytics';
+import { useAffiliateAnalytics } from '@/lib/hooks/use-affiliate-analytics';
+import { formatCurrency } from '@/types/analytics';
+import type { AnalyticsPeriod } from '@/types/analytics';
 
-import { ProductSalesDetailModal } from './produits/components/ProductSalesDetailModal';
-import { ProductStatsCharts } from './produits/components/ProductStatsCharts';
+// ─── Types filtres période ─────────────────────────────────────────────────────
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+type FilterPreset =
+  | 'all'
+  | 'this_month'
+  | 'this_quarter'
+  | 'this_year'
+  | 'custom';
 
-function formatCurrencyLocal(value: number): string {
-  return new Intl.NumberFormat('fr-FR', {
-    style: 'currency',
-    currency: 'EUR',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value);
+interface PeriodFilter {
+  preset: FilterPreset;
+  startDate?: Date;
+  endDate?: Date;
 }
 
-// ─── Contenu principal ────────────────────────────────────────────────────────
+const PRESET_TO_PERIOD: Record<FilterPreset, AnalyticsPeriod> = {
+  all: 'all',
+  this_month: 'month',
+  this_quarter: 'quarter',
+  this_year: 'year',
+  custom: 'year',
+};
+
+// ─── Contenu ──────────────────────────────────────────────────────────────────
 
 function StatistiquesContent(): JSX.Element {
-  const [filters, setFilters] = useState<ProductStatsFilters>({});
-  const [search, setSearch] = useState('');
-  const [selectedProductId, setSelectedProductId] = useState<string | null>(
-    null
-  );
+  const [filter, setFilter] = useState<PeriodFilter>({ preset: 'all' });
 
-  const { data, isLoading, error, refetch } = useAllProductsStats(filters);
+  const apiPeriod = PRESET_TO_PERIOD[filter.preset];
+  const { data, isLoading, error, refetch } = useAffiliateAnalytics(apiPeriod);
 
-  const filteredProducts = useMemo(() => {
-    const products = data?.products ?? [];
-    if (!search.trim()) return products;
-    const lower = search.toLowerCase();
-    return products.filter(
-      p =>
-        p.productName.toLowerCase().includes(lower) ||
-        p.productSku.toLowerCase().includes(lower)
-    );
-  }, [data?.products, search]);
+  const caChartData = useMemo(() => {
+    if (!data?.revenueByPeriod) return [];
+    return data.revenueByPeriod.map(d => ({
+      date: d.label,
+      'CA HT': d.revenue,
+    }));
+  }, [data?.revenueByPeriod]);
 
-  const handleYearFilterChange = useCallback(
-    (year: number | undefined): void => {
-      setFilters(prev => ({ ...prev, year }));
-    },
-    []
-  );
+  const formatDateInput = (date: Date): string =>
+    date.toISOString().split('T')[0];
 
-  const exportToCSV = useCallback((): void => {
-    const headers = [
-      'Produit',
-      'SKU',
-      'Source',
-      'Quantité',
-      'Prix unit. HT',
-      'CA HT',
-      'CA TTC',
-    ];
-    const rows = filteredProducts.map(p => [
-      p.productName,
-      p.productSku,
-      p.productSource === 'catalogue'
-        ? 'Catalogue'
-        : p.productSource === 'mes-produits'
-          ? 'Mes produits'
-          : 'Sur-mesure',
-      p.quantitySold.toString(),
-      p.avgPriceHT.toFixed(2),
-      p.revenueHT.toFixed(2),
-      p.revenueTTC.toFixed(2),
-    ]);
-
-    const csv = [headers, ...rows]
-      .map(row => row.map(cell => `"${cell}"`).join(','))
-      .join('\n');
-
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `stats-produits-linkme-${new Date().toISOString().split('T')[0]}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
-  }, [filteredProducts]);
+  const handlePresetChange = (preset: FilterPreset): void => {
+    if (preset === 'custom') {
+      const endDate = new Date();
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - 30);
+      setFilter({ preset: 'custom', startDate, endDate });
+    } else {
+      setFilter({ preset });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50/50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-gradient-to-br from-[#5DBEBB] to-[#3976BB] rounded-lg shadow-lg">
-              <BarChart3 className="h-5 w-5 text-white" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-[#183559]">Statistiques</h1>
-              <p className="text-gray-500 text-sm">
-                Performances produits — quantités et chiffre d&apos;affaires
-              </p>
-            </div>
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-gradient-to-br from-[#5DBEBB] to-[#3976BB] rounded-lg shadow-lg">
+            <BarChart3 className="h-5 w-5 text-white" />
           </div>
-
-          {/* Actions */}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={exportToCSV}
-              disabled={isLoading || filteredProducts.length === 0}
-              className="flex items-center gap-1.5 px-3 py-2 text-sm text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              title="Exporter en CSV"
-            >
-              <Download className="h-4 w-4" />
-              <span className="hidden sm:inline">Export CSV</span>
-            </button>
-            <button
-              onClick={() => void refetch()}
-              disabled={isLoading}
-              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
-              title="Actualiser"
-            >
-              <RefreshCw
-                className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`}
-              />
-            </button>
+          <div>
+            <h1 className="text-xl font-bold text-[#183559]">Statistiques</h1>
+            <p className="text-gray-500 text-sm">
+              Performances produits — quantités et chiffre d&apos;affaires
+            </p>
           </div>
         </div>
+
+        {/* Filtres période */}
+        <Card className="p-4">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <Filter className="h-4 w-4" />
+              <span className="font-medium">Période :</span>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              {(
+                [
+                  'all',
+                  'this_month',
+                  'this_quarter',
+                  'this_year',
+                ] as FilterPreset[]
+              ).map(preset => (
+                <button
+                  key={preset}
+                  onClick={() => handlePresetChange(preset)}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                    filter.preset === preset
+                      ? 'bg-[#5DBEBB] text-white'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  {preset === 'all' && 'Tout'}
+                  {preset === 'this_month' && 'Ce mois'}
+                  {preset === 'this_quarter' && 'Ce trimestre'}
+                  {preset === 'this_year' && 'Cette année'}
+                </button>
+              ))}
+              <button
+                onClick={() => handlePresetChange('custom')}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
+                  filter.preset === 'custom'
+                    ? 'bg-[#5DBEBB] text-white'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                <Calendar className="h-3.5 w-3.5" />
+                Personnalisé
+              </button>
+            </div>
+
+            {filter.preset === 'custom' && (
+              <div className="flex items-center gap-2">
+                <input
+                  type="date"
+                  value={
+                    filter.startDate ? formatDateInput(filter.startDate) : ''
+                  }
+                  onChange={e =>
+                    setFilter(f => ({
+                      ...f,
+                      startDate: new Date(e.target.value),
+                    }))
+                  }
+                  className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#5DBEBB] focus:border-transparent"
+                />
+                <span className="text-gray-400">→</span>
+                <input
+                  type="date"
+                  value={filter.endDate ? formatDateInput(filter.endDate) : ''}
+                  onChange={e =>
+                    setFilter(f => ({
+                      ...f,
+                      endDate: new Date(e.target.value),
+                    }))
+                  }
+                  className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#5DBEBB] focus:border-transparent"
+                />
+              </div>
+            )}
+          </div>
+        </Card>
 
         {/* Erreur */}
         {error && (
@@ -165,7 +191,11 @@ function StatistiquesContent(): JSX.Element {
                 <p className="text-xs text-red-600">{error.message}</p>
               </div>
               <button
-                onClick={() => void refetch()}
+                onClick={() => {
+                  void refetch().catch(err => {
+                    console.error('[Statistiques] Refetch failed:', err);
+                  });
+                }}
                 className="ml-auto px-2 py-1 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg text-xs font-medium transition-colors"
               >
                 Réessayer
@@ -174,110 +204,110 @@ function StatistiquesContent(): JSX.Element {
           </Card>
         )}
 
-        {/* 4 KPIs */}
-        <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="p-4 border-l-4 border-[#7E84C0]">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="p-1.5 bg-[#7E84C0]/10 rounded-lg">
-                <Package className="h-4 w-4 text-[#7E84C0]" />
+        {/* 2 KPIs produits */}
+        <section className="grid grid-cols-2 gap-4">
+          <Card className="p-5 border-l-4 border-[#5DBEBB]">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="p-1.5 bg-[#5DBEBB]/10 rounded-lg">
+                <DollarSign className="h-4 w-4 text-[#5DBEBB]" />
               </div>
-              <span className="text-xs text-gray-600">Produits</span>
+              <span className="text-sm text-gray-600 font-medium">
+                Chiffre d&apos;affaires HT
+              </span>
             </div>
             {isLoading ? (
-              <div className="animate-pulse h-7 bg-gray-200 rounded w-12" />
+              <div className="animate-pulse h-8 bg-gray-200 rounded w-32" />
             ) : (
-              <p className="text-xl font-bold text-[#7E84C0]">
-                {data?.totals.productsCount ?? 0}
-              </p>
+              <>
+                <p className="text-2xl font-bold text-[#5DBEBB]">
+                  {formatCurrency(data?.totalRevenueHT ?? 0)}
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {data?.totalOrders ?? 0} commande
+                  {(data?.totalOrders ?? 0) > 1 ? 's' : ''}
+                </p>
+              </>
             )}
           </Card>
 
-          <Card className="p-4 border-l-4 border-[#3976BB]">
-            <div className="flex items-center gap-2 mb-2">
+          <Card className="p-5 border-l-4 border-[#3976BB]">
+            <div className="flex items-center gap-2 mb-3">
               <div className="p-1.5 bg-[#3976BB]/10 rounded-lg">
                 <ShoppingCart className="h-4 w-4 text-[#3976BB]" />
               </div>
-              <span className="text-xs text-gray-600">Quantité</span>
+              <span className="text-sm text-gray-600 font-medium">
+                Éléments vendus
+              </span>
             </div>
             {isLoading ? (
-              <div className="animate-pulse h-7 bg-gray-200 rounded w-16" />
+              <div className="animate-pulse h-8 bg-gray-200 rounded w-20" />
             ) : (
-              <p className="text-xl font-bold text-[#3976BB]">
-                {(data?.totals.totalQuantity ?? 0).toLocaleString('fr-FR')}
-              </p>
-            )}
-          </Card>
-
-          <Card className="p-4 border-l-4 border-[#183559]">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="p-1.5 bg-[#183559]/10 rounded-lg">
-                <DollarSign className="h-4 w-4 text-[#183559]" />
-              </div>
-              <span className="text-xs text-gray-600">CA HT</span>
-            </div>
-            {isLoading ? (
-              <div className="animate-pulse h-7 bg-gray-200 rounded w-24" />
-            ) : (
-              <p className="text-xl font-bold text-[#183559]">
-                {formatCurrencyLocal(data?.totals.totalRevenueHT ?? 0)}
-              </p>
-            )}
-          </Card>
-
-          <Card className="p-4 border-l-4 border-[#183559]/60">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="p-1.5 bg-[#183559]/5 rounded-lg">
-                <Receipt className="h-4 w-4 text-[#183559]/70" />
-              </div>
-              <span className="text-xs text-gray-600">CA TTC</span>
-            </div>
-            {isLoading ? (
-              <div className="animate-pulse h-7 bg-gray-200 rounded w-24" />
-            ) : (
-              <p className="text-xl font-bold text-[#183559]/70">
-                {formatCurrencyLocal(data?.totals.totalRevenueTTC ?? 0)}
-              </p>
+              <>
+                <p className="text-2xl font-bold text-[#3976BB]">
+                  {(data?.totalQuantitySold ?? 0).toLocaleString('fr-FR')}
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  unités vendues sur la période
+                </p>
+              </>
             )}
           </Card>
         </section>
 
-        {/* Charts */}
-        <section>
-          <ProductStatsCharts
-            products={filteredProducts}
-            isLoading={isLoading}
-          />
-        </section>
+        {/* Graphique évolution du CA */}
+        <Card className="p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-2 bg-cyan-100 rounded-lg">
+              <TrendingUp className="h-5 w-5 text-cyan-600" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900">
+              Évolution du chiffre d&apos;affaires
+            </h3>
+          </div>
+          {isLoading ? (
+            <div className="animate-pulse h-64 bg-gray-200 rounded" />
+          ) : caChartData.length > 0 ? (
+            <AreaChart
+              data={caChartData}
+              index="date"
+              categories={['CA HT']}
+              colors={['cyan']}
+              valueFormatter={value => formatCurrency(value)}
+              showLegend={false}
+              showGridLines
+              showAnimation
+              className="h-64"
+              curveType="monotone"
+              yAxisWidth={120}
+            />
+          ) : (
+            <div className="h-64 flex items-center justify-center bg-gray-50 rounded-lg">
+              <div className="text-center">
+                <TrendingUp className="h-12 w-12 text-gray-300 mx-auto mb-2" />
+                <p className="text-gray-500">
+                  Aucune donnée pour cette période
+                </p>
+              </div>
+            </div>
+          )}
+        </Card>
 
-        {/* Tableau */}
+        {/* Top produits */}
         <section>
-          <ProductStatsTable
-            products={filteredProducts}
+          <TopProductsTable
+            products={data?.topProducts}
             isLoading={isLoading}
-            search={search}
-            onSearchChange={setSearch}
-            yearFilter={filters.year}
-            onYearFilterChange={handleYearFilterChange}
-            onProductClick={setSelectedProductId}
+            title="Top 10 Produits Vendus"
+            maxItems={10}
           />
         </section>
 
         <div className="text-center text-xs text-gray-400 pb-2">
           <p suppressHydrationWarning>
-            {filteredProducts.length} produit
-            {filteredProducts.length > 1 ? 's' : ''} affiché
-            {filteredProducts.length > 1 ? 's' : ''}
-            {search && ` pour "${search}"`}
-            {filters.year && ` en ${filters.year}`}
-            {' · '}
-            Dernière mise à jour : {new Date().toLocaleString('fr-FR')}
+            Données actualisées en temps réel · Dernière mise à jour :{' '}
+            {new Date().toLocaleString('fr-FR')}
           </p>
         </div>
-
-        <ProductSalesDetailModal
-          productId={selectedProductId}
-          onClose={() => setSelectedProductId(null)}
-        />
       </div>
     </div>
   );
