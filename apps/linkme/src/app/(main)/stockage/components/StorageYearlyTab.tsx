@@ -72,10 +72,6 @@ export function StorageYearlyTab({
       const totalUnits = rows.reduce((s, r) => s + r.total_units, 0);
       const totalProducts = rows.reduce((s, r) => s + r.products_count, 0);
       const totalVolume = rows.reduce((s, r) => s + r.total_volume_m3, 0);
-      const totalBillableVolume = rows.reduce(
-        (s, r) => s + r.billable_volume_m3,
-        0
-      );
       const totalCost = rows.reduce(
         (s, r) => s + calculateStoragePrice(r.billable_volume_m3, pricingTiers),
         0

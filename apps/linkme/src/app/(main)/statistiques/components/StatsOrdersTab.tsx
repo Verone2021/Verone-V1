@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 
 import type { AffiliateAnalyticsData } from '@/types/analytics';
-import { formatCurrency, formatPercentage } from '@/types/analytics';
+import { formatCurrency } from '@/types/analytics';
 
 interface StatsOrdersTabProps {
   data: AffiliateAnalyticsData | null | undefined;
