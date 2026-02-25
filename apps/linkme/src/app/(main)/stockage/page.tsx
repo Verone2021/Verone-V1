@@ -23,6 +23,7 @@ import {
   Package,
   RefreshCw,
   AlertCircle,
+  Send,
 } from 'lucide-react';
 
 import {
@@ -36,10 +37,11 @@ import { StorageOverviewTab } from './components/StorageOverviewTab';
 import { StorageMonthlyTab } from './components/StorageMonthlyTab';
 import { StorageYearlyTab } from './components/StorageYearlyTab';
 import { StorageProductsTab } from './components/StorageProductsTab';
+import { StorageRequestsTab } from './components/StorageRequestsTab';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
-type StorageTab = 'overview' | 'monthly' | 'yearly' | 'products';
+type StorageTab = 'overview' | 'monthly' | 'yearly' | 'products' | 'requests';
 
 const TABS: { id: StorageTab; label: string; icon: typeof LayoutDashboard }[] =
   [
@@ -47,6 +49,7 @@ const TABS: { id: StorageTab; label: string; icon: typeof LayoutDashboard }[] =
     { id: 'monthly', label: 'Mensuel', icon: CalendarDays },
     { id: 'yearly', label: 'Annuel', icon: CalendarRange },
     { id: 'products', label: 'Produits', icon: Package },
+    { id: 'requests', label: 'Mes demandes', icon: Send },
   ];
 
 // ─── Contenu ──────────────────────────────────────────────────────────────────
@@ -157,6 +160,7 @@ function StockageContent(): JSX.Element {
             isLoading={isLoading}
           />
         )}
+        {activeTab === 'requests' && <StorageRequestsTab />}
 
         <div className="text-center text-xs text-gray-400 pb-2">
           <p suppressHydrationWarning>

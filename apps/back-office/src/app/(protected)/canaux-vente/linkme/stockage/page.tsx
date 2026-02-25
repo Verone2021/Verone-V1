@@ -51,6 +51,10 @@ import {
   List,
   Pencil,
   X,
+  Send,
+  Check,
+  XCircle,
+  Clock,
 } from 'lucide-react';
 
 import {
@@ -65,17 +69,26 @@ import {
   type StorageOverviewItem,
   type StoragePricingTier,
 } from '../hooks/use-linkme-storage';
+import {
+  usePendingStorageRequests,
+  usePendingStorageRequestsCount,
+  useApproveStorageRequest,
+  useRejectStorageRequest,
+  type StorageRequestAdmin,
+} from '../hooks/use-storage-requests-admin';
 
 export default function StockagePage(): React.ReactElement {
   const searchParams = useSearchParams();
   const [searchFilter, setSearchFilter] = useState('');
   const [activeTab, setActiveTab] = useState('clients');
 
+  const { data: pendingCount } = usePendingStorageRequestsCount();
+
   // Handle tab from URL query param
   useEffect(() => {
     const tabParam = searchParams.get('tab');
-    if (tabParam === 'tarifs') {
-      setActiveTab('tarifs');
+    if (tabParam === 'tarifs' || tabParam === 'demandes') {
+      setActiveTab(tabParam);
     }
   }, [searchParams]);
 
@@ -151,6 +164,15 @@ export default function StockagePage(): React.ReactElement {
             <Settings className="h-3.5 w-3.5" />
             Grille Tarifaire
           </TabsTrigger>
+          <TabsTrigger value="demandes" className="gap-1.5 text-sm">
+            <Send className="h-3.5 w-3.5" />
+            Demandes
+            {(pendingCount ?? 0) > 0 && (
+              <span className="ml-1 inline-flex items-center justify-center h-5 min-w-[20px] px-1.5 text-xs font-bold text-white bg-amber-500 rounded-full">
+                {pendingCount}
+              </span>
+            )}
+          </TabsTrigger>
         </TabsList>
 
         {/* TAB: Vue Clients */}
@@ -207,6 +229,11 @@ export default function StockagePage(): React.ReactElement {
         {/* TAB: Grille Tarifaire */}
         <TabsContent value="tarifs">
           <PricingGridTab />
+        </TabsContent>
+
+        {/* TAB: Demandes d'envoi */}
+        <TabsContent value="demandes">
+          <StorageRequestsAdminTab />
         </TabsContent>
       </Tabs>
     </div>
@@ -764,5 +791,350 @@ function PricingGridTab(): React.ReactElement {
         </div>
       )}
     </div>
+  );
+}
+
+// ==============================================================
+// ONGLET DEMANDES D'ENVOI DE STOCK
+// ==============================================================
+
+function StorageRequestsAdminTab(): React.ReactElement {
+  const { data: pendingRequests, isLoading: pendingLoading } =
+    usePendingStorageRequests('pending');
+  const { data: allRequests, isLoading: allLoading } =
+    usePendingStorageRequests();
+  const approveRequest = useApproveStorageRequest();
+  const rejectRequest = useRejectStorageRequest();
+
+  const [rejectDialogId, setRejectDialogId] = useState<string | null>(null);
+  const [rejectReason, setRejectReason] = useState('');
+
+  const handleApprove = (requestId: string): void => {
+    if (!confirm('Approuver cette demande ? Une reception pending sera creee.'))
+      return;
+    void approveRequest.mutateAsync(requestId).catch(err => {
+      console.error('[StorageRequestsAdminTab] Approve failed:', err);
+      alert(
+        `Erreur: ${err instanceof Error ? err.message : 'Erreur inconnue'}`
+      );
+    });
+  };
+
+  const handleRejectConfirm = (): void => {
+    if (!rejectDialogId) return;
+    void rejectRequest
+      .mutateAsync({
+        requestId: rejectDialogId,
+        reason: rejectReason || undefined,
+      })
+      .then(() => {
+        setRejectDialogId(null);
+        setRejectReason('');
+      })
+      .catch(err => {
+        console.error('[StorageRequestsAdminTab] Reject failed:', err);
+        alert(
+          `Erreur: ${err instanceof Error ? err.message : 'Erreur inconnue'}`
+        );
+      });
+  };
+
+  const treatedRequests = (allRequests ?? []).filter(
+    r => r.status !== 'pending'
+  );
+
+  if (pendingLoading || allLoading) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <Loader2 className="h-6 w-6 text-blue-600 animate-spin" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Pending Requests */}
+      <div>
+        <h2 className="text-base font-semibold text-gray-900 flex items-center gap-2 mb-3">
+          <Clock className="h-4 w-4 text-amber-500" />
+          Demandes en attente
+          {(pendingRequests?.length ?? 0) > 0 && (
+            <Badge className="bg-amber-100 text-amber-700 border-amber-300">
+              {pendingRequests?.length}
+            </Badge>
+          )}
+        </h2>
+
+        {(!pendingRequests || pendingRequests.length === 0) && (
+          <div className="bg-white rounded-lg p-6 text-center border">
+            <Send className="h-6 w-6 text-gray-400 mx-auto mb-2" />
+            <p className="text-sm text-gray-500">Aucune demande en attente</p>
+          </div>
+        )}
+
+        {pendingRequests && pendingRequests.length > 0 && (
+          <div className="bg-white rounded-lg border overflow-hidden">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 border-b">
+                <tr>
+                  <th className="text-left px-3 py-2 font-medium text-gray-600">
+                    Affilie
+                  </th>
+                  <th className="text-left px-3 py-2 font-medium text-gray-600">
+                    Produit
+                  </th>
+                  <th className="text-center px-3 py-2 font-medium text-gray-600">
+                    Qte
+                  </th>
+                  <th className="text-left px-3 py-2 font-medium text-gray-600">
+                    Notes
+                  </th>
+                  <th className="text-left px-3 py-2 font-medium text-gray-600">
+                    Date
+                  </th>
+                  <th className="text-right px-3 py-2 font-medium text-gray-600 w-40">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {pendingRequests.map(request => (
+                  <RequestRow
+                    key={request.id}
+                    request={request}
+                    onApprove={() => handleApprove(request.id)}
+                    onReject={() => setRejectDialogId(request.id)}
+                    isApproving={approveRequest.isPending}
+                    showActions
+                  />
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Historique */}
+      {treatedRequests.length > 0 && (
+        <div>
+          <h2 className="text-base font-semibold text-gray-900 mb-3">
+            Historique
+          </h2>
+          <div className="bg-white rounded-lg border overflow-hidden">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 border-b">
+                <tr>
+                  <th className="text-left px-3 py-2 font-medium text-gray-600">
+                    Affilie
+                  </th>
+                  <th className="text-left px-3 py-2 font-medium text-gray-600">
+                    Produit
+                  </th>
+                  <th className="text-center px-3 py-2 font-medium text-gray-600">
+                    Qte
+                  </th>
+                  <th className="text-left px-3 py-2 font-medium text-gray-600">
+                    Statut
+                  </th>
+                  <th className="text-left px-3 py-2 font-medium text-gray-600">
+                    Date
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {treatedRequests.slice(0, 20).map(request => (
+                  <RequestRow key={request.id} request={request} />
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Reject Dialog */}
+      {rejectDialogId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setRejectDialogId(null)}
+            onKeyDown={e => {
+              if (e.key === 'Escape') setRejectDialogId(null);
+            }}
+            role="button"
+            tabIndex={-1}
+            aria-label="Fermer"
+          />
+          <div className="relative bg-white rounded-lg shadow-xl max-w-sm w-full mx-4 p-5">
+            <h3 className="text-base font-semibold text-gray-900 mb-3">
+              Rejeter la demande
+            </h3>
+            <label
+              htmlFor="reject-reason"
+              className="block text-sm text-gray-600 mb-1"
+            >
+              Raison du rejet (optionnel)
+            </label>
+            <textarea
+              id="reject-reason"
+              value={rejectReason}
+              onChange={e => setRejectReason(e.target.value)}
+              rows={3}
+              placeholder="Ex: Stock insuffisant, produit non conforme..."
+              className="w-full px-3 py-2 border rounded-md text-sm resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+            />
+            <div className="flex gap-2 mt-4">
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1"
+                onClick={() => {
+                  setRejectDialogId(null);
+                  setRejectReason('');
+                }}
+              >
+                Annuler
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                className="flex-1"
+                onClick={handleRejectConfirm}
+                disabled={rejectRequest.isPending}
+              >
+                {rejectRequest.isPending ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />
+                ) : (
+                  <XCircle className="h-3.5 w-3.5 mr-1" />
+                )}
+                Rejeter
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+const REQUEST_STATUS_CONFIG: Record<
+  string,
+  { label: string; color: string; bgColor: string }
+> = {
+  pending: {
+    label: 'En attente',
+    color: 'text-amber-700',
+    bgColor: 'bg-amber-100',
+  },
+  reception_created: {
+    label: 'Reception creee',
+    color: 'text-blue-700',
+    bgColor: 'bg-blue-100',
+  },
+  rejected: { label: 'Rejetee', color: 'text-red-700', bgColor: 'bg-red-100' },
+  cancelled: {
+    label: 'Annulee',
+    color: 'text-gray-600',
+    bgColor: 'bg-gray-100',
+  },
+  approved: {
+    label: 'Approuvee',
+    color: 'text-green-700',
+    bgColor: 'bg-green-100',
+  },
+};
+
+function RequestRow({
+  request,
+  onApprove,
+  onReject,
+  isApproving,
+  showActions,
+}: {
+  request: StorageRequestAdmin;
+  onApprove?: () => void;
+  onReject?: () => void;
+  isApproving?: boolean;
+  showActions?: boolean;
+}): React.ReactElement {
+  const statusConfig = REQUEST_STATUS_CONFIG[request.status] ?? {
+    label: request.status,
+    color: 'text-gray-600',
+    bgColor: 'bg-gray-100',
+  };
+
+  return (
+    <tr className="hover:bg-gray-50">
+      <td className="px-3 py-2">
+        <p className="font-medium text-gray-900 truncate max-w-[140px]">
+          {request.affiliate_name}
+        </p>
+        <p className="text-xs text-gray-400 truncate max-w-[140px]">
+          {request.owner_name}
+        </p>
+      </td>
+      <td className="px-3 py-2">
+        <p className="font-medium text-gray-900 truncate max-w-[160px]">
+          {request.product_name}
+        </p>
+        <p className="text-xs text-gray-400 font-mono">{request.product_sku}</p>
+      </td>
+      <td className="px-3 py-2 text-center font-semibold">
+        {request.quantity}
+      </td>
+      {showActions ? (
+        <td className="px-3 py-2">
+          <p className="text-xs text-gray-500 truncate max-w-[120px]">
+            {request.notes ?? '-'}
+          </p>
+        </td>
+      ) : (
+        <td className="px-3 py-2">
+          <span
+            className={cn(
+              'inline-flex px-2 py-0.5 rounded-full text-xs font-medium',
+              statusConfig.bgColor,
+              statusConfig.color
+            )}
+          >
+            {statusConfig.label}
+          </span>
+        </td>
+      )}
+      <td className="px-3 py-2 text-xs text-gray-500">
+        {new Date(request.created_at).toLocaleDateString('fr-FR', {
+          day: '2-digit',
+          month: 'short',
+        })}
+      </td>
+      {showActions && (
+        <td className="px-3 py-2 text-right">
+          <div className="flex items-center justify-end gap-1">
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 px-2 text-green-600 border-green-300 hover:bg-green-50"
+              onClick={onApprove}
+              disabled={isApproving}
+            >
+              {isApproving ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Check className="h-3.5 w-3.5 mr-1" />
+              )}
+              Approuver
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 px-2 text-red-600 border-red-300 hover:bg-red-50"
+              onClick={onReject}
+            >
+              <XCircle className="h-3.5 w-3.5 mr-1" />
+              Rejeter
+            </Button>
+          </div>
+        </td>
+      )}
+    </tr>
   );
 }

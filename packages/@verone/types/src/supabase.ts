@@ -241,6 +241,121 @@ export type Database = {
           },
         ];
       };
+      affiliate_storage_requests: {
+        Row: {
+          affiliate_id: string;
+          created_at: string;
+          id: string;
+          notes: string | null;
+          owner_enseigne_id: string | null;
+          owner_organisation_id: string | null;
+          product_id: string;
+          quantity: number;
+          reception_id: string | null;
+          rejection_reason: string | null;
+          reviewed_at: string | null;
+          reviewed_by: string | null;
+          status: string;
+          updated_at: string;
+        };
+        Insert: {
+          affiliate_id: string;
+          created_at?: string;
+          id?: string;
+          notes?: string | null;
+          owner_enseigne_id?: string | null;
+          owner_organisation_id?: string | null;
+          product_id: string;
+          quantity: number;
+          reception_id?: string | null;
+          rejection_reason?: string | null;
+          reviewed_at?: string | null;
+          reviewed_by?: string | null;
+          status?: string;
+          updated_at?: string;
+        };
+        Update: {
+          affiliate_id?: string;
+          created_at?: string;
+          id?: string;
+          notes?: string | null;
+          owner_enseigne_id?: string | null;
+          owner_organisation_id?: string | null;
+          product_id?: string;
+          quantity?: number;
+          reception_id?: string | null;
+          rejection_reason?: string | null;
+          reviewed_at?: string | null;
+          reviewed_by?: string | null;
+          status?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'affiliate_storage_requests_affiliate_id_fkey';
+            columns: ['affiliate_id'];
+            isOneToOne: false;
+            referencedRelation: 'linkme_affiliates';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'affiliate_storage_requests_owner_enseigne_id_fkey';
+            columns: ['owner_enseigne_id'];
+            isOneToOne: false;
+            referencedRelation: 'enseignes';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'affiliate_storage_requests_owner_enseigne_id_fkey';
+            columns: ['owner_enseigne_id'];
+            isOneToOne: false;
+            referencedRelation: 'enseignes_with_stats';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'affiliate_storage_requests_owner_organisation_id_fkey';
+            columns: ['owner_organisation_id'];
+            isOneToOne: false;
+            referencedRelation: 'organisations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'affiliate_storage_requests_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'product_prices_summary';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'affiliate_storage_requests_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'products';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'affiliate_storage_requests_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'stock_alerts_unified_view';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'affiliate_storage_requests_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'stock_alerts_view';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'affiliate_storage_requests_reception_id_fkey';
+            columns: ['reception_id'];
+            isOneToOne: false;
+            referencedRelation: 'purchase_order_receptions';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       app_settings: {
         Row: {
           category: string | null;
@@ -7304,7 +7419,6 @@ export type Database = {
           currency: string;
           customer_id: string | null;
           customer_type: string;
-          individual_customer_id: string | null;
           delivered_at: string | null;
           delivered_by: string | null;
           delivery_contact_id: string | null;
@@ -7314,6 +7428,7 @@ export type Database = {
           fees_vat_rate: number | null;
           handling_cost_ht: number | null;
           id: string;
+          individual_customer_id: string | null;
           insurance_cost_ht: number | null;
           invoiced_at: string | null;
           is_shopping_center_delivery: boolean;
@@ -7373,7 +7488,6 @@ export type Database = {
           currency?: string;
           customer_id?: string | null;
           customer_type: string;
-          individual_customer_id?: string | null;
           delivered_at?: string | null;
           delivered_by?: string | null;
           delivery_contact_id?: string | null;
@@ -7383,6 +7497,7 @@ export type Database = {
           fees_vat_rate?: number | null;
           handling_cost_ht?: number | null;
           id?: string;
+          individual_customer_id?: string | null;
           insurance_cost_ht?: number | null;
           invoiced_at?: string | null;
           is_shopping_center_delivery?: boolean;
@@ -7442,7 +7557,6 @@ export type Database = {
           currency?: string;
           customer_id?: string | null;
           customer_type?: string;
-          individual_customer_id?: string | null;
           delivered_at?: string | null;
           delivered_by?: string | null;
           delivery_contact_id?: string | null;
@@ -7452,6 +7566,7 @@ export type Database = {
           fees_vat_rate?: number | null;
           handling_cost_ht?: number | null;
           id?: string;
+          individual_customer_id?: string | null;
           insurance_cost_ht?: number | null;
           invoiced_at?: string | null;
           is_shopping_center_delivery?: boolean;
@@ -7524,6 +7639,13 @@ export type Database = {
             columns: ['delivery_contact_id'];
             isOneToOne: false;
             referencedRelation: 'contacts';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'sales_orders_individual_customer_id_fkey';
+            columns: ['individual_customer_id'];
+            isOneToOne: false;
+            referencedRelation: 'individual_customers';
             referencedColumns: ['id'];
           },
           {
@@ -8016,6 +8138,7 @@ export type Database = {
           owner_organisation_id: string | null;
           product_id: string;
           stock_quantity: number;
+          storage_start_date: string | null;
           updated_at: string;
         };
         Insert: {
@@ -8026,6 +8149,7 @@ export type Database = {
           owner_organisation_id?: string | null;
           product_id: string;
           stock_quantity?: number;
+          storage_start_date?: string | null;
           updated_at?: string;
         };
         Update: {
@@ -8036,6 +8160,7 @@ export type Database = {
           owner_organisation_id?: string | null;
           product_id?: string;
           stock_quantity?: number;
+          storage_start_date?: string | null;
           updated_at?: string;
         };
         Relationships: [
@@ -8363,7 +8488,7 @@ export type Database = {
       };
       transaction_document_links: {
         Row: {
-          allocated_amount: number | null;
+          allocated_amount: number;
           created_at: string | null;
           created_by: string | null;
           document_id: string | null;
@@ -8376,7 +8501,7 @@ export type Database = {
           updated_at: string | null;
         };
         Insert: {
-          allocated_amount?: number | null;
+          allocated_amount?: number;
           created_at?: string | null;
           created_by?: string | null;
           document_id?: string | null;
@@ -8389,7 +8514,7 @@ export type Database = {
           updated_at?: string | null;
         };
         Update: {
-          allocated_amount?: number | null;
+          allocated_amount?: number;
           created_at?: string | null;
           created_by?: string | null;
           document_id?: string | null;
@@ -10330,6 +10455,10 @@ export type Database = {
           success: boolean;
         }[];
       };
+      approve_storage_request: {
+        Args: { p_request_id: string };
+        Returns: Json;
+      };
       archive_address: { Args: { p_address_id: string }; Returns: boolean };
       auto_cancel_unpaid_orders: { Args: never; Returns: undefined };
       auto_classify_all_unmatched: { Args: never; Returns: Json };
@@ -10770,32 +10899,19 @@ export type Database = {
         };
         Returns: number;
       };
-      create_public_linkme_order:
-        | {
-            Args: {
-              p_affiliate_id: string;
-              p_billing: Json;
-              p_cart: Json;
-              p_organisation: Json;
-              p_owner: Json;
-              p_requester: Json;
-              p_selection_id: string;
-            };
-            Returns: Json;
-          }
-        | {
-            Args: {
-              p_affiliate_id: string;
-              p_billing: Json;
-              p_cart: Json;
-              p_delivery: Json;
-              p_organisation: Json;
-              p_owner: Json;
-              p_requester: Json;
-              p_selection_id: string;
-            };
-            Returns: Json;
-          };
+      create_public_linkme_order: {
+        Args: {
+          p_affiliate_id: string;
+          p_billing: Json;
+          p_cart: Json;
+          p_delivery: Json;
+          p_organisation: Json;
+          p_owner: Json;
+          p_requester: Json;
+          p_selection_id: string;
+        };
+        Returns: Json;
+      };
       create_public_order:
         | {
             Args: {
@@ -11096,9 +11212,7 @@ export type Database = {
         Args: { p_base_sku: string; p_variant_value: string };
         Returns: string;
       };
-      get_activity_stats:
-        | { Args: { days_ago?: number }; Returns: Json }
-        | { Args: { p_days_back?: number; p_user_id: string }; Returns: Json };
+      get_activity_stats: { Args: { days_ago?: number }; Returns: Json };
       get_affiliate_dashboard_data: {
         Args: { p_affiliate_id: string };
         Returns: Json;
@@ -11635,6 +11749,7 @@ export type Database = {
         }[];
       };
       get_pending_approvals_count: { Args: never; Returns: number };
+      get_pending_storage_requests_count: { Args: never; Returns: number };
       get_primary_contact: {
         Args: { org_id: string };
         Returns: {
@@ -11692,6 +11807,10 @@ export type Database = {
       };
       get_product_cost_price_details: {
         Args: { p_product_id: string };
+        Returns: Json;
+      };
+      get_product_detail_public: {
+        Args: { p_product_id: string; p_selection_id: string };
         Returns: Json;
       };
       get_product_margin_analysis: {
@@ -11756,10 +11875,6 @@ export type Database = {
         }[];
       };
       get_products_status_metrics: { Args: never; Returns: Json };
-      get_product_detail_public: {
-        Args: { p_product_id: string; p_selection_id: string };
-        Returns: Json;
-      };
       get_public_selection:
         | { Args: { p_selection_id: string }; Returns: Json }
         | { Args: { p_share_token?: string; p_slug: string }; Returns: Json };
@@ -12009,9 +12124,11 @@ export type Database = {
           allocation_id: string;
           billable_in_storage: boolean;
           product_id: string;
+          product_image_url: string;
           product_name: string;
           product_sku: string;
           stock_quantity: number;
+          storage_start_date: string;
           total_volume_m3: number;
           unit_volume_m3: number;
         }[];
@@ -12034,6 +12151,23 @@ export type Database = {
           qty_change: number;
           source: string;
           volume_m3_change: number;
+        }[];
+      };
+      get_storage_monthly_history: {
+        Args: {
+          p_months_back?: number;
+          p_owner_enseigne_id?: string;
+          p_owner_organisation_id?: string;
+        };
+        Returns: {
+          billable_volume_m3: number;
+          month_date: string;
+          month_label: string;
+          month_val: number;
+          products_count: number;
+          total_units: number;
+          total_volume_m3: number;
+          year_val: number;
         }[];
       };
       get_storage_totals: {
@@ -12437,6 +12571,10 @@ export type Database = {
       reject_affiliate_product: {
         Args: { p_product_id: string; p_reason: string };
         Returns: boolean;
+      };
+      reject_storage_request: {
+        Args: { p_reason?: string; p_request_id: string };
+        Returns: Json;
       };
       release_sync_lock: {
         Args: {

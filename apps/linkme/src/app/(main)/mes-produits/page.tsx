@@ -13,7 +13,7 @@
  * @updated 2026-01
  */
 
-import { Suspense, useEffect } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
@@ -32,6 +32,7 @@ import {
   XCircle,
   FileEdit,
   AlertCircle,
+  Warehouse,
 } from 'lucide-react';
 
 import { useAuth, type LinkMeRole } from '@/contexts/AuthContext';
@@ -41,6 +42,7 @@ import {
   type AffiliateProductApprovalStatus,
 } from '@/lib/hooks/use-affiliate-products';
 import { cn } from '@/lib/utils';
+import { SendToStorageDialog } from './components/SendToStorageDialog';
 
 // Roles qui peuvent creer des produits
 const CAN_CREATE_ROLES: LinkMeRole[] = ['enseigne_admin', 'organisation_admin'];
@@ -268,10 +270,12 @@ function MesProduitsContent(): JSX.Element | null {
 }
 
 function ProductRow({ product }: { product: AffiliateProduct }): JSX.Element {
+  const [showStorageDialog, setShowStorageDialog] = useState(false);
   const config = STATUS_CONFIG[product.affiliate_approval_status];
   const Icon = config.icon;
   const canEdit = product.affiliate_approval_status === 'draft';
   const isRejected = product.affiliate_approval_status === 'rejected';
+  const isApproved = product.affiliate_approval_status === 'approved';
 
   // Calcul du prix de vente HT pour les produits AFFILIÉS
   // Le modèle est: l'affilié fixe son payout, Vérone AJOUTE sa commission
@@ -371,7 +375,28 @@ function ProductRow({ product }: { product: AffiliateProduct }): JSX.Element {
               Corriger
             </Link>
           )}
+
+          {/* Envoyer au stock - uniquement approved */}
+          {isApproved && (
+            <button
+              onClick={() => setShowStorageDialog(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition-colors font-medium"
+              title="Envoyer au stock Verone"
+            >
+              <Warehouse className="h-3.5 w-3.5" />
+              Stock
+            </button>
+          )}
         </div>
+
+        {/* Dialog envoi au stock */}
+        {showStorageDialog && (
+          <SendToStorageDialog
+            product={{ id: product.id, name: product.name, sku: product.sku }}
+            isOpen={showStorageDialog}
+            onClose={() => setShowStorageDialog(false)}
+          />
+        )}
       </td>
     </tr>
   );
