@@ -1,11 +1,10 @@
 'use client';
 
-import { use, useEffect, useRef } from 'react';
+import { use, useEffect } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
 
-import { createClient } from '@verone/utils/supabase/client';
 import {
   ArrowLeft,
   Store,
@@ -13,8 +12,6 @@ import {
   ShoppingCart as _ShoppingCart,
   Plus,
 } from 'lucide-react';
-
-const supabase = createClient();
 
 import { useCart } from '../../../../components/cart/CartProvider';
 import { useSelectionWithProducts } from '../../../../lib/hooks/use-linkme-public';
@@ -53,28 +50,8 @@ export default function SelectionPage({ params }: SelectionPageProps) {
     setSelectionInfo,
   ]);
 
-  // Track selection view (once per page load)
-  const hasTrackedView = useRef(false);
-  useEffect(() => {
-    if (selection?.id && !hasTrackedView.current) {
-      hasTrackedView.current = true;
-      // Call RPC to increment views_count - fire and forget
-      const trackView = async () => {
-        try {
-          await supabase.rpc('track_selection_view', {
-            p_selection_id: selection.id,
-          });
-          // View tracked successfully (silent)
-        } catch (err) {
-          // Log error but don't block user experience
-          console.warn('Failed to track view:', err);
-        }
-      };
-      void trackView().catch(err => {
-        console.warn('Failed to track view:', err);
-      });
-    }
-  }, [selection?.id]);
+  // View tracking moved to public page (public)/s/[id]/catalogue
+  // This (main) page is behind auth — only affiliates see it, not real visitors
 
   const handleAddToCart = (item: NonNullable<typeof selection>['items'][0]) => {
     addItem({

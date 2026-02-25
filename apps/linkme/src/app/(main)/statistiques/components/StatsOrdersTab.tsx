@@ -104,27 +104,17 @@ export function StatsOrdersTab({ data, isLoading }: StatsOrdersTabProps) {
           )}
         </Card>
 
-        <Card className="p-5 border-l-4 border-purple-500">
+        <Card className="p-5 border-l-4 border-purple-300 opacity-60">
           <div className="flex items-center gap-2 mb-3">
             <div className="p-1.5 bg-purple-100 rounded-lg">
-              <Eye className="h-4 w-4 text-purple-600" />
+              <Eye className="h-4 w-4 text-purple-400" />
             </div>
-            <span className="text-sm text-gray-600 font-medium">
+            <span className="text-sm text-gray-400 font-medium">
               Conversion
             </span>
           </div>
-          {isLoading ? (
-            <div className="animate-pulse h-8 bg-gray-200 rounded w-16" />
-          ) : (
-            <>
-              <p className="text-2xl font-bold text-purple-600">
-                {formatPercentage(data?.conversionRate ?? 0)}
-              </p>
-              <p className="text-xs text-gray-500 mt-1">
-                {(data?.totalViews ?? 0).toLocaleString('fr-FR')} vues
-              </p>
-            </>
-          )}
+          <p className="text-2xl font-bold text-gray-400">—</p>
+          <p className="text-xs text-gray-400 mt-1">Bientôt disponible</p>
         </Card>
       </section>
 
