@@ -7,7 +7,6 @@ import { usePathname } from 'next/navigation';
 
 import {
   LayoutDashboard,
-  ShoppingBag,
   Star,
   Package,
   ShoppingCart,
@@ -21,6 +20,7 @@ import {
   ChevronRight,
   Share2,
   Users,
+  Warehouse,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -55,13 +55,36 @@ interface SidebarGroup {
 type SidebarItem = SidebarLink | SidebarGroup;
 
 // Hrefs appartenant au groupe Produits (pour auto-open)
-const PRODUITS_HREFS = ['/catalogue', '/ma-selection', '/mes-produits'];
+const PRODUITS_HREFS = ['/ma-selection', '/mes-produits'];
 
 // Hrefs appartenant au groupe Réseau (pour auto-open)
 const RESEAU_HREFS = ['/organisations', '/contacts'];
 
 const sidebarItems: SidebarItem[] = [
   { icon: LayoutDashboard, label: 'Dashboard', href: '/dashboard' },
+  {
+    type: 'group',
+    label: 'Produits',
+    icon: Package,
+    subLinks: [
+      {
+        label: 'Mes Sélections',
+        href: '/ma-selection',
+        icon: Star,
+        roles: ROUTE_PERMISSIONS['/ma-selection']?.roles,
+      },
+      {
+        label: 'Mes Produits',
+        href: '/mes-produits',
+        icon: Package,
+        roles: ROUTE_PERMISSIONS['/mes-produits']?.roles,
+      },
+    ],
+  },
+  { icon: ShoppingCart, label: 'Commandes', href: '/commandes' },
+  { icon: Coins, label: 'Commissions', href: '/commissions' },
+  { icon: BarChart3, label: 'Statistiques', href: '/statistiques' },
+  { icon: Warehouse, label: 'Stockage', href: '/stockage' },
   {
     type: 'group',
     label: 'Réseau',
@@ -81,34 +104,6 @@ const sidebarItems: SidebarItem[] = [
       },
     ],
   },
-  {
-    type: 'group',
-    label: 'Produits',
-    icon: Package,
-    subLinks: [
-      {
-        label: 'Catalogue',
-        href: '/catalogue',
-        icon: ShoppingBag,
-        roles: ROUTE_PERMISSIONS['/catalogue']?.roles,
-      },
-      {
-        label: 'Ma Sélection',
-        href: '/ma-selection',
-        icon: Star,
-        roles: ROUTE_PERMISSIONS['/ma-selection']?.roles,
-      },
-      {
-        label: 'Mes Produits',
-        href: '/mes-produits',
-        icon: Package,
-        roles: ROUTE_PERMISSIONS['/mes-produits']?.roles,
-      },
-    ],
-  },
-  { icon: ShoppingCart, label: 'Commandes', href: '/commandes' },
-  { icon: Coins, label: 'Commissions', href: '/commissions' },
-  { icon: BarChart3, label: 'Statistiques', href: '/statistiques' },
   { icon: Settings, label: 'Paramètres', href: '/parametres' },
 ];
 

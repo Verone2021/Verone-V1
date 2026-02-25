@@ -1,39 +1,37 @@
 'use client';
 
 /**
- * Page Statistiques — Performances produits
+ * Page Statistiques — 3 onglets : Commandes, Commissions, Produits & Sélections
  *
- * Affiche les stats de ventes produits de l'affilié :
- * - 2 KPIs : CA HT + Quantité vendue
- * - Graphique évolution du CA
- * - Top 10 produits vendus
- *
- * Source de données : useAffiliateAnalytics (linkme_commissions + order_items)
+ * Source de données unique : useAffiliateAnalytics
+ * Chaque onglet réutilise les composants analytics existants
  *
  * @module StatistiquesPage
  * @since 2026-02-25
  */
 
-import { useState, useMemo, Suspense } from 'react';
+import { useState, Suspense } from 'react';
 
-import { Card, AreaChart } from '@tremor/react';
+import { Card } from '@tremor/react';
 import {
   BarChart3,
   RefreshCw,
   AlertCircle,
-  TrendingUp,
-  ShoppingCart,
-  DollarSign,
   Filter,
   Calendar,
+  ShoppingCart,
+  Coins,
+  Package,
 } from 'lucide-react';
 
-import { TopProductsTable } from '@/components/analytics';
 import { useAffiliateAnalytics } from '@/lib/hooks/use-affiliate-analytics';
-import { formatCurrency } from '@/types/analytics';
 import type { AnalyticsPeriod } from '@/types/analytics';
 
-// ─── Types filtres période ─────────────────────────────────────────────────────
+import { StatsCommissionsTab } from './components/StatsCommissionsTab';
+import { StatsOrdersTab } from './components/StatsOrdersTab';
+import { StatsProductsTab } from './components/StatsProductsTab';
+
+// ─── Types ─────────────────────────────────────────────────────────────────────
 
 type FilterPreset =
   | 'all'
@@ -41,6 +39,8 @@ type FilterPreset =
   | 'this_quarter'
   | 'this_year'
   | 'custom';
+
+type StatsTab = 'orders' | 'commissions' | 'products';
 
 interface PeriodFilter {
   preset: FilterPreset;
@@ -56,21 +56,20 @@ const PRESET_TO_PERIOD: Record<FilterPreset, AnalyticsPeriod> = {
   custom: 'year',
 };
 
+const TABS: { id: StatsTab; label: string; icon: typeof ShoppingCart }[] = [
+  { id: 'orders', label: 'Commandes', icon: ShoppingCart },
+  { id: 'commissions', label: 'Commissions', icon: Coins },
+  { id: 'products', label: 'Produits & Sélections', icon: Package },
+];
+
 // ─── Contenu ──────────────────────────────────────────────────────────────────
 
 function StatistiquesContent(): JSX.Element {
   const [filter, setFilter] = useState<PeriodFilter>({ preset: 'all' });
+  const [activeTab, setActiveTab] = useState<StatsTab>('orders');
 
   const apiPeriod = PRESET_TO_PERIOD[filter.preset];
   const { data, isLoading, error, refetch } = useAffiliateAnalytics(apiPeriod);
-
-  const caChartData = useMemo(() => {
-    if (!data?.revenueByPeriod) return [];
-    return data.revenueByPeriod.map(d => ({
-      date: d.label,
-      'CA HT': d.revenue,
-    }));
-  }, [data?.revenueByPeriod]);
 
   const formatDateInput = (date: Date): string =>
     date.toISOString().split('T')[0];
@@ -97,7 +96,7 @@ function StatistiquesContent(): JSX.Element {
           <div>
             <h1 className="text-xl font-bold text-[#183559]">Statistiques</h1>
             <p className="text-gray-500 text-sm">
-              Performances produits — quantités et chiffre d&apos;affaires
+              Performances commandes, commissions et produits
             </p>
           </div>
         </div>
@@ -162,7 +161,7 @@ function StatistiquesContent(): JSX.Element {
                   }
                   className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#5DBEBB] focus:border-transparent"
                 />
-                <span className="text-gray-400">→</span>
+                <span className="text-gray-400">&rarr;</span>
                 <input
                   type="date"
                   value={filter.endDate ? formatDateInput(filter.endDate) : ''}
@@ -204,103 +203,43 @@ function StatistiquesContent(): JSX.Element {
           </Card>
         )}
 
-        {/* 2 KPIs produits */}
-        <section className="grid grid-cols-2 gap-4">
-          <Card className="p-5 border-l-4 border-[#5DBEBB]">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="p-1.5 bg-[#5DBEBB]/10 rounded-lg">
-                <DollarSign className="h-4 w-4 text-[#5DBEBB]" />
-              </div>
-              <span className="text-sm text-gray-600 font-medium">
-                Chiffre d&apos;affaires HT
-              </span>
-            </div>
-            {isLoading ? (
-              <div className="animate-pulse h-8 bg-gray-200 rounded w-32" />
-            ) : (
-              <>
-                <p className="text-2xl font-bold text-[#5DBEBB]">
-                  {formatCurrency(data?.totalRevenueHT ?? 0)}
-                </p>
-                <p className="text-xs text-gray-500 mt-1">
-                  {data?.totalOrders ?? 0} commande
-                  {(data?.totalOrders ?? 0) > 1 ? 's' : ''}
-                </p>
-              </>
-            )}
-          </Card>
+        {/* Onglets */}
+        <div className="border-b border-gray-200">
+          <nav className="flex gap-1" aria-label="Onglets statistiques">
+            {TABS.map(tab => {
+              const isActive = activeTab === tab.id;
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+                    isActive
+                      ? 'border-[#5DBEBB] text-[#183559]'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                  aria-current={isActive ? 'page' : undefined}
+                >
+                  <Icon
+                    className={`h-4 w-4 ${isActive ? 'text-[#5DBEBB]' : ''}`}
+                  />
+                  {tab.label}
+                </button>
+              );
+            })}
+          </nav>
+        </div>
 
-          <Card className="p-5 border-l-4 border-[#3976BB]">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="p-1.5 bg-[#3976BB]/10 rounded-lg">
-                <ShoppingCart className="h-4 w-4 text-[#3976BB]" />
-              </div>
-              <span className="text-sm text-gray-600 font-medium">
-                Éléments vendus
-              </span>
-            </div>
-            {isLoading ? (
-              <div className="animate-pulse h-8 bg-gray-200 rounded w-20" />
-            ) : (
-              <>
-                <p className="text-2xl font-bold text-[#3976BB]">
-                  {(data?.totalQuantitySold ?? 0).toLocaleString('fr-FR')}
-                </p>
-                <p className="text-xs text-gray-500 mt-1">
-                  unités vendues sur la période
-                </p>
-              </>
-            )}
-          </Card>
-        </section>
-
-        {/* Graphique évolution du CA */}
-        <Card className="p-6">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 bg-cyan-100 rounded-lg">
-              <TrendingUp className="h-5 w-5 text-cyan-600" />
-            </div>
-            <h3 className="text-lg font-semibold text-gray-900">
-              Évolution du chiffre d&apos;affaires
-            </h3>
-          </div>
-          {isLoading ? (
-            <div className="animate-pulse h-64 bg-gray-200 rounded" />
-          ) : caChartData.length > 0 ? (
-            <AreaChart
-              data={caChartData}
-              index="date"
-              categories={['CA HT']}
-              colors={['cyan']}
-              valueFormatter={value => formatCurrency(value)}
-              showLegend={false}
-              showGridLines
-              showAnimation
-              className="h-64"
-              curveType="monotone"
-              yAxisWidth={120}
-            />
-          ) : (
-            <div className="h-64 flex items-center justify-center bg-gray-50 rounded-lg">
-              <div className="text-center">
-                <TrendingUp className="h-12 w-12 text-gray-300 mx-auto mb-2" />
-                <p className="text-gray-500">
-                  Aucune donnée pour cette période
-                </p>
-              </div>
-            </div>
-          )}
-        </Card>
-
-        {/* Top produits */}
-        <section>
-          <TopProductsTable
-            products={data?.topProducts}
-            isLoading={isLoading}
-            title="Top 10 Produits Vendus"
-            maxItems={10}
-          />
-        </section>
+        {/* Contenu onglet */}
+        {activeTab === 'orders' && (
+          <StatsOrdersTab data={data} isLoading={isLoading} />
+        )}
+        {activeTab === 'commissions' && (
+          <StatsCommissionsTab data={data} isLoading={isLoading} />
+        )}
+        {activeTab === 'products' && (
+          <StatsProductsTab data={data} isLoading={isLoading} />
+        )}
 
         <div className="text-center text-xs text-gray-400 pb-2">
           <p suppressHydrationWarning>

@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 
-import { Menu } from 'lucide-react';
+import { Menu, BookOpen } from 'lucide-react';
 
 import { UserMenu } from '@/components/auth/UserMenu';
 
@@ -39,8 +39,16 @@ export function MinimalHeader(): JSX.Element {
         </Link>
       </div>
 
-      {/* Right: Actions + User Menu */}
+      {/* Right: Catalogue + Actions + User Menu */}
       <div className="flex items-center gap-3">
+        <Link
+          href="/catalogue"
+          className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-linkme-turquoise/10 hover:text-linkme-marine transition-colors"
+          title="Catalogue"
+        >
+          <BookOpen className="h-5 w-5" />
+          <span className="hidden sm:inline">Catalogue</span>
+        </Link>
         <ActionsRequiredDropdown />
         <UserMenu />
       </div>
