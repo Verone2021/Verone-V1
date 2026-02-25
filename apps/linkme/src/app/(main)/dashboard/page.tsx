@@ -212,7 +212,7 @@ export default function DashboardPage(): JSX.Element | null {
             Actions rapides
           </h2>
           <div className="grid grid-cols-3 gap-3">
-            {/* Ma sélection */}
+            {/* Mes sélections */}
             <Link
               href="/ma-selection"
               className="flex flex-col items-center gap-2 p-4 bg-white border border-gray-100 rounded-lg hover:bg-amber-50 hover:border-amber-200 transition-colors group"
@@ -221,7 +221,7 @@ export default function DashboardPage(): JSX.Element | null {
                 <Star className="h-5 w-5 text-amber-600" />
               </div>
               <span className="text-sm font-medium text-gray-700 text-center">
-                Ma sélection
+                Mes sélections
               </span>
             </Link>
 
