@@ -55,6 +55,7 @@ import {
 import { toast } from 'sonner';
 
 import { EditMarginModal } from '../../../../../components/selection/EditMarginModal';
+import { HelpTooltip } from '../../../../../components/ui/help-tooltip';
 import { useAuth, type LinkMeRole } from '../../../../../contexts/AuthContext';
 import {
   useUserAffiliate,
@@ -392,6 +393,7 @@ export default function SelectionProductsPage() {
           item={editingItem}
           selectionId={selection.id}
           onClose={() => setEditingItem(null)}
+          isAffiliateProduct={editingItem.is_affiliate_product}
         />
       )}
     </div>
@@ -485,9 +487,20 @@ function SortableProductItem({
         <p className="font-bold text-linkme-marine">
           {formatCurrency(item.selling_price_ht)}
         </p>
-        <p className="text-xs text-linkme-turquoise font-medium">
-          Marge: {item.margin_rate.toFixed(1)}%
-        </p>
+        {item.is_affiliate_product ? (
+          <span className="text-xs text-amber-600 font-medium">
+            Produit affilié
+          </span>
+        ) : (
+          <div className="flex items-center justify-end gap-1 text-xs text-linkme-turquoise font-medium">
+            <span>Marge: {item.margin_rate.toFixed(1)}%</span>
+            <HelpTooltip
+              content="Votre commission sur chaque vente. Le prix client = prix HT fournisseur + votre marge."
+              side="left"
+              iconClassName="h-3 w-3"
+            />
+          </div>
+        )}
       </div>
 
       {/* Stock */}

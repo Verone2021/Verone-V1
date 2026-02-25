@@ -25,6 +25,7 @@ import {
   PaymentRequestsPanel,
   HowToGetPaidBanner,
 } from '../../../components/commissions';
+import { PageTourTrigger } from '../../../components/onboarding/PageTourTrigger';
 import { useAffiliateAnalytics } from '../../../lib/hooks/use-affiliate-analytics';
 import { useAffiliateCommissions } from '../../../lib/hooks/use-affiliate-commissions';
 import type { AnalyticsPeriod } from '../../../types/analytics';
@@ -79,6 +80,7 @@ export default function CommissionsPage(): JSX.Element {
 
   return (
     <div className="space-y-4 p-4">
+      <PageTourTrigger tourId="tour_commissions" />
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
@@ -108,7 +110,10 @@ export default function CommissionsPage(): JSX.Element {
       </div>
 
       {/* 3 KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div
+        data-tour="commissions-kpis"
+        className="grid grid-cols-1 sm:grid-cols-3 gap-3"
+      >
         <CommissionKPICard
           title="Total TTC"
           amount={analyticsData?.commissionsByStatus?.total.amountTTC ?? 0}
@@ -130,6 +135,7 @@ export default function CommissionsPage(): JSX.Element {
           iconColor="text-linkme-turquoise"
           bgGradient="from-linkme-turquoise/10 to-white"
           isLoading={isLoading}
+          tooltip="Commande livrée, vous pouvez demander le versement de cette commission."
         />
         <CommissionKPICard
           title="En attente"
@@ -140,18 +146,26 @@ export default function CommissionsPage(): JSX.Element {
           iconColor="text-orange-500"
           bgGradient="from-orange-50 to-white"
           isLoading={isLoading}
+          tooltip="Commande en cours de traitement ou pas encore livrée. La commission sera payable après livraison."
         />
       </div>
 
       {/* Banner simplifié "Comment ça marche" avec bouton modal */}
-      <HowToGetPaidBanner
-        onOpenSelectionModal={() => setIsSelectionModalOpen(true)}
-        payableCount={analyticsData?.commissionsByStatus?.validated.count ?? 0}
-        payableAmount={analyticsData?.validatedCommissionsTTC ?? 0}
-      />
+      <div data-tour="commissions-request">
+        <HowToGetPaidBanner
+          onOpenSelectionModal={() => setIsSelectionModalOpen(true)}
+          payableCount={
+            analyticsData?.commissionsByStatus?.validated.count ?? 0
+          }
+          payableAmount={analyticsData?.validatedCommissionsTTC ?? 0}
+        />
+      </div>
 
       {/* Layout 2 colonnes : Table (60%) | Panel Demandes (40%) */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+      <div
+        data-tour="commissions-list"
+        className="grid grid-cols-1 lg:grid-cols-5 gap-4"
+      >
         {/* Colonne gauche : Table des commissions (3/5 = 60%) */}
         <div className="lg:col-span-3">
           {/* Indicateur période du tableau */}

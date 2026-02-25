@@ -43,6 +43,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { HelpTooltip } from '../../../../components/ui/help-tooltip';
 import { SelectionImageUploadDialog } from '../../../../components/selection/SelectionImageUploadDialog';
 import { useAuth, type LinkMeRole } from '../../../../contexts/AuthContext';
 import {
@@ -442,9 +443,12 @@ export default function SelectionDetailPage(): React.JSX.Element | null {
 
         {/* Card Visibilité */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
-          <h2 className="text-sm font-semibold text-linkme-marine mb-4">
-            Visibilité
-          </h2>
+          <div className="flex items-center gap-1.5 mb-4">
+            <h2 className="text-sm font-semibold text-linkme-marine">
+              Visibilité
+            </h2>
+            <HelpTooltip content="Brouillon = visible uniquement par vous. Publiée = accessible via le lien de partage que vous envoyez à vos clients." />
+          </div>
 
           <div className="grid grid-cols-2 gap-3">
             {/* Option Brouillon */}

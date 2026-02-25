@@ -43,6 +43,7 @@ export function MinimalHeader(): JSX.Element {
       <div className="flex items-center gap-3">
         <Link
           href="/catalogue"
+          data-tour="catalogue-link"
           className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-linkme-turquoise/10 hover:text-linkme-marine transition-colors"
           title="Catalogue"
         >

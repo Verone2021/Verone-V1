@@ -42,6 +42,7 @@ import {
   type AffiliateProductApprovalStatus,
 } from '@/lib/hooks/use-affiliate-products';
 import { cn } from '@/lib/utils';
+import { HelpTooltip } from '@/components/ui/help-tooltip';
 import { SendToStorageDialog } from './components/SendToStorageDialog';
 
 // Roles qui peuvent creer des produits
@@ -248,7 +249,10 @@ function MesProduitsContent(): JSX.Element | null {
                       <span className="text-green-600">Encaissement net</span>
                     </th>
                     <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
-                      Statut
+                      <span className="flex items-center gap-1">
+                        Statut
+                        <HelpTooltip content="Les produits doivent être approuvés par Vérone avant d'apparaître dans les sélections. Brouillon = non soumis. En attente = en revue. Approuvé = disponible." />
+                      </span>
                     </th>
                     <th className="text-right px-6 py-4 text-sm font-medium text-gray-500">
                       Actions
