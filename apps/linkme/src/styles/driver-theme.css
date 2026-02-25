@@ -1,0 +1,114 @@
+/**
+ * Driver.js Custom Theme - LinkMe Design System
+ *
+ * Couleurs LinkMe:
+ * - Turquoise: #5DBEBB
+ * - Marine: #183559
+ * - Lavande: #7E84C0
+ *
+ * @since 2026-02-26
+ */
+
+/* Overlay */
+.driver-overlay {
+  background-color: rgba(24, 53, 89, 0.6) !important;
+}
+
+/* Popover container */
+.driver-popover {
+  background-color: #fff !important;
+  border-radius: 16px !important;
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+  border: 1px solid #e5e7eb !important;
+  padding: 20px 24px !important;
+  max-width: 360px !important;
+}
+
+/* Arrow */
+.driver-popover-arrow {
+  border: 1px solid #e5e7eb !important;
+}
+
+/* Title */
+.driver-popover-title {
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  color: #183559 !important;
+  margin-bottom: 8px !important;
+  line-height: 1.4 !important;
+}
+
+/* Description */
+.driver-popover-description {
+  font-size: 14px !important;
+  color: #6b7280 !important;
+  line-height: 1.6 !important;
+  margin-bottom: 0 !important;
+}
+
+/* Progress text (Étape 2/5) */
+.driver-popover-progress-text {
+  font-size: 12px !important;
+  color: #9ca3af !important;
+  font-weight: 500 !important;
+}
+
+/* Footer */
+.driver-popover-footer {
+  margin-top: 16px !important;
+  padding-top: 12px !important;
+  border-top: 1px solid #f3f4f6 !important;
+}
+
+/* Navigation buttons */
+.driver-popover-navigation-btns {
+  gap: 8px !important;
+}
+
+/* Previous button */
+.driver-popover-prev-btn {
+  background-color: #f9fafb !important;
+  color: #6b7280 !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 8px !important;
+  padding: 8px 16px !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  transition: all 0.15s ease !important;
+}
+
+.driver-popover-prev-btn:hover {
+  background-color: #f3f4f6 !important;
+  color: #374151 !important;
+}
+
+/* Next button */
+.driver-popover-next-btn {
+  background-color: #5DBEBB !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 8px !important;
+  padding: 8px 16px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  transition: all 0.15s ease !important;
+}
+
+.driver-popover-next-btn:hover {
+  background-color: #4da9a6 !important;
+}
+
+/* Close button */
+.driver-popover-close-btn {
+  color: #9ca3af !important;
+  font-size: 20px !important;
+  top: 12px !important;
+  right: 12px !important;
+  transition: color 0.15s ease !important;
+}
+
+.driver-popover-close-btn:hover {
+  color: #6b7280 !important;
+}

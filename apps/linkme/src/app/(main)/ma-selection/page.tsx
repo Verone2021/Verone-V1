@@ -37,6 +37,7 @@ import {
 
 import { toast } from 'sonner';
 
+import { PageTourTrigger } from '../../../components/onboarding/PageTourTrigger';
 import { useAuth, type LinkMeRole } from '../../../contexts/AuthContext';
 import { useAffiliateAnalytics } from '../../../lib/hooks/use-affiliate-analytics';
 import {
@@ -133,8 +134,12 @@ export default function MaSelectionPage(): React.JSX.Element {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <PageTourTrigger tourId="tour_selection" />
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+        <div
+          data-tour="selection-header"
+          className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8"
+        >
           <div className="flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-linkme-turquoise/10">
               <Layers className="h-6 w-6 text-linkme-turquoise" />
@@ -151,6 +156,7 @@ export default function MaSelectionPage(): React.JSX.Element {
 
           <Link
             href="/ma-selection/nouvelle"
+            data-tour="selection-create"
             className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-linkme-turquoise text-white rounded-lg font-medium hover:bg-linkme-turquoise/90 transition-all shadow-lg shadow-linkme-turquoise/25 hover:shadow-xl hover:shadow-linkme-turquoise/30"
           >
             <Plus className="h-5 w-5" />
@@ -249,7 +255,10 @@ export default function MaSelectionPage(): React.JSX.Element {
 
         {/* Grille des sélections */}
         {selections && selections.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div
+            data-tour="selection-list"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+          >
             {selections.map(selection => (
               <SelectionCard key={selection.id} selection={selection} />
             ))}

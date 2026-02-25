@@ -1,6 +1,9 @@
 import type { Metadata, Viewport } from 'next';
 
+import 'driver.js/dist/driver.css';
+
 import './globals.css';
+import '../styles/driver-theme.css';
 
 /**
  * Configuration SEO globale LinkMe
