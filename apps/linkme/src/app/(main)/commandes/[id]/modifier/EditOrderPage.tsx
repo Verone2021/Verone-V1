@@ -34,7 +34,7 @@ import {
   Switch,
   cn,
 } from '@verone/ui';
-import { calculateMargin, LINKME_CONSTANTS } from '@verone/utils';
+import { LINKME_CONSTANTS } from '@verone/utils';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import {
@@ -87,11 +87,16 @@ interface EditableItem {
   quantity: number;
   originalQuantity: number;
   unit_price_ht: number;
+  original_unit_price_ht: number;
   base_price_ht: number;
   margin_rate: number;
   tax_rate: number;
   _delete: boolean;
   _isNew: boolean;
+  /** Produit créé par l'affilié (modèle inversé) */
+  is_affiliate_product: boolean;
+  /** Taux de commission Verone (lecture seule pour l'affilié, ex: 0.15 = 15%) */
+  affiliate_commission_rate: number;
 }
 
 interface ContactFormData {
@@ -123,11 +128,16 @@ function mapOrderItemToEditable(item: OrderItemData): EditableItem {
     quantity: item.quantity,
     originalQuantity: item.quantity,
     unit_price_ht: item.unit_price_ht,
+    original_unit_price_ht: item.unit_price_ht,
     base_price_ht: item.base_price_ht_locked ?? 0,
     margin_rate: item.retrocession_rate ?? 0,
     tax_rate: item.tax_rate ?? 0.2,
     _delete: false,
     _isNew: false,
+    is_affiliate_product: !!item.product?.created_by_affiliate,
+    affiliate_commission_rate: item.product?.affiliate_commission_rate
+      ? item.product.affiliate_commission_rate / 100
+      : 0.15,
   };
 }
 
@@ -604,12 +614,12 @@ export function EditOrderPage({ data }: EditOrderPageProps) {
         productsHt = roundMoney(
           productsHt + item.quantity * item.unit_price_ht
         );
-        const { gainEuros } = calculateMargin({
-          basePriceHt: item.base_price_ht,
-          marginRate: item.margin_rate,
-        });
+        // Commission = unit_price * retrocession_rate * quantity
+        // Aligned with DB trigger lock_prices_on_order_validation()
+        // margin_rate here is retrocession_rate (decimal, e.g. 0.15 = 15%)
         totalCommission = roundMoney(
-          totalCommission + gainEuros * item.quantity
+          totalCommission +
+            item.unit_price_ht * item.margin_rate * item.quantity
         );
       }
     }
@@ -633,7 +643,10 @@ export function EditOrderPage({ data }: EditOrderPageProps) {
   const hasChanges = useMemo(() => {
     const itemsChanged = items.some(
       item =>
-        item.quantity !== item.originalQuantity || item._delete || item._isNew
+        item.quantity !== item.originalQuantity ||
+        item.unit_price_ht !== item.original_unit_price_ht ||
+        item._delete ||
+        item._isNew
     );
 
     // For contacts/addresses, compare resolved values against original details
@@ -713,6 +726,19 @@ export function EditOrderPage({ data }: EditOrderPageProps) {
     );
   }, []);
 
+  // Modifier prix unitaire (produits affiliés uniquement)
+  const updateItemPrice = useCallback((itemId: string, newPrice: number) => {
+    if (newPrice < 0 || isNaN(newPrice)) return;
+    setItems(prev =>
+      prev.map(item => {
+        if (item.id === itemId || (item._isNew && item.product_id === itemId)) {
+          return { ...item, unit_price_ht: Math.round(newPrice * 100) / 100 };
+        }
+        return item;
+      })
+    );
+  }, []);
+
   const handleAddProducts = useCallback(
     (
       newProducts: Array<{
@@ -724,6 +750,8 @@ export function EditOrderPage({ data }: EditOrderPageProps) {
         base_price_ht: number;
         margin_rate: number;
         quantity: number;
+        is_affiliate_product?: boolean;
+        affiliate_commission_rate?: number;
       }>
     ) => {
       setItems(prev => {
@@ -751,11 +779,14 @@ export function EditOrderPage({ data }: EditOrderPageProps) {
               quantity: product.quantity,
               originalQuantity: 0,
               unit_price_ht: product.unit_price_ht,
+              original_unit_price_ht: product.unit_price_ht,
               base_price_ht: product.base_price_ht,
               margin_rate: product.margin_rate,
               tax_rate: 0.2,
               _delete: false,
               _isNew: true,
+              is_affiliate_product: product.is_affiliate_product ?? false,
+              affiliate_commission_rate: product.affiliate_commission_rate ?? 0,
             });
           }
         }
@@ -814,6 +845,7 @@ export function EditOrderPage({ data }: EditOrderPageProps) {
         if (item._isNew) return true;
         if (item._delete) return true;
         if (item.quantity !== item.originalQuantity) return true;
+        if (item.unit_price_ht !== item.original_unit_price_ht) return true;
         return false;
       })
       .map(item => ({
@@ -1029,14 +1061,79 @@ export function EditOrderPage({ data }: EditOrderPageProps) {
                             Nouveau
                           </Badge>
                         )}
+                        {item.is_affiliate_product && (
+                          <Badge
+                            variant="outline"
+                            className="bg-blue-100 text-blue-700 border-blue-300 text-xs"
+                          >
+                            Produit affilié
+                          </Badge>
+                        )}
                       </div>
-                      <p className="text-xs text-gray-500">
-                        {item.product_sku && `${item.product_sku} | `}
-                        {formatPrice(item.unit_price_ht)} HT x {item.quantity} ={' '}
-                        <span className="font-medium">
-                          {formatPrice(item.unit_price_ht * item.quantity)} HT
-                        </span>
-                      </p>
+                      {item.is_affiliate_product && !item._delete ? (
+                        <div className="space-y-1 mt-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-gray-500">
+                              Prix vente HT :
+                            </span>
+                            <input
+                              type="number"
+                              value={item.unit_price_ht}
+                              onChange={e =>
+                                updateItemPrice(
+                                  item._isNew ? item.product_id : item.id,
+                                  parseFloat(e.target.value) || 0
+                                )
+                              }
+                              min={0}
+                              step={0.01}
+                              className="w-24 px-2 py-0.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#5DBEBB]"
+                            />
+                            <span className="text-xs text-gray-500">
+                              × {item.quantity} ={' '}
+                              <span className="font-medium">
+                                {formatPrice(
+                                  item.unit_price_ht * item.quantity
+                                )}{' '}
+                                HT
+                              </span>
+                            </span>
+                          </div>
+                          <p className="text-xs text-blue-600">
+                            Commission Verone :{' '}
+                            {(item.affiliate_commission_rate * 100).toFixed(0)}%
+                            ={' '}
+                            {formatPrice(
+                              item.unit_price_ht *
+                                item.affiliate_commission_rate
+                            )}
+                          </p>
+                          <p className="text-xs text-green-600">
+                            Votre revenu net :{' '}
+                            {formatPrice(
+                              item.unit_price_ht *
+                                (1 - item.affiliate_commission_rate)
+                            )}{' '}
+                            / unité
+                          </p>
+                          {item.unit_price_ht !==
+                            item.original_unit_price_ht && (
+                            <p className="text-xs text-[#5DBEBB] font-medium">
+                              (prix initial :{' '}
+                              {formatPrice(item.original_unit_price_ht)})
+                            </p>
+                          )}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-gray-500">
+                          {item.product_sku && `${item.product_sku} | `}
+                          {formatPrice(item.unit_price_ht)} HT x {item.quantity}{' '}
+                          ={' '}
+                          <span className="font-medium">
+                            {formatPrice(item.unit_price_ht * item.quantity)} HT
+                          </span>
+                        </p>
+                      )}
                     </div>
 
                     {/* Quantity controls */}
