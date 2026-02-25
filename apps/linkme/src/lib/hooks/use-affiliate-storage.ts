@@ -252,3 +252,141 @@ export function formatPrice(price: number): string {
     currency: 'EUR',
   }).format(price);
 }
+
+// ─── Types historique mensuel ────────────────────────────────────────────────
+
+export interface StorageMonthlyRow {
+  month_date: string;
+  month_label: string;
+  year_val: number;
+  month_val: number;
+  total_units: number;
+  products_count: number;
+  total_volume_m3: number;
+  billable_volume_m3: number;
+}
+
+/**
+ * Hook: historique mensuel du stockage (12 derniers mois par défaut)
+ */
+export function useStorageMonthlyHistory(monthsBack = 12) {
+  const { linkMeRole } = useAuth();
+  const enseigneId = linkMeRole?.enseigne_id;
+  const organisationId = linkMeRole?.organisation_id;
+
+  return useQuery({
+    queryKey: [
+      'storage-monthly-history',
+      enseigneId,
+      organisationId,
+      monthsBack,
+    ],
+    queryFn: async (): Promise<StorageMonthlyRow[]> => {
+      if (!enseigneId && !organisationId) return [];
+
+      const supabase = createClient();
+
+      // RPC créée par migration 20260225130000 — pas encore dans les types générés
+      // Utiliser supabase.schema('public').rpc via cast typé pour contourner
+      interface RpcClient {
+        rpc(
+          fn: string,
+          args: Record<string, unknown>
+        ): {
+          returns<T>(): PromiseLike<{
+            data: T | null;
+            error: { message: string } | null;
+          }>;
+        };
+      }
+
+      const { data, error } = await (supabase as unknown as RpcClient)
+        .rpc('get_storage_monthly_history', {
+          p_owner_enseigne_id: enseigneId ?? null,
+          p_owner_organisation_id: organisationId ?? null,
+          p_months_back: monthsBack,
+        })
+        .returns<StorageMonthlyRow[]>();
+
+      if (error) {
+        console.error('Error fetching storage monthly history:', error);
+        throw new Error(error.message);
+      }
+
+      return data ?? [];
+    },
+    enabled: !!(enseigneId ?? organisationId),
+    staleTime: 120000,
+  });
+}
+
+/**
+ * Hook: historique des événements stockage (entrées/sorties)
+ */
+export interface StorageEvent {
+  id: string;
+  product_id: string;
+  product_name: string;
+  product_sku: string;
+  qty_change: number;
+  volume_m3_change: number;
+  billable: boolean;
+  happened_at: string;
+  source: string;
+  created_at: string;
+}
+
+export function useStorageEventsHistory(limit = 50) {
+  const { linkMeRole } = useAuth();
+  const enseigneId = linkMeRole?.enseigne_id;
+  const organisationId = linkMeRole?.organisation_id;
+
+  return useQuery({
+    queryKey: ['storage-events-history', enseigneId, organisationId, limit],
+    queryFn: async (): Promise<StorageEvent[]> => {
+      if (!enseigneId && !organisationId) return [];
+
+      const supabase: SupabaseClient<Database> = createClient();
+
+      const { data, error } = await supabase
+        .rpc('get_storage_events_history', {
+          p_owner_enseigne_id: enseigneId ?? undefined,
+          p_owner_organisation_id: organisationId ?? undefined,
+          p_limit: limit,
+          p_offset: 0,
+        })
+        .returns<StorageEvent[]>();
+
+      if (error) {
+        console.error('Error fetching storage events:', error);
+        throw error;
+      }
+
+      return data ?? [];
+    },
+    enabled: !!(enseigneId ?? organisationId),
+    staleTime: 60000,
+  });
+}
+
+/**
+ * Mois en français
+ */
+const MONTHS_FR = [
+  'Janvier',
+  'Février',
+  'Mars',
+  'Avril',
+  'Mai',
+  'Juin',
+  'Juillet',
+  'Août',
+  'Septembre',
+  'Octobre',
+  'Novembre',
+  'Décembre',
+];
+
+export function formatMonthLabel(monthVal: number, yearVal: number): string {
+  return `${MONTHS_FR[monthVal - 1]} ${yearVal}`;
+}
