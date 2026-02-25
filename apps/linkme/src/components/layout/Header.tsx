@@ -20,7 +20,7 @@ import { useCart } from '../cart/CartProvider';
 // Rôles autorisés à voir le catalogue
 const CATALOG_ROLES: LinkMeRole[] = ['enseigne_admin', 'organisation_admin'];
 
-// Rôles autorisés à voir "Ma sélection"
+// Rôles autorisés à voir "Mes sélections"
 const SELECTION_ROLES: LinkMeRole[] = ['enseigne_admin', 'organisation_admin'];
 
 // Rôles autorisés à créer des produits (affiliés)
@@ -84,7 +84,7 @@ export function Header() {
                 className="flex items-center gap-1.5 text-gray-600 hover:text-gray-900 font-medium"
               >
                 <Star className="h-4 w-4" />
-                Ma sélection
+                Mes sélections
               </Link>
             )}
             {canCreateProducts && (
