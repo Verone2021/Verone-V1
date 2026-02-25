@@ -1176,6 +1176,11 @@ function AddAllocationDialog({
                           value={product.id}
                           onSelect={() => {
                             setSelectedProduct(product);
+                            setQuantity(
+                              product.stock_quantity > 0
+                                ? product.stock_quantity
+                                : 1
+                            );
                             setProductOpen(false);
                           }}
                         >
@@ -1213,6 +1218,11 @@ function AddAllocationDialog({
                 setQuantity(Math.max(1, parseInt(e.target.value) ?? 1))
               }
             />
+            {selectedProduct && selectedProduct.stock_quantity > 0 && (
+              <p className="text-xs text-gray-500">
+                Stock produit : {selectedProduct.stock_quantity} unites
+              </p>
+            )}
           </div>
 
           {/* Billable Toggle */}
