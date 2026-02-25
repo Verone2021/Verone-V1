@@ -21,6 +21,7 @@ import {
   Share2,
   Users,
   Warehouse,
+  HelpCircle,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -105,6 +106,7 @@ const sidebarItems: SidebarItem[] = [
     ],
   },
   { icon: Settings, label: 'Paramètres', href: '/parametres' },
+  { icon: HelpCircle, label: 'Aide', href: '/aide' },
 ];
 
 function isProduitsPath(pathname: string): boolean {

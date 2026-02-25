@@ -10,6 +10,7 @@
 import { Euro, Loader2, Check } from 'lucide-react';
 
 import type { StoragePricingTier } from '../../lib/hooks/use-affiliate-storage';
+import { HelpTooltip } from '../ui/help-tooltip';
 
 export interface PricingGridReadOnlyProps {
   tiers: StoragePricingTier[];
@@ -58,6 +59,7 @@ export function PricingGridReadOnly({
           <h3 className="text-base font-semibold text-gray-900">
             Grille tarifaire
           </h3>
+          <HelpTooltip content="Tarif mensuel par m³ occupé. Le tarif est dégressif selon le volume total stocké." />
         </div>
         <p className="text-sm text-gray-500 text-center py-4">
           Aucune grille tarifaire disponible
@@ -73,6 +75,7 @@ export function PricingGridReadOnly({
         <h3 className="text-base font-semibold text-gray-900">
           Grille tarifaire stockage
         </h3>
+        <HelpTooltip content="Tarif mensuel par m³ occupé. Le tarif est dégressif selon le volume total stocké." />
       </div>
 
       <div className="space-y-2">

@@ -169,10 +169,14 @@ export function ProductPricingCard({
     return calculatePricingCompleteness(formData);
   }, [formData]);
 
+  // Produit affilié = créé par l'affilié (revendeur)
+  // Commission DÉDUITE du revenu, PAS ajoutée au prix client
+  const isAffiliateProduct = !!product.created_by_affiliate;
+
   // =====================================================
   // PRIX CLIENT LINKME (calculé automatiquement)
-  // Prix que le client final paie = prix vente × (1 + commission%)
-  // Se met à jour en temps réel quand prix ou commission change
+  // Catalogue: prix vente × (1 + commission%) → commission ajoutée
+  // Affilié: prix vente tel quel → commission déduite du revenu
   // =====================================================
   const customerPriceHT = useMemo(() => {
     const sellingPrice = formData.custom_price_ht;
@@ -180,7 +184,10 @@ export function ProductPricingCard({
 
     if (!sellingPrice || sellingPrice <= 0) return null;
 
-    // Commission en % (ex: 5 pour 5%) → convertir en décimal
+    // Produit affilié: prix client = prix de vente (pas de commission ajoutée)
+    if (isAffiliateProduct) return sellingPrice;
+
+    // Produit catalogue: Commission en % (ex: 5 pour 5%) → convertir en décimal
     const commissionDecimal =
       commissionRate !== null && commissionRate !== undefined
         ? commissionRate / 100
@@ -188,7 +195,11 @@ export function ProductPricingCard({
 
     // Prix client = prix vente × (1 + commission)
     return sellingPrice * (1 + commissionDecimal);
-  }, [formData.custom_price_ht, formData.channel_commission_rate]);
+  }, [
+    formData.custom_price_ht,
+    formData.channel_commission_rate,
+    isAffiliateProduct,
+  ]);
 
   const handleChange = (field: keyof LinkMePricingUpdate, value: string) => {
     const numValue = value === '' ? null : parseFloat(value);

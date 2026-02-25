@@ -1,13 +1,26 @@
 /**
  * Hook: useLinkMeOrders
- * Récupère les commandes LinkMe pour un affilié
+ * Récupère les commandes LinkMe via query directe (RLS-aware)
+ *
+ * Remplace l'ancien RPC `get_linkme_orders` (SECURITY DEFINER = bypass RLS)
+ * par une query directe sur `sales_orders` qui respecte la RLS :
+ * - Affilié voit SES commandes
+ * - Enseigne_admin voit TOUTES les commandes de son enseigne
+ * - Staff back-office voit tout
  *
  * @module use-linkme-orders
  * @since 2025-12-18
+ * @updated 2026-02-25 - Migration RPC → query directe + pagination server-side
  */
 
 import { useQuery } from '@tanstack/react-query';
+import type { Database } from '@verone/types/supabase';
 import { createClient } from '@verone/utils/supabase/client';
+
+type SalesOrderStatus = Database['public']['Enums']['sales_order_status'];
+
+/** LinkMe channel UUID */
+const LINKME_CHANNEL_ID = '93c68db1-5a30-4168-89ec-6383152be405';
 
 /**
  * Interface item de commande
@@ -21,7 +34,7 @@ export interface OrderItem {
   quantity: number;
   unit_price_ht: number;
   total_ht: number;
-  tax_rate: number; // Taux de TVA (0.2 = 20%, 0 = 0%)
+  tax_rate: number;
   base_price_ht: number;
   margin_rate: number;
   commission_rate: number;
@@ -41,102 +54,6 @@ export interface StructuredAddress {
   contact_name?: string;
   contact_phone?: string;
   contact_email?: string;
-}
-
-/**
- * Raw JSONB shapes returned by the RPC for nested objects
- */
-interface RawCustomerJsonb {
-  id: string;
-  name: string | null;
-  type: 'organization' | 'individual';
-  email: string | null;
-}
-
-interface RawProductJsonb {
-  id: string;
-  name: string | null;
-  sku: string | null;
-  stock_real: number | null;
-  primary_image_url: string | null;
-}
-
-interface RawItemJsonb {
-  id: string;
-  product: RawProductJsonb;
-  quantity: number;
-  tax_rate: number;
-  total_ht: number;
-  unit_price_ht: number;
-  base_price_ht: number;
-  selling_price_ht: number;
-  margin_rate: number;
-  affiliate_margin: number;
-}
-
-/**
- * Flat row returned by get_linkme_orders RPC.
- * Columns: sales_orders flat fields + JSONB (channel, customer, items)
- * + linkme_details prefixed with ld_*
- * + affiliate/selection info
- */
-interface RpcOrderRow {
-  id: string;
-  order_number: string;
-  created_at: string;
-  updated_at: string;
-  status: string;
-  payment_status: string | null;
-  total_ht: string | null; // PostgreSQL numeric → string
-  total_ttc: string | null;
-  shipping_cost_ht: string | null;
-  handling_cost_ht: string | null;
-  insurance_cost_ht: string | null;
-  affiliate_total_ht: string | null;
-  // JSONB addresses
-  billing_address: StructuredAddress | null;
-  shipping_address: StructuredAddress | null;
-  // Approval
-  pending_admin_validation: boolean;
-  // JSONB objects
-  channel: { id: string; code: string; name: string } | null;
-  customer: RawCustomerJsonb | null;
-  items: RawItemJsonb[] | null;
-  // Affiliate info
-  affiliate_id: string | null;
-  affiliate_display_name: string | null;
-  affiliate_type: string | null;
-  // Selection info
-  selection_id: string | null;
-  selection_name: string | null;
-  // LinkMe details: billing contact
-  ld_billing_name: string | null;
-  ld_billing_email: string | null;
-  ld_billing_phone: string | null;
-  // LinkMe details: requester contact
-  ld_requester_name: string | null;
-  ld_requester_email: string | null;
-  ld_requester_phone: string | null;
-  ld_requester_position: string | null;
-  // LinkMe details: delivery contact
-  ld_delivery_contact_name: string | null;
-  ld_delivery_contact_email: string | null;
-  ld_delivery_contact_phone: string | null;
-  // LinkMe details: delivery address (text)
-  ld_delivery_address: string | null;
-  ld_delivery_postal_code: string | null;
-  ld_delivery_city: string | null;
-  // LinkMe details: delivery dates
-  ld_desired_delivery_date: string | null;
-  ld_confirmed_delivery_date: string | null;
-  // LinkMe details: delivery options
-  ld_is_mall_delivery: boolean | null;
-  ld_delivery_notes: string | null;
-  ld_owner_type: string | null;
-  // LinkMe details: reception contact
-  ld_reception_contact_name: string | null;
-  ld_reception_contact_email: string | null;
-  ld_reception_contact_phone: string | null;
 }
 
 /**
@@ -207,140 +124,428 @@ export interface LinkMeOrder {
   items: OrderItem[];
 }
 
+// ============================================
+// Supabase row types for the joined query
+// ============================================
+
+interface QueryOrderRow {
+  id: string;
+  order_number: string;
+  created_at: string;
+  updated_at: string;
+  status: string;
+  payment_status_v2: string | null;
+  total_ht: number;
+  total_ttc: number;
+  shipping_cost_ht: number | null;
+  handling_cost_ht: number | null;
+  insurance_cost_ht: number | null;
+  affiliate_total_ht: number | null;
+  billing_address: StructuredAddress | null;
+  shipping_address: StructuredAddress | null;
+  pending_admin_validation: boolean | null;
+  created_by_affiliate_id: string | null;
+  linkme_selection_id: string | null;
+  customer_id: string | null;
+  customer_type: string;
+  channel: { id: string; name: string; code: string } | null;
+  items: QueryItemRow[];
+  linkme_details: QueryLinkmeDetailsRow[];
+  affiliate: {
+    id: string;
+    display_name: string;
+    affiliate_type: string;
+  } | null;
+  selection: { id: string; name: string } | null;
+  organisation: {
+    id: string;
+    trade_name: string | null;
+    legal_name: string;
+  } | null;
+  individual_customer: {
+    id: string;
+    first_name: string;
+    last_name: string;
+  } | null;
+}
+
+interface QueryItemRow {
+  id: string;
+  product_id: string;
+  quantity: number;
+  unit_price_ht: number;
+  total_ht: number | null;
+  tax_rate: number;
+  retrocession_amount: number | null;
+  retrocession_rate: number | null;
+  base_price_ht_locked: number | null;
+  selling_price_ht_locked: number | null;
+  product: { id: string; name: string; sku: string | null } | null;
+}
+
+interface QueryLinkmeDetailsRow {
+  billing_name: string | null;
+  billing_email: string | null;
+  billing_phone: string | null;
+  requester_name: string;
+  requester_email: string;
+  requester_phone: string | null;
+  requester_position: string | null;
+  delivery_contact_name: string | null;
+  delivery_contact_email: string | null;
+  delivery_contact_phone: string | null;
+  delivery_address: string | null;
+  delivery_postal_code: string | null;
+  delivery_city: string | null;
+  desired_delivery_date: string | null;
+  confirmed_delivery_date: string | null;
+  is_mall_delivery: boolean | null;
+  delivery_notes: string | null;
+  owner_type: string | null;
+  reception_contact_name: string | null;
+  reception_contact_email: string | null;
+  reception_contact_phone: string | null;
+}
+
+interface ProductImageRow {
+  product_id: string;
+  public_url: string | null;
+}
+
+// ============================================
+// Pagination options
+// ============================================
+
+export interface UseLinkMeOrdersOptions {
+  page: number;
+  pageSize: number;
+  yearFilter?: string; // 'all' | 'current' | '2025' | '2026' etc.
+  statusFilter?: 'all' | SalesOrderStatus; // tab filter
+}
+
+export interface UseLinkMeOrdersResult {
+  orders: LinkMeOrder[];
+  totalCount: number;
+  isLoading: boolean;
+  error: Error | null;
+  /** Status counts for tabs (total across all pages) */
+  statusCounts: Record<string, number>;
+  /** Whether status counts are still loading */
+  isCountsLoading: boolean;
+}
+
+// ============================================
+// Build query helper
+// ============================================
+
+const ORDER_SELECT = `
+  id, order_number, created_at, updated_at, status,
+  payment_status_v2, total_ht, total_ttc,
+  shipping_cost_ht, handling_cost_ht, insurance_cost_ht,
+  affiliate_total_ht, billing_address, shipping_address,
+  pending_admin_validation, created_by_affiliate_id,
+  linkme_selection_id, customer_id, customer_type,
+  channel:sales_channels!left(id, name, code),
+  items:sales_order_items(
+    id, product_id, quantity, unit_price_ht, total_ht, tax_rate,
+    retrocession_amount, retrocession_rate,
+    base_price_ht_locked, selling_price_ht_locked,
+    product:products!left(id, name, sku)
+  ),
+  linkme_details:sales_order_linkme_details!left(
+    billing_name, billing_email, billing_phone,
+    requester_name, requester_email, requester_phone, requester_position,
+    delivery_contact_name, delivery_contact_email, delivery_contact_phone,
+    delivery_address, delivery_postal_code, delivery_city,
+    desired_delivery_date, confirmed_delivery_date,
+    is_mall_delivery, delivery_notes, owner_type,
+    reception_contact_name, reception_contact_email, reception_contact_phone
+  ),
+  affiliate:linkme_affiliates!sales_orders_created_by_affiliate_id_fkey(
+    id, display_name, affiliate_type
+  ),
+  selection:linkme_selections!sales_orders_linkme_selection_id_fkey(id, name),
+  organisation:organisations!sales_orders_customer_id_fkey(id, trade_name, legal_name),
+  individual_customer:individual_customers!sales_orders_individual_customer_id_fkey(
+    id, first_name, last_name
+  )
+` as const;
+
+// ============================================
+// Map row to LinkMeOrder
+// ============================================
+
+function mapRowToOrder(
+  row: QueryOrderRow,
+  imageMap: Map<string, string | null>
+): LinkMeOrder {
+  const ld = row.linkme_details?.[0] ?? null;
+
+  // Customer name: from organisation or individual_customer, fallback to linkme_details
+  let customerName = 'Client inconnu';
+  if (row.customer_type === 'organization' && row.organisation) {
+    customerName =
+      row.organisation.trade_name ??
+      row.organisation.legal_name ??
+      'Client inconnu';
+  } else if (row.individual_customer) {
+    customerName =
+      `${row.individual_customer.first_name} ${row.individual_customer.last_name}`.trim();
+  } else if (ld?.billing_name) {
+    customerName = ld.billing_name;
+  } else if (ld?.requester_name) {
+    customerName = ld.requester_name;
+  }
+
+  // Compute total affiliate margin from items retrocession
+  const totalAffiliateMargin =
+    Number(row.affiliate_total_ht) ||
+    row.items.reduce(
+      (sum, item) => sum + (Number(item.retrocession_amount) || 0),
+      0
+    );
+
+  return {
+    id: row.id,
+    order_number: row.order_number,
+    status: row.status,
+    payment_status: row.payment_status_v2,
+    total_ht: Number(row.total_ht) || 0,
+    total_ttc: Number(row.total_ttc) || 0,
+    shipping_cost_ht: Number(row.shipping_cost_ht) || 0,
+    handling_cost_ht: Number(row.handling_cost_ht) || 0,
+    insurance_cost_ht: Number(row.insurance_cost_ht) || 0,
+    total_affiliate_margin: totalAffiliateMargin,
+    // Customer
+    customer_name: customerName,
+    customer_type:
+      (row.customer_type as 'organization' | 'individual') ?? 'organization',
+    customer_id: row.customer_id ?? '',
+    customer_address: ld?.delivery_address ?? null,
+    customer_postal_code: ld?.delivery_postal_code ?? null,
+    customer_city: ld?.delivery_city ?? null,
+    customer_email: ld?.billing_email ?? ld?.requester_email ?? null,
+    customer_phone: ld?.billing_phone ?? ld?.requester_phone ?? null,
+    // Structured addresses
+    billing_address: row.billing_address,
+    shipping_address: row.shipping_address,
+    // Dates
+    desired_delivery_date: ld?.desired_delivery_date ?? null,
+    confirmed_delivery_date: ld?.confirmed_delivery_date ?? null,
+    // Billing contact
+    billing_name: ld?.billing_name ?? null,
+    billing_email: ld?.billing_email ?? null,
+    billing_phone: ld?.billing_phone ?? null,
+    // Requester
+    requester_name: ld?.requester_name ?? null,
+    requester_email: ld?.requester_email ?? null,
+    requester_phone: ld?.requester_phone ?? null,
+    requester_position: ld?.requester_position ?? null,
+    // Delivery contact
+    delivery_contact_name: ld?.delivery_contact_name ?? null,
+    delivery_contact_email: ld?.delivery_contact_email ?? null,
+    delivery_contact_phone: ld?.delivery_contact_phone ?? null,
+    // Delivery address
+    delivery_address_text: ld?.delivery_address ?? null,
+    delivery_postal_code: ld?.delivery_postal_code ?? null,
+    delivery_city: ld?.delivery_city ?? null,
+    // Delivery options
+    is_mall_delivery: ld?.is_mall_delivery ?? false,
+    delivery_notes: ld?.delivery_notes ?? null,
+    owner_type: ld?.owner_type ?? null,
+    // Reception contact
+    reception_contact_name: ld?.reception_contact_name ?? null,
+    reception_contact_email: ld?.reception_contact_email ?? null,
+    reception_contact_phone: ld?.reception_contact_phone ?? null,
+    // Affiliate
+    affiliate_id: row.affiliate?.id ?? row.created_by_affiliate_id ?? '',
+    affiliate_name: row.affiliate?.display_name ?? null,
+    affiliate_type:
+      (row.affiliate?.affiliate_type as 'enseigne' | 'organisation') ?? null,
+    selection_id: row.selection?.id ?? row.linkme_selection_id ?? null,
+    selection_name: row.selection?.name ?? null,
+    items_count: row.items?.length ?? 0,
+    created_at: row.created_at,
+    updated_at: row.updated_at ?? row.created_at,
+    pending_admin_validation: row.pending_admin_validation ?? false,
+    // Items with images
+    items: (row.items ?? []).map(
+      (item): OrderItem => ({
+        id: item.id,
+        product_id: item.product_id ?? item.product?.id ?? '',
+        product_name: item.product?.name ?? 'Produit inconnu',
+        product_sku: item.product?.sku ?? '',
+        product_image_url: imageMap.get(item.product_id) ?? null,
+        quantity: item.quantity ?? 0,
+        unit_price_ht: Number(item.unit_price_ht) || 0,
+        total_ht: Number(item.total_ht) || 0,
+        tax_rate: Number(item.tax_rate) || 0,
+        base_price_ht: Number(item.base_price_ht_locked) || 0,
+        margin_rate: 0, // Not available in direct query
+        commission_rate: Number(item.retrocession_rate) || 0,
+        selling_price_ht: Number(item.selling_price_ht_locked) || 0,
+        affiliate_margin: Number(item.retrocession_amount) || 0,
+      })
+    ),
+  };
+}
+
+// ============================================
+// MAIN HOOK
+// ============================================
+
 /**
- * Hook: récupère les commandes LinkMe
+ * Hook: récupère les commandes LinkMe avec pagination server-side
  *
- * @param affiliateId - ID de l'affilié pour filtrer, ou null pour toutes les commandes
- * @param fetchAll - Si true, récupère toutes les commandes (mode CMS/admin)
- *
- * Note: Pour aligner les KPIs avec le back-office, utiliser fetchAll=true
+ * RLS filtre automatiquement :
+ * - Affilié voit ses commandes
+ * - Enseigne_admin voit toutes les commandes de son enseigne
+ * - Staff back-office voit tout
  */
-export function useLinkMeOrders(
-  affiliateId: string | null,
-  fetchAll: boolean = false
-) {
-  return useQuery({
-    queryKey: ['linkme-orders', fetchAll ? 'all' : affiliateId],
-    queryFn: async (): Promise<LinkMeOrder[]> => {
-      // Si pas de fetchAll et pas d'affiliateId, retourner vide
-      if (!fetchAll && !affiliateId) return [];
+export function useLinkMeOrders(options: UseLinkMeOrdersOptions) {
+  const { page, pageSize, yearFilter = 'all', statusFilter = 'all' } = options;
 
+  // Main paginated query
+  const ordersQuery = useQuery({
+    queryKey: ['linkme-orders', page, pageSize, yearFilter, statusFilter],
+    queryFn: async (): Promise<{
+      orders: LinkMeOrder[];
+      totalCount: number;
+    }> => {
       const supabase = createClient();
-      const { data: ordersData, error: ordersError } = await supabase.rpc(
-        'get_linkme_orders',
-        {}
-      );
+      const offset = page * pageSize;
 
-      if (ordersError) {
-        console.error('[useLinkMeOrders] RPC error:', {
-          message: ordersError.message,
-          code: ordersError.code,
-          details: ordersError.details,
-          hint: ordersError.hint,
-          affiliateId,
-          fetchAll,
-        });
-        throw ordersError;
+      let query = supabase
+        .from('sales_orders')
+        .select(ORDER_SELECT, { count: 'exact' })
+        .eq('channel_id', LINKME_CHANNEL_ID)
+        .order('created_at', { ascending: false });
+
+      // Year filter
+      if (yearFilter && yearFilter !== 'all') {
+        const year =
+          yearFilter === 'current'
+            ? new Date().getFullYear()
+            : Number(yearFilter);
+        query = query
+          .gte('created_at', `${year}-01-01`)
+          .lt('created_at', `${year + 1}-01-01`);
       }
 
-      if (!ordersData || ordersData.length === 0) {
-        return [];
+      // Status filter (tab)
+      if (statusFilter && statusFilter !== 'all') {
+        if (statusFilter === 'shipped') {
+          // "Shipped" tab includes shipped, partially_shipped, delivered
+          query = query.in('status', [
+            'shipped',
+            'partially_shipped',
+            'delivered',
+          ]);
+        } else {
+          query = query.eq('status', statusFilter);
+        }
       }
 
-      // Map flat RPC rows to LinkMeOrder
-      const typedRows = ordersData as unknown as RpcOrderRow[];
-      return typedRows.map(
-        (row): LinkMeOrder => ({
-          id: row.id,
-          order_number: row.order_number,
-          status: row.status,
-          payment_status: row.payment_status,
-          total_ht: Number(row.total_ht) || 0,
-          total_ttc: Number(row.total_ttc) || 0,
-          shipping_cost_ht: Number(row.shipping_cost_ht) || 0,
-          handling_cost_ht: Number(row.handling_cost_ht) || 0,
-          insurance_cost_ht: Number(row.insurance_cost_ht) || 0,
-          total_affiliate_margin: Number(row.affiliate_total_ht) || 0,
-          // Customer from JSONB
-          customer_name: row.customer?.name ?? 'Client inconnu',
-          customer_type: row.customer?.type ?? 'organization',
-          customer_id: row.customer?.id ?? '',
-          customer_address: null,
-          customer_postal_code: null,
-          customer_city: null,
-          customer_email: row.customer?.email ?? null,
-          customer_phone: null,
-          // Structured addresses from sales_orders JSONB
-          billing_address: row.billing_address,
-          shipping_address: row.shipping_address,
-          // Dates from linkme_details
-          desired_delivery_date: row.ld_desired_delivery_date,
-          confirmed_delivery_date: row.ld_confirmed_delivery_date,
-          // Billing contact from linkme_details
-          billing_name: row.ld_billing_name,
-          billing_email: row.ld_billing_email,
-          billing_phone: row.ld_billing_phone,
-          // Requester contact from linkme_details
-          requester_name: row.ld_requester_name,
-          requester_email: row.ld_requester_email,
-          requester_phone: row.ld_requester_phone,
-          requester_position: row.ld_requester_position,
-          // Delivery contact from linkme_details
-          delivery_contact_name: row.ld_delivery_contact_name,
-          delivery_contact_email: row.ld_delivery_contact_email,
-          delivery_contact_phone: row.ld_delivery_contact_phone,
-          // Delivery address text from linkme_details
-          delivery_address_text: row.ld_delivery_address,
-          delivery_postal_code: row.ld_delivery_postal_code,
-          delivery_city: row.ld_delivery_city,
-          // Delivery options
-          is_mall_delivery: row.ld_is_mall_delivery ?? false,
-          delivery_notes: row.ld_delivery_notes,
-          owner_type: row.ld_owner_type,
-          // Reception contact
-          reception_contact_name: row.ld_reception_contact_name,
-          reception_contact_email: row.ld_reception_contact_email,
-          reception_contact_phone: row.ld_reception_contact_phone,
-          // Affiliate info
-          affiliate_id: row.affiliate_id ?? '',
-          affiliate_name: row.affiliate_display_name,
-          affiliate_type:
-            (row.affiliate_type as 'enseigne' | 'organisation') ?? null,
-          selection_id: row.selection_id,
-          selection_name: row.selection_name,
-          items_count: (row.items ?? []).length,
-          created_at: row.created_at,
-          updated_at: row.updated_at ?? row.created_at,
-          // Approval
-          pending_admin_validation: row.pending_admin_validation ?? false,
-          // Items from JSONB with commission data
-          items: (row.items ?? []).map(
-            (item): OrderItem => ({
-              id: item.id,
-              product_id: item.product?.id ?? '',
-              product_name: item.product?.name ?? 'Produit inconnu',
-              product_sku: item.product?.sku ?? '',
-              product_image_url: item.product?.primary_image_url ?? null,
-              quantity: item.quantity ?? 0,
-              unit_price_ht: Number(item.unit_price_ht) || 0,
-              total_ht: Number(item.total_ht) || 0,
-              tax_rate: Number(item.tax_rate) || 0,
-              base_price_ht: Number(item.base_price_ht) || 0,
-              margin_rate: Number(item.margin_rate) || 0,
-              commission_rate: 0, // Computed elsewhere if needed
-              selling_price_ht: Number(item.selling_price_ht) || 0,
-              affiliate_margin: Number(item.affiliate_margin) || 0,
-            })
-          ),
-        })
+      // Pagination
+      query = query.range(offset, offset + pageSize - 1);
+
+      const { data, count, error } = await query;
+
+      if (error) {
+        console.error('[useLinkMeOrders] Query error:', error);
+        throw error;
+      }
+
+      const rows = (data ?? []) as unknown as QueryOrderRow[];
+
+      // Fetch product images (separate query, same pattern as useSelectionItems)
+      const productIds = rows.flatMap(row =>
+        (row.items ?? []).map(item => item.product_id)
       );
+
+      let imageMap = new Map<string, string | null>();
+      if (productIds.length > 0) {
+        const uniqueProductIds = [...new Set(productIds)];
+        const { data: images } = await supabase
+          .from('product_images')
+          .select('product_id, public_url')
+          .in('product_id', uniqueProductIds)
+          .eq('is_primary', true)
+          .returns<ProductImageRow[]>();
+
+        imageMap = new Map(
+          (images ?? []).map(img => [img.product_id, img.public_url])
+        );
+      }
+
+      const orders = rows.map(row => mapRowToOrder(row, imageMap));
+
+      return { orders, totalCount: count ?? 0 };
     },
-    enabled: fetchAll || !!affiliateId,
-    // Optimisation: cache plus long, pas de refetch on focus
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes garbage collection
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
+
+  // Status counts query (lightweight, no pagination, no items)
+  const countsQuery = useQuery({
+    queryKey: ['linkme-orders-counts', yearFilter],
+    queryFn: async (): Promise<Record<string, number>> => {
+      const supabase = createClient();
+
+      let query = supabase
+        .from('sales_orders')
+        .select('status', { count: 'exact', head: false })
+        .eq('channel_id', LINKME_CHANNEL_ID);
+
+      // Apply same year filter
+      if (yearFilter && yearFilter !== 'all') {
+        const year =
+          yearFilter === 'current'
+            ? new Date().getFullYear()
+            : Number(yearFilter);
+        query = query
+          .gte('created_at', `${year}-01-01`)
+          .lt('created_at', `${year + 1}-01-01`);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error('[useLinkMeOrders] Counts error:', error);
+        return {};
+      }
+
+      const counts: Record<string, number> = {};
+      let total = 0;
+      for (const row of data ?? []) {
+        const status = (row as { status: string }).status;
+        counts[status] = (counts[status] ?? 0) + 1;
+        total++;
+      }
+      counts['all'] = total;
+
+      // Group shipped statuses for the "shipped" tab
+      counts['shipped_tab'] =
+        (counts['shipped'] ?? 0) +
+        (counts['partially_shipped'] ?? 0) +
+        (counts['delivered'] ?? 0);
+
+      return counts;
+    },
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
+  return {
+    orders: ordersQuery.data?.orders ?? [],
+    totalCount: ordersQuery.data?.totalCount ?? 0,
+    isLoading: ordersQuery.isLoading,
+    error: ordersQuery.error,
+    statusCounts: countsQuery.data ?? {},
+    isCountsLoading: countsQuery.isLoading,
+  };
 }
 
 /**
