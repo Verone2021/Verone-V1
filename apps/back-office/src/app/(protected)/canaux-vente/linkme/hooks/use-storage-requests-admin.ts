@@ -177,7 +177,7 @@ export function usePendingStorageRequestsCount() {
         return 0;
       }
 
-      return (data as number) ?? 0;
+      return data ?? 0;
     },
     refetchInterval: 60000,
   });
