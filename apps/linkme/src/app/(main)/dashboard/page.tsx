@@ -198,7 +198,7 @@ export default function DashboardPage(): JSX.Element | null {
         <section className="mb-8" data-tour="analytics-link">
           <Link
             href="/statistiques"
-            className="flex items-center justify-center gap-2 w-full py-3 px-4 bg-white border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 hover:border-[#5DBEBB] hover:text-[#5DBEBB] transition-all"
+            className="flex items-center justify-center gap-2 w-full py-3 px-4 bg-linkme-turquoise text-white rounded-lg text-sm font-medium hover:bg-linkme-turquoise/90 transition-all shadow-sm"
           >
             <BarChart3 className="h-4 w-4" />
             Voir les statistiques détaillées
