@@ -71,6 +71,10 @@ type AffiliateSelection = {
 interface CartItem extends LinkMeOrderItemInput {
   id: string;
   tax_rate: number; // TVA par ligne (0.20 = 20%)
+  /** Produit créé par l'affilié (modèle inversé) */
+  is_affiliate_product: boolean;
+  /** Taux de commission Verone sur produit affilié (ex: 0.15 = 15%) */
+  affiliate_commission_rate: number;
 }
 
 /**
@@ -378,11 +382,19 @@ export function CreateLinkMeOrderModal({
       const lineTva = roundMoney(lineHt * (item.tax_rate ?? 0.2));
       productsHt = roundMoney(productsHt + lineHt);
       totalTva = roundMoney(totalTva + lineTva);
-      // Commission calculee sur base_price_ht (135EUR), pas sur unit_price_ht (168.75EUR)
-      totalRetrocession = roundMoney(
-        totalRetrocession +
-          item.quantity * item.base_price_ht * item.retrocession_rate
-      );
+      // Produit affilié: commission sur unit_price_ht (prix de vente)
+      // Produit catalogue: commission sur base_price_ht (prix de base)
+      if (item.is_affiliate_product) {
+        totalRetrocession = roundMoney(
+          totalRetrocession +
+            item.quantity * item.unit_price_ht * item.affiliate_commission_rate
+        );
+      } else {
+        totalRetrocession = roundMoney(
+          totalRetrocession +
+            item.quantity * item.base_price_ht * item.retrocession_rate
+        );
+      }
     }
 
     // Frais additionnels avec TVA configurable
@@ -420,30 +432,58 @@ export function CreateLinkMeOrderModal({
       return;
     }
 
-    // IMPORTANT: Calculer le prix affilié HT avec TAUX DE MARQUE
-    // Formule taux de marque: Prix = base / (1 - tauxMarque) × (1 + commission)
-    // - commission_rate: ex 10% (channel_pricing.channel_commission_rate)
-    // - margin_rate: ex 15% (taux de marque affilié)
-    // Exemple: (55.50 / 0.85) × 1.10 = 65.29 × 1.10 = 71.82€
-    const commissionRate = (item.commission_rate ?? 0) / 100;
-    const marginRate = item.margin_rate / 100;
-    const sellingPrice = roundMoney(
-      (item.base_price_ht / (1 - marginRate)) * (1 + commissionRate)
-    );
-    const retrocessionRate = marginRate;
+    // Distinguer produit affilié vs produit catalogue
+    const isAffiliateProduct = !!item.product?.created_by_affiliate;
 
-    const newItem: CartItem = {
-      id: `${item.product_id}-${Date.now()}`,
-      product_id: item.product_id,
-      product_name: item.product?.name ?? 'Produit inconnu',
-      sku: item.product?.sku ?? '',
-      quantity: 1,
-      unit_price_ht: sellingPrice,
-      tax_rate: 0.2, // TVA 20% par defaut
-      base_price_ht: item.base_price_ht, // Prix de base pour calcul commission
-      retrocession_rate: retrocessionRate,
-      linkme_selection_item_id: item.id,
-    };
+    let newItem: CartItem;
+
+    if (isAffiliateProduct) {
+      // PRODUIT AFFILIÉ: prix de vente = selling_price_ht (fixé par l'affilié)
+      // Commission Verone = affiliate_commission_rate (défaut 15%)
+      // Pas de taux de marque (margin_rate = 0)
+      const affiliateCommRate =
+        (item.product?.affiliate_commission_rate ?? 15) / 100;
+      const sellingPrice = item.selling_price_ht ?? item.base_price_ht;
+
+      newItem = {
+        id: `${item.product_id}-${Date.now()}`,
+        product_id: item.product_id,
+        product_name: item.product?.name ?? 'Produit inconnu',
+        sku: item.product?.sku ?? '',
+        quantity: 1,
+        unit_price_ht: sellingPrice,
+        tax_rate: 0.2,
+        base_price_ht: item.base_price_ht,
+        retrocession_rate: affiliateCommRate,
+        linkme_selection_item_id: item.id,
+        is_affiliate_product: true,
+        affiliate_commission_rate: affiliateCommRate,
+      };
+    } else {
+      // PRODUIT CATALOGUE: selling_price_ht déjà calculé en DB (GENERATED column)
+      // Formule DB: base_price_ht / (1 - margin_rate/100) — sans commission
+      const marginRate = item.margin_rate / 100;
+      const sellingPrice = roundMoney(
+        item.selling_price_ht ?? item.base_price_ht / (1 - marginRate)
+      );
+      const retrocessionRate = marginRate;
+
+      newItem = {
+        id: `${item.product_id}-${Date.now()}`,
+        product_id: item.product_id,
+        product_name: item.product?.name ?? 'Produit inconnu',
+        sku: item.product?.sku ?? '',
+        quantity: 1,
+        unit_price_ht: sellingPrice,
+        tax_rate: 0.2,
+        base_price_ht: item.base_price_ht,
+        retrocession_rate: retrocessionRate,
+        linkme_selection_item_id: item.id,
+        is_affiliate_product: false,
+        affiliate_commission_rate: 0,
+      };
+    }
+
     setCart([...cart, newItem]);
   };
 
@@ -459,6 +499,36 @@ export function CreateLinkMeOrderModal({
           return item;
         })
         .filter(Boolean) as CartItem[]
+    );
+  };
+
+  // Modifier prix unitaire (produits affiliés uniquement)
+  const updateUnitPrice = (itemId: string, newPrice: number) => {
+    if (newPrice < 0 || isNaN(newPrice)) return;
+    setCart(prev =>
+      prev.map(item =>
+        item.id === itemId
+          ? { ...item, unit_price_ht: Math.round(newPrice * 100) / 100 }
+          : item
+      )
+    );
+  };
+
+  // Modifier taux de commission (produits affiliés, back-office uniquement)
+  const updateCommissionRate = (itemId: string, newRatePercent: number) => {
+    if (newRatePercent < 0 || newRatePercent > 100 || isNaN(newRatePercent))
+      return;
+    const newRate = newRatePercent / 100;
+    setCart(prev =>
+      prev.map(item =>
+        item.id === itemId
+          ? {
+              ...item,
+              affiliate_commission_rate: newRate,
+              retrocession_rate: newRate,
+            }
+          : item
+      )
     );
   };
 
@@ -491,10 +561,14 @@ export function CreateLinkMeOrderModal({
         sku: item.sku,
         quantity: item.quantity,
         unit_price_ht: item.unit_price_ht,
-        tax_rate: item.tax_rate ?? 0.2, // TVA par ligne
+        tax_rate: item.tax_rate ?? 0.2,
         base_price_ht: item.base_price_ht,
-        retrocession_rate: item.retrocession_rate,
+        // Produit affilié: retrocession_rate = commission Verone (sur unit_price_ht)
+        retrocession_rate: item.is_affiliate_product
+          ? item.affiliate_commission_rate
+          : item.retrocession_rate,
         linkme_selection_item_id: item.linkme_selection_item_id,
+        is_affiliate_product: item.is_affiliate_product,
       })),
       internal_notes: internalNotes ?? undefined,
       // Frais additionnels
@@ -1371,13 +1445,9 @@ export function CreateLinkMeOrderModal({
                       const isInCart = cart.some(
                         c => c.product_id === item.product_id
                       );
-                      // margin_rate et commission_rate sont en POURCENTAGE
-                      // Taux de marque: Prix = base / (1 - tauxMarque) × (1 + commission)
-                      const commissionRate = (item.commission_rate ?? 0) / 100;
-                      const marginRate = item.margin_rate / 100;
+                      // selling_price_ht déjà calculé en DB (GENERATED column)
                       const sellingPrice =
-                        (item.base_price_ht / (1 - marginRate)) *
-                        (1 + commissionRate);
+                        item.selling_price_ht ?? item.base_price_ht;
                       return (
                         <button
                           key={item.id}
@@ -1440,52 +1510,150 @@ export function CreateLinkMeOrderModal({
                   {cart.map(item => (
                     <div
                       key={item.id}
-                      className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
+                      className={cn(
+                        'p-3 rounded-lg',
+                        item.is_affiliate_product
+                          ? 'bg-blue-50 border border-blue-200'
+                          : 'bg-gray-50'
+                      )}
                     >
-                      <Package className="h-4 w-4 text-gray-400" />
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm truncate">
-                          {item.product_name}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {item.unit_price_ht.toFixed(2)}€ HT × {item.quantity}{' '}
-                          = {(item.unit_price_ht * item.quantity).toFixed(2)}€
-                          HT
-                        </p>
-                        <p className="text-xs text-orange-600">
-                          Commission:{' '}
-                          {(item.retrocession_rate * 100).toFixed(0)}% (
-                          {(
-                            item.base_price_ht *
-                            item.quantity *
-                            item.retrocession_rate
-                          ).toFixed(2)}
-                          €)
-                        </p>
+                      <div className="flex items-center gap-3">
+                        <Package className="h-4 w-4 text-gray-400" />
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm truncate">
+                            {item.product_name}
+                            {item.is_affiliate_product && (
+                              <span className="ml-2 text-xs font-normal text-blue-600 bg-blue-100 px-1.5 py-0.5 rounded">
+                                Produit affilié
+                              </span>
+                            )}
+                          </p>
+                          {item.is_affiliate_product ? (
+                            <>
+                              <p className="text-xs text-gray-500">
+                                {item.unit_price_ht.toFixed(2)}€ HT ×{' '}
+                                {item.quantity} ={' '}
+                                {(item.unit_price_ht * item.quantity).toFixed(
+                                  2
+                                )}
+                                € HT
+                              </p>
+                              <p className="text-xs text-blue-600">
+                                Commission Verone:{' '}
+                                {(item.affiliate_commission_rate * 100).toFixed(
+                                  0
+                                )}
+                                % ={' '}
+                                {(
+                                  item.unit_price_ht *
+                                  item.quantity *
+                                  item.affiliate_commission_rate
+                                ).toFixed(2)}
+                                €
+                              </p>
+                              <p className="text-xs text-green-600">
+                                Revenu net affilié:{' '}
+                                {(
+                                  item.unit_price_ht *
+                                  item.quantity *
+                                  (1 - item.affiliate_commission_rate)
+                                ).toFixed(2)}
+                                €
+                              </p>
+                            </>
+                          ) : (
+                            <>
+                              <p className="text-xs text-gray-500">
+                                {item.unit_price_ht.toFixed(2)}€ HT ×{' '}
+                                {item.quantity} ={' '}
+                                {(item.unit_price_ht * item.quantity).toFixed(
+                                  2
+                                )}
+                                € HT
+                              </p>
+                              <p className="text-xs text-orange-600">
+                                Commission:{' '}
+                                {(item.retrocession_rate * 100).toFixed(0)}% (
+                                {(
+                                  item.base_price_ht *
+                                  item.quantity *
+                                  item.retrocession_rate
+                                ).toFixed(2)}
+                                €)
+                              </p>
+                            </>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => updateQuantity(item.id, -1)}
+                            className="p-1 hover:bg-gray-200 rounded"
+                          >
+                            <Minus className="h-4 w-4" />
+                          </button>
+                          <span className="w-8 text-center text-sm font-medium">
+                            {item.quantity}
+                          </span>
+                          <button
+                            onClick={() => updateQuantity(item.id, 1)}
+                            className="p-1 hover:bg-gray-200 rounded"
+                          >
+                            <Plus className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => removeFromCart(item.id)}
+                            className="p-1 hover:bg-red-100 rounded text-red-600 ml-2"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <button
-                          onClick={() => updateQuantity(item.id, -1)}
-                          className="p-1 hover:bg-gray-200 rounded"
-                        >
-                          <Minus className="h-4 w-4" />
-                        </button>
-                        <span className="w-8 text-center text-sm font-medium">
-                          {item.quantity}
-                        </span>
-                        <button
-                          onClick={() => updateQuantity(item.id, 1)}
-                          className="p-1 hover:bg-gray-200 rounded"
-                        >
-                          <Plus className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={() => removeFromCart(item.id)}
-                          className="p-1 hover:bg-red-100 rounded text-red-600 ml-2"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
+                      {/* Inputs éditables pour produits affiliés */}
+                      {item.is_affiliate_product && (
+                        <div className="mt-2 pt-2 border-t border-blue-200 flex items-center gap-4">
+                          <div className="flex items-center gap-2">
+                            <label className="text-xs text-gray-600 whitespace-nowrap">
+                              Prix vente HT
+                            </label>
+                            <input
+                              type="number"
+                              value={item.unit_price_ht}
+                              onChange={e =>
+                                updateUnitPrice(
+                                  item.id,
+                                  parseFloat(e.target.value) || 0
+                                )
+                              }
+                              min={0}
+                              step={0.01}
+                              className="w-24 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                            <span className="text-xs text-gray-500">€</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <label className="text-xs text-gray-600 whitespace-nowrap">
+                              Commission
+                            </label>
+                            <input
+                              type="number"
+                              value={Math.round(
+                                item.affiliate_commission_rate * 100
+                              )}
+                              onChange={e =>
+                                updateCommissionRate(
+                                  item.id,
+                                  parseFloat(e.target.value) || 0
+                                )
+                              }
+                              min={0}
+                              max={100}
+                              step={1}
+                              className="w-16 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                            <span className="text-xs text-gray-500">%</span>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -1738,12 +1906,9 @@ export function CreateLinkMeOrderModal({
               ) : (
                 <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
                   {previewSelection.items.map(item => {
-                    // Taux de marque: Prix = base / (1 - tauxMarque) × (1 + commission)
-                    const commissionRate = (item.commission_rate ?? 0) / 100;
-                    const marginRate = (item.margin_rate ?? 0) / 100;
+                    // selling_price_ht déjà calculé en DB (GENERATED column)
                     const sellingPrice =
-                      (item.base_price_ht / (1 - marginRate)) *
-                      (1 + commissionRate);
+                      item.selling_price_ht ?? item.base_price_ht;
                     return (
                       <div
                         key={item.id}
