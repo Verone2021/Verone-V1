@@ -130,6 +130,7 @@ export default function CommissionsPage(): JSX.Element {
           iconColor="text-linkme-turquoise"
           bgGradient="from-linkme-turquoise/10 to-white"
           isLoading={isLoading}
+          tooltip="Commande livrée, vous pouvez demander le versement de cette commission."
         />
         <CommissionKPICard
           title="En attente"
@@ -140,6 +141,7 @@ export default function CommissionsPage(): JSX.Element {
           iconColor="text-orange-500"
           bgGradient="from-orange-50 to-white"
           isLoading={isLoading}
+          tooltip="Commande en cours de traitement ou pas encore livrée. La commission sera payable après livraison."
         />
       </div>
 

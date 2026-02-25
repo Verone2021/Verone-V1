@@ -104,6 +104,12 @@ export const ROUTE_PERMISSIONS: Record<string, RoutePermission> = {
     redirect: '/dashboard',
     description: 'Statistiques et performances',
   },
+
+  '/aide': {
+    roles: ['enseigne_admin', 'organisation_admin'],
+    redirect: '/dashboard',
+    description: "Centre d'aide et documentation",
+  },
 } as const;
 
 /**

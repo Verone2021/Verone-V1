@@ -55,6 +55,7 @@ import {
 import { toast } from 'sonner';
 
 import { EditMarginModal } from '../../../../../components/selection/EditMarginModal';
+import { HelpTooltip } from '../../../../../components/ui/help-tooltip';
 import { useAuth, type LinkMeRole } from '../../../../../contexts/AuthContext';
 import {
   useUserAffiliate,
@@ -485,9 +486,14 @@ function SortableProductItem({
         <p className="font-bold text-linkme-marine">
           {formatCurrency(item.selling_price_ht)}
         </p>
-        <p className="text-xs text-linkme-turquoise font-medium">
-          Marge: {item.margin_rate.toFixed(1)}%
-        </p>
+        <div className="flex items-center justify-end gap-1 text-xs text-linkme-turquoise font-medium">
+          <span>Marge: {item.margin_rate.toFixed(1)}%</span>
+          <HelpTooltip
+            content="Votre commission sur chaque vente. Le prix client = prix HT fournisseur + votre marge."
+            side="left"
+            iconClassName="h-3 w-3"
+          />
+        </div>
       </div>
 
       {/* Stock */}

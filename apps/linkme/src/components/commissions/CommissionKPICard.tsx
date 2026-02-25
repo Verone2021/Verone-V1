@@ -11,6 +11,7 @@
 import type { LucideIcon } from 'lucide-react';
 
 import { formatCurrency } from '../../types/analytics';
+import { HelpTooltip } from '../ui/help-tooltip';
 
 interface CommissionKPICardProps {
   title: string;
@@ -21,6 +22,8 @@ interface CommissionKPICardProps {
   iconColor: string;
   bgGradient: string;
   isLoading?: boolean;
+  /** Texte d'aide contextuelle (icone ?) */
+  tooltip?: string;
 }
 
 export function CommissionKPICard({
@@ -32,6 +35,7 @@ export function CommissionKPICard({
   iconColor,
   bgGradient,
   isLoading,
+  tooltip,
 }: CommissionKPICardProps) {
   if (isLoading) {
     return (
@@ -71,7 +75,12 @@ export function CommissionKPICard({
       <div className="relative z-10">
         {/* Header with icon */}
         <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-medium text-gray-600">{title}</span>
+          <span className="flex items-center gap-1 text-xs font-medium text-gray-600">
+            {title}
+            {tooltip && (
+              <HelpTooltip content={tooltip} iconClassName="h-3 w-3" />
+            )}
+          </span>
           <div className={`p-1.5 rounded-lg bg-white/50 ${iconColor}`}>
             <Icon className="h-4 w-4" />
           </div>

@@ -40,6 +40,7 @@ import {
   Pencil,
 } from 'lucide-react';
 
+import { HelpTooltip } from '../../../components/ui/help-tooltip';
 import { OrderDetailModal } from './components/OrderDetailModal';
 import {
   useLinkMeOrders,
@@ -174,7 +175,12 @@ export default function CommandesPage(): JSX.Element {
       <div className="bg-white border-b px-6 py-4">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Mes Commandes</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-bold text-gray-900">
+                Mes Commandes
+              </h1>
+              <HelpTooltip content="En approbation = en attente de validation Vérone. Validée = confirmée et en préparation. Expédiée = en cours de livraison. Livrée = commission payable." />
+            </div>
             <p className="text-gray-500 mt-1">
               Gérez vos commandes clients et suivez vos ventes
             </p>
