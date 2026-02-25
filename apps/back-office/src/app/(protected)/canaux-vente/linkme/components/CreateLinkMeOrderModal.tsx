@@ -1477,8 +1477,10 @@ export function CreateLinkMeOrderModal({
                               {item.product?.name ?? 'Produit'}
                             </p>
                             <p className="text-xs text-gray-500">
-                              {sellingPrice.toFixed(2)}€ HT • Marge{' '}
-                              {item.margin_rate.toFixed(0)}%
+                              {sellingPrice.toFixed(2)}€ HT
+                              {item.margin_rate > 0 && (
+                                <> • Marge {item.margin_rate.toFixed(0)}%</>
+                              )}
                             </p>
                           </div>
                           {isInCart ? (
