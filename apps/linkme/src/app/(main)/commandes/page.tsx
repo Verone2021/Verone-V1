@@ -40,6 +40,7 @@ import {
   Pencil,
 } from 'lucide-react';
 
+import { PageTourTrigger } from '../../../components/onboarding/PageTourTrigger';
 import { HelpTooltip } from '../../../components/ui/help-tooltip';
 import { OrderDetailModal } from './components/OrderDetailModal';
 import {
@@ -171,8 +172,9 @@ export default function CommandesPage(): JSX.Element {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <PageTourTrigger tourId="tour_order" />
       {/* Header */}
-      <div className="bg-white border-b px-6 py-4">
+      <div data-tour="orders-header" className="bg-white border-b px-6 py-4">
         <div className="flex items-center justify-between">
           <div>
             <div className="flex items-center gap-2">
@@ -187,6 +189,7 @@ export default function CommandesPage(): JSX.Element {
           </div>
           <Link
             href="/commandes/nouvelle"
+            data-tour="orders-create"
             className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-sm"
           >
             <Plus className="h-5 w-5" />
@@ -280,7 +283,10 @@ export default function CommandesPage(): JSX.Element {
         </div>
 
         {/* Tabs de filtrage - Alignes avec Back-Office */}
-        <div className="bg-white rounded-xl border shadow-sm">
+        <div
+          data-tour="orders-filters"
+          className="bg-white rounded-xl border shadow-sm"
+        >
           <div className="border-b overflow-x-auto">
             <nav className="flex min-w-max">
               {[
@@ -359,7 +365,7 @@ export default function CommandesPage(): JSX.Element {
           </div>
 
           {/* Liste des commandes */}
-          <div className="p-4">
+          <div data-tour="orders-list" className="p-4">
             {isLoading && (
               <div className="flex items-center justify-center py-16">
                 <Loader2 className="h-8 w-8 animate-spin text-gray-400" />

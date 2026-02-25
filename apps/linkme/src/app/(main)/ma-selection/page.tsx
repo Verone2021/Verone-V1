@@ -33,13 +33,11 @@ import {
   Layers,
   MousePointerClick,
   Link2,
-  Store,
 } from 'lucide-react';
 
 import { toast } from 'sonner';
 
 import { PageTourTrigger } from '../../../components/onboarding/PageTourTrigger';
-import { SelectionCatalogDialog } from '../../../components/selection/SelectionProductsSheet';
 import { useAuth, type LinkMeRole } from '../../../contexts/AuthContext';
 import { useAffiliateAnalytics } from '../../../lib/hooks/use-affiliate-analytics';
 import {
@@ -354,7 +352,6 @@ interface ISelectionCardProps {
 function SelectionCard({ selection }: ISelectionCardProps): React.JSX.Element {
   const [isHovered, setIsHovered] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
-  const [isCatalogOpen, setIsCatalogOpen] = useState(false);
 
   return (
     <div
@@ -407,7 +404,58 @@ function SelectionCard({ selection }: ISelectionCardProps): React.JSX.Element {
           </span>
         </div>
 
-        {/* Pas de boutons sur le hover image — juste l'overlay gradient */}
+        {/* Actions au hover (slide-up) - z-10 pour être au-dessus du lien invisible */}
+        <div
+          className={`absolute bottom-0 left-0 right-0 p-4 transition-all duration-300 z-10 ${
+            isHovered ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+          }`}
+        >
+          <div className="flex gap-2">
+            <Link
+              href={`/ma-selection/${selection.slug}`}
+              className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-white text-linkme-marine rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors"
+            >
+              <Settings className="h-4 w-4" />
+              Configurer
+            </Link>
+            {selection.published_at && (
+              <>
+                <Link
+                  href={`/s/${selection.slug ?? selection.id}`}
+                  target="_blank"
+                  className="flex items-center justify-center px-3 py-2 bg-white/20 text-white rounded-lg text-sm font-medium hover:bg-white/30 transition-colors backdrop-blur-sm"
+                >
+                  <Eye className="h-4 w-4" />
+                </Link>
+                <button
+                  onClick={e => {
+                    e.preventDefault();
+                    void navigator.clipboard
+                      .writeText(
+                        `${window.location.origin}/s/${selection.slug ?? selection.id}`
+                      )
+                      .then(() => {
+                        setLinkCopied(true);
+                        toast.success('Lien copié !');
+                        setTimeout(() => setLinkCopied(false), 2000);
+                      })
+                      .catch((err: unknown) => {
+                        console.error('[SelectionCard] Copy failed:', err);
+                        toast.error('Impossible de copier le lien');
+                      });
+                  }}
+                  className="flex items-center justify-center px-3 py-2 bg-white/20 text-white rounded-lg text-sm font-medium hover:bg-white/30 transition-colors backdrop-blur-sm"
+                >
+                  {linkCopied ? (
+                    <Check className="h-4 w-4 text-green-400" />
+                  ) : (
+                    <Share2 className="h-4 w-4" />
+                  )}
+                </button>
+              </>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Contenu de la carte */}
@@ -416,102 +464,32 @@ function SelectionCard({ selection }: ISelectionCardProps): React.JSX.Element {
           {selection.name}
         </h3>
 
-        {/* Stats + Configurer */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3 text-sm text-gray-500">
-            <div className="flex items-center gap-1.5">
-              <Package className="h-4 w-4" />
+        {/* Stats minimalistes */}
+        <div className="flex items-center gap-4 text-sm text-gray-500">
+          <div className="flex items-center gap-1.5">
+            <Package className="h-4 w-4" />
+            <span>
+              {selection.products_count} produit
+              {selection.products_count > 1 ? 's' : ''}
+            </span>
+          </div>
+          {selection.orders_count > 0 && (
+            <div className="flex items-center gap-1.5 text-linkme-turquoise font-medium">
+              <ShoppingBag className="h-4 w-4" />
               <span>
-                {selection.products_count} produit
-                {selection.products_count > 1 ? 's' : ''}
+                {selection.orders_count} vendu
+                {selection.orders_count > 1 ? 's' : ''}
               </span>
             </div>
-            {selection.orders_count > 0 && (
-              <div className="flex items-center gap-1.5 text-linkme-turquoise font-medium">
-                <ShoppingBag className="h-4 w-4" />
-                <span>
-                  {selection.orders_count} vendu
-                  {selection.orders_count > 1 ? 's' : ''}
-                </span>
-              </div>
-            )}
-          </div>
-          <Link
-            href={`/ma-selection/${selection.slug}`}
-            className="relative z-10 flex items-center gap-1 text-xs text-gray-500 hover:text-linkme-turquoise transition-colors"
-          >
-            <Settings className="h-3.5 w-3.5" />
-            Configurer
-          </Link>
+          )}
         </div>
-
-        {/* Lien "Voir les produits" - toujours visible */}
-        <button
-          onClick={e => {
-            e.preventDefault();
-            e.stopPropagation();
-            setIsCatalogOpen(true);
-          }}
-          className="relative z-10 mt-2 text-sm text-linkme-turquoise font-medium hover:text-linkme-turquoise/80 transition-colors flex items-center gap-1"
-        >
-          <Eye className="h-3.5 w-3.5" />
-          Voir les produits
-        </button>
-
-        {/* Boutons Boutique + Partager - toujours visibles */}
-        {selection.published_at && (
-          <div className="relative z-10 flex items-center gap-2 mt-3 pt-3 border-t border-gray-100">
-            <Link
-              href={`/s/${selection.slug ?? selection.id}`}
-              target="_blank"
-              className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-linkme-turquoise/10 text-linkme-turquoise rounded-lg text-xs font-medium hover:bg-linkme-turquoise/20 transition-colors"
-            >
-              <Store className="h-3.5 w-3.5" />
-              Boutique
-            </Link>
-            <button
-              onClick={e => {
-                e.preventDefault();
-                e.stopPropagation();
-                void navigator.clipboard
-                  .writeText(
-                    `${window.location.origin}/s/${selection.slug ?? selection.id}`
-                  )
-                  .then(() => {
-                    setLinkCopied(true);
-                    toast.success('Lien copié !');
-                    setTimeout(() => setLinkCopied(false), 2000);
-                  })
-                  .catch((err: unknown) => {
-                    console.error('[SelectionCard] Copy failed:', err);
-                    toast.error('Impossible de copier le lien');
-                  });
-              }}
-              className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-gray-100 text-gray-600 rounded-lg text-xs font-medium hover:bg-gray-200 transition-colors"
-            >
-              {linkCopied ? (
-                <Check className="h-3.5 w-3.5 text-green-500" />
-              ) : (
-                <Share2 className="h-3.5 w-3.5" />
-              )}
-              {linkCopied ? 'Copié !' : 'Partager'}
-            </button>
-          </div>
-        )}
       </div>
 
-      {/* Lien invisible pour navigation vers config */}
+      {/* Lien invisible pour navigation */}
       <Link
         href={`/ma-selection/${selection.slug}`}
         className="absolute inset-0 z-0"
         aria-label={`Configurer ${selection.name}`}
-      />
-
-      {/* Dialog catalogue produits */}
-      <SelectionCatalogDialog
-        selection={selection}
-        isOpen={isCatalogOpen}
-        onClose={() => setIsCatalogOpen(false)}
       />
     </div>
   );
