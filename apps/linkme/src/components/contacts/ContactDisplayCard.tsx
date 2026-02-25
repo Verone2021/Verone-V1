@@ -1,20 +1,17 @@
 'use client';
 
 /**
- * ContactDisplayCard - Carte d'affichage de contact
+ * ContactDisplayCard - Carte compacte d'affichage de contact
  *
- * Affiche un contact avec badges de rôle colorés alignés sur le workflow commandes :
- * - Principal (turquoise) = responsable_contact_id dans les commandes
- * - Facturation (vert) = billing_contact_id dans les commandes
- *
- * Commercial et Technique sont masqués (non pertinents dans le workflow).
+ * Affiche un contact avec badges de rôle colorés + badge "Utilisateur"
+ * pour différencier les contacts liés à un compte utilisateur.
  *
  * @module ContactDisplayCard
  * @since 2026-01-21
  */
 
 import { Badge } from '@verone/ui';
-import { Mail, Phone } from 'lucide-react';
+import { Mail, Phone, UserCheck } from 'lucide-react';
 
 import type { OrganisationContact } from '@/lib/hooks/use-organisation-contacts';
 
@@ -61,56 +58,68 @@ export function ContactDisplayCard({
   const avatarColors = getAvatarColors(enseigneId);
 
   return (
-    <div className="rounded-lg border bg-white p-4 hover:shadow-md transition-shadow">
-      <div className="flex items-start gap-3">
+    <div className="rounded-lg border bg-white p-3 hover:shadow-sm transition-shadow">
+      <div className="flex items-start gap-2.5">
         {/* Avatar */}
         <div
-          className={`flex h-10 w-10 items-center justify-center rounded-full flex-shrink-0 ${avatarColors.bg}`}
+          className={`flex h-8 w-8 items-center justify-center rounded-full flex-shrink-0 ${avatarColors.bg}`}
         >
-          <span className={`text-sm font-semibold ${avatarColors.text}`}>
+          <span className={`text-xs font-semibold ${avatarColors.text}`}>
             {initials}
           </span>
         </div>
 
         {/* Informations */}
         <div className="flex-1 min-w-0">
-          <p className="font-medium truncate">{displayName}</p>
+          <div className="flex items-center gap-1.5">
+            <p className="text-sm font-medium truncate">{displayName}</p>
+            {contact.isUser && (
+              <Badge
+                variant="outline"
+                size="sm"
+                className="bg-blue-50 text-blue-600 border-blue-200 flex items-center gap-0.5 shrink-0"
+              >
+                <UserCheck className="h-3 w-3" />
+                Utilisateur
+              </Badge>
+            )}
+          </div>
 
           {/* Fonction/Titre */}
           {contact.title && (
-            <p className="text-sm text-gray-500 truncate">{contact.title}</p>
+            <p className="text-xs text-gray-500 truncate">{contact.title}</p>
           )}
 
           {/* Email et téléphone (si pas compact) */}
           {!compact && (
-            <div className="mt-2 space-y-1">
+            <div className="mt-1.5 space-y-0.5">
               <a
                 href={`mailto:${contact.email}`}
-                className="text-sm text-blue-600 hover:underline flex items-center gap-1.5 truncate"
+                className="text-xs text-blue-600 hover:underline flex items-center gap-1 truncate"
               >
-                <Mail className="h-3.5 w-3.5 flex-shrink-0" />
+                <Mail className="h-3 w-3 flex-shrink-0" />
                 <span className="truncate">{contact.email}</span>
               </a>
               {(Boolean(contact.phone) || Boolean(contact.mobile)) && (
                 <a
                   href={`tel:${contact.phone ?? contact.mobile}`}
-                  className="text-sm text-gray-600 hover:underline flex items-center gap-1.5"
+                  className="text-xs text-gray-600 hover:underline flex items-center gap-1"
                 >
-                  <Phone className="h-3.5 w-3.5 flex-shrink-0" />
+                  <Phone className="h-3 w-3 flex-shrink-0" />
                   <span>{contact.phone ?? contact.mobile}</span>
                 </a>
               )}
             </div>
           )}
 
-          {/* Badges rôles — uniquement Principal et Facturation */}
+          {/* Badges rôles */}
           {(contact.isPrimaryContact || contact.isBillingContact) && (
-            <div className="flex flex-wrap gap-1.5 mt-2">
+            <div className="flex flex-wrap gap-1 mt-1.5">
               {contact.isPrimaryContact && (
                 <Badge
                   variant="outline"
                   size="sm"
-                  className="bg-linkme-turquoise/10 text-linkme-turquoise border-linkme-turquoise/30"
+                  className="bg-linkme-turquoise/10 text-linkme-turquoise border-linkme-turquoise/30 text-[10px]"
                 >
                   Principal
                 </Badge>
@@ -119,7 +128,7 @@ export function ContactDisplayCard({
                 <Badge
                   variant="outline"
                   size="sm"
-                  className="bg-green-100 text-green-700 border-green-200"
+                  className="bg-green-100 text-green-700 border-green-200 text-[10px]"
                 >
                   Facturation
                 </Badge>
