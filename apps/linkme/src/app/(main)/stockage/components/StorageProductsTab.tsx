@@ -13,6 +13,7 @@
 import { useState, useMemo } from 'react';
 
 import { Card } from '@tremor/react';
+import Image from 'next/image';
 import {
   Package,
   Search,
@@ -44,12 +45,10 @@ interface StorageProductsTabProps {
 type SortField = 'name' | 'quantity' | 'volume' | 'cost' | 'age';
 type SortDir = 'asc' | 'desc';
 
-function getAgeDays(allocatedAt: string): number {
-  const allocated = new Date(allocatedAt);
+function getAgeDays(dateStr: string): number {
+  const date = new Date(dateStr);
   const now = new Date();
-  return Math.floor(
-    (now.getTime() - allocated.getTime()) / (1000 * 60 * 60 * 24)
-  );
+  return Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
 }
 
 function getAgeBadge(days: number): {
@@ -125,7 +124,8 @@ export function StorageProductsTab({
           break;
         }
         case 'age':
-          cmp = getAgeDays(a.allocated_at) - getAgeDays(b.allocated_at);
+          cmp =
+            getAgeDays(a.storage_start_date) - getAgeDays(b.storage_start_date);
           break;
       }
       return sortDir === 'asc' ? cmp : -cmp;
@@ -143,9 +143,9 @@ export function StorageProductsTab({
   };
 
   // Mois où ce produit était stocké (pour le détail extensible)
-  const getProductMonths = (allocatedAt: string): StorageMonthlyRow[] => {
+  const getProductMonths = (startDate: string): StorageMonthlyRow[] => {
     if (!monthlyData) return [];
-    const allocDate = new Date(allocatedAt);
+    const allocDate = new Date(startDate);
     return monthlyData.filter(m => new Date(m.month_date) >= allocDate);
   };
 
@@ -187,6 +187,7 @@ export function StorageProductsTab({
             <thead>
               <tr className="bg-gray-50 text-left">
                 <th className="px-4 py-3 w-8" />
+                <th className="px-4 py-3 w-12" />
                 <SortHeader
                   label="Produit"
                   field="name"
@@ -231,13 +232,13 @@ export function StorageProductsTab({
             <tbody className="divide-y">
               {sortedProducts.map(product => {
                 const isExpanded = expandedId === product.allocation_id;
-                const ageDays = getAgeDays(product.allocated_at);
+                const ageDays = getAgeDays(product.storage_start_date);
                 const badge = getAgeBadge(ageDays);
                 const cost = pricingTiers
                   ? calculateStoragePrice(product.total_volume_m3, pricingTiers)
                   : 0;
                 const productMonths = isExpanded
-                  ? getProductMonths(product.allocated_at)
+                  ? getProductMonths(product.storage_start_date)
                   : [];
 
                 return (
@@ -339,6 +340,21 @@ function ProductRow({
           )}
         </td>
         <td className="px-4 py-3">
+          {product.product_image_url ? (
+            <Image
+              src={product.product_image_url}
+              alt={product.product_name}
+              width={36}
+              height={36}
+              className="w-9 h-9 rounded-lg object-cover"
+            />
+          ) : (
+            <div className="w-9 h-9 bg-gray-100 rounded-lg flex items-center justify-center">
+              <Package className="h-4 w-4 text-gray-400" />
+            </div>
+          )}
+        </td>
+        <td className="px-4 py-3">
           <div>
             <p className="font-medium text-gray-900">{product.product_name}</p>
             <p className="text-xs text-gray-500 font-mono">
@@ -366,14 +382,14 @@ function ProductRow({
       </tr>
       {isExpanded && (
         <tr>
-          <td colSpan={6} className="bg-gray-50 px-8 py-3">
+          <td colSpan={7} className="bg-gray-50 px-8 py-3">
             <p className="text-xs font-medium text-gray-600 mb-2">
               Historique de stockage — {product.product_name}
             </p>
             <p className="text-xs text-gray-500 mb-2">
               En stock depuis le{' '}
-              {new Date(product.allocated_at).toLocaleDateString('fr-FR')} (
-              {ageDays} jours)
+              {new Date(product.storage_start_date).toLocaleDateString('fr-FR')}{' '}
+              ({ageDays} jours)
             </p>
             {productMonths.length > 0 ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">

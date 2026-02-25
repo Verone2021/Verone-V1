@@ -37,6 +37,8 @@ export interface StorageAllocation {
   total_volume_m3: number;
   billable_in_storage: boolean;
   allocated_at: string;
+  storage_start_date: string;
+  product_image_url: string | null;
 }
 
 /**

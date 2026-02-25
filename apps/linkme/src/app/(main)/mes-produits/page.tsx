@@ -15,6 +15,7 @@
 
 import { Suspense, useEffect } from 'react';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
@@ -229,6 +230,9 @@ function MesProduitsContent(): JSX.Element | null {
               <table className="w-full">
                 <thead className="bg-gray-50/50 border-b border-gray-100">
                   <tr>
+                    <th className="text-left px-6 py-4 text-sm font-medium text-gray-500 w-14">
+                      Photo
+                    </th>
                     <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
                       Produit
                     </th>
@@ -279,6 +283,21 @@ function ProductRow({ product }: { product: AffiliateProduct }): JSX.Element {
 
   return (
     <tr className="hover:bg-gray-50/50 transition-colors">
+      <td className="px-6 py-4">
+        {product.product_image_url ? (
+          <Image
+            src={product.product_image_url}
+            alt={product.name}
+            width={40}
+            height={40}
+            className="w-10 h-10 rounded-lg object-cover"
+          />
+        ) : (
+          <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+            <Package className="h-5 w-5 text-gray-400" />
+          </div>
+        )}
+      </td>
       <td className="px-6 py-4">
         <div>
           <p className="font-medium text-linkme-marine">{product.name}</p>

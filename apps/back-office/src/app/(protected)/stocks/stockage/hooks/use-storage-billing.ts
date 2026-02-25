@@ -33,6 +33,7 @@ export {
   useUpdateAllocationBillable,
   useCreateStorageAllocation,
   useUpdateStorageQuantity,
+  useUpdateStorageStartDate,
   formatVolumeM3,
   type StorageOverviewItem,
   type StorageSummary,

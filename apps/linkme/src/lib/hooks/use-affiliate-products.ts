@@ -41,6 +41,7 @@ export interface AffiliateProduct {
   } | null;
   created_at: string;
   updated_at: string;
+  product_image_url: string | null;
 }
 
 export interface CreateAffiliateProductInput {
@@ -93,18 +94,30 @@ export function useAffiliateProducts() {
         const { data, error } = await supabase
           .from('products')
           .select(
-            'id, name, sku, description, affiliate_payout_ht, affiliate_commission_rate, affiliate_approval_status, affiliate_rejection_reason, dimensions, created_at, updated_at'
+            'id, name, sku, description, affiliate_payout_ht, affiliate_commission_rate, affiliate_approval_status, affiliate_rejection_reason, dimensions, created_at, updated_at, product_images(public_url, display_order)'
           )
           .eq('created_by_affiliate', affiliate.id)
-          .order('created_at', { ascending: false })
-          .returns<AffiliateProduct[]>();
+          .order('created_at', { ascending: false });
 
         if (error) {
           console.error('Error fetching affiliate products:', error);
           throw error;
         }
 
-        return data ?? [];
+        // Map product_images join to product_image_url
+        return (data ?? []).map(p => {
+          const images = (p as Record<string, unknown>).product_images as
+            | { public_url: string; display_order: number | null }[]
+            | null;
+          const sorted = (images ?? []).sort(
+            (a, b) => (a.display_order ?? 999) - (b.display_order ?? 999)
+          );
+          return {
+            ...p,
+            product_image_url: sorted[0]?.public_url ?? null,
+            product_images: undefined,
+          } as unknown as AffiliateProduct;
+        });
       }
 
       // Pour enseigne_admin, utiliser la RPC existante
@@ -122,7 +135,28 @@ export function useAffiliateProducts() {
         throw error;
       }
 
-      return (data ?? []) as unknown as AffiliateProduct[];
+      // RPC doesn't return product_image_url; enrich with images
+      const products = (data ?? []) as unknown as AffiliateProduct[];
+      if (products.length === 0) return products;
+
+      const productIds = products.map(p => p.id);
+      const { data: images } = await supabase
+        .from('product_images')
+        .select('product_id, public_url, display_order')
+        .in('product_id', productIds)
+        .order('display_order', { ascending: true });
+
+      const imageMap = new Map<string, string>();
+      for (const img of images ?? []) {
+        if (!imageMap.has(img.product_id)) {
+          imageMap.set(img.product_id, img.public_url ?? '');
+        }
+      }
+
+      return products.map(p => ({
+        ...p,
+        product_image_url: imageMap.get(p.id) ?? null,
+      }));
     },
     enabled: !!enseigneId || (isOrganisationAdmin && !!organisationId),
     staleTime: 30000,
