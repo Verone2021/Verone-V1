@@ -112,18 +112,9 @@ export function ContactDisplayCard({
             </div>
           )}
 
-          {/* Badges rôles */}
-          {(contact.isPrimaryContact || contact.isBillingContact) && (
+          {/* Badges rôles — Facturation et Commercial uniquement */}
+          {(contact.isBillingContact || contact.isCommercialContact) && (
             <div className="flex flex-wrap gap-1 mt-1.5">
-              {contact.isPrimaryContact && (
-                <Badge
-                  variant="outline"
-                  size="sm"
-                  className="bg-linkme-turquoise/10 text-linkme-turquoise border-linkme-turquoise/30 text-[10px]"
-                >
-                  Principal
-                </Badge>
-              )}
               {contact.isBillingContact && (
                 <Badge
                   variant="outline"
@@ -131,6 +122,15 @@ export function ContactDisplayCard({
                   className="bg-green-100 text-green-700 border-green-200 text-[10px]"
                 >
                   Facturation
+                </Badge>
+              )}
+              {contact.isCommercialContact && (
+                <Badge
+                  variant="outline"
+                  size="sm"
+                  className="bg-blue-100 text-blue-700 border-blue-200 text-[10px]"
+                >
+                  Commercial
                 </Badge>
               )}
             </div>

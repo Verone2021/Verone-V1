@@ -24,7 +24,7 @@ import {
   Input,
   Label,
 } from '@verone/ui';
-import { User, Receipt, ShoppingBag, Building2 } from 'lucide-react';
+import { Receipt, ShoppingBag, Building2 } from 'lucide-react';
 import { createClient } from '@verone/utils/supabase/client';
 import { toast } from 'sonner';
 
@@ -84,7 +84,6 @@ export function CreateEnseigneContactModal({
     email: '',
     phone: '',
     title: '',
-    isPrimaryContact: false,
     isBillingContact: false,
     isCommercialContact: false,
   });
@@ -104,7 +103,6 @@ export function CreateEnseigneContactModal({
         email: formData.email,
         phone: formData.phone || null,
         title: formData.title || null,
-        is_primary_contact: formData.isPrimaryContact,
         is_billing_contact: formData.isBillingContact,
         is_commercial_contact: formData.isCommercialContact,
         is_active: true,
@@ -241,42 +239,7 @@ export function CreateEnseigneContactModal({
           {/* Rôles */}
           <div className="space-y-3">
             <Label>Rôles</Label>
-            <div className="grid grid-cols-3 gap-3">
-              {/* Principal */}
-              <button
-                type="button"
-                onClick={() =>
-                  setFormData(prev => ({
-                    ...prev,
-                    isPrimaryContact: !prev.isPrimaryContact,
-                  }))
-                }
-                className={`flex flex-col items-center gap-2 rounded-lg border-2 p-3 text-center transition-all ${
-                  formData.isPrimaryContact
-                    ? 'border-linkme-turquoise bg-linkme-turquoise/5'
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}
-              >
-                <div
-                  className={`flex h-9 w-9 items-center justify-center rounded-full ${
-                    formData.isPrimaryContact
-                      ? 'bg-linkme-turquoise/10 text-linkme-turquoise'
-                      : 'bg-gray-100 text-gray-400'
-                  }`}
-                >
-                  <User className="h-4 w-4" />
-                </div>
-                <span
-                  className={`text-xs font-medium ${
-                    formData.isPrimaryContact
-                      ? 'text-linkme-turquoise'
-                      : 'text-gray-500'
-                  }`}
-                >
-                  Principal
-                </span>
-              </button>
-
+            <div className="grid grid-cols-2 gap-3">
               {/* Facturation */}
               <button
                 type="button"
