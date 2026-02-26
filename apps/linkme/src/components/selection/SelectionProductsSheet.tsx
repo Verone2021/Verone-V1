@@ -34,6 +34,7 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
+  EyeOff,
 } from 'lucide-react';
 
 import {
@@ -113,11 +114,17 @@ function ProductRow({
   item: SelectionItem;
   onClick: () => void;
 }): React.JSX.Element {
+  const isHidden = item.is_hidden_by_staff;
+
   return (
     <button
       type="button"
       onClick={onClick}
-      className="flex items-center gap-3 bg-white rounded-lg border border-gray-100 p-2.5 hover:shadow-sm hover:border-linkme-turquoise/40 transition-all text-left w-full cursor-pointer"
+      className={`flex items-center gap-3 rounded-lg border p-2.5 hover:shadow-sm transition-all text-left w-full cursor-pointer ${
+        isHidden
+          ? 'opacity-50 bg-orange-50 border-orange-200'
+          : 'bg-white border-gray-100 hover:border-linkme-turquoise/40'
+      }`}
     >
       {/* Image */}
       <div className="relative h-16 w-16 flex-shrink-0 rounded-md bg-gray-50 overflow-hidden">
@@ -145,6 +152,12 @@ function ProductRow({
           <h3 className="text-sm font-medium text-gray-900 truncate">
             {item.product_name}
           </h3>
+          {isHidden && (
+            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium bg-orange-100 text-orange-700 flex-shrink-0">
+              <EyeOff className="h-2.5 w-2.5" />
+              Masqué par Vérone
+            </span>
+          )}
         </div>
         {item.subcategory_name && (
           <p className="text-xs text-gray-400 truncate mt-0.5">

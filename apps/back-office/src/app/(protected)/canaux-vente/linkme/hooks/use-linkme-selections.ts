@@ -26,6 +26,7 @@ export interface SelectionItem {
   display_order: number | null;
   custom_description: string | null;
   is_featured: boolean | null;
+  is_hidden_by_staff: boolean;
   created_at: string | null;
   product?: {
     id: string;
@@ -866,5 +867,75 @@ export function useLinkMeSelectionsByEnseigne(enseigneId: string | null) {
     queryFn: () => (enseigneId ? fetchSelectionsByEnseigne(enseigneId) : []),
     enabled: !!enseigneId,
     staleTime: 30000, // 30 secondes
+  });
+}
+
+// API response type for toggle visibility
+interface ToggleVisibilityApiResponse {
+  success?: boolean;
+  message?: string;
+  item_id?: string;
+  is_hidden_by_staff?: boolean;
+}
+
+/**
+ * Hook: Masquer/afficher un produit dans une sélection publique
+ * Staff back-office uniquement (via API Route avec supabaseAdmin)
+ */
+export function useToggleSelectionItemVisibility() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({
+      itemId,
+      isHidden,
+    }: {
+      itemId: string;
+      isHidden: boolean;
+      selectionId: string; // For cache invalidation
+    }) => {
+      const response = await fetch(
+        '/api/linkme/selections/toggle-item-visibility',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            item_id: itemId,
+            is_hidden: isHidden,
+          }),
+        }
+      );
+
+      const data = (await response.json()) as ToggleVisibilityApiResponse;
+
+      if (!response.ok) {
+        throw new Error(data.message ?? 'Erreur toggle visibilité');
+      }
+
+      return data;
+    },
+    onSuccess: async (data, { selectionId }) => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ['linkme-selection', selectionId],
+        }),
+        queryClient.invalidateQueries({ queryKey: ['linkme-selections'] }),
+      ]);
+      toast({
+        title: data.is_hidden_by_staff ? 'Produit masqué' : 'Produit visible',
+        description: data.is_hidden_by_staff
+          ? 'Le produit est masqué de la sélection publique.'
+          : 'Le produit est à nouveau visible publiquement.',
+      });
+    },
+    onError: (error: Error) => {
+      console.error('Error toggling visibility:', error);
+      toast({
+        title: 'Erreur',
+        description: error.message ?? 'Impossible de modifier la visibilité.',
+        variant: 'destructive',
+      });
+    },
   });
 }

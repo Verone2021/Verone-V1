@@ -4254,6 +4254,30 @@ export type Database = {
           },
         ];
       };
+      linkme_onboarding_progress: {
+        Row: {
+          completed_at: string | null;
+          created_at: string | null;
+          id: string;
+          step_id: string;
+          user_id: string;
+        };
+        Insert: {
+          completed_at?: string | null;
+          created_at?: string | null;
+          id?: string;
+          step_id: string;
+          user_id: string;
+        };
+        Update: {
+          completed_at?: string | null;
+          created_at?: string | null;
+          id?: string;
+          step_id?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       linkme_page_configurations: {
         Row: {
           config: Json;
@@ -4411,6 +4435,7 @@ export type Database = {
           display_order: number | null;
           id: string;
           is_featured: boolean | null;
+          is_hidden_by_staff: boolean;
           margin_rate: number;
           product_id: string;
           selection_id: string;
@@ -4424,6 +4449,7 @@ export type Database = {
           display_order?: number | null;
           id?: string;
           is_featured?: boolean | null;
+          is_hidden_by_staff?: boolean;
           margin_rate: number;
           product_id: string;
           selection_id: string;
@@ -4437,6 +4463,7 @@ export type Database = {
           display_order?: number | null;
           id?: string;
           is_featured?: boolean | null;
+          is_hidden_by_staff?: boolean;
           margin_rate?: number;
           product_id?: string;
           selection_id?: string;
@@ -4512,7 +4539,6 @@ export type Database = {
           slug: string;
           total_revenue: number | null;
           updated_at: string | null;
-          view_count: number | null;
           views_count: number | null;
         };
         Insert: {
@@ -4531,7 +4557,6 @@ export type Database = {
           slug: string;
           total_revenue?: number | null;
           updated_at?: string | null;
-          view_count?: number | null;
           views_count?: number | null;
         };
         Update: {
@@ -4550,7 +4575,6 @@ export type Database = {
           slug?: string;
           total_revenue?: number | null;
           updated_at?: string | null;
-          view_count?: number | null;
           views_count?: number | null;
         };
         Relationships: [
@@ -9540,6 +9564,7 @@ export type Database = {
           product_name: string | null;
           product_sku: string | null;
           quantity: number | null;
+          retrocession_rate: number | null;
           sales_order_id: string | null;
           selling_price_ht: number | null;
           tax_rate: number | null;

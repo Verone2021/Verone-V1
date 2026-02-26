@@ -75,6 +75,7 @@ export interface SelectionItem {
   selling_price_ht: number;
   custom_description: string | null;
   is_featured: boolean;
+  is_hidden_by_staff: boolean;
   display_order: number;
   // Données produit jointes
   product_name: string;
@@ -280,6 +281,7 @@ interface SelectionItemWithProduct {
   selling_price_ht: number | null;
   custom_description: string | null;
   is_featured: boolean | null;
+  is_hidden_by_staff: boolean | null;
   display_order: number | null;
   product: {
     name: string;
@@ -344,6 +346,7 @@ export function useSelectionItems(selectionId: string | null) {
           selling_price_ht,
           custom_description,
           is_featured,
+          is_hidden_by_staff,
           display_order,
           product:products(
             name,
@@ -394,6 +397,7 @@ export function useSelectionItems(selectionId: string | null) {
         selling_price_ht: item.selling_price_ht ?? 0,
         custom_description: item.custom_description,
         is_featured: item.is_featured ?? false,
+        is_hidden_by_staff: item.is_hidden_by_staff ?? false,
         display_order: item.display_order ?? 0,
         product_name: item.product?.name ?? '',
         product_reference: item.product?.sku ?? '',
