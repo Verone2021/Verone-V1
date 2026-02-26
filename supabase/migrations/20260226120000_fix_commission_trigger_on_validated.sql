@@ -1,9 +1,7 @@
--- Fix: Commission should be created when order is validated, not just shipped
--- The trigger currently only fires on status='shipped', but commissions should
--- appear in the "En attente" tab as soon as the order is validated.
--- Using NOT IN ('validated', 'shipped') ensures:
---   - 'validated' = initial commission creation (status 'pending')
---   - 'shipped' = idempotent UPSERT (commission already exists, ON CONFLICT handles it)
+-- Fix: Commission lifecycle tied to order status
+-- 1. Create commission when order is validated (not just shipped)
+-- 2. Delete commission when order is devalidated (draft/cancelled)
+-- 3. Idempotent via ON CONFLICT for shipped orders
 
 CREATE OR REPLACE FUNCTION public.create_linkme_commission_on_order_update()
  RETURNS trigger
@@ -17,11 +15,14 @@ DECLARE
   v_tax_rate NUMERIC(5,4);
   v_linkme_channel_id UUID := '93c68db1-5a30-4168-89ec-6383152be405';
 BEGIN
+  -- Only process LinkMe orders
   IF NEW.channel_id != v_linkme_channel_id THEN
     RETURN NEW;
   END IF;
 
+  -- If order is NOT validated or shipped, delete any existing commission
   IF NEW.status NOT IN ('validated', 'shipped') THEN
+    DELETE FROM linkme_commissions WHERE order_id = NEW.id;
     RETURN NEW;
   END IF;
 

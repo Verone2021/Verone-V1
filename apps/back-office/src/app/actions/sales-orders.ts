@@ -19,8 +19,8 @@ interface UpdateStatusResult {
 
 interface SalesOrderUpdateFields {
   status: SalesOrderStatus;
-  confirmed_at?: string;
-  confirmed_by?: string;
+  confirmed_at?: string | null;
+  confirmed_by?: string | null;
   shipped_at?: string;
   cancelled_at?: string;
   cancelled_by?: string;
@@ -97,6 +97,10 @@ export async function updateSalesOrderStatus(
     } else if (newStatus === 'cancelled') {
       updateFields.cancelled_at = new Date().toISOString();
       updateFields.cancelled_by = userId;
+    } else if (newStatus === 'draft') {
+      // Dévalidation : remettre confirmed_at à null (supprime le point vert)
+      updateFields.confirmed_at = null;
+      updateFields.confirmed_by = null;
     }
 
     console.warn(`🔧 [Server Action] Champs à mettre à jour:`, updateFields);
@@ -131,8 +135,10 @@ export async function updateSalesOrderStatus(
       `✅ [Server Action] Commande ${existingOrder.order_number} mise à jour avec succès: ${existingOrder.status} → ${newStatus}`
     );
 
-    // Revalider le cache Next.js pour la page des commandes
+    // Revalider le cache Next.js pour toutes les pages commandes
     revalidatePath('/commandes/clients');
+    revalidatePath('/canaux-vente/linkme/commandes');
+    revalidatePath('/canaux-vente/linkme/commissions');
 
     return {
       success: true,
