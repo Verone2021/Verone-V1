@@ -1694,12 +1694,18 @@ export function useSalesOrders() {
         }
 
         // ✅ Mettre à jour le statut dans la base de données
+        const updateFields: Record<string, string | null> = {
+          status: newStatus,
+          updated_at: new Date().toISOString(),
+        };
+        // Dévalidation : remettre confirmed_at à null (supprime le point vert)
+        if (newStatus === 'draft') {
+          updateFields.confirmed_at = null;
+          updateFields.confirmed_by = null;
+        }
         const { error: updateError } = await supabase
           .from('sales_orders')
-          .update({
-            status: newStatus,
-            updated_at: new Date().toISOString(),
-          })
+          .update(updateFields)
           .eq('id', orderId);
 
         if (updateError) {
