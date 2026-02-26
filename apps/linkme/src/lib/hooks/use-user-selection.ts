@@ -81,8 +81,12 @@ export interface SelectionItem {
   product_reference: string;
   product_image_url: string | null;
   product_stock_real: number;
-  // Données pour produits affiliés
+  // Hiérarchie catégorie
   category_name: string | null;
+  subcategory_name: string | null;
+  // Statut commercial du produit
+  product_status: 'active' | 'preorder' | 'discontinued' | 'draft';
+  // Données pour produits affiliés
   is_affiliate_product: boolean;
   affiliate_commission_rate: number | null;
 }
@@ -281,8 +285,12 @@ interface SelectionItemWithProduct {
     name: string;
     sku: string;
     stock_real: number | null;
+    product_status: string | null;
     subcategory: {
       name: string;
+      category: {
+        name: string;
+      } | null;
     } | null;
     created_by_affiliate: string | null;
     affiliate_commission_rate: number | null;
@@ -341,7 +349,11 @@ export function useSelectionItems(selectionId: string | null) {
             name,
             sku,
             stock_real,
-            subcategory:subcategories(name),
+            product_status,
+            subcategory:subcategories(
+              name,
+              category:categories(name)
+            ),
             created_by_affiliate,
             affiliate_commission_rate
           )
@@ -387,8 +399,16 @@ export function useSelectionItems(selectionId: string | null) {
         product_reference: item.product?.sku ?? '',
         product_image_url: imageMap.get(item.product_id) ?? null,
         product_stock_real: item.product?.stock_real ?? 0,
+        // Hiérarchie catégorie
+        category_name: item.product?.subcategory?.category?.name ?? null,
+        subcategory_name: item.product?.subcategory?.name ?? null,
+        // Statut commercial
+        product_status: (item.product?.product_status ?? 'active') as
+          | 'active'
+          | 'preorder'
+          | 'discontinued'
+          | 'draft',
         // Données pour produits affiliés
-        category_name: item.product?.subcategory?.name ?? null,
         is_affiliate_product: !!item.product?.created_by_affiliate,
         affiliate_commission_rate:
           item.product?.affiliate_commission_rate ?? null,
