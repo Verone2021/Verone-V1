@@ -30,7 +30,6 @@ import {
   RefreshCw,
   AlertCircle,
   Receipt,
-  Download,
 } from 'lucide-react';
 
 import { ProductStatsTable } from '@/components/analytics/ProductStatsTable';
@@ -87,44 +86,6 @@ export default function StatistiquesProduits(): JSX.Element {
     setFilters(prev => ({ ...prev, year }));
   }, []);
 
-  // Export CSV
-  const exportToCSV = useCallback(() => {
-    const headers = [
-      'Produit',
-      'SKU',
-      'Source',
-      'Quantité',
-      'Prix unit. HT',
-      'CA HT',
-      'CA TTC',
-    ];
-    const rows = filteredProducts.map(p => [
-      p.productName,
-      p.productSku,
-      p.productSource === 'catalogue'
-        ? 'Catalogue'
-        : p.productSource === 'mes-produits'
-          ? 'Mes produits'
-          : 'Sur-mesure',
-      p.quantitySold.toString(),
-      p.avgPriceHT.toFixed(2),
-      p.revenueHT.toFixed(2),
-      p.revenueTTC.toFixed(2),
-    ]);
-
-    const csv = [headers, ...rows]
-      .map(row => row.map(cell => `"${cell}"`).join(','))
-      .join('\n');
-
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `stats-produits-linkme-${new Date().toISOString().split('T')[0]}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
-  }, [filteredProducts]);
-
   return (
     <div className="min-h-screen bg-gray-50/50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
@@ -150,30 +111,16 @@ export default function StatistiquesProduits(): JSX.Element {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            {/* Export CSV */}
-            <button
-              onClick={exportToCSV}
-              disabled={isLoading || filteredProducts.length === 0}
-              className="flex items-center gap-1.5 px-3 py-2 text-sm text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              title="Exporter en CSV"
-            >
-              <Download className="h-4 w-4" />
-              <span className="hidden sm:inline">Export</span>
-            </button>
-
-            {/* Refresh */}
-            <button
-              onClick={() => void refetch()}
-              disabled={isLoading}
-              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
-              title="Actualiser"
-            >
-              <RefreshCw
-                className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`}
-              />
-            </button>
-          </div>
+          <button
+            onClick={() => void refetch()}
+            disabled={isLoading}
+            className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
+            title="Actualiser"
+          >
+            <RefreshCw
+              className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`}
+            />
+          </button>
         </div>
 
         {/* Erreur */}

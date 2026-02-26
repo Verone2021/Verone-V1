@@ -120,6 +120,9 @@ export function CreateLinkMeOrderModal({
 
   // Recherche clients et formulaire création
   const [searchQuery, setSearchQuery] = useState('');
+  const [orderDate, setOrderDate] = useState<string>(
+    new Date().toISOString().split('T')[0]
+  );
   const [internalNotes, setInternalNotes] = useState('');
   const [showCreateForm, setShowCreateForm] = useState(false);
 
@@ -382,8 +385,7 @@ export function CreateLinkMeOrderModal({
       const lineTva = roundMoney(lineHt * (item.tax_rate ?? 0.2));
       productsHt = roundMoney(productsHt + lineHt);
       totalTva = roundMoney(totalTva + lineTva);
-      // Produit affilié: commission sur unit_price_ht (prix de vente)
-      // Produit catalogue: commission sur base_price_ht (prix de base)
+      // Commission = prix_vente × quantité × taux (formule alignée avec trigger DB)
       if (item.is_affiliate_product) {
         totalRetrocession = roundMoney(
           totalRetrocession +
@@ -392,7 +394,7 @@ export function CreateLinkMeOrderModal({
       } else {
         totalRetrocession = roundMoney(
           totalRetrocession +
-            item.quantity * item.base_price_ht * item.retrocession_rate
+            item.unit_price_ht * item.quantity * item.retrocession_rate
         );
       }
     }
@@ -514,6 +516,18 @@ export function CreateLinkMeOrderModal({
     );
   };
 
+  // Modifier taux de commission catalogue (produits catalogue, back-office uniquement)
+  const updateRetrocessionRate = (itemId: string, newRatePercent: number) => {
+    if (newRatePercent < 0 || newRatePercent > 100 || isNaN(newRatePercent))
+      return;
+    const newRate = newRatePercent / 100;
+    setCart(prev =>
+      prev.map(item =>
+        item.id === itemId ? { ...item, retrocession_rate: newRate } : item
+      )
+    );
+  };
+
   // Modifier taux de commission (produits affiliés, back-office uniquement)
   const updateCommissionRate = (itemId: string, newRatePercent: number) => {
     if (newRatePercent < 0 || newRatePercent > 100 || isNaN(newRatePercent))
@@ -570,6 +584,7 @@ export function CreateLinkMeOrderModal({
         linkme_selection_item_id: item.linkme_selection_item_id,
         is_affiliate_product: item.is_affiliate_product,
       })),
+      order_date: orderDate || undefined,
       internal_notes: internalNotes ?? undefined,
       // Frais additionnels
       shipping_cost_ht: shippingCostHt ?? 0,
@@ -1575,14 +1590,62 @@ export function CreateLinkMeOrderModal({
                               </p>
                               <p className="text-xs text-orange-600">
                                 Commission:{' '}
-                                {(item.retrocession_rate * 100).toFixed(0)}% (
+                                {(item.retrocession_rate * 100).toFixed(1)}% (
                                 {(
-                                  item.base_price_ht *
+                                  item.unit_price_ht *
                                   item.quantity *
                                   item.retrocession_rate
                                 ).toFixed(2)}
                                 €)
                               </p>
+                              {/* Édition prix + commission (produits catalogue, back-office uniquement) */}
+                              <div className="mt-1 flex items-center gap-4">
+                                <div className="flex items-center gap-2">
+                                  <label className="text-xs text-gray-600 whitespace-nowrap">
+                                    Prix vente HT
+                                  </label>
+                                  <input
+                                    type="number"
+                                    value={item.unit_price_ht}
+                                    onChange={e =>
+                                      updateUnitPrice(
+                                        item.id,
+                                        parseFloat(e.target.value) || 0
+                                      )
+                                    }
+                                    min={0}
+                                    step={0.01}
+                                    className="w-24 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                  />
+                                  <span className="text-xs text-gray-500">
+                                    €
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <label className="text-xs text-gray-600 whitespace-nowrap">
+                                    Commission
+                                  </label>
+                                  <input
+                                    type="number"
+                                    value={parseFloat(
+                                      (item.retrocession_rate * 100).toFixed(2)
+                                    )}
+                                    onChange={e =>
+                                      updateRetrocessionRate(
+                                        item.id,
+                                        parseFloat(e.target.value) || 0
+                                      )
+                                    }
+                                    min={0}
+                                    max={100}
+                                    step={0.5}
+                                    className="w-20 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                  />
+                                  <span className="text-xs text-gray-500">
+                                    %
+                                  </span>
+                                </div>
+                              </div>
                             </>
                           )}
                         </div>
@@ -1684,7 +1747,21 @@ export function CreateLinkMeOrderModal({
               </div>
             )}
 
-            {/* Section 7: Notes */}
+            {/* Section 7: Date de commande + Notes */}
+            {selectedSelectionId && (
+              <div className="space-y-2 border-t pt-6">
+                <label className="block text-sm font-medium text-gray-700">
+                  Date de commande
+                </label>
+                <input
+                  type="date"
+                  value={orderDate}
+                  onChange={e => setOrderDate(e.target.value)}
+                  className="w-full max-w-xs px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                />
+              </div>
+            )}
+
             {selectedSelectionId && (
               <div className="space-y-2 border-t pt-6">
                 <label className="block text-sm font-medium text-gray-700">

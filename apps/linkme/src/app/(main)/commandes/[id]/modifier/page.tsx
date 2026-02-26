@@ -69,6 +69,8 @@ export interface OrderItemData {
     id: string;
     name: string;
     sku: string | null;
+    created_by_affiliate: string | null;
+    affiliate_commission_rate: number | null;
   } | null;
 }
 
@@ -157,7 +159,9 @@ export default function ModifierCommandePage() {
             product:products!sales_order_items_product_id_fkey (
               id,
               name,
-              sku
+              sku,
+              created_by_affiliate,
+              affiliate_commission_rate
             )
           ),
           sales_order_linkme_details (

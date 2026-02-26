@@ -46,6 +46,8 @@ interface AddProductDialogProps {
       base_price_ht: number;
       margin_rate: number;
       quantity: number;
+      is_affiliate_product?: boolean;
+      affiliate_commission_rate?: number;
     }>
   ) => void;
 }
@@ -153,6 +155,10 @@ export function AddProductDialog({
         base_price_ht: item.base_price_ht,
         margin_rate: item.margin_rate,
         quantity,
+        is_affiliate_product: item.is_affiliate_product,
+        affiliate_commission_rate: item.affiliate_commission_rate
+          ? item.affiliate_commission_rate / 100
+          : undefined,
       },
     ]);
 
