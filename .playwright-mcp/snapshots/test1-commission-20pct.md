@@ -1,0 +1,1742 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - complementary "Navigation principale" [ref=e3]:
+      - link "V" [ref=e5] [cursor=pointer]:
+        - /url: /dashboard
+        - generic [ref=e6]: V
+      - navigation [ref=e7]:
+        - menubar [ref=e8]:
+          - listitem [ref=e9]:
+            - link [ref=e10] [cursor=pointer]:
+              - /url: /dashboard
+              - img [ref=e11]
+          - listitem [ref=e14]:
+            - button "0" [ref=e15] [cursor=pointer]:
+              - img [ref=e16]
+              - text: "0"
+          - listitem [ref=e20]:
+            - button "9+" [ref=e164] [cursor=pointer]:
+              - img [ref=e22]
+              - generic [ref=e165]: 9+
+          - listitem [ref=e26]:
+            - button "0" [ref=e27] [cursor=pointer]:
+              - img [ref=e28]
+              - text: "0"
+          - listitem [ref=e32]:
+            - button "0" [ref=e33] [cursor=pointer]:
+              - img [ref=e34]
+              - text: "0"
+          - listitem [ref=e37]:
+            - link [ref=e38] [cursor=pointer]:
+              - /url: /ventes
+              - img [ref=e39]
+          - listitem [ref=e43]:
+            - link "0" [ref=e44] [cursor=pointer]:
+              - /url: /consultations
+              - img [ref=e45]
+              - text: "0"
+          - listitem [ref=e47]:
+            - button "0" [ref=e48] [cursor=pointer]:
+              - img [ref=e49]
+              - text: "0"
+          - listitem [ref=e54]:
+            - button "9+" [ref=e166] [cursor=pointer]:
+              - img [ref=e56]
+              - generic [ref=e167]: 9+
+          - listitem [ref=e58]:
+            - link [ref=e59] [cursor=pointer]:
+              - /url: /livraisons
+              - img [ref=e60]
+          - listitem [ref=e65]:
+            - link [ref=e66] [cursor=pointer]:
+              - /url: /parametres
+              - img [ref=e67]
+      - button [ref=e71] [cursor=pointer]:
+        - img [ref=e72]
+    - generic [ref=e75]:
+      - banner [ref=e76]:
+        - generic [ref=e77]:
+          - generic [ref=e78]: mer. 25 févr.
+          - button "50 50 Notifications" [ref=e168] [cursor=pointer]:
+            - img [ref=e80]
+            - generic [ref=e169]: "50"
+            - generic [ref=e83]: 50 Notifications
+          - button "Menu profil" [ref=e84] [cursor=pointer]:
+            - img [ref=e85]
+            - generic [ref=e88]: Menu profil
+      - generic [ref=e90]:
+        - generic [ref=e91]:
+          - link "← Retour aux Canaux" [ref=e92] [cursor=pointer]:
+            - /url: /canaux-vente
+          - generic [ref=e93]: /
+          - generic [ref=e94]: LinkMe
+        - generic [ref=e95]:
+          - link "Dashboard" [ref=e96] [cursor=pointer]:
+            - /url: /canaux-vente/linkme
+          - link "Utilisateurs" [ref=e97] [cursor=pointer]:
+            - /url: /canaux-vente/linkme/utilisateurs
+          - link "Enseignes" [ref=e98] [cursor=pointer]:
+            - /url: /canaux-vente/linkme/enseignes
+          - link "Organisations" [ref=e99] [cursor=pointer]:
+            - /url: /canaux-vente/linkme/organisations
+          - link "Catalogue" [ref=e100] [cursor=pointer]:
+            - /url: /canaux-vente/linkme/catalogue
+          - link "Sélections" [ref=e101] [cursor=pointer]:
+            - /url: /canaux-vente/linkme/selections
+          - link "Commandes" [ref=e102] [cursor=pointer]:
+            - /url: /canaux-vente/linkme/commandes
+          - link "Approbations" [ref=e103] [cursor=pointer]:
+            - /url: /canaux-vente/linkme/approbations
+          - link "Commissions" [ref=e104] [cursor=pointer]:
+            - /url: /canaux-vente/linkme/commissions
+          - link "Messages" [ref=e105] [cursor=pointer]:
+            - /url: /canaux-vente/linkme/messages
+          - link "Rapports" [ref=e106] [cursor=pointer]:
+            - /url: /canaux-vente/linkme/analytics/rapports
+          - link "Configuration" [ref=e107] [cursor=pointer]:
+            - /url: /canaux-vente/linkme/configuration
+      - main [ref=e108]:
+        - generic [ref=e170]:
+          - generic [ref=e171]:
+            - heading "Commandes LinkMe" [level=1] [ref=e172]
+            - paragraph [ref=e173]: Commandes via le canal affilies - Meme workflow que les commandes generales
+          - button "0 en attente d'approbation" [ref=e175] [cursor=pointer]:
+            - img [ref=e176]
+            - text: 0 en attente d'approbation
+          - generic [ref=e179]:
+            - generic [ref=e180]:
+              - generic [ref=e181]:
+                - heading "Total" [level=3] [ref=e183]
+                - generic [ref=e184]:
+                  - generic [ref=e185]: "119"
+                  - paragraph [ref=e186]: commandes
+              - generic [ref=e187]:
+                - heading "Chiffre d'affaires" [level=3] [ref=e189]
+                - generic [ref=e190]:
+                  - generic [ref=e191]: 231 756,24 €
+                  - generic [ref=e192]:
+                    - generic [ref=e193]: "HT: 170 540,22 €"
+                    - generic [ref=e194]: "TVA: 61 216,02 €"
+              - generic [ref=e195]:
+                - heading "Panier Moyen" [level=3] [ref=e197]
+                - generic [ref=e198]:
+                  - generic [ref=e199]: 1 947,53 €
+                  - paragraph [ref=e200]: par commande
+              - generic [ref=e201]:
+                - heading "En cours" [level=3] [ref=e203]
+                - generic [ref=e204]:
+                  - generic [ref=e205]: "0"
+                  - paragraph [ref=e206]: draft + validee
+              - generic [ref=e207]:
+                - heading "Expediees" [level=3] [ref=e209]
+                - generic [ref=e210]:
+                  - generic [ref=e211]: "119"
+                  - paragraph [ref=e212]: commandes
+            - generic [ref=e213]:
+              - generic [ref=e215]:
+                - heading "Filtres" [level=3] [ref=e216]
+                - generic [ref=e217]:
+                  - button "Exporter Excel" [ref=e218] [cursor=pointer]:
+                    - img [ref=e219]
+                    - text: Exporter Excel
+                  - button "Nouvelle commande" [ref=e222] [cursor=pointer]:
+                    - img [ref=e223]
+                    - text: Nouvelle commande
+              - generic [ref=e224]:
+                - tablist [ref=e226]:
+                  - tab "Toutes (119)" [selected] [ref=e227] [cursor=pointer]
+                  - tab "Approbation (0)" [ref=e228] [cursor=pointer]
+                  - tab "Brouillon (0)" [ref=e229] [cursor=pointer]
+                  - tab "Validee (0)" [ref=e230] [cursor=pointer]
+                  - tab "Expediee (119)" [ref=e231] [cursor=pointer]
+                  - tab "Annulee (0)" [ref=e232] [cursor=pointer]
+                - generic [ref=e233]:
+                  - img [ref=e234]
+                  - textbox "Rechercher par numero ou client..." [ref=e239]
+                - generic [ref=e240]:
+                  - generic [ref=e241]:
+                    - generic [ref=e242]: "Type client :"
+                    - combobox [ref=e243] [cursor=pointer]:
+                      - generic: Tous
+                      - img [ref=e244]
+                  - generic [ref=e246]:
+                    - generic [ref=e247]: "Année :"
+                    - combobox [ref=e248] [cursor=pointer]:
+                      - generic: Toutes
+                      - img [ref=e249]
+                  - generic [ref=e251]:
+                    - generic [ref=e252]: "Période :"
+                    - combobox [ref=e253] [cursor=pointer]:
+                      - generic: Toute
+                      - img [ref=e254]
+                  - generic [ref=e256]:
+                    - generic [ref=e257]: "Rapprochement :"
+                    - combobox [ref=e258] [cursor=pointer]:
+                      - generic: Tous
+                      - img [ref=e259]
+            - generic [ref=e261]:
+              - generic [ref=e262]:
+                - heading "Commandes" [level=3] [ref=e263]
+                - paragraph [ref=e264]: 119 commande(s) trouvee(s)
+              - generic [ref=e265]:
+                - table [ref=e269]:
+                  - rowgroup [ref=e270]:
+                    - row "N Commande Client Statut Paiement Articles Date création Date commande Canal Marge Affilie Montant TTC Actions" [ref=e271]:
+                      - columnheader [ref=e272]
+                      - columnheader "N Commande" [ref=e273] [cursor=pointer]:
+                        - generic [ref=e274]:
+                          - text: N Commande
+                          - img [ref=e275]
+                      - columnheader "Client" [ref=e278] [cursor=pointer]:
+                        - generic [ref=e279]:
+                          - text: Client
+                          - img [ref=e280]
+                      - columnheader "Statut" [ref=e283]
+                      - columnheader "Paiement" [ref=e284]
+                      - columnheader "Articles" [ref=e285]
+                      - columnheader "Date création" [ref=e286] [cursor=pointer]:
+                        - generic [ref=e287]:
+                          - text: Date création
+                          - img [ref=e288]
+                      - columnheader "Date commande" [ref=e291]
+                      - columnheader "Canal" [ref=e292]
+                      - columnheader [ref=e293]
+                      - columnheader "Marge Affilie" [ref=e294]
+                      - columnheader "Montant TTC" [ref=e295] [cursor=pointer]:
+                        - generic [ref=e296]:
+                          - text: Montant TTC
+                          - img [ref=e297]
+                      - columnheader "Actions" [ref=e300]
+                  - rowgroup [ref=e301]:
+                    - row "SO-2026-00084 Pokawa Lyon Mercière Professionnel Expediee En attente 1ref. 19 février 2026 10 novembre 2025 Manuel 48,90 € 450,48 € Voir details Lier transaction" [ref=e302]:
+                      - cell [ref=e303]:
+                        - button [ref=e304] [cursor=pointer]:
+                          - img [ref=e305]
+                      - cell "SO-2026-00084" [ref=e307]
+                      - cell "Pokawa Lyon Mercière Professionnel" [ref=e308]:
+                        - generic [ref=e309]:
+                          - generic [ref=e310]: Pokawa Lyon Mercière
+                          - generic [ref=e311]: Professionnel
+                      - cell "Expediee" [ref=e312]:
+                        - generic [ref=e314]: Expediee
+                      - cell "En attente" [ref=e315]:
+                        - button "En attente" [ref=e317] [cursor=pointer]:
+                          - generic [ref=e318]:
+                            - text: En attente
+                            - img [ref=e319]
+                      - cell "1ref." [ref=e321]
+                      - cell "19 février 2026" [ref=e322]
+                      - cell "10 novembre 2025" [ref=e323]
+                      - cell "Manuel" [ref=e324]
+                      - cell [ref=e325]:
+                        - generic "Approuvée" [ref=e326]:
+                          - img [ref=e327]
+                      - cell "48,90 €" [ref=e329]
+                      - cell "450,48 €" [ref=e330]:
+                        - generic [ref=e331]: 450,48 €
+                      - cell "Voir details Lier transaction" [ref=e332]:
+                        - generic [ref=e333]:
+                          - button "Voir details" [ref=e334] [cursor=pointer]:
+                            - img [ref=e335]
+                          - button "Lier transaction" [ref=e338] [cursor=pointer]:
+                            - img [ref=e339]
+                    - row "SO-2026-00083 Pokawa Marseille Opéra Professionnel Expediee En attente 1ref. 19 février 2026 10 novembre 2025 Manuel 130,40 € 1 103,28 € Voir details Lier transaction" [ref=e342]:
+                      - cell [ref=e343]:
+                        - button [ref=e344] [cursor=pointer]:
+                          - img [ref=e345]
+                      - cell "SO-2026-00083" [ref=e347]
+                      - cell "Pokawa Marseille Opéra Professionnel" [ref=e348]:
+                        - generic [ref=e349]:
+                          - generic [ref=e350]: Pokawa Marseille Opéra
+                          - generic [ref=e351]: Professionnel
+                      - cell "Expediee" [ref=e352]:
+                        - generic [ref=e354]: Expediee
+                      - cell "En attente" [ref=e355]:
+                        - button "En attente" [ref=e357] [cursor=pointer]:
+                          - generic [ref=e358]:
+                            - text: En attente
+                            - img [ref=e359]
+                      - cell "1ref." [ref=e361]
+                      - cell "19 février 2026" [ref=e362]
+                      - cell "10 novembre 2025" [ref=e363]
+                      - cell "Manuel" [ref=e364]
+                      - cell [ref=e365]:
+                        - generic "Approuvée" [ref=e366]:
+                          - img [ref=e367]
+                      - cell "130,40 €" [ref=e369]
+                      - cell "1 103,28 €" [ref=e370]:
+                        - generic [ref=e371]: 1 103,28 €
+                      - cell "Voir details Lier transaction" [ref=e372]:
+                        - generic [ref=e373]:
+                          - button "Voir details" [ref=e374] [cursor=pointer]:
+                            - img [ref=e375]
+                          - button "Lier transaction" [ref=e378] [cursor=pointer]:
+                            - img [ref=e379]
+                    - row "SO-2026-00082 Pokawa BFM Professionnel Expediee En attente 1ref. 19 février 2026 11 décembre 2025 Manuel 119,00 € 1 011,60 € Voir details Lier transaction" [ref=e382]:
+                      - cell [ref=e383]:
+                        - button [ref=e384] [cursor=pointer]:
+                          - img [ref=e385]
+                      - cell "SO-2026-00082" [ref=e387]
+                      - cell "Pokawa BFM Professionnel" [ref=e388]:
+                        - generic [ref=e389]:
+                          - generic [ref=e390]: Pokawa BFM
+                          - generic [ref=e391]: Professionnel
+                      - cell "Expediee" [ref=e392]:
+                        - generic [ref=e394]: Expediee
+                      - cell "En attente" [ref=e395]:
+                        - button "En attente" [ref=e397] [cursor=pointer]:
+                          - generic [ref=e398]:
+                            - text: En attente
+                            - img [ref=e399]
+                      - cell "1ref." [ref=e401]
+                      - cell "19 février 2026" [ref=e402]
+                      - cell "11 décembre 2025" [ref=e403]
+                      - cell "Manuel" [ref=e404]
+                      - cell [ref=e405]:
+                        - generic "Approuvée" [ref=e406]:
+                          - img [ref=e407]
+                      - cell "119,00 €" [ref=e409]
+                      - cell "1 011,60 €" [ref=e410]:
+                        - generic [ref=e411]: 1 011,60 €
+                      - cell "Voir details Lier transaction" [ref=e412]:
+                        - generic [ref=e413]:
+                          - button "Voir details" [ref=e414] [cursor=pointer]:
+                            - img [ref=e415]
+                          - button "Lier transaction" [ref=e418] [cursor=pointer]:
+                            - img [ref=e419]
+                    - row "SO-2026-00081 Pokawa Lyon confluence Professionnel Expediee En attente 1ref. 19 février 2026 11 décembre 2025 Manuel 88,02 € 751,82 € Voir details Lier transaction" [ref=e422]:
+                      - cell [ref=e423]:
+                        - button [ref=e424] [cursor=pointer]:
+                          - img [ref=e425]
+                      - cell "SO-2026-00081" [ref=e427]
+                      - cell "Pokawa Lyon confluence Professionnel" [ref=e428]:
+                        - generic [ref=e429]:
+                          - generic [ref=e430]: Pokawa Lyon confluence
+                          - generic [ref=e431]: Professionnel
+                      - cell "Expediee" [ref=e432]:
+                        - generic [ref=e434]: Expediee
+                      - cell "En attente" [ref=e435]:
+                        - button "En attente" [ref=e437] [cursor=pointer]:
+                          - generic [ref=e438]:
+                            - text: En attente
+                            - img [ref=e439]
+                      - cell "1ref." [ref=e441]
+                      - cell "19 février 2026" [ref=e442]
+                      - cell "11 décembre 2025" [ref=e443]
+                      - cell "Manuel" [ref=e444]
+                      - cell [ref=e445]:
+                        - generic "Approuvée" [ref=e446]:
+                          - img [ref=e447]
+                      - cell "88,02 €" [ref=e449]
+                      - cell "751,82 €" [ref=e450]:
+                        - generic [ref=e451]: 751,82 €
+                      - cell "Voir details Lier transaction" [ref=e452]:
+                        - generic [ref=e453]:
+                          - button "Voir details" [ref=e454] [cursor=pointer]:
+                            - img [ref=e455]
+                          - button "Lier transaction" [ref=e458] [cursor=pointer]:
+                            - img [ref=e459]
+                    - row "SO-2026-00080 Pokawa Euralille Professionnel Expediee En attente 2ref. 19 février 2026 13 novembre 2025 Manuel 42,74 € 389,09 € Voir details Lier transaction" [ref=e462]:
+                      - cell [ref=e463]:
+                        - button [ref=e464] [cursor=pointer]:
+                          - img [ref=e465]
+                      - cell "SO-2026-00080" [ref=e467]
+                      - cell "Pokawa Euralille Professionnel" [ref=e468]:
+                        - generic [ref=e469]:
+                          - generic [ref=e470]: Pokawa Euralille
+                          - generic [ref=e471]: Professionnel
+                      - cell "Expediee" [ref=e472]:
+                        - generic [ref=e474]: Expediee
+                      - cell "En attente" [ref=e475]:
+                        - button "En attente" [ref=e477] [cursor=pointer]:
+                          - generic [ref=e478]:
+                            - text: En attente
+                            - img [ref=e479]
+                      - cell "2ref." [ref=e481]
+                      - cell "19 février 2026" [ref=e482]
+                      - cell "13 novembre 2025" [ref=e483]
+                      - cell "Manuel" [ref=e484]
+                      - cell [ref=e485]:
+                        - generic "Approuvée" [ref=e486]:
+                          - img [ref=e487]
+                      - cell "42,74 €" [ref=e489]
+                      - cell "389,09 €" [ref=e490]:
+                        - generic [ref=e491]: 389,09 €
+                      - cell "Voir details Lier transaction" [ref=e492]:
+                        - generic [ref=e493]:
+                          - button "Voir details" [ref=e494] [cursor=pointer]:
+                            - img [ref=e495]
+                          - button "Lier transaction" [ref=e498] [cursor=pointer]:
+                            - img [ref=e499]
+                    - row "SO-2026-00079 Pokawa La roche sur Yon Professionnel Expediee Payé 1ref. 19 février 2026 30 janvier 2026 Manuel 11,10 € 112,80 € Voir details Rapprochée" [ref=e502]:
+                      - cell [ref=e503]:
+                        - button [ref=e504] [cursor=pointer]:
+                          - img [ref=e505]
+                      - cell "SO-2026-00079" [ref=e507]
+                      - cell "Pokawa La roche sur Yon Professionnel" [ref=e508]:
+                        - generic [ref=e509]:
+                          - generic [ref=e510]: Pokawa La roche sur Yon
+                          - generic [ref=e511]: Professionnel
+                      - cell "Expediee" [ref=e512]:
+                        - generic [ref=e514]: Expediee
+                      - cell "Payé" [ref=e515]:
+                        - generic [ref=e517]: Payé
+                      - cell "1ref." [ref=e518]
+                      - cell "19 février 2026" [ref=e519]
+                      - cell "30 janvier 2026" [ref=e520]
+                      - cell "Manuel" [ref=e521]
+                      - cell [ref=e522]:
+                        - generic "Approuvée" [ref=e523]:
+                          - img [ref=e524]
+                      - cell "11,10 €" [ref=e526]
+                      - cell "112,80 €" [ref=e527]:
+                        - generic [ref=e528]: 112,80 €
+                      - cell "Voir details Rapprochée" [ref=e529]:
+                        - generic [ref=e530]:
+                          - button "Voir details" [ref=e531] [cursor=pointer]:
+                            - img [ref=e532]
+                          - 'generic "Rapprochée: S.A.R.L. RESB (112,80 €)" [ref=e535]':
+                            - img [ref=e536]
+                            - text: Rapprochée
+                    - row "SO-2026-00078 Pokawa Aubagne (Pk Prado) Professionnel Expediee Payé 2ref. 19 février 2026 30 janvier 2026 Manuel 19,20 € 177,72 € Voir details Rapprochée" [ref=e539]:
+                      - cell [ref=e540]:
+                        - button [ref=e541] [cursor=pointer]:
+                          - img [ref=e542]
+                      - cell "SO-2026-00078" [ref=e544]
+                      - cell "Pokawa Aubagne (Pk Prado) Professionnel" [ref=e545]:
+                        - generic [ref=e546]:
+                          - generic [ref=e547]: Pokawa Aubagne (Pk Prado)
+                          - generic [ref=e548]: Professionnel
+                      - cell "Expediee" [ref=e549]:
+                        - generic [ref=e551]: Expediee
+                      - cell "Payé" [ref=e552]:
+                        - generic [ref=e554]: Payé
+                      - cell "2ref." [ref=e555]
+                      - cell "19 février 2026" [ref=e556]
+                      - cell "30 janvier 2026" [ref=e557]
+                      - cell "Manuel" [ref=e558]
+                      - cell [ref=e559]:
+                        - generic "Approuvée" [ref=e560]:
+                          - img [ref=e561]
+                      - cell "19,20 €" [ref=e563]
+                      - cell "177,72 €" [ref=e564]:
+                        - generic [ref=e565]: 177,72 €
+                      - cell "Voir details Rapprochée" [ref=e566]:
+                        - generic [ref=e567]:
+                          - button "Voir details" [ref=e568] [cursor=pointer]:
+                            - img [ref=e569]
+                          - 'generic "Rapprochée: PK PRADO (177,72 €)" [ref=e572]':
+                            - img [ref=e573]
+                            - text: Rapprochée
+                    - row "F-25-050 Pokawa Marseille Prado (PK PRADO) Professionnel Expediee Payé 11ref. 10 février 2026 16 décembre 2025 Manuel 881,93 € 6 300,90 € Voir details Rapprochée" [ref=e576]:
+                      - cell [ref=e577]:
+                        - button [ref=e578] [cursor=pointer]:
+                          - img [ref=e579]
+                      - cell "F-25-050" [ref=e581]
+                      - cell "Pokawa Marseille Prado (PK PRADO) Professionnel" [ref=e582]:
+                        - generic [ref=e583]:
+                          - generic [ref=e584]: Pokawa Marseille Prado (PK PRADO)
+                          - generic [ref=e585]: Professionnel
+                      - cell "Expediee" [ref=e586]:
+                        - generic [ref=e588]: Expediee
+                      - cell "Payé" [ref=e589]:
+                        - generic [ref=e591]: Payé
+                      - cell "11ref." [ref=e592]
+                      - cell "10 février 2026" [ref=e593]
+                      - cell "16 décembre 2025" [ref=e594]
+                      - cell "Manuel" [ref=e595]
+                      - cell [ref=e596]
+                      - cell "881,93 €" [ref=e597]
+                      - cell "6 300,90 €" [ref=e598]:
+                        - generic [ref=e599]: 6 300,90 €
+                      - cell "Voir details Rapprochée" [ref=e600]:
+                        - generic [ref=e601]:
+                          - button "Voir details" [ref=e602] [cursor=pointer]:
+                            - img [ref=e603]
+                          - 'generic "Rapprochée: PK PRADO (6 300,90 €)" [ref=e606]':
+                            - img [ref=e607]
+                            - text: Rapprochée
+                    - row "F-25-049 Pokawa Cormeilles-en-Parisis (DESMAFOOD) Professionnel Expediee Payé 9ref. 10 février 2026 9 décembre 2025 Manuel 966,17 € 6 806,63 € Voir details Rapprochée" [ref=e610]:
+                      - cell [ref=e611]:
+                        - button [ref=e612] [cursor=pointer]:
+                          - img [ref=e613]
+                      - cell "F-25-049" [ref=e615]
+                      - cell "Pokawa Cormeilles-en-Parisis (DESMAFOOD) Professionnel" [ref=e616]:
+                        - generic [ref=e617]:
+                          - generic [ref=e618]: Pokawa Cormeilles-en-Parisis (DESMAFOOD)
+                          - generic [ref=e619]: Professionnel
+                      - cell "Expediee" [ref=e620]:
+                        - generic [ref=e622]: Expediee
+                      - cell "Payé" [ref=e623]:
+                        - generic [ref=e625]: Payé
+                      - cell "9ref." [ref=e626]
+                      - cell "10 février 2026" [ref=e627]
+                      - cell "9 décembre 2025" [ref=e628]
+                      - cell "Manuel" [ref=e629]
+                      - cell [ref=e630]
+                      - cell "966,17 €" [ref=e631]
+                      - cell "6 806,63 €" [ref=e632]:
+                        - generic [ref=e633]: 6 806,63 €
+                      - cell "Voir details Rapprochée" [ref=e634]:
+                        - generic [ref=e635]:
+                          - button "Voir details" [ref=e636] [cursor=pointer]:
+                            - img [ref=e637]
+                          - 'generic "Rapprochée: BNP PARIBAS (6 806,62 €)" [ref=e640]':
+                            - img [ref=e641]
+                            - text: Rapprochée
+                    - row "F-25-046 Pokawa Aix en Provence (Rue d'Italie) Professionnel Expediee Payé 0ref. 10 février 2026 3 octobre 2025 Manuel - 540,00 € Voir details Rapprochée" [ref=e644]:
+                      - cell [ref=e645]
+                      - cell "F-25-046" [ref=e646]
+                      - cell "Pokawa Aix en Provence (Rue d'Italie) Professionnel" [ref=e647]:
+                        - generic [ref=e648]:
+                          - generic [ref=e649]: Pokawa Aix en Provence (Rue d'Italie)
+                          - generic [ref=e650]: Professionnel
+                      - cell "Expediee" [ref=e651]:
+                        - generic [ref=e653]: Expediee
+                      - cell "Payé" [ref=e654]:
+                        - generic [ref=e656]: Payé
+                      - cell "0ref." [ref=e657]
+                      - cell "10 février 2026" [ref=e658]
+                      - cell "3 octobre 2025" [ref=e659]
+                      - cell "Manuel" [ref=e660]
+                      - cell [ref=e661]
+                      - cell "-" [ref=e662]
+                      - cell "540,00 €" [ref=e663]:
+                        - generic [ref=e664]: 540,00 €
+                      - cell "Voir details Rapprochée" [ref=e665]:
+                        - generic [ref=e666]:
+                          - button "Voir details" [ref=e667] [cursor=pointer]:
+                            - img [ref=e668]
+                          - 'generic "Rapprochée: POKAWA AIX EN PROVENCRE (540,00 €)" [ref=e671]':
+                            - img [ref=e672]
+                            - text: Rapprochée
+                - generic [ref=e675]:
+                  - generic [ref=e676]:
+                    - generic [ref=e677]: Afficher
+                    - generic [ref=e678]:
+                      - button "10" [ref=e679] [cursor=pointer]
+                      - button "20" [ref=e680] [cursor=pointer]
+                    - generic [ref=e681]: par page
+                  - generic [ref=e682]:
+                    - generic [ref=e683]: 1-10 sur 119
+                    - generic [ref=e684]:
+                      - button "Precedent" [disabled]
+                      - button "Suivant" [ref=e685] [cursor=pointer]
+            - generic [ref=e689]:
+              - generic [ref=e690]:
+                - generic [ref=e691]:
+                  - img [ref=e693]
+                  - generic [ref=e697]:
+                    - heading "Nouvelle commande LinkMe" [level=2] [ref=e698]
+                    - paragraph [ref=e699]: Créer une commande depuis une sélection affilié
+                - button [ref=e700] [cursor=pointer]:
+                  - img [ref=e701]
+              - generic [ref=e704]:
+                - generic [ref=e705]:
+                  - generic [ref=e706]: Type d'affilié *
+                  - generic [ref=e707]:
+                    - button "Enseigne Chaîne de magasins affiliée" [ref=e708] [cursor=pointer]:
+                      - img [ref=e709]
+                      - generic [ref=e714]:
+                        - paragraph [ref=e715]: Enseigne
+                        - paragraph [ref=e716]: Chaîne de magasins affiliée
+                      - img [ref=e731]
+                    - button "Organisation indépendante Entreprise affiliée autonome" [ref=e717] [cursor=pointer]:
+                      - img [ref=e718]
+                      - generic [ref=e722]:
+                        - paragraph [ref=e723]: Organisation indépendante
+                        - paragraph [ref=e724]: Entreprise affiliée autonome
+                - generic [ref=e733]:
+                  - generic [ref=e734]: Affilié *
+                  - generic [ref=e735]:
+                    - button "Black & White Burger Black & White Burger • 1 sélection" [ref=e736] [cursor=pointer]:
+                      - img [ref=e738]
+                      - generic [ref=e743]:
+                        - paragraph [ref=e744]: Black & White Burger
+                        - paragraph [ref=e745]: Black & White Burger • 1 sélection
+                    - button "Pokawa Pokawa • 1 sélection" [ref=e746] [cursor=pointer]:
+                      - img [ref=e748]
+                      - generic [ref=e753]:
+                        - paragraph [ref=e754]: Pokawa
+                        - paragraph [ref=e755]: Pokawa • 1 sélection
+                      - img [ref=e756]
+                - generic [ref=e758]:
+                  - generic [ref=e759]:
+                    - img [ref=e760]
+                    - text: Sélection (mini-boutique) *
+                  - generic [ref=e765]:
+                    - button "Collection Mobilier Pokawa 43 produits" [ref=e766] [cursor=pointer]:
+                      - img [ref=e767]
+                      - generic [ref=e771]:
+                        - paragraph [ref=e772]: Collection Mobilier Pokawa
+                        - paragraph [ref=e773]: 43 produits
+                      - img [ref=e778]
+                    - button "Aperçu des produits" [ref=e774] [cursor=pointer]:
+                      - img [ref=e775]
+                - generic [ref=e780]:
+                  - generic [ref=e781]: Client *
+                  - generic [ref=e782]:
+                    - button "Organisation" [ref=e783] [cursor=pointer]:
+                      - img [ref=e784]
+                      - generic [ref=e788]: Organisation
+                    - button "Particulier" [ref=e789] [cursor=pointer]:
+                      - img [ref=e790]
+                      - generic [ref=e793]: Particulier
+                  - generic [ref=e794]:
+                    - generic [ref=e795]:
+                      - img [ref=e796]
+                      - textbox "Rechercher un client..." [ref=e799]
+                    - button "Nouveau" [ref=e800] [cursor=pointer]:
+                      - img [ref=e801]
+                      - generic [ref=e802]: Nouveau
+                  - generic [ref=e803]:
+                    - button "Pokawa Aix-La-Pioline Aix en Provence" [ref=e804] [cursor=pointer]:
+                      - img [ref=e805]
+                      - generic [ref=e809]:
+                        - paragraph [ref=e810]: Pokawa Aix-La-Pioline
+                        - paragraph [ref=e811]: Aix en Provence
+                    - button "Pokawa Montesson Montesson" [ref=e812] [cursor=pointer]:
+                      - img [ref=e813]
+                      - generic [ref=e817]:
+                        - paragraph [ref=e818]: Pokawa Montesson
+                        - paragraph [ref=e819]: Montesson
+                    - button "Pokawa Angoulême Champniers" [ref=e820] [cursor=pointer]:
+                      - img [ref=e821]
+                      - generic [ref=e825]:
+                        - paragraph [ref=e826]: Pokawa Angoulême
+                        - paragraph [ref=e827]: Champniers
+                    - button "Pokawa Cormeilles-en-Parisis Cormeilles-en-Parisis" [ref=e828] [cursor=pointer]:
+                      - img [ref=e829]
+                      - generic [ref=e833]:
+                        - paragraph [ref=e834]: Pokawa Cormeilles-en-Parisis
+                        - paragraph [ref=e835]: Cormeilles-en-Parisis
+                    - button "Pokawa Aix en Provence 3 Aix en Provence" [ref=e836] [cursor=pointer]:
+                      - img [ref=e837]
+                      - generic [ref=e841]:
+                        - paragraph [ref=e842]: Pokawa Aix en Provence 3
+                        - paragraph [ref=e843]: Aix en Provence
+                    - button "Pokawa Aubagne Aubagne" [ref=e844] [cursor=pointer]:
+                      - img [ref=e845]
+                      - generic [ref=e849]:
+                        - paragraph [ref=e850]: Pokawa Aubagne
+                        - paragraph [ref=e851]: Aubagne
+                    - button "Pokawa Marseille Prado Marseille" [ref=e852] [cursor=pointer]:
+                      - img [ref=e853]
+                      - generic [ref=e857]:
+                        - paragraph [ref=e858]: Pokawa Marseille Prado
+                        - paragraph [ref=e859]: Marseille
+                    - button "Pokawa Dijon Dijon" [ref=e860] [cursor=pointer]:
+                      - img [ref=e861]
+                      - generic [ref=e865]:
+                        - paragraph [ref=e866]: Pokawa Dijon
+                        - paragraph [ref=e867]: Dijon
+                    - button "Pokawa Aéroville Roissy-en-France" [ref=e868] [cursor=pointer]:
+                      - img [ref=e869]
+                      - generic [ref=e873]:
+                        - paragraph [ref=e874]: Pokawa Aéroville
+                        - paragraph [ref=e875]: Roissy-en-France
+                    - button "Pokawa Aix en Provence (Rue d'Italie) Aix-en-provence" [ref=e876] [cursor=pointer]:
+                      - img [ref=e877]
+                      - generic [ref=e881]:
+                        - paragraph [ref=e882]: Pokawa Aix en Provence (Rue d'Italie)
+                        - paragraph [ref=e883]: Aix-en-provence
+                    - button "Pokawa Ajaccio Mezzavia" [ref=e884] [cursor=pointer]:
+                      - img [ref=e885]
+                      - generic [ref=e889]:
+                        - paragraph [ref=e890]: Pokawa Ajaccio
+                        - paragraph [ref=e891]: Mezzavia
+                    - button "Pokawa Amiens Amiens" [ref=e892] [cursor=pointer]:
+                      - img [ref=e893]
+                      - generic [ref=e897]:
+                        - paragraph [ref=e898]: Pokawa Amiens
+                        - paragraph [ref=e899]: Amiens
+                    - button "Pokawa Amiens CC Amiens" [ref=e900] [cursor=pointer]:
+                      - img [ref=e901]
+                      - generic [ref=e905]:
+                        - paragraph [ref=e906]: Pokawa Amiens CC
+                        - paragraph [ref=e907]: Amiens
+                    - button "Pokawa Angers Centre Angers" [ref=e908] [cursor=pointer]:
+                      - img [ref=e909]
+                      - generic [ref=e913]:
+                        - paragraph [ref=e914]: Pokawa Angers Centre
+                        - paragraph [ref=e915]: Angers
+                    - button "Pokawa Angers Iceparc Angers" [ref=e916] [cursor=pointer]:
+                      - img [ref=e917]
+                      - generic [ref=e921]:
+                        - paragraph [ref=e922]: Pokawa Angers Iceparc
+                        - paragraph [ref=e923]: Angers
+                    - button "Pokawa Annecy Annecy" [ref=e924] [cursor=pointer]:
+                      - img [ref=e925]
+                      - generic [ref=e929]:
+                        - paragraph [ref=e930]: Pokawa Annecy
+                        - paragraph [ref=e931]: Annecy
+                    - button "Pokawa Annemasse Annemasse" [ref=e932] [cursor=pointer]:
+                      - img [ref=e933]
+                      - generic [ref=e937]:
+                        - paragraph [ref=e938]: Pokawa Annemasse
+                        - paragraph [ref=e939]: Annemasse
+                    - button "Pokawa Antony Antony" [ref=e940] [cursor=pointer]:
+                      - img [ref=e941]
+                      - generic [ref=e945]:
+                        - paragraph [ref=e946]: Pokawa Antony
+                        - paragraph [ref=e947]: Antony
+                    - button "Pokawa Asnières Asnières-sur-Seine" [ref=e948] [cursor=pointer]:
+                      - img [ref=e949]
+                      - generic [ref=e953]:
+                        - paragraph [ref=e954]: Pokawa Asnières
+                        - paragraph [ref=e955]: Asnières-sur-Seine
+                    - button "Pokawa Avignon Avignon" [ref=e956] [cursor=pointer]:
+                      - img [ref=e957]
+                      - generic [ref=e961]:
+                        - paragraph [ref=e962]: Pokawa Avignon
+                        - paragraph [ref=e963]: Avignon
+                    - button "Pokawa Bayonne Gradignan" [ref=e964] [cursor=pointer]:
+                      - img [ref=e965]
+                      - generic [ref=e969]:
+                        - paragraph [ref=e970]: Pokawa Bayonne
+                        - paragraph [ref=e971]: Gradignan
+                    - button "Pokawa BFM Paris" [ref=e972] [cursor=pointer]:
+                      - img [ref=e973]
+                      - generic [ref=e977]:
+                        - paragraph [ref=e978]: Pokawa BFM
+                        - paragraph [ref=e979]: Paris
+                    - button "Pokawa Biganos Gujan-Mestras" [ref=e980] [cursor=pointer]:
+                      - img [ref=e981]
+                      - generic [ref=e985]:
+                        - paragraph [ref=e986]: Pokawa Biganos
+                        - paragraph [ref=e987]: Gujan-Mestras
+                    - button "Pokawa Blagnac Blagnac" [ref=e988] [cursor=pointer]:
+                      - img [ref=e989]
+                      - generic [ref=e993]:
+                        - paragraph [ref=e994]: Pokawa Blagnac
+                        - paragraph [ref=e995]: Blagnac
+                    - button "Pokawa Blois Blois" [ref=e996] [cursor=pointer]:
+                      - img [ref=e997]
+                      - generic [ref=e1001]:
+                        - paragraph [ref=e1002]: Pokawa Blois
+                        - paragraph [ref=e1003]: Blois
+                    - button "Pokawa Bordeaux Gambetta Bordeaux" [ref=e1004] [cursor=pointer]:
+                      - img [ref=e1005]
+                      - generic [ref=e1009]:
+                        - paragraph [ref=e1010]: Pokawa Bordeaux Gambetta
+                        - paragraph [ref=e1011]: Bordeaux
+                    - button "Pokawa Bordeaux Victor Hugo Bordeaux" [ref=e1012] [cursor=pointer]:
+                      - img [ref=e1013]
+                      - generic [ref=e1017]:
+                        - paragraph [ref=e1018]: Pokawa Bordeaux Victor Hugo
+                        - paragraph [ref=e1019]: Bordeaux
+                    - button "Pokawa Boulogne Boulogne-Billancourt" [ref=e1020] [cursor=pointer]:
+                      - img [ref=e1021]
+                      - generic [ref=e1025]:
+                        - paragraph [ref=e1026]: Pokawa Boulogne
+                        - paragraph [ref=e1027]: Boulogne-Billancourt
+                    - button "Pokawa Boursault Paris" [ref=e1028] [cursor=pointer]:
+                      - img [ref=e1029]
+                      - generic [ref=e1033]:
+                        - paragraph [ref=e1034]: Pokawa Boursault
+                        - paragraph [ref=e1035]: Paris
+                    - button "Pokawa Brest Brest" [ref=e1036] [cursor=pointer]:
+                      - img [ref=e1037]
+                      - generic [ref=e1041]:
+                        - paragraph [ref=e1042]: Pokawa Brest
+                        - paragraph [ref=e1043]: Brest
+                    - button "Pokawa Bruxelles Louise Ixelles" [ref=e1044] [cursor=pointer]:
+                      - img [ref=e1045]
+                      - generic [ref=e1049]:
+                        - paragraph [ref=e1050]: Pokawa Bruxelles Louise
+                        - paragraph [ref=e1051]: Ixelles
+                    - button "Pokawa Caen Caen" [ref=e1052] [cursor=pointer]:
+                      - img [ref=e1053]
+                      - generic [ref=e1057]:
+                        - paragraph [ref=e1058]: Pokawa Caen
+                        - paragraph [ref=e1059]: Caen
+                    - button "Pokawa Cannes Cannes" [ref=e1060] [cursor=pointer]:
+                      - img [ref=e1061]
+                      - generic [ref=e1065]:
+                        - paragraph [ref=e1066]: Pokawa Cannes
+                        - paragraph [ref=e1067]: Cannes
+                    - button "Pokawa Cap Saran Saran" [ref=e1068] [cursor=pointer]:
+                      - img [ref=e1069]
+                      - generic [ref=e1073]:
+                        - paragraph [ref=e1074]: Pokawa Cap Saran
+                        - paragraph [ref=e1075]: Saran
+                    - button "Pokawa Carcassonne Carcassonne" [ref=e1076] [cursor=pointer]:
+                      - img [ref=e1077]
+                      - generic [ref=e1081]:
+                        - paragraph [ref=e1082]: Pokawa Carcassonne
+                        - paragraph [ref=e1083]: Carcassonne
+                    - button "Pokawa Cesson centre co Cesson" [ref=e1084] [cursor=pointer]:
+                      - img [ref=e1085]
+                      - generic [ref=e1089]:
+                        - paragraph [ref=e1090]: Pokawa Cesson centre co
+                        - paragraph [ref=e1091]: Cesson
+                    - button "POKAWA CHAMBÉRY Chambéry" [ref=e1092] [cursor=pointer]:
+                      - img [ref=e1093]
+                      - generic [ref=e1097]:
+                        - paragraph [ref=e1098]: POKAWA CHAMBÉRY
+                        - paragraph [ref=e1099]: Chambéry
+                    - button "pokawa Charleroi Gosselies" [ref=e1100] [cursor=pointer]:
+                      - img [ref=e1101]
+                      - generic [ref=e1105]:
+                        - paragraph [ref=e1106]: pokawa Charleroi
+                        - paragraph [ref=e1107]: Gosselies
+                    - button "Pokawa Châteaudun PARIS" [ref=e1108] [cursor=pointer]:
+                      - img [ref=e1109]
+                      - generic [ref=e1113]:
+                        - paragraph [ref=e1114]: Pokawa Châteaudun
+                        - paragraph [ref=e1115]: PARIS
+                    - button "Pokawa Châteaudun - Paris 9 Paris" [ref=e1116] [cursor=pointer]:
+                      - img [ref=e1117]
+                      - generic [ref=e1121]:
+                        - paragraph [ref=e1122]: Pokawa Châteaudun - Paris 9
+                        - paragraph [ref=e1123]: Paris
+                    - button "Pokawa Clermont-Ferrand Clermont-Ferrand" [ref=e1124] [cursor=pointer]:
+                      - img [ref=e1125]
+                      - generic [ref=e1129]:
+                        - paragraph [ref=e1130]: Pokawa Clermont-Ferrand
+                        - paragraph [ref=e1131]: Clermont-Ferrand
+                    - button "Pokawa Colombes Paris" [ref=e1132] [cursor=pointer]:
+                      - img [ref=e1133]
+                      - generic [ref=e1137]:
+                        - paragraph [ref=e1138]: Pokawa Colombes
+                        - paragraph [ref=e1139]: Paris
+                    - button "Pokawa Commerce - Paris 15 Paris" [ref=e1140] [cursor=pointer]:
+                      - img [ref=e1141]
+                      - generic [ref=e1145]:
+                        - paragraph [ref=e1146]: Pokawa Commerce - Paris 15
+                        - paragraph [ref=e1147]: Paris
+                    - button "Pokawa Courbevoie Courbevoie" [ref=e1148] [cursor=pointer]:
+                      - img [ref=e1149]
+                      - generic [ref=e1153]:
+                        - paragraph [ref=e1154]: Pokawa Courbevoie
+                        - paragraph [ref=e1155]: Courbevoie
+                    - button "Pokawa Créteil Soleil Créteil" [ref=e1156] [cursor=pointer]:
+                      - img [ref=e1157]
+                      - generic [ref=e1161]:
+                        - paragraph [ref=e1162]: Pokawa Créteil Soleil
+                        - paragraph [ref=e1163]: Créteil
+                    - button "Pokawa Euralille Lille" [ref=e1164] [cursor=pointer]:
+                      - img [ref=e1165]
+                      - generic [ref=e1169]:
+                        - paragraph [ref=e1170]: Pokawa Euralille
+                        - paragraph [ref=e1171]: Lille
+                    - button "Pokawa Gare du Nord Paris" [ref=e1172] [cursor=pointer]:
+                      - img [ref=e1173]
+                      - generic [ref=e1177]:
+                        - paragraph [ref=e1178]: Pokawa Gare du Nord
+                        - paragraph [ref=e1179]: Paris
+                    - button "Pokawa Gare Lyon Part Dieu Lyon" [ref=e1180] [cursor=pointer]:
+                      - img [ref=e1181]
+                      - generic [ref=e1185]:
+                        - paragraph [ref=e1186]: Pokawa Gare Lyon Part Dieu
+                        - paragraph [ref=e1187]: Lyon
+                    - button "Pokawa Genève Genève" [ref=e1188] [cursor=pointer]:
+                      - img [ref=e1189]
+                      - generic [ref=e1193]:
+                        - paragraph [ref=e1194]: Pokawa Genève
+                        - paragraph [ref=e1195]: Genève
+                    - button "Pokawa Grenoble GRENOBLE" [ref=e1196] [cursor=pointer]:
+                      - img [ref=e1197]
+                      - generic [ref=e1201]:
+                        - paragraph [ref=e1202]: Pokawa Grenoble
+                        - paragraph [ref=e1203]: GRENOBLE
+                    - button "Pokawa Ile de Nantes Nantes" [ref=e1204] [cursor=pointer]:
+                      - img [ref=e1205]
+                      - generic [ref=e1209]:
+                        - paragraph [ref=e1210]: Pokawa Ile de Nantes
+                        - paragraph [ref=e1211]: Nantes
+                    - button "Pokawa Issy les Moulineaux Issy-les-Moulineaux" [ref=e1212] [cursor=pointer]:
+                      - img [ref=e1213]
+                      - generic [ref=e1217]:
+                        - paragraph [ref=e1218]: Pokawa Issy les Moulineaux
+                        - paragraph [ref=e1219]: Issy-les-Moulineaux
+                    - button "Pokawa KW NEYRPIC Saint Martin d'Heres" [ref=e1220] [cursor=pointer]:
+                      - img [ref=e1221]
+                      - generic [ref=e1225]:
+                        - paragraph [ref=e1226]: Pokawa KW NEYRPIC
+                        - paragraph [ref=e1227]: Saint Martin d'Heres
+                    - button "Pokawa La Défense Puteaux" [ref=e1228] [cursor=pointer]:
+                      - img [ref=e1229]
+                      - generic [ref=e1233]:
+                        - paragraph [ref=e1234]: Pokawa La Défense
+                        - paragraph [ref=e1235]: Puteaux
+                    - button "Pokawa La Réunion Saint-Denis" [ref=e1236] [cursor=pointer]:
+                      - img [ref=e1237]
+                      - generic [ref=e1241]:
+                        - paragraph [ref=e1242]: Pokawa La Réunion
+                        - paragraph [ref=e1243]: Saint-Denis
+                    - button "Pokawa La roche sur Yon La Roche-sur-Yon" [ref=e1244] [cursor=pointer]:
+                      - img [ref=e1245]
+                      - generic [ref=e1249]:
+                        - paragraph [ref=e1250]: Pokawa La roche sur Yon
+                        - paragraph [ref=e1251]: La Roche-sur-Yon
+                    - button "Pokawa La Rochelle La Rochelle" [ref=e1252] [cursor=pointer]:
+                      - img [ref=e1253]
+                      - generic [ref=e1257]:
+                        - paragraph [ref=e1258]: Pokawa La Rochelle
+                        - paragraph [ref=e1259]: La Rochelle
+                    - button "Pokawa La vache noire Arcueil" [ref=e1260] [cursor=pointer]:
+                      - img [ref=e1261]
+                      - generic [ref=e1265]:
+                        - paragraph [ref=e1266]: Pokawa La vache noire
+                        - paragraph [ref=e1267]: Arcueil
+                    - button "Pokawa La Valette GRENOBLE" [ref=e1268] [cursor=pointer]:
+                      - img [ref=e1269]
+                      - generic [ref=e1273]:
+                        - paragraph [ref=e1274]: Pokawa La Valette
+                        - paragraph [ref=e1275]: GRENOBLE
+                    - button "Pokawa Lausanne Annemasse" [ref=e1276] [cursor=pointer]:
+                      - img [ref=e1277]
+                      - generic [ref=e1281]:
+                        - paragraph [ref=e1282]: Pokawa Lausanne
+                        - paragraph [ref=e1283]: Annemasse
+                    - button "Pokawa Le Havre Le Havre" [ref=e1284] [cursor=pointer]:
+                      - img [ref=e1285]
+                      - generic [ref=e1289]:
+                        - paragraph [ref=e1290]: Pokawa Le Havre
+                        - paragraph [ref=e1291]: Le Havre
+                    - button "Pokawa Le Mans Le Mans" [ref=e1292] [cursor=pointer]:
+                      - img [ref=e1293]
+                      - generic [ref=e1297]:
+                        - paragraph [ref=e1298]: Pokawa Le Mans
+                        - paragraph [ref=e1299]: Le Mans
+                    - button "Pokawa Lebon Paris" [ref=e1300] [cursor=pointer]:
+                      - img [ref=e1301]
+                      - generic [ref=e1305]:
+                        - paragraph [ref=e1306]: Pokawa Lebon
+                        - paragraph [ref=e1307]: Paris
+                    - button "Pokawa les Sable d'Olonne Les Sables-d'Olonne" [ref=e1308] [cursor=pointer]:
+                      - img [ref=e1309]
+                      - generic [ref=e1313]:
+                        - paragraph [ref=e1314]: Pokawa les Sable d'Olonne
+                        - paragraph [ref=e1315]: Les Sables-d'Olonne
+                    - button "Pokawa Levallois Levallois-Perret" [ref=e1316] [cursor=pointer]:
+                      - img [ref=e1317]
+                      - generic [ref=e1321]:
+                        - paragraph [ref=e1322]: Pokawa Levallois
+                        - paragraph [ref=e1323]: Levallois-Perret
+                    - button "Pokawa Liège Liège" [ref=e1324] [cursor=pointer]:
+                      - img [ref=e1325]
+                      - generic [ref=e1329]:
+                        - paragraph [ref=e1330]: Pokawa Liège
+                        - paragraph [ref=e1331]: Liège
+                    - button "Pokawa Lille (Nationale) Lille" [ref=e1332] [cursor=pointer]:
+                      - img [ref=e1333]
+                      - generic [ref=e1337]:
+                        - paragraph [ref=e1338]: Pokawa Lille (Nationale)
+                        - paragraph [ref=e1339]: Lille
+                    - button "Pokawa Lille flandres Levallois Perret" [ref=e1340] [cursor=pointer]:
+                      - img [ref=e1341]
+                      - generic [ref=e1345]:
+                        - paragraph [ref=e1346]: Pokawa Lille flandres
+                        - paragraph [ref=e1347]: Levallois Perret
+                    - button "Pokawa Limoges Limoges" [ref=e1348] [cursor=pointer]:
+                      - img [ref=e1349]
+                      - generic [ref=e1353]:
+                        - paragraph [ref=e1354]: Pokawa Limoges
+                        - paragraph [ref=e1355]: Limoges
+                    - button "Pokawa Lorient Lorient" [ref=e1356] [cursor=pointer]:
+                      - img [ref=e1357]
+                      - generic [ref=e1361]:
+                        - paragraph [ref=e1362]: Pokawa Lorient
+                        - paragraph [ref=e1363]: Lorient
+                    - button "Pokawa Louvain Oosterzele" [ref=e1364] [cursor=pointer]:
+                      - img [ref=e1365]
+                      - generic [ref=e1369]:
+                        - paragraph [ref=e1370]: Pokawa Louvain
+                        - paragraph [ref=e1371]: Oosterzele
+                    - button "Pokawa Luxembourg Luxembourg" [ref=e1372] [cursor=pointer]:
+                      - img [ref=e1373]
+                      - generic [ref=e1377]:
+                        - paragraph [ref=e1378]: Pokawa Luxembourg
+                        - paragraph [ref=e1379]: Luxembourg
+                    - button "Pokawa Luxembourg Belval Esch-Belval Esch-sur-Alzette" [ref=e1380] [cursor=pointer]:
+                      - img [ref=e1381]
+                      - generic [ref=e1385]:
+                        - paragraph [ref=e1386]: Pokawa Luxembourg Belval
+                        - paragraph [ref=e1387]: Esch-Belval Esch-sur-Alzette
+                    - button "Pokawa Lyon confluence Lyon" [ref=e1388] [cursor=pointer]:
+                      - img [ref=e1389]
+                      - generic [ref=e1393]:
+                        - paragraph [ref=e1394]: Pokawa Lyon confluence
+                        - paragraph [ref=e1395]: Lyon
+                    - button "Pokawa Lyon Mercière Lyon" [ref=e1396] [cursor=pointer]:
+                      - img [ref=e1397]
+                      - generic [ref=e1401]:
+                        - paragraph [ref=e1402]: Pokawa Lyon Mercière
+                        - paragraph [ref=e1403]: Lyon
+                      - img [ref=e1992]
+                    - button "Pokawa Lyon Vitton Lyon" [ref=e1404] [cursor=pointer]:
+                      - img [ref=e1405]
+                      - generic [ref=e1409]:
+                        - paragraph [ref=e1410]: Pokawa Lyon Vitton
+                        - paragraph [ref=e1411]: Lyon
+                    - button "Pokawa Marseille Aéroport Marignane" [ref=e1412] [cursor=pointer]:
+                      - img [ref=e1413]
+                      - generic [ref=e1417]:
+                        - paragraph [ref=e1418]: Pokawa Marseille Aéroport
+                        - paragraph [ref=e1419]: Marignane
+                    - button "Pokawa Marseille Terrasses du Port Marseille" [ref=e1420] [cursor=pointer]:
+                      - img [ref=e1421]
+                      - generic [ref=e1425]:
+                        - paragraph [ref=e1426]: Pokawa Marseille Terrasses du Port
+                        - paragraph [ref=e1427]: Marseille
+                    - button "Pokawa Marseille La Valentine Marseille" [ref=e1428] [cursor=pointer]:
+                      - img [ref=e1429]
+                      - generic [ref=e1433]:
+                        - paragraph [ref=e1434]: Pokawa Marseille La Valentine
+                        - paragraph [ref=e1435]: Marseille
+                    - button "Pokawa Marseille Opéra Marseille" [ref=e1436] [cursor=pointer]:
+                      - img [ref=e1437]
+                      - generic [ref=e1441]:
+                        - paragraph [ref=e1442]: Pokawa Marseille Opéra
+                        - paragraph [ref=e1443]: Marseille
+                    - button "Pokawa Martinique Martinique" [ref=e1444] [cursor=pointer]:
+                      - img [ref=e1445]
+                      - generic [ref=e1449]:
+                        - paragraph [ref=e1450]: Pokawa Martinique
+                        - paragraph [ref=e1451]: Martinique
+                    - button "Pokawa Massy Massy" [ref=e1452] [cursor=pointer]:
+                      - img [ref=e1453]
+                      - generic [ref=e1457]:
+                        - paragraph [ref=e1458]: Pokawa Massy
+                        - paragraph [ref=e1459]: Massy
+                    - button "Pokawa Mazarine - Paris 6 Paris" [ref=e1460] [cursor=pointer]:
+                      - img [ref=e1461]
+                      - generic [ref=e1465]:
+                        - paragraph [ref=e1466]: Pokawa Mazarine - Paris 6
+                        - paragraph [ref=e1467]: Paris
+                    - button "Pokawa Mediacité Liège" [ref=e1468] [cursor=pointer]:
+                      - img [ref=e1469]
+                      - generic [ref=e1473]:
+                        - paragraph [ref=e1474]: Pokawa Mediacité
+                        - paragraph [ref=e1475]: Liège
+                    - button "Pokawa Metz Metz" [ref=e1476] [cursor=pointer]:
+                      - img [ref=e1477]
+                      - generic [ref=e1481]:
+                        - paragraph [ref=e1482]: Pokawa Metz
+                        - paragraph [ref=e1483]: Metz
+                    - button "POKAWA MEYLAN Meylan" [ref=e1484] [cursor=pointer]:
+                      - img [ref=e1485]
+                      - generic [ref=e1489]:
+                        - paragraph [ref=e1490]: POKAWA MEYLAN
+                        - paragraph [ref=e1491]: Meylan
+                    - button "Pokawa Montélimar Montélimar" [ref=e1492] [cursor=pointer]:
+                      - img [ref=e1493]
+                      - generic [ref=e1497]:
+                        - paragraph [ref=e1498]: Pokawa Montélimar
+                        - paragraph [ref=e1499]: Montélimar
+                    - button "Pokawa Montigny Montigny-le-Bretonneux" [ref=e1500] [cursor=pointer]:
+                      - img [ref=e1501]
+                      - generic [ref=e1505]:
+                        - paragraph [ref=e1506]: Pokawa Montigny
+                        - paragraph [ref=e1507]: Montigny-le-Bretonneux
+                    - button "Pokawa Montorgueil - Paris 2 Paris" [ref=e1508] [cursor=pointer]:
+                      - img [ref=e1509]
+                      - generic [ref=e1513]:
+                        - paragraph [ref=e1514]: Pokawa Montorgueil - Paris 2
+                        - paragraph [ref=e1515]: Paris
+                    - button "Pokawa Montparnasse Paris" [ref=e1516] [cursor=pointer]:
+                      - img [ref=e1517]
+                      - generic [ref=e1521]:
+                        - paragraph [ref=e1522]: Pokawa Montparnasse
+                        - paragraph [ref=e1523]: Paris
+                    - button "Pokawa Montpellier 1 Montpellier" [ref=e1524] [cursor=pointer]:
+                      - img [ref=e1525]
+                      - generic [ref=e1529]:
+                        - paragraph [ref=e1530]: Pokawa Montpellier 1
+                        - paragraph [ref=e1531]: Montpellier
+                    - button "Pokawa Montpellier Le Crès Le Crès" [ref=e1532] [cursor=pointer]:
+                      - img [ref=e1533]
+                      - generic [ref=e1537]:
+                        - paragraph [ref=e1538]: Pokawa Montpellier Le Crès
+                        - paragraph [ref=e1539]: Le Crès
+                    - button "Pokawa Mozart - Paris 16 Paris" [ref=e1540] [cursor=pointer]:
+                      - img [ref=e1541]
+                      - generic [ref=e1545]:
+                        - paragraph [ref=e1546]: Pokawa Mozart - Paris 16
+                        - paragraph [ref=e1547]: Paris
+                    - button "Pokawa Mulhouse Mulhouse" [ref=e1548] [cursor=pointer]:
+                      - img [ref=e1549]
+                      - generic [ref=e1553]:
+                        - paragraph [ref=e1554]: Pokawa Mulhouse
+                        - paragraph [ref=e1555]: Mulhouse
+                    - button "Pokawa Nancy Nancy" [ref=e1556] [cursor=pointer]:
+                      - img [ref=e1557]
+                      - generic [ref=e1561]:
+                        - paragraph [ref=e1562]: Pokawa Nancy
+                        - paragraph [ref=e1563]: Nancy
+                    - button "Pokawa Nantes Atlantis Saint-Herblain" [ref=e1564] [cursor=pointer]:
+                      - img [ref=e1565]
+                      - generic [ref=e1569]:
+                        - paragraph [ref=e1570]: Pokawa Nantes Atlantis
+                        - paragraph [ref=e1571]: Saint-Herblain
+                    - button "Pokawa Nantes Mercœur Nantes" [ref=e1572] [cursor=pointer]:
+                      - img [ref=e1573]
+                      - generic [ref=e1577]:
+                        - paragraph [ref=e1578]: Pokawa Nantes Mercœur
+                        - paragraph [ref=e1579]: Nantes
+                    - button "Pokawa Nantes Verdun Nantes" [ref=e1580] [cursor=pointer]:
+                      - img [ref=e1581]
+                      - generic [ref=e1585]:
+                        - paragraph [ref=e1586]: Pokawa Nantes Verdun
+                        - paragraph [ref=e1587]: Nantes
+                    - button "Pokawa Neyrpic Saint Martin d'Héres" [ref=e1588] [cursor=pointer]:
+                      - img [ref=e1589]
+                      - generic [ref=e1593]:
+                        - paragraph [ref=e1594]: Pokawa Neyrpic
+                        - paragraph [ref=e1595]: Saint Martin d'Héres
+                    - button "Pokawa Nice Nice" [ref=e1596] [cursor=pointer]:
+                      - img [ref=e1597]
+                      - generic [ref=e1601]:
+                        - paragraph [ref=e1602]: Pokawa Nice
+                        - paragraph [ref=e1603]: Nice
+                    - button "Pokawa Nice Cap Saint-Laurent-du-Var" [ref=e1604] [cursor=pointer]:
+                      - img [ref=e1605]
+                      - generic [ref=e1609]:
+                        - paragraph [ref=e1610]: Pokawa Nice Cap
+                        - paragraph [ref=e1611]: Saint-Laurent-du-Var
+                    - button "POKAWA Nice Gioffredo Nice" [ref=e1612] [cursor=pointer]:
+                      - img [ref=e1613]
+                      - generic [ref=e1617]:
+                        - paragraph [ref=e1618]: POKAWA Nice Gioffredo
+                        - paragraph [ref=e1619]: Nice
+                    - button "Pokawa Nimes Nîmes" [ref=e1620] [cursor=pointer]:
+                      - img [ref=e1621]
+                      - generic [ref=e1625]:
+                        - paragraph [ref=e1626]: Pokawa Nimes
+                        - paragraph [ref=e1627]: Nîmes
+                    - button "Pokawa Niort Niort" [ref=e1628] [cursor=pointer]:
+                      - img [ref=e1629]
+                      - generic [ref=e1633]:
+                        - paragraph [ref=e1634]: Pokawa Niort
+                        - paragraph [ref=e1635]: Niort
+                    - button "Pokawa Nogent sur Marne Nogent-sur-Marne" [ref=e1636] [cursor=pointer]:
+                      - img [ref=e1637]
+                      - generic [ref=e1641]:
+                        - paragraph [ref=e1642]: Pokawa Nogent sur Marne
+                        - paragraph [ref=e1643]: Nogent-sur-Marne
+                    - button "Pokawa Oberkampf - Paris 11 Paris" [ref=e1644] [cursor=pointer]:
+                      - img [ref=e1645]
+                      - generic [ref=e1649]:
+                        - paragraph [ref=e1650]: Pokawa Oberkampf - Paris 11
+                        - paragraph [ref=e1651]: Paris
+                    - button "Pokawa Odysséum Montpellier" [ref=e1652] [cursor=pointer]:
+                      - img [ref=e1653]
+                      - generic [ref=e1657]:
+                        - paragraph [ref=e1658]: Pokawa Odysséum
+                        - paragraph [ref=e1659]: Montpellier
+                    - button "Pokawa Paris 08 Paris" [ref=e1660] [cursor=pointer]:
+                      - img [ref=e1661]
+                      - generic [ref=e1665]:
+                        - paragraph [ref=e1666]: Pokawa Paris 08
+                        - paragraph [ref=e1667]: Paris
+                    - button "Pokawa Pau Pau" [ref=e1668] [cursor=pointer]:
+                      - img [ref=e1669]
+                      - generic [ref=e1673]:
+                        - paragraph [ref=e1674]: Pokawa Pau
+                        - paragraph [ref=e1675]: Pau
+                    - button "Pokawa Perpignan Perpignan" [ref=e1676] [cursor=pointer]:
+                      - img [ref=e1677]
+                      - generic [ref=e1681]:
+                        - paragraph [ref=e1682]: Pokawa Perpignan
+                        - paragraph [ref=e1683]: Perpignan
+                    - button "Pokawa Plan de Campagne Cabriès" [ref=e1684] [cursor=pointer]:
+                      - img [ref=e1685]
+                      - generic [ref=e1689]:
+                        - paragraph [ref=e1690]: Pokawa Plan de Campagne
+                        - paragraph [ref=e1691]: Cabriès
+                    - button "Pokawa Poitiers Poitiers" [ref=e1692] [cursor=pointer]:
+                      - img [ref=e1693]
+                      - generic [ref=e1697]:
+                        - paragraph [ref=e1698]: Pokawa Poitiers
+                        - paragraph [ref=e1699]: Poitiers
+                    - button "Pokawa Porte des Lilas Paris" [ref=e1700] [cursor=pointer]:
+                      - img [ref=e1701]
+                      - generic [ref=e1705]:
+                        - paragraph [ref=e1706]: Pokawa Porte des Lilas
+                        - paragraph [ref=e1707]: Paris
+                    - button "Pokawa Puilboreau Puilboreau" [ref=e1708] [cursor=pointer]:
+                      - img [ref=e1709]
+                      - generic [ref=e1713]:
+                        - paragraph [ref=e1714]: Pokawa Puilboreau
+                        - paragraph [ref=e1715]: Puilboreau
+                    - button "Pokawa Puteaux Puteaux" [ref=e1716] [cursor=pointer]:
+                      - img [ref=e1717]
+                      - generic [ref=e1721]:
+                        - paragraph [ref=e1722]: Pokawa Puteaux
+                        - paragraph [ref=e1723]: Puteaux
+                    - button "Pokawa Quimper Quimper" [ref=e1724] [cursor=pointer]:
+                      - img [ref=e1725]
+                      - generic [ref=e1729]:
+                        - paragraph [ref=e1730]: Pokawa Quimper
+                        - paragraph [ref=e1731]: Quimper
+                    - button "Pokawa Reims Reims" [ref=e1732] [cursor=pointer]:
+                      - img [ref=e1733]
+                      - generic [ref=e1737]:
+                        - paragraph [ref=e1738]: Pokawa Reims
+                        - paragraph [ref=e1739]: Reims
+                    - button "Pokawa Rennes Alma Rennes" [ref=e1740] [cursor=pointer]:
+                      - img [ref=e1741]
+                      - generic [ref=e1745]:
+                        - paragraph [ref=e1746]: Pokawa Rennes Alma
+                        - paragraph [ref=e1747]: Rennes
+                    - button "Pokawa Rennes Rallier Rennes" [ref=e1748] [cursor=pointer]:
+                      - img [ref=e1749]
+                      - generic [ref=e1753]:
+                        - paragraph [ref=e1754]: Pokawa Rennes Rallier
+                        - paragraph [ref=e1755]: Rennes
+                    - button "Pokawa Rocourt Le Mesnil-le-Roi" [ref=e1756] [cursor=pointer]:
+                      - img [ref=e1757]
+                      - generic [ref=e1761]:
+                        - paragraph [ref=e1762]: Pokawa Rocourt
+                        - paragraph [ref=e1763]: Le Mesnil-le-Roi
+                    - button "Pokawa Rouen Rouen" [ref=e1764] [cursor=pointer]:
+                      - img [ref=e1765]
+                      - generic [ref=e1769]:
+                        - paragraph [ref=e1770]: Pokawa Rouen
+                        - paragraph [ref=e1771]: Rouen
+                    - button "Pokawa Rueil-Malmaison Rueil-Malmaison" [ref=e1772] [cursor=pointer]:
+                      - img [ref=e1773]
+                      - generic [ref=e1777]:
+                        - paragraph [ref=e1778]: Pokawa Rueil-Malmaison
+                        - paragraph [ref=e1779]: Rueil-Malmaison
+                    - button "Pokawa Saint Ouen Saint-Ouen-sur-Seine" [ref=e1780] [cursor=pointer]:
+                      - img [ref=e1781]
+                      - generic [ref=e1785]:
+                        - paragraph [ref=e1786]: Pokawa Saint Ouen
+                        - paragraph [ref=e1787]: Saint-Ouen-sur-Seine
+                    - button "Pokawa Saint-Etienne Saint-Étienne" [ref=e1788] [cursor=pointer]:
+                      - img [ref=e1789]
+                      - generic [ref=e1793]:
+                        - paragraph [ref=e1794]: Pokawa Saint-Etienne
+                        - paragraph [ref=e1795]: Saint-Étienne
+                    - button "Pokawa Seyne sur Mer La Seyne-sur-Mer" [ref=e1796] [cursor=pointer]:
+                      - img [ref=e1797]
+                      - generic [ref=e1801]:
+                        - paragraph [ref=e1802]: Pokawa Seyne sur Mer
+                        - paragraph [ref=e1803]: La Seyne-sur-Mer
+                    - button "Pokawa Siège Paris" [ref=e1804] [cursor=pointer]:
+                      - img [ref=e1805]
+                      - generic [ref=e1809]:
+                        - paragraph [ref=e1810]: Pokawa Siège
+                        - paragraph [ref=e1811]: Paris
+                    - button "Pokawa St Maur des fossés Saint-Maur-des-Fossés" [ref=e1812] [cursor=pointer]:
+                      - img [ref=e1813]
+                      - generic [ref=e1817]:
+                        - paragraph [ref=e1818]: Pokawa St Maur des fossés
+                        - paragraph [ref=e1819]: Saint-Maur-des-Fossés
+                    - button "Pokawa Tigneu Tignieu-Jameyzieu" [ref=e1820] [cursor=pointer]:
+                      - img [ref=e1821]
+                      - generic [ref=e1825]:
+                        - paragraph [ref=e1826]: Pokawa Tigneu
+                        - paragraph [ref=e1827]: Tignieu-Jameyzieu
+                    - button "Pokawa Toulon La Valette-du-Var" [ref=e1828] [cursor=pointer]:
+                      - img [ref=e1829]
+                      - generic [ref=e1833]:
+                        - paragraph [ref=e1834]: Pokawa Toulon
+                        - paragraph [ref=e1835]: La Valette-du-Var
+                    - button "Pokawa Toulouse Jeanne-d'Arc Toulouse" [ref=e1836] [cursor=pointer]:
+                      - img [ref=e1837]
+                      - generic [ref=e1841]:
+                        - paragraph [ref=e1842]: Pokawa Toulouse Jeanne-d'Arc
+                        - paragraph [ref=e1843]: Toulouse
+                    - button "Pokawa Troyes Troyes" [ref=e1844] [cursor=pointer]:
+                      - img [ref=e1845]
+                      - generic [ref=e1849]:
+                        - paragraph [ref=e1850]: Pokawa Troyes
+                        - paragraph [ref=e1851]: Troyes
+                    - button "Pokawa Val d'Europe Serris" [ref=e1852] [cursor=pointer]:
+                      - img [ref=e1853]
+                      - generic [ref=e1857]:
+                        - paragraph [ref=e1858]: Pokawa Val d'Europe
+                        - paragraph [ref=e1859]: Serris
+                    - button "Pokawa Valence Valence" [ref=e1860] [cursor=pointer]:
+                      - img [ref=e1861]
+                      - generic [ref=e1865]:
+                        - paragraph [ref=e1866]: Pokawa Valence
+                        - paragraph [ref=e1867]: Valence
+                    - button "Pokawa Valenciennes Valenciennes" [ref=e1868] [cursor=pointer]:
+                      - img [ref=e1869]
+                      - generic [ref=e1873]:
+                        - paragraph [ref=e1874]: Pokawa Valenciennes
+                        - paragraph [ref=e1875]: Valenciennes
+                    - button "Pokawa Valvert Le Plessis Pâté" [ref=e1876] [cursor=pointer]:
+                      - img [ref=e1877]
+                      - generic [ref=e1881]:
+                        - paragraph [ref=e1882]: Pokawa Valvert
+                        - paragraph [ref=e1883]: Le Plessis Pâté
+                    - button "Pokawa Versailles Versailles" [ref=e1884] [cursor=pointer]:
+                      - img [ref=e1885]
+                      - generic [ref=e1889]:
+                        - paragraph [ref=e1890]: Pokawa Versailles
+                        - paragraph [ref=e1891]: Versailles
+                    - button "Pokawa Villiers - Paris 17 Paris" [ref=e1892] [cursor=pointer]:
+                      - img [ref=e1893]
+                      - generic [ref=e1897]:
+                        - paragraph [ref=e1898]: Pokawa Villiers - Paris 17
+                        - paragraph [ref=e1899]: Paris
+                    - button "Pokawa Vincennes Vincennes" [ref=e1900] [cursor=pointer]:
+                      - img [ref=e1901]
+                      - generic [ref=e1905]:
+                        - paragraph [ref=e1906]: Pokawa Vincennes
+                        - paragraph [ref=e1907]: Vincennes
+                    - button "Pokawa Vincennes 2 Vincennes" [ref=e1908] [cursor=pointer]:
+                      - img [ref=e1909]
+                      - generic [ref=e1913]:
+                        - paragraph [ref=e1914]: Pokawa Vincennes 2
+                        - paragraph [ref=e1915]: Vincennes
+                    - button "Pokawa Washington - Paris 8 Paris" [ref=e1916] [cursor=pointer]:
+                      - img [ref=e1917]
+                      - generic [ref=e1921]:
+                        - paragraph [ref=e1922]: Pokawa Washington - Paris 8
+                        - paragraph [ref=e1923]: Paris
+                    - button "Pokawa Aéroport de Nice Saint Laurent du Var" [ref=e1924] [cursor=pointer]:
+                      - img [ref=e1925]
+                      - generic [ref=e1929]:
+                        - paragraph [ref=e1930]: Pokawa Aéroport de Nice
+                        - paragraph [ref=e1931]: Saint Laurent du Var
+                    - button "Pokawa Toulouse Compans Caffarelli Toulouse" [ref=e1932] [cursor=pointer]:
+                      - img [ref=e1933]
+                      - generic [ref=e1937]:
+                        - paragraph [ref=e1938]: Pokawa Toulouse Compans Caffarelli
+                        - paragraph [ref=e1939]: Toulouse
+                    - button "Pokawa Saint-Maximin Saint-Maximin" [ref=e1940] [cursor=pointer]:
+                      - img [ref=e1941]
+                      - generic [ref=e1945]:
+                        - paragraph [ref=e1946]: Pokawa Saint-Maximin
+                        - paragraph [ref=e1947]: Saint-Maximin
+                    - button "Pokawa Bourgoin Jallieu Bourgoin-Jallieu" [ref=e1948] [cursor=pointer]:
+                      - img [ref=e1949]
+                      - generic [ref=e1953]:
+                        - paragraph [ref=e1954]: Pokawa Bourgoin Jallieu
+                        - paragraph [ref=e1955]: Bourgoin-Jallieu
+                    - button "Pokawa Bruxelles Midi Oosterzele" [ref=e1956] [cursor=pointer]:
+                      - img [ref=e1957]
+                      - generic [ref=e1961]:
+                        - paragraph [ref=e1962]: Pokawa Bruxelles Midi
+                        - paragraph [ref=e1963]: Oosterzele
+                - generic [ref=e1995]:
+                  - generic [ref=e1996]:
+                    - img [ref=e1998]
+                    - generic [ref=e2002]:
+                      - paragraph [ref=e2003]: Pokawa Lyon Mercière
+                      - paragraph [ref=e2004]: 📍 4, Rue Grenette, 69002, Lyon
+                  - button "Modifier" [ref=e2005] [cursor=pointer]
+                - generic [ref=e2006]:
+                  - heading "Contacts & Adresses" [level=3] [ref=e2007]
+                  - generic [ref=e2008]:
+                    - generic [ref=e2009]:
+                      - button "Contact de facturation Sélectionnez un contact" [ref=e2010] [cursor=pointer]:
+                        - generic [ref=e2011]:
+                          - img [ref=e2013]
+                          - generic [ref=e2016]:
+                            - heading "Contact de facturation" [level=4] [ref=e2017]
+                            - paragraph [ref=e2018]: Sélectionnez un contact
+                        - img [ref=e2019]
+                      - generic [ref=e2024] [cursor=pointer]:
+                        - generic [ref=e2026]: +
+                        - generic [ref=e2027]: Nouveau contact
+                    - button "Adresse de facturation Sélectionnez une adresse" [ref=e2029] [cursor=pointer]:
+                      - generic [ref=e2030]:
+                        - img [ref=e2032]
+                        - generic [ref=e2035]:
+                          - heading "Adresse de facturation" [level=4] [ref=e2036]
+                          - paragraph [ref=e2037]: Sélectionnez une adresse
+                      - img [ref=e2038]
+                    - button "Contact de livraison Sélectionnez un contact" [ref=e2041] [cursor=pointer]:
+                      - generic [ref=e2042]:
+                        - img [ref=e2044]
+                        - generic [ref=e2047]:
+                          - heading "Contact de livraison" [level=4] [ref=e2048]
+                          - paragraph [ref=e2049]: Sélectionnez un contact
+                      - img [ref=e2050]
+                    - button "Adresse de livraison Sélectionnez une adresse" [ref=e2053] [cursor=pointer]:
+                      - generic [ref=e2054]:
+                        - img [ref=e2056]
+                        - generic [ref=e2059]:
+                          - heading "Adresse de livraison" [level=4] [ref=e2060]
+                          - paragraph [ref=e2061]: Sélectionnez une adresse
+                      - img [ref=e2062]
+                - generic [ref=e1964]:
+                  - generic [ref=e1965]: Frais additionnels (HT)
+                  - generic [ref=e1966]:
+                    - generic [ref=e1967]:
+                      - generic [ref=e1968]: Livraison
+                      - generic [ref=e1969]:
+                        - spinbutton [ref=e1970]: "0"
+                        - generic [ref=e1971]: EUR
+                    - generic [ref=e1972]:
+                      - generic [ref=e1973]: Manutention
+                      - generic [ref=e1974]:
+                        - spinbutton [ref=e1975]: "0"
+                        - generic [ref=e1976]: EUR
+                    - generic [ref=e1977]:
+                      - generic [ref=e1978]: Assurance
+                      - generic [ref=e1979]:
+                        - spinbutton [ref=e1980]: "0"
+                        - generic [ref=e1981]: EUR
+                  - generic [ref=e1982]:
+                    - generic [ref=e1983]: Taux de TVA sur les frais
+                    - generic [ref=e1984]:
+                      - button "20%" [ref=e1985] [cursor=pointer]
+                      - button "10%" [ref=e1986] [cursor=pointer]
+                      - button "5,5%" [ref=e1987] [cursor=pointer]
+                      - button "0%" [ref=e1988] [cursor=pointer]
+                - generic [ref=e2064]:
+                  - generic [ref=e2065]:
+                    - img [ref=e2066]
+                    - text: Produits disponibles (43)
+                  - generic [ref=e2070]:
+                    - generic [ref=e2071]:
+                      - img [ref=e2072]
+                      - textbox "Rechercher (nom ou SKU)..." [ref=e2075]
+                    - combobox [ref=e2076] [cursor=pointer]:
+                      - generic [ref=e2077]: Filtrer par catégorie...
+                      - img [ref=e2078]
+                  - generic [ref=e2081]:
+                    - button "Soliflore PM 9.21€ HT • Marge 15%" [ref=e2082] [cursor=pointer]:
+                      - img [ref=e2084]
+                      - generic [ref=e2088]:
+                        - paragraph [ref=e2089]: Soliflore PM
+                        - paragraph [ref=e2090]: 9.21€ HT • Marge 15%
+                      - img [ref=e2091]
+                    - button "Vase ceramic Titi bleu Vase ceramic Titi bleu 23.94€ HT • Marge 15%" [ref=e2092] [cursor=pointer]:
+                      - img "Vase ceramic Titi bleu" [ref=e2093]
+                      - generic [ref=e2094]:
+                        - paragraph [ref=e2095]: Vase ceramic Titi bleu
+                        - paragraph [ref=e2096]: 23.94€ HT • Marge 15%
+                      - img [ref=e2097]
+                    - button "Vase terracota Pluriel Vase terracota Pluriel 14.93€ HT • Marge 15%" [ref=e2098] [cursor=pointer]:
+                      - img "Vase terracota Pluriel" [ref=e2099]
+                      - generic [ref=e2100]:
+                        - paragraph [ref=e2101]: Vase terracota Pluriel
+                        - paragraph [ref=e2102]: 14.93€ HT • Marge 15%
+                      - img [ref=e2103]
+                    - button "Vase ceramic Anse terracotta Vase ceramic Anse terracotta 8.05€ HT • Marge 15%" [ref=e2104] [cursor=pointer]:
+                      - img "Vase ceramic Anse terracotta" [ref=e2105]
+                      - generic [ref=e2106]:
+                        - paragraph [ref=e2107]: Vase ceramic Anse terracotta
+                        - paragraph [ref=e2108]: 8.05€ HT • Marge 15%
+                      - img [ref=e2109]
+                    - button "Soliflore GM 18.21€ HT • Marge 15%" [ref=e2110] [cursor=pointer]:
+                      - img [ref=e2112]
+                      - generic [ref=e2116]:
+                        - paragraph [ref=e2117]: Soliflore GM
+                        - paragraph [ref=e2118]: 18.21€ HT • Marge 15%
+                      - img [ref=e2119]
+                    - button "Vase Tamegroute 15.88€ HT • Marge 15%" [ref=e2120] [cursor=pointer]:
+                      - img [ref=e2122]
+                      - generic [ref=e2126]:
+                        - paragraph [ref=e2127]: Vase Tamegroute
+                        - paragraph [ref=e2128]: 15.88€ HT • Marge 15%
+                      - img [ref=e2129]
+                    - button "Organiseur coulissant bambou PM 7.35€ HT • Marge 15%" [ref=e2130] [cursor=pointer]:
+                      - img [ref=e2132]
+                      - generic [ref=e2136]:
+                        - paragraph [ref=e2137]: Organiseur coulissant bambou PM
+                        - paragraph [ref=e2138]: 7.35€ HT • Marge 15%
+                      - img [ref=e2139]
+                    - button "Organiseur coulissant bambou MM 12.35€ HT • Marge 15%" [ref=e2140] [cursor=pointer]:
+                      - img [ref=e2142]
+                      - generic [ref=e2146]:
+                        - paragraph [ref=e2147]: Organiseur coulissant bambou MM
+                        - paragraph [ref=e2148]: 12.35€ HT • Marge 15%
+                      - img [ref=e2149]
+                    - button "Vase ceramic Double blanc texturé Vase ceramic Double blanc texturé 13.33€ HT • Marge 15%" [ref=e2150] [cursor=pointer]:
+                      - img "Vase ceramic Double blanc texturé" [ref=e2151]
+                      - generic [ref=e2152]:
+                        - paragraph [ref=e2153]: Vase ceramic Double blanc texturé
+                        - paragraph [ref=e2154]: 13.33€ HT • Marge 15%
+                      - img [ref=e2155]
+                    - button "Vase ceramic boule terracotta Vase ceramic boule terracotta 21.39€ HT • Marge 15%" [ref=e2156] [cursor=pointer]:
+                      - img "Vase ceramic boule terracotta" [ref=e2157]
+                      - generic [ref=e2158]:
+                        - paragraph [ref=e2159]: Vase ceramic boule terracotta
+                        - paragraph [ref=e2160]: 21.39€ HT • Marge 15%
+                      - img [ref=e2161]
+                    - button "Plateau bois 20 x 30 cm Plateau bois 20 x 30 cm 21.76€ HT • Marge 15%" [ref=e2162] [cursor=pointer]:
+                      - img "Plateau bois 20 x 30 cm" [ref=e2163]
+                      - generic [ref=e2164]:
+                        - paragraph [ref=e2165]: Plateau bois 20 x 30 cm
+                        - paragraph [ref=e2166]: 21.76€ HT • Marge 15%
+                      - img [ref=e2376]
+                    - button "Plateau bois 30 x 40 cm Plateau bois 30 x 40 cm 15.88€ HT • Marge 15%" [ref=e2168] [cursor=pointer]:
+                      - img "Plateau bois 30 x 40 cm" [ref=e2169]
+                      - generic [ref=e2170]:
+                        - paragraph [ref=e2171]: Plateau bois 30 x 40 cm
+                        - paragraph [ref=e2172]: 15.88€ HT • Marge 15%
+                      - img [ref=e2173]
+                    - button "Coussin Bleu Coussin Bleu 56.12€ HT • Marge 15%" [ref=e2174] [cursor=pointer]:
+                      - img "Coussin Bleu" [ref=e2175]
+                      - generic [ref=e2176]:
+                        - paragraph [ref=e2177]: Coussin Bleu
+                        - paragraph [ref=e2178]: 56.12€ HT • Marge 15%
+                      - img [ref=e2179]
+                    - button "Coussin beige Coussin beige 61.16€ HT • Marge 15%" [ref=e2180] [cursor=pointer]:
+                      - img "Coussin beige" [ref=e2181]
+                      - generic [ref=e2182]:
+                        - paragraph [ref=e2183]: Coussin beige
+                        - paragraph [ref=e2184]: 61.16€ HT • Marge 15%
+                      - img [ref=e2185]
+                    - button "Coussin Blanc Coussin Blanc 64.71€ HT • Marge 15%" [ref=e2186] [cursor=pointer]:
+                      - img "Coussin Blanc" [ref=e2187]
+                      - generic [ref=e2188]:
+                        - paragraph [ref=e2189]: Coussin Blanc
+                        - paragraph [ref=e2190]: 64.71€ HT • Marge 15%
+                      - img [ref=e2191]
+                    - button "Coussin Rêveur Coussin Rêveur 30.58€ HT • Marge 15%" [ref=e2192] [cursor=pointer]:
+                      - img "Coussin Rêveur" [ref=e2193]
+                      - generic [ref=e2194]:
+                        - paragraph [ref=e2195]: Coussin Rêveur
+                        - paragraph [ref=e2196]: 30.58€ HT • Marge 15%
+                      - img [ref=e2197]
+                    - button "Coussin Évasion Bleu Coussin Évasion Bleu 25.18€ HT • Marge 15%" [ref=e2198] [cursor=pointer]:
+                      - img "Coussin Évasion Bleu" [ref=e2199]
+                      - generic [ref=e2200]:
+                        - paragraph [ref=e2201]: Coussin Évasion Bleu
+                        - paragraph [ref=e2202]: 25.18€ HT • Marge 15%
+                      - img [ref=e2203]
+                    - button "Coussin Rose Sérénité Coussin Rose Sérénité 24.59€ HT • Marge 15%" [ref=e2204] [cursor=pointer]:
+                      - img "Coussin Rose Sérénité" [ref=e2205]
+                      - generic [ref=e2206]:
+                        - paragraph [ref=e2207]: Coussin Rose Sérénité
+                        - paragraph [ref=e2208]: 24.59€ HT • Marge 15%
+                      - img [ref=e2209]
+                    - button "Miroir XL Miroir XL 153.82€ HT • Marge 15%" [ref=e2210] [cursor=pointer]:
+                      - img "Miroir XL" [ref=e2211]
+                      - generic [ref=e2212]:
+                        - paragraph [ref=e2213]: Miroir XL
+                        - paragraph [ref=e2214]: 153.82€ HT • Marge 15%
+                      - img [ref=e2215]
+                    - button "Lots 4 miroirs irrégulier laiton Lots 4 miroirs irrégulier laiton 376.59€ HT • Marge 15%" [ref=e2216] [cursor=pointer]:
+                      - img "Lots 4 miroirs irrégulier laiton" [ref=e2217]
+                      - generic [ref=e2218]:
+                        - paragraph [ref=e2219]: Lots 4 miroirs irrégulier laiton
+                        - paragraph [ref=e2220]: 376.59€ HT • Marge 15%
+                      - img [ref=e2221]
+                    - button "Suspension raphia 3 Suspension raphia 3 174.94€ HT • Marge 15%" [ref=e2222] [cursor=pointer]:
+                      - img "Suspension raphia 3" [ref=e2223]
+                      - generic [ref=e2224]:
+                        - paragraph [ref=e2225]: Suspension raphia 3
+                        - paragraph [ref=e2226]: 174.94€ HT • Marge 15%
+                      - img [ref=e2227]
+                    - button "Suspension raphia 5 Suspension raphia 5 192.78€ HT • Marge 15%" [ref=e2228] [cursor=pointer]:
+                      - img "Suspension raphia 5" [ref=e2229]
+                      - generic [ref=e2230]:
+                        - paragraph [ref=e2231]: Suspension raphia 5
+                        - paragraph [ref=e2232]: 192.78€ HT • Marge 15%
+                      - img [ref=e2233]
+                    - button "Suspension raphia 6 Suspension raphia 6 192.78€ HT • Marge 15%" [ref=e2234] [cursor=pointer]:
+                      - img "Suspension raphia 6" [ref=e2235]
+                      - generic [ref=e2236]:
+                        - paragraph [ref=e2237]: Suspension raphia 6
+                        - paragraph [ref=e2238]: 192.78€ HT • Marge 15%
+                      - img [ref=e2239]
+                    - button "Banc artisanal bois - 100 cm Banc artisanal bois - 100 cm 143.13€ HT • Marge 15%" [ref=e2240] [cursor=pointer]:
+                      - img "Banc artisanal bois - 100 cm" [ref=e2241]
+                      - generic [ref=e2242]:
+                        - paragraph [ref=e2243]: Banc artisanal bois - 100 cm
+                        - paragraph [ref=e2244]: 143.13€ HT • Marge 15%
+                      - img [ref=e2245]
+                    - button "Banc artisanal bois - 120 cm Banc artisanal bois - 120 cm 131.29€ HT • Marge 15%" [ref=e2246] [cursor=pointer]:
+                      - img "Banc artisanal bois - 120 cm" [ref=e2247]
+                      - generic [ref=e2248]:
+                        - paragraph [ref=e2249]: Banc artisanal bois - 120 cm
+                        - paragraph [ref=e2250]: 131.29€ HT • Marge 15%
+                      - img [ref=e2251]
+                    - button "Suspensions franges n°1 Suspensions franges n°1 65.08€ HT • Marge 15%" [ref=e2252] [cursor=pointer]:
+                      - img "Suspensions franges n°1" [ref=e2253]
+                      - generic [ref=e2254]:
+                        - paragraph [ref=e2255]: Suspensions franges n°1
+                        - paragraph [ref=e2256]: 65.08€ HT • Marge 15%
+                      - img [ref=e2257]
+                    - button "Suspensions frange n°2 Suspensions frange n°2 132.31€ HT • Marge 15%" [ref=e2258] [cursor=pointer]:
+                      - img "Suspensions frange n°2" [ref=e2259]
+                      - generic [ref=e2260]:
+                        - paragraph [ref=e2261]: Suspensions frange n°2
+                        - paragraph [ref=e2262]: 132.31€ HT • Marge 15%
+                      - img [ref=e2263]
+                    - button "Suspension frange n°3 Suspension frange n°3 65.08€ HT • Marge 15%" [ref=e2264] [cursor=pointer]:
+                      - img "Suspension frange n°3" [ref=e2265]
+                      - generic [ref=e2266]:
+                        - paragraph [ref=e2267]: Suspension frange n°3
+                        - paragraph [ref=e2268]: 65.08€ HT • Marge 15%
+                      - img [ref=e2269]
+                    - button "Suspension frange n°4 Suspension frange n°4 81.88€ HT • Marge 15%" [ref=e2270] [cursor=pointer]:
+                      - img "Suspension frange n°4" [ref=e2271]
+                      - generic [ref=e2272]:
+                        - paragraph [ref=e2273]: Suspension frange n°4
+                        - paragraph [ref=e2274]: 81.88€ HT • Marge 15%
+                      - img [ref=e2275]
+                    - button "Suspension frange n°5 Suspension frange n°5 115.51€ HT • Marge 15%" [ref=e2276] [cursor=pointer]:
+                      - img "Suspension frange n°5" [ref=e2277]
+                      - generic [ref=e2278]:
+                        - paragraph [ref=e2279]: Suspension frange n°5
+                        - paragraph [ref=e2280]: 115.51€ HT • Marge 15%
+                      - img [ref=e2281]
+                    - button "Suspension paille Suspension paille 98.69€ HT • Marge 15%" [ref=e2282] [cursor=pointer]:
+                      - img "Suspension paille" [ref=e2283]
+                      - generic [ref=e2284]:
+                        - paragraph [ref=e2285]: Suspension paille
+                        - paragraph [ref=e2286]: 98.69€ HT • Marge 15%
+                      - img [ref=e2287]
+                    - button "Panier n°1 Taille S 17.98€ HT • Marge 15%" [ref=e2288] [cursor=pointer]:
+                      - img [ref=e2290]
+                      - generic [ref=e2294]:
+                        - paragraph [ref=e2295]: Panier n°1 Taille S
+                        - paragraph [ref=e2296]: 17.98€ HT • Marge 15%
+                      - img [ref=e2297]
+                    - button "Panier n°1 Taille M 22.51€ HT • Marge 15%" [ref=e2298] [cursor=pointer]:
+                      - img [ref=e2300]
+                      - generic [ref=e2304]:
+                        - paragraph [ref=e2305]: Panier n°1 Taille M
+                        - paragraph [ref=e2306]: 22.51€ HT • Marge 15%
+                      - img [ref=e2307]
+                    - button "Panier n°1 Taille L 34.27€ HT • Marge 15%" [ref=e2308] [cursor=pointer]:
+                      - img [ref=e2310]
+                      - generic [ref=e2314]:
+                        - paragraph [ref=e2315]: Panier n°1 Taille L
+                        - paragraph [ref=e2316]: 34.27€ HT • Marge 15%
+                      - img [ref=e2317]
+                    - button "Rond paille S Rond paille S 35.95€ HT • Marge 15%" [ref=e2318] [cursor=pointer]:
+                      - img "Rond paille S" [ref=e2319]
+                      - generic [ref=e2320]:
+                        - paragraph [ref=e2321]: Rond paille S
+                        - paragraph [ref=e2322]: 35.95€ HT • Marge 15%
+                      - img [ref=e2323]
+                    - button "Rond paille M Rond paille M 47.72€ HT • Marge 15%" [ref=e2324] [cursor=pointer]:
+                      - img "Rond paille M" [ref=e2325]
+                      - generic [ref=e2326]:
+                        - paragraph [ref=e2327]: Rond paille M
+                        - paragraph [ref=e2328]: 47.72€ HT • Marge 15%
+                      - img [ref=e2329]
+                    - button "Rond paille L Rond paille L 52.76€ HT • Marge 15%" [ref=e2330] [cursor=pointer]:
+                      - img "Rond paille L" [ref=e2331]
+                      - generic [ref=e2332]:
+                        - paragraph [ref=e2333]: Rond paille L
+                        - paragraph [ref=e2334]: 52.76€ HT • Marge 15%
+                      - img [ref=e2335]
+                    - button "Ciel de bar Ciel de bar 310.75€ HT • Marge 15%" [ref=e2336] [cursor=pointer]:
+                      - img "Ciel de bar" [ref=e2337]
+                      - generic [ref=e2338]:
+                        - paragraph [ref=e2339]: Ciel de bar
+                        - paragraph [ref=e2340]: 310.75€ HT • Marge 15%
+                      - img [ref=e2341]
+                    - button "Poubelle à POKAWA Poubelle à POKAWA 500.00€ HT" [ref=e2342] [cursor=pointer]:
+                      - img "Poubelle à POKAWA" [ref=e2343]
+                      - generic [ref=e2344]:
+                        - paragraph [ref=e2345]: Poubelle à POKAWA
+                        - paragraph [ref=e2346]: 500.00€ HT
+                      - img [ref=e2347]
+                    - button "Séparateur Terrasse Séparateur Terrasse 470.00€ HT • Marge 15%" [ref=e2348] [cursor=pointer]:
+                      - img "Séparateur Terrasse" [ref=e2349]
+                      - generic [ref=e2350]:
+                        - paragraph [ref=e2351]: Séparateur Terrasse
+                        - paragraph [ref=e2352]: 470.00€ HT • Marge 15%
+                      - img [ref=e2353]
+                    - button "Meuble TABESTO à POKAWA Meuble TABESTO à POKAWA 1006.14€ HT" [ref=e2354] [cursor=pointer]:
+                      - img "Meuble TABESTO à POKAWA" [ref=e2355]
+                      - generic [ref=e2356]:
+                        - paragraph [ref=e2357]: Meuble TABESTO à POKAWA
+                        - paragraph [ref=e2358]: 1006.14€ HT
+                      - img [ref=e2359]
+                    - button "Table modèle 2021 Table modèle 2021 0.00€ HT" [ref=e2360] [cursor=pointer]:
+                      - img "Table modèle 2021" [ref=e2361]
+                      - generic [ref=e2362]:
+                        - paragraph [ref=e2363]: Table modèle 2021
+                        - paragraph [ref=e2364]: 0.00€ HT
+                      - img [ref=e2365]
+                    - button "Tabouret modèle 2021 0.00€ HT" [ref=e2366] [cursor=pointer]:
+                      - img [ref=e2368]
+                      - generic [ref=e2372]:
+                        - paragraph [ref=e2373]: Tabouret modèle 2021
+                        - paragraph [ref=e2374]: 0.00€ HT
+                      - img [ref=e2375]
+                - generic [ref=e2378]:
+                  - paragraph [ref=e2379]: Panier (1 produit)
+                  - generic [ref=e2382]:
+                    - img [ref=e2383]
+                    - generic [ref=e2387]:
+                      - paragraph [ref=e2388]: Plateau bois 20 x 30 cm
+                      - paragraph [ref=e2389]: 30.00€ HT × 1 = 30.00€ HT
+                      - paragraph [ref=e2390]: "Commission: 20.0% (6.00€)"
+                      - generic [ref=e2391]:
+                        - generic [ref=e2392]:
+                          - generic [ref=e2393]: Prix vente HT
+                          - spinbutton [ref=e2394]: "30"
+                          - generic [ref=e2395]: €
+                        - generic [ref=e2396]:
+                          - generic [ref=e2397]: Commission
+                          - spinbutton [ref=e2398]: "20"
+                          - generic [ref=e2399]: "%"
+                    - generic [ref=e2400]:
+                      - button [ref=e2401] [cursor=pointer]:
+                        - img [ref=e2402]
+                      - generic [ref=e2403]: "1"
+                      - button [ref=e2404] [cursor=pointer]:
+                        - img [ref=e2405]
+                      - button [ref=e2406] [cursor=pointer]:
+                        - img [ref=e2407]
+                  - generic [ref=e2410]:
+                    - generic [ref=e2411]:
+                      - generic [ref=e2412]: Total HT
+                      - generic [ref=e2413]: 30.00€
+                    - generic [ref=e2414]:
+                      - generic [ref=e2415]: TVA
+                      - generic [ref=e2416]: 6.00€
+                    - generic [ref=e2417]:
+                      - generic [ref=e2418]: Total TTC
+                      - generic [ref=e2419]: 36.00€
+                    - generic [ref=e2420]:
+                      - generic [ref=e2421]: Commissions affilié
+                      - generic [ref=e2422]: "-6.00€"
+                - generic [ref=e1989]:
+                  - generic [ref=e1990]: Notes internes (optionnel)
+                  - textbox "Notes visibles uniquement par l'équipe..." [ref=e1991]
+                - generic [ref=e2423]:
+                  - heading "Récapitulatif de la commande" [level=3] [ref=e2424]
+                  - generic [ref=e2425]:
+                    - generic [ref=e2426]:
+                      - generic [ref=e2427]:
+                        - img [ref=e2428]
+                        - generic [ref=e2432]: Client
+                      - paragraph [ref=e2433]: Pokawa Lyon Mercière
+                      - paragraph [ref=e2434]: 4, Rue Grenette, 69002, Lyon
+                    - generic [ref=e2435]:
+                      - generic [ref=e2436]:
+                        - img [ref=e2437]
+                        - generic [ref=e2442]: Affilié
+                      - paragraph [ref=e2443]: Pokawa
+                      - paragraph [ref=e2444]: Enseigne
+                  - generic [ref=e2445]:
+                    - generic [ref=e2446]:
+                      - generic [ref=e2447]:
+                        - img [ref=e2448]
+                        - generic [ref=e2452]: 1 Produit
+                      - generic [ref=e2453]: TVA par ligne
+                    - generic [ref=e2455]:
+                      - generic [ref=e2456]: Plateau bois 20 x 30 cm × 1
+                      - generic [ref=e2457]: 30.00€
+                  - generic [ref=e2459]:
+                    - generic [ref=e2460]:
+                      - generic [ref=e2461]: Total HT
+                      - generic [ref=e2462]: 30.00€
+                    - generic [ref=e2463]:
+                      - generic [ref=e2464]: TVA
+                      - generic [ref=e2465]: 6.00€
+                    - generic [ref=e2466]:
+                      - generic [ref=e2467]: Total TTC
+                      - generic [ref=e2468]: 36.00€
+                    - generic [ref=e2469]:
+                      - generic [ref=e2470]: Commission affilié
+                      - generic [ref=e2471]: "-6.00€"
+              - generic [ref=e725]:
+                - button "Annuler" [ref=e727] [cursor=pointer]
+                - button "Créer la commande" [ref=e728] [cursor=pointer]:
+                  - img [ref=e729]
+                  - text: Créer la commande
+  - region "Notifications alt+T"
+  - button "Open Next.js Dev Tools" [ref=e159] [cursor=pointer]:
+    - img [ref=e160]
+  - alert [ref=e163]

@@ -1,0 +1,198 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e5]:
+    - complementary "Navigation principale" [ref=e6]:
+      - link "V" [ref=e8] [cursor=pointer]:
+        - /url: /dashboard
+        - generic [ref=e9]: V
+      - navigation [ref=e10]:
+        - menubar [ref=e11]:
+          - listitem [ref=e12]:
+            - link [ref=e13] [cursor=pointer]:
+              - /url: /dashboard
+              - img [ref=e14]
+          - listitem [ref=e17]:
+            - button "0" [ref=e18] [cursor=pointer]:
+              - img [ref=e19]
+              - text: "0"
+          - listitem [ref=e23]:
+            - button "9+" [ref=e24] [cursor=pointer]:
+              - img [ref=e25]
+              - generic [ref=e29]: 9+
+          - listitem [ref=e30]:
+            - button "0" [ref=e2496] [cursor=pointer]:
+              - img [ref=e32]
+              - text: "0"
+          - listitem [ref=e36]:
+            - button "1" [ref=e2497] [cursor=pointer]:
+              - img [ref=e38]
+              - generic [ref=e2498]: "1"
+          - listitem [ref=e42]:
+            - link [ref=e43] [cursor=pointer]:
+              - /url: /ventes
+              - img [ref=e44]
+          - listitem [ref=e48]:
+            - link "0" [ref=e49] [cursor=pointer]:
+              - /url: /consultations
+              - img [ref=e50]
+              - text: "0"
+          - listitem [ref=e52]:
+            - button "1" [ref=e2054] [cursor=pointer]:
+              - img [ref=e54]
+              - generic [ref=e59]: "1"
+          - listitem [ref=e60]:
+            - button "9+" [ref=e61] [cursor=pointer]:
+              - img [ref=e62]
+              - generic [ref=e64]: 9+
+          - listitem [ref=e65]:
+            - link [ref=e66] [cursor=pointer]:
+              - /url: /livraisons
+              - img [ref=e67]
+          - listitem [ref=e72]:
+            - link [ref=e73] [cursor=pointer]:
+              - /url: /parametres
+              - img [ref=e74]
+      - button [ref=e78] [cursor=pointer]:
+        - img [ref=e79]
+    - generic [ref=e82]:
+      - banner [ref=e83]:
+        - generic [ref=e84]:
+          - generic [ref=e85]: jeu. 26 févr.
+          - button "50 50 Notifications" [ref=e86] [cursor=pointer]:
+            - img [ref=e87]
+            - generic [ref=e90]: "50"
+            - generic [ref=e91]: 50 Notifications
+          - button "Menu profil" [ref=e92] [cursor=pointer]:
+            - img [ref=e93]
+            - generic [ref=e96]: Menu profil
+      - generic [ref=e98]:
+        - generic [ref=e99]:
+          - link "← Retour aux Canaux" [ref=e100] [cursor=pointer]:
+            - /url: /canaux-vente
+          - generic [ref=e101]: /
+          - generic [ref=e102]: LinkMe
+        - generic [ref=e103]:
+          - link "Dashboard" [ref=e104] [cursor=pointer]:
+            - /url: /canaux-vente/linkme
+          - link "Utilisateurs" [ref=e105] [cursor=pointer]:
+            - /url: /canaux-vente/linkme/utilisateurs
+          - link "Enseignes" [ref=e106] [cursor=pointer]:
+            - /url: /canaux-vente/linkme/enseignes
+          - link "Organisations" [ref=e107] [cursor=pointer]:
+            - /url: /canaux-vente/linkme/organisations
+          - link "Catalogue" [ref=e108] [cursor=pointer]:
+            - /url: /canaux-vente/linkme/catalogue
+          - link "Sélections" [ref=e109] [cursor=pointer]:
+            - /url: /canaux-vente/linkme/selections
+          - link "Commandes" [ref=e110] [cursor=pointer]:
+            - /url: /canaux-vente/linkme/commandes
+          - link "Approbations" [ref=e111] [cursor=pointer]:
+            - /url: /canaux-vente/linkme/approbations
+          - link "Commissions" [ref=e112] [cursor=pointer]:
+            - /url: /canaux-vente/linkme/commissions
+          - link "Messages" [ref=e113] [cursor=pointer]:
+            - /url: /canaux-vente/linkme/messages
+          - link "Rapports" [ref=e114] [cursor=pointer]:
+            - /url: /canaux-vente/linkme/analytics/rapports
+          - link "Configuration" [ref=e115] [cursor=pointer]:
+            - /url: /canaux-vente/linkme/configuration
+      - main [ref=e116]:
+        - generic [ref=e117]:
+          - generic [ref=e118]:
+            - heading "Commandes LinkMe" [level=1] [ref=e119]
+            - paragraph [ref=e120]: Commandes via le canal affilies - Meme workflow que les commandes generales
+          - button "0 en attente d'approbation" [ref=e122] [cursor=pointer]:
+            - img [ref=e123]
+            - text: 0 en attente d'approbation
+          - generic [ref=e126]:
+            - generic [ref=e127]:
+              - generic [ref=e128]:
+                - heading "Total" [level=3] [ref=e130]
+                - generic [ref=e131]:
+                  - generic [ref=e132]: "121"
+                  - paragraph [ref=e133]: commandes
+              - generic [ref=e134]:
+                - heading "Chiffre d'affaires" [level=3] [ref=e136]
+                - generic [ref=e137]:
+                  - generic [ref=e138]: 232 306,80 €
+                  - generic [ref=e139]:
+                    - generic [ref=e140]: "HT: 170 999,02 €"
+                    - generic [ref=e141]: "TVA: 61 307,78 €"
+              - generic [ref=e142]:
+                - heading "Panier Moyen" [level=3] [ref=e144]
+                - generic [ref=e145]:
+                  - generic [ref=e146]: 1 919,89 €
+                  - paragraph [ref=e147]: par commande
+              - generic [ref=e148]:
+                - heading "En cours" [level=3] [ref=e150]
+                - generic [ref=e151]:
+                  - generic [ref=e152]: "1"
+                  - paragraph [ref=e153]: draft + validee
+              - generic [ref=e154]:
+                - heading "Expediees" [level=3] [ref=e156]
+                - generic [ref=e157]:
+                  - generic [ref=e158]: "119"
+                  - paragraph [ref=e159]: commandes
+            - generic [ref=e160]:
+              - generic [ref=e162]:
+                - heading "Filtres" [level=3] [ref=e163]
+                - generic [ref=e164]:
+                  - button "Exporter Excel" [ref=e165] [cursor=pointer]:
+                    - img [ref=e166]
+                    - text: Exporter Excel
+                  - button "Nouvelle commande" [ref=e169] [cursor=pointer]:
+                    - img [ref=e170]
+                    - text: Nouvelle commande
+              - generic [ref=e171]:
+                - tablist [ref=e173]:
+                  - tab "Toutes (121)" [selected] [ref=e2055] [cursor=pointer]
+                  - tab "Approbation (0)" [ref=e175] [cursor=pointer]
+                  - tab "Brouillon (0)" [ref=e2056] [cursor=pointer]
+                  - tab "Validee (1)" [ref=e1600] [cursor=pointer]
+                  - tab "Expediee (119)" [ref=e2057] [cursor=pointer]
+                  - tab "Annulee (1)" [ref=e2058] [cursor=pointer]
+                - generic [ref=e180]:
+                  - img [ref=e181]
+                  - textbox "Rechercher par numero ou client..." [ref=e186]
+                - generic [ref=e187]:
+                  - generic [ref=e188]:
+                    - generic [ref=e189]: "Type client :"
+                    - combobox [ref=e190] [cursor=pointer]:
+                      - generic: Tous
+                      - img [ref=e191]
+                  - generic [ref=e193]:
+                    - generic [ref=e194]: "Année :"
+                    - combobox [ref=e195] [cursor=pointer]:
+                      - generic: Toutes
+                      - img [ref=e196]
+                  - generic [ref=e198]:
+                    - generic [ref=e199]: "Période :"
+                    - combobox [ref=e200] [cursor=pointer]:
+                      - generic: Toute
+                      - img [ref=e201]
+                  - generic [ref=e203]:
+                    - generic [ref=e204]: "Rapprochement :"
+                    - combobox [ref=e205] [cursor=pointer]:
+                      - generic: Tous
+                      - img [ref=e206]
+            - generic [ref=e208]:
+              - generic [ref=e209]:
+                - heading "Commandes" [level=3] [ref=e210]
+                - paragraph [ref=e211]: 121 commande(s) trouvee(s)
+              - generic [ref=e212]:
+                - generic [ref=e214]: Chargement...
+                - generic [ref=e653]:
+                  - generic [ref=e654]:
+                    - generic [ref=e655]: Afficher
+                    - generic [ref=e656]:
+                      - button "10" [ref=e657] [cursor=pointer]
+                      - button "20" [ref=e658] [cursor=pointer]
+                    - generic [ref=e659]: par page
+                  - generic [ref=e660]:
+                    - generic [ref=e661]: 1-10 sur 121
+                    - generic [ref=e662]:
+                      - button "Precedent" [disabled]
+                      - button "Suivant" [ref=e663] [cursor=pointer]
+  - region "Notifications alt+T"
+  - button "Open Next.js Dev Tools" [ref=e669] [cursor=pointer]:
+    - img [ref=e670]
+  - alert [ref=e4]

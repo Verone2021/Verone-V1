@@ -1,0 +1,546 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e5]:
+    - complementary "Navigation principale" [ref=e6]:
+      - link "V" [ref=e8] [cursor=pointer]:
+        - /url: /dashboard
+        - generic [ref=e9]: V
+      - navigation [ref=e10]:
+        - menubar [ref=e11]:
+          - listitem [ref=e12]:
+            - link [ref=e13] [cursor=pointer]:
+              - /url: /dashboard
+              - img [ref=e14]
+          - listitem [ref=e17]:
+            - button "0" [ref=e18] [cursor=pointer]:
+              - img [ref=e19]
+              - text: "0"
+          - listitem [ref=e23]:
+            - button "9+" [ref=e24] [cursor=pointer]:
+              - img [ref=e25]
+              - generic [ref=e29]: 9+
+          - listitem [ref=e30]:
+            - button "0" [ref=e31] [cursor=pointer]:
+              - img [ref=e32]
+              - text: "0"
+          - listitem [ref=e36]:
+            - button "2" [ref=e37] [cursor=pointer]:
+              - img [ref=e38]
+              - generic [ref=e41]: "2"
+          - listitem [ref=e42]:
+            - link [ref=e43] [cursor=pointer]:
+              - /url: /ventes
+              - img [ref=e44]
+          - listitem [ref=e48]:
+            - link "0" [ref=e49] [cursor=pointer]:
+              - /url: /consultations
+              - img [ref=e50]
+              - text: "0"
+          - listitem [ref=e52]:
+            - button "2" [ref=e53] [cursor=pointer]:
+              - img [ref=e54]
+              - generic [ref=e59]: "2"
+          - listitem [ref=e60]:
+            - button "9+" [ref=e61] [cursor=pointer]:
+              - img [ref=e62]
+              - generic [ref=e64]: 9+
+          - listitem [ref=e65]:
+            - link [ref=e66] [cursor=pointer]:
+              - /url: /livraisons
+              - img [ref=e67]
+          - listitem [ref=e72]:
+            - link [ref=e73] [cursor=pointer]:
+              - /url: /parametres
+              - img [ref=e74]
+      - button [ref=e78] [cursor=pointer]:
+        - img [ref=e79]
+    - generic [ref=e82]:
+      - banner [ref=e83]:
+        - generic [ref=e84]:
+          - generic [ref=e85]: mer. 25 févr.
+          - button "50 50 Notifications" [ref=e86] [cursor=pointer]:
+            - img [ref=e87]
+            - generic [ref=e90]: "50"
+            - generic [ref=e91]: 50 Notifications
+          - button "Menu profil" [ref=e92] [cursor=pointer]:
+            - img [ref=e93]
+            - generic [ref=e96]: Menu profil
+      - generic [ref=e98]:
+        - generic [ref=e99]:
+          - link "← Retour aux Canaux" [ref=e100] [cursor=pointer]:
+            - /url: /canaux-vente
+          - generic [ref=e101]: /
+          - generic [ref=e102]: LinkMe
+        - generic [ref=e103]:
+          - link "Dashboard" [ref=e104] [cursor=pointer]:
+            - /url: /canaux-vente/linkme
+          - link "Utilisateurs" [ref=e105] [cursor=pointer]:
+            - /url: /canaux-vente/linkme/utilisateurs
+          - link "Enseignes" [ref=e106] [cursor=pointer]:
+            - /url: /canaux-vente/linkme/enseignes
+          - link "Organisations" [ref=e107] [cursor=pointer]:
+            - /url: /canaux-vente/linkme/organisations
+          - link "Catalogue" [ref=e108] [cursor=pointer]:
+            - /url: /canaux-vente/linkme/catalogue
+          - link "Sélections" [ref=e109] [cursor=pointer]:
+            - /url: /canaux-vente/linkme/selections
+          - link "Commandes" [ref=e110] [cursor=pointer]:
+            - /url: /canaux-vente/linkme/commandes
+          - link "Approbations" [ref=e111] [cursor=pointer]:
+            - /url: /canaux-vente/linkme/approbations
+          - link "Commissions" [ref=e112] [cursor=pointer]:
+            - /url: /canaux-vente/linkme/commissions
+          - link "Messages" [ref=e113] [cursor=pointer]:
+            - /url: /canaux-vente/linkme/messages
+          - link "Rapports" [ref=e114] [cursor=pointer]:
+            - /url: /canaux-vente/linkme/analytics/rapports
+          - link "Configuration" [ref=e115] [cursor=pointer]:
+            - /url: /canaux-vente/linkme/configuration
+      - main [ref=e116]:
+        - generic [ref=e117]:
+          - generic [ref=e118]:
+            - heading "Commandes LinkMe" [level=1] [ref=e119]
+            - paragraph [ref=e120]: Commandes via le canal affilies - Meme workflow que les commandes generales
+          - button "0 en attente d'approbation" [ref=e122] [cursor=pointer]:
+            - img [ref=e123]
+            - text: 0 en attente d'approbation
+          - generic [ref=e126]:
+            - generic [ref=e127]:
+              - generic [ref=e128]:
+                - heading "Total" [level=3] [ref=e130]
+                - generic [ref=e131]:
+                  - generic [ref=e132]: "121"
+                  - paragraph [ref=e133]: commandes
+              - generic [ref=e134]:
+                - heading "Chiffre d'affaires" [level=3] [ref=e136]
+                - generic [ref=e137]:
+                  - generic [ref=e138]: 232 306,80 €
+                  - generic [ref=e139]:
+                    - generic [ref=e140]: "HT: 170 999,02 €"
+                    - generic [ref=e141]: "TVA: 61 307,78 €"
+              - generic [ref=e142]:
+                - heading "Panier Moyen" [level=3] [ref=e144]
+                - generic [ref=e145]:
+                  - generic [ref=e146]: 1 919,89 €
+                  - paragraph [ref=e147]: par commande
+              - generic [ref=e148]:
+                - heading "En cours" [level=3] [ref=e150]
+                - generic [ref=e151]:
+                  - generic [ref=e152]: "2"
+                  - paragraph [ref=e153]: draft + validee
+              - generic [ref=e154]:
+                - heading "Expediees" [level=3] [ref=e156]
+                - generic [ref=e157]:
+                  - generic [ref=e158]: "119"
+                  - paragraph [ref=e159]: commandes
+            - generic [ref=e160]:
+              - generic [ref=e162]:
+                - heading "Filtres" [level=3] [ref=e163]
+                - generic [ref=e164]:
+                  - button "Exporter Excel" [ref=e165] [cursor=pointer]:
+                    - img [ref=e166]
+                    - text: Exporter Excel
+                  - button "Nouvelle commande" [ref=e169] [cursor=pointer]:
+                    - img [ref=e170]
+                    - text: Nouvelle commande
+              - generic [ref=e171]:
+                - tablist [ref=e173]:
+                  - tab "Toutes (121)" [selected] [ref=e174] [cursor=pointer]
+                  - tab "Approbation (0)" [ref=e175] [cursor=pointer]
+                  - tab "Brouillon (2)" [ref=e176] [cursor=pointer]
+                  - tab "Validee (0)" [ref=e177] [cursor=pointer]
+                  - tab "Expediee (119)" [ref=e178] [cursor=pointer]
+                  - tab "Annulee (0)" [ref=e179] [cursor=pointer]
+                - generic [ref=e180]:
+                  - img [ref=e181]
+                  - textbox "Rechercher par numero ou client..." [ref=e186]
+                - generic [ref=e187]:
+                  - generic [ref=e188]:
+                    - generic [ref=e189]: "Type client :"
+                    - combobox [ref=e190] [cursor=pointer]:
+                      - generic: Tous
+                      - img [ref=e191]
+                  - generic [ref=e193]:
+                    - generic [ref=e194]: "Année :"
+                    - combobox [ref=e195] [cursor=pointer]:
+                      - generic: Toutes
+                      - img [ref=e196]
+                  - generic [ref=e198]:
+                    - generic [ref=e199]: "Période :"
+                    - combobox [ref=e200] [cursor=pointer]:
+                      - generic: Toute
+                      - img [ref=e201]
+                  - generic [ref=e203]:
+                    - generic [ref=e204]: "Rapprochement :"
+                    - combobox [ref=e205] [cursor=pointer]:
+                      - generic: Tous
+                      - img [ref=e206]
+            - generic [ref=e208]:
+              - generic [ref=e209]:
+                - heading "Commandes" [level=3] [ref=e210]
+                - paragraph [ref=e211]: 121 commande(s) trouvee(s)
+              - generic [ref=e212]:
+                - table [ref=e216]:
+                  - rowgroup [ref=e217]:
+                    - row "N Commande Client Statut Paiement Articles Date création Date commande Canal Marge Affilie Montant TTC Actions" [ref=e218]:
+                      - columnheader [ref=e219]
+                      - columnheader "N Commande" [ref=e220] [cursor=pointer]:
+                        - generic [ref=e221]:
+                          - text: N Commande
+                          - img [ref=e222]
+                      - columnheader "Client" [ref=e225] [cursor=pointer]:
+                        - generic [ref=e226]:
+                          - text: Client
+                          - img [ref=e227]
+                      - columnheader "Statut" [ref=e230]
+                      - columnheader "Paiement" [ref=e231]
+                      - columnheader "Articles" [ref=e232]
+                      - columnheader "Date création" [ref=e233] [cursor=pointer]:
+                        - generic [ref=e234]:
+                          - text: Date création
+                          - img [ref=e235]
+                      - columnheader "Date commande" [ref=e238]
+                      - columnheader "Canal" [ref=e239]
+                      - columnheader [ref=e240]
+                      - columnheader "Marge Affilie" [ref=e241]
+                      - columnheader "Montant TTC" [ref=e242] [cursor=pointer]:
+                        - generic [ref=e243]:
+                          - text: Montant TTC
+                          - img [ref=e244]
+                      - columnheader "Actions" [ref=e247]
+                  - rowgroup [ref=e248]:
+                    - row "SO-2026-00101 Pokawa Angoulême (CJ) Professionnel Brouillon En attente 1ref. 25 février 2026 - Manuel 60,00 € 360,00 € Voir details Modifier Valider Annuler la commande" [ref=e249]:
+                      - cell [ref=e250]:
+                        - button [ref=e251] [cursor=pointer]:
+                          - img [ref=e252]
+                      - cell "SO-2026-00101" [ref=e254]
+                      - cell "Pokawa Angoulême (CJ) Professionnel" [ref=e255]:
+                        - generic [ref=e256]:
+                          - generic [ref=e257]: Pokawa Angoulême (CJ)
+                          - generic [ref=e258]: Professionnel
+                      - cell "Brouillon" [ref=e259]:
+                        - generic [ref=e261]: Brouillon
+                      - cell "En attente" [ref=e262]:
+                        - button "En attente" [ref=e264] [cursor=pointer]:
+                          - generic [ref=e265]:
+                            - text: En attente
+                            - img [ref=e266]
+                      - cell "1ref." [ref=e268]
+                      - cell "25 février 2026" [ref=e269]
+                      - cell "-" [ref=e270]
+                      - cell "Manuel" [ref=e271]
+                      - cell [ref=e272]:
+                        - generic "Approuvée" [ref=e273]:
+                          - img [ref=e274]
+                      - cell "60,00 €" [ref=e276]
+                      - cell "360,00 €" [ref=e277]:
+                        - generic [ref=e278]: 360,00 €
+                      - cell "Voir details Modifier Valider Annuler la commande" [ref=e279]:
+                        - generic [ref=e280]:
+                          - button "Voir details" [ref=e281] [cursor=pointer]:
+                            - img [ref=e282]
+                          - button "Modifier" [ref=e285] [cursor=pointer]:
+                            - img [ref=e286]
+                          - button "Valider" [ref=e289] [cursor=pointer]:
+                            - img [ref=e290]
+                          - button "Annuler la commande" [ref=e293] [cursor=pointer]:
+                            - img [ref=e294]
+                    - row "SO-2026-00100 Pokawa Angoulême (CJ) Professionnel Brouillon En attente 1ref. 25 février 2026 - Manuel 23,82 € 190,56 € Voir details Modifier Valider Annuler la commande" [ref=e297]:
+                      - cell [ref=e298]:
+                        - button [ref=e299] [cursor=pointer]:
+                          - img [ref=e300]
+                      - cell "SO-2026-00100" [ref=e302]
+                      - cell "Pokawa Angoulême (CJ) Professionnel" [ref=e303]:
+                        - generic [ref=e304]:
+                          - generic [ref=e305]: Pokawa Angoulême (CJ)
+                          - generic [ref=e306]: Professionnel
+                      - cell "Brouillon" [ref=e307]:
+                        - generic [ref=e309]: Brouillon
+                      - cell "En attente" [ref=e310]:
+                        - button "En attente" [ref=e312] [cursor=pointer]:
+                          - generic [ref=e313]:
+                            - text: En attente
+                            - img [ref=e314]
+                      - cell "1ref." [ref=e316]
+                      - cell "25 février 2026" [ref=e317]
+                      - cell "-" [ref=e318]
+                      - cell "Manuel" [ref=e319]
+                      - cell [ref=e320]:
+                        - generic "Approuvée" [ref=e321]:
+                          - img [ref=e322]
+                      - cell "23,82 €" [ref=e324]
+                      - cell "190,56 €" [ref=e325]:
+                        - generic [ref=e326]: 190,56 €
+                      - cell "Voir details Modifier Valider Annuler la commande" [ref=e327]:
+                        - generic [ref=e328]:
+                          - button "Voir details" [ref=e329] [cursor=pointer]:
+                            - img [ref=e330]
+                          - button "Modifier" [ref=e333] [cursor=pointer]:
+                            - img [ref=e334]
+                          - button "Valider" [ref=e337] [cursor=pointer]:
+                            - img [ref=e338]
+                          - button "Annuler la commande" [ref=e341] [cursor=pointer]:
+                            - img [ref=e342]
+                    - row "SO-2026-00084 Pokawa Lyon Mercière Professionnel Expediee En attente 1ref. 19 février 2026 10 novembre 2025 Manuel 48,90 € 450,48 € Voir details Lier transaction" [ref=e345]:
+                      - cell [ref=e346]:
+                        - button [ref=e347] [cursor=pointer]:
+                          - img [ref=e348]
+                      - cell "SO-2026-00084" [ref=e350]
+                      - cell "Pokawa Lyon Mercière Professionnel" [ref=e351]:
+                        - generic [ref=e352]:
+                          - generic [ref=e353]: Pokawa Lyon Mercière
+                          - generic [ref=e354]: Professionnel
+                      - cell "Expediee" [ref=e355]:
+                        - generic [ref=e357]: Expediee
+                      - cell "En attente" [ref=e358]:
+                        - button "En attente" [ref=e360] [cursor=pointer]:
+                          - generic [ref=e361]:
+                            - text: En attente
+                            - img [ref=e362]
+                      - cell "1ref." [ref=e364]
+                      - cell "19 février 2026" [ref=e365]
+                      - cell "10 novembre 2025" [ref=e366]
+                      - cell "Manuel" [ref=e367]
+                      - cell [ref=e368]:
+                        - generic "Approuvée" [ref=e369]:
+                          - img [ref=e370]
+                      - cell "48,90 €" [ref=e372]
+                      - cell "450,48 €" [ref=e373]:
+                        - generic [ref=e374]: 450,48 €
+                      - cell "Voir details Lier transaction" [ref=e375]:
+                        - generic [ref=e376]:
+                          - button "Voir details" [ref=e377] [cursor=pointer]:
+                            - img [ref=e378]
+                          - button "Lier transaction" [ref=e381] [cursor=pointer]:
+                            - img [ref=e382]
+                    - row "SO-2026-00083 Pokawa Marseille Opéra Professionnel Expediee En attente 1ref. 19 février 2026 10 novembre 2025 Manuel 130,40 € 1 103,28 € Voir details Lier transaction" [ref=e385]:
+                      - cell [ref=e386]:
+                        - button [ref=e387] [cursor=pointer]:
+                          - img [ref=e388]
+                      - cell "SO-2026-00083" [ref=e390]
+                      - cell "Pokawa Marseille Opéra Professionnel" [ref=e391]:
+                        - generic [ref=e392]:
+                          - generic [ref=e393]: Pokawa Marseille Opéra
+                          - generic [ref=e394]: Professionnel
+                      - cell "Expediee" [ref=e395]:
+                        - generic [ref=e397]: Expediee
+                      - cell "En attente" [ref=e398]:
+                        - button "En attente" [ref=e400] [cursor=pointer]:
+                          - generic [ref=e401]:
+                            - text: En attente
+                            - img [ref=e402]
+                      - cell "1ref." [ref=e404]
+                      - cell "19 février 2026" [ref=e405]
+                      - cell "10 novembre 2025" [ref=e406]
+                      - cell "Manuel" [ref=e407]
+                      - cell [ref=e408]:
+                        - generic "Approuvée" [ref=e409]:
+                          - img [ref=e410]
+                      - cell "130,40 €" [ref=e412]
+                      - cell "1 103,28 €" [ref=e413]:
+                        - generic [ref=e414]: 1 103,28 €
+                      - cell "Voir details Lier transaction" [ref=e415]:
+                        - generic [ref=e416]:
+                          - button "Voir details" [ref=e417] [cursor=pointer]:
+                            - img [ref=e418]
+                          - button "Lier transaction" [ref=e421] [cursor=pointer]:
+                            - img [ref=e422]
+                    - row "SO-2026-00082 Pokawa BFM Professionnel Expediee En attente 1ref. 19 février 2026 11 décembre 2025 Manuel 119,00 € 1 011,60 € Voir details Lier transaction" [ref=e425]:
+                      - cell [ref=e426]:
+                        - button [ref=e427] [cursor=pointer]:
+                          - img [ref=e428]
+                      - cell "SO-2026-00082" [ref=e430]
+                      - cell "Pokawa BFM Professionnel" [ref=e431]:
+                        - generic [ref=e432]:
+                          - generic [ref=e433]: Pokawa BFM
+                          - generic [ref=e434]: Professionnel
+                      - cell "Expediee" [ref=e435]:
+                        - generic [ref=e437]: Expediee
+                      - cell "En attente" [ref=e438]:
+                        - button "En attente" [ref=e440] [cursor=pointer]:
+                          - generic [ref=e441]:
+                            - text: En attente
+                            - img [ref=e442]
+                      - cell "1ref." [ref=e444]
+                      - cell "19 février 2026" [ref=e445]
+                      - cell "11 décembre 2025" [ref=e446]
+                      - cell "Manuel" [ref=e447]
+                      - cell [ref=e448]:
+                        - generic "Approuvée" [ref=e449]:
+                          - img [ref=e450]
+                      - cell "119,00 €" [ref=e452]
+                      - cell "1 011,60 €" [ref=e453]:
+                        - generic [ref=e454]: 1 011,60 €
+                      - cell "Voir details Lier transaction" [ref=e455]:
+                        - generic [ref=e456]:
+                          - button "Voir details" [ref=e457] [cursor=pointer]:
+                            - img [ref=e458]
+                          - button "Lier transaction" [ref=e461] [cursor=pointer]:
+                            - img [ref=e462]
+                    - row "SO-2026-00081 Pokawa Lyon confluence Professionnel Expediee En attente 1ref. 19 février 2026 11 décembre 2025 Manuel 88,02 € 751,82 € Voir details Lier transaction" [ref=e465]:
+                      - cell [ref=e466]:
+                        - button [ref=e467] [cursor=pointer]:
+                          - img [ref=e468]
+                      - cell "SO-2026-00081" [ref=e470]
+                      - cell "Pokawa Lyon confluence Professionnel" [ref=e471]:
+                        - generic [ref=e472]:
+                          - generic [ref=e473]: Pokawa Lyon confluence
+                          - generic [ref=e474]: Professionnel
+                      - cell "Expediee" [ref=e475]:
+                        - generic [ref=e477]: Expediee
+                      - cell "En attente" [ref=e478]:
+                        - button "En attente" [ref=e480] [cursor=pointer]:
+                          - generic [ref=e481]:
+                            - text: En attente
+                            - img [ref=e482]
+                      - cell "1ref." [ref=e484]
+                      - cell "19 février 2026" [ref=e485]
+                      - cell "11 décembre 2025" [ref=e486]
+                      - cell "Manuel" [ref=e487]
+                      - cell [ref=e488]:
+                        - generic "Approuvée" [ref=e489]:
+                          - img [ref=e490]
+                      - cell "88,02 €" [ref=e492]
+                      - cell "751,82 €" [ref=e493]:
+                        - generic [ref=e494]: 751,82 €
+                      - cell "Voir details Lier transaction" [ref=e495]:
+                        - generic [ref=e496]:
+                          - button "Voir details" [ref=e497] [cursor=pointer]:
+                            - img [ref=e498]
+                          - button "Lier transaction" [ref=e501] [cursor=pointer]:
+                            - img [ref=e502]
+                    - row "SO-2026-00080 Pokawa Euralille Professionnel Expediee En attente 2ref. 19 février 2026 13 novembre 2025 Manuel 42,74 € 389,09 € Voir details Lier transaction" [ref=e505]:
+                      - cell [ref=e506]:
+                        - button [ref=e507] [cursor=pointer]:
+                          - img [ref=e508]
+                      - cell "SO-2026-00080" [ref=e510]
+                      - cell "Pokawa Euralille Professionnel" [ref=e511]:
+                        - generic [ref=e512]:
+                          - generic [ref=e513]: Pokawa Euralille
+                          - generic [ref=e514]: Professionnel
+                      - cell "Expediee" [ref=e515]:
+                        - generic [ref=e517]: Expediee
+                      - cell "En attente" [ref=e518]:
+                        - button "En attente" [ref=e520] [cursor=pointer]:
+                          - generic [ref=e521]:
+                            - text: En attente
+                            - img [ref=e522]
+                      - cell "2ref." [ref=e524]
+                      - cell "19 février 2026" [ref=e525]
+                      - cell "13 novembre 2025" [ref=e526]
+                      - cell "Manuel" [ref=e527]
+                      - cell [ref=e528]:
+                        - generic "Approuvée" [ref=e529]:
+                          - img [ref=e530]
+                      - cell "42,74 €" [ref=e532]
+                      - cell "389,09 €" [ref=e533]:
+                        - generic [ref=e534]: 389,09 €
+                      - cell "Voir details Lier transaction" [ref=e535]:
+                        - generic [ref=e536]:
+                          - button "Voir details" [ref=e537] [cursor=pointer]:
+                            - img [ref=e538]
+                          - button "Lier transaction" [ref=e541] [cursor=pointer]:
+                            - img [ref=e542]
+                    - row "SO-2026-00079 Pokawa La roche sur Yon Professionnel Expediee Payé 1ref. 19 février 2026 30 janvier 2026 Manuel 11,10 € 112,80 € Voir details Rapprochée" [ref=e545]:
+                      - cell [ref=e546]:
+                        - button [ref=e547] [cursor=pointer]:
+                          - img [ref=e548]
+                      - cell "SO-2026-00079" [ref=e550]
+                      - cell "Pokawa La roche sur Yon Professionnel" [ref=e551]:
+                        - generic [ref=e552]:
+                          - generic [ref=e553]: Pokawa La roche sur Yon
+                          - generic [ref=e554]: Professionnel
+                      - cell "Expediee" [ref=e555]:
+                        - generic [ref=e557]: Expediee
+                      - cell "Payé" [ref=e558]:
+                        - generic [ref=e560]: Payé
+                      - cell "1ref." [ref=e561]
+                      - cell "19 février 2026" [ref=e562]
+                      - cell "30 janvier 2026" [ref=e563]
+                      - cell "Manuel" [ref=e564]
+                      - cell [ref=e565]:
+                        - generic "Approuvée" [ref=e566]:
+                          - img [ref=e567]
+                      - cell "11,10 €" [ref=e569]
+                      - cell "112,80 €" [ref=e570]:
+                        - generic [ref=e571]: 112,80 €
+                      - cell "Voir details Rapprochée" [ref=e572]:
+                        - generic [ref=e573]:
+                          - button "Voir details" [ref=e574] [cursor=pointer]:
+                            - img [ref=e575]
+                          - 'generic "Rapprochée: S.A.R.L. RESB (112,80 €)" [ref=e578]':
+                            - img [ref=e579]
+                            - text: Rapprochée
+                    - row "SO-2026-00078 Pokawa Aubagne (Pk Prado) Professionnel Expediee Payé 2ref. 19 février 2026 30 janvier 2026 Manuel 19,20 € 177,72 € Voir details Rapprochée" [ref=e582]:
+                      - cell [ref=e583]:
+                        - button [ref=e584] [cursor=pointer]:
+                          - img [ref=e585]
+                      - cell "SO-2026-00078" [ref=e587]
+                      - cell "Pokawa Aubagne (Pk Prado) Professionnel" [ref=e588]:
+                        - generic [ref=e589]:
+                          - generic [ref=e590]: Pokawa Aubagne (Pk Prado)
+                          - generic [ref=e591]: Professionnel
+                      - cell "Expediee" [ref=e592]:
+                        - generic [ref=e594]: Expediee
+                      - cell "Payé" [ref=e595]:
+                        - generic [ref=e597]: Payé
+                      - cell "2ref." [ref=e598]
+                      - cell "19 février 2026" [ref=e599]
+                      - cell "30 janvier 2026" [ref=e600]
+                      - cell "Manuel" [ref=e601]
+                      - cell [ref=e602]:
+                        - generic "Approuvée" [ref=e603]:
+                          - img [ref=e604]
+                      - cell "19,20 €" [ref=e606]
+                      - cell "177,72 €" [ref=e607]:
+                        - generic [ref=e608]: 177,72 €
+                      - cell "Voir details Rapprochée" [ref=e609]:
+                        - generic [ref=e610]:
+                          - button "Voir details" [ref=e611] [cursor=pointer]:
+                            - img [ref=e612]
+                          - 'generic "Rapprochée: PK PRADO (177,72 €)" [ref=e615]':
+                            - img [ref=e616]
+                            - text: Rapprochée
+                    - row "F-25-050 Pokawa Marseille Prado (PK PRADO) Professionnel Expediee Payé 11ref. 10 février 2026 16 décembre 2025 Manuel 881,93 € 6 300,90 € Voir details Rapprochée" [ref=e619]:
+                      - cell [ref=e620]:
+                        - button [ref=e621] [cursor=pointer]:
+                          - img [ref=e622]
+                      - cell "F-25-050" [ref=e624]
+                      - cell "Pokawa Marseille Prado (PK PRADO) Professionnel" [ref=e625]:
+                        - generic [ref=e626]:
+                          - generic [ref=e627]: Pokawa Marseille Prado (PK PRADO)
+                          - generic [ref=e628]: Professionnel
+                      - cell "Expediee" [ref=e629]:
+                        - generic [ref=e631]: Expediee
+                      - cell "Payé" [ref=e632]:
+                        - generic [ref=e634]: Payé
+                      - cell "11ref." [ref=e635]
+                      - cell "10 février 2026" [ref=e636]
+                      - cell "16 décembre 2025" [ref=e637]
+                      - cell "Manuel" [ref=e638]
+                      - cell [ref=e639]
+                      - cell "881,93 €" [ref=e640]
+                      - cell "6 300,90 €" [ref=e641]:
+                        - generic [ref=e642]: 6 300,90 €
+                      - cell "Voir details Rapprochée" [ref=e643]:
+                        - generic [ref=e644]:
+                          - button "Voir details" [ref=e645] [cursor=pointer]:
+                            - img [ref=e646]
+                          - 'generic "Rapprochée: PK PRADO (6 300,90 €)" [ref=e649]':
+                            - img [ref=e650]
+                            - text: Rapprochée
+                - generic [ref=e653]:
+                  - generic [ref=e654]:
+                    - generic [ref=e655]: Afficher
+                    - generic [ref=e656]:
+                      - button "10" [ref=e657] [cursor=pointer]
+                      - button "20" [ref=e658] [cursor=pointer]
+                    - generic [ref=e659]: par page
+                  - generic [ref=e660]:
+                    - generic [ref=e661]: 1-10 sur 121
+                    - generic [ref=e662]:
+                      - button "Precedent" [disabled]
+                      - button "Suivant" [ref=e663] [cursor=pointer]
+  - region "Notifications alt+T"
+  - button "Open Next.js Dev Tools" [ref=e669] [cursor=pointer]:
+    - img [ref=e670]
+  - alert [ref=e4]
