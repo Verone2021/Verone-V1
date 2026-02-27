@@ -203,6 +203,8 @@ interface SalesOrderFormModalProps {
   onOpenChange?: (open: boolean) => void;
   onSuccess?: () => void;
   buttonLabel?: string;
+  /** Callback quand l'utilisateur clique "LinkMe" dans le wizard canal (ex: redirection) */
+  onLinkMeClick?: () => void;
 }
 
 export function SalesOrderFormModal({
@@ -212,6 +214,7 @@ export function SalesOrderFormModal({
   onOpenChange,
   onSuccess,
   buttonLabel = 'Nouvelle commande',
+  onLinkMeClick,
 }: SalesOrderFormModalProps) {
   const [internalOpen, setInternalOpen] = useState(false);
 
@@ -1220,7 +1223,14 @@ export function SalesOrderFormModal({
               {/* Option: LinkMe */}
               <button
                 type="button"
-                onClick={() => handleChannelSelect('linkme')}
+                onClick={() => {
+                  if (onLinkMeClick) {
+                    setOpen(false);
+                    onLinkMeClick();
+                  } else {
+                    handleChannelSelect('linkme');
+                  }
+                }}
                 className="flex items-center gap-4 p-4 border-2 border-gray-200 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition-all text-left group"
               >
                 <div className="flex-shrink-0 w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center group-hover:bg-purple-200">

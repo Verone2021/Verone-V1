@@ -150,6 +150,15 @@ export interface SalesOrdersTableProps {
     cell: (order: SalesOrder) => React.ReactNode;
   }>;
 
+  /** Callback custom pour le bouton "Nouvelle commande" (ex: redirection) */
+  onCreateClick?: () => void;
+
+  /** Callback quand l'utilisateur clique "LinkMe" dans le wizard canal (ex: redirection) */
+  onLinkMeClick?: () => void;
+
+  /** Ouvrir le modal de création au montage (ex: ?action=new) */
+  initialCreateOpen?: boolean;
+
   /** Render custom du modal de creation */
   renderCreateModal?: (props: {
     open: boolean;
@@ -236,6 +245,9 @@ export function SalesOrdersTable({
   allowDelete = true,
   allowEdit = true,
   additionalColumns = [],
+  onCreateClick,
+  onLinkMeClick,
+  initialCreateOpen = false,
   renderCreateModal,
   renderEditModal,
   onOrderCreated,
@@ -315,7 +327,7 @@ export function SalesOrdersTable({
   const [dismissedOrderId, setDismissedOrderId] = useState<string | null>(null);
   const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(initialCreateOpen);
   const [showLinkMeModal, setShowLinkMeModal] = useState(false);
   const [showShipmentModal, setShowShipmentModal] = useState(false);
   const [orderToShip, setOrderToShip] = useState<SalesOrder | null>(null);
@@ -1094,7 +1106,11 @@ export function SalesOrdersTable({
               >
                 Exporter Excel
               </ButtonUnified>
-              {renderCreateModal ? (
+              {onCreateClick ? (
+                <ButtonUnified onClick={onCreateClick} icon={Plus}>
+                  Nouvelle commande
+                </ButtonUnified>
+              ) : renderCreateModal ? (
                 <ButtonUnified
                   onClick={() => setShowCreateModal(true)}
                   icon={Plus}
@@ -1105,6 +1121,7 @@ export function SalesOrdersTable({
                 <SalesOrderFormModal
                   buttonLabel="Nouvelle commande"
                   onSuccess={handleCreateSuccess}
+                  onLinkMeClick={onLinkMeClick}
                 />
               )}
               {renderHeaderRight?.()}
