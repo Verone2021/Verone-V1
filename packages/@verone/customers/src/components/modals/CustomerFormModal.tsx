@@ -3,12 +3,12 @@
 import { useState, useEffect } from 'react';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { AddressSelector } from '@verone/common/components/address/AddressSelector';
 import {
   useOrganisations,
   useActiveEnseignes,
   type Organisation,
 } from '@verone/organisations/hooks';
+import { AddressAutocomplete, type AddressResult } from '@verone/ui';
 import { Button } from '@verone/ui';
 import {
   Dialog,
@@ -26,9 +26,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@verone/ui';
+import { Checkbox } from '@verone/ui';
 import { Switch } from '@verone/ui';
+import { Separator } from '@verone/ui';
 import { Textarea } from '@verone/ui';
-import { Loader2, Building2 } from 'lucide-react';
+import {
+  Loader2,
+  Building2,
+  MapPin,
+  Navigation,
+  Store,
+  Mail,
+  FileText,
+  CreditCard,
+  StickyNote,
+} from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -91,6 +103,10 @@ const customerSchema = z.object({
 
   // Indicateur adresses différentes
   has_different_shipping_address: z.boolean().default(false),
+
+  // Coordonnées GPS (remplies automatiquement par AddressAutocomplete)
+  latitude: z.number().nullable().optional(),
+  longitude: z.number().nullable().optional(),
 });
 
 type CustomerFormData = z.infer<typeof customerSchema>;
@@ -179,7 +195,7 @@ export function CustomerFormModal({
         trade_name: data.business_name ?? undefined, // Nom commercial (alias UI: business_name)
         type: 'customer' as const,
         email: data.email ?? undefined,
-        country: data.country,
+        country: data.billing_country || data.country || 'FR',
         phone: data.phone ?? undefined,
         website: data.website ?? undefined,
         is_active: data.is_active,
@@ -195,6 +211,23 @@ export function CustomerFormModal({
         enseigne_id: data.enseigne_id ?? undefined,
         is_enseigne_parent: data.is_enseigne_parent,
         ownership_type: data.ownership_type ?? undefined,
+        // Adresses
+        billing_address_line1: data.billing_address_line1 ?? undefined,
+        billing_address_line2: data.billing_address_line2 ?? undefined,
+        billing_postal_code: data.billing_postal_code ?? undefined,
+        billing_city: data.billing_city ?? undefined,
+        billing_region: data.billing_region ?? undefined,
+        billing_country: data.billing_country || 'FR',
+        shipping_address_line1: data.shipping_address_line1 ?? undefined,
+        shipping_address_line2: data.shipping_address_line2 ?? undefined,
+        shipping_postal_code: data.shipping_postal_code ?? undefined,
+        shipping_city: data.shipping_city ?? undefined,
+        shipping_region: data.shipping_region ?? undefined,
+        shipping_country: data.shipping_country || 'FR',
+        has_different_shipping_address: data.has_different_shipping_address,
+        // Coordonnées GPS
+        latitude: data.latitude ?? undefined,
+        longitude: data.longitude ?? undefined,
       };
 
       if (mode === 'edit' && customer) {
@@ -224,6 +257,31 @@ export function CustomerFormModal({
   const handleClose = () => {
     form.reset();
     onClose();
+  };
+
+  // Handlers pour AddressAutocomplete
+  const handleBillingAddressSelect = (address: AddressResult) => {
+    form.setValue('billing_address_line1', address.streetAddress);
+    form.setValue('billing_city', address.city);
+    form.setValue('billing_postal_code', address.postalCode);
+    form.setValue('billing_region', address.region || '');
+    form.setValue('billing_country', address.countryCode || 'FR');
+    // GPS si pas d'adresse livraison différente
+    if (!form.getValues('has_different_shipping_address')) {
+      form.setValue('latitude', address.latitude || null);
+      form.setValue('longitude', address.longitude || null);
+    }
+  };
+
+  const handleShippingAddressSelect = (address: AddressResult) => {
+    form.setValue('shipping_address_line1', address.streetAddress);
+    form.setValue('shipping_city', address.city);
+    form.setValue('shipping_postal_code', address.postalCode);
+    form.setValue('shipping_region', address.region || '');
+    form.setValue('shipping_country', address.countryCode || 'FR');
+    // GPS = adresse de livraison si différente
+    form.setValue('latitude', address.latitude || null);
+    form.setValue('longitude', address.longitude || null);
   };
 
   // Options de pays fréquents
@@ -269,9 +327,9 @@ export function CustomerFormModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+          <DialogTitle className="flex items-center gap-2 text-xl">
             <Building2 className="h-5 w-5" />
             {mode === 'edit'
               ? 'Modifier le client professionnel'
@@ -289,68 +347,17 @@ export function CustomerFormModal({
           }}
           className="space-y-6"
         >
-          {/* Informations de base */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium text-black border-b pb-2">
-              Informations de base
-            </h3>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="name">Nom de l'entreprise *</Label>
-                <Input
-                  id="name"
-                  {...form.register('name')}
-                  placeholder="Ex: Entreprise ABC"
-                  className="mt-1"
-                />
-                {form.formState.errors.name && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {form.formState.errors.name.message}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <Label htmlFor="country">Pays</Label>
-                <Select
-                  value={form.watch('country')}
-                  onValueChange={value => form.setValue('country', value)}
-                >
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Sélectionner un pays" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {countries.map(country => (
-                      <SelectItem key={country.code} value={country.code}>
-                        {country.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div>
-              <Label htmlFor="description">Description / Notes</Label>
-              <Textarea
-                id="description"
-                {...form.register('description')}
-                placeholder="Description de l'activité, notes importantes..."
-                className="mt-1"
-                rows={3}
-              />
-            </div>
-          </div>
-
-          {/* Enseigne / Franchise */}
+          {/* 1. Enseigne */}
           {enseignes.length > 0 && (
             <div className="space-y-4">
-              <h3 className="text-lg font-medium text-black border-b pb-2">
-                Enseigne / Franchise
-              </h3>
+              <div className="flex items-center gap-2">
+                <Store className="h-4 w-4 text-muted-foreground" />
+                <h3 className="text-sm font-medium text-muted-foreground">
+                  Enseigne
+                </h3>
+              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <Label htmlFor="enseigne_id">Enseigne</Label>
                   <Select
@@ -374,131 +381,105 @@ export function CustomerFormModal({
                       ))}
                     </SelectContent>
                   </Select>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Associez ce client à une enseigne (groupe de franchises)
-                  </p>
                 </div>
 
                 {form.watch('enseigne_id') && (
-                  <div className="flex items-start pt-6">
-                    <div className="flex items-center space-x-3">
-                      <Switch
-                        id="is_enseigne_parent"
-                        checked={form.watch('is_enseigne_parent')}
-                        onCheckedChange={checked =>
-                          form.setValue('is_enseigne_parent', checked)
+                  <>
+                    <div>
+                      <Label htmlFor="ownership_type">Type de propriété</Label>
+                      <Select
+                        value={form.watch('ownership_type') ?? '__none__'}
+                        onValueChange={value =>
+                          form.setValue(
+                            'ownership_type',
+                            value === '__none__'
+                              ? null
+                              : (value as 'succursale' | 'franchise')
+                          )
                         }
-                      />
-                      <div>
-                        <Label
-                          htmlFor="is_enseigne_parent"
-                          className="font-medium"
-                        >
-                          Société mère
-                        </Label>
-                        <p className="text-xs text-gray-500">
-                          Cochez si ce client est la holding/maison mère de
-                          l'enseigne
-                        </p>
+                      >
+                        <SelectTrigger className="mt-1">
+                          <SelectValue placeholder="Non défini" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__none__">Non défini</SelectItem>
+                          <SelectItem value="succursale">
+                            Succursale (propre)
+                          </SelectItem>
+                          <SelectItem value="franchise">Franchise</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="flex items-end pb-1">
+                      <div className="flex items-center space-x-3">
+                        <Switch
+                          id="is_enseigne_parent"
+                          checked={form.watch('is_enseigne_parent')}
+                          onCheckedChange={checked =>
+                            form.setValue('is_enseigne_parent', checked)
+                          }
+                        />
+                        <div>
+                          <Label
+                            htmlFor="is_enseigne_parent"
+                            className="font-medium text-sm"
+                          >
+                            Société mère
+                          </Label>
+                          <p className="text-xs text-gray-400">
+                            Holding de l&apos;enseigne
+                          </p>
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  </>
                 )}
               </div>
-
-              {/* Type de propriété (succursale/franchise) */}
-              {form.watch('enseigne_id') && (
-                <div>
-                  <Label htmlFor="ownership_type">Type de propriété</Label>
-                  <Select
-                    value={form.watch('ownership_type') ?? '__none__'}
-                    onValueChange={value =>
-                      form.setValue(
-                        'ownership_type',
-                        value === '__none__'
-                          ? null
-                          : (value as 'succursale' | 'franchise')
-                      )
-                    }
-                  >
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="Non défini" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="__none__">Non défini</SelectItem>
-                      <SelectItem value="succursale">
-                        Succursale (restaurant propre)
-                      </SelectItem>
-                      <SelectItem value="franchise">Franchise</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Succursale = détenu par l'enseigne, Franchise = franchisé
-                    indépendant
-                  </p>
-                </div>
-              )}
             </div>
           )}
 
-          {/* Informations de contact */}
+          {/* 2. Entreprise */}
+          <Separator />
           <div className="space-y-4">
-            <h3 className="text-lg font-medium text-black border-b pb-2">
-              Contact
-            </h3>
+            <div className="flex items-center gap-2">
+              <Building2 className="h-4 w-4 text-muted-foreground" />
+              <h3 className="text-sm font-medium text-muted-foreground">
+                Entreprise
+              </h3>
+            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="name">Dénomination sociale *</Label>
                 <Input
-                  id="email"
-                  type="email"
-                  {...form.register('email')}
-                  placeholder="contact@entreprise.com"
+                  id="name"
+                  {...form.register('name')}
+                  placeholder="Ex: SAS Mobilier Design"
                   className="mt-1"
                 />
-                {form.formState.errors.email && (
+                {form.formState.errors.name && (
                   <p className="text-red-500 text-sm mt-1">
-                    {form.formState.errors.email.message}
+                    {form.formState.errors.name.message}
                   </p>
                 )}
               </div>
 
               <div>
-                <Label htmlFor="phone">Téléphone</Label>
+                <Label htmlFor="business_name">
+                  Nom commercial
+                  <span className="text-gray-400 ml-1 font-normal">
+                    (si différent)
+                  </span>
+                </Label>
                 <Input
-                  id="phone"
-                  {...form.register('phone')}
-                  placeholder="01 23 45 67 89"
+                  id="business_name"
+                  {...form.register('business_name')}
+                  placeholder="Ex: Pokawa Paris 1"
                   className="mt-1"
                 />
               </div>
-            </div>
 
-            <div>
-              <Label htmlFor="website">Site web</Label>
-              <Input
-                id="website"
-                type="url"
-                {...form.register('website')}
-                placeholder="https://www.entreprise.com"
-                className="mt-1"
-              />
-              {form.formState.errors.website && (
-                <p className="text-red-500 text-sm mt-1">
-                  {form.formState.errors.website.message}
-                </p>
-              )}
-            </div>
-          </div>
-
-          {/* Informations légales */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium text-black border-b pb-2">
-              Informations légales
-            </h3>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="legal_form">Forme juridique</Label>
                 <Select
@@ -509,21 +490,34 @@ export function CustomerFormModal({
                     <SelectValue placeholder="Sélectionner..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {legalForms.map(form => (
-                      <SelectItem key={form} value={form}>
-                        {form}
+                    {legalForms.map(lf => (
+                      <SelectItem key={lf} value={lf}>
+                        {lf}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+          </div>
 
+          {/* 3. Légal */}
+          <Separator />
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <FileText className="h-4 w-4 text-muted-foreground" />
+              <h3 className="text-sm font-medium text-muted-foreground">
+                Légal
+              </h3>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <Label htmlFor="siren">SIREN</Label>
                 <Input
                   id="siren"
                   {...form.register('siren')}
-                  placeholder="123456789"
+                  placeholder="123 456 789"
                   maxLength={9}
                   className="mt-1"
                 />
@@ -532,19 +526,14 @@ export function CustomerFormModal({
                     {form.formState.errors.siren.message}
                   </p>
                 )}
-                <p className="text-xs text-gray-500 mt-1">
-                  Numéro SIREN à 9 chiffres (identifiant unique de l'entreprise)
-                </p>
               </div>
-            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="siret">SIRET</Label>
                 <Input
                   id="siret"
                   {...form.register('siret')}
-                  placeholder="12345678901234"
+                  placeholder="123 456 789 00012"
                   maxLength={14}
                   className="mt-1"
                 />
@@ -553,46 +542,126 @@ export function CustomerFormModal({
                     {form.formState.errors.siret.message}
                   </p>
                 )}
-                <p className="text-xs text-gray-500 mt-1">
-                  Numéro SIRET à 14 chiffres (SIREN + NIC de l'établissement)
-                </p>
               </div>
 
               <div>
-                <Label htmlFor="business_name">
-                  Nom commercial
-                  <span className="text-gray-500 ml-1">(si différent)</span>
-                </Label>
+                <Label htmlFor="vat_number">TVA intracommunautaire</Label>
                 <Input
-                  id="business_name"
-                  {...form.register('business_name')}
-                  placeholder="Ex: Pokawa Paris 1"
+                  id="vat_number"
+                  {...form.register('vat_number')}
+                  placeholder="FR12345678901"
                   className="mt-1"
                 />
-                <p className="text-xs text-gray-500 mt-1">
-                  Nom sous lequel l'entreprise exerce son activité
-                </p>
               </div>
-            </div>
-
-            <div>
-              <Label htmlFor="vat_number">Numéro de TVA</Label>
-              <Input
-                id="vat_number"
-                {...form.register('vat_number')}
-                placeholder="FR12345678901"
-                className="mt-1"
-              />
             </div>
           </div>
 
-          {/* Conditions commerciales */}
+          {/* 4. Adresses */}
+          <Separator />
           <div className="space-y-4">
-            <h3 className="text-lg font-medium text-black border-b pb-2">
-              Conditions commerciales
-            </h3>
+            <div className="flex items-center gap-2">
+              <MapPin className="h-4 w-4 text-muted-foreground" />
+              <h3 className="text-sm font-medium text-muted-foreground">
+                Adresses
+              </h3>
+            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Adresse de facturation */}
+            <div className="space-y-3">
+              <h4 className="text-sm font-medium text-gray-700">
+                Adresse de facturation
+              </h4>
+              <AddressAutocomplete
+                value={form.watch('billing_address_line1') || ''}
+                onChange={value =>
+                  form.setValue('billing_address_line1', value)
+                }
+                onSelect={handleBillingAddressSelect}
+                placeholder="Rechercher une adresse..."
+                id="billing-address-create"
+              />
+              <Input
+                {...form.register('billing_address_line2')}
+                placeholder="Complément d'adresse (bâtiment, étage...)"
+              />
+            </div>
+
+            {/* Toggle adresse de livraison différente */}
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="has_different_shipping"
+                checked={form.watch('has_different_shipping_address')}
+                onCheckedChange={(checked: boolean) => {
+                  form.setValue('has_different_shipping_address', checked);
+                  if (!checked) {
+                    form.setValue('shipping_address_line1', '');
+                    form.setValue('shipping_address_line2', '');
+                    form.setValue('shipping_postal_code', '');
+                    form.setValue('shipping_city', '');
+                    form.setValue('shipping_region', '');
+                    form.setValue('shipping_country', 'FR');
+                  }
+                }}
+              />
+              <Label
+                htmlFor="has_different_shipping"
+                className="text-sm font-medium cursor-pointer"
+              >
+                Adresse de livraison différente
+              </Label>
+            </div>
+
+            {/* Adresse de livraison (conditionnelle) */}
+            {form.watch('has_different_shipping_address') && (
+              <div className="space-y-3 border-t border-gray-200 pt-3">
+                <h4 className="text-sm font-medium text-gray-700">
+                  Adresse de livraison
+                </h4>
+                <AddressAutocomplete
+                  value={form.watch('shipping_address_line1') || ''}
+                  onChange={value =>
+                    form.setValue('shipping_address_line1', value)
+                  }
+                  onSelect={handleShippingAddressSelect}
+                  placeholder="Rechercher une adresse de livraison..."
+                  id="shipping-address-create"
+                />
+                <Input
+                  {...form.register('shipping_address_line2')}
+                  placeholder="Complément d'adresse (bâtiment, étage...)"
+                />
+              </div>
+            )}
+
+            {/* Coordonnées GPS (lecture seule) */}
+            {(form.watch('latitude') || form.watch('longitude')) && (
+              <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                <div className="flex items-center gap-2 text-green-700">
+                  <Navigation className="h-4 w-4" />
+                  <span className="text-sm font-medium">Coordonnées GPS</span>
+                  <span className="text-xs text-green-600 ml-auto">
+                    (mises à jour automatiquement)
+                  </span>
+                </div>
+                <div className="mt-1 pl-6 text-sm text-green-800 font-mono">
+                  {form.watch('latitude')?.toFixed(6)},{' '}
+                  {form.watch('longitude')?.toFixed(6)}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* 5. Commercial */}
+          <Separator />
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <CreditCard className="h-4 w-4 text-muted-foreground" />
+              <h3 className="text-sm font-medium text-muted-foreground">
+                Commercial
+              </h3>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <Label htmlFor="payment_terms">Conditions de paiement</Label>
                 <Select
@@ -635,11 +704,26 @@ export function CustomerFormModal({
                   </SelectContent>
                 </Select>
               </div>
+
+              <div className="flex items-end pb-1">
+                <div className="flex items-center space-x-3">
+                  <Switch
+                    id="is_active"
+                    checked={form.watch('is_active')}
+                    onCheckedChange={checked =>
+                      form.setValue('is_active', checked)
+                    }
+                  />
+                  <Label htmlFor="is_active" className="text-sm font-medium">
+                    Client actif
+                  </Label>
+                </div>
+              </div>
             </div>
 
             {/* Prépaiement conditionnel */}
             {form.watch('payment_terms') === '0' && (
-              <div className="bg-gray-50 border border-gray-300 rounded-lg p-4">
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
                 <div className="flex items-center space-x-3">
                   <Switch
                     id="prepayment_required"
@@ -651,11 +735,11 @@ export function CustomerFormModal({
                   <div className="flex-1">
                     <Label
                       htmlFor="prepayment_required"
-                      className="text-gray-900 font-medium"
+                      className="text-gray-900 font-medium text-sm"
                     >
                       Prépaiement obligatoire
                     </Label>
-                    <p className="text-xs text-gray-900">
+                    <p className="text-xs text-gray-500">
                       {form.watch('prepayment_required')
                         ? "Commande bloquée jusqu'au règlement préalable"
                         : 'Envoi et facturation simultanés'}
@@ -666,31 +750,81 @@ export function CustomerFormModal({
             )}
           </div>
 
-          {/* Adresses de facturation et livraison */}
+          {/* 6. Contact */}
+          <Separator />
           <div className="space-y-4">
-            <h3 className="text-lg font-medium text-black border-b pb-2">
-              Adresses
-            </h3>
-            <AddressSelector form={form} />
-          </div>
+            <div className="flex items-center gap-2">
+              <Mail className="h-4 w-4 text-muted-foreground" />
+              <h3 className="text-sm font-medium text-muted-foreground">
+                Contact
+              </h3>
+            </div>
 
-          {/* Statut */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium text-black border-b pb-2">
-              Statut
-            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  {...form.register('email')}
+                  placeholder="contact@entreprise.com"
+                  className="mt-1"
+                />
+                {form.formState.errors.email && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {form.formState.errors.email.message}
+                  </p>
+                )}
+              </div>
 
-            <div className="flex items-center space-x-3">
-              <Switch
-                id="is_active"
-                checked={form.watch('is_active')}
-                onCheckedChange={checked => form.setValue('is_active', checked)}
-              />
-              <Label htmlFor="is_active">Client actif</Label>
+              <div>
+                <Label htmlFor="phone">Téléphone</Label>
+                <Input
+                  id="phone"
+                  {...form.register('phone')}
+                  placeholder="01 23 45 67 89"
+                  className="mt-1"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="website">Site web</Label>
+                <Input
+                  id="website"
+                  type="url"
+                  {...form.register('website')}
+                  placeholder="https://www.entreprise.com"
+                  className="mt-1"
+                />
+                {form.formState.errors.website && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {form.formState.errors.website.message}
+                  </p>
+                )}
+              </div>
             </div>
           </div>
 
-          <DialogFooter>
+          {/* 7. Notes */}
+          <Separator />
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <StickyNote className="h-4 w-4 text-muted-foreground" />
+              <h3 className="text-sm font-medium text-muted-foreground">
+                Notes
+              </h3>
+            </div>
+
+            <Textarea
+              id="description"
+              {...form.register('description')}
+              placeholder="Notes sur le client, informations complémentaires..."
+              rows={3}
+            />
+          </div>
+
+          <Separator />
+          <DialogFooter className="pt-2">
             <Button
               type="button"
               variant="outline"
