@@ -57,14 +57,6 @@ import {
   TableRow,
 } from '@verone/ui';
 import { Tabs, TabsList, TabsTrigger } from '@verone/ui';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@verone/ui';
 import { cn, formatCurrency, formatDate } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
 import {
@@ -86,11 +78,6 @@ import {
   ChevronDown,
   ExternalLink,
   Link2,
-  Banknote,
-  CreditCard,
-  Building2,
-  Receipt,
-  CheckSquare,
 } from 'lucide-react';
 
 import type { SalesAdvancedFilters } from '../types/advanced-filters';
@@ -270,7 +257,6 @@ export function SalesOrdersTable({
     fetchStats,
     updateStatus,
     deleteOrder,
-    markAsManuallyPaid,
   } = useSalesOrders();
 
   // ✅ OPTIMISÉ: Utiliser preloadedOrders si fourni (évite double fetch)
@@ -1514,96 +1500,15 @@ export function SalesOrdersTable({
                                   <Badge className="bg-green-100 text-green-800">
                                     Payé
                                   </Badge>
+                                ) : order.payment_status_v2 ===
+                                  'partially_paid' ? (
+                                  <Badge className="bg-amber-100 text-amber-800">
+                                    Partiel
+                                  </Badge>
                                 ) : (
-                                  <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                      <button className="flex items-center gap-1 cursor-pointer">
-                                        <Badge className="bg-orange-100 text-orange-800 hover:bg-orange-200 transition-colors">
-                                          En attente
-                                          <ChevronDown className="h-3 w-3 ml-1" />
-                                        </Badge>
-                                      </button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="start">
-                                      <DropdownMenuLabel>
-                                        Marquer comme payé
-                                      </DropdownMenuLabel>
-                                      <DropdownMenuSeparator />
-                                      <DropdownMenuItem
-                                        onClick={() =>
-                                          void markAsManuallyPaid(
-                                            order.id,
-                                            'cash',
-                                            order.total_ttc || 0
-                                          )
-                                        }
-                                      >
-                                        <Banknote className="h-4 w-4 mr-2" />
-                                        Espèces
-                                      </DropdownMenuItem>
-                                      <DropdownMenuItem
-                                        onClick={() =>
-                                          void markAsManuallyPaid(
-                                            order.id,
-                                            'check',
-                                            order.total_ttc || 0
-                                          )
-                                        }
-                                      >
-                                        <Receipt className="h-4 w-4 mr-2" />
-                                        Chèque
-                                      </DropdownMenuItem>
-                                      <DropdownMenuItem
-                                        onClick={() =>
-                                          void markAsManuallyPaid(
-                                            order.id,
-                                            'transfer_other',
-                                            order.total_ttc || 0
-                                          )
-                                        }
-                                      >
-                                        <Building2 className="h-4 w-4 mr-2" />
-                                        Virement autre banque
-                                      </DropdownMenuItem>
-                                      <DropdownMenuItem
-                                        onClick={() =>
-                                          void markAsManuallyPaid(
-                                            order.id,
-                                            'card',
-                                            order.total_ttc || 0
-                                          )
-                                        }
-                                      >
-                                        <CreditCard className="h-4 w-4 mr-2" />
-                                        Carte bancaire
-                                      </DropdownMenuItem>
-                                      <DropdownMenuSeparator />
-                                      <DropdownMenuItem
-                                        onClick={() =>
-                                          void markAsManuallyPaid(
-                                            order.id,
-                                            'compensation',
-                                            order.total_ttc || 0
-                                          )
-                                        }
-                                      >
-                                        <CheckSquare className="h-4 w-4 mr-2" />
-                                        Compensation
-                                      </DropdownMenuItem>
-                                      <DropdownMenuItem
-                                        onClick={() =>
-                                          void markAsManuallyPaid(
-                                            order.id,
-                                            'verified_bubble',
-                                            order.total_ttc || 0
-                                          )
-                                        }
-                                      >
-                                        <CheckCircle className="h-4 w-4 mr-2" />
-                                        Vérifié Bubble
-                                      </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                  </DropdownMenu>
+                                  <Badge className="bg-orange-100 text-orange-800">
+                                    En attente
+                                  </Badge>
                                 )}
                               </div>
                             </TableCell>
