@@ -1258,9 +1258,7 @@ export default function LinkMeOrderDetailPage() {
                           </div>
                         </TableCell>
                         <TableCell className="text-right">
-                          {formatCurrency(
-                            item.selling_price_ht || item.unit_price_ht
-                          )}
+                          {formatCurrency(item.unit_price_ht)}
                         </TableCell>
                         <TableCell className="text-center">
                           {item.quantity}

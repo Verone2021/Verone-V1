@@ -200,6 +200,20 @@ gh pr merge --squash
 - Formatter prettier AVANT staging (evite conflits lint-staged)
 - Details : `.claude/rules/dev/git-workflow.md`
 
+### 7. JAMAIS de données test via SQL/migration (NON NEGOCIABLE)
+
+- Interdit : `INSERT INTO` via `mcp__supabase__execute_sql` pour créer des données test
+- Interdit : Migrations SQL pour injecter des commandes, produits, entités de test
+- Interdit : Tout bypass de l'interface utilisateur pour "tester"
+- **Les tests se font MANUELLEMENT via l'interface (Playwright ou Romeo)**
+- SQL = uniquement pour DDL (CREATE TABLE, ALTER, policies RLS) et requêtes lecture (SELECT)
+
+### 8. JAMAIS inventer de terminologie
+
+- TOUJOURS vérifier les noms exacts dans la DB/code avant d'utiliser un terme
+- Canaux de vente (sales_channels) : `site_internet`, `google_merchant`, `linkme`, `manuel`
+- Il n'existe PAS de canal "affilié" — le canal s'appelle **LinkMe**
+
 ---
 
 ## Hooks Bloquants (settings.json)

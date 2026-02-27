@@ -75,14 +75,19 @@ export interface SelectionItem {
   selling_price_ht: number;
   custom_description: string | null;
   is_featured: boolean;
+  is_hidden_by_staff: boolean;
   display_order: number;
   // Données produit jointes
   product_name: string;
   product_reference: string;
   product_image_url: string | null;
   product_stock_real: number;
-  // Données pour produits affiliés
+  // Hiérarchie catégorie
   category_name: string | null;
+  subcategory_name: string | null;
+  // Statut commercial du produit
+  product_status: 'active' | 'preorder' | 'discontinued' | 'draft';
+  // Données pour produits affiliés
   is_affiliate_product: boolean;
   affiliate_commission_rate: number | null;
 }
@@ -276,13 +281,18 @@ interface SelectionItemWithProduct {
   selling_price_ht: number | null;
   custom_description: string | null;
   is_featured: boolean | null;
+  is_hidden_by_staff: boolean | null;
   display_order: number | null;
   product: {
     name: string;
     sku: string;
     stock_real: number | null;
+    product_status: string | null;
     subcategory: {
       name: string;
+      category: {
+        name: string;
+      } | null;
     } | null;
     created_by_affiliate: string | null;
     affiliate_commission_rate: number | null;
@@ -336,12 +346,17 @@ export function useSelectionItems(selectionId: string | null) {
           selling_price_ht,
           custom_description,
           is_featured,
+          is_hidden_by_staff,
           display_order,
           product:products(
             name,
             sku,
             stock_real,
-            subcategory:subcategories(name),
+            product_status,
+            subcategory:subcategories(
+              name,
+              category:categories(name)
+            ),
             created_by_affiliate,
             affiliate_commission_rate
           )
@@ -382,13 +397,22 @@ export function useSelectionItems(selectionId: string | null) {
         selling_price_ht: item.selling_price_ht ?? 0,
         custom_description: item.custom_description,
         is_featured: item.is_featured ?? false,
+        is_hidden_by_staff: item.is_hidden_by_staff ?? false,
         display_order: item.display_order ?? 0,
         product_name: item.product?.name ?? '',
         product_reference: item.product?.sku ?? '',
         product_image_url: imageMap.get(item.product_id) ?? null,
         product_stock_real: item.product?.stock_real ?? 0,
+        // Hiérarchie catégorie
+        category_name: item.product?.subcategory?.category?.name ?? null,
+        subcategory_name: item.product?.subcategory?.name ?? null,
+        // Statut commercial
+        product_status: (item.product?.product_status ?? 'active') as
+          | 'active'
+          | 'preorder'
+          | 'discontinued'
+          | 'draft',
         // Données pour produits affiliés
-        category_name: item.product?.subcategory?.name ?? null,
         is_affiliate_product: !!item.product?.created_by_affiliate,
         affiliate_commission_rate:
           item.product?.affiliate_commission_rate ?? null,

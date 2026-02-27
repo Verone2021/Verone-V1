@@ -135,7 +135,7 @@ export default function CommandesClient() {
       },
       {
         key: 'margin',
-        header: 'Marge Affilie',
+        header: 'Commission HT',
         cell: (order: SalesOrder) => {
           const margin = getAffiliateMargin(order);
           return margin > 0 ? (

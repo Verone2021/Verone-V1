@@ -1,13 +1,29 @@
 # Documentation Verone - Source de Verite
 
-**Derniere mise a jour:** 2026-01-30
+**Derniere mise a jour:** 2026-02-26
 
 Cette documentation est la **source unique de verite** pour le projet Verone.
 Toute autre documentation doit etre consideree comme archive.
 
 ---
 
-## Table des Matieres
+## Documentation Consolidée (2026-02-26)
+
+Consolidation de 57 fichiers récupérés des anciens commits en 7 documents de référence.
+
+| Doc                                                                            | Description                                            | Usage                |
+| ------------------------------------------------------------------------------ | ------------------------------------------------------ | -------------------- |
+| [database/triggers-stock-reference.md](./database/triggers-stock-reference.md) | 48 triggers PostgreSQL, décisions audit, notifications | Triggers DB          |
+| [linkme/commission-reference.md](./linkme/commission-reference.md)             | 2 types produits, formules, tables source de vérité    | Commissions LinkMe   |
+| [modules/stock-module-reference.md](./modules/stock-module-reference.md)       | 14 pages stock, alertes 3 couleurs, tables, hooks      | Module Stock         |
+| [modules/orders-workflow-reference.md](./modules/orders-workflow-reference.md) | Statuts SO/PO, triggers par transition, ADR-0008       | Workflow Commandes   |
+| [modules/sourcing-reference.md](./modules/sourcing-reference.md)               | Machine à états sourcing, 7 workflows catalogue        | Sourcing & Catalogue |
+| [finance/finance-reference.md](./finance/finance-reference.md)                 | PCG, Qonto, rapprochement bancaire                     | Finance & Compta     |
+| [users/daily-workflows.md](./users/daily-workflows.md)                         | Owner vs Admin, checklist matin                        | Workflows Quotidiens |
+
+---
+
+## Table des Matieres (Existant)
 
 | Doc                                                    | Description                      | Usage               |
 | ------------------------------------------------------ | -------------------------------- | ------------------- |

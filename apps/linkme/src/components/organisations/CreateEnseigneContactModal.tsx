@@ -10,7 +10,7 @@
  * @since 2026-01-21
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import { useQueryClient } from '@tanstack/react-query';
 import {
@@ -18,12 +18,13 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
   Button,
   Input,
   Label,
-  Checkbox,
 } from '@verone/ui';
+import { Receipt, ShoppingBag, Building2 } from 'lucide-react';
 import { createClient } from '@verone/utils/supabase/client';
 import { toast } from 'sonner';
 
@@ -47,6 +48,35 @@ export function CreateEnseigneContactModal({
   onClose,
 }: CreateEnseigneContactModalProps) {
   const queryClient = useQueryClient();
+  const [enseigneInfo, setEnseigneInfo] = useState<{
+    name: string;
+    logoUrl: string | null;
+  } | null>(null);
+
+  // Fetch enseigne name + logo
+  useEffect(() => {
+    const supabase = createClient();
+    void supabase
+      .from('enseignes')
+      .select('name, logo_url')
+      .eq('id', enseigneId)
+      .single()
+      .then(({ data }) => {
+        if (!data) return;
+        let logoUrl: string | null = null;
+        if (data.logo_url) {
+          if (data.logo_url.startsWith('http')) {
+            logoUrl = data.logo_url;
+          } else {
+            const { data: storageData } = supabase.storage
+              .from('organisation-logos')
+              .getPublicUrl(data.logo_url);
+            logoUrl = storageData?.publicUrl ?? null;
+          }
+        }
+        setEnseigneInfo({ name: data.name, logoUrl });
+      });
+  }, [enseigneId]);
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -56,7 +86,6 @@ export function CreateEnseigneContactModal({
     title: '',
     isBillingContact: false,
     isCommercialContact: false,
-    isTechnicalContact: false,
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -76,7 +105,6 @@ export function CreateEnseigneContactModal({
         title: formData.title || null,
         is_billing_contact: formData.isBillingContact,
         is_commercial_contact: formData.isCommercialContact,
-        is_technical_contact: formData.isTechnicalContact,
         is_active: true,
       });
 
@@ -99,7 +127,28 @@ export function CreateEnseigneContactModal({
     <Dialog open onOpenChange={onClose}>
       <DialogContent dialogSize="md">
         <DialogHeader>
-          <DialogTitle>Nouveau Contact Enseigne</DialogTitle>
+          <div className="flex items-center gap-3">
+            {enseigneInfo?.logoUrl ? (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img
+                src={enseigneInfo.logoUrl}
+                alt={enseigneInfo.name}
+                className="h-[50px] w-[50px] rounded-lg object-contain"
+              />
+            ) : (
+              <div className="flex h-[50px] w-[50px] items-center justify-center rounded-lg bg-linkme-turquoise/10">
+                <Building2 className="h-6 w-6 text-linkme-turquoise" />
+              </div>
+            )}
+            <div>
+              <DialogTitle>Nouveau contact</DialogTitle>
+              <DialogDescription>
+                {enseigneInfo?.name
+                  ? `Contact partagé avec tous les restaurants ${enseigneInfo.name}.`
+                  : 'Ce contact sera partagé avec tous vos restaurants.'}
+              </DialogDescription>
+            </div>
+          </div>
         </DialogHeader>
 
         <form
@@ -190,54 +239,76 @@ export function CreateEnseigneContactModal({
           {/* Rôles */}
           <div className="space-y-3">
             <Label>Rôles</Label>
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  id="isBillingContact"
-                  checked={formData.isBillingContact}
-                  onCheckedChange={checked =>
-                    setFormData(prev => ({
-                      ...prev,
-                      isBillingContact: !!checked,
-                    }))
-                  }
-                />
-                <Label htmlFor="isBillingContact" className="font-normal">
-                  Contact Facturation
-                </Label>
-              </div>
+            <div className="grid grid-cols-2 gap-3">
+              {/* Facturation */}
+              <button
+                type="button"
+                onClick={() =>
+                  setFormData(prev => ({
+                    ...prev,
+                    isBillingContact: !prev.isBillingContact,
+                  }))
+                }
+                className={`flex flex-col items-center gap-2 rounded-lg border-2 p-3 text-center transition-all ${
+                  formData.isBillingContact
+                    ? 'border-green-500 bg-green-50'
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}
+              >
+                <div
+                  className={`flex h-9 w-9 items-center justify-center rounded-full ${
+                    formData.isBillingContact
+                      ? 'bg-green-100 text-green-600'
+                      : 'bg-gray-100 text-gray-400'
+                  }`}
+                >
+                  <Receipt className="h-4 w-4" />
+                </div>
+                <span
+                  className={`text-xs font-medium ${
+                    formData.isBillingContact
+                      ? 'text-green-600'
+                      : 'text-gray-500'
+                  }`}
+                >
+                  Facturation
+                </span>
+              </button>
 
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  id="isCommercialContact"
-                  checked={formData.isCommercialContact}
-                  onCheckedChange={checked =>
-                    setFormData(prev => ({
-                      ...prev,
-                      isCommercialContact: !!checked,
-                    }))
-                  }
-                />
-                <Label htmlFor="isCommercialContact" className="font-normal">
-                  Contact Commercial
-                </Label>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  id="isTechnicalContact"
-                  checked={formData.isTechnicalContact}
-                  onCheckedChange={checked =>
-                    setFormData(prev => ({
-                      ...prev,
-                      isTechnicalContact: !!checked,
-                    }))
-                  }
-                />
-                <Label htmlFor="isTechnicalContact" className="font-normal">
-                  Contact Technique
-                </Label>
-              </div>
+              {/* Commercial */}
+              <button
+                type="button"
+                onClick={() =>
+                  setFormData(prev => ({
+                    ...prev,
+                    isCommercialContact: !prev.isCommercialContact,
+                  }))
+                }
+                className={`flex flex-col items-center gap-2 rounded-lg border-2 p-3 text-center transition-all ${
+                  formData.isCommercialContact
+                    ? 'border-blue-500 bg-blue-50'
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}
+              >
+                <div
+                  className={`flex h-9 w-9 items-center justify-center rounded-full ${
+                    formData.isCommercialContact
+                      ? 'bg-blue-100 text-blue-600'
+                      : 'bg-gray-100 text-gray-400'
+                  }`}
+                >
+                  <ShoppingBag className="h-4 w-4" />
+                </div>
+                <span
+                  className={`text-xs font-medium ${
+                    formData.isCommercialContact
+                      ? 'text-blue-600'
+                      : 'text-gray-500'
+                  }`}
+                >
+                  Commercial
+                </span>
+              </button>
             </div>
           </div>
 
