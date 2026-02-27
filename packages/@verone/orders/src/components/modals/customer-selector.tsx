@@ -7,6 +7,7 @@ import { Combobox } from '@verone/ui';
 import { Label } from '@verone/ui';
 import { RadioGroup, RadioGroupItem } from '@verone/ui';
 import { createClient } from '@verone/utils/supabase/client';
+import { getOrganisationCardName } from '@verone/utils/utils/organisation-helpers';
 
 import { CreateIndividualCustomerModal } from './create-individual-customer-modal';
 import { CreateOrganisationModal } from './create-organisation-modal';
@@ -138,7 +139,7 @@ export function CustomerSelector({
         setCustomers(
           (organisations || []).map(org => ({
             ...org,
-            name: org.trade_name || org.legal_name,
+            name: getOrganisationCardName(org),
             type: 'professional' as const,
           })) as any
         );
