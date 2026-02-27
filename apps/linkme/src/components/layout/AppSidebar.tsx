@@ -12,7 +12,6 @@ import {
   ShoppingCart,
   Coins,
   BarChart3,
-  Settings,
   Building2,
   LogOut,
   X,
@@ -105,7 +104,6 @@ const sidebarItems: SidebarItem[] = [
       },
     ],
   },
-  { icon: Settings, label: 'Paramètres', href: '/parametres' },
   { icon: HelpCircle, label: 'Aide', href: '/aide' },
 ];
 
