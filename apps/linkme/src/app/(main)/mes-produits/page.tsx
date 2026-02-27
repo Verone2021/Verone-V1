@@ -281,13 +281,13 @@ function ProductRow({ product }: { product: AffiliateProduct }): JSX.Element {
   const isRejected = product.affiliate_approval_status === 'rejected';
   const isApproved = product.affiliate_approval_status === 'approved';
 
-  // Calcul du prix de vente HT pour les produits AFFILIÉS
-  // Le modèle est: l'affilié fixe son payout, Vérone AJOUTE sa commission
-  // Formule correcte: prixVente = payout × (1 + commissionRate/100)
+  // Calcul pricing affilié
+  // affiliate_payout_ht = prix de vente HT (ce que le client paie)
+  // Encaissement net = prix de vente - commission LinkMe
   const commissionRate = product.affiliate_commission_rate || 0;
-  const payoutHt = product.affiliate_payout_ht || 0;
-  const prixVenteHt = payoutHt * (1 + commissionRate / 100);
-  const commissionMontant = payoutHt * (commissionRate / 100);
+  const prixVenteHt = product.affiliate_payout_ht || 0;
+  const commissionMontant = prixVenteHt * (commissionRate / 100);
+  const encaissementNet = prixVenteHt - commissionMontant;
 
   return (
     <tr className="hover:bg-gray-50/50 transition-colors">
@@ -325,7 +325,7 @@ function ProductRow({ product }: { product: AffiliateProduct }): JSX.Element {
       </td>
       <td className="px-6 py-4">
         <span className="font-semibold text-green-600">
-          {payoutHt.toFixed(2)} €
+          {encaissementNet.toFixed(2)} €
         </span>
       </td>
       <td className="px-6 py-4">

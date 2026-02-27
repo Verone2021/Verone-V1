@@ -286,15 +286,14 @@ async function approveOrder(
     throw new Error(`Erreur mise à jour détails: ${detailsError.message}`);
   }
 
-  // 5. Mettre à jour le status de la commande + audit trail
-  const currentUserId = (await supabase.auth.getUser()).data.user?.id;
+  // 5. Mettre à jour le status de la commande → draft (PAS validated)
+  // L'admin pourra modifier prix/marges en draft, puis valider manuellement
+  // confirmed_at/confirmed_by appartiennent à la validation, pas à l'approbation
   const { error: orderError } = await supabase
     .from('sales_orders')
     .update({
-      status: 'validated',
+      status: 'draft',
       pending_admin_validation: false,
-      confirmed_at: new Date().toISOString(),
-      confirmed_by: currentUserId,
       updated_at: new Date().toISOString(),
     } as Record<string, unknown>)
     .eq('id', input.orderId);

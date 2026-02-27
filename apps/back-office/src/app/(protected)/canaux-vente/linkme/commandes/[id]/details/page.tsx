@@ -68,6 +68,7 @@ import {
   Package,
   Pencil,
   Phone,
+  RotateCcw,
   Save,
   Truck,
   User,
@@ -192,6 +193,7 @@ interface EnrichedOrderItem {
   commission_rate: number;
   selling_price_ht: number;
   affiliate_margin: number;
+  retrocession_rate: number;
   created_by_affiliate: string | null;
 }
 
@@ -218,6 +220,7 @@ interface LinkmeOrderItemEnrichedRaw {
   commission_rate: number | null;
   selling_price_ht: number | null;
   affiliate_margin: number | null;
+  retrocession_rate?: number | null;
 }
 
 interface ProductWithAffiliate {
@@ -473,6 +476,7 @@ export default function LinkMeOrderDetailsPage() {
             commission_rate: item.commission_rate ?? 0,
             selling_price_ht: item.selling_price_ht ?? 0,
             affiliate_margin: item.affiliate_margin ?? 0,
+            retrocession_rate: item.retrocession_rate ?? 0,
             created_by_affiliate: productMap.get(item.product_id) ?? null,
           }))
         );
@@ -510,7 +514,7 @@ export default function LinkMeOrderDetailsPage() {
       if (!user) throw new Error('Not authenticated');
       const result = await updateSalesOrderStatus(
         order!.id,
-        newStatus as 'validated' | 'shipped' | 'cancelled',
+        newStatus as 'validated' | 'shipped' | 'cancelled' | 'draft',
         user.id
       );
       if (!result.success) throw new Error(result.error ?? 'Update failed');
@@ -1139,9 +1143,7 @@ export default function LinkMeOrderDetailsPage() {
                                     : 'text-teal-600'
                                 }
                               >
-                                {isRevendeur
-                                  ? `${item.commission_rate ?? 0}%`
-                                  : `${item.margin_rate ?? 0}%`}
+                                {`${Math.round(item.retrocession_rate * 100)}%`}
                               </span>
                               <p className="text-[10px] text-gray-400">
                                 {isRevendeur ? 'Comm. LinkMe' : 'Marge affilié'}
@@ -1849,18 +1851,35 @@ export default function LinkMeOrderDetailsPage() {
                   </Button>
                 )}
                 {order.status === 'validated' && (
-                  <Button
-                    className="w-full gap-2"
-                    disabled={isUpdatingStatus}
-                    onClick={() => {
-                      void handleStatusChange('shipped').catch(err =>
-                        console.error(err)
-                      );
-                    }}
-                  >
-                    <Truck className="h-4 w-4" />
-                    {isUpdatingStatus ? 'En cours...' : 'Marquer expédiée'}
-                  </Button>
+                  <>
+                    <Button
+                      className="w-full gap-2"
+                      disabled={isUpdatingStatus}
+                      onClick={() => {
+                        void handleStatusChange('shipped').catch(err =>
+                          console.error(err)
+                        );
+                      }}
+                    >
+                      <Truck className="h-4 w-4" />
+                      {isUpdatingStatus ? 'En cours...' : 'Marquer expédiée'}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="w-full gap-2"
+                      disabled={isUpdatingStatus}
+                      onClick={() => {
+                        void handleStatusChange('draft').catch(err =>
+                          console.error(err)
+                        );
+                      }}
+                    >
+                      <RotateCcw className="h-4 w-4" />
+                      {isUpdatingStatus
+                        ? 'En cours...'
+                        : 'Dévalider (retour brouillon)'}
+                    </Button>
+                  </>
                 )}
                 {/* shipped is a terminal status before delivery — no further action */}
                 {order.status !== 'cancelled' &&

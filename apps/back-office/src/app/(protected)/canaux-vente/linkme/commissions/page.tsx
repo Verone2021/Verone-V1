@@ -92,6 +92,10 @@ interface Commission {
     total_ht: number | null;
     total_ttc: number | null;
     created_at: string | null;
+    customer: {
+      trade_name: string | null;
+      legal_name: string;
+    } | null;
   } | null;
 }
 
@@ -207,7 +211,7 @@ export default function LinkMeCommissionsPage() {
           `
           *,
           affiliate:linkme_affiliates(display_name, enseigne_id, organisation_id),
-          sales_order:sales_orders(order_number, payment_status_v2, customer_type, total_ht, total_ttc, created_at)
+          sales_order:sales_orders(order_number, payment_status_v2, customer_type, total_ht, total_ttc, created_at, customer:organisations(trade_name, legal_name))
         `
         )
         .order('created_at', { ascending: false })
@@ -469,8 +473,8 @@ export default function LinkMeCommissionsPage() {
     const headers = [
       'Date',
       'N° Commande',
+      'Organisation',
       'Affilié',
-      'Type',
       'Paiement Client',
       'Total HT',
       'Commission HT',
@@ -478,22 +482,30 @@ export default function LinkMeCommissionsPage() {
       'Statut',
     ];
 
-    const rows = filtered.map(c => [
-      (c.sales_order?.created_at ?? c.created_at)
-        ? new Date(
-            (c.sales_order?.created_at ?? c.created_at)!
-          ).toLocaleDateString('fr-FR')
-        : '-',
-      c.sales_order?.order_number ?? c.order_number ?? '-',
-      c.affiliate?.display_name ?? 'N/A',
-      c.affiliate?.enseigne_id ? 'Enseigne' : 'Organisation',
-      c.sales_order?.payment_status_v2 === 'paid' ? 'Payé' : 'En attente',
-      (c.sales_order?.total_ht ?? c.order_amount_ht).toFixed(2),
-      c.affiliate_commission.toFixed(2),
-      (c.affiliate_commission_ttc ?? 0).toFixed(2),
-      statusConfig[(c.status ?? 'pending') as keyof typeof statusConfig]
-        ?.label ?? c.status,
-    ]);
+    const rows = filtered.map(c => {
+      const org = c.sales_order?.customer;
+      const orgName = org
+        ? org.trade_name && org.trade_name !== org.legal_name
+          ? `${org.trade_name} (${org.legal_name})`
+          : org.legal_name
+        : '-';
+      return [
+        (c.sales_order?.created_at ?? c.created_at)
+          ? new Date(
+              (c.sales_order?.created_at ?? c.created_at)!
+            ).toLocaleDateString('fr-FR')
+          : '-',
+        c.sales_order?.order_number ?? c.order_number ?? '-',
+        orgName,
+        c.affiliate?.display_name ?? 'N/A',
+        c.sales_order?.payment_status_v2 === 'paid' ? 'Payé' : 'En attente',
+        (c.sales_order?.total_ht ?? c.order_amount_ht).toFixed(2),
+        c.affiliate_commission.toFixed(2),
+        (c.affiliate_commission_ttc ?? 0).toFixed(2),
+        statusConfig[(c.status ?? 'pending') as keyof typeof statusConfig]
+          ?.label ?? c.status,
+      ];
+    });
 
     const csv = [headers.join(';'), ...rows.map(r => r.join(';'))].join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -864,26 +876,24 @@ export default function LinkMeCommissionsPage() {
                               {renderSortIcon('order_number')}
                             </span>
                           </TableHead>
+                          <TableHead>Organisation</TableHead>
                           <TableHead>Affilié</TableHead>
-                          <TableHead>Type</TableHead>
                           <TableHead>Paiement</TableHead>
                           <TableHead className="text-right">Total HT</TableHead>
                           <TableHead className="text-right">
                             Total TTC
                           </TableHead>
-                          <TableHead className="text-right">Marge HT</TableHead>
+                          <TableHead className="text-right">
+                            Commission HT
+                          </TableHead>
                           <TableHead className="text-right text-orange-600">
-                            Marge TTC
+                            Commission TTC
                           </TableHead>
                           <TableHead className="w-[50px]" />
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {tabCommissions.map(commission => {
-                          const affiliateType = commission.affiliate
-                            ?.enseigne_id
-                            ? 'Enseigne'
-                            : 'Organisation';
                           const orderNumber =
                             commission.sales_order?.order_number ??
                             commission.order_number ??
@@ -922,18 +932,31 @@ export default function LinkMeCommissionsPage() {
                                 {orderNumber}
                               </TableCell>
                               <TableCell>
-                                {commission.affiliate?.display_name ?? 'N/A'}
+                                {(() => {
+                                  const org = commission.sales_order?.customer;
+                                  if (!org)
+                                    return (
+                                      <span className="text-gray-400">-</span>
+                                    );
+                                  const tradeName = org.trade_name;
+                                  const legalName = org.legal_name;
+                                  if (tradeName && tradeName !== legalName) {
+                                    return (
+                                      <span className="text-sm">
+                                        {tradeName}{' '}
+                                        <span className="text-muted-foreground">
+                                          ({legalName})
+                                        </span>
+                                      </span>
+                                    );
+                                  }
+                                  return (
+                                    <span className="text-sm">{legalName}</span>
+                                  );
+                                })()}
                               </TableCell>
                               <TableCell>
-                                <Badge
-                                  variant={
-                                    affiliateType === 'Enseigne'
-                                      ? 'default'
-                                      : 'secondary'
-                                  }
-                                >
-                                  {affiliateType}
-                                </Badge>
+                                {commission.affiliate?.display_name ?? 'N/A'}
                               </TableCell>
                               <TableCell>
                                 <Badge

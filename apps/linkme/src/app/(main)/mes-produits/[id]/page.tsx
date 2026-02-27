@@ -414,7 +414,7 @@ export default function EditProduitPage() {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Votre prix (payout HT) {!viewOnly && '*'}
+                    Votre prix de vente HT {!viewOnly && '*'}
                   </label>
                   <div className="relative">
                     <input
@@ -441,7 +441,8 @@ export default function EditProduitPage() {
                     </p>
                   )}
                   <p className="text-xs text-gray-500 mt-1">
-                    Montant que vous recevrez pour chaque vente
+                    Prix de vente hors taxes. Encaissement net = prix -
+                    commission LinkMe
                   </p>
                 </div>
 
@@ -642,14 +643,15 @@ export default function EditProduitPage() {
 
               <div className="space-y-3">
                 <div className="flex justify-between items-center py-2 border-b">
-                  <span className="text-gray-600">Votre payout</span>
+                  <span className="text-gray-600">Prix de vente HT</span>
                   <span className="font-semibold text-green-600">
                     {payout.toFixed(2)} EUR
                   </span>
                 </div>
                 <div className="py-2 text-center">
                   <p className="text-sm text-gray-500">
-                    Le prix client final sera calcule apres approbation
+                    Votre encaissement net sera calcule apres approbation (prix
+                    - commission LinkMe)
                   </p>
                 </div>
               </div>

@@ -198,7 +198,7 @@ export default function DashboardPage(): JSX.Element | null {
         <section className="mb-8" data-tour="analytics-link">
           <Link
             href="/statistiques"
-            className="flex items-center justify-center gap-2 w-full py-3 px-4 bg-white border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 hover:border-[#5DBEBB] hover:text-[#5DBEBB] transition-all"
+            className="flex items-center justify-center gap-2 w-full py-3 px-4 bg-linkme-turquoise text-white rounded-lg text-sm font-medium hover:bg-linkme-turquoise/90 transition-all shadow-sm"
           >
             <BarChart3 className="h-4 w-4" />
             Voir les statistiques détaillées
@@ -212,7 +212,7 @@ export default function DashboardPage(): JSX.Element | null {
             Actions rapides
           </h2>
           <div className="grid grid-cols-3 gap-3">
-            {/* Ma sélection */}
+            {/* Mes sélections */}
             <Link
               href="/ma-selection"
               className="flex flex-col items-center gap-2 p-4 bg-white border border-gray-100 rounded-lg hover:bg-amber-50 hover:border-amber-200 transition-colors group"
@@ -221,7 +221,7 @@ export default function DashboardPage(): JSX.Element | null {
                 <Star className="h-5 w-5 text-amber-600" />
               </div>
               <span className="text-sm font-medium text-gray-700 text-center">
-                Ma sélection
+                Mes sélections
               </span>
             </Link>
 

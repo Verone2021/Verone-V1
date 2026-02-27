@@ -11,8 +11,10 @@
  * @since 2026-02-25
  */
 
+import Link from 'next/link';
+
 import { Card } from '@tremor/react';
-import { Package, Award } from 'lucide-react';
+import { Package, Award, ArrowRight } from 'lucide-react';
 
 import { TopProductsTable } from '@/components/analytics';
 import type { AffiliateAnalyticsData } from '@/types/analytics';
@@ -85,6 +87,17 @@ export function StatsProductsTab({ data, isLoading }: StatsProductsTabProps) {
         title="Top 10 Produits Vendus"
         maxItems={10}
       />
+
+      {/* Lien vers page complète */}
+      <div className="text-center pt-4">
+        <Link
+          href="/statistiques/produits"
+          className="inline-flex items-center gap-2 text-sm font-medium text-[#3976BB] hover:text-[#183559] transition-colors"
+        >
+          Voir tous les produits
+          <ArrowRight className="h-4 w-4" />
+        </Link>
+      </div>
     </div>
   );
 }

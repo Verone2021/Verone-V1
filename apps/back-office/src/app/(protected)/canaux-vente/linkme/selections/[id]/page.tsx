@@ -45,6 +45,7 @@ import {
   Plus,
   Trash2,
   Eye,
+  EyeOff,
   Pencil,
   Package,
   ShoppingCart,
@@ -70,6 +71,7 @@ import {
   useRemoveProductFromSelection,
   useUpdateProductMargin,
   useUpdateSelectionItem,
+  useToggleSelectionItemVisibility,
   type SelectionItem,
   type SourcedProduct,
 } from '../../hooks/use-linkme-selections';
@@ -105,6 +107,7 @@ export default function SelectionDetailPage({
   const updateSelection = useUpdateSelection();
   const addProduct = useAddProductToSelection();
   const removeProduct = useRemoveProductFromSelection();
+  const toggleVisibility = useToggleSelectionItemVisibility();
 
   // États du formulaire
   const [formData, setFormData] = useState({
@@ -676,7 +679,14 @@ export default function SelectionDetailPage({
                       : 0;
 
                     return (
-                      <TableRow key={item.id}>
+                      <TableRow
+                        key={item.id}
+                        className={
+                          item.is_hidden_by_staff
+                            ? 'opacity-50 bg-orange-50/50'
+                            : undefined
+                        }
+                      >
                         <TableCell>
                           <ProductThumbnail
                             src={item.product_image_url}
@@ -705,6 +715,15 @@ export default function SelectionDetailPage({
                                   className="text-xs bg-purple-100 text-purple-700 border-purple-200"
                                 >
                                   Revendeur
+                                </Badge>
+                              )}
+                              {item.is_hidden_by_staff && (
+                                <Badge
+                                  variant="outline"
+                                  className="text-xs bg-orange-100 text-orange-700 border-orange-200"
+                                >
+                                  <EyeOff className="h-3 w-3 mr-1" />
+                                  Masqué
                                 </Badge>
                               )}
                             </div>
@@ -794,15 +813,51 @@ export default function SelectionDetailPage({
                         {/* Actions */}
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-1">
-                            {/* Bouton Vue (READ-ONLY) */}
+                            {/* Bouton Masquer/Afficher (toggle visibility) */}
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className={`h-8 w-8 ${
+                                item.is_hidden_by_staff
+                                  ? 'text-orange-500 hover:text-orange-600'
+                                  : 'text-gray-400 hover:text-orange-500'
+                              }`}
+                              onClick={() => {
+                                void toggleVisibility
+                                  .mutateAsync({
+                                    itemId: item.id,
+                                    isHidden: !item.is_hidden_by_staff,
+                                    selectionId: id,
+                                  })
+                                  .catch(error => {
+                                    console.error(
+                                      '[Selections] toggleVisibility failed:',
+                                      error
+                                    );
+                                  });
+                              }}
+                              disabled={toggleVisibility.isPending}
+                              title={
+                                item.is_hidden_by_staff
+                                  ? 'Rendre visible publiquement'
+                                  : 'Masquer de la sélection publique'
+                              }
+                            >
+                              {item.is_hidden_by_staff ? (
+                                <EyeOff className="h-4 w-4" />
+                              ) : (
+                                <Eye className="h-4 w-4" />
+                              )}
+                            </Button>
+                            {/* Bouton Vue fiche (READ-ONLY) */}
                             <Button
                               size="icon"
                               variant="ghost"
                               className="h-8 w-8 text-gray-600 hover:text-gray-700"
                               onClick={() => handleOpenViewModal(item)}
-                              title="Voir fiche"
+                              title="Voir fiche produit"
                             >
-                              <Eye className="h-4 w-4" />
+                              <BookOpen className="h-4 w-4" />
                             </Button>
                             {/* Bouton Édition (Pencil) */}
                             <Button

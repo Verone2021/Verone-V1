@@ -46,7 +46,14 @@ type SalesOrderItemWithProduct = {
   total_ht: number;
   retrocession_rate: number;
   retrocession_amount: number;
+  base_price_ht_locked: number | null;
+  selling_price_ht_locked: number | null;
   linkme_selection_item_id: string | null;
+  linkme_selection_items: {
+    base_price_ht: number;
+    margin_rate: number;
+    selling_price_ht: number;
+  } | null;
   products: {
     id: string;
     name: string;
@@ -84,6 +91,8 @@ export interface LinkMeOrderItemInput {
   linkme_selection_item_id?: string;
   /** Prix de base HT pour calcul commission (avant majoration affilié) */
   base_price_ht: number;
+  /** Produit créé par l'affilié (modèle inversé) */
+  is_affiliate_product?: boolean;
 }
 
 export interface CreateLinkMeOrderInput {
@@ -115,6 +124,8 @@ export interface CreateLinkMeOrderInput {
   handling_cost_ht?: number;
   /** Taux de TVA sur les frais (decimal, ex: 0.2 pour 20%) - defaut 20% */
   frais_tax_rate?: number;
+  /** Date de commande (format YYYY-MM-DD, défaut: aujourd'hui) */
+  order_date?: string | null;
   /** Date de livraison souhaitée */
   expected_delivery_date?: string | null;
   /** Livraison en centre commercial (logistique spéciale) */
@@ -168,12 +179,14 @@ export interface UpdateLinkMeOrderInput {
   insurance_cost_ht?: number;
   /** Frais de manutention HT */
   handling_cost_ht?: number;
-  /** Lignes de commande (mise à jour des quantités) */
+  /** Lignes de commande (mise à jour des quantités et prix) */
   items?: Array<{
     id?: string;
     product_id: string;
     quantity: number;
     unit_price_ht: number;
+    /** Override du taux de rétrocession (commission affilié) */
+    retrocession_rate?: number;
   }>;
 }
 
@@ -188,6 +201,14 @@ export interface LinkMeOrderItem {
   retrocession_rate: number | null;
   retrocession_amount: number | null;
   linkme_selection_item_id: string | null;
+  /** Prix de base HT (locked ou depuis sélection) */
+  base_price_ht: number;
+  /** Taux de marge en % (depuis sélection) */
+  margin_rate: number;
+  /** Prix de base HT verrouillé à la validation */
+  base_price_ht_locked: number | null;
+  /** Prix de vente HT verrouillé à la validation */
+  selling_price_ht_locked: number | null;
 }
 
 // ============================================
@@ -277,7 +298,14 @@ async function fetchLinkMeOrderById(orderId: string): Promise<LinkMeOrder> {
         total_ht,
         retrocession_rate,
         retrocession_amount,
+        base_price_ht_locked,
+        selling_price_ht_locked,
         linkme_selection_item_id,
+        linkme_selection_items (
+          base_price_ht,
+          margin_rate,
+          selling_price_ht
+        ),
         products (
           id,
           name,
@@ -314,6 +342,14 @@ async function fetchLinkMeOrderById(orderId: string): Promise<LinkMeOrder> {
         retrocession_rate: item.retrocession_rate,
         retrocession_amount: item.retrocession_amount,
         linkme_selection_item_id: item.linkme_selection_item_id,
+        // Prix de base: priorité locked > sélection > unit_price_ht (fallback)
+        base_price_ht:
+          item.base_price_ht_locked ??
+          item.linkme_selection_items?.base_price_ht ??
+          item.unit_price_ht,
+        margin_rate: item.linkme_selection_items?.margin_rate ?? 0,
+        base_price_ht_locked: item.base_price_ht_locked,
+        selling_price_ht_locked: item.selling_price_ht_locked,
       })
     ),
   };
@@ -389,13 +425,18 @@ async function updateLinkMeOrder(
   if (input.items && input.items.length > 0) {
     for (const item of input.items) {
       if (item.id) {
-        // Mise à jour ligne existante
+        // Mise à jour ligne existante (prix + quantité + rétrocession optionnelle)
+        const updatePayload: Record<string, unknown> = {
+          quantity: item.quantity,
+          unit_price_ht: item.unit_price_ht,
+        };
+        // Envoyer retrocession_rate si fourni (trigger DB recalcule retrocession_amount)
+        if (item.retrocession_rate !== undefined) {
+          updatePayload.retrocession_rate = item.retrocession_rate;
+        }
         await supabase
           .from('sales_order_items')
-          .update({
-            quantity: item.quantity,
-            unit_price_ht: item.unit_price_ht,
-          })
+          .update(updatePayload)
           .eq('id', item.id);
       }
     }
@@ -449,9 +490,14 @@ async function createLinkMeOrder(
     const lineTva = lineTotal * (item.tax_rate ?? 0.2);
     productsHt += lineTotal;
     totalTva += lineTva;
-    // Commission calculee sur base_price_ht (135EUR), pas sur unit_price_ht (168.75EUR)
-    _totalRetrocession +=
-      item.quantity * item.base_price_ht * item.retrocession_rate;
+    // Commission = prix_vente × quantité × taux (formule alignée avec trigger DB)
+    if (item.is_affiliate_product) {
+      _totalRetrocession +=
+        item.quantity * item.unit_price_ht * item.retrocession_rate;
+    } else {
+      _totalRetrocession +=
+        item.unit_price_ht * item.quantity * item.retrocession_rate;
+    }
   }
 
   // Frais additionnels avec TVA configurable
@@ -489,6 +535,7 @@ async function createLinkMeOrder(
     total_ht: totalHt,
     total_ttc: totalTtc,
     tax_rate: 0, // TVA calculee par ligne, pas globale
+    order_date: input.order_date ?? new Date().toISOString().split('T')[0],
     notes: input.internal_notes ?? null,
     // Frais additionnels
     shipping_cost_ht: shippingCostHt,
@@ -535,9 +582,11 @@ async function createLinkMeOrder(
     // total_ht est GENERATED - ne pas l'inserer
     tax_rate: item.tax_rate ?? 0.2, // TVA par ligne (defaut 20%)
     retrocession_rate: item.retrocession_rate,
-    // CORRECTION: utiliser base_price_ht (prix catalogue) et non unit_price_ht (prix vente)
-    retrocession_amount:
-      item.quantity * item.base_price_ht * item.retrocession_rate,
+    // retrocession_amount: calculé par le trigger DB (BEFORE INSERT)
+    // Verrouiller les prix au moment de la création
+    // → Le trigger utilisera ces valeurs au lieu de fetch la sélection
+    base_price_ht_locked: item.base_price_ht,
+    selling_price_ht_locked: item.unit_price_ht,
     linkme_selection_item_id: item.linkme_selection_item_id ?? null,
   }));
 

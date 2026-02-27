@@ -1,23 +1,17 @@
 'use client';
 
 /**
- * ContactDisplayCard - Carte d'affichage de contact (non-sélectionnable)
+ * ContactDisplayCard - Carte compacte d'affichage de contact
  *
- * Variante de ContactCard pour affichage uniquement (modal, liste)
- * Affiche badges pour rôles et appartenance (enseigne/restaurant/partagé)
+ * Affiche un contact avec badges de rôle colorés + badge "Utilisateur"
+ * pour différencier les contacts liés à un compte utilisateur.
  *
  * @module ContactDisplayCard
  * @since 2026-01-21
  */
 
-import { Card, Badge } from '@verone/ui';
-import {
-  User as _User,
-  Building2 as _Building2,
-  Share2,
-  Mail,
-  Phone,
-} from 'lucide-react';
+import { Badge } from '@verone/ui';
+import { Mail, Phone, UserCheck } from 'lucide-react';
 
 import type { OrganisationContact } from '@/lib/hooks/use-organisation-contacts';
 
@@ -30,12 +24,23 @@ interface ContactDisplayCardProps {
   contact: OrganisationContact;
   /** Affichage compact (sans détails) */
   compact?: boolean;
-  /** Montrer le badge d'appartenance (enseigne/restaurant/partagé) */
-  showOwnershipBadge?: boolean;
-  /** ID de l'organisation pour déterminer le badge */
-  organisationId?: string | null;
-  /** ID de l'enseigne pour déterminer le badge */
+  /** ID de l'enseigne pour couleur avatar */
   enseigneId?: string | null;
+}
+
+// ============================================================================
+// HELPERS
+// ============================================================================
+
+/** Couleur avatar selon contexte (enseigne = turquoise, org = bleu) */
+function getAvatarColors(enseigneId: string | null | undefined): {
+  bg: string;
+  text: string;
+} {
+  if (enseigneId) {
+    return { bg: 'bg-linkme-turquoise/10', text: 'text-linkme-turquoise' };
+  }
+  return { bg: 'bg-blue-100', text: 'text-blue-700' };
 }
 
 // ============================================================================
@@ -45,85 +50,94 @@ interface ContactDisplayCardProps {
 export function ContactDisplayCard({
   contact,
   compact = false,
-  showOwnershipBadge = false,
+  enseigneId,
 }: ContactDisplayCardProps) {
   const displayName = `${contact.firstName} ${contact.lastName}`;
   const initials =
     `${contact.firstName[0]}${contact.lastName[0]}`.toUpperCase();
-
-  // Déterminer les rôles
-  const roles: string[] = [];
-  if (contact.isPrimaryContact) roles.push('Principal');
-  if (contact.isBillingContact) roles.push('Facturation');
-  if (contact.isCommercialContact) roles.push('Commercial');
-  if (contact.isTechnicalContact) roles.push('Technique');
+  const avatarColors = getAvatarColors(enseigneId);
 
   return (
-    <Card className="p-4 hover:shadow-md transition-shadow">
-      <div className="flex items-start gap-3">
+    <div className="rounded-lg border bg-white p-3 hover:shadow-sm transition-shadow">
+      <div className="flex items-start gap-2.5">
         {/* Avatar */}
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 flex-shrink-0">
-          <span className="text-sm font-medium text-blue-700">{initials}</span>
+        <div
+          className={`flex h-8 w-8 items-center justify-center rounded-full flex-shrink-0 ${avatarColors.bg}`}
+        >
+          <span className={`text-xs font-semibold ${avatarColors.text}`}>
+            {initials}
+          </span>
         </div>
 
         {/* Informations */}
         <div className="flex-1 min-w-0">
-          <p className="font-medium truncate">{displayName}</p>
+          <div className="flex items-center gap-1.5">
+            <p className="text-sm font-medium truncate">{displayName}</p>
+            {contact.isUser && (
+              <Badge
+                variant="outline"
+                size="sm"
+                className="bg-blue-50 text-blue-600 border-blue-200 flex items-center gap-0.5 shrink-0"
+              >
+                <UserCheck className="h-3 w-3" />
+                Utilisateur
+              </Badge>
+            )}
+          </div>
 
           {/* Fonction/Titre */}
           {contact.title && (
-            <p className="text-sm text-gray-500 truncate">{contact.title}</p>
+            <p className="text-xs text-gray-500 truncate">{contact.title}</p>
           )}
 
           {/* Email et téléphone (si pas compact) */}
           {!compact && (
-            <div className="mt-2 space-y-1">
+            <div className="mt-1.5 space-y-0.5">
               <a
                 href={`mailto:${contact.email}`}
-                className="text-sm text-blue-600 hover:underline flex items-center gap-1.5 truncate"
+                className="text-xs text-blue-600 hover:underline flex items-center gap-1 truncate"
               >
-                <Mail className="h-3.5 w-3.5 flex-shrink-0" />
+                <Mail className="h-3 w-3 flex-shrink-0" />
                 <span className="truncate">{contact.email}</span>
               </a>
               {(Boolean(contact.phone) || Boolean(contact.mobile)) && (
                 <a
                   href={`tel:${contact.phone ?? contact.mobile}`}
-                  className="text-sm text-gray-600 hover:underline flex items-center gap-1.5"
+                  className="text-xs text-gray-600 hover:underline flex items-center gap-1"
                 >
-                  <Phone className="h-3.5 w-3.5 flex-shrink-0" />
+                  <Phone className="h-3 w-3 flex-shrink-0" />
                   <span>{contact.phone ?? contact.mobile}</span>
                 </a>
               )}
             </div>
           )}
 
-          {/* Badges rôles */}
-          {roles.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 mt-2">
-              {roles.map(role => (
-                <Badge key={role} variant="secondary" size="sm">
-                  {role}
+          {/* Badges rôles — Facturation et Commercial uniquement */}
+          {(contact.isBillingContact || contact.isCommercialContact) && (
+            <div className="flex flex-wrap gap-1 mt-1.5">
+              {contact.isBillingContact && (
+                <Badge
+                  variant="outline"
+                  size="sm"
+                  className="bg-green-100 text-green-700 border-green-200 text-[10px]"
+                >
+                  Facturation
                 </Badge>
-              ))}
-            </div>
-          )}
-
-          {/* Badge appartenance (optionnel) */}
-          {showOwnershipBadge && (
-            <div className="mt-2">
-              <Badge
-                variant="outline"
-                size="sm"
-                className="bg-purple-50 text-purple-700 border-purple-200"
-              >
-                <Share2 className="mr-1 h-3 w-3" />
-                Partagé
-              </Badge>
+              )}
+              {contact.isCommercialContact && (
+                <Badge
+                  variant="outline"
+                  size="sm"
+                  className="bg-blue-100 text-blue-700 border-blue-200 text-[10px]"
+                >
+                  Commercial
+                </Badge>
+              )}
             </div>
           )}
         </div>
       </div>
-    </Card>
+    </div>
   );
 }
 
