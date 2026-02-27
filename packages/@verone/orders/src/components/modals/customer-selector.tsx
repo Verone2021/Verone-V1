@@ -3,16 +3,11 @@
 import { useState, useEffect } from 'react';
 
 import { useToast } from '@verone/common/hooks';
+import { Combobox } from '@verone/ui';
 import { Label } from '@verone/ui';
 import { RadioGroup, RadioGroupItem } from '@verone/ui';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@verone/ui';
 import { createClient } from '@verone/utils/supabase/client';
+import { getOrganisationCardName } from '@verone/utils/utils/organisation-helpers';
 
 import { CreateIndividualCustomerModal } from './create-individual-customer-modal';
 import { CreateOrganisationModal } from './create-organisation-modal';
@@ -144,7 +139,7 @@ export function CustomerSelector({
         setCustomers(
           (organisations || []).map(org => ({
             ...org,
-            name: org.trade_name || org.legal_name,
+            name: getOrganisationCardName(org),
             type: 'professional' as const,
           })) as any
         );
@@ -347,34 +342,23 @@ export function CustomerSelector({
         ) : (
           <div className="flex gap-2">
             <div className="flex-1">
-              <Select
+              <Combobox
+                options={customerOptions}
                 value={selectedCustomer?.id || ''}
                 onValueChange={handleCustomerChange}
+                placeholder={
+                  loading
+                    ? 'Chargement...'
+                    : `Sélectionner ${customerType === 'professional' ? 'une organisation' : 'un client particulier'}...`
+                }
+                searchPlaceholder={
+                  customerType === 'professional'
+                    ? 'Rechercher une organisation...'
+                    : 'Rechercher un client...'
+                }
+                emptyMessage="Aucun client trouvé."
                 disabled={disabled || loading}
-              >
-                <SelectTrigger>
-                  <SelectValue
-                    placeholder={
-                      loading
-                        ? 'Chargement...'
-                        : `Sélectionner ${customerType === 'professional' ? 'une organisation' : 'un client particulier'}...`
-                    }
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  {customerOptions.length === 0 ? (
-                    <div className="p-2 text-sm text-gray-500 text-center">
-                      Aucun client trouvé.
-                    </div>
-                  ) : (
-                    customerOptions.map(option => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
+              />
             </div>
 
             {/* Bouton création selon le type */}

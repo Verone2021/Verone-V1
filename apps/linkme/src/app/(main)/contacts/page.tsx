@@ -54,7 +54,10 @@ export default function ContactsPage() {
     true
   );
 
-  const contacts = contactsData?.contacts ?? [];
+  const contacts = useMemo(
+    () => contactsData?.contacts ?? [],
+    [contactsData?.contacts]
+  );
 
   // Filtrage et recherche
   const filteredContacts = useMemo(() => {
