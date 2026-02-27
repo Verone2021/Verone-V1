@@ -13,7 +13,6 @@
   "dependencies": {
     "@verone/common": "workspace:*",
     "@verone/integrations": "workspace:*",
-    "@verone/orders": "workspace:*",
     "@verone/products": "workspace:*",
     "@verone/types": "workspace:*",
     "@verone/ui": "workspace:*",
