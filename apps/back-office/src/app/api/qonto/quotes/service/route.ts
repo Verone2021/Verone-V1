@@ -236,7 +236,7 @@ export async function POST(request: NextRequest): Promise<
       title: item.title,
       description: item.description,
       quantity: String(item.quantity),
-      unit: 'prestation',
+      unit: 'unit',
       unitPrice: {
         value: String(item.unitPrice),
         currency: 'EUR',

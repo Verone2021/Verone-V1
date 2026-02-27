@@ -223,9 +223,9 @@ async function detectCompletedSteps(
     complete_profile: !!(
       affiliate?.display_name &&
       affiliate.display_name.trim().length > 0 &&
-      (affiliate.phone || affiliate.email)
+      (affiliate.phone ?? affiliate.email)
     ),
-    customize_site: !!(affiliate?.logo_url || affiliate?.bio),
+    customize_site: !!(affiliate?.logo_url ?? affiliate?.bio),
     create_selection: selections.length > 0,
     add_products: hasProducts,
     configure_margins: hasProducts, // Marge définie à l'ajout du produit
