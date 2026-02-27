@@ -1,0 +1,1479 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e5]:
+    - complementary "Navigation principale" [ref=e6]:
+      - link "V" [ref=e8] [cursor=pointer]:
+        - /url: /dashboard
+        - generic [ref=e9]: V
+      - navigation [ref=e10]:
+        - menubar [ref=e11]:
+          - listitem [ref=e12]:
+            - link [ref=e13] [cursor=pointer]:
+              - /url: /dashboard
+              - img [ref=e14]
+          - listitem [ref=e17]:
+            - button "0" [ref=e18] [cursor=pointer]:
+              - img [ref=e19]
+              - text: "0"
+          - listitem [ref=e23]:
+            - button "9+" [ref=e24] [cursor=pointer]:
+              - img [ref=e25]
+              - generic [ref=e29]: 9+
+          - listitem [ref=e30]:
+            - button "0" [ref=e31] [cursor=pointer]:
+              - img [ref=e32]
+              - text: "0"
+          - listitem [ref=e36]:
+            - button "4" [ref=e37] [cursor=pointer]:
+              - img [ref=e38]
+              - generic [ref=e41]: "4"
+          - listitem [ref=e42]:
+            - link [ref=e43] [cursor=pointer]:
+              - /url: /ventes
+              - img [ref=e44]
+          - listitem [ref=e48]:
+            - link "0" [ref=e49] [cursor=pointer]:
+              - /url: /consultations
+              - img [ref=e50]
+              - text: "0"
+          - listitem [ref=e52]:
+            - button "4" [ref=e53] [cursor=pointer]:
+              - img [ref=e54]
+              - generic [ref=e59]: "4"
+          - listitem [ref=e60]:
+            - button "9+" [ref=e61] [cursor=pointer]:
+              - img [ref=e62]
+              - generic [ref=e64]: 9+
+          - listitem [ref=e65]:
+            - link [ref=e66] [cursor=pointer]:
+              - /url: /livraisons
+              - img [ref=e67]
+          - listitem [ref=e72]:
+            - link [ref=e73] [cursor=pointer]:
+              - /url: /parametres
+              - img [ref=e74]
+      - button [ref=e78] [cursor=pointer]:
+        - img [ref=e79]
+    - generic [ref=e82]:
+      - banner [ref=e83]:
+        - generic [ref=e84]:
+          - generic [ref=e85]: jeu. 26 févr.
+          - button "50 50 Notifications" [ref=e86] [cursor=pointer]:
+            - img [ref=e87]
+            - generic [ref=e90]: "50"
+            - generic [ref=e91]: 50 Notifications
+          - button "Menu profil" [ref=e92] [cursor=pointer]:
+            - img [ref=e93]
+            - generic [ref=e96]: Menu profil
+      - generic [ref=e98]:
+        - generic [ref=e99]:
+          - link "← Retour aux Canaux" [ref=e100] [cursor=pointer]:
+            - /url: /canaux-vente
+          - generic [ref=e101]: /
+          - generic [ref=e102]: LinkMe
+        - generic [ref=e103]:
+          - link "Dashboard" [ref=e104] [cursor=pointer]:
+            - /url: /canaux-vente/linkme
+          - link "Utilisateurs" [ref=e105] [cursor=pointer]:
+            - /url: /canaux-vente/linkme/utilisateurs
+          - link "Enseignes" [ref=e106] [cursor=pointer]:
+            - /url: /canaux-vente/linkme/enseignes
+          - link "Organisations" [ref=e107] [cursor=pointer]:
+            - /url: /canaux-vente/linkme/organisations
+          - link "Catalogue" [ref=e108] [cursor=pointer]:
+            - /url: /canaux-vente/linkme/catalogue
+          - link "Sélections" [ref=e109] [cursor=pointer]:
+            - /url: /canaux-vente/linkme/selections
+          - link "Commandes" [ref=e110] [cursor=pointer]:
+            - /url: /canaux-vente/linkme/commandes
+          - link "Approbations" [ref=e111] [cursor=pointer]:
+            - /url: /canaux-vente/linkme/approbations
+          - link "Commissions" [ref=e112] [cursor=pointer]:
+            - /url: /canaux-vente/linkme/commissions
+          - link "Messages" [ref=e113] [cursor=pointer]:
+            - /url: /canaux-vente/linkme/messages
+          - link "Rapports" [ref=e114] [cursor=pointer]:
+            - /url: /canaux-vente/linkme/analytics/rapports
+          - link "Configuration" [ref=e115] [cursor=pointer]:
+            - /url: /canaux-vente/linkme/configuration
+      - main [ref=e116]:
+        - generic [ref=e117]:
+          - generic [ref=e118]:
+            - generic [ref=e119]:
+              - button [ref=e120] [cursor=pointer]:
+                - img [ref=e121]
+              - generic [ref=e123]:
+                - heading "Collection Mobilier Pokawa" [level=1] [ref=e124]
+                - paragraph [ref=e125]: Par Pokawa
+            - generic [ref=e126]:
+              - link "Voir la boutique" [ref=e127] [cursor=pointer]:
+                - /url: https://linkme.verone.fr/s/collection-mobilier-pokawa
+                - img [ref=e128]
+                - text: Voir la boutique
+              - button "Enregistrer" [disabled] [ref=e132]:
+                - img [ref=e133]
+                - text: Enregistrer
+          - generic [ref=e137]:
+            - generic [ref=e138]:
+              - generic [ref=e139]:
+                - heading "Informations" [level=3] [ref=e140]
+                - paragraph [ref=e141]: Modifiez les détails de la sélection
+              - generic [ref=e142]:
+                - generic [ref=e144]:
+                  - generic [ref=e146]: Nom
+                  - textbox "Nom" [ref=e149]: Collection Mobilier Pokawa
+                - generic [ref=e150]:
+                  - generic [ref=e152]: Description
+                  - textbox "Description" [ref=e154]
+                - generic [ref=e155]:
+                  - generic [ref=e156]:
+                    - generic [ref=e158]: Affichage des prix
+                    - paragraph [ref=e159]: Choisissez comment les prix sont affichés aux clients
+                  - combobox [ref=e160] [cursor=pointer]:
+                    - generic: TTC
+                    - img [ref=e161]
+            - generic [ref=e163]:
+              - heading "Statistiques" [level=3] [ref=e165]
+              - generic [ref=e166]:
+                - generic [ref=e167]:
+                  - img [ref=e168]
+                  - generic [ref=e172]:
+                    - paragraph [ref=e173]: "43"
+                    - paragraph [ref=e174]: Produits
+                - generic [ref=e175]:
+                  - img [ref=e176]
+                  - generic [ref=e179]:
+                    - paragraph [ref=e180]: "32"
+                    - paragraph [ref=e181]: Vues
+                - generic [ref=e182]:
+                  - img [ref=e183]
+                  - generic [ref=e187]:
+                    - paragraph [ref=e188]: "0"
+                    - paragraph [ref=e189]: Commandes
+                - generic [ref=e191]: Active
+          - generic [ref=e192]:
+            - generic [ref=e193]:
+              - generic [ref=e194]:
+                - generic [ref=e195]:
+                  - heading "Produits de la sélection" [level=3] [ref=e196]
+                  - paragraph [ref=e197]: Gérez les produits et leurs taux de marque
+                - button "Ajouter un produit" [ref=e198] [cursor=pointer]:
+                  - img [ref=e199]
+                  - text: Ajouter un produit
+              - tablist [ref=e201]:
+                - tab "Tous (43)" [selected] [ref=e202] [cursor=pointer]:
+                  - img [ref=e203]
+                  - text: Tous (43)
+                - tab "Catalogue (41)" [ref=e207] [cursor=pointer]:
+                  - img [ref=e208]
+                  - text: Catalogue (41)
+                - tab "Revendeur (2)" [ref=e211] [cursor=pointer]:
+                  - img [ref=e212]
+                  - text: Revendeur (2)
+            - table [ref=e219]:
+              - rowgroup [ref=e220]:
+                - row "Image Produit Stock Catalogue HT Prix vente LinkMe HT Prix vente Final HT Marge/Frais % Marge/Frais € Prix affilié HT Actions" [ref=e221]:
+                  - columnheader "Image" [ref=e222]
+                  - columnheader "Produit" [ref=e223]
+                  - columnheader "Stock" [ref=e224]
+                  - columnheader "Catalogue HT" [ref=e225]
+                  - columnheader "Prix vente LinkMe HT" [ref=e226]
+                  - columnheader "Prix vente Final HT" [ref=e227]
+                  - columnheader "Marge/Frais %" [ref=e228]
+                  - columnheader "Marge/Frais €" [ref=e229]
+                  - columnheader "Prix affilié HT" [ref=e230]
+                  - columnheader "Actions" [ref=e231]
+              - rowgroup [ref=e232]:
+                - row "Soliflore PM VAS-0006 3 7.83 € 7.83 € 8.61 € Marge compétitive (≤15%) 15.00 % 1.38 € 10.13 €" [ref=e233]:
+                  - cell [ref=e234]:
+                    - img [ref=e237]
+                  - cell "Soliflore PM VAS-0006" [ref=e241]:
+                    - generic [ref=e242]:
+                      - link "Soliflore PM" [ref=e244] [cursor=pointer]:
+                        - /url: /canaux-vente/linkme/catalogue/43f0edb9-9826-4378-a6bc-2f874d2bc33d
+                      - paragraph [ref=e245]: VAS-0006
+                  - cell "3" [ref=e246]:
+                    - generic [ref=e247]: "3"
+                  - cell "7.83 €" [ref=e248]
+                  - cell "7.83 €" [ref=e249]:
+                    - generic [ref=e251]: 7.83 €
+                  - cell "8.61 €" [ref=e252]
+                  - cell "Marge compétitive (≤15%) 15.00 %" [ref=e253]:
+                    - generic [ref=e254]:
+                      - generic "Marge compétitive (≤15%)" [ref=e255]
+                      - generic [ref=e256]: 15.00 %
+                  - cell "1.38 €" [ref=e257]
+                  - cell "10.13 €" [ref=e258]
+                  - cell [ref=e259]:
+                    - generic [ref=e260]:
+                      - button "Masquer de la sélection publique" [ref=e261] [cursor=pointer]:
+                        - img [ref=e262]
+                      - button "Voir fiche produit" [ref=e265] [cursor=pointer]:
+                        - img [ref=e266]
+                      - button "Modifier" [ref=e269] [cursor=pointer]:
+                        - img [ref=e270]
+                      - button "Supprimer" [ref=e273] [cursor=pointer]:
+                        - img [ref=e274]
+                - row "Vase ceramic Titi bleu Vase ceramic Titi bleu VAS-0017 18 20.35 € 20.35 € 20.35 € Marge compétitive (≤15%) 15.00 % 3.59 € 23.94 €" [ref=e277]:
+                  - cell "Vase ceramic Titi bleu" [ref=e278]:
+                    - img "Vase ceramic Titi bleu" [ref=e280]
+                  - cell "Vase ceramic Titi bleu VAS-0017" [ref=e281]:
+                    - generic [ref=e282]:
+                      - link "Vase ceramic Titi bleu" [ref=e284] [cursor=pointer]:
+                        - /url: /canaux-vente/linkme/catalogue/d169fbd4-8eba-4da4-96de-31122e51dab7
+                      - paragraph [ref=e285]: VAS-0017
+                  - cell "18" [ref=e286]:
+                    - generic [ref=e287]: "18"
+                  - cell "20.35 €" [ref=e288]
+                  - cell "20.35 €" [ref=e289]:
+                    - generic [ref=e291]: 20.35 €
+                  - cell "20.35 €" [ref=e292]
+                  - cell "Marge compétitive (≤15%) 15.00 %" [ref=e293]:
+                    - generic [ref=e294]:
+                      - generic "Marge compétitive (≤15%)" [ref=e295]
+                      - generic [ref=e296]: 15.00 %
+                  - cell "3.59 €" [ref=e297]
+                  - cell "23.94 €" [ref=e298]
+                  - cell [ref=e299]:
+                    - generic [ref=e300]:
+                      - button "Masquer de la sélection publique" [ref=e301] [cursor=pointer]:
+                        - img [ref=e302]
+                      - button "Voir fiche produit" [ref=e305] [cursor=pointer]:
+                        - img [ref=e306]
+                      - button "Modifier" [ref=e309] [cursor=pointer]:
+                        - img [ref=e310]
+                      - button "Supprimer" [ref=e313] [cursor=pointer]:
+                        - img [ref=e314]
+                - row "Vase terracota Pluriel Vase terracota Pluriel VAS-0016 42 12.69 € 12.69 € 12.69 € Marge compétitive (≤15%) 15.00 % 2.24 € 14.93 €" [ref=e317]:
+                  - cell "Vase terracota Pluriel" [ref=e318]:
+                    - img "Vase terracota Pluriel" [ref=e320]
+                  - cell "Vase terracota Pluriel VAS-0016" [ref=e321]:
+                    - generic [ref=e322]:
+                      - link "Vase terracota Pluriel" [ref=e324] [cursor=pointer]:
+                        - /url: /canaux-vente/linkme/catalogue/0c8b8792-e767-4a5f-ac76-22b2097da634
+                      - paragraph [ref=e325]: VAS-0016
+                  - cell "42" [ref=e326]:
+                    - generic [ref=e327]: "42"
+                  - cell "12.69 €" [ref=e328]
+                  - cell "12.69 €" [ref=e329]:
+                    - generic [ref=e331]: 12.69 €
+                  - cell "12.69 €" [ref=e332]
+                  - cell "Marge compétitive (≤15%) 15.00 %" [ref=e333]:
+                    - generic [ref=e334]:
+                      - generic "Marge compétitive (≤15%)" [ref=e335]
+                      - generic [ref=e336]: 15.00 %
+                  - cell "2.24 €" [ref=e337]
+                  - cell "14.93 €" [ref=e338]
+                  - cell [ref=e339]:
+                    - generic [ref=e340]:
+                      - button "Masquer de la sélection publique" [ref=e341] [cursor=pointer]:
+                        - img [ref=e342]
+                      - button "Voir fiche produit" [ref=e345] [cursor=pointer]:
+                        - img [ref=e346]
+                      - button "Modifier" [ref=e349] [cursor=pointer]:
+                        - img [ref=e350]
+                      - button "Supprimer" [ref=e353] [cursor=pointer]:
+                        - img [ref=e354]
+                - row "Vase ceramic Anse terracotta Vase ceramic Anse terracotta VAS-0008 18 6.84 € 6.84 € 6.84 € Marge compétitive (≤15%) 15.00 % 1.21 € 8.05 €" [ref=e357]:
+                  - cell "Vase ceramic Anse terracotta" [ref=e358]:
+                    - img "Vase ceramic Anse terracotta" [ref=e360]
+                  - cell "Vase ceramic Anse terracotta VAS-0008" [ref=e361]:
+                    - generic [ref=e362]:
+                      - link "Vase ceramic Anse terracotta" [ref=e364] [cursor=pointer]:
+                        - /url: /canaux-vente/linkme/catalogue/dc5b5c73-dbb8-4f55-aad6-545e99e29a8d
+                      - paragraph [ref=e365]: VAS-0008
+                  - cell "18" [ref=e366]:
+                    - generic [ref=e367]: "18"
+                  - cell "6.84 €" [ref=e368]
+                  - cell "6.84 €" [ref=e369]:
+                    - generic [ref=e371]: 6.84 €
+                  - cell "6.84 €" [ref=e372]
+                  - cell "Marge compétitive (≤15%) 15.00 %" [ref=e373]:
+                    - generic [ref=e374]:
+                      - generic "Marge compétitive (≤15%)" [ref=e375]
+                      - generic [ref=e376]: 15.00 %
+                  - cell "1.21 €" [ref=e377]
+                  - cell "8.05 €" [ref=e378]
+                  - cell [ref=e379]:
+                    - generic [ref=e380]:
+                      - button "Masquer de la sélection publique" [ref=e381] [cursor=pointer]:
+                        - img [ref=e382]
+                      - button "Voir fiche produit" [ref=e385] [cursor=pointer]:
+                        - img [ref=e386]
+                      - button "Modifier" [ref=e389] [cursor=pointer]:
+                        - img [ref=e390]
+                      - button "Supprimer" [ref=e393] [cursor=pointer]:
+                        - img [ref=e394]
+                - row "Soliflore GM VAS-0007 4 15.48 € 15.48 € 17.03 € Marge compétitive (≤15%) 15.00 % 2.73 € 20.03 €" [ref=e397]:
+                  - cell [ref=e398]:
+                    - img [ref=e401]
+                  - cell "Soliflore GM VAS-0007" [ref=e405]:
+                    - generic [ref=e406]:
+                      - link "Soliflore GM" [ref=e408] [cursor=pointer]:
+                        - /url: /canaux-vente/linkme/catalogue/13cd58ed-4bff-41f2-86df-da81b4c40dd9
+                      - paragraph [ref=e409]: VAS-0007
+                  - cell "4" [ref=e410]:
+                    - generic [ref=e411]: "4"
+                  - cell "15.48 €" [ref=e412]
+                  - cell "15.48 €" [ref=e413]:
+                    - generic [ref=e415]: 15.48 €
+                  - cell "17.03 €" [ref=e416]
+                  - cell "Marge compétitive (≤15%) 15.00 %" [ref=e417]:
+                    - generic [ref=e418]:
+                      - generic "Marge compétitive (≤15%)" [ref=e419]
+                      - generic [ref=e420]: 15.00 %
+                  - cell "2.73 €" [ref=e421]
+                  - cell "20.03 €" [ref=e422]
+                  - cell [ref=e423]:
+                    - generic [ref=e424]:
+                      - button "Masquer de la sélection publique" [ref=e425] [cursor=pointer]:
+                        - img [ref=e426]
+                      - button "Voir fiche produit" [ref=e429] [cursor=pointer]:
+                        - img [ref=e430]
+                      - button "Modifier" [ref=e433] [cursor=pointer]:
+                        - img [ref=e434]
+                      - button "Supprimer" [ref=e437] [cursor=pointer]:
+                        - img [ref=e438]
+                - row "Vase Tamegroute VAS-0005 20 13.50 € 13.50 € 13.50 € Marge compétitive (≤15%) 15.00 % 2.38 € 15.88 €" [ref=e441]:
+                  - cell [ref=e442]:
+                    - img [ref=e445]
+                  - cell "Vase Tamegroute VAS-0005" [ref=e449]:
+                    - generic [ref=e450]:
+                      - link "Vase Tamegroute" [ref=e452] [cursor=pointer]:
+                        - /url: /canaux-vente/linkme/catalogue/bcc2e47f-f4d0-4714-9fd7-fa8ed22ea9c4
+                      - paragraph [ref=e453]: VAS-0005
+                  - cell "20" [ref=e454]:
+                    - generic [ref=e455]: "20"
+                  - cell "13.50 €" [ref=e456]
+                  - cell "13.50 €" [ref=e457]:
+                    - generic [ref=e459]: 13.50 €
+                  - cell "13.50 €" [ref=e460]
+                  - cell "Marge compétitive (≤15%) 15.00 %" [ref=e461]:
+                    - generic [ref=e462]:
+                      - generic "Marge compétitive (≤15%)" [ref=e463]
+                      - generic [ref=e464]: 15.00 %
+                  - cell "2.38 €" [ref=e465]
+                  - cell "15.88 €" [ref=e466]
+                  - cell [ref=e467]:
+                    - generic [ref=e468]:
+                      - button "Masquer de la sélection publique" [ref=e469] [cursor=pointer]:
+                        - img [ref=e470]
+                      - button "Voir fiche produit" [ref=e473] [cursor=pointer]:
+                        - img [ref=e474]
+                      - button "Modifier" [ref=e477] [cursor=pointer]:
+                        - img [ref=e478]
+                      - button "Supprimer" [ref=e481] [cursor=pointer]:
+                        - img [ref=e482]
+                - row "Organiseur coulissant bambou PM RAN-0001 152 6.25 € 6.25 € 6.25 € Marge compétitive (≤15%) 15.00 % 1.10 € 7.35 €" [ref=e485]:
+                  - cell [ref=e486]:
+                    - img [ref=e489]
+                  - cell "Organiseur coulissant bambou PM RAN-0001" [ref=e493]:
+                    - generic [ref=e494]:
+                      - generic [ref=e496]: Organiseur coulissant bambou PM
+                      - paragraph [ref=e497]: RAN-0001
+                  - cell "152" [ref=e498]:
+                    - generic [ref=e499]: "152"
+                  - cell "6.25 €" [ref=e500]
+                  - cell "6.25 €" [ref=e501]:
+                    - generic [ref=e503]: 6.25 €
+                  - cell "6.25 €" [ref=e504]
+                  - cell "Marge compétitive (≤15%) 15.00 %" [ref=e505]:
+                    - generic [ref=e506]:
+                      - generic "Marge compétitive (≤15%)" [ref=e507]
+                      - generic [ref=e508]: 15.00 %
+                  - cell "1.10 €" [ref=e509]
+                  - cell "7.35 €" [ref=e510]
+                  - cell [ref=e511]:
+                    - generic [ref=e512]:
+                      - button "Masquer de la sélection publique" [ref=e513] [cursor=pointer]:
+                        - img [ref=e514]
+                      - button "Voir fiche produit" [ref=e517] [cursor=pointer]:
+                        - img [ref=e518]
+                      - button "Modifier" [ref=e521] [cursor=pointer]:
+                        - img [ref=e522]
+                      - button "Supprimer" [ref=e525] [cursor=pointer]:
+                        - img [ref=e526]
+                - row "Organiseur coulissant bambou MM RAN-0002 142 10.50 € 10.50 € 10.50 € Marge compétitive (≤15%) 15.00 % 1.85 € 12.35 €" [ref=e529]:
+                  - cell [ref=e530]:
+                    - img [ref=e533]
+                  - cell "Organiseur coulissant bambou MM RAN-0002" [ref=e537]:
+                    - generic [ref=e538]:
+                      - generic [ref=e540]: Organiseur coulissant bambou MM
+                      - paragraph [ref=e541]: RAN-0002
+                  - cell "142" [ref=e542]:
+                    - generic [ref=e543]: "142"
+                  - cell "10.50 €" [ref=e544]
+                  - cell "10.50 €" [ref=e545]:
+                    - generic [ref=e547]: 10.50 €
+                  - cell "10.50 €" [ref=e548]
+                  - cell "Marge compétitive (≤15%) 15.00 %" [ref=e549]:
+                    - generic [ref=e550]:
+                      - generic "Marge compétitive (≤15%)" [ref=e551]
+                      - generic [ref=e552]: 15.00 %
+                  - cell "1.85 €" [ref=e553]
+                  - cell "12.35 €" [ref=e554]
+                  - cell [ref=e555]:
+                    - generic [ref=e556]:
+                      - button "Masquer de la sélection publique" [ref=e557] [cursor=pointer]:
+                        - img [ref=e558]
+                      - button "Voir fiche produit" [ref=e561] [cursor=pointer]:
+                        - img [ref=e562]
+                      - button "Modifier" [ref=e565] [cursor=pointer]:
+                        - img [ref=e566]
+                      - button "Supprimer" [ref=e569] [cursor=pointer]:
+                        - img [ref=e570]
+                - row "Vase ceramic Double blanc texturé Vase ceramic Double blanc texturé VAS-0020 24 11.33 € 11.33 € 11.33 € Marge compétitive (≤15%) 15.00 % 2.00 € 13.33 €" [ref=e573]:
+                  - cell "Vase ceramic Double blanc texturé" [ref=e574]:
+                    - img "Vase ceramic Double blanc texturé" [ref=e576]
+                  - cell "Vase ceramic Double blanc texturé VAS-0020" [ref=e577]:
+                    - generic [ref=e578]:
+                      - link "Vase ceramic Double blanc texturé" [ref=e580] [cursor=pointer]:
+                        - /url: /canaux-vente/linkme/catalogue/0789b872-6e8d-4cf5-8773-05577bb11d84
+                      - paragraph [ref=e581]: VAS-0020
+                  - cell "24" [ref=e582]:
+                    - generic [ref=e583]: "24"
+                  - cell "11.33 €" [ref=e584]
+                  - cell "11.33 €" [ref=e585]:
+                    - generic [ref=e587]: 11.33 €
+                  - cell "11.33 €" [ref=e588]
+                  - cell "Marge compétitive (≤15%) 15.00 %" [ref=e589]:
+                    - generic [ref=e590]:
+                      - generic "Marge compétitive (≤15%)" [ref=e591]
+                      - generic [ref=e592]: 15.00 %
+                  - cell "2.00 €" [ref=e593]
+                  - cell "13.33 €" [ref=e594]
+                  - cell [ref=e595]:
+                    - generic [ref=e596]:
+                      - button "Masquer de la sélection publique" [ref=e597] [cursor=pointer]:
+                        - img [ref=e598]
+                      - button "Voir fiche produit" [ref=e601] [cursor=pointer]:
+                        - img [ref=e602]
+                      - button "Modifier" [ref=e605] [cursor=pointer]:
+                        - img [ref=e606]
+                      - button "Supprimer" [ref=e609] [cursor=pointer]:
+                        - img [ref=e610]
+                - row "Vase ceramic boule terracotta Vase ceramic boule terracotta VAS-0019 36 18.18 € 18.18 € 18.18 € Marge compétitive (≤15%) 15.00 % 3.21 € 21.39 €" [ref=e613]:
+                  - cell "Vase ceramic boule terracotta" [ref=e614]:
+                    - img "Vase ceramic boule terracotta" [ref=e616]
+                  - cell "Vase ceramic boule terracotta VAS-0019" [ref=e617]:
+                    - generic [ref=e618]:
+                      - link "Vase ceramic boule terracotta" [ref=e620] [cursor=pointer]:
+                        - /url: /canaux-vente/linkme/catalogue/945dc236-f584-4869-a3c8-6ad8dd172d36
+                      - paragraph [ref=e621]: VAS-0019
+                  - cell "36" [ref=e622]:
+                    - generic [ref=e623]: "36"
+                  - cell "18.18 €" [ref=e624]
+                  - cell "18.18 €" [ref=e625]:
+                    - generic [ref=e627]: 18.18 €
+                  - cell "18.18 €" [ref=e628]
+                  - cell "Marge compétitive (≤15%) 15.00 %" [ref=e629]:
+                    - generic [ref=e630]:
+                      - generic "Marge compétitive (≤15%)" [ref=e631]
+                      - generic [ref=e632]: 15.00 %
+                  - cell "3.21 €" [ref=e633]
+                  - cell "21.39 €" [ref=e634]
+                  - cell [ref=e635]:
+                    - generic [ref=e636]:
+                      - button "Masquer de la sélection publique" [ref=e637] [cursor=pointer]:
+                        - img [ref=e638]
+                      - button "Voir fiche produit" [ref=e641] [cursor=pointer]:
+                        - img [ref=e642]
+                      - button "Modifier" [ref=e645] [cursor=pointer]:
+                        - img [ref=e646]
+                      - button "Supprimer" [ref=e649] [cursor=pointer]:
+                        - img [ref=e650]
+                - row "Plateau bois 20 x 30 cm Plateau bois 20 x 30 cm PLA-0001 605 18.50 € 18.50 € 18.50 € Marge compétitive (≤15%) 15.00 % 3.26 € 21.76 €" [ref=e653]:
+                  - cell "Plateau bois 20 x 30 cm" [ref=e654]:
+                    - img "Plateau bois 20 x 30 cm" [ref=e656]
+                  - cell "Plateau bois 20 x 30 cm PLA-0001" [ref=e657]:
+                    - generic [ref=e658]:
+                      - link "Plateau bois 20 x 30 cm" [ref=e660] [cursor=pointer]:
+                        - /url: /canaux-vente/linkme/catalogue/0785b5e7-da45-482e-833a-3496567fbc6e
+                      - paragraph [ref=e661]: PLA-0001
+                  - cell "605" [ref=e662]:
+                    - generic [ref=e663]: "605"
+                  - cell "18.50 €" [ref=e664]
+                  - cell "18.50 €" [ref=e665]:
+                    - generic [ref=e667]: 18.50 €
+                  - cell "18.50 €" [ref=e668]
+                  - cell "Marge compétitive (≤15%) 15.00 %" [ref=e669]:
+                    - generic [ref=e670]:
+                      - generic "Marge compétitive (≤15%)" [ref=e671]
+                      - generic [ref=e672]: 15.00 %
+                  - cell "3.26 €" [ref=e673]
+                  - cell "21.76 €" [ref=e674]
+                  - cell [ref=e675]:
+                    - generic [ref=e676]:
+                      - button "Masquer de la sélection publique" [ref=e677] [cursor=pointer]:
+                        - img [ref=e678]
+                      - button "Voir fiche produit" [ref=e681] [cursor=pointer]:
+                        - img [ref=e682]
+                      - button "Modifier" [ref=e685] [cursor=pointer]:
+                        - img [ref=e686]
+                      - button "Supprimer" [ref=e689] [cursor=pointer]:
+                        - img [ref=e690]
+                - row "Plateau bois 30 x 40 cm Plateau bois 30 x 40 cm PLA-0002 90 13.50 € 13.50 € 13.50 € Marge compétitive (≤15%) 15.00 % 2.38 € 15.88 €" [ref=e693]:
+                  - cell "Plateau bois 30 x 40 cm" [ref=e694]:
+                    - img "Plateau bois 30 x 40 cm" [ref=e696]
+                  - cell "Plateau bois 30 x 40 cm PLA-0002" [ref=e697]:
+                    - generic [ref=e698]:
+                      - link "Plateau bois 30 x 40 cm" [ref=e700] [cursor=pointer]:
+                        - /url: /canaux-vente/linkme/catalogue/83e1165b-3ee3-4161-8b9e-f7c3bc72a906
+                      - paragraph [ref=e701]: PLA-0002
+                  - cell "90" [ref=e702]:
+                    - generic [ref=e703]: "90"
+                  - cell "13.50 €" [ref=e704]
+                  - cell "13.50 €" [ref=e705]:
+                    - generic [ref=e707]: 13.50 €
+                  - cell "13.50 €" [ref=e708]
+                  - cell "Marge compétitive (≤15%) 15.00 %" [ref=e709]:
+                    - generic [ref=e710]:
+                      - generic "Marge compétitive (≤15%)" [ref=e711]
+                      - generic [ref=e712]: 15.00 %
+                  - cell "2.38 €" [ref=e713]
+                  - cell "15.88 €" [ref=e714]
+                  - cell [ref=e715]:
+                    - generic [ref=e716]:
+                      - button "Masquer de la sélection publique" [ref=e717] [cursor=pointer]:
+                        - img [ref=e718]
+                      - button "Voir fiche produit" [ref=e721] [cursor=pointer]:
+                        - img [ref=e722]
+                      - button "Modifier" [ref=e725] [cursor=pointer]:
+                        - img [ref=e726]
+                      - button "Supprimer" [ref=e729] [cursor=pointer]:
+                        - img [ref=e730]
+                - row "Coussin Bleu Coussin Bleu COU-0008 0 47.70 € 47.70 € 47.70 € Marge compétitive (≤15%) 15.00 % 8.42 € 56.12 €" [ref=e733]:
+                  - cell "Coussin Bleu" [ref=e734]:
+                    - img "Coussin Bleu" [ref=e736]
+                  - cell "Coussin Bleu COU-0008" [ref=e737]:
+                    - generic [ref=e738]:
+                      - link "Coussin Bleu" [ref=e740] [cursor=pointer]:
+                        - /url: /canaux-vente/linkme/catalogue/8c7cb404-f59d-45ba-918d-cb026140c53b
+                      - paragraph [ref=e741]: COU-0008
+                  - cell "0" [ref=e742]:
+                    - generic [ref=e743]: "0"
+                  - cell "47.70 €" [ref=e744]
+                  - cell "47.70 €" [ref=e745]:
+                    - generic [ref=e747]: 47.70 €
+                  - cell "47.70 €" [ref=e748]
+                  - cell "Marge compétitive (≤15%) 15.00 %" [ref=e749]:
+                    - generic [ref=e750]:
+                      - generic "Marge compétitive (≤15%)" [ref=e751]
+                      - generic [ref=e752]: 15.00 %
+                  - cell "8.42 €" [ref=e753]
+                  - cell "56.12 €" [ref=e754]
+                  - cell [ref=e755]:
+                    - generic [ref=e756]:
+                      - button "Masquer de la sélection publique" [ref=e757] [cursor=pointer]:
+                        - img [ref=e758]
+                      - button "Voir fiche produit" [ref=e761] [cursor=pointer]:
+                        - img [ref=e762]
+                      - button "Modifier" [ref=e765] [cursor=pointer]:
+                        - img [ref=e766]
+                      - button "Supprimer" [ref=e769] [cursor=pointer]:
+                        - img [ref=e770]
+                - row "Coussin beige Coussin beige COU-0009 0 51.99 € 51.99 € 51.99 € Marge compétitive (≤15%) 15.00 % 9.17 € 61.16 €" [ref=e773]:
+                  - cell "Coussin beige" [ref=e774]:
+                    - img "Coussin beige" [ref=e776]
+                  - cell "Coussin beige COU-0009" [ref=e777]:
+                    - generic [ref=e778]:
+                      - link "Coussin beige" [ref=e780] [cursor=pointer]:
+                        - /url: /canaux-vente/linkme/catalogue/899d4e31-4a95-4a0c-ac88-a7b615302260
+                      - paragraph [ref=e781]: COU-0009
+                  - cell "0" [ref=e782]:
+                    - generic [ref=e783]: "0"
+                  - cell "51.99 €" [ref=e784]
+                  - cell "51.99 €" [ref=e785]:
+                    - generic [ref=e787]: 51.99 €
+                  - cell "51.99 €" [ref=e788]
+                  - cell "Marge compétitive (≤15%) 15.00 %" [ref=e789]:
+                    - generic [ref=e790]:
+                      - generic "Marge compétitive (≤15%)" [ref=e791]
+                      - generic [ref=e792]: 15.00 %
+                  - cell "9.17 €" [ref=e793]
+                  - cell "61.16 €" [ref=e794]
+                  - cell [ref=e795]:
+                    - generic [ref=e796]:
+                      - button "Masquer de la sélection publique" [ref=e797] [cursor=pointer]:
+                        - img [ref=e798]
+                      - button "Voir fiche produit" [ref=e801] [cursor=pointer]:
+                        - img [ref=e802]
+                      - button "Modifier" [ref=e805] [cursor=pointer]:
+                        - img [ref=e806]
+                      - button "Supprimer" [ref=e809] [cursor=pointer]:
+                        - img [ref=e810]
+                - row "Coussin Blanc Coussin Blanc COU-0007 0 55.00 € 55.00 € 55.00 € Marge compétitive (≤15%) 15.00 % 9.71 € 64.71 €" [ref=e813]:
+                  - cell "Coussin Blanc" [ref=e814]:
+                    - img "Coussin Blanc" [ref=e816]
+                  - cell "Coussin Blanc COU-0007" [ref=e817]:
+                    - generic [ref=e818]:
+                      - link "Coussin Blanc" [ref=e820] [cursor=pointer]:
+                        - /url: /canaux-vente/linkme/catalogue/f71d5a25-0b88-4b28-8266-9b7e3db0bc66
+                      - paragraph [ref=e821]: COU-0007
+                  - cell "0" [ref=e822]:
+                    - generic [ref=e823]: "0"
+                  - cell "55.00 €" [ref=e824]
+                  - cell "55.00 €" [ref=e825]:
+                    - generic [ref=e827]: 55.00 €
+                  - cell "55.00 €" [ref=e828]
+                  - cell "Marge compétitive (≤15%) 15.00 %" [ref=e829]:
+                    - generic [ref=e830]:
+                      - generic "Marge compétitive (≤15%)" [ref=e831]
+                      - generic [ref=e832]: 15.00 %
+                  - cell "9.71 €" [ref=e833]
+                  - cell "64.71 €" [ref=e834]
+                  - cell [ref=e835]:
+                    - generic [ref=e836]:
+                      - button "Masquer de la sélection publique" [ref=e837] [cursor=pointer]:
+                        - img [ref=e838]
+                      - button "Voir fiche produit" [ref=e841] [cursor=pointer]:
+                        - img [ref=e842]
+                      - button "Modifier" [ref=e845] [cursor=pointer]:
+                        - img [ref=e846]
+                      - button "Supprimer" [ref=e849] [cursor=pointer]:
+                        - img [ref=e850]
+                - row "Coussin Rêveur Coussin Rêveur COU-0001 42 25.99 € 25.99 € 25.99 € Marge compétitive (≤15%) 15.00 % 4.59 € 30.58 €" [ref=e853]:
+                  - cell "Coussin Rêveur" [ref=e854]:
+                    - img "Coussin Rêveur" [ref=e856]
+                  - cell "Coussin Rêveur COU-0001" [ref=e857]:
+                    - generic [ref=e858]:
+                      - link "Coussin Rêveur" [ref=e860] [cursor=pointer]:
+                        - /url: /canaux-vente/linkme/catalogue/55a41eea-597d-4f97-bc96-ad639bb9e854
+                      - paragraph [ref=e861]: COU-0001
+                  - cell "42" [ref=e862]:
+                    - generic [ref=e863]: "42"
+                  - cell "25.99 €" [ref=e864]
+                  - cell "25.99 €" [ref=e865]:
+                    - generic [ref=e867]: 25.99 €
+                  - cell "25.99 €" [ref=e868]
+                  - cell "Marge compétitive (≤15%) 15.00 %" [ref=e869]:
+                    - generic [ref=e870]:
+                      - generic "Marge compétitive (≤15%)" [ref=e871]
+                      - generic [ref=e872]: 15.00 %
+                  - cell "4.59 €" [ref=e873]
+                  - cell "30.58 €" [ref=e874]
+                  - cell [ref=e875]:
+                    - generic [ref=e876]:
+                      - button "Masquer de la sélection publique" [ref=e877] [cursor=pointer]:
+                        - img [ref=e878]
+                      - button "Voir fiche produit" [ref=e881] [cursor=pointer]:
+                        - img [ref=e882]
+                      - button "Modifier" [ref=e885] [cursor=pointer]:
+                        - img [ref=e886]
+                      - button "Supprimer" [ref=e889] [cursor=pointer]:
+                        - img [ref=e890]
+                - row "Coussin Évasion Bleu Coussin Évasion Bleu COU-0006 67 21.40 € 21.40 € 21.40 € Marge compétitive (≤15%) 15.00 % 3.78 € 25.18 €" [ref=e893]:
+                  - cell "Coussin Évasion Bleu" [ref=e894]:
+                    - img "Coussin Évasion Bleu" [ref=e896]
+                  - cell "Coussin Évasion Bleu COU-0006" [ref=e897]:
+                    - generic [ref=e898]:
+                      - link "Coussin Évasion Bleu" [ref=e900] [cursor=pointer]:
+                        - /url: /canaux-vente/linkme/catalogue/97eafc75-9010-4527-8bd4-824d76351382
+                      - paragraph [ref=e901]: COU-0006
+                  - cell "67" [ref=e902]:
+                    - generic [ref=e903]: "67"
+                  - cell "21.40 €" [ref=e904]
+                  - cell "21.40 €" [ref=e905]:
+                    - generic [ref=e907]: 21.40 €
+                  - cell "21.40 €" [ref=e908]
+                  - cell "Marge compétitive (≤15%) 15.00 %" [ref=e909]:
+                    - generic [ref=e910]:
+                      - generic "Marge compétitive (≤15%)" [ref=e911]
+                      - generic [ref=e912]: 15.00 %
+                  - cell "3.78 €" [ref=e913]
+                  - cell "25.18 €" [ref=e914]
+                  - cell [ref=e915]:
+                    - generic [ref=e916]:
+                      - button "Masquer de la sélection publique" [ref=e917] [cursor=pointer]:
+                        - img [ref=e918]
+                      - button "Voir fiche produit" [ref=e921] [cursor=pointer]:
+                        - img [ref=e922]
+                      - button "Modifier" [ref=e925] [cursor=pointer]:
+                        - img [ref=e926]
+                      - button "Supprimer" [ref=e929] [cursor=pointer]:
+                        - img [ref=e930]
+                - row "Coussin Rose Sérénité Coussin Rose Sérénité COU-0005 79 20.90 € 20.90 € 20.90 € Marge compétitive (≤15%) 15.00 % 3.69 € 24.59 €" [ref=e933]:
+                  - cell "Coussin Rose Sérénité" [ref=e934]:
+                    - img "Coussin Rose Sérénité" [ref=e936]
+                  - cell "Coussin Rose Sérénité COU-0005" [ref=e937]:
+                    - generic [ref=e938]:
+                      - link "Coussin Rose Sérénité" [ref=e940] [cursor=pointer]:
+                        - /url: /canaux-vente/linkme/catalogue/57127cfa-1b2c-49a5-a947-7f5c8fdd8aaa
+                      - paragraph [ref=e941]: COU-0005
+                  - cell "79" [ref=e942]:
+                    - generic [ref=e943]: "79"
+                  - cell "20.90 €" [ref=e944]
+                  - cell "20.90 €" [ref=e945]:
+                    - generic [ref=e947]: 20.90 €
+                  - cell "20.90 €" [ref=e948]
+                  - cell "Marge compétitive (≤15%) 15.00 %" [ref=e949]:
+                    - generic [ref=e950]:
+                      - generic "Marge compétitive (≤15%)" [ref=e951]
+                      - generic [ref=e952]: 15.00 %
+                  - cell "3.69 €" [ref=e953]
+                  - cell "24.59 €" [ref=e954]
+                  - cell [ref=e955]:
+                    - generic [ref=e956]:
+                      - button "Masquer de la sélection publique" [ref=e957] [cursor=pointer]:
+                        - img [ref=e958]
+                      - button "Voir fiche produit" [ref=e961] [cursor=pointer]:
+                        - img [ref=e962]
+                      - button "Modifier" [ref=e965] [cursor=pointer]:
+                        - img [ref=e966]
+                      - button "Supprimer" [ref=e969] [cursor=pointer]:
+                        - img [ref=e970]
+                - row "Miroir XL Miroir XL DEC-0001 9 130.75 € 130.75 € 130.75 € Marge compétitive (≤15%) 15.00 % 23.07 € 153.82 €" [ref=e973]:
+                  - cell "Miroir XL" [ref=e974]:
+                    - img "Miroir XL" [ref=e976]
+                  - cell "Miroir XL DEC-0001" [ref=e977]:
+                    - generic [ref=e978]:
+                      - link "Miroir XL" [ref=e980] [cursor=pointer]:
+                        - /url: /canaux-vente/linkme/catalogue/9bef383c-900c-4189-be74-eec6ce50c36d
+                      - paragraph [ref=e981]: DEC-0001
+                  - cell "9" [ref=e982]:
+                    - generic [ref=e983]: "9"
+                  - cell "130.75 €" [ref=e984]
+                  - cell "130.75 €" [ref=e985]:
+                    - generic [ref=e987]: 130.75 €
+                  - cell "130.75 €" [ref=e988]
+                  - cell "Marge compétitive (≤15%) 15.00 %" [ref=e989]:
+                    - generic [ref=e990]:
+                      - generic "Marge compétitive (≤15%)" [ref=e991]
+                      - generic [ref=e992]: 15.00 %
+                  - cell "23.07 €" [ref=e993]
+                  - cell "153.82 €" [ref=e994]
+                  - cell [ref=e995]:
+                    - generic [ref=e996]:
+                      - button "Masquer de la sélection publique" [ref=e997] [cursor=pointer]:
+                        - img [ref=e998]
+                      - button "Voir fiche produit" [ref=e1001] [cursor=pointer]:
+                        - img [ref=e1002]
+                      - button "Modifier" [ref=e1005] [cursor=pointer]:
+                        - img [ref=e1006]
+                      - button "Supprimer" [ref=e1009] [cursor=pointer]:
+                        - img [ref=e1010]
+                - row "Lots 4 miroirs irrégulier laiton Lots 4 miroirs irrégulier laiton DEC-0005 1 320.10 € 320.10 € 320.10 € Marge compétitive (≤15%) 15.00 % 56.49 € 376.59 €" [ref=e1013]:
+                  - cell "Lots 4 miroirs irrégulier laiton" [ref=e1014]:
+                    - img "Lots 4 miroirs irrégulier laiton" [ref=e1016]
+                  - cell "Lots 4 miroirs irrégulier laiton DEC-0005" [ref=e1017]:
+                    - generic [ref=e1018]:
+                      - link "Lots 4 miroirs irrégulier laiton" [ref=e1020] [cursor=pointer]:
+                        - /url: /canaux-vente/linkme/catalogue/50faac62-1c16-4e82-bfc0-ccc12a6895d7
+                      - paragraph [ref=e1021]: DEC-0005
+                  - cell "1" [ref=e1022]:
+                    - generic [ref=e1023]: "1"
+                  - cell "320.10 €" [ref=e1024]
+                  - cell "320.10 €" [ref=e1025]:
+                    - generic [ref=e1027]: 320.10 €
+                  - cell "320.10 €" [ref=e1028]
+                  - cell "Marge compétitive (≤15%) 15.00 %" [ref=e1029]:
+                    - generic [ref=e1030]:
+                      - generic "Marge compétitive (≤15%)" [ref=e1031]
+                      - generic [ref=e1032]: 15.00 %
+                  - cell "56.49 €" [ref=e1033]
+                  - cell "376.59 €" [ref=e1034]
+                  - cell [ref=e1035]:
+                    - generic [ref=e1036]:
+                      - button "Masquer de la sélection publique" [ref=e1037] [cursor=pointer]:
+                        - img [ref=e1038]
+                      - button "Voir fiche produit" [ref=e1041] [cursor=pointer]:
+                        - img [ref=e1042]
+                      - button "Modifier" [ref=e1045] [cursor=pointer]:
+                        - img [ref=e1046]
+                      - button "Supprimer" [ref=e1049] [cursor=pointer]:
+                        - img [ref=e1050]
+                - row "Suspension raphia 3 Suspension raphia 3 SUS-0007 24 148.70 € 148.70 € 148.70 € Marge compétitive (≤15%) 15.00 % 26.24 € 174.94 €" [ref=e1053]:
+                  - cell "Suspension raphia 3" [ref=e1054]:
+                    - img "Suspension raphia 3" [ref=e1056]
+                  - cell "Suspension raphia 3 SUS-0007" [ref=e1057]:
+                    - generic [ref=e1058]:
+                      - link "Suspension raphia 3" [ref=e1060] [cursor=pointer]:
+                        - /url: /canaux-vente/linkme/catalogue/94fa3a6c-b863-40c4-bc37-d868ae0ef755
+                      - paragraph [ref=e1061]: SUS-0007
+                  - cell "24" [ref=e1062]:
+                    - generic [ref=e1063]: "24"
+                  - cell "148.70 €" [ref=e1064]
+                  - cell "148.70 €" [ref=e1065]:
+                    - generic [ref=e1067]: 148.70 €
+                  - cell "148.70 €" [ref=e1068]
+                  - cell "Marge compétitive (≤15%) 15.00 %" [ref=e1069]:
+                    - generic [ref=e1070]:
+                      - generic "Marge compétitive (≤15%)" [ref=e1071]
+                      - generic [ref=e1072]: 15.00 %
+                  - cell "26.24 €" [ref=e1073]
+                  - cell "174.94 €" [ref=e1074]
+                  - cell [ref=e1075]:
+                    - generic [ref=e1076]:
+                      - button "Masquer de la sélection publique" [ref=e1077] [cursor=pointer]:
+                        - img [ref=e1078]
+                      - button "Voir fiche produit" [ref=e1081] [cursor=pointer]:
+                        - img [ref=e1082]
+                      - button "Modifier" [ref=e1085] [cursor=pointer]:
+                        - img [ref=e1086]
+                      - button "Supprimer" [ref=e1089] [cursor=pointer]:
+                        - img [ref=e1090]
+                - row "Suspension raphia 5 Suspension raphia 5 SUS-0005 5 163.86 € 163.86 € 163.86 € Marge compétitive (≤15%) 15.00 % 28.92 € 192.78 €" [ref=e1093]:
+                  - cell "Suspension raphia 5" [ref=e1094]:
+                    - img "Suspension raphia 5" [ref=e1096]
+                  - cell "Suspension raphia 5 SUS-0005" [ref=e1097]:
+                    - generic [ref=e1098]:
+                      - link "Suspension raphia 5" [ref=e1100] [cursor=pointer]:
+                        - /url: /canaux-vente/linkme/catalogue/336d1dce-b752-4bd4-a6c8-046ab23273b8
+                      - paragraph [ref=e1101]: SUS-0005
+                  - cell "5" [ref=e1102]:
+                    - generic [ref=e1103]: "5"
+                  - cell "163.86 €" [ref=e1104]
+                  - cell "163.86 €" [ref=e1105]:
+                    - generic [ref=e1107]: 163.86 €
+                  - cell "163.86 €" [ref=e1108]
+                  - cell "Marge compétitive (≤15%) 15.00 %" [ref=e1109]:
+                    - generic [ref=e1110]:
+                      - generic "Marge compétitive (≤15%)" [ref=e1111]
+                      - generic [ref=e1112]: 15.00 %
+                  - cell "28.92 €" [ref=e1113]
+                  - cell "192.78 €" [ref=e1114]
+                  - cell [ref=e1115]:
+                    - generic [ref=e1116]:
+                      - button "Masquer de la sélection publique" [ref=e1117] [cursor=pointer]:
+                        - img [ref=e1118]
+                      - button "Voir fiche produit" [ref=e1121] [cursor=pointer]:
+                        - img [ref=e1122]
+                      - button "Modifier" [ref=e1125] [cursor=pointer]:
+                        - img [ref=e1126]
+                      - button "Supprimer" [ref=e1129] [cursor=pointer]:
+                        - img [ref=e1130]
+                - row "Suspension raphia 6 Suspension raphia 6 SUS-0006 39 163.86 € 163.86 € 163.86 € Marge compétitive (≤15%) 15.00 % 28.92 € 192.78 €" [ref=e1133]:
+                  - cell "Suspension raphia 6" [ref=e1134]:
+                    - img "Suspension raphia 6" [ref=e1136]
+                  - cell "Suspension raphia 6 SUS-0006" [ref=e1137]:
+                    - generic [ref=e1138]:
+                      - link "Suspension raphia 6" [ref=e1140] [cursor=pointer]:
+                        - /url: /canaux-vente/linkme/catalogue/54b958aa-ba9b-4c0e-9a80-de9e6cd521f3
+                      - paragraph [ref=e1141]: SUS-0006
+                  - cell "39" [ref=e1142]:
+                    - generic [ref=e1143]: "39"
+                  - cell "163.86 €" [ref=e1144]
+                  - cell "163.86 €" [ref=e1145]:
+                    - generic [ref=e1147]: 163.86 €
+                  - cell "163.86 €" [ref=e1148]
+                  - cell "Marge compétitive (≤15%) 15.00 %" [ref=e1149]:
+                    - generic [ref=e1150]:
+                      - generic "Marge compétitive (≤15%)" [ref=e1151]
+                      - generic [ref=e1152]: 15.00 %
+                  - cell "28.92 €" [ref=e1153]
+                  - cell "192.78 €" [ref=e1154]
+                  - cell [ref=e1155]:
+                    - generic [ref=e1156]:
+                      - button "Masquer de la sélection publique" [ref=e1157] [cursor=pointer]:
+                        - img [ref=e1158]
+                      - button "Voir fiche produit" [ref=e1161] [cursor=pointer]:
+                        - img [ref=e1162]
+                      - button "Modifier" [ref=e1165] [cursor=pointer]:
+                        - img [ref=e1166]
+                      - button "Supprimer" [ref=e1169] [cursor=pointer]:
+                        - img [ref=e1170]
+                - row "Banc artisanal bois - 100 cm Banc artisanal bois - 100 cm BAN-0009 0 121.66 € 121.66 € 121.66 € Marge compétitive (≤15%) 15.00 % 21.47 € 143.13 €" [ref=e1173]:
+                  - cell "Banc artisanal bois - 100 cm" [ref=e1174]:
+                    - img "Banc artisanal bois - 100 cm" [ref=e1176]
+                  - cell "Banc artisanal bois - 100 cm BAN-0009" [ref=e1177]:
+                    - generic [ref=e1178]:
+                      - link "Banc artisanal bois - 100 cm" [ref=e1180] [cursor=pointer]:
+                        - /url: /canaux-vente/linkme/catalogue/14fe9a29-4493-4b2f-8dff-9e4c47276691
+                      - paragraph [ref=e1181]: BAN-0009
+                  - cell "0" [ref=e1182]:
+                    - generic [ref=e1183]: "0"
+                  - cell "121.66 €" [ref=e1184]
+                  - cell "121.66 €" [ref=e1185]:
+                    - generic [ref=e1187]: 121.66 €
+                  - cell "121.66 €" [ref=e1188]
+                  - cell "Marge compétitive (≤15%) 15.00 %" [ref=e1189]:
+                    - generic [ref=e1190]:
+                      - generic "Marge compétitive (≤15%)" [ref=e1191]
+                      - generic [ref=e1192]: 15.00 %
+                  - cell "21.47 €" [ref=e1193]
+                  - cell "143.13 €" [ref=e1194]
+                  - cell [ref=e1195]:
+                    - generic [ref=e1196]:
+                      - button "Masquer de la sélection publique" [ref=e1197] [cursor=pointer]:
+                        - img [ref=e1198]
+                      - button "Voir fiche produit" [ref=e1201] [cursor=pointer]:
+                        - img [ref=e1202]
+                      - button "Modifier" [ref=e1205] [cursor=pointer]:
+                        - img [ref=e1206]
+                      - button "Supprimer" [ref=e1209] [cursor=pointer]:
+                        - img [ref=e1210]
+                - row "Banc artisanal bois - 120 cm Banc artisanal bois - 120 cm BAN-0008 3 111.60 € 111.60 € 111.60 € Marge compétitive (≤15%) 15.00 % 19.69 € 131.29 €" [ref=e1213]:
+                  - cell "Banc artisanal bois - 120 cm" [ref=e1214]:
+                    - img "Banc artisanal bois - 120 cm" [ref=e1216]
+                  - cell "Banc artisanal bois - 120 cm BAN-0008" [ref=e1217]:
+                    - generic [ref=e1218]:
+                      - link "Banc artisanal bois - 120 cm" [ref=e1220] [cursor=pointer]:
+                        - /url: /canaux-vente/linkme/catalogue/6b1d873f-0b48-4353-a346-51e2d52153d1
+                      - paragraph [ref=e1221]: BAN-0008
+                  - cell "3" [ref=e1222]:
+                    - generic [ref=e1223]: "3"
+                  - cell "111.60 €" [ref=e1224]
+                  - cell "111.60 €" [ref=e1225]:
+                    - generic [ref=e1227]: 111.60 €
+                  - cell "111.60 €" [ref=e1228]
+                  - cell "Marge compétitive (≤15%) 15.00 %" [ref=e1229]:
+                    - generic [ref=e1230]:
+                      - generic "Marge compétitive (≤15%)" [ref=e1231]
+                      - generic [ref=e1232]: 15.00 %
+                  - cell "19.69 €" [ref=e1233]
+                  - cell "131.29 €" [ref=e1234]
+                  - cell [ref=e1235]:
+                    - generic [ref=e1236]:
+                      - button "Masquer de la sélection publique" [ref=e1237] [cursor=pointer]:
+                        - img [ref=e1238]
+                      - button "Voir fiche produit" [ref=e1241] [cursor=pointer]:
+                        - img [ref=e1242]
+                      - button "Modifier" [ref=e1245] [cursor=pointer]:
+                        - img [ref=e1246]
+                      - button "Supprimer" [ref=e1249] [cursor=pointer]:
+                        - img [ref=e1250]
+                - row "Suspensions franges n°1 Suspensions franges n°1 SUS-0010 0 55.32 € 55.32 € 55.32 € Marge compétitive (≤15%) 15.00 % 9.76 € 65.08 €" [ref=e1253]:
+                  - cell "Suspensions franges n°1" [ref=e1254]:
+                    - img "Suspensions franges n°1" [ref=e1256]
+                  - cell "Suspensions franges n°1 SUS-0010" [ref=e1257]:
+                    - generic [ref=e1258]:
+                      - link "Suspensions franges n°1" [ref=e1260] [cursor=pointer]:
+                        - /url: /canaux-vente/linkme/catalogue/244afb6a-7ef4-4aed-98ef-29053c4c91e8
+                      - paragraph [ref=e1261]: SUS-0010
+                  - cell "0" [ref=e1262]:
+                    - generic [ref=e1263]: "0"
+                  - cell "55.32 €" [ref=e1264]
+                  - cell "55.32 €" [ref=e1265]:
+                    - generic [ref=e1267]: 55.32 €
+                  - cell "55.32 €" [ref=e1268]
+                  - cell "Marge compétitive (≤15%) 15.00 %" [ref=e1269]:
+                    - generic [ref=e1270]:
+                      - generic "Marge compétitive (≤15%)" [ref=e1271]
+                      - generic [ref=e1272]: 15.00 %
+                  - cell "9.76 €" [ref=e1273]
+                  - cell "65.08 €" [ref=e1274]
+                  - cell [ref=e1275]:
+                    - generic [ref=e1276]:
+                      - button "Masquer de la sélection publique" [ref=e1277] [cursor=pointer]:
+                        - img [ref=e1278]
+                      - button "Voir fiche produit" [ref=e1281] [cursor=pointer]:
+                        - img [ref=e1282]
+                      - button "Modifier" [ref=e1285] [cursor=pointer]:
+                        - img [ref=e1286]
+                      - button "Supprimer" [ref=e1289] [cursor=pointer]:
+                        - img [ref=e1290]
+                - row "Suspensions frange n°2 Suspensions frange n°2 SUS-0002 32 112.46 € 112.46 € 112.46 € Marge compétitive (≤15%) 15.00 % 19.85 € 132.31 €" [ref=e1293]:
+                  - cell "Suspensions frange n°2" [ref=e1294]:
+                    - img "Suspensions frange n°2" [ref=e1296]
+                  - cell "Suspensions frange n°2 SUS-0002" [ref=e1297]:
+                    - generic [ref=e1298]:
+                      - link "Suspensions frange n°2" [ref=e1300] [cursor=pointer]:
+                        - /url: /canaux-vente/linkme/catalogue/b4d30a44-f17d-4e00-8cdf-f3f18080b917
+                      - paragraph [ref=e1301]: SUS-0002
+                  - cell "32" [ref=e1302]:
+                    - generic [ref=e1303]: "32"
+                  - cell "112.46 €" [ref=e1304]
+                  - cell "112.46 €" [ref=e1305]:
+                    - generic [ref=e1307]: 112.46 €
+                  - cell "112.46 €" [ref=e1308]
+                  - cell "Marge compétitive (≤15%) 15.00 %" [ref=e1309]:
+                    - generic [ref=e1310]:
+                      - generic "Marge compétitive (≤15%)" [ref=e1311]
+                      - generic [ref=e1312]: 15.00 %
+                  - cell "19.85 €" [ref=e1313]
+                  - cell "132.31 €" [ref=e1314]
+                  - cell [ref=e1315]:
+                    - generic [ref=e1316]:
+                      - button "Masquer de la sélection publique" [ref=e1317] [cursor=pointer]:
+                        - img [ref=e1318]
+                      - button "Voir fiche produit" [ref=e1321] [cursor=pointer]:
+                        - img [ref=e1322]
+                      - button "Modifier" [ref=e1325] [cursor=pointer]:
+                        - img [ref=e1326]
+                      - button "Supprimer" [ref=e1329] [cursor=pointer]:
+                        - img [ref=e1330]
+                - row "Suspension frange n°3 Suspension frange n°3 SUS-0009 7 55.32 € 55.32 € 55.32 € Marge compétitive (≤15%) 15.00 % 9.76 € 65.08 €" [ref=e1333]:
+                  - cell "Suspension frange n°3" [ref=e1334]:
+                    - img "Suspension frange n°3" [ref=e1336]
+                  - cell "Suspension frange n°3 SUS-0009" [ref=e1337]:
+                    - generic [ref=e1338]:
+                      - link "Suspension frange n°3" [ref=e1340] [cursor=pointer]:
+                        - /url: /canaux-vente/linkme/catalogue/9359b6b2-22e8-4b9b-8f97-115139e2a72d
+                      - paragraph [ref=e1341]: SUS-0009
+                  - cell "7" [ref=e1342]:
+                    - generic [ref=e1343]: "7"
+                  - cell "55.32 €" [ref=e1344]
+                  - cell "55.32 €" [ref=e1345]:
+                    - generic [ref=e1347]: 55.32 €
+                  - cell "55.32 €" [ref=e1348]
+                  - cell "Marge compétitive (≤15%) 15.00 %" [ref=e1349]:
+                    - generic [ref=e1350]:
+                      - generic "Marge compétitive (≤15%)" [ref=e1351]
+                      - generic [ref=e1352]: 15.00 %
+                  - cell "9.76 €" [ref=e1353]
+                  - cell "65.08 €" [ref=e1354]
+                  - cell [ref=e1355]:
+                    - generic [ref=e1356]:
+                      - button "Masquer de la sélection publique" [ref=e1357] [cursor=pointer]:
+                        - img [ref=e1358]
+                      - button "Voir fiche produit" [ref=e1361] [cursor=pointer]:
+                        - img [ref=e1362]
+                      - button "Modifier" [ref=e1365] [cursor=pointer]:
+                        - img [ref=e1366]
+                      - button "Supprimer" [ref=e1369] [cursor=pointer]:
+                        - img [ref=e1370]
+                - row "Suspension frange n°4 Suspension frange n°4 SUS-0001 61 69.60 € 69.60 € 69.60 € Marge compétitive (≤15%) 15.00 % 12.28 € 81.88 €" [ref=e1373]:
+                  - cell "Suspension frange n°4" [ref=e1374]:
+                    - img "Suspension frange n°4" [ref=e1376]
+                  - cell "Suspension frange n°4 SUS-0001" [ref=e1377]:
+                    - generic [ref=e1378]:
+                      - link "Suspension frange n°4" [ref=e1380] [cursor=pointer]:
+                        - /url: /canaux-vente/linkme/catalogue/1dfe40d7-9c78-4222-9c65-3082eda2536c
+                      - paragraph [ref=e1381]: SUS-0001
+                  - cell "61" [ref=e1382]:
+                    - generic [ref=e1383]: "61"
+                  - cell "69.60 €" [ref=e1384]
+                  - cell "69.60 €" [ref=e1385]:
+                    - generic [ref=e1387]: 69.60 €
+                  - cell "69.60 €" [ref=e1388]
+                  - cell "Marge compétitive (≤15%) 15.00 %" [ref=e1389]:
+                    - generic [ref=e1390]:
+                      - generic "Marge compétitive (≤15%)" [ref=e1391]
+                      - generic [ref=e1392]: 15.00 %
+                  - cell "12.28 €" [ref=e1393]
+                  - cell "81.88 €" [ref=e1394]
+                  - cell [ref=e1395]:
+                    - generic [ref=e1396]:
+                      - button "Masquer de la sélection publique" [ref=e1397] [cursor=pointer]:
+                        - img [ref=e1398]
+                      - button "Voir fiche produit" [ref=e1401] [cursor=pointer]:
+                        - img [ref=e1402]
+                      - button "Modifier" [ref=e1405] [cursor=pointer]:
+                        - img [ref=e1406]
+                      - button "Supprimer" [ref=e1409] [cursor=pointer]:
+                        - img [ref=e1410]
+                - row "Suspension frange n°5 Suspension frange n°5 SUS-0008 32 98.18 € 98.18 € 98.18 € Marge compétitive (≤15%) 15.00 % 17.33 € 115.51 €" [ref=e1413]:
+                  - cell "Suspension frange n°5" [ref=e1414]:
+                    - img "Suspension frange n°5" [ref=e1416]
+                  - cell "Suspension frange n°5 SUS-0008" [ref=e1417]:
+                    - generic [ref=e1418]:
+                      - link "Suspension frange n°5" [ref=e1420] [cursor=pointer]:
+                        - /url: /canaux-vente/linkme/catalogue/269189b6-5e8a-4efa-99e6-ec688023b48e
+                      - paragraph [ref=e1421]: SUS-0008
+                  - cell "32" [ref=e1422]:
+                    - generic [ref=e1423]: "32"
+                  - cell "98.18 €" [ref=e1424]
+                  - cell "98.18 €" [ref=e1425]:
+                    - generic [ref=e1427]: 98.18 €
+                  - cell "98.18 €" [ref=e1428]
+                  - cell "Marge compétitive (≤15%) 15.00 %" [ref=e1429]:
+                    - generic [ref=e1430]:
+                      - generic "Marge compétitive (≤15%)" [ref=e1431]
+                      - generic [ref=e1432]: 15.00 %
+                  - cell "17.33 €" [ref=e1433]
+                  - cell "115.51 €" [ref=e1434]
+                  - cell [ref=e1435]:
+                    - generic [ref=e1436]:
+                      - button "Masquer de la sélection publique" [ref=e1437] [cursor=pointer]:
+                        - img [ref=e1438]
+                      - button "Voir fiche produit" [ref=e1441] [cursor=pointer]:
+                        - img [ref=e1442]
+                      - button "Modifier" [ref=e1445] [cursor=pointer]:
+                        - img [ref=e1446]
+                      - button "Supprimer" [ref=e1449] [cursor=pointer]:
+                        - img [ref=e1450]
+                - row "Suspension paille Suspension paille SUS-0003 31 83.89 € 83.89 € 83.89 € Marge compétitive (≤15%) 15.00 % 14.80 € 98.69 €" [ref=e1453]:
+                  - cell "Suspension paille" [ref=e1454]:
+                    - img "Suspension paille" [ref=e1456]
+                  - cell "Suspension paille SUS-0003" [ref=e1457]:
+                    - generic [ref=e1458]:
+                      - link "Suspension paille" [ref=e1460] [cursor=pointer]:
+                        - /url: /canaux-vente/linkme/catalogue/e490a93d-d0b5-4619-b633-c492e544ead0
+                      - paragraph [ref=e1461]: SUS-0003
+                  - cell "31" [ref=e1462]:
+                    - generic [ref=e1463]: "31"
+                  - cell "83.89 €" [ref=e1464]
+                  - cell "83.89 €" [ref=e1465]:
+                    - generic [ref=e1467]: 83.89 €
+                  - cell "83.89 €" [ref=e1468]
+                  - cell "Marge compétitive (≤15%) 15.00 %" [ref=e1469]:
+                    - generic [ref=e1470]:
+                      - generic "Marge compétitive (≤15%)" [ref=e1471]
+                      - generic [ref=e1472]: 15.00 %
+                  - cell "14.80 €" [ref=e1473]
+                  - cell "98.69 €" [ref=e1474]
+                  - cell [ref=e1475]:
+                    - generic [ref=e1476]:
+                      - button "Masquer de la sélection publique" [ref=e1477] [cursor=pointer]:
+                        - img [ref=e1478]
+                      - button "Voir fiche produit" [ref=e1481] [cursor=pointer]:
+                        - img [ref=e1482]
+                      - button "Modifier" [ref=e1485] [cursor=pointer]:
+                        - img [ref=e1486]
+                      - button "Supprimer" [ref=e1489] [cursor=pointer]:
+                        - img [ref=e1490]
+                - row "Panier n°1 Taille S PRD-0310 0 15.28 € 15.28 € 15.28 € Marge compétitive (≤15%) 15.00 % 2.70 € 17.98 €" [ref=e1493]:
+                  - cell [ref=e1494]:
+                    - img [ref=e1497]
+                  - cell "Panier n°1 Taille S PRD-0310" [ref=e1501]:
+                    - generic [ref=e1502]:
+                      - link "Panier n°1 Taille S" [ref=e1504] [cursor=pointer]:
+                        - /url: /canaux-vente/linkme/catalogue/7e747e0d-79d3-4161-a479-cd49872e0fe7
+                      - paragraph [ref=e1505]: PRD-0310
+                  - cell "0" [ref=e1506]:
+                    - generic [ref=e1507]: "0"
+                  - cell "15.28 €" [ref=e1508]
+                  - cell "15.28 €" [ref=e1509]:
+                    - generic [ref=e1511]: 15.28 €
+                  - cell "15.28 €" [ref=e1512]
+                  - cell "Marge compétitive (≤15%) 15.00 %" [ref=e1513]:
+                    - generic [ref=e1514]:
+                      - generic "Marge compétitive (≤15%)" [ref=e1515]
+                      - generic [ref=e1516]: 15.00 %
+                  - cell "2.70 €" [ref=e1517]
+                  - cell "17.98 €" [ref=e1518]
+                  - cell [ref=e1519]:
+                    - generic [ref=e1520]:
+                      - button "Masquer de la sélection publique" [ref=e1521] [cursor=pointer]:
+                        - img [ref=e1522]
+                      - button "Voir fiche produit" [ref=e1525] [cursor=pointer]:
+                        - img [ref=e1526]
+                      - button "Modifier" [ref=e1529] [cursor=pointer]:
+                        - img [ref=e1530]
+                      - button "Supprimer" [ref=e1533] [cursor=pointer]:
+                        - img [ref=e1534]
+                - row "Panier n°1 Taille M PRD-0311 0 19.13 € 19.13 € 19.13 € Marge compétitive (≤15%) 15.00 % 3.38 € 22.51 €" [ref=e1537]:
+                  - cell [ref=e1538]:
+                    - img [ref=e1541]
+                  - cell "Panier n°1 Taille M PRD-0311" [ref=e1545]:
+                    - generic [ref=e1546]:
+                      - link "Panier n°1 Taille M" [ref=e1548] [cursor=pointer]:
+                        - /url: /canaux-vente/linkme/catalogue/40146766-e824-45f0-9a0a-3919bcbc31a6
+                      - paragraph [ref=e1549]: PRD-0311
+                  - cell "0" [ref=e1550]:
+                    - generic [ref=e1551]: "0"
+                  - cell "19.13 €" [ref=e1552]
+                  - cell "19.13 €" [ref=e1553]:
+                    - generic [ref=e1555]: 19.13 €
+                  - cell "19.13 €" [ref=e1556]
+                  - cell "Marge compétitive (≤15%) 15.00 %" [ref=e1557]:
+                    - generic [ref=e1558]:
+                      - generic "Marge compétitive (≤15%)" [ref=e1559]
+                      - generic [ref=e1560]: 15.00 %
+                  - cell "3.38 €" [ref=e1561]
+                  - cell "22.51 €" [ref=e1562]
+                  - cell [ref=e1563]:
+                    - generic [ref=e1564]:
+                      - button "Masquer de la sélection publique" [ref=e1565] [cursor=pointer]:
+                        - img [ref=e1566]
+                      - button "Voir fiche produit" [ref=e1569] [cursor=pointer]:
+                        - img [ref=e1570]
+                      - button "Modifier" [ref=e1573] [cursor=pointer]:
+                        - img [ref=e1574]
+                      - button "Supprimer" [ref=e1577] [cursor=pointer]:
+                        - img [ref=e1578]
+                - row "Panier n°1 Taille L PRD-0312 0 29.13 € 29.13 € 29.13 € Marge compétitive (≤15%) 15.00 % 5.14 € 34.27 €" [ref=e1581]:
+                  - cell [ref=e1582]:
+                    - img [ref=e1585]
+                  - cell "Panier n°1 Taille L PRD-0312" [ref=e1589]:
+                    - generic [ref=e1590]:
+                      - link "Panier n°1 Taille L" [ref=e1592] [cursor=pointer]:
+                        - /url: /canaux-vente/linkme/catalogue/921230c8-75a3-4ed0-b8ca-16f35e0414f0
+                      - paragraph [ref=e1593]: PRD-0312
+                  - cell "0" [ref=e1594]:
+                    - generic [ref=e1595]: "0"
+                  - cell "29.13 €" [ref=e1596]
+                  - cell "29.13 €" [ref=e1597]:
+                    - generic [ref=e1599]: 29.13 €
+                  - cell "29.13 €" [ref=e1600]
+                  - cell "Marge compétitive (≤15%) 15.00 %" [ref=e1601]:
+                    - generic [ref=e1602]:
+                      - generic "Marge compétitive (≤15%)" [ref=e1603]
+                      - generic [ref=e1604]: 15.00 %
+                  - cell "5.14 €" [ref=e1605]
+                  - cell "34.27 €" [ref=e1606]
+                  - cell [ref=e1607]:
+                    - generic [ref=e1608]:
+                      - button "Masquer de la sélection publique" [ref=e1609] [cursor=pointer]:
+                        - img [ref=e1610]
+                      - button "Voir fiche produit" [ref=e1613] [cursor=pointer]:
+                        - img [ref=e1614]
+                      - button "Modifier" [ref=e1617] [cursor=pointer]:
+                        - img [ref=e1618]
+                      - button "Supprimer" [ref=e1621] [cursor=pointer]:
+                        - img [ref=e1622]
+                - row "Rond paille S Rond paille S DEC-0002 0 30.56 € 30.56 € 30.56 € Marge compétitive (≤15%) 15.00 % 5.39 € 35.95 €" [ref=e1625]:
+                  - cell "Rond paille S" [ref=e1626]:
+                    - img "Rond paille S" [ref=e1628]
+                  - cell "Rond paille S DEC-0002" [ref=e1629]:
+                    - generic [ref=e1630]:
+                      - link "Rond paille S" [ref=e1632] [cursor=pointer]:
+                        - /url: /canaux-vente/linkme/catalogue/408ce30a-a9be-4054-90de-9a8d31bbf110
+                      - paragraph [ref=e1633]: DEC-0002
+                  - cell "0" [ref=e1634]:
+                    - generic [ref=e1635]: "0"
+                  - cell "30.56 €" [ref=e1636]
+                  - cell "30.56 €" [ref=e1637]:
+                    - generic [ref=e1639]: 30.56 €
+                  - cell "30.56 €" [ref=e1640]
+                  - cell "Marge compétitive (≤15%) 15.00 %" [ref=e1641]:
+                    - generic [ref=e1642]:
+                      - generic "Marge compétitive (≤15%)" [ref=e1643]
+                      - generic [ref=e1644]: 15.00 %
+                  - cell "5.39 €" [ref=e1645]
+                  - cell "35.95 €" [ref=e1646]
+                  - cell [ref=e1647]:
+                    - generic [ref=e1648]:
+                      - button "Masquer de la sélection publique" [ref=e1649] [cursor=pointer]:
+                        - img [ref=e1650]
+                      - button "Voir fiche produit" [ref=e1653] [cursor=pointer]:
+                        - img [ref=e1654]
+                      - button "Modifier" [ref=e1657] [cursor=pointer]:
+                        - img [ref=e1658]
+                      - button "Supprimer" [ref=e1661] [cursor=pointer]:
+                        - img [ref=e1662]
+                - row "Rond paille M Rond paille M DEC-0004 4 40.56 € 40.56 € 40.56 € Marge compétitive (≤15%) 15.00 % 7.16 € 47.72 €" [ref=e1665]:
+                  - cell "Rond paille M" [ref=e1666]:
+                    - img "Rond paille M" [ref=e1668]
+                  - cell "Rond paille M DEC-0004" [ref=e1669]:
+                    - generic [ref=e1670]:
+                      - link "Rond paille M" [ref=e1672] [cursor=pointer]:
+                        - /url: /canaux-vente/linkme/catalogue/8f7cf086-031e-47e1-90ee-dff25d80a768
+                      - paragraph [ref=e1673]: DEC-0004
+                  - cell "4" [ref=e1674]:
+                    - generic [ref=e1675]: "4"
+                  - cell "40.56 €" [ref=e1676]
+                  - cell "40.56 €" [ref=e1677]:
+                    - generic [ref=e1679]: 40.56 €
+                  - cell "40.56 €" [ref=e1680]
+                  - cell "Marge compétitive (≤15%) 15.00 %" [ref=e1681]:
+                    - generic [ref=e1682]:
+                      - generic "Marge compétitive (≤15%)" [ref=e1683]
+                      - generic [ref=e1684]: 15.00 %
+                  - cell "7.16 €" [ref=e1685]
+                  - cell "47.72 €" [ref=e1686]
+                  - cell [ref=e1687]:
+                    - generic [ref=e1688]:
+                      - button "Masquer de la sélection publique" [ref=e1689] [cursor=pointer]:
+                        - img [ref=e1690]
+                      - button "Voir fiche produit" [ref=e1693] [cursor=pointer]:
+                        - img [ref=e1694]
+                      - button "Modifier" [ref=e1697] [cursor=pointer]:
+                        - img [ref=e1698]
+                      - button "Supprimer" [ref=e1701] [cursor=pointer]:
+                        - img [ref=e1702]
+                - row "Rond paille L Rond paille L DEC-0003 2 44.85 € 44.85 € 44.85 € Marge compétitive (≤15%) 15.00 % 7.91 € 52.76 €" [ref=e1705]:
+                  - cell "Rond paille L" [ref=e1706]:
+                    - img "Rond paille L" [ref=e1708]
+                  - cell "Rond paille L DEC-0003" [ref=e1709]:
+                    - generic [ref=e1710]:
+                      - link "Rond paille L" [ref=e1712] [cursor=pointer]:
+                        - /url: /canaux-vente/linkme/catalogue/15016c5c-f913-4c01-8344-4e22b6b9cb9e
+                      - paragraph [ref=e1713]: DEC-0003
+                  - cell "2" [ref=e1714]:
+                    - generic [ref=e1715]: "2"
+                  - cell "44.85 €" [ref=e1716]
+                  - cell "44.85 €" [ref=e1717]:
+                    - generic [ref=e1719]: 44.85 €
+                  - cell "44.85 €" [ref=e1720]
+                  - cell "Marge compétitive (≤15%) 15.00 %" [ref=e1721]:
+                    - generic [ref=e1722]:
+                      - generic "Marge compétitive (≤15%)" [ref=e1723]
+                      - generic [ref=e1724]: 15.00 %
+                  - cell "7.91 €" [ref=e1725]
+                  - cell "52.76 €" [ref=e1726]
+                  - cell [ref=e1727]:
+                    - generic [ref=e1728]:
+                      - button "Masquer de la sélection publique" [ref=e1729] [cursor=pointer]:
+                        - img [ref=e1730]
+                      - button "Voir fiche produit" [ref=e1733] [cursor=pointer]:
+                        - img [ref=e1734]
+                      - button "Modifier" [ref=e1737] [cursor=pointer]:
+                        - img [ref=e1738]
+                      - button "Supprimer" [ref=e1741] [cursor=pointer]:
+                        - img [ref=e1742]
+                - row "Ciel de bar Ciel de bar VAS-0034 9 264.14 € 264.14 € 264.14 € Marge compétitive (≤15%) 15.00 % 46.61 € 310.75 €" [ref=e1745]:
+                  - cell "Ciel de bar" [ref=e1746]:
+                    - img "Ciel de bar" [ref=e1748]
+                  - cell "Ciel de bar VAS-0034" [ref=e1749]:
+                    - generic [ref=e1750]:
+                      - link "Ciel de bar" [ref=e1752] [cursor=pointer]:
+                        - /url: /canaux-vente/linkme/catalogue/5e9b79f9-cdcc-464c-83e3-e18ca96a9ecf
+                      - paragraph [ref=e1753]: VAS-0034
+                  - cell "9" [ref=e1754]:
+                    - generic [ref=e1755]: "9"
+                  - cell "264.14 €" [ref=e1756]
+                  - cell "264.14 €" [ref=e1757]:
+                    - generic [ref=e1759]: 264.14 €
+                  - cell "264.14 €" [ref=e1760]
+                  - cell "Marge compétitive (≤15%) 15.00 %" [ref=e1761]:
+                    - generic [ref=e1762]:
+                      - generic "Marge compétitive (≤15%)" [ref=e1763]
+                      - generic [ref=e1764]: 15.00 %
+                  - cell "46.61 €" [ref=e1765]
+                  - cell "310.75 €" [ref=e1766]
+                  - cell [ref=e1767]:
+                    - generic [ref=e1768]:
+                      - button "Masquer de la sélection publique" [ref=e1769] [cursor=pointer]:
+                        - img [ref=e1770]
+                      - button "Voir fiche produit" [ref=e1773] [cursor=pointer]:
+                        - img [ref=e1774]
+                      - button "Modifier" [ref=e1777] [cursor=pointer]:
+                        - img [ref=e1778]
+                      - button "Supprimer" [ref=e1781] [cursor=pointer]:
+                        - img [ref=e1782]
+                - row "Poubelle à POKAWA Poubelle à POKAWA Revendeur POU-0001 5 500.00 € 500.00 € 500.00 € Frais LinkMe (produit revendeur) 15.00 % 75.00 € 425.00 €" [ref=e1785]:
+                  - cell "Poubelle à POKAWA" [ref=e1786]:
+                    - img "Poubelle à POKAWA" [ref=e1788]
+                  - cell "Poubelle à POKAWA Revendeur POU-0001" [ref=e1789]:
+                    - generic [ref=e1790]:
+                      - generic [ref=e1791]:
+                        - link "Poubelle à POKAWA" [ref=e1792] [cursor=pointer]:
+                          - /url: /canaux-vente/linkme/catalogue/f3f93a55-c8e1-4676-9169-428bfba0487a
+                        - generic [ref=e1793]: Revendeur
+                      - paragraph [ref=e1794]: POU-0001
+                  - cell "5" [ref=e1795]:
+                    - generic [ref=e1796]: "5"
+                  - cell "500.00 €" [ref=e1797]
+                  - cell "500.00 €" [ref=e1798]:
+                    - generic [ref=e1800]: 500.00 €
+                  - cell "500.00 €" [ref=e1801]
+                  - cell "Frais LinkMe (produit revendeur) 15.00 %" [ref=e1802]:
+                    - generic [ref=e1803]:
+                      - generic "Frais LinkMe (produit revendeur)" [ref=e1804]
+                      - generic [ref=e1805]: 15.00 %
+                  - cell "75.00 €" [ref=e1806]
+                  - cell "425.00 €" [ref=e1807]
+                  - cell [ref=e1808]:
+                    - generic [ref=e1809]:
+                      - button "Masquer de la sélection publique" [ref=e1810] [cursor=pointer]:
+                        - img [ref=e1811]
+                      - button "Voir fiche produit" [ref=e1814] [cursor=pointer]:
+                        - img [ref=e1815]
+                      - button "Modifier" [ref=e1818] [cursor=pointer]:
+                        - img [ref=e1819]
+                      - button "Supprimer" [ref=e1822] [cursor=pointer]:
+                        - img [ref=e1823]
+                - row "Séparateur Terrasse Séparateur Terrasse SEP-0001 13 399.50 € 399.50 € 399.50 € Marge compétitive (≤15%) 15.00 % 70.50 € 470.00 €" [ref=e1826]:
+                  - cell "Séparateur Terrasse" [ref=e1827]:
+                    - img "Séparateur Terrasse" [ref=e1829]
+                  - cell "Séparateur Terrasse SEP-0001" [ref=e1830]:
+                    - generic [ref=e1831]:
+                      - link "Séparateur Terrasse" [ref=e1833] [cursor=pointer]:
+                        - /url: /canaux-vente/linkme/catalogue/00d4d67b-52e0-443d-b85a-a878fa7e9948
+                      - paragraph [ref=e1834]: SEP-0001
+                  - cell "13" [ref=e1835]:
+                    - generic [ref=e1836]: "13"
+                  - cell "399.50 €" [ref=e1837]
+                  - cell "399.50 €" [ref=e1838]:
+                    - generic [ref=e1840]: 399.50 €
+                  - cell "399.50 €" [ref=e1841]
+                  - cell "Marge compétitive (≤15%) 15.00 %" [ref=e1842]:
+                    - generic [ref=e1843]:
+                      - generic "Marge compétitive (≤15%)" [ref=e1844]
+                      - generic [ref=e1845]: 15.00 %
+                  - cell "70.50 €" [ref=e1846]
+                  - cell "470.00 €" [ref=e1847]
+                  - cell [ref=e1848]:
+                    - generic [ref=e1849]:
+                      - button "Masquer de la sélection publique" [ref=e1850] [cursor=pointer]:
+                        - img [ref=e1851]
+                      - button "Voir fiche produit" [ref=e1854] [cursor=pointer]:
+                        - img [ref=e1855]
+                      - button "Modifier" [ref=e1858] [cursor=pointer]:
+                        - img [ref=e1859]
+                      - button "Supprimer" [ref=e1862] [cursor=pointer]:
+                        - img [ref=e1863]
+                - row "Meuble TABESTO à POKAWA Meuble TABESTO à POKAWA Revendeur MEU-0001 15 1006.14 € 1006.14 € 1006.14 € Frais LinkMe (produit revendeur) 15.00 % 150.92 € 855.22 €" [ref=e1866]:
+                  - cell "Meuble TABESTO à POKAWA" [ref=e1867]:
+                    - img "Meuble TABESTO à POKAWA" [ref=e1869]
+                  - cell "Meuble TABESTO à POKAWA Revendeur MEU-0001" [ref=e1870]:
+                    - generic [ref=e1871]:
+                      - generic [ref=e1872]:
+                        - link "Meuble TABESTO à POKAWA" [ref=e1873] [cursor=pointer]:
+                          - /url: /canaux-vente/linkme/catalogue/259d327c-aa3e-4bcf-adc5-df68aec15cef
+                        - generic [ref=e1874]: Revendeur
+                      - paragraph [ref=e1875]: MEU-0001
+                  - cell "15" [ref=e1876]:
+                    - generic [ref=e1877]: "15"
+                  - cell "1006.14 €" [ref=e1878]
+                  - cell "1006.14 €" [ref=e1879]:
+                    - generic [ref=e1881]: 1006.14 €
+                  - cell "1006.14 €" [ref=e1882]
+                  - cell "Frais LinkMe (produit revendeur) 15.00 %" [ref=e1883]:
+                    - generic [ref=e1884]:
+                      - generic "Frais LinkMe (produit revendeur)" [ref=e1885]
+                      - generic [ref=e1886]: 15.00 %
+                  - cell "150.92 €" [ref=e1887]
+                  - cell "855.22 €" [ref=e1888]
+                  - cell [ref=e1889]:
+                    - generic [ref=e1890]:
+                      - button "Masquer de la sélection publique" [ref=e1891] [cursor=pointer]:
+                        - img [ref=e1892]
+                      - button "Voir fiche produit" [ref=e1895] [cursor=pointer]:
+                        - img [ref=e1896]
+                      - button "Modifier" [ref=e1899] [cursor=pointer]:
+                        - img [ref=e1900]
+                      - button "Supprimer" [ref=e1903] [cursor=pointer]:
+                        - img [ref=e1904]
+                - row "Table modèle 2021 Table modèle 2021 TAB-0003 30 0.00 € 0.00 € 0.00 € Marge compétitive (≤15%) 0.00 % 0.00 € 0.00 €" [ref=e1907]:
+                  - cell "Table modèle 2021" [ref=e1908]:
+                    - img "Table modèle 2021" [ref=e1910]
+                  - cell "Table modèle 2021 TAB-0003" [ref=e1911]:
+                    - generic [ref=e1912]:
+                      - generic [ref=e1914]: Table modèle 2021
+                      - paragraph [ref=e1915]: TAB-0003
+                  - cell "30" [ref=e1916]:
+                    - generic [ref=e1917]: "30"
+                  - cell "0.00 €" [ref=e1918]
+                  - cell "0.00 €" [ref=e1919]:
+                    - generic [ref=e1921]: 0.00 €
+                  - cell "0.00 €" [ref=e1922]
+                  - cell "Marge compétitive (≤15%) 0.00 %" [ref=e1923]:
+                    - generic [ref=e1924]:
+                      - generic "Marge compétitive (≤15%)" [ref=e1925]
+                      - generic [ref=e1926]: 0.00 %
+                  - cell "0.00 €" [ref=e1927]
+                  - cell "0.00 €" [ref=e1928]
+                  - cell [ref=e1929]:
+                    - generic [ref=e1930]:
+                      - button "Masquer de la sélection publique" [ref=e1931] [cursor=pointer]:
+                        - img [ref=e1932]
+                      - button "Voir fiche produit" [ref=e1935] [cursor=pointer]:
+                        - img [ref=e1936]
+                      - button "Modifier" [ref=e1939] [cursor=pointer]:
+                        - img [ref=e1940]
+                      - button "Supprimer" [ref=e1943] [cursor=pointer]:
+                        - img [ref=e1944]
+                - row "Tabouret modèle 2021 BAN-0001 42 0.00 € 0.00 € 0.00 € Marge compétitive (≤15%) 0.00 % 0.00 € 0.00 €" [ref=e1947]:
+                  - cell [ref=e1948]:
+                    - img [ref=e1951]
+                  - cell "Tabouret modèle 2021 BAN-0001" [ref=e1955]:
+                    - generic [ref=e1956]:
+                      - generic [ref=e1958]: Tabouret modèle 2021
+                      - paragraph [ref=e1959]: BAN-0001
+                  - cell "42" [ref=e1960]:
+                    - generic [ref=e1961]: "42"
+                  - cell "0.00 €" [ref=e1962]
+                  - cell "0.00 €" [ref=e1963]:
+                    - generic [ref=e1965]: 0.00 €
+                  - cell "0.00 €" [ref=e1966]
+                  - cell "Marge compétitive (≤15%) 0.00 %" [ref=e1967]:
+                    - generic [ref=e1968]:
+                      - generic "Marge compétitive (≤15%)" [ref=e1969]
+                      - generic [ref=e1970]: 0.00 %
+                  - cell "0.00 €" [ref=e1971]
+                  - cell "0.00 €" [ref=e1972]
+                  - cell [ref=e1973]:
+                    - generic [ref=e1974]:
+                      - button "Masquer de la sélection publique" [ref=e1975] [cursor=pointer]:
+                        - img [ref=e1976]
+                      - button "Voir fiche produit" [ref=e1979] [cursor=pointer]:
+                        - img [ref=e1980]
+                      - button "Modifier" [ref=e1983] [cursor=pointer]:
+                        - img [ref=e1984]
+                      - button "Supprimer" [ref=e1987] [cursor=pointer]:
+                        - img [ref=e1988]
+  - region "Notifications alt+T"
+  - button "Open Next.js Dev Tools" [ref=e1996] [cursor=pointer]:
+    - img [ref=e1997]
+  - alert [ref=e4]
