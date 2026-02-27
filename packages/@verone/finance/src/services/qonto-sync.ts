@@ -121,9 +121,8 @@ interface TransactionDbData {
   // Pièces jointes - source unique
   attachment_ids?: string[] | null;
   updated_at?: string;
-  // TVA Qonto OCR
+  // TVA Qonto OCR (amount_vat is computed by trigger trg_calculate_ht_vat)
   vat_rate?: number | null;
-  vat_amount?: number | null;
   vat_source?: 'qonto_ocr' | 'manual' | null;
   vat_breakdown?: Array<{
     description: string;
@@ -354,7 +353,14 @@ export class QontoSyncService {
               errors.push({
                 transactionId: tx.transaction_id,
                 code: 'UPSERT_ERROR',
-                message: err instanceof Error ? err.message : 'Erreur inconnue',
+                message:
+                  err instanceof Error
+                    ? err.message
+                    : typeof err === 'object' &&
+                        err !== null &&
+                        'message' in err
+                      ? String((err as { message: unknown }).message)
+                      : 'Erreur inconnue',
                 timestamp: new Date().toISOString(),
               });
             }
@@ -463,13 +469,25 @@ export class QontoSyncService {
           p_errors: JSON.stringify([
             {
               code: 'SYNC_ERROR',
-              message: err instanceof Error ? err.message : 'Erreur inconnue',
+              message:
+                err instanceof Error
+                  ? err.message
+                  : typeof err === 'object' && err !== null && 'message' in err
+                    ? String((err as { message: unknown }).message)
+                    : 'Erreur inconnue',
               timestamp: new Date().toISOString(),
             },
           ]),
           p_cursor: null,
         });
       }
+
+      const errMessage =
+        err instanceof Error
+          ? err.message
+          : typeof err === 'object' && err !== null && 'message' in err
+            ? String((err as { message: unknown }).message)
+            : 'Erreur de synchronisation';
 
       return {
         success: false,
@@ -484,12 +502,11 @@ export class QontoSyncService {
         errors: [
           {
             code: 'SYNC_ERROR',
-            message: err instanceof Error ? err.message : 'Erreur inconnue',
+            message: errMessage,
             timestamp: new Date().toISOString(),
           },
         ],
-        message:
-          err instanceof Error ? err.message : 'Erreur de synchronisation',
+        message: errMessage,
       };
     }
   }
@@ -544,9 +561,8 @@ export class QontoSyncService {
       attachment_ids: tx.attachment_ids || null,
       updated_at: new Date().toISOString(),
       // TVA Qonto OCR - stocker uniquement si valide (pas -1)
-      // Si Qonto retourne une TVA simple, on EFFACE vat_breakdown pour éviter les conflits
+      // amount_vat is computed by trigger trg_calculate_ht_vat from amount + vat_rate
       vat_rate: hasQontoVat ? tx.vat_rate : null,
-      vat_amount: hasQontoVat ? tx.vat_amount : null,
       vat_source: hasQontoVat ? 'qonto_ocr' : null,
       vat_breakdown: hasQontoVat ? null : vat_breakdown,
     };
