@@ -536,7 +536,7 @@ export default function QuoteDetailPage({ params }: QuoteDetailPageProps) {
   const status = quote.quote_status;
   const hasQonto = !!quote.qonto_invoice_id;
   const canEdit = (status === 'draft' || status === 'sent') && !hasQonto;
-  const canDelete = status === 'draft' && !hasQonto;
+  const canDelete = !quote.converted_to_invoice_id;
   const statusActions = getStatusActions(status, hasQonto);
 
   const customerName = quote.individual_customer

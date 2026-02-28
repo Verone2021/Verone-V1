@@ -1755,8 +1755,8 @@ export default function FacturationPage() {
                           : (quote.partner?.legal_name ??
                             quote.partner?.trade_name ??
                             '-');
-                      const isDraft = quote.quote_status === 'draft';
                       const hasSyncedQonto = !!quote.qonto_invoice_id;
+                      const canDeleteQuote = !quote.converted_to_invoice_id;
 
                       return (
                         <TableRow
@@ -1821,7 +1821,7 @@ export default function FacturationPage() {
                                   <FileEdit className="h-4 w-4" />
                                 </Button>
                               )}
-                              {isDraft && (
+                              {canDeleteQuote && (
                                 <Button
                                   variant="ghost"
                                   size="icon"

@@ -690,13 +690,17 @@ export function useQuotes(initialFilters?: QuoteFilters) {
 
         const { data: existing, error: fetchErr } = await supabase
           .from('financial_documents')
-          .select('id, quote_status')
+          .select('id, quote_status, converted_to_invoice_id')
           .eq('id', quoteId)
           .single();
 
         if (fetchErr || !existing) throw new Error('Devis introuvable');
-        if (existing.quote_status !== 'draft') {
-          toast.error('Seuls les brouillons peuvent être supprimés');
+
+        // Only block deletion if quote has been converted to invoice
+        if (existing.converted_to_invoice_id) {
+          toast.error(
+            'Ce devis a été converti en facture et ne peut pas être supprimé'
+          );
           return false;
         }
 
