@@ -169,6 +169,28 @@ export interface UpdateQuoteData
 }
 
 // =====================================================================
+// STATUS TRANSITIONS
+// =====================================================================
+
+/** Valid status transitions map */
+const VALID_TRANSITIONS: Record<QuoteStatus, QuoteStatus[]> = {
+  draft: ['sent'],
+  sent: ['draft', 'accepted', 'declined', 'expired'],
+  accepted: ['converted'],
+  declined: [],
+  expired: [],
+  converted: [],
+};
+
+/** Fields editable when quote is in 'sent' status */
+const SENT_EDITABLE_FIELDS = new Set([
+  'notes',
+  'billing_address',
+  'shipping_address',
+  'validity_days',
+]);
+
+// =====================================================================
 // HELPERS
 // =====================================================================
 
@@ -239,7 +261,7 @@ export function useQuotes(initialFilters?: QuoteFilters) {
           qonto_invoice_id, qonto_pdf_url, qonto_public_url,
           converted_to_invoice_id, sales_order_id,
           description, notes, created_at, updated_at, created_by,
-          partner:organisations!partner_id(id, legal_name, trade_name),
+          partner:organisations!financial_documents_partner_id_fkey(id, legal_name, trade_name),
           individual_customer:individual_customers!individual_customer_id(id, first_name, last_name, email),
           channel:sales_channels!channel_id(id, name, code),
           items:financial_document_items(
@@ -358,7 +380,7 @@ export function useQuotes(initialFilters?: QuoteFilters) {
         // Insert document
         const insertData = {
           document_type: 'customer_quote' as const,
-          document_direction: 'outbound' as const,
+          document_direction: 'inbound' as const,
           document_number: data.reference ?? generateQuoteNumber(),
           document_date: new Date().toISOString().split('T')[0],
           validity_date: computeValidityDate(data.validity_days),
@@ -429,24 +451,50 @@ export function useQuotes(initialFilters?: QuoteFilters) {
   );
 
   // -----------------------------------------------------------------
-  // UPDATE QUOTE (only drafts)
+  // UPDATE QUOTE (draft = full edit, sent = partial edit)
   // -----------------------------------------------------------------
   const updateQuote = useCallback(
     async (quoteId: string, data: UpdateQuoteData): Promise<boolean> => {
       try {
         const supabase = createClient();
 
-        // Verify quote is still a draft
+        // Verify quote exists and check status
         const { data: existing, error: fetchErr } = await supabase
           .from('financial_documents')
-          .select('id, quote_status')
+          .select('id, quote_status, qonto_invoice_id')
           .eq('id', quoteId)
           .single();
 
         if (fetchErr || !existing) throw new Error('Devis introuvable');
-        if (existing.quote_status !== 'draft') {
-          toast.error('Seuls les brouillons peuvent être modifiés');
+
+        const status = existing.quote_status as QuoteStatus;
+
+        // Qonto-synced quotes are read-only
+        if (existing.qonto_invoice_id) {
+          toast.error(
+            'Les devis synchronisés Qonto ne peuvent pas être modifiés'
+          );
           return false;
+        }
+
+        // Only draft and sent can be edited
+        if (status !== 'draft' && status !== 'sent') {
+          toast.error('Ce devis ne peut plus être modifié');
+          return false;
+        }
+
+        // In sent status, only certain fields are editable
+        if (status === 'sent') {
+          const dataKeys = Object.keys(data) as (keyof UpdateQuoteData)[];
+          const disallowedKeys = dataKeys.filter(
+            key => data[key] !== undefined && !SENT_EDITABLE_FIELDS.has(key)
+          );
+          if (disallowedKeys.length > 0) {
+            toast.error(
+              'En statut "envoyé", seuls les notes, adresses et date de validité sont modifiables'
+            );
+            return false;
+          }
         }
 
         // Prepare update payload
@@ -560,6 +608,79 @@ export function useQuotes(initialFilters?: QuoteFilters) {
   );
 
   // -----------------------------------------------------------------
+  // CHANGE QUOTE STATUS
+  // -----------------------------------------------------------------
+  const changeQuoteStatus = useCallback(
+    async (quoteId: string, newStatus: QuoteStatus): Promise<boolean> => {
+      try {
+        const supabase = createClient();
+
+        // Fetch current quote
+        const { data: existing, error: fetchErr } = await supabase
+          .from('financial_documents')
+          .select('id, quote_status, qonto_invoice_id')
+          .eq('id', quoteId)
+          .single();
+
+        if (fetchErr || !existing) throw new Error('Devis introuvable');
+
+        const currentStatus = existing.quote_status as QuoteStatus;
+
+        // Validate transition
+        const allowedTransitions = VALID_TRANSITIONS[currentStatus] ?? [];
+        if (!allowedTransitions.includes(newStatus)) {
+          toast.error(
+            `Transition impossible : ${currentStatus} → ${newStatus}`
+          );
+          return false;
+        }
+
+        // Cannot revert to draft if synced to Qonto
+        if (
+          newStatus === 'draft' &&
+          currentStatus === 'sent' &&
+          existing.qonto_invoice_id
+        ) {
+          toast.error(
+            'Impossible de revenir en brouillon : devis déjà synchronisé avec Qonto'
+          );
+          return false;
+        }
+
+        const { error: updateErr } = await supabase
+          .from('financial_documents')
+          .update({
+            quote_status: newStatus,
+            status: newStatus === 'draft' ? 'draft' : 'sent',
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', quoteId);
+
+        if (updateErr) throw new Error(updateErr.message);
+
+        const statusLabels: Record<QuoteStatus, string> = {
+          draft: 'brouillon',
+          sent: 'envoyé',
+          accepted: 'accepté',
+          declined: 'refusé',
+          expired: 'expiré',
+          converted: 'converti',
+        };
+
+        toast.success(`Devis marqué comme "${statusLabels[newStatus]}"`);
+        await fetchQuotes();
+        return true;
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Erreur inconnue';
+        console.error('[useQuotes] changeQuoteStatus error:', err);
+        toast.error(`Erreur: ${message}`);
+        return false;
+      }
+    },
+    [fetchQuotes]
+  );
+
+  // -----------------------------------------------------------------
   // DELETE QUOTE (soft delete, only drafts)
   // -----------------------------------------------------------------
   const deleteQuote = useCallback(
@@ -620,7 +741,7 @@ export function useQuotes(initialFilters?: QuoteFilters) {
           qonto_invoice_id, qonto_pdf_url, qonto_public_url,
           converted_to_invoice_id, sales_order_id,
           description, notes, created_at, updated_at, created_by,
-          partner:organisations!partner_id(id, legal_name, trade_name),
+          partner:organisations!financial_documents_partner_id_fkey(id, legal_name, trade_name),
           individual_customer:individual_customers!individual_customer_id(id, first_name, last_name, email),
           channel:sales_channels!channel_id(id, name, code),
           items:financial_document_items(
@@ -666,6 +787,7 @@ export function useQuotes(initialFilters?: QuoteFilters) {
     fetchQuote,
     createQuote,
     updateQuote,
+    changeQuoteStatus,
     deleteQuote,
   };
 }

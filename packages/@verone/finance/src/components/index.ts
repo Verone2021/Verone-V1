@@ -21,6 +21,7 @@ export * from './RuleModal'; // SLICE 2: RuleModal universel (création + éditi
 export * from './ApplyExistingWizard'; // Wizard preview/confirm pour application de règles
 
 // Composants UI
+export * from './QuoteStatusBadge'; // Badge statut devis réutilisable
 export * from './SupplierCell';
 export * from './OrganisationTransactionsSection';
 

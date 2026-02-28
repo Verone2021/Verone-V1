@@ -22,6 +22,7 @@ import {
   QuoteCreateFromOrderModal,
   QuoteCreateServiceModal,
   QuoteFormModal,
+  QuoteStatusBadge,
   RapprochementFromOrderModal,
   type TransactionForUpload,
   type IOrderForInvoice,
@@ -227,39 +228,6 @@ function formatAmount(amount: number, currency = 'EUR'): string {
 
 function formatDate(dateString: string): string {
   return new Intl.DateTimeFormat('fr-FR').format(new Date(dateString));
-}
-
-function QuoteStatusBadge({ status }: { status: string }): React.ReactNode {
-  const variants: Record<
-    string,
-    'default' | 'secondary' | 'destructive' | 'outline'
-  > = {
-    draft: 'secondary',
-    sent: 'outline',
-    pending_approval: 'outline',
-    finalized: 'default',
-    accepted: 'default',
-    declined: 'destructive',
-    expired: 'outline',
-    converted: 'default',
-  };
-
-  const labels: Record<string, string> = {
-    draft: 'Brouillon',
-    sent: 'Envoyé',
-    pending_approval: 'En attente',
-    finalized: 'Finalisé',
-    accepted: 'Accepté',
-    declined: 'Refusé',
-    expired: 'Expiré',
-    converted: 'Converti',
-  };
-
-  return (
-    <Badge variant={variants[status] ?? 'outline'}>
-      {labels[status] ?? status}
-    </Badge>
-  );
 }
 
 function CreditNoteStatusBadge({
@@ -1791,7 +1759,15 @@ export default function FacturationPage() {
                       const hasSyncedQonto = !!quote.qonto_invoice_id;
 
                       return (
-                        <TableRow key={quote.id}>
+                        <TableRow
+                          key={quote.id}
+                          className="cursor-pointer hover:bg-muted/50"
+                          onClick={() =>
+                            window.location.assign(
+                              `/factures/devis/${quote.id}`
+                            )
+                          }
+                        >
                           <TableCell className="font-mono">
                             {quote.document_number}
                           </TableCell>
@@ -1816,24 +1792,34 @@ export default function FacturationPage() {
                             {formatAmount(quote.total_ttc, 'EUR')}
                           </TableCell>
                           <TableCell className="text-right">
-                            <div className="flex justify-end gap-1">
+                            <div
+                              className="flex justify-end gap-1"
+                              onClick={e => e.stopPropagation()}
+                            >
+                              <Link href={`/factures/devis/${quote.id}`}>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  title="Voir le détail"
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                              </Link>
                               {hasSyncedQonto && (
-                                <>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() =>
-                                      window.open(
-                                        `/api/qonto/quotes/${quote.qonto_invoice_id}/view`,
-                                        '_blank'
-                                      )
-                                    }
-                                    title="Voir PDF Qonto"
-                                    className="text-primary hover:text-primary hover:bg-primary/10"
-                                  >
-                                    <FileEdit className="h-4 w-4" />
-                                  </Button>
-                                </>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() =>
+                                    window.open(
+                                      `/api/qonto/quotes/${quote.qonto_invoice_id}/view`,
+                                      '_blank'
+                                    )
+                                  }
+                                  title="Voir PDF Qonto"
+                                  className="text-primary hover:text-primary hover:bg-primary/10"
+                                >
+                                  <FileEdit className="h-4 w-4" />
+                                </Button>
                               )}
                               {isDraft && (
                                 <Button
