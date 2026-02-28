@@ -44,6 +44,7 @@ import {
 } from '@verone/ui';
 import { Money } from '@verone/ui-business';
 import { formatCurrency } from '@verone/utils';
+import { createClient } from '@verone/utils/supabase/client';
 import {
   ArrowLeft,
   Building2,
@@ -54,6 +55,7 @@ import {
   Loader2,
   MapPin,
   Plus,
+  RefreshCw,
   Save,
   Send,
   Trash2,
@@ -117,6 +119,10 @@ function generateId(): string {
 
 function addressToString(address: Record<string, unknown> | null): string {
   if (!address) return '';
+  // Support freeform text format: { address: "multiline text" }
+  if (typeof address.address === 'string' && address.address) {
+    return address.address;
+  }
   const street = (address.street as string) ?? (address.line1 as string) ?? '';
   const zip = (address.zip as string) ?? (address.postal_code as string) ?? '';
   const city = (address.city as string) ?? '';
@@ -275,6 +281,83 @@ export default function QuoteDetailPage({ params }: QuoteDetailPageProps) {
     insurance_cost_ht: 0,
     fees_vat_rate: 0.2,
   });
+
+  const [updatingOrgAddress, setUpdatingOrgAddress] = useState(false);
+
+  // Handler to propagate address changes back to the organisation
+  const handleUpdateOrgAddress = useCallback(async () => {
+    if (!quote?.partner?.id) return;
+    setUpdatingOrgAddress(true);
+    try {
+      const supabase = createClient();
+      const billingText = addressToString(editFields.billing_address);
+      const shippingText = addressToString(editFields.shipping_address);
+
+      // Parse the freeform text into structured address fields
+      const parseBillingLines = billingText.split('\n').filter(Boolean);
+      const parseShippingLines = shippingText.split('\n').filter(Boolean);
+
+      const updateData: Record<string, string | null> = {
+        billing_address_line1: parseBillingLines[0] ?? null,
+        billing_address_line2:
+          parseBillingLines.length > 3 ? parseBillingLines[1] : null,
+        billing_city:
+          parseBillingLines.length > 2
+            ? (parseBillingLines[parseBillingLines.length - 2]?.replace(
+                /^\d+\s*/,
+                ''
+              ) ?? null)
+            : null,
+        billing_postal_code:
+          parseBillingLines.length > 2
+            ? (parseBillingLines[parseBillingLines.length - 2]?.match(
+                /^\d+/
+              )?.[0] ?? null)
+            : null,
+        billing_country:
+          parseBillingLines[parseBillingLines.length - 1] ?? null,
+      };
+
+      if (shippingText && shippingText !== billingText) {
+        updateData.shipping_address_line1 = parseShippingLines[0] ?? null;
+        updateData.shipping_address_line2 =
+          parseShippingLines.length > 3 ? parseShippingLines[1] : null;
+        updateData.shipping_city =
+          parseShippingLines.length > 2
+            ? (parseShippingLines[parseShippingLines.length - 2]?.replace(
+                /^\d+\s*/,
+                ''
+              ) ?? null)
+            : null;
+        updateData.shipping_postal_code =
+          parseShippingLines.length > 2
+            ? (parseShippingLines[parseShippingLines.length - 2]?.match(
+                /^\d+/
+              )?.[0] ?? null)
+            : null;
+        updateData.shipping_country =
+          parseShippingLines[parseShippingLines.length - 1] ?? null;
+        updateData.has_different_shipping_address = 'true';
+      }
+
+      const { error } = await supabase
+        .from('organisations')
+        .update(updateData)
+        .eq('id', quote.partner.id);
+
+      if (error) throw error;
+      toast.success("Adresse de l'organisation mise à jour");
+    } catch (err) {
+      console.error('[QuoteDetail] Update org address error:', err);
+      toast.error("Erreur lors de la mise à jour de l'adresse");
+    } finally {
+      setUpdatingOrgAddress(false);
+    }
+  }, [
+    quote?.partner?.id,
+    editFields.billing_address,
+    editFields.shipping_address,
+  ]);
 
   // -----------------------------------------------------------------
   // LOAD QUOTE
@@ -1198,6 +1281,36 @@ export default function QuoteDetailPage({ params }: QuoteDetailPageProps) {
                   <AddressDisplay address={quote.shipping_address} />
                 )}
               </div>
+
+              {/* Propagate address to organisation */}
+              {isEditing &&
+                quote.partner?.id &&
+                quote.customer_type === 'organization' && (
+                  <div className="pt-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={updatingOrgAddress}
+                      onClick={() => {
+                        void handleUpdateOrgAddress().catch((err: unknown) => {
+                          console.error(
+                            '[QuoteDetail] updateOrgAddress error:',
+                            err
+                          );
+                        });
+                      }}
+                      className="w-full text-xs"
+                    >
+                      {updatingOrgAddress ? (
+                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                      ) : (
+                        <RefreshCw className="h-3 w-3 mr-1" />
+                      )}
+                      Mettre à jour l&apos;adresse de l&apos;organisation
+                    </Button>
+                  </div>
+                )}
             </CardContent>
           </Card>
         </div>
@@ -1292,6 +1405,17 @@ function AddressDisplay({
 }) {
   if (!address) {
     return <p className="text-sm text-muted-foreground">Non renseignée</p>;
+  }
+
+  // Support freeform text format: { address: "multiline text" }
+  if (typeof address.address === 'string' && address.address) {
+    return (
+      <div className="text-sm">
+        {address.address.split('\n').map((line, i) => (
+          <p key={i}>{line}</p>
+        ))}
+      </div>
+    );
   }
 
   const street = (address.street as string) ?? (address.line1 as string) ?? '';

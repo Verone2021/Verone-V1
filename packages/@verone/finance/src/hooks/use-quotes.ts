@@ -143,6 +143,10 @@ export interface CreateQuoteItemData {
   tva_rate: number;
   discount_percentage?: number;
   eco_tax?: number;
+  // LinkMe metadata
+  linkme_selection_item_id?: string | null;
+  base_price_ht?: number | null;
+  retrocession_rate?: number | null;
 }
 
 export interface CreateQuoteData {
@@ -161,6 +165,9 @@ export interface CreateQuoteData {
   insurance_cost_ht?: number;
   fees_vat_rate?: number;
   sales_order_id?: string | null;
+  // LinkMe metadata
+  linkme_selection_id?: string | null;
+  linkme_affiliate_id?: string | null;
 }
 
 export interface UpdateQuoteData
@@ -404,6 +411,8 @@ export function useQuotes(initialFilters?: QuoteFilters) {
           sales_order_id: data.sales_order_id ?? null,
           notes: data.notes ?? null,
           created_by: userData.user.id,
+          linkme_selection_id: data.linkme_selection_id ?? null,
+          linkme_affiliate_id: data.linkme_affiliate_id ?? null,
         };
 
         const { data: doc, error: docError } = await supabase
@@ -429,6 +438,9 @@ export function useQuotes(initialFilters?: QuoteFilters) {
           discount_percentage: item.discount_percentage ?? 0,
           eco_tax: item.eco_tax ?? 0,
           sort_order: index,
+          linkme_selection_item_id: item.linkme_selection_item_id ?? null,
+          base_price_ht: item.base_price_ht ?? null,
+          retrocession_rate: item.retrocession_rate ?? null,
         }));
 
         const { error: itemsError } = await supabase

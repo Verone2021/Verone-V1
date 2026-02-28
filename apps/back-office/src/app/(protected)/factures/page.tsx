@@ -1752,8 +1752,8 @@ export default function FacturationPage() {
                         quote.customer_type === 'individual' &&
                         quote.individual_customer
                           ? `${quote.individual_customer.first_name} ${quote.individual_customer.last_name}`
-                          : (quote.partner?.legal_name ??
-                            quote.partner?.trade_name ??
+                          : (quote.partner?.trade_name ??
+                            quote.partner?.legal_name ??
                             '-');
                       const hasSyncedQonto = !!quote.qonto_invoice_id;
                       const canDeleteQuote = !quote.converted_to_invoice_id;

@@ -18,6 +18,10 @@ export interface UnifiedCustomer {
   id: string;
   name: string;
   type: CustomerType;
+  // Identité B2B
+  legal_name?: string | null;
+  trade_name?: string | null;
+  siret?: string | null;
   // Conditions de paiement
   payment_terms?: string | null; // DEPRECATED - garder pour rétro-compatibilité
   payment_terms_type?: string | null; // NOUVEAU - enum payment_terms_type
@@ -100,6 +104,7 @@ export function CustomerSelector({
             id,
             legal_name,
             trade_name,
+            siret,
             payment_terms,
             payment_terms_type,
             payment_terms_notes,

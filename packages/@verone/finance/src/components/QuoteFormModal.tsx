@@ -14,6 +14,12 @@ import {
   type UnifiedCustomer,
 } from '@verone/orders/components/modals/customer-selector';
 import { AddProductToOrderModal } from '@verone/orders/components/modals/AddProductToOrderModal';
+import {
+  useLinkMeAffiliates,
+  useLinkMeSelectionsByAffiliate,
+  useLinkMeSelection,
+  type SelectionItem,
+} from '@verone/orders/hooks';
 import { ButtonV2 } from '@verone/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
 import {
@@ -55,6 +61,8 @@ import {
   ChevronRight,
   ArrowLeft,
   Loader2,
+  Package,
+  Users,
 } from 'lucide-react';
 
 // =====================================================================
@@ -62,7 +70,11 @@ import {
 // =====================================================================
 
 type QuoteChannelType = 'manual' | 'site-internet' | 'linkme' | 'service';
-type WizardStep = 'channel-selection' | 'form';
+type WizardStep =
+  | 'channel-selection'
+  | 'linkme-affiliate'
+  | 'linkme-selection'
+  | 'form';
 
 interface QuoteItemLocal {
   id: string;
@@ -79,6 +91,10 @@ interface QuoteItemLocal {
     sku: string;
     primary_image_url?: string;
   };
+  // LinkMe metadata
+  linkme_selection_item_id?: string | null;
+  base_price_ht?: number | null;
+  retrocession_rate?: number | null;
 }
 
 interface QuoteFormModalProps {
@@ -116,6 +132,21 @@ export function QuoteFormModal({
   // Customer
   const [selectedCustomer, setSelectedCustomer] =
     useState<UnifiedCustomer | null>(null);
+
+  // LinkMe state
+  const [selectedAffiliateId, setSelectedAffiliateId] = useState<string | null>(
+    null
+  );
+  const [selectedSelectionId, setSelectedSelectionId] = useState<string | null>(
+    null
+  );
+
+  // LinkMe hooks
+  const { data: linkmeAffiliates } = useLinkMeAffiliates();
+  const { data: linkmeSelections } =
+    useLinkMeSelectionsByAffiliate(selectedAffiliateId);
+  const { data: linkmeSelectionDetails } =
+    useLinkMeSelection(selectedSelectionId);
 
   // Items
   const [items, setItems] = useState<QuoteItemLocal[]>([]);
@@ -175,6 +206,8 @@ export function QuoteFormModal({
     setSelectedChannel(null);
     setChannelId(null);
     setSelectedCustomer(null);
+    setSelectedAffiliateId(null);
+    setSelectedSelectionId(null);
     setItems([]);
     setValidityDays('30');
     setReference('');
@@ -193,10 +226,113 @@ export function QuoteFormModal({
     onOpenChange(false);
   }, [resetForm, onOpenChange]);
 
+  // Auto-fill addresses when customer is selected
+  const handleCustomerChange = useCallback(
+    (customer: UnifiedCustomer | null) => {
+      setSelectedCustomer(customer);
+
+      if (!customer) {
+        setBillingAddress('');
+        setShippingAddress('');
+        return;
+      }
+
+      if (customer.type === 'professional') {
+        // B2B: billing address
+        const billingParts = [
+          customer.name,
+          customer.billing_address_line1,
+          customer.billing_address_line2,
+          [customer.billing_postal_code, customer.billing_city]
+            .filter(Boolean)
+            .join(' '),
+          customer.billing_region,
+          customer.billing_country,
+        ]
+          .filter(Boolean)
+          .join('\n');
+        setBillingAddress(billingParts);
+
+        // B2B: shipping address (use shipping if available, else billing)
+        const useShipping =
+          (customer.shipping_address_line1 != null &&
+            customer.shipping_address_line1 !== '') ||
+          (customer.shipping_city != null && customer.shipping_city !== '');
+        const shippingParts = [
+          customer.name,
+          useShipping
+            ? customer.shipping_address_line1
+            : customer.billing_address_line1,
+          useShipping
+            ? customer.shipping_address_line2
+            : customer.billing_address_line2,
+          useShipping
+            ? [customer.shipping_postal_code, customer.shipping_city]
+                .filter(Boolean)
+                .join(' ')
+            : [customer.billing_postal_code, customer.billing_city]
+                .filter(Boolean)
+                .join(' '),
+          useShipping ? customer.shipping_region : customer.billing_region,
+          useShipping ? customer.shipping_country : customer.billing_country,
+        ]
+          .filter(Boolean)
+          .join('\n');
+        setShippingAddress(shippingParts);
+      } else {
+        // B2C: primary address for shipping
+        const shippingParts = [
+          customer.name,
+          customer.address_line1,
+          customer.address_line2,
+          [customer.postal_code, customer.city].filter(Boolean).join(' '),
+          customer.region,
+          customer.country,
+        ]
+          .filter(Boolean)
+          .join('\n');
+        setShippingAddress(shippingParts);
+
+        // B2C: billing (specific individual billing or fallback to primary)
+        const useSpecificBilling =
+          (customer.billing_address_line1_individual != null &&
+            customer.billing_address_line1_individual !== '') ||
+          (customer.billing_city_individual != null &&
+            customer.billing_city_individual !== '');
+        const billingParts = [
+          customer.name,
+          useSpecificBilling
+            ? customer.billing_address_line1_individual
+            : customer.address_line1,
+          useSpecificBilling
+            ? customer.billing_address_line2_individual
+            : customer.address_line2,
+          useSpecificBilling
+            ? [
+                customer.billing_postal_code_individual,
+                customer.billing_city_individual,
+              ]
+                .filter(Boolean)
+                .join(' ')
+            : [customer.postal_code, customer.city].filter(Boolean).join(' '),
+          useSpecificBilling
+            ? customer.billing_region_individual
+            : customer.region,
+          useSpecificBilling
+            ? customer.billing_country_individual
+            : customer.country,
+        ]
+          .filter(Boolean)
+          .join('\n');
+        setBillingAddress(billingParts);
+      }
+    },
+    []
+  );
+
   const handleChannelSelect = useCallback(
     (channel: QuoteChannelType) => {
       setSelectedChannel(channel);
-      setWizardStep('form');
 
       // Set channel_id from available channels
       if (channel === 'manual') {
@@ -219,6 +355,14 @@ export function QuoteFormModal({
         // Service quotes don't need a specific channel
         setChannelId(null);
       }
+
+      // LinkMe goes through affiliate/selection steps first
+      if (channel === 'linkme') {
+        setWizardStep('linkme-affiliate');
+        return;
+      }
+
+      setWizardStep('form');
 
       // For service channel, add a default empty service line
       if (channel === 'service') {
@@ -244,8 +388,25 @@ export function QuoteFormModal({
     setWizardStep('channel-selection');
     setSelectedChannel(null);
     setChannelId(null);
+    setSelectedAffiliateId(null);
+    setSelectedSelectionId(null);
     setItems([]);
   }, []);
+
+  const handleBackFromLinkmeSelection = useCallback(() => {
+    setWizardStep('linkme-affiliate');
+    setSelectedSelectionId(null);
+    setItems([]);
+  }, []);
+
+  const handleBackFromForm = useCallback(() => {
+    if (selectedChannel === 'linkme') {
+      setWizardStep('linkme-selection');
+      setItems([]);
+    } else {
+      handleBackToChannelSelection();
+    }
+  }, [selectedChannel, handleBackToChannelSelection]);
 
   // Add product from catalog (for manual/site-internet/linkme)
   const handleAddProduct = useCallback(
@@ -255,21 +416,22 @@ export function QuoteFormModal({
       unit_price_ht: number;
       tax_rate?: number;
       discount_percentage?: number;
-      eco_tax_ht?: number;
+      eco_tax?: number;
       notes?: string;
       product_name?: string;
       product_sku?: string;
       product_image_url?: string;
+      product_description?: string;
     }) => {
       const newItem: QuoteItemLocal = {
         id: generateId(),
         product_id: data.product_id,
-        description: data.product_name ?? '',
+        description: data.product_description ?? data.product_name ?? '',
         quantity: data.quantity,
         unit_price_ht: data.unit_price_ht,
         tva_rate: (data.tax_rate ?? 0.2) * 100, // Convert from 0.2 to 20
         discount_percentage: data.discount_percentage ?? 0,
-        eco_tax: data.eco_tax_ht ?? 0,
+        eco_tax: data.eco_tax ?? 0,
         is_service: false,
         product: {
           name: data.product_name ?? '',
@@ -281,6 +443,60 @@ export function QuoteFormModal({
       setShowAddProduct(false);
     },
     []
+  );
+
+  // Add product from LinkMe selection
+  const handleAddLinkMeProduct = useCallback(
+    (item: SelectionItem) => {
+      const roundMoney = (value: number): number =>
+        Math.round(value * 100) / 100;
+
+      // Check if already in items -> increment quantity
+      const existing = items.find(i => i.product_id === item.product_id);
+      if (existing) {
+        setItems(prev =>
+          prev.map(i =>
+            i.product_id === item.product_id
+              ? { ...i, quantity: i.quantity + 1 }
+              : i
+          )
+        );
+        return;
+      }
+
+      // Price formula: selling_price = base_price / (1 - marginRate) * (1 + commissionRate)
+      const commissionRate = (item.commission_rate ?? 0) / 100;
+      const marginRate = item.margin_rate / 100;
+      const sellingPrice = roundMoney(
+        (item.base_price_ht / (1 - marginRate)) * (1 + commissionRate)
+      );
+
+      const newItem: QuoteItemLocal = {
+        id: generateId(),
+        product_id: item.product_id,
+        description:
+          item.custom_description ??
+          item.product?.description ??
+          item.product?.name ??
+          '',
+        quantity: 1,
+        unit_price_ht: sellingPrice,
+        tva_rate: 20,
+        discount_percentage: 0,
+        eco_tax: 0,
+        is_service: false,
+        product: {
+          name: item.product?.name ?? '',
+          sku: item.product?.sku ?? '',
+          primary_image_url: item.product_image_url ?? undefined,
+        },
+        linkme_selection_item_id: item.id,
+        base_price_ht: item.base_price_ht,
+        retrocession_rate: marginRate,
+      };
+      setItems(prev => [...prev, newItem]);
+    },
+    [items]
   );
 
   // Add service line (for service channel)
@@ -408,6 +624,9 @@ export function QuoteFormModal({
         tva_rate: item.tva_rate,
         discount_percentage: item.discount_percentage,
         eco_tax: item.eco_tax,
+        linkme_selection_item_id: item.linkme_selection_item_id ?? null,
+        base_price_ht: item.base_price_ht ?? null,
+        retrocession_rate: item.retrocession_rate ?? null,
       }));
 
       const quoteData: CreateQuoteData = {
@@ -430,6 +649,8 @@ export function QuoteFormModal({
         handling_cost_ht: handlingCostHt,
         insurance_cost_ht: insuranceCostHt,
         fees_vat_rate: feesVatRate,
+        linkme_selection_id: selectedSelectionId ?? null,
+        linkme_affiliate_id: selectedAffiliateId ?? null,
       };
 
       const quoteId = await createQuote(quoteData);
@@ -464,6 +685,8 @@ export function QuoteFormModal({
     handlingCostHt,
     insuranceCostHt,
     feesVatRate,
+    selectedSelectionId,
+    selectedAffiliateId,
     createQuote,
     handleClose,
     onSuccess,
@@ -489,6 +712,7 @@ export function QuoteFormModal({
   }, [selectedChannel]);
 
   const isServiceMode = selectedChannel === 'service';
+  const isLinkMeMode = selectedChannel === 'linkme';
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -497,14 +721,22 @@ export function QuoteFormModal({
           <DialogTitle>
             {wizardStep === 'channel-selection'
               ? 'Nouveau Devis'
-              : `Devis ${channelLabel}`}
+              : wizardStep === 'linkme-affiliate'
+                ? "Devis LinkMe — Choix de l'affilié"
+                : wizardStep === 'linkme-selection'
+                  ? 'Devis LinkMe — Choix de la sélection'
+                  : `Devis ${channelLabel}`}
           </DialogTitle>
           <DialogDescription>
             {wizardStep === 'channel-selection'
               ? 'Sélectionnez le type de devis à créer'
-              : isServiceMode
-                ? 'Créer un devis pour des prestations de service'
-                : `Créer un devis ${channelLabel} avec produits du catalogue`}
+              : wizardStep === 'linkme-affiliate'
+                ? "Sélectionnez l'affilié LinkMe pour ce devis"
+                : wizardStep === 'linkme-selection'
+                  ? 'Sélectionnez la sélection de produits'
+                  : isServiceMode
+                    ? 'Créer un devis pour des prestations de service'
+                    : `Créer un devis ${channelLabel} avec produits du catalogue`}
           </DialogDescription>
         </DialogHeader>
 
@@ -590,6 +822,118 @@ export function QuoteFormModal({
         )}
 
         {/* ============================================================= */}
+        {/* STEP 1b: LinkMe Affiliate Selection                            */}
+        {/* ============================================================= */}
+        {wizardStep === 'linkme-affiliate' && (
+          <div className="py-4">
+            <div className="mb-4">
+              <ButtonV2
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={handleBackToChannelSelection}
+                className="text-gray-600"
+              >
+                <ArrowLeft className="h-4 w-4 mr-1" />
+                Retour
+              </ButtonV2>
+            </div>
+
+            {!linkmeAffiliates || linkmeAffiliates.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                <p className="text-sm">Aucun affilié LinkMe actif</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-3 max-h-[50vh] overflow-y-auto">
+                {linkmeAffiliates.map(affiliate => (
+                  <button
+                    key={affiliate.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedAffiliateId(affiliate.id);
+                      setWizardStep('linkme-selection');
+                    }}
+                    className="flex items-center gap-4 p-4 border-2 border-gray-200 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition-all text-left group"
+                  >
+                    <div className="flex-shrink-0 w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center group-hover:bg-purple-200">
+                      <Users className="h-5 w-5 text-purple-600" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-gray-900">
+                        {affiliate.display_name}
+                      </h3>
+                      <p className="text-xs text-gray-500">
+                        {affiliate.type === 'enseigne'
+                          ? 'Enseigne'
+                          : 'Org. indépendante'}
+                        {affiliate.selections_count > 0 &&
+                          ` · ${affiliate.selections_count} sélection(s)`}
+                      </p>
+                    </div>
+                    <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-purple-500" />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ============================================================= */}
+        {/* STEP 1c: LinkMe Selection Choice                               */}
+        {/* ============================================================= */}
+        {wizardStep === 'linkme-selection' && (
+          <div className="py-4">
+            <div className="mb-4">
+              <ButtonV2
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={handleBackFromLinkmeSelection}
+                className="text-gray-600"
+              >
+                <ArrowLeft className="h-4 w-4 mr-1" />
+                Retour aux affiliés
+              </ButtonV2>
+            </div>
+
+            {!linkmeSelections || linkmeSelections.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <Package className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                <p className="text-sm">Aucune sélection pour cet affilié</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-3 max-h-[50vh] overflow-y-auto">
+                {linkmeSelections.map(selection => (
+                  <button
+                    key={selection.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedSelectionId(selection.id);
+                      setWizardStep('form');
+                    }}
+                    className="flex items-center gap-4 p-4 border-2 border-gray-200 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition-all text-left group"
+                  >
+                    <div className="flex-shrink-0 w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center group-hover:bg-purple-200">
+                      <Package className="h-5 w-5 text-purple-600" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-gray-900">
+                        {selection.name}
+                      </h3>
+                      <p className="text-xs text-gray-500">
+                        {selection.products_count ?? 0} produit(s)
+                      </p>
+                    </div>
+                    <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-purple-500" />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ============================================================= */}
         {/* STEP 2: Quote Form                                             */}
         {/* ============================================================= */}
         {wizardStep === 'form' && (
@@ -600,7 +944,7 @@ export function QuoteFormModal({
                 type="button"
                 variant="ghost"
                 size="sm"
-                onClick={handleBackToChannelSelection}
+                onClick={handleBackFromForm}
                 className="text-gray-600"
               >
                 <ArrowLeft className="h-4 w-4 mr-1" />
@@ -617,17 +961,129 @@ export function QuoteFormModal({
                 <CardContent>
                   <CustomerSelector
                     selectedCustomer={selectedCustomer}
-                    onCustomerChange={setSelectedCustomer}
+                    onCustomerChange={handleCustomerChange}
                   />
+                  {/* B2B identity details */}
+                  {selectedCustomer?.type === 'professional' && (
+                    <div className="mt-3 rounded-md bg-gray-50 p-3 text-sm space-y-1">
+                      {selectedCustomer.legal_name && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-500 min-w-[120px]">
+                            Raison sociale :
+                          </span>
+                          <span className="font-medium">
+                            {selectedCustomer.legal_name}
+                          </span>
+                        </div>
+                      )}
+                      {selectedCustomer.trade_name &&
+                        selectedCustomer.trade_name !==
+                          selectedCustomer.legal_name && (
+                          <div className="flex items-center gap-2">
+                            <span className="text-gray-500 min-w-[120px]">
+                              Nom commercial :
+                            </span>
+                            <span className="font-medium">
+                              {selectedCustomer.trade_name}
+                            </span>
+                          </div>
+                        )}
+                      {selectedCustomer.siret && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-500 min-w-[120px]">
+                            SIRET :
+                          </span>
+                          <span className="font-mono text-xs">
+                            {selectedCustomer.siret}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
+
+              {/* ----- LinkMe Selection Products (pick to add) ----- */}
+              {isLinkMeMode && linkmeSelectionDetails && (
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base">
+                      Produits de la sélection — {linkmeSelectionDetails.name}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {(linkmeSelectionDetails.items ?? []).length === 0 ? (
+                      <div className="text-center py-4 text-gray-500">
+                        <p className="text-sm">
+                          Aucun produit dans cette sélection
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2 max-h-[250px] overflow-y-auto">
+                        {(linkmeSelectionDetails.items ?? []).map(selItem => {
+                          const marginRate = selItem.margin_rate / 100;
+                          const commissionRate =
+                            (selItem.commission_rate ?? 0) / 100;
+                          const sellingPrice =
+                            Math.round(
+                              (selItem.base_price_ht / (1 - marginRate)) *
+                                (1 + commissionRate) *
+                                100
+                            ) / 100;
+                          const alreadyAdded = items.some(
+                            i => i.product_id === selItem.product_id
+                          );
+
+                          return (
+                            <div
+                              key={selItem.id}
+                              className="flex items-center gap-3 p-2 border rounded-md hover:bg-gray-50"
+                            >
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium truncate">
+                                  {selItem.product?.name ?? 'Produit'}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  SKU: {selItem.product?.sku ?? '-'} · Base:{' '}
+                                  {formatCurrency(selItem.base_price_ht)} ·
+                                  Marge: {selItem.margin_rate}%
+                                </p>
+                              </div>
+                              <div className="text-right mr-2">
+                                <p className="text-sm font-semibold">
+                                  {formatCurrency(sellingPrice)}
+                                </p>
+                                <p className="text-xs text-gray-400">
+                                  Prix affilié HT
+                                </p>
+                              </div>
+                              <ButtonV2
+                                type="button"
+                                variant={alreadyAdded ? 'outline' : 'default'}
+                                size="sm"
+                                onClick={() => handleAddLinkMeProduct(selItem)}
+                              >
+                                <Plus className="h-4 w-4" />
+                              </ButtonV2>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
 
               {/* ----- Items Section ----- */}
               <Card>
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-base">
-                      {isServiceMode ? 'Prestations' : 'Produits'}
+                      {isServiceMode
+                        ? 'Prestations'
+                        : isLinkMeMode
+                          ? 'Produits du devis'
+                          : 'Produits'}
                     </CardTitle>
                     {isServiceMode ? (
                       <ButtonV2
@@ -639,7 +1095,7 @@ export function QuoteFormModal({
                         <Plus className="h-4 w-4 mr-1" />
                         Ajouter une ligne
                       </ButtonV2>
-                    ) : (
+                    ) : !isLinkMeMode ? (
                       <ButtonV2
                         type="button"
                         variant="outline"
@@ -649,7 +1105,7 @@ export function QuoteFormModal({
                         <Plus className="h-4 w-4 mr-1" />
                         Ajouter un produit
                       </ButtonV2>
-                    )}
+                    ) : null}
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -658,7 +1114,9 @@ export function QuoteFormModal({
                       <p className="text-sm">
                         {isServiceMode
                           ? 'Aucune prestation ajoutée'
-                          : 'Aucun produit ajouté'}
+                          : isLinkMeMode
+                            ? 'Cliquez sur + pour ajouter des produits depuis la sélection'
+                            : 'Aucun produit ajouté'}
                       </p>
                     </div>
                   ) : isServiceMode ? (
@@ -1113,8 +1571,8 @@ export function QuoteFormModal({
           </>
         )}
 
-        {/* AddProductToOrderModal (for catalog channels) */}
-        {!isServiceMode && (
+        {/* AddProductToOrderModal (for catalog channels, not LinkMe) */}
+        {!isServiceMode && !isLinkMeMode && (
           <AddProductToOrderModal
             open={showAddProduct}
             onClose={() => setShowAddProduct(false)}
