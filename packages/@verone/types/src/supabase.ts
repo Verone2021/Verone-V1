@@ -2622,7 +2622,9 @@ export type Database = {
         Row: {
           created_at: string;
           description: string;
+          discount_percentage: number | null;
           document_id: string;
+          eco_tax: number | null;
           id: string;
           product_id: string | null;
           quantity: number;
@@ -2637,7 +2639,9 @@ export type Database = {
         Insert: {
           created_at?: string;
           description: string;
+          discount_percentage?: number | null;
           document_id: string;
+          eco_tax?: number | null;
           id?: string;
           product_id?: string | null;
           quantity?: number;
@@ -2652,7 +2656,9 @@ export type Database = {
         Update: {
           created_at?: string;
           description?: string;
+          discount_percentage?: number | null;
           document_id?: string;
+          eco_tax?: number | null;
           id?: string;
           product_id?: string | null;
           quantity?: number;
@@ -2829,8 +2835,11 @@ export type Database = {
           amount_paid: number;
           billing_address: Json | null;
           billing_contact_id: string | null;
+          channel_id: string | null;
+          converted_to_invoice_id: string | null;
           created_at: string;
           created_by: string;
+          customer_type: string | null;
           deleted_at: string | null;
           delivery_contact_id: string | null;
           description: string | null;
@@ -2844,6 +2853,7 @@ export type Database = {
           finalized_by: string | null;
           handling_cost_ht: number | null;
           id: string;
+          individual_customer_id: string | null;
           insurance_cost_ht: number | null;
           invoice_source: string | null;
           last_synced_from_abby_at: string | null;
@@ -2859,6 +2869,7 @@ export type Database = {
           qonto_invoice_id: string | null;
           qonto_pdf_url: string | null;
           qonto_public_url: string | null;
+          quote_status: string | null;
           responsable_contact_id: string | null;
           sales_order_id: string | null;
           sent_at: string | null;
@@ -2879,6 +2890,7 @@ export type Database = {
           uploaded_file_url: string | null;
           validated_by: string | null;
           validated_to_draft_at: string | null;
+          validity_date: string | null;
           workflow_status: string | null;
         };
         Insert: {
@@ -2889,8 +2901,11 @@ export type Database = {
           amount_paid?: number;
           billing_address?: Json | null;
           billing_contact_id?: string | null;
+          channel_id?: string | null;
+          converted_to_invoice_id?: string | null;
           created_at?: string;
           created_by: string;
+          customer_type?: string | null;
           deleted_at?: string | null;
           delivery_contact_id?: string | null;
           description?: string | null;
@@ -2904,6 +2919,7 @@ export type Database = {
           finalized_by?: string | null;
           handling_cost_ht?: number | null;
           id?: string;
+          individual_customer_id?: string | null;
           insurance_cost_ht?: number | null;
           invoice_source?: string | null;
           last_synced_from_abby_at?: string | null;
@@ -2919,6 +2935,7 @@ export type Database = {
           qonto_invoice_id?: string | null;
           qonto_pdf_url?: string | null;
           qonto_public_url?: string | null;
+          quote_status?: string | null;
           responsable_contact_id?: string | null;
           sales_order_id?: string | null;
           sent_at?: string | null;
@@ -2939,6 +2956,7 @@ export type Database = {
           uploaded_file_url?: string | null;
           validated_by?: string | null;
           validated_to_draft_at?: string | null;
+          validity_date?: string | null;
           workflow_status?: string | null;
         };
         Update: {
@@ -2949,8 +2967,11 @@ export type Database = {
           amount_paid?: number;
           billing_address?: Json | null;
           billing_contact_id?: string | null;
+          channel_id?: string | null;
+          converted_to_invoice_id?: string | null;
           created_at?: string;
           created_by?: string;
+          customer_type?: string | null;
           deleted_at?: string | null;
           delivery_contact_id?: string | null;
           description?: string | null;
@@ -2964,6 +2985,7 @@ export type Database = {
           finalized_by?: string | null;
           handling_cost_ht?: number | null;
           id?: string;
+          individual_customer_id?: string | null;
           insurance_cost_ht?: number | null;
           invoice_source?: string | null;
           last_synced_from_abby_at?: string | null;
@@ -2979,6 +3001,7 @@ export type Database = {
           qonto_invoice_id?: string | null;
           qonto_pdf_url?: string | null;
           qonto_public_url?: string | null;
+          quote_status?: string | null;
           responsable_contact_id?: string | null;
           sales_order_id?: string | null;
           sent_at?: string | null;
@@ -2999,6 +3022,7 @@ export type Database = {
           uploaded_file_url?: string | null;
           validated_by?: string | null;
           validated_to_draft_at?: string | null;
+          validity_date?: string | null;
           workflow_status?: string | null;
         };
         Relationships: [
@@ -3010,10 +3034,45 @@ export type Database = {
             referencedColumns: ['id'];
           },
           {
+            foreignKeyName: 'financial_documents_channel_id_fkey';
+            columns: ['channel_id'];
+            isOneToOne: false;
+            referencedRelation: 'sales_channels';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'financial_documents_converted_to_invoice_id_fkey';
+            columns: ['converted_to_invoice_id'];
+            isOneToOne: false;
+            referencedRelation: 'financial_documents';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'financial_documents_converted_to_invoice_id_fkey';
+            columns: ['converted_to_invoice_id'];
+            isOneToOne: false;
+            referencedRelation: 'v_pending_invoice_uploads';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'financial_documents_converted_to_invoice_id_fkey';
+            columns: ['converted_to_invoice_id'];
+            isOneToOne: false;
+            referencedRelation: 'v_transactions_missing_invoice';
+            referencedColumns: ['financial_document_id'];
+          },
+          {
             foreignKeyName: 'financial_documents_delivery_contact_id_fkey';
             columns: ['delivery_contact_id'];
             isOneToOne: false;
             referencedRelation: 'contacts';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'financial_documents_individual_customer_id_fkey';
+            columns: ['individual_customer_id'];
+            isOneToOne: false;
+            referencedRelation: 'individual_customers';
             referencedColumns: ['id'];
           },
           {
@@ -10824,8 +10883,11 @@ export type Database = {
           amount_paid: number;
           billing_address: Json | null;
           billing_contact_id: string | null;
+          channel_id: string | null;
+          converted_to_invoice_id: string | null;
           created_at: string;
           created_by: string;
+          customer_type: string | null;
           deleted_at: string | null;
           delivery_contact_id: string | null;
           description: string | null;
@@ -10839,6 +10901,7 @@ export type Database = {
           finalized_by: string | null;
           handling_cost_ht: number | null;
           id: string;
+          individual_customer_id: string | null;
           insurance_cost_ht: number | null;
           invoice_source: string | null;
           last_synced_from_abby_at: string | null;
@@ -10854,6 +10917,7 @@ export type Database = {
           qonto_invoice_id: string | null;
           qonto_pdf_url: string | null;
           qonto_public_url: string | null;
+          quote_status: string | null;
           responsable_contact_id: string | null;
           sales_order_id: string | null;
           sent_at: string | null;
@@ -10874,6 +10938,7 @@ export type Database = {
           uploaded_file_url: string | null;
           validated_by: string | null;
           validated_to_draft_at: string | null;
+          validity_date: string | null;
           workflow_status: string | null;
         };
         SetofOptions: {
@@ -11069,8 +11134,11 @@ export type Database = {
           amount_paid: number;
           billing_address: Json | null;
           billing_contact_id: string | null;
+          channel_id: string | null;
+          converted_to_invoice_id: string | null;
           created_at: string;
           created_by: string;
+          customer_type: string | null;
           deleted_at: string | null;
           delivery_contact_id: string | null;
           description: string | null;
@@ -11084,6 +11152,7 @@ export type Database = {
           finalized_by: string | null;
           handling_cost_ht: number | null;
           id: string;
+          individual_customer_id: string | null;
           insurance_cost_ht: number | null;
           invoice_source: string | null;
           last_synced_from_abby_at: string | null;
@@ -11099,6 +11168,7 @@ export type Database = {
           qonto_invoice_id: string | null;
           qonto_pdf_url: string | null;
           qonto_public_url: string | null;
+          quote_status: string | null;
           responsable_contact_id: string | null;
           sales_order_id: string | null;
           sent_at: string | null;
@@ -11119,6 +11189,7 @@ export type Database = {
           uploaded_file_url: string | null;
           validated_by: string | null;
           validated_to_draft_at: string | null;
+          validity_date: string | null;
           workflow_status: string | null;
         };
         SetofOptions: {
@@ -12979,7 +13050,8 @@ export type Database = {
         | 'customer_credit_note'
         | 'supplier_invoice'
         | 'supplier_credit_note'
-        | 'expense';
+        | 'expense'
+        | 'customer_quote';
       error_severity_enum: 'critical' | 'high' | 'medium' | 'low';
       error_status_enum: 'open' | 'in_progress' | 'resolved' | 'closed';
       error_type_enum:
@@ -13333,6 +13405,7 @@ export const Constants = {
         'supplier_invoice',
         'supplier_credit_note',
         'expense',
+        'customer_quote',
       ],
       error_severity_enum: ['critical', 'high', 'medium', 'low'],
       error_status_enum: ['open', 'in_progress', 'resolved', 'closed'],
