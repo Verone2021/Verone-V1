@@ -6,6 +6,9 @@
  * 1. Supabase Storage local (si disponible)
  * 2. Qonto pdf_url
  * 3. Qonto attachment_id (fallback)
+ *
+ * Store-on-read: Si le PDF est récupéré depuis Qonto,
+ * il est automatiquement stocké localement pour les accès futurs.
  */
 
 import type { NextRequest } from 'next/server';
@@ -21,6 +24,74 @@ function getQontoClient(): QontoClient {
     apiKey: process.env.QONTO_API_KEY,
     accessToken: process.env.QONTO_ACCESS_TOKEN,
   });
+}
+
+/**
+ * Store-on-read: Upload le PDF vers Supabase Storage et met à jour les métadonnées.
+ * Non-bloquant: si l'upload échoue, on log mais on ne fait pas échouer la requête.
+ */
+async function storeLocalPdf(
+  supabase: Awaited<ReturnType<typeof createServerClient>>,
+  documentId: string,
+  pdfBuffer: ArrayBuffer,
+  storagePath: string,
+  metadata: {
+    qonto_pdf_url?: string;
+    qonto_attachment_id?: string;
+    qonto_public_url?: string;
+  }
+): Promise<void> {
+  try {
+    // Upload vers Supabase Storage (bucket 'invoices')
+    const { error: uploadError } = await supabase.storage
+      .from('invoices')
+      .upload(storagePath, pdfBuffer, {
+        contentType: 'application/pdf',
+        upsert: true,
+      });
+
+    if (uploadError) {
+      console.error(
+        '[API Invoice PDF] Store-on-read upload failed:',
+        uploadError
+      );
+      return;
+    }
+
+    // Mettre à jour financial_documents avec le chemin local + métadonnées Qonto
+    const updateData: Record<string, unknown> = {
+      local_pdf_path: storagePath,
+      pdf_stored_at: new Date().toISOString(),
+    };
+
+    // Enrichir les métadonnées Qonto manquantes
+    if (metadata.qonto_pdf_url) {
+      updateData.qonto_pdf_url = metadata.qonto_pdf_url;
+    }
+    if (metadata.qonto_attachment_id) {
+      updateData.qonto_attachment_id = metadata.qonto_attachment_id;
+    }
+    if (metadata.qonto_public_url) {
+      updateData.qonto_public_url = metadata.qonto_public_url;
+    }
+
+    const { error: updateError } = await supabase
+      .from('financial_documents')
+      .update(updateData)
+      .eq('id', documentId);
+
+    if (updateError) {
+      console.error(
+        '[API Invoice PDF] Store-on-read DB update failed:',
+        updateError
+      );
+      return;
+    }
+
+    console.warn(`[API Invoice PDF] Store-on-read success: ${storagePath}`);
+  } catch (error) {
+    console.error('[API Invoice PDF] Store-on-read error:', error);
+  }
 }
 
 export async function GET(
@@ -42,26 +113,27 @@ export async function GET(
       );
 
     let localPdfPath: string | null = null;
+    let documentId: string | null = null;
     let documentNumber: string | null = null;
+    let documentType: string | null = null;
     let qontoInvoiceId: string | null = null;
 
     if (isUUID) {
       // ID local → chercher dans financial_documents
-      // Note: local_pdf_path ajouté par migration 20260122_005
       const { data: doc } = await supabase
         .from('financial_documents')
-        .select('document_number, qonto_invoice_id')
+        .select(
+          'id, document_number, document_type, qonto_invoice_id, local_pdf_path'
+        )
         .eq('id', id)
         .single();
 
       if (doc) {
-        // Cast explicite pour les colonnes ajoutées par migration
-        const docWithLocalPdf = doc as typeof doc & {
-          local_pdf_path?: string | null;
-        };
-        localPdfPath = docWithLocalPdf.local_pdf_path ?? null;
+        documentId = doc.id;
         documentNumber = doc.document_number;
+        documentType = doc.document_type;
         qontoInvoiceId = doc.qonto_invoice_id;
+        localPdfPath = doc.local_pdf_path ?? null;
       }
     }
 
@@ -84,7 +156,7 @@ export async function GET(
             'Content-Type': 'application/pdf',
             'Content-Disposition': `inline; filename="facture-${documentNumber ?? id}.pdf"`,
             'Content-Length': String(pdfBuffer.byteLength),
-            'X-PDF-Source': 'local', // Header indiquant la source
+            'X-PDF-Source': 'local',
           },
         });
       } else {
@@ -107,7 +179,6 @@ export async function GET(
     // Récupérer la facture pour obtenir le pdf_url
     const invoice = await client.getClientInvoiceById(qontoId);
 
-    // DEBUG: Logger les champs disponibles pour le PDF
     console.warn('[API Invoice PDF] Fetching from Qonto:', {
       id: invoice.id,
       invoice_number: invoice.invoice_number,
@@ -185,13 +256,37 @@ export async function GET(
       );
     }
 
+    // ========================================
+    // ÉTAPE 3: Store-on-read (non-bloquant)
+    // ========================================
+    if (documentId && isUUID) {
+      // Construire le chemin de stockage : {type}/{year}/{document_number}.pdf
+      const typeFolder =
+        documentType === 'supplier_invoice' ? 'supplier' : 'customer';
+      const year = new Date().getFullYear();
+      const fileName = `${documentNumber ?? id}.pdf`;
+      const storagePath = `${typeFolder}/${year}/${fileName}`;
+
+      // Store-on-read en arrière-plan (non-bloquant pour la réponse)
+      void storeLocalPdf(supabase, documentId, pdfBuffer, storagePath, {
+        qonto_pdf_url: invoice.pdf_url,
+        qonto_attachment_id: invoice.attachment_id,
+        qonto_public_url: invoice.public_url,
+      }).catch((error: unknown) => {
+        console.error(
+          '[API Invoice PDF] Store-on-read background error:',
+          error
+        );
+      });
+    }
+
     // Retourner le PDF avec les bons headers pour VISUALISATION (inline)
     return new NextResponse(pdfBuffer, {
       headers: {
         'Content-Type': 'application/pdf',
         'Content-Disposition': `inline; filename="facture-${invoice.invoice_number ?? id}.pdf"`,
         'Content-Length': String(pdfBuffer.byteLength),
-        'X-PDF-Source': 'qonto', // Header indiquant la source
+        'X-PDF-Source': 'qonto',
       },
     });
   } catch (error) {
