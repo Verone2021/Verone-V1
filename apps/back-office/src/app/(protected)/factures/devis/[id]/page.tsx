@@ -5,7 +5,10 @@ import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
-import { QuoteStatusBadge } from '@verone/finance/components';
+import {
+  EditableQuoteItemRow,
+  QuoteStatusBadge,
+} from '@verone/finance/components';
 import {
   useQuotes,
   type Quote,
@@ -15,6 +18,9 @@ import {
 } from '@verone/finance/hooks';
 import { AddProductToOrderModal } from '@verone/orders/components/modals/AddProductToOrderModal';
 import type { CreateOrderItemData } from '@verone/orders/hooks';
+import { useLinkMeSelection, type SelectionItem } from '@verone/orders/hooks';
+import { SelectionProductDetailModal } from '../../../canaux-vente/linkme/components/SelectionProductDetailModal';
+import type { SelectionItem as BackOfficeSelectionItem } from '../../../canaux-vente/linkme/hooks/use-linkme-selections';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -51,6 +57,7 @@ import {
   Calendar,
   Edit,
   ExternalLink,
+  Eye,
   FileText,
   Loader2,
   MapPin,
@@ -89,15 +96,27 @@ interface EditableFields {
   fees_vat_rate: number;
 }
 
+/** Product info for UI display (never persisted to DB) */
+interface EditableItemProduct {
+  name: string;
+  sku: string | null;
+  image_url: string | null;
+}
+
 interface EditableItem {
   id: string;
   product_id: string | null;
+  product: EditableItemProduct | null;
   description: string;
   quantity: number;
   unit_price_ht: number;
   tva_rate: number;
   discount_percentage: number;
   eco_tax: number;
+  // LinkMe metadata (preserved for save)
+  linkme_selection_item_id: string | null;
+  base_price_ht: number | null;
+  retrocession_rate: number | null;
 }
 
 // =====================================================================
@@ -268,6 +287,12 @@ export default function QuoteDetailPage({ params }: QuoteDetailPageProps) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showAddProduct, setShowAddProduct] = useState(false);
 
+  // LinkMe detail modal state
+  const [detailModalItem, setDetailModalItem] =
+    useState<BackOfficeSelectionItem | null>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [detailModalSaving, setDetailModalSaving] = useState(false);
+
   // Editable state
   const [editFields, setEditFields] = useState<EditableFields>({
     notes: '',
@@ -283,6 +308,11 @@ export default function QuoteDetailPage({ params }: QuoteDetailPageProps) {
   });
 
   const [updatingOrgAddress, setUpdatingOrgAddress] = useState(false);
+
+  // LinkMe selection details (for editing LinkMe quotes)
+  const { data: linkmeSelectionDetails } = useLinkMeSelection(
+    quote?.linkme_selection_id ?? null
+  );
 
   // Handler to propagate address changes back to the organisation
   const handleUpdateOrgAddress = useCallback(async () => {
@@ -401,16 +431,35 @@ export default function QuoteDetailPage({ params }: QuoteDetailPageProps) {
       billing_address: quote.billing_address,
       shipping_address: quote.shipping_address,
       validity_days: validityDays,
-      items: (quote.items ?? []).map(item => ({
-        id: item.id,
-        product_id: item.product_id,
-        description: item.description,
-        quantity: item.quantity,
-        unit_price_ht: item.unit_price_ht,
-        tva_rate: item.tva_rate,
-        discount_percentage: item.discount_percentage,
-        eco_tax: item.eco_tax,
-      })),
+      items: (quote.items ?? []).map(item => {
+        // Extract primary image from joined product data
+        const productImages = item.product?.product_images ?? [];
+        const primaryImage =
+          productImages.find(img => img.is_primary)?.public_url ??
+          productImages[0]?.public_url ??
+          null;
+
+        return {
+          id: item.id,
+          product_id: item.product_id,
+          product: item.product
+            ? {
+                name: item.product.name,
+                sku: item.product.sku,
+                image_url: primaryImage,
+              }
+            : null,
+          description: item.description,
+          quantity: item.quantity,
+          unit_price_ht: item.unit_price_ht,
+          tva_rate: item.tva_rate,
+          discount_percentage: item.discount_percentage,
+          eco_tax: item.eco_tax,
+          linkme_selection_item_id: item.linkme_selection_item_id,
+          base_price_ht: item.base_price_ht,
+          retrocession_rate: item.retrocession_rate,
+        };
+      }),
       reference: quote.document_number,
       shipping_cost_ht: quote.shipping_cost_ht,
       handling_cost_ht: quote.handling_cost_ht,
@@ -453,6 +502,9 @@ export default function QuoteDetailPage({ params }: QuoteDetailPageProps) {
         tva_rate: item.tva_rate,
         discount_percentage: item.discount_percentage,
         eco_tax: item.eco_tax,
+        linkme_selection_item_id: item.linkme_selection_item_id,
+        base_price_ht: item.base_price_ht,
+        retrocession_rate: item.retrocession_rate,
       }));
       updateData.items = items;
     }
@@ -525,12 +577,16 @@ export default function QuoteDetailPage({ params }: QuoteDetailPageProps) {
         {
           id: generateId(),
           product_id: null,
+          product: null,
           description: '',
           quantity: 1,
           unit_price_ht: 0,
           tva_rate: 20,
           discount_percentage: 0,
           eco_tax: 0,
+          linkme_selection_item_id: null,
+          base_price_ht: null,
+          retrocession_rate: null,
         },
       ],
     }));
@@ -544,17 +600,174 @@ export default function QuoteDetailPage({ params }: QuoteDetailPageProps) {
         {
           id: generateId(),
           product_id: data.product_id,
-          description: data.notes ?? `Produit ${data.product_id}`,
+          product: data.product_name
+            ? {
+                name: data.product_name,
+                sku: data.product_sku ?? null,
+                image_url: data.product_image_url ?? null,
+              }
+            : null,
+          description:
+            data.notes ?? data.product_name ?? `Produit ${data.product_id}`,
           quantity: data.quantity,
           unit_price_ht: data.unit_price_ht,
           tva_rate: data.tax_rate ?? 20,
           discount_percentage: data.discount_percentage ?? 0,
           eco_tax: data.eco_tax ?? 0,
+          linkme_selection_item_id: null,
+          base_price_ht: null,
+          retrocession_rate: null,
         },
       ],
     }));
     setShowAddProduct(false);
   }, []);
+
+  const handleAddLinkMeProduct = useCallback(
+    (selItem: SelectionItem) => {
+      // Check if already in items → increment quantity
+      const existing = editFields.items.find(
+        i => i.product_id === selItem.product_id
+      );
+      if (existing) {
+        updateItem(existing.id, 'quantity', existing.quantity + 1);
+        return;
+      }
+
+      // LinkMe price formula
+      const commissionRate = (selItem.commission_rate ?? 0) / 100;
+      const marginRate = selItem.margin_rate / 100;
+      const sellingPrice =
+        Math.round(
+          (selItem.base_price_ht / (1 - marginRate)) *
+            (1 + commissionRate) *
+            100
+        ) / 100;
+
+      setEditFields(prev => ({
+        ...prev,
+        items: [
+          ...prev.items,
+          {
+            id: generateId(),
+            product_id: selItem.product_id,
+            product: {
+              name: selItem.product?.name ?? '',
+              sku: selItem.product?.sku ?? null,
+              image_url: selItem.product_image_url ?? null,
+            },
+            description:
+              selItem.custom_description ?? selItem.product?.name ?? '',
+            quantity: 1,
+            unit_price_ht: sellingPrice,
+            tva_rate: 20,
+            discount_percentage: 0,
+            eco_tax: 0,
+            linkme_selection_item_id: selItem.id,
+            base_price_ht: selItem.base_price_ht,
+            retrocession_rate: marginRate,
+          },
+        ],
+      }));
+    },
+    [editFields.items, updateItem]
+  );
+
+  // Open detail modal for a LinkMe item (from table row margin click)
+  const handleEditMarginFromTable = useCallback(
+    (editableItemId: string) => {
+      const editItem = editFields.items.find(i => i.id === editableItemId);
+      if (!editItem?.linkme_selection_item_id || !linkmeSelectionDetails?.items)
+        return;
+
+      const selItem = linkmeSelectionDetails.items.find(
+        (si: SelectionItem) => si.id === editItem.linkme_selection_item_id
+      );
+      if (!selItem) return;
+
+      // Map @verone/orders SelectionItem to back-office SelectionItem for the modal
+      const modalItem: BackOfficeSelectionItem = {
+        ...selItem,
+        is_hidden_by_staff: false,
+        // Override margin_rate with the current editable value (may have been changed)
+        margin_rate:
+          editItem.retrocession_rate !== null
+            ? editItem.retrocession_rate * 100
+            : selItem.margin_rate,
+        // Override base_price_ht with current editable value
+        base_price_ht: editItem.base_price_ht ?? selItem.base_price_ht,
+      };
+
+      setDetailModalItem(modalItem);
+      setIsDetailModalOpen(true);
+    },
+    [editFields.items, linkmeSelectionDetails]
+  );
+
+  // Open detail modal from selection panel (view button)
+  const handleOpenDetailFromPanel = useCallback((selItem: SelectionItem) => {
+    const modalItem: BackOfficeSelectionItem = {
+      ...selItem,
+      is_hidden_by_staff: false,
+    };
+    setDetailModalItem(modalItem);
+    setIsDetailModalOpen(true);
+  }, []);
+
+  // Save margin changes from the detail modal
+  const handleDetailModalSave = useCallback(
+    async (
+      itemId: string,
+      updates: { marginRate?: number; customPriceHT?: number }
+    ) => {
+      setDetailModalSaving(true);
+      try {
+        // Find the matching editable item by linkme_selection_item_id
+        const editItemIndex = editFields.items.findIndex(
+          i => i.linkme_selection_item_id === itemId
+        );
+
+        if (editItemIndex === -1) {
+          // Item not yet added to the quote — nothing to update
+          setDetailModalSaving(false);
+          return;
+        }
+
+        const editItem = editFields.items[editItemIndex];
+        const newMarginRate =
+          updates.marginRate !== undefined
+            ? updates.marginRate / 100 // Convert from % to decimal
+            : editItem.retrocession_rate;
+        const newBasePriceHT = updates.customPriceHT ?? editItem.base_price_ht;
+
+        // Recalculate selling price with LinkMe formula
+        const commissionRate = (detailModalItem?.commission_rate ?? 0) / 100;
+        const marginDecimal = newMarginRate ?? 0;
+        const base = newBasePriceHT ?? 0;
+        const sellingPrice =
+          Math.round(
+            (base / (1 - marginDecimal)) * (1 + commissionRate) * 100
+          ) / 100;
+
+        setEditFields(prev => ({
+          ...prev,
+          items: prev.items.map((item, idx) =>
+            idx === editItemIndex
+              ? {
+                  ...item,
+                  base_price_ht: newBasePriceHT,
+                  retrocession_rate: newMarginRate,
+                  unit_price_ht: sellingPrice,
+                }
+              : item
+          ),
+        }));
+      } finally {
+        setDetailModalSaving(false);
+      }
+    },
+    [editFields.items, detailModalItem]
+  );
 
   // -----------------------------------------------------------------
   // COMPUTED
@@ -621,6 +834,7 @@ export default function QuoteDetailPage({ params }: QuoteDetailPageProps) {
   const canEdit = (status === 'draft' || status === 'sent') && !hasQonto;
   const canDelete = !quote.converted_to_invoice_id;
   const statusActions = getStatusActions(status, hasQonto);
+  const isLinkMe = quote.channel?.code === 'linkme';
 
   const customerName = quote.individual_customer
     ? `${quote.individual_customer.first_name} ${quote.individual_customer.last_name}`
@@ -797,38 +1011,154 @@ export default function QuoteDetailPage({ params }: QuoteDetailPageProps) {
             </CardContent>
           </Card>
 
+          {/* ----- LINKME SELECTION PRODUCTS (edit mode only) ----- */}
+          {isEditing &&
+            isLinkMe &&
+            quote.linkme_selection_id &&
+            linkmeSelectionDetails &&
+            isFieldEditable('items', status, hasQonto) && (
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">
+                    Produits de la sélection — {linkmeSelectionDetails.name}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2 max-h-80 overflow-y-auto">
+                    {(linkmeSelectionDetails.items ?? []).map(
+                      (selItem: SelectionItem) => {
+                        const commissionRate =
+                          (selItem.commission_rate ?? 0) / 100;
+                        const marginRate = selItem.margin_rate / 100;
+                        const sellingPrice =
+                          Math.round(
+                            (selItem.base_price_ht / (1 - marginRate)) *
+                              (1 + commissionRate) *
+                              100
+                          ) / 100;
+                        const alreadyAdded = editFields.items.some(
+                          i => i.product_id === selItem.product_id
+                        );
+
+                        return (
+                          <div
+                            key={selItem.id}
+                            className="flex items-center justify-between rounded-lg border p-3"
+                          >
+                            <div className="flex items-center gap-3">
+                              {selItem.product_image_url ? (
+                                <img
+                                  src={selItem.product_image_url}
+                                  alt={selItem.product?.name ?? ''}
+                                  className="h-10 w-10 rounded border object-cover"
+                                />
+                              ) : (
+                                <div className="flex h-10 w-10 items-center justify-center rounded border bg-gray-100">
+                                  <FileText className="h-5 w-5 text-gray-400" />
+                                </div>
+                              )}
+                              <div className="min-w-0">
+                                <p className="text-sm font-medium line-clamp-1">
+                                  {selItem.product?.name ?? 'Produit'}
+                                </p>
+                                <div className="flex gap-2 text-xs text-muted-foreground">
+                                  <span>
+                                    Base:{' '}
+                                    {formatCurrency(selItem.base_price_ht)}
+                                  </span>
+                                  <span>Marge: {selItem.margin_rate}%</span>
+                                  {selItem.commission_rate ? (
+                                    <span>Com: {selItem.commission_rate}%</span>
+                                  ) : null}
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <span className="text-sm font-medium">
+                                {formatCurrency(sellingPrice)}
+                              </span>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                onClick={() =>
+                                  handleOpenDetailFromPanel(selItem)
+                                }
+                                title="Voir le détail produit"
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant={alreadyAdded ? 'secondary' : 'outline'}
+                                size="sm"
+                                onClick={() => handleAddLinkMeProduct(selItem)}
+                              >
+                                <Plus className="mr-1 h-3 w-3" />
+                                {alreadyAdded ? '+1' : 'Ajouter'}
+                              </Button>
+                            </div>
+                          </div>
+                        );
+                      }
+                    )}
+                    {(linkmeSelectionDetails.items ?? []).length === 0 && (
+                      <p className="py-4 text-center text-sm text-muted-foreground">
+                        Aucun produit dans cette sélection
+                      </p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
           {/* ----- ITEMS TABLE ----- */}
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base">Articles</CardTitle>
-                {isEditing && isFieldEditable('items', status, hasQonto) && (
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowAddProduct(true)}
-                    >
-                      <Plus className="mr-1 h-3 w-3" />
-                      Catalogue
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={addManualItem}>
-                      <Plus className="mr-1 h-3 w-3" />
-                      Ligne libre
-                    </Button>
-                  </div>
-                )}
+                {isEditing &&
+                  isFieldEditable('items', status, hasQonto) &&
+                  !isLinkMe && (
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowAddProduct(true)}
+                      >
+                        <Plus className="mr-1 h-3 w-3" />
+                        Catalogue
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={addManualItem}
+                      >
+                        <Plus className="mr-1 h-3 w-3" />
+                        Ligne libre
+                      </Button>
+                    </div>
+                  )}
               </div>
             </CardHeader>
             <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[40%]">Description</TableHead>
+                    <TableHead className="w-[35%]">
+                      Produit / Description
+                    </TableHead>
                     <TableHead className="text-right">Qté</TableHead>
                     <TableHead className="text-right">Prix unit. HT</TableHead>
                     <TableHead className="text-right">TVA</TableHead>
                     <TableHead className="text-right">Remise</TableHead>
+                    {isLinkMe && (
+                      <>
+                        <TableHead className="text-right">
+                          Prix base HT
+                        </TableHead>
+                        <TableHead className="text-right">Marge</TableHead>
+                      </>
+                    )}
                     <TableHead className="text-right">Total HT</TableHead>
                     {isEditing &&
                       isFieldEditable('items', status, hasQonto) && (
@@ -839,134 +1169,108 @@ export default function QuoteDetailPage({ params }: QuoteDetailPageProps) {
                 <TableBody>
                   {isEditing && isFieldEditable('items', status, hasQonto)
                     ? /* EDIT MODE ITEMS */
-                      editFields.items.map(item => {
-                        const discount = 1 - item.discount_percentage / 100;
-                        const lineHt =
-                          item.quantity * item.unit_price_ht * discount +
-                          item.eco_tax * item.quantity;
-
-                        return (
-                          <TableRow key={item.id}>
-                            <TableCell>
-                              <Input
-                                value={item.description}
-                                onChange={e =>
-                                  updateItem(
-                                    item.id,
-                                    'description',
-                                    e.target.value
-                                  )
-                                }
-                                className="h-8"
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <Input
-                                type="number"
-                                value={item.quantity}
-                                onChange={e =>
-                                  updateItem(
-                                    item.id,
-                                    'quantity',
-                                    parseFloat(e.target.value) || 0
-                                  )
-                                }
-                                className="h-8 w-20 text-right"
-                                min={1}
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <Input
-                                type="number"
-                                value={item.unit_price_ht}
-                                onChange={e =>
-                                  updateItem(
-                                    item.id,
-                                    'unit_price_ht',
-                                    parseFloat(e.target.value) || 0
-                                  )
-                                }
-                                className="h-8 w-28 text-right"
-                                step={0.01}
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <Input
-                                type="number"
-                                value={item.tva_rate}
-                                onChange={e =>
-                                  updateItem(
-                                    item.id,
-                                    'tva_rate',
-                                    parseFloat(e.target.value) || 0
-                                  )
-                                }
-                                className="h-8 w-20 text-right"
-                                step={0.1}
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <Input
-                                type="number"
-                                value={item.discount_percentage}
-                                onChange={e =>
-                                  updateItem(
-                                    item.id,
-                                    'discount_percentage',
-                                    parseFloat(e.target.value) || 0
-                                  )
-                                }
-                                className="h-8 w-20 text-right"
-                                min={0}
-                                max={100}
-                              />
-                            </TableCell>
-                            <TableCell className="text-right font-medium">
-                              {formatCurrency(lineHt)}
-                            </TableCell>
-                            <TableCell>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 text-destructive"
-                                onClick={() => removeItem(item.id)}
-                              >
-                                <Trash2 className="h-3 w-3" />
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })
+                      editFields.items.map(item => (
+                        <EditableQuoteItemRow
+                          key={item.id}
+                          item={item}
+                          isLinkMe={isLinkMe}
+                          onUpdate={(itemId, field, value) =>
+                            updateItem(
+                              itemId,
+                              field as keyof EditableItem,
+                              value
+                            )
+                          }
+                          onDelete={removeItem}
+                          onEditMargin={
+                            isLinkMe ? handleEditMarginFromTable : undefined
+                          }
+                        />
+                      ))
                     : /* READ MODE ITEMS */
                       (quote.items ?? [])
                         .sort((a, b) => a.sort_order - b.sort_order)
-                        .map(item => (
-                          <TableRow key={item.id}>
-                            <TableCell>{item.description}</TableCell>
-                            <TableCell className="text-right">
-                              {item.quantity}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              {formatCurrency(item.unit_price_ht)}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              {item.tva_rate}%
-                            </TableCell>
-                            <TableCell className="text-right">
-                              {item.discount_percentage > 0
-                                ? `${item.discount_percentage}%`
-                                : '-'}
-                            </TableCell>
-                            <TableCell className="text-right font-medium">
-                              {formatCurrency(item.total_ht)}
-                            </TableCell>
-                          </TableRow>
-                        ))}
+                        .map(item => {
+                          const productImages =
+                            item.product?.product_images ?? [];
+                          const primaryImage =
+                            productImages.find(img => img.is_primary)
+                              ?.public_url ??
+                            productImages[0]?.public_url ??
+                            null;
+
+                          return (
+                            <TableRow key={item.id}>
+                              <TableCell>
+                                {item.product ? (
+                                  <div className="flex gap-3 items-center">
+                                    <div className="flex-shrink-0">
+                                      {primaryImage ? (
+                                        <img
+                                          src={primaryImage}
+                                          alt={item.product.name}
+                                          className="w-10 h-10 object-cover rounded border"
+                                        />
+                                      ) : (
+                                        <div className="w-10 h-10 bg-gray-100 rounded border flex items-center justify-center">
+                                          <FileText className="h-5 w-5 text-gray-400" />
+                                        </div>
+                                      )}
+                                    </div>
+                                    <div className="min-w-0">
+                                      <p className="font-medium text-sm line-clamp-2">
+                                        {item.product.name}
+                                      </p>
+                                      {item.product.sku && (
+                                        <p className="text-xs text-muted-foreground">
+                                          {item.product.sku}
+                                        </p>
+                                      )}
+                                    </div>
+                                  </div>
+                                ) : (
+                                  item.description
+                                )}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                {item.quantity}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                {formatCurrency(item.unit_price_ht)}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                {item.tva_rate}%
+                              </TableCell>
+                              <TableCell className="text-right">
+                                {item.discount_percentage > 0
+                                  ? `${item.discount_percentage}%`
+                                  : '-'}
+                              </TableCell>
+                              {isLinkMe && (
+                                <>
+                                  <TableCell className="text-right text-sm text-muted-foreground">
+                                    {item.base_price_ht !== null
+                                      ? formatCurrency(item.base_price_ht)
+                                      : '-'}
+                                  </TableCell>
+                                  <TableCell className="text-right text-sm text-muted-foreground">
+                                    {item.retrocession_rate !== null
+                                      ? `${(item.retrocession_rate * 100).toFixed(0)}%`
+                                      : '-'}
+                                  </TableCell>
+                                </>
+                              )}
+                              <TableCell className="text-right font-medium">
+                                {formatCurrency(item.total_ht)}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
                   {(isEditing ? editFields.items : (quote.items ?? []))
                     .length === 0 && (
                     <TableRow>
                       <TableCell
-                        colSpan={6}
+                        colSpan={isLinkMe ? 8 : 6}
                         className="py-8 text-center text-muted-foreground"
                       >
                         Aucun article
@@ -975,42 +1279,64 @@ export default function QuoteDetailPage({ params }: QuoteDetailPageProps) {
                   )}
                 </TableBody>
                 <TableFooter>
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-right">
-                      Total HT
-                    </TableCell>
-                    <TableCell className="text-right font-medium">
-                      <Money amount={computedTotals.items_total_ht} />
-                    </TableCell>
-                    {isEditing &&
-                      isFieldEditable('items', status, hasQonto) && (
-                        <TableCell />
-                      )}
-                  </TableRow>
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-right">
-                      TVA
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Money amount={computedTotals.tva_amount} />
-                    </TableCell>
-                    {isEditing &&
-                      isFieldEditable('items', status, hasQonto) && (
-                        <TableCell />
-                      )}
-                  </TableRow>
-                  <TableRow className="font-bold">
-                    <TableCell colSpan={5} className="text-right">
-                      Total TTC
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Money amount={computedTotals.total_ttc} bold size="lg" />
-                    </TableCell>
-                    {isEditing &&
-                      isFieldEditable('items', status, hasQonto) && (
-                        <TableCell />
-                      )}
-                  </TableRow>
+                  {(() => {
+                    const baseColSpan = 5;
+                    const linkMeExtra = isLinkMe ? 2 : 0;
+                    const footerColSpan = baseColSpan + linkMeExtra;
+                    return (
+                      <>
+                        <TableRow>
+                          <TableCell
+                            colSpan={footerColSpan}
+                            className="text-right"
+                          >
+                            Total HT
+                          </TableCell>
+                          <TableCell className="text-right font-medium">
+                            <Money amount={computedTotals.items_total_ht} />
+                          </TableCell>
+                          {isEditing &&
+                            isFieldEditable('items', status, hasQonto) && (
+                              <TableCell />
+                            )}
+                        </TableRow>
+                        <TableRow>
+                          <TableCell
+                            colSpan={footerColSpan}
+                            className="text-right"
+                          >
+                            TVA
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Money amount={computedTotals.tva_amount} />
+                          </TableCell>
+                          {isEditing &&
+                            isFieldEditable('items', status, hasQonto) && (
+                              <TableCell />
+                            )}
+                        </TableRow>
+                        <TableRow className="font-bold">
+                          <TableCell
+                            colSpan={footerColSpan}
+                            className="text-right"
+                          >
+                            Total TTC
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Money
+                              amount={computedTotals.total_ttc}
+                              bold
+                              size="lg"
+                            />
+                          </TableCell>
+                          {isEditing &&
+                            isFieldEditable('items', status, hasQonto) && (
+                              <TableCell />
+                            )}
+                        </TableRow>
+                      </>
+                    );
+                  })()}
                 </TableFooter>
               </Table>
             </CardContent>
@@ -1388,6 +1714,18 @@ export default function QuoteDetailPage({ params }: QuoteDetailPageProps) {
           onClose={() => setShowAddProduct(false)}
           onAdd={handleAddProduct}
           orderType="sales"
+        />
+      )}
+
+      {/* LinkMe product detail modal (margin editing) */}
+      {isLinkMe && (
+        <SelectionProductDetailModal
+          open={isDetailModalOpen}
+          onOpenChange={setIsDetailModalOpen}
+          item={detailModalItem}
+          mode={isEditing ? 'edit' : 'view'}
+          onSave={handleDetailModalSave}
+          isSaving={detailModalSaving}
         />
       )}
     </div>

@@ -28,6 +28,17 @@ export type QuoteStatus =
   | 'expired'
   | 'converted';
 
+export interface QuoteItemProduct {
+  id: string;
+  name: string;
+  sku: string | null;
+  product_images: Array<{
+    public_url: string;
+    is_primary: boolean;
+    display_order: number | null;
+  }>;
+}
+
 export interface QuoteItem {
   id: string;
   document_id: string;
@@ -42,6 +53,12 @@ export interface QuoteItem {
   discount_percentage: number;
   eco_tax: number;
   sort_order: number;
+  // LinkMe metadata
+  linkme_selection_item_id: string | null;
+  base_price_ht: number | null;
+  retrocession_rate: number | null;
+  // Joined product data (from enriched query)
+  product: QuoteItemProduct | null;
 }
 
 export interface Quote {
@@ -84,6 +101,10 @@ export interface Quote {
   // Conversion
   converted_to_invoice_id: string | null;
   sales_order_id: string | null;
+
+  // LinkMe
+  linkme_selection_id: string | null;
+  linkme_affiliate_id: string | null;
 
   // Metadata
   description: string | null;
@@ -267,6 +288,7 @@ export function useQuotes(initialFilters?: QuoteFilters) {
           billing_address, shipping_address,
           qonto_invoice_id, qonto_pdf_url, qonto_public_url,
           converted_to_invoice_id, sales_order_id,
+          linkme_selection_id, linkme_affiliate_id,
           description, notes, created_at, updated_at, created_by,
           partner:organisations!financial_documents_partner_id_fkey(id, legal_name, trade_name),
           individual_customer:individual_customers!individual_customer_id(id, first_name, last_name, email),
@@ -274,7 +296,9 @@ export function useQuotes(initialFilters?: QuoteFilters) {
           items:financial_document_items(
             id, document_id, product_id, description, quantity,
             unit_price_ht, total_ht, tva_rate, tva_amount, total_ttc,
-            discount_percentage, eco_tax, sort_order
+            discount_percentage, eco_tax, sort_order,
+            linkme_selection_item_id, base_price_ht, retrocession_rate,
+            product:products(id, name, sku, product_images(public_url, is_primary, display_order))
           )
         `
         )
@@ -589,6 +613,9 @@ export function useQuotes(initialFilters?: QuoteFilters) {
             discount_percentage: item.discount_percentage ?? 0,
             eco_tax: item.eco_tax ?? 0,
             sort_order: index,
+            linkme_selection_item_id: item.linkme_selection_item_id ?? null,
+            base_price_ht: item.base_price_ht ?? null,
+            retrocession_rate: item.retrocession_rate ?? null,
           }));
 
           const { error: insertErr } = await supabase
@@ -756,6 +783,7 @@ export function useQuotes(initialFilters?: QuoteFilters) {
           billing_address, shipping_address,
           qonto_invoice_id, qonto_pdf_url, qonto_public_url,
           converted_to_invoice_id, sales_order_id,
+          linkme_selection_id, linkme_affiliate_id,
           description, notes, created_at, updated_at, created_by,
           partner:organisations!financial_documents_partner_id_fkey(id, legal_name, trade_name),
           individual_customer:individual_customers!individual_customer_id(id, first_name, last_name, email),
@@ -763,7 +791,9 @@ export function useQuotes(initialFilters?: QuoteFilters) {
           items:financial_document_items(
             id, document_id, product_id, description, quantity,
             unit_price_ht, total_ht, tva_rate, tva_amount, total_ttc,
-            discount_percentage, eco_tax, sort_order
+            discount_percentage, eco_tax, sort_order,
+            linkme_selection_item_id, base_price_ht, retrocession_rate,
+            product:products(id, name, sku, product_images(public_url, is_primary, display_order))
           )
         `
           )

@@ -20,6 +20,9 @@ export * from './QuoteFormModal'; // Modal: Nouveau formulaire unifié devis (20
 export * from './RuleModal'; // SLICE 2: RuleModal universel (création + édition)
 export * from './ApplyExistingWizard'; // Wizard preview/confirm pour application de règles
 
+// Tables
+export * from './tables/EditableQuoteItemRow'; // Ligne éditable devis (catalogue vs libre)
+
 // Composants UI
 export * from './QuoteStatusBadge'; // Badge statut devis réutilisable
 export * from './SupplierCell';
