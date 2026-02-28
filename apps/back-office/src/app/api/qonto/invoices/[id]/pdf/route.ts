@@ -119,7 +119,7 @@ export async function GET(
     let qontoInvoiceId: string | null = null;
 
     if (isUUID) {
-      // ID local → chercher dans financial_documents
+      // ID local → chercher dans financial_documents par clé primaire
       const { data: doc } = await supabase
         .from('financial_documents')
         .select(
@@ -134,6 +134,25 @@ export async function GET(
         documentType = doc.document_type;
         qontoInvoiceId = doc.qonto_invoice_id;
         localPdfPath = doc.local_pdf_path ?? null;
+      } else {
+        // Fallback: lookup par qonto_invoice_id
+        // Le bouton "Voir PDF" passe le qonto_invoice_id (UUID Qonto),
+        // pas l'id local du document
+        const { data: docByQonto } = await supabase
+          .from('financial_documents')
+          .select(
+            'id, document_number, document_type, qonto_invoice_id, local_pdf_path'
+          )
+          .eq('qonto_invoice_id', id)
+          .single();
+
+        if (docByQonto) {
+          documentId = docByQonto.id;
+          documentNumber = docByQonto.document_number;
+          documentType = docByQonto.document_type;
+          qontoInvoiceId = docByQonto.qonto_invoice_id;
+          localPdfPath = docByQonto.local_pdf_path ?? null;
+        }
       }
     }
 
