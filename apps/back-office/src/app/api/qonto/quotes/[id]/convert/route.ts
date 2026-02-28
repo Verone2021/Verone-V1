@@ -271,15 +271,200 @@ export async function POST(
       }
     }
 
+    // ========================================
+    // Auto-création commande (sales_order) si devis standalone
+    // ========================================
+    let salesOrderId: string | null = typedLocalQuote?.sales_order_id ?? null;
+
+    if (!salesOrderId && typedLocalQuote) {
+      // Générer le numéro de commande
+      const { data: soNumber, error: soNumberError } =
+        await supabase.rpc('generate_so_number');
+
+      if (soNumberError || !soNumber) {
+        console.error(
+          '[API Qonto Quote Convert] SO number generation failed:',
+          soNumberError
+        );
+      } else {
+        // Calculer les totaux depuis les items de la facture
+        let orderTotalHt = 0;
+        let orderTotalTtc = 0;
+        const orderTaxRate = 0.2;
+
+        if (invoice.items && invoice.items.length > 0) {
+          for (const item of invoice.items) {
+            const unitPrice = item.unit_price ?? 0;
+            const qty = item.quantity ?? 1;
+            const vatRate =
+              (item.vat_rate ?? 0.2) < 1
+                ? (item.vat_rate ?? 0.2)
+                : (item.vat_rate ?? 20) / 100;
+            const lineHt = unitPrice * qty;
+            const lineTtc = lineHt * (1 + vatRate);
+            orderTotalHt += lineHt;
+            orderTotalTtc += lineTtc;
+          }
+        }
+
+        // Créer la commande
+        const { data: newOrder, error: orderInsertError } = await supabase
+          .from('sales_orders')
+          .insert({
+            order_number: soNumber as string,
+            customer_id: partnerType === 'organisation' ? partnerId : null,
+            customer_type: (typedLocalQuote.customer_type ?? 'organization') as
+              | 'organization'
+              | 'individual',
+            individual_customer_id:
+              typedLocalQuote.individual_customer_id ?? null,
+            channel_id: typedLocalQuote.channel_id ?? null,
+            order_date:
+              invoice.issue_date ?? new Date().toISOString().split('T')[0],
+            billing_address: (typedLocalQuote.billing_address as Json) ?? null,
+            shipping_address:
+              (typedLocalQuote.shipping_address as Json) ?? null,
+            shipping_cost_ht: typedLocalQuote.shipping_cost_ht ?? 0,
+            handling_cost_ht: typedLocalQuote.handling_cost_ht ?? 0,
+            insurance_cost_ht: typedLocalQuote.insurance_cost_ht ?? 0,
+            fees_vat_rate: typedLocalQuote.fees_vat_rate ?? 0.2,
+            billing_contact_id: typedLocalQuote.billing_contact_id ?? null,
+            delivery_contact_id: typedLocalQuote.delivery_contact_id ?? null,
+            responsable_contact_id:
+              typedLocalQuote.responsable_contact_id ?? null,
+            total_ht: orderTotalHt,
+            total_ttc: orderTotalTtc,
+            tax_rate: orderTaxRate,
+            created_by: createdBy,
+            notes: typedLocalQuote.notes ?? null,
+            status: 'draft',
+          })
+          .select('id')
+          .single();
+
+        if (orderInsertError || !newOrder) {
+          console.error(
+            '[API Qonto Quote Convert] Sales order creation failed:',
+            orderInsertError
+          );
+        } else {
+          salesOrderId = newOrder.id;
+
+          // Titres de frais à exclure (déjà dans les champs dédiés)
+          const FEE_TITLES = [
+            'Frais de livraison',
+            'Frais de manutention',
+            "Frais d'assurance",
+          ];
+
+          // Récupérer les items du devis local pour le mapping product_id
+          const { data: quoteItems } = await supabase
+            .from('financial_document_items')
+            .select('description, product_id, sort_order')
+            .eq('document_id', typedLocalQuote.id)
+            .order('sort_order');
+
+          // Créer les sales_order_items
+          if (invoice.items && invoice.items.length > 0) {
+            const orderItems: Array<{
+              sales_order_id: string;
+              product_id: string;
+              quantity: number;
+              unit_price_ht: number;
+              tax_rate: number;
+              discount_percentage: number;
+              eco_tax: number;
+            }> = [];
+
+            for (const [index, item] of invoice.items.entries()) {
+              // Exclure les lignes de frais
+              if (FEE_TITLES.includes(item.title ?? '')) continue;
+
+              // Résoudre product_id depuis le devis local
+              const matchingQuoteItem = quoteItems?.find(
+                (qi, i) => i === index || qi.description === (item.title ?? '')
+              );
+              let productId = matchingQuoteItem?.product_id ?? null;
+
+              // Si pas trouvé dans le devis, chercher par nom dans products
+              if (!productId && item.title) {
+                const { data: product } = await supabase
+                  .from('products')
+                  .select('id')
+                  .ilike('name', item.title)
+                  .limit(1)
+                  .single();
+                productId = product?.id ?? null;
+              }
+
+              // product_id est NOT NULL dans sales_order_items → skip si absent
+              if (!productId) {
+                console.warn(
+                  `[API Qonto Quote Convert] No product_id for item "${item.title}" - skipping sales_order_item`
+                );
+                continue;
+              }
+
+              const vatRate =
+                (item.vat_rate ?? 0.2) < 1
+                  ? (item.vat_rate ?? 0.2)
+                  : (item.vat_rate ?? 20) / 100;
+
+              orderItems.push({
+                sales_order_id: newOrder.id,
+                product_id: productId,
+                quantity: item.quantity ?? 1,
+                unit_price_ht: item.unit_price ?? 0,
+                tax_rate: vatRate,
+                discount_percentage: 0,
+                eco_tax: 0,
+              });
+            }
+
+            if (orderItems.length > 0) {
+              const { error: itemsError } = await supabase
+                .from('sales_order_items')
+                .insert(orderItems);
+
+              if (itemsError) {
+                console.error(
+                  '[API Qonto Quote Convert] Sales order items creation failed:',
+                  itemsError
+                );
+              }
+            }
+          }
+
+          // Lier la commande à la facture locale
+          await supabase
+            .from('financial_documents')
+            .update({ sales_order_id: newOrder.id })
+            .eq('id', newDoc.id);
+
+          // Lier la commande au devis local
+          await supabase
+            .from('financial_documents')
+            .update({ sales_order_id: newOrder.id })
+            .eq('id', typedLocalQuote.id);
+
+          console.warn(
+            `[API Qonto Quote Convert] Sales order created: ${soNumber as string} (${newOrder.id})`
+          );
+        }
+      }
+    }
+
     console.warn(
-      `[API Qonto Quote Convert] Success: quote ${id} → invoice ${invoice.id} (local: ${newDoc.id})`
+      `[API Qonto Quote Convert] Success: quote ${id} → invoice ${invoice.id} (local: ${newDoc.id}, order: ${salesOrderId ?? 'none'})`
     );
 
     return NextResponse.json({
       success: true,
       invoice,
       localDocumentId: newDoc.id,
-      message: 'Quote converted to draft invoice successfully',
+      message: salesOrderId
+        ? 'Quote converted to draft invoice with auto-created sales order'
+        : 'Quote converted to draft invoice successfully',
     });
   } catch (error) {
     console.error('[API Qonto Quote Convert] POST error:', error);
