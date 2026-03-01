@@ -19,8 +19,6 @@ import {
 import { AddProductToOrderModal } from '@verone/orders/components/modals/AddProductToOrderModal';
 import type { CreateOrderItemData } from '@verone/orders/hooks';
 import { useLinkMeSelection, type SelectionItem } from '@verone/orders/hooks';
-import { SelectionProductDetailModal } from '../../../canaux-vente/linkme/components/SelectionProductDetailModal';
-import type { SelectionItem as BackOfficeSelectionItem } from '../../../canaux-vente/linkme/hooks/use-linkme-selections';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,6 +34,10 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
   Input,
   Label,
   Separator,
@@ -57,7 +59,6 @@ import {
   Calendar,
   Edit,
   ExternalLink,
-  Eye,
   FileText,
   Loader2,
   MapPin,
@@ -72,6 +73,8 @@ import {
   Check,
   XCircle,
   ArrowRightLeft,
+  Search,
+  ShoppingBag,
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
@@ -286,12 +289,8 @@ export default function QuoteDetailPage({ params }: QuoteDetailPageProps) {
   const [confirmAction, setConfirmAction] = useState<StatusAction | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showAddProduct, setShowAddProduct] = useState(false);
-
-  // LinkMe detail modal state
-  const [detailModalItem, setDetailModalItem] =
-    useState<BackOfficeSelectionItem | null>(null);
-  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
-  const [detailModalSaving, setDetailModalSaving] = useState(false);
+  const [showLinkMeProducts, setShowLinkMeProducts] = useState(false);
+  const [linkMeSearchTerm, setLinkMeSearchTerm] = useState('');
 
   // Editable state
   const [editFields, setEditFields] = useState<EditableFields>({
@@ -673,102 +672,6 @@ export default function QuoteDetailPage({ params }: QuoteDetailPageProps) {
     [editFields.items, updateItem]
   );
 
-  // Open detail modal for a LinkMe item (from table row margin click)
-  const handleEditMarginFromTable = useCallback(
-    (editableItemId: string) => {
-      const editItem = editFields.items.find(i => i.id === editableItemId);
-      if (!editItem?.linkme_selection_item_id || !linkmeSelectionDetails?.items)
-        return;
-
-      const selItem = linkmeSelectionDetails.items.find(
-        (si: SelectionItem) => si.id === editItem.linkme_selection_item_id
-      );
-      if (!selItem) return;
-
-      // Map @verone/orders SelectionItem to back-office SelectionItem for the modal
-      const modalItem: BackOfficeSelectionItem = {
-        ...selItem,
-        is_hidden_by_staff: false,
-        // Override margin_rate with the current editable value (may have been changed)
-        margin_rate:
-          editItem.retrocession_rate !== null
-            ? editItem.retrocession_rate * 100
-            : selItem.margin_rate,
-        // Override base_price_ht with current editable value
-        base_price_ht: editItem.base_price_ht ?? selItem.base_price_ht,
-      };
-
-      setDetailModalItem(modalItem);
-      setIsDetailModalOpen(true);
-    },
-    [editFields.items, linkmeSelectionDetails]
-  );
-
-  // Open detail modal from selection panel (view button)
-  const handleOpenDetailFromPanel = useCallback((selItem: SelectionItem) => {
-    const modalItem: BackOfficeSelectionItem = {
-      ...selItem,
-      is_hidden_by_staff: false,
-    };
-    setDetailModalItem(modalItem);
-    setIsDetailModalOpen(true);
-  }, []);
-
-  // Save margin changes from the detail modal
-  const handleDetailModalSave = useCallback(
-    async (
-      itemId: string,
-      updates: { marginRate?: number; customPriceHT?: number }
-    ) => {
-      setDetailModalSaving(true);
-      try {
-        // Find the matching editable item by linkme_selection_item_id
-        const editItemIndex = editFields.items.findIndex(
-          i => i.linkme_selection_item_id === itemId
-        );
-
-        if (editItemIndex === -1) {
-          // Item not yet added to the quote — nothing to update
-          setDetailModalSaving(false);
-          return;
-        }
-
-        const editItem = editFields.items[editItemIndex];
-        const newMarginRate =
-          updates.marginRate !== undefined
-            ? updates.marginRate / 100 // Convert from % to decimal
-            : editItem.retrocession_rate;
-        const newBasePriceHT = updates.customPriceHT ?? editItem.base_price_ht;
-
-        // Recalculate selling price with LinkMe formula
-        const commissionRate = (detailModalItem?.commission_rate ?? 0) / 100;
-        const marginDecimal = newMarginRate ?? 0;
-        const base = newBasePriceHT ?? 0;
-        const sellingPrice =
-          Math.round(
-            (base / (1 - marginDecimal)) * (1 + commissionRate) * 100
-          ) / 100;
-
-        setEditFields(prev => ({
-          ...prev,
-          items: prev.items.map((item, idx) =>
-            idx === editItemIndex
-              ? {
-                  ...item,
-                  base_price_ht: newBasePriceHT,
-                  retrocession_rate: newMarginRate,
-                  unit_price_ht: sellingPrice,
-                }
-              : item
-          ),
-        }));
-      } finally {
-        setDetailModalSaving(false);
-      }
-    },
-    [editFields.items, detailModalItem]
-  );
-
   // -----------------------------------------------------------------
   // COMPUTED
   // -----------------------------------------------------------------
@@ -1011,133 +914,47 @@ export default function QuoteDetailPage({ params }: QuoteDetailPageProps) {
             </CardContent>
           </Card>
 
-          {/* ----- LINKME SELECTION PRODUCTS (edit mode only) ----- */}
-          {isEditing &&
-            isLinkMe &&
-            quote.linkme_selection_id &&
-            linkmeSelectionDetails &&
-            isFieldEditable('items', status, hasQonto) && (
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base">
-                    Produits de la sélection — {linkmeSelectionDetails.name}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2 max-h-80 overflow-y-auto">
-                    {(linkmeSelectionDetails.items ?? []).map(
-                      (selItem: SelectionItem) => {
-                        const commissionRate =
-                          (selItem.commission_rate ?? 0) / 100;
-                        const marginRate = selItem.margin_rate / 100;
-                        const sellingPrice =
-                          Math.round(
-                            (selItem.base_price_ht / (1 - marginRate)) *
-                              (1 + commissionRate) *
-                              100
-                          ) / 100;
-                        const alreadyAdded = editFields.items.some(
-                          i => i.product_id === selItem.product_id
-                        );
-
-                        return (
-                          <div
-                            key={selItem.id}
-                            className="flex items-center justify-between rounded-lg border p-3"
-                          >
-                            <div className="flex items-center gap-3">
-                              {selItem.product_image_url ? (
-                                <img
-                                  src={selItem.product_image_url}
-                                  alt={selItem.product?.name ?? ''}
-                                  className="h-10 w-10 rounded border object-cover"
-                                />
-                              ) : (
-                                <div className="flex h-10 w-10 items-center justify-center rounded border bg-gray-100">
-                                  <FileText className="h-5 w-5 text-gray-400" />
-                                </div>
-                              )}
-                              <div className="min-w-0">
-                                <p className="text-sm font-medium line-clamp-1">
-                                  {selItem.product?.name ?? 'Produit'}
-                                </p>
-                                <div className="flex gap-2 text-xs text-muted-foreground">
-                                  <span>
-                                    Base:{' '}
-                                    {formatCurrency(selItem.base_price_ht)}
-                                  </span>
-                                  <span>Marge: {selItem.margin_rate}%</span>
-                                  {selItem.commission_rate ? (
-                                    <span>Com: {selItem.commission_rate}%</span>
-                                  ) : null}
-                                </div>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-3">
-                              <span className="text-sm font-medium">
-                                {formatCurrency(sellingPrice)}
-                              </span>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
-                                onClick={() =>
-                                  handleOpenDetailFromPanel(selItem)
-                                }
-                                title="Voir le détail produit"
-                              >
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant={alreadyAdded ? 'secondary' : 'outline'}
-                                size="sm"
-                                onClick={() => handleAddLinkMeProduct(selItem)}
-                              >
-                                <Plus className="mr-1 h-3 w-3" />
-                                {alreadyAdded ? '+1' : 'Ajouter'}
-                              </Button>
-                            </div>
-                          </div>
-                        );
-                      }
-                    )}
-                    {(linkmeSelectionDetails.items ?? []).length === 0 && (
-                      <p className="py-4 text-center text-sm text-muted-foreground">
-                        Aucun produit dans cette sélection
-                      </p>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
           {/* ----- ITEMS TABLE ----- */}
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base">Articles</CardTitle>
-                {isEditing &&
-                  isFieldEditable('items', status, hasQonto) &&
-                  !isLinkMe && (
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setShowAddProduct(true)}
-                      >
-                        <Plus className="mr-1 h-3 w-3" />
-                        Catalogue
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={addManualItem}
-                      >
-                        <Plus className="mr-1 h-3 w-3" />
-                        Ligne libre
-                      </Button>
-                    </div>
-                  )}
+                {isEditing && isFieldEditable('items', status, hasQonto) && (
+                  <div className="flex gap-2">
+                    {isLinkMe &&
+                      quote.linkme_selection_id &&
+                      linkmeSelectionDetails && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setShowLinkMeProducts(true)}
+                        >
+                          <ShoppingBag className="mr-1 h-3 w-3" />
+                          Sélection LinkMe
+                        </Button>
+                      )}
+                    {!isLinkMe && (
+                      <>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setShowAddProduct(true)}
+                        >
+                          <Plus className="mr-1 h-3 w-3" />
+                          Catalogue
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={addManualItem}
+                        >
+                          <Plus className="mr-1 h-3 w-3" />
+                          Ligne libre
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
             </CardHeader>
             <CardContent>
@@ -1182,9 +999,6 @@ export default function QuoteDetailPage({ params }: QuoteDetailPageProps) {
                             )
                           }
                           onDelete={removeItem}
-                          onEditMargin={
-                            isLinkMe ? handleEditMarginFromTable : undefined
-                          }
                         />
                       ))
                     : /* READ MODE ITEMS */
@@ -1717,17 +1531,114 @@ export default function QuoteDetailPage({ params }: QuoteDetailPageProps) {
         />
       )}
 
-      {/* LinkMe product detail modal (margin editing) */}
-      {isLinkMe && (
-        <SelectionProductDetailModal
-          open={isDetailModalOpen}
-          onOpenChange={setIsDetailModalOpen}
-          item={detailModalItem}
-          mode={isEditing ? 'edit' : 'view'}
-          onSave={handleDetailModalSave}
-          isSaving={detailModalSaving}
-        />
-      )}
+      {/* LinkMe selection products dialog */}
+      <Dialog
+        open={showLinkMeProducts}
+        onOpenChange={open => {
+          setShowLinkMeProducts(open);
+          if (!open) setLinkMeSearchTerm('');
+        }}
+      >
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle>
+              Produits de la sélection —{' '}
+              {linkmeSelectionDetails?.name ?? 'LinkMe'}
+            </DialogTitle>
+          </DialogHeader>
+
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Rechercher par nom ou SKU..."
+              value={linkMeSearchTerm}
+              onChange={e => setLinkMeSearchTerm(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+
+          {/* Products list */}
+          <div className="space-y-2 overflow-y-auto flex-1 min-h-0">
+            {(linkmeSelectionDetails?.items ?? [])
+              .filter((selItem: SelectionItem) => {
+                if (!linkMeSearchTerm.trim()) return true;
+                const term = linkMeSearchTerm.toLowerCase();
+                const name = (selItem.product?.name ?? '').toLowerCase();
+                const sku = (selItem.product?.sku ?? '').toLowerCase();
+                return name.includes(term) || sku.includes(term);
+              })
+              .map((selItem: SelectionItem) => {
+                const commissionRate = (selItem.commission_rate ?? 0) / 100;
+                const marginRate = selItem.margin_rate / 100;
+                const sellingPrice =
+                  Math.round(
+                    (selItem.base_price_ht / (1 - marginRate)) *
+                      (1 + commissionRate) *
+                      100
+                  ) / 100;
+                const alreadyAdded = editFields.items.some(
+                  i => i.product_id === selItem.product_id
+                );
+
+                return (
+                  <div
+                    key={selItem.id}
+                    className="flex items-center justify-between rounded-lg border p-3"
+                  >
+                    <div className="flex items-center gap-3">
+                      {selItem.product_image_url ? (
+                        <img
+                          src={selItem.product_image_url}
+                          alt={selItem.product?.name ?? ''}
+                          className="h-10 w-10 rounded border object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-10 w-10 items-center justify-center rounded border bg-gray-100">
+                          <FileText className="h-5 w-5 text-gray-400" />
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium line-clamp-1">
+                          {selItem.product?.name ?? 'Produit'}
+                        </p>
+                        <div className="flex gap-2 text-xs text-muted-foreground">
+                          <span>
+                            Base: {formatCurrency(selItem.base_price_ht)}
+                          </span>
+                          <span>Marge: {selItem.margin_rate}%</span>
+                          <span>Com: {selItem.commission_rate ?? 0}%</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm font-medium">
+                        {formatCurrency(sellingPrice)}
+                      </span>
+                      <Button
+                        variant={alreadyAdded ? 'secondary' : 'outline'}
+                        size="sm"
+                        onClick={() => {
+                          handleAddLinkMeProduct(selItem);
+                          setShowLinkMeProducts(false);
+                          setLinkMeSearchTerm('');
+                        }}
+                      >
+                        <Plus className="mr-1 h-3 w-3" />
+                        {alreadyAdded ? '+1' : 'Ajouter'}
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+            {(linkmeSelectionDetails?.items ?? []).length === 0 && (
+              <p className="py-4 text-center text-sm text-muted-foreground">
+                Aucun produit dans cette sélection
+              </p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
