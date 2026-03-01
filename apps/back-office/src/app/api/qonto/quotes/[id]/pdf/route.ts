@@ -2,14 +2,20 @@
  * API Route: GET /api/qonto/quotes/[id]/pdf
  * Télécharge le PDF d'un devis depuis Qonto
  *
- * Utilise pdf_url en priorité (comme les factures),
- * avec fallback sur attachment_id si nécessaire.
+ * Priorité:
+ * 1. Supabase Storage local (si disponible)
+ * 2. Qonto pdf_url
+ * 3. Qonto attachment_id (fallback)
+ *
+ * Store-on-read: Si le PDF est récupéré depuis Qonto,
+ * il est automatiquement stocké localement pour les accès futurs.
  */
 
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 import { QontoClient } from '@verone/integrations/qonto';
+import { createServerClient } from '@verone/utils/supabase/server';
 
 function getQontoClient(): QontoClient {
   return new QontoClient({
@@ -26,12 +32,12 @@ export async function GET(
 ): Promise<NextResponse> {
   try {
     const { id } = await params;
+    const supabase = await createServerClient();
     const client = getQontoClient();
 
-    // Récupérer le devis
+    // Récupérer le devis depuis Qonto (nécessaire pour le quote_number)
     const quote = await client.getClientQuoteById(id);
 
-    // DEBUG: Logger les champs disponibles pour le PDF
     console.warn('[API Qonto Quote PDF] Quote data:', {
       id: quote.id,
       quote_number: quote.quote_number,
@@ -40,6 +46,39 @@ export async function GET(
       public_url: quote.public_url,
       attachment_id: quote.attachment_id,
     });
+
+    // Construire le chemin de stockage basé sur le quote_number
+    const year = new Date().getFullYear();
+    const quoteNumber = quote.quote_number ?? quote.id;
+    const storagePath = `quotes/${year}/${quoteNumber}.pdf`;
+
+    // ========================================
+    // ÉTAPE 1: Vérifier si PDF stocké localement
+    // ========================================
+    const { data: localPdf, error: downloadError } = await supabase.storage
+      .from('invoices')
+      .download(storagePath);
+
+    if (!downloadError && localPdf) {
+      console.warn(
+        '[API Qonto Quote PDF] Serving from local storage:',
+        storagePath
+      );
+      const pdfBuffer = await localPdf.arrayBuffer();
+
+      return new NextResponse(pdfBuffer, {
+        headers: {
+          'Content-Type': 'application/pdf',
+          'Content-Disposition': `inline; filename="devis-${quoteNumber}.pdf"`,
+          'Content-Length': String(pdfBuffer.byteLength),
+          'X-PDF-Source': 'local',
+        },
+      });
+    }
+
+    // ========================================
+    // ÉTAPE 2: Fallback vers Qonto
+    // ========================================
 
     // Déterminer l'URL du PDF (priorité: pdf_url > attachment_id)
     let pdfUrl: string | undefined = quote.pdf_url;
@@ -52,7 +91,6 @@ export async function GET(
       );
       try {
         const attachment = await client.getAttachment(quote.attachment_id);
-        console.warn('[API Qonto Quote PDF] Attachment response:', attachment);
         pdfUrl = attachment.url;
       } catch (attachmentError) {
         console.error(
@@ -75,15 +113,10 @@ export async function GET(
       );
     }
 
-    console.warn('[API Qonto Quote PDF] Fetching PDF from:', pdfUrl);
+    console.warn('[API Qonto Quote PDF] Fetching PDF from Qonto...');
 
     // Télécharger le PDF depuis l'URL
     const pdfResponse = await fetch(pdfUrl);
-
-    console.warn(
-      '[API Qonto Quote PDF] PDF response status:',
-      pdfResponse.status
-    );
 
     if (!pdfResponse.ok) {
       console.error(
@@ -102,11 +135,6 @@ export async function GET(
 
     const pdfBuffer = await pdfResponse.arrayBuffer();
 
-    console.warn(
-      '[API Qonto Quote PDF] PDF buffer size:',
-      pdfBuffer.byteLength
-    );
-
     // Vérifier que le PDF n'est pas vide
     if (pdfBuffer.byteLength === 0) {
       console.error('[API Qonto Quote PDF] PDF buffer is empty!');
@@ -119,12 +147,45 @@ export async function GET(
       );
     }
 
+    // ========================================
+    // ÉTAPE 3: Store-on-read (non-bloquant)
+    // ========================================
+    void (async () => {
+      try {
+        const { error: uploadError } = await supabase.storage
+          .from('invoices')
+          .upload(storagePath, pdfBuffer, {
+            contentType: 'application/pdf',
+            upsert: true,
+          });
+
+        if (uploadError) {
+          console.error(
+            '[API Qonto Quote PDF] Store-on-read upload failed:',
+            uploadError
+          );
+        } else {
+          console.warn(
+            `[API Qonto Quote PDF] Store-on-read success: ${storagePath}`
+          );
+        }
+      } catch (error) {
+        console.error('[API Qonto Quote PDF] Store-on-read error:', error);
+      }
+    })().catch((error: unknown) => {
+      console.error(
+        '[API Qonto Quote PDF] Store-on-read background error:',
+        error
+      );
+    });
+
     // Retourner le PDF avec les bons headers pour VISUALISATION (inline)
     return new NextResponse(pdfBuffer, {
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `inline; filename="devis-${quote.quote_number ?? quote.id}.pdf"`,
+        'Content-Disposition': `inline; filename="devis-${quoteNumber}.pdf"`,
         'Content-Length': String(pdfBuffer.byteLength),
+        'X-PDF-Source': 'qonto',
       },
     });
   } catch (error) {

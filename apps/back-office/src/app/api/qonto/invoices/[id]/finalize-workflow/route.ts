@@ -74,7 +74,7 @@ export async function POST(
     // 2. Récupérer facture actuelle
     const { data: invoice, error: fetchError } = await supabase
       .from('financial_documents')
-      .select('id, workflow_status, qonto_invoice_id')
+      .select('id, workflow_status, qonto_invoice_id, sales_order_id')
       .eq('id', invoiceId)
       .single();
 
@@ -231,6 +231,42 @@ export async function POST(
     console.warn(
       `[Finalize workflow] Invoice ${invoiceId} finalized by user ${user.id}${localPdfPath ? ' (PDF stored locally)' : ''}`
     );
+
+    // 7. Auto-validation de la commande liée (règle métier : facture finalisée → commande validée)
+    if (invoice.sales_order_id) {
+      const { data: linkedOrder } = await supabase
+        .from('sales_orders')
+        .select('id, status, order_number, confirmed_at')
+        .eq('id', invoice.sales_order_id)
+        .single();
+
+      if (
+        linkedOrder &&
+        (linkedOrder.status === 'draft' ||
+          linkedOrder.status === 'pending_approval')
+      ) {
+        const { error: orderUpdateError } = await supabase
+          .from('sales_orders')
+          .update({
+            status: 'validated',
+            confirmed_at: new Date().toISOString(),
+            confirmed_by: user.id,
+          })
+          .eq('id', linkedOrder.id);
+
+        if (orderUpdateError) {
+          console.error(
+            '[Finalize workflow] Auto-validate order failed:',
+            orderUpdateError
+          );
+          // Succès partiel : facture finalisée mais commande non validée
+        } else {
+          console.warn(
+            `[Finalize workflow] Auto-validated order ${linkedOrder.order_number} (${linkedOrder.status} → validated)`
+          );
+        }
+      }
+    }
 
     return NextResponse.json({
       success: true,

@@ -3,12 +3,13 @@
 import { useState, useEffect } from 'react';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { AddressSelector } from '@verone/common/components/address/AddressSelector';
+import { AddressAutocomplete, type AddressResult } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import { Checkbox } from '@verone/ui';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@verone/ui';
 import { Input } from '@verone/ui';
 import { Label } from '@verone/ui';
+import { RadioGroup, RadioGroupItem } from '@verone/ui';
 import {
   Select,
   SelectContent,
@@ -18,12 +19,22 @@ import {
 } from '@verone/ui';
 import { Textarea } from '@verone/ui';
 import { spacing, colors, componentShadows } from '@verone/ui';
-import { Building2, MapPin, FileText, CreditCard, Users } from 'lucide-react';
+import {
+  Building2,
+  MapPin,
+  FileText,
+  CreditCard,
+  Users,
+  Store,
+  Info,
+  Navigation,
+} from 'lucide-react';
 import { useForm, type SubmitHandler, type Resolver } from 'react-hook-form';
 import * as z from 'zod';
 
 import type { Organisation } from '@verone/organisations/hooks';
 
+import { useActiveEnseignes } from '../../hooks/use-enseignes';
 import { OrganisationContactsManager } from './organisation-contacts-manager';
 import { LogoUploadButton } from '../buttons/LogoUploadButton';
 
@@ -42,7 +53,7 @@ export type OrganisationType =
 
 const baseOrganisationSchema = z.object({
   name: z.string().min(1, 'Le nom est obligatoire'),
-  country: z.string().min(1, 'Le pays est obligatoire'),
+  country: z.string().default('FR'),
   is_active: z.boolean().default(true),
   notes: z.string().optional().or(z.literal('')),
 
@@ -77,11 +88,27 @@ const baseOrganisationSchema = z.object({
   shipping_country: z.string().default('FR'),
   has_different_shipping_address: z.boolean().default(false),
 
+  // Coordonnées GPS (remplies automatiquement par AddressAutocomplete)
+  latitude: z.number().nullable().optional(),
+  longitude: z.number().nullable().optional(),
+
+  // Identité commerciale
+  has_different_trade_name: z.boolean().default(false),
+  trade_name: z.string().optional().or(z.literal('')),
+
   // Légal
+  siren: z.string().optional().or(z.literal('')),
   legal_form: z.string().optional().or(z.literal('')),
   siret: z.string().optional().or(z.literal('')),
   vat_number: z.string().optional().or(z.literal('')),
   industry_sector: z.string().optional().or(z.literal('')),
+
+  // Rattachement enseigne (clients B2B uniquement)
+  enseigne_id: z.string().nullable().optional(),
+  ownership_type: z
+    .enum(['succursale', 'franchise', 'propre'])
+    .nullable()
+    .optional(),
 
   // Commercial
   currency: z.string().default('EUR'),
@@ -173,6 +200,9 @@ const getDefaultValues = (
       shipping_region: '',
       shipping_country: 'FR',
       has_different_shipping_address: false,
+      has_different_trade_name: false,
+      trade_name: '',
+      siren: '',
       legal_form: '',
       siret: '',
       vat_number: '',
@@ -180,6 +210,8 @@ const getDefaultValues = (
       currency: 'EUR',
       payment_terms: '',
       supplier_segment: '',
+      enseigne_id: null,
+      ownership_type: null,
     };
   }
 
@@ -204,6 +236,9 @@ const getDefaultValues = (
     shipping_country: organisation.shipping_country || 'FR',
     has_different_shipping_address:
       organisation.has_different_shipping_address || false,
+    has_different_trade_name: organisation.has_different_trade_name ?? false,
+    trade_name: organisation.trade_name || '',
+    siren: organisation.siren || '',
     legal_form: organisation.legal_form || '',
     siret: organisation.siret || '',
     vat_number: organisation.vat_number || '',
@@ -211,6 +246,8 @@ const getDefaultValues = (
     currency: organisation.currency || 'EUR',
     payment_terms: organisation.payment_terms || '',
     supplier_segment: organisation.supplier_segment || '',
+    enseigne_id: organisation.enseigne_id ?? null,
+    ownership_type: organisation.ownership_type ?? null,
   };
 };
 
@@ -259,6 +296,7 @@ export function UnifiedOrganisationForm({
 }: UnifiedOrganisationFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isCustomer = organisationType === 'customer';
+  const { enseignes, loading: enseignesLoading } = useActiveEnseignes();
 
   const form = useForm<OrganisationFormData>({
     // Cast via unknown to resolve zodResolver/react-hook-form type mismatch with .default() fields
@@ -274,10 +312,38 @@ export function UnifiedOrganisationForm({
     }
   }, [isOpen, organisation]);
 
+  // Handlers pour AddressAutocomplete
+  const handleBillingAddressSelect = (address: AddressResult) => {
+    form.setValue('billing_address_line1', address.streetAddress);
+    form.setValue('billing_city', address.city);
+    form.setValue('billing_postal_code', address.postalCode);
+    form.setValue('billing_region', address.region || '');
+    form.setValue('billing_country', address.countryCode || 'FR');
+    if (!form.getValues('has_different_shipping_address')) {
+      form.setValue('latitude', address.latitude || null);
+      form.setValue('longitude', address.longitude || null);
+    }
+  };
+
+  const handleShippingAddressSelect = (address: AddressResult) => {
+    form.setValue('shipping_address_line1', address.streetAddress);
+    form.setValue('shipping_city', address.city);
+    form.setValue('shipping_postal_code', address.postalCode);
+    form.setValue('shipping_region', address.region || '');
+    form.setValue('shipping_country', address.countryCode || 'FR');
+    form.setValue('latitude', address.latitude || null);
+    form.setValue('longitude', address.longitude || null);
+  };
+
   const handleSubmit: SubmitHandler<OrganisationFormData> = async data => {
     setIsSubmitting(true);
     try {
-      await onSubmit(data, organisation?.id);
+      // Auto-fill country from billing_country (évite champ redondant)
+      const enrichedData = {
+        ...data,
+        country: data.billing_country || data.country || 'FR',
+      };
+      await onSubmit(enrichedData, organisation?.id);
     } catch (error) {
       console.error('Erreur lors de la soumission:', error);
     } finally {
@@ -299,7 +365,7 @@ export function UnifiedOrganisationForm({
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent
-        className="max-w-4xl max-h-[90vh] overflow-y-auto"
+        className="max-w-5xl max-h-[90vh] overflow-y-auto"
         style={{
           backgroundColor: colors.background.DEFAULT,
           borderColor: colors.border.DEFAULT,
@@ -384,7 +450,7 @@ export function UnifiedOrganisationForm({
                   gap: spacing[4],
                 }}
               >
-                {/* Name */}
+                {/* Dénomination sociale (legal_name) */}
                 <div>
                   <Label
                     htmlFor="name"
@@ -395,12 +461,12 @@ export function UnifiedOrganisationForm({
                       marginBottom: spacing[2],
                     }}
                   >
-                    Nom de l'organisation *
+                    Dénomination sociale *
                   </Label>
                   <Input
                     id="name"
                     {...form.register('name')}
-                    placeholder="Ex: Entreprise ABC"
+                    placeholder="Ex: SAS Mobilier Design"
                     disabled={isSubmitting}
                     className="transition-all duration-200"
                     style={{
@@ -424,56 +490,65 @@ export function UnifiedOrganisationForm({
                   )}
                 </div>
 
-                {/* Country */}
-                <div>
-                  <Label
-                    htmlFor="country"
-                    className="text-sm font-medium"
-                    style={{
-                      color: colors.text.DEFAULT,
-                      display: 'block',
-                      marginBottom: spacing[2],
+                {/* Nom commercial différent */}
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: spacing[2],
+                  }}
+                >
+                  <Checkbox
+                    id="has_different_trade_name"
+                    checked={form.watch('has_different_trade_name')}
+                    onCheckedChange={checked => {
+                      form.setValue(
+                        'has_different_trade_name',
+                        checked as boolean
+                      );
+                      if (!checked) {
+                        form.setValue('trade_name', '');
+                      }
                     }}
-                  >
-                    Pays *
-                  </Label>
-                  <Select
-                    value={form.watch('country')}
-                    onValueChange={value => form.setValue('country', value)}
                     disabled={isSubmitting}
+                  />
+                  <Label
+                    htmlFor="has_different_trade_name"
+                    className="text-sm font-medium cursor-pointer"
+                    style={{ color: colors.text.DEFAULT }}
                   >
-                    <SelectTrigger
+                    Nom commercial différent
+                  </Label>
+                </div>
+
+                {/* Trade Name (conditionnel) */}
+                {form.watch('has_different_trade_name') && (
+                  <div>
+                    <Label
+                      htmlFor="trade_name"
+                      className="text-sm font-medium"
+                      style={{
+                        color: colors.text.DEFAULT,
+                        display: 'block',
+                        marginBottom: spacing[2],
+                      }}
+                    >
+                      Nom commercial
+                    </Label>
+                    <Input
+                      id="trade_name"
+                      {...form.register('trade_name')}
+                      placeholder="Ex: Marque XYZ"
+                      disabled={isSubmitting}
                       className="transition-all duration-200"
                       style={{
-                        borderColor: form.formState.errors.country
-                          ? colors.danger[500]
-                          : colors.border.DEFAULT,
+                        borderColor: colors.border.DEFAULT,
                         color: colors.text.DEFAULT,
                         borderRadius: '8px',
                       }}
-                    >
-                      <SelectValue placeholder="Sélectionner un pays" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {COUNTRIES.map(country => (
-                        <SelectItem key={country.value} value={country.value}>
-                          {country.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {form.formState.errors.country && (
-                    <p
-                      style={{
-                        color: colors.danger[500],
-                        fontSize: '0.875rem',
-                        marginTop: spacing[1],
-                      }}
-                    >
-                      {form.formState.errors.country.message}
-                    </p>
-                  )}
-                </div>
+                    />
+                  </div>
+                )}
 
                 {/* Active Status */}
                 <div
@@ -502,12 +577,155 @@ export function UnifiedOrganisationForm({
               </div>
             </div>
 
-            {/* Section 2: Adresse(s) - Conditionnelle selon type d'organisation */}
-            {isCustomer ? (
-              // CLIENTS B2B: Adresses facturation + livraison (avec AddressSelector)
-              <AddressSelector form={form} />
-            ) : (
-              // FOURNISSEURS/PRESTATAIRES: Adresse de facturation uniquement
+            {/* Section 2: Adresse(s) — AddressAutocomplete unifié pour tous les types */}
+            <div>
+              <h3
+                className="text-lg font-semibold flex items-center gap-2"
+                style={{
+                  color: colors.text.DEFAULT,
+                  marginBottom: spacing[4],
+                }}
+              >
+                <MapPin className="h-5 w-5" />
+                Adresse de facturation
+              </h3>
+
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: spacing[3],
+                }}
+              >
+                <AddressAutocomplete
+                  value={form.watch('billing_address_line1') || ''}
+                  onChange={value =>
+                    form.setValue('billing_address_line1', value)
+                  }
+                  onSelect={handleBillingAddressSelect}
+                  placeholder="Rechercher une adresse..."
+                  id="org-billing-address"
+                  disabled={isSubmitting}
+                />
+                <Input
+                  id="billing_address_line2"
+                  {...form.register('billing_address_line2')}
+                  placeholder="Complément d'adresse (bâtiment, étage...)"
+                  disabled={isSubmitting}
+                  style={{
+                    borderColor: colors.border.DEFAULT,
+                    color: colors.text.DEFAULT,
+                    borderRadius: '8px',
+                  }}
+                />
+              </div>
+
+              {/* Toggle adresse de livraison différente (clients uniquement) */}
+              {isCustomer && (
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: spacing[2],
+                    marginTop: spacing[4],
+                  }}
+                >
+                  <Checkbox
+                    id="has_different_shipping_org"
+                    checked={form.watch('has_different_shipping_address')}
+                    onCheckedChange={(checked: boolean) => {
+                      form.setValue('has_different_shipping_address', checked);
+                      if (!checked) {
+                        form.setValue('shipping_address_line1', '');
+                        form.setValue('shipping_address_line2', '');
+                        form.setValue('shipping_postal_code', '');
+                        form.setValue('shipping_city', '');
+                        form.setValue('shipping_region', '');
+                        form.setValue('shipping_country', 'FR');
+                      }
+                    }}
+                  />
+                  <Label
+                    htmlFor="has_different_shipping_org"
+                    className="text-sm font-medium cursor-pointer"
+                    style={{ color: colors.text.DEFAULT }}
+                  >
+                    Adresse de livraison différente
+                  </Label>
+                </div>
+              )}
+
+              {/* Adresse de livraison (conditionnelle, clients uniquement) */}
+              {isCustomer && form.watch('has_different_shipping_address') && (
+                <div
+                  style={{
+                    marginTop: spacing[4],
+                    paddingTop: spacing[4],
+                    borderTop: `1px solid ${colors.border.DEFAULT}`,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: spacing[3],
+                  }}
+                >
+                  <h3
+                    className="text-lg font-semibold flex items-center gap-2"
+                    style={{ color: colors.text.DEFAULT }}
+                  >
+                    <MapPin className="h-5 w-5" />
+                    Adresse de livraison
+                  </h3>
+                  <AddressAutocomplete
+                    value={form.watch('shipping_address_line1') || ''}
+                    onChange={value =>
+                      form.setValue('shipping_address_line1', value)
+                    }
+                    onSelect={handleShippingAddressSelect}
+                    placeholder="Rechercher une adresse de livraison..."
+                    id="org-shipping-address"
+                    disabled={isSubmitting}
+                  />
+                  <Input
+                    id="shipping_address_line2"
+                    {...form.register('shipping_address_line2')}
+                    placeholder="Complément d'adresse (bâtiment, étage...)"
+                    disabled={isSubmitting}
+                    style={{
+                      borderColor: colors.border.DEFAULT,
+                      color: colors.text.DEFAULT,
+                      borderRadius: '8px',
+                    }}
+                  />
+                </div>
+              )}
+
+              {/* Coordonnées GPS (lecture seule) */}
+              {(form.watch('latitude') || form.watch('longitude')) && (
+                <div
+                  style={{
+                    marginTop: spacing[3],
+                    backgroundColor: '#f0fdf4',
+                    border: '1px solid #bbf7d0',
+                    borderRadius: '8px',
+                    padding: spacing[3],
+                  }}
+                >
+                  <div className="flex items-center gap-2 text-green-700">
+                    <Navigation className="h-4 w-4" />
+                    <span className="text-sm font-medium">Coordonnées GPS</span>
+                    <span className="text-xs text-green-600 ml-auto">
+                      (mises à jour automatiquement)
+                    </span>
+                  </div>
+                  <div className="mt-1 pl-6 text-sm text-green-800 font-mono">
+                    {form.watch('latitude')?.toFixed(6)},{' '}
+                    {form.watch('longitude')?.toFixed(6)}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Section 3bis: Rattachement Enseigne (clients B2B uniquement) */}
+            {isCustomer && (
               <div>
                 <h3
                   className="text-lg font-semibold flex items-center gap-2"
@@ -516,8 +734,8 @@ export function UnifiedOrganisationForm({
                     marginBottom: spacing[4],
                   }}
                 >
-                  <MapPin className="h-5 w-5" />
-                  Adresse de facturation
+                  <Store className="h-5 w-5" />
+                  Rattachement enseigne
                 </h3>
 
                 <div
@@ -527,10 +745,10 @@ export function UnifiedOrganisationForm({
                     gap: spacing[4],
                   }}
                 >
-                  {/* Billing Address Line 1 */}
+                  {/* Enseigne Select */}
                   <div>
                     <Label
-                      htmlFor="billing_address_line1"
+                      htmlFor="enseigne_id"
                       className="text-sm font-medium"
                       style={{
                         color: colors.text.DEFAULT,
@@ -538,151 +756,19 @@ export function UnifiedOrganisationForm({
                         marginBottom: spacing[2],
                       }}
                     >
-                      Adresse ligne 1
-                    </Label>
-                    <Input
-                      id="billing_address_line1"
-                      {...form.register('billing_address_line1')}
-                      placeholder="123 Rue de la Paix"
-                      disabled={isSubmitting}
-                      style={{
-                        borderColor: colors.border.DEFAULT,
-                        color: colors.text.DEFAULT,
-                        borderRadius: '8px',
-                      }}
-                    />
-                  </div>
-
-                  {/* Billing Address Line 2 */}
-                  <div>
-                    <Label
-                      htmlFor="billing_address_line2"
-                      className="text-sm font-medium"
-                      style={{
-                        color: colors.text.DEFAULT,
-                        display: 'block',
-                        marginBottom: spacing[2],
-                      }}
-                    >
-                      Adresse ligne 2
-                    </Label>
-                    <Input
-                      id="billing_address_line2"
-                      {...form.register('billing_address_line2')}
-                      placeholder="Bâtiment A, 2ème étage"
-                      disabled={isSubmitting}
-                      style={{
-                        borderColor: colors.border.DEFAULT,
-                        color: colors.text.DEFAULT,
-                        borderRadius: '8px',
-                      }}
-                    />
-                  </div>
-
-                  {/* Billing Postal Code + City */}
-                  <div
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: '1fr 2fr',
-                      gap: spacing[3],
-                    }}
-                  >
-                    <div>
-                      <Label
-                        htmlFor="billing_postal_code"
-                        className="text-sm font-medium"
-                        style={{
-                          color: colors.text.DEFAULT,
-                          display: 'block',
-                          marginBottom: spacing[2],
-                        }}
-                      >
-                        Code postal
-                      </Label>
-                      <Input
-                        id="billing_postal_code"
-                        {...form.register('billing_postal_code')}
-                        placeholder="75001"
-                        disabled={isSubmitting}
-                        style={{
-                          borderColor: colors.border.DEFAULT,
-                          color: colors.text.DEFAULT,
-                          borderRadius: '8px',
-                        }}
-                      />
-                    </div>
-
-                    <div>
-                      <Label
-                        htmlFor="billing_city"
-                        className="text-sm font-medium"
-                        style={{
-                          color: colors.text.DEFAULT,
-                          display: 'block',
-                          marginBottom: spacing[2],
-                        }}
-                      >
-                        Ville
-                      </Label>
-                      <Input
-                        id="billing_city"
-                        {...form.register('billing_city')}
-                        placeholder="Paris"
-                        disabled={isSubmitting}
-                        style={{
-                          borderColor: colors.border.DEFAULT,
-                          color: colors.text.DEFAULT,
-                          borderRadius: '8px',
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Billing Region */}
-                  <div>
-                    <Label
-                      htmlFor="billing_region"
-                      className="text-sm font-medium"
-                      style={{
-                        color: colors.text.DEFAULT,
-                        display: 'block',
-                        marginBottom: spacing[2],
-                      }}
-                    >
-                      Région / État
-                    </Label>
-                    <Input
-                      id="billing_region"
-                      {...form.register('billing_region')}
-                      placeholder="Île-de-France"
-                      disabled={isSubmitting}
-                      style={{
-                        borderColor: colors.border.DEFAULT,
-                        color: colors.text.DEFAULT,
-                        borderRadius: '8px',
-                      }}
-                    />
-                  </div>
-
-                  {/* Billing Country */}
-                  <div>
-                    <Label
-                      htmlFor="billing_country"
-                      className="text-sm font-medium"
-                      style={{
-                        color: colors.text.DEFAULT,
-                        display: 'block',
-                        marginBottom: spacing[2],
-                      }}
-                    >
-                      Pays
+                      Rattacher à une enseigne (facultatif)
                     </Label>
                     <Select
-                      value={form.watch('billing_country')}
-                      onValueChange={value =>
-                        form.setValue('billing_country', value)
-                      }
-                      disabled={isSubmitting}
+                      value={form.watch('enseigne_id') ?? '__none__'}
+                      onValueChange={value => {
+                        if (value === '__none__') {
+                          form.setValue('enseigne_id', null);
+                          form.setValue('ownership_type', null);
+                        } else {
+                          form.setValue('enseigne_id', value);
+                        }
+                      }}
+                      disabled={isSubmitting || enseignesLoading}
                     >
                       <SelectTrigger
                         style={{
@@ -691,17 +777,96 @@ export function UnifiedOrganisationForm({
                           borderRadius: '8px',
                         }}
                       >
-                        <SelectValue placeholder="Sélectionner un pays" />
+                        <SelectValue placeholder="Aucune enseigne" />
                       </SelectTrigger>
                       <SelectContent>
-                        {COUNTRIES.map(country => (
-                          <SelectItem key={country.value} value={country.value}>
-                            {country.label}
+                        <SelectItem value="__none__">Aucune</SelectItem>
+                        {enseignes.map(enseigne => (
+                          <SelectItem key={enseigne.id} value={enseigne.id}>
+                            {enseigne.name}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
+
+                  {/* Ownership Type (conditionnel: visible si enseigne sélectionnée) */}
+                  {form.watch('enseigne_id') && (
+                    <div>
+                      <Label
+                        className="text-sm font-medium"
+                        style={{
+                          color: colors.text.DEFAULT,
+                          display: 'block',
+                          marginBottom: spacing[2],
+                        }}
+                      >
+                        Type de rattachement (facultatif)
+                      </Label>
+                      <RadioGroup
+                        value={form.watch('ownership_type') ?? ''}
+                        onValueChange={value => {
+                          form.setValue(
+                            'ownership_type',
+                            value as 'succursale' | 'franchise' | 'propre'
+                          );
+                        }}
+                        orientation="vertical"
+                        spacing="sm"
+                      >
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: spacing[2],
+                          }}
+                        >
+                          <RadioGroupItem
+                            value="succursale"
+                            id="ownership_succursale"
+                          />
+                          <Label
+                            htmlFor="ownership_succursale"
+                            className="text-sm cursor-pointer"
+                            style={{ color: colors.text.DEFAULT }}
+                          >
+                            Propre (succursale)
+                          </Label>
+                        </div>
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: spacing[2],
+                          }}
+                        >
+                          <RadioGroupItem
+                            value="franchise"
+                            id="ownership_franchise"
+                          />
+                          <Label
+                            htmlFor="ownership_franchise"
+                            className="text-sm cursor-pointer"
+                            style={{ color: colors.text.DEFAULT }}
+                          >
+                            Franchise
+                          </Label>
+                        </div>
+                      </RadioGroup>
+                      <p
+                        className="flex items-center gap-1"
+                        style={{
+                          color: colors.text.muted,
+                          fontSize: '0.75rem',
+                          marginTop: spacing[2],
+                        }}
+                      >
+                        <Info className="h-3 w-3" />
+                        Si &quot;Propre&quot;, les conditions commerciales
+                        seront héritées de l&apos;enseigne
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -726,118 +891,167 @@ export function UnifiedOrganisationForm({
                   gap: spacing[4],
                 }}
               >
-                {/* Legal Form */}
-                <div>
-                  <Label
-                    htmlFor="legal_form"
-                    className="text-sm font-medium"
-                    style={{
-                      color: colors.text.DEFAULT,
-                      display: 'block',
-                      marginBottom: spacing[2],
-                    }}
-                  >
-                    Forme juridique
-                  </Label>
-                  <Select
-                    value={form.watch('legal_form')}
-                    onValueChange={value => form.setValue('legal_form', value)}
-                    disabled={isSubmitting}
-                  >
-                    <SelectTrigger
+                {/* Row 1: Forme juridique + SIREN + SIRET */}
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(3, 1fr)',
+                    gap: spacing[4],
+                  }}
+                >
+                  {/* Legal Form */}
+                  <div>
+                    <Label
+                      htmlFor="legal_form"
+                      className="text-sm font-medium"
+                      style={{
+                        color: colors.text.DEFAULT,
+                        display: 'block',
+                        marginBottom: spacing[2],
+                      }}
+                    >
+                      Forme juridique
+                    </Label>
+                    <Select
+                      value={form.watch('legal_form')}
+                      onValueChange={value =>
+                        form.setValue('legal_form', value)
+                      }
+                      disabled={isSubmitting}
+                    >
+                      <SelectTrigger
+                        style={{
+                          borderColor: colors.border.DEFAULT,
+                          color: colors.text.DEFAULT,
+                        }}
+                      >
+                        <SelectValue placeholder="Sélectionner..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {LEGAL_FORMS.map(legalForm => (
+                          <SelectItem
+                            key={legalForm.value}
+                            value={legalForm.value}
+                          >
+                            {legalForm.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* SIREN */}
+                  <div>
+                    <Label
+                      htmlFor="siren"
+                      className="text-sm font-medium"
+                      style={{
+                        color: colors.text.DEFAULT,
+                        display: 'block',
+                        marginBottom: spacing[2],
+                      }}
+                    >
+                      SIREN
+                    </Label>
+                    <Input
+                      id="siren"
+                      {...form.register('siren')}
+                      placeholder="123 456 789"
+                      disabled={isSubmitting}
                       style={{
                         borderColor: colors.border.DEFAULT,
                         color: colors.text.DEFAULT,
+                        borderRadius: '8px',
+                      }}
+                    />
+                  </div>
+
+                  {/* SIRET */}
+                  <div>
+                    <Label
+                      htmlFor="siret"
+                      className="text-sm font-medium"
+                      style={{
+                        color: colors.text.DEFAULT,
+                        display: 'block',
+                        marginBottom: spacing[2],
                       }}
                     >
-                      <SelectValue placeholder="Sélectionner une forme juridique" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {LEGAL_FORMS.map(legalForm => (
-                        <SelectItem
-                          key={legalForm.value}
-                          value={legalForm.value}
-                        >
-                          {legalForm.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                      SIRET
+                    </Label>
+                    <Input
+                      id="siret"
+                      {...form.register('siret')}
+                      placeholder="123 456 789 00012"
+                      disabled={isSubmitting}
+                      style={{
+                        borderColor: colors.border.DEFAULT,
+                        color: colors.text.DEFAULT,
+                        borderRadius: '8px',
+                      }}
+                    />
+                  </div>
                 </div>
 
-                {/* SIRET */}
-                <div>
-                  <Label
-                    htmlFor="siret"
-                    className="text-sm font-medium"
-                    style={{
-                      color: colors.text.DEFAULT,
-                      display: 'block',
-                      marginBottom: spacing[2],
-                    }}
-                  >
-                    SIRET
-                  </Label>
-                  <Input
-                    id="siret"
-                    {...form.register('siret')}
-                    placeholder="123 456 789 00012"
-                    disabled={isSubmitting}
-                    style={{
-                      borderColor: colors.border.DEFAULT,
-                      color: colors.text.DEFAULT,
-                    }}
-                  />
-                </div>
+                {/* Row 2: TVA + Secteur d'activité */}
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(2, 1fr)',
+                    gap: spacing[4],
+                  }}
+                >
+                  {/* VAT Number */}
+                  <div>
+                    <Label
+                      htmlFor="vat_number"
+                      className="text-sm font-medium"
+                      style={{
+                        color: colors.text.DEFAULT,
+                        display: 'block',
+                        marginBottom: spacing[2],
+                      }}
+                    >
+                      N° TVA intracommunautaire
+                    </Label>
+                    <Input
+                      id="vat_number"
+                      {...form.register('vat_number')}
+                      placeholder="FR12345678901"
+                      disabled={isSubmitting}
+                      style={{
+                        borderColor: colors.border.DEFAULT,
+                        color: colors.text.DEFAULT,
+                        borderRadius: '8px',
+                      }}
+                    />
+                  </div>
 
-                {/* VAT Number */}
-                <div>
-                  <Label
-                    htmlFor="vat_number"
-                    className="text-sm font-medium"
-                    style={{
-                      color: colors.text.DEFAULT,
-                      display: 'block',
-                      marginBottom: spacing[2],
-                    }}
-                  >
-                    Numéro TVA
-                  </Label>
-                  <Input
-                    id="vat_number"
-                    {...form.register('vat_number')}
-                    placeholder="FR12345678901"
-                    disabled={isSubmitting}
-                    style={{
-                      borderColor: colors.border.DEFAULT,
-                      color: colors.text.DEFAULT,
-                    }}
-                  />
-                </div>
-
-                {/* Industry Sector */}
-                <div>
-                  <Label
-                    htmlFor="industry_sector"
-                    className="text-sm font-medium"
-                    style={{
-                      color: colors.text.DEFAULT,
-                      display: 'block',
-                      marginBottom: spacing[2],
-                    }}
-                  >
-                    Secteur d'activité
-                  </Label>
-                  <Input
-                    id="industry_sector"
-                    {...form.register('industry_sector')}
-                    placeholder="Ex: Mobilier, Décoration, Textile"
-                    disabled={isSubmitting}
-                    style={{
-                      borderColor: colors.border.DEFAULT,
-                      color: colors.text.DEFAULT,
-                    }}
-                  />
+                  {/* Industry Sector */}
+                  <div>
+                    <Label
+                      htmlFor="industry_sector"
+                      className="text-sm font-medium"
+                      style={{
+                        color: colors.text.DEFAULT,
+                        display: 'block',
+                        marginBottom: spacing[2],
+                      }}
+                    >
+                      Secteur d'activité
+                    </Label>
+                    <Input
+                      id="industry_sector"
+                      {...form.register('industry_sector')}
+                      placeholder="Ex: Mobilier, Décoration, Textile"
+                      disabled={isSubmitting}
+                      style={{
+                        borderColor: colors.border.DEFAULT,
+                        color: colors.text.DEFAULT,
+                        borderRadius: '8px',
+                      }}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -857,8 +1071,8 @@ export function UnifiedOrganisationForm({
 
               <div
                 style={{
-                  display: 'flex',
-                  flexDirection: 'column',
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(2, 1fr)',
                   gap: spacing[4],
                 }}
               >
@@ -884,6 +1098,7 @@ export function UnifiedOrganisationForm({
                       style={{
                         borderColor: colors.border.DEFAULT,
                         color: colors.text.DEFAULT,
+                        borderRadius: '8px',
                       }}
                     >
                       <SelectValue placeholder="Sélectionner une devise" />
@@ -922,6 +1137,7 @@ export function UnifiedOrganisationForm({
                       style={{
                         borderColor: colors.border.DEFAULT,
                         color: colors.text.DEFAULT,
+                        borderRadius: '8px',
                       }}
                     >
                       <SelectValue placeholder="Sélectionner des conditions" />

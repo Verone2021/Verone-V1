@@ -70,6 +70,7 @@ import { ProductThumbnail } from '@verone/products/components/images/ProductThum
 export interface ProductData {
   id: string;
   name: string;
+  description?: string | null;
   sku: string | null;
   product_status: 'active' | 'preorder' | 'discontinued' | 'draft';
   creation_mode: 'complete' | 'sourcing';
@@ -347,6 +348,7 @@ function useProductSearch(
           `
           id,
           name,
+          description,
           sku,
           product_status,
           creation_mode,

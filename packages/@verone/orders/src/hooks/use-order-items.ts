@@ -79,6 +79,11 @@ export interface CreateOrderItemData {
   eco_tax?: number;
   tax_rate?: number; // Sales only
   notes?: string;
+  // Product metadata (for local display before save)
+  product_name?: string;
+  product_sku?: string;
+  product_image_url?: string;
+  product_description?: string;
 }
 
 interface UseOrderItemsProps {
