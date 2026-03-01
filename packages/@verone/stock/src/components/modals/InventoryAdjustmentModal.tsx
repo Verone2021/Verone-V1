@@ -12,7 +12,15 @@
 
 import React, { useState, useEffect } from 'react';
 
-import { Plus, Minus, Settings, Loader2, Upload, X } from 'lucide-react';
+import {
+  Plus,
+  Minus,
+  Settings,
+  Loader2,
+  Upload,
+  X,
+  AlertCircle,
+} from 'lucide-react';
 
 import { Button } from '@verone/ui';
 import {
@@ -36,7 +44,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@verone/ui';
 import { Textarea } from '@verone/ui';
 import { type ReasonCode } from '../../hooks/core/use-stock-core';
 import { createClient } from '@verone/utils/supabase/client';
-import { useToast } from '@verone/common/hooks';
+import { toast } from 'sonner';
 import { useStockUI } from '../../hooks';
 import { useStockMovements, type StockReasonCode } from '../../hooks';
 
@@ -147,7 +155,6 @@ export function InventoryAdjustmentModal({
   product,
 }: InventoryAdjustmentModalProps) {
   const supabase = createClient();
-  const { toast } = useToast();
   const stock = useStockUI({ autoLoad: false });
   const { getReasonDescription } = useStockMovements();
 
@@ -163,6 +170,7 @@ export function InventoryAdjustmentModal({
 
   const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   // Reset form quand produit change ou modal s'ouvre
   useEffect(() => {
@@ -175,6 +183,7 @@ export function InventoryAdjustmentModal({
         uploadedFile: null,
         uploadedFileUrl: '',
       });
+      setFormError(null);
     }
   }, [isOpen, product]);
 
@@ -302,20 +311,12 @@ export function InventoryAdjustmentModal({
         uploadedFileUrl: publicUrlData.publicUrl,
       });
 
-      toast({
-        title: '✅ Fichier uploadé',
-        description: `${file.name} a été téléchargé avec succès`,
-      });
+      toast.success(`${file.name} a été téléchargé avec succès`);
     } catch (err) {
       console.error('Erreur upload fichier:', err);
-      toast({
-        variant: 'destructive',
-        title: 'Erreur upload',
-        description:
-          err instanceof Error
-            ? err.message
-            : "Impossible d'uploader le fichier",
-      });
+      toast.error(
+        err instanceof Error ? err.message : "Impossible d'uploader le fichier"
+      );
     } finally {
       setUploading(false);
     }
@@ -324,43 +325,42 @@ export function InventoryAdjustmentModal({
   // Soumission formulaire
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError(null);
 
     if (!product) return;
 
     // Validation
     const validation = validateForm();
     if (!validation.valid) {
-      toast({
-        variant: 'destructive',
-        title: 'Erreur validation',
-        description: validation.error,
-      });
+      setFormError(validation.error ?? 'Erreur de validation');
+      return;
+    }
+
+    // Validation edge case : quantity_change = 0 (DB constraint CHECK)
+    const quantityChange = calculateQuantityChange();
+    if (quantityChange === 0) {
+      setFormError(
+        'Aucun changement de stock détecté. La quantité doit être différente du stock actuel.'
+      );
       return;
     }
 
     setSubmitting(true);
 
     try {
-      const quantityChange = calculateQuantityChange();
-
-      // ✅ FIX: Envoyer directement StockReasonCode (enum détaillé PostgreSQL)
-      // Ne PAS mapper vers ReasonCode (enum simplifié) car PostgreSQL attend stock_reason_code
-      // Créer mouvement via use-stock-ui (toast automatique)
+      // Créer mouvement via use-stock-ui (toast automatique via sonner)
       const movement = await stock.createMovement({
         product_id: product.id,
         movement_type: 'ADJUST',
         quantity_change: quantityChange,
-        reason_code: formData.reasonCode as StockReasonCode, // ✅ Direct StockReasonCode (ex: 'write_off')
+        reason_code: formData.reasonCode as StockReasonCode,
         notes: `[${getReasonDescription(formData.reasonCode as StockReasonCode)}] ${formData.notes}`,
-        reference_type: 'manual_adjustment', // ✅ Valeur valide dans ReferenceType
-        reference_id: crypto.randomUUID(), // ✅ UUID unique pour traçabilité
+        reference_type: 'manual_adjustment',
+        reference_id: crypto.randomUUID(),
         affects_forecast: false,
       });
 
       if (movement) {
-        // Si fichier uploadé, stocker référence dans metadata (optionnel)
-        // Pour l'instant, on laisse juste l'URL dans les notes
-
         // Callback succès
         onSuccess();
         onClose();
@@ -374,10 +374,19 @@ export function InventoryAdjustmentModal({
           uploadedFile: null,
           uploadedFileUrl: '',
         });
+      } else {
+        // createMovement a retourné null → erreur déjà affichée via toast sonner
+        setFormError(
+          "L'ajustement a échoué. Vérifiez les détails et réessayez."
+        );
       }
     } catch (err) {
       console.error('Erreur création ajustement:', err);
-      // Toast erreur déjà géré par use-stock-ui
+      setFormError(
+        err instanceof Error
+          ? err.message
+          : "Erreur inattendue lors de la création de l'ajustement"
+      );
     } finally {
       setSubmitting(false);
     }
@@ -414,7 +423,13 @@ export function InventoryAdjustmentModal({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit}>
+        <form
+          onSubmit={e => {
+            void handleSubmit(e).catch((err: unknown) => {
+              console.error('[InventoryAdjustmentModal] Submit failed:', err);
+            });
+          }}
+        >
           <Tabs
             value={formData.adjustmentType}
             onValueChange={v => handleAdjustmentTypeChange(v as AdjustmentType)}
@@ -660,7 +675,15 @@ export function InventoryAdjustmentModal({
                         accept="image/*,.pdf,.xls,.xlsx"
                         onChange={e => {
                           const file = e.target.files?.[0];
-                          if (file) handleFileUpload(file);
+                          if (file)
+                            void handleFileUpload(file).catch(
+                              (err: unknown) => {
+                                console.error(
+                                  '[InventoryAdjustmentModal] File upload failed:',
+                                  err
+                                );
+                              }
+                            );
                         }}
                         disabled={uploading}
                       />
@@ -694,6 +717,14 @@ export function InventoryAdjustmentModal({
               </div>
             </div>
           </Tabs>
+
+          {/* Erreur inline */}
+          {formError && (
+            <div className="mt-4 flex items-start gap-2 p-3 rounded-md bg-red-50 border border-red-200">
+              <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-red-800">{formError}</p>
+            </div>
+          )}
 
           <DialogFooter className="mt-6">
             <Button

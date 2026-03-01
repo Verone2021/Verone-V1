@@ -40,7 +40,7 @@
 
 import { useEffect, useState } from 'react';
 
-import { useToast } from '@verone/common/hooks';
+import { toast } from 'sonner';
 import { createClient } from '@verone/utils/supabase/client';
 
 import {
@@ -94,7 +94,6 @@ export interface UseStockUIReturn
 export function useStockUI(config: UseStockUIConfig = {}): UseStockUIReturn {
   const { channelId = null, autoLoad = true, initialFilters } = config;
 
-  const { toast } = useToast();
   const supabase = createClient();
 
   const [userId, setUserId] = useState<string | null>(null);
@@ -229,11 +228,7 @@ export function useStockUI(config: UseStockUIConfig = {}): UseStockUIReturn {
 
         if (!isAuthSessionMissing && !isNetworkError) {
           console.error('❌ [useStockUI] Erreur auto-load:', err);
-          toast({
-            variant: 'destructive',
-            title: 'Erreur chargement',
-            description: 'Impossible de charger les données stock',
-          });
+          toast.error('Impossible de charger les données stock');
         }
         // Sinon on ignore silencieusement (logout en cours)
       });
@@ -261,11 +256,7 @@ export function useStockUI(config: UseStockUIConfig = {}): UseStockUIReturn {
     successMessage?: string
   ): Promise<StockMovement | null> => {
     if (!isAuthenticated || !userId) {
-      toast({
-        variant: 'destructive',
-        title: 'Non authentifié',
-        description: 'Vous devez être connecté pour créer un mouvement stock',
-      });
+      toast.error('Vous devez être connecté pour créer un mouvement stock');
       return null;
     }
 
@@ -273,25 +264,21 @@ export function useStockUI(config: UseStockUIConfig = {}): UseStockUIReturn {
       const movement = await stockCore.createMovement(params);
 
       // Toast succès
-      toast({
-        variant: 'success',
-        title: '✅ Mouvement créé',
-        description:
-          successMessage ||
-          `${params.movement_type} de ${Math.abs(params.quantity_change)} unités`,
-      });
+      toast.success(
+        successMessage ||
+          `Mouvement créé : ${params.movement_type} de ${Math.abs(params.quantity_change)} unités`
+      );
 
       return movement;
     } catch (err) {
       console.error('❌ [useStockUI] Erreur création mouvement:', err);
 
       // Toast erreur
-      toast({
-        variant: 'destructive',
-        title: 'Erreur création mouvement',
-        description:
-          err instanceof Error ? err.message : 'Une erreur est survenue',
-      });
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : 'Erreur lors de la création du mouvement'
+      );
 
       return null;
     }
