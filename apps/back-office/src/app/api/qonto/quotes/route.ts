@@ -30,10 +30,6 @@ interface ISalesOrderWithItems extends SalesOrder {
   }>;
 }
 
-interface ISalesOrderWithCustomer extends ISalesOrderWithItems {
-  customer: Organisation | IndividualCustomer | null;
-}
-
 function getQontoClient(): QontoClient {
   return new QontoClient({
     authMode: (process.env.QONTO_AUTH_MODE as 'oauth' | 'api_key') ?? 'oauth',
@@ -160,8 +156,17 @@ interface ICustomLine {
   vat_rate: number;
 }
 
+/**
+ * Données client pour devis standalone (sans commande)
+ */
+interface IStandaloneCustomer {
+  customerId: string; // ID organisation ou individual_customer
+  customerType: 'organization' | 'individual';
+}
+
 interface IPostRequestBody {
-  salesOrderId: string;
+  salesOrderId?: string; // Optionnel: si absent, création standalone
+  customer?: IStandaloneCustomer; // Requis si pas de salesOrderId
   expiryDays?: number; // Nombre de jours avant expiration (défaut: 30)
   fees?: IFeesData;
   customLines?: ICustomLine[];
@@ -172,8 +177,10 @@ interface IPostRequestBody {
  * Crée un devis depuis une commande client
  *
  * Body:
- * - salesOrderId: UUID de la commande
+ * - salesOrderId?: UUID de la commande (optionnel pour devis standalone)
+ * - customer?: { customerId, customerType } (requis si pas de salesOrderId)
  * - expiryDays: nombre de jours avant expiration (défaut: 30)
+ * - customLines: lignes personnalisées (requises si pas de salesOrderId)
  */
 export async function POST(request: NextRequest): Promise<
   NextResponse<{
@@ -185,71 +192,133 @@ export async function POST(request: NextRequest): Promise<
 > {
   try {
     const body = (await request.json()) as IPostRequestBody;
-    const { salesOrderId, expiryDays = 30, fees, customLines } = body;
+    const {
+      salesOrderId,
+      customer: standaloneCustomer,
+      expiryDays = 30,
+      fees,
+      customLines,
+    } = body;
 
-    if (!salesOrderId) {
+    // Validation: soit salesOrderId, soit customer + customLines
+    if (!salesOrderId && !standaloneCustomer) {
       return NextResponse.json(
-        { success: false, error: 'salesOrderId is required' },
+        { success: false, error: 'salesOrderId ou customer est requis' },
         { status: 400 }
       );
     }
 
-    // Récupérer la commande avec ses lignes
-    const supabase = createAdminClient();
-    const { data: order, error: orderError } = await supabase
-      .from('sales_orders')
-      .select(
-        `
-        *,
-        sales_order_items (
-          *,
-          products:product_id (id, name, sku)
-        )
-      `
-      )
-      .eq('id', salesOrderId)
-      .single();
-
-    if (orderError || !order) {
-      console.error('[API Qonto Quotes] Order fetch error:', orderError);
+    if (!salesOrderId && (!customLines || customLines.length === 0)) {
       return NextResponse.json(
-        { success: false, error: 'Order not found' },
-        { status: 404 }
+        {
+          success: false,
+          error:
+            'customLines est requis pour un devis standalone (sans commande)',
+        },
+        { status: 400 }
       );
     }
 
-    const orderWithItems = order as ISalesOrderWithItems;
+    const supabase = createAdminClient();
+    const qontoClient = getQontoClient();
 
-    // Fetch manuel du customer selon customer_type
+    // Variables communes
     let customer: Organisation | IndividualCustomer | null = null;
+    let customerType: string = 'organization';
+    let orderNumber: string | undefined;
+    let orderItems: ISalesOrderWithItems['sales_order_items'] = [];
+    let orderShippingCostHt = 0;
+    let orderHandlingCostHt = 0;
+    let orderInsuranceCostHt = 0;
+    let orderFeesVatRate = 0.2;
+    let orderBillingAddress: Record<string, string> | null = null;
 
-    if (orderWithItems.customer_id && orderWithItems.customer_type) {
-      if (orderWithItems.customer_type === 'organization') {
+    if (salesOrderId) {
+      // Mode commande: récupérer la commande avec ses lignes
+      const { data: order, error: orderError } = await supabase
+        .from('sales_orders')
+        .select(
+          `
+          *,
+          sales_order_items (
+            *,
+            products:product_id (id, name, sku)
+          )
+        `
+        )
+        .eq('id', salesOrderId)
+        .single();
+
+      if (orderError || !order) {
+        console.error('[API Qonto Quotes] Order fetch error:', orderError);
+        return NextResponse.json(
+          { success: false, error: 'Order not found' },
+          { status: 404 }
+        );
+      }
+
+      const orderWithItems = order as ISalesOrderWithItems;
+
+      // Fetch customer depuis la commande
+      if (orderWithItems.customer_id && orderWithItems.customer_type) {
+        if (orderWithItems.customer_type === 'organization') {
+          const { data: org } = await supabase
+            .from('organisations')
+            .select('*')
+            .eq('id', orderWithItems.customer_id)
+            .single();
+          customer = org;
+        } else if (
+          orderWithItems.customer_type === 'individual' &&
+          orderWithItems.individual_customer_id
+        ) {
+          const { data: indiv } = await supabase
+            .from('individual_customers')
+            .select('*')
+            .eq('id', orderWithItems.individual_customer_id)
+            .single();
+          customer = indiv;
+        }
+      }
+
+      customerType = orderWithItems.customer_type ?? 'organization';
+      orderNumber = orderWithItems.order_number ?? undefined;
+      orderItems = orderWithItems.sales_order_items ?? [];
+      orderShippingCostHt = orderWithItems.shipping_cost_ht ?? 0;
+      orderHandlingCostHt = orderWithItems.handling_cost_ht ?? 0;
+      orderInsuranceCostHt = orderWithItems.insurance_cost_ht ?? 0;
+      orderFeesVatRate = orderWithItems.fees_vat_rate ?? 0.2;
+      orderBillingAddress = orderWithItems.billing_address as Record<
+        string,
+        string
+      > | null;
+    } else if (standaloneCustomer) {
+      // Mode standalone: récupérer le customer directement
+      customerType = standaloneCustomer.customerType;
+
+      if (standaloneCustomer.customerType === 'organization') {
         const { data: org } = await supabase
           .from('organisations')
           .select('*')
-          .eq('id', orderWithItems.customer_id)
+          .eq('id', standaloneCustomer.customerId)
           .single();
         customer = org;
-      } else if (
-        orderWithItems.customer_type === 'individual' &&
-        orderWithItems.individual_customer_id
-      ) {
+      } else {
         const { data: indiv } = await supabase
           .from('individual_customers')
           .select('*')
-          .eq('id', orderWithItems.individual_customer_id)
+          .eq('id', standaloneCustomer.customerId)
           .single();
         customer = indiv;
       }
+
+      if (!customer) {
+        return NextResponse.json(
+          { success: false, error: 'Client introuvable' },
+          { status: 404 }
+        );
+      }
     }
-
-    const typedOrder: ISalesOrderWithCustomer = {
-      ...orderWithItems,
-      customer,
-    };
-
-    const qontoClient = getQontoClient();
 
     // Extraire email et nom selon le type de customer
     let customerEmail: string | null = null;
@@ -258,24 +327,21 @@ export async function POST(request: NextRequest): Promise<
     // Tax identification number (SIRET/TVA) for Qonto client creation
     let vatNumber: string | undefined;
 
-    if (typedOrder.customer_type === 'organization' && typedOrder.customer) {
-      const org = typedOrder.customer as Organisation;
+    if (customerType === 'organization' && customer) {
+      const org = customer as Organisation;
       customerEmail = org.email ?? null;
       customerName = org.trade_name ?? org.legal_name ?? 'Client';
       // Priority: vat_number (TVA intra-communautaire), then siret
       vatNumber = org.vat_number ?? org.siret ?? undefined;
-    } else if (
-      typedOrder.customer_type === 'individual' &&
-      typedOrder.customer
-    ) {
-      const indiv = typedOrder.customer as IndividualCustomer;
+    } else if (customerType === 'individual' && customer) {
+      const indiv = customer as IndividualCustomer;
       customerEmail = indiv.email ?? null;
       customerName =
         `${indiv.first_name ?? ''} ${indiv.last_name ?? ''}`.trim() || 'Client';
     }
 
     // Validate: organisations MUST have a tax identification number for quotes
-    if (typedOrder.customer_type === 'organization' && !vatNumber) {
+    if (customerType === 'organization' && !vatNumber) {
       return NextResponse.json(
         {
           success: false,
@@ -288,20 +354,30 @@ export async function POST(request: NextRequest): Promise<
 
     // Récupérer ou créer le client Qonto
     let qontoClientId: string;
-    const billingAddress = typedOrder.billing_address as Record<
-      string,
-      string
-    > | null;
+
+    // Pour les organisations standalone, utiliser leur adresse
+    let orgAddress: Record<string, string> | null = null;
+    if (!orderBillingAddress && customerType === 'organization' && customer) {
+      const org = customer as Organisation;
+      orgAddress = {
+        street: org.address_line1 ?? '',
+        city: org.city ?? 'Paris',
+        postal_code: org.postal_code ?? '75001',
+        country: org.country ?? 'FR',
+      };
+    }
+
+    const addressSource = orderBillingAddress ?? orgAddress;
 
     const qontoAddress = {
-      streetAddress: billingAddress?.street ?? billingAddress?.address ?? '',
-      city: billingAddress?.city ?? 'Paris',
-      zipCode: billingAddress?.postal_code ?? '75001',
-      countryCode: billingAddress?.country ?? 'FR',
+      streetAddress: addressSource?.street ?? addressSource?.address ?? '',
+      city: addressSource?.city ?? 'Paris',
+      zipCode: addressSource?.postal_code ?? '75001',
+      countryCode: addressSource?.country ?? 'FR',
     };
 
     const qontoClientType =
-      typedOrder.customer_type === 'organization' ? 'company' : 'individual';
+      customerType === 'organization' ? 'company' : 'individual';
 
     // Stratégie : chercher par email SI disponible, sinon par nom
     let existingClient = customerEmail
@@ -331,9 +407,8 @@ export async function POST(request: NextRequest): Promise<
     }
 
     // Mapper les lignes de commande vers items devis
-    const items = (typedOrder.sales_order_items ?? []).map(item => ({
+    const items = orderItems.map(item => ({
       title: item.products?.name ?? 'Article',
-
       description: item.notes ?? undefined,
       quantity: String(item.quantity ?? 1),
       unit: 'pièce',
@@ -345,11 +420,10 @@ export async function POST(request: NextRequest): Promise<
     }));
 
     // Déterminer la TVA des frais (priorité: body > commande > défaut 20%)
-    const feesVatRate = fees?.fees_vat_rate ?? typedOrder.fees_vat_rate ?? 0.2;
+    const feesVatRate = fees?.fees_vat_rate ?? orderFeesVatRate;
 
     // Ajouter les frais de livraison
-    const shippingCost =
-      fees?.shipping_cost_ht ?? typedOrder.shipping_cost_ht ?? 0;
+    const shippingCost = fees?.shipping_cost_ht ?? orderShippingCostHt;
     if (shippingCost > 0) {
       items.push({
         title: 'Frais de livraison',
@@ -365,8 +439,7 @@ export async function POST(request: NextRequest): Promise<
     }
 
     // Ajouter les frais de manutention
-    const handlingCost =
-      fees?.handling_cost_ht ?? typedOrder.handling_cost_ht ?? 0;
+    const handlingCost = fees?.handling_cost_ht ?? orderHandlingCostHt;
     if (handlingCost > 0) {
       items.push({
         title: 'Frais de manutention',
@@ -382,8 +455,7 @@ export async function POST(request: NextRequest): Promise<
     }
 
     // Ajouter les frais d'assurance
-    const insuranceCost =
-      fees?.insurance_cost_ht ?? typedOrder.insurance_cost_ht ?? 0;
+    const insuranceCost = fees?.insurance_cost_ht ?? orderInsuranceCostHt;
     if (insuranceCost > 0) {
       items.push({
         title: "Frais d'assurance",
@@ -428,7 +500,7 @@ export async function POST(request: NextRequest): Promise<
       issueDate,
       expiryDate,
 
-      purchaseOrderNumber: typedOrder.order_number ?? undefined,
+      purchaseOrderNumber: orderNumber,
       items,
     };
 

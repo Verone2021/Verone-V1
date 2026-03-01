@@ -16,10 +16,15 @@ export * from './OrderSelectModal'; // Modal: Selection commande pour facturatio
 export * from './CreditNoteCreateModal'; // Modal: Facture → Avoir Qonto (2026-01-07)
 export * from './QuoteCreateFromOrderModal'; // Modal: Commande → Devis Qonto (2026-01-07)
 export * from './QuoteCreateServiceModal'; // Modal: Devis service (sans commande) (2026-01-07)
+export * from './QuoteFormModal'; // Modal: Nouveau formulaire unifié devis (2026-02-28)
 export * from './RuleModal'; // SLICE 2: RuleModal universel (création + édition)
 export * from './ApplyExistingWizard'; // Wizard preview/confirm pour application de règles
 
+// Tables
+export * from './tables/EditableQuoteItemRow'; // Ligne éditable devis (catalogue vs libre)
+
 // Composants UI
+export * from './QuoteStatusBadge'; // Badge statut devis réutilisable
 export * from './SupplierCell';
 export * from './OrganisationTransactionsSection';
 

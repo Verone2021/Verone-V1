@@ -16,8 +16,8 @@
  * Les triggers stock sont automatiques et identiques pour tous les canaux.
  */
 
-import { useState, useMemo, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 import { SalesOrdersTable } from '@verone/orders';
 import type { SalesOrder } from '@verone/orders';
@@ -82,7 +82,16 @@ function getAffiliateMargin(order: SalesOrder): number {
 
 export default function CommandesClient() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const shouldAutoOpenCreate = searchParams.get('action') === 'new';
   const [filterPendingValidation, setFilterPendingValidation] = useState(false);
+
+  // Nettoyer le query param après ouverture automatique du modal
+  useEffect(() => {
+    if (shouldAutoOpenCreate) {
+      router.replace('/canaux-vente/linkme/commandes', { scroll: false });
+    }
+  }, [shouldAutoOpenCreate, router]);
 
   // Navigation vers page détail LinkMe au lieu du modal générique
   const handleViewOrder = useCallback(
@@ -204,6 +213,7 @@ export default function CommandesClient() {
           defaultItemsPerPage={10}
           additionalColumns={additionalColumns}
           updateStatusAction={updateSalesOrderStatus}
+          initialCreateOpen={shouldAutoOpenCreate}
           renderCreateModal={({ open, onClose, onSuccess }) => (
             <CreateLinkMeOrderModal
               isOpen={open}

@@ -18,6 +18,10 @@ export interface UnifiedCustomer {
   id: string;
   name: string;
   type: CustomerType;
+  // Identité B2B
+  legal_name?: string | null;
+  trade_name?: string | null;
+  siret?: string | null;
   // Conditions de paiement
   payment_terms?: string | null; // DEPRECATED - garder pour rétro-compatibilité
   payment_terms_type?: string | null; // NOUVEAU - enum payment_terms_type
@@ -59,12 +63,14 @@ interface CustomerSelectorProps {
   selectedCustomer: UnifiedCustomer | null;
   onCustomerChange: (customer: UnifiedCustomer | null) => void;
   disabled?: boolean;
+  enseigneId?: string | null;
 }
 
 export function CustomerSelector({
   selectedCustomer,
   onCustomerChange,
   disabled,
+  enseigneId,
 }: CustomerSelectorProps) {
   const [customerType, setCustomerType] =
     useState<CustomerType>('professional');
@@ -73,10 +79,10 @@ export function CustomerSelector({
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  // Charger les clients selon le type sélectionné
+  // Charger les clients selon le type sélectionné (et l'enseigne si fournie)
   useEffect(() => {
-    loadCustomers();
-  }, [customerType]);
+    void loadCustomers();
+  }, [customerType, enseigneId]);
 
   const loadCustomers = async () => {
     console.log(
@@ -93,13 +99,14 @@ export function CustomerSelector({
       if (customerType === 'professional') {
         // Charger les organisations professionnelles (B2B)
         console.log('🏢 [CustomerSelector] Chargement organisations B2B...');
-        const { data: organisations, error: orgError } = await supabase
+        let orgQuery = supabase
           .from('organisations')
           .select(
             `
             id,
             legal_name,
             trade_name,
+            siret,
             payment_terms,
             payment_terms_type,
             payment_terms_notes,
@@ -121,8 +128,15 @@ export function CustomerSelector({
           `
           )
           .eq('type', 'customer')
-          .eq('is_active', true)
-          .order('legal_name');
+          .eq('is_active', true);
+
+        // Filtrer par enseigne si fourni (devis LinkMe)
+        if (enseigneId) {
+          orgQuery = orgQuery.eq('enseigne_id', enseigneId);
+        }
+
+        const { data: organisations, error: orgError } =
+          await orgQuery.order('legal_name');
 
         if (orgError) {
           console.error(

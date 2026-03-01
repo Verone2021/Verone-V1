@@ -72,6 +72,7 @@ export interface SelectionDetail {
     display_name: string;
     slug: string;
     enseigne_id: string | null;
+    linkme_commission_rate: number | null;
     organisation?: {
       enseigne_id: string | null;
     } | null;
@@ -105,6 +106,7 @@ async function fetchSelectionById(
         display_name,
         slug,
         enseigne_id,
+        linkme_commission_rate,
         organisation:organisations!organisation_id(enseigne_id)
       )
     `

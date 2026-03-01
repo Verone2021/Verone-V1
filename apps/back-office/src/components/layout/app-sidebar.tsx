@@ -3,7 +3,7 @@
 import { useState, useMemo, useRef } from 'react';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 
 import {
   Badge,
@@ -39,6 +39,8 @@ import {
   Layers,
   MessageCircle,
   FileText,
+  FileSignature,
+  FileX,
   Banknote,
   Globe,
   Link2,
@@ -271,6 +273,21 @@ const getNavItems = (
         icon: LayoutDashboard,
       },
       {
+        title: 'Devis',
+        href: '/factures?tab=devis',
+        icon: FileSignature,
+      },
+      {
+        title: 'Factures',
+        href: '/factures?tab=factures',
+        icon: FileText,
+      },
+      {
+        title: 'Avoirs',
+        href: '/factures?tab=avoirs',
+        icon: FileX,
+      },
+      {
         title: 'Transactions',
         href: '/finance/transactions',
         icon: ArrowLeftRight,
@@ -278,16 +295,10 @@ const getNavItems = (
         badgeVariant: transactionsUnreconciledCount > 0 ? 'urgent' : undefined,
       },
       {
-        title: 'Factures',
-        href: '/factures',
-        icon: FileText,
-      },
-      {
         title: 'Trésorerie',
         href: '/finance/tresorerie',
         icon: Banknote,
       },
-      // Livres et Catégorisation - accès via Dashboard
     ],
   },
   {
@@ -334,6 +345,7 @@ function useHoverExpand(delay: number = 150) {
 
 function SidebarContent() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   // Hover expansion UX 2026 (Linear pattern)
   const { isExpanded, onMouseEnter, onMouseLeave, onFocus } =
@@ -446,12 +458,26 @@ function SidebarContent() {
     );
   };
 
+  const isHrefActive = (href: string): boolean => {
+    // Split href into path and query params
+    const [hrefPath, hrefQuery] = href.split('?');
+    // Match pathname
+    const pathMatches =
+      pathname === hrefPath ||
+      (hrefPath !== '/dashboard' && pathname.startsWith(hrefPath));
+    if (!pathMatches) return false;
+    // If href has query params, also check them (e.g. ?tab=devis)
+    if (hrefQuery) {
+      const hrefParams = new URLSearchParams(hrefQuery);
+      for (const [key, value] of hrefParams.entries()) {
+        if (searchParams.get(key) !== value) return false;
+      }
+    }
+    return true;
+  };
+
   const isActiveOrHasActiveChild = (item: NavItem): boolean => {
-    if (
-      item.href &&
-      (pathname === item.href ||
-        (item.href !== '/dashboard' && pathname.startsWith(item.href)))
-    ) {
+    if (item.href && isHrefActive(item.href)) {
       return true;
     }
     if (item.children) {
@@ -519,9 +545,7 @@ function SidebarContent() {
     idx: number,
     isParentExpanded: boolean
   ): React.ReactNode => {
-    const isChildActive =
-      pathname === child.href ||
-      (child.href !== '/dashboard' && pathname.startsWith(child.href!));
+    const isChildActive = child.href ? isHrefActive(child.href) : false;
     const isChildExpanded = expandedItems.includes(child.title);
 
     if (child.children) {
@@ -683,10 +707,7 @@ function SidebarContent() {
               <ul className="mt-1 space-y-1 ml-8">
                 {item.children.map(child => {
                   const childHref = child.href ?? '#';
-                  const isChildActive =
-                    pathname === childHref ||
-                    (childHref !== '/dashboard' &&
-                      pathname.startsWith(childHref));
+                  const isChildActive = isHrefActive(childHref);
                   return (
                     <li key={childHref}>
                       <Link
@@ -808,9 +829,7 @@ function SidebarContent() {
               <div className="py-1">
                 {item.children.map(child => {
                   const childHref: string = child.href ?? '#';
-                  const isChildActive =
-                    pathname === childHref ||
-                    pathname.startsWith(childHref + '/');
+                  const isChildActive = isHrefActive(childHref);
                   return (
                     <Link
                       key={childHref}

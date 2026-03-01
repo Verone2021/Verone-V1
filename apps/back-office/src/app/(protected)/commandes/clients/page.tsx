@@ -11,13 +11,18 @@
  * - draft → validated → partially_shipped → shipped → delivered
  * - Annulation possible (draft uniquement, ou devalider d'abord)
  * - Les triggers stock sont automatiques (agnostiques du canal)
+ *
+ * Création commande LinkMe:
+ * - Redirige vers /canaux-vente/linkme/commandes?action=new
+ * - Single Source of Truth: un seul formulaire LinkMe (canaux-vente)
  */
 
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
-import { SalesOrdersTable, CreateLinkMeOrderModal } from '@verone/orders';
+import { SalesOrdersTable } from '@verone/orders';
 import {
   ButtonUnified,
   Select,
@@ -40,7 +45,13 @@ const CHANNEL_IDS = {
 type ChannelFilter = 'all' | 'linkme' | 'siteInternet';
 
 export default function SalesOrdersClientsPage() {
+  const router = useRouter();
   const [channelFilter, setChannelFilter] = useState<ChannelFilter>('all');
+
+  // Rediriger vers le formulaire LinkMe unique (canaux-vente)
+  const handleCreateLinkMeOrder = useCallback(() => {
+    router.push('/canaux-vente/linkme/commandes?action=new');
+  }, [router]);
 
   return (
     <div className="space-y-6 p-6">
@@ -96,19 +107,10 @@ export default function SalesOrdersClientsPage() {
           amount: true,
           orderNumber: true,
         }}
-        renderCreateModal={
-          channelFilter === 'linkme'
-            ? ({ open, onClose, onSuccess }) => (
-                <CreateLinkMeOrderModal
-                  isOpen={open}
-                  onClose={() => {
-                    onClose();
-                    onSuccess();
-                  }}
-                />
-              )
-            : undefined
+        onCreateClick={
+          channelFilter === 'linkme' ? handleCreateLinkMeOrder : undefined
         }
+        onLinkMeClick={handleCreateLinkMeOrder}
       />
     </div>
   );

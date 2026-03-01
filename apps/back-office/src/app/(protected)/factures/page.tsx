@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 
 import { OrderDetailModal } from '@verone/orders/components/modals';
 import { useSalesOrders } from '@verone/orders/hooks';
@@ -20,12 +21,15 @@ import {
   OrderSelectModal,
   QuoteCreateFromOrderModal,
   QuoteCreateServiceModal,
+  QuoteFormModal,
+  QuoteStatusBadge,
   RapprochementFromOrderModal,
   type TransactionForUpload,
   type IOrderForInvoice,
   type IOrderForDocument,
   type OrderForLink,
 } from '@verone/finance/components';
+import { useQuotes, type Quote as LocalQuote } from '@verone/finance/hooks';
 import {
   Card,
   CardContent,
@@ -102,6 +106,7 @@ import {
 // =====================================================================
 
 type TabType = 'factures' | 'devis' | 'avoirs' | 'manquantes';
+const VALID_TABS: TabType[] = ['factures', 'devis', 'avoirs', 'manquantes'];
 
 interface ConsolidateReport {
   success: boolean;
@@ -126,33 +131,9 @@ interface InvoicesResponse extends ApiResponse<{ invoices: Invoice[] }> {
   invoices?: Invoice[];
 }
 
-interface QuotesResponse extends ApiResponse<{ quotes: Quote[] }> {
-  quotes?: Quote[];
-}
-
 interface CreditNotesResponse
   extends ApiResponse<{ credit_notes: CreditNote[] }> {
   credit_notes?: CreditNote[];
-}
-
-interface Quote {
-  id: string;
-  quote_number: string;
-  status:
-    | 'draft'
-    | 'pending_approval'
-    | 'finalized'
-    | 'accepted'
-    | 'declined'
-    | 'expired';
-  currency: string;
-  total_amount: number;
-  issue_date: string;
-  expiry_date: string;
-  client?: {
-    name: string;
-  };
-  converted_to_invoice_id?: string;
 }
 
 interface CreditNote {
@@ -223,35 +204,6 @@ function formatAmount(amount: number, currency = 'EUR'): string {
 
 function formatDate(dateString: string): string {
   return new Intl.DateTimeFormat('fr-FR').format(new Date(dateString));
-}
-
-function QuoteStatusBadge({ status }: { status: string }): React.ReactNode {
-  const variants: Record<
-    string,
-    'default' | 'secondary' | 'destructive' | 'outline'
-  > = {
-    draft: 'secondary',
-    pending_approval: 'outline',
-    finalized: 'default',
-    accepted: 'default',
-    declined: 'destructive',
-    expired: 'outline',
-  };
-
-  const labels: Record<string, string> = {
-    draft: 'Brouillon',
-    pending_approval: 'En attente',
-    finalized: 'Finalisé',
-    accepted: 'Accepté',
-    declined: 'Refusé',
-    expired: 'Expiré',
-  };
-
-  return (
-    <Badge variant={variants[status] ?? 'outline'}>
-      {labels[status] ?? status}
-    </Badge>
-  );
 }
 
 function CreditNoteStatusBadge({
@@ -774,7 +726,19 @@ function MissingInvoicesTable({
 // =====================================================================
 
 export default function FacturationPage() {
-  const [activeTab, setActiveTab] = useState<TabType>('factures');
+  const searchParams = useSearchParams();
+  const tabFromUrl = searchParams.get('tab') as TabType | null;
+  const [activeTab, setActiveTab] = useState<TabType>(
+    tabFromUrl && VALID_TABS.includes(tabFromUrl) ? tabFromUrl : 'factures'
+  );
+  // Sync activeTab when URL query param changes (e.g. sidebar click while page is already open)
+  useEffect(() => {
+    const tab = searchParams.get('tab') as TabType | null;
+    if (tab && VALID_TABS.includes(tab)) {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
+
   const [invoiceView, setInvoiceView] = useState<
     'drafts' | 'finalized' | 'archived'
   >('finalized');
@@ -794,20 +758,24 @@ export default function FacturationPage() {
   // Etat pour facture de service (sans commande)
   const [showServiceModal, setShowServiceModal] = useState(false);
 
-  // États pour les devis
-  const [quotes, setQuotes] = useState<Quote[]>([]);
-  const [loadingQuotes, setLoadingQuotes] = useState(false);
-  const [errorQuotes, setErrorQuotes] = useState<string | null>(null);
+  // États pour les devis (nouveau formulaire unifié)
+  const [showQuoteForm, setShowQuoteForm] = useState(false);
+  const {
+    quotes: localQuotes,
+    loading: loadingQuotes,
+    error: errorQuotes,
+    fetchQuotes,
+    deleteQuote: deleteLocalQuote,
+  } = useQuotes();
+
+  // Legacy states (kept for Qonto finalization/PDF features)
   const [showQuoteOrderSelect, setShowQuoteOrderSelect] = useState(false);
   const [showQuoteCreate, setShowQuoteCreate] = useState(false);
   const [showQuoteServiceModal, setShowQuoteServiceModal] = useState(false);
   const [selectedQuoteOrder, setSelectedQuoteOrder] =
     useState<IOrderForDocument | null>(null);
-  const [quoteToDelete, setQuoteToDelete] = useState<Quote | null>(null);
+  const [quoteToDelete, setQuoteToDelete] = useState<LocalQuote | null>(null);
   const [deletingQuote, setDeletingQuote] = useState(false);
-  const [finalizingQuoteId, setFinalizingQuoteId] = useState<string | null>(
-    null
-  );
 
   // État consolidation liaisons
   const [isConsolidating, setIsConsolidating] = useState(false);
@@ -904,26 +872,7 @@ export default function FacturationPage() {
     }
   };
 
-  // Fetch quotes
-  const fetchQuotes = async (): Promise<void> => {
-    setLoadingQuotes(true);
-    setErrorQuotes(null);
-
-    try {
-      const response = await fetch('/api/qonto/quotes');
-      const data = (await response.json()) as QuotesResponse;
-
-      if (!response.ok || !data.success) {
-        throw new Error(data.error ?? 'Failed to fetch quotes');
-      }
-
-      setQuotes(data.quotes ?? []);
-    } catch (err) {
-      setErrorQuotes(err instanceof Error ? err.message : 'Erreur inconnue');
-    } finally {
-      setLoadingQuotes(false);
-    }
-  };
+  // fetchQuotes is now provided by useQuotes hook (local DB instead of Qonto API)
 
   // Fetch credit notes
   const fetchCreditNotes = async (): Promise<void> => {
@@ -953,16 +902,14 @@ export default function FacturationPage() {
     void fetchInvoices();
   }, []);
 
-  // Load data when tab changes
+  // Load data when tab changes (quotes auto-loaded by useQuotes hook)
   useEffect(() => {
     if (activeTab === 'factures' && invoices.length === 0) {
       void fetchInvoices();
-    } else if (activeTab === 'devis' && quotes.length === 0) {
-      void fetchQuotes();
     } else if (activeTab === 'avoirs' && creditNotes.length === 0) {
       void fetchCreditNotes();
     }
-  }, [activeTab, invoices.length, quotes.length, creditNotes.length]);
+  }, [activeTab, invoices.length, creditNotes.length]);
 
   // Convertir TransactionMissingInvoice en TransactionForUpload
   const transactionForUpload: TransactionForUpload | null = useMemo(() => {
@@ -1055,46 +1002,12 @@ export default function FacturationPage() {
   const handleQuoteCreated = (): void => {
     setShowQuoteCreate(false);
     setSelectedQuoteOrder(null);
-    void fetchQuotes();
-  };
-
-  const handleDownloadQuotePdf = async (quote: Quote): Promise<void> => {
-    try {
-      const response = await fetch(`/api/qonto/quotes/${quote.id}/pdf`);
-
-      if (!response.ok) {
-        const errorData = (await response.json().catch(() => ({}))) as {
-          error?: string;
-        };
-        throw new Error(
-          errorData.error ?? `Erreur ${response.status}: ${response.statusText}`
-        );
-      }
-
-      const blob = await response.blob();
-
-      if (blob.size === 0) {
-        throw new Error('Le PDF est vide');
-      }
-
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `devis-${quote.quote_number}.pdf`;
-      a.style.display = 'none';
-      document.body.appendChild(a);
-      a.click();
-
-      setTimeout(() => {
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-      }, 1000);
-    } catch (err) {
-      console.error('Download error:', err);
-      setErrorQuotes(
-        err instanceof Error ? err.message : 'Erreur de téléchargement'
+    void fetchQuotes().catch((err: unknown) => {
+      console.error(
+        '[Factures] fetchQuotes after handleQuoteCreated failed:',
+        err
       );
-    }
+    });
   };
 
   const handleDeleteQuote = async (): Promise<void> => {
@@ -1102,52 +1015,13 @@ export default function FacturationPage() {
 
     setDeletingQuote(true);
     try {
-      const response = await fetch(`/api/qonto/quotes/${quoteToDelete.id}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        const data = (await response.json()) as ApiResponse<unknown>;
-        throw new Error(data.error ?? 'Erreur lors de la suppression');
-      }
-
-      void fetchQuotes();
+      await deleteLocalQuote(quoteToDelete.id);
     } catch (err) {
       console.error('Delete error:', err);
-      setErrorQuotes(
-        err instanceof Error ? err.message : 'Erreur de suppression'
-      );
     } finally {
       setDeletingQuote(false);
       setQuoteToDelete(null);
     }
-  };
-
-  const handleFinalizeQuote = async (quote: Quote): Promise<void> => {
-    setFinalizingQuoteId(quote.id);
-    try {
-      const response = await fetch(`/api/qonto/quotes/${quote.id}/finalize`, {
-        method: 'POST',
-      });
-
-      if (!response.ok) {
-        const data = (await response.json()) as ApiResponse<unknown>;
-        throw new Error(data.error ?? 'Erreur lors de la finalisation');
-      }
-
-      void fetchQuotes();
-    } catch (err) {
-      console.error('Finalize error:', err);
-      setErrorQuotes(
-        err instanceof Error ? err.message : 'Erreur de finalisation'
-      );
-    } finally {
-      setFinalizingQuoteId(null);
-    }
-  };
-
-  const isDraftQuote = (quote: Quote): boolean => {
-    return quote.status === 'draft' || quote.status === 'pending_approval';
   };
 
   // Credit note handlers
@@ -1413,27 +1287,10 @@ export default function FacturationPage() {
             </DropdownMenu>
           )}
           {activeTab === 'devis' && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Nouveau devis
-                  <ChevronDown className="h-4 w-4 ml-2" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setShowQuoteOrderSelect(true)}>
-                  <ShoppingCart className="h-4 w-4 mr-2" />
-                  Depuis une commande
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => setShowQuoteServiceModal(true)}
-                >
-                  <Briefcase className="h-4 w-4 mr-2" />
-                  Devis de service
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Button onClick={() => setShowQuoteForm(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Nouveau devis
+            </Button>
           )}
         </div>
       </div>
@@ -1488,7 +1345,7 @@ export default function FacturationPage() {
             <FileEdit className="h-4 w-4 mr-1" />
             Devis
             <Badge variant="secondary" className="ml-2">
-              {quotes.length}
+              {localQuotes.length}
             </Badge>
           </TabsTrigger>
           <TabsTrigger value="avoirs">
@@ -1748,7 +1605,11 @@ export default function FacturationPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => void fetchQuotes()}
+                  onClick={() => {
+                    void fetchQuotes().catch((err: unknown) => {
+                      console.error('[Factures] fetchQuotes failed:', err);
+                    });
+                  }}
                   disabled={loadingQuotes}
                 >
                   <RefreshCw
@@ -1769,7 +1630,7 @@ export default function FacturationPage() {
                 <div className="rounded-lg border border-destructive/20 bg-destructive/10 p-4 text-destructive">
                   {errorQuotes}
                 </div>
-              ) : quotes.length === 0 ? (
+              ) : localQuotes.length === 0 ? (
                 <div className="py-8 text-center text-muted-foreground">
                   <FileEdit className="mx-auto mb-4 h-12 w-12 opacity-50" />
                   <p>Aucun devis</p>
@@ -1791,101 +1652,96 @@ export default function FacturationPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {quotes.map(quote => (
-                      <TableRow key={quote.id}>
-                        <TableCell className="font-mono">
-                          {quote.quote_number}
-                        </TableCell>
-                        <TableCell>{quote.client?.name ?? '-'}</TableCell>
-                        <TableCell>{formatDate(quote.issue_date)}</TableCell>
-                        <TableCell>{formatDate(quote.expiry_date)}</TableCell>
-                        <TableCell>
-                          <QuoteStatusBadge status={quote.status} />
-                        </TableCell>
-                        <TableCell className="text-right font-medium">
-                          {formatAmount(quote.total_amount, quote.currency)}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-1">
-                            <Button variant="ghost" size="icon" asChild>
-                              <Link
-                                href={`/factures/${quote.id}?type=quote`}
-                                title="Voir"
-                              >
-                                <Eye className="h-4 w-4" />
+                    {localQuotes.map(quote => {
+                      const customerName =
+                        quote.customer_type === 'individual' &&
+                        quote.individual_customer
+                          ? `${quote.individual_customer.first_name} ${quote.individual_customer.last_name}`
+                          : (quote.partner?.trade_name ??
+                            quote.partner?.legal_name ??
+                            '-');
+                      const hasSyncedQonto = !!quote.qonto_invoice_id;
+                      const canDeleteQuote = !quote.converted_to_invoice_id;
+
+                      return (
+                        <TableRow
+                          key={quote.id}
+                          className="cursor-pointer hover:bg-muted/50"
+                          onClick={() =>
+                            window.location.assign(
+                              `/factures/devis/${quote.id}`
+                            )
+                          }
+                        >
+                          <TableCell className="font-mono">
+                            {quote.document_number}
+                          </TableCell>
+                          <TableCell>{customerName}</TableCell>
+                          <TableCell>
+                            {formatDate(quote.document_date)}
+                          </TableCell>
+                          <TableCell>
+                            {quote.validity_date
+                              ? formatDate(quote.validity_date)
+                              : '-'}
+                          </TableCell>
+                          <TableCell>
+                            <QuoteStatusBadge status={quote.quote_status} />
+                            {hasSyncedQonto && (
+                              <Badge variant="outline" className="ml-1 text-xs">
+                                Qonto
+                              </Badge>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right font-medium">
+                            {formatAmount(quote.total_ttc, 'EUR')}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div
+                              className="flex justify-end gap-1"
+                              onClick={e => e.stopPropagation()}
+                            >
+                              <Link href={`/factures/devis/${quote.id}`}>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  title="Voir le détail"
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
                               </Link>
-                            </Button>
-                            {isDraftQuote(quote) && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => {
-                                  void handleFinalizeQuote(quote).catch(
-                                    error => {
-                                      console.error(
-                                        '[Factures] handleFinalizeQuote failed:',
-                                        error
-                                      );
-                                    }
-                                  );
-                                }}
-                                title="Envoyer au client"
-                                disabled={finalizingQuoteId === quote.id}
-                                className="text-primary hover:text-primary hover:bg-primary/10"
-                              >
-                                {finalizingQuoteId === quote.id ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                ) : (
-                                  <Send className="h-4 w-4" />
-                                )}
-                              </Button>
-                            )}
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() =>
-                                window.open(
-                                  `/api/qonto/quotes/${quote.id}/view`,
-                                  '_blank'
-                                )
-                              }
-                              title="Voir PDF"
-                              className="text-primary hover:text-primary hover:bg-primary/10"
-                            >
-                              <FileEdit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => {
-                                void handleDownloadQuotePdf(quote).catch(
-                                  error => {
-                                    console.error(
-                                      '[Factures] handleDownloadQuotePdf failed:',
-                                      error
-                                    );
+                              {hasSyncedQonto && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() =>
+                                    window.open(
+                                      `/api/qonto/quotes/${quote.qonto_invoice_id}/view`,
+                                      '_blank'
+                                    )
                                   }
-                                );
-                              }}
-                              title="Télécharger PDF"
-                            >
-                              <Download className="h-4 w-4" />
-                            </Button>
-                            {isDraftQuote(quote) && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => setQuoteToDelete(quote)}
-                                title="Supprimer"
-                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            )}
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                                  title="Voir PDF Qonto"
+                                  className="text-primary hover:text-primary hover:bg-primary/10"
+                                >
+                                  <FileEdit className="h-4 w-4" />
+                                </Button>
+                              )}
+                              {canDeleteQuote && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => setQuoteToDelete(quote)}
+                                  title="Supprimer"
+                                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               )}
@@ -2130,27 +1986,42 @@ export default function FacturationPage() {
         }}
       />
 
-      {/* Modal selection commande pour nouveau devis */}
+      {/* Nouveau formulaire unifié de création de devis */}
+      <QuoteFormModal
+        open={showQuoteForm}
+        onOpenChange={setShowQuoteForm}
+        onSuccess={() => {
+          void fetchQuotes().catch((err: unknown) => {
+            console.error(
+              '[Factures] fetchQuotes after quote create failed:',
+              err
+            );
+          });
+        }}
+      />
+
+      {/* Legacy modals (kept for backward compatibility with existing Qonto quotes) */}
       <OrderSelectModal
         open={showQuoteOrderSelect}
         onOpenChange={setShowQuoteOrderSelect}
         onSelectOrder={handleQuoteOrderSelected}
       />
-
-      {/* Modal creation devis depuis commande */}
       <QuoteCreateFromOrderModal
         order={selectedQuoteOrder}
         open={showQuoteCreate}
         onOpenChange={setShowQuoteCreate}
         onSuccess={handleQuoteCreated}
       />
-
-      {/* Modal creation devis de service (sans commande) */}
       <QuoteCreateServiceModal
         open={showQuoteServiceModal}
         onOpenChange={setShowQuoteServiceModal}
         onSuccess={() => {
-          void fetchQuotes();
+          void fetchQuotes().catch((err: unknown) => {
+            console.error(
+              '[Factures] fetchQuotes after legacy quote create failed:',
+              err
+            );
+          });
         }}
       />
 
@@ -2164,8 +2035,8 @@ export default function FacturationPage() {
             <AlertDialogTitle>Supprimer ce devis ?</AlertDialogTitle>
             <AlertDialogDescription>
               Vous allez supprimer le devis{' '}
-              <strong>{quoteToDelete?.quote_number}</strong>. Cette action est
-              irreversible.
+              <strong>{quoteToDelete?.document_number}</strong>. Cette action
+              est irreversible.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

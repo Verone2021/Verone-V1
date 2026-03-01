@@ -151,6 +151,11 @@ export function AddProductToOrderModal({
         discount_percentage: discountPercentage,
         eco_tax: ecoTax,
         notes: notes.trim() || undefined,
+        // Product metadata for display
+        product_name: selectedProduct.name,
+        product_sku: selectedProduct.sku ?? undefined,
+        product_image_url: getPrimaryImage(selectedProduct) ?? undefined,
+        product_description: selectedProduct.description ?? undefined,
       };
 
       // Ajouter TVA si ventes
