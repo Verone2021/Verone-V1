@@ -52,6 +52,8 @@ interface ILocalQuote {
   responsable_contact_id: string | null;
   created_by: string;
   notes: string | null;
+  linkme_selection_id: string | null;
+  linkme_affiliate_id: string | null;
 }
 
 export async function POST(
@@ -111,7 +113,7 @@ export async function POST(
     const { data: localQuote } = await supabase
       .from('financial_documents')
       .select(
-        'id, sales_order_id, partner_id, partner_type, customer_type, individual_customer_id, channel_id, billing_address, shipping_address, shipping_cost_ht, handling_cost_ht, insurance_cost_ht, fees_vat_rate, billing_contact_id, delivery_contact_id, responsable_contact_id, created_by, notes'
+        'id, sales_order_id, partner_id, partner_type, customer_type, individual_customer_id, channel_id, billing_address, shipping_address, shipping_cost_ht, handling_cost_ht, insurance_cost_ht, fees_vat_rate, billing_contact_id, delivery_contact_id, responsable_contact_id, created_by, notes, linkme_selection_id, linkme_affiliate_id'
       )
       .eq('document_type', 'customer_quote')
       .eq('qonto_invoice_id', id)
@@ -338,6 +340,7 @@ export async function POST(
             created_by: createdBy,
             notes: typedLocalQuote.notes ?? null,
             status: 'draft',
+            linkme_selection_id: typedLocalQuote.linkme_selection_id ?? null,
           })
           .select('id')
           .single();
@@ -360,7 +363,9 @@ export async function POST(
           // Récupérer les items du devis local pour le mapping product_id
           const { data: quoteItems } = await supabase
             .from('financial_document_items')
-            .select('description, product_id, sort_order')
+            .select(
+              'description, product_id, sort_order, discount_percentage, eco_tax, linkme_selection_item_id, base_price_ht, retrocession_rate'
+            )
             .eq('document_id', typedLocalQuote.id)
             .order('sort_order');
 
@@ -374,6 +379,10 @@ export async function POST(
               tax_rate: number;
               discount_percentage: number;
               eco_tax: number;
+              linkme_selection_item_id?: string | null;
+              retrocession_rate?: number | null;
+              retrocession_amount?: number | null;
+              base_price_ht_locked?: number | null;
             }> = [];
 
             for (const [index, item] of invoice.items.entries()) {
@@ -410,14 +419,32 @@ export async function POST(
                   ? (item.vat_rate ?? 0.2)
                   : (item.vat_rate ?? 20) / 100;
 
+              const itemUnitPrice = item.unit_price ?? 0;
+              const itemQty = item.quantity ?? 1;
+
               orderItems.push({
                 sales_order_id: newOrder.id,
                 product_id: productId,
-                quantity: item.quantity ?? 1,
-                unit_price_ht: item.unit_price ?? 0,
+                quantity: itemQty,
+                unit_price_ht: itemUnitPrice,
                 tax_rate: vatRate,
-                discount_percentage: 0,
-                eco_tax: 0,
+                discount_percentage:
+                  matchingQuoteItem?.discount_percentage ?? 0,
+                eco_tax: matchingQuoteItem?.eco_tax ?? 0,
+                base_price_ht_locked: matchingQuoteItem?.base_price_ht ?? null,
+                linkme_selection_item_id:
+                  matchingQuoteItem?.linkme_selection_item_id ?? null,
+                retrocession_rate: matchingQuoteItem?.retrocession_rate ?? null,
+                retrocession_amount:
+                  matchingQuoteItem?.retrocession_rate != null &&
+                  matchingQuoteItem.retrocession_rate > 0
+                    ? Math.round(
+                        itemUnitPrice *
+                          itemQty *
+                          matchingQuoteItem.retrocession_rate *
+                          100
+                      ) / 100
+                    : null,
               });
             }
 

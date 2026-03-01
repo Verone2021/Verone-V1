@@ -2620,14 +2620,17 @@ export type Database = {
       };
       financial_document_items: {
         Row: {
+          base_price_ht: number | null;
           created_at: string;
           description: string;
           discount_percentage: number | null;
           document_id: string;
           eco_tax: number | null;
           id: string;
+          linkme_selection_item_id: string | null;
           product_id: string | null;
           quantity: number;
+          retrocession_rate: number | null;
           sort_order: number;
           total_ht: number;
           total_ttc: number;
@@ -2637,14 +2640,17 @@ export type Database = {
           updated_at: string;
         };
         Insert: {
+          base_price_ht?: number | null;
           created_at?: string;
           description: string;
           discount_percentage?: number | null;
           document_id: string;
           eco_tax?: number | null;
           id?: string;
+          linkme_selection_item_id?: string | null;
           product_id?: string | null;
           quantity?: number;
+          retrocession_rate?: number | null;
           sort_order?: number;
           total_ht?: number;
           total_ttc?: number;
@@ -2654,14 +2660,17 @@ export type Database = {
           updated_at?: string;
         };
         Update: {
+          base_price_ht?: number | null;
           created_at?: string;
           description?: string;
           discount_percentage?: number | null;
           document_id?: string;
           eco_tax?: number | null;
           id?: string;
+          linkme_selection_item_id?: string | null;
           product_id?: string | null;
           quantity?: number;
+          retrocession_rate?: number | null;
           sort_order?: number;
           total_ht?: number;
           total_ttc?: number;
@@ -2857,6 +2866,8 @@ export type Database = {
           insurance_cost_ht: number | null;
           invoice_source: string | null;
           last_synced_from_abby_at: string | null;
+          linkme_affiliate_id: string | null;
+          linkme_selection_id: string | null;
           local_pdf_path: string | null;
           local_pdf_url: string | null;
           notes: string | null;
@@ -2923,6 +2934,8 @@ export type Database = {
           insurance_cost_ht?: number | null;
           invoice_source?: string | null;
           last_synced_from_abby_at?: string | null;
+          linkme_affiliate_id?: string | null;
+          linkme_selection_id?: string | null;
           local_pdf_path?: string | null;
           local_pdf_url?: string | null;
           notes?: string | null;
@@ -2989,6 +3002,8 @@ export type Database = {
           insurance_cost_ht?: number | null;
           invoice_source?: string | null;
           last_synced_from_abby_at?: string | null;
+          linkme_affiliate_id?: string | null;
+          linkme_selection_id?: string | null;
           local_pdf_path?: string | null;
           local_pdf_url?: string | null;
           notes?: string | null;

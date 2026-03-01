@@ -3,7 +3,11 @@
 import { useState, useEffect } from 'react';
 
 import { Badge, Button, Input, TableCell, TableRow } from '@verone/ui';
-import { formatCurrency } from '@verone/utils';
+import {
+  calculateMargin,
+  calculateMarginRateFromPrices,
+  formatCurrency,
+} from '@verone/utils';
 import { Package, Trash2 } from 'lucide-react';
 
 // =====================================================================
@@ -38,8 +42,6 @@ interface EditableQuoteItemRowProps {
   isLinkMe: boolean;
   onUpdate: (itemId: string, field: string, value: string | number) => void;
   onDelete: (itemId: string) => void;
-  /** Callback to open the margin detail modal (LinkMe items only) */
-  onEditMargin?: (itemId: string) => void;
 }
 
 // =====================================================================
@@ -51,8 +53,10 @@ export function EditableQuoteItemRow({
   isLinkMe,
   onUpdate,
   onDelete,
-  onEditMargin,
 }: EditableQuoteItemRowProps) {
+  // Is this a LinkMe item with margin editing capability?
+  const isLinkMeItem = isLinkMe && !!item.linkme_selection_item_id;
+
   // Local string states for free-form input (parse/validate on blur)
   const [localQuantity, setLocalQuantity] = useState(String(item.quantity));
   const [localPrice, setLocalPrice] = useState(String(item.unit_price_ht));
@@ -61,6 +65,11 @@ export function EditableQuoteItemRow({
     String(item.discount_percentage)
   );
   const [localDescription, setLocalDescription] = useState(item.description);
+  const [localMarginRate, setLocalMarginRate] = useState(
+    item.retrocession_rate !== null
+      ? String((item.retrocession_rate * 100).toFixed(1))
+      : ''
+  );
 
   // Sync if item changes externally
   useEffect(() => {
@@ -69,7 +78,12 @@ export function EditableQuoteItemRow({
     setLocalTva(String(item.tva_rate));
     setLocalDiscount(String(item.discount_percentage));
     setLocalDescription(item.description);
-  }, [item.id]);
+    setLocalMarginRate(
+      item.retrocession_rate !== null
+        ? String((item.retrocession_rate * 100).toFixed(1))
+        : ''
+    );
+  }, [item.id, item.retrocession_rate]);
 
   // Is this a catalogue item (linked to a product)?
   const isCatalogue = item.product_id !== null;
@@ -98,6 +112,40 @@ export function EditableQuoteItemRow({
     setLocalPrice(String(valid));
     if (valid !== item.unit_price_ht) {
       onUpdate(item.id, 'unit_price_ht', valid);
+      // LinkMe: recalculate margin rate from the new price
+      if (
+        isLinkMeItem &&
+        item.base_price_ht !== null &&
+        item.base_price_ht > 0 &&
+        valid > 0
+      ) {
+        const newMarginRate = calculateMarginRateFromPrices(
+          item.base_price_ht,
+          valid
+        );
+        setLocalMarginRate(String(newMarginRate.toFixed(1)));
+        onUpdate(item.id, 'retrocession_rate', newMarginRate / 100);
+      }
+    }
+  };
+
+  const handleMarginBlur = () => {
+    if (!isLinkMeItem || item.base_price_ht === null) return;
+    const parsed = parseFloat(localMarginRate);
+    const valid = isNaN(parsed) ? 0 : Math.min(99, Math.max(0, parsed));
+    setLocalMarginRate(String(valid.toFixed(1)));
+
+    const currentRate =
+      item.retrocession_rate !== null ? item.retrocession_rate * 100 : 0;
+    if (Math.abs(valid - currentRate) > 0.01) {
+      // Recalculate selling price from margin
+      const { sellingPriceHt } = calculateMargin({
+        basePriceHt: item.base_price_ht,
+        marginRate: valid,
+      });
+      setLocalPrice(String(sellingPriceHt));
+      onUpdate(item.id, 'unit_price_ht', sellingPriceHt);
+      onUpdate(item.id, 'retrocession_rate', valid / 100);
     }
   };
 
@@ -227,7 +275,7 @@ export function EditableQuoteItemRow({
         />
       </TableCell>
 
-      {/* Column 6 & 7: LinkMe read-only columns (conditional) */}
+      {/* Column 6 & 7: LinkMe columns — Prix base HT (read-only) + Marge (editable) */}
       {isLinkMe && (
         <>
           <TableCell className="text-right text-sm text-muted-foreground">
@@ -236,21 +284,24 @@ export function EditableQuoteItemRow({
               : '-'}
           </TableCell>
           <TableCell className="text-right text-sm">
-            {onEditMargin && item.linkme_selection_item_id ? (
-              <button
-                type="button"
-                onClick={() => onEditMargin(item.id)}
-                className="group cursor-pointer text-right hover:bg-blue-50 rounded px-2 py-1 -mx-2 -my-1 transition-colors"
-                title="Modifier la marge (ouvrir le détail)"
-              >
-                <span className="text-blue-600 group-hover:text-blue-800 font-medium">
-                  {item.retrocession_rate !== null
-                    ? `${(item.retrocession_rate * 100).toFixed(0)}%`
-                    : '-'}
-                </span>
+            {isLinkMeItem ? (
+              <div className="space-y-0.5">
+                <div className="flex items-center justify-end gap-1">
+                  <Input
+                    type="number"
+                    value={localMarginRate}
+                    onChange={e => setLocalMarginRate(e.target.value)}
+                    onBlur={handleMarginBlur}
+                    className="h-7 w-16 text-right text-xs"
+                    step={0.1}
+                    min={0}
+                    max={99}
+                  />
+                  <span className="text-xs text-muted-foreground">%</span>
+                </div>
                 {item.retrocession_rate !== null &&
                   item.retrocession_rate > 0 && (
-                    <p className="text-[10px] text-emerald-600">
+                    <p className="text-[10px] text-emerald-600 text-right">
                       {formatCurrency(
                         item.unit_price_ht *
                           item.quantity *
@@ -258,10 +309,7 @@ export function EditableQuoteItemRow({
                       )}
                     </p>
                   )}
-                <p className="text-[9px] text-blue-400 group-hover:text-blue-600">
-                  Modifier
-                </p>
-              </button>
+              </div>
             ) : (
               <div>
                 <span className="text-muted-foreground">

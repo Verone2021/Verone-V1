@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect, useMemo, use } from 'react';
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -38,6 +38,9 @@ import {
   Tabs,
   TabsList,
   TabsTrigger,
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
 } from '@verone/ui';
 import {
   ArrowLeft,
@@ -56,6 +59,7 @@ import {
   X,
   Store,
   BookOpen,
+  ChevronDown,
 } from 'lucide-react';
 
 import { SelectionProductDetailModal } from '../../components/SelectionProductDetailModal';
@@ -143,6 +147,10 @@ export default function SelectionDetailPage({
   const [productTab, setProductTab] = useState<'all' | 'catalog' | 'reseller'>(
     'all'
   );
+
+  // Section produits collapsible + recherche
+  const [isProductsOpen, setIsProductsOpen] = useState(false);
+  const [productSearchQuery, setProductSearchQuery] = useState('');
 
   // Note: Les marges ne sont plus éditables depuis cette vue
   // L'utilisateur doit aller dans la page détail du produit pour modifier
@@ -516,402 +524,462 @@ export default function SelectionDetailPage({
       </div>
 
       {/* Produits */}
-      <Card>
-        <CardHeader className="flex flex-col gap-4">
-          <div className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle>Produits de la sélection</CardTitle>
-              <CardDescription>
-                Gérez les produits et leurs taux de marque
-              </CardDescription>
-            </div>
-            <Button onClick={() => setIsAddModalOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Ajouter un produit
-            </Button>
-          </div>
-          {/* Onglets Catalogue / Revendeur */}
-          <Tabs
-            value={productTab}
-            onValueChange={v =>
-              setProductTab(v as 'all' | 'catalog' | 'reseller')
-            }
-          >
-            <TabsList>
-              <TabsTrigger value="all" className="gap-2">
-                <Package className="h-4 w-4" />
-                Tous ({selection.items?.length ?? 0})
-              </TabsTrigger>
-              <TabsTrigger value="catalog" className="gap-2">
-                <BookOpen className="h-4 w-4" />
-                Catalogue (
-                {selection.items?.filter(
-                  i =>
-                    i.product?.created_by_affiliate === null ||
-                    i.product?.created_by_affiliate === undefined
-                ).length ?? 0}
-                )
-              </TabsTrigger>
-              <TabsTrigger value="reseller" className="gap-2">
-                <Store className="h-4 w-4" />
-                Revendeur (
-                {selection.items?.filter(
-                  i =>
-                    i.product?.created_by_affiliate !== null &&
-                    i.product?.created_by_affiliate !== undefined
-                ).length ?? 0}
-                )
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
-        </CardHeader>
-        <CardContent>
-          {selection.items && selection.items.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-16">Image</TableHead>
-                  <TableHead>Produit</TableHead>
-                  <TableHead className="text-center w-20">Stock</TableHead>
-                  <TableHead className="text-right">Catalogue HT</TableHead>
-                  <TableHead className="text-right">
-                    Prix vente LinkMe HT
-                  </TableHead>
-                  <TableHead className="text-right">
-                    Prix vente Final HT
-                  </TableHead>
-                  <TableHead className="text-center w-24">
-                    {productTab === 'reseller'
-                      ? 'Frais LinkMe %'
-                      : productTab === 'catalog'
-                        ? 'Marge %'
-                        : 'Marge/Frais %'}
-                  </TableHead>
-                  <TableHead className="text-right">
-                    {productTab === 'reseller'
-                      ? 'Frais LinkMe €'
-                      : productTab === 'catalog'
-                        ? 'Marge €'
-                        : 'Marge/Frais €'}
-                  </TableHead>
-                  <TableHead className="text-right">
-                    {productTab === 'reseller'
-                      ? 'Encaissement affilié'
-                      : 'Prix affilié HT'}
-                  </TableHead>
-                  <TableHead className="text-right w-24">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {selection.items
-                  .filter((item: SelectionItem) => {
-                    // Filtrage selon l'onglet sélectionné
-                    if (productTab === 'all') return true;
-                    const isAffiliate =
-                      item.product?.created_by_affiliate !== null &&
-                      item.product?.created_by_affiliate !== undefined;
-                    if (productTab === 'catalog') return !isAffiliate;
-                    if (productTab === 'reseller') return isAffiliate;
-                    return true;
-                  })
-                  .map((item: SelectionItem) => {
-                    const marginRate = item.margin_rate;
-                    const commissionRate = (item.commission_rate ?? 0) / 100; // Conversion % → décimal (5.00 → 0.05)
-
-                    // DÉTECTION: Produit AFFILIÉ (créé par l'affilié) vs Produit CATALOGUE (Vérone)
-                    const isAffiliateProduct =
-                      item.product?.created_by_affiliate !== null &&
-                      item.product?.created_by_affiliate !== undefined;
-
-                    // Prix Catalogue HT = prix du catalogue LinkMe (référence)
-                    const catalogPriceHT =
-                      item.catalog_price_ht ?? item.base_price_ht;
-                    // Prix de vente LinkMe HT = prix de base de la sélection
-                    const selectionPriceHT = item.base_price_ht;
-
-                    let prixVenteFinalHT: number;
-                    let marginEuros: number;
-                    let prixAffilieHT: number;
-                    let displayMarginRate: number;
-
-                    if (isAffiliateProduct) {
-                      // ========================================
-                      // PRODUIT AFFILIÉ (Modèle INVERSÉ)
-                      // ========================================
-                      // Le prix catalogue EST le prix de vente au client final
-                      // Vérone DÉDUIT sa commission, l'affilié reçoit le reste
-                      // Exemple: 500€ vente - 15% = 75€ pour Vérone, 425€ pour l'affilié
-                      const affiliateCommissionRate =
-                        item.product?.affiliate_commission_rate ?? 15;
-                      displayMarginRate = affiliateCommissionRate;
-                      // Prix de vente final = prix catalogue (pas de majoration)
-                      prixVenteFinalHT = selectionPriceHT;
-                      // Frais LinkMe (commission Vérone) = prix × taux%
-                      marginEuros =
-                        selectionPriceHT * (affiliateCommissionRate / 100);
-                      // Payout affilié = prix vente - commission Vérone
-                      prixAffilieHT = selectionPriceHT - marginEuros;
-                    } else {
-                      // ========================================
-                      // PRODUIT CATALOGUE (Modèle STANDARD)
-                      // ========================================
-                      // L'affilié GAGNE une marge qu'on AJOUTE au prix de base
-                      displayMarginRate = marginRate;
-                      // Prix de vente LinkMe Final HT = Prix × (1 + commission)
-                      prixVenteFinalHT =
-                        selectionPriceHT * (1 + commissionRate);
-                      // Taux de marque: PVHT = PAHT / (1 - taux%)
-                      const sellingPriceWithMargin =
-                        selectionPriceHT / (1 - marginRate / 100);
-                      // Marge € = Prix avec taux de marque - Prix de base
-                      marginEuros = sellingPriceWithMargin - selectionPriceHT;
-                      // Prix affilié HT = Prix avec taux de marque × (1 + commission)
-                      prixAffilieHT =
-                        sellingPriceWithMargin * (1 + commissionRate);
-                    }
-
-                    // Calcul remise si Prix Sélection < Prix Catalogue
-                    const hasDiscount =
-                      selectionPriceHT < catalogPriceHT && catalogPriceHT > 0;
-                    const discountPercent = hasDiscount
-                      ? ((catalogPriceHT - selectionPriceHT) / catalogPriceHT) *
-                        100
-                      : 0;
-
-                    return (
-                      <TableRow
-                        key={item.id}
-                        className={
-                          item.is_hidden_by_staff
-                            ? 'opacity-50 bg-orange-50/50'
-                            : undefined
-                        }
-                      >
-                        <TableCell>
-                          <ProductThumbnail
-                            src={item.product_image_url}
-                            alt={item.product?.name ?? 'Produit'}
-                            size="sm"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <div>
-                            <div className="flex items-center gap-2">
-                              {item.channel_pricing_id ? (
-                                <Link
-                                  href={`/canaux-vente/linkme/catalogue/${item.channel_pricing_id}`}
-                                  className="font-medium text-blue-600 hover:text-blue-800 hover:underline"
-                                >
-                                  {item.product?.name}
-                                </Link>
-                              ) : (
-                                <span className="font-medium">
-                                  {item.product?.name}
-                                </span>
-                              )}
-                              {isAffiliateProduct && (
-                                <Badge
-                                  variant="outline"
-                                  className="text-xs bg-purple-100 text-purple-700 border-purple-200"
-                                >
-                                  Revendeur
-                                </Badge>
-                              )}
-                              {item.is_hidden_by_staff && (
-                                <Badge
-                                  variant="outline"
-                                  className="text-xs bg-orange-100 text-orange-700 border-orange-200"
-                                >
-                                  <EyeOff className="h-3 w-3 mr-1" />
-                                  Masqué
-                                </Badge>
-                              )}
-                            </div>
-                            <p className="text-sm text-muted-foreground">
-                              {item.product?.sku}
-                            </p>
-                          </div>
-                        </TableCell>
-                        {/* Stock reel (source de verite) */}
-                        <TableCell className="text-center">
-                          {(() => {
-                            const stock = item.product?.stock_real ?? 0;
-                            let badgeClass = '';
-                            if (stock > 10) {
-                              badgeClass = 'bg-green-100 text-green-700';
-                            } else if (stock > 0) {
-                              badgeClass = 'bg-orange-100 text-orange-700';
-                            } else {
-                              badgeClass = 'bg-red-100 text-red-700';
-                            }
-                            return (
-                              <Badge variant="outline" className={badgeClass}>
-                                {stock}
-                              </Badge>
-                            );
-                          })()}
-                        </TableCell>
-                        {/* Prix Catalogue HT */}
-                        <TableCell className="text-right font-mono text-muted-foreground">
-                          {catalogPriceHT.toFixed(2)} €
-                        </TableCell>
-                        {/* Prix vente LinkMe HT (avec badge remise si applicable) */}
-                        <TableCell className="text-right font-mono">
-                          <div className="flex items-center justify-end gap-1.5">
-                            <span className="font-medium">
-                              {selectionPriceHT.toFixed(2)} €
-                            </span>
-                            {hasDiscount && (
-                              <Badge
-                                variant="secondary"
-                                className="text-xs bg-green-100 text-green-700 border-green-200"
-                              >
-                                -{discountPercent.toFixed(1)}%
-                              </Badge>
-                            )}
-                          </div>
-                        </TableCell>
-                        {/* Prix vente Final HT = prix × (1 + commission) */}
-                        <TableCell className="text-right font-mono font-medium text-primary">
-                          {prixVenteFinalHT.toFixed(2)} €
-                        </TableCell>
-                        {/* Marge % avec indicateur Traffic Light */}
-                        <TableCell>
-                          <div className="flex items-center justify-center gap-1.5">
-                            <div
-                              className={`w-2.5 h-2.5 rounded-full ${marginIndicatorColors[getMarginIndicatorColor(displayMarginRate)]} shrink-0`}
-                              title={
-                                isAffiliateProduct
-                                  ? 'Frais LinkMe (produit revendeur)'
-                                  : marginIndicatorTooltips[
-                                      getMarginIndicatorColor(displayMarginRate)
-                                    ]
-                              }
-                            />
-                            <span className="font-mono text-sm">
-                              {displayMarginRate.toFixed(2)} %
-                            </span>
-                          </div>
-                        </TableCell>
-                        {/* Marge € (ou Frais LinkMe pour produits affiliés) */}
-                        <TableCell
-                          className={`text-right font-mono ${isAffiliateProduct ? 'text-orange-600' : 'text-green-600'}`}
-                        >
-                          {marginEuros.toFixed(2)} €
-                        </TableCell>
-                        {/* Prix affilié HT (Payout pour produits affiliés) */}
-                        <TableCell
-                          className={`text-right font-mono font-semibold ${isAffiliateProduct ? 'text-green-600' : 'text-blue-600'}`}
-                          title={
-                            isAffiliateProduct
-                              ? 'Payout affilié (prix vente - frais)'
-                              : 'Prix affilié HT'
-                          }
-                        >
-                          {prixAffilieHT.toFixed(2)} €
-                        </TableCell>
-                        {/* Actions */}
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-1">
-                            {/* Bouton Masquer/Afficher (toggle visibility) */}
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              className={`h-8 w-8 ${
-                                item.is_hidden_by_staff
-                                  ? 'text-orange-500 hover:text-orange-600'
-                                  : 'text-gray-400 hover:text-orange-500'
-                              }`}
-                              onClick={() => {
-                                void toggleVisibility
-                                  .mutateAsync({
-                                    itemId: item.id,
-                                    isHidden: !item.is_hidden_by_staff,
-                                    selectionId: id,
-                                  })
-                                  .catch(error => {
-                                    console.error(
-                                      '[Selections] toggleVisibility failed:',
-                                      error
-                                    );
-                                  });
-                              }}
-                              disabled={toggleVisibility.isPending}
-                              title={
-                                item.is_hidden_by_staff
-                                  ? 'Rendre visible publiquement'
-                                  : 'Masquer de la sélection publique'
-                              }
-                            >
-                              {item.is_hidden_by_staff ? (
-                                <EyeOff className="h-4 w-4" />
-                              ) : (
-                                <Eye className="h-4 w-4" />
-                              )}
-                            </Button>
-                            {/* Bouton Vue fiche (READ-ONLY) */}
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              className="h-8 w-8 text-gray-600 hover:text-gray-700"
-                              onClick={() => handleOpenViewModal(item)}
-                              title="Voir fiche produit"
-                            >
-                              <BookOpen className="h-4 w-4" />
-                            </Button>
-                            {/* Bouton Édition (Pencil) */}
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              className="h-8 w-8 text-blue-600 hover:text-blue-700"
-                              onClick={() => handleOpenEditModal(item)}
-                              title="Modifier"
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            {/* Bouton Supprimer */}
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              className="h-8 w-8 text-destructive hover:text-destructive"
-                              onClick={() => {
-                                void handleRemoveProduct(item.id).catch(
-                                  error => {
-                                    console.error(
-                                      '[Selections] handleRemoveProduct failed:',
-                                      error
-                                    );
-                                  }
-                                );
-                              }}
-                              disabled={removeProduct.isPending}
-                              title="Supprimer"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-              </TableBody>
-            </Table>
-          ) : (
-            <div className="text-center py-12 text-muted-foreground">
-              <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>Aucun produit dans cette sélection</p>
-              <Button
-                variant="outline"
-                className="mt-4"
-                onClick={() => setIsAddModalOpen(true)}
-              >
+      <Collapsible open={isProductsOpen} onOpenChange={setIsProductsOpen}>
+        <Card>
+          <CardHeader className="flex flex-col gap-4">
+            <div className="flex flex-row items-center justify-between">
+              <CollapsibleTrigger asChild>
+                <button
+                  type="button"
+                  className="flex items-center gap-2 text-left cursor-pointer hover:opacity-80 transition-opacity"
+                >
+                  <ChevronDown
+                    className={`h-5 w-5 text-muted-foreground transition-transform duration-200 ${isProductsOpen ? '' : '-rotate-90'}`}
+                  />
+                  <div>
+                    <CardTitle>
+                      Produits de la sélection ({selection.items?.length ?? 0})
+                    </CardTitle>
+                    <CardDescription>
+                      Gérez les produits et leurs taux de marque
+                    </CardDescription>
+                  </div>
+                </button>
+              </CollapsibleTrigger>
+              <Button onClick={() => setIsAddModalOpen(true)}>
                 <Plus className="h-4 w-4 mr-2" />
-                Ajouter des produits
+                Ajouter un produit
               </Button>
             </div>
-          )}
-        </CardContent>
-      </Card>
+            {isProductsOpen && (
+              <div className="flex flex-col gap-3">
+                {/* Onglets Catalogue / Revendeur */}
+                <Tabs
+                  value={productTab}
+                  onValueChange={v => {
+                    setProductTab(v as 'all' | 'catalog' | 'reseller');
+                    setProductSearchQuery('');
+                  }}
+                >
+                  <TabsList>
+                    <TabsTrigger value="all" className="gap-2">
+                      <Package className="h-4 w-4" />
+                      Tous ({selection.items?.length ?? 0})
+                    </TabsTrigger>
+                    <TabsTrigger value="catalog" className="gap-2">
+                      <BookOpen className="h-4 w-4" />
+                      Catalogue (
+                      {selection.items?.filter(
+                        i =>
+                          i.product?.created_by_affiliate === null ||
+                          i.product?.created_by_affiliate === undefined
+                      ).length ?? 0}
+                      )
+                    </TabsTrigger>
+                    <TabsTrigger value="reseller" className="gap-2">
+                      <Store className="h-4 w-4" />
+                      Revendeur (
+                      {selection.items?.filter(
+                        i =>
+                          i.product?.created_by_affiliate !== null &&
+                          i.product?.created_by_affiliate !== undefined
+                      ).length ?? 0}
+                      )
+                    </TabsTrigger>
+                  </TabsList>
+                </Tabs>
+                {/* Recherche dans les produits */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    placeholder="Rechercher par nom ou SKU..."
+                    value={productSearchQuery}
+                    onChange={e => setProductSearchQuery(e.target.value)}
+                    className="pl-10 pr-10"
+                  />
+                  {productSearchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setProductSearchQuery('')}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+          </CardHeader>
+          <CollapsibleContent>
+            <CardContent>
+              {selection.items && selection.items.length > 0 ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-16">Image</TableHead>
+                      <TableHead>Produit</TableHead>
+                      <TableHead className="text-center w-20">Stock</TableHead>
+                      <TableHead className="text-right">Catalogue HT</TableHead>
+                      <TableHead className="text-right">
+                        Prix vente LinkMe HT
+                      </TableHead>
+                      <TableHead className="text-right">
+                        Prix vente Final HT
+                      </TableHead>
+                      <TableHead className="text-center w-24">
+                        {productTab === 'reseller'
+                          ? 'Frais LinkMe %'
+                          : productTab === 'catalog'
+                            ? 'Marge %'
+                            : 'Marge/Frais %'}
+                      </TableHead>
+                      <TableHead className="text-right">
+                        {productTab === 'reseller'
+                          ? 'Frais LinkMe €'
+                          : productTab === 'catalog'
+                            ? 'Marge €'
+                            : 'Marge/Frais €'}
+                      </TableHead>
+                      <TableHead className="text-right">
+                        {productTab === 'reseller'
+                          ? 'Encaissement affilié'
+                          : 'Prix affilié HT'}
+                      </TableHead>
+                      <TableHead className="text-right w-24">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {selection.items
+                      .filter((item: SelectionItem) => {
+                        // Filtrage selon l'onglet sélectionné
+                        if (productTab !== 'all') {
+                          const isAffiliate =
+                            item.product?.created_by_affiliate !== null &&
+                            item.product?.created_by_affiliate !== undefined;
+                          if (productTab === 'catalog' && isAffiliate)
+                            return false;
+                          if (productTab === 'reseller' && !isAffiliate)
+                            return false;
+                        }
+                        // Filtrage par recherche (nom ou SKU)
+                        if (productSearchQuery.trim()) {
+                          const q = productSearchQuery.toLowerCase();
+                          const name = (item.product?.name ?? '').toLowerCase();
+                          const sku = (item.product?.sku ?? '').toLowerCase();
+                          if (!name.includes(q) && !sku.includes(q))
+                            return false;
+                        }
+                        return true;
+                      })
+                      .map((item: SelectionItem) => {
+                        const marginRate = item.margin_rate;
+                        const commissionRate =
+                          (item.commission_rate ?? 0) / 100; // Conversion % → décimal (5.00 → 0.05)
+
+                        // DÉTECTION: Produit AFFILIÉ (créé par l'affilié) vs Produit CATALOGUE (Vérone)
+                        const isAffiliateProduct =
+                          item.product?.created_by_affiliate !== null &&
+                          item.product?.created_by_affiliate !== undefined;
+
+                        // Prix Catalogue HT = prix du catalogue LinkMe (référence)
+                        const catalogPriceHT =
+                          item.catalog_price_ht ?? item.base_price_ht;
+                        // Prix de vente LinkMe HT = prix de base de la sélection
+                        const selectionPriceHT = item.base_price_ht;
+
+                        let prixVenteFinalHT: number;
+                        let marginEuros: number;
+                        let prixAffilieHT: number;
+                        let displayMarginRate: number;
+
+                        if (isAffiliateProduct) {
+                          // ========================================
+                          // PRODUIT AFFILIÉ (Modèle INVERSÉ)
+                          // ========================================
+                          // Le prix catalogue EST le prix de vente au client final
+                          // Vérone DÉDUIT sa commission, l'affilié reçoit le reste
+                          // Exemple: 500€ vente - 15% = 75€ pour Vérone, 425€ pour l'affilié
+                          const affiliateCommissionRate =
+                            item.product?.affiliate_commission_rate ?? 15;
+                          displayMarginRate = affiliateCommissionRate;
+                          // Prix de vente final = prix catalogue (pas de majoration)
+                          prixVenteFinalHT = selectionPriceHT;
+                          // Frais LinkMe (commission Vérone) = prix × taux%
+                          marginEuros =
+                            selectionPriceHT * (affiliateCommissionRate / 100);
+                          // Payout affilié = prix vente - commission Vérone
+                          prixAffilieHT = selectionPriceHT - marginEuros;
+                        } else {
+                          // ========================================
+                          // PRODUIT CATALOGUE (Modèle STANDARD)
+                          // ========================================
+                          // L'affilié GAGNE une marge qu'on AJOUTE au prix de base
+                          displayMarginRate = marginRate;
+                          // Prix de vente LinkMe Final HT = Prix × (1 + commission)
+                          prixVenteFinalHT =
+                            selectionPriceHT * (1 + commissionRate);
+                          // Taux de marque: PVHT = PAHT / (1 - taux%)
+                          const sellingPriceWithMargin =
+                            selectionPriceHT / (1 - marginRate / 100);
+                          // Marge € = Prix avec taux de marque - Prix de base
+                          marginEuros =
+                            sellingPriceWithMargin - selectionPriceHT;
+                          // Prix affilié HT = Prix avec taux de marque × (1 + commission)
+                          prixAffilieHT =
+                            sellingPriceWithMargin * (1 + commissionRate);
+                        }
+
+                        // Calcul remise si Prix Sélection < Prix Catalogue
+                        const hasDiscount =
+                          selectionPriceHT < catalogPriceHT &&
+                          catalogPriceHT > 0;
+                        const discountPercent = hasDiscount
+                          ? ((catalogPriceHT - selectionPriceHT) /
+                              catalogPriceHT) *
+                            100
+                          : 0;
+
+                        return (
+                          <TableRow
+                            key={item.id}
+                            className={
+                              item.is_hidden_by_staff
+                                ? 'opacity-50 bg-orange-50/50'
+                                : undefined
+                            }
+                          >
+                            <TableCell>
+                              <ProductThumbnail
+                                src={item.product_image_url}
+                                alt={item.product?.name ?? 'Produit'}
+                                size="sm"
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  {item.channel_pricing_id ? (
+                                    <Link
+                                      href={`/canaux-vente/linkme/catalogue/${item.channel_pricing_id}`}
+                                      className="font-medium text-blue-600 hover:text-blue-800 hover:underline"
+                                    >
+                                      {item.product?.name}
+                                    </Link>
+                                  ) : (
+                                    <span className="font-medium">
+                                      {item.product?.name}
+                                    </span>
+                                  )}
+                                  {isAffiliateProduct && (
+                                    <Badge
+                                      variant="outline"
+                                      className="text-xs bg-purple-100 text-purple-700 border-purple-200"
+                                    >
+                                      Revendeur
+                                    </Badge>
+                                  )}
+                                  {item.is_hidden_by_staff && (
+                                    <Badge
+                                      variant="outline"
+                                      className="text-xs bg-orange-100 text-orange-700 border-orange-200"
+                                    >
+                                      <EyeOff className="h-3 w-3 mr-1" />
+                                      Masqué
+                                    </Badge>
+                                  )}
+                                </div>
+                                <p className="text-sm text-muted-foreground">
+                                  {item.product?.sku}
+                                </p>
+                              </div>
+                            </TableCell>
+                            {/* Stock reel (source de verite) */}
+                            <TableCell className="text-center">
+                              {(() => {
+                                const stock = item.product?.stock_real ?? 0;
+                                let badgeClass = '';
+                                if (stock > 10) {
+                                  badgeClass = 'bg-green-100 text-green-700';
+                                } else if (stock > 0) {
+                                  badgeClass = 'bg-orange-100 text-orange-700';
+                                } else {
+                                  badgeClass = 'bg-red-100 text-red-700';
+                                }
+                                return (
+                                  <Badge
+                                    variant="outline"
+                                    className={badgeClass}
+                                  >
+                                    {stock}
+                                  </Badge>
+                                );
+                              })()}
+                            </TableCell>
+                            {/* Prix Catalogue HT */}
+                            <TableCell className="text-right font-mono text-muted-foreground">
+                              {catalogPriceHT.toFixed(2)} €
+                            </TableCell>
+                            {/* Prix vente LinkMe HT (avec badge remise si applicable) */}
+                            <TableCell className="text-right font-mono">
+                              <div className="flex items-center justify-end gap-1.5">
+                                <span className="font-medium">
+                                  {selectionPriceHT.toFixed(2)} €
+                                </span>
+                                {hasDiscount && (
+                                  <Badge
+                                    variant="secondary"
+                                    className="text-xs bg-green-100 text-green-700 border-green-200"
+                                  >
+                                    -{discountPercent.toFixed(1)}%
+                                  </Badge>
+                                )}
+                              </div>
+                            </TableCell>
+                            {/* Prix vente Final HT = prix × (1 + commission) */}
+                            <TableCell className="text-right font-mono font-medium text-primary">
+                              {prixVenteFinalHT.toFixed(2)} €
+                            </TableCell>
+                            {/* Marge % avec indicateur Traffic Light */}
+                            <TableCell>
+                              <div className="flex items-center justify-center gap-1.5">
+                                <div
+                                  className={`w-2.5 h-2.5 rounded-full ${marginIndicatorColors[getMarginIndicatorColor(displayMarginRate)]} shrink-0`}
+                                  title={
+                                    isAffiliateProduct
+                                      ? 'Frais LinkMe (produit revendeur)'
+                                      : marginIndicatorTooltips[
+                                          getMarginIndicatorColor(
+                                            displayMarginRate
+                                          )
+                                        ]
+                                  }
+                                />
+                                <span className="font-mono text-sm">
+                                  {displayMarginRate.toFixed(2)} %
+                                </span>
+                              </div>
+                            </TableCell>
+                            {/* Marge € (ou Frais LinkMe pour produits affiliés) */}
+                            <TableCell
+                              className={`text-right font-mono ${isAffiliateProduct ? 'text-orange-600' : 'text-green-600'}`}
+                            >
+                              {marginEuros.toFixed(2)} €
+                            </TableCell>
+                            {/* Prix affilié HT (Payout pour produits affiliés) */}
+                            <TableCell
+                              className={`text-right font-mono font-semibold ${isAffiliateProduct ? 'text-green-600' : 'text-blue-600'}`}
+                              title={
+                                isAffiliateProduct
+                                  ? 'Payout affilié (prix vente - frais)'
+                                  : 'Prix affilié HT'
+                              }
+                            >
+                              {prixAffilieHT.toFixed(2)} €
+                            </TableCell>
+                            {/* Actions */}
+                            <TableCell className="text-right">
+                              <div className="flex items-center justify-end gap-1">
+                                {/* Bouton Masquer/Afficher (toggle visibility) */}
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className={`h-8 w-8 ${
+                                    item.is_hidden_by_staff
+                                      ? 'text-orange-500 hover:text-orange-600'
+                                      : 'text-gray-400 hover:text-orange-500'
+                                  }`}
+                                  onClick={() => {
+                                    void toggleVisibility
+                                      .mutateAsync({
+                                        itemId: item.id,
+                                        isHidden: !item.is_hidden_by_staff,
+                                        selectionId: id,
+                                      })
+                                      .catch(error => {
+                                        console.error(
+                                          '[Selections] toggleVisibility failed:',
+                                          error
+                                        );
+                                      });
+                                  }}
+                                  disabled={toggleVisibility.isPending}
+                                  title={
+                                    item.is_hidden_by_staff
+                                      ? 'Rendre visible publiquement'
+                                      : 'Masquer de la sélection publique'
+                                  }
+                                >
+                                  {item.is_hidden_by_staff ? (
+                                    <EyeOff className="h-4 w-4" />
+                                  ) : (
+                                    <Eye className="h-4 w-4" />
+                                  )}
+                                </Button>
+                                {/* Bouton Vue fiche (READ-ONLY) */}
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-8 w-8 text-gray-600 hover:text-gray-700"
+                                  onClick={() => handleOpenViewModal(item)}
+                                  title="Voir fiche produit"
+                                >
+                                  <BookOpen className="h-4 w-4" />
+                                </Button>
+                                {/* Bouton Édition (Pencil) */}
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-8 w-8 text-blue-600 hover:text-blue-700"
+                                  onClick={() => handleOpenEditModal(item)}
+                                  title="Modifier"
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                                {/* Bouton Supprimer */}
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-8 w-8 text-destructive hover:text-destructive"
+                                  onClick={() => {
+                                    void handleRemoveProduct(item.id).catch(
+                                      error => {
+                                        console.error(
+                                          '[Selections] handleRemoveProduct failed:',
+                                          error
+                                        );
+                                      }
+                                    );
+                                  }}
+                                  disabled={removeProduct.isPending}
+                                  title="Supprimer"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                  </TableBody>
+                </Table>
+              ) : (
+                <div className="text-center py-12 text-muted-foreground">
+                  <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>Aucun produit dans cette sélection</p>
+                  <Button
+                    variant="outline"
+                    className="mt-4"
+                    onClick={() => setIsAddModalOpen(true)}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Ajouter des produits
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
 
       {/* Modal Ajout Produit */}
       <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>

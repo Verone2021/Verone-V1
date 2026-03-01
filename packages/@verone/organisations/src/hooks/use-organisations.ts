@@ -302,9 +302,9 @@ export function useOrganisations(filters?: OrganisationFilters) {
             customer_type: data.customer_type || null,
             prepayment_required: data.prepayment_required ?? false,
 
-            // ❌ RETIRÉES - Colonnes pour individual_customers uniquement :
-            // first_name, mobile_phone, date_of_birth, nationality,
-            // preferred_language, communication_preference, marketing_consent
+            // ✅ Rattachement enseigne (clients B2B)
+            enseigne_id: data.enseigne_id || null,
+            ownership_type: data.ownership_type || null,
           },
         ])
         .select()
@@ -371,6 +371,8 @@ export function useOrganisations(filters?: OrganisationFilters) {
         'has_different_shipping_address',
         'customer_type',
         'prepayment_required',
+        'enseigne_id',
+        'ownership_type',
       ];
 
       // Copier uniquement les champs autorisés
