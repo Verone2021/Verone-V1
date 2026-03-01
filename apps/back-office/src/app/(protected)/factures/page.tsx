@@ -131,33 +131,9 @@ interface InvoicesResponse extends ApiResponse<{ invoices: Invoice[] }> {
   invoices?: Invoice[];
 }
 
-interface QuotesResponse extends ApiResponse<{ quotes: Quote[] }> {
-  quotes?: Quote[];
-}
-
 interface CreditNotesResponse
   extends ApiResponse<{ credit_notes: CreditNote[] }> {
   credit_notes?: CreditNote[];
-}
-
-interface Quote {
-  id: string;
-  quote_number: string;
-  status:
-    | 'draft'
-    | 'pending_approval'
-    | 'finalized'
-    | 'accepted'
-    | 'declined'
-    | 'expired';
-  currency: string;
-  total_amount: number;
-  issue_date: string;
-  expiry_date: string;
-  client?: {
-    name: string;
-  };
-  converted_to_invoice_id?: string;
 }
 
 interface CreditNote {
@@ -800,9 +776,6 @@ export default function FacturationPage() {
     useState<IOrderForDocument | null>(null);
   const [quoteToDelete, setQuoteToDelete] = useState<LocalQuote | null>(null);
   const [deletingQuote, setDeletingQuote] = useState(false);
-  const [finalizingQuoteId, setFinalizingQuoteId] = useState<string | null>(
-    null
-  );
 
   // État consolidation liaisons
   const [isConsolidating, setIsConsolidating] = useState(false);
@@ -1037,45 +1010,6 @@ export default function FacturationPage() {
     });
   };
 
-  const handleDownloadQuotePdf = async (quote: Quote): Promise<void> => {
-    try {
-      const response = await fetch(`/api/qonto/quotes/${quote.id}/pdf`);
-
-      if (!response.ok) {
-        const errorData = (await response.json().catch(() => ({}))) as {
-          error?: string;
-        };
-        throw new Error(
-          errorData.error ?? `Erreur ${response.status}: ${response.statusText}`
-        );
-      }
-
-      const blob = await response.blob();
-
-      if (blob.size === 0) {
-        throw new Error('Le PDF est vide');
-      }
-
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `devis-${quote.quote_number}.pdf`;
-      a.style.display = 'none';
-      document.body.appendChild(a);
-      a.click();
-
-      setTimeout(() => {
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-      }, 1000);
-    } catch (err) {
-      console.error('Download error:', err);
-      toast.error(
-        err instanceof Error ? err.message : 'Erreur de téléchargement'
-      );
-    }
-  };
-
   const handleDeleteQuote = async (): Promise<void> => {
     if (!quoteToDelete) return;
 
@@ -1088,35 +1022,6 @@ export default function FacturationPage() {
       setDeletingQuote(false);
       setQuoteToDelete(null);
     }
-  };
-
-  const handleFinalizeQuote = async (quote: Quote): Promise<void> => {
-    setFinalizingQuoteId(quote.id);
-    try {
-      const response = await fetch(`/api/qonto/quotes/${quote.id}/finalize`, {
-        method: 'POST',
-      });
-
-      if (!response.ok) {
-        const data = (await response.json()) as ApiResponse<unknown>;
-        throw new Error(data.error ?? 'Erreur lors de la finalisation');
-      }
-
-      void fetchQuotes().catch((err: unknown) => {
-        console.error('[Factures] fetchQuotes after finalize failed:', err);
-      });
-    } catch (err) {
-      console.error('Finalize error:', err);
-      toast.error(
-        err instanceof Error ? err.message : 'Erreur de finalisation'
-      );
-    } finally {
-      setFinalizingQuoteId(null);
-    }
-  };
-
-  const isDraftQuote = (quote: Quote): boolean => {
-    return quote.status === 'draft' || quote.status === 'pending_approval';
   };
 
   // Credit note handlers

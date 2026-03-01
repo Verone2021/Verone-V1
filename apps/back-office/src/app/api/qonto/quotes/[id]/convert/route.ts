@@ -313,7 +313,7 @@ export async function POST(
         const { data: newOrder, error: orderInsertError } = await supabase
           .from('sales_orders')
           .insert({
-            order_number: soNumber as string,
+            order_number: soNumber,
             customer_id: partnerType === 'organisation' ? partnerId : null,
             customer_type: (typedLocalQuote.customer_type ?? 'organization') as
               | 'organization'
@@ -475,7 +475,7 @@ export async function POST(
             .eq('id', typedLocalQuote.id);
 
           console.warn(
-            `[API Qonto Quote Convert] Sales order created: ${soNumber as string} (${newOrder.id})`
+            `[API Qonto Quote Convert] Sales order created: ${soNumber} (${newOrder.id})`
           );
         }
       }

@@ -172,13 +172,6 @@ function isFieldEditable(
 ): boolean {
   if (hasQonto) return false;
 
-  const draftOnlyFields = new Set([
-    'items',
-    'customer',
-    'channel',
-    'reference',
-    'fees',
-  ]);
   const draftAndSentFields = new Set([
     'notes',
     'validity_date',
@@ -1020,6 +1013,7 @@ export default function QuoteDetailPage({ params }: QuoteDetailPageProps) {
                                   <div className="flex gap-3 items-center">
                                     <div className="flex-shrink-0">
                                       {primaryImage ? (
+                                        // eslint-disable-next-line @next/next/no-img-element
                                         <img
                                           src={primaryImage}
                                           alt={item.product.name}
@@ -1176,7 +1170,7 @@ export default function QuoteDetailPage({ params }: QuoteDetailPageProps) {
                 />
               ) : (
                 <p className="whitespace-pre-wrap text-sm">
-                  {quote.notes || (
+                  {quote.notes ?? (
                     <span className="text-muted-foreground">Aucune note</span>
                   )}
                 </p>
@@ -1588,6 +1582,7 @@ export default function QuoteDetailPage({ params }: QuoteDetailPageProps) {
                   >
                     <div className="flex items-center gap-3">
                       {selItem.product_image_url ? (
+                        /* eslint-disable-next-line @next/next/no-img-element */
                         <img
                           src={selItem.product_image_url}
                           alt={selItem.product?.name ?? ''}
