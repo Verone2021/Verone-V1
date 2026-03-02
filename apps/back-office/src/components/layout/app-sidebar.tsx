@@ -62,6 +62,7 @@ import {
   useTransactionsUnreconciledCount,
   useLinkmeApprovalsCount,
   useFormSubmissionsCount,
+  useLinkmeMissingInfoCount,
   StockAlertsDropdown,
   ConsultationsDropdown,
   LinkmePendingDropdown,
@@ -69,6 +70,7 @@ import {
   OrdersPendingDropdown,
   ExpeditionsPendingDropdown,
   TransactionsUnreconciledDropdown,
+  LinkmeMissingInfoDropdown,
 } from '@verone/notifications';
 
 // Interface pour les éléments de navigation
@@ -93,7 +95,8 @@ const getNavItems = (
   expeditionsPendingCount: number,
   transactionsUnreconciledCount: number,
   _linkmeApprovalsCount: number,
-  formSubmissionsCount: number
+  formSubmissionsCount: number,
+  linkmeMissingInfoCount: number
 ): NavItem[] => [
   {
     title: 'Dashboard',
@@ -237,8 +240,9 @@ const getNavItems = (
     title: 'Canaux de Vente',
     href: '/canaux-vente',
     icon: Store,
-    badge: linkmePendingCount,
-    badgeVariant: linkmePendingCount > 0 ? 'urgent' : undefined,
+    badge: linkmePendingCount + linkmeMissingInfoCount,
+    badgeVariant:
+      linkmePendingCount + linkmeMissingInfoCount > 0 ? 'urgent' : undefined,
     children: [
       {
         title: 'LinkMe',
@@ -246,6 +250,13 @@ const getNavItems = (
         icon: Link2,
         badge: linkmePendingCount,
         badgeVariant: linkmePendingCount > 0 ? 'urgent' : undefined,
+      },
+      {
+        title: 'Messages LinkMe',
+        href: '/canaux-vente/linkme/messages',
+        icon: MessageCircle,
+        badge: linkmeMissingInfoCount,
+        badgeVariant: linkmeMissingInfoCount > 0 ? 'urgent' : undefined,
       },
       {
         title: 'Site Internet',
@@ -363,6 +374,7 @@ function SidebarContent() {
     useTransactionsUnreconciledCount();
   const { count: linkmeApprovalsCount } = useLinkmeApprovalsCount();
   const { count: formSubmissionsCount } = useFormSubmissionsCount();
+  const { count: linkmeMissingInfoCount } = useLinkmeMissingInfoCount();
 
   /**
    * Render badge avec dropdown interactif selon le module
@@ -430,6 +442,12 @@ function SidebarContent() {
           <LinkmePendingDropdown side="right" align="start">
             {badgeContent}
           </LinkmePendingDropdown>
+        );
+      case 'Messages LinkMe':
+        return (
+          <LinkmeMissingInfoDropdown side="right" align="start">
+            {badgeContent}
+          </LinkmeMissingInfoDropdown>
         );
       case 'Finance':
       case 'Transactions':
@@ -518,7 +536,8 @@ function SidebarContent() {
       expeditionsPendingCount,
       transactionsUnreconciledCount,
       linkmeApprovalsCount,
-      formSubmissionsCount
+      formSubmissionsCount,
+      linkmeMissingInfoCount
     );
 
     // Masquer Finance si financeEnabled = false (module fusionné)
@@ -537,6 +556,7 @@ function SidebarContent() {
     transactionsUnreconciledCount,
     linkmeApprovalsCount,
     formSubmissionsCount,
+    linkmeMissingInfoCount,
   ]);
 
   // Fonction récursive pour rendre les enfants (support multi-niveaux) - Reserved
