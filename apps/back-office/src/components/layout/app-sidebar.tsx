@@ -104,6 +104,14 @@ const getNavItems = (
     icon: Home,
   },
   {
+    title: 'Messages',
+    href: '/messages',
+    icon: MessageCircle,
+    badge: formSubmissionsCount + linkmeMissingInfoCount,
+    badgeVariant:
+      formSubmissionsCount + linkmeMissingInfoCount > 0 ? 'urgent' : undefined,
+  },
+  {
     title: 'Contacts & Clients',
     href: '/contacts-organisations',
     icon: Building2,
