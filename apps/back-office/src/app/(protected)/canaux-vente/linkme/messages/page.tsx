@@ -306,16 +306,24 @@ function useOrdersWithMissingFields() {
       const results: OrderWithMissing[] = [];
 
       for (const order of orders ?? []) {
-        const detailsArray = order.sales_order_linkme_details as Array<
-          Record<string, unknown>
-        > | null;
-        const details = (detailsArray?.[0] ??
-          null) as LinkMeOrderDetails | null;
+        // Supabase PostgREST returns single objects for FK joins, handle both shapes
+        const detailsRaw = order.sales_order_linkme_details as unknown as
+          | Record<string, unknown>
+          | Record<string, unknown>[]
+          | null;
+        const details = (
+          Array.isArray(detailsRaw)
+            ? (detailsRaw[0] ?? null)
+            : (detailsRaw ?? null)
+        ) as LinkMeOrderDetails | null;
 
-        // After backfill, details should always exist for LinkMe orders.
-        // If still null (edge case), getOrderMissingFields handles it gracefully.
-        const orgArray = order.organisations as unknown as OrgRow[] | null;
-        const org = orgArray?.[0] ?? null;
+        const orgRaw = order.organisations as unknown as
+          | OrgRow
+          | OrgRow[]
+          | null;
+        const org = Array.isArray(orgRaw)
+          ? (orgRaw[0] ?? null)
+          : (orgRaw ?? null);
 
         const rawIgnored = (details as unknown as Record<string, unknown>)
           ?.ignored_missing_fields;
@@ -323,8 +331,11 @@ function useOrdersWithMissingFields() {
           ? (rawIgnored as string[])
           : [];
 
-        const ownerType =
-          (detailsArray?.[0]?.owner_type as string | null) ?? null;
+        const detailsRecord = details as unknown as Record<
+          string,
+          unknown
+        > | null;
+        const ownerType = (detailsRecord?.owner_type as string | null) ?? null;
 
         const missingFields = getOrderMissingFields({
           details,
@@ -332,6 +343,17 @@ function useOrdersWithMissingFields() {
           ownerType,
           ignoredFields,
         });
+
+        // Normalize info requests (also could be object or array)
+        const infoReqRaw = order.linkme_info_requests as unknown as
+          | InfoRequest
+          | InfoRequest[]
+          | null;
+        const infoRequests: InfoRequest[] = Array.isArray(infoReqRaw)
+          ? infoReqRaw
+          : infoReqRaw
+            ? [infoReqRaw]
+            : [];
 
         if (!missingFields.isComplete) {
           results.push({
@@ -352,7 +374,7 @@ function useOrdersWithMissingFields() {
                 | null) ?? null,
             ignoredFields,
             missingFields,
-            infoRequests: (order.linkme_info_requests ?? []) as InfoRequest[],
+            infoRequests,
           });
         }
       }
