@@ -153,7 +153,7 @@ export function AddProductDialog({
         product_image_url: item.product_image_url,
         unit_price_ht: item.selling_price_ht,
         base_price_ht: item.base_price_ht,
-        margin_rate: item.margin_rate,
+        margin_rate: item.margin_rate / 100, // Convert % to decimal (0.15 = 15%) for commission formula
         quantity,
         is_affiliate_product: item.is_affiliate_product,
         affiliate_commission_rate: item.affiliate_commission_rate
