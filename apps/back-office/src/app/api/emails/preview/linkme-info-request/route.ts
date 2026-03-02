@@ -94,7 +94,8 @@ export async function GET() {
     ${customMessageHtml}`;
 
   const previewToken = '00000000-0000-0000-0000-000000000000';
-  const linkmeUrl = process.env.LINKME_PUBLIC_URL ?? 'https://linkme.verone.fr';
+  const linkmeUrl =
+    process.env.LINKME_PUBLIC_URL ?? 'https://linkme-blue.vercel.app';
 
   const emailHtml = buildEmailHtml({
     title: 'Informations compl\u00e9mentaires requises',

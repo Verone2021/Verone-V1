@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
 
     // Build shared email HTML parts
     const linkmeUrl =
-      process.env.LINKME_PUBLIC_URL ?? 'https://linkme.verone.fr';
+      process.env.LINKME_PUBLIC_URL ?? 'https://linkme-blue.vercel.app';
 
     const fieldsByCategory: Record<string, RequestedFieldInfo[]> = {};
     for (const field of requestedFields) {
