@@ -14,6 +14,7 @@ import { ButtonV2 } from '@verone/ui';
 import { Card } from '@verone/ui';
 import { Input } from '@verone/ui';
 import { Label } from '@verone/ui';
+import { SuccessDialog } from '@verone/ui';
 import {
   Table,
   TableBody,
@@ -31,6 +32,19 @@ import {
   useSalesShipments,
   type SalesOrderForShipment,
 } from '@verone/orders/hooks';
+
+interface ShipmentResultSummary {
+  isComplete: boolean;
+  orderNumber: string;
+  customerName: string;
+  items: Array<{
+    product_name: string;
+    product_sku: string;
+    quantity_shipped: number;
+  }>;
+  totalValue: number;
+  trackingNumber?: string;
+}
 
 interface SalesOrderShipmentFormProps {
   salesOrder: SalesOrderForShipment;
@@ -58,6 +72,8 @@ export function SalesOrderShipmentForm({
   const [trackingNumber, setTrackingNumber] = useState('');
   const [notes, setNotes] = useState('');
   const [history, setHistory] = useState<any[]>([]);
+  const [shipmentResult, setShipmentResult] =
+    useState<ShipmentResultSummary | null>(null);
 
   // Initialiser items
   useEffect(() => {
@@ -174,7 +190,22 @@ export function SalesOrderShipmentForm({
     });
 
     if (result.success) {
-      onSuccess();
+      const shippedItems = items
+        .filter(item => item.quantity_to_ship > 0)
+        .map(item => ({
+          product_name: item.product_name,
+          product_sku: item.product_sku,
+          quantity_shipped: item.quantity_to_ship,
+        }));
+
+      setShipmentResult({
+        isComplete: totals.allFullyShipped,
+        orderNumber: salesOrder.order_number,
+        customerName: salesOrder.customer_name ?? 'Client',
+        items: shippedItems,
+        totalValue: totals.totalValue,
+        trackingNumber: trackingNumber || undefined,
+      });
     } else {
       alert(`Erreur: ${result.error}`);
     }
@@ -501,6 +532,72 @@ export function SalesOrderShipmentForm({
               : 'Valider Expédition Partielle'}
         </ButtonV2>
       </div>
+
+      {/* Modal Confirmation Expédition */}
+      <SuccessDialog
+        open={shipmentResult !== null}
+        onOpenChange={open => {
+          if (!open) {
+            setShipmentResult(null);
+            onSuccess();
+          }
+        }}
+        title={
+          shipmentResult?.isComplete
+            ? 'Expédition complète validée'
+            : 'Expédition partielle validée'
+        }
+        description={`L'expédition de la commande ${shipmentResult?.orderNumber ?? ''} pour ${shipmentResult?.customerName ?? ''} a été enregistrée.`}
+      >
+        {shipmentResult && (
+          <div className="space-y-3">
+            <div className="rounded-lg border bg-gray-50 p-3">
+              <div className="text-xs font-semibold text-gray-500 uppercase mb-2">
+                Produits expédiés
+              </div>
+              <div className="space-y-1.5">
+                {shipmentResult.items.map(item => (
+                  <div
+                    key={item.product_sku}
+                    className="flex items-center justify-between text-sm"
+                  >
+                    <div>
+                      <span className="font-medium text-gray-800">
+                        {item.product_name}
+                      </span>
+                      <span className="text-gray-400 ml-1.5 text-xs">
+                        {item.product_sku}
+                      </span>
+                    </div>
+                    <span className="font-semibold text-blue-700">
+                      ×{item.quantity_shipped}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            {shipmentResult.trackingNumber && (
+              <div className="flex items-center gap-2 rounded-lg border bg-blue-50 p-3">
+                <Truck className="h-4 w-4 text-blue-600" />
+                <span className="text-sm font-medium text-blue-700">
+                  Tracking :
+                </span>
+                <span className="text-sm font-mono text-blue-600">
+                  {shipmentResult.trackingNumber}
+                </span>
+              </div>
+            )}
+            <div className="flex items-center justify-between rounded-lg border bg-emerald-50 p-3">
+              <span className="text-sm font-medium text-emerald-700">
+                Valeur expédiée HT
+              </span>
+              <span className="text-lg font-bold text-emerald-700">
+                {formatCurrency(shipmentResult.totalValue)}
+              </span>
+            </div>
+          </div>
+        )}
+      </SuccessDialog>
     </div>
   );
 }

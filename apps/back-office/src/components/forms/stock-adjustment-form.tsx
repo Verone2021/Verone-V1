@@ -39,6 +39,7 @@ interface Product {
   sku: string;
   name: string;
   stock_quantity: number;
+  stock_real: number;
 }
 
 interface StockAdjustmentFormData {
@@ -118,7 +119,7 @@ export function StockAdjustmentForm({
       try {
         const { data, error } = await supabase
           .from('products')
-          .select('id, sku, name, stock_quantity')
+          .select('id, sku, name, stock_quantity, stock_real')
           .order('name');
 
         if (error) throw error;
@@ -159,7 +160,7 @@ export function StockAdjustmentForm({
       case 'correction':
         // Correction = différence entre stock actuel et quantité cible
         if (!selectedProduct) return 0;
-        return formData.quantity - selectedProduct.stock_quantity;
+        return formData.quantity - selectedProduct.stock_real;
       default:
         return 0;
     }
@@ -191,11 +192,9 @@ export function StockAdjustmentForm({
     if (
       formData.adjustment_type === 'decrease' &&
       selectedProduct &&
-      formData.quantity > selectedProduct.stock_quantity
+      formData.quantity > selectedProduct.stock_real
     ) {
-      setError(
-        `Stock insuffisant (stock actuel: ${selectedProduct.stock_quantity})`
-      );
+      setError(`Stock insuffisant (stock réel: ${selectedProduct.stock_real})`);
       return false;
     }
 
@@ -213,7 +212,8 @@ export function StockAdjustmentForm({
 
     try {
       const quantityChange = calculateQuantityChange();
-      const quantityBefore = selectedProduct?.stock_quantity ?? 0;
+      const quantityBefore =
+        selectedProduct?.stock_real ?? selectedProduct?.stock_quantity ?? 0;
       const quantityAfter = quantityBefore + quantityChange;
 
       // Récupérer user ID
@@ -310,7 +310,7 @@ export function StockAdjustmentForm({
                   {products.map(product => (
                     <SelectItem key={product.id} value={product.id}>
                       {product.sku} - {product.name} (Stock:{' '}
-                      {product.stock_quantity})
+                      {product.stock_real})
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -318,8 +318,7 @@ export function StockAdjustmentForm({
             )}
             {selectedProduct && (
               <p className="text-sm text-gray-500">
-                Stock actuel: <strong>{selectedProduct.stock_quantity}</strong>{' '}
-                unités
+                Stock réel: <strong>{selectedProduct.stock_real}</strong> unités
               </p>
             )}
           </div>
