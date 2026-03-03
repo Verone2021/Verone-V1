@@ -429,3 +429,83 @@ export function useCreateOrganisationContacts() {
     },
   });
 }
+
+// ============================================
+// TYPES - Création contact complet
+// ============================================
+
+export interface CreateContactInput {
+  organisationId: string;
+  enseigneId?: string | null;
+  first_name: string;
+  last_name: string;
+  email: string;
+  title?: string;
+  department?: string;
+  phone?: string;
+  mobile?: string;
+  secondary_email?: string;
+  direct_line?: string;
+  is_primary_contact: boolean;
+  is_billing_contact: boolean;
+  is_technical_contact: boolean;
+  is_commercial_contact: boolean;
+  preferred_communication_method: 'email' | 'phone' | 'both';
+  accepts_marketing: boolean;
+  accepts_notifications: boolean;
+  language_preference: string;
+  notes?: string;
+}
+
+/**
+ * Hook pour créer un contact complet (tous les champs BO)
+ * Utilisé dans la fiche organisation LinkMe, onglet Contacts
+ */
+export function useCreateContact() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: CreateContactInput) => {
+      const supabase = createClient();
+
+      const { error } = await supabase.from('contacts').insert({
+        organisation_id: input.organisationId,
+        enseigne_id: input.enseigneId ?? null,
+        first_name: input.first_name,
+        last_name: input.last_name,
+        email: input.email,
+        title: input.title || null,
+        department: input.department || null,
+        phone: input.phone || null,
+        mobile: input.mobile || null,
+        secondary_email: input.secondary_email || null,
+        direct_line: input.direct_line || null,
+        is_primary_contact: input.is_primary_contact,
+        is_billing_contact: input.is_billing_contact,
+        is_technical_contact: input.is_technical_contact,
+        is_commercial_contact: input.is_commercial_contact,
+        preferred_communication_method: input.preferred_communication_method,
+        accepts_marketing: input.accepts_marketing,
+        accepts_notifications: input.accepts_notifications,
+        language_preference: input.language_preference,
+        notes: input.notes || null,
+        is_active: true,
+      });
+
+      if (error) throw error;
+      return { success: true };
+    },
+    onSuccess: async (_, variables) => {
+      await queryClient.invalidateQueries({
+        queryKey: ['organisation-contacts', variables.organisationId],
+      });
+      toast.success('Contact créé avec succès');
+    },
+    onError: (error: Error) => {
+      console.error('Erreur création contact:', error);
+      toast.error('Erreur', {
+        description: error.message || 'Impossible de créer le contact',
+      });
+    },
+  });
+}

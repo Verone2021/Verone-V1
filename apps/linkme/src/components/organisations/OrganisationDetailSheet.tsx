@@ -60,9 +60,11 @@ import {
   AlertCircle,
   Globe,
   CreditCard,
+  Plus,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { CreateContactDialog } from './CreateContactDialog';
 import {
   useOrganisationContacts,
   type OrganisationContact,
@@ -406,6 +408,9 @@ export function OrganisationDetailSheet({
       open ? contactOwnershipType : null
     );
 
+  // État pour le dialog de création de contact
+  const [showCreateContact, setShowCreateContact] = useState(false);
+
   // États pour l'édition de chaque section
   const [editingSection, setEditingSection] = useState<string | null>(null);
 
@@ -562,7 +567,7 @@ export function OrganisationDetailSheet({
     }));
   };
 
-  // Adresses formatées
+  // Adresses formatées (données backfillées en DB, pas de fallback legacy)
   const shippingAddress = useMemo(() => {
     if (!data?.organisation) return null;
     const org = data.organisation;
@@ -1120,6 +1125,19 @@ export function OrganisationDetailSheet({
 
             {/* Onglet Contacts */}
             <TabsContent value="contacts" className="mt-4 space-y-3">
+              {/* Bouton Nouveau contact (mode edit uniquement) */}
+              {mode === 'edit' && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full border-dashed"
+                  onClick={() => setShowCreateContact(true)}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Nouveau contact
+                </Button>
+              )}
+
               {contactsLoading && (
                 <div className="space-y-2">
                   <Skeleton className="h-24 w-full" />
@@ -1143,8 +1161,34 @@ export function OrganisationDetailSheet({
                   <div className="text-center py-8 text-gray-400">
                     <User className="h-8 w-8 mx-auto mb-2 opacity-50" />
                     <p>Aucun contact renseigné</p>
+                    {mode === 'edit' && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="mt-2 text-linkme-turquoise"
+                        onClick={() => setShowCreateContact(true)}
+                      >
+                        <Plus className="h-4 w-4 mr-1" />
+                        Ajouter un contact
+                      </Button>
+                    )}
                   </div>
                 )}
+
+              {/* Dialog de création */}
+              {organisationId && (
+                <CreateContactDialog
+                  organisationId={organisationId}
+                  organisationName={
+                    data?.organisation?.trade_name ??
+                    data?.organisation?.legal_name ??
+                    ''
+                  }
+                  enseigneId={data?.organisation?.enseigne_id}
+                  open={showCreateContact}
+                  onOpenChange={setShowCreateContact}
+                />
+              )}
             </TabsContent>
 
             {/* Onglet Activité */}
