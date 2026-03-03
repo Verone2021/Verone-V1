@@ -44,7 +44,7 @@ import {
 import { cn } from '@/lib/utils';
 import { HelpTooltip } from '@/components/ui/help-tooltip';
 import { ProductDetailSheet } from './components/ProductDetailSheet';
-import { ProductStockSheet } from './components/ProductStockSheet';
+import { SendToStorageDialog } from './components/SendToStorageDialog';
 
 // Roles qui peuvent creer des produits
 const CAN_CREATE_ROLES: LinkMeRole[] = ['enseigne_admin', 'organisation_admin'];
@@ -276,7 +276,7 @@ function MesProduitsContent(): JSX.Element | null {
 
 function ProductRow({ product }: { product: AffiliateProduct }): JSX.Element {
   const [showDetailSheet, setShowDetailSheet] = useState(false);
-  const [showStockSheet, setShowStockSheet] = useState(false);
+  const [showStorageDialog, setShowStorageDialog] = useState(false);
   const config = STATUS_CONFIG[product.affiliate_approval_status];
   const Icon = config.icon;
   const canEdit = product.affiliate_approval_status === 'draft';
@@ -385,14 +385,23 @@ function ProductRow({ product }: { product: AffiliateProduct }): JSX.Element {
 
           {/* Stock - uniquement approved + store_at_verone */}
           {canShowStock && (
-            <button
-              onClick={() => setShowStockSheet(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition-colors font-medium"
-              title="Voir le stock Verone"
-            >
-              <Warehouse className="h-3.5 w-3.5" />
-              Stock
-            </button>
+            <>
+              <Link
+                href="/stockage"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition-colors font-medium"
+                title="Voir mon stock"
+              >
+                <Warehouse className="h-3.5 w-3.5" />
+                Stock
+              </Link>
+              <button
+                onClick={() => setShowStorageDialog(true)}
+                className="p-1.5 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
+                title="Demande d'envoi au stock"
+              >
+                <Plus className="h-3.5 w-3.5" />
+              </button>
+            </>
           )}
         </div>
 
@@ -405,12 +414,12 @@ function ProductRow({ product }: { product: AffiliateProduct }): JSX.Element {
           />
         )}
 
-        {/* Sheet stock lateral */}
-        {showStockSheet && (
-          <ProductStockSheet
-            product={product}
-            isOpen={showStockSheet}
-            onClose={() => setShowStockSheet(false)}
+        {/* Dialog envoi au stock */}
+        {showStorageDialog && (
+          <SendToStorageDialog
+            product={{ id: product.id, name: product.name, sku: product.sku }}
+            isOpen={showStorageDialog}
+            onClose={() => setShowStorageDialog(false)}
           />
         )}
       </td>
