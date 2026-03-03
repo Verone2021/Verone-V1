@@ -431,6 +431,110 @@ export function useCreateOrganisationContacts() {
 }
 
 // ============================================
+// HOOKS - Update & Delete contact
+// ============================================
+
+export interface UpdateContactInput {
+  contactId: string;
+  organisationId: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  title?: string;
+  department?: string;
+  phone?: string;
+  mobile?: string;
+  secondary_email?: string;
+  direct_line?: string;
+  is_primary_contact: boolean;
+  is_billing_contact: boolean;
+  notes?: string;
+}
+
+/**
+ * Hook pour mettre à jour un contact existant
+ */
+export function useUpdateContact() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: UpdateContactInput) => {
+      const supabase = createClient();
+
+      const { error } = await supabase
+        .from('contacts')
+        .update({
+          first_name: input.first_name,
+          last_name: input.last_name,
+          email: input.email,
+          title: input.title || null,
+          department: input.department || null,
+          phone: input.phone || null,
+          mobile: input.mobile || null,
+          secondary_email: input.secondary_email || null,
+          direct_line: input.direct_line || null,
+          is_primary_contact: input.is_primary_contact,
+          is_billing_contact: input.is_billing_contact,
+          notes: input.notes || null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', input.contactId);
+
+      if (error) throw error;
+      return { success: true };
+    },
+    onSuccess: async (_, variables) => {
+      await queryClient.invalidateQueries({
+        queryKey: ['organisation-contacts', variables.organisationId],
+      });
+      toast.success('Contact mis à jour');
+    },
+    onError: (error: Error) => {
+      console.error('Erreur mise à jour contact:', error);
+      toast.error('Erreur', {
+        description: error.message || 'Impossible de mettre à jour le contact',
+      });
+    },
+  });
+}
+
+/**
+ * Hook pour supprimer un contact (soft-delete: is_active = false)
+ */
+export function useDeleteContact() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: {
+      contactId: string;
+      organisationId: string;
+    }) => {
+      const supabase = createClient();
+
+      const { error } = await supabase
+        .from('contacts')
+        .update({ is_active: false, updated_at: new Date().toISOString() })
+        .eq('id', input.contactId);
+
+      if (error) throw error;
+      return { success: true };
+    },
+    onSuccess: async (_, variables) => {
+      await queryClient.invalidateQueries({
+        queryKey: ['organisation-contacts', variables.organisationId],
+      });
+      toast.success('Contact supprimé');
+    },
+    onError: (error: Error) => {
+      console.error('Erreur suppression contact:', error);
+      toast.error('Erreur', {
+        description: error.message || 'Impossible de supprimer le contact',
+      });
+    },
+  });
+}
+
+// ============================================
 // TYPES - Création contact complet
 // ============================================
 
@@ -448,18 +552,12 @@ export interface CreateContactInput {
   direct_line?: string;
   is_primary_contact: boolean;
   is_billing_contact: boolean;
-  is_technical_contact: boolean;
-  is_commercial_contact: boolean;
-  preferred_communication_method: 'email' | 'phone' | 'both';
-  accepts_marketing: boolean;
-  accepts_notifications: boolean;
-  language_preference: string;
   notes?: string;
 }
 
 /**
- * Hook pour créer un contact complet (tous les champs BO)
- * Utilisé dans la fiche organisation LinkMe, onglet Contacts
+ * Hook pour créer un contact dans une organisation
+ * Champs LinkMe : identité, coordonnées, rôles (principal/facturation), notes
  */
 export function useCreateContact() {
   const queryClient = useQueryClient();
@@ -482,12 +580,6 @@ export function useCreateContact() {
         direct_line: input.direct_line || null,
         is_primary_contact: input.is_primary_contact,
         is_billing_contact: input.is_billing_contact,
-        is_technical_contact: input.is_technical_contact,
-        is_commercial_contact: input.is_commercial_contact,
-        preferred_communication_method: input.preferred_communication_method,
-        accepts_marketing: input.accepts_marketing,
-        accepts_notifications: input.accepts_notifications,
-        language_preference: input.language_preference,
         notes: input.notes || null,
         is_active: true,
       });

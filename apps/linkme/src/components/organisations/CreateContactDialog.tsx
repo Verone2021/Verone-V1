@@ -3,14 +3,18 @@
 /**
  * CreateContactDialog
  *
- * Dialog de création d'un contact organisation (tous les champs BO)
+ * Dialog de création / édition d'un contact organisation LinkMe
  * Utilisé dans l'onglet Contacts de OrganisationDetailSheet
+ *
+ * - Sans prop `contact` : mode création
+ * - Avec prop `contact` : mode édition (formulaire pré-rempli)
  *
  * @module CreateContactDialog
  * @since 2026-03-03
+ * @updated 2026-03-03 - Ajout mode édition
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import { z } from 'zod';
 import {
@@ -24,18 +28,16 @@ import {
   Input,
   Label,
   Switch,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
   Textarea,
 } from '@verone/ui';
 import { Loader2 } from 'lucide-react';
 
 import {
   useCreateContact,
+  useUpdateContact,
   type CreateContactInput,
+  type UpdateContactInput,
+  type OrganisationContact,
 } from '../../lib/hooks/use-organisation-contacts';
 
 // ============================================================================
@@ -64,12 +66,6 @@ const contactSchema = z.object({
   direct_line: z.string().optional(),
   is_primary_contact: z.boolean(),
   is_billing_contact: z.boolean(),
-  is_technical_contact: z.boolean(),
-  is_commercial_contact: z.boolean(),
-  preferred_communication_method: z.enum(['email', 'phone', 'both']),
-  accepts_marketing: z.boolean(),
-  accepts_notifications: z.boolean(),
-  language_preference: z.string(),
   notes: z.string().optional(),
 });
 
@@ -85,6 +81,8 @@ interface CreateContactDialogProps {
   enseigneId?: string | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** If provided, dialog opens in edit mode with pre-filled data */
+  contact?: OrganisationContact | null;
 }
 
 // ============================================================================
@@ -103,12 +101,6 @@ const defaultFormData: ContactFormData = {
   direct_line: '',
   is_primary_contact: false,
   is_billing_contact: false,
-  is_technical_contact: false,
-  is_commercial_contact: false,
-  preferred_communication_method: 'email',
-  accepts_marketing: false,
-  accepts_notifications: true,
-  language_preference: 'fr',
   notes: '',
 };
 
@@ -122,10 +114,35 @@ export function CreateContactDialog({
   enseigneId,
   open,
   onOpenChange,
+  contact,
 }: CreateContactDialogProps) {
+  const isEditMode = !!contact;
   const [formData, setFormData] = useState<ContactFormData>(defaultFormData);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const createContact = useCreateContact();
+  const updateContact = useUpdateContact();
+
+  // Pre-fill form when editing
+  useEffect(() => {
+    if (contact && open) {
+      setFormData({
+        first_name: contact.firstName,
+        last_name: contact.lastName,
+        title: contact.title ?? '',
+        department: '',
+        email: contact.email,
+        phone: contact.phone ?? '',
+        mobile: contact.mobile ?? '',
+        secondary_email: '',
+        direct_line: '',
+        is_primary_contact: contact.isPrimaryContact,
+        is_billing_contact: contact.isBillingContact,
+        notes: '',
+      });
+    } else if (!contact && open) {
+      setFormData(defaultFormData);
+    }
+  }, [contact, open]);
 
   const handleClose = () => {
     setFormData(defaultFormData);
@@ -152,13 +169,21 @@ export function CreateContactDialog({
 
     setErrors({});
 
-    const input: CreateContactInput = {
-      organisationId,
-      enseigneId,
-      ...result.data,
-    };
-
-    await createContact.mutateAsync(input);
+    if (isEditMode) {
+      const input: UpdateContactInput = {
+        contactId: contact.id,
+        organisationId,
+        ...result.data,
+      };
+      await updateContact.mutateAsync(input);
+    } else {
+      const input: CreateContactInput = {
+        organisationId,
+        enseigneId,
+        ...result.data,
+      };
+      await createContact.mutateAsync(input);
+    }
     handleClose();
   };
 
@@ -181,9 +206,13 @@ export function CreateContactDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent dialogSize="md" className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Nouveau contact</DialogTitle>
+          <DialogTitle>
+            {isEditMode ? 'Modifier le contact' : 'Nouveau contact'}
+          </DialogTitle>
           <DialogDescription>
-            Ajouter un contact pour {organisationName}
+            {isEditMode
+              ? `Modifier les informations de ${contact.firstName} ${contact.lastName}`
+              : `Ajouter un contact pour ${organisationName}`}
           </DialogDescription>
         </DialogHeader>
 
@@ -351,86 +380,6 @@ export function CreateContactDialog({
                   onCheckedChange={v => updateField('is_billing_contact', v)}
                 />
               </div>
-              <div className="flex items-center justify-between rounded-lg border p-3">
-                <Label
-                  htmlFor="cc-commercial"
-                  className="text-sm font-normal cursor-pointer"
-                >
-                  Commercial
-                </Label>
-                <Switch
-                  id="cc-commercial"
-                  checked={formData.is_commercial_contact}
-                  onCheckedChange={v => updateField('is_commercial_contact', v)}
-                />
-              </div>
-              <div className="flex items-center justify-between rounded-lg border p-3">
-                <Label
-                  htmlFor="cc-technical"
-                  className="text-sm font-normal cursor-pointer"
-                >
-                  Technique
-                </Label>
-                <Switch
-                  id="cc-technical"
-                  checked={formData.is_technical_contact}
-                  onCheckedChange={v => updateField('is_technical_contact', v)}
-                />
-              </div>
-            </div>
-          </fieldset>
-
-          {/* Section: Préférences */}
-          <fieldset className="space-y-3">
-            <legend className="text-sm font-medium text-gray-700">
-              Préférences
-            </legend>
-            <div className="space-y-1">
-              <Label htmlFor="cc-comm-method">Communication préférée</Label>
-              <Select
-                value={formData.preferred_communication_method}
-                onValueChange={v =>
-                  updateField(
-                    'preferred_communication_method',
-                    v as 'email' | 'phone' | 'both'
-                  )
-                }
-              >
-                <SelectTrigger id="cc-comm-method">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="email">Email</SelectItem>
-                  <SelectItem value="phone">Téléphone</SelectItem>
-                  <SelectItem value="both">Les deux</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex items-center justify-between rounded-lg border p-3">
-              <Label
-                htmlFor="cc-marketing"
-                className="text-sm font-normal cursor-pointer"
-              >
-                Accepte le marketing
-              </Label>
-              <Switch
-                id="cc-marketing"
-                checked={formData.accepts_marketing}
-                onCheckedChange={v => updateField('accepts_marketing', v)}
-              />
-            </div>
-            <div className="flex items-center justify-between rounded-lg border p-3">
-              <Label
-                htmlFor="cc-notifications"
-                className="text-sm font-normal cursor-pointer"
-              >
-                Accepte les notifications
-              </Label>
-              <Switch
-                id="cc-notifications"
-                checked={formData.accepts_notifications}
-                onCheckedChange={v => updateField('accepts_notifications', v)}
-              />
             </div>
           </fieldset>
 
@@ -450,12 +399,21 @@ export function CreateContactDialog({
             <Button type="button" variant="outline" onClick={handleClose}>
               Annuler
             </Button>
-            <Button type="submit" disabled={createContact.isPending}>
-              {createContact.isPending ? (
+            <Button
+              type="submit"
+              disabled={
+                isEditMode ? updateContact.isPending : createContact.isPending
+              }
+            >
+              {(
+                isEditMode ? updateContact.isPending : createContact.isPending
+              ) ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Création...
+                  {isEditMode ? 'Mise à jour...' : 'Création...'}
                 </>
+              ) : isEditMode ? (
+                'Enregistrer'
               ) : (
                 'Créer le contact'
               )}

@@ -38,6 +38,7 @@ import {
   type AddressResult,
   RadioGroup,
   RadioGroupItem,
+  ConfirmDialog,
 } from '@verone/ui';
 import { cn } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
@@ -61,12 +62,15 @@ import {
   Globe,
   CreditCard,
   Plus,
+  Pencil,
+  Trash2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { CreateContactDialog } from './CreateContactDialog';
 import {
   useOrganisationContacts,
+  useDeleteContact,
   type OrganisationContact,
 } from '../../lib/hooks/use-organisation-contacts';
 import {
@@ -84,6 +88,8 @@ interface OrganisationDetailSheetProps {
   onOpenChange: (open: boolean) => void;
   mode: 'view' | 'edit';
   onEdit?: () => void; // Deprecated - kept for compatibility
+  /** Tab to show when opening the sheet (default: 'infos') */
+  defaultTab?: 'infos' | 'contacts' | 'activite';
 }
 
 // =====================================================================
@@ -233,7 +239,17 @@ function EditableSection({
   );
 }
 
-function ContactCard({ contact }: { contact: OrganisationContact }) {
+function ContactCard({
+  contact,
+  onEdit,
+  onDelete,
+  mode,
+}: {
+  contact: OrganisationContact;
+  onEdit?: (contact: OrganisationContact) => void;
+  onDelete?: (contact: OrganisationContact) => void;
+  mode: 'view' | 'edit';
+}) {
   const fullName = `${contact.firstName} ${contact.lastName}`;
   const roles: string[] = [];
   if (contact.isPrimaryContact) roles.push('Principal');
@@ -250,7 +266,27 @@ function ContactCard({ contact }: { contact: OrganisationContact }) {
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <p className="font-medium text-gray-900 truncate">{fullName}</p>
+            <p className="font-medium text-gray-900 truncate flex-1">
+              {fullName}
+            </p>
+            {mode === 'edit' && (
+              <div className="flex items-center gap-0.5 flex-shrink-0">
+                <button
+                  onClick={() => onEdit?.(contact)}
+                  className="p-1 text-gray-400 hover:text-linkme-turquoise hover:bg-linkme-turquoise/10 rounded transition-colors"
+                  title="Modifier"
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  onClick={() => onDelete?.(contact)}
+                  className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                  title="Supprimer"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            )}
             {contact.isUser && (
               <Badge className="text-xs bg-blue-500 text-white">
                 Utilisateur
@@ -387,7 +423,17 @@ export function OrganisationDetailSheet({
   open,
   onOpenChange,
   mode,
+  defaultTab = 'infos',
 }: OrganisationDetailSheetProps) {
+  const [activeTab, setActiveTab] = useState(defaultTab);
+
+  // Sync activeTab when sheet opens with a specific tab
+  useEffect(() => {
+    if (open) {
+      setActiveTab(defaultTab);
+    }
+  }, [open, defaultTab]);
+
   const { data, isLoading, error } = useOrganisationDetail(
     open ? organisationId : null
   );
@@ -408,8 +454,16 @@ export function OrganisationDetailSheet({
       open ? contactOwnershipType : null
     );
 
-  // État pour le dialog de création de contact
+  // État pour le dialog de création/édition de contact
   const [showCreateContact, setShowCreateContact] = useState(false);
+  const [editingContact, setEditingContact] =
+    useState<OrganisationContact | null>(null);
+
+  // État pour la suppression de contact
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [contactToDelete, setContactToDelete] =
+    useState<OrganisationContact | null>(null);
+  const deleteContact = useDeleteContact();
 
   // États pour l'édition de chaque section
   const [editingSection, setEditingSection] = useState<string | null>(null);
@@ -650,7 +704,13 @@ export function OrganisationDetailSheet({
 
         {/* Content */}
         {data && !isLoading && (
-          <Tabs defaultValue="infos" className="mt-4">
+          <Tabs
+            value={activeTab}
+            onValueChange={v =>
+              setActiveTab(v as 'infos' | 'contacts' | 'activite')
+            }
+            className="mt-4"
+          >
             <TabsList className="w-full grid grid-cols-3 bg-gray-100">
               <TabsTrigger
                 value="infos"
@@ -1149,8 +1209,20 @@ export function OrganisationDetailSheet({
                 contactsData?.contacts &&
                 contactsData.contacts.length > 0 && (
                   <div className="space-y-2">
-                    {contactsData.contacts.map(contact => (
-                      <ContactCard key={contact.id} contact={contact} />
+                    {contactsData.contacts.map(c => (
+                      <ContactCard
+                        key={c.id}
+                        contact={c}
+                        mode={mode}
+                        onEdit={ct => {
+                          setEditingContact(ct);
+                          setShowCreateContact(true);
+                        }}
+                        onDelete={ct => {
+                          setContactToDelete(ct);
+                          setDeleteDialogOpen(true);
+                        }}
+                      />
                     ))}
                   </div>
                 )}
@@ -1175,7 +1247,7 @@ export function OrganisationDetailSheet({
                   </div>
                 )}
 
-              {/* Dialog de création */}
+              {/* Dialog de création / édition */}
               {organisationId && (
                 <CreateContactDialog
                   organisationId={organisationId}
@@ -1186,9 +1258,44 @@ export function OrganisationDetailSheet({
                   }
                   enseigneId={data?.organisation?.enseigne_id}
                   open={showCreateContact}
-                  onOpenChange={setShowCreateContact}
+                  onOpenChange={open => {
+                    setShowCreateContact(open);
+                    if (!open) setEditingContact(null);
+                  }}
+                  contact={editingContact}
                 />
               )}
+
+              {/* Dialog de confirmation de suppression */}
+              <ConfirmDialog
+                open={deleteDialogOpen}
+                onOpenChange={setDeleteDialogOpen}
+                title="Supprimer ce contact ?"
+                description={`${contactToDelete ? `${contactToDelete.firstName} ${contactToDelete.lastName}` : 'Ce contact'} sera définitivement supprimé. Cette action est irréversible.`}
+                confirmText="Supprimer"
+                cancelText="Annuler"
+                variant="destructive"
+                onConfirm={() => {
+                  if (contactToDelete && organisationId) {
+                    void deleteContact
+                      .mutateAsync({
+                        contactId: contactToDelete.id,
+                        organisationId,
+                      })
+                      .then(() => {
+                        setDeleteDialogOpen(false);
+                        setContactToDelete(null);
+                      })
+                      .catch((err: unknown) => {
+                        console.error(
+                          '[OrganisationDetailSheet] Delete failed:',
+                          err
+                        );
+                      });
+                  }
+                }}
+                loading={deleteContact.isPending}
+              />
             </TabsContent>
 
             {/* Onglet Activité */}
