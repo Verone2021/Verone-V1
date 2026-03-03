@@ -331,8 +331,8 @@ export function OrganisationCard({
       {/* Actions - Icônes compactes */}
       <div className="flex items-center justify-end gap-0.5 pt-2 border-t border-gray-100">
         {(organisation.contact_count ?? 0) > 0 && (
-          <span className="flex items-center gap-0.5 px-1.5 py-0.5 mr-auto text-[10px] font-medium text-gray-500 bg-gray-100 rounded">
-            <Users className="h-3 w-3" />
+          <span className="flex items-center gap-1 px-1.5 py-0.5 mr-auto text-xs font-medium text-linkme-turquoise bg-linkme-turquoise/10 rounded">
+            <Users className="h-3.5 w-3.5" />
             {organisation.contact_count}
           </span>
         )}
