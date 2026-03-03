@@ -1,6 +1,9 @@
 -- Migration: Add store_at_verone to get_affiliate_products_for_enseigne RPC
 -- This allows LinkMe to conditionally show the Stock button only for products stored at Verone
 
+-- Must drop first because RETURNS TABLE signature changed (added store_at_verone column)
+DROP FUNCTION IF EXISTS get_affiliate_products_for_enseigne(UUID);
+
 CREATE OR REPLACE FUNCTION get_affiliate_products_for_enseigne(p_enseigne_id UUID)
 RETURNS TABLE (
   id UUID,
