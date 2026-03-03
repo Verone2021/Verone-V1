@@ -43,6 +43,7 @@ import {
 } from '@/lib/hooks/use-affiliate-products';
 import { cn } from '@/lib/utils';
 import { HelpTooltip } from '@/components/ui/help-tooltip';
+import { ProductDetailSheet } from './components/ProductDetailSheet';
 import { ProductStockSheet } from './components/ProductStockSheet';
 
 // Roles qui peuvent creer des produits
@@ -274,6 +275,7 @@ function MesProduitsContent(): JSX.Element | null {
 }
 
 function ProductRow({ product }: { product: AffiliateProduct }): JSX.Element {
+  const [showDetailSheet, setShowDetailSheet] = useState(false);
   const [showStockSheet, setShowStockSheet] = useState(false);
   const config = STATUS_CONFIG[product.affiliate_approval_status];
   const Icon = config.icon;
@@ -354,12 +356,12 @@ function ProductRow({ product }: { product: AffiliateProduct }): JSX.Element {
       <td className="px-6 py-4 text-right">
         <div className="flex items-center justify-end gap-2">
           {/* Voir - toujours disponible */}
-          <Link
-            href={`/mes-produits/${product.id}`}
+          <button
+            onClick={() => setShowDetailSheet(true)}
             className="px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors font-medium"
           >
             Voir
-          </Link>
+          </button>
 
           {/* Modifier - uniquement draft */}
           {canEdit && (
@@ -393,6 +395,15 @@ function ProductRow({ product }: { product: AffiliateProduct }): JSX.Element {
             </button>
           )}
         </div>
+
+        {/* Sheet detail produit */}
+        {showDetailSheet && (
+          <ProductDetailSheet
+            product={product}
+            isOpen={showDetailSheet}
+            onClose={() => setShowDetailSheet(false)}
+          />
+        )}
 
         {/* Sheet stock lateral */}
         {showStockSheet && (
