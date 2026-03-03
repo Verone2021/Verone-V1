@@ -29,11 +29,14 @@ import {
   FileEdit,
   AlertCircle,
   ExternalLink,
+  ShoppingBag,
+  Loader2,
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 
 import type { AffiliateProduct } from '@/lib/hooks/use-affiliate-products';
+import { useProductSalesDetail } from '@/lib/hooks/use-product-sales-detail';
 
 const STATUS_CONFIG = {
   draft: {
@@ -78,6 +81,7 @@ export function ProductDetailSheet({
   const StatusIcon = config.icon;
   const isDraft = status === 'draft';
   const isRejected = status === 'rejected';
+  const isApproved = status === 'approved';
   const canEdit = isDraft || isRejected;
 
   // Pricing
@@ -284,6 +288,14 @@ export function ProductDetailSheet({
             </div>
           </section>
 
+          {/* Historique des ventes (produits approuvés uniquement) */}
+          {isApproved && (
+            <SalesHistorySection
+              productId={product.id}
+              commissionRate={commissionRate}
+            />
+          )}
+
           {/* Actions */}
           {canEdit && (
             <Link
@@ -301,6 +313,202 @@ export function ProductDetailSheet({
 }
 
 // ---- Sub-components ----
+
+const ORDER_STATUS_COLORS: Record<string, string> = {
+  draft: 'bg-amber-100 text-amber-800',
+  pending: 'bg-amber-100 text-amber-800',
+  validated: 'bg-blue-100 text-blue-800',
+  processing: 'bg-blue-100 text-blue-800',
+  shipped: 'bg-purple-100 text-purple-800',
+  delivered: 'bg-emerald-100 text-emerald-800',
+  cancelled: 'bg-gray-100 text-gray-600',
+};
+
+const ORDER_STATUS_LABELS: Record<string, string> = {
+  draft: 'Brouillon',
+  pending: 'En attente',
+  validated: 'Validée',
+  processing: 'En cours',
+  shipped: 'Expédiée',
+  delivered: 'Livrée',
+  cancelled: 'Annulée',
+};
+
+function formatCurrency(value: number): string {
+  return new Intl.NumberFormat('fr-FR', {
+    style: 'currency',
+    currency: 'EUR',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(value);
+}
+
+function formatDate(dateStr: string): string {
+  if (!dateStr) return '-';
+  try {
+    return new Date(dateStr).toLocaleDateString('fr-FR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
+  } catch {
+    return '-';
+  }
+}
+
+function SalesHistorySection({
+  productId,
+  commissionRate,
+}: {
+  productId: string;
+  commissionRate: number;
+}): JSX.Element {
+  const { data, isLoading } = useProductSalesDetail(productId);
+
+  if (isLoading) {
+    return (
+      <section>
+        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+          <ShoppingBag className="h-4 w-4" />
+          Historique des ventes
+        </h3>
+        <div className="flex items-center justify-center py-6">
+          <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+        </div>
+      </section>
+    );
+  }
+
+  const sales = data?.sales ?? [];
+  const totals = data?.totals;
+
+  // Compute commission totals
+  const totalCommission = totals
+    ? totals.totalRevenueHT * (commissionRate / 100)
+    : 0;
+  const totalNet = totals ? totals.totalRevenueHT - totalCommission : 0;
+
+  return (
+    <section>
+      <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+        <ShoppingBag className="h-4 w-4" />
+        Historique des ventes
+      </h3>
+
+      {sales.length === 0 ? (
+        <div className="bg-gray-50 rounded-xl p-6 text-center">
+          <Package className="h-8 w-8 text-gray-300 mx-auto mb-2" />
+          <p className="text-sm text-gray-500">Aucune vente pour ce produit</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {/* 3 Mini-KPIs */}
+          <div className="grid grid-cols-3 gap-2">
+            <div className="bg-gray-50 rounded-lg p-3 text-center">
+              <p className="text-[10px] text-gray-500 uppercase tracking-wider">
+                Commandes
+              </p>
+              <p className="text-lg font-bold text-[#183559]">
+                {totals?.totalOrders ?? 0}
+              </p>
+            </div>
+            <div className="bg-gray-50 rounded-lg p-3 text-center">
+              <p className="text-[10px] text-gray-500 uppercase tracking-wider">
+                CA HT
+              </p>
+              <p className="text-lg font-bold text-[#183559]">
+                {formatCurrency(totals?.totalRevenueHT ?? 0)}
+              </p>
+            </div>
+            <div className="bg-green-50 rounded-lg p-3 text-center">
+              <p className="text-[10px] text-green-600 uppercase tracking-wider">
+                Net encaissé
+              </p>
+              <p className="text-lg font-bold text-green-600">
+                {formatCurrency(totalNet)}
+              </p>
+            </div>
+          </div>
+
+          {/* Sales table */}
+          <div className="bg-gray-50 rounded-xl overflow-hidden">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="border-b border-gray-200">
+                  <th className="text-left py-2 px-3 font-medium text-gray-500">
+                    Date
+                  </th>
+                  <th className="text-left py-2 px-3 font-medium text-gray-500">
+                    Client
+                  </th>
+                  <th className="text-right py-2 px-3 font-medium text-gray-500">
+                    Qté
+                  </th>
+                  <th className="text-right py-2 px-3 font-medium text-gray-500">
+                    Total
+                  </th>
+                  <th className="text-right py-2 px-3 font-medium text-gray-500">
+                    Net
+                  </th>
+                  <th className="text-center py-2 px-3 font-medium text-gray-500">
+                    Statut
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {sales.map((sale, index) => {
+                  const lineCommission = sale.totalHT * (commissionRate / 100);
+                  const lineNet = sale.totalHT - lineCommission;
+                  const statusColor =
+                    ORDER_STATUS_COLORS[sale.orderStatus] ??
+                    ORDER_STATUS_COLORS.pending;
+                  const statusLabel =
+                    ORDER_STATUS_LABELS[sale.orderStatus] ?? sale.orderStatus;
+
+                  return (
+                    <tr
+                      key={`${sale.orderId}-${index}`}
+                      className="hover:bg-white/50 transition-colors"
+                    >
+                      <td className="py-2 px-3 text-gray-600">
+                        {formatDate(sale.orderDate)}
+                      </td>
+                      <td className="py-2 px-3 text-gray-700 truncate max-w-[100px]">
+                        {sale.customerName}
+                      </td>
+                      <td className="py-2 px-3 text-right font-medium">
+                        {sale.quantity}
+                      </td>
+                      <td className="py-2 px-3 text-right text-gray-700">
+                        {formatCurrency(sale.totalHT)}
+                      </td>
+                      <td className="py-2 px-3 text-right font-semibold text-green-600">
+                        {formatCurrency(lineNet)}
+                      </td>
+                      <td className="py-2 px-3 text-center">
+                        <span
+                          className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-medium ${statusColor}`}
+                        >
+                          {statusLabel}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Commission footer */}
+          <div className="text-center text-xs text-gray-400 pt-1">
+            Commission LinkMe totale : {formatCurrency(totalCommission)} (
+            {commissionRate}%)
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
 
 function InfoRow({
   label,

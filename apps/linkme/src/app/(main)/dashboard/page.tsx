@@ -379,10 +379,12 @@ export default function DashboardPage(): JSX.Element | null {
 
               <div className="divide-y divide-green-50">
                 {topProductsRevendeur.map((product, index) => {
-                  // Pour les produits revendeur, commissionHT = ce que l'affilié encaisse
+                  // Encaissement net = CA total - commission Verone
+                  const encaissementNet =
+                    product.revenueHT - product.commissionHT;
                   const encaissementPerUnit =
                     product.quantitySold > 0
-                      ? product.commissionHT / product.quantitySold
+                      ? encaissementNet / product.quantitySold
                       : 0;
 
                   return (
@@ -418,10 +420,13 @@ export default function DashboardPage(): JSX.Element | null {
                         </p>
                         <p className="text-xs text-gray-500">
                           {product.quantitySold} ×{' '}
-                          {encaissementPerUnit.toFixed(0)}€{' '}
+                          {encaissementPerUnit.toFixed(0)}€ net{' '}
                           <span className="text-green-600 font-semibold">
-                            → {product.commissionHT.toFixed(0)}€ encaissés
+                            → {encaissementNet.toFixed(0)}€ encaissés
                           </span>
+                        </p>
+                        <p className="text-[10px] text-gray-400">
+                          comm. LinkMe : {product.commissionHT.toFixed(0)}€
                         </p>
                       </div>
                     </div>
