@@ -43,7 +43,7 @@ import {
 } from '@/lib/hooks/use-affiliate-products';
 import { cn } from '@/lib/utils';
 import { HelpTooltip } from '@/components/ui/help-tooltip';
-import { SendToStorageDialog } from './components/SendToStorageDialog';
+import { ProductStockSheet } from './components/ProductStockSheet';
 
 // Roles qui peuvent creer des produits
 const CAN_CREATE_ROLES: LinkMeRole[] = ['enseigne_admin', 'organisation_admin'];
@@ -274,12 +274,13 @@ function MesProduitsContent(): JSX.Element | null {
 }
 
 function ProductRow({ product }: { product: AffiliateProduct }): JSX.Element {
-  const [showStorageDialog, setShowStorageDialog] = useState(false);
+  const [showStockSheet, setShowStockSheet] = useState(false);
   const config = STATUS_CONFIG[product.affiliate_approval_status];
   const Icon = config.icon;
   const canEdit = product.affiliate_approval_status === 'draft';
   const isRejected = product.affiliate_approval_status === 'rejected';
   const isApproved = product.affiliate_approval_status === 'approved';
+  const canShowStock = isApproved && product.store_at_verone;
 
   // Calcul pricing affilié
   // affiliate_payout_ht = prix de vente HT (ce que le client paie)
@@ -380,12 +381,12 @@ function ProductRow({ product }: { product: AffiliateProduct }): JSX.Element {
             </Link>
           )}
 
-          {/* Envoyer au stock - uniquement approved */}
-          {isApproved && (
+          {/* Stock - uniquement approved + store_at_verone */}
+          {canShowStock && (
             <button
-              onClick={() => setShowStorageDialog(true)}
+              onClick={() => setShowStockSheet(true)}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition-colors font-medium"
-              title="Envoyer au stock Verone"
+              title="Voir le stock Verone"
             >
               <Warehouse className="h-3.5 w-3.5" />
               Stock
@@ -393,12 +394,12 @@ function ProductRow({ product }: { product: AffiliateProduct }): JSX.Element {
           )}
         </div>
 
-        {/* Dialog envoi au stock */}
-        {showStorageDialog && (
-          <SendToStorageDialog
-            product={{ id: product.id, name: product.name, sku: product.sku }}
-            isOpen={showStorageDialog}
-            onClose={() => setShowStorageDialog(false)}
+        {/* Sheet stock lateral */}
+        {showStockSheet && (
+          <ProductStockSheet
+            product={product}
+            isOpen={showStockSheet}
+            onClose={() => setShowStockSheet(false)}
           />
         )}
       </td>
