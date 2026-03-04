@@ -2,31 +2,17 @@
 
 import type { ComponentProps } from 'react';
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import type { Database } from '@verone/types';
 
-import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 
 import { CategoryHierarchySelector } from '@verone/categories';
-import { SupplierVsPricingEditSection } from '@verone/common';
 import { ProductStatusCompact } from '@verone/products';
 import { SampleHistoryCompact } from '@verone/products';
-import { ProductVariantsGrid } from '@verone/products';
-import { ProductFixedCharacteristics } from '@verone/products';
 import { ProductImageGallery } from '@verone/products';
 import { ProductCharacteristicsModal } from '@verone/products';
 import { ProductDescriptionsModal } from '@verone/products';
 import { ProductPhotosModal } from '@verone/products';
-import { IdentifiersCompleteEditSection } from '@verone/products';
-import { ProductDescriptionsEditSection } from '@verone/products';
-import { ProductDetailAccordion } from '@verone/products';
-import { ProductInfoSection } from '@verone/products';
-import { SampleRequirementSection } from '@verone/products';
-import { SupplierEditSection } from '@verone/products';
-import { WeightEditSection } from '@verone/products';
-import { ClientOrEnseigneSelector, useProductImages } from '@verone/products';
-import { StockEditSection } from '@verone/stock';
-import { StockStatusCompact } from '@verone/stock';
+import { useProductImages } from '@verone/products';
 import {
   Dialog,
   DialogContent,
@@ -35,195 +21,36 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@verone/ui';
-import { Badge, ButtonUnified, Switch, Label } from '@verone/ui';
-import { cn, checkSLOCompliance } from '@verone/utils';
+import { ButtonUnified, TabsNavigation, TabContent } from '@verone/ui';
+import { checkSLOCompliance } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
 import {
-  ArrowLeft,
-  Share2,
-  ImageIcon,
-  Package,
-  Tag,
-  Truck,
-  Boxes,
-  DollarSign,
-  Settings,
-  Hash,
-  Beaker,
-  Clock,
   Info,
-  Building2,
-  Sparkles,
-  Globe,
-  AlertCircle,
-  UserCircle2,
+  FileText,
+  DollarSign,
+  Boxes,
+  Settings,
+  ImageIcon,
+  Tag,
 } from 'lucide-react';
 
-// Nombre total de champs pour le calcul de completude
-const TOTAL_COMPLETION_FIELDS = 19;
-
-/**
- * Calcule champs manquants par section (19 champs au total)
- * Couvre TOUTES les sections de la fiche produit
- */
-function calculateAllMissingFields(product: Product | null) {
-  if (!product)
-    return {
-      infosGenerales: 0,
-      descriptions: 0,
-      categorisation: 0,
-      fournisseur: 0,
-      stock: 0,
-      tarification: 0,
-      caracteristiques: 0,
-      identifiants: 0,
-    };
-
-  const attrs = product.variant_attributes as Record<string, unknown> | null;
-
-  return {
-    // Informations Generales (2 champs)
-    infosGenerales: [
-      !product.name || product.name.trim() === '',
-      !product.cost_price || product.cost_price <= 0,
-    ].filter(Boolean).length,
-
-    // Descriptions (3 champs)
-    descriptions: [
-      !product.description || product.description.trim() === '',
-      !product.technical_description ||
-        product.technical_description.trim() === '',
-      !product.selling_points ||
-        (product.selling_points as string[]).length === 0,
-    ].filter(Boolean).length,
-
-    // Categorisation (1 champ)
-    categorisation: !product.subcategory_id ? 1 : 0,
-
-    // Fournisseur & References (2 champs)
-    fournisseur: [
-      !product.supplier_id,
-      !product.weight || product.weight <= 0,
-    ].filter(Boolean).length,
-
-    // Stock (1 champ)
-    stock: !product.condition || product.condition.trim() === '' ? 1 : 0,
-
-    // Tarification (1 champ)
-    tarification:
-      product.margin_percentage == null || product.margin_percentage <= 0
-        ? 1
-        : 0,
-
-    // Caracteristiques (6 champs - avec heritage variant_group)
-    caracteristiques: [
-      !attrs?.color,
-      !attrs?.material,
-      product.variant_group_id ? !product.variant_group?.style : !product.style,
-      !attrs?.finish,
-      product.variant_group_id
-        ? !(
-            product.variant_group?.dimensions_length ??
-            product.variant_group?.dimensions_width ??
-            product.variant_group?.dimensions_height
-          )
-        : !(
-            product.dimensions &&
-            Object.keys(product.dimensions as Record<string, unknown>).length >
-              0
-          ),
-      product.variant_group_id
-        ? !product.variant_group?.common_weight
-        : !product.weight,
-    ].filter(Boolean).length,
-
-    // Identifiants (3 champs)
-    identifiants: [
-      !product.sku || product.sku.trim() === '',
-      !product.brand || product.brand.trim() === '',
-      !product.gtin || product.gtin.trim() === '',
-    ].filter(Boolean).length,
-  };
-}
-
-function calculateCompletionPercentage(
-  missing: ReturnType<typeof calculateAllMissingFields>
-): number {
-  const totalMissing = Object.values(missing).reduce((sum, n) => sum + n, 0);
-  return Math.round(
-    ((TOTAL_COMPLETION_FIELDS - totalMissing) / TOTAL_COMPLETION_FIELDS) * 100
-  );
-}
-
-// Type pour un produit avec ses relations (basé sur types Supabase générés)
-type ProductRow = Database['public']['Tables']['products']['Row'];
-type ProductUpdate = Database['public']['Tables']['products']['Update'];
-
-// Relations jointes via select
-interface ProductRelations {
-  enseigne?: {
-    id: string;
-    name: string;
-  } | null;
-  assigned_client?: {
-    id: string;
-    legal_name: string;
-    trade_name: string | null;
-  } | null;
-  affiliate_creator?: {
-    id: string;
-    display_name: string;
-    enseigne?: { id: string; name: string } | null;
-    organisation?: {
-      id: string;
-      legal_name: string;
-      trade_name: string | null;
-    } | null;
-  } | null;
-  supplier?: {
-    id: string;
-    legal_name: string;
-    trade_name: string | null;
-    email: string | null;
-    phone: string | null;
-    is_active: boolean;
-    type: string | null;
-  } | null;
-  subcategory?: {
-    id: string;
-    name: string;
-    slug: string;
-    category?: {
-      id: string;
-      name: string;
-      slug: string;
-      family?: {
-        id: string;
-        name: string;
-        slug: string;
-      };
-    };
-  } | null;
-  variant_group?: {
-    id: string;
-    name: string;
-    dimensions_length: number | null;
-    dimensions_width: number | null;
-    dimensions_height: number | null;
-    dimensions_unit: string | null;
-    common_weight: number | null;
-    has_common_weight: boolean | null;
-    common_cost_price: number | null;
-    has_common_cost_price: boolean | null;
-    style: string | null;
-    suitable_rooms: string[] | null;
-    has_common_supplier: boolean | null;
-    supplier_id: string | null;
-  } | null;
-}
-
-// Type combiné Product (Row + Relations)
-type Product = ProductRow & ProductRelations;
+import { ProductDetailHeader } from './_components/product-detail-header';
+import { ProductGeneralTab } from './_components/product-general-tab';
+import { ProductDescriptionsTab } from './_components/product-descriptions-tab';
+import { ProductPricingTab } from './_components/product-pricing-tab';
+import { ProductStockTab } from './_components/product-stock-tab';
+import { ProductCharacteristicsTab } from './_components/product-characteristics-tab';
+import { ProductImagesTab } from './_components/product-images-tab';
+import type {
+  Product,
+  ProductRow,
+  ProductUpdate,
+  ChannelPricingRow,
+} from './_components/types';
+import {
+  calculateAllMissingFields,
+  calculateCompletionPercentage,
+} from './_components/types';
 
 export default function ProductDetailPage() {
   const params = useParams();
@@ -233,44 +60,31 @@ export default function ProductDetailPage() {
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState('general');
   const [showPhotosModal, setShowPhotosModal] = useState(false);
   const [showCharacteristicsModal, setShowCharacteristicsModal] =
     useState(false);
   const [showDescriptionsModal, setShowDescriptionsModal] = useState(false);
   const [isCategorizeModalOpen, setIsCategorizeModalOpen] = useState(false);
-  const [channelPricing, setChannelPricing] = useState<
-    Array<{
-      channel_id: string;
-      channel_name: string;
-      channel_code: string;
-      public_price_ht: number | null;
-      custom_price_ht: number | null;
-      discount_rate: number | null;
-      markup_rate: number | null;
-      suggested_margin_rate: number | null;
-      is_active: boolean;
-    }>
-  >([]);
+  const [channelPricing, setChannelPricing] = useState<ChannelPricingRow[]>([]);
 
-  // Hook pour récupérer les images du produit (table product_images)
+  // Hook pour recuperer les images du produit (table product_images)
   const { images: productImages, primaryImage: _primaryImage } =
     useProductImages({
       productId: productId ?? '',
       autoFetch: true,
     });
 
-  // Charger le produit (✅ Optimisé avec useCallback)
+  // Charger le produit
   const fetchProduct = useCallback(async () => {
     const startTime = Date.now();
     try {
       setLoading(true);
       setError(null);
 
-      // ✅ FIX: Valider format UUID avant requête
       const uuidRegex =
         /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       if (!productId || !uuidRegex.test(productId)) {
-        // Si ce n'est pas un UUID valide (ex: "create"), rediriger vers catalogue
         router.push('/produits/catalogue');
         return;
       }
@@ -350,7 +164,6 @@ export default function ProductDetailPage() {
         throw new Error('Produit non trouvé');
       }
 
-      // Cast to Product with relations (Supabase returns row + joined relations)
       setProduct(data as Product);
     } catch (err) {
       console.error('Erreur lors du chargement du produit:', err);
@@ -365,13 +178,11 @@ export default function ProductDetailPage() {
     }
   }, [productId, router]);
 
-  // Handler pour mettre à jour le produit (✅ Optimisé avec optimistic update + DB)
+  // Handler pour mettre a jour le produit (optimistic update + DB)
   const handleProductUpdate = useCallback(
     async (updatedData: Partial<ProductRow>) => {
-      // 1. Optimistic UI update (instantané)
       setProduct(prev => (prev ? { ...prev, ...updatedData } : null));
 
-      // 2. Sauvegarde réelle en DB
       try {
         const supabase = createClient();
         const updatePayload: ProductUpdate = updatedData;
@@ -384,11 +195,9 @@ export default function ProductDetailPage() {
           console.error('❌ Erreur sauvegarde produit:', error);
           void fetchProduct().catch(fetchError => {
             console.error('[ProductDetail] Rollback fetch failed:', fetchError);
-          }); // Rollback UI si erreur
+          });
         } else {
           console.warn('✅ Produit sauvegardé en DB:', updatedData);
-          // 3. Recharger les données complètes si champs relationnels modifiés
-          // (pour mettre à jour le breadcrumb et autres données jointes)
           if ('subcategory_id' in updatedData || 'supplier_id' in updatedData) {
             void fetchProduct().catch(fetchError => {
               console.error(
@@ -402,7 +211,7 @@ export default function ProductDetailPage() {
         console.error('❌ Erreur sauvegarde produit:', err);
         void fetchProduct().catch(fetchError => {
           console.error('[ProductDetail] Rollback fetch failed:', fetchError);
-        }); // Rollback UI
+        });
       }
     },
     [productId, fetchProduct]
@@ -422,7 +231,7 @@ export default function ProductDetailPage() {
     });
   }, [fetchProduct]);
 
-  // Fetch channel pricing (canaux de vente) pour ce produit
+  // Fetch channel pricing
   useEffect(() => {
     if (!productId) return;
     const uuidRegex =
@@ -431,7 +240,6 @@ export default function ProductDetailPage() {
 
     const fetchChannelPricing = async () => {
       const supabase = createClient();
-      // Fetch all sales channels with their pricing for this product
       const { data: channels } = await supabase
         .from('sales_channels')
         .select('id, name, code')
@@ -472,8 +280,7 @@ export default function ProductDetailPage() {
     });
   }, [productId]);
 
-  // ✅ HOOKS DÉPLACÉS AVANT RETURNS CONDITIONNELS (React Rules of Hooks)
-  // Breadcrumb (✅ Optimisé avec useMemo)
+  // Breadcrumb
   const breadcrumbParts = useMemo(() => {
     if (!product) return [];
     const parts: string[] = [];
@@ -490,7 +297,7 @@ export default function ProductDetailPage() {
     return parts;
   }, [product]);
 
-  // Calcul complétude accordéons (✅ 19 champs couvrant toutes les sections)
+  // Calcul completude
   const missingFields = useMemo(
     () => calculateAllMissingFields(product),
     [product]
@@ -501,20 +308,11 @@ export default function ProductDetailPage() {
     [missingFields]
   );
 
-  // Calcul sourcing (interne vs client/sur mesure vs affilié)
-  // PRIORITÉ: 1. Affilié (created_by_affiliate) → 2. Sur mesure (enseigne/client) → 3. Interne
-  const sourcing = useMemo((): {
-    type: 'interne' | 'client' | 'affiliate';
-    clientType?: 'enseigne' | 'organisation';
-    clientName?: string;
-    clientId?: string;
-    affiliateName?: string;
-    affiliateDisplayName?: string;
-  } => {
-    // PRIORITÉ 1: Produit affilié (NE PEUT PAS être sur mesure)
+  // Calcul sourcing
+  const sourcing = useMemo(() => {
     if (product?.created_by_affiliate) {
       return {
-        type: 'affiliate',
+        type: 'affiliate' as const,
         affiliateName:
           product.affiliate_creator?.enseigne?.name ??
           product.affiliate_creator?.organisation?.trade_name ??
@@ -524,28 +322,25 @@ export default function ProductDetailPage() {
           product.affiliate_creator?.display_name ?? undefined,
       };
     }
-    // PRIORITÉ 2: Sur mesure enseigne
     if (product?.enseigne) {
       return {
-        type: 'client',
-        clientType: 'enseigne',
+        type: 'client' as const,
+        clientType: 'enseigne' as const,
         clientName: product.enseigne.name,
         clientId: product.enseigne.id,
       };
     }
-    // PRIORITÉ 3: Sur mesure organisation
     if (product?.assigned_client) {
       return {
-        type: 'client',
-        clientType: 'organisation',
+        type: 'client' as const,
+        clientType: 'organisation' as const,
         clientName:
           product.assigned_client.trade_name ??
           product.assigned_client.legal_name,
         clientId: product.assigned_client.id,
       };
     }
-    // DÉFAUT: Catalogue interne
-    return { type: 'interne' };
+    return { type: 'interne' as const };
   }, [
     product?.created_by_affiliate,
     product?.affiliate_creator,
@@ -553,131 +348,79 @@ export default function ProductDetailPage() {
     product?.assigned_client,
   ]);
 
-  // Previews pour les accordions (résumé visible quand fermé)
-  const previews = useMemo(() => {
-    if (!product) return {};
+  // Primary image URL
+  const primaryImageUrl = useMemo(() => {
+    if (_primaryImage?.public_url) return _primaryImage.public_url;
+    if (productImages.length > 0 && productImages[0].public_url)
+      return productImages[0].public_url;
+    return null;
+  }, [_primaryImage, productImages]);
 
-    // Descriptions preview
-    const descParts: string[] = [];
-    if (product.description) {
-      descParts.push(
-        product.description.slice(0, 60) +
-          (product.description.length > 60 ? '...' : '')
-      );
-    }
-    if (product.technical_description) descParts.push('Technique');
-    const sellingPts = product.selling_points as string[] | null;
-    if (sellingPts?.length) descParts.push(`${sellingPts.length} pts de vente`);
-    const descriptions =
-      descParts.length > 0 ? descParts.join(' · ') : 'Aucune description';
-
-    // Categorisation preview
-    const catParts: string[] = [];
-    if (product.subcategory?.category?.family)
-      catParts.push(product.subcategory.category.family.name);
-    if (product.subcategory?.category)
-      catParts.push(product.subcategory.category.name);
-    if (product.subcategory) catParts.push(product.subcategory.name);
-    const categorisation =
-      catParts.length > 0 ? catParts.join(' › ') : 'Non categorise';
-
-    // Fournisseur preview
-    const supplierName =
-      product.supplier?.trade_name ?? product.supplier?.legal_name;
-    const fournisseur = supplierName
-      ? `${supplierName}${product.supplier_reference ? ` · Ref: ${product.supplier_reference}` : ''}`
-      : 'Aucun fournisseur';
-
-    // Stock preview
-    const stock = product.condition
-      ? `Condition: ${product.condition}${product.min_stock ? ` · Min: ${product.min_stock}` : ''}`
-      : 'Non renseigne';
-
-    // Tarification preview
-    const tarifParts: string[] = [];
-    const fmtEur = (v: number) =>
-      new Intl.NumberFormat('fr-FR', {
-        style: 'currency',
-        currency: 'EUR',
-      }).format(v);
-    if (product.cost_price && product.cost_price > 0) {
-      tarifParts.push(`Achat: ${fmtEur(product.cost_price)}`);
-    }
-    if (product.margin_percentage && product.margin_percentage > 0) {
-      tarifParts.push(`Marge: ${product.margin_percentage}%`);
-    }
-    // Prix de vente calculé (cost_price + eco_tax) * (1 + margin/100) - pas de colonne selling_price en DB
-    if (
-      product.cost_price &&
-      product.cost_price > 0 &&
-      product.margin_percentage &&
-      product.margin_percentage > 0
-    ) {
-      const ecoTax = product.eco_tax_default ?? 0;
-      const minSelling =
-        (product.cost_price + ecoTax) * (1 + product.margin_percentage / 100);
-      tarifParts.push(`Vente min: ${fmtEur(minSelling)}`);
-    }
-    const tarification =
-      tarifParts.length > 0 ? tarifParts.join(' · ') : 'Non renseigne';
-
-    // Caracteristiques preview
-    const attrs = product.variant_attributes as Record<string, unknown> | null;
-    const charParts: string[] = [];
-    if (attrs?.color) charParts.push(String(attrs.color));
-    if (attrs?.material) charParts.push(String(attrs.material));
-    const styleVal = product.variant_group_id
-      ? product.variant_group?.style
-      : product.style;
-    if (styleVal) charParts.push(String(styleVal));
-    const caracteristiques =
-      charParts.length > 0 ? charParts.join(' · ') : 'Non renseigne';
-
-    // Identifiants preview
-    const idParts: string[] = [];
-    if (product.sku) idParts.push(`SKU: ${product.sku}`);
-    if (product.brand) idParts.push(product.brand);
-    if (product.gtin) idParts.push(`GTIN: ${product.gtin}`);
-    const identifiants =
-      idParts.length > 0 ? idParts.join(' · ') : 'Non renseigne';
-
-    // Echantillons preview
-    const echantillons = product.requires_sample
-      ? 'Echantillon requis'
-      : 'Non requis';
-
-    // Visibilite LinkMe preview
-    const visibilite = product.show_on_linkme_globe
-      ? 'Visible sur le globe LinkMe'
-      : 'Non publie';
-
-    // Metadonnees preview
-    const metaParts: string[] = [];
-    if (product.created_at)
-      metaParts.push(
-        `Cree le ${new Date(product.created_at).toLocaleDateString('fr-FR')}`
-      );
-    if (product.updated_at)
-      metaParts.push(
-        `Modifie le ${new Date(product.updated_at).toLocaleDateString('fr-FR')}`
-      );
-    const metadonnees = metaParts.join(' · ');
-
+  // Missing fields per tab (for badges)
+  const tabBadges = useMemo(() => {
+    const generalMissing =
+      missingFields.infosGenerales +
+      missingFields.categorisation +
+      missingFields.fournisseur +
+      missingFields.identifiants;
     return {
-      descriptions,
-      categorisation,
-      fournisseur,
-      stock,
-      tarification,
-      caracteristiques,
-      identifiants,
-      echantillons,
-      visibilite,
-      metadonnees,
+      general: generalMissing > 0 ? generalMissing : undefined,
+      descriptions:
+        missingFields.descriptions > 0 ? missingFields.descriptions : undefined,
+      pricing:
+        missingFields.tarification > 0 ? missingFields.tarification : undefined,
+      stock: missingFields.stock > 0 ? missingFields.stock : undefined,
+      characteristics:
+        missingFields.caracteristiques > 0
+          ? missingFields.caracteristiques
+          : undefined,
     };
-  }, [product]);
+  }, [missingFields]);
 
-  // État de chargement
+  // Tab definitions
+  const tabs = useMemo(
+    () => [
+      {
+        id: 'general',
+        label: 'Général',
+        icon: <Info className="h-4 w-4" />,
+        badge: tabBadges.general,
+      },
+      {
+        id: 'descriptions',
+        label: 'Descriptions',
+        icon: <FileText className="h-4 w-4" />,
+        badge: tabBadges.descriptions,
+      },
+      {
+        id: 'pricing',
+        label: 'Tarification',
+        icon: <DollarSign className="h-4 w-4" />,
+        badge: tabBadges.pricing,
+      },
+      {
+        id: 'stock',
+        label: 'Stock',
+        icon: <Boxes className="h-4 w-4" />,
+        badge: tabBadges.stock,
+      },
+      {
+        id: 'characteristics',
+        label: 'Caractéristiques',
+        icon: <Settings className="h-4 w-4" />,
+        badge: tabBadges.characteristics,
+      },
+      {
+        id: 'images',
+        label: 'Images',
+        icon: <ImageIcon className="h-4 w-4" />,
+        badge: productImages.length > 0 ? productImages.length : undefined,
+      },
+    ],
+    [tabBadges, productImages.length]
+  );
+
+  // Etat de chargement
   if (loading) {
     return (
       <div className="w-full py-6">
@@ -691,7 +434,7 @@ export default function ProductDetailPage() {
     );
   }
 
-  // État d'erreur
+  // Etat d'erreur
   if (error || !product) {
     return (
       <div className="w-full py-6">
@@ -713,645 +456,82 @@ export default function ProductDetailPage() {
 
   return (
     <div className="min-h-screen bg-neutral-50 pb-20">
-      {/* Header fixe avec navigation */}
-      <div className="bg-white border-b border-neutral-200 sticky top-0 z-10">
-        <div className="max-w-[1800px] mx-auto px-4 py-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <ButtonUnified
-                variant="outline"
-                size="sm"
-                onClick={() => router.push('/produits/catalogue')}
-                icon={ArrowLeft}
-                iconPosition="left"
-              >
-                Retour
-              </ButtonUnified>
-              <div className="h-6 w-px bg-neutral-200" />
-              <nav className="text-sm text-neutral-600">
-                {breadcrumbParts.join(' › ')}
-              </nav>
-              {/* Badge Sourcing */}
-              {sourcing.type === 'affiliate' ? (
-                <Badge
-                  variant="outline"
-                  className="flex items-center gap-1 bg-purple-50 border-purple-300 text-purple-700"
-                >
-                  <UserCircle2 className="h-3 w-3" />
-                  Produit affilié ({sourcing.affiliateName})
-                </Badge>
-              ) : sourcing.type === 'client' && sourcing.clientId ? (
-                <Link
-                  href={
-                    sourcing.clientType === 'enseigne'
-                      ? `/contacts-organisations/enseignes/${sourcing.clientId}`
-                      : `/contacts-organisations/customers/${sourcing.clientId}`
-                  }
-                >
-                  <Badge
-                    variant="customer"
-                    className="flex items-center gap-1 cursor-pointer hover:bg-purple-200 transition-colors"
-                  >
-                    <Building2 className="h-3 w-3" />
-                    Client: {sourcing.clientName}
-                  </Badge>
-                </Link>
-              ) : (
-                <Badge variant="secondary" className="flex items-center gap-1">
-                  <Package className="h-3 w-3" />
-                  Sourcing interne
-                </Badge>
-              )}
-            </div>
-            <ButtonUnified
-              variant="outline"
-              size="sm"
-              onClick={handleShare}
-              icon={Share2}
-              iconPosition="left"
-            >
-              Partager
-            </ButtonUnified>
-          </div>
-        </div>
-      </div>
+      {/* Header sticky */}
+      <ProductDetailHeader
+        product={product}
+        breadcrumbParts={breadcrumbParts}
+        completionPercentage={completionPercentage}
+        primaryImageUrl={primaryImageUrl}
+        sourcing={sourcing}
+        onBack={() => router.push('/produits/catalogue')}
+        onShare={handleShare}
+        onImageClick={() => setShowPhotosModal(true)}
+      />
 
-      {/* Layout Grid 2 colonnes */}
-      <div className="max-w-[1800px] mx-auto grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-4 p-4">
-        {/* SIDEBAR FIXE - Galerie Images */}
-        <aside className="lg:sticky lg:top-20 lg:h-[calc(100vh-6rem)] space-y-3">
-          {/* Galerie principale */}
-          <div className="bg-white rounded-lg shadow-sm border border-neutral-200 overflow-hidden">
-            <ProductImageGallery
-              productId={product.id}
-              productName={product.name}
-              productStatus={
-                product.product_status as ComponentProps<
-                  typeof ProductImageGallery
-                >['productStatus']
-              }
-              compact={false}
-              onManagePhotos={() => setShowPhotosModal(true)}
-            />
-          </div>
+      {/* Tabs Navigation */}
+      <div className="max-w-[1800px] mx-auto px-4">
+        <TabsNavigation
+          tabs={tabs}
+          defaultTab="general"
+          onTabChange={setActiveTab}
+          className="bg-white"
+        />
 
-          {/* Actions sous galerie */}
-          <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-3 space-y-2">
-            <ButtonUnified
-              variant="outline"
-              size="sm"
-              className="w-full justify-start"
-              onClick={() => setShowPhotosModal(true)}
-              icon={ImageIcon}
-              iconPosition="left"
-            >
-              Gérer photos ({productImages.length})
-            </ButtonUnified>
-            <ButtonUnified
-              variant="outline"
-              size="sm"
-              className="w-full justify-start"
-              onClick={handleShare}
-              icon={Share2}
-              iconPosition="left"
-            >
-              Partager
-            </ButtonUnified>
-          </div>
+        {/* Tab Contents */}
+        <TabContent activeTab={activeTab} tabId="general">
+          <ProductGeneralTab
+            product={product}
+            completionPercentage={completionPercentage}
+            missingFields={missingFields}
+            sourcing={sourcing}
+            breadcrumbParts={breadcrumbParts}
+            onProductUpdate={handleProductUpdate}
+            onOpenCategorizeModal={() => setIsCategorizeModalOpen(true)}
+          />
+        </TabContent>
 
-          {/* Sections statuts compactes */}
-          <div className="space-y-2">
-            <StockStatusCompact
-              product={{
-                id: product.id,
-                stock_real: product.stock_real ?? 0,
-                stock_forecasted_in: product.stock_forecasted_in ?? 0,
-              }}
-            />
+        <TabContent activeTab={activeTab} tabId="descriptions">
+          <ProductDescriptionsTab
+            product={product}
+            onProductUpdate={handleProductUpdate}
+          />
+        </TabContent>
 
-            <ProductStatusCompact
-              product={{
-                id: product.id,
-                product_status: product.product_status,
-              }}
-              onUpdate={updates => {
-                void handleProductUpdate(updates).catch(console.error);
-              }}
-            />
+        <TabContent activeTab={activeTab} tabId="pricing">
+          <ProductPricingTab
+            product={product}
+            channelPricing={channelPricing}
+            onProductUpdate={handleProductUpdate}
+          />
+        </TabContent>
 
-            {/* Historique échantillons commandés */}
-            <SampleHistoryCompact productId={product.id} />
-          </div>
-        </aside>
+        <TabContent activeTab={activeTab} tabId="stock">
+          <ProductStockTab
+            product={product}
+            onProductUpdate={handleProductUpdate}
+          />
+        </TabContent>
 
-        {/* CONTENT AREA - Accordions scrollables */}
-        <main className="space-y-3 max-w-6xl">
-          {/* Accordion 1: Informations Générales */}
-          <ProductDetailAccordion
-            title="Informations Générales"
-            icon={Info}
-            defaultOpen
-            badge={
-              missingFields.infosGenerales > 0
-                ? missingFields.infosGenerales
-                : undefined
+        <TabContent activeTab={activeTab} tabId="characteristics">
+          <ProductCharacteristicsTab
+            product={product}
+            onOpenCharacteristicsModal={() => setShowCharacteristicsModal(true)}
+          />
+        </TabContent>
+
+        <TabContent activeTab={activeTab} tabId="images">
+          <ProductImagesTab
+            productId={product.id}
+            productName={product.name}
+            productStatus={
+              product.product_status as ComponentProps<
+                typeof ProductImageGallery
+              >['productStatus']
             }
-          >
-            <ProductInfoSection
-              product={{
-                id: product.id,
-                name: product.name,
-                sku: product.sku,
-                cost_price: product.cost_price,
-                cost_net_avg: product.cost_net_avg,
-                stock_status: product.stock_status,
-                product_status: product.product_status,
-                supplier_id: product.supplier_id,
-                subcategory_id: product.subcategory_id,
-                variant_group_id: product.variant_group_id,
-              }}
-              completionPercentage={completionPercentage}
-              missingFields={missingFields}
-              onUpdate={async updates => {
-                await handleProductUpdate(updates as Partial<ProductRow>);
-              }}
-            />
-
-            {/* Section: Attribution client (produit sur mesure) */}
-            <div className="mt-6 pt-6 border-t border-neutral-200">
-              {/* Bannière informative pour les produits affiliés */}
-              {product.created_by_affiliate && (
-                <div className="mb-3 p-3 bg-purple-50 border border-purple-200 rounded-lg">
-                  <div className="flex items-center gap-2">
-                    <UserCircle2 className="h-5 w-5 text-purple-600 flex-shrink-0" />
-                    <div>
-                      <p className="text-sm font-medium text-purple-900">
-                        Produit affilié
-                      </p>
-                      <p className="text-xs text-purple-700">
-                        Canal de vente: LinkMe
-                      </p>
-                      <p className="text-xs text-purple-700">
-                        Créé par:{' '}
-                        {product.affiliate_creator?.display_name ??
-                          sourcing.affiliateName ??
-                          'Affilié inconnu'}
-                      </p>
-                      <p className="text-xs text-purple-600 mt-1">
-                        Ce produit ne peut pas être marqué comme &quot;sur
-                        mesure&quot; car il appartient à l&apos;affilié.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              <div className="flex items-center justify-between mb-3">
-                <div>
-                  <h4 className="text-sm font-medium text-neutral-900 flex items-center gap-2">
-                    <Sparkles className="h-4 w-4 text-purple-600" />
-                    Attribution client (produit sur mesure)
-                  </h4>
-                  <p className="text-xs text-neutral-500 mt-0.5">
-                    {product.created_by_affiliate
-                      ? 'Ce produit affilié ne peut pas être assigné à un autre client'
-                      : 'Assignez ce produit à une enseigne ou organisation pour le rendre exclusif'}
-                  </p>
-                </div>
-                <Badge
-                  variant={
-                    sourcing.type === 'affiliate'
-                      ? 'outline'
-                      : sourcing.type === 'client'
-                        ? 'customer'
-                        : 'secondary'
-                  }
-                  className={cn(
-                    'flex items-center gap-1',
-                    sourcing.type === 'affiliate' &&
-                      'bg-purple-50 border-purple-300 text-purple-700'
-                  )}
-                >
-                  {sourcing.type === 'affiliate' ? (
-                    <>
-                      <UserCircle2 className="h-3 w-3" />
-                      Produit affilié
-                    </>
-                  ) : sourcing.type === 'client' ? (
-                    <>
-                      <Sparkles className="h-3 w-3" />
-                      Sur mesure
-                    </>
-                  ) : (
-                    <>
-                      <Package className="h-3 w-3" />
-                      Catalogue général
-                    </>
-                  )}
-                </Badge>
-              </div>
-
-              <ClientOrEnseigneSelector
-                enseigneId={product.enseigne_id}
-                organisationId={product.assigned_client_id}
-                onEnseigneChange={(enseigneId, _enseigneName, _parentOrgId) => {
-                  void handleProductUpdate({
-                    enseigne_id: enseigneId,
-                    assigned_client_id: null, // Reset l'autre si on sélectionne une enseigne
-                  }).catch(error => {
-                    console.error(
-                      '[ProductDetail] Enseigne update failed:',
-                      error
-                    );
-                  });
-                }}
-                onOrganisationChange={(organisationId, _organisationName) => {
-                  void handleProductUpdate({
-                    assigned_client_id: organisationId,
-                    enseigne_id: null, // Reset l'autre si on sélectionne une organisation
-                  }).catch(error => {
-                    console.error(
-                      '[ProductDetail] Organisation update failed:',
-                      error
-                    );
-                  });
-                }}
-                disabled={!!product.created_by_affiliate}
-                label=""
-                className="max-w-md"
-              />
-            </div>
-          </ProductDetailAccordion>
-
-          {/* Accordion 2: Descriptions (ouvert par defaut - critique pour boutique) */}
-          <ProductDetailAccordion
-            title="Descriptions"
-            icon={Beaker}
-            defaultOpen
-            preview={previews.descriptions}
-            badge={
-              missingFields.descriptions > 0
-                ? missingFields.descriptions
-                : undefined
-            }
-          >
-            <ProductDescriptionsEditSection
-              product={{
-                id: product.id,
-                description: product.description,
-                technical_description: product.technical_description,
-                selling_points: product.selling_points as string[] | null,
-              }}
-              onUpdate={updates => {
-                void handleProductUpdate(updates).catch(console.error);
-              }}
-            />
-          </ProductDetailAccordion>
-
-          {/* Accordion 3: Catégorisation */}
-          <ProductDetailAccordion
-            title="Catégorisation"
-            icon={Tag}
-            defaultOpen={false}
-            preview={previews.categorisation}
-            badge={
-              missingFields.categorisation > 0
-                ? missingFields.categorisation
-                : undefined
-            }
-          >
-            <div className="space-y-3">
-              {/* Message informatif si catégorisation gérée par le groupe */}
-              {product.variant_group_id && product.variant_group && (
-                <div className="mb-3 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-800">
-                  ℹ️ La catégorisation est héritée du groupe de variantes "
-                  {product.variant_group.name}".{' '}
-                  <a
-                    href={`/produits/catalogue/variantes/${product.variant_group.id}`}
-                    className="underline font-medium hover:text-blue-900"
-                  >
-                    Modifier depuis la page du groupe
-                  </a>
-                </div>
-              )}
-
-              {/* Hiérarchie actuelle */}
-              {breadcrumbParts.length > 1 && (
-                <div className="bg-neutral-50 rounded-md p-3 text-sm">
-                  <p className="text-neutral-600 mb-1">
-                    Classification actuelle:
-                  </p>
-                  <p className="font-medium text-neutral-900">
-                    {breadcrumbParts.slice(0, -1).join(' › ')}
-                  </p>
-                </div>
-              )}
-
-              <ButtonUnified
-                variant="outline"
-                size="sm"
-                onClick={() => setIsCategorizeModalOpen(true)}
-                disabled={!!product.variant_group_id}
-              >
-                Modifier la catégorisation
-              </ButtonUnified>
-            </div>
-          </ProductDetailAccordion>
-
-          {/* Accordion 4: Fournisseur & Références */}
-          <ProductDetailAccordion
-            title="Fournisseur & Références"
-            icon={Truck}
-            defaultOpen={false}
-            preview={previews.fournisseur}
-            badge={
-              missingFields.fournisseur > 0
-                ? missingFields.fournisseur
-                : undefined
-            }
-          >
-            <SupplierEditSection
-              product={
-                product as ComponentProps<typeof SupplierEditSection>['product']
-              }
-              variantGroup={
-                (product.variant_group ?? undefined) as ComponentProps<
-                  typeof SupplierEditSection
-                >['variantGroup']
-              }
-              onUpdate={updates => {
-                void handleProductUpdate(updates).catch(console.error);
-              }}
-            />
-            <WeightEditSection
-              product={
-                product as ComponentProps<typeof WeightEditSection>['product']
-              }
-              variantGroup={
-                (product.variant_group ?? undefined) as ComponentProps<
-                  typeof WeightEditSection
-                >['variantGroup']
-              }
-              onUpdate={updates => {
-                void handleProductUpdate(updates).catch(console.error);
-              }}
-              className="mt-4"
-            />
-          </ProductDetailAccordion>
-
-          {/* Accordion 4: Variantes Produit (conditionnel) */}
-          {product.variant_group_id && (
-            <ProductDetailAccordion
-              title="Variantes Produit"
-              icon={Package}
-              defaultOpen
-            >
-              <ProductVariantsGrid
-                productId={product.id}
-                currentProductId={product.id}
-              />
-            </ProductDetailAccordion>
-          )}
-
-          {/* Accordion 6: Stock */}
-          <ProductDetailAccordion
-            title="Stock"
-            icon={Boxes}
-            defaultOpen={false}
-            preview={previews.stock}
-            badge={missingFields.stock > 0 ? missingFields.stock : undefined}
-          >
-            <StockEditSection
-              product={
-                {
-                  id: product.id,
-                  condition: product.condition,
-                  min_stock: product.min_stock ?? undefined,
-                } as ComponentProps<typeof StockEditSection>['product']
-              }
-              onUpdate={updates => {
-                void handleProductUpdate(updates).catch(console.error);
-              }}
-            />
-          </ProductDetailAccordion>
-
-          {/* Accordion 7: Tarification */}
-          <ProductDetailAccordion
-            title="Tarification"
-            icon={DollarSign}
-            defaultOpen={false}
-            preview={previews.tarification}
-            badge={
-              missingFields.tarification > 0
-                ? missingFields.tarification
-                : undefined
-            }
-          >
-            <SupplierVsPricingEditSection
-              product={{
-                id: product.id,
-                cost_price: product.cost_price ?? undefined,
-                margin_percentage: product.margin_percentage ?? undefined,
-                variant_group_id: product.variant_group_id ?? undefined,
-                cost_price_avg: product.cost_price_avg,
-                cost_price_min: product.cost_price_min,
-                cost_price_max: product.cost_price_max,
-                cost_price_last: product.cost_price_last,
-                cost_price_count: product.cost_price_count,
-                target_margin_percentage: product.target_margin_percentage,
-                cost_net_avg: product.cost_net_avg,
-                cost_net_min: product.cost_net_min,
-                cost_net_max: product.cost_net_max,
-                cost_net_last: product.cost_net_last,
-              }}
-              variantGroup={product.variant_group ?? null}
-              channelPricing={channelPricing}
-              onUpdate={updates => {
-                void handleProductUpdate(updates as Partial<ProductRow>).catch(
-                  console.error
-                );
-              }}
-            />
-          </ProductDetailAccordion>
-
-          {/* Accordion 8: Caractéristiques */}
-          <ProductDetailAccordion
-            title="Caractéristiques"
-            icon={Settings}
-            defaultOpen={false}
-            preview={previews.caracteristiques}
-            badge={
-              missingFields.caracteristiques > 0
-                ? missingFields.caracteristiques
-                : undefined
-            }
-          >
-            {product.variant_group_id && (
-              <div className="mb-3 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-800">
-                ℹ️ Les caractéristiques sont gérées au niveau du groupe de
-                variantes.{' '}
-                <a
-                  href={`/produits/catalogue/variantes/${product.variant_group_id}`}
-                  className="underline font-medium hover:text-blue-900"
-                >
-                  Voir le groupe
-                </a>
-              </div>
-            )}
-            <ProductFixedCharacteristics
-              product={
-                product as ComponentProps<
-                  typeof ProductFixedCharacteristics
-                >['product']
-              }
-            />
-
-            <div className="mt-4">
-              <ButtonUnified
-                variant="outline"
-                size="sm"
-                onClick={() => setShowCharacteristicsModal(true)}
-              >
-                Éditer caractéristiques
-              </ButtonUnified>
-            </div>
-          </ProductDetailAccordion>
-
-          {/* Accordion 9: Identifiants */}
-          <ProductDetailAccordion
-            title="Identifiants"
-            icon={Hash}
-            defaultOpen={false}
-            preview={previews.identifiants}
-            badge={
-              missingFields.identifiants > 0
-                ? missingFields.identifiants
-                : undefined
-            }
-          >
-            <IdentifiersCompleteEditSection
-              product={{
-                id: product.id,
-                sku: product.sku ?? '',
-                brand: product.brand ?? undefined,
-                gtin: product.gtin ?? undefined,
-                condition: product.condition ?? undefined,
-              }}
-              onUpdate={updates => {
-                void handleProductUpdate(updates).catch(console.error);
-              }}
-            />
-          </ProductDetailAccordion>
-
-          {/* Accordion 10: Échantillons */}
-          <ProductDetailAccordion
-            title="Gestion Échantillons"
-            icon={Beaker}
-            defaultOpen={false}
-            preview={previews.echantillons}
-          >
-            <SampleRequirementSection
-              productId={product.id}
-              requiresSample={product.requires_sample ?? false}
-              isProduct
-              productName={product.name}
-              supplierName={
-                product.supplier?.legal_name ??
-                product.supplier?.trade_name ??
-                undefined
-              }
-              costPrice={product.cost_price ?? undefined}
-              disabled={(product.stock_quantity ?? 0) >= 1}
-              onRequirementChange={requiresSample => {
-                void handleProductUpdate({
-                  requires_sample: requiresSample,
-                }).catch(error => {
-                  console.error(
-                    '[ProductDetail] Sample requirement update failed:',
-                    error
-                  );
-                });
-              }}
-            />
-          </ProductDetailAccordion>
-
-          {/* Accordion 11: Visibilité LinkMe */}
-          <ProductDetailAccordion
-            title="Visibilité LinkMe"
-            icon={Globe}
-            defaultOpen={false}
-            preview={previews.visibilite}
-          >
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                <div className="flex-1">
-                  <Label className="font-medium flex items-center gap-2">
-                    <Globe className="h-4 w-4 text-[#2ECCC1]" />
-                    Afficher sur le Globe LinkMe
-                  </Label>
-                  <p className="text-sm text-gray-500 mt-1">
-                    Ce produit apparaîtra sur le globe 3D de la page
-                    d&apos;accueil et de connexion LinkMe
-                  </p>
-                </div>
-                <Switch
-                  checked={product.show_on_linkme_globe ?? false}
-                  onCheckedChange={(checked: boolean) => {
-                    void handleProductUpdate({
-                      show_on_linkme_globe: checked,
-                    }).catch(error => {
-                      console.error(
-                        '[ProductDetail] Globe visibility update failed:',
-                        error
-                      );
-                    });
-                  }}
-                  disabled={productImages.length === 0}
-                />
-              </div>
-              {productImages.length === 0 && (
-                <p className="text-sm text-amber-600 flex items-center gap-2">
-                  <AlertCircle className="h-4 w-4" />
-                  Une image produit est requise pour l&apos;affichage sur le
-                  globe
-                </p>
-              )}
-            </div>
-          </ProductDetailAccordion>
-
-          {/* Accordion 12: Métadonnées & Audit */}
-          <ProductDetailAccordion
-            title="Métadonnées & Audit"
-            icon={Clock}
-            defaultOpen={false}
-            preview={previews.metadonnees}
-          >
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between py-2 border-b border-neutral-100">
-                <span className="text-neutral-600">ID:</span>
-                <span className="font-mono text-neutral-900">
-                  {product.id.slice(0, 8)}...
-                </span>
-              </div>
-              <div className="flex justify-between py-2 border-b border-neutral-100">
-                <span className="text-neutral-600">Créé le:</span>
-                <span className="text-neutral-900">
-                  {product.created_at
-                    ? new Date(product.created_at).toLocaleString('fr-FR')
-                    : 'N/A'}
-                </span>
-              </div>
-              <div className="flex justify-between py-2">
-                <span className="text-neutral-600">Modifié le:</span>
-                <span className="text-neutral-900">
-                  {product.updated_at
-                    ? new Date(product.updated_at).toLocaleString('fr-FR')
-                    : 'N/A'}
-                </span>
-              </div>
-            </div>
-          </ProductDetailAccordion>
-        </main>
+            imageCount={productImages.length}
+            onOpenPhotosModal={() => setShowPhotosModal(true)}
+          />
+        </TabContent>
       </div>
 
       {/* Modal de gestion des photos */}
@@ -1372,14 +552,13 @@ export default function ProductDetailPage() {
         }}
       />
 
-      {/* Modal de gestion des caractéristiques */}
+      {/* Modal de gestion des caracteristiques */}
       <ProductCharacteristicsModal
         isOpen={showCharacteristicsModal}
         onClose={() => setShowCharacteristicsModal(false)}
         productId={product.id}
         productName={product.name}
         initialData={{
-          // JSONB fields from Supabase are typed as Json; actual runtime shape is Record
           variant_attributes:
             (product.variant_attributes as Record<string, unknown>) ??
             undefined,
@@ -1417,7 +596,7 @@ export default function ProductDetailPage() {
         }}
       />
 
-      {/* Modal de modification de la catégorisation */}
+      {/* Modal de modification de la categorisation */}
       <Dialog
         open={isCategorizeModalOpen}
         onOpenChange={setIsCategorizeModalOpen}
