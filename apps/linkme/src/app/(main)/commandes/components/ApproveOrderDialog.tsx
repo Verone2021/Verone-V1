@@ -74,7 +74,7 @@ export function ApproveOrderDialog({
             <div className="flex justify-between items-center">
               <span className="text-sm text-gray-500">Numéro</span>
               <span className="font-semibold text-gray-900">
-                {order.order_number}
+                {order.linkme_display_number || order.order_number}
               </span>
             </div>
             <div className="flex justify-between items-center">

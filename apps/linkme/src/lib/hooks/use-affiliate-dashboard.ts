@@ -46,7 +46,8 @@ export interface TopProductData {
 
 export interface DashboardData {
   commissionsByStatus: CommissionsByStatus;
-  topProducts: TopProductData[];
+  topProductsCatalogue: TopProductData[];
+  topProductsRevendeur: TopProductData[];
 }
 
 // ============================================

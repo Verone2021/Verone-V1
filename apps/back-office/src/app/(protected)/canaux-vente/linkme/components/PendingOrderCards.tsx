@@ -49,7 +49,14 @@ function PendingOrderCard({ order }: { order: PendingOrder }) {
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <CardTitle className="text-base">{order.order_number}</CardTitle>
+            <CardTitle className="text-base">
+              {order.order_number}
+              {order.linkme_display_number && (
+                <span className="ml-2 text-sm font-normal text-gray-500">
+                  ({order.linkme_display_number})
+                </span>
+              )}
+            </CardTitle>
             <Badge variant="destructive" className="text-xs">
               En attente
             </Badge>

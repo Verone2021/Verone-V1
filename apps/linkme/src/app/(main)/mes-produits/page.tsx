@@ -33,8 +33,19 @@ import {
   FileEdit,
   AlertCircle,
   Warehouse,
+  MoreHorizontal,
+  Eye,
+  Pencil,
+  PackagePlus,
 } from 'lucide-react';
 
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from '@verone/ui';
 import { useAuth, type LinkMeRole } from '@/contexts/AuthContext';
 import {
   useAffiliateProducts,
@@ -275,6 +286,7 @@ function MesProduitsContent(): JSX.Element | null {
 }
 
 function ProductRow({ product }: { product: AffiliateProduct }): JSX.Element {
+  const router = useRouter();
   const [showDetailSheet, setShowDetailSheet] = useState(false);
   const [showStorageDialog, setShowStorageDialog] = useState(false);
   const config = STATUS_CONFIG[product.affiliate_approval_status];
@@ -354,56 +366,52 @@ function ProductRow({ product }: { product: AffiliateProduct }): JSX.Element {
         </div>
       </td>
       <td className="px-6 py-4 text-right">
-        <div className="flex items-center justify-end gap-2">
-          {/* Voir - toujours disponible */}
-          <button
-            onClick={() => setShowDetailSheet(true)}
-            className="px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors font-medium"
-          >
-            Voir
-          </button>
-
-          {/* Modifier - uniquement draft */}
-          {canEdit && (
-            <Link
-              href={`/mes-produits/${product.id}?edit=true`}
-              className="px-3 py-1.5 text-sm text-linkme-turquoise hover:bg-linkme-turquoise/10 rounded-lg transition-colors font-medium"
-            >
-              Modifier
-            </Link>
-          )}
-
-          {/* Corriger - uniquement rejected */}
-          {isRejected && (
-            <Link
-              href={`/mes-produits/${product.id}?edit=true`}
-              className="px-3 py-1.5 text-sm text-amber-600 hover:bg-amber-50 rounded-lg transition-colors font-medium"
-            >
-              Corriger
-            </Link>
-          )}
-
-          {/* Stock - uniquement approved + store_at_verone */}
-          {canShowStock && (
-            <>
-              <Link
-                href="/stockage"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition-colors font-medium"
-                title="Voir mon stock"
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+              <MoreHorizontal className="h-4 w-4 text-gray-500" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuItem onClick={() => setShowDetailSheet(true)}>
+              <Eye className="h-4 w-4 mr-2" />
+              Voir détails
+            </DropdownMenuItem>
+            {canEdit && (
+              <DropdownMenuItem
+                onClick={() =>
+                  router.push(`/mes-produits/${product.id}?edit=true`)
+                }
               >
-                <Warehouse className="h-3.5 w-3.5" />
-                Stock
-              </Link>
-              <button
-                onClick={() => setShowStorageDialog(true)}
-                className="p-1.5 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
-                title="Demande d'envoi au stock"
+                <Pencil className="h-4 w-4 mr-2" />
+                Modifier
+              </DropdownMenuItem>
+            )}
+            {isRejected && (
+              <DropdownMenuItem
+                onClick={() =>
+                  router.push(`/mes-produits/${product.id}?edit=true`)
+                }
               >
-                <Plus className="h-3.5 w-3.5" />
-              </button>
-            </>
-          )}
-        </div>
+                <Pencil className="h-4 w-4 mr-2" />
+                Corriger
+              </DropdownMenuItem>
+            )}
+            {canShowStock && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => router.push('/stockage')}>
+                  <Warehouse className="h-4 w-4 mr-2" />
+                  Voir stock
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setShowStorageDialog(true)}>
+                  <PackagePlus className="h-4 w-4 mr-2" />
+                  Demande de stock
+                </DropdownMenuItem>
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         {/* Sheet detail produit */}
         {showDetailSheet && (

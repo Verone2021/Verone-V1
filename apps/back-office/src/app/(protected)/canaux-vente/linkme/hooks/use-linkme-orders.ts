@@ -26,6 +26,7 @@ type SalesOrderWithCustomer = Pick<
   SalesOrderRow,
   | 'id'
   | 'order_number'
+  | 'linkme_display_number'
   | 'channel_id'
   | 'customer_id'
   | 'customer_type'
@@ -137,6 +138,7 @@ export interface CreateLinkMeOrderInput {
 export interface LinkMeOrder {
   id: string;
   order_number: string;
+  linkme_display_number: string | null;
   channel_id: string | null;
   customer_type: string;
   customer_organisation_id: string | null;
@@ -227,6 +229,7 @@ async function fetchLinkMeOrders(): Promise<LinkMeOrder[]> {
       `
       id,
       order_number,
+      linkme_display_number,
       channel_id,
       customer_id,
       customer_type,
@@ -530,6 +533,7 @@ async function createLinkMeOrder(
     customer_id: customerId,
     customer_type: input.customer_type,
     created_by: user.id,
+    created_by_affiliate_id: input.affiliate_id,
     status: 'draft' as const,
     payment_status_v2: 'pending',
     total_ht: totalHt,
