@@ -534,6 +534,40 @@ export function useDeleteLinkMeUser() {
 }
 
 /**
+ * Hook: supprimer définitivement un utilisateur LinkMe (hard delete)
+ * Supprime auth.users + user_app_roles + user_profiles, libère l'email
+ * Prérequis: l'utilisateur doit être archivé (is_active = false)
+ */
+export function useHardDeleteLinkMeUser() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (userId: string) => {
+      const response = await fetch('/api/linkme/users/hard-delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: userId }),
+      });
+
+      if (!response.ok) {
+        const errorData = (await response.json()) as { message?: string };
+        throw new Error(
+          errorData.message ?? 'Erreur lors de la suppression définitive'
+        );
+      }
+
+      return response.json() as Promise<{ success: boolean; message: string }>;
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['linkme-users'] }),
+        queryClient.invalidateQueries({ queryKey: ['linkme-users-stats'] }),
+      ]);
+    },
+  });
+}
+
+/**
  * Hook: statistiques utilisateurs LinkMe
  */
 export function useLinkMeUsersStats() {

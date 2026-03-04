@@ -14,7 +14,6 @@ import {
   Building2,
   Store,
   Check,
-  X,
   Eye,
   Pencil,
   UserX,
@@ -22,6 +21,7 @@ import {
   Key,
   Shield,
   Trash2,
+  Archive,
 } from 'lucide-react';
 
 import { LinkMeDeleteUserDialog } from '../components/LinkMeDeleteUserDialog';
@@ -66,9 +66,9 @@ function StatusBadge({ isActive }: { isActive: boolean }) {
       Actif
     </span>
   ) : (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">
-      <X className="h-3 w-3" />
-      Suspendu
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-700">
+      <Archive className="h-3 w-3" />
+      Archivé
     </span>
   );
 }
@@ -125,9 +125,14 @@ function AccountRow({
     `${user.first_name?.[0] ?? ''}${user.last_name?.[0] ?? ''}`.toUpperCase() ||
     '?';
 
+  const isArchived = !user.is_active;
+
   return (
     <tr
-      className="hover:bg-gray-50 transition-colors cursor-pointer"
+      className={cn(
+        'hover:bg-gray-50 transition-colors cursor-pointer',
+        isArchived && 'opacity-50'
+      )}
       onClick={() => onView(user)}
     >
       {/* Avatar + Email */}
@@ -184,7 +189,7 @@ function AccountRow({
         <StatusBadge isActive={user.is_active} />
       </td>
 
-      {/* Actions - 4 boutons comme admin/users */}
+      {/* Actions */}
       <td className="px-4 py-3 text-right">
         <div
           className="flex items-center justify-end gap-1"
@@ -198,29 +203,40 @@ function AccountRow({
           >
             <Eye className="h-4 w-4 text-gray-500" />
           </button>
-          {/* Pencil - Modifier profil */}
-          <button
-            onClick={() => onEdit(user)}
-            className="p-1.5 rounded hover:bg-blue-100 transition-colors"
-            title="Modifier profil"
-          >
-            <Pencil className="h-4 w-4 text-blue-500" />
-          </button>
-          {/* Key - Reset password */}
-          <button
-            onClick={() => onResetPassword(user)}
-            className="p-1.5 rounded hover:bg-orange-100 transition-colors"
-            title="Réinitialiser mot de passe"
-          >
-            <Key className="h-4 w-4 text-orange-500" />
-          </button>
-          {/* Trash - Supprimer */}
+          {/* Pencil - Modifier profil (hidden for archived) */}
+          {!isArchived && (
+            <button
+              onClick={() => onEdit(user)}
+              className="p-1.5 rounded hover:bg-blue-100 transition-colors"
+              title="Modifier profil"
+            >
+              <Pencil className="h-4 w-4 text-blue-500" />
+            </button>
+          )}
+          {/* Key - Reset password (hidden for archived) */}
+          {!isArchived && (
+            <button
+              onClick={() => onResetPassword(user)}
+              className="p-1.5 rounded hover:bg-orange-100 transition-colors"
+              title="Réinitialiser mot de passe"
+            >
+              <Key className="h-4 w-4 text-orange-500" />
+            </button>
+          )}
+          {/* Archive / Hard delete */}
           <button
             onClick={() => onDelete(user)}
-            className="p-1.5 rounded hover:bg-red-100 transition-colors"
-            title="Supprimer"
+            className={cn(
+              'p-1.5 rounded transition-colors',
+              isArchived ? 'hover:bg-red-100' : 'hover:bg-orange-100'
+            )}
+            title={isArchived ? 'Supprimer définitivement' : 'Archiver'}
           >
-            <Trash2 className="h-4 w-4 text-red-500" />
+            {isArchived ? (
+              <Trash2 className="h-4 w-4 text-red-500" />
+            ) : (
+              <Archive className="h-4 w-4 text-orange-500" />
+            )}
           </button>
         </div>
       </td>
@@ -358,7 +374,7 @@ export default function UtilisateursClient() {
           color="bg-green-500"
         />
         <StatCard
-          title="Comptes Suspendus"
+          title="Comptes Archivés"
           value={suspendedCount}
           icon={UserX}
           color="bg-red-500"
@@ -412,7 +428,7 @@ export default function UtilisateursClient() {
           >
             <option value="all">Tous les statuts</option>
             <option value="active">Actifs</option>
-            <option value="inactive">Suspendus</option>
+            <option value="inactive">Archivés</option>
           </select>
         </div>
       </div>
