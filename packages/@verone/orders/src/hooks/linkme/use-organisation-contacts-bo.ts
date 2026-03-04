@@ -32,6 +32,7 @@ export interface ContactBO {
   isCommercialContact: boolean;
   isTechnicalContact: boolean;
   linkmeUserId: string | null;
+  linkmeRole: string | null;
 }
 
 export interface UpdateContactInput {
@@ -122,6 +123,7 @@ export function useOrganisationContactsBO(organisationId: string | null) {
         isCommercialContact: c.is_commercial_contact ?? false,
         isTechnicalContact: c.is_technical_contact ?? false,
         linkmeUserId: null,
+        linkmeRole: null,
       }));
 
       // Identifier les contacts clés
@@ -180,34 +182,46 @@ export function useEnseigneContactsBO(enseigneId: string | null) {
         throw error;
       }
 
-      // Fetch LinkMe users for this enseigne to detect linked accounts
-      type LinkmeUserRow = { user_id: string; email: string };
+      // Fetch LinkMe users for this enseigne to detect linked accounts and enrich data
+      type LinkmeUserRow = {
+        user_id: string;
+        email: string;
+        first_name: string | null;
+        last_name: string | null;
+        phone: string | null;
+        linkme_role: string | null;
+      };
       const { data: linkmeUsers } = await supabase
         .from('v_linkme_users')
-        .select('user_id, email')
+        .select('user_id, email, first_name, last_name, phone, linkme_role')
         .eq('enseigne_id', enseigneId)
         .eq('is_active', true)
         .returns<LinkmeUserRow[]>();
 
-      const linkmeEmailMap = new Map<string, string>();
+      const linkmeEmailMap = new Map<string, LinkmeUserRow>();
       for (const u of linkmeUsers ?? []) {
-        linkmeEmailMap.set(u.email.toLowerCase(), u.user_id);
+        linkmeEmailMap.set(u.email.toLowerCase(), u);
       }
 
-      const contacts: ContactBO[] = (data ?? []).map(c => ({
-        id: c.id,
-        firstName: c.first_name,
-        lastName: c.last_name,
-        email: c.email,
-        phone: c.phone,
-        mobile: c.mobile,
-        title: c.title,
-        isPrimaryContact: c.is_primary_contact ?? false,
-        isBillingContact: c.is_billing_contact ?? false,
-        isCommercialContact: c.is_commercial_contact ?? false,
-        isTechnicalContact: c.is_technical_contact ?? false,
-        linkmeUserId: linkmeEmailMap.get(c.email?.toLowerCase()) ?? null,
-      }));
+      const contacts: ContactBO[] = (data ?? []).map(c => {
+        const linkmeUser = linkmeEmailMap.get(c.email?.toLowerCase());
+        // If linked to a LinkMe user, override name/phone with fresh data from v_linkme_users
+        return {
+          id: c.id,
+          firstName: linkmeUser?.first_name ?? c.first_name,
+          lastName: linkmeUser?.last_name ?? c.last_name,
+          email: c.email,
+          phone: linkmeUser?.phone ?? c.phone,
+          mobile: c.mobile,
+          title: c.title,
+          isPrimaryContact: c.is_primary_contact ?? false,
+          isBillingContact: c.is_billing_contact ?? false,
+          isCommercialContact: c.is_commercial_contact ?? false,
+          isTechnicalContact: c.is_technical_contact ?? false,
+          linkmeUserId: linkmeUser?.user_id ?? null,
+          linkmeRole: linkmeUser?.linkme_role ?? null,
+        };
+      });
 
       const primaryContact = contacts.find(c => c.isPrimaryContact) ?? null;
       const billingContact = contacts.find(c => c.isBillingContact) ?? null;

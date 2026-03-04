@@ -26,8 +26,22 @@ interface RoleBadge {
   className: string;
 }
 
+const LINKME_ROLE_LABELS: Record<string, string> = {
+  enseigne_admin: 'Admin Enseigne',
+  org_independante: 'Org. Indépendante',
+};
+
 function getRoleBadges(contact: ContactBO): RoleBadge[] {
   const badges: RoleBadge[] = [];
+
+  // LinkMe role first (most important for this context)
+  if (contact.linkmeRole) {
+    badges.push({
+      label: LINKME_ROLE_LABELS[contact.linkmeRole] ?? contact.linkmeRole,
+      className: 'bg-teal-100 text-teal-700',
+    });
+  }
+
   if (contact.isPrimaryContact) {
     badges.push({
       label: 'Responsable',
