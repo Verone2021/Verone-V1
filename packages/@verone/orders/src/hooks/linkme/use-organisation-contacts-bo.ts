@@ -31,6 +31,23 @@ export interface ContactBO {
   isBillingContact: boolean;
   isCommercialContact: boolean;
   isTechnicalContact: boolean;
+  linkmeUserId: string | null;
+  linkmeRole: string | null;
+}
+
+export interface UpdateContactInput {
+  contactId: string;
+  enseigneId?: string;
+  organisationId?: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone?: string;
+  title?: string;
+  isBillingContact?: boolean;
+  isPrimaryContact?: boolean;
+  isCommercialContact?: boolean;
+  isTechnicalContact?: boolean;
 }
 
 export interface CreateContactInput {
@@ -105,6 +122,8 @@ export function useOrganisationContactsBO(organisationId: string | null) {
         isBillingContact: c.is_billing_contact ?? false,
         isCommercialContact: c.is_commercial_contact ?? false,
         isTechnicalContact: c.is_technical_contact ?? false,
+        linkmeUserId: null,
+        linkmeRole: null,
       }));
 
       // Identifier les contacts clés
@@ -163,19 +182,46 @@ export function useEnseigneContactsBO(enseigneId: string | null) {
         throw error;
       }
 
-      const contacts: ContactBO[] = (data ?? []).map(c => ({
-        id: c.id,
-        firstName: c.first_name,
-        lastName: c.last_name,
-        email: c.email,
-        phone: c.phone,
-        mobile: c.mobile,
-        title: c.title,
-        isPrimaryContact: c.is_primary_contact ?? false,
-        isBillingContact: c.is_billing_contact ?? false,
-        isCommercialContact: c.is_commercial_contact ?? false,
-        isTechnicalContact: c.is_technical_contact ?? false,
-      }));
+      // Fetch LinkMe users for this enseigne to detect linked accounts and enrich data
+      type LinkmeUserRow = {
+        user_id: string;
+        email: string;
+        first_name: string | null;
+        last_name: string | null;
+        phone: string | null;
+        linkme_role: string | null;
+      };
+      const { data: linkmeUsers } = await supabase
+        .from('v_linkme_users')
+        .select('user_id, email, first_name, last_name, phone, linkme_role')
+        .eq('enseigne_id', enseigneId)
+        .eq('is_active', true)
+        .returns<LinkmeUserRow[]>();
+
+      const linkmeEmailMap = new Map<string, LinkmeUserRow>();
+      for (const u of linkmeUsers ?? []) {
+        linkmeEmailMap.set(u.email.toLowerCase(), u);
+      }
+
+      const contacts: ContactBO[] = (data ?? []).map(c => {
+        const linkmeUser = linkmeEmailMap.get(c.email?.toLowerCase());
+        // If linked to a LinkMe user, override name/phone with fresh data from v_linkme_users
+        return {
+          id: c.id,
+          firstName: linkmeUser?.first_name ?? c.first_name,
+          lastName: linkmeUser?.last_name ?? c.last_name,
+          email: c.email,
+          phone: linkmeUser?.phone ?? c.phone,
+          mobile: c.mobile,
+          title: c.title,
+          isPrimaryContact: c.is_primary_contact ?? false,
+          isBillingContact: c.is_billing_contact ?? false,
+          isCommercialContact: c.is_commercial_contact ?? false,
+          isTechnicalContact: c.is_technical_contact ?? false,
+          linkmeUserId: linkmeUser?.user_id ?? null,
+          linkmeRole: linkmeUser?.linkme_role ?? null,
+        };
+      });
 
       const primaryContact = contacts.find(c => c.isPrimaryContact) ?? null;
       const billingContact = contacts.find(c => c.isBillingContact) ?? null;
@@ -243,6 +289,110 @@ export function useCreateContactBO() {
     onError: (error: Error) => {
       console.error('Erreur création contact:', error);
       toast.error('Erreur lors de la création du contact', {
+        description: error.message,
+      });
+    },
+  });
+}
+
+/**
+ * Mutation pour mettre à jour un contact (tous les champs)
+ */
+export function useUpdateContactBO() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: UpdateContactInput) => {
+      const supabase = createClient();
+
+      const { data: contact, error } = await supabase
+        .from('contacts')
+        .update({
+          first_name: input.firstName,
+          last_name: input.lastName,
+          email: input.email,
+          phone: input.phone ?? null,
+          title: input.title ?? null,
+          is_billing_contact: input.isBillingContact ?? false,
+          is_primary_contact: input.isPrimaryContact ?? false,
+          is_commercial_contact: input.isCommercialContact ?? false,
+          is_technical_contact: input.isTechnicalContact ?? false,
+        })
+        .eq('id', input.contactId)
+        .select('id, first_name, last_name, email')
+        .single();
+
+      if (error) {
+        console.error('Erreur mise à jour contact:', error);
+        throw error;
+      }
+
+      return contact;
+    },
+    onSuccess: async (_, variables) => {
+      if (variables.organisationId) {
+        await queryClient.invalidateQueries({
+          queryKey: ['organisation-contacts-bo', variables.organisationId],
+        });
+      }
+      if (variables.enseigneId) {
+        await queryClient.invalidateQueries({
+          queryKey: ['enseigne-contacts-bo', variables.enseigneId],
+        });
+      }
+      toast.success('Contact mis à jour');
+    },
+    onError: (error: Error) => {
+      console.error('Erreur mise à jour contact:', error);
+      toast.error('Erreur lors de la mise à jour du contact', {
+        description: error.message,
+      });
+    },
+  });
+}
+
+/**
+ * Mutation pour soft-delete un contact (is_active = false)
+ */
+export function useDeleteContactBO() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: {
+      contactId: string;
+      enseigneId?: string;
+      organisationId?: string;
+    }) => {
+      const supabase = createClient();
+
+      const { error } = await supabase
+        .from('contacts')
+        .update({ is_active: false })
+        .eq('id', input.contactId);
+
+      if (error) {
+        console.error('Erreur suppression contact:', error);
+        throw error;
+      }
+
+      return true;
+    },
+    onSuccess: async (_, variables) => {
+      if (variables.organisationId) {
+        await queryClient.invalidateQueries({
+          queryKey: ['organisation-contacts-bo', variables.organisationId],
+        });
+      }
+      if (variables.enseigneId) {
+        await queryClient.invalidateQueries({
+          queryKey: ['enseigne-contacts-bo', variables.enseigneId],
+        });
+      }
+      toast.success('Contact supprimé');
+    },
+    onError: (error: Error) => {
+      console.error('Erreur suppression contact:', error);
+      toast.error('Erreur lors de la suppression du contact', {
         description: error.message,
       });
     },
