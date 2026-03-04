@@ -1,23 +1,12 @@
 'use client';
 
 /**
- * FinanceDashboard - Dashboard Finance complet
- * Design: Haute qualité inspiré Qonto/Pennylane/Stripe
+ * FinanceDashboard — Pilotage style Indy
  *
- * CORRIGÉ: Utilise maintenant useBankTransactionStats qui récupère
- * les vraies données des transactions bancaires classifiées.
- *
- * Layout:
- * ┌─────────────────────────────────────────────────────┐
- * │ Filtres Année/Mois                                  │
- * ├─────────────────────────────────────────────────────┤
- * │ KPI Header (5 cartes)                               │
- * ├────────────────────────────┬────────────────────────┤
- * │ Évolution Trésorerie       │ Dépenses par Org       │
- * │ (AreaChart)                │ (DonutChart)           │
- * ├────────────────────────────┴────────────────────────┤
- * │ Entrées / Sorties Mensuelles (BarChart)             │
- * └─────────────────────────────────────────────────────┘
+ * 3 sections :
+ * 1. Activite — KPIs (CA, Charges, Resultat) + graphique barres/ligne 12 mois
+ * 2. Resultat — Decomposition CA - Charges = Resultat + Donut charges
+ * 3. Tresorerie — Solde Qonto + cards (Factures en attente, TVA, IS)
  */
 
 import { useState, useMemo, useCallback } from 'react';
@@ -40,18 +29,20 @@ import {
   CalendarDays,
   Check,
   Minus,
-  Percent,
   RefreshCw,
   TrendingDown,
   TrendingUp,
   Wallet,
+  Landmark,
+  FileText,
+  Percent,
 } from 'lucide-react';
 import {
-  Area,
-  AreaChart,
   Bar,
   BarChart,
   Cell,
+  Line,
+  ComposedChart,
   Pie,
   PieChart,
   ResponsiveContainer,
@@ -61,31 +52,32 @@ import {
 } from 'recharts';
 
 import { useBankTransactionStats } from '../../hooks/use-bank-transaction-stats';
+import { useTreasuryStats } from '../../hooks/use-treasury-stats';
 
 // =====================================================================
-// FILTER TYPES & CONFIG
+// FILTER CONFIG
 // =====================================================================
 
 const ALL_YEARS_VALUE = 0;
 
 interface FinanceFilters {
-  year: number; // 0 = Tout
-  months: number[]; // 1-12, vide = tous les mois
+  year: number;
+  months: number[];
 }
 
 const MONTHS = [
   { value: 1, label: 'Janv.', fullLabel: 'Janvier' },
-  { value: 2, label: 'Févr.', fullLabel: 'Février' },
+  { value: 2, label: 'Fevr.', fullLabel: 'Fevrier' },
   { value: 3, label: 'Mars', fullLabel: 'Mars' },
   { value: 4, label: 'Avr.', fullLabel: 'Avril' },
   { value: 5, label: 'Mai', fullLabel: 'Mai' },
   { value: 6, label: 'Juin', fullLabel: 'Juin' },
   { value: 7, label: 'Juil.', fullLabel: 'Juillet' },
-  { value: 8, label: 'Août', fullLabel: 'Août' },
+  { value: 8, label: 'Aout', fullLabel: 'Aout' },
   { value: 9, label: 'Sept.', fullLabel: 'Septembre' },
   { value: 10, label: 'Oct.', fullLabel: 'Octobre' },
   { value: 11, label: 'Nov.', fullLabel: 'Novembre' },
-  { value: 12, label: 'Déc.', fullLabel: 'Décembre' },
+  { value: 12, label: 'Dec.', fullLabel: 'Decembre' },
 ];
 
 const AVAILABLE_YEARS = Array.from(
@@ -100,22 +92,18 @@ function getDateRangeForFilters(filters: FinanceFilters): {
   if (filters.year === ALL_YEARS_VALUE) {
     return { startDate: null, endDate: null };
   }
-
   const year = filters.year;
   const months = filters.months;
-
   if (months.length === 0) {
     return {
       startDate: new Date(year, 0, 1),
       endDate: new Date(year, 11, 31, 23, 59, 59),
     };
   }
-
   const sortedMonths = [...months].sort((a, b) => a - b);
   const firstMonth = sortedMonths[0];
   const lastMonth = sortedMonths[sortedMonths.length - 1];
   const lastDay = new Date(year, lastMonth, 0).getDate();
-
   return {
     startDate: new Date(year, firstMonth - 1, 1),
     endDate: new Date(year, lastMonth - 1, lastDay, 23, 59, 59),
@@ -123,23 +111,13 @@ function getDateRangeForFilters(filters: FinanceFilters): {
 }
 
 function formatFiltersLabel(filters: FinanceFilters): string {
-  if (filters.year === ALL_YEARS_VALUE) {
-    return 'Toutes les données';
-  }
-
-  if (filters.months.length === 0) {
-    return `Année ${filters.year}`;
-  }
-
+  if (filters.year === ALL_YEARS_VALUE) return 'Toutes les donnees';
+  if (filters.months.length === 0) return `Annee ${filters.year}`;
   if (filters.months.length === 1) {
     const month = MONTHS.find(m => m.value === filters.months[0]);
     return `${month?.fullLabel} ${filters.year}`;
   }
-
-  if (filters.months.length === 12) {
-    return `Année ${filters.year}`;
-  }
-
+  if (filters.months.length === 12) return `Annee ${filters.year}`;
   const sortedMonths = [...filters.months].sort((a, b) => a - b);
   const monthLabels = sortedMonths.map(
     m => MONTHS.find(mo => mo.value === m)?.label
@@ -159,116 +137,53 @@ const formatCurrency = (value: number) =>
     maximumFractionDigits: 0,
   }).format(value);
 
-const formatPercent = (value: number) =>
-  `${value >= 0 ? '+' : ''}${value.toFixed(1)}%`;
-
-// Couleurs pour le donut chart
-const COLORS = [
-  '#6366f1', // indigo
-  '#8b5cf6', // violet
-  '#ec4899', // pink
+const DONUT_COLORS = [
+  '#f43f5e', // rose
   '#f97316', // orange
   '#eab308', // yellow
   '#22c55e', // green
   '#06b6d4', // cyan
-  '#64748b', // slate (autres)
+  '#6366f1', // indigo
+  '#8b5cf6', // violet
+  '#64748b', // slate
 ];
-
-// =====================================================================
-// COMPOSANTS
-// =====================================================================
-
-function KpiCard({
-  title,
-  value,
-  variation,
-  icon: Icon,
-  trend,
-}: {
-  title: string;
-  value: string;
-  variation?: number;
-  icon: React.ElementType;
-  trend?: 'up' | 'down' | 'neutral';
-}) {
-  return (
-    <Card>
-      <CardContent className="p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100">
-            <Icon size={20} className="text-slate-600" />
-          </div>
-          {variation !== undefined && (
-            <div
-              className={`flex items-center gap-1 text-xs font-medium ${
-                trend === 'up'
-                  ? 'text-green-600'
-                  : trend === 'down'
-                    ? 'text-red-600'
-                    : 'text-slate-500'
-              }`}
-            >
-              {trend === 'up' ? (
-                <ArrowUpRight size={14} />
-              ) : trend === 'down' ? (
-                <ArrowDownRight size={14} />
-              ) : (
-                <Minus size={14} />
-              )}
-              {formatPercent(variation)}
-            </div>
-          )}
-        </div>
-        <div className="mt-3">
-          <p className="text-sm text-slate-500">{title}</p>
-          <p className="text-xl font-bold text-slate-900">{value}</p>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
 
 // =====================================================================
 // COMPOSANT PRINCIPAL
 // =====================================================================
 
 export function FinanceDashboard() {
-  // État des filtres
   const [filters, setFilters] = useState<FinanceFilters>({
     year: ALL_YEARS_VALUE,
     months: [],
   });
 
-  // Calculer la plage de dates selon les filtres
   const dateRange = useMemo(() => getDateRangeForFilters(filters), [filters]);
 
-  // Hook avec les options de filtrage
-  const {
-    stats,
-    evolution,
-    organisationBreakdown,
-    categoryBreakdown,
-    loading,
-    error,
-    refresh,
-  } = useBankTransactionStats({
-    months: 24, // Fallback si pas de filtre
-    startDate: dateRange.startDate,
-    endDate: dateRange.endDate,
-  });
+  const { stats, evolution, categoryBreakdown, loading, error, refresh } =
+    useBankTransactionStats({
+      months: 24,
+      startDate: dateRange.startDate,
+      endDate: dateRange.endDate,
+    });
 
-  // Handlers pour les filtres
+  // Treasury data (Qonto balance + AR/AP)
+  const {
+    totalBalance,
+    bankLoading,
+    stats: treasuryStats,
+    refreshBankBalance,
+  } = useTreasuryStats();
+
   const handleYearChange = useCallback((yearStr: string) => {
-    const newYear = Number(yearStr);
-    setFilters({ year: newYear, months: [] });
+    setFilters({ year: Number(yearStr), months: [] });
   }, []);
 
   const handleMonthToggle = useCallback(
     (month: number) => {
-      const currentMonths = filters.months;
-      const newMonths = currentMonths.includes(month)
-        ? currentMonths.filter(m => m !== month)
-        : [...currentMonths, month];
+      const newMonths = filters.months.includes(month)
+        ? filters.months.filter(m => m !== month)
+        : [...filters.months, month];
       setFilters({ year: filters.year, months: newMonths });
     },
     [filters.year, filters.months]
@@ -278,35 +193,40 @@ export function FinanceDashboard() {
     setFilters({ year: filters.year, months: [] });
   }, [filters.year]);
 
+  const handleRefreshAll = () => {
+    refresh();
+    refreshBankBalance();
+  };
+
   const isAllTime = filters.year === ALL_YEARS_VALUE;
   const dateLabel = formatFiltersLabel(filters);
 
-  // Calculer les métriques pertinentes
+  // Metrics
   const chiffreAffaires = stats?.totalCredit || 0;
-  const depenses = stats?.totalDebit || 0;
-  const resultatNet = chiffreAffaires - depenses;
-  const marge = chiffreAffaires > 0 ? (resultatNet / chiffreAffaires) * 100 : 0;
+  const charges = stats?.totalDebit || 0;
+  const resultat = chiffreAffaires - charges;
+
+  // AR/AP from treasury
+  const facturesEnAttente = treasuryStats?.unpaid_count_ar ?? 0;
+  const montantAR =
+    (treasuryStats?.total_invoiced_ar ?? 0) -
+    (treasuryStats?.total_paid_ar ?? 0);
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Header */}
-      <div className="border-b border-slate-200 bg-white px-6 py-4">
+    <div className="min-h-screen bg-white">
+      {/* Header + Filtres */}
+      <div className="border-b border-gray-200 bg-white px-6 py-4">
         <div className="flex flex-col gap-4">
-          {/* Titre */}
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-xl font-bold text-slate-900">
-                Dashboard Finance
-              </h1>
-              <p className="text-sm text-slate-500">
-                Vue d'ensemble de votre trésorerie et dépenses
+              <h1 className="text-xl font-bold text-gray-900">Pilotage</h1>
+              <p className="text-sm text-gray-500">
+                Vue d&apos;ensemble de votre activite financiere
               </p>
             </div>
           </div>
 
-          {/* Filtres */}
           <div className="flex flex-col gap-3">
-            {/* Row 1: Year selector + Badge + Refresh */}
             <div className="flex items-center gap-3 flex-wrap">
               <Tabs
                 value={String(filters.year)}
@@ -315,7 +235,7 @@ export function FinanceDashboard() {
                 <TabsList className="bg-gray-100">
                   <TabsTrigger
                     value={String(ALL_YEARS_VALUE)}
-                    className="text-xs data-[state=active]:bg-indigo-600 data-[state=active]:text-white px-4"
+                    className="text-xs data-[state=active]:bg-rose-500 data-[state=active]:text-white px-4"
                   >
                     Tout
                   </TabsTrigger>
@@ -342,7 +262,7 @@ export function FinanceDashboard() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={refresh}
+                onClick={handleRefreshAll}
                 disabled={loading}
                 className="gap-2"
               >
@@ -353,7 +273,6 @@ export function FinanceDashboard() {
               </Button>
             </div>
 
-            {/* Row 2: Month selector (hidden when "Tout") */}
             {!isAllTime && (
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-xs text-gray-500 mr-1">Mois:</span>
@@ -366,8 +285,8 @@ export function FinanceDashboard() {
                       className={cn(
                         'text-xs px-2 py-1 rounded border transition-colors',
                         isSelected
-                          ? 'bg-indigo-600 text-white border-indigo-600'
-                          : 'bg-white text-gray-700 border-gray-300 hover:border-indigo-400'
+                          ? 'bg-rose-500 text-white border-rose-500'
+                          : 'bg-white text-gray-700 border-gray-300 hover:border-rose-400'
                       )}
                     >
                       {isSelected && <Check className="h-3 w-3 inline mr-1" />}
@@ -378,7 +297,7 @@ export function FinanceDashboard() {
                 {filters.months.length > 0 && (
                   <button
                     onClick={handleClearMonths}
-                    className="text-xs text-indigo-600 hover:underline ml-2"
+                    className="text-xs text-rose-600 hover:underline ml-2"
                   >
                     Tout effacer
                   </button>
@@ -390,161 +309,64 @@ export function FinanceDashboard() {
       </div>
 
       {/* Content */}
-      <div className="p-6">
-        {/* Error State */}
+      <div className="p-6 space-y-8">
         {error && !loading && (
-          <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-4">
+          <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
             <p className="text-sm text-amber-800">{error}</p>
           </div>
         )}
 
-        {/* KPIs - 4 métriques pertinentes */}
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          <KpiCard
-            title="Chiffre d'Affaires"
-            value={formatCurrency(chiffreAffaires)}
-            icon={TrendingUp}
-            trend="up"
-          />
-          <KpiCard
-            title="Dépenses"
-            value={formatCurrency(depenses)}
-            icon={TrendingDown}
-            trend="down"
-          />
-          <KpiCard
-            title="Résultat Net"
-            value={formatCurrency(resultatNet)}
-            icon={Wallet}
-            trend={resultatNet >= 0 ? 'up' : 'down'}
-          />
-          <KpiCard
-            title="Marge"
-            value={`${marge.toFixed(1)}%`}
-            icon={Percent}
-            trend={marge >= 0 ? 'up' : 'down'}
-          />
-        </div>
+        {/* ============================================================ */}
+        {/* SECTION 1 — ACTIVITE                                         */}
+        {/* ============================================================ */}
+        <section>
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Activite</h2>
+          <div className="flex gap-6">
+            {/* KPIs verticaux a gauche */}
+            <div className="w-56 flex-shrink-0 space-y-3">
+              <KpiSideCard
+                label="Chiffre d'affaires"
+                value={chiffreAffaires}
+                color="green"
+              />
+              <KpiSideCard
+                label="Charges d'exploitation"
+                value={charges}
+                color="rose"
+              />
+              <KpiSideCard
+                label="Resultat d'exploitation"
+                value={resultat}
+                color={resultat >= 0 ? 'green' : 'red'}
+              />
+            </div>
 
-        {/* Charts Row 1 */}
-        <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
-          {/* Évolution Trésorerie */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base font-medium">
-                Évolution Trésorerie
-              </CardTitle>
-              <p className="text-xs text-slate-500">12 derniers mois</p>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <div className="flex h-64 items-center justify-center">
-                  <RefreshCw className="h-6 w-6 animate-spin text-slate-400" />
-                </div>
-              ) : evolution.length === 0 ? (
-                <div className="flex h-64 items-center justify-center text-sm text-slate-500">
-                  Aucune donnée disponible
-                </div>
-              ) : (
-                <ResponsiveContainer width="100%" height={256}>
-                  <AreaChart data={evolution}>
-                    <defs>
-                      <linearGradient
-                        id="balanceGradient"
-                        x1="0"
-                        y1="0"
-                        x2="0"
-                        y2="1"
-                      >
-                        <stop
-                          offset="5%"
-                          stopColor="#6366f1"
-                          stopOpacity={0.3}
-                        />
-                        <stop
-                          offset="95%"
-                          stopColor="#6366f1"
-                          stopOpacity={0}
-                        />
-                      </linearGradient>
-                    </defs>
-                    <XAxis
-                      dataKey="monthLabel"
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fontSize: 11, fill: '#94a3b8' }}
-                    />
-                    <YAxis
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fontSize: 11, fill: '#94a3b8' }}
-                      tickFormatter={v => `${(v / 1000).toFixed(0)}k`}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: '#1e293b',
-                        border: 'none',
-                        borderRadius: '8px',
-                        color: '#fff',
-                        fontSize: '12px',
-                      }}
-                      formatter={(value: number) => [
-                        formatCurrency(value),
-                        'Balance',
-                      ]}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="balance"
-                      stroke="#6366f1"
-                      strokeWidth={2}
-                      fill="url(#balanceGradient)"
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Dépenses par Catégorie PCG */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base font-medium">
-                Dépenses par Catégorie
-              </CardTitle>
-              <p className="text-xs text-slate-500">
-                Répartition selon le Plan Comptable
-              </p>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <div className="flex h-64 items-center justify-center">
-                  <RefreshCw className="h-6 w-6 animate-spin text-slate-400" />
-                </div>
-              ) : categoryBreakdown.length === 0 ? (
-                <div className="flex h-64 items-center justify-center text-sm text-slate-500">
-                  Aucune donnée disponible
-                </div>
-              ) : (
-                <div className="flex items-center gap-4">
-                  <ResponsiveContainer width={160} height={160}>
-                    <PieChart>
-                      <Pie
-                        data={categoryBreakdown.slice(0, 7)}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={45}
-                        outerRadius={70}
-                        dataKey="totalAmount"
-                        stroke="none"
-                      >
-                        {categoryBreakdown.slice(0, 7).map((_, index) => (
-                          <Cell
-                            key={`cell-${index}`}
-                            fill={COLORS[index % COLORS.length]}
-                          />
-                        ))}
-                      </Pie>
+            {/* Graphique central — Barres (Charges) + Ligne (CA) */}
+            <Card className="flex-1">
+              <CardContent className="pt-6">
+                {loading ? (
+                  <div className="flex h-64 items-center justify-center">
+                    <RefreshCw className="h-6 w-6 animate-spin text-gray-400" />
+                  </div>
+                ) : evolution.length === 0 ? (
+                  <div className="flex h-64 items-center justify-center text-sm text-gray-500">
+                    Aucune donnee disponible
+                  </div>
+                ) : (
+                  <ResponsiveContainer width="100%" height={280}>
+                    <ComposedChart data={evolution}>
+                      <XAxis
+                        dataKey="monthLabel"
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fontSize: 11, fill: '#94a3b8' }}
+                      />
+                      <YAxis
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fontSize: 11, fill: '#94a3b8' }}
+                        tickFormatter={v => `${(Number(v) / 1000).toFixed(0)}k`}
+                      />
                       <Tooltip
                         contentStyle={{
                           backgroundColor: '#1e293b',
@@ -553,92 +375,337 @@ export function FinanceDashboard() {
                           color: '#fff',
                           fontSize: '12px',
                         }}
-                        formatter={(value: number) => formatCurrency(value)}
+                        formatter={(value: number, name: string) => [
+                          formatCurrency(value),
+                          name === 'credit'
+                            ? 'CA'
+                            : name === 'debit'
+                              ? 'Charges'
+                              : name,
+                        ]}
                       />
-                    </PieChart>
+                      <Bar
+                        dataKey="debit"
+                        fill="#fda4af"
+                        radius={[4, 4, 0, 0]}
+                        name="debit"
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="credit"
+                        stroke="#22c55e"
+                        strokeWidth={2}
+                        dot={{ r: 3, fill: '#22c55e' }}
+                        name="credit"
+                      />
+                    </ComposedChart>
                   </ResponsiveContainer>
-                  <div className="flex-1 space-y-2">
-                    {categoryBreakdown.slice(0, 6).map((cat, index) => (
-                      <div
-                        key={cat.code}
-                        className="flex items-center justify-between text-sm"
-                      >
-                        <div className="flex items-center gap-2">
-                          <div
-                            className="h-2.5 w-2.5 rounded-full"
-                            style={{
-                              backgroundColor: COLORS[index % COLORS.length],
-                            }}
-                          />
-                          <span className="truncate text-slate-700">
-                            {cat.label}
-                          </span>
-                        </div>
-                        <span className="font-medium text-slate-900">
-                          {formatCurrency(cat.totalAmount)}
-                        </span>
-                      </div>
-                    ))}
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Tableau mensuel expansible */}
+          {!loading && evolution.length > 0 && (
+            <Card className="mt-4">
+              <CardContent className="p-0">
+                <div className="grid grid-cols-3 gap-4 px-4 py-2.5 bg-gray-50 text-xs font-medium text-gray-500 border-b uppercase tracking-wide">
+                  <div>Mois</div>
+                  <div className="text-right">CA</div>
+                  <div className="text-right">Charges</div>
+                </div>
+                {evolution.slice(-12).map(row => (
+                  <div
+                    key={row.monthLabel}
+                    className="grid grid-cols-3 gap-4 px-4 py-2 border-b last:border-b-0 hover:bg-gray-50 text-sm"
+                  >
+                    <div className="capitalize text-gray-700">
+                      {row.monthLabel}
+                    </div>
+                    <div className="text-right text-green-600 font-medium">
+                      {formatCurrency(row.credit)}
+                    </div>
+                    <div className="text-right text-rose-600 font-medium">
+                      {formatCurrency(row.debit)}
+                    </div>
+                  </div>
+                ))}
+                {/* Total */}
+                <div className="grid grid-cols-3 gap-4 px-4 py-2.5 bg-gray-100 font-bold text-sm border-t">
+                  <div>Total</div>
+                  <div className="text-right text-green-700">
+                    {formatCurrency(chiffreAffaires)}
+                  </div>
+                  <div className="text-right text-rose-700">
+                    {formatCurrency(charges)}
                   </div>
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+              </CardContent>
+            </Card>
+          )}
+        </section>
 
-        {/* Charts Row 2 - Entrées/Sorties Mensuelles */}
-        <Card className="mt-6">
-          <CardHeader>
-            <CardTitle className="text-base font-medium">
-              Entrées / Sorties Mensuelles
-            </CardTitle>
-            <p className="text-xs text-slate-500">6 derniers mois</p>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="flex h-48 items-center justify-center">
-                <RefreshCw className="h-6 w-6 animate-spin text-slate-400" />
-              </div>
-            ) : evolution.length === 0 ? (
-              <div className="flex h-48 items-center justify-center text-sm text-slate-500">
-                Aucune donnée disponible
-              </div>
-            ) : (
-              <ResponsiveContainer width="100%" height={200}>
-                <BarChart data={evolution.slice(-6)}>
-                  <XAxis
-                    dataKey="monthLabel"
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fontSize: 11, fill: '#94a3b8' }}
+        {/* ============================================================ */}
+        {/* SECTION 2 — RESULTAT                                         */}
+        {/* ============================================================ */}
+        <section>
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Resultat</h2>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Card decomposition resultat */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">
+                  Resultat apres impot
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <ResultRow
+                  label="Chiffre d'affaires"
+                  value={chiffreAffaires}
+                  positive
+                />
+                <ResultRow label="Charges d'exploitation" value={-charges} />
+                <div className="border-t pt-3">
+                  <ResultRow
+                    label="Resultat d'exploitation"
+                    value={resultat}
+                    bold
+                    positive={resultat >= 0}
                   />
-                  <YAxis
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fontSize: 11, fill: '#94a3b8' }}
-                    tickFormatter={v => `${(v / 1000).toFixed(0)}k`}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: '#1e293b',
-                      border: 'none',
-                      borderRadius: '8px',
-                      color: '#fff',
-                      fontSize: '12px',
-                    }}
-                    formatter={(value: number, name: string) => [
-                      formatCurrency(value),
-                      name === 'credit' ? 'Entrées' : 'Sorties',
-                    ]}
-                  />
-                  <Bar dataKey="credit" fill="#22c55e" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="debit" fill="#ef4444" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            )}
-          </CardContent>
-        </Card>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Donut charges par categorie */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">
+                  Charges d&apos;exploitation
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <div className="flex h-48 items-center justify-center">
+                    <RefreshCw className="h-6 w-6 animate-spin text-gray-400" />
+                  </div>
+                ) : categoryBreakdown.length === 0 ? (
+                  <div className="flex h-48 items-center justify-center text-sm text-gray-500">
+                    Aucune donnee
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-4">
+                    <ResponsiveContainer width={160} height={160}>
+                      <PieChart>
+                        <Pie
+                          data={categoryBreakdown.slice(0, 7)}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={45}
+                          outerRadius={70}
+                          dataKey="totalAmount"
+                          stroke="none"
+                        >
+                          {categoryBreakdown.slice(0, 7).map((_, index) => (
+                            <Cell
+                              key={`cell-${index}`}
+                              fill={DONUT_COLORS[index % DONUT_COLORS.length]}
+                            />
+                          ))}
+                        </Pie>
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: '#1e293b',
+                            border: 'none',
+                            borderRadius: '8px',
+                            color: '#fff',
+                            fontSize: '12px',
+                          }}
+                          formatter={(value: number) => formatCurrency(value)}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                    <div className="flex-1 space-y-2">
+                      {categoryBreakdown.slice(0, 6).map((cat, index) => (
+                        <div
+                          key={cat.code}
+                          className="flex items-center justify-between text-sm"
+                        >
+                          <div className="flex items-center gap-2">
+                            <div
+                              className="h-2.5 w-2.5 rounded-full"
+                              style={{
+                                backgroundColor:
+                                  DONUT_COLORS[index % DONUT_COLORS.length],
+                              }}
+                            />
+                            <span className="truncate text-gray-700">
+                              {cat.label}
+                            </span>
+                          </div>
+                          <span className="font-medium text-gray-900">
+                            {formatCurrency(cat.totalAmount)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </section>
+
+        {/* ============================================================ */}
+        {/* SECTION 3 — TRESORERIE                                       */}
+        {/* ============================================================ */}
+        <section>
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+            Tresorerie
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Solde Qonto */}
+            <Card className="lg:col-span-1">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Landmark className="h-4 w-4 text-gray-500" />
+                  <span className="text-sm text-gray-500">Solde bancaire</span>
+                </div>
+                <p className="text-2xl font-bold text-gray-900">
+                  {bankLoading ? (
+                    <span className="text-gray-400">...</span>
+                  ) : (
+                    formatCurrency(totalBalance)
+                  )}
+                </p>
+                <p className="text-xs text-gray-400 mt-1">Qonto</p>
+              </CardContent>
+            </Card>
+
+            {/* Factures en attente */}
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <FileText className="h-4 w-4 text-gray-500" />
+                  <span className="text-sm text-gray-500">
+                    Factures en attente
+                  </span>
+                </div>
+                <p className="text-2xl font-bold text-gray-900">
+                  {formatCurrency(montantAR)}
+                </p>
+                <p className="text-xs text-gray-400 mt-1">
+                  {facturesEnAttente} facture
+                  {facturesEnAttente > 1 ? 's' : ''}
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Solde TVA estimee */}
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Percent className="h-4 w-4 text-gray-500" />
+                  <span className="text-sm text-gray-500">Solde TVA</span>
+                </div>
+                <p className="text-2xl font-bold text-gray-900">-</p>
+                <p className="text-xs text-gray-400 mt-1">
+                  Voir Documents &gt; TVA
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* IS a payer */}
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Wallet className="h-4 w-4 text-gray-500" />
+                  <span className="text-sm text-gray-500">IS a payer</span>
+                </div>
+                <p className="text-2xl font-bold text-gray-900">-</p>
+                <p className="text-xs text-gray-400 mt-1">
+                  Estim. expert-comptable
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </section>
       </div>
+    </div>
+  );
+}
+
+// =====================================================================
+// SUB-COMPONENTS
+// =====================================================================
+
+function KpiSideCard({
+  label,
+  value,
+  color,
+}: {
+  label: string;
+  value: number;
+  color: 'green' | 'rose' | 'red';
+}) {
+  const colorMap = {
+    green: 'border-l-green-500 bg-green-50',
+    rose: 'border-l-rose-400 bg-rose-50',
+    red: 'border-l-red-500 bg-red-50',
+  };
+  const textColor = {
+    green: 'text-green-700',
+    rose: 'text-rose-700',
+    red: 'text-red-700',
+  };
+
+  return (
+    <div className={cn('rounded-lg border border-l-4 p-3', colorMap[color])}>
+      <p className="text-xs text-gray-500 mb-1">{label}</p>
+      <p className={cn('text-lg font-bold', textColor[color])}>
+        {new Intl.NumberFormat('fr-FR', {
+          style: 'currency',
+          currency: 'EUR',
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0,
+        }).format(value)}
+      </p>
+    </div>
+  );
+}
+
+function ResultRow({
+  label,
+  value,
+  bold,
+  positive,
+}: {
+  label: string;
+  value: number;
+  bold?: boolean;
+  positive?: boolean;
+}) {
+  return (
+    <div className="flex justify-between items-center">
+      <span className={cn('text-sm', bold ? 'font-semibold' : 'text-gray-600')}>
+        {label}
+      </span>
+      <span
+        className={cn(
+          'text-sm font-medium',
+          bold && 'text-base font-bold',
+          positive === true && 'text-green-600',
+          positive === false && 'text-red-600',
+          positive === undefined && 'text-gray-900'
+        )}
+      >
+        {value >= 0 ? '+' : ''}
+        {new Intl.NumberFormat('fr-FR', {
+          style: 'currency',
+          currency: 'EUR',
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0,
+        }).format(value)}
+      </span>
     </div>
   );
 }
