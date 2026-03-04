@@ -8,6 +8,7 @@ import {
   Mail,
   Pencil,
   Phone,
+  ShoppingCart,
   Smartphone,
   Trash2,
   User,
@@ -172,6 +173,32 @@ export function EnseigneContactCard({
               </div>
             )}
           </div>
+
+          {/* Mini-stats for LinkMe contacts */}
+          {isLinkmeUser && contact.affiliateOrdersCount !== null && (
+            <div className="flex items-center gap-1.5 text-xs text-gray-500 mt-2 pt-2 border-t border-gray-100">
+              <ShoppingCart className="h-3 w-3 flex-shrink-0 text-blue-500" />
+              <span>
+                {contact.affiliateOrdersCount} commande
+                {contact.affiliateOrdersCount !== 1 ? 's' : ''}
+              </span>
+              {contact.affiliateLastOrderDate && (
+                <>
+                  <span className="text-gray-300">|</span>
+                  <span>
+                    Derniere :{' '}
+                    {new Date(
+                      contact.affiliateLastOrderDate
+                    ).toLocaleDateString('fr-FR', {
+                      day: 'numeric',
+                      month: 'short',
+                      year: 'numeric',
+                    })}
+                  </span>
+                </>
+              )}
+            </div>
+          )}
 
           {/* Badges - pushed to bottom */}
           <div className="flex flex-wrap gap-1 mt-auto pt-2">

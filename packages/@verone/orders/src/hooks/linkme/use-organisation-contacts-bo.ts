@@ -33,6 +33,8 @@ export interface ContactBO {
   isTechnicalContact: boolean;
   linkmeUserId: string | null;
   linkmeRole: string | null;
+  affiliateOrdersCount: number | null;
+  affiliateLastOrderDate: string | null;
 }
 
 export interface UpdateContactInput {
@@ -124,6 +126,8 @@ export function useOrganisationContactsBO(organisationId: string | null) {
         isTechnicalContact: c.is_technical_contact ?? false,
         linkmeUserId: null,
         linkmeRole: null,
+        affiliateOrdersCount: null,
+        affiliateLastOrderDate: null,
       }));
 
       // Identifier les contacts clés
@@ -203,6 +207,29 @@ export function useEnseigneContactsBO(enseigneId: string | null) {
         linkmeEmailMap.set(u.email.toLowerCase(), u);
       }
 
+      // Fetch affiliate order stats for this enseigne
+      let affiliateOrdersCount: number | null = null;
+      let affiliateLastOrderDate: string | null = null;
+
+      const { data: affiliate } = await supabase
+        .from('linkme_affiliates')
+        .select('id')
+        .eq('enseigne_id', enseigneId)
+        .limit(1)
+        .single();
+
+      if (affiliate?.id) {
+        const { count, data: lastOrder } = await supabase
+          .from('sales_orders')
+          .select('created_at', { count: 'exact' })
+          .eq('created_by_affiliate_id', affiliate.id)
+          .order('created_at', { ascending: false })
+          .limit(1);
+
+        affiliateOrdersCount = count ?? 0;
+        affiliateLastOrderDate = lastOrder?.[0]?.created_at ?? null;
+      }
+
       const contacts: ContactBO[] = (data ?? []).map(c => {
         const linkmeUser = linkmeEmailMap.get(c.email?.toLowerCase());
         // If linked to a LinkMe user, override name/phone with fresh data from v_linkme_users
@@ -220,6 +247,8 @@ export function useEnseigneContactsBO(enseigneId: string | null) {
           isTechnicalContact: c.is_technical_contact ?? false,
           linkmeUserId: linkmeUser?.user_id ?? null,
           linkmeRole: linkmeUser?.linkme_role ?? null,
+          affiliateOrdersCount: linkmeUser ? affiliateOrdersCount : null,
+          affiliateLastOrderDate: linkmeUser ? affiliateLastOrderDate : null,
         };
       });
 

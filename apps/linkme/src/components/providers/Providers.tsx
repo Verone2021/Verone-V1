@@ -9,6 +9,7 @@ import { AuthProvider } from '../../contexts/AuthContext';
 import { cleanupLegacyCookies } from '../../lib/cleanup-legacy-cookies';
 import { CartDrawer } from '../cart/CartDrawer';
 import { CartProvider } from '../cart/CartProvider';
+import { LinkmeActivityTrackerProvider } from './LinkmeActivityTrackerProvider';
 
 interface ProvidersProps {
   children: ReactNode;
@@ -36,7 +37,9 @@ export function Providers({ children }: ProvidersProps): React.ReactElement {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <CartProvider>
-          {children}
+          <LinkmeActivityTrackerProvider>
+            {children}
+          </LinkmeActivityTrackerProvider>
           <CartDrawer />
           <Toaster position="top-right" richColors />
         </CartProvider>
