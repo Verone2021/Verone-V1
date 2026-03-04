@@ -197,8 +197,16 @@ export default function ProductDetailPage() {
             console.error('[ProductDetail] Rollback fetch failed:', fetchError);
           });
         } else {
-          console.warn('✅ Produit sauvegardé en DB:', updatedData);
-          if ('subcategory_id' in updatedData || 'supplier_id' in updatedData) {
+          console.log(
+            '[ProductDetail] Produit sauvegardé en DB:',
+            Object.keys(updatedData)
+          );
+          if (
+            'subcategory_id' in updatedData ||
+            'supplier_id' in updatedData ||
+            'enseigne_id' in updatedData ||
+            'assigned_client_id' in updatedData
+          ) {
             void fetchProduct().catch(fetchError => {
               console.error(
                 '[ProductDetail] Fetch after update failed:',

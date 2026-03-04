@@ -523,10 +523,12 @@ export function SupplierVsPricingEditSection({
                 <TrendingUp className="h-3 w-3 inline mr-1" />
                 HISTORIQUE PRIX D'ACHAT
               </div>
-              <div className="grid grid-cols-2 gap-2 text-sm">
+              <div className="space-y-1.5 text-sm">
                 {product.cost_price_avg != null && (
-                  <div className="flex justify-between">
-                    <span className="text-neutral-600">Prix moyen:</span>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-neutral-500 text-xs whitespace-nowrap">
+                      Prix moyen
+                    </span>
                     <span className="font-medium text-neutral-800">
                       {formatPrice(product.cost_price_avg)}
                       {product.cost_net_avg != null && (
@@ -538,8 +540,10 @@ export function SupplierVsPricingEditSection({
                   </div>
                 )}
                 {product.cost_price_last != null && (
-                  <div className="flex justify-between">
-                    <span className="text-neutral-600">Dernier prix:</span>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-neutral-500 text-xs whitespace-nowrap">
+                      Dernier prix
+                    </span>
                     <span className="font-medium text-neutral-800">
                       {formatPrice(product.cost_price_last)}
                       {product.cost_net_last != null && (
@@ -552,8 +556,10 @@ export function SupplierVsPricingEditSection({
                 )}
                 {product.cost_price_min != null &&
                   product.cost_price_max != null && (
-                    <div className="flex justify-between col-span-2">
-                      <span className="text-neutral-600">Min / Max:</span>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-neutral-500 text-xs whitespace-nowrap">
+                        Min / Max
+                      </span>
                       <span className="font-medium text-neutral-800">
                         {formatPrice(product.cost_price_min)}
                         {product.cost_net_min != null && (
@@ -573,8 +579,10 @@ export function SupplierVsPricingEditSection({
                   )}
                 {product.cost_price_count != null &&
                   product.cost_price_count > 0 && (
-                    <div className="flex justify-between">
-                      <span className="text-neutral-600">Nb achats:</span>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-neutral-500 text-xs whitespace-nowrap">
+                        Nb achats
+                      </span>
                       <span className="font-medium text-neutral-800">
                         {product.cost_price_count}
                       </span>
@@ -583,8 +591,10 @@ export function SupplierVsPricingEditSection({
                 {product.target_margin_percentage != null &&
                   product.target_margin_percentage !==
                     product.margin_percentage && (
-                    <div className="flex justify-between">
-                      <span className="text-neutral-600">Marge cible:</span>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-neutral-500 text-xs whitespace-nowrap">
+                        Marge cible
+                      </span>
                       <span className="font-medium text-neutral-800">
                         {product.target_margin_percentage}%
                       </span>

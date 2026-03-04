@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 
 import type { Database, Organisation, OrganisationInsert } from '@verone/types';
 import { createClient } from '@verone/utils/supabase/client';
@@ -34,7 +34,7 @@ export function useOrganisations(filters?: OrganisationFilters) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   // Fonction pour récupérer une organisation par ID avec ses adresses
   const getOrganisationById = async (
@@ -254,6 +254,8 @@ export function useOrganisations(filters?: OrganisationFilters) {
     filters?.country,
     filters?.include_archived,
     filters?.exclude_with_enseigne,
+    filters?.is_service_provider,
+    filters?.customer_type,
   ]);
 
   const createOrganisation = async (
