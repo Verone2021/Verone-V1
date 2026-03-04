@@ -18,7 +18,6 @@ import {
   useBankReconciliation,
   TVA_RATES,
   calculateVAT,
-  calculateHT,
   type BankTransaction,
 } from '@verone/finance';
 import {
@@ -76,13 +75,31 @@ export default function AnnexeLegalePage() {
     const totalDepenses = debits.reduce((s, tx) => s + Math.abs(tx.amount), 0);
     const resultat = totalRecettes - totalDepenses;
 
-    // TVA estimée
+    // TVA based on actual vat_rate (0 if unknown — no 20% assumption)
     const tvaCollectee = credits.reduce(
-      (s, tx) => s + calculateVAT(Math.abs(tx.amount), 20),
+      (s, tx) =>
+        s +
+        calculateVAT(
+          Math.abs(tx.amount),
+          ((tx as BankTransaction & { vat_rate?: number }).vat_rate ?? 0) as
+            | 0
+            | 5.5
+            | 10
+            | 20
+        ),
       0
     );
     const tvaDeductible = debits.reduce(
-      (s, tx) => s + calculateVAT(Math.abs(tx.amount), 20),
+      (s, tx) =>
+        s +
+        calculateVAT(
+          Math.abs(tx.amount),
+          ((tx as BankTransaction & { vat_rate?: number }).vat_rate ?? 0) as
+            | 0
+            | 5.5
+            | 10
+            | 20
+        ),
       0
     );
 

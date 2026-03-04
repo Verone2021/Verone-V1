@@ -123,7 +123,7 @@ export default function TvaPage() {
 
       const key = getMonthKey(date);
       const m = ensureMonth(key);
-      const vatRate = tx.vat_rate ?? 20;
+      const vatRate = tx.vat_rate ?? 0;
       const ttc = Math.abs(tx.amount);
       const tva = calculateVAT(ttc, vatRate as 0 | 5.5 | 10 | 20);
       const ht = calculateHT(ttc, vatRate as 0 | 5.5 | 10 | 20);
@@ -142,7 +142,7 @@ export default function TvaPage() {
 
       const key = getMonthKey(date);
       const m = ensureMonth(key);
-      const vatRate = tx.vat_rate ?? 20;
+      const vatRate = tx.vat_rate ?? 0;
       const ttc = Math.abs(tx.amount);
       const tva = calculateVAT(ttc, vatRate as 0 | 5.5 | 10 | 20);
       const ht = calculateHT(ttc, vatRate as 0 | 5.5 | 10 | 20);

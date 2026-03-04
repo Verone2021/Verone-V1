@@ -19,7 +19,6 @@ import { useState, useMemo, useCallback } from 'react';
 import {
   useBankReconciliation,
   calculateVAT,
-  calculateHT,
   type BankTransaction,
 } from '@verone/finance';
 import {
@@ -98,11 +97,29 @@ export default function CloturePage() {
     const resultat = totalRecettes - totalDepenses;
 
     const tvaCollectee = credits.reduce(
-      (s, tx) => s + calculateVAT(Math.abs(tx.amount), 20),
+      (s, tx) =>
+        s +
+        calculateVAT(
+          Math.abs(tx.amount),
+          ((tx as BankTransaction & { vat_rate?: number }).vat_rate ?? 0) as
+            | 0
+            | 5.5
+            | 10
+            | 20
+        ),
       0
     );
     const tvaDeductible = debits.reduce(
-      (s, tx) => s + calculateVAT(Math.abs(tx.amount), 20),
+      (s, tx) =>
+        s +
+        calculateVAT(
+          Math.abs(tx.amount),
+          ((tx as BankTransaction & { vat_rate?: number }).vat_rate ?? 0) as
+            | 0
+            | 5.5
+            | 10
+            | 20
+        ),
       0
     );
 

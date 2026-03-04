@@ -110,12 +110,15 @@ export default function GrandLivrePage() {
       // Get PCG code
       const rawCode = (tx as BankTransaction & { category_pcg?: string })
         .category_pcg;
-      const pcgCode = rawCode ?? (isCredit ? '70' : '60');
-      const pcgInfo = getPcgCategory(pcgCode.substring(0, 2));
+      const pcgCode = rawCode ?? '00';
+      const pcgInfo =
+        pcgCode === '00' ? null : getPcgCategory(pcgCode.substring(0, 2));
 
       const accountCode = pcgCode;
       const accountLabel =
-        pcgInfo?.label ?? (isCredit ? 'Ventes' : 'Achats non classés');
+        pcgCode === '00'
+          ? 'Non categorise'
+          : (pcgInfo?.label ?? 'Compte inconnu');
 
       if (!accountMap.has(accountCode)) {
         accountMap.set(accountCode, {

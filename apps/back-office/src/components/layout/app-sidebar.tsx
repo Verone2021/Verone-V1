@@ -39,8 +39,6 @@ import {
   Layers,
   MessageCircle,
   FileText,
-  FileSignature,
-  FileX,
   Banknote,
   Globe,
   Link2,
@@ -49,10 +47,6 @@ import {
   ArrowLeftRight,
   Grid3x3,
   BookOpenCheck,
-  FolderArchive,
-  Scale,
-  Percent,
-  Lock,
 } from 'lucide-react';
 
 import { PhaseIndicator } from '@/components/ui/phase-indicator';
@@ -288,7 +282,7 @@ const getNavItems = (
       },
     ],
   },
-  // ============ FINANCE (FUSIONNÉ) ============
+  // ============ FINANCE (5 entrées — Pattern Pennylane/Indy) ============
   {
     title: 'Finance',
     href: '/finance',
@@ -302,19 +296,9 @@ const getNavItems = (
         icon: LayoutDashboard,
       },
       {
-        title: 'Devis',
-        href: '/factures?tab=devis',
-        icon: FileSignature,
-      },
-      {
-        title: 'Factures',
-        href: '/factures?tab=factures',
+        title: 'Facturation',
+        href: '/factures',
         icon: FileText,
-      },
-      {
-        title: 'Avoirs',
-        href: '/factures?tab=avoirs',
-        icon: FileX,
       },
       {
         title: 'Transactions',
@@ -324,44 +308,14 @@ const getNavItems = (
         badgeVariant: transactionsUnreconciledCount > 0 ? 'urgent' : undefined,
       },
       {
-        title: 'Livres comptables',
-        href: '/finance/livres',
+        title: 'Comptabilité',
+        href: '/finance/comptabilite',
         icon: BookOpenCheck,
-      },
-      {
-        title: 'Grand Livre',
-        href: '/finance/grand-livre',
-        icon: BookOpenCheck,
-      },
-      {
-        title: 'TVA (CA3)',
-        href: '/finance/tva',
-        icon: Percent,
-      },
-      {
-        title: 'Bilan',
-        href: '/finance/bilan',
-        icon: Scale,
-      },
-      {
-        title: 'Annexe légale',
-        href: '/finance/annexe',
-        icon: FileText,
       },
       {
         title: 'Trésorerie',
         href: '/finance/tresorerie',
         icon: Banknote,
-      },
-      {
-        title: 'Bibliothèque',
-        href: '/finance/bibliotheque',
-        icon: FolderArchive,
-      },
-      {
-        title: 'Clôture exercice',
-        href: '/finance/admin/cloture',
-        icon: Lock,
       },
     ],
   },

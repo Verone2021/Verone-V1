@@ -41,14 +41,13 @@ import {
   ArrowRight,
   ArrowUpRight,
   Banknote,
+  BookOpenCheck,
   CalendarDays,
   Check,
-  CreditCard,
   FileText,
   Minus,
   Percent,
   RefreshCw,
-  Settings,
   TrendingDown,
   TrendingUp,
   Wallet,
@@ -234,6 +233,13 @@ function KpiCard({
     </Card>
   );
 }
+
+const QUICK_NAV = [
+  { href: '/factures', icon: FileText, title: 'Facturation' },
+  { href: '/finance/transactions', icon: Banknote, title: 'Transactions' },
+  { href: '/finance/comptabilite', icon: BookOpenCheck, title: 'Comptabilite' },
+  { href: '/finance/tresorerie', icon: Wallet, title: 'Tresorerie' },
+] as const;
 
 // =====================================================================
 // COMPOSANT PRINCIPAL
@@ -646,69 +652,19 @@ export function FinanceDashboard() {
           </CardContent>
         </Card>
 
-        {/* Quick Actions */}
-        <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-4">
-          <Link href="/finance/transactions">
-            <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 transition-shadow hover:shadow-md">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-50">
-                  <CreditCard size={20} className="text-indigo-600" />
+        {/* Navigation rapide — 4 boutons */}
+        <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-4">
+          {QUICK_NAV.map(nav => (
+            <Link key={nav.href} href={nav.href}>
+              <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 transition-shadow hover:shadow-md">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100">
+                  <nav.icon size={18} className="text-slate-600" />
                 </div>
-                <div>
-                  <p className="font-medium text-slate-900">Transactions</p>
-                  <p className="text-sm text-slate-500">
-                    Toutes les opérations
-                  </p>
-                </div>
+                <span className="font-medium text-slate-900">{nav.title}</span>
+                <ArrowRight size={16} className="ml-auto text-slate-400" />
               </div>
-              <ArrowRight size={20} className="text-slate-400" />
-            </div>
-          </Link>
-
-          <Link href="/finance/depenses">
-            <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 transition-shadow hover:shadow-md">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50">
-                  <FileText size={20} className="text-blue-600" />
-                </div>
-                <div>
-                  <p className="font-medium text-slate-900">Dépenses</p>
-                  <p className="text-sm text-slate-500">Liste détaillée</p>
-                </div>
-              </div>
-              <ArrowRight size={20} className="text-slate-400" />
-            </div>
-          </Link>
-
-          <Link href="/finance/rapprochement">
-            <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 transition-shadow hover:shadow-md">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-50">
-                  <CreditCard size={20} className="text-green-600" />
-                </div>
-                <div>
-                  <p className="font-medium text-slate-900">Rapprochement</p>
-                  <p className="text-sm text-slate-500">Matcher commandes</p>
-                </div>
-              </div>
-              <ArrowRight size={20} className="text-slate-400" />
-            </div>
-          </Link>
-
-          <Link href="/finance/depenses/regles">
-            <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 transition-shadow hover:shadow-md">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-violet-50">
-                  <Settings size={20} className="text-violet-600" />
-                </div>
-                <div>
-                  <p className="font-medium text-slate-900">Règles</p>
-                  <p className="text-sm text-slate-500">Classification auto</p>
-                </div>
-              </div>
-              <ArrowRight size={20} className="text-slate-400" />
-            </div>
-          </Link>
+            </Link>
+          ))}
         </div>
       </div>
     </div>
