@@ -239,19 +239,21 @@ git pull
 
 ---
 
-## Règle : Créer les branches feature depuis main (TOUJOURS)
+## Règle : Créer les branches feature depuis staging (TOUJOURS)
 
 ```bash
-# ✅ CORRECT
-git checkout main && git pull
+# ✅ CORRECT — staging contient le code le plus récent
+git checkout staging && git pull
 git checkout -b feat/BO-XXX-description
 
-# ❌ INCORRECT - embarque des commits staging pas encore dans main
-git checkout staging
+# ❌ INCORRECT — main est en retard, features interdépendantes cassées
+git checkout main
 git checkout -b feat/BO-XXX-description
 ```
 
-**Pourquoi** : Une branche créée depuis staging contient les commits squashés de staging (hash X) qui seront re-squashés différemment dans main (hash Y) → conflits inévitables.
+**Pourquoi** : Les features sont souvent interdépendantes (feature B dépend de feature A). Comme les PRs vont d'abord vers staging, créer depuis main = code manquant + conflits. Staging est toujours la base la plus à jour.
+
+**Note** : Après chaque deploy staging→main + rebase (règle ci-dessus), staging et main sont alignés → pas de divergence.
 
 ---
 

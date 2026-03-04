@@ -87,7 +87,8 @@ pnpm lint:fix                              # ESLint auto-fix
 5. **VERIFY** : `type-check` + `build` filtres
 
 **Git** : Feature branch AVANT de coder. Format : `[APP-DOMAIN-NNN] type: description`
-**Deploiement** : PRs → `staging` → `main` (1-2x/jour). Branches feature depuis `main`.
+**Deploiement** : PRs → `staging` → `main`. Branches feature depuis **`staging`** (pas main).
+**PR staging→main + rebase** : C'est Claude qui le fait (JAMAIS Romeo).
 Details : `.claude/rules/dev/git-workflow.md`
 
 ---
