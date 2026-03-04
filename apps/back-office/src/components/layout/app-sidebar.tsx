@@ -50,6 +50,8 @@ import {
   Grid3x3,
   BookOpenCheck,
   FolderArchive,
+  Scale,
+  Percent,
 } from 'lucide-react';
 
 import { PhaseIndicator } from '@/components/ui/phase-indicator';
@@ -329,6 +331,21 @@ const getNavItems = (
         title: 'Grand Livre',
         href: '/finance/grand-livre',
         icon: BookOpenCheck,
+      },
+      {
+        title: 'TVA (CA3)',
+        href: '/finance/tva',
+        icon: Percent,
+      },
+      {
+        title: 'Bilan',
+        href: '/finance/bilan',
+        icon: Scale,
+      },
+      {
+        title: 'Annexe légale',
+        href: '/finance/annexe',
+        icon: FileText,
       },
       {
         title: 'Trésorerie',
