@@ -5,8 +5,11 @@
 export {
   type ContactBO,
   type CreateContactInput,
+  type UpdateContactInput,
   useOrganisationContactsBO,
   useEnseigneContactsBO,
   useCreateContactBO,
+  useUpdateContactBO,
+  useDeleteContactBO,
   useSetBillingContactBO,
 } from '@verone/orders/hooks/linkme';

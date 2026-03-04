@@ -31,6 +31,22 @@ export interface ContactBO {
   isBillingContact: boolean;
   isCommercialContact: boolean;
   isTechnicalContact: boolean;
+  linkmeUserId: string | null;
+}
+
+export interface UpdateContactInput {
+  contactId: string;
+  enseigneId?: string;
+  organisationId?: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone?: string;
+  title?: string;
+  isBillingContact?: boolean;
+  isPrimaryContact?: boolean;
+  isCommercialContact?: boolean;
+  isTechnicalContact?: boolean;
 }
 
 export interface CreateContactInput {
@@ -105,6 +121,7 @@ export function useOrganisationContactsBO(organisationId: string | null) {
         isBillingContact: c.is_billing_contact ?? false,
         isCommercialContact: c.is_commercial_contact ?? false,
         isTechnicalContact: c.is_technical_contact ?? false,
+        linkmeUserId: null,
       }));
 
       // Identifier les contacts clés
@@ -163,6 +180,20 @@ export function useEnseigneContactsBO(enseigneId: string | null) {
         throw error;
       }
 
+      // Fetch LinkMe users for this enseigne to detect linked accounts
+      type LinkmeUserRow = { user_id: string; email: string };
+      const { data: linkmeUsers } = await supabase
+        .from('v_linkme_users')
+        .select('user_id, email')
+        .eq('enseigne_id', enseigneId)
+        .eq('is_active', true)
+        .returns<LinkmeUserRow[]>();
+
+      const linkmeEmailMap = new Map<string, string>();
+      for (const u of linkmeUsers ?? []) {
+        linkmeEmailMap.set(u.email.toLowerCase(), u.user_id);
+      }
+
       const contacts: ContactBO[] = (data ?? []).map(c => ({
         id: c.id,
         firstName: c.first_name,
@@ -175,6 +206,7 @@ export function useEnseigneContactsBO(enseigneId: string | null) {
         isBillingContact: c.is_billing_contact ?? false,
         isCommercialContact: c.is_commercial_contact ?? false,
         isTechnicalContact: c.is_technical_contact ?? false,
+        linkmeUserId: linkmeEmailMap.get(c.email?.toLowerCase()) ?? null,
       }));
 
       const primaryContact = contacts.find(c => c.isPrimaryContact) ?? null;
@@ -243,6 +275,110 @@ export function useCreateContactBO() {
     onError: (error: Error) => {
       console.error('Erreur création contact:', error);
       toast.error('Erreur lors de la création du contact', {
+        description: error.message,
+      });
+    },
+  });
+}
+
+/**
+ * Mutation pour mettre à jour un contact (tous les champs)
+ */
+export function useUpdateContactBO() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: UpdateContactInput) => {
+      const supabase = createClient();
+
+      const { data: contact, error } = await supabase
+        .from('contacts')
+        .update({
+          first_name: input.firstName,
+          last_name: input.lastName,
+          email: input.email,
+          phone: input.phone ?? null,
+          title: input.title ?? null,
+          is_billing_contact: input.isBillingContact ?? false,
+          is_primary_contact: input.isPrimaryContact ?? false,
+          is_commercial_contact: input.isCommercialContact ?? false,
+          is_technical_contact: input.isTechnicalContact ?? false,
+        })
+        .eq('id', input.contactId)
+        .select('id, first_name, last_name, email')
+        .single();
+
+      if (error) {
+        console.error('Erreur mise à jour contact:', error);
+        throw error;
+      }
+
+      return contact;
+    },
+    onSuccess: async (_, variables) => {
+      if (variables.organisationId) {
+        await queryClient.invalidateQueries({
+          queryKey: ['organisation-contacts-bo', variables.organisationId],
+        });
+      }
+      if (variables.enseigneId) {
+        await queryClient.invalidateQueries({
+          queryKey: ['enseigne-contacts-bo', variables.enseigneId],
+        });
+      }
+      toast.success('Contact mis à jour');
+    },
+    onError: (error: Error) => {
+      console.error('Erreur mise à jour contact:', error);
+      toast.error('Erreur lors de la mise à jour du contact', {
+        description: error.message,
+      });
+    },
+  });
+}
+
+/**
+ * Mutation pour soft-delete un contact (is_active = false)
+ */
+export function useDeleteContactBO() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: {
+      contactId: string;
+      enseigneId?: string;
+      organisationId?: string;
+    }) => {
+      const supabase = createClient();
+
+      const { error } = await supabase
+        .from('contacts')
+        .update({ is_active: false })
+        .eq('id', input.contactId);
+
+      if (error) {
+        console.error('Erreur suppression contact:', error);
+        throw error;
+      }
+
+      return true;
+    },
+    onSuccess: async (_, variables) => {
+      if (variables.organisationId) {
+        await queryClient.invalidateQueries({
+          queryKey: ['organisation-contacts-bo', variables.organisationId],
+        });
+      }
+      if (variables.enseigneId) {
+        await queryClient.invalidateQueries({
+          queryKey: ['enseigne-contacts-bo', variables.enseigneId],
+        });
+      }
+      toast.success('Contact supprimé');
+    },
+    onError: (error: Error) => {
+      console.error('Erreur suppression contact:', error);
+      toast.error('Erreur lors de la suppression du contact', {
         description: error.message,
       });
     },
