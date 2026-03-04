@@ -47,6 +47,7 @@ import {
   Calculator,
   LayoutDashboard,
   ArrowLeftRight,
+  Grid3x3,
 } from 'lucide-react';
 
 import { PhaseIndicator } from '@/components/ui/phase-indicator';
@@ -168,11 +169,15 @@ const getNavItems = (
         icon: Layers,
       },
       {
+        title: 'Variantes',
+        href: '/produits/catalogue/variantes',
+        icon: Grid3x3,
+      },
+      {
         title: 'Catégories',
         href: '/produits/catalogue/categories',
         icon: Tags,
       },
-      // Variantes supprimé - accès via Catalogue
     ],
   },
   {
