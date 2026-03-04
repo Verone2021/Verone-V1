@@ -18,7 +18,11 @@
 import { useState, useMemo } from 'react';
 import Image from 'next/image';
 
-import { calculateMargin, LINKME_CONSTANTS } from '@verone/utils';
+import {
+  calculateMargin,
+  LINKME_CONSTANTS,
+  PUBLIC_PRICE_ESTIMATION_FACTOR,
+} from '@verone/utils';
 import {
   X,
   Loader2,
@@ -63,8 +67,8 @@ export function EditMarginModal({
   // Calculer les limites de marge (formule identique à AddToSelectionModal)
   const marginLimits = useMemo(() => {
     const basePriceHt = item.base_price_ht;
-    // Prix public estimé = base × 1.5 (estimation conservative)
-    const publicPriceHt = basePriceHt * 1.5;
+    // Prix public estimé quand non renseigné en DB
+    const publicPriceHt = basePriceHt * PUBLIC_PRICE_ESTIMATION_FACTOR;
     const commissionRate =
       affiliate?.linkme_commission_rate ?? PLATFORM_COMMISSION_RATE;
 
@@ -102,7 +106,7 @@ export function EditMarginModal({
     // Produit affilié : prix client = selling_price tel quel
     // Commission Vérone DÉDUITE du revenu (pas ajoutée au prix)
     if (isAffiliateProduct) {
-      const affiliateCommissionRate = item.affiliate_commission_rate ?? 15;
+      const affiliateCommissionRate = item.affiliate_commission_rate ?? 0;
       const commissionDeducted = basePriceHt * (affiliateCommissionRate / 100);
       return {
         sellingPrice: Math.round(basePriceHt * 100) / 100,

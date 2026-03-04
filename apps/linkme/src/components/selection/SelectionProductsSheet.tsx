@@ -37,6 +37,8 @@ import {
   EyeOff,
 } from 'lucide-react';
 
+import { PLATFORM_COMMISSION_RATE } from '@verone/utils';
+
 import {
   useSelectionItems,
   useUserAffiliate,
@@ -204,7 +206,8 @@ export function SelectionCatalogDialog({
 
   // Get affiliate commission rate
   const { data: affiliate } = useUserAffiliate();
-  const commissionRate = affiliate?.linkme_commission_rate ?? 5;
+  const commissionRate =
+    affiliate?.linkme_commission_rate ?? PLATFORM_COMMISSION_RATE;
 
   // Counts
   const totalItems = items?.length ?? 0;

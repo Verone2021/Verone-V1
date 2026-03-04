@@ -81,17 +81,6 @@ export interface IMetricCardProps {
 }
 
 /**
- * Génère des données de graphique mockées
- */
-export function generateChartData(
-  points: number = 12
-): Array<{ value: number }> {
-  return Array.from({ length: points }, () => ({
-    value: Math.floor(Math.random() * 100) + 50,
-  }));
-}
-
-/**
  * MetricCard - Carte de métrique avec mini-graphique
  */
 export function MetricCard({
@@ -101,7 +90,7 @@ export function MetricCard({
   value,
   trend,
   trendLabel,
-  chartData = generateChartData(),
+  chartData = [],
   isLoading = false,
   onMenuClick,
 }: IMetricCardProps): JSX.Element {
@@ -194,5 +183,3 @@ export function MetricCard({
     </Card>
   );
 }
-
-export default MetricCard;

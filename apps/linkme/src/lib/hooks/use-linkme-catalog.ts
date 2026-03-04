@@ -14,6 +14,7 @@ import * as React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { Database } from '@verone/types';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { DEFAULT_PRODUCT_MARGIN_PERCENTAGE } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
 
 const supabase: SupabaseClient<Database> = createClient();
@@ -271,7 +272,8 @@ async function fetchCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
     // Calcul prix de vente: custom_price_ht ou (cost + eco_tax) * (1 + margin%)
     const costPrice = product?.cost_price ?? 0;
     const ecoTax = product?.eco_tax_default ?? 0;
-    const marginPct = product?.margin_percentage ?? 25;
+    const marginPct =
+      product?.margin_percentage ?? DEFAULT_PRODUCT_MARGIN_PERCENTAGE;
     const calculatedPrice =
       costPrice > 0 ? (costPrice + ecoTax) * (1 + marginPct / 100) : 0;
     const sellingPrice = cp.custom_price_ht ?? calculatedPrice;
@@ -455,7 +457,8 @@ export function useCatalogProduct(catalogId: string | null) {
       // Calcul prix de vente
       const costPrice = product?.cost_price ?? 0;
       const ecoTax = product?.eco_tax_default ?? 0;
-      const marginPct = product?.margin_percentage ?? 25;
+      const marginPct =
+        product?.margin_percentage ?? DEFAULT_PRODUCT_MARGIN_PERCENTAGE;
       const calculatedPrice =
         costPrice > 0 ? (costPrice + ecoTax) * (1 + marginPct / 100) : 0;
 
