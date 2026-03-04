@@ -8,6 +8,7 @@
 
 import React, { useState } from 'react';
 
+import { useToast } from '@verone/common';
 import { ButtonV2 } from '@verone/ui';
 import {
   Dialog,
@@ -40,6 +41,7 @@ export function LinkMeDeleteUserDialog({
   onUserDeleted,
 }: LinkMeDeleteUserDialogProps) {
   const [error, setError] = useState<string>('');
+  const { toast } = useToast();
   const deleteMutation = useDeleteLinkMeUser();
 
   if (!user) return null;
@@ -54,7 +56,10 @@ export function LinkMeDeleteUserDialog({
       onOpenChange(false);
       onUserDeleted?.();
 
-      console.warn('Utilisateur LinkMe désactivé avec succès');
+      toast({
+        title: 'Utilisateur désactivé',
+        description: `${fullName} a été désactivé avec succès.`,
+      });
     } catch (error: unknown) {
       console.error('Erreur suppression utilisateur:', error);
       const message =

@@ -505,16 +505,27 @@ export function useDeleteLinkMeUser() {
   return useMutation({
     mutationFn: async (userId: string) => {
       // Soft delete: désactiver le rôle
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('user_app_roles')
         .update({
           is_active: false,
           updated_at: new Date().toISOString(),
         })
         .eq('user_id', userId)
-        .eq('app', 'linkme');
+        .eq('app', 'linkme')
+        .select('id, is_active');
 
       if (error) throw error;
+      if (!data || data.length === 0) {
+        throw new Error(
+          'Impossible de désactiver cet utilisateur. Permissions insuffisantes.'
+        );
+      }
+      if (data[0].is_active !== false) {
+        throw new Error(
+          'La désactivation a échoué. Contactez un administrateur.'
+        );
+      }
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['linkme-users'] });
