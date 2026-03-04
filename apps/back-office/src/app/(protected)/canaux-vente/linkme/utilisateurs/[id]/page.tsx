@@ -9,7 +9,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@verone/ui';
 import { Avatar, AvatarFallback, AvatarImage } from '@verone/ui';
 import { createClient } from '@verone/utils/supabase/client';
-import { useUserLinkmeActivity } from '@verone/orders/hooks/linkme';
 import {
   ArrowLeft,
   Loader2,
@@ -23,6 +22,7 @@ import {
   Shield,
   Link2,
   Activity,
+  Clock,
   Package,
   Eye,
   ShoppingCart,
@@ -39,6 +39,7 @@ import {
 } from '../../hooks/use-linkme-users';
 import { UserActivityTimeline } from './components/UserActivityTimeline';
 import { UserEngagementCards } from './components/UserEngagementCards';
+import { UserNavigationStats } from './components/UserNavigationStats';
 
 // Types
 interface UserSelection {
@@ -149,12 +150,6 @@ export default function UserDetailPage() {
     user?.enseigne_id ?? null,
     user?.organisation_id ?? null
   );
-  const { stats, isLoading: statsLoading } = useUserLinkmeActivity(
-    user?.user_id ?? null,
-    user?.enseigne_id ?? null,
-    user?.organisation_id ?? null
-  );
-
   // État onglet actif
   const [activeTab, setActiveTab] = useState('infos');
 
@@ -262,58 +257,6 @@ export default function UserDetailPage() {
         </div>
       </div>
 
-      {/* KPIs */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">
-                  Sélections créées
-                </p>
-                <p className="text-2xl font-bold">
-                  {statsLoading ? '-' : stats.selectionsCount}
-                </p>
-              </div>
-              <ShoppingBag className="h-8 w-8 text-purple-500 opacity-80" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">
-                  Commandes générées
-                </p>
-                <p className="text-2xl font-bold">
-                  {statsLoading ? '-' : stats.ordersCount}
-                </p>
-              </div>
-              <ShoppingCart className="h-8 w-8 text-blue-500 opacity-80" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">CA Total HT</p>
-                <p className="text-2xl font-bold">
-                  {statsLoading
-                    ? '-'
-                    : new Intl.NumberFormat('fr-FR', {
-                        style: 'currency',
-                        currency: 'EUR',
-                      }).format(stats.totalCaHT)}
-                </p>
-              </div>
-              <Package className="h-8 w-8 text-green-500 opacity-80" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
       {/* Onglets */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList variant="underline" className="w-full justify-start border-b">
@@ -332,6 +275,10 @@ export default function UserDetailPage() {
           <TabsTrigger value="activite" variant="underline">
             <Activity className="h-4 w-4 mr-2" />
             Activité
+          </TabsTrigger>
+          <TabsTrigger value="historique" variant="underline">
+            <Clock className="h-4 w-4 mr-2" />
+            Historique
           </TabsTrigger>
         </TabsList>
 
@@ -634,12 +581,14 @@ export default function UserDetailPage() {
           </Card>
         </TabsContent>
 
-        {/* Onglet Activité */}
+        {/* Onglet Activité — engagement + navigation */}
         <TabsContent value="activite" className="mt-6 space-y-6">
-          {/* Engagement metrics (navigation tracking) */}
           <UserEngagementCards userId={user.user_id} />
+          <UserNavigationStats userId={user.user_id} />
+        </TabsContent>
 
-          {/* Activity timeline (business events) */}
+        {/* Onglet Historique — commandes, notifications, onboarding */}
+        <TabsContent value="historique" className="mt-6">
           <UserActivityTimeline
             userId={user.user_id}
             enseigneId={user.enseigne_id ?? null}
