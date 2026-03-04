@@ -282,7 +282,7 @@ const getNavItems = (
       },
     ],
   },
-  // ============ FINANCE (5 entrées — Pattern Pennylane/Indy) ============
+  // ============ FINANCE (5 entrées — Style Indy 2026) ============
   {
     title: 'Finance',
     href: '/finance',
@@ -291,7 +291,7 @@ const getNavItems = (
     badgeVariant: transactionsUnreconciledCount > 0 ? 'urgent' : undefined,
     children: [
       {
-        title: 'Tableau de bord',
+        title: 'Pilotage',
         href: '/finance',
         icon: LayoutDashboard,
       },
@@ -308,13 +308,13 @@ const getNavItems = (
         badgeVariant: transactionsUnreconciledCount > 0 ? 'urgent' : undefined,
       },
       {
-        title: 'Comptabilité',
-        href: '/finance/comptabilite',
+        title: 'Documents',
+        href: '/finance/documents',
         icon: BookOpenCheck,
       },
       {
-        title: 'Trésorerie',
-        href: '/finance/tresorerie',
+        title: 'Clôture exercice',
+        href: '/finance/admin/cloture',
         icon: Banknote,
       },
     ],
@@ -521,6 +521,9 @@ function SidebarContent() {
       Achats: 'commandes',
       Comptabilité: 'finance',
       Finance: 'finance',
+      Pilotage: 'finance',
+      Documents: 'finance',
+      'Clôture exercice': 'finance',
       Facturation: 'factures',
       Factures: 'factures',
       Devis: 'factures',
