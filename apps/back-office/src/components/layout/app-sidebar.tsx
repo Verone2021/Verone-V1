@@ -52,6 +52,7 @@ import {
   FolderArchive,
   Scale,
   Percent,
+  Lock,
 } from 'lucide-react';
 
 import { PhaseIndicator } from '@/components/ui/phase-indicator';
@@ -356,6 +357,11 @@ const getNavItems = (
         title: 'Bibliothèque',
         href: '/finance/bibliotheque',
         icon: FolderArchive,
+      },
+      {
+        title: 'Clôture exercice',
+        href: '/finance/admin/cloture',
+        icon: Lock,
       },
     ],
   },
