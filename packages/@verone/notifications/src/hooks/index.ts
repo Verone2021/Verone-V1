@@ -18,3 +18,6 @@ export * from './use-linkme-approvals-count';
 
 // Badge count hooks - Phase 3 (2026-02-24)
 export * from './use-form-submissions-count';
+
+// Badge count hooks - Phase 4 (2026-03-02)
+export * from './use-linkme-missing-info-count';

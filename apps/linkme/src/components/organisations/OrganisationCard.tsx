@@ -6,7 +6,7 @@
  * Carte compacte affichant une organisation avec :
  * - Nom, adresse de livraison (2 lignes)
  * - CA et commissions totales (compact)
- * - Boutons CRUD : Voir, Modifier, Archiver (icônes)
+ * - Boutons actions : Ajouter contact, Voir/Modifier, Archiver (icônes)
  * - Badges cliquables pour les champs manquants (quick edit)
  *
  * Mode "incomplete" : variante pour les organisations nécessitant
@@ -26,13 +26,14 @@ import {
   MapPin,
   Euro,
   Coins,
-  Eye,
+  UserPlus,
   Pencil,
   Archive,
   AlertCircle,
   Loader2,
   Building2,
   Truck,
+  Users,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -46,9 +47,10 @@ import type { OrganisationStats } from '../../lib/hooks/use-organisation-stats';
 interface OrganisationCardProps {
   organisation: EnseigneOrganisation;
   stats?: OrganisationStats;
-  onView: (org: EnseigneOrganisation) => void;
   onEdit: (org: EnseigneOrganisation) => void;
   onArchive: (org: EnseigneOrganisation) => void;
+  /** Quick action: ouvre le detail sheet sur l'onglet Contacts */
+  onAddContact: (org: EnseigneOrganisation) => void;
   isLoading?: boolean;
   /** Mode d'affichage: normal ou incomplete (avec completion inline) */
   mode?: 'normal' | 'incomplete';
@@ -117,9 +119,9 @@ function getAddressLines(org: EnseigneOrganisation): AddressLines {
 export function OrganisationCard({
   organisation,
   stats,
-  onView,
   onEdit,
   onArchive,
+  onAddContact,
   isLoading = false,
   mode = 'normal',
   onEditShippingAddress,
@@ -216,18 +218,18 @@ export function OrganisationCard({
         {/* Actions secondaires */}
         <div className="flex items-center justify-end gap-1 mt-3 pt-3 border-t border-orange-100">
           <button
-            onClick={() => onView(organisation)}
+            onClick={() => onAddContact(organisation)}
             disabled={isLoading}
             className="p-1.5 text-gray-500 hover:text-linkme-turquoise hover:bg-linkme-turquoise/10 rounded transition-colors"
-            title="Voir les détails"
+            title="Ajouter un contact"
           >
-            <Eye className="h-4 w-4" />
+            <UserPlus className="h-4 w-4" />
           </button>
           <button
             onClick={() => onEdit(organisation)}
             disabled={isLoading}
             className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
-            title="Modifier"
+            title="Voir / Modifier"
           >
             <Pencil className="h-4 w-4" />
           </button>
@@ -326,21 +328,27 @@ export function OrganisationCard({
         </div>
       </div>
 
-      {/* Actions CRUD - Icônes compactes */}
+      {/* Actions - Icônes compactes */}
       <div className="flex items-center justify-end gap-0.5 pt-2 border-t border-gray-100">
+        {(organisation.contact_count ?? 0) > 0 && (
+          <span className="flex items-center gap-1 px-1.5 py-0.5 mr-auto text-xs font-medium text-linkme-turquoise bg-linkme-turquoise/10 rounded">
+            <Users className="h-3.5 w-3.5" />
+            {organisation.contact_count}
+          </span>
+        )}
         <button
-          onClick={() => onView(organisation)}
+          onClick={() => onAddContact(organisation)}
           disabled={isLoading}
           className="p-1.5 text-gray-500 hover:text-linkme-turquoise hover:bg-linkme-turquoise/10 rounded transition-colors disabled:opacity-50"
-          title="Voir les détails"
+          title="Ajouter un contact"
         >
-          <Eye className="h-4 w-4" />
+          <UserPlus className="h-4 w-4" />
         </button>
         <button
           onClick={() => onEdit(organisation)}
           disabled={isLoading}
           className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors disabled:opacity-50"
-          title="Modifier"
+          title="Voir / Modifier"
         >
           <Pencil className="h-4 w-4" />
         </button>

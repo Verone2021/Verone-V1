@@ -14,6 +14,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { Database } from '@verone/types';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import {
+  DEFAULT_SELECTION_ITEM_MARGIN,
+  DEFAULT_PRODUCT_MARGIN_PERCENTAGE,
+  PLATFORM_COMMISSION_RATE,
+} from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
 
 import { useAuth } from '../../contexts/AuthContext';
@@ -186,9 +191,11 @@ export function useUserAffiliate() {
         logo_url: data.logo_url,
         bio: data.bio,
         status: data.status ?? 'active',
-        default_margin_rate: data.default_margin_rate ?? 20,
+        default_margin_rate:
+          data.default_margin_rate ?? DEFAULT_SELECTION_ITEM_MARGIN,
         max_margin_rate: data.max_margin_rate ?? 50,
-        linkme_commission_rate: data.linkme_commission_rate ?? 5,
+        linkme_commission_rate:
+          data.linkme_commission_rate ?? PLATFORM_COMMISSION_RATE,
       };
     },
     enabled: !!user && !!linkMeRole,
@@ -393,7 +400,7 @@ export function useSelectionItems(selectionId: string | null) {
         selection_id: item.selection_id,
         product_id: item.product_id,
         base_price_ht: item.base_price_ht ?? 0,
-        margin_rate: item.margin_rate ?? 20,
+        margin_rate: item.margin_rate ?? DEFAULT_SELECTION_ITEM_MARGIN,
         selling_price_ht: item.selling_price_ht ?? 0,
         custom_description: item.custom_description,
         is_featured: item.is_featured ?? false,
@@ -521,7 +528,8 @@ export function useAddToSelection() {
       const product = catalogProduct.products;
       const costPrice = product?.cost_price ?? 0;
       const ecoTax = product?.eco_tax_default ?? 0;
-      const marginPct = product?.margin_percentage ?? 25;
+      const marginPct =
+        product?.margin_percentage ?? DEFAULT_PRODUCT_MARGIN_PERCENTAGE;
       const calculatedPrice =
         costPrice > 0 ? (costPrice + ecoTax) * (1 + marginPct / 100) : 0;
 
@@ -640,7 +648,8 @@ export function useAddToSelectionWithMargin() {
       const product = catalogProduct.products;
       const costPrice = product?.cost_price ?? 0;
       const ecoTax = product?.eco_tax_default ?? 0;
-      const marginPct = product?.margin_percentage ?? 25;
+      const marginPct =
+        product?.margin_percentage ?? DEFAULT_PRODUCT_MARGIN_PERCENTAGE;
       const calculatedPrice =
         costPrice > 0 ? (costPrice + ecoTax) * (1 + marginPct / 100) : 0;
 

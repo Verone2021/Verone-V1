@@ -19,7 +19,7 @@ export const LINKME_CONSTANTS = {
    * Marge minimum autorisée pour les affiliés (%)
    * En dessous de ce seuil, l'affilié ne peut pas configurer sa marge
    */
-  MIN_MARGIN: 1,
+  MIN_MARGIN: 0,
 
   /**
    * Marge maximum recommandée par défaut (%)
@@ -59,6 +59,24 @@ export const LINKME_CONSTANTS = {
    * Vérone prélève cette commission sur le prix de vente
    */
   DEFAULT_AFFILIATE_PRODUCT_COMMISSION: 15,
+
+  /**
+   * Marge par défaut pour les items de sélection (%)
+   * Utilisée quand la DB retourne null pour default_margin_rate ou margin_rate
+   */
+  DEFAULT_SELECTION_ITEM_MARGIN: 15,
+
+  /**
+   * Marge produit catalogue par défaut (%)
+   * Utilisée quand products.margin_percentage est null dans channel_pricing
+   */
+  DEFAULT_PRODUCT_MARGIN_PERCENTAGE: 25,
+
+  /**
+   * Facteur d'estimation du prix public quand channel_pricing.public_price_ht est absent
+   * Prix public estimé = base_price × PUBLIC_PRICE_ESTIMATION_FACTOR
+   */
+  PUBLIC_PRICE_ESTIMATION_FACTOR: 1.5,
 } as const;
 
 /**
@@ -77,4 +95,7 @@ export const {
   DEFAULT_TAX_RATE,
   TRAFFIC_LIGHTS,
   DEFAULT_AFFILIATE_PRODUCT_COMMISSION,
+  DEFAULT_SELECTION_ITEM_MARGIN,
+  DEFAULT_PRODUCT_MARGIN_PERCENTAGE,
+  PUBLIC_PRICE_ESTIMATION_FACTOR,
 } = LINKME_CONSTANTS;

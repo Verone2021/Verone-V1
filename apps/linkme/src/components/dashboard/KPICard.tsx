@@ -215,6 +215,16 @@ export function KPICard({
           <h3 className="font-semibold text-[#183559]">{title}</h3>
         </div>
 
+        {/* Main value (compact mode) */}
+        {mainValue !== undefined && (
+          <div className="mt-1">
+            <span className={cn('text-2xl font-bold', styles.text)}>
+              {isLoading ? '--' : mainValue}
+              {mainUnit && <span className="text-lg ml-1">{mainUnit}</span>}
+            </span>
+          </div>
+        )}
+
         {/* Sous-valeurs en liste */}
         <div className="space-y-2">
           {subValues.map((sv, idx) => (

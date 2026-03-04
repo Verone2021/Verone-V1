@@ -110,6 +110,7 @@ interface CreatedByProfile {
 interface OrderWithDetails {
   id: string;
   order_number: string;
+  linkme_display_number: string | null;
   created_at: string;
   status: string;
   total_ht: number;
@@ -319,7 +320,7 @@ export default function LinkMeOrderDetailsPage() {
         .from('sales_orders')
         .select(
           `
-          id, order_number, created_at, status, total_ht, total_ttc, notes,
+          id, order_number, linkme_display_number, created_at, status, total_ht, total_ttc, notes,
           customer_id, customer_type, expected_delivery_date,
           created_by_affiliate_id, linkme_selection_id, created_by,
           payment_status_v2, payment_terms, currency, tax_rate,
@@ -404,6 +405,9 @@ export default function LinkMeOrderDetailsPage() {
       setOrder({
         id: orderData.id,
         order_number: orderData.order_number,
+        linkme_display_number:
+          (orderData as unknown as { linkme_display_number?: string | null })
+            .linkme_display_number ?? null,
         created_at: orderData.created_at,
         status: orderData.status,
         total_ht: orderData.total_ht,
@@ -851,6 +855,11 @@ export default function LinkMeOrderDetailsPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
             Commande {order.order_number}
+            {order.linkme_display_number && (
+              <span className="ml-2 text-lg font-normal text-gray-500">
+                ({order.linkme_display_number})
+              </span>
+            )}
           </h1>
           <div className="flex items-center gap-2 mt-1">
             {getStatusBadge(order.status)}

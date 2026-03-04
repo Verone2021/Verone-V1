@@ -444,7 +444,7 @@ export function CreateLinkMeOrderModal({
       // Commission Verone = affiliate_commission_rate (défaut 15%)
       // Pas de taux de marque (margin_rate = 0)
       const affiliateCommRate =
-        (item.product?.affiliate_commission_rate ?? 15) / 100;
+        (item.product?.affiliate_commission_rate ?? 0) / 100;
       const sellingPrice = item.selling_price_ht ?? item.base_price_ht;
 
       newItem = {

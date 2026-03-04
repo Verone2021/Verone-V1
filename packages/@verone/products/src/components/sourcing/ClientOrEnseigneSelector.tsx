@@ -2,8 +2,11 @@
 
 import { useState, useEffect, useMemo } from 'react';
 
-import { useEnseignes } from '@verone/organisations';
-import { useOrganisations } from '@verone/organisations';
+import { useEnseignes, useOrganisations } from '@verone/organisations';
+import type {
+  EnseigneWithStats,
+  EnseigneOrganisation,
+} from '@verone/organisations';
 import {
   Command,
   CommandInput,
@@ -59,7 +62,8 @@ export function ClientOrEnseigneSelector({
     'enseigne'
   );
 
-  const [selectedEnseigneData, setSelectedEnseigneData] = useState<any>(null);
+  const [selectedEnseigneData, setSelectedEnseigneData] =
+    useState<EnseigneWithStats | null>(null);
   // État local pour stocker le nom sélectionné (évite le bug de timing avec le hook)
   const [selectedOrganisationName, setSelectedOrganisationName] = useState<
     string | null
@@ -110,9 +114,18 @@ export function ClientOrEnseigneSelector({
   const enseigneParentOrg = useMemo(() => {
     if (!selectedEnseigneData?.organisations) return null;
     return selectedEnseigneData.organisations.find(
-      (org: any) => org.is_enseigne_parent === true
+      (org: EnseigneOrganisation) => org.is_enseigne_parent === true
     );
   }, [selectedEnseigneData]);
+
+  // Synchroniser le nom local avec la liste chargée (après refetch parent)
+  useEffect(() => {
+    if (organisationId && selectedOrganisation) {
+      setSelectedOrganisationName(selectedOrganisation.name);
+    } else if (!organisationId) {
+      setSelectedOrganisationName(null);
+    }
+  }, [organisationId, selectedOrganisation]);
 
   // Auto-switch tab based on selection
   useEffect(() => {
@@ -125,22 +138,12 @@ export function ClientOrEnseigneSelector({
 
   // Handlers
   const handleEnseigneSelect = (enseigne: (typeof enseignes)[0]) => {
-    // Appeler immédiatement les callbacks avec les données disponibles
-    // La société mère sera chargée en arrière-plan
+    // Reset état local organisation
+    setSelectedOrganisationName(null);
+    // Un seul appel — le parent gère assigned_client_id: null
+    // Le useEffect [enseigneId] charge les détails (société mère) automatiquement
     onEnseigneChange(enseigne.id, enseigne.name, null);
-    onOrganisationChange(null, null);
     setOpen(false);
-
-    // Charger les détails de l'enseigne en arrière-plan pour obtenir la société mère
-    getEnseigneById(enseigne.id).then(enseigneDetails => {
-      const parentOrg = enseigneDetails?.organisations?.find(
-        (org: any) => org.is_enseigne_parent === true
-      );
-      if (parentOrg) {
-        // Mise à jour avec l'ID de la société mère
-        onEnseigneChange(enseigne.id, enseigne.name, parentOrg.id);
-      }
-    });
   };
 
   const handleOrganisationSelect = (
@@ -149,14 +152,15 @@ export function ClientOrEnseigneSelector({
     // Stocker le nom localement pour l'affichage immédiat
     setSelectedOrganisationName(organisation.name);
     onOrganisationChange(organisation.id, organisation.name);
-    onEnseigneChange(null, null, null); // Reset enseigne
+    // NE PAS appeler onEnseigneChange ici — le parent gère déjà enseigne_id: null
     setOpen(false);
   };
 
   const handleReset = () => {
     setSelectedOrganisationName(null);
+    setSelectedEnseigneData(null);
+    // Un seul appel suffit — le parent met les 2 champs à null
     onEnseigneChange(null, null, null);
-    onOrganisationChange(null, null);
     setOpen(false);
   };
 
@@ -334,7 +338,9 @@ export function ClientOrEnseigneSelector({
               Enseigne : {selectedEnseigne.name}
               {enseigneParentOrg && (
                 <span className="ml-1 text-xs text-muted-foreground">
-                  (Société mère : {enseigneParentOrg.name})
+                  (Société mère :{' '}
+                  {enseigneParentOrg.trade_name || enseigneParentOrg.legal_name}
+                  )
                 </span>
               )}
             </Badge>

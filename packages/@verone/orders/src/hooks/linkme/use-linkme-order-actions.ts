@@ -799,6 +799,7 @@ export interface PendingOrderLinkMeDetails {
 export interface PendingOrder {
   id: string;
   order_number: string;
+  linkme_display_number: string | null;
   status: string;
   total_ht: number;
   total_ttc: number;
@@ -859,6 +860,7 @@ export function usePendingOrders() {
           `
           id,
           order_number,
+          linkme_display_number,
           status,
           total_ht,
           total_ttc,
@@ -1019,6 +1021,9 @@ export function usePendingOrders() {
         enrichedOrders.push({
           id: order.id,
           order_number: order.order_number,
+          linkme_display_number:
+            (order as unknown as { linkme_display_number?: string | null })
+              .linkme_display_number ?? null,
           status: order.status,
           total_ht: order.total_ht,
           total_ttc: order.total_ttc,
@@ -1089,6 +1094,7 @@ export function useAllLinkMeOrders(status?: OrderValidationStatus) {
           `
           id,
           order_number,
+          linkme_display_number,
           status,
           total_ht,
           total_ttc,
@@ -1240,6 +1246,9 @@ export function useAllLinkMeOrders(status?: OrderValidationStatus) {
         enrichedOrders.push({
           id: order.id,
           order_number: order.order_number,
+          linkme_display_number:
+            (order as unknown as { linkme_display_number?: string | null })
+              .linkme_display_number ?? null,
           status: order.status,
           total_ht: order.total_ht,
           total_ttc: order.total_ttc,

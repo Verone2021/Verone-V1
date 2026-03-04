@@ -77,6 +77,8 @@ import {
   EyeOff,
   UserPlus,
   ExternalLink,
+  Plus,
+  X,
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -306,16 +308,24 @@ function useOrdersWithMissingFields() {
       const results: OrderWithMissing[] = [];
 
       for (const order of orders ?? []) {
-        const detailsArray = order.sales_order_linkme_details as Array<
-          Record<string, unknown>
-        > | null;
-        const details = (detailsArray?.[0] ??
-          null) as LinkMeOrderDetails | null;
+        // Supabase PostgREST returns single objects for FK joins, handle both shapes
+        const detailsRaw = order.sales_order_linkme_details as unknown as
+          | Record<string, unknown>
+          | Record<string, unknown>[]
+          | null;
+        const details = (
+          Array.isArray(detailsRaw)
+            ? (detailsRaw[0] ?? null)
+            : (detailsRaw ?? null)
+        ) as LinkMeOrderDetails | null;
 
-        // After backfill, details should always exist for LinkMe orders.
-        // If still null (edge case), getOrderMissingFields handles it gracefully.
-        const orgArray = order.organisations as unknown as OrgRow[] | null;
-        const org = orgArray?.[0] ?? null;
+        const orgRaw = order.organisations as unknown as
+          | OrgRow
+          | OrgRow[]
+          | null;
+        const org = Array.isArray(orgRaw)
+          ? (orgRaw[0] ?? null)
+          : (orgRaw ?? null);
 
         const rawIgnored = (details as unknown as Record<string, unknown>)
           ?.ignored_missing_fields;
@@ -323,8 +333,11 @@ function useOrdersWithMissingFields() {
           ? (rawIgnored as string[])
           : [];
 
-        const ownerType =
-          (detailsArray?.[0]?.owner_type as string | null) ?? null;
+        const detailsRecord = details as unknown as Record<
+          string,
+          unknown
+        > | null;
+        const ownerType = (detailsRecord?.owner_type as string | null) ?? null;
 
         const missingFields = getOrderMissingFields({
           details,
@@ -332,6 +345,17 @@ function useOrdersWithMissingFields() {
           ownerType,
           ignoredFields,
         });
+
+        // Normalize info requests (also could be object or array)
+        const infoReqRaw = order.linkme_info_requests as unknown as
+          | InfoRequest
+          | InfoRequest[]
+          | null;
+        const infoRequests: InfoRequest[] = Array.isArray(infoReqRaw)
+          ? infoReqRaw
+          : infoReqRaw
+            ? [infoReqRaw]
+            : [];
 
         if (!missingFields.isComplete) {
           results.push({
@@ -352,7 +376,7 @@ function useOrdersWithMissingFields() {
                 | null) ?? null,
             ignoredFields,
             missingFields,
-            infoRequests: (order.linkme_info_requests ?? []) as InfoRequest[],
+            infoRequests,
           });
         }
       }
@@ -598,7 +622,7 @@ function useSendInfoRequest() {
       orderNumber: string;
       recipientEmail: string;
       recipientName: string;
-      recipientType: 'requester' | 'owner';
+      recipientType: 'requester' | 'owner' | 'manual';
       organisationName: string | null;
       totalTtc: number;
       requestedFields: Array<{
@@ -1315,6 +1339,8 @@ function SeveritySelector({
 // COMPONENTS - SEND INFO REQUEST DIALOG
 // =============================================================================
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 function SendInfoRequestDialog({
   order,
   open,
@@ -1324,9 +1350,23 @@ function SendInfoRequestDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const [recipientType, setRecipientType] = useState<'requester' | 'owner'>(
-    'requester'
-  );
+  const details = order.details;
+  const requesterEmail = details?.requester_email ?? '';
+  const requesterName = details?.requester_name ?? '';
+  const ownerEmail = details?.owner_email ?? '';
+  const ownerName = details?.owner_name ?? '';
+
+  // Auto-select: requester > owner > manual (fallback when no emails exist)
+  const defaultRecipientType: 'requester' | 'owner' | 'manual' = requesterEmail
+    ? 'requester'
+    : ownerEmail
+      ? 'owner'
+      : 'manual';
+
+  const [recipientType, setRecipientType] = useState<
+    'requester' | 'owner' | 'manual'
+  >(defaultRecipientType);
+  const [manualEmails, setManualEmails] = useState<string[]>(['']);
   const [customMessage, setCustomMessage] = useState('');
   const sendInfoRequest = useSendInfoRequest();
   const ignoreField = useIgnoreField();
@@ -1342,16 +1382,25 @@ function SendInfoRequestDialog({
     },
   });
 
-  const details = order.details;
-  const requesterEmail = details?.requester_email ?? '';
-  const requesterName = details?.requester_name ?? '';
-  const ownerEmail = details?.owner_email ?? '';
-  const ownerName = details?.owner_name ?? '';
+  const validManualEmails = manualEmails.filter(e =>
+    EMAIL_REGEX.test(e.trim())
+  );
 
   const selectedEmail =
-    recipientType === 'requester' ? requesterEmail : ownerEmail;
+    recipientType === 'manual'
+      ? validManualEmails.join(', ')
+      : recipientType === 'requester'
+        ? requesterEmail
+        : ownerEmail;
   const selectedName =
-    recipientType === 'requester' ? requesterName : ownerName;
+    recipientType === 'manual'
+      ? ''
+      : recipientType === 'requester'
+        ? requesterName
+        : ownerName;
+
+  const canSend =
+    recipientType === 'manual' ? validManualEmails.length > 0 : !!selectedEmail;
 
   const pendingRequest = order.infoRequests.find(
     r =>
@@ -1360,7 +1409,7 @@ function SendInfoRequestDialog({
   );
 
   const handleSend = async () => {
-    if (!currentUser?.id || !selectedEmail) return;
+    if (!currentUser?.id || !canSend) return;
 
     await sendInfoRequest.mutateAsync({
       salesOrderId: order.id,
@@ -1382,6 +1431,19 @@ function SendInfoRequestDialog({
 
     onOpenChange(false);
     setCustomMessage('');
+    setManualEmails(['']);
+  };
+
+  const handleAddEmail = () => {
+    setManualEmails(prev => [...prev, '']);
+  };
+
+  const handleRemoveEmail = (index: number) => {
+    setManualEmails(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleEmailChange = (index: number, value: string) => {
+    setManualEmails(prev => prev.map((e, i) => (i === index ? value : e)));
   };
 
   return (
@@ -1452,6 +1514,67 @@ function SendInfoRequestDialog({
                     {ownerName ? `${ownerName} - ` : ''}
                     {ownerEmail || 'Email non renseigné'}
                   </div>
+                </div>
+              </label>
+
+              {/* Manual email option */}
+              <label
+                className={cn(
+                  'flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors',
+                  recipientType === 'manual'
+                    ? 'border-blue-500 bg-blue-50'
+                    : 'border-gray-200 hover:border-gray-300'
+                )}
+              >
+                <input
+                  type="radio"
+                  name="recipientType"
+                  value="manual"
+                  checked={recipientType === 'manual'}
+                  onChange={() => setRecipientType('manual')}
+                  className="accent-blue-600 mt-1"
+                />
+                <div className="flex-1 space-y-2">
+                  <div className="font-medium">Email manuel</div>
+                  {recipientType === 'manual' && (
+                    <div className="space-y-2">
+                      {manualEmails.map((email, index) => (
+                        <div key={index} className="flex items-center gap-2">
+                          <Input
+                            type="email"
+                            placeholder="email@exemple.fr"
+                            value={email}
+                            onChange={e =>
+                              handleEmailChange(index, e.target.value)
+                            }
+                            className={cn(
+                              'flex-1 h-8 text-sm',
+                              email.trim() &&
+                                !EMAIL_REGEX.test(email.trim()) &&
+                                'border-red-300 focus-visible:ring-red-500'
+                            )}
+                          />
+                          {index > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveEmail(index)}
+                              className="p-1 rounded hover:bg-gray-200 text-gray-400 hover:text-gray-600"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={handleAddEmail}
+                        className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800"
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                        Ajouter un destinataire
+                      </button>
+                    </div>
+                  )}
                 </div>
               </label>
             </div>
@@ -1595,7 +1718,7 @@ function SendInfoRequestDialog({
                 console.error('[SendInfoRequest] failed:', err);
               });
             }}
-            disabled={sendInfoRequest.isPending || !selectedEmail}
+            disabled={sendInfoRequest.isPending || !canSend}
           >
             {sendInfoRequest.isPending ? (
               <>
@@ -1606,6 +1729,9 @@ function SendInfoRequestDialog({
               <>
                 <Mail className="h-4 w-4 mr-2" />
                 Envoyer la demande
+                {recipientType === 'manual' && validManualEmails.length > 1
+                  ? ` (${validManualEmails.length})`
+                  : ''}
               </>
             )}
           </Button>

@@ -1,5 +1,5 @@
 /**
- * Page Mes Rémunérations - LinkMe
+ * Page Mes Commissions - LinkMe
  *
  * Refonte 2026-01 avec :
  * - 3 KPI Cards (Total TTC, Payables, En attente)
@@ -84,7 +84,7 @@ export default function CommissionsPage(): JSX.Element {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold text-gray-900">Mes Rémunérations</h1>
+          <h1 className="text-xl font-bold text-gray-900">Mes Commissions</h1>
           <p className="text-gray-500 text-sm">
             Suivez vos commissions et demandez vos versements
           </p>

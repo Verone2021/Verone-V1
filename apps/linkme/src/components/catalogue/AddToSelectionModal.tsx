@@ -16,7 +16,11 @@
 import { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
 
-import { calculateMargin, LINKME_CONSTANTS } from '@verone/utils';
+import {
+  calculateMargin,
+  LINKME_CONSTANTS,
+  PUBLIC_PRICE_ESTIMATION_FACTOR,
+} from '@verone/utils';
 import {
   X,
   Plus,
@@ -88,7 +92,8 @@ export function AddToSelectionModal({
       };
 
     const basePriceHt = product.selling_price_ht;
-    const publicPriceHt = product.public_price_ht ?? basePriceHt * 1.5;
+    const publicPriceHt =
+      product.public_price_ht ?? basePriceHt * PUBLIC_PRICE_ESTIMATION_FACTOR;
     const commissionRate =
       affiliate?.linkme_commission_rate ?? PLATFORM_COMMISSION_RATE;
 

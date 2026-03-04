@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 
 import { createClient } from '@verone/utils/supabase/client';
 
@@ -67,7 +67,7 @@ export function useEnseignes(filters?: EnseigneFilters) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   const fetchEnseignes = useCallback(async () => {
     setLoading(true);
@@ -112,52 +112,58 @@ export function useEnseignes(filters?: EnseigneFilters) {
   /**
    * Récupère une enseigne par ID avec ses organisations membres
    */
-  const getEnseigneById = async (
-    id: string
-  ): Promise<EnseigneWithStats | null> => {
-    if (!id || id.trim() === '') return null;
+  const getEnseigneById = useCallback(
+    async (id: string): Promise<EnseigneWithStats | null> => {
+      if (!id || id.trim() === '') return null;
 
-    try {
-      // Récupérer l'enseigne
-      const { data: enseigne, error: enseigneError } = await (supabase as any)
-        .from('enseignes')
-        .select('*')
-        .eq('id', id)
-        .single();
+      try {
+        // Récupérer l'enseigne
+        const { data: enseigne, error: enseigneError } = await (supabase as any)
+          .from('enseignes')
+          .select('*')
+          .eq('id', id)
+          .single();
 
-      if (enseigneError) {
-        if (enseigneError.code === 'PGRST116') return null;
-        throw enseigneError;
-      }
+        if (enseigneError) {
+          if (enseigneError.code === 'PGRST116') return null;
+          throw enseigneError;
+        }
 
-      // Récupérer les organisations liées
-      const { data: organisations, error: orgsError } = await (supabase as any)
-        .from('organisations')
-        .select(
-          'id, legal_name, trade_name, is_enseigne_parent, is_active, city, country, logo_url'
+        // Récupérer les organisations liées
+        const { data: organisations, error: orgsError } = await (
+          supabase as any
         )
-        .eq('enseigne_id', id)
-        .order('is_enseigne_parent', { ascending: false })
-        .order('legal_name', { ascending: true });
+          .from('organisations')
+          .select(
+            'id, legal_name, trade_name, is_enseigne_parent, is_active, city, country, logo_url'
+          )
+          .eq('enseigne_id', id)
+          .order('is_enseigne_parent', { ascending: false })
+          .order('legal_name', { ascending: true });
 
-      if (orgsError) {
-        console.error('Erreur récupération organisations enseigne:', orgsError);
+        if (orgsError) {
+          console.error(
+            'Erreur récupération organisations enseigne:',
+            orgsError
+          );
+        }
+
+        // Identifier la société mère (is_enseigne_parent = true)
+        const parent_company =
+          organisations?.find(org => org.is_enseigne_parent) || null;
+
+        return {
+          ...enseigne,
+          organisations: organisations || [],
+          parent_company,
+        };
+      } catch (err) {
+        console.error("Erreur lors de la récupération de l'enseigne:", err);
+        return null;
       }
-
-      // Identifier la société mère (is_enseigne_parent = true)
-      const parent_company =
-        organisations?.find(org => org.is_enseigne_parent) || null;
-
-      return {
-        ...enseigne,
-        organisations: organisations || [],
-        parent_company,
-      };
-    } catch (err) {
-      console.error("Erreur lors de la récupération de l'enseigne:", err);
-      return null;
-    }
-  };
+    },
+    [supabase]
+  );
 
   /**
    * Crée une nouvelle enseigne
@@ -392,7 +398,7 @@ export function useEnseigne(id: string) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   const fetchEnseigne = useCallback(async () => {
     if (!id) {

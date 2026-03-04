@@ -33,6 +33,7 @@ export interface EnseigneOrganisation {
   latitude: number | null;
   longitude: number | null;
   country: string | null; // Pour calcul TVA (FR=20%, autres=0%)
+  contact_count?: number;
 }
 
 interface UseEnseigneOrganisationsOptions {
@@ -86,15 +87,16 @@ export function useEnseigneOrganisations(
         return [];
       }
 
-      // 2. Récupérer organisations de l'enseigne avec adresses, logo, type et coordonnées GPS
+      // 2. Récupérer organisations de l'enseigne avec adresses, logo, type, coordonnées GPS et count contacts
       const { data: organisations, error: orgError } = await supabase
         .from('organisations')
         .select(
-          'id, legal_name, trade_name, address_line1, city, postal_code, shipping_address_line1, shipping_city, shipping_postal_code, logo_url, ownership_type, latitude, longitude, country'
+          'id, legal_name, trade_name, address_line1, city, postal_code, shipping_address_line1, shipping_city, shipping_postal_code, logo_url, ownership_type, latitude, longitude, country, contacts(count)'
         )
         .eq('enseigne_id', affiliate.enseigne_id)
         .eq('approval_status', 'approved')
         .is('archived_at', null)
+        .eq('contacts.is_active', true)
         .order('trade_name', { ascending: true, nullsFirst: false });
 
       if (orgError) {
@@ -102,7 +104,12 @@ export function useEnseigneOrganisations(
         throw orgError;
       }
 
-      return (organisations || []) as EnseigneOrganisation[];
+      return (organisations || []).map(org => ({
+        ...org,
+        contact_count:
+          (org.contacts as unknown as { count: number }[])?.[0]?.count ?? 0,
+        contacts: undefined,
+      })) as EnseigneOrganisation[];
     },
     enabled: enabled && !!affiliateId,
     staleTime: 60000, // 1 minute

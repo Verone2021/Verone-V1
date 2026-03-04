@@ -1,3 +1,7 @@
+---
+globs: supabase/migrations/**, **/middleware.ts, **/auth/**
+---
+
 # RLS Patterns Standards Verone
 
 **Version** : 2026-01-30

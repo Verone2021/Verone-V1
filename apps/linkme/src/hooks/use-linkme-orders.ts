@@ -62,6 +62,7 @@ export interface StructuredAddress {
 export interface LinkMeOrder {
   id: string;
   order_number: string;
+  linkme_display_number: string | null;
   status: string;
   payment_status: string | null;
   total_ht: number;
@@ -131,6 +132,7 @@ export interface LinkMeOrder {
 interface QueryOrderRow {
   id: string;
   order_number: string;
+  linkme_display_number: string | null;
   created_at: string;
   updated_at: string;
   status: string;
@@ -239,7 +241,7 @@ export interface UseLinkMeOrdersResult {
 // ============================================
 
 const ORDER_SELECT = `
-  id, order_number, created_at, updated_at, status,
+  id, order_number, linkme_display_number, created_at, updated_at, status,
   payment_status_v2, total_ht, total_ttc,
   shipping_cost_ht, handling_cost_ht, insurance_cost_ht,
   affiliate_total_ht, billing_address, shipping_address,
@@ -308,6 +310,7 @@ function mapRowToOrder(
   return {
     id: row.id,
     order_number: row.order_number,
+    linkme_display_number: row.linkme_display_number ?? null,
     status: row.status,
     payment_status: row.payment_status_v2,
     total_ht: Number(row.total_ht) || 0,

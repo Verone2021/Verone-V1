@@ -7,8 +7,10 @@
  * @since 2026-02
  */
 
+import { MIN_MARGIN } from '@verone/utils';
+
 export interface MarginCalculationResult {
-  /** Marge minimum en decimal (0.01 = 1%) */
+  /** Marge minimum en decimal (MIN_MARGIN / 100) */
   minRate: number;
   /** Marge maximum calculee en decimal */
   maxRate: number;
@@ -60,7 +62,7 @@ export function calculateLinkMeMargins(
     basePriceHT <= 0
   ) {
     return {
-      minRate: 0.01,
+      minRate: MIN_MARGIN / 100,
       maxRate: 0,
       suggestedRate: 0,
       isProductSellable: false,
@@ -80,10 +82,10 @@ export function calculateLinkMeMargins(
   const suggestedRate = maxRate / 3;
 
   return {
-    minRate: 0.01,
+    minRate: MIN_MARGIN / 100,
     maxRate: Math.round(maxRate * 10000) / 10000,
     suggestedRate: Math.round(suggestedRate * 10000) / 10000,
-    isProductSellable: maxRate > 0.01,
+    isProductSellable: maxRate > MIN_MARGIN / 100,
     greenZoneEnd: suggestedRate,
     orangeZoneEnd: suggestedRate * 2,
   };
