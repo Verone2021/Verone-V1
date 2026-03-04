@@ -107,7 +107,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const { data: transactions, error } = await supabase
       .from('bank_transactions')
       .select(
-        'id, transaction_id, amount, settled_at, emitted_at, label, counterparty_name, category_pcg, reference, side'
+        'id, transaction_id, amount, settled_at, emitted_at, label, counterparty_name, category_pcg, reference, side, matched_document:financial_documents!matched_document_id(document_date, document_number)'
       )
       .gte('settled_at', startDate)
       .lte('settled_at', endDate)
@@ -129,12 +129,31 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     // Data lines (one per transaction, double entry: debit + credit)
     let ecritureNum = 1;
+    let skippedCount = 0;
 
     for (const tx of transactions ?? []) {
-      const date = tx.settled_at ?? tx.emitted_at;
-      const fecDate = formatFecDate(date);
-      const amount = Math.abs(tx.amount);
       const categoryPcg = tx.category_pcg as string | null;
+
+      // Skip transactions without PCG classification (no fictitious accounts)
+      if (!categoryPcg) {
+        skippedCount++;
+        continue;
+      }
+
+      // Dates FEC: PieceDate ≤ EcritureDate ≤ ValidDate (norme DGFIP)
+      const settlementDate = tx.settled_at ?? tx.emitted_at;
+      const ecritureDate = formatFecDate(settlementDate);
+
+      // PieceDate = date du document (facture) si disponible, sinon date de règlement
+      const matchedDoc = tx.matched_document as {
+        document_date: string | null;
+        document_number: string | null;
+      } | null;
+      const pieceDate = formatFecDate(
+        matchedDoc?.document_date ?? settlementDate
+      );
+
+      const amount = Math.abs(tx.amount);
       const side = tx.side as string | null;
       const isCredit = side === 'credit' || tx.amount > 0;
 
@@ -145,9 +164,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       );
       const journalLib = getJournalLib(journalCode);
 
-      // PCG account for the expense/revenue
-      const compteNum = categoryPcg ?? (isCredit ? '701000' : '607000');
-      const pcgInfo = getPcgCategory(compteNum.substring(0, 2));
+      // PCG account for the expense/revenue — padded to 6 digits (norme FEC)
+      const compteNum = categoryPcg.padEnd(6, '0');
+      const pcgInfo = getPcgCategory(categoryPcg.substring(0, 2));
       const compteLib = pcgInfo?.label ?? (isCredit ? 'Ventes' : 'Achats');
 
       // Bank account (512000 = Banque)
@@ -164,19 +183,19 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         journalCode,
         journalLib,
         numStr,
-        fecDate,
+        ecritureDate,
         compteNum,
         compteLib,
         '', // CompAuxNum
         '', // CompAuxLib
         pieceRef,
-        fecDate,
+        pieceDate, // PieceDate = date document (facture)
         ecritureLib,
         isCredit ? '' : formatFecAmount(amount), // Debit
         isCredit ? formatFecAmount(amount) : '', // Credit
         '', // EcritureLet
         '', // DateLet
-        fecDate, // ValidDate
+        ecritureDate, // ValidDate = date de comptabilisation
         '', // Montantdevise
         '', // Idevise
       ].join('\t');
@@ -186,19 +205,19 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         journalCode,
         journalLib,
         numStr,
-        fecDate,
+        ecritureDate,
         compteBanque,
         libBanque,
         '', // CompAuxNum
         '', // CompAuxLib
         pieceRef,
-        fecDate,
+        pieceDate, // PieceDate = date document (facture)
         ecritureLib,
         isCredit ? formatFecAmount(amount) : '', // Debit (bank receives)
         isCredit ? '' : formatFecAmount(amount), // Credit (bank pays)
         '', // EcritureLet
         '', // DateLet
-        fecDate, // ValidDate
+        ecritureDate, // ValidDate = date de comptabilisation
         '', // Montantdevise
         '', // Idevise
       ].join('\t');
@@ -217,6 +236,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       headers: {
         'Content-Type': 'text/plain; charset=utf-8',
         'Content-Disposition': `attachment; filename="${filename}"`,
+        'X-FEC-Skipped-Transactions': String(skippedCount),
       },
     });
   } catch (err: unknown) {

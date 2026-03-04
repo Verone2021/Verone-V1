@@ -41,6 +41,11 @@ export interface BankTransaction {
   // Pièces jointes
   attachment_ids: string[] | null;
   has_attachment: boolean | null;
+  // Document lié (facture)
+  matched_document: {
+    document_date: string | null;
+    document_number: string | null;
+  } | null;
 }
 
 export interface OrderWithoutInvoice {
@@ -161,7 +166,9 @@ export function useBankReconciliation() {
       // 1. Fetch ALL bank transactions (tous les statuts pour affichage par onglet)
       const { data: transactions, error: txError } = await supabase
         .from('bank_transactions')
-        .select('*')
+        .select(
+          '*, matched_document:financial_documents!matched_document_id(document_date, document_number)'
+        )
         .in('matching_status', [
           'unmatched',
           'manual_matched',

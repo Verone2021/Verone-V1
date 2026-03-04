@@ -77,8 +77,8 @@ export default function BilanPage() {
       if (!date) return;
       if (selectedYear !== 'all' && !date.startsWith(selectedYear)) return;
 
-      const pcgCode =
-        (tx as TransactionWithPcg).category_pcg ?? (isCredit ? '70' : '60');
+      const pcgCode = (tx as TransactionWithPcg).category_pcg;
+      if (!pcgCode) return; // Non catégorisé = exclu du bilan par classes
       const classCode = pcgCode.substring(0, 1);
       const amount = Math.abs(tx.amount);
       const current = pcgTotals.get(classCode) ?? 0;
@@ -172,8 +172,34 @@ export default function BilanPage() {
       });
     }
 
-    // TVA à payer (estimation)
-    const tvaEstimee = (totalCredits * 0.2) / 1.2 - (totalDebits * 0.2) / 1.2;
+    // TVA à payer (calculée sur les taux individuels de chaque transaction)
+    const filterByYear = (tx: BankTransaction) => {
+      const date = tx.settled_at ?? tx.emitted_at;
+      if (!date) return false;
+      return selectedYear === 'all' || date.startsWith(selectedYear);
+    };
+
+    const tvaCollectee = creditTransactions
+      .filter(filterByYear)
+      .reduce((sum, tx) => {
+        const vatRate =
+          (tx as TransactionWithPcg & { vat_rate?: number }).vat_rate ?? 0;
+        const ttc = Math.abs(tx.amount);
+        const tva = ttc - ttc / (1 + vatRate / 100);
+        return sum + tva;
+      }, 0);
+
+    const tvaDeductible = debitTransactions
+      .filter(filterByYear)
+      .reduce((sum, tx) => {
+        const vatRate =
+          (tx as TransactionWithPcg & { vat_rate?: number }).vat_rate ?? 0;
+        const ttc = Math.abs(tx.amount);
+        const tva = ttc - ttc / (1 + vatRate / 100);
+        return sum + tva;
+      }, 0);
+
+    const tvaEstimee = tvaCollectee - tvaDeductible;
     if (tvaEstimee > 0) {
       dettes.push({
         code: '4457',

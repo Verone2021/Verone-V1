@@ -138,7 +138,7 @@ function RecettesTable({ transactions }: { transactions: BankTransaction[] }) {
     <div className="border rounded-lg overflow-hidden">
       <div className="grid grid-cols-12 gap-2 px-4 py-3 bg-muted/50 text-xs font-medium text-muted-foreground border-b uppercase tracking-wide">
         <div className="col-span-2">Date paiement</div>
-        <div className="col-span-1">Réf.</div>
+        <div className="col-span-1">N° facture</div>
         <div className="col-span-3">Client / Libellé</div>
         <div className="col-span-2">Mode paiement</div>
         <div className="col-span-1 text-right">HT</div>
@@ -147,7 +147,7 @@ function RecettesTable({ transactions }: { transactions: BankTransaction[] }) {
       </div>
       <ScrollArea className="h-[400px]">
         {(transactions as TransactionWithExtras[]).map(tx => {
-          const vatRate = tx.vat_rate ?? 20;
+          const vatRate = tx.vat_rate ?? 0;
           const ttc = Math.abs(tx.amount);
           const ht = Math.round((ttc / (1 + vatRate / 100)) * 100) / 100;
           const tva = ttc - ht;
@@ -160,8 +160,11 @@ function RecettesTable({ transactions }: { transactions: BankTransaction[] }) {
               <div className="col-span-2 text-sm text-muted-foreground">
                 {formatDate(tx.settled_at ?? tx.emitted_at)}
               </div>
-              <div className="col-span-1 text-xs text-muted-foreground">
-                {tx.reference ?? '-'}
+              <div
+                className="col-span-1 text-xs text-muted-foreground"
+                title={tx.reference ?? undefined}
+              >
+                {tx.matched_document?.document_number ?? tx.reference ?? '-'}
               </div>
               <div className="col-span-3">
                 <div className="font-medium truncate text-sm">
@@ -228,7 +231,7 @@ function AchatsTable({ transactions }: { transactions: BankTransaction[] }) {
           const pcgCode =
             tx.category_pcg || tx.ignore_reason?.match(/PCG (\d+)/)?.[1];
           const pcgInfo = pcgCode ? getPcgCategory(pcgCode) : null;
-          const vatRate = tx.vat_rate ?? 20;
+          const vatRate = tx.vat_rate ?? 0;
           const ttc = Math.abs(tx.amount);
           const ht = Math.round((ttc / (1 + vatRate / 100)) * 100) / 100;
           const tva = ttc - ht;
@@ -610,10 +613,8 @@ function CompteResultatTab({
         if (classes[classCode] !== undefined) {
           classes[classCode] += Math.abs(tx.amount);
         }
-      } else {
-        // Par défaut, classer en ventes (70)
-        classes['70'] += Math.abs(tx.amount);
       }
+      // Transactions sans PCG ignorées (pas de fallback erroné)
     });
 
     return pcgStructure.produits
@@ -641,10 +642,8 @@ function CompteResultatTab({
         if (classes[classCode] !== undefined) {
           classes[classCode] += Math.abs(tx.amount);
         }
-      } else {
-        // Par défaut, classer les dépenses non catégorisées en Achats (60)
-        classes['60'] += Math.abs(tx.amount);
       }
+      // Transactions sans PCG ignorées (pas de fallback erroné)
     });
 
     return pcgStructure.charges
