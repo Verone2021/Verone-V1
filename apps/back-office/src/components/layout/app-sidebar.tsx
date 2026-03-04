@@ -326,6 +326,11 @@ const getNavItems = (
         icon: BookOpenCheck,
       },
       {
+        title: 'Grand Livre',
+        href: '/finance/grand-livre',
+        icon: BookOpenCheck,
+      },
+      {
         title: 'Trésorerie',
         href: '/finance/tresorerie',
         icon: Banknote,
