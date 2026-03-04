@@ -39,6 +39,7 @@ export interface AffiliateProduct {
     width_cm?: number;
     height_cm?: number;
   } | null;
+  store_at_verone: boolean;
   created_at: string;
   updated_at: string;
   product_image_url: string | null;
@@ -94,7 +95,7 @@ export function useAffiliateProducts() {
         const { data, error } = await supabase
           .from('products')
           .select(
-            'id, name, sku, description, affiliate_payout_ht, affiliate_commission_rate, affiliate_approval_status, affiliate_rejection_reason, dimensions, created_at, updated_at, product_images(public_url, display_order)'
+            'id, name, sku, description, affiliate_payout_ht, affiliate_commission_rate, affiliate_approval_status, affiliate_rejection_reason, dimensions, store_at_verone, created_at, updated_at, product_images(public_url, display_order)'
           )
           .eq('created_by_affiliate', affiliate.id)
           .order('created_at', { ascending: false });

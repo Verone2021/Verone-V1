@@ -30,6 +30,7 @@ import { EditOrderPage } from './EditOrderPage';
 interface OrderData {
   id: string;
   order_number: string;
+  linkme_display_number: string | null;
   status: string;
   customer_id: string;
   total_ht: number;
@@ -126,6 +127,7 @@ export default function ModifierCommandePage() {
           `
           id,
           order_number,
+          linkme_display_number,
           status,
           customer_id,
           total_ht,

@@ -132,8 +132,7 @@ export function SelectionProductDetailModal({
     : basePrice * (1 + commissionRate);
 
   // Commission Vérone déduite du revenu affilié (uniquement produits affiliés)
-  const affiliateCommissionRate =
-    item?.product?.affiliate_commission_rate ?? 15;
+  const affiliateCommissionRate = item?.product?.affiliate_commission_rate ?? 0;
   const affiliateCommissionAmount = isAffiliateProduct
     ? basePrice * (affiliateCommissionRate / 100)
     : 0;

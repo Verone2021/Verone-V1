@@ -11,13 +11,6 @@ export {
 } from './KPICard';
 
 export {
-  MetricCard,
-  generateChartData,
-  type IMetricCardProps,
-  type MetricCardVariant,
-} from './MetricCard';
-
-export {
   CommissionKPICard,
   type CommissionKPICardProps,
   type CommissionKPIVariant,

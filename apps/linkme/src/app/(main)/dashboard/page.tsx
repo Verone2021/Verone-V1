@@ -7,7 +7,7 @@
  * - Layout max-w-3xl mx-auto (pas plein écran)
  * - Message de bienvenue simple
  * - 4 KPIs de commission (Total, Payables, En cours, En attente)
- * - 3 actions rapides
+ * - 4 actions rapides
  * - Top produits (5 max)
  * - Lien vers page analytics
  *
@@ -27,8 +27,8 @@ import {
   Loader2,
   Package,
   ShoppingBag,
+  ShoppingCart,
   Star,
-  User,
   Award,
   ArrowRight,
   CheckCircle,
@@ -80,7 +80,7 @@ export default function DashboardPage(): JSX.Element | null {
   if (affiliateLoading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50/50">
-        <Loader2 className="h-8 w-8 animate-spin text-[#5DBEBB]" />
+        <Loader2 className="h-8 w-8 animate-spin text-linkme-turquoise" />
         <p className="mt-4 text-sm text-gray-500">Chargement du profil...</p>
       </div>
     );
@@ -121,14 +121,9 @@ export default function DashboardPage(): JSX.Element | null {
   // Données des commissions par statut
   const commissionsByStatus = data?.commissionsByStatus;
 
-  // Séparer les top produits: Catalogue (marge gagnée) vs Revendeur (encaissement)
-  const allTopProducts = data?.topProducts ?? [];
-  const topProductsCatalogue = allTopProducts
-    .filter(p => !p.isRevendeur)
-    .slice(0, 5);
-  const topProductsRevendeur = allTopProducts
-    .filter(p => p.isRevendeur)
-    .slice(0, 5);
+  // Top produits séparés par la RPC (catalogue vs revendeur)
+  const topProductsCatalogue = data?.topProductsCatalogue ?? [];
+  const topProductsRevendeur = data?.topProductsRevendeur ?? [];
 
   return (
     <div className="min-h-screen bg-gray-50/50">
@@ -139,7 +134,7 @@ export default function DashboardPage(): JSX.Element | null {
 
         {/* Section Bienvenue */}
         <section className="mb-8" data-tour="dashboard-welcome">
-          <h1 className="text-2xl font-bold text-[#183559]">
+          <h1 className="text-2xl font-bold text-linkme-marine">
             Bonjour, {firstName}
           </h1>
           <p className="text-gray-500 mt-1">Votre tableau de bord</p>
@@ -211,7 +206,7 @@ export default function DashboardPage(): JSX.Element | null {
           <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">
             Actions rapides
           </h2>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {/* Mes sélections */}
             <Link
               href="/ma-selection"
@@ -222,6 +217,32 @@ export default function DashboardPage(): JSX.Element | null {
               </div>
               <span className="text-sm font-medium text-gray-700 text-center">
                 Mes sélections
+              </span>
+            </Link>
+
+            {/* Catalogue */}
+            <Link
+              href="/catalogue"
+              className="flex flex-col items-center gap-2 p-4 bg-white border border-gray-100 rounded-lg hover:bg-violet-50 hover:border-violet-200 transition-colors group"
+            >
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-violet-100 group-hover:bg-violet-200 transition-colors">
+                <Package className="h-5 w-5 text-violet-600" />
+              </div>
+              <span className="text-sm font-medium text-gray-700 text-center">
+                Catalogue
+              </span>
+            </Link>
+
+            {/* Nouvelle commande */}
+            <Link
+              href="/commandes"
+              className="flex flex-col items-center gap-2 p-4 bg-white border border-gray-100 rounded-lg hover:bg-green-50 hover:border-green-200 transition-colors group"
+            >
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100 group-hover:bg-green-200 transition-colors">
+                <ShoppingCart className="h-5 w-5 text-green-600" />
+              </div>
+              <span className="text-sm font-medium text-gray-700 text-center">
+                Nouvelle commande
               </span>
             </Link>
 
@@ -237,41 +258,29 @@ export default function DashboardPage(): JSX.Element | null {
                 Mes commandes
               </span>
             </Link>
-
-            {/* Mon profil */}
-            <Link
-              href="/profil"
-              className="flex flex-col items-center gap-2 p-4 bg-white border border-gray-100 rounded-lg hover:bg-gray-100 hover:border-gray-200 transition-colors group"
-            >
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 group-hover:bg-gray-200 transition-colors">
-                <User className="h-5 w-5 text-gray-600" />
-              </div>
-              <span className="text-sm font-medium text-gray-700 text-center">
-                Mon profil
-              </span>
-            </Link>
           </div>
         </section>
 
-        {/* Top produits Catalogue (marge gagnée) */}
-        <section className="mb-6">
+        {/* Top produits : Catalogue + Revendeur côte à côte */}
+        <section className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
+          {/* Catalogue (marge gagnée) */}
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-            <div className="p-4 sm:p-6 border-b border-gray-100">
+            <div className="p-4 border-b border-gray-100">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#7E84C0]/10">
-                    <Award className="h-5 w-5 text-[#7E84C0]" />
+                <div className="flex items-center gap-2">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-linkme-mauve/10">
+                    <Award className="h-4 w-4 text-linkme-mauve" />
                   </div>
                   <div>
-                    <h2 className="font-semibold text-[#183559]">
+                    <h2 className="font-semibold text-linkme-marine text-sm">
                       Top Produits Catalogue
                     </h2>
-                    <p className="text-xs text-gray-500">Marge gagnée</p>
+                    <p className="text-[10px] text-gray-500">Marge gagnée</p>
                   </div>
                 </div>
                 <Link
                   href="/statistiques"
-                  className="text-sm text-gray-500 hover:text-[#5DBEBB] transition-colors"
+                  className="text-xs text-gray-500 hover:text-linkme-turquoise transition-colors"
                 >
                   Tout voir
                 </Link>
@@ -280,21 +289,21 @@ export default function DashboardPage(): JSX.Element | null {
 
             <div className="divide-y divide-gray-50">
               {isLoading ? (
-                <div className="p-8 text-center">
-                  <Loader2 className="h-6 w-6 animate-spin text-gray-400 mx-auto" />
+                <div className="p-6 text-center">
+                  <Loader2 className="h-5 w-5 animate-spin text-gray-400 mx-auto" />
                 </div>
               ) : topProductsCatalogue.length === 0 ? (
                 <div className="p-6 text-center">
-                  <Package className="h-8 w-8 text-gray-300 mx-auto mb-2" />
-                  <p className="text-gray-500 text-sm">
-                    Aucune vente de produits catalogue
+                  <Package className="h-6 w-6 text-gray-300 mx-auto mb-2" />
+                  <p className="text-gray-500 text-xs">
+                    Aucune vente catalogue
                   </p>
                   <Link
                     href="/catalogue"
-                    className="inline-flex items-center gap-2 mt-3 text-sm text-[#5DBEBB] hover:underline"
+                    className="inline-flex items-center gap-1 mt-2 text-xs text-linkme-turquoise hover:underline"
                   >
                     Explorer le catalogue
-                    <ArrowRight className="h-4 w-4" />
+                    <ArrowRight className="h-3 w-3" />
                   </Link>
                 </div>
               ) : (
@@ -307,38 +316,38 @@ export default function DashboardPage(): JSX.Element | null {
                   return (
                     <div
                       key={product.productId}
-                      className="flex items-center gap-3 p-4 hover:bg-gray-50 transition-colors"
+                      className="flex items-center gap-2 px-3 py-2.5 hover:bg-gray-50 transition-colors"
                     >
-                      <div className="flex-shrink-0 w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center">
-                        <span className="text-xs font-bold text-gray-500">
+                      <div className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center">
+                        <span className="text-[10px] font-bold text-gray-500">
                           {index + 1}
                         </span>
                       </div>
 
-                      <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-gray-100 overflow-hidden">
+                      <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gray-100 overflow-hidden">
                         {product.productImageUrl ? (
                           <Image
                             src={product.productImageUrl}
                             alt={product.productName}
-                            width={40}
-                            height={40}
+                            width={32}
+                            height={32}
                             className="w-full h-full object-cover"
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
-                            <Package className="h-4 w-4 text-gray-400" />
+                            <Package className="h-3 w-3 text-gray-400" />
                           </div>
                         )}
                       </div>
 
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-[#183559] text-sm truncate">
+                        <p className="font-medium text-linkme-marine text-xs truncate">
                           {product.productName}
                         </p>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-[10px] text-gray-500">
                           {product.quantitySold} ×{' '}
-                          {commissionPerUnit.toFixed(0)}€ marge{' '}
-                          <span className="text-[#5DBEBB] font-semibold">
+                          {commissionPerUnit.toFixed(0)}€{' '}
+                          <span className="text-linkme-turquoise font-semibold">
                             → {product.commissionHT.toFixed(0)}€
                           </span>
                         </p>
@@ -349,88 +358,109 @@ export default function DashboardPage(): JSX.Element | null {
               )}
             </div>
           </div>
-        </section>
 
-        {/* Top produits Revendeur (encaissement) */}
-        {topProductsRevendeur.length > 0 && (
-          <section className="mb-8">
-            <div className="bg-white rounded-xl border border-green-100 shadow-sm overflow-hidden">
-              <div className="p-4 sm:p-6 border-b border-green-100 bg-green-50/30">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100">
-                      <Package className="h-5 w-5 text-green-600" />
-                    </div>
-                    <div>
-                      <h2 className="font-semibold text-[#183559]">
-                        Mes Produits Revendeur
-                      </h2>
-                      <p className="text-xs text-green-600">Encaissement net</p>
-                    </div>
+          {/* Revendeur (encaissement net) */}
+          <div className="bg-white rounded-xl border border-green-100 shadow-sm overflow-hidden">
+            <div className="p-4 border-b border-green-100 bg-green-50/30">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-100">
+                    <Package className="h-4 w-4 text-green-600" />
                   </div>
+                  <div>
+                    <h2 className="font-semibold text-linkme-marine text-sm">
+                      Mes Produits Revendeur
+                    </h2>
+                    <p className="text-[10px] text-green-600">
+                      Encaissement net
+                    </p>
+                  </div>
+                </div>
+                <Link
+                  href="/mes-produits"
+                  className="text-xs text-gray-500 hover:text-green-600 transition-colors"
+                >
+                  Gérer
+                </Link>
+              </div>
+            </div>
+
+            <div className="divide-y divide-green-50">
+              {isLoading ? (
+                <div className="p-6 text-center">
+                  <Loader2 className="h-5 w-5 animate-spin text-gray-400 mx-auto" />
+                </div>
+              ) : topProductsRevendeur.length === 0 ? (
+                <div className="p-6 text-center">
+                  <Package className="h-6 w-6 text-gray-300 mx-auto mb-2" />
+                  <p className="text-gray-500 text-xs">
+                    Aucun produit revendeur vendu
+                  </p>
                   <Link
                     href="/mes-produits"
-                    className="text-sm text-gray-500 hover:text-green-600 transition-colors"
+                    className="inline-flex items-center gap-1 mt-2 text-xs text-green-600 hover:underline"
                   >
-                    Gérer
+                    Gérer mes produits
+                    <ArrowRight className="h-3 w-3" />
                   </Link>
                 </div>
-              </div>
-
-              <div className="divide-y divide-green-50">
-                {topProductsRevendeur.map((product, index) => {
-                  // Pour les produits revendeur, commissionHT = ce que l'affilié encaisse
-                  const encaissementPerUnit =
+              ) : (
+                topProductsRevendeur.map((product, index) => {
+                  const encaissementNet =
+                    product.revenueHT - product.commissionHT;
+                  const netPerUnit =
                     product.quantitySold > 0
-                      ? product.commissionHT / product.quantitySold
+                      ? encaissementNet / product.quantitySold
                       : 0;
 
                   return (
                     <div
                       key={product.productId}
-                      className="flex items-center gap-3 p-4 hover:bg-green-50/50 transition-colors"
+                      className="flex items-center gap-2 px-3 py-2.5 hover:bg-green-50/50 transition-colors"
                     >
-                      <div className="flex-shrink-0 w-7 h-7 rounded-full bg-green-100 flex items-center justify-center">
-                        <span className="text-xs font-bold text-green-600">
+                      <div className="flex-shrink-0 w-6 h-6 rounded-full bg-green-100 flex items-center justify-center">
+                        <span className="text-[10px] font-bold text-green-600">
                           {index + 1}
                         </span>
                       </div>
 
-                      <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-gray-100 overflow-hidden">
+                      <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gray-100 overflow-hidden">
                         {product.productImageUrl ? (
                           <Image
                             src={product.productImageUrl}
                             alt={product.productName}
-                            width={40}
-                            height={40}
+                            width={32}
+                            height={32}
                             className="w-full h-full object-cover"
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
-                            <Package className="h-4 w-4 text-gray-400" />
+                            <Package className="h-3 w-3 text-gray-400" />
                           </div>
                         )}
                       </div>
 
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-[#183559] text-sm truncate">
+                        <p className="font-medium text-linkme-marine text-xs truncate">
                           {product.productName}
                         </p>
-                        <p className="text-xs text-gray-500">
-                          {product.quantitySold} ×{' '}
-                          {encaissementPerUnit.toFixed(0)}€{' '}
+                        <p className="text-[10px] text-gray-500">
+                          {product.quantitySold} × {netPerUnit.toFixed(0)}€ net{' '}
                           <span className="text-green-600 font-semibold">
-                            → {product.commissionHT.toFixed(0)}€ encaissés
+                            → {encaissementNet.toFixed(0)}€ encaissés
+                          </span>{' '}
+                          <span className="text-gray-400">
+                            (comm. LinkMe: {product.commissionHT.toFixed(0)}€)
                           </span>
                         </p>
                       </div>
                     </div>
                   );
-                })}
-              </div>
+                })
+              )}
             </div>
-          </section>
-        )}
+          </div>
+        </section>
 
         {/* Message si pas de rôle LinkMe */}
         {!linkMeRole && (

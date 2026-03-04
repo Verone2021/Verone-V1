@@ -1,3 +1,7 @@
+---
+globs: apps/**/*.tsx, apps/**/*.ts, packages/**/*.tsx, packages/**/*.ts
+---
+
 # Patterns Async Obligatoires (TypeScript/React)
 
 ## Les 3 Erreurs Production Silencieuses

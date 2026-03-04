@@ -381,6 +381,11 @@ function CommandesTab() {
                         <div>
                           <p className="font-medium text-gray-900">
                             {order.order_number}
+                            {order.linkme_display_number && (
+                              <span className="ml-1 text-xs font-normal text-gray-500">
+                                ({order.linkme_display_number})
+                              </span>
+                            )}
                           </p>
                           <p className="text-sm text-gray-500">
                             {new Date(order.created_at).toLocaleDateString(

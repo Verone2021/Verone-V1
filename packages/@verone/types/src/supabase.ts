@@ -3927,6 +3927,7 @@ export type Database = {
           id: string;
           linkme_commission_rate: number | null;
           logo_url: string | null;
+          order_code: string | null;
           organisation_id: string | null;
           phone: string | null;
           price_display_mode: string | null;
@@ -3954,6 +3955,7 @@ export type Database = {
           id?: string;
           linkme_commission_rate?: number | null;
           logo_url?: string | null;
+          order_code?: string | null;
           organisation_id?: string | null;
           phone?: string | null;
           price_display_mode?: string | null;
@@ -3981,6 +3983,7 @@ export type Database = {
           id?: string;
           linkme_commission_rate?: number | null;
           logo_url?: string | null;
+          order_code?: string | null;
           organisation_id?: string | null;
           phone?: string | null;
           price_display_mode?: string | null;
@@ -7530,6 +7533,7 @@ export type Database = {
           insurance_cost_ht: number | null;
           invoiced_at: string | null;
           is_shopping_center_delivery: boolean;
+          linkme_display_number: string | null;
           linkme_selection_id: string | null;
           manual_payment_by: string | null;
           manual_payment_date: string | null;
@@ -7599,6 +7603,7 @@ export type Database = {
           insurance_cost_ht?: number | null;
           invoiced_at?: string | null;
           is_shopping_center_delivery?: boolean;
+          linkme_display_number?: string | null;
           linkme_selection_id?: string | null;
           manual_payment_by?: string | null;
           manual_payment_date?: string | null;
@@ -7668,6 +7673,7 @@ export type Database = {
           insurance_cost_ht?: number | null;
           invoiced_at?: string | null;
           is_shopping_center_delivery?: boolean;
+          linkme_display_number?: string | null;
           linkme_selection_id?: string | null;
           manual_payment_by?: string | null;
           manual_payment_date?: string | null;

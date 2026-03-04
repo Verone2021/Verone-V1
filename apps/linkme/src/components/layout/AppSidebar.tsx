@@ -64,6 +64,25 @@ const sidebarItems: SidebarItem[] = [
   { icon: LayoutDashboard, label: 'Dashboard', href: '/dashboard' },
   {
     type: 'group',
+    label: 'Réseau',
+    icon: Share2,
+    subLinks: [
+      {
+        label: 'Organisations',
+        href: '/organisations',
+        icon: Building2,
+        roles: ROUTE_PERMISSIONS['/organisations']?.roles,
+      },
+      {
+        label: 'Contacts',
+        href: '/contacts',
+        icon: Users,
+        roles: ROUTE_PERMISSIONS['/contacts']?.roles,
+      },
+    ],
+  },
+  {
+    type: 'group',
     label: 'Produits',
     icon: Package,
     subLinks: [
@@ -85,25 +104,6 @@ const sidebarItems: SidebarItem[] = [
   { icon: Coins, label: 'Commissions', href: '/commissions' },
   { icon: BarChart3, label: 'Statistiques', href: '/statistiques' },
   { icon: Warehouse, label: 'Stockage', href: '/stockage' },
-  {
-    type: 'group',
-    label: 'Réseau',
-    icon: Share2,
-    subLinks: [
-      {
-        label: 'Organisations',
-        href: '/organisations',
-        icon: Building2,
-        roles: ROUTE_PERMISSIONS['/organisations']?.roles,
-      },
-      {
-        label: 'Contacts',
-        href: '/contacts',
-        icon: Users,
-        roles: ROUTE_PERMISSIONS['/contacts']?.roles,
-      },
-    ],
-  },
   { icon: HelpCircle, label: 'Aide', href: '/aide' },
 ];
 

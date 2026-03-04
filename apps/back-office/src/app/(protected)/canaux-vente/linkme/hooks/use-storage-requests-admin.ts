@@ -195,6 +195,15 @@ export function useApproveStorageRequest() {
     ): Promise<{ success: boolean; reception_id?: string; error?: string }> => {
       const supabase: SupabaseClient<Database> = createClient();
 
+      // Fetch request details BEFORE approval for email
+      const { data: reqData } = await supabase
+        .from('affiliate_storage_requests')
+        .select(
+          'product_id, quantity, owner_enseigne_id, owner_organisation_id, affiliate_id'
+        )
+        .eq('id', requestId)
+        .single();
+
       const { data, error } = await supabase.rpc('approve_storage_request', {
         p_request_id: requestId,
       });
@@ -211,6 +220,16 @@ export function useApproveStorageRequest() {
       };
       if (!result.success) {
         throw new Error(result.error ?? 'Erreur inconnue');
+      }
+
+      // Send approval email (non-blocking)
+      if (reqData) {
+        void sendStorageApprovalEmail(
+          supabase,
+          reqData as StorageRequestRow
+        ).catch(err =>
+          console.error('[useApproveStorageRequest] Email failed:', err)
+        );
       }
 
       return result;
@@ -242,6 +261,15 @@ export function useRejectStorageRequest() {
     }): Promise<{ success: boolean; error?: string }> => {
       const supabase: SupabaseClient<Database> = createClient();
 
+      // Fetch request details BEFORE rejection for email
+      const { data: reqData } = await supabase
+        .from('affiliate_storage_requests')
+        .select(
+          'product_id, quantity, owner_enseigne_id, owner_organisation_id, affiliate_id'
+        )
+        .eq('id', requestId)
+        .single();
+
       const { data, error } = await supabase.rpc('reject_storage_request', {
         p_request_id: requestId,
         p_reason: reason,
@@ -257,6 +285,17 @@ export function useRejectStorageRequest() {
         throw new Error(result.error ?? 'Erreur inconnue');
       }
 
+      // Send rejection email (non-blocking)
+      if (reqData) {
+        void sendStorageRejectionEmail(
+          supabase,
+          reqData as StorageRequestRow,
+          reason ?? ''
+        ).catch(err =>
+          console.error('[useRejectStorageRequest] Email failed:', err)
+        );
+      }
+
       return result;
     },
     onSuccess: async () => {
@@ -267,5 +306,128 @@ export function useRejectStorageRequest() {
         queryKey: ['storage-requests-count'],
       });
     },
+  });
+}
+
+// ─── Email helpers ──────────────────────────────────────────────────────────
+
+interface StorageRequestRow {
+  product_id: string;
+  quantity: number;
+  owner_enseigne_id: string | null;
+  owner_organisation_id: string | null;
+  affiliate_id: string;
+}
+
+/**
+ * Fetch product info + recipient emails for a storage request
+ */
+async function getEmailContext(
+  supabase: SupabaseClient<Database>,
+  req: StorageRequestRow
+): Promise<{
+  productName: string;
+  productSku: string;
+  affiliateName: string;
+  recipientEmails: string[];
+} | null> {
+  // Fetch product info
+  const { data: product } = await supabase
+    .from('products')
+    .select('name, sku')
+    .eq('id', req.product_id)
+    .single();
+
+  if (!product) return null;
+
+  // Fetch affiliate display name
+  const { data: affiliate } = await supabase
+    .from('linkme_affiliates')
+    .select('display_name')
+    .eq('id', req.affiliate_id)
+    .single();
+
+  // Fetch recipient emails: LinkMe users for this enseigne/org
+  interface UserAppRole {
+    user_id: string;
+  }
+  let userQuery = supabase
+    .from('user_app_roles')
+    .select('user_id')
+    .eq('app', 'linkme')
+    .eq('is_active', true);
+
+  if (req.owner_enseigne_id) {
+    userQuery = userQuery.eq('enseigne_id', req.owner_enseigne_id);
+  } else if (req.owner_organisation_id) {
+    userQuery = userQuery.eq('organisation_id', req.owner_organisation_id);
+  } else {
+    return null;
+  }
+
+  const { data: roles } = await userQuery.returns<UserAppRole[]>();
+  if (!roles?.length) return null;
+
+  const userIds = roles.map(r => r.user_id);
+
+  // Fetch emails from user_profiles
+  const { data: profiles } = await supabase
+    .from('user_profiles')
+    .select('email')
+    .in('id', userIds);
+
+  const emails = (profiles ?? [])
+    .map(p => (p as Record<string, unknown>).email as string | null)
+    .filter((e): e is string => !!e);
+
+  if (emails.length === 0) return null;
+
+  return {
+    productName: product.name,
+    productSku: product.sku ?? '',
+    affiliateName: affiliate?.display_name ?? 'Partenaire',
+    recipientEmails: emails,
+  };
+}
+
+async function sendStorageApprovalEmail(
+  supabase: SupabaseClient<Database>,
+  req: StorageRequestRow
+): Promise<void> {
+  const ctx = await getEmailContext(supabase, req);
+  if (!ctx) return;
+
+  await fetch('/api/emails/storage-request-approved', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      productName: ctx.productName,
+      productSku: ctx.productSku,
+      quantity: req.quantity,
+      affiliateName: ctx.affiliateName,
+      recipientEmails: ctx.recipientEmails,
+    }),
+  });
+}
+
+async function sendStorageRejectionEmail(
+  supabase: SupabaseClient<Database>,
+  req: StorageRequestRow,
+  reason: string
+): Promise<void> {
+  const ctx = await getEmailContext(supabase, req);
+  if (!ctx) return;
+
+  await fetch('/api/emails/storage-request-rejected', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      productName: ctx.productName,
+      productSku: ctx.productSku,
+      quantity: req.quantity,
+      affiliateName: ctx.affiliateName,
+      reason,
+      recipientEmails: ctx.recipientEmails,
+    }),
   });
 }

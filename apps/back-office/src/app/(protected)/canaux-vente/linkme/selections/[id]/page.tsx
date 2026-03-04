@@ -700,7 +700,7 @@ export default function SelectionDetailPage({
                           // Vérone DÉDUIT sa commission, l'affilié reçoit le reste
                           // Exemple: 500€ vente - 15% = 75€ pour Vérone, 425€ pour l'affilié
                           const affiliateCommissionRate =
-                            item.product?.affiliate_commission_rate ?? 15;
+                            item.product?.affiliate_commission_rate ?? 0;
                           displayMarginRate = affiliateCommissionRate;
                           // Prix de vente final = prix catalogue (pas de majoration)
                           prixVenteFinalHT = selectionPriceHT;

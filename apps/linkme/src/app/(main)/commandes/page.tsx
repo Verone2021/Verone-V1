@@ -39,6 +39,7 @@ import {
   Calendar,
 } from 'lucide-react';
 
+import { KPICard } from '../../../components/dashboard/KPICard';
 import { PageTourTrigger } from '../../../components/onboarding/PageTourTrigger';
 import { HelpTooltip } from '../../../components/ui/help-tooltip';
 import { OrderDetailModal } from './components/OrderDetailModal';
@@ -77,7 +78,7 @@ type TabType =
   | 'shipped'
   | 'cancelled';
 
-const PAGE_SIZE = 20;
+const ITEMS_PER_PAGE = 20;
 
 // Available years for filter
 const YEAR_OPTIONS = [
@@ -104,7 +105,7 @@ export default function CommandesPage(): JSX.Element {
     statusCounts,
   } = useLinkMeOrders({
     page,
-    pageSize: PAGE_SIZE,
+    pageSize: ITEMS_PER_PAGE,
     yearFilter,
     statusFilter: activeTab,
   });
@@ -120,7 +121,7 @@ export default function CommandesPage(): JSX.Element {
 
   const isLoading = ordersLoading || kpisLoading || commissionStatsLoading;
 
-  const totalPages = Math.ceil(totalCount / PAGE_SIZE);
+  const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
 
   // Handlers
   const handleTabChange = useCallback((tab: TabType) => {
@@ -162,23 +163,26 @@ export default function CommandesPage(): JSX.Element {
     <div className="min-h-screen bg-gray-50">
       <PageTourTrigger tourId="tour_order" />
       {/* Header */}
-      <div data-tour="orders-header" className="bg-white border-b px-6 py-4">
+      <div
+        data-tour="orders-header"
+        className="bg-gradient-to-b from-white to-gray-50/50 border-b px-6 py-4"
+      >
         <div className="flex items-center justify-between">
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold text-gray-900">
+              <h1 className="text-2xl font-bold text-[#183559]">
                 Mes Commandes
               </h1>
               <HelpTooltip content="En approbation = en attente de validation Vérone. Validée = confirmée et en préparation. Expédiée = en cours de livraison. Livrée = commission payable." />
             </div>
-            <p className="text-gray-500 mt-1">
+            <p className="text-[#183559]/60 mt-1">
               Gérez vos commandes clients et suivez vos ventes
             </p>
           </div>
           <Link
             href="/commandes/nouvelle"
             data-tour="orders-create"
-            className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-sm"
+            className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[#5DBEBB] to-[#4AA8A5] text-white rounded-xl hover:from-[#4DA9A6] hover:to-[#3D9895] shadow-md hover:shadow-lg transition-all duration-200 font-medium"
           >
             <Plus className="h-5 w-5" />
             Nouvelle vente
@@ -188,86 +192,63 @@ export default function CommandesPage(): JSX.Element {
 
       <div className="p-6 space-y-6">
         {/* KPIs Dashboard - Totaux */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {/* Commandes totales */}
-          <div className="bg-white rounded-xl border p-5 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-blue-100 rounded-lg">
-                <ShoppingBag className="h-6 w-6 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Commandes</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {monthlyKPIs?.allTime.ordersCount ?? 0}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* CA TTC total */}
-          <div className="bg-white rounded-xl border p-5 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-indigo-100 rounded-lg">
-                <TrendingUp className="h-6 w-6 text-indigo-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">CA TTC</p>
-                <p className="text-2xl font-bold text-indigo-600">
-                  {(monthlyKPIs?.allTime.caTTC ?? 0).toLocaleString('fr-FR', {
+        <div
+          data-tour="orders-kpis"
+          className="grid grid-cols-2 md:grid-cols-4 gap-4"
+        >
+          <KPICard
+            title="Commandes"
+            icon={ShoppingBag}
+            variant="turquoise"
+            compact
+            mainValue={monthlyKPIs?.allTime.ordersCount ?? 0}
+            isLoading={kpisLoading}
+          />
+          <KPICard
+            title="CA TTC"
+            icon={TrendingUp}
+            variant="marine"
+            compact
+            mainValue={`${(monthlyKPIs?.allTime.caTTC ?? 0).toLocaleString(
+              'fr-FR',
+              {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0,
+              }
+            )} €`}
+            isLoading={kpisLoading}
+          />
+          <KPICard
+            title="Panier Moyen"
+            icon={Package}
+            variant="turquoise"
+            compact
+            mainValue={`${
+              monthlyKPIs?.allTime.ordersCount
+                ? (
+                    (monthlyKPIs?.allTime.caTTC ?? 0) /
+                    monthlyKPIs.allTime.ordersCount
+                  ).toLocaleString('fr-FR', {
                     minimumFractionDigits: 0,
                     maximumFractionDigits: 0,
-                  })}{' '}
-                  €
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Panier Moyen */}
-          <div className="bg-white rounded-xl border p-5 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-purple-100 rounded-lg">
-                <Package className="h-6 w-6 text-purple-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Panier Moyen</p>
-                <p className="text-2xl font-bold text-purple-600">
-                  {monthlyKPIs?.allTime.ordersCount
-                    ? (
-                        (monthlyKPIs?.allTime.caTTC ?? 0) /
-                        monthlyKPIs.allTime.ordersCount
-                      ).toLocaleString('fr-FR', {
-                        minimumFractionDigits: 0,
-                        maximumFractionDigits: 0,
-                      })
-                    : 0}{' '}
-                  €
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Commissions totales (TTC) - SOURCE DE VÉRITÉ: linkme_commissions */}
-          <div className="bg-white rounded-xl border p-5 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-emerald-100 rounded-lg">
-                <Wallet className="h-6 w-6 text-emerald-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Commissions TTC</p>
-                <p className="text-2xl font-bold text-emerald-600">
-                  {(commissionStats?.total.amountTTC ?? 0).toLocaleString(
-                    'fr-FR',
-                    {
-                      minimumFractionDigits: 0,
-                      maximumFractionDigits: 0,
-                    }
-                  )}{' '}
-                  €
-                </p>
-              </div>
-            </div>
-          </div>
+                  })
+                : 0
+            } €`}
+            isLoading={kpisLoading}
+          />
+          <KPICard
+            title="Commissions TTC"
+            icon={Wallet}
+            variant="marine"
+            compact
+            mainValue={`${(
+              commissionStats?.total.amountTTC ?? 0
+            ).toLocaleString('fr-FR', {
+              minimumFractionDigits: 0,
+              maximumFractionDigits: 0,
+            })} €`}
+            isLoading={commissionStatsLoading}
+          />
         </div>
 
         {/* Filtre année */}
@@ -277,7 +258,7 @@ export default function CommandesPage(): JSX.Element {
             <select
               value={yearFilter}
               onChange={handleYearChange}
-              className="text-sm border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="text-sm border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#5DBEBB] focus:border-[#5DBEBB]"
             >
               {YEAR_OPTIONS.map(opt => (
                 <option key={opt.value} value={opt.value}>
@@ -339,7 +320,7 @@ export default function CommandesPage(): JSX.Element {
                         : tab.color === 'gray'
                           ? 'bg-gray-100 text-gray-500'
                           : isActive
-                            ? 'bg-blue-100 text-blue-600'
+                            ? 'bg-[#5DBEBB]/10 text-[#5DBEBB]'
                             : 'bg-gray-100 text-gray-500';
 
                 return (
@@ -348,7 +329,7 @@ export default function CommandesPage(): JSX.Element {
                     onClick={() => handleTabChange(tab.id)}
                     className={`px-4 py-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                       isActive
-                        ? 'border-blue-600 text-blue-600'
+                        ? 'border-[#5DBEBB] text-[#5DBEBB]'
                         : 'border-transparent text-gray-500 hover:text-gray-700'
                     }`}
                   >
@@ -392,7 +373,7 @@ export default function CommandesPage(): JSX.Element {
                 {activeTab === 'all' && (
                   <Link
                     href="/commandes/nouvelle"
-                    className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
+                    className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#5DBEBB] to-[#4AA8A5] text-white rounded-xl hover:from-[#4DA9A6] hover:to-[#3D9895] text-sm shadow-md transition-all duration-200"
                   >
                     <Plus className="h-4 w-4" />
                     Nouvelle vente
@@ -411,7 +392,7 @@ export default function CommandesPage(): JSX.Element {
                   return (
                     <div
                       key={order.id}
-                      className="bg-white border rounded-xl overflow-hidden hover:shadow-md transition-shadow"
+                      className="bg-white border rounded-xl overflow-hidden hover:shadow-md hover:border-[#5DBEBB]/30 transition-all"
                     >
                       {/* Header de la commande */}
                       <div
@@ -429,8 +410,9 @@ export default function CommandesPage(): JSX.Element {
                             </div>
 
                             <div>
-                              <p className="font-semibold text-gray-900">
-                                {order.order_number}
+                              <p className="font-semibold text-[#183559]">
+                                {order.linkme_display_number ||
+                                  order.order_number}
                               </p>
                               <p className="text-sm text-gray-500">
                                 {new Date(order.created_at).toLocaleDateString(
@@ -468,7 +450,7 @@ export default function CommandesPage(): JSX.Element {
                               <p className="text-sm text-gray-500">
                                 Commission
                               </p>
-                              <p className="font-semibold text-emerald-600">
+                              <p className="font-semibold text-[#5DBEBB]">
                                 +{order.total_affiliate_margin.toFixed(2)} €
                               </p>
                             </div>
@@ -544,7 +526,7 @@ export default function CommandesPage(): JSX.Element {
                                   {order.total_ttc.toFixed(2)} €
                                 </span>
                               </span>
-                              <span className="text-emerald-600 font-semibold">
+                              <span className="text-[#5DBEBB] font-semibold">
                                 +{order.total_affiliate_margin.toFixed(2)} €
                               </span>
                             </div>
@@ -611,7 +593,7 @@ export default function CommandesPage(): JSX.Element {
                                       <td className="px-3 py-2 text-right font-medium text-gray-900">
                                         {item.total_ht.toFixed(2)} €
                                       </td>
-                                      <td className="px-3 py-2 text-right font-medium text-emerald-600">
+                                      <td className="px-3 py-2 text-right font-medium text-[#5DBEBB]">
                                         {item.affiliate_margin > 0
                                           ? `+${item.affiliate_margin.toFixed(2)} €`
                                           : '-'}
@@ -631,7 +613,7 @@ export default function CommandesPage(): JSX.Element {
             )}
 
             {/* Pagination */}
-            {!isLoading && !error && totalCount > PAGE_SIZE && (
+            {!isLoading && !error && totalCount > ITEMS_PER_PAGE && (
               <div className="flex items-center justify-between pt-4 border-t mt-4">
                 <p className="text-sm text-gray-500">
                   {totalCount} commande{totalCount > 1 ? 's' : ''} au total

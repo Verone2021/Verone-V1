@@ -262,7 +262,7 @@ export function ProductDetailSheet({
 
   // Commission amount
   const commissionAmountEuro = isAffiliateProduct
-    ? basePrice * ((item?.affiliate_commission_rate ?? 15) / 100)
+    ? basePrice * ((item?.affiliate_commission_rate ?? 0) / 100)
     : basePrice * platformFeeRate;
 
   if (!item) return null;
@@ -451,7 +451,7 @@ export function ProductDetailSheet({
               {isAffiliateProduct ? (
                 <>
                   <span className="text-gray-400">
-                    Commission Verone ({item.affiliate_commission_rate ?? 15}%)
+                    Commission Verone ({item.affiliate_commission_rate ?? 0}%)
                   </span>
                   <span className="font-mono text-right text-amber-600">
                     -{formatPrice(commissionAmountEuro)}

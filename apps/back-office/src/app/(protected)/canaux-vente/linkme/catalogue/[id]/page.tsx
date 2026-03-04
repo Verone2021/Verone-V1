@@ -53,7 +53,7 @@ export default function LinkMeProductDetailPage(): React.JSX.Element {
   // État local pour la commission affilié
   const [editedCommission, setEditedCommission] = useState<number | null>(null);
   const currentCommission =
-    editedCommission ?? product?.affiliate_commission_rate ?? 15;
+    editedCommission ?? product?.affiliate_commission_rate ?? 0;
 
   // Handlers
   const handleToggle = async (

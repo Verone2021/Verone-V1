@@ -89,6 +89,9 @@ function OrganisationsPageContent(): JSX.Element | null {
     'all' | 'succursale' | 'franchise' | 'incomplete' | 'map'
   >('all');
   const [detailSheetOrgId, setDetailSheetOrgId] = useState<string | null>(null);
+  const [detailSheetTab, setDetailSheetTab] = useState<
+    'infos' | 'contacts' | 'activite'
+  >('infos');
   const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
   const [orgToArchive, setOrgToArchive] = useState<EnseigneOrganisation | null>(
     null
@@ -206,12 +209,13 @@ function OrganisationsPageContent(): JSX.Element | null {
   }, [filteredOrgs, currentPage]);
 
   // Handlers
-  const handleView = (org: EnseigneOrganisation): void => {
+  const handleEdit = (org: EnseigneOrganisation): void => {
+    setDetailSheetTab('infos');
     setDetailSheetOrgId(org.id);
   };
 
-  const handleEdit = (org: EnseigneOrganisation): void => {
-    // Ouvrir le DetailSheet qui gère maintenant l'édition inline
+  const handleAddContact = (org: EnseigneOrganisation): void => {
+    setDetailSheetTab('contacts');
     setDetailSheetOrgId(org.id);
   };
 
@@ -456,9 +460,9 @@ function OrganisationsPageContent(): JSX.Element | null {
                     <OrganisationCard
                       organisation={org}
                       stats={statsMap?.[org.id]}
-                      onView={handleView}
                       onEdit={handleEdit}
                       onArchive={handleArchiveClick}
+                      onAddContact={handleAddContact}
                       isLoading={isArchiving}
                       mode={
                         activeTab === 'incomplete' ? 'incomplete' : 'normal'
@@ -558,6 +562,7 @@ function OrganisationsPageContent(): JSX.Element | null {
         open={!!detailSheetOrgId}
         onOpenChange={open => !open && setDetailSheetOrgId(null)}
         mode="edit"
+        defaultTab={detailSheetTab}
       />
 
       {/* Sheet de détail (mode view) - depuis la carte */}

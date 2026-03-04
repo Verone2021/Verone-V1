@@ -11,3 +11,6 @@ export { OrdersPendingDropdown } from './OrdersPendingDropdown';
 export { ExpeditionsPendingDropdown } from './ExpeditionsPendingDropdown';
 export { TransactionsUnreconciledDropdown } from './TransactionsUnreconciledDropdown';
 export { LinkmeApprovalsDropdown } from './LinkmeApprovalsDropdown';
+
+// Sidebar badge dropdowns - Phase 4 (2026-03-02)
+export { LinkmeMissingInfoDropdown } from './LinkmeMissingInfoDropdown';

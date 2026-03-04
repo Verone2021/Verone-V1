@@ -335,6 +335,26 @@ export default function SelectionDetailPage(): React.JSX.Element | null {
           </div>
         </div>
 
+        {/* Actions rapides */}
+        <div className="flex flex-wrap gap-3 mb-6">
+          <Link
+            href={publicUrl}
+            target="_blank"
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-linkme-turquoise text-white rounded-xl font-semibold hover:bg-linkme-turquoise/90 transition-all duration-200 shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]"
+          >
+            <Eye className="h-5 w-5" />
+            Prévisualiser
+          </Link>
+
+          <Link
+            href={`/ma-selection/${selection.slug}/produits`}
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-white border-2 border-linkme-turquoise text-linkme-turquoise rounded-xl font-semibold hover:bg-linkme-turquoise/5 transition-all duration-200"
+          >
+            <Package className="h-5 w-5" />
+            Gérer produits
+          </Link>
+        </div>
+
         {/* Dialog Upload Image */}
         <SelectionImageUploadDialog
           isOpen={isImageDialogOpen}
@@ -611,26 +631,6 @@ export default function SelectionDetailPage(): React.JSX.Element | null {
               Publiez votre sélection pour que le lien soit accessible
             </p>
           )}
-        </div>
-
-        {/* Actions rapides */}
-        <div className="flex flex-wrap gap-3">
-          <Link
-            href={publicUrl}
-            target="_blank"
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-linkme-turquoise text-white rounded-xl font-semibold hover:bg-linkme-turquoise/90 transition-all duration-200 shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]"
-          >
-            <Eye className="h-5 w-5" />
-            Prévisualiser
-          </Link>
-
-          <Link
-            href={`/ma-selection/${selection.slug}/produits`}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-white border-2 border-linkme-turquoise text-linkme-turquoise rounded-xl font-semibold hover:bg-linkme-turquoise/5 transition-all duration-200"
-          >
-            <Package className="h-5 w-5" />
-            Gérer produits
-          </Link>
         </div>
       </div>
     </div>

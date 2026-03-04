@@ -43,6 +43,7 @@ interface OrderItem {
 interface LinkMeOrderWithDetails {
   id: string;
   order_number: string;
+  linkme_display_number?: string | null;
   status: string;
   payment_status: string | null;
   total_ht: number;
@@ -156,6 +157,11 @@ export function LinkMeOrderDetailModal({
                   <span className="font-mono text-lg">
                     {order.order_number}
                   </span>
+                  {order.linkme_display_number && (
+                    <span className="text-sm text-gray-500 font-normal">
+                      ({order.linkme_display_number})
+                    </span>
+                  )}
                   <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>
                   {paymentInfo && (
                     <Badge variant={paymentInfo.variant}>
