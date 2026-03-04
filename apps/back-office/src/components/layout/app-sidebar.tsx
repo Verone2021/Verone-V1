@@ -48,6 +48,8 @@ import {
   LayoutDashboard,
   ArrowLeftRight,
   Grid3x3,
+  BookOpenCheck,
+  FolderArchive,
 } from 'lucide-react';
 
 import { PhaseIndicator } from '@/components/ui/phase-indicator';
@@ -319,9 +321,19 @@ const getNavItems = (
         badgeVariant: transactionsUnreconciledCount > 0 ? 'urgent' : undefined,
       },
       {
+        title: 'Livres comptables',
+        href: '/finance/livres',
+        icon: BookOpenCheck,
+      },
+      {
         title: 'Trésorerie',
         href: '/finance/tresorerie',
         icon: Banknote,
+      },
+      {
+        title: 'Bibliothèque',
+        href: '/finance/bibliotheque',
+        icon: FolderArchive,
       },
     ],
   },
