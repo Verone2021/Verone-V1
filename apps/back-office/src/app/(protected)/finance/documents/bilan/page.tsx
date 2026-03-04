@@ -1,13 +1,10 @@
 'use client';
 
 /**
- * Bilan Simplifié
+ * Bilan — Style Indy (tableau formel Cerfa)
  *
- * Présentation Actif / Passif / Capitaux propres
- * Basé sur les comptes PCG classes 1-5.
- *
- * Note: bilan simplifié pour aide à la décision.
- * Le bilan officiel est établi par l'expert-comptable.
+ * BILAN ACTIF : Brut | Amortissements | Net N | Net N-1
+ * BILAN PASSIF : Net N | Net N-1
  */
 
 import { useState, useMemo } from 'react';
@@ -22,10 +19,6 @@ import {
 import {
   Card,
   CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  Badge,
   Select,
   SelectContent,
   SelectItem,
@@ -34,27 +27,22 @@ import {
   Alert,
   AlertDescription,
 } from '@verone/ui';
-import { KpiCard, KpiGrid, Money } from '@verone/ui-business';
-import {
-  Scale,
-  Calendar,
-  TrendingUp,
-  TrendingDown,
-  Landmark,
-  Info,
-  Building2,
-  Wallet,
-  ArrowLeft,
-} from 'lucide-react';
+import { Money } from '@verone/ui-business';
+import { ArrowLeft, Info } from 'lucide-react';
 
 // =====================================================================
 // TYPES
 // =====================================================================
 
 interface BilanLine {
-  code: string;
   label: string;
-  amount: number;
+  brut: number;
+  amortissement: number;
+  net: number;
+  netN1: number;
+  isBold?: boolean;
+  isTotal?: boolean;
+  indent?: boolean;
 }
 
 type TransactionWithPcg = BankTransaction & { category_pcg?: string };
@@ -70,169 +58,345 @@ export default function BilanPage() {
   const { creditTransactions, debitTransactions, loading, error } =
     useBankReconciliation();
 
-  // Build bilan from transactions
   const bilan = useMemo(() => {
-    // Accumulate by PCG class
-    const pcgTotals = new Map<string, number>();
+    const filterByYear = (txs: BankTransaction[], year: string) =>
+      year === 'all'
+        ? txs
+        : txs.filter(tx => {
+            const date = tx.settled_at ?? tx.emitted_at;
+            return date?.startsWith(year);
+          });
 
-    const processTx = (tx: BankTransaction, isCredit: boolean) => {
-      const date = tx.settled_at ?? tx.emitted_at;
-      if (!date) return;
-      if (selectedYear !== 'all' && !date.startsWith(selectedYear)) return;
+    const computeForYear = (year: string) => {
+      const credits = filterByYear(creditTransactions, year);
+      const debits = filterByYear(debitTransactions, year);
 
-      const pcgCode = (tx as TransactionWithPcg).category_pcg;
-      if (!pcgCode) return; // Non catégorisé = exclu du bilan par classes
-      const classCode = pcgCode.substring(0, 1);
-      const amount = Math.abs(tx.amount);
-      const current = pcgTotals.get(classCode) ?? 0;
-      pcgTotals.set(classCode, current + (isCredit ? amount : -amount));
+      const pcgTotals = new Map<string, number>();
+      const processTx = (tx: BankTransaction, isCredit: boolean) => {
+        const pcgCode = (tx as TransactionWithPcg).category_pcg;
+        if (!pcgCode) return;
+        const classCode = pcgCode.substring(0, 1);
+        const amount = Math.abs(tx.amount);
+        const current = pcgTotals.get(classCode) ?? 0;
+        pcgTotals.set(classCode, current + (isCredit ? amount : -amount));
+      };
+      credits.forEach(tx => processTx(tx, true));
+      debits.forEach(tx => processTx(tx, false));
+
+      const totalCredits = credits.reduce(
+        (sum, tx) => sum + Math.abs(tx.amount),
+        0
+      );
+      const totalDebits = debits.reduce(
+        (sum, tx) => sum + Math.abs(tx.amount),
+        0
+      );
+      const soldeBancaire = totalCredits - totalDebits;
+      const resultat = totalCredits - totalDebits;
+
+      // TVA estimee
+      const tvaCollectee = credits.reduce((sum, tx) => {
+        const vatRate =
+          (tx as TransactionWithPcg & { vat_rate?: number }).vat_rate ?? 0;
+        const ttc = Math.abs(tx.amount);
+        return sum + (ttc - ttc / (1 + vatRate / 100));
+      }, 0);
+      const tvaDeductible = debits.reduce((sum, tx) => {
+        const vatRate =
+          (tx as TransactionWithPcg & { vat_rate?: number }).vat_rate ?? 0;
+        const ttc = Math.abs(tx.amount);
+        return sum + (ttc - ttc / (1 + vatRate / 100));
+      }, 0);
+      const tvaEstimee = tvaCollectee - tvaDeductible;
+
+      const immo = pcgTotals.get('2') ?? 0;
+      const stocks = pcgTotals.get('3') ?? 0;
+      const creances = pcgTotals.get('4') ?? 0;
+
+      return {
+        immoIncorporelles: 0,
+        immoCorporelles: Math.abs(immo),
+        immoFinancieres: 0,
+        stocks: Math.abs(stocks),
+        fournisseursDebiteurs: 0,
+        creances: creances > 0 ? creances : 0,
+        associesApport: 0,
+        disponibilites: Math.max(0, soldeBancaire),
+        chargesConstatees: 0,
+        capital: 0,
+        primes: 0,
+        reserves: 0,
+        reportNouveau: 0,
+        resultat,
+        dettesFinancieres: 0,
+        clientsCrediteurs: 0,
+        dettesFournisseurs: creances < 0 ? Math.abs(creances) : 0,
+        dettesExploitation: tvaEstimee > 0 ? tvaEstimee : 0,
+        produitsConstates: 0,
+      };
     };
 
-    creditTransactions.forEach(tx => processTx(tx, true));
-    debitTransactions.forEach(tx => processTx(tx, false));
+    const yearN = selectedYear === 'all' ? String(currentYear) : selectedYear;
+    const yearN1 = String(Number(yearN) - 1);
+    const dataN = computeForYear(yearN);
+    const dataN1 = computeForYear(yearN1);
 
-    // Actif
-    const actifImmobilise: BilanLine[] = [];
-    const actifCirculant: BilanLine[] = [];
+    // ACTIF lines
+    const actifLines: BilanLine[] = [
+      {
+        label: 'Actif immobilise',
+        brut: 0,
+        amortissement: 0,
+        net: 0,
+        netN1: 0,
+        isBold: true,
+      },
+      {
+        label: 'Immobilisations incorporelles',
+        brut: dataN.immoIncorporelles,
+        amortissement: 0,
+        net: dataN.immoIncorporelles,
+        netN1: dataN1.immoIncorporelles,
+        indent: true,
+      },
+      {
+        label: 'Immobilisations corporelles',
+        brut: dataN.immoCorporelles,
+        amortissement: 0,
+        net: dataN.immoCorporelles,
+        netN1: dataN1.immoCorporelles,
+        indent: true,
+      },
+      {
+        label: 'Immobilisations financieres',
+        brut: dataN.immoFinancieres,
+        amortissement: 0,
+        net: dataN.immoFinancieres,
+        netN1: dataN1.immoFinancieres,
+        indent: true,
+      },
+    ];
 
-    // Immobilisations (classe 2) — simplifié, pas de données directes
-    const immo = pcgTotals.get('2') ?? 0;
-    if (immo !== 0) {
-      actifImmobilise.push({
-        code: '2',
-        label: 'Immobilisations',
-        amount: Math.abs(immo),
-      });
-    }
+    const totalActifImmo =
+      dataN.immoIncorporelles + dataN.immoCorporelles + dataN.immoFinancieres;
+    const totalActifImmoN1 =
+      dataN1.immoIncorporelles +
+      dataN1.immoCorporelles +
+      dataN1.immoFinancieres;
 
-    // Stocks (classe 3)
-    const stocks = pcgTotals.get('3') ?? 0;
-    if (stocks !== 0) {
-      actifCirculant.push({
-        code: '3',
+    const actifCirculantLines: BilanLine[] = [
+      {
+        label: 'Actif circulant',
+        brut: 0,
+        amortissement: 0,
+        net: 0,
+        netN1: 0,
+        isBold: true,
+      },
+      {
         label: 'Stocks et en-cours',
-        amount: Math.abs(stocks),
-      });
-    }
+        brut: dataN.stocks,
+        amortissement: 0,
+        net: dataN.stocks,
+        netN1: dataN1.stocks,
+        indent: true,
+      },
+      {
+        label: 'Fournisseurs debiteurs',
+        brut: dataN.fournisseursDebiteurs,
+        amortissement: 0,
+        net: dataN.fournisseursDebiteurs,
+        netN1: dataN1.fournisseursDebiteurs,
+        indent: true,
+      },
+      {
+        label: 'Creances',
+        brut: dataN.creances,
+        amortissement: 0,
+        net: dataN.creances,
+        netN1: dataN1.creances,
+        indent: true,
+      },
+      {
+        label: "Associes - Comptes d'apport en societe",
+        brut: dataN.associesApport,
+        amortissement: 0,
+        net: dataN.associesApport,
+        netN1: dataN1.associesApport,
+        indent: true,
+      },
+      {
+        label: 'Disponibilites',
+        brut: dataN.disponibilites,
+        amortissement: 0,
+        net: dataN.disponibilites,
+        netN1: dataN1.disponibilites,
+        indent: true,
+      },
+      {
+        label: "Charges constatees d'avance",
+        brut: dataN.chargesConstatees,
+        amortissement: 0,
+        net: dataN.chargesConstatees,
+        netN1: dataN1.chargesConstatees,
+        indent: true,
+      },
+    ];
 
-    // Créances (classe 4)
-    const creances = pcgTotals.get('4') ?? 0;
-    if (creances > 0) {
-      actifCirculant.push({
-        code: '4',
-        label: 'Créances clients',
-        amount: creances,
-      });
-    }
+    const totalActifCirculant =
+      dataN.stocks +
+      dataN.fournisseursDebiteurs +
+      dataN.creances +
+      dataN.associesApport +
+      dataN.disponibilites +
+      dataN.chargesConstatees;
+    const totalActifCirculantN1 =
+      dataN1.stocks +
+      dataN1.fournisseursDebiteurs +
+      dataN1.creances +
+      dataN1.associesApport +
+      dataN1.disponibilites +
+      dataN1.chargesConstatees;
 
-    // Trésorerie (classe 5) — solde bancaire
-    const tresorerie = pcgTotals.get('5') ?? 0;
-    // Use net result as proxy for bank balance
-    const totalCredits = creditTransactions
-      .filter(tx => {
-        const date = tx.settled_at ?? tx.emitted_at;
-        if (!date) return false;
-        return selectedYear === 'all' || date.startsWith(selectedYear);
-      })
-      .reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
+    const totalActif = totalActifImmo + totalActifCirculant;
+    const totalActifN1 = totalActifImmoN1 + totalActifCirculantN1;
 
-    const totalDebits = debitTransactions
-      .filter(tx => {
-        const date = tx.settled_at ?? tx.emitted_at;
-        if (!date) return false;
-        return selectedYear === 'all' || date.startsWith(selectedYear);
-      })
-      .reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
+    // PASSIF lines
+    const passifLines: BilanLine[] = [
+      {
+        label: 'Capital',
+        brut: 0,
+        amortissement: 0,
+        net: dataN.capital,
+        netN1: dataN1.capital,
+        indent: true,
+      },
+      {
+        label: "Primes d'emission",
+        brut: 0,
+        amortissement: 0,
+        net: dataN.primes,
+        netN1: dataN1.primes,
+        indent: true,
+      },
+      {
+        label: 'Reserves',
+        brut: 0,
+        amortissement: 0,
+        net: dataN.reserves,
+        netN1: dataN1.reserves,
+        indent: true,
+      },
+      {
+        label: 'Report a nouveau',
+        brut: 0,
+        amortissement: 0,
+        net: dataN.reportNouveau,
+        netN1: dataN1.reportNouveau,
+        indent: true,
+      },
+      {
+        label: "Resultat de l'exercice",
+        brut: 0,
+        amortissement: 0,
+        net: dataN.resultat,
+        netN1: dataN1.resultat,
+        indent: true,
+      },
+    ];
 
-    const soldeBancaire = totalCredits - totalDebits;
-    actifCirculant.push({
-      code: '512',
-      label: 'Disponibilités (banque)',
-      amount: Math.max(0, soldeBancaire),
-    });
+    const totalCapitauxPropres =
+      dataN.capital +
+      dataN.primes +
+      dataN.reserves +
+      dataN.reportNouveau +
+      dataN.resultat;
+    const totalCapitauxPropresN1 =
+      dataN1.capital +
+      dataN1.primes +
+      dataN1.reserves +
+      dataN1.reportNouveau +
+      dataN1.resultat;
 
-    // Passif
-    const capitauxPropres: BilanLine[] = [];
-    const dettes: BilanLine[] = [];
+    const dettesLines: BilanLine[] = [
+      {
+        label: 'Dettes financieres',
+        brut: 0,
+        amortissement: 0,
+        net: dataN.dettesFinancieres,
+        netN1: dataN1.dettesFinancieres,
+        indent: true,
+      },
+      {
+        label: 'Clients crediteurs',
+        brut: 0,
+        amortissement: 0,
+        net: dataN.clientsCrediteurs,
+        netN1: dataN1.clientsCrediteurs,
+        indent: true,
+      },
+      {
+        label: "Dettes d'exploitation",
+        brut: 0,
+        amortissement: 0,
+        net: dataN.dettesFournisseurs + dataN.dettesExploitation,
+        netN1: dataN1.dettesFournisseurs + dataN1.dettesExploitation,
+        indent: true,
+      },
+    ];
 
-    // Résultat de l'exercice
-    const resultat = totalCredits - totalDebits;
-    capitauxPropres.push({
-      code: '12',
-      label:
-        resultat >= 0
-          ? "Résultat de l'exercice (bénéfice)"
-          : "Résultat de l'exercice (perte)",
-      amount: resultat,
-    });
-
-    // Dettes fournisseurs (classe 4 négatif)
-    if (creances < 0) {
-      dettes.push({
-        code: '401',
-        label: 'Dettes fournisseurs',
-        amount: Math.abs(creances),
-      });
-    }
-
-    // TVA à payer (calculée sur les taux individuels de chaque transaction)
-    const filterByYear = (tx: BankTransaction) => {
-      const date = tx.settled_at ?? tx.emitted_at;
-      if (!date) return false;
-      return selectedYear === 'all' || date.startsWith(selectedYear);
-    };
-
-    const tvaCollectee = creditTransactions
-      .filter(filterByYear)
-      .reduce((sum, tx) => {
-        const vatRate =
-          (tx as TransactionWithPcg & { vat_rate?: number }).vat_rate ?? 0;
-        const ttc = Math.abs(tx.amount);
-        const tva = ttc - ttc / (1 + vatRate / 100);
-        return sum + tva;
-      }, 0);
-
-    const tvaDeductible = debitTransactions
-      .filter(filterByYear)
-      .reduce((sum, tx) => {
-        const vatRate =
-          (tx as TransactionWithPcg & { vat_rate?: number }).vat_rate ?? 0;
-        const ttc = Math.abs(tx.amount);
-        const tva = ttc - ttc / (1 + vatRate / 100);
-        return sum + tva;
-      }, 0);
-
-    const tvaEstimee = tvaCollectee - tvaDeductible;
-    if (tvaEstimee > 0) {
-      dettes.push({
-        code: '4457',
-        label: 'TVA à décaisser (estimée)',
-        amount: tvaEstimee,
-      });
-    }
-
-    const totalActif =
-      actifImmobilise.reduce((s, l) => s + l.amount, 0) +
-      actifCirculant.reduce((s, l) => s + l.amount, 0);
+    const totalDettes =
+      dataN.dettesFinancieres +
+      dataN.clientsCrediteurs +
+      dataN.dettesFournisseurs +
+      dataN.dettesExploitation;
+    const totalDettesN1 =
+      dataN1.dettesFinancieres +
+      dataN1.clientsCrediteurs +
+      dataN1.dettesFournisseurs +
+      dataN1.dettesExploitation;
 
     const totalPassif =
-      capitauxPropres.reduce((s, l) => s + l.amount, 0) +
-      dettes.reduce((s, l) => s + l.amount, 0);
+      totalCapitauxPropres + totalDettes + dataN.produitsConstates;
+    const totalPassifN1 =
+      totalCapitauxPropresN1 + totalDettesN1 + dataN1.produitsConstates;
 
     return {
-      actifImmobilise,
-      actifCirculant,
-      capitauxPropres,
-      dettes,
+      yearN,
+      yearN1,
+      actifLines,
+      actifCirculantLines,
+      totalActifImmo,
+      totalActifImmoN1,
+      totalActifCirculant,
+      totalActifCirculantN1,
       totalActif,
+      totalActifN1,
+      passifLines,
+      totalCapitauxPropres,
+      totalCapitauxPropresN1,
+      dettesLines,
+      totalDettes,
+      totalDettesN1,
+      produitsConstates: dataN.produitsConstates,
+      produitsConstatesN1: dataN1.produitsConstates,
       totalPassif,
-      resultat,
+      totalPassifN1,
     };
-  }, [creditTransactions, debitTransactions, selectedYear]);
+  }, [creditTransactions, debitTransactions, selectedYear, currentYear]);
 
   const years = Array.from(
     { length: currentYear - 2022 },
     (_, i) => currentYear - i
+  );
+
+  // Render helper for amount cell
+  const renderAmount = (amount: number) => (
+    <Money
+      amount={amount}
+      size="sm"
+      className={amount === 0 ? 'text-muted-foreground' : ''}
+    />
   );
 
   return (
@@ -251,200 +415,258 @@ export default function BilanPage() {
             <span>/</span>
             <span className="text-black">Bilan</span>
           </div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Scale className="h-6 w-6" />
-            Bilan Simplifié
-          </h1>
-          <p className="text-muted-foreground">
-            Actif / Passif — Vue d&apos;aide à la décision
-          </p>
+          <h1 className="text-2xl font-bold">Bilan</h1>
         </div>
-        <div className="flex items-center gap-2">
-          <Calendar className="h-4 w-4 text-muted-foreground" />
-          <Select value={selectedYear} onValueChange={setSelectedYear}>
-            <SelectTrigger className="w-40">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Toutes les années</SelectItem>
-              {years.map(year => (
-                <SelectItem key={year} value={String(year)}>
-                  {year}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <Select value={selectedYear} onValueChange={setSelectedYear}>
+          <SelectTrigger className="w-44 rounded-full">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Toutes les annees</SelectItem>
+            {years.map(year => (
+              <SelectItem key={year} value={String(year)}>
+                Exercice {year}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
-      <Alert className="border-amber-200 bg-amber-50">
-        <Info className="h-4 w-4 text-amber-600" />
-        <AlertDescription className="text-amber-700 text-sm">
-          <strong>Bilan simplifié</strong> basé sur les flux de trésorerie. Le
-          bilan officiel (normes PCG/IFRS) doit être établi par votre
-          expert-comptable pour le dépôt au greffe du Tribunal de Commerce.
+      {/* Alert */}
+      <Alert className="border-orange-200 bg-orange-50">
+        <Info className="h-4 w-4 text-orange-600" />
+        <AlertDescription className="text-orange-700 text-sm">
+          Votre bilan {bilan.yearN} n&apos;est{' '}
+          <strong>pas encore cloture</strong>, les montants affiches sont{' '}
+          <strong>previsionnels</strong>.
+          <br />
+          Rendez-vous dans l&apos;onglet <em>A faire</em> pour acceder a la
+          cloture et <strong>generer votre bilan definitif</strong>.
         </AlertDescription>
       </Alert>
 
-      {/* KPIs */}
-      <KpiGrid columns={3}>
-        <KpiCard
-          title="Total Actif"
-          value={bilan.totalActif}
-          valueType="money"
-          icon={<Building2 className="h-4 w-4" />}
-        />
-        <KpiCard
-          title="Total Passif"
-          value={bilan.totalPassif}
-          valueType="money"
-          icon={<Landmark className="h-4 w-4" />}
-        />
-        <KpiCard
-          title={bilan.resultat >= 0 ? 'Bénéfice' : 'Perte'}
-          value={Math.abs(bilan.resultat)}
-          valueType="money"
-          icon={
-            bilan.resultat >= 0 ? (
-              <TrendingUp className="h-4 w-4" />
-            ) : (
-              <TrendingDown className="h-4 w-4" />
-            )
-          }
-          variant={bilan.resultat >= 0 ? 'success' : 'danger'}
-        />
-      </KpiGrid>
-
-      {/* Bilan en 2 colonnes */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* ACTIF */}
+      {loading ? (
         <Card>
-          <CardHeader className="bg-blue-50 border-b border-blue-200">
-            <CardTitle className="text-lg text-blue-800 flex items-center gap-2">
-              <Building2 className="h-5 w-5" />
-              ACTIF
-            </CardTitle>
-            <CardDescription className="text-blue-600">
-              Ce que l&apos;entreprise possède
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="p-0">
-            {/* Actif immobilisé */}
-            {bilan.actifImmobilise.length > 0 && (
-              <>
-                <div className="px-4 py-2 bg-muted/30 text-sm font-semibold border-b">
-                  Actif immobilisé
+          <CardContent className="py-12">
+            <div className="flex items-center justify-center gap-3">
+              <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+              <span className="text-muted-foreground">Chargement...</span>
+            </div>
+          </CardContent>
+        </Card>
+      ) : error ? (
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="py-6 text-red-700">{error}</CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-8">
+          {/* ====== BILAN ACTIF ====== */}
+          <div className="border rounded-xl bg-white overflow-hidden">
+            <div className="px-5 py-3 bg-gray-50 border-b">
+              <h2 className="font-bold text-sm uppercase tracking-wide">
+                Bilan Actif
+              </h2>
+            </div>
+
+            {/* Header */}
+            <div className="grid grid-cols-12 gap-2 px-5 py-2 text-xs font-medium text-muted-foreground border-b bg-gray-50/50">
+              <div className="col-span-4" />
+              <div className="col-span-4 text-center">
+                Exercice {bilan.yearN}
+              </div>
+              <div className="col-span-2 text-center border-l">
+                Exercice {bilan.yearN1}
+              </div>
+              <div className="col-span-2" />
+            </div>
+            <div className="grid grid-cols-12 gap-2 px-5 py-2 text-xs font-medium text-muted-foreground border-b">
+              <div className="col-span-4" />
+              <div className="col-span-2 text-right">Brut</div>
+              <div className="col-span-2 text-right">Amortissements</div>
+              <div className="col-span-2 text-right border-l pl-2">Net</div>
+              <div className="col-span-2 text-right">Net</div>
+            </div>
+
+            {/* Actif immobilise */}
+            {bilan.actifLines.map((line, i) => (
+              <div
+                key={`ai-${i}`}
+                className={`grid grid-cols-12 gap-2 px-5 py-2.5 border-b text-sm ${line.isBold ? 'font-semibold bg-gray-50/30' : ''}`}
+              >
+                <div className={`col-span-4 ${line.indent ? 'pl-4' : ''}`}>
+                  {line.label}
                 </div>
-                {bilan.actifImmobilise.map(line => (
-                  <div
-                    key={line.code}
-                    className="flex justify-between px-4 py-3 border-b hover:bg-muted/20"
-                  >
-                    <span className="flex items-center gap-2">
-                      <Badge variant="outline" className="font-mono text-xs">
-                        {line.code}
-                      </Badge>
-                      {line.label}
-                    </span>
-                    <Money amount={line.amount} size="sm" />
-                  </div>
-                ))}
-              </>
-            )}
+                <div className="col-span-2 text-right">
+                  {!line.isBold && renderAmount(line.brut)}
+                </div>
+                <div className="col-span-2 text-right">
+                  {!line.isBold && renderAmount(line.amortissement)}
+                </div>
+                <div className="col-span-2 text-right border-l pl-2">
+                  {!line.isBold && renderAmount(line.net)}
+                </div>
+                <div className="col-span-2 text-right">
+                  {!line.isBold && renderAmount(line.netN1)}
+                </div>
+              </div>
+            ))}
 
             {/* Actif circulant */}
-            <div className="px-4 py-2 bg-muted/30 text-sm font-semibold border-b">
-              Actif circulant
-            </div>
-            {bilan.actifCirculant.map(line => (
+            {bilan.actifCirculantLines.map((line, i) => (
               <div
-                key={line.code}
-                className="flex justify-between px-4 py-3 border-b hover:bg-muted/20"
+                key={`ac-${i}`}
+                className={`grid grid-cols-12 gap-2 px-5 py-2.5 border-b text-sm ${line.isBold ? 'font-semibold bg-gray-50/30' : ''}`}
               >
-                <span className="flex items-center gap-2">
-                  <Badge variant="outline" className="font-mono text-xs">
-                    {line.code}
-                  </Badge>
+                <div className={`col-span-4 ${line.indent ? 'pl-4' : ''}`}>
                   {line.label}
-                </span>
-                <Money amount={line.amount} size="sm" />
+                </div>
+                <div className="col-span-2 text-right">
+                  {!line.isBold && renderAmount(line.brut)}
+                </div>
+                <div className="col-span-2 text-right">
+                  {!line.isBold && renderAmount(line.amortissement)}
+                </div>
+                <div className="col-span-2 text-right border-l pl-2">
+                  {!line.isBold && renderAmount(line.net)}
+                </div>
+                <div className="col-span-2 text-right">
+                  {!line.isBold && renderAmount(line.netN1)}
+                </div>
               </div>
             ))}
 
-            {/* Total */}
-            <div className="flex justify-between px-4 py-3 bg-blue-100 font-bold text-blue-800">
-              <span>TOTAL ACTIF</span>
-              <Money amount={bilan.totalActif} />
+            {/* Total actif et circulant */}
+            <div className="grid grid-cols-12 gap-2 px-5 py-2.5 border-b text-sm bg-gray-50/50">
+              <div className="col-span-4 pl-4 font-medium">
+                Total actif et circulant
+              </div>
+              <div className="col-span-2" />
+              <div className="col-span-2" />
+              <div className="col-span-2 text-right border-l pl-2">
+                {renderAmount(bilan.totalActif)}
+              </div>
+              <div className="col-span-2 text-right">
+                {renderAmount(bilan.totalActifN1)}
+              </div>
             </div>
-          </CardContent>
-        </Card>
 
-        {/* PASSIF */}
-        <Card>
-          <CardHeader className="bg-purple-50 border-b border-purple-200">
-            <CardTitle className="text-lg text-purple-800 flex items-center gap-2">
-              <Landmark className="h-5 w-5" />
-              PASSIF
-            </CardTitle>
-            <CardDescription className="text-purple-600">
-              Ce que l&apos;entreprise doit
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="p-0">
+            {/* TOTAL ACTIF */}
+            <div className="grid grid-cols-12 gap-2 px-5 py-3 text-sm font-bold bg-orange-50">
+              <div className="col-span-4">TOTAL ACTIF</div>
+              <div className="col-span-2" />
+              <div className="col-span-2" />
+              <div className="col-span-2 text-right border-l pl-2">
+                <Money amount={bilan.totalActif} />
+              </div>
+              <div className="col-span-2 text-right">
+                <Money amount={bilan.totalActifN1} />
+              </div>
+            </div>
+          </div>
+
+          {/* ====== BILAN PASSIF ====== */}
+          <div className="border rounded-xl bg-white overflow-hidden">
+            <div className="px-5 py-3 bg-gray-50 border-b">
+              <h2 className="font-bold text-sm uppercase tracking-wide">
+                Bilan Passif
+              </h2>
+            </div>
+
+            {/* Header */}
+            <div className="grid grid-cols-12 gap-2 px-5 py-2 text-xs font-medium text-muted-foreground border-b">
+              <div className="col-span-6" />
+              <div className="col-span-3 text-right">
+                Exercice {bilan.yearN} (Net)
+              </div>
+              <div className="col-span-3 text-right">
+                Exercice {bilan.yearN1} (Net)
+              </div>
+            </div>
+
             {/* Capitaux propres */}
-            <div className="px-4 py-2 bg-muted/30 text-sm font-semibold border-b">
-              Capitaux propres
-            </div>
-            {bilan.capitauxPropres.map(line => (
+            {bilan.passifLines.map((line, i) => (
               <div
-                key={line.code}
-                className="flex justify-between px-4 py-3 border-b hover:bg-muted/20"
+                key={`p-${i}`}
+                className="grid grid-cols-12 gap-2 px-5 py-2.5 border-b text-sm"
               >
-                <span className="flex items-center gap-2">
-                  <Badge variant="outline" className="font-mono text-xs">
-                    {line.code}
-                  </Badge>
+                <div className={`col-span-6 ${line.indent ? 'pl-4' : ''}`}>
                   {line.label}
-                </span>
-                <Money amount={line.amount} colorize size="sm" />
+                </div>
+                <div className="col-span-3 text-right">
+                  {renderAmount(line.net)}
+                </div>
+                <div className="col-span-3 text-right">
+                  {renderAmount(line.netN1)}
+                </div>
               </div>
             ))}
+
+            {/* Total Capitaux Propres */}
+            <div className="grid grid-cols-12 gap-2 px-5 py-2.5 border-b text-sm font-semibold bg-gray-50/50">
+              <div className="col-span-6">Total Capitaux Propres</div>
+              <div className="col-span-3 text-right">
+                {renderAmount(bilan.totalCapitauxPropres)}
+              </div>
+              <div className="col-span-3 text-right">
+                {renderAmount(bilan.totalCapitauxPropresN1)}
+              </div>
+            </div>
 
             {/* Dettes */}
-            {bilan.dettes.length > 0 && (
-              <>
-                <div className="px-4 py-2 bg-muted/30 text-sm font-semibold border-b">
-                  Dettes
+            {bilan.dettesLines.map((line, i) => (
+              <div
+                key={`d-${i}`}
+                className="grid grid-cols-12 gap-2 px-5 py-2.5 border-b text-sm"
+              >
+                <div className={`col-span-6 ${line.indent ? 'pl-4' : ''}`}>
+                  {line.label}
                 </div>
-                {bilan.dettes.map(line => (
-                  <div
-                    key={line.code}
-                    className="flex justify-between px-4 py-3 border-b hover:bg-muted/20"
-                  >
-                    <span className="flex items-center gap-2">
-                      <Badge variant="outline" className="font-mono text-xs">
-                        {line.code}
-                      </Badge>
-                      {line.label}
-                    </span>
-                    <Money
-                      amount={line.amount}
-                      className="text-red-600"
-                      size="sm"
-                    />
-                  </div>
-                ))}
-              </>
-            )}
+                <div className="col-span-3 text-right">
+                  {renderAmount(line.net)}
+                </div>
+                <div className="col-span-3 text-right">
+                  {renderAmount(line.netN1)}
+                </div>
+              </div>
+            ))}
 
-            {/* Total */}
-            <div className="flex justify-between px-4 py-3 bg-purple-100 font-bold text-purple-800">
-              <span>TOTAL PASSIF</span>
-              <Money amount={bilan.totalPassif} />
+            {/* Total Dettes */}
+            <div className="grid grid-cols-12 gap-2 px-5 py-2.5 border-b text-sm font-semibold bg-gray-50/50">
+              <div className="col-span-6">Total Dettes</div>
+              <div className="col-span-3 text-right">
+                {renderAmount(bilan.totalDettes)}
+              </div>
+              <div className="col-span-3 text-right">
+                {renderAmount(bilan.totalDettesN1)}
+              </div>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+
+            {/* Produits constates d'avance */}
+            <div className="grid grid-cols-12 gap-2 px-5 py-2.5 border-b text-sm">
+              <div className="col-span-6 pl-4">
+                Produits constates d&apos;avance
+              </div>
+              <div className="col-span-3 text-right">
+                {renderAmount(bilan.produitsConstates)}
+              </div>
+              <div className="col-span-3 text-right">
+                {renderAmount(bilan.produitsConstatesN1)}
+              </div>
+            </div>
+
+            {/* TOTAL PASSIF */}
+            <div className="grid grid-cols-12 gap-2 px-5 py-3 text-sm font-bold bg-orange-50">
+              <div className="col-span-6">TOTAL PASSIF</div>
+              <div className="col-span-3 text-right">
+                <Money amount={bilan.totalPassif} />
+              </div>
+              <div className="col-span-3 text-right">
+                <Money amount={bilan.totalPassifN1} />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

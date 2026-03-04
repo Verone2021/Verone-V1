@@ -1,14 +1,9 @@
 'use client';
 
 /**
- * Préparation Déclaration TVA (CA3)
+ * Preparation Declaration TVA (CA3) — Style Indy epure
  *
- * Calcul automatique:
- * - TVA collectée (sur ventes/recettes)
- * - TVA déductible (sur achats/dépenses)
- * - TVA nette à payer ou crédit de TVA
- *
- * Vue mensuelle pour déclaration CA3.
+ * Pas de KPIs cards. Tableau recap par taux + detail mensuel.
  */
 
 import { useState, useMemo } from 'react';
@@ -25,10 +20,6 @@ import {
 import {
   Card,
   CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  Badge,
   Select,
   SelectContent,
   SelectItem,
@@ -38,18 +29,8 @@ import {
   Alert,
   AlertDescription,
 } from '@verone/ui';
-import { KpiCard, KpiGrid, Money } from '@verone/ui-business';
-import {
-  Calculator,
-  Calendar,
-  TrendingUp,
-  TrendingDown,
-  Percent,
-  Info,
-  ArrowRight,
-  Download,
-  ArrowLeft,
-} from 'lucide-react';
+import { Money } from '@verone/ui-business';
+import { Percent, Info, ArrowLeft } from 'lucide-react';
 
 // =====================================================================
 // TYPES
@@ -62,12 +43,12 @@ type TransactionWithVat = BankTransaction & {
 interface MonthlyTva {
   month: string;
   label: string;
-  collectee: { [rate: string]: number }; // TVA collected by rate
-  deductible: { [rate: string]: number }; // TVA deductible by rate
+  collectee: { [rate: string]: number };
+  deductible: { [rate: string]: number };
   totalCollectee: number;
   totalDeductible: number;
-  net: number; // positive = à payer, negative = crédit
-  caHT: number; // Chiffre d'affaires HT
+  net: number;
+  caHT: number;
   achatsHT: number;
 }
 
@@ -97,7 +78,6 @@ export default function TvaPage() {
   const { creditTransactions, debitTransactions, loading, error } =
     useBankReconciliation();
 
-  // Calculate monthly TVA
   const monthlyTva = useMemo(() => {
     const months = new Map<string, MonthlyTva>();
 
@@ -118,45 +98,38 @@ export default function TvaPage() {
       return months.get(key)!;
     };
 
-    // TVA collectée (sur ventes)
     (creditTransactions as TransactionWithVat[]).forEach(tx => {
       const date = tx.settled_at ?? tx.emitted_at;
       if (!date) return;
       if (selectedYear !== 'all' && !date.startsWith(selectedYear)) return;
-
       const key = getMonthKey(date);
       const m = ensureMonth(key);
       const vatRate = tx.vat_rate ?? 0;
       const ttc = Math.abs(tx.amount);
       const tva = calculateVAT(ttc, vatRate as 0 | 5.5 | 10 | 20);
       const ht = calculateHT(ttc, vatRate as 0 | 5.5 | 10 | 20);
-
       const rateKey = String(vatRate);
       m.collectee[rateKey] = (m.collectee[rateKey] ?? 0) + tva;
       m.totalCollectee += tva;
       m.caHT += ht;
     });
 
-    // TVA déductible (sur achats)
     (debitTransactions as TransactionWithVat[]).forEach(tx => {
       const date = tx.settled_at ?? tx.emitted_at;
       if (!date) return;
       if (selectedYear !== 'all' && !date.startsWith(selectedYear)) return;
-
       const key = getMonthKey(date);
       const m = ensureMonth(key);
       const vatRate = tx.vat_rate ?? 0;
       const ttc = Math.abs(tx.amount);
       const tva = calculateVAT(ttc, vatRate as 0 | 5.5 | 10 | 20);
       const ht = calculateHT(ttc, vatRate as 0 | 5.5 | 10 | 20);
-
       const rateKey = String(vatRate);
       m.deductible[rateKey] = (m.deductible[rateKey] ?? 0) + tva;
       m.totalDeductible += tva;
       m.achatsHT += ht;
     });
 
-    // Calculate net
     for (const m of months.values()) {
       m.net = m.totalCollectee - m.totalDeductible;
     }
@@ -166,7 +139,6 @@ export default function TvaPage() {
     );
   }, [creditTransactions, debitTransactions, selectedYear]);
 
-  // Annual totals
   const annualTotals = useMemo(() => {
     return monthlyTva.reduce(
       (acc, m) => ({
@@ -174,13 +146,11 @@ export default function TvaPage() {
         deductible: acc.deductible + m.totalDeductible,
         net: acc.net + m.net,
         caHT: acc.caHT + m.caHT,
-        achatsHT: acc.achatsHT + m.achatsHT,
       }),
-      { collectee: 0, deductible: 0, net: 0, caHT: 0, achatsHT: 0 }
+      { collectee: 0, deductible: 0, net: 0, caHT: 0 }
     );
   }, [monthlyTva]);
 
-  // Years
   const years = Array.from(
     { length: currentYear - 2022 },
     (_, i) => currentYear - i
@@ -202,90 +172,59 @@ export default function TvaPage() {
             <span>/</span>
             <span className="text-black">TVA (CA3)</span>
           </div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Percent className="h-6 w-6" />
-            Déclaration TVA (CA3)
-          </h1>
-          <p className="text-muted-foreground">
-            Préparation mensuelle — TVA collectée vs déductible
-          </p>
+          <h1 className="text-2xl font-bold">Declaration TVA (CA3)</h1>
         </div>
-        <div className="flex items-center gap-2">
-          <Calendar className="h-4 w-4 text-muted-foreground" />
-          <Select value={selectedYear} onValueChange={setSelectedYear}>
-            <SelectTrigger className="w-40">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Toutes les années</SelectItem>
-              {years.map(year => (
-                <SelectItem key={year} value={String(year)}>
-                  {year}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <Select value={selectedYear} onValueChange={setSelectedYear}>
+          <SelectTrigger className="w-44 rounded-full">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Toutes les annees</SelectItem>
+            {years.map(year => (
+              <SelectItem key={year} value={String(year)}>
+                Exercice {year}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Info banner */}
-      <Alert className="border-blue-200 bg-blue-50">
-        <Info className="h-4 w-4 text-blue-600" />
-        <AlertDescription className="text-blue-700 text-sm">
-          <strong>Note :</strong> Les montants de TVA sont calculés à partir des
-          transactions bancaires. Pour une déclaration CA3 définitive, vérifiez
-          avec votre expert-comptable. Les taux de TVA par transaction peuvent
-          être ajustés dans la page Transactions.
+      <Alert className="border-orange-200 bg-orange-50">
+        <Info className="h-4 w-4 text-orange-600" />
+        <AlertDescription className="text-orange-700 text-sm">
+          Les montants de TVA sont calcules a partir des transactions bancaires.
+          Verifiez avec votre expert-comptable pour la declaration CA3
+          definitive.
         </AlertDescription>
       </Alert>
 
-      {/* KPIs annuels */}
-      <KpiGrid columns={4}>
-        <KpiCard
-          title="TVA collectée"
-          value={annualTotals.collectee}
-          valueType="money"
-          icon={<TrendingUp className="h-4 w-4" />}
-          variant="success"
-        />
-        <KpiCard
-          title="TVA déductible"
-          value={annualTotals.deductible}
-          valueType="money"
-          icon={<TrendingDown className="h-4 w-4" />}
-        />
-        <KpiCard
-          title={annualTotals.net >= 0 ? 'TVA à payer' : 'Crédit de TVA'}
-          value={Math.abs(annualTotals.net)}
-          valueType="money"
-          icon={<Calculator className="h-4 w-4" />}
-          variant={annualTotals.net >= 0 ? 'danger' : 'success'}
-        />
-        <KpiCard
-          title="CA HT"
-          value={annualTotals.caHT}
-          valueType="money"
-          icon={<TrendingUp className="h-4 w-4" />}
-        />
-      </KpiGrid>
-
-      {/* Détail annuel par taux */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Percent className="h-5 w-5" />
-            Récapitulatif par taux de TVA
-          </CardTitle>
-          <CardDescription>
-            Ventilation de la TVA collectée et déductible par taux
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="border rounded-lg overflow-hidden">
-            <div className="grid grid-cols-5 gap-4 px-4 py-3 bg-muted/50 text-sm font-medium text-muted-foreground border-b">
+      {loading ? (
+        <Card>
+          <CardContent className="py-12">
+            <div className="flex items-center justify-center gap-3">
+              <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+              <span className="text-muted-foreground">Chargement...</span>
+            </div>
+          </CardContent>
+        </Card>
+      ) : error ? (
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="py-6 text-red-700">{error}</CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-6">
+          {/* Recap par taux */}
+          <div className="border rounded-xl bg-white overflow-hidden">
+            <div className="px-5 py-3 bg-gray-50 border-b">
+              <h2 className="font-semibold text-sm">
+                Recapitulatif par taux de TVA
+              </h2>
+            </div>
+            <div className="grid grid-cols-5 gap-4 px-5 py-2.5 text-xs font-medium text-muted-foreground border-b">
               <div>Taux</div>
-              <div className="text-right">TVA collectée</div>
-              <div className="text-right">TVA déductible</div>
+              <div className="text-right">TVA collectee</div>
+              <div className="text-right">TVA deductible</div>
               <div className="text-right">Net</div>
               <div className="text-center">Statut</div>
             </div>
@@ -300,170 +239,128 @@ export default function TvaPage() {
                 0
               );
               const net = collected - deducted;
-
               if (collected === 0 && deducted === 0) return null;
-
               return (
                 <div
                   key={rateKey}
-                  className="grid grid-cols-5 gap-4 px-4 py-3 border-b hover:bg-muted/30"
+                  className="grid grid-cols-5 gap-4 px-5 py-3 border-b text-sm"
                 >
                   <div>
-                    <Badge variant="outline" className="font-mono">
-                      {rate.label}
-                    </Badge>
+                    <span className="font-mono font-medium">{rate.label}</span>
                     <span className="text-xs text-muted-foreground ml-2">
                       {rate.description}
                     </span>
                   </div>
                   <div className="text-right">
-                    <Money
-                      amount={collected}
-                      className="text-green-600"
-                      size="sm"
-                    />
+                    <Money amount={collected} size="sm" />
                   </div>
                   <div className="text-right">
-                    <Money
-                      amount={deducted}
-                      className="text-red-600"
-                      size="sm"
-                    />
+                    <Money amount={deducted} size="sm" />
                   </div>
                   <div className="text-right">
                     <Money amount={net} colorize bold size="sm" />
                   </div>
-                  <div className="text-center">
-                    <Badge
-                      variant={net >= 0 ? 'destructive' : 'default'}
-                      className="text-xs"
+                  <div className="text-center text-xs">
+                    <span
+                      className={net >= 0 ? 'text-red-600' : 'text-green-600'}
                     >
-                      {net >= 0 ? 'À payer' : 'Crédit'}
-                    </Badge>
+                      {net >= 0 ? 'A payer' : 'Credit'}
+                    </span>
                   </div>
                 </div>
               );
             })}
           </div>
-        </CardContent>
-      </Card>
 
-      {/* Tableau mensuel */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
-            Détail mensuel CA3
-          </CardTitle>
-          <CardDescription>
-            Pour chaque mois : TVA collectée, TVA déductible, TVA nette
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="flex items-center justify-center py-12 gap-3">
-              <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-              <span className="text-muted-foreground">Chargement...</span>
+          {/* Detail mensuel */}
+          <div className="border rounded-xl bg-white overflow-hidden">
+            <div className="px-5 py-3 bg-gray-50 border-b">
+              <h2 className="font-semibold text-sm">Detail mensuel CA3</h2>
             </div>
-          ) : error ? (
-            <div className="text-red-600 py-4">{error}</div>
-          ) : monthlyTva.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <Percent className="h-12 w-12 mx-auto mb-4 opacity-30" />
-              <p>Aucune donnée TVA pour cette période</p>
-            </div>
-          ) : (
-            <div className="border rounded-lg overflow-hidden">
-              <div className="grid grid-cols-7 gap-2 px-4 py-3 bg-muted/50 text-xs font-medium text-muted-foreground border-b uppercase tracking-wide">
-                <div className="col-span-2">Mois</div>
-                <div className="text-right">CA HT</div>
-                <div className="text-right">TVA collectée</div>
-                <div className="text-right">TVA déductible</div>
-                <div className="text-right">TVA nette</div>
-                <div className="text-center">Statut</div>
+
+            {monthlyTva.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                <Percent className="h-12 w-12 mx-auto mb-4 opacity-30" />
+                <p>Aucune donnee TVA pour cette periode</p>
               </div>
-              <ScrollArea className="h-[400px]">
-                {monthlyTva.map(m => (
-                  <div
-                    key={m.month}
-                    className="grid grid-cols-7 gap-2 px-4 py-3 border-b hover:bg-muted/30 transition-colors items-center"
-                  >
-                    <div className="col-span-2 font-medium capitalize">
-                      {m.label}
-                    </div>
-                    <div className="text-right">
-                      <Money amount={m.caHT} size="sm" />
-                    </div>
-                    <div className="text-right">
-                      <Money
-                        amount={m.totalCollectee}
-                        className="text-green-600"
-                        size="sm"
-                      />
-                    </div>
-                    <div className="text-right">
-                      <Money
-                        amount={m.totalDeductible}
-                        className="text-red-600"
-                        size="sm"
-                      />
-                    </div>
-                    <div className="text-right">
-                      <Money amount={m.net} colorize bold size="sm" />
-                    </div>
-                    <div className="text-center">
-                      {m.net >= 0 ? (
-                        <Badge variant="destructive" className="text-xs">
-                          À payer
-                        </Badge>
-                      ) : (
-                        <Badge
-                          variant="default"
-                          className="text-xs bg-green-600"
+            ) : (
+              <>
+                <div className="grid grid-cols-7 gap-2 px-5 py-2.5 text-xs font-medium text-muted-foreground border-b">
+                  <div className="col-span-2">Mois</div>
+                  <div className="text-right">CA HT</div>
+                  <div className="text-right">TVA collectee</div>
+                  <div className="text-right">TVA deductible</div>
+                  <div className="text-right">TVA nette</div>
+                  <div className="text-center">Statut</div>
+                </div>
+                <ScrollArea className="h-[400px]">
+                  {monthlyTva.map(m => (
+                    <div
+                      key={m.month}
+                      className="grid grid-cols-7 gap-2 px-5 py-3 border-b hover:bg-gray-50 transition-colors items-center text-sm"
+                    >
+                      <div className="col-span-2 font-medium capitalize">
+                        {m.label}
+                      </div>
+                      <div className="text-right">
+                        <Money amount={m.caHT} size="sm" />
+                      </div>
+                      <div className="text-right">
+                        <Money amount={m.totalCollectee} size="sm" />
+                      </div>
+                      <div className="text-right">
+                        <Money amount={m.totalDeductible} size="sm" />
+                      </div>
+                      <div className="text-right">
+                        <Money amount={m.net} colorize bold size="sm" />
+                      </div>
+                      <div className="text-center text-xs">
+                        <span
+                          className={
+                            m.net >= 0 ? 'text-red-600' : 'text-green-600'
+                          }
                         >
-                          Crédit
-                        </Badge>
-                      )}
+                          {m.net >= 0 ? 'A payer' : 'Credit'}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </ScrollArea>
+                  ))}
+                </ScrollArea>
 
-              {/* Total annuel */}
-              <div className="grid grid-cols-7 gap-2 px-4 py-3 bg-muted font-bold border-t-2">
-                <div className="col-span-2">
-                  TOTAL {selectedYear === 'all' ? 'GÉNÉRAL' : selectedYear}
+                {/* Total */}
+                <div className="grid grid-cols-7 gap-2 px-5 py-3 bg-gray-100 font-bold text-sm border-t">
+                  <div className="col-span-2">
+                    TOTAL {selectedYear === 'all' ? 'GENERAL' : selectedYear}
+                  </div>
+                  <div className="text-right">
+                    <Money amount={annualTotals.caHT} />
+                  </div>
+                  <div className="text-right">
+                    <Money amount={annualTotals.collectee} />
+                  </div>
+                  <div className="text-right">
+                    <Money amount={annualTotals.deductible} />
+                  </div>
+                  <div className="text-right">
+                    <Money amount={annualTotals.net} colorize />
+                  </div>
+                  <div className="text-center text-xs">
+                    <span
+                      className={
+                        annualTotals.net >= 0
+                          ? 'text-red-600 font-bold'
+                          : 'text-green-600 font-bold'
+                      }
+                    >
+                      {annualTotals.net >= 0 ? 'A payer' : 'Credit'}
+                    </span>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <Money amount={annualTotals.caHT} />
-                </div>
-                <div className="text-right">
-                  <Money
-                    amount={annualTotals.collectee}
-                    className="text-green-700"
-                  />
-                </div>
-                <div className="text-right">
-                  <Money
-                    amount={annualTotals.deductible}
-                    className="text-red-700"
-                  />
-                </div>
-                <div className="text-right">
-                  <Money amount={annualTotals.net} colorize />
-                </div>
-                <div className="text-center">
-                  <Badge
-                    variant={annualTotals.net >= 0 ? 'destructive' : 'default'}
-                  >
-                    {annualTotals.net >= 0 ? 'À payer' : 'Crédit'}
-                  </Badge>
-                </div>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

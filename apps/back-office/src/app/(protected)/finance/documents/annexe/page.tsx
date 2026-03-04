@@ -1,15 +1,10 @@
 'use client';
 
 /**
- * Annexe Légale
+ * Annexe Legale — Style Indy epure
  *
  * Notes explicatives aux comptes annuels.
- * Obligation SASU (Code de Commerce Art. L123-12 à L123-14).
- *
- * Contenu standard d'une annexe simplifiée :
- * - Règles et méthodes comptables
- * - Compléments d'information au bilan et au compte de résultat
- * - Informations sur les engagements financiers
+ * Design epure sans badges excessifs.
  */
 
 import { useState, useMemo } from 'react';
@@ -27,8 +22,6 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
-  CardDescription,
-  Badge,
   Select,
   SelectContent,
   SelectItem,
@@ -39,16 +32,7 @@ import {
   Button,
 } from '@verone/ui';
 import { Money } from '@verone/ui-business';
-import {
-  FileText,
-  Calendar,
-  Info,
-  Building2,
-  Scale,
-  Download,
-  Printer,
-  ArrowLeft,
-} from 'lucide-react';
+import { Printer, ArrowLeft, Info } from 'lucide-react';
 
 // =====================================================================
 // PAGE
@@ -61,7 +45,6 @@ export default function AnnexeLegalePage() {
   const { creditTransactions, debitTransactions, loading } =
     useBankReconciliation();
 
-  // Compute annual figures
   const figures = useMemo(() => {
     const filterByYear = (txs: BankTransaction[]) =>
       selectedYear === 'all'
@@ -78,7 +61,6 @@ export default function AnnexeLegalePage() {
     const totalDepenses = debits.reduce((s, tx) => s + Math.abs(tx.amount), 0);
     const resultat = totalRecettes - totalDepenses;
 
-    // TVA based on actual vat_rate (0 if unknown — no 20% assumption)
     const tvaCollectee = credits.reduce(
       (s, tx) =>
         s +
@@ -122,7 +104,7 @@ export default function AnnexeLegalePage() {
     (_, i) => currentYear - i
   );
 
-  const yearLabel = selectedYear === 'all' ? 'Toutes années' : selectedYear;
+  const yearLabel = selectedYear === 'all' ? 'Toutes annees' : selectedYear;
 
   return (
     <div className="space-y-6">
@@ -140,34 +122,28 @@ export default function AnnexeLegalePage() {
             <span>/</span>
             <span className="text-black">Annexe legale</span>
           </div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <FileText className="h-6 w-6" />
-            Annexe Légale
-          </h1>
-          <p className="text-muted-foreground">
-            Notes explicatives aux comptes annuels — Exercice {yearLabel}
-          </p>
+          <h1 className="text-2xl font-bold">Annexe Legale</h1>
+          <p className="text-muted-foreground text-sm">Exercice {yearLabel}</p>
         </div>
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
             size="sm"
             onClick={() => window.print()}
-            className="gap-2"
+            className="gap-2 rounded-lg"
           >
             <Printer className="h-4 w-4" />
             Imprimer
           </Button>
-          <Calendar className="h-4 w-4 text-muted-foreground" />
           <Select value={selectedYear} onValueChange={setSelectedYear}>
-            <SelectTrigger className="w-40">
+            <SelectTrigger className="w-44 rounded-full">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Toutes les années</SelectItem>
+              <SelectItem value="all">Toutes les annees</SelectItem>
               {years.map(year => (
                 <SelectItem key={year} value={String(year)}>
-                  {year}
+                  Exercice {year}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -175,12 +151,11 @@ export default function AnnexeLegalePage() {
         </div>
       </div>
 
-      <Alert className="border-amber-200 bg-amber-50">
-        <Info className="h-4 w-4 text-amber-600" />
-        <AlertDescription className="text-amber-700 text-sm">
-          <strong>Document de travail.</strong> L&apos;annexe légale définitive
-          doit être validée par votre expert-comptable avant dépôt au greffe du
-          Tribunal de Commerce.
+      <Alert className="border-orange-200 bg-orange-50">
+        <Info className="h-4 w-4 text-orange-600" />
+        <AlertDescription className="text-orange-700 text-sm">
+          <strong>Document de travail.</strong> L&apos;annexe legale definitive
+          doit etre validee par votre expert-comptable avant depot au greffe.
         </AlertDescription>
       </Alert>
 
@@ -198,8 +173,7 @@ export default function AnnexeLegalePage() {
           {/* Section 1: Identification */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Building2 className="h-5 w-5" />
+              <CardTitle className="text-base">
                 1. Identification de l&apos;entreprise
               </CardTitle>
             </CardHeader>
@@ -207,9 +181,9 @@ export default function AnnexeLegalePage() {
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <span className="text-muted-foreground">
-                    Dénomination sociale :
+                    Denomination sociale :
                   </span>
-                  <span className="font-medium ml-2">VERONE (à compléter)</span>
+                  <span className="font-medium ml-2">VERONE (a completer)</span>
                 </div>
                 <div>
                   <span className="text-muted-foreground">
@@ -220,7 +194,7 @@ export default function AnnexeLegalePage() {
                 <div>
                   <span className="text-muted-foreground">SIREN :</span>
                   <span className="font-medium ml-2">
-                    {process.env.NEXT_PUBLIC_VERONE_SIREN ?? '(à configurer)'}
+                    {process.env.NEXT_PUBLIC_VERONE_SIREN ?? '(a configurer)'}
                   </span>
                 </div>
                 <div>
@@ -232,180 +206,153 @@ export default function AnnexeLegalePage() {
                   </span>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">Activité :</span>
+                  <span className="text-muted-foreground">Activite :</span>
                   <span className="font-medium ml-2">
-                    Commerce de décoration et mobilier d&apos;intérieur haut de
+                    Commerce de decoration et mobilier d&apos;interieur haut de
                     gamme
                   </span>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">Régime fiscal :</span>
+                  <span className="text-muted-foreground">Regime fiscal :</span>
                   <span className="font-medium ml-2">
-                    IS — Impôt sur les sociétés
+                    IS — Impot sur les societes
                   </span>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Section 2: Règles et méthodes */}
+          {/* Section 2: Regles et methodes */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Scale className="h-5 w-5" />
-                2. Règles et méthodes comptables
+              <CardTitle className="text-base">
+                2. Regles et methodes comptables
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4 text-sm">
               <div>
                 <h4 className="font-semibold mb-1">
-                  2.1 Référentiel comptable
+                  2.1 Referentiel comptable
                 </h4>
                 <p className="text-muted-foreground">
-                  Les comptes annuels sont établis conformément au Plan
-                  Comptable Général (PCG, règlement ANC n°2014-03) et aux
-                  dispositions du Code de Commerce (Art. L123-12 à L123-28).
+                  Les comptes annuels sont etablis conformement au Plan
+                  Comptable General (PCG, reglement ANC n°2014-03) et aux
+                  dispositions du Code de Commerce (Art. L123-12 a L123-28).
                 </p>
               </div>
               <div>
                 <h4 className="font-semibold mb-1">
-                  2.2 Conventions générales
+                  2.2 Conventions generales
                 </h4>
                 <ul className="list-disc list-inside text-muted-foreground space-y-1">
-                  <li>
-                    Principe de continuité d&apos;exploitation : les comptes
-                    sont établis dans une perspective de poursuite
-                    d&apos;activité
-                  </li>
-                  <li>
-                    Principe de prudence : seuls les bénéfices réalisés sont
-                    comptabilisés
-                  </li>
-                  <li>
-                    Principe d&apos;indépendance des exercices : les produits et
-                    charges sont rattachés à l&apos;exercice concerné
-                  </li>
+                  <li>Principe de continuite d&apos;exploitation</li>
+                  <li>Principe de prudence</li>
+                  <li>Principe d&apos;independance des exercices</li>
                 </ul>
               </div>
               <div>
                 <h4 className="font-semibold mb-1">2.3 TVA</h4>
                 <p className="text-muted-foreground">
-                  La société est assujettie à la TVA au régime réel normal. Les
-                  taux appliqués sont :
+                  Regime reel normal. Taux appliques :{' '}
+                  {TVA_RATES.map(r => r.label).join(', ')}.
                 </p>
-                <div className="flex gap-2 mt-2">
-                  {TVA_RATES.map(rate => (
-                    <Badge key={rate.value} variant="outline">
-                      {rate.label} — {rate.description}
-                    </Badge>
-                  ))}
-                </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Section 3: Compléments au compte de résultat */}
+          {/* Section 3: Complements au compte de resultat */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">
-                3. Compléments au compte de résultat
+              <CardTitle className="text-base">
+                3. Complements au compte de resultat
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="border rounded-lg overflow-hidden">
-                <div className="grid grid-cols-2 gap-4 px-4 py-3 bg-muted/50 text-sm font-medium border-b">
+                <div className="grid grid-cols-2 gap-4 px-4 py-2.5 bg-gray-50 text-xs font-medium border-b">
                   <div>Rubrique</div>
                   <div className="text-right">Montant</div>
                 </div>
-                <div className="grid grid-cols-2 gap-4 px-4 py-3 border-b">
-                  <div className="text-sm">
-                    Chiffre d&apos;affaires net (produits)
-                  </div>
+                <div className="grid grid-cols-2 gap-4 px-4 py-2.5 border-b text-sm">
+                  <div>Chiffre d&apos;affaires net</div>
                   <div className="text-right">
-                    <Money
-                      amount={figures.totalRecettes}
-                      className="text-green-600"
-                    />
+                    <Money amount={figures.totalRecettes} size="sm" />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4 px-4 py-3 border-b">
-                  <div className="text-sm">Total des charges</div>
+                <div className="grid grid-cols-2 gap-4 px-4 py-2.5 border-b text-sm">
+                  <div>Total des charges</div>
                   <div className="text-right">
-                    <Money
-                      amount={figures.totalDepenses}
-                      className="text-red-600"
-                    />
+                    <Money amount={figures.totalDepenses} size="sm" />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4 px-4 py-3 border-b bg-muted/30 font-bold">
+                <div className="grid grid-cols-2 gap-4 px-4 py-2.5 border-b text-sm font-semibold bg-gray-50/50">
                   <div>
-                    Résultat de l&apos;exercice (
-                    {figures.resultat >= 0 ? 'bénéfice' : 'perte'})
+                    Resultat de l&apos;exercice (
+                    {figures.resultat >= 0 ? 'benefice' : 'perte'})
                   </div>
                   <div className="text-right">
-                    <Money amount={figures.resultat} colorize bold />
+                    <Money amount={figures.resultat} colorize bold size="sm" />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4 px-4 py-3 border-b">
-                  <div className="text-sm">TVA collectée</div>
+                <div className="grid grid-cols-2 gap-4 px-4 py-2.5 border-b text-sm">
+                  <div>TVA collectee</div>
                   <div className="text-right">
                     <Money amount={figures.tvaCollectee} size="sm" />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4 px-4 py-3 border-b">
-                  <div className="text-sm">TVA déductible</div>
+                <div className="grid grid-cols-2 gap-4 px-4 py-2.5 border-b text-sm">
+                  <div>TVA deductible</div>
                   <div className="text-right">
                     <Money amount={figures.tvaDeductible} size="sm" />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4 px-4 py-3">
-                  <div className="text-sm font-medium">
-                    TVA nette ({figures.tvaNette >= 0 ? 'à payer' : 'crédit'})
+                <div className="grid grid-cols-2 gap-4 px-4 py-2.5 text-sm font-medium">
+                  <div>
+                    TVA nette ({figures.tvaNette >= 0 ? 'a payer' : 'credit'})
                   </div>
                   <div className="text-right">
-                    <Money amount={figures.tvaNette} colorize />
+                    <Money amount={figures.tvaNette} colorize size="sm" />
                   </div>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Section 4: Engagements */}
+          {/* Section 4 */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">
+              <CardTitle className="text-base">
                 4. Engagements hors bilan
               </CardTitle>
             </CardHeader>
             <CardContent className="text-sm text-muted-foreground">
               <p>
-                À compléter par l&apos;expert-comptable : engagements donnés et
-                reçus (cautions, garanties, contrats de crédit-bail, engagements
-                de retraite, etc.).
+                A completer par l&apos;expert-comptable : engagements donnes et
+                recus.
               </p>
             </CardContent>
           </Card>
 
-          {/* Section 5: Événements postérieurs */}
+          {/* Section 5 */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">
-                5. Événements postérieurs à la clôture
+              <CardTitle className="text-base">
+                5. Evenements posterieurs a la cloture
               </CardTitle>
             </CardHeader>
             <CardContent className="text-sm text-muted-foreground">
               <p>
-                À compléter : événements significatifs survenus entre la date de
-                clôture et la date d&apos;établissement des comptes.
+                A completer : evenements significatifs survenus entre la date de
+                cloture et la date d&apos;etablissement des comptes.
               </p>
             </CardContent>
           </Card>
 
-          {/* Section 6: Informations complémentaires */}
+          {/* Section 6 */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">
-                6. Informations complémentaires
+              <CardTitle className="text-base">
+                6. Informations complementaires
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 text-sm">
@@ -420,7 +367,7 @@ export default function AnnexeLegalePage() {
                 </div>
                 <div>
                   <span className="text-muted-foreground">
-                    Système comptable :
+                    Systeme comptable :
                   </span>
                   <span className="font-medium ml-2">
                     Verone Back Office + Qonto
@@ -434,7 +381,7 @@ export default function AnnexeLegalePage() {
                 </div>
                 <div>
                   <span className="text-muted-foreground">
-                    Conservation des pièces :
+                    Conservation des pieces :
                   </span>
                   <span className="font-medium ml-2">
                     Qonto + Supabase Storage (10 ans)

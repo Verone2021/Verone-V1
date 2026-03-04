@@ -1,10 +1,9 @@
 'use client';
 
 /**
- * Resultats — Synthese mensuelle
+ * Resultats — Synthese mensuelle (style Indy epure)
  *
- * Extrait de l'ancien onglet "Resultats" de /finance/livres.
- * Vue synthese mensuelle avec details expansibles.
+ * Pas de KPIs, tableau mensuel collapsible simple.
  */
 
 import { useState, useMemo } from 'react';
@@ -20,27 +19,14 @@ import { useBankReconciliation, type BankTransaction } from '@verone/finance';
 import {
   Card,
   CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from '@verone/ui';
-import { Money, KpiCard, KpiGrid } from '@verone/ui-business';
-import {
-  Calculator,
-  TrendingUp,
-  TrendingDown,
-  Calendar,
-  ChevronDown,
-  ChevronRight,
-  ArrowDownLeft,
-  ArrowUpRight,
-  ArrowLeft,
-} from 'lucide-react';
+import { Money } from '@verone/ui-business';
+import { Calculator, ChevronDown, ChevronRight, ArrowLeft } from 'lucide-react';
 
 // =====================================================================
 // HELPERS
@@ -80,7 +66,6 @@ export default function ResultatsPage() {
   const { creditTransactions, debitTransactions, loading, error } =
     useBankReconciliation();
 
-  // Grouper par mois
   const monthlyData = useMemo(() => {
     const months: Record<
       string,
@@ -165,56 +150,22 @@ export default function ResultatsPage() {
             <span>/</span>
             <span className="text-black">Resultats</span>
           </div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Calculator className="h-6 w-6" />
-            Resultats
-          </h1>
-          <p className="text-muted-foreground">
-            Synthese mensuelle des recettes et depenses
-          </p>
+          <h1 className="text-2xl font-bold">Resultats</h1>
         </div>
-        <div className="flex items-center gap-2">
-          <Calendar className="h-4 w-4 text-muted-foreground" />
-          <Select value={selectedYear} onValueChange={setSelectedYear}>
-            <SelectTrigger className="w-40">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Toutes les annees</SelectItem>
-              {years.map(year => (
-                <SelectItem key={year} value={String(year)}>
-                  {year}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <Select value={selectedYear} onValueChange={setSelectedYear}>
+          <SelectTrigger className="w-44 rounded-full">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Toutes les annees</SelectItem>
+            {years.map(year => (
+              <SelectItem key={year} value={String(year)}>
+                Exercice {year}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
-
-      {/* KPIs */}
-      <KpiGrid columns={3}>
-        <KpiCard
-          title="Total Recettes"
-          value={totals.credits}
-          valueType="money"
-          icon={<TrendingUp className="h-4 w-4" />}
-          variant="success"
-        />
-        <KpiCard
-          title="Total Achats"
-          value={totals.debits}
-          valueType="money"
-          icon={<TrendingDown className="h-4 w-4" />}
-          color="danger"
-        />
-        <KpiCard
-          title="Resultat"
-          value={totals.solde}
-          valueType="money"
-          icon={<Calculator className="h-4 w-4" />}
-          variant={totals.solde >= 0 ? 'success' : 'danger'}
-        />
-      </KpiGrid>
 
       {/* Tableau mensuel */}
       {loading ? (
@@ -231,158 +182,132 @@ export default function ResultatsPage() {
           <CardContent className="py-6 text-red-700">{error}</CardContent>
         </Card>
       ) : (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">
-              Synthese mensuelle{' '}
-              {selectedYear === 'all' ? '— Toutes les annees' : selectedYear}
-            </CardTitle>
-            <CardDescription>
-              Cliquez sur un mois pour voir le detail des transactions
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="border rounded-lg overflow-hidden">
-              <div className="grid grid-cols-5 gap-4 px-4 py-3 bg-muted/50 text-sm font-medium text-muted-foreground border-b">
-                <div />
-                <div>Mois</div>
-                <div className="text-right">Recettes</div>
-                <div className="text-right">Achats</div>
-                <div className="text-right">Solde</div>
-              </div>
+        <div className="border rounded-xl bg-white overflow-hidden">
+          <div className="grid grid-cols-5 gap-4 px-5 py-3 bg-gray-50 text-xs font-medium text-muted-foreground border-b">
+            <div />
+            <div>Mois</div>
+            <div className="text-right">Recettes</div>
+            <div className="text-right">Achats</div>
+            <div className="text-right">Solde</div>
+          </div>
 
-              {monthlyData.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  Aucune donnee pour{' '}
-                  {selectedYear === 'all' ? 'cette periode' : selectedYear}
-                </div>
-              ) : (
-                monthlyData.map(row => (
-                  <Collapsible
-                    key={row.month}
-                    open={expandedMonths.has(row.month)}
-                    onOpenChange={() => toggleMonth(row.month)}
-                  >
-                    <CollapsibleTrigger className="w-full">
-                      <div className="grid grid-cols-5 gap-4 px-4 py-3 border-b hover:bg-muted/30 cursor-pointer transition-colors">
-                        <div className="flex items-center">
-                          {expandedMonths.has(row.month) ? (
-                            <ChevronDown className="h-4 w-4" />
-                          ) : (
-                            <ChevronRight className="h-4 w-4" />
+          {monthlyData.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <Calculator className="h-12 w-12 mx-auto mb-4 opacity-30" />
+              <p>
+                Aucune donnee pour{' '}
+                {selectedYear === 'all' ? 'cette periode' : selectedYear}
+              </p>
+            </div>
+          ) : (
+            monthlyData.map(row => (
+              <Collapsible
+                key={row.month}
+                open={expandedMonths.has(row.month)}
+                onOpenChange={() => toggleMonth(row.month)}
+              >
+                <CollapsibleTrigger className="w-full">
+                  <div className="grid grid-cols-5 gap-4 px-5 py-3 border-b hover:bg-gray-50 cursor-pointer transition-colors">
+                    <div className="flex items-center">
+                      {expandedMonths.has(row.month) ? (
+                        <ChevronDown className="h-4 w-4 text-gray-400" />
+                      ) : (
+                        <ChevronRight className="h-4 w-4 text-gray-400" />
+                      )}
+                    </div>
+                    <div className="font-medium capitalize text-left text-sm">
+                      {row.label}
+                    </div>
+                    <div className="text-right">
+                      <Money amount={row.credits} size="sm" />
+                    </div>
+                    <div className="text-right">
+                      <Money amount={-row.debits} size="sm" />
+                    </div>
+                    <div className="text-right">
+                      <Money amount={row.solde} colorize bold size="sm" />
+                    </div>
+                  </div>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <div className="bg-gray-50/50 px-8 py-4 border-b space-y-4">
+                    {row.creditTx.length > 0 && (
+                      <div>
+                        <h4 className="text-xs font-medium text-muted-foreground mb-2">
+                          Recettes ({row.creditTx.length})
+                        </h4>
+                        <div className="space-y-1">
+                          {row.creditTx.slice(0, 5).map(tx => (
+                            <div
+                              key={tx.id}
+                              className="flex justify-between text-sm py-1 px-2 bg-white rounded"
+                            >
+                              <span className="text-muted-foreground">
+                                {formatDate(tx.settled_at ?? tx.emitted_at)} -{' '}
+                                {tx.counterparty_name ?? tx.label}
+                              </span>
+                              <Money amount={Math.abs(tx.amount)} size="sm" />
+                            </div>
+                          ))}
+                          {row.creditTx.length > 5 && (
+                            <p className="text-xs text-muted-foreground italic">
+                              + {row.creditTx.length - 5} autre(s)
+                            </p>
                           )}
                         </div>
-                        <div className="font-medium capitalize text-left">
-                          {row.label}
-                        </div>
-                        <div className="text-right">
-                          <Money
-                            amount={row.credits}
-                            className="text-green-600"
-                          />
-                        </div>
-                        <div className="text-right">
-                          <Money
-                            amount={-row.debits}
-                            className="text-red-600"
-                          />
-                        </div>
-                        <div className="text-right">
-                          <Money amount={row.solde} colorize bold />
+                      </div>
+                    )}
+                    {row.debitTx.length > 0 && (
+                      <div>
+                        <h4 className="text-xs font-medium text-muted-foreground mb-2">
+                          Depenses ({row.debitTx.length})
+                        </h4>
+                        <div className="space-y-1">
+                          {row.debitTx.slice(0, 5).map(tx => (
+                            <div
+                              key={tx.id}
+                              className="flex justify-between text-sm py-1 px-2 bg-white rounded"
+                            >
+                              <span className="text-muted-foreground">
+                                {formatDate(tx.settled_at ?? tx.emitted_at)} -{' '}
+                                {tx.counterparty_name ?? tx.label}
+                              </span>
+                              <Money amount={-Math.abs(tx.amount)} size="sm" />
+                            </div>
+                          ))}
+                          {row.debitTx.length > 5 && (
+                            <p className="text-xs text-muted-foreground italic">
+                              + {row.debitTx.length - 5} autre(s)
+                            </p>
+                          )}
                         </div>
                       </div>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent>
-                      <div className="bg-muted/20 px-8 py-4 border-b space-y-4">
-                        {row.creditTx.length > 0 && (
-                          <div>
-                            <h4 className="text-sm font-medium text-green-700 mb-2 flex items-center gap-2">
-                              <ArrowDownLeft className="h-4 w-4" />
-                              Recettes ({row.creditTx.length})
-                            </h4>
-                            <div className="space-y-1">
-                              {row.creditTx.slice(0, 5).map(tx => (
-                                <div
-                                  key={tx.id}
-                                  className="flex justify-between text-sm py-1 px-2 bg-white rounded"
-                                >
-                                  <span className="text-muted-foreground">
-                                    {formatDate(tx.settled_at ?? tx.emitted_at)}{' '}
-                                    - {tx.counterparty_name ?? tx.label}
-                                  </span>
-                                  <Money
-                                    amount={Math.abs(tx.amount)}
-                                    className="text-green-600"
-                                    size="sm"
-                                  />
-                                </div>
-                              ))}
-                              {row.creditTx.length > 5 && (
-                                <p className="text-xs text-muted-foreground italic">
-                                  + {row.creditTx.length - 5} autre(s)
-                                  transaction(s)
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                        {row.debitTx.length > 0 && (
-                          <div>
-                            <h4 className="text-sm font-medium text-red-700 mb-2 flex items-center gap-2">
-                              <ArrowUpRight className="h-4 w-4" />
-                              Depenses ({row.debitTx.length})
-                            </h4>
-                            <div className="space-y-1">
-                              {row.debitTx.slice(0, 5).map(tx => (
-                                <div
-                                  key={tx.id}
-                                  className="flex justify-between text-sm py-1 px-2 bg-white rounded"
-                                >
-                                  <span className="text-muted-foreground">
-                                    {formatDate(tx.settled_at ?? tx.emitted_at)}{' '}
-                                    - {tx.counterparty_name ?? tx.label}
-                                  </span>
-                                  <Money
-                                    amount={-Math.abs(tx.amount)}
-                                    className="text-red-600"
-                                    size="sm"
-                                  />
-                                </div>
-                              ))}
-                              {row.debitTx.length > 5 && (
-                                <p className="text-xs text-muted-foreground italic">
-                                  + {row.debitTx.length - 5} autre(s)
-                                  transaction(s)
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </CollapsibleContent>
-                  </Collapsible>
-                ))
-              )}
+                    )}
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+            ))
+          )}
 
-              {/* Total */}
-              <div className="grid grid-cols-5 gap-4 px-4 py-3 bg-muted font-bold">
-                <div />
-                <div>
-                  TOTAL {selectedYear === 'all' ? 'GENERAL' : selectedYear}
-                </div>
-                <div className="text-right">
-                  <Money amount={totals.credits} className="text-green-600" />
-                </div>
-                <div className="text-right">
-                  <Money amount={-totals.debits} className="text-red-600" />
-                </div>
-                <div className="text-right">
-                  <Money amount={totals.solde} colorize />
-                </div>
+          {/* Total */}
+          {monthlyData.length > 0 && (
+            <div className="grid grid-cols-5 gap-4 px-5 py-3 bg-gray-100 font-bold text-sm">
+              <div />
+              <div>
+                TOTAL {selectedYear === 'all' ? 'GENERAL' : selectedYear}
+              </div>
+              <div className="text-right">
+                <Money amount={totals.credits} />
+              </div>
+              <div className="text-right">
+                <Money amount={-totals.debits} />
+              </div>
+              <div className="text-right">
+                <Money amount={totals.solde} colorize />
               </div>
             </div>
-          </CardContent>
-        </Card>
+          )}
+        </div>
       )}
     </div>
   );

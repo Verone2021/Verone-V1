@@ -1,10 +1,9 @@
 'use client';
 
 /**
- * Livre des Achats
+ * Livre des Achats — Style Indy epure
  *
- * Extrait de l'ancien onglet "Achats" de /finance/livres.
- * Sorties de tresorerie categorisees par PCG.
+ * Pas de badge count. Design epure.
  */
 
 import { useState, useMemo } from 'react';
@@ -22,9 +21,6 @@ import { SupplierCellReadOnly } from '@verone/finance/components';
 import {
   Card,
   CardContent,
-  CardHeader,
-  CardTitle,
-  Badge,
   ScrollArea,
   Select,
   SelectContent,
@@ -35,10 +31,8 @@ import {
 import { Money } from '@verone/ui-business';
 import {
   TrendingDown,
-  Calendar,
   Paperclip,
   AlertTriangle,
-  CreditCard,
   ArrowLeft,
 } from 'lucide-react';
 
@@ -121,31 +115,21 @@ export default function AchatsPage() {
             <span>/</span>
             <span className="text-black">Achats</span>
           </div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <TrendingDown className="h-6 w-6 text-red-600" />
-            Livre des achats
-          </h1>
-          <p className="text-muted-foreground">
-            Sorties de tresorerie categorisees par PCG
-          </p>
+          <h1 className="text-2xl font-bold">Livre des achats</h1>
         </div>
-        <div className="flex items-center gap-2">
-          <Badge variant="destructive">{filteredDebits.length} sorties</Badge>
-          <Calendar className="h-4 w-4 text-muted-foreground" />
-          <Select value={selectedYear} onValueChange={setSelectedYear}>
-            <SelectTrigger className="w-40">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Toutes les annees</SelectItem>
-              {years.map(year => (
-                <SelectItem key={year} value={String(year)}>
-                  {year}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <Select value={selectedYear} onValueChange={setSelectedYear}>
+          <SelectTrigger className="w-44 rounded-full">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Toutes les annees</SelectItem>
+            {years.map(year => (
+              <SelectItem key={year} value={String(year)}>
+                Exercice {year}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {loading ? (
@@ -167,94 +151,80 @@ export default function AchatsPage() {
           <p>Aucun achat pour cette periode</p>
         </div>
       ) : (
-        <Card>
-          <CardContent className="p-0">
-            <div className="border rounded-lg overflow-hidden">
-              <div className="grid grid-cols-12 gap-2 px-4 py-3 bg-muted/50 text-xs font-medium text-muted-foreground border-b uppercase tracking-wide">
-                <div className="col-span-1">Date</div>
-                <div className="col-span-3">Fournisseur / Libelle</div>
-                <div className="col-span-2">Categorie PCG</div>
-                <div className="col-span-1">Paiement</div>
-                <div className="col-span-1 text-right">HT</div>
-                <div className="col-span-1 text-right">TVA</div>
-                <div className="col-span-2 text-right">TTC</div>
-                <div className="col-span-1 text-center">Just.</div>
-              </div>
-              <ScrollArea className="h-[500px]">
-                {(filteredDebits as TransactionWithExtras[]).map(tx => {
-                  const pcgCode =
-                    tx.category_pcg ||
-                    tx.ignore_reason?.match(/PCG (\d+)/)?.[1];
-                  const pcgInfo = pcgCode ? getPcgCategory(pcgCode) : null;
-                  const vatRate = tx.vat_rate ?? 0;
-                  const ttc = Math.abs(tx.amount);
-                  const ht =
-                    Math.round((ttc / (1 + vatRate / 100)) * 100) / 100;
-                  const tva = ttc - ht;
-                  const hasJustificatif = hasAttachment(tx);
+        <div className="border rounded-xl bg-white overflow-hidden">
+          <div className="grid grid-cols-12 gap-2 px-5 py-3 bg-gray-50 text-xs font-medium text-muted-foreground border-b">
+            <div className="col-span-1">Date</div>
+            <div className="col-span-3">Fournisseur / Libelle</div>
+            <div className="col-span-2">Categorie PCG</div>
+            <div className="col-span-1">Paiement</div>
+            <div className="col-span-1 text-right">HT</div>
+            <div className="col-span-1 text-right">TVA</div>
+            <div className="col-span-2 text-right">TTC</div>
+            <div className="col-span-1 text-center">Just.</div>
+          </div>
+          <ScrollArea className="h-[500px]">
+            {(filteredDebits as TransactionWithExtras[]).map(tx => {
+              const pcgCode =
+                tx.category_pcg || tx.ignore_reason?.match(/PCG (\d+)/)?.[1];
+              const pcgInfo = pcgCode ? getPcgCategory(pcgCode) : null;
+              const vatRate = tx.vat_rate ?? 0;
+              const ttc = Math.abs(tx.amount);
+              const ht = Math.round((ttc / (1 + vatRate / 100)) * 100) / 100;
+              const tva = ttc - ht;
+              const hasJustificatif = hasAttachment(tx);
 
-                  return (
-                    <div
-                      key={tx.id}
-                      className="grid grid-cols-12 gap-2 px-4 py-3 border-b hover:bg-muted/30 transition-colors items-center"
-                    >
-                      <div className="col-span-1 text-xs text-muted-foreground">
-                        {formatDate(tx.settled_at ?? tx.emitted_at)}
-                      </div>
-                      <div className="col-span-3">
-                        <div className="font-medium truncate text-sm">
-                          <SupplierCellReadOnly
-                            counterpartyName={tx.counterparty_name}
-                            label={tx.label}
-                          />
-                        </div>
-                        <p className="text-xs text-muted-foreground truncate">
-                          {tx.label}
-                        </p>
-                      </div>
-                      <div className="col-span-2">
-                        {pcgInfo ? (
-                          <Badge
-                            variant="outline"
-                            className="font-mono text-[10px]"
-                          >
-                            {pcgInfo.code} - {pcgInfo.label}
-                          </Badge>
-                        ) : (
-                          <span className="text-xs text-muted-foreground">
-                            Non classe
-                          </span>
-                        )}
-                      </div>
-                      <div className="col-span-1">
-                        <span className="text-xs">{getPaymentMethod(tx)}</span>
-                      </div>
-                      <div className="col-span-1 text-right text-sm">
-                        <Money amount={-ht} size="sm" />
-                      </div>
-                      <div className="col-span-1 text-right text-sm text-muted-foreground">
-                        <Money amount={tva} size="sm" />
-                      </div>
-                      <div className="col-span-2 text-right">
-                        <Money
-                          amount={-ttc}
-                          className="text-red-600 font-semibold"
-                        />
-                      </div>
-                      <div className="col-span-1 text-center">
-                        {hasJustificatif ? (
-                          <Paperclip className="h-4 w-4 text-green-600 mx-auto" />
-                        ) : (
-                          <AlertTriangle className="h-4 w-4 text-amber-500 mx-auto" />
-                        )}
-                      </div>
+              return (
+                <div
+                  key={tx.id}
+                  className="grid grid-cols-12 gap-2 px-5 py-3 border-b hover:bg-gray-50 transition-colors items-center text-sm"
+                >
+                  <div className="col-span-1 text-xs text-muted-foreground">
+                    {formatDate(tx.settled_at ?? tx.emitted_at)}
+                  </div>
+                  <div className="col-span-3">
+                    <div className="font-medium truncate">
+                      <SupplierCellReadOnly
+                        counterpartyName={tx.counterparty_name}
+                        label={tx.label}
+                      />
                     </div>
-                  );
-                })}
-              </ScrollArea>
-            </div>
-          </CardContent>
-        </Card>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {tx.label}
+                    </p>
+                  </div>
+                  <div className="col-span-2 text-xs text-muted-foreground">
+                    {pcgInfo ? (
+                      <span className="font-mono">
+                        {pcgInfo.code} - {pcgInfo.label}
+                      </span>
+                    ) : (
+                      'Non classe'
+                    )}
+                  </div>
+                  <div className="col-span-1 text-xs text-muted-foreground">
+                    {getPaymentMethod(tx)}
+                  </div>
+                  <div className="col-span-1 text-right">
+                    <Money amount={-ht} size="sm" />
+                  </div>
+                  <div className="col-span-1 text-right text-muted-foreground">
+                    <Money amount={tva} size="sm" />
+                  </div>
+                  <div className="col-span-2 text-right font-medium">
+                    <Money amount={-ttc} size="sm" />
+                  </div>
+                  <div className="col-span-1 text-center">
+                    {hasJustificatif ? (
+                      <Paperclip className="h-4 w-4 text-green-600 mx-auto" />
+                    ) : (
+                      <AlertTriangle className="h-4 w-4 text-amber-500 mx-auto" />
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </ScrollArea>
+        </div>
       )}
     </div>
   );

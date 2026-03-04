@@ -1,10 +1,10 @@
 'use client';
 
 /**
- * Compte de Resultat (P&L PCG)
+ * Compte de Resultat — Style Indy (tableau formel)
  *
- * Extrait de l'ancien onglet "Compte de resultat" de /finance/livres.
- * Format Plan Comptable General — Classes 6 et 7.
+ * Format simple : libelle | montant N | montant N-1
+ * Pas de badges colores, design epure.
  */
 
 import { useState, useMemo } from 'react';
@@ -15,25 +15,16 @@ import { useBankReconciliation, type BankTransaction } from '@verone/finance';
 import {
   Card,
   CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  Badge,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
+  Alert,
+  AlertDescription,
 } from '@verone/ui';
 import { Money } from '@verone/ui-business';
-import {
-  Calculator,
-  BookOpenCheck,
-  TrendingUp,
-  TrendingDown,
-  Calendar,
-  ArrowLeft,
-} from 'lucide-react';
+import { ArrowLeft, Info } from 'lucide-react';
 
 // =====================================================================
 // TYPES
@@ -55,7 +46,6 @@ export default function CompteResultatPage() {
   const { creditTransactions, debitTransactions, loading, error } =
     useBankReconciliation();
 
-  // Structure PCG complete
   const pcgStructure = {
     produits: [
       { code: '70', label: 'Ventes de produits/services' },
@@ -78,58 +68,90 @@ export default function CompteResultatPage() {
     ],
   };
 
-  const produitsParClasse = useMemo(() => {
-    const classes: Record<string, number> = {};
-    pcgStructure.produits.forEach(p => (classes[p.code] = 0));
+  const computeForYear = (year: string) => {
+    const filterByYear = (txs: BankTransaction[]) =>
+      year === 'all'
+        ? txs
+        : txs.filter(tx => {
+            const date = tx.settled_at ?? tx.emitted_at;
+            return date?.startsWith(year);
+          });
 
-    creditTransactions.forEach(tx => {
-      const date = tx.settled_at ?? tx.emitted_at;
-      if (!date) return;
-      if (selectedYear !== 'all' && !date.startsWith(selectedYear)) return;
+    const credits = filterByYear(creditTransactions);
+    const debits = filterByYear(debitTransactions);
+
+    const produitsClasses: Record<string, number> = {};
+    pcgStructure.produits.forEach(p => (produitsClasses[p.code] = 0));
+    credits.forEach(tx => {
       const pcgCode = tx.category_pcg;
       if (pcgCode) {
         const classCode = pcgCode.substring(0, 2);
-        if (classes[classCode] !== undefined) {
-          classes[classCode] += Math.abs(tx.amount);
+        if (produitsClasses[classCode] !== undefined) {
+          produitsClasses[classCode] += Math.abs(tx.amount);
         }
       }
     });
 
-    return pcgStructure.produits
-      .map(p => ({ ...p, total: classes[p.code] ?? 0 }))
-      .filter(p => p.total > 0);
-  }, [creditTransactions, selectedYear, pcgStructure.produits]);
-
-  const chargesParClasse = useMemo(() => {
-    const classes: Record<string, number> = {};
-    pcgStructure.charges.forEach(c => (classes[c.code] = 0));
-
-    (debitTransactions as TransactionWithExtras[]).forEach(tx => {
-      const date = tx.settled_at ?? tx.emitted_at;
-      if (!date) return;
-      if (selectedYear !== 'all' && !date.startsWith(selectedYear)) return;
+    const chargesClasses: Record<string, number> = {};
+    pcgStructure.charges.forEach(c => (chargesClasses[c.code] = 0));
+    (debits as TransactionWithExtras[]).forEach(tx => {
       const pcgCode =
         tx.category_pcg || tx.ignore_reason?.match(/PCG (\d+)/)?.[1];
       if (pcgCode) {
         const classCode = pcgCode.substring(0, 2);
-        if (classes[classCode] !== undefined) {
-          classes[classCode] += Math.abs(tx.amount);
+        if (chargesClasses[classCode] !== undefined) {
+          chargesClasses[classCode] += Math.abs(tx.amount);
         }
       }
     });
 
-    return pcgStructure.charges
-      .map(c => ({ ...c, total: classes[c.code] ?? 0 }))
-      .filter(c => c.total > 0);
-  }, [debitTransactions, selectedYear, pcgStructure.charges]);
+    return { produitsClasses, chargesClasses };
+  };
 
-  const totalProduits = produitsParClasse.reduce((sum, p) => sum + p.total, 0);
-  const totalCharges = chargesParClasse.reduce((sum, c) => sum + c.total, 0);
-  const resultat = totalProduits - totalCharges;
+  const yearN = selectedYear === 'all' ? String(currentYear) : selectedYear;
+  const yearN1 = String(Number(yearN) - 1);
+
+  const dataN = useMemo(
+    () => computeForYear(yearN),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [creditTransactions, debitTransactions, yearN]
+  );
+  const dataN1 = useMemo(
+    () => computeForYear(yearN1),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [creditTransactions, debitTransactions, yearN1]
+  );
+
+  const totalProduitsN = pcgStructure.produits.reduce(
+    (sum, p) => sum + (dataN.produitsClasses[p.code] ?? 0),
+    0
+  );
+  const totalProduitsN1 = pcgStructure.produits.reduce(
+    (sum, p) => sum + (dataN1.produitsClasses[p.code] ?? 0),
+    0
+  );
+  const totalChargesN = pcgStructure.charges.reduce(
+    (sum, c) => sum + (dataN.chargesClasses[c.code] ?? 0),
+    0
+  );
+  const totalChargesN1 = pcgStructure.charges.reduce(
+    (sum, c) => sum + (dataN1.chargesClasses[c.code] ?? 0),
+    0
+  );
+  const resultatN = totalProduitsN - totalChargesN;
+  const resultatN1 = totalProduitsN1 - totalChargesN1;
 
   const years = Array.from(
     { length: currentYear - 2022 },
     (_, i) => currentYear - i
+  );
+
+  const renderAmount = (amount: number) => (
+    <Money
+      amount={amount}
+      size="sm"
+      className={amount === 0 ? 'text-muted-foreground' : ''}
+    />
   );
 
   return (
@@ -148,31 +170,34 @@ export default function CompteResultatPage() {
             <span>/</span>
             <span className="text-black">Compte de resultat</span>
           </div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <BookOpenCheck className="h-6 w-6" />
-            Compte de Resultat
-          </h1>
-          <p className="text-muted-foreground">
-            Format Plan Comptable General (PCG) - Classes 6 et 7
-          </p>
+          <h1 className="text-2xl font-bold">Compte de Resultat</h1>
         </div>
-        <div className="flex items-center gap-2">
-          <Calendar className="h-4 w-4 text-muted-foreground" />
-          <Select value={selectedYear} onValueChange={setSelectedYear}>
-            <SelectTrigger className="w-40">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Toutes les annees</SelectItem>
-              {years.map(year => (
-                <SelectItem key={year} value={String(year)}>
-                  {year}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <Select value={selectedYear} onValueChange={setSelectedYear}>
+          <SelectTrigger className="w-44 rounded-full">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Toutes les annees</SelectItem>
+            {years.map(year => (
+              <SelectItem key={year} value={String(year)}>
+                Exercice {year}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
+
+      {/* Alert */}
+      {selectedYear !== 'all' && (
+        <Alert className="border-orange-200 bg-orange-50">
+          <Info className="h-4 w-4 text-orange-600" />
+          <AlertDescription className="text-orange-700 text-sm">
+            Votre exercice {yearN} n&apos;est{' '}
+            <strong>pas encore cloture</strong>, les montants affiches sont{' '}
+            <strong>previsionnels</strong>.
+          </AlertDescription>
+        </Alert>
+      )}
 
       {loading ? (
         <Card>
@@ -188,118 +213,112 @@ export default function CompteResultatPage() {
           <CardContent className="py-6 text-red-700">{error}</CardContent>
         </Card>
       ) : (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Calculator className="h-5 w-5" />
-              Compte de Resultat{' '}
-              {selectedYear === 'all' ? '— Toutes les annees' : selectedYear}
-            </CardTitle>
-            <CardDescription>
-              Format Plan Comptable General (PCG) - Classes 6 et 7
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-8">
-            {/* PRODUITS */}
-            <div>
-              <h3 className="font-bold text-lg mb-4 text-green-700 flex items-center gap-2">
-                <TrendingUp className="h-5 w-5" />
-                PRODUITS (Classe 7)
-              </h3>
-              <div className="border rounded-lg overflow-hidden">
-                {produitsParClasse.length === 0 ? (
-                  <div className="px-4 py-4 text-muted-foreground text-center">
-                    Aucun produit enregistre
-                  </div>
-                ) : (
-                  produitsParClasse.map(produit => (
-                    <div
-                      key={produit.code}
-                      className="flex justify-between px-4 py-3 border-b last:border-b-0 hover:bg-muted/30"
-                    >
-                      <span className="flex items-center gap-2">
-                        <Badge
-                          variant="outline"
-                          className="font-mono bg-green-50 text-green-700"
-                        >
-                          {produit.code}
-                        </Badge>
-                        {produit.label}
-                      </span>
-                      <Money
-                        amount={produit.total}
-                        className="text-green-600 font-medium"
-                      />
-                    </div>
-                  ))
-                )}
-              </div>
-              <div className="flex justify-between px-4 py-3 font-bold text-green-700 border-t-2 border-green-300 mt-2 bg-green-50 rounded">
-                <span>TOTAL PRODUITS</span>
-                <Money amount={totalProduits} />
-              </div>
-            </div>
+        <div className="border rounded-xl bg-white overflow-hidden">
+          {/* Header */}
+          <div className="grid grid-cols-12 gap-2 px-5 py-2.5 text-xs font-medium text-muted-foreground border-b bg-gray-50">
+            <div className="col-span-6">Libelle</div>
+            <div className="col-span-3 text-right">Exercice {yearN}</div>
+            <div className="col-span-3 text-right">Exercice {yearN1}</div>
+          </div>
 
-            {/* CHARGES */}
-            <div>
-              <h3 className="font-bold text-lg mb-4 text-red-700 flex items-center gap-2">
-                <TrendingDown className="h-5 w-5" />
-                CHARGES (Classe 6)
-              </h3>
-              <div className="border rounded-lg overflow-hidden">
-                {chargesParClasse.length === 0 ? (
-                  <div className="px-4 py-4 text-muted-foreground text-center">
-                    Aucune charge categorisee
-                  </div>
-                ) : (
-                  chargesParClasse.map(charge => (
-                    <div
-                      key={charge.code}
-                      className="flex justify-between px-4 py-3 border-b last:border-b-0 hover:bg-muted/30"
-                    >
-                      <span className="flex items-center gap-2">
-                        <Badge
-                          variant="outline"
-                          className="font-mono bg-red-50 text-red-700"
-                        >
-                          {charge.code}
-                        </Badge>
-                        {charge.label}
-                      </span>
-                      <Money
-                        amount={-charge.total}
-                        className="text-red-600 font-medium"
-                      />
-                    </div>
-                  ))
-                )}
-              </div>
-              <div className="flex justify-between px-4 py-3 font-bold text-red-700 border-t-2 border-red-300 mt-2 bg-red-50 rounded">
-                <span>TOTAL CHARGES</span>
-                <Money amount={-totalCharges} />
-              </div>
-            </div>
-
-            {/* RESULTAT NET */}
-            <div
-              className={`p-6 rounded-lg ${resultat >= 0 ? 'bg-green-100 border-2 border-green-300' : 'bg-red-100 border-2 border-red-300'}`}
-            >
-              <div className="flex justify-between items-center">
-                <div>
-                  <span className="text-xl font-bold">RESULTAT NET</span>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {resultat >= 0 ? 'Benefice' : 'Perte'} de l&apos;exercice{' '}
-                    {selectedYear === 'all' ? '(toutes annees)' : selectedYear}
-                  </p>
+          {/* PRODUITS */}
+          <div className="grid grid-cols-12 gap-2 px-5 py-2.5 border-b bg-gray-50/50 font-semibold text-sm">
+            <div className="col-span-12">PRODUITS (Classe 7)</div>
+          </div>
+          {pcgStructure.produits.map(p => {
+            const amountN = dataN.produitsClasses[p.code] ?? 0;
+            const amountN1 = dataN1.produitsClasses[p.code] ?? 0;
+            if (amountN === 0 && amountN1 === 0) return null;
+            return (
+              <div
+                key={p.code}
+                className="grid grid-cols-12 gap-2 px-5 py-2.5 border-b text-sm"
+              >
+                <div className="col-span-6 pl-4">
+                  <span className="text-muted-foreground font-mono mr-2">
+                    {p.code}
+                  </span>
+                  {p.label}
                 </div>
-                <Money
-                  amount={resultat}
-                  className={`text-3xl font-bold ${resultat >= 0 ? 'text-green-700' : 'text-red-700'}`}
-                />
+                <div className="col-span-3 text-right">
+                  {renderAmount(amountN)}
+                </div>
+                <div className="col-span-3 text-right">
+                  {renderAmount(amountN1)}
+                </div>
               </div>
+            );
+          })}
+          <div className="grid grid-cols-12 gap-2 px-5 py-2.5 border-b text-sm font-semibold bg-green-50/50">
+            <div className="col-span-6">TOTAL PRODUITS</div>
+            <div className="col-span-3 text-right">
+              <Money amount={totalProduitsN} className="text-green-700" />
             </div>
-          </CardContent>
-        </Card>
+            <div className="col-span-3 text-right">
+              <Money amount={totalProduitsN1} className="text-green-700" />
+            </div>
+          </div>
+
+          {/* CHARGES */}
+          <div className="grid grid-cols-12 gap-2 px-5 py-2.5 border-b bg-gray-50/50 font-semibold text-sm">
+            <div className="col-span-12">CHARGES (Classe 6)</div>
+          </div>
+          {pcgStructure.charges.map(c => {
+            const amountN = dataN.chargesClasses[c.code] ?? 0;
+            const amountN1 = dataN1.chargesClasses[c.code] ?? 0;
+            if (amountN === 0 && amountN1 === 0) return null;
+            return (
+              <div
+                key={c.code}
+                className="grid grid-cols-12 gap-2 px-5 py-2.5 border-b text-sm"
+              >
+                <div className="col-span-6 pl-4">
+                  <span className="text-muted-foreground font-mono mr-2">
+                    {c.code}
+                  </span>
+                  {c.label}
+                </div>
+                <div className="col-span-3 text-right">
+                  {renderAmount(amountN)}
+                </div>
+                <div className="col-span-3 text-right">
+                  {renderAmount(amountN1)}
+                </div>
+              </div>
+            );
+          })}
+          <div className="grid grid-cols-12 gap-2 px-5 py-2.5 border-b text-sm font-semibold bg-red-50/50">
+            <div className="col-span-6">TOTAL CHARGES</div>
+            <div className="col-span-3 text-right">
+              <Money amount={-totalChargesN} className="text-red-700" />
+            </div>
+            <div className="col-span-3 text-right">
+              <Money amount={-totalChargesN1} className="text-red-700" />
+            </div>
+          </div>
+
+          {/* RESULTAT NET */}
+          <div className="grid grid-cols-12 gap-2 px-5 py-4 text-sm font-bold bg-orange-50">
+            <div className="col-span-6">
+              RESULTAT NET
+              <span className="text-xs font-normal text-muted-foreground ml-2">
+                ({resultatN >= 0 ? 'Benefice' : 'Perte'})
+              </span>
+            </div>
+            <div className="col-span-3 text-right">
+              <Money
+                amount={resultatN}
+                className={resultatN >= 0 ? 'text-green-700' : 'text-red-700'}
+              />
+            </div>
+            <div className="col-span-3 text-right">
+              <Money
+                amount={resultatN1}
+                className={resultatN1 >= 0 ? 'text-green-700' : 'text-red-700'}
+              />
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

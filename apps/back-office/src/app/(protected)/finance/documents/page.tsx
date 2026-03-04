@@ -1,17 +1,17 @@
 'use client';
 
 /**
- * Hub Documents — Style Indy
+ * Hub Documents — Style Indy exact
  *
- * Sous-navigation laterale + cartes cliquables par section.
- * Remplace l'ancien hub Comptabilite.
+ * Liste verticale pleine largeur + sous-navigation laterale.
+ * Chaque document = 1 ligne avec icone + titre a gauche, boutons a droite.
  */
 
 import { useState } from 'react';
 
 import Link from 'next/link';
 
-import { Card, CardContent, Button } from '@verone/ui';
+import { Button } from '@verone/ui';
 import { cn } from '@verone/utils';
 import {
   BookOpenCheck,
@@ -25,19 +25,21 @@ import {
   Eye,
   Percent,
   Paperclip,
-  ChevronRight,
+  FolderOpen,
 } from 'lucide-react';
 
 // =====================================================================
 // TYPES
 // =====================================================================
 
-interface DocumentCard {
+interface DocumentRow {
   title: string;
-  description: string;
   href: string;
   icon: React.ComponentType<{ className?: string }>;
-  downloadAction?: () => void;
+  hasDownload?: boolean;
+  hasVisualize?: boolean;
+  exportOnly?: boolean;
+  exportAction?: () => void;
 }
 
 type SubNav = 'comptabilite' | 'declarations' | 'justificatifs';
@@ -46,57 +48,72 @@ type SubNav = 'comptabilite' | 'declarations' | 'justificatifs';
 // DATA
 // =====================================================================
 
-const comptabiliteCards: DocumentCard[] = [
+const comptabiliteRows: DocumentRow[] = [
   {
-    title: 'Resultats',
-    description: 'Synthese mensuelle des recettes et depenses',
-    href: '/finance/documents/resultats',
-    icon: Calculator,
-  },
-  {
-    title: 'Recettes',
-    description: 'Livre des recettes (entrees de tresorerie)',
-    href: '/finance/documents/recettes',
-    icon: TrendingUp,
-  },
-  {
-    title: 'Achats',
-    description: 'Livre des achats (sorties de tresorerie)',
-    href: '/finance/documents/achats',
-    icon: TrendingDown,
+    title: 'Bilan',
+    href: '/finance/documents/bilan',
+    icon: Scale,
+    hasDownload: true,
+    hasVisualize: true,
   },
   {
     title: 'Compte de resultat',
-    description: 'P&L format Plan Comptable General (PCG)',
     href: '/finance/documents/compte-resultat',
-    icon: BookOpenCheck,
+    icon: Calculator,
+    hasDownload: true,
+    hasVisualize: true,
   },
   {
     title: 'Grand Livre',
-    description: 'Ecritures ventilees par compte PCG',
     href: '/finance/documents/grand-livre',
     icon: Landmark,
+    hasDownload: true,
+    hasVisualize: true,
   },
   {
-    title: 'Bilan',
-    description: 'Actif / Passif — vue simplifiee',
-    href: '/finance/documents/bilan',
-    icon: Scale,
+    title: 'Resultats',
+    href: '/finance/documents/resultats',
+    icon: TrendingUp,
+    hasDownload: true,
+    hasVisualize: true,
+  },
+  {
+    title: 'Recettes',
+    href: '/finance/documents/recettes',
+    icon: TrendingUp,
+    hasDownload: true,
+    hasVisualize: true,
+  },
+  {
+    title: 'Achats',
+    href: '/finance/documents/achats',
+    icon: TrendingDown,
+    hasDownload: true,
+    hasVisualize: true,
   },
   {
     title: 'Annexe legale',
-    description: 'Notes explicatives aux comptes annuels',
     href: '/finance/documents/annexe',
     icon: FileText,
+    hasDownload: true,
+    hasVisualize: true,
+  },
+  {
+    title: 'FEC',
+    href: '/finance/documents/grand-livre',
+    icon: FolderOpen,
+    hasDownload: true,
+    hasVisualize: true,
   },
 ];
 
-const declarationsCards: DocumentCard[] = [
+const declarationsRows: DocumentRow[] = [
   {
     title: 'TVA (CA3)',
-    description: 'Declaration mensuelle TVA collectee vs deductible',
     href: '/finance/documents/tva',
     icon: Percent,
+    hasDownload: true,
+    hasVisualize: true,
   },
 ];
 
@@ -106,157 +123,153 @@ const declarationsCards: DocumentCard[] = [
 
 export default function DocumentsHubPage() {
   const [activeNav, setActiveNav] = useState<SubNav>('comptabilite');
+  const currentYear = new Date().getFullYear();
 
-  const handleExportFec = () => {
-    const year = new Date().getFullYear();
-    window.open(`/api/finance/export-fec?year=${year}`, '_blank');
+  const handleExportComptable = () => {
+    window.open(`/api/finance/export-fec?year=${currentYear}`, '_blank');
   };
 
-  const cards =
+  const rows =
     activeNav === 'comptabilite'
-      ? comptabiliteCards
+      ? comptabiliteRows
       : activeNav === 'declarations'
-        ? declarationsCards
+        ? declarationsRows
         : [];
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <BookOpenCheck className="h-6 w-6" />
-          Documents
-        </h1>
-        <p className="text-muted-foreground">
-          Documents comptables, declarations fiscales et justificatifs
-        </p>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Documents</h1>
+        <Button
+          variant="outline"
+          className="rounded-full px-4 text-sm font-medium"
+        >
+          Exercice {currentYear} ▾
+        </Button>
       </div>
 
-      <div className="flex gap-6">
+      <div className="flex gap-8">
         {/* Sous-navigation laterale */}
-        <nav className="w-56 flex-shrink-0 space-y-1">
+        <nav className="w-52 flex-shrink-0 space-y-1">
           <button
             onClick={() => setActiveNav('comptabilite')}
             className={cn(
-              'w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-left',
+              'w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-left',
               activeNav === 'comptabilite'
-                ? 'bg-black text-white'
-                : 'text-gray-600 hover:bg-gray-100'
+                ? 'bg-orange-50 text-orange-900 font-semibold'
+                : 'text-gray-600 hover:bg-gray-50'
             )}
           >
-            <BookOpenCheck className="h-4 w-4" />
             Comptabilite
           </button>
           <button
             onClick={() => setActiveNav('declarations')}
             className={cn(
-              'w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-left',
+              'w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-left',
               activeNav === 'declarations'
-                ? 'bg-black text-white'
-                : 'text-gray-600 hover:bg-gray-100'
+                ? 'bg-orange-50 text-orange-900 font-semibold'
+                : 'text-gray-600 hover:bg-gray-50'
             )}
           >
-            <Percent className="h-4 w-4" />
             Declarations fiscales
           </button>
           <button
             onClick={() => setActiveNav('justificatifs')}
             className={cn(
-              'w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-left',
+              'w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-left',
               activeNav === 'justificatifs'
-                ? 'bg-black text-white'
-                : 'text-gray-600 hover:bg-gray-100'
+                ? 'bg-orange-50 text-orange-900 font-semibold'
+                : 'text-gray-600 hover:bg-gray-50'
             )}
           >
-            <Paperclip className="h-4 w-4" />
             Justificatifs
           </button>
         </nav>
 
         {/* Contenu principal */}
         <div className="flex-1">
+          {/* Section title */}
+          <h2 className="text-lg font-semibold mb-4 capitalize">
+            {activeNav === 'declarations' ? 'Declarations fiscales' : activeNav}
+          </h2>
+
           {activeNav === 'justificatifs' ? (
-            <Card>
-              <CardContent className="py-12 text-center text-muted-foreground">
-                <Paperclip className="h-12 w-12 mx-auto mb-4 opacity-30" />
-                <p className="text-lg font-medium mb-2">Justificatifs</p>
-                <p className="text-sm">
-                  Les justificatifs sont accessibles depuis chaque transaction
-                  dans la page{' '}
-                  <Link
-                    href="/finance/transactions"
-                    className="text-blue-600 underline"
-                  >
-                    Transactions
-                  </Link>
-                  .
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {cards.map(card => (
-                <Card
-                  key={card.href}
-                  className="group hover:shadow-md transition-all duration-200 hover:border-gray-300"
+            <div className="border rounded-xl p-12 text-center text-muted-foreground bg-white">
+              <Paperclip className="h-12 w-12 mx-auto mb-4 opacity-30" />
+              <p className="text-lg font-medium mb-2">Justificatifs</p>
+              <p className="text-sm">
+                Les justificatifs sont accessibles depuis chaque transaction
+                dans la page{' '}
+                <Link
+                  href="/finance/transactions"
+                  className="text-blue-600 underline"
                 >
-                  <CardContent className="p-5">
-                    <div className="flex items-start gap-3 mb-4">
-                      <div className="p-2 rounded-lg bg-gray-100 group-hover:bg-gray-200 transition-colors">
-                        <card.icon className="h-5 w-5 text-gray-700" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-sm">{card.title}</h3>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          {card.description}
-                        </p>
-                      </div>
+                  Transactions
+                </Link>
+                .
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {rows.map(row => (
+                <div
+                  key={row.href + row.title}
+                  className="flex items-center justify-between border rounded-xl px-5 py-4 bg-white hover:shadow-sm transition-shadow"
+                >
+                  {/* Left: icon + title */}
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center flex-shrink-0">
+                      <row.icon className="h-5 w-5 text-orange-700" />
                     </div>
-                    <div className="flex items-center gap-2">
+                    <span className="font-medium text-sm">{row.title}</span>
+                  </div>
+
+                  {/* Right: buttons */}
+                  <div className="flex items-center gap-2">
+                    {row.hasDownload && (
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-9 w-9 rounded-lg"
+                      >
+                        <Download className="h-4 w-4" />
+                      </Button>
+                    )}
+                    {row.hasVisualize && (
                       <Button
                         variant="outline"
                         size="sm"
-                        className="gap-1.5"
+                        className="rounded-lg gap-1.5"
                         asChild
                       >
-                        <Link href={card.href}>
-                          <Eye className="h-3.5 w-3.5" />
-                          Visualiser
-                        </Link>
+                        <Link href={row.href}>Visualiser</Link>
                       </Button>
-                    </div>
-                  </CardContent>
-                </Card>
+                    )}
+                  </div>
+                </div>
               ))}
 
-              {/* Export FEC — carte speciale (comptabilite seulement) */}
+              {/* Export comptable — derniere ligne */}
               {activeNav === 'comptabilite' && (
-                <Card className="group hover:shadow-md transition-all duration-200 hover:border-gray-300">
-                  <CardContent className="p-5">
-                    <div className="flex items-start gap-3 mb-4">
-                      <div className="p-2 rounded-lg bg-gray-100 group-hover:bg-gray-200 transition-colors">
-                        <Download className="h-5 w-5 text-gray-700" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-sm">Export FEC</h3>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          Fichier des Ecritures Comptables (obligation legale)
-                        </p>
-                      </div>
+                <div className="flex items-center justify-between border rounded-xl px-5 py-4 bg-white hover:shadow-sm transition-shadow">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center flex-shrink-0">
+                      <Download className="h-5 w-5 text-orange-700" />
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="gap-1.5"
-                        onClick={handleExportFec}
-                      >
-                        <Download className="h-3.5 w-3.5" />
-                        Exporter
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
+                    <span className="font-medium text-sm">
+                      Export comptable
+                    </span>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="rounded-lg"
+                    onClick={handleExportComptable}
+                  >
+                    Exporter
+                  </Button>
+                </div>
               )}
             </div>
           )}
