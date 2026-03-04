@@ -22,8 +22,6 @@
 
 import { useState, useMemo, useCallback } from 'react';
 
-import Link from 'next/link';
-
 import {
   Badge,
   Button,
@@ -38,13 +36,9 @@ import {
 import { cn } from '@verone/utils';
 import {
   ArrowDownRight,
-  ArrowRight,
   ArrowUpRight,
-  Banknote,
-  BookOpenCheck,
   CalendarDays,
   Check,
-  FileText,
   Minus,
   Percent,
   RefreshCw,
@@ -233,13 +227,6 @@ function KpiCard({
     </Card>
   );
 }
-
-const QUICK_NAV = [
-  { href: '/factures', icon: FileText, title: 'Facturation' },
-  { href: '/finance/transactions', icon: Banknote, title: 'Transactions' },
-  { href: '/finance/comptabilite', icon: BookOpenCheck, title: 'Comptabilite' },
-  { href: '/finance/tresorerie', icon: Wallet, title: 'Tresorerie' },
-] as const;
 
 // =====================================================================
 // COMPOSANT PRINCIPAL
@@ -651,21 +638,6 @@ export function FinanceDashboard() {
             )}
           </CardContent>
         </Card>
-
-        {/* Navigation rapide — 4 boutons */}
-        <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-4">
-          {QUICK_NAV.map(nav => (
-            <Link key={nav.href} href={nav.href}>
-              <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 transition-shadow hover:shadow-md">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100">
-                  <nav.icon size={18} className="text-slate-600" />
-                </div>
-                <span className="font-medium text-slate-900">{nav.title}</span>
-                <ArrowRight size={16} className="ml-auto text-slate-400" />
-              </div>
-            </Link>
-          ))}
-        </div>
       </div>
     </div>
   );
