@@ -95,7 +95,10 @@ const MONTHS = [
   { value: 12, label: 'Déc.', fullLabel: 'Décembre' },
 ];
 
-const AVAILABLE_YEARS = [2023, 2024, 2025];
+const AVAILABLE_YEARS = Array.from(
+  { length: new Date().getFullYear() - 2022 },
+  (_, i) => new Date().getFullYear() - i
+);
 
 function getDateRangeForFilters(filters: FinanceFilters): {
   startDate: Date | null;

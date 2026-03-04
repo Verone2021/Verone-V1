@@ -320,7 +320,8 @@ function ResultatsTab({
 
     creditTransactions.forEach(tx => {
       const date = tx.settled_at ?? tx.emitted_at;
-      if (!date?.startsWith(selectedYear)) return;
+      if (!date) return;
+      if (selectedYear !== 'all' && !date.startsWith(selectedYear)) return;
       const key = getMonthKey(date);
       if (!months[key])
         months[key] = { credits: 0, debits: 0, creditTx: [], debitTx: [] };
@@ -330,7 +331,8 @@ function ResultatsTab({
 
     (debitTransactions as TransactionWithExtras[]).forEach(tx => {
       const date = tx.settled_at ?? tx.emitted_at;
-      if (!date?.startsWith(selectedYear)) return;
+      if (!date) return;
+      if (selectedYear !== 'all' && !date.startsWith(selectedYear)) return;
       const key = getMonthKey(date);
       if (!months[key])
         months[key] = { credits: 0, debits: 0, creditTx: [], debitTx: [] };
@@ -403,7 +405,8 @@ function ResultatsTab({
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">
-            Synthèse mensuelle {selectedYear}
+            Synthèse mensuelle{' '}
+            {selectedYear === 'all' ? '— Toutes les années' : selectedYear}
           </CardTitle>
           <CardDescription>
             Cliquez sur un mois pour voir le détail des transactions
@@ -421,7 +424,8 @@ function ResultatsTab({
 
             {monthlyData.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
-                Aucune donnée pour {selectedYear}
+                Aucune donnée pour{' '}
+                {selectedYear === 'all' ? 'cette période' : selectedYear}
               </div>
             ) : (
               monthlyData.map(row => (
@@ -534,7 +538,9 @@ function ResultatsTab({
             {/* Total */}
             <div className="grid grid-cols-5 gap-4 px-4 py-3 bg-muted font-bold">
               <div />
-              <div>TOTAL {selectedYear}</div>
+              <div>
+                TOTAL {selectedYear === 'all' ? 'GÉNÉRAL' : selectedYear}
+              </div>
               <div className="text-right">
                 <Money amount={totals.credits} className="text-green-600" />
               </div>
@@ -595,7 +601,8 @@ function CompteResultatTab({
 
     creditTransactions.forEach(tx => {
       const date = tx.settled_at ?? tx.emitted_at;
-      if (!date?.startsWith(selectedYear)) return;
+      if (!date) return;
+      if (selectedYear !== 'all' && !date.startsWith(selectedYear)) return;
 
       const pcgCode = tx.category_pcg;
       if (pcgCode) {
@@ -624,7 +631,8 @@ function CompteResultatTab({
 
     (debitTransactions as TransactionWithExtras[]).forEach(tx => {
       const date = tx.settled_at ?? tx.emitted_at;
-      if (!date?.startsWith(selectedYear)) return;
+      if (!date) return;
+      if (selectedYear !== 'all' && !date.startsWith(selectedYear)) return;
 
       const pcgCode =
         tx.category_pcg || tx.ignore_reason?.match(/PCG (\d+)/)?.[1];
@@ -658,7 +666,8 @@ function CompteResultatTab({
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
             <Calculator className="h-5 w-5" />
-            Compte de Résultat {selectedYear}
+            Compte de Résultat{' '}
+            {selectedYear === 'all' ? '— Toutes les années' : selectedYear}
           </CardTitle>
           <CardDescription>
             Format Plan Comptable Général (PCG) - Classes 6 et 7
@@ -753,8 +762,8 @@ function CompteResultatTab({
               <div>
                 <span className="text-xl font-bold">RÉSULTAT NET</span>
                 <p className="text-sm text-muted-foreground mt-1">
-                  {resultat >= 0 ? 'Bénéfice' : 'Perte'} de l'exercice{' '}
-                  {selectedYear}
+                  {resultat >= 0 ? 'Bénéfice' : 'Perte'} de l&apos;exercice{' '}
+                  {selectedYear === 'all' ? '(toutes années)' : selectedYear}
                 </p>
               </div>
               <Money
@@ -775,13 +784,16 @@ function CompteResultatTab({
 
 export default function LivresComptablesPage() {
   const [activeTab, setActiveTab] = useState('resultats');
-  const [selectedYear, setSelectedYear] = useState('2025');
+  const [selectedYear, setSelectedYear] = useState(
+    String(new Date().getFullYear())
+  );
 
   const { creditTransactions, debitTransactions, loading, error } =
     useBankReconciliation();
 
-  // Filtrer par année sélectionnée
+  // Filtrer par année sélectionnée ('all' = toutes les années)
   const filteredCredits = useMemo(() => {
+    if (selectedYear === 'all') return creditTransactions;
     return creditTransactions.filter(tx => {
       const date = tx.settled_at ?? tx.emitted_at;
       return date?.startsWith(selectedYear);
@@ -789,6 +801,7 @@ export default function LivresComptablesPage() {
   }, [creditTransactions, selectedYear]);
 
   const filteredDebits = useMemo(() => {
+    if (selectedYear === 'all') return debitTransactions;
     return debitTransactions.filter(tx => {
       const date = tx.settled_at ?? tx.emitted_at;
       return date?.startsWith(selectedYear);
@@ -837,9 +850,15 @@ export default function LivresComptablesPage() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="2025">2025</SelectItem>
-              <SelectItem value="2024">2024</SelectItem>
-              <SelectItem value="2023">2023</SelectItem>
+              <SelectItem value="all">Toutes les années</SelectItem>
+              {Array.from(
+                { length: new Date().getFullYear() - 2022 },
+                (_, i) => new Date().getFullYear() - i
+              ).map(year => (
+                <SelectItem key={year} value={String(year)}>
+                  {year}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -897,7 +916,10 @@ export default function LivresComptablesPage() {
                     <div>
                       <CardTitle className="text-lg flex items-center gap-2">
                         <TrendingUp className="h-5 w-5 text-green-600" />
-                        Livre des recettes - {selectedYear}
+                        Livre des recettes -{' '}
+                        {selectedYear === 'all'
+                          ? 'Toutes les années'
+                          : selectedYear}
                       </CardTitle>
                       <CardDescription>
                         Entrées de trésorerie (ventes, encaissements)
@@ -931,7 +953,10 @@ export default function LivresComptablesPage() {
                     <div>
                       <CardTitle className="text-lg flex items-center gap-2">
                         <TrendingDown className="h-5 w-5 text-red-600" />
-                        Livre des achats - {selectedYear}
+                        Livre des achats -{' '}
+                        {selectedYear === 'all'
+                          ? 'Toutes les années'
+                          : selectedYear}
                       </CardTitle>
                       <CardDescription>
                         Sorties de trésorerie catégorisées par PCG

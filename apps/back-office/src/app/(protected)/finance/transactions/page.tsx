@@ -196,7 +196,7 @@ function TransactionsPageV2() {
     { length: currentYear - 2021 },
     (_, i) => currentYear - i
   );
-  const [yearFilter, setYearFilter] = useState<number>(currentYear);
+  const [yearFilter, setYearFilter] = useState<number | null>(currentYear);
 
   // Modals state
   const [showRapprochementModal, setShowRapprochementModal] = useState(false);
@@ -303,7 +303,7 @@ function TransactionsPageV2() {
   };
 
   // Handle year filter change
-  const handleYearChange = (year: number) => {
+  const handleYearChange = (year: number | null) => {
     setYearFilter(year);
     setSelectedTransaction(null);
     setFilters({
@@ -694,9 +694,13 @@ function TransactionsPageV2() {
               {/* Filtre Année */}
               <select
                 className="px-3 py-2 border border-slate-200 rounded-lg text-sm"
-                value={yearFilter}
-                onChange={e => handleYearChange(parseInt(e.target.value))}
+                value={yearFilter ?? 'all'}
+                onChange={e => {
+                  const val = e.target.value;
+                  handleYearChange(val === 'all' ? null : parseInt(val));
+                }}
               >
+                <option value="all">Toutes les années</option>
                 {years.map(year => (
                   <option key={year} value={year}>
                     {year}
