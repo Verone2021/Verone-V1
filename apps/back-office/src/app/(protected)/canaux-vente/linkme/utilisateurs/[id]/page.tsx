@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@verone/ui';
 import { Avatar, AvatarFallback, AvatarImage } from '@verone/ui';
 import { createClient } from '@verone/utils/supabase/client';
+import { useUserLinkmeActivity } from '@verone/orders/hooks/linkme';
 import {
   ArrowLeft,
   Loader2,
@@ -36,6 +37,8 @@ import {
   LINKME_ROLE_COLORS,
   LINKME_ROLE_PERMISSIONS,
 } from '../../hooks/use-linkme-users';
+import { UserActivityTimeline } from './components/UserActivityTimeline';
+import { UserEngagementCards } from './components/UserEngagementCards';
 
 // Types
 interface UserSelection {
@@ -47,12 +50,6 @@ interface UserSelection {
   views_count: number;
   orders_count: number;
   created_at: string;
-}
-
-interface UserStats {
-  selectionsCount: number;
-  ordersCount: number;
-  totalCaHT: number;
 }
 
 /**
@@ -133,84 +130,6 @@ function useUserSelections(
 }
 
 /**
- * Hook pour calculer les stats d'un utilisateur
- * Via son enseigne_id ou organisation_id → affilié → stats
- */
-function useUserStats(
-  enseigneId: string | null,
-  organisationId: string | null
-) {
-  const [stats, setStats] = useState<UserStats>({
-    selectionsCount: 0,
-    ordersCount: 0,
-    totalCaHT: 0,
-  });
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (!enseigneId && !organisationId) {
-      setLoading(false);
-      return;
-    }
-
-    const fetchStats = async () => {
-      setLoading(true);
-      const supabase = createClient();
-
-      // Trouver l'affilié lié à l'enseigne ou organisation
-      let affiliateId: string | null = null;
-
-      if (enseigneId) {
-        const { data: affiliate } = await supabase
-          .from('linkme_affiliates')
-          .select('id')
-          .eq('enseigne_id', enseigneId)
-          .limit(1)
-          .single();
-        affiliateId = affiliate?.id ?? null;
-      }
-
-      if (!affiliateId && organisationId) {
-        const { data: affiliate } = await supabase
-          .from('linkme_affiliates')
-          .select('id')
-          .eq('organisation_id', organisationId)
-          .limit(1)
-          .single();
-        affiliateId = affiliate?.id ?? null;
-      }
-
-      if (!affiliateId) {
-        setStats({ selectionsCount: 0, ordersCount: 0, totalCaHT: 0 });
-        setLoading(false);
-        return;
-      }
-
-      // Compter les sélections de cet affilié
-      const { count: selectionsCount } = await supabase
-        .from('linkme_selections')
-        .select('id', { count: 'exact', head: true })
-        .eq('affiliate_id', affiliateId);
-
-      // TODO: Calculer ordersCount et totalCaHT quand les commandes LinkMe seront implémentées
-
-      setStats({
-        selectionsCount: selectionsCount ?? 0,
-        ordersCount: 0,
-        totalCaHT: 0,
-      });
-      setLoading(false);
-    };
-
-    void fetchStats().catch(error => {
-      console.error('[useUserStats] fetchStats failed:', error);
-    });
-  }, [enseigneId, organisationId]);
-
-  return { stats, loading };
-}
-
-/**
  * Page détail utilisateur LinkMe
  */
 export default function UserDetailPage() {
@@ -230,7 +149,8 @@ export default function UserDetailPage() {
     user?.enseigne_id ?? null,
     user?.organisation_id ?? null
   );
-  const { stats, loading: statsLoading } = useUserStats(
+  const { stats, isLoading: statsLoading } = useUserLinkmeActivity(
+    user?.user_id ?? null,
     user?.enseigne_id ?? null,
     user?.organisation_id ?? null
   );
@@ -715,24 +635,16 @@ export default function UserDetailPage() {
         </TabsContent>
 
         {/* Onglet Activité */}
-        <TabsContent value="activite" className="mt-6">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center">
-                <Activity className="h-5 w-5 mr-2 text-green-500" />
-                Activité récente
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8">
-                <Activity className="h-12 w-12 mx-auto text-gray-300 mb-4" />
-                <p className="text-sm text-gray-500">
-                  L&apos;historique d&apos;activité sera disponible
-                  prochainement
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+        <TabsContent value="activite" className="mt-6 space-y-6">
+          {/* Engagement metrics (navigation tracking) */}
+          <UserEngagementCards userId={user.user_id} />
+
+          {/* Activity timeline (business events) */}
+          <UserActivityTimeline
+            userId={user.user_id}
+            enseigneId={user.enseigne_id ?? null}
+            organisationId={user.organisation_id ?? null}
+          />
         </TabsContent>
       </Tabs>
 
