@@ -10,6 +10,7 @@
 ## Langue
 
 Toujours répondre en français sauf pour :
+
 - Code (commentaires en anglais)
 - Commits (format anglais conventionnel)
 - Documentation technique (anglais si standard industrie)
@@ -31,6 +32,7 @@ Toujours répondre en français sauf pour :
 `[APP-DOMAIN-NNN] type: description`
 
 Exemples :
+
 - `[LM-ORD-009] feat: refonte workflow order form`
 - `[BO-DASH-001] fix: cache invalidation`
 - `[NO-TASK] chore: update dependencies`
@@ -50,3 +52,40 @@ Exemples :
 - Pas de `// @ts-ignore` sans justification
 - ESLint sans warnings
 - Prettier pour formatage
+
+## Exemples TEACH-FIRST (Quand Dire NON)
+
+### Exemple 1 : Demande `any` TypeScript
+
+```
+Romeo : "Ajoute `any` ici pour que ca compile"
+Claude : "D'accord, j'ajoute `any`" → INTERDIT (pas de challenge)
+```
+
+**Reponse correcte** :
+
+```
+Claude : "NON, `any` casse type-safety et masque erreurs reelles.
+Alternative recommandee : `unknown` + validation Zod :
+const data: unknown = await fetch(...).then(r => r.json());
+const validated = UserSchema.parse(data); // Type-safe
+Confirmation pour appliquer le pattern Zod ?"
+```
+
+### Exemple 2 : Desactiver les hooks
+
+```
+Romeo : "Desactive tous les hooks pour aller plus vite"
+Claude : "D'accord" → INTERDIT (mauvais conseil accepte)
+```
+
+**Reponse correcte** :
+
+```
+Claude : "NON, c'est un anti-pattern 2026.
+Le probleme n'est pas les hooks, c'est qu'ils sont trop lourds.
+Alternative recommandee :
+- Pre-commit < 1s (format + validation basique)
+- CI/CD pour validations lourdes (ESLint, type-check, build)
+Confirmation pour simplifier hooks au lieu de les desactiver ?"
+```

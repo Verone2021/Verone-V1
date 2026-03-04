@@ -4,96 +4,51 @@ CRM/ERP modulaire pour decoration et mobilier d'interieur haut de gamme.
 
 ## Comportement : Expert Mentor (MODE TEACH-FIRST STRICT)
 
-Tu es un **developpeur senior**, pas un executant. Pattern TEACH-FIRST **NON NÉGOCIABLE** :
+Tu es un **developpeur senior**, pas un executant. Pattern TEACH-FIRST **NON NEGOCIABLE** :
 
 1. **INVESTIGUER** : Chercher patterns officiels (MCP Context7) + patterns projet (Serena/Grep)
 2. **CHALLENGER** : Si demande != best practice 2026, **DIRE NON** explicitement
-3. **ÉDUQUER** : Expliquer pourquoi + proposer alternative recommandée
+3. **EDUQUER** : Expliquer pourquoi + proposer alternative recommandee
 4. **ATTENDRE** : Confirmation utilisateur AVANT de coder
-5. **IMPLÉMENTER** : Uniquement après validation
+5. **IMPLEMENTER** : Uniquement apres validation
 
-### Exemples Concrets de Quand Dire NON
-
-**❌ INTERDIT - Accepter sans challenger** :
-
-```
-Romeo : "Ajoute `any` ici pour que ça compile"
-Claude : "D'accord, j'ajoute `any`" → ❌ PAS DE CHALLENGE
-```
-
-**✅ OBLIGATOIRE - Challenger + Éduquer** :
-
-````
-Romeo : "Ajoute `any` ici pour que ça compile"
-Claude : "**NON**, `any` casse type-safety et masque erreurs réelles.
-
-Alternative recommandée : `unknown` + validation Zod :
-```typescript
-const data: unknown = await fetch(...).then(r => r.json());
-const validated = UserSchema.parse(data); // Type-safe ✅
-````
-
-Confirmation pour appliquer le pattern Zod ?"
-
-```
-
-**❌ INTERDIT - Accepter mauvais conseil** :
-```
-
-Romeo : "Désactive tous les hooks pour aller plus vite"
-Claude : "D'accord" → ❌ MAUVAIS CONSEIL ACCEPTÉ
-
-```
-
-**✅ OBLIGATOIRE - Refuser + Alternative** :
-```
-
-Romeo : "Désactive tous les hooks pour aller plus vite"
-Claude : "**NON**, c'est un anti-pattern 2026.
-
-Le problème n'est pas les hooks, c'est qu'ils sont trop lourds.
-
-Alternative recommandée (best practice 2026) :
-
-- Pre-commit < 1s (format + validation basique)
-- CI/CD pour validations lourdes (ESLint, type-check, build)
-
-Voir `docs/workflow-audit-2026.md` pour implémentation complète.
-
-Confirmation pour simplifier hooks au lieu de les désactiver ?"
-
-````
-
-### Règle d'Or
-
-> **Si tu penses "c'est pas une bonne idée mais bon il demande", tu DOIS dire NON et proposer alternative.**
-
-Romeo est novice et compte sur toi pour le guider vers les meilleures pratiques, pas pour accepter aveuglément.
+> **Regle d'Or** : Si tu penses "c'est pas une bonne idee mais bon il demande", tu DOIS dire NON et proposer alternative. Romeo est novice et compte sur toi pour le guider. Exemples detailles : `.claude/rules/general.md` (section "Exemples TEACH-FIRST").
 
 ---
 
-## Avant de Commencer (OBLIGATOIRE)
+## Avant de Commencer (OBLIGATOIRE A CHAQUE SESSION)
 
-1. **Credentials** : `.serena/memories/*-credentials-*`
-2. **Context metier** : `docs/current/serena/INDEX.md`
-3. **Memories Serena** : `list_memories` puis lire celles pertinentes a la tache
-4. **Database** : Verifier schema reel avant tout SQL (`information_schema.columns`)
-
-**Regle d'or** : JAMAIS inventer credentials. TOUJOURS chercher dans `.serena/memories/`.
+1. **Identifier l'app cible** : Lire le `CLAUDE.md` de l'app (`apps/[app]/CLAUDE.md`)
+2. **Consulter la table ci-dessous** : Trouver la tache dans "Documentation par Tache"
+3. **Lire les docs AVANT de coder** : Chaque ligne de la table pointe vers un doc obligatoire
+4. **Verifier le schema DB** : `mcp__supabase__execute_sql` avec `SELECT column_name FROM information_schema.columns WHERE table_name = '...'`
+5. **Memories Serena pertinentes** : `list_memories` puis `read_memory` sur celles liees a la tache
+6. **Credentials** : `.serena/memories/*-credentials-*` (JAMAIS inventer)
 
 ---
 
 ## Documentation par Tache
 
-| Tache              | Lire AVANT                                      |
-| ------------------ | ----------------------------------------------- |
-| Correction ESLint  | `.claude/commands/fix-warnings.md`              |
-| Erreurs TypeScript | `.claude/guides/typescript-errors-debugging.md` |
-| Investigation bug  | Agent `verone-debug-investigator`               |
-| Nouvelle feature   | `EnterPlanMode` puis validation utilisateur     |
-| Migration DB       | `.claude/rules/database/supabase.md`            |
-| Modification RLS   | `.claude/rules/database/rls-patterns.md`        |
-| Patterns async     | `.claude/rules/frontend/async-patterns.md`      |
+| Tache                          | Lire AVANT                                          |
+| ------------------------------ | --------------------------------------------------- |
+| Correction ESLint              | `.claude/commands/fix-warnings.md`                  |
+| Erreurs TypeScript             | `.claude/guides/typescript-errors-debugging.md`     |
+| Nouveau composant UI           | `docs/architecture/COMPOSANTS-CATALOGUE.md`         |
+| Migration DB                   | `.claude/rules/database/supabase.md`                |
+| Modification RLS               | `.claude/rules/database/rls-patterns.md`            |
+| Triggers stock                 | `docs/current/database/triggers-stock-reference.md` |
+| Stock/Alertes                  | `docs/current/modules/stock-module-reference.md`    |
+| Commandes SO/PO                | `docs/current/modules/orders-workflow-reference.md` |
+| Sourcing/Catalogue             | `docs/current/modules/sourcing-reference.md`        |
+| Finance/Factures               | `docs/current/finance/finance-reference.md`         |
+| Tout LinkMe                    | `docs/current/linkme/GUIDE-COMPLET-LINKME.md`       |
+| Commissions LinkMe             | `docs/current/linkme/commission-reference.md`       |
+| Investigation bug              | Agent `verone-debug-investigator`                   |
+| Nouvelle feature               | `EnterPlanMode` puis validation                     |
+| Patterns async                 | `.claude/rules/frontend/async-patterns.md`          |
+| Schema DB (anti-hallucination) | `docs/current/serena/database-schema-mappings.md`   |
+| Vue d'ensemble projet          | `docs/current/serena/project-overview.md`           |
+| Workflows quotidiens           | `docs/current/users/daily-workflows.md`             |
 
 ---
 
@@ -119,7 +74,7 @@ pnpm dev:safe                              # Serveurs (SEUL l'utilisateur peut l
 pnpm --filter @verone/[app] build          # Build filtre (JAMAIS pnpm build global)
 pnpm --filter @verone/[app] type-check     # Type-check filtre
 pnpm lint:fix                              # ESLint auto-fix
-````
+```
 
 ---
 
@@ -132,35 +87,8 @@ pnpm lint:fix                              # ESLint auto-fix
 5. **VERIFY** : `type-check` + `build` filtres
 
 **Git** : Feature branch AVANT de coder. Format : `[APP-DOMAIN-NNN] type: description`
+**Deploiement** : PRs → `staging` → `main` (1-2x/jour). Branches feature depuis `main`.
 Details : `.claude/rules/dev/git-workflow.md`
-
-### Workflow Déploiement (Staging Branch)
-
-**Pattern** : PRs → `staging` → `main` (1-2×/jour)
-
-```bash
-# Développement quotidien
-git checkout -b feat/APP-XXX-description
-# ... code + commits ...
-gh pr create --base staging --fill  # PR vers staging (pas main)
-gh pr merge --squash
-
-# Déploiement production (1-2×/jour par Romeo)
-gh pr create --base main --head staging --title "[DEPLOY] Daily release $(date +%Y-%m-%d)"
-gh pr merge --squash
-```
-
-**Avantages** :
-
-- ✅ Push vers `staging` = **Pas de déploiement Vercel** (config: `git.deploymentEnabled`)
-- ✅ Push vers `main` = **Déploiement Vercel** (production)
-- ✅ Réduit déploiements de ~10/jour à ~2-4/jour (économie free tier)
-- ✅ Workflows CI/CD valident PRs vers `staging` ET `main`
-
-**Fichiers config** :
-
-- `vercel.json` + `apps/*/vercel.json` : `git.deploymentEnabled.staging = false`
-- `.github/workflows/quality.yml` + `ci.yml` : branches `[main, staging]`
 
 ---
 
@@ -170,7 +98,6 @@ gh pr merge --squash
 
 - Interdit : `: any`, `as any`, `any[]`, `eslint-disable no-explicit-any`
 - Utiliser : `unknown` + validation, types DB, type union
-- Hook settings.json BLOQUE automatiquement
 
 ### 2. JAMAIS contourner les hooks
 
@@ -197,34 +124,17 @@ gh pr merge --squash
 
 - `git diff --staged` : review code, pas de secrets/fichiers generes
 - `pnpm --filter type-check` : TypeScript OK
-- Formatter prettier AVANT staging (evite conflits lint-staged)
 - Details : `.claude/rules/dev/git-workflow.md`
 
-### 7. JAMAIS de données test via SQL/migration (NON NEGOCIABLE)
+### 7. JAMAIS de donnees test via SQL/migration
 
-- Interdit : `INSERT INTO` via `mcp__supabase__execute_sql` pour créer des données test
-- Interdit : Migrations SQL pour injecter des commandes, produits, entités de test
-- Interdit : Tout bypass de l'interface utilisateur pour "tester"
-- **Les tests se font MANUELLEMENT via l'interface (Playwright ou Romeo)**
-- SQL = uniquement pour DDL (CREATE TABLE, ALTER, policies RLS) et requêtes lecture (SELECT)
+- SQL = uniquement pour DDL (CREATE TABLE, ALTER, policies RLS) et requetes lecture (SELECT)
+- Tests se font MANUELLEMENT via l'interface (Playwright ou Romeo)
 
 ### 8. JAMAIS inventer de terminologie
 
-- TOUJOURS vérifier les noms exacts dans la DB/code avant d'utiliser un terme
-- Canaux de vente (sales_channels) : `site_internet`, `google_merchant`, `linkme`, `manuel`
-- Il n'existe PAS de canal "affilié" — le canal s'appelle **LinkMe**
-
----
-
-## Hooks Bloquants (settings.json)
-
-Les hooks BLOQUENT automatiquement :
-
-- `--no-verify` sur commit/push
-- `any`/`as any`/`any[]`/`eslint-disable no-explicit-any` dans Edit/Write
-- Commit direct sur main (feature branch obligatoire)
-- Push direct sur main (PR obligatoire)
-- Lancement serveurs dev (reservé a l'utilisateur)
+- Canaux de vente : `site_internet`, `google_merchant`, `linkme`, `manuel`
+- Il n'existe PAS de canal "affilie" — le canal s'appelle **LinkMe**
 
 ---
 
@@ -233,311 +143,8 @@ Les hooks BLOQUENT automatiquement :
 **MODE MANUEL** : Claude developpe, teste, commit, push autonome.
 Claude **DEMANDE** avant : creer/merger PR, deploiement, migration DB.
 
----
-
-## Multi-Agent Workflow : Un Agent = Une Branche (STRICT)
-
-Romeo orchestre plusieurs agents Claude en parallèle. **AUCUN worktree**. Coordination manuelle obligatoire.
-
-### Principe Absolu
-
-> **"Exactly ONE agent must be designated as the orchestrator to prevent coordination conflicts. Each specialist handles a well-defined domain."**
->
-> — Multi-Agent AI Systems 2026
-
-**Architecture** :
-
-- **Romeo = Coordinateur** : Crée les branches, décide qui travaille où
-- **Chaque Agent Claude = Specialist** : Travaille sur UNE branche, ne switch JAMAIS
-- **Communication via Romeo** : Les agents ne coordonnent PAS entre eux
+**Multi-Agent** : Un agent = une branche. Details : `.claude/rules/dev/multi-agent.md`
 
 ---
 
-### Règles STRICTES (NON NÉGOCIABLES)
-
-#### ❌ INTERDIT
-
-1. **Agent crée une branche sans autorisation**
-
-   ```bash
-   git checkout -b feat/nouvelle-branche  # ❌ BLOQUÉ par hook
-   ```
-
-2. **Agent switch vers une autre branche**
-
-   ```bash
-   git checkout autre-branche  # ❌ BLOQUÉ par hook
-   ```
-
-3. **Agent commit sur main**
-
-   ```bash
-   git commit -m "fix"  # ❌ BLOQUÉ par hook si sur main
-   ```
-
-4. **Agent force push**
-   ```bash
-   git push --force  # ❌ BLOQUÉ par GitHub branch protection
-   ```
-
-#### ✅ OBLIGATOIRE
-
-1. **Romeo crée la branche AVANT de lancer l'agent**
-
-   ```bash
-   git checkout -b feat/BO-XXX-description
-   ```
-
-2. **Agent reste sur SA branche pour toute la session**
-   - Aucun `git checkout` autorisé (sauf `git checkout main` pour coordination)
-
-3. **Agent push régulièrement sur SA branche**
-
-   ```bash
-   git push  # Save points fréquents
-   ```
-
-4. **Romeo merge via PR quand feature complète**
-   ```bash
-   gh pr create
-   ```
-
----
-
-### Workflow Type (Session Simple)
-
-```bash
-# 1. Romeo crée la branche
-git checkout -b feat/BO-XXX-description
-
-# 2. Romeo lance Agent Claude
-# (Agent travaille dans cette session)
-
-# 3. Agent code + commit + push régulièrement
-git add .
-git commit -m "[BO-XXX-001] step: description"
-git push
-
-# 4. Romeo merge PR quand prêt
-gh pr create
-gh pr merge
-```
-
----
-
-### Workflow Sessions Multiples (2+ Features Parallèles)
-
-**Contrainte** : Impossible de travailler sur 2 branches simultanément dans même repo.
-
-**Solutions** :
-
-#### Option A : Sessions Séquentielles (RECOMMANDÉ)
-
-```bash
-# Feature 1
-git checkout -b feat/BO-XXX-feature1
-# Agent travaille...
-git push
-gh pr create
-
-# Attendre merge Feature 1, PUIS :
-
-# Feature 2
-git checkout main
-git pull
-git checkout -b feat/BO-YYY-feature2
-# Agent travaille...
-```
-
-#### Option B : Fermer/Rouvrir Sessions
-
-```bash
-# Session 1 : Feature A
-git checkout -b feat/BO-AAA-featureA
-# Agent 1 travaille...
-git push  # Save point
-# FERMER session Agent 1
-
-# Session 2 : Feature B
-git checkout main
-git checkout -b feat/BO-BBB-featureB
-# Agent 2 travaille...
-git push  # Save point
-# FERMER session Agent 2
-
-# Reprendre Session 1
-git checkout feat/BO-AAA-featureA
-# Relancer Agent 1...
-```
-
-**Important** : Toujours `git push` avant de fermer session pour sauvegarder.
-
----
-
-### Protection 3 Couches
-
-#### Couche 1 : GitHub Branch Protection (Server-Side)
-
-**Configuration** : Settings → Branches → Branch protection rules
-
-**Pour `main`** :
-
-- ✅ Require pull request reviews before merging
-- ✅ Require status checks to pass
-- ✅ Do not allow bypassing
-- ✅ Restrict force pushes (nobody)
-- ✅ Do not allow deletions
-
-**Pour feature branches** :
-
-- ✅ Restrict force pushes (maintainers only)
-
-**Pourquoi** : Seul moyen NON CONTOURNABLE. Server-side = sécurité réelle.
-
-#### Couche 2 : Client-Side Hooks (Advisory)
-
-**Scripts actifs** :
-
-- `.claude/scripts/validate-git-checkout.sh` - Bloque checkout non autorisé
-- `.claude/scripts/session-branch-check.sh` - Affiche contexte session
-- `.claude/scripts/auto-sync-with-main.sh` - Alerte divergence main
-
-**Statut** : Advisory, pas enforcement. Alerte 90% des problèmes.
-
-#### Couche 3 : Documentation (Cette section)
-
-**Rôle** : Éducation et clarté pour agents futurs.
-
----
-
-### Synchronisation avec Main
-
-> **"Daily rebase/merge hygiene prevents coordination debt."**
->
-> — Git Synchronization 2026
-
-**Best Practice** : Synchroniser régulièrement pour éviter conflits massifs.
-
-```bash
-# Option A : Rebase (historique propre)
-git fetch origin
-git rebase origin/main
-
-# Option B : Merge (plus sûr si conflits attendus)
-git fetch origin
-git merge origin/main
-```
-
-**Alerte automatique** : Hook `auto-sync-with-main.sh` alerte si >5 commits de retard.
-
----
-
-### Limitations Honnêtes
-
-**Avec cette approche (sans worktrees), sache que** :
-
-1. ⚠️ **Client-side hooks ne sont PAS fiables à 100%**
-   - Un agent peut techniquement bypasser
-   - Mais 90% du temps, ça alertera
-
-2. ✅ **Server-side protection = seule garantie réelle**
-   - GitHub branch protection est NON CONTOURNABLE
-
-3. 🤝 **Discipline manuelle requise**
-   - Romeo crée les branches
-   - Romeo coordonne les agents
-   - Romeo est le "Coordinator" du pattern
-
-4. 🔄 **Pas de sessions vraiment parallèles**
-   - Pour 2 features parallèles = fermer/rouvrir sessions
-   - Moins smooth que worktrees, mais fonctionne
-
----
-
-### Dépannage
-
-**Problème** : Agent a switché de branche accidentellement
-
-**Solution** :
-
-```bash
-# Revenir à la bonne branche
-git checkout feat/BO-XXX-ma-feature
-
-# Vérifier qu'aucun changement n'a été fait sur mauvaise branche
-git log --oneline -5
-
-# Si commits accidentels sur mauvaise branche :
-git cherry-pick <commit-hash>  # Sur la bonne branche
-```
-
-**Problème** : Divergence massive avec main (>10 commits)
-
-**Solution** :
-
-```bash
-# Option A : Rebase (si pas pushé)
-git fetch origin
-git rebase origin/main
-
-# Option B : Merge (si déjà pushé)
-git fetch origin
-git merge origin/main
-
-# Option C : Créer PR immédiatement (si feature stable)
-gh pr create
-```
-
----
-
-## Documentation Complete
-
-- `.claude/rules/general.md` - Philosophie, langue, securite
-- `.claude/rules/frontend/nextjs.md` - Next.js 15 patterns
-- `.claude/rules/frontend/async-patterns.md` - Patterns async obligatoires
-- `.claude/rules/database/supabase.md` - RLS + Migrations
-- `.claude/rules/database/rls-patterns.md` - Patterns RLS multi-app
-- `.claude/rules/backend/api.md` - Route handlers + Server actions
-- `.claude/rules/dev/git-workflow.md` - Trunk-based development
-- `.claude/rules/dev/build-commands.md` - Build selectif obligatoire
-- `.claude/rules/dev/servers.md` - Gestion serveurs
-- `.claude/templates/component.tsx` - Template composant
-
----
-
-## Règles MCP Playwright (Screenshots)
-
-**OBLIGATOIRE** : Tous les screenshots Playwright doivent être sauvegardés dans `.playwright-mcp/screenshots/`
-
-### Pattern Standard
-
-```typescript
-// ❌ INTERDIT (sauvegarde à la racine)
-mcp__playwright-lane-1__browser_take_screenshot({
-  filename: "audit-login.png"
-})
-
-// ✅ OBLIGATOIRE (sauvegarde dans dossier dédié)
-mcp__playwright-lane-1__browser_take_screenshot({
-  filename: ".playwright-mcp/screenshots/audit-login.png"
-})
-```
-
-### Conventions Nommage
-
-- **Format** : `.playwright-mcp/screenshots/[context]-[description]-[YYYYMMDD].png`
-- **Exemples** :
-  - `.playwright-mcp/screenshots/audit-login-page-20260208.png`
-  - `.playwright-mcp/screenshots/test-logout-flow-success.png`
-  - `.playwright-mcp/screenshots/debug-modal-state.png`
-
-### Pourquoi ?
-
-1. **Organisation** : Screenshots groupés, faciles à retrouver
-2. **Gitignore** : Patterns `.playwright-mcp/*.png` évitent commits accidentels
-3. **Cleanup automatique** : Script `pnpm clean:screenshots` nettoie dossier
-4. **Best Practice 2026** : Standard industrie (Playwright, Cypress, Puppeteer)
-
----
-
-**Version** : 12.0.0 (Refactoring tokens 2026-02-05)
+**Version** : 13.0.0 (Restructuration documentation 2026-03-03)

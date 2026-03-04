@@ -1,17 +1,23 @@
+---
+globs: apps/**/api/**/*.ts, apps/**/actions/**/*.ts
+---
+
 # Règles Backend API (Next.js 15 Route Handlers)
 
 ## Route Handlers
 
 ### Structure
+
 ```typescript
 // app/api/[resource]/route.ts
-export async function GET(request: Request) { }
-export async function POST(request: Request) { }
-export async function PUT(request: Request) { }
-export async function DELETE(request: Request) { }
+export async function GET(request: Request) {}
+export async function POST(request: Request) {}
+export async function PUT(request: Request) {}
+export async function DELETE(request: Request) {}
 ```
 
 ### Conventions
+
 - Un fichier route.ts par ressource
 - Zod pour validation des inputs
 - Retourner NextResponse avec status approprié
@@ -20,6 +26,7 @@ export async function DELETE(request: Request) { }
 ## Server Actions
 
 ### Structure
+
 ```typescript
 // app/actions/[domain].ts
 "use server"
@@ -41,6 +48,7 @@ export async function createResource(formData: FormData) {
 ```
 
 ### Conventions
+
 - "use server" en haut de fichier
 - Validation Zod OBLIGATOIRE
 - Retourner objets typés (pas throw)
@@ -49,18 +57,22 @@ export async function createResource(formData: FormData) {
 ## Authentification
 
 ### Pattern standard
+
 ```typescript
-import { createServerClient } from "@supabase/ssr"
-import { cookies } from "next/headers"
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
 
 export async function getUser() {
-  const supabase = createServerClient(/* ... */)
-  const { data: { user } } = await supabase.auth.getUser()
-  return user
+  const supabase = createServerClient(/* ... */);
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  return user;
 }
 ```
 
 ### Middleware
+
 - `/middleware.ts` pour protection routes
 - Refresh session automatique
 - Redirect vers /login si non authentifié
@@ -68,6 +80,7 @@ export async function getUser() {
 ## Error Handling
 
 ### Codes HTTP
+
 - 200: Success (GET, PUT)
 - 201: Created (POST)
 - 204: No Content (DELETE)
@@ -78,11 +91,12 @@ export async function getUser() {
 - 500: Internal Error
 
 ### Format erreur standard
+
 ```typescript
 return NextResponse.json(
-  { error: { code: "VALIDATION_ERROR", message: "...", details: {} } },
+  { error: { code: 'VALIDATION_ERROR', message: '...', details: {} } },
   { status: 400 }
-)
+);
 ```
 
 ## Interdictions

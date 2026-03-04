@@ -1,3 +1,7 @@
+---
+globs: supabase/migrations/**, packages/@verone/types/**
+---
+
 # Règles Supabase
 
 ## Workflow Migrations

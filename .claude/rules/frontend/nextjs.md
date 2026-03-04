@@ -1,3 +1,7 @@
+---
+globs: apps/**/page.tsx, apps/**/layout.tsx, apps/**/*.tsx
+---
+
 # Règles Next.js 15
 
 ## Stack
