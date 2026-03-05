@@ -183,11 +183,6 @@ export function StockAdjustmentForm({
       return false;
     }
 
-    if (formData.reason === 'other' && formData.notes.trim().length < 10) {
-      setError('Veuillez détailler la raison (minimum 10 caractères)');
-      return false;
-    }
-
     // Vérifier stock suffisant pour diminution
     if (
       formData.adjustment_type === 'decrease' &&
@@ -441,12 +436,7 @@ export function StockAdjustmentForm({
 
           {/* Notes */}
           <div className="space-y-2">
-            <Label htmlFor="notes">
-              Notes{' '}
-              {formData.reason === 'other' && (
-                <span className="text-red-500">* (minimum 10 caractères)</span>
-              )}
-            </Label>
+            <Label htmlFor="notes">Notes </Label>
             <Textarea
               id="notes"
               value={formData.notes}
