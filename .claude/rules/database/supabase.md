@@ -97,6 +97,21 @@ if (error) {
 - Jamais éditer types générés manuellement
 - Regénérer après chaque migration
 
+## Retrocession Rate (LinkMe)
+
+**INTERDIT** : Recalculer un `retrocession_rate` a partir d'un ratio de prix.
+Le taux vient TOUJOURS de `linkme_selection_items.margin_rate / 100`.
+
+```sql
+-- ✅ CORRECT
+retrocession_rate = lsi.margin_rate / 100
+
+-- ❌ INTERDIT (formule fausse de la migration 20260212)
+retrocession_rate = selling_price_ht * margin_rate / unit_price_ht
+```
+
+Ref : `docs/current/linkme/commission-pricing-rules.md`
+
 ## Indexes
 
 - Index sur colonnes fréquemment filtrées
