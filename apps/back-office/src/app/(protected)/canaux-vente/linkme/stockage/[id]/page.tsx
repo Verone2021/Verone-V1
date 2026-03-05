@@ -17,16 +17,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 
 import { ProductThumbnail } from '@verone/products';
-import {
-  Badge,
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  ConfirmDialog,
-  Input,
-  Switch,
-} from '@verone/ui';
+import { Badge, Card, CardContent, Input } from '@verone/ui';
 import {
   ArrowLeft,
   Loader2,
@@ -37,21 +28,13 @@ import {
   Briefcase,
   Euro,
   Search,
-  Trash2,
-  Check,
-  X,
   Eye,
   EyeOff,
 } from 'lucide-react';
-import { toast } from 'sonner';
 
 import {
   useAffiliateStorageDetail,
   useStoragePricingTiers,
-  useUpdateAllocationBillable,
-  useUpdateAllocationVisibility,
-  useUpdateStorageQuantity,
-  useDeleteStorageAllocation,
   formatVolumeM3,
   calculateStoragePrice,
   formatPrice,
@@ -75,42 +58,49 @@ export default function StorageDetailPage() {
   const { data: pricingTiers } = useStoragePricingTiers();
 
   const [ownerName, setOwnerName] = useState<string>('');
+  const [ownerLogoUrl, setOwnerLogoUrl] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Fetch owner name
+  // Fetch owner name and logo
   useEffect(() => {
-    async function fetchOwnerName() {
+    async function fetchOwnerInfo() {
       const { createClient } = await import('@verone/utils/supabase/client');
       const supabase = createClient();
 
       if (ownerType === 'enseigne') {
-        type EnseigneName = { name: string };
+        type EnseigneInfo = { name: string; logo_url: string | null };
 
         const { data } = await supabase
           .from('enseignes')
-          .select('name')
+          .select('name, logo_url')
           .eq('id', ownerId)
           .single()
-          .returns<EnseigneName>();
-        if (data) setOwnerName(data.name);
+          .returns<EnseigneInfo>();
+        if (data) {
+          setOwnerName(data.name);
+          setOwnerLogoUrl(data.logo_url);
+        }
       } else {
-        type OrganisationName = {
+        type OrganisationInfo = {
           trade_name: string | null;
           legal_name: string;
+          logo_url: string | null;
         };
 
         const { data } = await supabase
           .from('organisations')
-          .select('trade_name, legal_name')
+          .select('trade_name, legal_name, logo_url')
           .eq('id', ownerId)
           .single()
-          .returns<OrganisationName>();
-        if (data)
+          .returns<OrganisationInfo>();
+        if (data) {
           setOwnerName(data.trade_name ?? data.legal_name ?? 'Organisation');
+          setOwnerLogoUrl(data.logo_url);
+        }
       }
     }
-    void fetchOwnerName().catch(error => {
-      console.error('[LinkMeStockage] fetchOwnerName failed:', error);
+    void fetchOwnerInfo().catch(error => {
+      console.error('[LinkMeStockage] fetchOwnerInfo failed:', error);
     });
   }, [ownerType, ownerId]);
 
@@ -152,17 +142,28 @@ export default function StorageDetailPage() {
         </Link>
 
         <div className="flex items-center gap-4">
-          <div
-            className={`p-4 rounded-xl ${
-              isEnseigne ? 'bg-blue-50' : 'bg-purple-50'
-            }`}
-          >
-            {isEnseigne ? (
-              <Building2 className="h-8 w-8 text-blue-600" />
-            ) : (
-              <Briefcase className="h-8 w-8 text-purple-600" />
-            )}
-          </div>
+          {ownerLogoUrl ? (
+            <div className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 bg-white border">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={getLogoUrl(ownerLogoUrl)}
+                alt={ownerName}
+                className="w-full h-full object-contain p-1"
+              />
+            </div>
+          ) : (
+            <div
+              className={`p-4 rounded-xl ${
+                isEnseigne ? 'bg-blue-50' : 'bg-purple-50'
+              }`}
+            >
+              {isEnseigne ? (
+                <Building2 className="h-8 w-8 text-blue-600" />
+              ) : (
+                <Briefcase className="h-8 w-8 text-purple-600" />
+              )}
+            </div>
+          )}
           <div>
             <h1 className="text-2xl font-bold text-gray-900">
               {ownerName ?? 'Chargement...'}
@@ -240,17 +241,27 @@ export default function StorageDetailPage() {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {filteredAllocations.map(allocation => (
             <ProductStorageCard
               key={allocation.allocation_id}
               allocation={allocation}
+              storageId={id}
             />
           ))}
         </div>
       )}
     </div>
   );
+}
+
+// ==============================================================
+// HELPERS
+// ==============================================================
+
+function getLogoUrl(logoPath: string): string {
+  if (logoPath.startsWith('http')) return logoPath;
+  return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/organisation-logos/${logoPath}`;
 }
 
 // ==============================================================
@@ -292,238 +303,63 @@ function SummaryCard({
   );
 }
 
-function ProductStorageCard({ allocation }: { allocation: StorageAllocation }) {
-  const totalVolume =
-    allocation.stock_quantity * (allocation.unit_volume_m3 ?? 0);
-
-  const billableMutation = useUpdateAllocationBillable();
-  const visibilityMutation = useUpdateAllocationVisibility();
-  const deleteMutation = useDeleteStorageAllocation();
-  const quantityMutation = useUpdateStorageQuantity();
-
-  const [editingQty, setEditingQty] = useState(false);
-  const [qtyValue, setQtyValue] = useState(String(allocation.stock_quantity));
-  const [deleteOpen, setDeleteOpen] = useState(false);
-
-  function handleToggleBillable() {
-    void billableMutation
-      .mutateAsync({
-        allocationId: allocation.allocation_id,
-        billable: !allocation.billable_in_storage,
-      })
-      .then(() => {
-        toast.success(
-          allocation.billable_in_storage
-            ? 'Produit non facturable'
-            : 'Produit facturable'
-        );
-      })
-      .catch((err: Error) => {
-        toast.error(`Erreur: ${err.message}`);
-      });
-  }
-
-  function handleToggleVisibility() {
-    void visibilityMutation
-      .mutateAsync({
-        allocationId: allocation.allocation_id,
-        visible: !allocation.is_visible,
-      })
-      .then(() => {
-        toast.success(
-          allocation.is_visible ? 'Produit masque' : 'Produit visible'
-        );
-      })
-      .catch((err: Error) => {
-        toast.error(`Erreur: ${err.message}`);
-      });
-  }
-
-  function handleDeleteConfirm() {
-    return deleteMutation.mutateAsync(allocation.allocation_id).then(() => {
-      toast.success('Allocation supprimee');
-    });
-  }
-
-  function handleSaveQty() {
-    const newQty = parseInt(qtyValue, 10);
-    if (isNaN(newQty) || newQty < 0) {
-      toast.error('Quantite invalide');
-      return;
-    }
-    void quantityMutation
-      .mutateAsync({
-        allocationId: allocation.allocation_id,
-        quantity: newQty,
-      })
-      .then(() => {
-        setEditingQty(false);
-        toast.success('Quantite mise a jour');
-      })
-      .catch((err: Error) => {
-        toast.error(`Erreur: ${err.message}`);
-      });
-  }
-
-  function handleCancelQty() {
-    setQtyValue(String(allocation.stock_quantity));
-    setEditingQty(false);
-  }
-
+function ProductStorageCard({
+  allocation,
+  storageId,
+}: {
+  allocation: StorageAllocation;
+  storageId: string;
+}) {
   return (
-    <>
-      <Card className="hover:shadow-lg transition-shadow overflow-hidden">
-        <CardHeader className="pb-3">
-          <div className="flex items-start gap-4">
-            {/* Product Image */}
-            <div className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 flex items-center justify-center">
+    <Link
+      href={`/canaux-vente/linkme/stockage/${storageId}/produit/${allocation.allocation_id}`}
+      className="block"
+    >
+      <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
+        <CardContent className="p-3">
+          <div className="flex items-start gap-3">
+            <div className="w-12 h-12 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 flex items-center justify-center">
               <ProductThumbnail
                 src={allocation.product_image_url ?? undefined}
                 alt={allocation.product_name}
-                size="md"
+                size="sm"
               />
             </div>
             <div className="flex-1 min-w-0">
-              <div className="flex items-start justify-between">
-                <div className="min-w-0">
-                  <CardTitle className="text-base truncate">
-                    {allocation.product_name}
-                  </CardTitle>
-                  <p className="text-sm text-gray-500 font-mono mt-1">
-                    {allocation.product_sku}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setDeleteOpen(true)}
-                  className="shrink-0 p-1.5 rounded-md text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                  title="Supprimer"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
-              <div className="flex items-center gap-2 mt-2 flex-wrap">
-                {allocation.billable_in_storage ? (
-                  <Badge className="bg-green-100 text-green-700 border-green-200">
-                    Facturable
-                  </Badge>
-                ) : (
-                  <Badge variant="outline" className="text-gray-500">
-                    Non facturable
-                  </Badge>
-                )}
-                {allocation.is_visible ? (
-                  <Badge className="bg-blue-100 text-blue-700 border-blue-200">
-                    <Eye className="h-3 w-3 mr-1" />
-                    Visible
-                  </Badge>
-                ) : (
-                  <Badge
-                    variant="outline"
-                    className="text-red-500 border-red-200"
-                  >
-                    <EyeOff className="h-3 w-3 mr-1" />
-                    Masque
-                  </Badge>
-                )}
-              </div>
+              <p className="text-sm font-medium text-gray-900 truncate">
+                {allocation.product_name}
+              </p>
+              <p className="text-xs text-gray-400 font-mono">
+                {allocation.product_sku}
+              </p>
             </div>
           </div>
-        </CardHeader>
-        <CardContent className="pt-0 space-y-4">
-          {/* Volume stats */}
-          <div className="grid grid-cols-3 gap-4 text-center border-t pt-4">
-            <div>
-              {editingQty ? (
-                <div className="flex items-center gap-1 justify-center">
-                  <Input
-                    type="number"
-                    min={0}
-                    value={qtyValue}
-                    onChange={e => setQtyValue(e.target.value)}
-                    className="w-16 h-8 text-center text-sm"
-                    onKeyDown={e => {
-                      if (e.key === 'Enter') handleSaveQty();
-                      if (e.key === 'Escape') handleCancelQty();
-                    }}
-                    autoFocus
-                  />
-                  <button
-                    type="button"
-                    onClick={handleSaveQty}
-                    className="p-1 text-green-600 hover:bg-green-50 rounded"
-                    disabled={quantityMutation.isPending}
-                  >
-                    <Check className="h-3.5 w-3.5" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleCancelQty}
-                    className="p-1 text-gray-400 hover:bg-gray-50 rounded"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
-                </div>
+          <div className="flex items-center justify-between mt-3 pt-2 border-t">
+            <p className="text-sm font-semibold text-gray-900">
+              {allocation.stock_quantity} unites
+            </p>
+            <div className="flex items-center gap-1">
+              {allocation.billable_in_storage ? (
+                <Badge className="bg-green-100 text-green-700 border-green-200 text-[10px] px-1.5 py-0">
+                  Fact.
+                </Badge>
               ) : (
-                <button
-                  type="button"
-                  onClick={() => setEditingQty(true)}
-                  className="cursor-pointer hover:bg-gray-50 rounded px-2 py-1 transition-colors"
-                  title="Cliquer pour modifier"
+                <Badge
+                  variant="outline"
+                  className="text-gray-400 text-[10px] px-1.5 py-0"
                 >
-                  <p className="text-2xl font-bold text-gray-900">
-                    {allocation.stock_quantity}
-                  </p>
-                </button>
+                  Non fact.
+                </Badge>
               )}
-              <p className="text-xs text-gray-500">unites</p>
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-blue-600">
-                {formatVolumeM3(allocation.unit_volume_m3)}
-              </p>
-              <p className="text-xs text-gray-500">vol. unitaire</p>
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-green-600">
-                {formatVolumeM3(totalVolume)}
-              </p>
-              <p className="text-xs text-gray-500">vol. total</p>
-            </div>
-          </div>
-
-          {/* Toggles */}
-          <div className="border-t pt-3 space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Facturable</span>
-              <Switch
-                checked={allocation.billable_in_storage}
-                onCheckedChange={handleToggleBillable}
-                disabled={billableMutation.isPending}
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Visible affilie</span>
-              <Switch
-                checked={allocation.is_visible}
-                onCheckedChange={handleToggleVisibility}
-                disabled={visibilityMutation.isPending}
-              />
+              {allocation.is_visible ? (
+                <Eye className="h-3.5 w-3.5 text-blue-500" />
+              ) : (
+                <EyeOff className="h-3.5 w-3.5 text-red-400" />
+              )}
             </div>
           </div>
         </CardContent>
       </Card>
-
-      <ConfirmDialog
-        open={deleteOpen}
-        onOpenChange={setDeleteOpen}
-        title="Supprimer l'allocation ?"
-        description={`Le produit "${allocation.product_name}" sera retire du stockage de cet affilie. Cette action est irreversible.`}
-        variant="destructive"
-        confirmText="Supprimer"
-        onConfirm={handleDeleteConfirm}
-        loading={deleteMutation.isPending}
-      />
-    </>
+    </Link>
   );
 }
