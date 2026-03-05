@@ -1,15 +1,3 @@
-/**
- * NotificationsDropdown - Panneau déroulant notifications système V2
- * Design System 2025 - Minimaliste, élégant, professionnel
- *
- * Refonte complète :
- * - Button (Brand Vérone) avec micro-interactions
- * - Badges minimalistes sans emojis
- * - Typography hiérarchisée
- * - Spacing Design System tokens
- * - Phrases claires et professionnelles
- */
-
 'use client';
 
 import { Badge } from '@verone/ui';
@@ -35,17 +23,21 @@ import {
   CheckCircle,
   Info,
   ExternalLink,
+  FileText,
+  Link2,
 } from 'lucide-react';
 
 import {
   useDatabaseNotifications,
+  useFormSubmissionsCount,
+  useLinkmeMissingInfoCount,
   type DatabaseNotification,
 } from '../../hooks';
 
-/**
- * Badge de sévérité - Style minimaliste Design System V2
- * Suppression des emojis, design professionnel
- */
+// ============================================================================
+// SeverityBadge
+// ============================================================================
+
 const SeverityBadge = ({
   severity,
 }: {
@@ -75,10 +67,10 @@ const SeverityBadge = ({
   );
 };
 
-/**
- * Icône selon le type de notification - Lucide icons professionnels
- * Remplacement des emojis par des icônes React
- */
+// ============================================================================
+// NotificationIcon
+// ============================================================================
+
 const NotificationIcon = ({
   type,
   severity,
@@ -86,14 +78,12 @@ const NotificationIcon = ({
   type: DatabaseNotification['type'];
   severity: DatabaseNotification['severity'];
 }) => {
-  // Couleur selon sévérité
   const colorClass = {
     urgent: 'text-red-600',
     important: 'text-orange-600',
     info: 'text-blue-600',
   }[severity];
 
-  // Icône selon type
   const IconComponent =
     {
       system: Info,
@@ -102,7 +92,7 @@ const NotificationIcon = ({
       operations: Info,
       performance: Info,
       maintenance: AlertCircle,
-    }[type] || Info; // Fallback vers Info si type inconnu
+    }[type] || Info;
 
   return (
     <div
@@ -117,9 +107,10 @@ const NotificationIcon = ({
   );
 };
 
-/**
- * Item notification individuel - Refonte Design System V2
- */
+// ============================================================================
+// NotificationItem (system notification)
+// ============================================================================
+
 interface NotificationItemProps {
   notification: DatabaseNotification;
   onMarkAsRead: (id: string) => Promise<void>;
@@ -133,10 +124,7 @@ const NotificationItem = ({
 }: NotificationItemProps) => {
   const timeAgo = formatDistanceToNow(
     new Date(notification.created_at || new Date()),
-    {
-      addSuffix: true,
-      locale: fr,
-    }
+    { addSuffix: true, locale: fr }
   );
 
   return (
@@ -149,7 +137,6 @@ const NotificationItem = ({
         !notification.read && 'bg-blue-50/30'
       )}
     >
-      {/* Badge "non lu" */}
       {!notification.read && (
         <div
           className="absolute top-4 right-4 w-2 h-2 rounded-full"
@@ -157,17 +144,13 @@ const NotificationItem = ({
         />
       )}
 
-      {/* Layout principal */}
       <div className="flex items-start gap-3">
-        {/* Icône */}
         <NotificationIcon
           type={notification.type}
           severity={notification.severity}
         />
 
-        {/* Contenu */}
         <div className="flex-1 min-w-0">
-          {/* En-tête: titre + sévérité */}
           <div className="flex items-start justify-between gap-2 mb-1">
             <h4
               className="font-semibold text-[15px] leading-tight"
@@ -178,12 +161,10 @@ const NotificationItem = ({
             <SeverityBadge severity={notification.severity} />
           </div>
 
-          {/* Timestamp */}
           <p className="text-xs mb-2" style={{ color: colors.text.muted }}>
             {timeAgo}
           </p>
 
-          {/* Message */}
           <p
             className="text-sm leading-relaxed mb-3"
             style={{ color: colors.text.subtle }}
@@ -191,9 +172,7 @@ const NotificationItem = ({
             {notification.message}
           </p>
 
-          {/* Actions */}
           <div className="flex items-center gap-2">
-            {/* Bouton action principale */}
             {notification.action_url && notification.action_label && (
               <Button
                 variant="default"
@@ -207,14 +186,20 @@ const NotificationItem = ({
               </Button>
             )}
 
-            {/* Actions secondaires (hover) */}
             <div className="ml-auto flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
               {!notification.read && (
                 <Button
                   variant="ghost"
                   size="icon"
                   title="Marquer comme lu"
-                  onClick={() => onMarkAsRead(notification.id)}
+                  onClick={() => {
+                    void onMarkAsRead(notification.id).catch(error => {
+                      console.error(
+                        '[NotificationsDropdown] onMarkAsRead failed:',
+                        error
+                      );
+                    });
+                  }}
                 >
                   <Check className="h-4 w-4" />
                 </Button>
@@ -225,7 +210,14 @@ const NotificationItem = ({
                 size="icon"
                 className="text-red-500 hover:text-red-700 hover:bg-red-50"
                 title="Supprimer"
-                onClick={() => onDelete(notification.id)}
+                onClick={() => {
+                  void onDelete(notification.id).catch(error => {
+                    console.error(
+                      '[NotificationsDropdown] onDelete failed:',
+                      error
+                    );
+                  });
+                }}
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
@@ -237,9 +229,54 @@ const NotificationItem = ({
   );
 };
 
-/**
- * Dropdown principal des notifications - Design System V2
- */
+// ============================================================================
+// Summary items for non-system sources
+// ============================================================================
+
+interface SummaryItemProps {
+  icon: React.ReactNode;
+  label: string;
+  count: number;
+  href: string;
+  color: string;
+}
+
+const SummaryItem = ({ icon, label, count, href, color }: SummaryItemProps) => {
+  if (count === 0) return null;
+
+  return (
+    <a
+      href={href}
+      className="flex items-center gap-3 p-3 hover:bg-neutral-50 transition-colors border-b last:border-b-0"
+    >
+      <div
+        className={cn(
+          'flex items-center justify-center w-8 h-8 rounded-lg',
+          color
+        )}
+      >
+        {icon}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p
+          className="text-sm font-medium"
+          style={{ color: colors.text.DEFAULT }}
+        >
+          {label}
+        </p>
+        <p className="text-xs" style={{ color: colors.text.muted }}>
+          {count} en attente
+        </p>
+      </div>
+      <Badge className="bg-red-500 text-white text-xs">{count}</Badge>
+    </a>
+  );
+};
+
+// ============================================================================
+// Main Dropdown
+// ============================================================================
+
 export const NotificationsDropdown = () => {
   const {
     notifications,
@@ -249,6 +286,20 @@ export const NotificationsDropdown = () => {
     markAllAsRead,
     deleteNotification,
   } = useDatabaseNotifications();
+
+  const { count: formSubmissionsCount } = useFormSubmissionsCount();
+  const { count: linkmeMissingInfoCount } = useLinkmeMissingInfoCount();
+
+  // Total badge count across all sources
+  const totalCount =
+    unreadCount + formSubmissionsCount + linkmeMissingInfoCount;
+
+  // Show max 5 system notifications in dropdown
+  const recentNotifications = notifications.slice(0, 5);
+
+  // Are there non-system items?
+  const hasNonSystemItems =
+    formSubmissionsCount > 0 || linkmeMissingInfoCount > 0;
 
   return (
     <DropdownMenu>
@@ -262,19 +313,21 @@ export const NotificationsDropdown = () => {
             'focus:outline-none focus:ring-2 focus:ring-neutral-200'
           )}
           title={
-            loading ? 'Chargement...' : `${unreadCount} notifications non lues`
+            loading
+              ? 'Chargement...'
+              : `${totalCount} notification${totalCount > 1 ? 's' : ''} non lue${totalCount > 1 ? 's' : ''}`
           }
         >
           <Bell className="h-5 w-5" style={{ color: colors.text.DEFAULT }} />
-          {!loading && unreadCount > 0 && (
+          {!loading && totalCount > 0 && (
             <span
               className="absolute -top-2 -right-2 h-4 w-auto min-w-[16px] px-1 rounded-full text-xs text-white flex items-center justify-center font-medium"
               style={{ backgroundColor: colors.danger[500] }}
             >
-              {unreadCount > 99 ? '99+' : unreadCount}
+              {totalCount > 99 ? '99+' : totalCount}
             </span>
           )}
-          <span className="sr-only">{unreadCount} Notifications</span>
+          <span className="sr-only">{totalCount} Notifications</span>
         </button>
       </DropdownMenuTrigger>
 
@@ -288,7 +341,7 @@ export const NotificationsDropdown = () => {
           flexDirection: 'column',
         }}
       >
-        {/* En-tête avec actions globales */}
+        {/* Header */}
         <div className="flex items-center justify-between border-b px-4 py-3">
           <div>
             <DropdownMenuLabel
@@ -297,25 +350,57 @@ export const NotificationsDropdown = () => {
             >
               Notifications
             </DropdownMenuLabel>
-            {unreadCount > 0 && (
+            {totalCount > 0 && (
               <span
                 className="text-xs font-normal"
                 style={{ color: colors.text.subtle }}
               >
-                ({unreadCount} non {unreadCount > 1 ? 'lues' : 'lue'})
+                ({totalCount} non {totalCount > 1 ? 'lues' : 'lue'})
               </span>
             )}
           </div>
 
           {unreadCount > 0 && (
-            <Button variant="ghost" size="sm" onClick={() => markAllAsRead()}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                void markAllAsRead().catch(error => {
+                  console.error(
+                    '[NotificationsDropdown] markAllAsRead failed:',
+                    error
+                  );
+                });
+              }}
+            >
               <CheckCheck className="mr-1 h-4 w-4" />
               Tout marquer lu
             </Button>
           )}
         </div>
 
-        {/* Liste des notifications avec scroll */}
+        {/* Non-system summary items */}
+        {hasNonSystemItems && (
+          <>
+            <SummaryItem
+              icon={<FileText className="h-4 w-4 text-blue-600" />}
+              label="Formulaires de contact"
+              count={formSubmissionsCount}
+              href="/messages?onglet=formulaires"
+              color="bg-blue-50"
+            />
+            <SummaryItem
+              icon={<Link2 className="h-4 w-4 text-purple-600" />}
+              label="Demandes d'info LinkMe"
+              count={linkmeMissingInfoCount}
+              href="/messages?onglet=linkme"
+              color="bg-purple-50"
+            />
+            {recentNotifications.length > 0 && <DropdownMenuSeparator />}
+          </>
+        )}
+
+        {/* System notifications list */}
         {loading ? (
           <div className="p-8 text-center">
             <div
@@ -323,10 +408,10 @@ export const NotificationsDropdown = () => {
               style={{ borderColor: colors.primary[500] }}
             />
             <p className="text-sm" style={{ color: colors.text.subtle }}>
-              Chargement des notifications...
+              Chargement...
             </p>
           </div>
-        ) : notifications.length === 0 ? (
+        ) : recentNotifications.length === 0 && !hasNonSystemItems ? (
           <div className="p-8 text-center">
             <div
               className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center"
@@ -341,12 +426,12 @@ export const NotificationsDropdown = () => {
               Aucune notification
             </p>
             <p className="text-xs" style={{ color: colors.text.muted }}>
-              Vous êtes à jour ! 🎉
+              Vous etes a jour !
             </p>
           </div>
         ) : (
           <ScrollArea className="max-h-[380px]">
-            {notifications.map(notification => (
+            {recentNotifications.map(notification => (
               <NotificationItem
                 key={notification.id}
                 notification={notification}
@@ -357,8 +442,8 @@ export const NotificationsDropdown = () => {
           </ScrollArea>
         )}
 
-        {/* Pied avec lien "Voir toutes" */}
-        {notifications.length > 0 && (
+        {/* Footer link */}
+        {(recentNotifications.length > 0 || hasNonSystemItems) && (
           <>
             <DropdownMenuSeparator />
             <div className="p-2">
@@ -367,10 +452,10 @@ export const NotificationsDropdown = () => {
                 size="sm"
                 className="w-full"
                 onClick={() => {
-                  window.location.href = '/notifications';
+                  window.location.href = '/messages';
                 }}
               >
-                Voir toutes les notifications
+                Voir tous les messages
                 <ExternalLink className="ml-auto h-4 w-4" />
               </Button>
             </div>

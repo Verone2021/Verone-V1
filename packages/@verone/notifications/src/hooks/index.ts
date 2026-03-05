@@ -21,3 +21,6 @@ export * from './use-form-submissions-count';
 
 // Badge count hooks - Phase 4 (2026-03-02)
 export * from './use-linkme-missing-info-count';
+
+// Aggregated count hook (2026-03-05)
+export * from './use-all-notifications-count';
