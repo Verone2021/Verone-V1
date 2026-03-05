@@ -36,6 +36,7 @@ export interface StorageAllocation {
   unit_volume_m3: number;
   total_volume_m3: number;
   billable_in_storage: boolean;
+  is_visible: boolean;
   allocated_at: string;
   storage_start_date: string;
   product_image_url: string | null;
@@ -125,7 +126,8 @@ export function useAffiliateStorageDetails() {
         throw error;
       }
 
-      return data ?? [];
+      // Only show visible allocations to affiliates
+      return (data ?? []).filter(a => a.is_visible !== false);
     },
     enabled: !!(enseigneId ?? organisationId),
     staleTime: 60000,
@@ -162,9 +164,11 @@ export function useAffiliateBillableStorage() {
         throw error;
       }
 
-      // Filtrer uniquement les produits facturables
+      // Only show visible + billable allocations to affiliates
       return (data ?? []).filter(
-        allocation => allocation.billable_in_storage === true
+        allocation =>
+          allocation.billable_in_storage === true &&
+          allocation.is_visible !== false
       );
     },
     enabled: !!(enseigneId ?? organisationId),
