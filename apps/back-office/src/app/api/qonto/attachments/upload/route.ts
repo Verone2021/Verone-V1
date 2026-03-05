@@ -127,13 +127,39 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       idempotencyKey
     );
 
-    // 6. Mettre à jour financial_documents avec les nouvelles colonnes
+    // 6. Double stockage: copie dans Supabase Storage (bucket justificatifs)
+    // Organisation: justificatifs/{year}/{month}/{transactionId}_{filename}
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const storagePath = `${year}/${month}/${transactionId}_${safeName}`;
+
+    const fileBuffer = Buffer.from(await file.arrayBuffer());
+    const { error: storageError } = await supabase.storage
+      .from('justificatifs')
+      .upload(storagePath, fileBuffer, {
+        contentType: file.type,
+        upsert: false,
+      });
+
+    if (storageError) {
+      // Log but don't fail — Qonto upload already succeeded
+      console.error(
+        '[Qonto Upload] Supabase Storage backup failed:',
+        storageError.message
+      );
+    }
+
+    // 7. Mettre à jour financial_documents avec les nouvelles colonnes
     if (documentId) {
       await supabase
         .from('financial_documents')
         .update({
           upload_status: 'uploaded',
           qonto_attachment_id: attachment.id,
+          uploaded_file_url: storageError ? null : storagePath,
+          uploaded_file_name: file.name,
           uploaded_at: new Date().toISOString(),
           uploaded_by: user.id,
           updated_at: new Date().toISOString(),
@@ -141,7 +167,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         .eq('id', documentId);
     }
 
-    // 7. Mettre à jour UNIQUEMENT attachment_ids (source de vérité unique)
+    // 8. Mettre à jour UNIQUEMENT attachment_ids (source de vérité unique)
     // Note: has_attachment est une colonne GENERATED qui se recalcule automatiquement
     const txDataWithIds = txData as { attachment_ids?: string[] };
     const existingIds = txDataWithIds.attachment_ids ?? [];
@@ -156,7 +182,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({
       success: true,
       attachmentId: attachment.id,
-      message: 'Facture uploadée avec succès vers Qonto',
+      storagePath: storageError ? null : storagePath,
+      message:
+        'Facture uploadée avec succès vers Qonto' +
+        (storageError ? ' (backup local échoué)' : ' + backup local'),
     });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Erreur inconnue';

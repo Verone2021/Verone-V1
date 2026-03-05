@@ -1,19 +1,15 @@
 'use client';
 
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+
 /**
- * Route: /finance/tresorerie
- * Description: Dashboard Trésorerie - Soldes comptes Qonto, KPIs, prévisions
+ * Tresorerie fusionnee dans le Pilotage (/finance).
  */
-
-import { redirect } from 'next/navigation';
-
-import { TreasuryDashboard } from '@verone/finance/components';
-import { featureFlags } from '@verone/utils/feature-flags';
-
-export default function TresoreriePage() {
-  if (!featureFlags.financeEnabled) {
-    redirect('/module-inactive?module=finance');
-  }
-
-  return <TreasuryDashboard />;
+export default function TresorerieRedirect() {
+  const router = useRouter();
+  useEffect(() => {
+    router.replace('/finance');
+  }, [router]);
+  return null;
 }

@@ -28,6 +28,8 @@ export interface TransactionWithSuggestions<T> {
     roleType: 'supplier' | 'customer' | 'partner' | 'internal' | null;
     /** Libellé d'affichage suggéré */
     displayLabel: string | null;
+    /** Taux TVA par défaut de la règle */
+    vatRate: number | null;
     /** Confiance de la suggestion (high si règle exacte, medium si contains) */
     confidence: 'high' | 'medium' | 'none';
     /**
@@ -164,6 +166,7 @@ export function useAutoClassification<
           organisationId: null,
           organisationName: null,
           category: null,
+          vatRate: null,
           roleType: null,
           displayLabel: null,
           confidence: 'none' as const,
@@ -204,6 +207,7 @@ export function useAutoClassification<
             organisationId: bestMatchRule.organisation_id,
             organisationName: bestMatchRule.organisation_name,
             category: bestMatchRule.default_category,
+            vatRate: bestMatchRule.default_vat_rate ?? null,
             roleType: bestMatchRule.default_role_type,
             displayLabel: bestMatchRule.display_label,
             confidence:
@@ -222,6 +226,7 @@ export function useAutoClassification<
           organisationId: null,
           organisationName: null,
           category: null,
+          vatRate: null,
           roleType: null,
           displayLabel: null,
           confidence: 'none' as const,
@@ -252,6 +257,7 @@ export function getSuggestionForLabel(
       organisationId: null,
       organisationName: null,
       category: null,
+      vatRate: null,
       roleType: null,
       displayLabel: null,
       confidence: 'none',
@@ -283,6 +289,7 @@ export function getSuggestionForLabel(
       organisationId: bestMatchRule.organisation_id,
       organisationName: bestMatchRule.organisation_name,
       category: bestMatchRule.default_category,
+      vatRate: bestMatchRule.default_vat_rate ?? null,
       roleType: bestMatchRule.default_role_type,
       displayLabel: bestMatchRule.display_label,
       confidence: bestMatchType === 'exact' ? 'high' : 'medium',
@@ -295,6 +302,7 @@ export function getSuggestionForLabel(
     organisationId: null,
     organisationName: null,
     category: null,
+    vatRate: null,
     roleType: null,
     displayLabel: null,
     confidence: 'none',

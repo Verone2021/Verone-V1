@@ -12,3 +12,5 @@ export * from './use-linkme-order-actions';
 export * from './use-organisation-contacts-bo';
 export * from './use-organisation-addresses-bo';
 export * from './use-enseigne-details';
+export * from './use-affiliate-activity';
+export * from './affiliate-activity-utils';

@@ -22,6 +22,7 @@ import {
   Shield,
   Link2,
   Activity,
+  Clock,
   Package,
   Eye,
   ShoppingCart,
@@ -36,6 +37,9 @@ import {
   LINKME_ROLE_COLORS,
   LINKME_ROLE_PERMISSIONS,
 } from '../../hooks/use-linkme-users';
+import { UserActivityTimeline } from './components/UserActivityTimeline';
+import { UserEngagementCards } from './components/UserEngagementCards';
+import { UserNavigationStats } from './components/UserNavigationStats';
 
 // Types
 interface UserSelection {
@@ -47,12 +51,6 @@ interface UserSelection {
   views_count: number;
   orders_count: number;
   created_at: string;
-}
-
-interface UserStats {
-  selectionsCount: number;
-  ordersCount: number;
-  totalCaHT: number;
 }
 
 /**
@@ -133,84 +131,6 @@ function useUserSelections(
 }
 
 /**
- * Hook pour calculer les stats d'un utilisateur
- * Via son enseigne_id ou organisation_id → affilié → stats
- */
-function useUserStats(
-  enseigneId: string | null,
-  organisationId: string | null
-) {
-  const [stats, setStats] = useState<UserStats>({
-    selectionsCount: 0,
-    ordersCount: 0,
-    totalCaHT: 0,
-  });
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (!enseigneId && !organisationId) {
-      setLoading(false);
-      return;
-    }
-
-    const fetchStats = async () => {
-      setLoading(true);
-      const supabase = createClient();
-
-      // Trouver l'affilié lié à l'enseigne ou organisation
-      let affiliateId: string | null = null;
-
-      if (enseigneId) {
-        const { data: affiliate } = await supabase
-          .from('linkme_affiliates')
-          .select('id')
-          .eq('enseigne_id', enseigneId)
-          .limit(1)
-          .single();
-        affiliateId = affiliate?.id ?? null;
-      }
-
-      if (!affiliateId && organisationId) {
-        const { data: affiliate } = await supabase
-          .from('linkme_affiliates')
-          .select('id')
-          .eq('organisation_id', organisationId)
-          .limit(1)
-          .single();
-        affiliateId = affiliate?.id ?? null;
-      }
-
-      if (!affiliateId) {
-        setStats({ selectionsCount: 0, ordersCount: 0, totalCaHT: 0 });
-        setLoading(false);
-        return;
-      }
-
-      // Compter les sélections de cet affilié
-      const { count: selectionsCount } = await supabase
-        .from('linkme_selections')
-        .select('id', { count: 'exact', head: true })
-        .eq('affiliate_id', affiliateId);
-
-      // TODO: Calculer ordersCount et totalCaHT quand les commandes LinkMe seront implémentées
-
-      setStats({
-        selectionsCount: selectionsCount ?? 0,
-        ordersCount: 0,
-        totalCaHT: 0,
-      });
-      setLoading(false);
-    };
-
-    void fetchStats().catch(error => {
-      console.error('[useUserStats] fetchStats failed:', error);
-    });
-  }, [enseigneId, organisationId]);
-
-  return { stats, loading };
-}
-
-/**
  * Page détail utilisateur LinkMe
  */
 export default function UserDetailPage() {
@@ -230,11 +150,6 @@ export default function UserDetailPage() {
     user?.enseigne_id ?? null,
     user?.organisation_id ?? null
   );
-  const { stats, loading: statsLoading } = useUserStats(
-    user?.enseigne_id ?? null,
-    user?.organisation_id ?? null
-  );
-
   // État onglet actif
   const [activeTab, setActiveTab] = useState('infos');
 
@@ -342,58 +257,6 @@ export default function UserDetailPage() {
         </div>
       </div>
 
-      {/* KPIs */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">
-                  Sélections créées
-                </p>
-                <p className="text-2xl font-bold">
-                  {statsLoading ? '-' : stats.selectionsCount}
-                </p>
-              </div>
-              <ShoppingBag className="h-8 w-8 text-purple-500 opacity-80" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">
-                  Commandes générées
-                </p>
-                <p className="text-2xl font-bold">
-                  {statsLoading ? '-' : stats.ordersCount}
-                </p>
-              </div>
-              <ShoppingCart className="h-8 w-8 text-blue-500 opacity-80" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">CA Total HT</p>
-                <p className="text-2xl font-bold">
-                  {statsLoading
-                    ? '-'
-                    : new Intl.NumberFormat('fr-FR', {
-                        style: 'currency',
-                        currency: 'EUR',
-                      }).format(stats.totalCaHT)}
-                </p>
-              </div>
-              <Package className="h-8 w-8 text-green-500 opacity-80" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
       {/* Onglets */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList variant="underline" className="w-full justify-start border-b">
@@ -412,6 +275,10 @@ export default function UserDetailPage() {
           <TabsTrigger value="activite" variant="underline">
             <Activity className="h-4 w-4 mr-2" />
             Activité
+          </TabsTrigger>
+          <TabsTrigger value="historique" variant="underline">
+            <Clock className="h-4 w-4 mr-2" />
+            Historique
           </TabsTrigger>
         </TabsList>
 
@@ -714,25 +581,19 @@ export default function UserDetailPage() {
           </Card>
         </TabsContent>
 
-        {/* Onglet Activité */}
-        <TabsContent value="activite" className="mt-6">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center">
-                <Activity className="h-5 w-5 mr-2 text-green-500" />
-                Activité récente
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8">
-                <Activity className="h-12 w-12 mx-auto text-gray-300 mb-4" />
-                <p className="text-sm text-gray-500">
-                  L&apos;historique d&apos;activité sera disponible
-                  prochainement
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Onglet Activité — engagement + navigation */}
+        <TabsContent value="activite" className="mt-6 space-y-6">
+          <UserEngagementCards userId={user.user_id} />
+          <UserNavigationStats userId={user.user_id} />
+        </TabsContent>
+
+        {/* Onglet Historique — commandes, notifications, onboarding */}
+        <TabsContent value="historique" className="mt-6">
+          <UserActivityTimeline
+            userId={user.user_id}
+            enseigneId={user.enseigne_id ?? null}
+            organisationId={user.organisation_id ?? null}
+          />
         </TabsContent>
       </Tabs>
 

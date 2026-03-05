@@ -91,21 +91,29 @@ export function useUserActivityTracker() {
       const { error } = await supabase
         .from('user_activity_logs') // ✅ FIX: Table correcte avec session_id
         .insert(
-          events.map(event => ({
-            user_id: user.id,
-            session_id: sessionIdRef.current, // ✅ FIX: session_id pour trigger
-            action: event.action,
-            table_name: event.table_name,
-            record_id: event.record_id,
-            old_data: event.old_data,
-            new_data: event.new_data,
-            severity: event.severity || 'info',
-            page_url: event.metadata?.page_url,
-            ip_address: event.metadata?.ip_address,
-            user_agent: event.metadata?.user_agent || navigator.userAgent,
-            metadata: event.metadata,
-            created_at: new Date().toISOString(),
-          }))
+          events.map(event => {
+            // Extract app_source from new_data if provided (e.g. 'linkme')
+            const appSource = (
+              event.new_data as Record<string, unknown> | undefined
+            )?.app_source as string | undefined;
+
+            return {
+              user_id: user.id,
+              session_id: sessionIdRef.current, // ✅ FIX: session_id pour trigger
+              action: event.action,
+              table_name: event.table_name,
+              record_id: event.record_id,
+              old_data: event.old_data,
+              new_data: event.new_data,
+              severity: event.severity || 'info',
+              page_url: event.metadata?.page_url,
+              ip_address: event.metadata?.ip_address,
+              user_agent: event.metadata?.user_agent || navigator.userAgent,
+              metadata: event.metadata,
+              created_at: new Date().toISOString(),
+              ...(appSource ? { app_source: appSource } : {}),
+            };
+          })
         );
 
       if (error) {

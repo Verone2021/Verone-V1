@@ -24,10 +24,14 @@ import { createClient } from '@verone/utils/supabase/client';
 
 export interface BankTransactionStats {
   // Totaux
-  totalCredit: number; // Entrées
+  totalCredit: number; // Entrées (tous crédits bancaires)
   totalDebit: number; // Sorties
   netBalance: number; // Solde net
   transactionCount: number;
+
+  // CA comptable (uniquement classe 7 = ventes réelles)
+  revenue: number; // CA = crédits catégorisés en classe 7 (70x)
+  uncategorizedCredit: number; // Crédits non catégorisés (à traiter)
 
   // Comparaison mois précédent
   creditVariation: number; // % variation entrées
@@ -197,7 +201,8 @@ export function useBankTransactionStats(
           emitted_at,
           counterparty_name,
           matching_status,
-          matched_document_id
+          matched_document_id,
+          category_pcg
         `
         )
         .order('settled_at', { ascending: false });
@@ -254,6 +259,8 @@ export function useBankTransactionStats(
       // 4. Calculer les stats globales
       let totalCredit = 0;
       let totalDebit = 0;
+      let revenue = 0; // CA comptable = crédits classe 7 uniquement
+      let uncategorizedCredit = 0; // Crédits non catégorisés
       let currentMonthCredit = 0;
       let currentMonthDebit = 0;
       let prevMonthCredit = 0;
@@ -275,10 +282,19 @@ export function useBankTransactionStats(
           : new Date(tx.emitted_at);
         const month =
           tx.settled_at?.substring(0, 7) || tx.emitted_at?.substring(0, 7);
+        const categoryPcg: string | null = tx.category_pcg;
 
         // Totaux globaux
         if (isCredit) {
           totalCredit += amount;
+          // CA comptable = seulement classe 7 (codes commençant par 7)
+          if (categoryPcg && categoryPcg.startsWith('7')) {
+            revenue += amount;
+          } else if (!categoryPcg) {
+            uncategorizedCredit += amount;
+          }
+          // Note: crédits catégorisés hors classe 7 (ex: 455 apport associé)
+          // ne sont PAS du CA — c'est comptablement correct
         } else {
           totalDebit += amount;
         }
@@ -468,6 +484,8 @@ export function useBankTransactionStats(
         totalDebit,
         netBalance: totalCredit - totalDebit,
         transactionCount: transactions?.length || 0,
+        revenue,
+        uncategorizedCredit,
         creditVariation,
         debitVariation,
         periodStart: startDateStr,
