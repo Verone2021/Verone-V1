@@ -4,12 +4,12 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 /**
- * Tresorerie fusionnee dans le Pilotage (/finance).
+ * Comptabilite deplacee vers /finance/documents (hub cartes).
  */
-export default function TresorerieRedirect() {
+export default function ComptabiliteRedirect() {
   const router = useRouter();
   useEffect(() => {
-    router.replace('/finance');
+    router.replace('/finance/documents');
   }, [router]);
   return null;
 }

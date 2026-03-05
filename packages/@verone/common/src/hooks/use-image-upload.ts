@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * 🎯 VÉRONE - Hook Upload Images Simple
  *

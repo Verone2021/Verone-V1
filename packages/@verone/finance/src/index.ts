@@ -36,6 +36,9 @@ export * from './lib/tva';
 // Lib - Payment Methods
 export * from './lib/payment-methods';
 
+// Lib - PCG Themes (classification thématique style Indy)
+export * from './lib/pcg-themes';
+
 // Services - NE PAS EXPORTER ICI
 // Les services serveur contiennent du code server-only (next/headers)
 // Utiliser: import { ... } from '@verone/finance/services' dans les API routes uniquement

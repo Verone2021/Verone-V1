@@ -41,7 +41,7 @@ export interface MatchingRule {
    * Si FALSE (défaut), la catégorie est verrouillée par la règle.
    */
   allow_multiple_categories: boolean;
-  // TVA retirée des règles - vient de Qonto OCR ou saisie manuelle
+  default_vat_rate: number | null;
   created_at: string;
   created_by: string | null;
   // Joined from organisation
@@ -99,7 +99,8 @@ export interface CreateRuleData {
   priority?: number;
   /** Si TRUE, permet de modifier la catégorie individuellement par transaction */
   allow_multiple_categories?: boolean;
-  // TVA retirée des règles - vient de Qonto OCR ou saisie manuelle
+  /** Taux TVA par défaut (0, 5.5, 10, 20) — appliqué automatiquement aux transactions matchées */
+  default_vat_rate?: number | null;
 }
 
 export interface UseMatchingRulesReturn {
@@ -194,7 +195,7 @@ export function useMatchingRules(): UseMatchingRulesReturn {
           default_role_type: data.default_role_type,
           priority: data.priority ?? 100,
           allow_multiple_categories: data.allow_multiple_categories ?? false,
-          // TVA retirée des règles - vient de Qonto OCR ou saisie manuelle
+          default_vat_rate: data.default_vat_rate ?? null,
           // Multi-patterns: si non fourni, utiliser [match_value]
           match_patterns: data.match_patterns ?? [data.match_value],
           enabled: true,
@@ -287,7 +288,8 @@ export function useMatchingRules(): UseMatchingRulesReturn {
           cleanData.match_type = data.match_type;
         if (data.match_value !== undefined)
           cleanData.match_value = data.match_value;
-        // TVA retirée des règles - vient de Qonto OCR ou saisie manuelle
+        if (data.default_vat_rate !== undefined)
+          cleanData.default_vat_rate = data.default_vat_rate ?? null;
         if (data.match_patterns !== undefined)
           cleanData.match_patterns = data.match_patterns ?? null;
 

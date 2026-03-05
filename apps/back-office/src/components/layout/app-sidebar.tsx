@@ -39,8 +39,6 @@ import {
   Layers,
   MessageCircle,
   FileText,
-  FileSignature,
-  FileX,
   Banknote,
   Globe,
   Link2,
@@ -48,6 +46,7 @@ import {
   LayoutDashboard,
   ArrowLeftRight,
   Grid3x3,
+  BookOpenCheck,
 } from 'lucide-react';
 
 import { PhaseIndicator } from '@/components/ui/phase-indicator';
@@ -283,7 +282,7 @@ const getNavItems = (
       },
     ],
   },
-  // ============ FINANCE (FUSIONNÉ) ============
+  // ============ FINANCE (5 entrées — Style Indy 2026) ============
   {
     title: 'Finance',
     href: '/finance',
@@ -292,24 +291,14 @@ const getNavItems = (
     badgeVariant: transactionsUnreconciledCount > 0 ? 'urgent' : undefined,
     children: [
       {
-        title: 'Tableau de bord',
+        title: 'Pilotage',
         href: '/finance',
         icon: LayoutDashboard,
       },
       {
-        title: 'Devis',
-        href: '/factures?tab=devis',
-        icon: FileSignature,
-      },
-      {
-        title: 'Factures',
-        href: '/factures?tab=factures',
+        title: 'Facturation',
+        href: '/factures',
         icon: FileText,
-      },
-      {
-        title: 'Avoirs',
-        href: '/factures?tab=avoirs',
-        icon: FileX,
       },
       {
         title: 'Transactions',
@@ -319,8 +308,13 @@ const getNavItems = (
         badgeVariant: transactionsUnreconciledCount > 0 ? 'urgent' : undefined,
       },
       {
-        title: 'Trésorerie',
-        href: '/finance/tresorerie',
+        title: 'Documents',
+        href: '/finance/documents',
+        icon: BookOpenCheck,
+      },
+      {
+        title: 'Clôture exercice',
+        href: '/finance/admin/cloture',
         icon: Banknote,
       },
     ],
@@ -527,6 +521,9 @@ function SidebarContent() {
       Achats: 'commandes',
       Comptabilité: 'finance',
       Finance: 'finance',
+      Pilotage: 'finance',
+      Documents: 'finance',
+      'Clôture exercice': 'finance',
       Facturation: 'factures',
       Factures: 'factures',
       Devis: 'factures',

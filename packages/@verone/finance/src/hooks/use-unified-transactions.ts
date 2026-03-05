@@ -89,6 +89,7 @@ export interface UnifiedTransaction {
   vat_source: string | null;
   payment_method: string | null;
   nature: string | null;
+  note: string | null;
 
   // Periode
   year: number;
@@ -360,6 +361,8 @@ export function useUnifiedTransactions(
             vat_breakdown: tx.vat_breakdown,
             payment_method: tx.payment_method,
             nature: tx.nature,
+            note: tx.note ?? null,
+            vat_source: tx.vat_source ?? null,
             // Période (calculée par la vue)
             year: tx.year,
             month: tx.month,

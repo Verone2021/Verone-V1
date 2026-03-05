@@ -4,12 +4,12 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 /**
- * Tresorerie fusionnee dans le Pilotage (/finance).
+ * Annexe deplacee vers /finance/documents/annexe
  */
-export default function TresorerieRedirect() {
+export default function AnnexeRedirect() {
   const router = useRouter();
   useEffect(() => {
-    router.replace('/finance');
+    router.replace('/finance/documents/annexe');
   }, [router]);
   return null;
 }

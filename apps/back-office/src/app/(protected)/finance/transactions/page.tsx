@@ -4,7 +4,13 @@ import { useState, useMemo } from 'react';
 
 import Link from 'next/link';
 
-import { getPcgCategory, getPcgColor } from '@verone/finance';
+import {
+  getPcgCategory,
+  getPcgColor,
+  formatBankPaymentMethod,
+  detectBankPaymentMethod,
+  BANK_PAYMENT_METHODS,
+} from '@verone/finance';
 import {
   RapprochementModal,
   InvoiceUploadModal,
@@ -18,40 +24,34 @@ import {
   useAutoClassification,
   useUnifiedTransactions,
   useTransactionActions,
-  useUnreconciledOrders,
   type UnifiedTransaction,
 } from '@verone/finance/hooks';
 import {
   Card,
   CardContent,
-  CardHeader,
   Button,
   Badge,
   Input,
-  Tabs,
-  TabsList,
-  TabsTrigger,
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
   Separator,
-  KPICardUnified,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
+  Textarea,
 } from '@verone/ui';
 import { SyncButton } from '@verone/ui-business';
 import { createClient } from '@verone/utils/supabase/client';
 import {
   ArrowDownLeft,
   ArrowUpRight,
-  Check,
   AlertCircle,
   Search,
-  Clock,
+  Calendar,
   FileText,
   ExternalLink,
   Paperclip,
@@ -60,17 +60,20 @@ import {
   Tag,
   Upload,
   CheckCircle2,
-  XCircle,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   Lock,
   FileX,
   FileCheck,
   CheckCircle,
-  ShoppingCart,
   Zap,
   Trash2,
   Percent,
+  Filter,
+  CreditCard,
+  StickyNote,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -108,6 +111,20 @@ function formatAmount(amount: number): string {
     style: 'currency',
     currency: 'EUR',
   }).format(amount);
+}
+
+function getMonthKey(dateStr: string | null): string {
+  if (!dateStr) return 'unknown';
+  const d = new Date(dateStr);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function formatMonthLabel(key: string): string {
+  if (key === 'unknown') return 'Date inconnue';
+  return new Date(`${key}-01`).toLocaleDateString('fr-FR', {
+    month: 'long',
+    year: 'numeric',
+  });
 }
 
 // =====================================================================
@@ -173,18 +190,17 @@ function TransactionCompletenessIndicator({ tx }: { tx: UnifiedTransaction }) {
 // PAGE V2 (FINANCE V2 - Unified)
 // =====================================================================
 
-type TabFilterV2 =
+type StatusFilter =
   | 'all'
   | 'to_process'
   | 'classified'
   | 'matched'
   | 'cca'
   | 'ignored';
-
 type SideFilter = 'all' | 'credit' | 'debit';
 
 function TransactionsPageV2() {
-  const [activeTab, setActiveTab] = useState<TabFilterV2>('all');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [sideFilter, setSideFilter] = useState<SideFilter>('all');
   const [selectedTransaction, setSelectedTransaction] =
     useState<UnifiedTransaction | null>(null);
@@ -196,7 +212,7 @@ function TransactionsPageV2() {
     { length: currentYear - 2021 },
     (_, i) => currentYear - i
   );
-  const [yearFilter, setYearFilter] = useState<number>(currentYear);
+  const [yearFilter, setYearFilter] = useState<number | null>(currentYear);
 
   // Modals state
   const [showRapprochementModal, setShowRapprochementModal] = useState(false);
@@ -212,6 +228,9 @@ function TransactionsPageV2() {
 
   // Auto-categorization state
   const [isAutoCategorizing, setIsAutoCategorizing] = useState(false);
+
+  // Collapsible technical details in sidebar
+  const [showTechnicalDetails, setShowTechnicalDetails] = useState(false);
 
   // Hook pour les règles (preview/confirm workflow)
   const {
@@ -239,7 +258,7 @@ function TransactionsPageV2() {
     prevPage,
   } = useUnifiedTransactions({
     filters: {
-      status: activeTab === 'all' ? 'all' : activeTab,
+      status: statusFilter === 'all' ? 'all' : statusFilter,
       side: sideFilter === 'all' ? 'all' : sideFilter,
       search: search ?? undefined,
       year: yearFilter,
@@ -275,12 +294,9 @@ function TransactionsPageV2() {
     markCCA,
   } = useTransactionActions();
 
-  // Commandes non rapprochées (pour KPI)
-  const { count: unreconciledOrdersCount } = useUnreconciledOrders();
-
   // Handle tab change
-  const handleTabChange = (tab: TabFilterV2) => {
-    setActiveTab(tab);
+  const handleStatusChange = (tab: StatusFilter) => {
+    setStatusFilter(tab);
     setSelectedTransaction(null);
     setFilters({
       status: tab === 'all' ? 'all' : tab,
@@ -295,7 +311,7 @@ function TransactionsPageV2() {
     setSideFilter(side);
     setSelectedTransaction(null);
     setFilters({
-      status: activeTab === 'all' ? 'all' : activeTab,
+      status: statusFilter === 'all' ? 'all' : statusFilter,
       side: side === 'all' ? 'all' : side,
       search: search ?? undefined,
       year: yearFilter,
@@ -303,11 +319,11 @@ function TransactionsPageV2() {
   };
 
   // Handle year filter change
-  const handleYearChange = (year: number) => {
+  const handleYearChange = (year: number | null) => {
     setYearFilter(year);
     setSelectedTransaction(null);
     setFilters({
-      status: activeTab === 'all' ? 'all' : activeTab,
+      status: statusFilter === 'all' ? 'all' : statusFilter,
       side: sideFilter === 'all' ? 'all' : sideFilter,
       search: search ?? undefined,
       year,
@@ -318,7 +334,7 @@ function TransactionsPageV2() {
   const handleSearch = (value: string) => {
     setSearch(value);
     setFilters({
-      status: activeTab === 'all' ? 'all' : activeTab,
+      status: statusFilter === 'all' ? 'all' : statusFilter,
       side: sideFilter === 'all' ? 'all' : sideFilter,
       search: value ?? undefined,
       year: yearFilter,
@@ -520,359 +536,338 @@ function TransactionsPageV2() {
       ) ?? 0)
     : 0;
 
+  // Solde total filtré
+  const totalBalance = useMemo(() => {
+    return transactions.reduce((sum, tx) => {
+      const val =
+        tx.side === 'credit' ? Math.abs(tx.amount) : -Math.abs(tx.amount);
+      return sum + val;
+    }, 0);
+  }, [transactions]);
+
+  // Grouper les transactions par mois (pour affichage chrono)
+  const groupedByMonth = useMemo(() => {
+    const groups: {
+      month: string;
+      label: string;
+      txs: UnifiedTransaction[];
+    }[] = [];
+    const monthMap = new Map<string, UnifiedTransaction[]>();
+
+    for (const tx of transactions) {
+      const key = getMonthKey(tx.settled_at ?? tx.emitted_at);
+      const existing = monthMap.get(key);
+      if (existing) {
+        existing.push(tx);
+      } else {
+        monthMap.set(key, [tx]);
+      }
+    }
+
+    // Trier mois décroissant
+    const sortedKeys = Array.from(monthMap.keys()).sort((a, b) =>
+      b.localeCompare(a)
+    );
+    for (const key of sortedKeys) {
+      groups.push({
+        month: key,
+        label: formatMonthLabel(key),
+        txs: monthMap.get(key) ?? [],
+      });
+    }
+    return groups;
+  }, [transactions]);
+
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white border-b border-slate-200 px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-slate-900">Transactions</h1>
-            <div className="flex items-center gap-3 mt-1">
-              <p className="text-sm text-slate-600">
-                {progressPercent}% traite
-              </p>
-              <div className="w-32 h-2 bg-slate-200 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-green-500 transition-all"
-                  style={{ width: `${progressPercent}%` }}
-                />
-              </div>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                void handleAutoCategorizeCredits().catch(error => {
-                  console.error(
-                    '[Transactions] Auto categorize failed:',
-                    error
-                  );
-                });
-              }}
-              disabled={isAutoCategorizing}
-              title="Catégoriser toutes les entrées non classées en 707 (Ventes)"
-            >
-              <Zap className="h-4 w-4 mr-2" />
-              {isAutoCategorizing ? 'En cours...' : 'Entrées → 707'}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Transactions</h1>
+          <p className="text-muted-foreground">
+            {totalCount} transaction{totalCount !== 1 ? 's' : ''} —{' '}
+            {progressPercent}% traitees
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              void handleAutoCategorizeCredits().catch(error => {
+                console.error('[Transactions] Auto categorize failed:', error);
+              });
+            }}
+            disabled={isAutoCategorizing}
+            title="Categoriser toutes les entrees non classees en 707 (Ventes)"
+          >
+            <Zap className="h-4 w-4 mr-2" />
+            {isAutoCategorizing ? 'En cours...' : 'Entrees → 707'}
+          </Button>
+          <Link href="/finance/depenses/regles">
+            <Button variant="outline" size="sm">
+              <Settings className="h-4 w-4 mr-2" />
+              Regles
             </Button>
-            <Link href="/finance/depenses/regles">
-              <Button variant="outline">
-                <Settings className="h-4 w-4 mr-2" />
-                Regles
-              </Button>
-            </Link>
-            <SyncButton onSync={handleSync} label="Sync Qonto" showLastSync />
-          </div>
+          </Link>
+          <SyncButton onSync={handleSync} label="Sync Qonto" showLastSync />
         </div>
       </div>
 
-      <div className="p-6 space-y-6">
-        {/* Error */}
-        {error && (
-          <Card className="border-red-200 bg-red-50">
-            <CardContent className="py-4">
-              <div className="flex items-center gap-2 text-red-700">
-                <AlertCircle className="h-5 w-5" />
-                <p>{error.message}</p>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* KPIs */}
-        {stats && (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            <KPICardUnified
-              variant="elegant"
-              title="A traiter"
-              value={stats.to_process_count}
-              icon={Clock}
-              onClick={() => handleTabChange('to_process')}
-            />
-            <KPICardUnified
-              variant="elegant"
-              title="Commandes à rapprocher"
-              value={unreconciledOrdersCount}
-              icon={ShoppingCart}
-              description="Commandes sans transaction liée"
-            />
-            <KPICardUnified
-              variant="elegant"
-              title="Rapprochees"
-              value={stats.matched_count}
-              icon={CheckCircle2}
-              onClick={() => handleTabChange('matched')}
-            />
-            <KPICardUnified
-              variant="elegant"
-              title="CCA"
-              value={stats.cca_count}
-              icon={Building2}
-              onClick={() => handleTabChange('cca')}
-            />
-            <KPICardUnified
-              variant="elegant"
-              title="Avec justif"
-              value={stats.with_attachment_count}
-              icon={Paperclip}
-            />
-            <KPICardUnified
-              variant="elegant"
-              title="Ignorees"
-              value={stats.ignored_count}
-              icon={XCircle}
-              onClick={() => handleTabChange('ignored')}
-            />
-          </div>
-        )}
-
-        {/* Tabs et Recherche */}
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between flex-wrap gap-4">
-              <Tabs
-                value={activeTab}
-                onValueChange={v => handleTabChange(v as TabFilterV2)}
-              >
-                <TabsList>
-                  <TabsTrigger value="all" className="gap-2">
-                    Toutes
-                    <Badge variant="secondary" className="ml-1">
-                      {stats?.total_count ?? 0}
-                    </Badge>
-                  </TabsTrigger>
-                  <TabsTrigger value="to_process" className="gap-2">
-                    <Clock className="h-4 w-4 text-amber-600" />A traiter
-                    <Badge variant="warning" className="ml-1">
-                      {stats?.to_process_count ?? 0}
-                    </Badge>
-                  </TabsTrigger>
-                  <TabsTrigger value="matched" className="gap-2">
-                    <Check className="h-4 w-4 text-green-600" />
-                    Rapprochees
-                  </TabsTrigger>
-                  <TabsTrigger value="cca" className="gap-2">
-                    <Building2 className="h-4 w-4 text-purple-600" />
-                    CCA
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
-            </div>
-          </CardHeader>
-
-          {/* Filtres */}
-          <div className="px-6 pb-4">
-            <div className="flex flex-wrap items-center gap-4">
-              {/* Recherche */}
-              <div className="flex-1 min-w-[200px] max-w-md">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Rechercher par libellé..."
-                    className="pl-9"
-                    value={search}
-                    onChange={e => handleSearch(e.target.value)}
-                  />
-                </div>
-              </div>
-
-              {/* Filtre Entrées/Sorties */}
-              <select
-                className="px-3 py-2 border border-slate-200 rounded-lg text-sm font-medium"
-                value={sideFilter}
-                onChange={e =>
-                  handleSideChange(e.target.value as 'all' | 'credit' | 'debit')
-                }
-              >
-                <option value="all">📊 Toutes transactions</option>
-                <option value="debit">📤 Sorties (dépenses)</option>
-                <option value="credit">📥 Entrées (recettes)</option>
-              </select>
-
-              {/* Filtre Année */}
-              <select
-                className="px-3 py-2 border border-slate-200 rounded-lg text-sm"
-                value={yearFilter}
-                onChange={e => handleYearChange(parseInt(e.target.value))}
-              >
-                {years.map(year => (
-                  <option key={year} value={year}>
-                    {year}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <CardContent className="p-0">
-            {/* Header tableau */}
-            <div className="flex items-center gap-3 px-3 py-2 bg-muted/50 text-sm font-medium text-muted-foreground border-b">
-              <div className="w-8" />
-              <div className="w-20">Date</div>
-              <div className="flex-1 min-w-0">Libellé</div>
-              <div className="w-44">Catégorie</div>
-              <div className="w-32">À compléter</div>
-              <div className="w-36">Justificatif</div>
-              <div className="w-24 text-right">Montant</div>
-            </div>
-
-            {/* Liste des transactions */}
+      {/* Alerte transactions sans categorie (style Indy) */}
+      {stats && stats.to_process_count > 0 && (
+        <div className="flex items-center justify-between px-5 py-4 bg-rose-50 border border-rose-200 rounded-xl">
+          <div className="flex items-center gap-3">
+            <AlertCircle className="h-5 w-5 text-rose-500" />
             <div>
-              {isLoading ? (
-                <div className="space-y-0">
-                  {[1, 2, 3, 4, 5].map(i => (
-                    <div
-                      key={i}
-                      className="h-16 border-b animate-pulse bg-muted/30"
-                    />
-                  ))}
-                </div>
-              ) : transactions.length === 0 ? (
-                <div className="text-center py-16 text-muted-foreground">
-                  <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p className="font-medium">Aucune transaction trouvee</p>
-                </div>
-              ) : (
-                <div>
-                  {transactions.map(tx => (
+              <p className="font-medium text-rose-900">
+                Transactions sans categorie
+              </p>
+              <p className="text-sm text-rose-700">
+                Vous avez <strong>{stats.to_process_count}</strong> transaction
+                {stats.to_process_count > 1 ? 's' : ''} non categorisee
+                {stats.to_process_count > 1 ? 's' : ''}
+              </p>
+            </div>
+          </div>
+          <Button
+            size="sm"
+            className="bg-rose-600 hover:bg-rose-700 text-white"
+            onClick={() => handleStatusChange('to_process')}
+          >
+            Categoriser
+          </Button>
+        </div>
+      )}
+
+      {/* Error */}
+      {error && (
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="py-4">
+            <div className="flex items-center gap-2 text-red-700">
+              <AlertCircle className="h-5 w-5" />
+              <p>{error.message}</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Solde + Recherche + Filtres */}
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <div>
+          <p className="text-3xl font-bold">{formatAmount(totalBalance)}</p>
+          <p className="text-sm text-muted-foreground">Solde affiche</p>
+        </div>
+        <div className="flex items-center gap-3">
+          {/* Recherche */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Rechercher..."
+              className="pl-9 w-64"
+              value={search}
+              onChange={e => handleSearch(e.target.value)}
+            />
+          </div>
+
+          {/* Filtre status */}
+          <Select
+            value={statusFilter}
+            onValueChange={v => handleStatusChange(v as StatusFilter)}
+          >
+            <SelectTrigger className="w-40">
+              <Filter className="h-4 w-4 mr-2 text-muted-foreground" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Toutes</SelectItem>
+              <SelectItem value="to_process">A traiter</SelectItem>
+              <SelectItem value="classified">Classees</SelectItem>
+              <SelectItem value="matched">Rapprochees</SelectItem>
+              <SelectItem value="cca">CCA</SelectItem>
+              <SelectItem value="ignored">Ignorees</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {/* Filtre Entrees/Sorties */}
+          <Select
+            value={sideFilter}
+            onValueChange={v => handleSideChange(v as SideFilter)}
+          >
+            <SelectTrigger className="w-40">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Toutes</SelectItem>
+              <SelectItem value="debit">Sorties</SelectItem>
+              <SelectItem value="credit">Entrees</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {/* Filtre Annee */}
+          <Select
+            value={yearFilter?.toString() ?? 'all'}
+            onValueChange={v =>
+              handleYearChange(v === 'all' ? null : parseInt(v))
+            }
+          >
+            <SelectTrigger className="w-32">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Toutes</SelectItem>
+              {years.map(year => (
+                <SelectItem key={year} value={String(year)}>
+                  {year}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* Liste chronologique groupee par mois */}
+      <Card>
+        <CardContent className="p-0">
+          {isLoading ? (
+            <div className="space-y-0">
+              {[1, 2, 3, 4, 5].map(i => (
+                <div
+                  key={i}
+                  className="h-16 border-b animate-pulse bg-muted/30"
+                />
+              ))}
+            </div>
+          ) : transactions.length === 0 ? (
+            <div className="text-center py-16 text-muted-foreground">
+              <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p className="font-medium">Aucune transaction trouvee</p>
+            </div>
+          ) : (
+            <div>
+              {groupedByMonth.map(group => (
+                <div key={group.month}>
+                  {/* Separateur mensuel */}
+                  <div className="flex items-center gap-2 px-4 py-2.5 bg-muted/40 border-b">
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-semibold capitalize">
+                      {group.label}
+                    </span>
+                    <Badge variant="secondary" className="text-xs">
+                      {group.txs.length}
+                    </Badge>
+                  </div>
+
+                  {/* Transactions du mois */}
+                  {group.txs.map(tx => (
                     <div
                       key={tx.id}
                       data-testid={`tx-row-${tx.id}`}
                       onClick={() => setSelectedTransaction(tx)}
                       className={`
-                        flex items-center gap-3 p-3 border-b cursor-pointer transition-colors
-                        ${selectedTransaction?.id === tx.id ? 'bg-primary/10 border-primary' : 'hover:bg-muted/50'}
+                        flex items-center gap-3 px-4 py-3 border-b cursor-pointer transition-colors
+                        ${selectedTransaction?.id === tx.id ? 'bg-primary/5 border-l-2 border-l-primary' : 'hover:bg-muted/30'}
                         ${tx.unified_status === 'ignored' ? 'opacity-50' : ''}
                       `}
                     >
-                      {/* Type */}
-                      <div
-                        className={`
-                        flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center
-                        ${tx.side === 'credit' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}
-                      `}
-                      >
-                        {tx.side === 'credit' ? (
-                          <ArrowDownLeft className="h-4 w-4" />
+                      {/* Date empilee */}
+                      <div className="w-12 text-center flex-shrink-0">
+                        <p className="text-sm font-semibold leading-tight">
+                          {new Date(
+                            tx.settled_at ?? tx.emitted_at ?? ''
+                          ).toLocaleDateString('fr-FR', { day: '2-digit' })}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground uppercase">
+                          {new Date(
+                            tx.settled_at ?? tx.emitted_at ?? ''
+                          ).toLocaleDateString('fr-FR', { month: 'short' })}
+                        </p>
+                      </div>
+
+                      {/* Icone justificatif */}
+                      <div className="flex-shrink-0">
+                        {(tx.attachment_ids?.length ?? 0) > 0 ? (
+                          <div className="relative">
+                            <Paperclip className="h-4 w-4 text-muted-foreground" />
+                            <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-green-500 rounded-full" />
+                          </div>
                         ) : (
-                          <ArrowUpRight className="h-4 w-4" />
+                          <Paperclip className="h-4 w-4 text-muted-foreground/30" />
                         )}
                       </div>
 
-                      {/* Date */}
-                      <div className="w-20 text-sm text-muted-foreground">
-                        {formatDate(tx.settled_at ?? tx.emitted_at)}
-                      </div>
-
-                      {/* Libellé + Organisation en bleu */}
+                      {/* Nom contrepartie */}
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate">
-                          {tx.label ?? 'Sans libellé'}
+                        <p className="font-medium truncate text-sm">
+                          {tx.counterparty_name ?? tx.label ?? 'Sans libelle'}
                         </p>
-                        <div className="flex items-center gap-2 text-sm">
-                          <span className="text-muted-foreground truncate">
-                            {tx.counterparty_name ?? '-'}
-                          </span>
-                          {tx.organisation_name && (
-                            <span className="text-blue-600 truncate">
-                              • {tx.organisation_name}
-                            </span>
-                          )}
-                        </div>
+                        {tx.organisation_name && (
+                          <p className="text-xs text-blue-600 truncate">
+                            {tx.organisation_name}
+                          </p>
+                        )}
                       </div>
 
-                      {/* Catégorie avec badge couleur + code PCG */}
-                      <div className="w-44 flex items-center gap-2 text-sm">
+                      {/* Categorie (badge cliquable) */}
+                      <div className="w-44 flex-shrink-0">
                         {tx.category_pcg ? (
-                          <>
+                          <Badge
+                            variant="secondary"
+                            className="text-xs gap-1 max-w-full truncate"
+                            style={{
+                              backgroundColor: `${getPcgColor(tx.category_pcg)}15`,
+                              color: getPcgColor(tx.category_pcg),
+                              borderColor: `${getPcgColor(tx.category_pcg)}30`,
+                            }}
+                          >
                             <span
-                              className="w-2 h-2 rounded-full flex-shrink-0"
+                              className="w-1.5 h-1.5 rounded-full flex-shrink-0"
                               style={{
                                 backgroundColor: getPcgColor(tx.category_pcg),
                               }}
                             />
-                            <div className="min-w-0">
-                              <p className="text-slate-700 truncate">
-                                {getPcgCategory(tx.category_pcg)?.label ??
-                                  tx.category_pcg}
-                              </p>
-                              <p className="text-xs text-slate-400">
-                                {tx.category_pcg}
-                              </p>
-                            </div>
-                          </>
+                            {getPcgCategory(tx.category_pcg)?.label ??
+                              tx.category_pcg}
+                          </Badge>
                         ) : (
-                          <span className="text-slate-300">-</span>
+                          <Badge
+                            variant="outline"
+                            className="text-xs border-orange-300 bg-orange-50 text-orange-700 cursor-pointer hover:bg-orange-100"
+                            onClick={e => {
+                              e.stopPropagation();
+                              setSelectedTransaction(tx);
+                              setShowClassificationModal(true);
+                            }}
+                          >
+                            A categoriser
+                          </Badge>
                         )}
                       </div>
 
-                      {/* Colonne À compléter - Badges éléments manquants */}
-                      <div className="w-32">
-                        <TransactionCompletenessIndicator tx={tx} />
-                      </div>
-
-                      {/* Justificatif: PJ présente / Facultatif (vert) / Upload (rouge) */}
-                      <div className="w-36">
-                        {(() => {
-                          // SOURCE UNIQUE: tx.attachment_ids (colonne directe)
-                          const hasAttachment =
-                            (tx.attachment_ids?.length ?? 0) > 0;
-                          const attachmentId = tx.attachment_ids?.[0];
-
-                          if (hasAttachment && attachmentId) {
-                            // AVEC pièce jointe : Icône + nom cliquable (bleu)
-                            return (
-                              <button
-                                onClick={e => {
-                                  e.stopPropagation();
-                                  window.open(
-                                    `/api/qonto/attachments/${attachmentId}`,
-                                    '_blank'
-                                  );
-                                }}
-                                className="flex items-center gap-1.5 text-blue-500 hover:text-blue-700 transition-colors max-w-full"
-                                title="Voir le justificatif"
-                              >
-                                <Paperclip className="h-3.5 w-3.5 flex-shrink-0" />
-                                <span className="text-xs truncate">
-                                  Justificatif
-                                </span>
-                              </button>
-                            );
-                          } else if (tx.justification_optional) {
-                            // Justificatif facultatif : Texte vert (pas d'upload)
-                            return (
-                              <span className="flex items-center gap-1.5 text-green-600">
-                                <FileCheck className="h-3.5 w-3.5 flex-shrink-0" />
-                                <span className="text-xs">Facultatif</span>
-                              </span>
-                            );
-                          } else {
-                            // SANS pièce jointe + requis : Upload en rouge
-                            return (
-                              <button
-                                onClick={e => {
-                                  e.stopPropagation();
-                                  setUploadTransaction(tx);
-                                  setShowUploadModal(true);
-                                }}
-                                className="flex items-center gap-1.5 text-red-500 hover:text-red-700 transition-colors"
-                                title="Déposer un justificatif (requis)"
-                              >
-                                <Upload className="h-3.5 w-3.5 flex-shrink-0" />
-                                <span className="text-xs">Upload</span>
-                              </button>
-                            );
-                          }
-                        })()}
+                      {/* TVA (badge) */}
+                      <div className="w-24 flex-shrink-0">
+                        {tx.vat_rate != null ? (
+                          <Badge variant="secondary" className="text-xs">
+                            TVA {tx.vat_rate}%
+                          </Badge>
+                        ) : tx.vat_breakdown && tx.vat_breakdown.length > 0 ? (
+                          <Badge
+                            variant="secondary"
+                            className="text-xs bg-green-50 text-green-700"
+                          >
+                            TVA OCR
+                          </Badge>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">
+                            -
+                          </span>
+                        )}
                       </div>
 
                       {/* Montant */}
-                      <div className="w-24 text-right">
+                      <div className="w-28 text-right flex-shrink-0">
                         <span
-                          className={`font-semibold ${tx.side === 'credit' ? 'text-green-600' : 'text-red-600'}`}
+                          className={`font-semibold ${tx.side === 'credit' ? 'text-green-600' : ''}`}
                         >
                           {tx.side === 'credit' ? '+' : ''}
                           {formatAmount(
@@ -885,72 +880,64 @@ function TransactionsPageV2() {
                     </div>
                   ))}
                 </div>
-              )}
+              ))}
             </div>
+          )}
 
-            {/* Pagination */}
-            {!isLoading && transactions.length > 0 && (
-              <div className="flex items-center justify-between border-t px-4 py-3">
-                {/* Page size selector */}
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">
-                    Afficher
-                  </span>
-                  <Select
-                    value={String(pageSize)}
-                    onValueChange={v => setPageSize(Number(v) as 10 | 20)}
-                  >
-                    <SelectTrigger className="w-[70px] h-8">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="10">10</SelectItem>
-                      <SelectItem value="20">20</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <span className="text-sm text-muted-foreground">
-                    par page
-                  </span>
-                </div>
-
-                {/* Page info */}
-                <span className="text-sm text-muted-foreground">
-                  {(currentPage - 1) * pageSize + 1}-
-                  {Math.min(currentPage * pageSize, totalCount)} sur{' '}
-                  {totalCount}
-                </span>
-
-                {/* Navigation */}
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={prevPage}
-                    disabled={currentPage <= 1 || isLoading}
-                    className="gap-1"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                    Précédent
-                  </Button>
-                  <span className="text-sm text-muted-foreground px-2">
-                    Page {currentPage} / {totalPages}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={nextPage}
-                    disabled={currentPage >= totalPages || isLoading}
-                    className="gap-1"
-                  >
-                    Suivant
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
+          {/* Pagination */}
+          {!isLoading && transactions.length > 0 && (
+            <div className="flex items-center justify-between border-t px-4 py-3">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">Afficher</span>
+                <Select
+                  value={String(pageSize)}
+                  onValueChange={v => setPageSize(Number(v) as 10 | 20)}
+                >
+                  <SelectTrigger className="w-[70px] h-8">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="20">20</SelectItem>
+                  </SelectContent>
+                </Select>
+                <span className="text-sm text-muted-foreground">par page</span>
               </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+
+              <span className="text-sm text-muted-foreground">
+                {(currentPage - 1) * pageSize + 1}-
+                {Math.min(currentPage * pageSize, totalCount)} sur {totalCount}
+              </span>
+
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={prevPage}
+                  disabled={currentPage <= 1 || isLoading}
+                  className="gap-1"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Precedent
+                </Button>
+                <span className="text-sm text-muted-foreground px-2">
+                  Page {currentPage} / {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={nextPage}
+                  disabled={currentPage >= totalPages || isLoading}
+                  className="gap-1"
+                >
+                  Suivant
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Side Panel */}
       <Sheet
@@ -1029,44 +1016,55 @@ function TransactionsPageV2() {
                         {selectedTransaction.label ?? '-'}
                       </p>
                     </div>
-                    {(() => {
-                      const rawData = selectedTransaction.raw_data as Record<
-                        string,
-                        unknown
-                      > | null;
-                      const reference =
-                        rawData && typeof rawData.reference === 'string'
-                          ? rawData.reference
-                          : null;
-                      const note =
-                        rawData && typeof rawData.note === 'string'
-                          ? rawData.note
-                          : null;
-                      if (!reference && !note) return null;
-                      return (
-                        <>
-                          {reference && (
-                            <div className="mt-1">
-                              <p className="text-muted-foreground text-[10px]">
-                                Référence
-                              </p>
-                              <p className="font-medium text-xs">{reference}</p>
-                            </div>
-                          )}
-                          {note && (
-                            <div className="mt-1">
-                              <p className="text-muted-foreground text-[10px]">
-                                Note
-                              </p>
-                              <p className="font-medium text-xs text-blue-600">
-                                {note}
-                              </p>
-                            </div>
-                          )}
-                        </>
-                      );
-                    })()}
+
+                    {/* Notes (style Indy — visible, pas cachée) */}
+                    {/* Note éditable */}
+                    <div className="mt-1 p-1.5 bg-blue-50 border border-blue-100 rounded">
+                      <div className="flex items-center gap-1 mb-0.5">
+                        <StickyNote className="h-3 w-3 text-blue-500" />
+                        <p className="text-[10px] font-medium text-blue-700">
+                          Note
+                        </p>
+                      </div>
+                      <Textarea
+                        key={selectedTransaction.id + '-note'}
+                        defaultValue={selectedTransaction.note ?? ''}
+                        placeholder="Ajouter une note..."
+                        className="text-xs min-h-[40px] h-auto resize-none bg-white border-blue-200 focus:border-blue-400"
+                        rows={2}
+                        onBlur={e => {
+                          const newNote = e.target.value.trim() || null;
+                          if (newNote === (selectedTransaction.note ?? null))
+                            return;
+                          void (async () => {
+                            try {
+                              const supabase = createClient();
+                              const { error: updateError } = await supabase
+                                .from('bank_transactions')
+                                .update({ note: newNote })
+                                .eq('id', selectedTransaction.id);
+                              if (updateError) throw updateError;
+                              toast.success('Note sauvegardée');
+                              void refresh().catch(err => {
+                                console.error(
+                                  '[Transactions] Refresh after note update failed:',
+                                  err
+                                );
+                              });
+                            } catch (err) {
+                              console.error('[Note update] Error:', err);
+                              toast.error(
+                                'Erreur lors de la sauvegarde de la note'
+                              );
+                            }
+                          })();
+                        }}
+                      />
+                    </div>
+
                     <Separator className="my-0.5" />
+
+                    {/* Contrepartie + Mode de paiement */}
                     <div className="grid grid-cols-2 gap-1.5">
                       <div>
                         <p className="text-xs text-muted-foreground">
@@ -1077,10 +1075,59 @@ function TransactionsPageV2() {
                         </p>
                       </div>
                       <div>
-                        <p className="text-xs text-muted-foreground">Type</p>
-                        <p className="text-xs font-medium">
-                          {selectedTransaction.operation_type ?? 'Virement'}
+                        <p className="text-xs text-muted-foreground">
+                          Mode de paiement
                         </p>
+                        <div className="flex items-center gap-1">
+                          <CreditCard className="h-3 w-3 text-muted-foreground" />
+                          <Select
+                            value={
+                              selectedTransaction.payment_method ??
+                              detectBankPaymentMethod(
+                                selectedTransaction.label ?? ''
+                              ) ??
+                              'none'
+                            }
+                            onValueChange={value => {
+                              const newMethod = value === 'none' ? null : value;
+                              void (async () => {
+                                try {
+                                  const supabase = createClient();
+                                  const { error: updateError } = await supabase
+                                    .from('bank_transactions')
+                                    .update({ payment_method: newMethod })
+                                    .eq('id', selectedTransaction.id);
+                                  if (updateError) throw updateError;
+                                  toast.success('Mode de paiement mis à jour');
+                                  void refresh().catch(err => {
+                                    console.error(
+                                      '[Transactions] Refresh after payment method update failed:',
+                                      err
+                                    );
+                                  });
+                                } catch (err) {
+                                  console.error(
+                                    '[Payment method update] Error:',
+                                    err
+                                  );
+                                  toast.error('Erreur lors de la mise à jour');
+                                }
+                              })();
+                            }}
+                          >
+                            <SelectTrigger className="h-6 text-xs w-full">
+                              <SelectValue placeholder="Non défini" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="none">Non défini</SelectItem>
+                              {BANK_PAYMENT_METHODS.map(pm => (
+                                <SelectItem key={pm.value} value={pm.value}>
+                                  {pm.icon} {pm.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </div>
                     </div>
                     {selectedTransaction.category_pcg && (
@@ -1420,6 +1467,71 @@ function TransactionsPageV2() {
                     </div>
                   </CardContent>
                 </Card>
+
+                {/* Détails techniques (collapsible — référence Qonto, type opération) */}
+                {(() => {
+                  const rawData = selectedTransaction.raw_data as Record<
+                    string,
+                    unknown
+                  > | null;
+                  const reference =
+                    rawData && typeof rawData.reference === 'string'
+                      ? rawData.reference
+                      : null;
+                  if (!reference && !selectedTransaction.operation_type)
+                    return null;
+                  return (
+                    <div className="mt-0.5">
+                      <button
+                        onClick={() =>
+                          setShowTechnicalDetails(!showTechnicalDetails)
+                        }
+                        className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors w-full"
+                      >
+                        {showTechnicalDetails ? (
+                          <ChevronUp className="h-3 w-3" />
+                        ) : (
+                          <ChevronDown className="h-3 w-3" />
+                        )}
+                        Détails techniques
+                      </button>
+                      {showTechnicalDetails && (
+                        <div className="mt-0.5 p-1.5 bg-muted/30 rounded text-[10px] space-y-0.5">
+                          {reference && (
+                            <div>
+                              <span className="text-muted-foreground">
+                                Réf :{' '}
+                              </span>
+                              <span className="font-mono break-all">
+                                {reference}
+                              </span>
+                            </div>
+                          )}
+                          {selectedTransaction.operation_type && (
+                            <div>
+                              <span className="text-muted-foreground">
+                                Type :{' '}
+                              </span>
+                              <span className="font-mono">
+                                {selectedTransaction.operation_type}
+                              </span>
+                            </div>
+                          )}
+                          {selectedTransaction.transaction_id && (
+                            <div>
+                              <span className="text-muted-foreground">
+                                ID :{' '}
+                              </span>
+                              <span className="font-mono break-all">
+                                {selectedTransaction.transaction_id}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
 
                 {/* Actions simplifiées - Transactions = Justificatifs + Rapprochement */}
                 <div className="space-y-1">

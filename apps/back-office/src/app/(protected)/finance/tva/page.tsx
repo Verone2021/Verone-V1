@@ -4,12 +4,12 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 /**
- * Tresorerie fusionnee dans le Pilotage (/finance).
+ * TVA deplacee vers /finance/documents/tva
  */
-export default function TresorerieRedirect() {
+export default function TvaRedirect() {
   const router = useRouter();
   useEffect(() => {
-    router.replace('/finance');
+    router.replace('/finance/documents/tva');
   }, [router]);
   return null;
 }

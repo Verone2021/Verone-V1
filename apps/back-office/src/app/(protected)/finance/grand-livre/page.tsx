@@ -4,12 +4,12 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 /**
- * Tresorerie fusionnee dans le Pilotage (/finance).
+ * Grand Livre deplace vers /finance/documents/grand-livre
  */
-export default function TresorerieRedirect() {
+export default function GrandLivreRedirect() {
   const router = useRouter();
   useEffect(() => {
-    router.replace('/finance');
+    router.replace('/finance/documents/grand-livre');
   }, [router]);
   return null;
 }
