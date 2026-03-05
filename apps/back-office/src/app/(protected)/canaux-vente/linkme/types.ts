@@ -159,7 +159,7 @@ export interface LinkMePricingUpdate {
   max_margin_rate?: number;
   suggested_margin_rate?: number | null;
   /** Commission LinkMe (sera sauvé comme channel_commission_rate) */
-  channel_commission_rate?: number | null;
+  channel_commission_rate?: number;
   /** Prix de vente HT spécifique au canal */
   custom_price_ht?: number | null;
   /** Tarif public HT */

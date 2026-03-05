@@ -11,13 +11,13 @@
  * @since 2025-12-22
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 
 import { ProductThumbnail } from '@verone/products';
-import { Badge, Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
+import { Badge, Card, CardContent, Input } from '@verone/ui';
 import {
   ArrowLeft,
   Loader2,
@@ -27,6 +27,9 @@ import {
   Building2,
   Briefcase,
   Euro,
+  Search,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 
 import {
@@ -55,41 +58,49 @@ export default function StorageDetailPage() {
   const { data: pricingTiers } = useStoragePricingTiers();
 
   const [ownerName, setOwnerName] = useState<string>('');
+  const [ownerLogoUrl, setOwnerLogoUrl] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
-  // Fetch owner name
+  // Fetch owner name and logo
   useEffect(() => {
-    async function fetchOwnerName() {
+    async function fetchOwnerInfo() {
       const { createClient } = await import('@verone/utils/supabase/client');
       const supabase = createClient();
 
       if (ownerType === 'enseigne') {
-        type EnseigneName = { name: string };
+        type EnseigneInfo = { name: string; logo_url: string | null };
 
         const { data } = await supabase
           .from('enseignes')
-          .select('name')
+          .select('name, logo_url')
           .eq('id', ownerId)
           .single()
-          .returns<EnseigneName>();
-        if (data) setOwnerName(data.name);
+          .returns<EnseigneInfo>();
+        if (data) {
+          setOwnerName(data.name);
+          setOwnerLogoUrl(data.logo_url);
+        }
       } else {
-        type OrganisationName = {
+        type OrganisationInfo = {
           trade_name: string | null;
           legal_name: string;
+          logo_url: string | null;
         };
 
         const { data } = await supabase
           .from('organisations')
-          .select('trade_name, legal_name')
+          .select('trade_name, legal_name, logo_url')
           .eq('id', ownerId)
           .single()
-          .returns<OrganisationName>();
-        if (data)
+          .returns<OrganisationInfo>();
+        if (data) {
           setOwnerName(data.trade_name ?? data.legal_name ?? 'Organisation');
+          setOwnerLogoUrl(data.logo_url);
+        }
       }
     }
-    void fetchOwnerName().catch(error => {
-      console.error('[LinkMeStockage] fetchOwnerName failed:', error);
+    void fetchOwnerInfo().catch(error => {
+      console.error('[LinkMeStockage] fetchOwnerInfo failed:', error);
     });
   }, [ownerType, ownerId]);
 
@@ -98,6 +109,17 @@ export default function StorageDetailPage() {
   const estimatedPrice = pricingTiers
     ? calculateStoragePrice(totalVolume, pricingTiers)
     : 0;
+
+  const filteredAllocations = useMemo(() => {
+    if (!data?.allocations) return [];
+    if (!searchQuery.trim()) return data.allocations;
+    const q = searchQuery.toLowerCase();
+    return data.allocations.filter(
+      a =>
+        a.product_name.toLowerCase().includes(q) ||
+        a.product_sku.toLowerCase().includes(q)
+    );
+  }, [data?.allocations, searchQuery]);
 
   if (isLoading) {
     return (
@@ -120,17 +142,28 @@ export default function StorageDetailPage() {
         </Link>
 
         <div className="flex items-center gap-4">
-          <div
-            className={`p-4 rounded-xl ${
-              isEnseigne ? 'bg-blue-50' : 'bg-purple-50'
-            }`}
-          >
-            {isEnseigne ? (
-              <Building2 className="h-8 w-8 text-blue-600" />
-            ) : (
-              <Briefcase className="h-8 w-8 text-purple-600" />
-            )}
-          </div>
+          {ownerLogoUrl ? (
+            <div className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 bg-white border">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={getLogoUrl(ownerLogoUrl)}
+                alt={ownerName}
+                className="w-full h-full object-contain p-1"
+              />
+            </div>
+          ) : (
+            <div
+              className={`p-4 rounded-xl ${
+                isEnseigne ? 'bg-blue-50' : 'bg-purple-50'
+              }`}
+            >
+              {isEnseigne ? (
+                <Building2 className="h-8 w-8 text-blue-600" />
+              ) : (
+                <Briefcase className="h-8 w-8 text-purple-600" />
+              )}
+            </div>
+          )}
           <div>
             <h1 className="text-2xl font-bold text-gray-900">
               {ownerName ?? 'Chargement...'}
@@ -177,12 +210,21 @@ export default function StorageDetailPage() {
         />
       </div>
 
-      {/* Products Grid - CARDS */}
-      <div className="mb-4">
-        <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+      {/* Search + Products Grid */}
+      <div className="flex items-center justify-between mb-4 gap-4">
+        <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2 shrink-0">
           <Package className="h-5 w-5" />
           Produits en stockage ({data?.allocations.length ?? 0})
         </h2>
+        <div className="relative max-w-sm w-full">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Input
+            placeholder="Rechercher par nom ou SKU..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            className="pl-9"
+          />
+        </div>
       </div>
 
       {!data?.allocations || data.allocations.length === 0 ? (
@@ -192,18 +234,34 @@ export default function StorageDetailPage() {
           </div>
           <p className="text-gray-500">Aucun produit en stockage</p>
         </div>
+      ) : filteredAllocations.length === 0 ? (
+        <div className="bg-white rounded-xl p-12 text-center border">
+          <p className="text-gray-500">
+            Aucun produit ne correspond a &quot;{searchQuery}&quot;
+          </p>
+        </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {data.allocations.map(allocation => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {filteredAllocations.map(allocation => (
             <ProductStorageCard
               key={allocation.allocation_id}
               allocation={allocation}
+              storageId={id}
             />
           ))}
         </div>
       )}
     </div>
   );
+}
+
+// ==============================================================
+// HELPERS
+// ==============================================================
+
+function getLogoUrl(logoPath: string): string {
+  if (logoPath.startsWith('http')) return logoPath;
+  return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/organisation-logos/${logoPath}`;
 }
 
 // ==============================================================
@@ -245,59 +303,63 @@ function SummaryCard({
   );
 }
 
-function ProductStorageCard({ allocation }: { allocation: StorageAllocation }) {
-  const totalVolume =
-    allocation.stock_quantity * (allocation.unit_volume_m3 ?? 0);
-
+function ProductStorageCard({
+  allocation,
+  storageId,
+}: {
+  allocation: StorageAllocation;
+  storageId: string;
+}) {
   return (
-    <Card className="hover:shadow-lg transition-shadow overflow-hidden">
-      <CardHeader className="pb-3">
-        <div className="flex items-start gap-4">
-          {/* Product Image */}
-          <div className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 flex items-center justify-center">
-            <ProductThumbnail
-              src={undefined}
-              alt={allocation.product_name}
-              size="md"
-            />
+    <Link
+      href={`/canaux-vente/linkme/stockage/${storageId}/produit/${allocation.allocation_id}`}
+      className="block"
+    >
+      <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
+        <CardContent className="p-3">
+          <div className="flex items-start gap-3">
+            <div className="w-12 h-12 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 flex items-center justify-center">
+              <ProductThumbnail
+                src={allocation.product_image_url ?? undefined}
+                alt={allocation.product_name}
+                size="sm"
+              />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-gray-900 truncate">
+                {allocation.product_name}
+              </p>
+              <p className="text-xs text-gray-400 font-mono">
+                {allocation.product_sku}
+              </p>
+            </div>
           </div>
-          <div className="flex-1 min-w-0">
-            <CardTitle className="text-base truncate">
-              {allocation.product_name}
-            </CardTitle>
-            <p className="text-sm text-gray-500 font-mono mt-1">
-              {allocation.product_sku}
+          <div className="flex items-center justify-between mt-3 pt-2 border-t">
+            <p className="text-sm font-semibold text-gray-900">
+              {allocation.stock_quantity} unites
             </p>
-            {allocation.billable_in_storage && (
-              <Badge className="mt-2 bg-green-100 text-green-700 border-green-200">
-                Facturable
-              </Badge>
-            )}
+            <div className="flex items-center gap-1">
+              {allocation.billable_in_storage ? (
+                <Badge className="bg-green-100 text-green-700 border-green-200 text-[10px] px-1.5 py-0">
+                  Fact.
+                </Badge>
+              ) : (
+                <Badge
+                  variant="outline"
+                  className="text-gray-400 text-[10px] px-1.5 py-0"
+                >
+                  Non fact.
+                </Badge>
+              )}
+              {allocation.is_visible ? (
+                <Eye className="h-3.5 w-3.5 text-blue-500" />
+              ) : (
+                <EyeOff className="h-3.5 w-3.5 text-red-400" />
+              )}
+            </div>
           </div>
-        </div>
-      </CardHeader>
-      <CardContent className="pt-0">
-        <div className="grid grid-cols-3 gap-4 text-center border-t pt-4">
-          <div>
-            <p className="text-2xl font-bold text-gray-900">
-              {allocation.stock_quantity}
-            </p>
-            <p className="text-xs text-gray-500">unites</p>
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-blue-600">
-              {formatVolumeM3(allocation.unit_volume_m3)}
-            </p>
-            <p className="text-xs text-gray-500">vol. unitaire</p>
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-green-600">
-              {formatVolumeM3(totalVolume)}
-            </p>
-            <p className="text-xs text-gray-500">vol. total</p>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </Link>
   );
 }
