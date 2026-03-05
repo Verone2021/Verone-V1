@@ -38,6 +38,7 @@ export interface StorageAllocation {
   unit_volume_m3: number;
   total_volume_m3: number;
   billable_in_storage: boolean;
+  is_visible: boolean;
   allocated_at: string;
   storage_start_date: string;
   product_image_url: string | null;
@@ -200,6 +201,70 @@ export function useUpdateAllocationBillable() {
 
       if (error) {
         console.warn('Error updating allocation:', error.message);
+        throw error;
+      }
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['storage-overview'] });
+      await queryClient.invalidateQueries({
+        queryKey: ['affiliate-storage-detail'],
+      });
+    },
+  });
+}
+
+/**
+ * Hook: toggle visibility of a storage allocation
+ */
+export function useUpdateAllocationVisibility() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      allocationId,
+      visible,
+    }: {
+      allocationId: string;
+      visible: boolean;
+    }): Promise<void> => {
+      const supabase = createClient();
+
+      const { error } = await supabase
+        .from('storage_allocations')
+        .update({ is_visible: visible })
+        .eq('id', allocationId);
+
+      if (error) {
+        console.warn('Error updating visibility:', error.message);
+        throw error;
+      }
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['storage-overview'] });
+      await queryClient.invalidateQueries({
+        queryKey: ['affiliate-storage-detail'],
+      });
+    },
+  });
+}
+
+/**
+ * Hook: delete a storage allocation
+ */
+export function useDeleteStorageAllocation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (allocationId: string): Promise<void> => {
+      const supabase = createClient();
+
+      const { error } = await supabase
+        .from('storage_allocations')
+        .delete()
+        .eq('id', allocationId);
+
+      if (error) {
+        console.warn('Error deleting allocation:', error.message);
         throw error;
       }
     },
