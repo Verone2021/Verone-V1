@@ -9,6 +9,7 @@ import {
   getPcgColor,
   formatBankPaymentMethod,
   detectBankPaymentMethod,
+  BANK_PAYMENT_METHODS,
 } from '@verone/finance';
 import {
   RapprochementModal,
@@ -41,6 +42,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  Textarea,
 } from '@verone/ui';
 import { SyncButton } from '@verone/ui-business';
 import { createClient } from '@verone/utils/supabase/client';
@@ -1016,28 +1018,49 @@ function TransactionsPageV2() {
                     </div>
 
                     {/* Notes (style Indy — visible, pas cachée) */}
-                    {(() => {
-                      const rawData = selectedTransaction.raw_data as Record<
-                        string,
-                        unknown
-                      > | null;
-                      const note =
-                        rawData && typeof rawData.note === 'string'
-                          ? rawData.note
-                          : null;
-                      if (!note) return null;
-                      return (
-                        <div className="mt-1 p-1.5 bg-blue-50 border border-blue-100 rounded">
-                          <div className="flex items-center gap-1 mb-0.5">
-                            <StickyNote className="h-3 w-3 text-blue-500" />
-                            <p className="text-[10px] font-medium text-blue-700">
-                              Note
-                            </p>
-                          </div>
-                          <p className="text-xs text-blue-800">{note}</p>
-                        </div>
-                      );
-                    })()}
+                    {/* Note éditable */}
+                    <div className="mt-1 p-1.5 bg-blue-50 border border-blue-100 rounded">
+                      <div className="flex items-center gap-1 mb-0.5">
+                        <StickyNote className="h-3 w-3 text-blue-500" />
+                        <p className="text-[10px] font-medium text-blue-700">
+                          Note
+                        </p>
+                      </div>
+                      <Textarea
+                        key={selectedTransaction.id + '-note'}
+                        defaultValue={selectedTransaction.note ?? ''}
+                        placeholder="Ajouter une note..."
+                        className="text-xs min-h-[40px] h-auto resize-none bg-white border-blue-200 focus:border-blue-400"
+                        rows={2}
+                        onBlur={e => {
+                          const newNote = e.target.value.trim() || null;
+                          if (newNote === (selectedTransaction.note ?? null))
+                            return;
+                          void (async () => {
+                            try {
+                              const supabase = createClient();
+                              const { error: updateError } = await supabase
+                                .from('bank_transactions')
+                                .update({ note: newNote })
+                                .eq('id', selectedTransaction.id);
+                              if (updateError) throw updateError;
+                              toast.success('Note sauvegardée');
+                              void refresh().catch(err => {
+                                console.error(
+                                  '[Transactions] Refresh after note update failed:',
+                                  err
+                                );
+                              });
+                            } catch (err) {
+                              console.error('[Note update] Error:', err);
+                              toast.error(
+                                'Erreur lors de la sauvegarde de la note'
+                              );
+                            }
+                          })();
+                        }}
+                      />
+                    </div>
 
                     <Separator className="my-0.5" />
 
@@ -1057,37 +1080,53 @@ function TransactionsPageV2() {
                         </p>
                         <div className="flex items-center gap-1">
                           <CreditCard className="h-3 w-3 text-muted-foreground" />
-                          <p className="text-xs font-medium">
-                            {(() => {
-                              // Priorité : champ payment_method > détection depuis label > type opération
-                              if (selectedTransaction.payment_method) {
-                                return formatBankPaymentMethod(
-                                  selectedTransaction.payment_method as Parameters<
-                                    typeof formatBankPaymentMethod
-                                  >[0]
-                                );
-                              }
-                              const detected = detectBankPaymentMethod(
+                          <Select
+                            value={
+                              selectedTransaction.payment_method ??
+                              detectBankPaymentMethod(
                                 selectedTransaction.label ?? ''
-                              );
-                              if (detected)
-                                return formatBankPaymentMethod(detected);
-                              // Fallback sur operation_type traduit
-                              const opType = selectedTransaction.operation_type;
-                              if (
-                                opType === 'transfer' ||
-                                opType === 'swift_income'
-                              )
-                                return 'Virement';
-                              if (opType === 'card') return 'Carte bancaire';
-                              if (opType === 'direct_debit')
-                                return 'Prélèvement';
-                              if (opType === 'check') return 'Chèque';
-                              if (opType === 'qonto_fee')
-                                return 'Frais bancaires';
-                              return opType ?? 'Non défini';
-                            })()}
-                          </p>
+                              ) ??
+                              'none'
+                            }
+                            onValueChange={value => {
+                              const newMethod = value === 'none' ? null : value;
+                              void (async () => {
+                                try {
+                                  const supabase = createClient();
+                                  const { error: updateError } = await supabase
+                                    .from('bank_transactions')
+                                    .update({ payment_method: newMethod })
+                                    .eq('id', selectedTransaction.id);
+                                  if (updateError) throw updateError;
+                                  toast.success('Mode de paiement mis à jour');
+                                  void refresh().catch(err => {
+                                    console.error(
+                                      '[Transactions] Refresh after payment method update failed:',
+                                      err
+                                    );
+                                  });
+                                } catch (err) {
+                                  console.error(
+                                    '[Payment method update] Error:',
+                                    err
+                                  );
+                                  toast.error('Erreur lors de la mise à jour');
+                                }
+                              })();
+                            }}
+                          >
+                            <SelectTrigger className="h-6 text-xs w-full">
+                              <SelectValue placeholder="Non défini" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="none">Non défini</SelectItem>
+                              {BANK_PAYMENT_METHODS.map(pm => (
+                                <SelectItem key={pm.value} value={pm.value}>
+                                  {pm.icon} {pm.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
                       </div>
                     </div>

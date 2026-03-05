@@ -1,9 +1,16 @@
-import { permanentRedirect } from 'next/navigation';
+'use client';
+
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 /**
- * Page obsolète - redirige vers la page Transactions unifiée
- * Les fonctionnalités rapprochement sont intégrées dans /finance/transactions
+ * Page obsolete - redirige vers la page Transactions unifiee
+ * Les fonctionnalites rapprochement sont integrees dans /finance/transactions
  */
 export default function RapprochementPage() {
-  permanentRedirect('/finance/transactions');
+  const router = useRouter();
+  useEffect(() => {
+    router.replace('/finance/transactions');
+  }, [router]);
+  return null;
 }

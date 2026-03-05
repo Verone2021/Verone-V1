@@ -667,25 +667,26 @@ export function QuickClassificationModal({
 
       // 2. Mode modification: mettre à jour la règle existante si la catégorie a changé
       if (existingRuleId && selectedCategory !== currentCategory) {
-        // TVA retirée des règles - vient de Qonto OCR ou saisie manuelle par transaction
         await updateMatchingRule(existingRuleId, {
           default_category: selectedCategory,
+          default_vat_rate: isVentilationMode ? null : tvaRate,
         });
       }
-      // 3. Mode création: créer ou mettre à jour la règle automatique (catégorie seulement)
+      // 3. Mode création: créer ou mettre à jour la règle automatique (catégorie + TVA)
       // Note: L'organisation est gérée via OrganisationLinkingModal (page Règles → "Lier")
-      // TVA retirée des règles - vient de Qonto OCR ou saisie manuelle par transaction
       else if (!isModificationMode && createRule && label) {
         let ruleIdForApply: string | null = null;
+        const ruleVatRate = isVentilationMode ? null : tvaRate;
 
         if (existingRuleForLabel) {
-          // UPDATE règle existante avec la catégorie seulement
+          // UPDATE règle existante avec catégorie + TVA
           await updateMatchingRule(existingRuleForLabel.id, {
             default_category: selectedCategory,
+            default_vat_rate: ruleVatRate,
           });
           ruleIdForApply = existingRuleForLabel.id;
         } else {
-          // CREATE nouvelle règle (catégorie seulement, pas de TVA)
+          // CREATE nouvelle règle (catégorie + TVA)
           const newRule = await createMatchingRule({
             match_type: 'label_contains',
             match_value: label,
@@ -693,6 +694,7 @@ export function QuickClassificationModal({
             organisation_id: null,
             counterparty_type: null,
             default_category: selectedCategory,
+            default_vat_rate: ruleVatRate,
             default_role_type: 'supplier',
             priority: 100,
           });

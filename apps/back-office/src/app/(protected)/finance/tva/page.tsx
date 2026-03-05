@@ -1,8 +1,15 @@
-import { redirect } from 'next/navigation';
+'use client';
+
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 /**
  * TVA deplacee vers /finance/documents/tva
  */
 export default function TvaRedirect() {
-  redirect('/finance/documents/tva');
+  const router = useRouter();
+  useEffect(() => {
+    router.replace('/finance/documents/tva');
+  }, [router]);
+  return null;
 }

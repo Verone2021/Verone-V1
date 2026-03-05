@@ -1,4 +1,7 @@
-import { redirect } from 'next/navigation';
+'use client';
+
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 /**
  * Livres comptables deplacees vers /finance/documents (hub cartes).
@@ -9,5 +12,9 @@ import { redirect } from 'next/navigation';
  * - /finance/documents/compte-resultat
  */
 export default function LivresRedirect() {
-  redirect('/finance/documents');
+  const router = useRouter();
+  useEffect(() => {
+    router.replace('/finance/documents');
+  }, [router]);
+  return null;
 }
