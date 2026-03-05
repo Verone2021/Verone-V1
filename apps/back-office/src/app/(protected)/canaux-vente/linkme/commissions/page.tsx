@@ -53,6 +53,7 @@ import {
   X,
 } from 'lucide-react';
 
+import { CommissionDetailSheet } from './components/CommissionDetailSheet';
 import { PaymentRequestModalAdmin } from '../components/PaymentRequestModalAdmin';
 
 // ============================================
@@ -198,6 +199,10 @@ export default function LinkMeCommissionsPage() {
   const [currentPage, setCurrentPage] = useState(0);
   const [sortColumn, setSortColumn] = useState<SortColumn>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  const [detailCommission, setDetailCommission] = useState<Commission | null>(
+    null
+  );
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
 
   const fetchData = useCallback(async () => {
     const supabase = createClient();
@@ -460,7 +465,7 @@ export default function LinkMeCommissionsPage() {
   }
 
   function exportToCSV() {
-    const filtered = applyFilters(getCommissionsByTab(activeTab));
+    const filtered = filteredByTab[activeTab];
     if (filtered.length === 0) {
       toast({
         title: 'Aucune donnée',
@@ -540,37 +545,40 @@ export default function LinkMeCommissionsPage() {
   // COMPUTED VALUES
   // ============================================
 
+  // Apply filters per tab — KPI cards + badges + table all use this
+  const filteredByTab = useMemo(() => {
+    const result = {} as Record<TabType, Commission[]>;
+    for (const tab of Object.keys(TABS_CONFIG) as TabType[]) {
+      result[tab] = applyFilters(getCommissionsByTab(tab));
+    }
+    return result;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    commissions,
+    searchTerm,
+    affiliateFilter,
+    typeFilter,
+    filterYear,
+    enseigneFilter,
+    sortColumn,
+    sortDirection,
+  ]);
+
   // Totaux en TTC (cohérent avec LinkMe app)
-  const tabCounts: Record<TabType, { count: number; total: number }> = {
-    en_attente: {
-      count: getCommissionsByTab('en_attente').length,
-      total: getCommissionsByTab('en_attente').reduce(
-        (sum, c) => sum + (c.affiliate_commission_ttc ?? 0),
-        0
-      ),
-    },
-    payables: {
-      count: getCommissionsByTab('payables').length,
-      total: getCommissionsByTab('payables').reduce(
-        (sum, c) => sum + (c.affiliate_commission_ttc ?? 0),
-        0
-      ),
-    },
-    en_cours: {
-      count: getCommissionsByTab('en_cours').length,
-      total: getCommissionsByTab('en_cours').reduce(
-        (sum, c) => sum + (c.affiliate_commission_ttc ?? 0),
-        0
-      ),
-    },
-    payees: {
-      count: getCommissionsByTab('payees').length,
-      total: getCommissionsByTab('payees').reduce(
-        (sum, c) => sum + (c.affiliate_commission_ttc ?? 0),
-        0
-      ),
-    },
-  };
+  const tabCounts = useMemo(() => {
+    const result = {} as Record<TabType, { count: number; total: number }>;
+    for (const tab of Object.keys(TABS_CONFIG) as TabType[]) {
+      const list = filteredByTab[tab];
+      result[tab] = {
+        count: list.length,
+        total: list.reduce(
+          (sum, c) => sum + (c.affiliate_commission_ttc ?? 0),
+          0
+        ),
+      };
+    }
+    return result;
+  }, [filteredByTab]);
 
   // ============================================
   // RENDER
@@ -668,7 +676,7 @@ export default function LinkMeCommissionsPage() {
 
         {(Object.keys(TABS_CONFIG) as TabType[]).map(tab => {
           const config = TABS_CONFIG[tab];
-          const allTabCommissions = applyFilters(getCommissionsByTab(tab));
+          const allTabCommissions = filteredByTab[tab];
           const totalPages = Math.max(
             1,
             Math.ceil(allTabCommissions.length / pageSize)
@@ -1001,6 +1009,10 @@ export default function LinkMeCommissionsPage() {
                                   variant="ghost"
                                   size="sm"
                                   className="h-8 w-8 p-0"
+                                  onClick={() => {
+                                    setDetailCommission(commission);
+                                    setIsDetailOpen(true);
+                                  }}
                                 >
                                   <Eye className="h-4 w-4" />
                                 </ButtonV2>
@@ -1082,6 +1094,13 @@ export default function LinkMeCommissionsPage() {
           );
         })}
       </Tabs>
+
+      {/* Detail commission Sheet */}
+      <CommissionDetailSheet
+        commission={detailCommission}
+        open={isDetailOpen}
+        onOpenChange={setIsDetailOpen}
+      />
 
       {/* Modal de paiement */}
       {(() => {
