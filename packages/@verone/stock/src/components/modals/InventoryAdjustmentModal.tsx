@@ -265,13 +265,6 @@ export function InventoryAdjustmentModal({
       return { valid: false, error: 'Veuillez sélectionner un motif' };
     }
 
-    if (formData.notes.trim().length < 10) {
-      return {
-        valid: false,
-        error: 'Les notes doivent contenir au moins 10 caractères',
-      };
-    }
-
     return { valid: true };
   };
 
@@ -612,26 +605,17 @@ export function InventoryAdjustmentModal({
 
               {/* Notes - Commun à tous */}
               <div>
-                <Label htmlFor="notes">
-                  Notes *{' '}
-                  <span className="text-gray-500 text-xs">
-                    (minimum 10 caractères)
-                  </span>
-                </Label>
+                <Label htmlFor="notes">Notes</Label>
                 <Textarea
                   id="notes"
                   value={formData.notes}
                   onChange={e =>
                     setFormData({ ...formData, notes: e.target.value })
                   }
-                  placeholder="Détails sur l'ajustement..."
+                  placeholder="Détails sur l'ajustement (optionnel)..."
                   rows={3}
                   className="mt-1"
-                  required
                 />
-                <p className="text-xs text-gray-500 mt-1">
-                  {formData.notes.length}/10 caractères minimum
-                </p>
               </div>
 
               {/* Upload Fichier Justificatif */}
