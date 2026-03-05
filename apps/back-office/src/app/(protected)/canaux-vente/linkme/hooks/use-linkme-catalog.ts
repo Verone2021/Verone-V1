@@ -1122,7 +1122,7 @@ export function useUpdateLinkMePricing() {
         min_margin_rate?: number;
         max_margin_rate?: number;
         suggested_margin_rate?: number | null;
-        channel_commission_rate?: number | null; // Correct column name
+        channel_commission_rate?: number; // Correct column name
         buffer_rate?: number | null; // Marge de sécurité (décimal)
         custom_price_ht?: number | null; // Prix de vente canal
         public_price_ht?: number | null; // Tarif public HT

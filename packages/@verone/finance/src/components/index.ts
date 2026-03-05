@@ -27,6 +27,8 @@ export * from './tables/EditableQuoteItemRow'; // Ligne éditable devis (catalog
 export * from './QuoteStatusBadge'; // Badge statut devis réutilisable
 export * from './SupplierCell';
 export * from './OrganisationTransactionsSection';
+export * from './TransactionDetailDialog';
+export * from './TransactionDetailSheet';
 
 // Charts (Recharts-based)
 export * from './charts';

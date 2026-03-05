@@ -383,7 +383,7 @@ export default function LinkMePricingConfigPage() {
             public_price_ht?: number | null;
             custom_price_ht?: number | null;
             buffer_rate?: number | null;
-            channel_commission_rate?: number | null;
+            channel_commission_rate?: number;
           },
         });
         successCount++;
