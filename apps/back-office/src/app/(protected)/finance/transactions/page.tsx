@@ -4,7 +4,12 @@ import { useState, useMemo } from 'react';
 
 import Link from 'next/link';
 
-import { getPcgCategory, getPcgColor } from '@verone/finance';
+import {
+  getPcgCategory,
+  getPcgColor,
+  formatBankPaymentMethod,
+  detectBankPaymentMethod,
+} from '@verone/finance';
 import {
   RapprochementModal,
   InvoiceUploadModal,
@@ -55,6 +60,8 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   Lock,
   FileX,
   FileCheck,
@@ -63,6 +70,8 @@ import {
   Trash2,
   Percent,
   Filter,
+  CreditCard,
+  StickyNote,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -217,6 +226,9 @@ function TransactionsPageV2() {
 
   // Auto-categorization state
   const [isAutoCategorizing, setIsAutoCategorizing] = useState(false);
+
+  // Collapsible technical details in sidebar
+  const [showTechnicalDetails, setShowTechnicalDetails] = useState(false);
 
   // Hook pour les règles (preview/confirm workflow)
   const {
@@ -1002,44 +1014,34 @@ function TransactionsPageV2() {
                         {selectedTransaction.label ?? '-'}
                       </p>
                     </div>
+
+                    {/* Notes (style Indy — visible, pas cachée) */}
                     {(() => {
                       const rawData = selectedTransaction.raw_data as Record<
                         string,
                         unknown
                       > | null;
-                      const reference =
-                        rawData && typeof rawData.reference === 'string'
-                          ? rawData.reference
-                          : null;
                       const note =
                         rawData && typeof rawData.note === 'string'
                           ? rawData.note
                           : null;
-                      if (!reference && !note) return null;
+                      if (!note) return null;
                       return (
-                        <>
-                          {reference && (
-                            <div className="mt-1">
-                              <p className="text-muted-foreground text-[10px]">
-                                Référence
-                              </p>
-                              <p className="font-medium text-xs">{reference}</p>
-                            </div>
-                          )}
-                          {note && (
-                            <div className="mt-1">
-                              <p className="text-muted-foreground text-[10px]">
-                                Note
-                              </p>
-                              <p className="font-medium text-xs text-blue-600">
-                                {note}
-                              </p>
-                            </div>
-                          )}
-                        </>
+                        <div className="mt-1 p-1.5 bg-blue-50 border border-blue-100 rounded">
+                          <div className="flex items-center gap-1 mb-0.5">
+                            <StickyNote className="h-3 w-3 text-blue-500" />
+                            <p className="text-[10px] font-medium text-blue-700">
+                              Note
+                            </p>
+                          </div>
+                          <p className="text-xs text-blue-800">{note}</p>
+                        </div>
                       );
                     })()}
+
                     <Separator className="my-0.5" />
+
+                    {/* Contrepartie + Mode de paiement */}
                     <div className="grid grid-cols-2 gap-1.5">
                       <div>
                         <p className="text-xs text-muted-foreground">
@@ -1050,10 +1052,43 @@ function TransactionsPageV2() {
                         </p>
                       </div>
                       <div>
-                        <p className="text-xs text-muted-foreground">Type</p>
-                        <p className="text-xs font-medium">
-                          {selectedTransaction.operation_type ?? 'Virement'}
+                        <p className="text-xs text-muted-foreground">
+                          Mode de paiement
                         </p>
+                        <div className="flex items-center gap-1">
+                          <CreditCard className="h-3 w-3 text-muted-foreground" />
+                          <p className="text-xs font-medium">
+                            {(() => {
+                              // Priorité : champ payment_method > détection depuis label > type opération
+                              if (selectedTransaction.payment_method) {
+                                return formatBankPaymentMethod(
+                                  selectedTransaction.payment_method as Parameters<
+                                    typeof formatBankPaymentMethod
+                                  >[0]
+                                );
+                              }
+                              const detected = detectBankPaymentMethod(
+                                selectedTransaction.label ?? ''
+                              );
+                              if (detected)
+                                return formatBankPaymentMethod(detected);
+                              // Fallback sur operation_type traduit
+                              const opType = selectedTransaction.operation_type;
+                              if (
+                                opType === 'transfer' ||
+                                opType === 'swift_income'
+                              )
+                                return 'Virement';
+                              if (opType === 'card') return 'Carte bancaire';
+                              if (opType === 'direct_debit')
+                                return 'Prélèvement';
+                              if (opType === 'check') return 'Chèque';
+                              if (opType === 'qonto_fee')
+                                return 'Frais bancaires';
+                              return opType ?? 'Non défini';
+                            })()}
+                          </p>
+                        </div>
                       </div>
                     </div>
                     {selectedTransaction.category_pcg && (
@@ -1393,6 +1428,71 @@ function TransactionsPageV2() {
                     </div>
                   </CardContent>
                 </Card>
+
+                {/* Détails techniques (collapsible — référence Qonto, type opération) */}
+                {(() => {
+                  const rawData = selectedTransaction.raw_data as Record<
+                    string,
+                    unknown
+                  > | null;
+                  const reference =
+                    rawData && typeof rawData.reference === 'string'
+                      ? rawData.reference
+                      : null;
+                  if (!reference && !selectedTransaction.operation_type)
+                    return null;
+                  return (
+                    <div className="mt-0.5">
+                      <button
+                        onClick={() =>
+                          setShowTechnicalDetails(!showTechnicalDetails)
+                        }
+                        className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors w-full"
+                      >
+                        {showTechnicalDetails ? (
+                          <ChevronUp className="h-3 w-3" />
+                        ) : (
+                          <ChevronDown className="h-3 w-3" />
+                        )}
+                        Détails techniques
+                      </button>
+                      {showTechnicalDetails && (
+                        <div className="mt-0.5 p-1.5 bg-muted/30 rounded text-[10px] space-y-0.5">
+                          {reference && (
+                            <div>
+                              <span className="text-muted-foreground">
+                                Réf :{' '}
+                              </span>
+                              <span className="font-mono break-all">
+                                {reference}
+                              </span>
+                            </div>
+                          )}
+                          {selectedTransaction.operation_type && (
+                            <div>
+                              <span className="text-muted-foreground">
+                                Type :{' '}
+                              </span>
+                              <span className="font-mono">
+                                {selectedTransaction.operation_type}
+                              </span>
+                            </div>
+                          )}
+                          {selectedTransaction.transaction_id && (
+                            <div>
+                              <span className="text-muted-foreground">
+                                ID :{' '}
+                              </span>
+                              <span className="font-mono break-all">
+                                {selectedTransaction.transaction_id}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
 
                 {/* Actions simplifiées - Transactions = Justificatifs + Rapprochement */}
                 <div className="space-y-1">

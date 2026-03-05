@@ -62,6 +62,11 @@ import { toast } from 'sonner';
 
 import { useMatchingRules } from '../hooks/use-matching-rules';
 import {
+  PCG_THEMES,
+  getPcgEntriesByTheme,
+  type PcgThemeId,
+} from '../lib/pcg-themes';
+import {
   ALL_PCG_CATEGORIES,
   PCG_SUGGESTED_CATEGORIES,
   PCG_SUGGESTED_INCOME_CATEGORIES,
@@ -279,6 +284,75 @@ const POPULAR_INCOME_CATEGORIES = [
     iconColor: 'text-indigo-600',
   },
 ];
+
+// =====================================================================
+// Vue thématique style Indy (6 colonnes)
+// =====================================================================
+
+function ThematicCategoryGrid({
+  onSelect,
+  side,
+}: {
+  onSelect: (code: string) => void;
+  side: 'debit' | 'credit';
+}) {
+  const entriesByTheme = useMemo(() => getPcgEntriesByTheme(), []);
+
+  // Pour les crédits, montrer seulement "Revenus"
+  // Pour les débits, montrer tout sauf "Revenus"
+  const visibleThemes = useMemo(() => {
+    if (side === 'credit') {
+      return PCG_THEMES.filter(t => t.id === 'revenus');
+    }
+    return PCG_THEMES.filter(t => t.id !== 'revenus');
+  }, [side]);
+
+  return (
+    <div
+      className={cn(
+        'grid gap-4',
+        side === 'credit'
+          ? 'grid-cols-1'
+          : 'grid-cols-2 md:grid-cols-3 lg:grid-cols-6'
+      )}
+    >
+      {visibleThemes.map(theme => {
+        const entries = entriesByTheme[theme.id as PcgThemeId] ?? [];
+        if (entries.length === 0) return null;
+
+        return (
+          <div key={theme.id} className="space-y-1">
+            {/* En-tête thème */}
+            <div className="flex items-center gap-1.5 mb-2">
+              <div className={cn('w-2 h-2 rounded-full', theme.color)} />
+              <span className={cn('text-xs font-semibold', theme.textColor)}>
+                {theme.label}
+              </span>
+            </div>
+
+            {/* Entrées */}
+            <div className="space-y-0.5">
+              {entries.map(entry => (
+                <button
+                  key={entry.code}
+                  type="button"
+                  onClick={() => onSelect(entry.code)}
+                  className={cn(
+                    'w-full text-left px-2 py-1.5 rounded-lg text-xs transition-colors',
+                    'hover:bg-slate-100 text-slate-700 hover:text-slate-900'
+                  )}
+                  title={entry.description}
+                >
+                  {entry.label_fr}
+                </button>
+              ))}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 export interface QuickClassificationModalProps {
   open: boolean;
@@ -971,22 +1045,22 @@ export function QuickClassificationModal({
                     })}
                   </div>
 
-                  {/* Plus de catégories - seulement pour les dépenses */}
-                  {moreCategories.length > 0 && !showAllCategories && (
+                  {/* Vue thématique Indy — toutes catégories en colonnes */}
+                  {!showAllCategories && (
                     <button
                       type="button"
                       onClick={() => setShowAllCategories(true)}
                       className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-300 py-4 text-sm font-medium text-slate-600 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
                     >
-                      Voir plus de catégories
+                      Toutes les catégories par thème
                       <ChevronRight className="h-4 w-4" />
                     </button>
                   )}
-                  {moreCategories.length > 0 && showAllCategories && (
+                  {showAllCategories && (
                     <>
                       <div className="flex items-center justify-between mb-4">
                         <h3 className="text-sm font-semibold text-slate-600">
-                          Plus de catégories
+                          Toutes les catégories par thème
                         </h3>
                         <button
                           type="button"
@@ -997,32 +1071,10 @@ export function QuickClassificationModal({
                           Réduire
                         </button>
                       </div>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                        {moreCategories.map(cat => {
-                          const IconComponent = cat.icon;
-                          return (
-                            <button
-                              key={cat.code}
-                              type="button"
-                              onClick={() => handleSelectCategory(cat.code)}
-                              className={cn(
-                                'flex flex-col items-start rounded-xl border-2 p-4 text-left transition-all hover:scale-[1.02] hover:shadow-lg cursor-pointer',
-                                cat.color
-                              )}
-                            >
-                              <IconComponent
-                                className={cn('h-7 w-7 mb-2', cat.iconColor)}
-                              />
-                              <div className="font-semibold text-sm">
-                                {cat.label}
-                              </div>
-                              <div className="text-xs opacity-80 mt-0.5">
-                                {cat.description}
-                              </div>
-                            </button>
-                          );
-                        })}
-                      </div>
+                      <ThematicCategoryGrid
+                        onSelect={handleSelectCategory}
+                        side={transactionSide}
+                      />
                     </>
                   )}
                 </>

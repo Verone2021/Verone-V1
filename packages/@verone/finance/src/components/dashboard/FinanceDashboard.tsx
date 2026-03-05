@@ -202,9 +202,13 @@ export function FinanceDashboard() {
   const dateLabel = formatFiltersLabel(filters);
 
   // Metrics
-  const chiffreAffaires = stats?.totalCredit || 0;
+  // CA = uniquement classe 7 (ventes réelles), pas tous les crédits bancaires
+  // stats.revenue exclut les apports associés (455), remboursements non-ventes, etc.
+  const chiffreAffaires = stats?.revenue || 0;
+  const totalEncaissements = stats?.totalCredit || 0;
   const charges = stats?.totalDebit || 0;
   const resultat = chiffreAffaires - charges;
+  const hasUncategorizedCredit = (stats?.uncategorizedCredit || 0) > 0;
 
   // AR/AP from treasury
   const facturesEnAttente = treasuryStats?.unpaid_count_ar ?? 0;
@@ -328,6 +332,13 @@ export function FinanceDashboard() {
                 label="Chiffre d'affaires"
                 value={chiffreAffaires}
                 color="green"
+                subtitle={
+                  hasUncategorizedCredit
+                    ? `${formatCurrency(stats?.uncategorizedCredit || 0)} non catégorisé`
+                    : chiffreAffaires !== totalEncaissements
+                      ? `Encaissements: ${formatCurrency(totalEncaissements)}`
+                      : undefined
+                }
               />
               <KpiSideCard
                 label="Charges d'exploitation"
@@ -642,10 +653,12 @@ function KpiSideCard({
   label,
   value,
   color,
+  subtitle,
 }: {
   label: string;
   value: number;
   color: 'green' | 'rose' | 'red';
+  subtitle?: string;
 }) {
   const colorMap = {
     green: 'border-l-green-500 bg-green-50',
@@ -669,6 +682,9 @@ function KpiSideCard({
           maximumFractionDigits: 0,
         }).format(value)}
       </p>
+      {subtitle && (
+        <p className="text-[10px] text-amber-600 mt-0.5">{subtitle}</p>
+      )}
     </div>
   );
 }
