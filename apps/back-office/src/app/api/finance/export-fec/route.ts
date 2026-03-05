@@ -13,7 +13,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
-import { getPcgCategory } from '@verone/finance';
+import { getPcgCategory } from '@verone/finance/lib/pcg-categories';
 import { createServerClient } from '@verone/utils/supabase/server';
 
 export const runtime = 'nodejs';
