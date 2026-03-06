@@ -551,7 +551,7 @@ export function CreateLinkMeOrderModal({
         retrocession_rate: item.retrocession_rate,
         linkme_selection_item_id: item.linkme_selection_item_id,
       })),
-      order_date: orderDate || undefined,
+      order_date: orderDate,
       internal_notes: internalNotes ?? undefined,
       // Frais additionnels
       shipping_cost_ht: shippingCostHt ?? 0,

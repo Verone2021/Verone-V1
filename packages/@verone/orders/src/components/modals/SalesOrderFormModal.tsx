@@ -1030,6 +1030,7 @@ export function SalesOrderFormModal({
           retrocession_rate: item.retrocession_rate,
           linkme_selection_item_id: item.linkme_selection_item_id,
         })),
+        order_date: orderDate,
         internal_notes: notes || undefined,
       };
 

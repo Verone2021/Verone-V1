@@ -24,6 +24,8 @@ interface Commission {
   margin_rate_applied: number;
   order_number: string | null;
   status: string | null;
+  total_payout_ht: number | null;
+  total_payout_ttc: number | null;
   affiliate?: {
     display_name: string;
   } | null;
