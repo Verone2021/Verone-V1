@@ -227,6 +227,9 @@ const isOrderEditable = (order: SalesOrder, channelId?: string | null) => {
 
 const getChannelRedirectUrl = (order: SalesOrder) => {
   if (order.channel_id === LINKME_CHANNEL_ID) {
+    if (order.status === 'pending_approval') {
+      return '/canaux-vente/linkme/approbations';
+    }
     return '/canaux-vente/linkme/commandes';
   }
   if (order.channel_id === SITE_INTERNET_CHANNEL_ID) {
