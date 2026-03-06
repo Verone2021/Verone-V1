@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useToast } from '@verone/common';
 import { useActiveEnseignes } from '@verone/organisations';
@@ -41,7 +41,6 @@ import {
   CheckCircle,
   CreditCard,
   Download,
-  Eye,
   Banknote,
   Hourglass,
   ArrowRightCircle,
@@ -53,6 +52,7 @@ import {
   X,
 } from 'lucide-react';
 
+import { CommissionDetailContent } from './components/CommissionDetailContent';
 import { PaymentRequestModalAdmin } from '../components/PaymentRequestModalAdmin';
 
 // ============================================
@@ -79,6 +79,8 @@ interface Commission {
   payment_reference: string | null;
   payment_method: string | null;
   created_at: string | null;
+  total_payout_ht: number | null;
+  total_payout_ttc: number | null;
   // Joined
   affiliate?: {
     display_name: string;
@@ -198,6 +200,7 @@ export default function LinkMeCommissionsPage() {
   const [currentPage, setCurrentPage] = useState(0);
   const [sortColumn, setSortColumn] = useState<SortColumn>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     const supabase = createClient();
@@ -460,7 +463,7 @@ export default function LinkMeCommissionsPage() {
   }
 
   function exportToCSV() {
-    const filtered = applyFilters(getCommissionsByTab(activeTab));
+    const filtered = filteredByTab[activeTab];
     if (filtered.length === 0) {
       toast({
         title: 'Aucune donnée',
@@ -477,8 +480,8 @@ export default function LinkMeCommissionsPage() {
       'Affilié',
       'Paiement Client',
       'Total HT',
-      'Commission HT',
-      'Commission TTC',
+      'Rémunération HT',
+      'Rémunération TTC',
       'Statut',
     ];
 
@@ -500,8 +503,8 @@ export default function LinkMeCommissionsPage() {
         c.affiliate?.display_name ?? 'N/A',
         c.sales_order?.payment_status_v2 === 'paid' ? 'Payé' : 'En attente',
         (c.sales_order?.total_ht ?? c.order_amount_ht).toFixed(2),
-        c.affiliate_commission.toFixed(2),
-        (c.affiliate_commission_ttc ?? 0).toFixed(2),
+        (c.total_payout_ht ?? c.affiliate_commission).toFixed(2),
+        (c.total_payout_ttc ?? c.affiliate_commission_ttc ?? 0).toFixed(2),
         statusConfig[(c.status ?? 'pending') as keyof typeof statusConfig]
           ?.label ?? c.status,
       ];
@@ -540,37 +543,41 @@ export default function LinkMeCommissionsPage() {
   // COMPUTED VALUES
   // ============================================
 
+  // Apply filters per tab — KPI cards + badges + table all use this
+  const filteredByTab = useMemo(() => {
+    const result = {} as Record<TabType, Commission[]>;
+    for (const tab of Object.keys(TABS_CONFIG) as TabType[]) {
+      result[tab] = applyFilters(getCommissionsByTab(tab));
+    }
+    return result;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    commissions,
+    searchTerm,
+    affiliateFilter,
+    typeFilter,
+    filterYear,
+    enseigneFilter,
+    sortColumn,
+    sortDirection,
+  ]);
+
   // Totaux en TTC (cohérent avec LinkMe app)
-  const tabCounts: Record<TabType, { count: number; total: number }> = {
-    en_attente: {
-      count: getCommissionsByTab('en_attente').length,
-      total: getCommissionsByTab('en_attente').reduce(
-        (sum, c) => sum + (c.affiliate_commission_ttc ?? 0),
-        0
-      ),
-    },
-    payables: {
-      count: getCommissionsByTab('payables').length,
-      total: getCommissionsByTab('payables').reduce(
-        (sum, c) => sum + (c.affiliate_commission_ttc ?? 0),
-        0
-      ),
-    },
-    en_cours: {
-      count: getCommissionsByTab('en_cours').length,
-      total: getCommissionsByTab('en_cours').reduce(
-        (sum, c) => sum + (c.affiliate_commission_ttc ?? 0),
-        0
-      ),
-    },
-    payees: {
-      count: getCommissionsByTab('payees').length,
-      total: getCommissionsByTab('payees').reduce(
-        (sum, c) => sum + (c.affiliate_commission_ttc ?? 0),
-        0
-      ),
-    },
-  };
+  const tabCounts = useMemo(() => {
+    const result = {} as Record<TabType, { count: number; total: number }>;
+    for (const tab of Object.keys(TABS_CONFIG) as TabType[]) {
+      const list = filteredByTab[tab];
+      result[tab] = {
+        count: list.length,
+        total: list.reduce(
+          (sum, c) =>
+            sum + (c.total_payout_ttc ?? c.affiliate_commission_ttc ?? 0),
+          0
+        ),
+      };
+    }
+    return result;
+  }, [filteredByTab]);
 
   // ============================================
   // RENDER
@@ -668,7 +675,7 @@ export default function LinkMeCommissionsPage() {
 
         {(Object.keys(TABS_CONFIG) as TabType[]).map(tab => {
           const config = TABS_CONFIG[tab];
-          const allTabCommissions = applyFilters(getCommissionsByTab(tab));
+          const allTabCommissions = filteredByTab[tab];
           const totalPages = Math.max(
             1,
             Math.ceil(allTabCommissions.length / pageSize)
@@ -884,12 +891,11 @@ export default function LinkMeCommissionsPage() {
                             Total TTC
                           </TableHead>
                           <TableHead className="text-right">
-                            Commission HT
+                            Rémunération HT
                           </TableHead>
                           <TableHead className="text-right text-orange-600">
-                            Commission TTC
+                            Rémunération TTC
                           </TableHead>
-                          <TableHead className="w-[50px]" />
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -898,114 +904,148 @@ export default function LinkMeCommissionsPage() {
                             commission.sales_order?.order_number ??
                             commission.order_number ??
                             `#${commission.order_id.slice(0, 8)}`;
+                          const commissionHT =
+                            commission.total_payout_ht ??
+                            commission.affiliate_commission;
                           const commissionTTC =
-                            commission.affiliate_commission_ttc ?? 0;
+                            commission.total_payout_ttc ??
+                            commission.affiliate_commission_ttc ??
+                            0;
+                          const isExpanded = expandedId === commission.id;
+                          const colCount = showCheckboxes ? 10 : 9;
 
                           return (
-                            <TableRow key={commission.id}>
-                              {showCheckboxes && (
+                            <React.Fragment key={commission.id}>
+                              <TableRow
+                                className="cursor-pointer hover:bg-muted/50"
+                                onClick={() =>
+                                  setExpandedId(
+                                    isExpanded ? null : commission.id
+                                  )
+                                }
+                              >
+                                {showCheckboxes && (
+                                  <TableCell onClick={e => e.stopPropagation()}>
+                                    <Checkbox
+                                      checked={selectedIds.includes(
+                                        commission.id
+                                      )}
+                                      onCheckedChange={() =>
+                                        toggleSelect(commission.id)
+                                      }
+                                    />
+                                  </TableCell>
+                                )}
                                 <TableCell>
-                                  <Checkbox
-                                    checked={selectedIds.includes(
-                                      commission.id
-                                    )}
-                                    onCheckedChange={() =>
-                                      toggleSelect(commission.id)
-                                    }
-                                  />
+                                  <div className="flex items-center gap-2">
+                                    <ChevronRight
+                                      className={`h-4 w-4 text-muted-foreground transition-transform ${
+                                        isExpanded ? 'rotate-90' : ''
+                                      }`}
+                                    />
+                                    <span>
+                                      {(commission.sales_order?.created_at ??
+                                      commission.created_at)
+                                        ? new Date(
+                                            (commission.sales_order
+                                              ?.created_at ??
+                                              commission.created_at)!
+                                          ).toLocaleDateString('fr-FR', {
+                                            day: '2-digit',
+                                            month: '2-digit',
+                                            year: '2-digit',
+                                          })
+                                        : '-'}
+                                    </span>
+                                  </div>
                                 </TableCell>
-                              )}
-                              <TableCell>
-                                {(commission.sales_order?.created_at ??
-                                commission.created_at)
-                                  ? new Date(
-                                      (commission.sales_order?.created_at ??
-                                        commission.created_at)!
-                                    ).toLocaleDateString('fr-FR', {
-                                      day: '2-digit',
-                                      month: '2-digit',
-                                      year: '2-digit',
-                                    })
-                                  : '-'}
-                              </TableCell>
-                              <TableCell className="font-mono text-sm font-medium">
-                                {orderNumber}
-                              </TableCell>
-                              <TableCell>
-                                {(() => {
-                                  const org = commission.sales_order?.customer;
-                                  if (!org)
-                                    return (
-                                      <span className="text-gray-400">-</span>
-                                    );
-                                  const tradeName = org.trade_name;
-                                  const legalName = org.legal_name;
-                                  if (tradeName && tradeName !== legalName) {
+                                <TableCell className="font-mono text-sm font-medium">
+                                  {orderNumber}
+                                </TableCell>
+                                <TableCell>
+                                  {(() => {
+                                    const org =
+                                      commission.sales_order?.customer;
+                                    if (!org)
+                                      return (
+                                        <span className="text-gray-400">-</span>
+                                      );
+                                    const tradeName = org.trade_name;
+                                    const legalName = org.legal_name;
+                                    if (tradeName && tradeName !== legalName) {
+                                      return (
+                                        <span className="text-sm">
+                                          {tradeName}{' '}
+                                          <span className="text-muted-foreground">
+                                            ({legalName})
+                                          </span>
+                                        </span>
+                                      );
+                                    }
                                     return (
                                       <span className="text-sm">
-                                        {tradeName}{' '}
-                                        <span className="text-muted-foreground">
-                                          ({legalName})
-                                        </span>
+                                        {legalName}
                                       </span>
                                     );
-                                  }
-                                  return (
-                                    <span className="text-sm">{legalName}</span>
-                                  );
-                                })()}
-                              </TableCell>
-                              <TableCell>
-                                {commission.affiliate?.display_name ?? 'N/A'}
-                              </TableCell>
-                              <TableCell>
-                                <Badge
-                                  variant={
-                                    commission.sales_order
+                                  })()}
+                                </TableCell>
+                                <TableCell>
+                                  {commission.affiliate?.display_name ?? 'N/A'}
+                                </TableCell>
+                                <TableCell>
+                                  <Badge
+                                    variant={
+                                      commission.sales_order
+                                        ?.payment_status_v2 === 'paid'
+                                        ? 'default'
+                                        : 'outline'
+                                    }
+                                    className={
+                                      commission.sales_order
+                                        ?.payment_status_v2 === 'paid'
+                                        ? 'bg-green-100 text-green-700 border-green-200'
+                                        : 'bg-orange-50 text-orange-600 border-orange-200'
+                                    }
+                                  >
+                                    {commission.sales_order
                                       ?.payment_status_v2 === 'paid'
-                                      ? 'default'
-                                      : 'outline'
-                                  }
-                                  className={
-                                    commission.sales_order
-                                      ?.payment_status_v2 === 'paid'
-                                      ? 'bg-green-100 text-green-700 border-green-200'
-                                      : 'bg-orange-50 text-orange-600 border-orange-200'
-                                  }
-                                >
-                                  {commission.sales_order?.payment_status_v2 ===
-                                  'paid'
-                                    ? 'Payé'
-                                    : 'En attente'}
-                                </Badge>
-                              </TableCell>
-                              <TableCell className="text-right">
-                                {formatPrice(
-                                  commission.sales_order?.total_ht ??
-                                    commission.order_amount_ht
-                                )}
-                              </TableCell>
-                              <TableCell className="text-right">
-                                {formatPrice(
-                                  commission.sales_order?.total_ttc ?? 0
-                                )}
-                              </TableCell>
-                              <TableCell className="text-right font-medium">
-                                {formatPrice(commission.affiliate_commission)}
-                              </TableCell>
-                              <TableCell className="text-right font-bold text-orange-600">
-                                {formatPrice(commissionTTC)}
-                              </TableCell>
-                              <TableCell>
-                                <ButtonV2
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-8 w-8 p-0"
-                                >
-                                  <Eye className="h-4 w-4" />
-                                </ButtonV2>
-                              </TableCell>
-                            </TableRow>
+                                      ? 'Payé'
+                                      : 'En attente'}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  {formatPrice(
+                                    commission.sales_order?.total_ht ??
+                                      commission.order_amount_ht
+                                  )}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  {formatPrice(
+                                    commission.sales_order?.total_ttc ?? 0
+                                  )}
+                                </TableCell>
+                                <TableCell className="text-right font-medium">
+                                  {formatPrice(commissionHT)}
+                                </TableCell>
+                                <TableCell className="text-right font-bold text-orange-600">
+                                  {formatPrice(commissionTTC)}
+                                </TableCell>
+                              </TableRow>
+                              {isExpanded && (
+                                <TableRow>
+                                  <TableCell
+                                    colSpan={colCount}
+                                    className="bg-muted/30 p-0"
+                                  >
+                                    <div className="p-4">
+                                      <CommissionDetailContent
+                                        commission={commission}
+                                      />
+                                    </div>
+                                  </TableCell>
+                                </TableRow>
+                              )}
+                            </React.Fragment>
                           );
                         })}
                       </TableBody>

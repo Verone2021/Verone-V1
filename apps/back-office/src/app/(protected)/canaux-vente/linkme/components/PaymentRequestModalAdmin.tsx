@@ -41,6 +41,8 @@ interface CommissionForModal {
   order_amount_ht: number;
   affiliate_commission: number;
   affiliate_commission_ttc: number | null;
+  total_payout_ht: number | null;
+  total_payout_ttc: number | null;
   affiliate?: {
     display_name: string;
     enseigne_id: string | null;
@@ -105,11 +107,11 @@ export function PaymentRequestModalAdmin({
   // Calculs des totaux
   const totals = useMemo(() => {
     const totalHT = selectedCommissions.reduce(
-      (sum, c) => sum + (c.affiliate_commission ?? 0),
+      (sum, c) => sum + (c.total_payout_ht ?? c.affiliate_commission ?? 0),
       0
     );
     const totalTTC = selectedCommissions.reduce(
-      (sum, c) => sum + (c.affiliate_commission_ttc ?? 0),
+      (sum, c) => sum + (c.total_payout_ttc ?? c.affiliate_commission_ttc ?? 0),
       0
     );
     return { totalHT, totalTTC, count: selectedCommissions.length };
@@ -174,7 +176,7 @@ export function PaymentRequestModalAdmin({
       '',
       ...selectedCommissions.map(
         c =>
-          `• Commande #${c.sales_order?.order_number ?? c.order_number ?? c.id.slice(0, 8)} : ${formatPrice(c.affiliate_commission)}`
+          `• Commande #${c.sales_order?.order_number ?? c.order_number ?? c.id.slice(0, 8)} : ${formatPrice(c.total_payout_ht ?? c.affiliate_commission)}`
       ),
     ];
     try {
@@ -317,7 +319,9 @@ export function PaymentRequestModalAdmin({
                         </span>
                       </div>
                       <span className="text-sm font-semibold text-emerald-600">
-                        {formatPrice(c.affiliate_commission_ttc ?? 0)}
+                        {formatPrice(
+                          c.total_payout_ttc ?? c.affiliate_commission_ttc ?? 0
+                        )}
                       </span>
                     </div>
                   ))}
@@ -510,7 +514,9 @@ export function PaymentRequestModalAdmin({
                               c.id.slice(0, 8)}
                           </td>
                           <td className="px-4 py-2 text-xs text-right font-medium text-gray-900">
-                            {formatPrice(c.affiliate_commission)}
+                            {formatPrice(
+                              c.total_payout_ht ?? c.affiliate_commission
+                            )}
                           </td>
                         </tr>
                       ))}
