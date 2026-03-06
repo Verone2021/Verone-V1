@@ -505,19 +505,64 @@ export function useDeleteLinkMeUser() {
   return useMutation({
     mutationFn: async (userId: string) => {
       // Soft delete: désactiver le rôle
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('user_app_roles')
         .update({
           is_active: false,
           updated_at: new Date().toISOString(),
         })
         .eq('user_id', userId)
-        .eq('app', 'linkme');
+        .eq('app', 'linkme')
+        .select('id, is_active');
 
       if (error) throw error;
+      if (!data || data.length === 0) {
+        throw new Error(
+          'Impossible de désactiver cet utilisateur. Permissions insuffisantes.'
+        );
+      }
+      if (data[0].is_active !== false) {
+        throw new Error(
+          'La désactivation a échoué. Contactez un administrateur.'
+        );
+      }
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['linkme-users'] });
+    },
+  });
+}
+
+/**
+ * Hook: supprimer définitivement un utilisateur LinkMe (hard delete)
+ * Supprime auth.users + user_app_roles + user_profiles, libère l'email
+ * Prérequis: l'utilisateur doit être archivé (is_active = false)
+ */
+export function useHardDeleteLinkMeUser() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (userId: string) => {
+      const response = await fetch('/api/linkme/users/hard-delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: userId }),
+      });
+
+      if (!response.ok) {
+        const errorData = (await response.json()) as { message?: string };
+        throw new Error(
+          errorData.message ?? 'Erreur lors de la suppression définitive'
+        );
+      }
+
+      return response.json() as Promise<{ success: boolean; message: string }>;
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['linkme-users'] }),
+        queryClient.invalidateQueries({ queryKey: ['linkme-users-stats'] }),
+      ]);
     },
   });
 }
