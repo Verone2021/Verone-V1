@@ -5,6 +5,11 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 
 import {
+  useDatabaseNotifications,
+  useFormSubmissionsCount,
+  useLinkmeMissingInfoCount,
+} from '@verone/notifications';
+import {
   Badge,
   Button,
   Card,
@@ -24,14 +29,16 @@ import {
   Globe,
   Mail,
   Clock,
-  CheckCircle,
   AlertCircle,
   ArrowRight,
   RefreshCw,
   Filter,
   Inbox,
   FileText,
+  Bell,
 } from 'lucide-react';
+
+import { SystemNotificationsTab } from './components/system-notifications-tab';
 
 // ============================================================================
 // Types
@@ -209,17 +216,47 @@ function EmptyState({ message }: { message: string }) {
 }
 
 // ============================================================================
+// Loading skeleton
+// ============================================================================
+
+function LoadingSkeleton({ count = 5 }: { count?: number }) {
+  return (
+    <div className="space-y-3">
+      {[...Array(count)].map((_, i) => (
+        <Card key={i} className="animate-pulse">
+          <CardContent className="p-4">
+            <div className="flex items-start gap-3">
+              <div className="w-9 h-9 rounded-lg bg-muted" />
+              <div className="flex-1 space-y-2">
+                <div className="h-4 w-2/3 bg-muted rounded" />
+                <div className="h-3 w-1/2 bg-muted rounded" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
+// ============================================================================
 // Main Page
 // ============================================================================
 
 export default function MessagesHubPage() {
   const searchParams = useSearchParams();
-  const initialTab = searchParams.get('canal') ?? 'tous';
+  const initialTab =
+    searchParams.get('onglet') ?? searchParams.get('canal') ?? 'tous';
 
   const [messages, setMessages] = useState<UnifiedMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
+
+  // Hooks for badge counts (realtime)
+  const { count: formSubmissionsCount } = useFormSubmissionsCount();
+  const { count: linkmeMissingInfoCount } = useLinkmeMissingInfoCount();
+  const { unreadCount: systemUnreadCount } = useDatabaseNotifications();
 
   const supabase = createClient();
 
@@ -377,7 +414,7 @@ export default function MessagesHubPage() {
     [filteredMessages]
   );
 
-  // Counts for tab badges
+  // Counts for tab badges (from local data for "tous" tab)
   const pendingLinkme = messages.filter(
     m =>
       m.channel === 'linkme' && (m.status === 'pending' || m.status === 'new')
@@ -387,7 +424,7 @@ export default function MessagesHubPage() {
       m.type === 'form_submission' &&
       (m.status === 'new' || m.status === 'open')
   ).length;
-  const totalPending = pendingLinkme + pendingForms;
+  const totalPending = pendingLinkme + pendingForms + systemUnreadCount;
 
   return (
     <div className="space-y-6">
@@ -400,7 +437,8 @@ export default function MessagesHubPage() {
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Messages</h1>
             <p className="text-sm text-muted-foreground">
-              Demandes d&apos;informations et prises de contact — tous canaux
+              Formulaires, demandes d&apos;informations et notifications — tous
+              canaux
             </p>
           </div>
         </div>
@@ -468,21 +506,30 @@ export default function MessagesHubPage() {
               </Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="linkme" className="gap-1.5">
-            <Link2 className="h-4 w-4" />
-            LinkMe
-            {pendingLinkme > 0 && (
-              <Badge className="bg-purple-500 text-white text-[10px] px-1 py-0">
-                {pendingLinkme}
-              </Badge>
-            )}
-          </TabsTrigger>
           <TabsTrigger value="formulaires" className="gap-1.5">
             <FileText className="h-4 w-4" />
             Formulaires
-            {pendingForms > 0 && (
+            {formSubmissionsCount > 0 && (
               <Badge className="bg-blue-500 text-white text-[10px] px-1 py-0">
-                {pendingForms}
+                {formSubmissionsCount}
+              </Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="linkme" className="gap-1.5">
+            <Link2 className="h-4 w-4" />
+            LinkMe
+            {linkmeMissingInfoCount > 0 && (
+              <Badge className="bg-purple-500 text-white text-[10px] px-1 py-0">
+                {linkmeMissingInfoCount}
+              </Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="systeme" className="gap-1.5">
+            <Bell className="h-4 w-4" />
+            Systeme
+            {systemUnreadCount > 0 && (
+              <Badge className="bg-orange-500 text-white text-[10px] px-1 py-0">
+                {systemUnreadCount}
               </Badge>
             )}
           </TabsTrigger>
@@ -491,21 +538,7 @@ export default function MessagesHubPage() {
         {/* ALL */}
         <TabsContent value="tous" className="mt-4">
           {loading ? (
-            <div className="space-y-3">
-              {[...Array(5)].map((_, i) => (
-                <Card key={i} className="animate-pulse">
-                  <CardContent className="p-4">
-                    <div className="flex items-start gap-3">
-                      <div className="w-9 h-9 rounded-lg bg-muted" />
-                      <div className="flex-1 space-y-2">
-                        <div className="h-4 w-2/3 bg-muted rounded" />
-                        <div className="h-3 w-1/2 bg-muted rounded" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+            <LoadingSkeleton />
           ) : filteredMessages.length === 0 ? (
             <EmptyState message="Aucun message pour ces filtres" />
           ) : (
@@ -517,24 +550,25 @@ export default function MessagesHubPage() {
           )}
         </TabsContent>
 
+        {/* FORMULAIRES */}
+        <TabsContent value="formulaires" className="mt-4">
+          {loading ? (
+            <LoadingSkeleton count={3} />
+          ) : formMessages.length === 0 ? (
+            <EmptyState message="Aucun formulaire de contact" />
+          ) : (
+            <div className="space-y-2">
+              {formMessages.map(m => (
+                <MessageCard key={`${m.type}-${m.id}`} message={m} />
+              ))}
+            </div>
+          )}
+        </TabsContent>
+
         {/* LINKME */}
         <TabsContent value="linkme" className="mt-4">
           {loading ? (
-            <div className="space-y-3">
-              {[...Array(3)].map((_, i) => (
-                <Card key={i} className="animate-pulse">
-                  <CardContent className="p-4">
-                    <div className="flex items-start gap-3">
-                      <div className="w-9 h-9 rounded-lg bg-muted" />
-                      <div className="flex-1 space-y-2">
-                        <div className="h-4 w-2/3 bg-muted rounded" />
-                        <div className="h-3 w-1/2 bg-muted rounded" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+            <LoadingSkeleton count={3} />
           ) : linkmeMessages.length === 0 ? (
             <EmptyState message="Aucune demande d'information LinkMe" />
           ) : (
@@ -546,33 +580,9 @@ export default function MessagesHubPage() {
           )}
         </TabsContent>
 
-        {/* FORMULAIRES */}
-        <TabsContent value="formulaires" className="mt-4">
-          {loading ? (
-            <div className="space-y-3">
-              {[...Array(3)].map((_, i) => (
-                <Card key={i} className="animate-pulse">
-                  <CardContent className="p-4">
-                    <div className="flex items-start gap-3">
-                      <div className="w-9 h-9 rounded-lg bg-muted" />
-                      <div className="flex-1 space-y-2">
-                        <div className="h-4 w-2/3 bg-muted rounded" />
-                        <div className="h-3 w-1/2 bg-muted rounded" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : formMessages.length === 0 ? (
-            <EmptyState message="Aucun formulaire de contact" />
-          ) : (
-            <div className="space-y-2">
-              {formMessages.map(m => (
-                <MessageCard key={`${m.type}-${m.id}`} message={m} />
-              ))}
-            </div>
-          )}
+        {/* SYSTEME */}
+        <TabsContent value="systeme" className="mt-4">
+          <SystemNotificationsTab />
         </TabsContent>
       </Tabs>
     </div>

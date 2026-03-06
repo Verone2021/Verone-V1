@@ -1,6 +1,5 @@
 'use client';
 
-import type { ComponentProps } from 'react';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 
 import { useParams, useRouter } from 'next/navigation';
@@ -8,7 +7,6 @@ import { useParams, useRouter } from 'next/navigation';
 import { CategoryHierarchySelector } from '@verone/categories';
 import { ProductStatusCompact } from '@verone/products';
 import { SampleHistoryCompact } from '@verone/products';
-import { ProductImageGallery } from '@verone/products';
 import { ProductCharacteristicsModal } from '@verone/products';
 import { ProductDescriptionsModal } from '@verone/products';
 import { ProductPhotosModal } from '@verone/products';
@@ -531,11 +529,6 @@ export default function ProductDetailPage() {
           <ProductImagesTab
             productId={product.id}
             productName={product.name}
-            productStatus={
-              product.product_status as ComponentProps<
-                typeof ProductImageGallery
-              >['productStatus']
-            }
             imageCount={productImages.length}
             onOpenPhotosModal={() => setShowPhotosModal(true)}
           />

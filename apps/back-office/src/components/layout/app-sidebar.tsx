@@ -63,6 +63,7 @@ import {
   useLinkmeApprovalsCount,
   useFormSubmissionsCount,
   useLinkmeMissingInfoCount,
+  useDatabaseNotifications,
   StockAlertsDropdown,
   ConsultationsDropdown,
   LinkmePendingDropdown,
@@ -96,7 +97,8 @@ const getNavItems = (
   transactionsUnreconciledCount: number,
   _linkmeApprovalsCount: number,
   formSubmissionsCount: number,
-  linkmeMissingInfoCount: number
+  linkmeMissingInfoCount: number,
+  unreadNotificationsCount: number
 ): NavItem[] => [
   {
     title: 'Dashboard',
@@ -107,16 +109,18 @@ const getNavItems = (
     title: 'Messages',
     href: '/messages',
     icon: MessageCircle,
-    badge: formSubmissionsCount + linkmeMissingInfoCount,
+    badge:
+      formSubmissionsCount + linkmeMissingInfoCount + unreadNotificationsCount,
     badgeVariant:
-      formSubmissionsCount + linkmeMissingInfoCount > 0 ? 'urgent' : undefined,
+      formSubmissionsCount + linkmeMissingInfoCount + unreadNotificationsCount >
+      0
+        ? 'urgent'
+        : undefined,
   },
   {
     title: 'Contacts & Clients',
     href: '/contacts-organisations',
     icon: Building2,
-    badge: formSubmissionsCount,
-    badgeVariant: formSubmissionsCount > 0 ? 'urgent' : undefined,
     children: [
       {
         title: 'Enseignes',
@@ -132,13 +136,6 @@ const getNavItems = (
         title: 'Clients Particuliers',
         href: '/contacts-organisations/clients-particuliers',
         icon: User,
-      },
-      {
-        title: 'Prises de contact',
-        href: '/prises-contact',
-        icon: MessageCircle,
-        badge: formSubmissionsCount,
-        badgeVariant: formSubmissionsCount > 0 ? 'urgent' : undefined,
       },
     ],
   },
@@ -382,6 +379,7 @@ function SidebarContent() {
   const { count: linkmeApprovalsCount } = useLinkmeApprovalsCount();
   const { count: formSubmissionsCount } = useFormSubmissionsCount();
   const { count: linkmeMissingInfoCount } = useLinkmeMissingInfoCount();
+  const { unreadCount: unreadNotificationsCount } = useDatabaseNotifications();
 
   /**
    * Render badge avec dropdown interactif selon le module
@@ -547,7 +545,8 @@ function SidebarContent() {
       transactionsUnreconciledCount,
       linkmeApprovalsCount,
       formSubmissionsCount,
-      linkmeMissingInfoCount
+      linkmeMissingInfoCount,
+      unreadNotificationsCount
     );
 
     // Masquer Finance si financeEnabled = false (module fusionné)
@@ -567,6 +566,7 @@ function SidebarContent() {
     linkmeApprovalsCount,
     formSubmissionsCount,
     linkmeMissingInfoCount,
+    unreadNotificationsCount,
   ]);
 
   // Fonction récursive pour rendre les enfants (support multi-niveaux) - Reserved
