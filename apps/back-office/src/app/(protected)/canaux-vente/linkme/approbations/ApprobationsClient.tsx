@@ -18,6 +18,14 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
   Badge,
   Button,
   Dialog,
@@ -56,7 +64,10 @@ import {
   ChevronDown,
   ChevronRight,
   Store,
+  Trash2,
 } from 'lucide-react';
+
+import { createClient } from '@verone/utils/supabase/client';
 
 import {
   usePendingOrdersCount,
@@ -218,6 +229,33 @@ function CommandesTab() {
   const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
 
+  // État pour la suppression
+  const [deleteTarget, setDeleteTarget] = useState<PendingOrder | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDelete = async (order: PendingOrder) => {
+    setIsDeleting(true);
+    try {
+      const supabase = createClient();
+      const { error } = await supabase
+        .from('sales_orders')
+        .delete()
+        .eq('id', order.id);
+
+      if (error) throw error;
+
+      setDeleteTarget(null);
+      void refetch().catch(err => {
+        console.error('[Approbations] Refetch after delete failed:', err);
+      });
+    } catch (err) {
+      console.error('[Approbations] Delete failed:', err);
+      alert('Erreur lors de la suppression');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   // État pour les lignes expandues
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
 
@@ -268,6 +306,14 @@ function CommandesTab() {
     } catch {
       alert('Erreur lors du rejet');
     }
+  };
+
+  const getOrderValidationStatus = (
+    order: PendingOrder
+  ): OrderValidationStatus => {
+    if (order.status === 'cancelled') return 'rejected';
+    if (order.status === 'pending_approval') return 'pending';
+    return 'approved';
   };
 
   // Format du type de demandeur - Reserved
@@ -457,46 +503,75 @@ function CommandesTab() {
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <div
-                          className="flex items-center justify-end gap-2"
-                          onClick={e => e.stopPropagation()}
-                        >
-                          <Link
-                            href={`/canaux-vente/linkme/commandes/${order.id}`}
-                            className="p-2 text-gray-500 hover:text-gray-700"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Link>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={e => handleRejectClick(order, e)}
-                            className="text-red-600 border-red-200 hover:bg-red-50"
-                          >
-                            <XCircle className="h-4 w-4 mr-1" />
-                            Rejeter
-                          </Button>
-                          <Button
-                            size="sm"
-                            onClick={e => {
-                              void handleApprove(order, e).catch(error => {
-                                console.error(
-                                  '[Approbations] Approve failed:',
-                                  error
-                                );
-                              });
-                            }}
-                            disabled={approveOrder.isPending}
-                            className="bg-green-600 hover:bg-green-700"
-                          >
-                            {approveOrder.isPending ? (
-                              <Loader2 className="h-4 w-4 animate-spin mr-1" />
-                            ) : (
-                              <CheckCircle className="h-4 w-4 mr-1" />
-                            )}
-                            Approuver
-                          </Button>
-                        </div>
+                        {(() => {
+                          const validationStatus =
+                            selectedStatus === 'all'
+                              ? getOrderValidationStatus(order)
+                              : selectedStatus;
+
+                          return (
+                            <div
+                              className="flex items-center justify-end gap-2"
+                              onClick={e => e.stopPropagation()}
+                            >
+                              <Link
+                                href={`/canaux-vente/linkme/commandes/${order.id}`}
+                                className="p-2 text-gray-500 hover:text-gray-700"
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Link>
+                              {validationStatus === 'pending' && (
+                                <>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={e => handleRejectClick(order, e)}
+                                    className="text-red-600 border-red-200 hover:bg-red-50"
+                                  >
+                                    <XCircle className="h-4 w-4 mr-1" />
+                                    Rejeter
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    onClick={e => {
+                                      void handleApprove(order, e).catch(
+                                        error => {
+                                          console.error(
+                                            '[Approbations] Approve failed:',
+                                            error
+                                          );
+                                        }
+                                      );
+                                    }}
+                                    disabled={approveOrder.isPending}
+                                    className="bg-green-600 hover:bg-green-700"
+                                  >
+                                    {approveOrder.isPending ? (
+                                      <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                                    ) : (
+                                      <CheckCircle className="h-4 w-4 mr-1" />
+                                    )}
+                                    Approuver
+                                  </Button>
+                                </>
+                              )}
+                              {validationStatus === 'rejected' && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={e => {
+                                    e.stopPropagation();
+                                    setDeleteTarget(order);
+                                  }}
+                                  className="text-red-600 border-red-200 hover:bg-red-50"
+                                >
+                                  <Trash2 className="h-4 w-4 mr-1" />
+                                  Supprimer
+                                </Button>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </td>
                     </tr>
 
@@ -605,6 +680,51 @@ function CommandesTab() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog
+        open={deleteTarget !== null}
+        onOpenChange={open => {
+          if (!open) setDeleteTarget(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Trash2 className="h-5 w-5 text-red-500" />
+              Supprimer la commande
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Etes-vous sur de vouloir supprimer la commande{' '}
+              <strong>
+                {deleteTarget?.linkme_display_number ??
+                  deleteTarget?.order_number}
+              </strong>{' '}
+              ? Cette action est irreversible.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              disabled={isDeleting}
+              onClick={e => {
+                e.preventDefault();
+                if (deleteTarget) {
+                  void handleDelete(deleteTarget).catch(err => {
+                    console.error('[Approbations] Delete failed:', err);
+                  });
+                }
+              }}
+            >
+              {isDeleting ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : null}
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
