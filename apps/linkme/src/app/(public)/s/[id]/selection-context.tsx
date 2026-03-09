@@ -34,6 +34,7 @@ export interface ISelection {
   contact_name: string | null;
   contact_email: string | null;
   contact_phone: string | null;
+  price_display_mode: 'HT' | 'TTC';
 }
 
 export interface IBranding {

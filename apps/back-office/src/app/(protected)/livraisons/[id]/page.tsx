@@ -22,7 +22,6 @@ import {
 } from '@verone/ui';
 import {
   ArrowLeft,
-  Download,
   ExternalLink,
   MapPin,
   Package,
@@ -178,10 +177,6 @@ export default function DeliveryNoteDetailPage(): React.ReactNode {
               </Link>
             </Button>
           )}
-          <Button variant="outline" disabled>
-            <Download className="mr-2 h-4 w-4" />
-            Télécharger PDF
-          </Button>
         </div>
       </div>
 

@@ -92,16 +92,21 @@ export interface CommissionItem {
   id: string;
   orderNumber: string;
   orderAmountHT: number;
+  orderAmountTTC: number;
   affiliateCommission: number;
   affiliateCommissionTTC: number;
+  totalPayoutHT: number;
+  totalPayoutTTC: number;
   linkmeCommission: number;
   marginRateApplied: number;
   status: CommissionStatus;
   createdAt: string;
+  orderDate: string; // Date de commande (sales_orders.order_date)
   validatedAt: string | null;
   paidAt: string | null;
   selectionName?: string;
   customerName?: string; // Nom du restaurant/client
+  orderId: string;
 }
 
 export type CommissionStatus =

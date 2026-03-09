@@ -1397,12 +1397,7 @@ export default function FacturationPage() {
               }}
               loading={loadingInvoices}
               resultCount={invoices.length}
-              actions={
-                <Button variant="outline" size="sm" disabled>
-                  <Download className="h-4 w-4 mr-2" />
-                  Exporter
-                </Button>
-              }
+              actions={undefined}
             />
           </div>
         )}

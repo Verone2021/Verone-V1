@@ -117,6 +117,8 @@ export function useAffiliateAnalytics(period: AnalyticsPeriod = 'all') {
             order_amount_ht,
             affiliate_commission,
             affiliate_commission_ttc,
+            total_payout_ht,
+            total_payout_ttc,
             linkme_commission,
             margin_rate_applied,
             status,
@@ -195,56 +197,65 @@ export function useAffiliateAnalytics(period: AnalyticsPeriod = 'all') {
         pending: {
           count: pendingCommissions.length,
           amountHT: pendingCommissions.reduce(
-            (sum, c) => sum + (c.affiliate_commission ?? 0),
+            (sum, c) =>
+              sum + (c.total_payout_ht ?? c.affiliate_commission ?? 0),
             0
           ),
           amountTTC: pendingCommissions.reduce(
-            (sum, c) => sum + (c.affiliate_commission_ttc ?? 0),
+            (sum, c) =>
+              sum + (c.total_payout_ttc ?? c.affiliate_commission_ttc ?? 0),
             0
           ),
         },
         validated: {
           count: validatedCommissions.length,
           amountHT: validatedCommissions.reduce(
-            (sum, c) => sum + (c.affiliate_commission ?? 0),
+            (sum, c) =>
+              sum + (c.total_payout_ht ?? c.affiliate_commission ?? 0),
             0
           ),
           amountTTC: validatedCommissions.reduce(
-            (sum, c) => sum + (c.affiliate_commission_ttc ?? 0),
+            (sum, c) =>
+              sum + (c.total_payout_ttc ?? c.affiliate_commission_ttc ?? 0),
             0
           ),
         },
         requested: {
           count: requestedCommissions.length,
           amountHT: requestedCommissions.reduce(
-            (sum, c) => sum + (c.affiliate_commission ?? 0),
+            (sum, c) =>
+              sum + (c.total_payout_ht ?? c.affiliate_commission ?? 0),
             0
           ),
           amountTTC: requestedCommissions.reduce(
-            (sum, c) => sum + (c.affiliate_commission_ttc ?? 0),
+            (sum, c) =>
+              sum + (c.total_payout_ttc ?? c.affiliate_commission_ttc ?? 0),
             0
           ),
         },
         paid: {
           count: paidCommissions.length,
           amountHT: paidCommissions.reduce(
-            (sum, c) => sum + (c.affiliate_commission ?? 0),
+            (sum, c) =>
+              sum + (c.total_payout_ht ?? c.affiliate_commission ?? 0),
             0
           ),
           amountTTC: paidCommissions.reduce(
-            (sum, c) => sum + (c.affiliate_commission_ttc ?? 0),
+            (sum, c) =>
+              sum + (c.total_payout_ttc ?? c.affiliate_commission_ttc ?? 0),
             0
           ),
         },
         total: {
-          // Utiliser commissions (filtré par période) pour cohérence avec les autres KPIs
           count: commissions.length,
           amountHT: commissions.reduce(
-            (sum, c) => sum + (c.affiliate_commission ?? 0),
+            (sum, c) =>
+              sum + (c.total_payout_ht ?? c.affiliate_commission ?? 0),
             0
           ),
           amountTTC: commissions.reduce(
-            (sum, c) => sum + (c.affiliate_commission_ttc ?? 0),
+            (sum, c) =>
+              sum + (c.total_payout_ttc ?? c.affiliate_commission_ttc ?? 0),
             0
           ),
         },
@@ -259,11 +270,12 @@ export function useAffiliateAnalytics(period: AnalyticsPeriod = 'all') {
         0
       );
       const totalCommissionsHT = commissions.reduce(
-        (sum, c) => sum + (c.affiliate_commission ?? 0),
+        (sum, c) => sum + (c.total_payout_ht ?? c.affiliate_commission ?? 0),
         0
       );
       const totalCommissionsTTC = commissions.reduce(
-        (sum, c) => sum + (c.affiliate_commission_ttc ?? 0),
+        (sum, c) =>
+          sum + (c.total_payout_ttc ?? c.affiliate_commission_ttc ?? 0),
         0
       );
       const averageBasket = totalOrders > 0 ? totalRevenueHT / totalOrders : 0;

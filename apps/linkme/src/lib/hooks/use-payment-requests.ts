@@ -118,10 +118,13 @@ export function usePaymentRequestDetail(requestId: string | null) {
           commission_amount_ttc,
           linkme_commissions (
             id,
+            order_id,
             order_number,
             order_amount_ht,
             affiliate_commission,
             affiliate_commission_ttc,
+            total_payout_ht,
+            total_payout_ttc,
             status,
             created_at,
             linkme_selections (name)
@@ -139,24 +142,33 @@ export function usePaymentRequestDetail(requestId: string | null) {
       const commissions: CommissionItem[] = (items || []).map(item => {
         const comm = item.linkme_commissions as unknown as {
           id: string;
+          order_id: string;
           order_number: string;
           order_amount_ht: number;
           affiliate_commission: number;
           affiliate_commission_ttc: number;
+          total_payout_ht: number | null;
+          total_payout_ttc: number | null;
           status: string;
           created_at: string;
           linkme_selections: { name: string };
         };
         return {
           id: comm.id,
+          orderId: comm.order_id,
           orderNumber: comm.order_number || '',
           orderAmountHT: comm.order_amount_ht || 0,
+          orderAmountTTC: 0,
           affiliateCommission: comm.affiliate_commission || 0,
           affiliateCommissionTTC: comm.affiliate_commission_ttc || 0,
+          totalPayoutHT: comm.total_payout_ht ?? comm.affiliate_commission ?? 0,
+          totalPayoutTTC:
+            comm.total_payout_ttc ?? comm.affiliate_commission_ttc ?? 0,
           linkmeCommission: 0,
           marginRateApplied: 0,
           status: comm.status as 'pending' | 'validated' | 'paid' | 'cancelled',
           createdAt: comm.created_at || '',
+          orderDate: comm.created_at || '',
           validatedAt: null,
           paidAt: null,
           selectionName: comm.linkme_selections?.name || 'Sélection inconnue',
@@ -191,7 +203,9 @@ export function useCreatePaymentRequest() {
       // 1. Récupérer les commissions sélectionnées pour calculer le total
       const { data: commissions, error: commError } = await supabase
         .from('linkme_commissions')
-        .select('id, affiliate_commission_ttc, affiliate_commission, status')
+        .select(
+          'id, affiliate_commission_ttc, affiliate_commission, total_payout_ht, total_payout_ttc, status'
+        )
         .in('id', input.commissionIds)
         .eq('affiliate_id', affiliate.id)
         .eq('status', 'validated'); // Seulement les validées
@@ -216,13 +230,14 @@ export function useCreatePaymentRequest() {
         );
       }
 
-      // Calculer les totaux
+      // Calculer les totaux (total_payout inclut catalogue + produits affiliés)
       const totalTTC = commissions.reduce(
-        (sum, c) => sum + (c.affiliate_commission_ttc ?? 0),
+        (sum, c) =>
+          sum + (c.total_payout_ttc ?? c.affiliate_commission_ttc ?? 0),
         0
       );
       const totalHT = commissions.reduce(
-        (sum, c) => sum + (c.affiliate_commission ?? 0),
+        (sum, c) => sum + (c.total_payout_ht ?? c.affiliate_commission ?? 0),
         0
       );
 
@@ -250,7 +265,8 @@ export function useCreatePaymentRequest() {
       const items = commissions.map(c => ({
         payment_request_id: request.id,
         commission_id: c.id,
-        commission_amount_ttc: c.affiliate_commission_ttc ?? 0,
+        commission_amount_ttc:
+          c.total_payout_ttc ?? c.affiliate_commission_ttc ?? 0,
       }));
 
       const { error: itemsError } = await supabase

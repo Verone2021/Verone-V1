@@ -30,9 +30,7 @@ import {
   TrendingUp,
   Edit,
   History,
-  BarChart3,
   RefreshCw,
-  Download,
   ArrowUpDown,
   X,
   ArrowLeft,
@@ -372,9 +370,6 @@ export default function StockInventairePage() {
       const [inventoryProducts] = await Promise.all([
         fetchInventoryProducts(),
         fetchStats(),
-        // ✅ Problem 12 - RÉSOLU: Migration RLS appliquée + query simplifiée
-        // Migration: supabase/migrations/20251119090317_add_stock_reservations_rls_policies.sql
-        // RLS policies activées sur stock_reservations (pattern products: authenticated users)
         fetchReservations(),
       ]);
       setProducts(inventoryProducts as Product[]);
@@ -383,12 +378,44 @@ export default function StockInventairePage() {
     }
   }, [fetchInventoryProducts, fetchStats, fetchReservations]);
 
-  // Charger les données au montage
+  // Ref pour éviter stale closures dans le useEffect
+  const loadDataRef = React.useRef(loadData);
+  loadDataRef.current = loadData;
+
+  // Charger les données au montage avec stale guard (StrictMode safe)
   useEffect(() => {
-    void loadData().catch(error => {
-      console.error('[StockProduits] loadData failed:', error);
+    let stale = false;
+
+    const run = async () => {
+      setProductsLoading(true);
+      try {
+        const [inventoryProducts] = await Promise.all([
+          fetchInventoryProducts(),
+          fetchStats(),
+          fetchReservations(),
+        ]);
+        if (!stale) {
+          setProducts(inventoryProducts as Product[]);
+        }
+      } finally {
+        if (!stale) {
+          setProductsLoading(false);
+        }
+      }
+    };
+
+    void run().catch(error => {
+      if (!stale) {
+        console.error('[StockProduits] loadData failed:', error);
+        setProductsLoading(false);
+      }
     });
-  }, [loadData]);
+
+    return () => {
+      stale = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Calculer les statistiques de stock
   const stockStats = useMemo(() => {
@@ -570,17 +597,6 @@ export default function StockInventairePage() {
                 <RefreshCw
                   className={`h-4 w-4 ${productsLoading ? 'animate-spin' : ''}`}
                 />
-              </ButtonV2>
-              <ButtonV2
-                variant="outline"
-                className="border-black text-black hover:bg-black hover:text-white"
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Exporter
-              </ButtonV2>
-              <ButtonV2 className="bg-black hover:bg-gray-800 text-white">
-                <BarChart3 className="h-4 w-4 mr-2" />
-                Rapports
               </ButtonV2>
             </div>
           </div>
