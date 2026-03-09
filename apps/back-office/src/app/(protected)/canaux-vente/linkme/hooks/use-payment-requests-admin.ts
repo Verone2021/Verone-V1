@@ -249,6 +249,8 @@ interface CommissionForPayment {
   id: string;
   affiliate_commission_ttc: number;
   affiliate_commission: number;
+  total_payout_ht: number | null;
+  total_payout_ttc: number | null;
   status: string;
 }
 
@@ -265,7 +267,9 @@ export function useCreatePaymentRequestAdmin() {
       // 1. Récupérer les commissions sélectionnées pour calculer le total
       const { data: commissions, error: commError } = await supabase
         .from('linkme_commissions')
-        .select('id, affiliate_commission_ttc, affiliate_commission, status')
+        .select(
+          'id, affiliate_commission_ttc, affiliate_commission, total_payout_ht, total_payout_ttc, status'
+        )
         .in('id', commissionIds)
         .eq('affiliate_id', affiliateId)
         .eq('status', 'validated')
@@ -291,13 +295,14 @@ export function useCreatePaymentRequestAdmin() {
         );
       }
 
-      // Calculer les totaux
+      // Calculer les totaux (total_payout inclut catalogue + produits affiliés)
       const totalTTC = commissions.reduce(
-        (sum, c) => sum + (c.affiliate_commission_ttc ?? 0),
+        (sum, c) =>
+          sum + (c.total_payout_ttc ?? c.affiliate_commission_ttc ?? 0),
         0
       );
       const totalHT = commissions.reduce(
-        (sum, c) => sum + (c.affiliate_commission ?? 0),
+        (sum, c) => sum + (c.total_payout_ht ?? c.affiliate_commission ?? 0),
         0
       );
 
@@ -329,7 +334,8 @@ export function useCreatePaymentRequestAdmin() {
       const items = commissions.map(c => ({
         payment_request_id: request.id,
         commission_id: c.id,
-        commission_amount_ttc: c.affiliate_commission_ttc ?? 0,
+        commission_amount_ttc:
+          c.total_payout_ttc ?? c.affiliate_commission_ttc ?? 0,
       }));
 
       const { error: itemsError } = await supabase

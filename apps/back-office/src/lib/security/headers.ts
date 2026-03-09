@@ -133,10 +133,15 @@ function getSecurityHeaders() {
 
   // Base headers sans conflits HTTPS en développement
   const baseHeaders = [
-    {
-      key: 'Content-Security-Policy',
-      value: csp.replace(/\n/g, ''),
-    },
+    // Skip CSP in development - Next.js 15 nonce mechanism conflicts with static CSP
+    ...(isDev
+      ? []
+      : [
+          {
+            key: 'Content-Security-Policy',
+            value: csp.replace(/\n/g, ''),
+          },
+        ]),
     {
       key: 'X-DNS-Prefetch-Control',
       value: 'on',

@@ -9,11 +9,9 @@ import {
   CardHeader,
   CardTitle,
 } from '@verone/ui';
-import { ButtonV2 } from '@verone/ui';
 import {
   Webhook,
   Key,
-  Plus,
   Copy,
   Eye,
   EyeOff,
@@ -294,10 +292,6 @@ export default function IntegrationsPage() {
                 </CardDescription>
               </div>
             </div>
-            <ButtonV2 size="sm" variant="outline" disabled>
-              <Plus className="h-4 w-4 mr-2" />
-              Ajouter
-            </ButtonV2>
           </div>
         </CardHeader>
         <CardContent>
@@ -332,10 +326,6 @@ export default function IntegrationsPage() {
                 </CardDescription>
               </div>
             </div>
-            <ButtonV2 size="sm" variant="outline" disabled>
-              <Plus className="h-4 w-4 mr-2" />
-              Générer
-            </ButtonV2>
           </div>
         </CardHeader>
         <CardContent>

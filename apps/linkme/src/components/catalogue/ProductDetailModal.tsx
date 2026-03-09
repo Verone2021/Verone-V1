@@ -49,6 +49,7 @@ interface ProductDetailModalProps {
   cart: ICartItem[];
   onAddToCart: (item: ISelectionItem) => void;
   onUpdateQuantity: (itemId: string, delta: number) => void;
+  priceDisplayMode?: 'HT' | 'TTC';
 }
 
 // ============================================
@@ -113,6 +114,7 @@ export function ProductDetailModal({
   cart,
   onAddToCart,
   onUpdateQuantity,
+  priceDisplayMode = 'TTC',
 }: ProductDetailModalProps) {
   const [detail, setDetail] = useState<ProductDetail | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -298,12 +300,23 @@ export function ProductDetailModal({
                   className="text-3xl font-bold"
                   style={{ color: branding.text_color }}
                 >
-                  {formatPrice(item.selling_price_ttc)}
+                  {formatPrice(
+                    priceDisplayMode === 'HT'
+                      ? item.selling_price_ht
+                      : item.selling_price_ttc
+                  )}
                 </span>
-                <span className="text-sm text-gray-500 ml-2">TTC</span>
+                <span className="text-sm text-gray-500 ml-2">
+                  {priceDisplayMode}
+                </span>
                 {detail && (
                   <div className="text-sm text-gray-500 mt-1">
-                    HT : {formatPrice(detail.selling_price_ht)}
+                    {priceDisplayMode === 'HT' ? 'TTC' : 'HT'} :{' '}
+                    {formatPrice(
+                      priceDisplayMode === 'HT'
+                        ? detail.selling_price_ttc
+                        : detail.selling_price_ht
+                    )}
                   </div>
                 )}
               </div>

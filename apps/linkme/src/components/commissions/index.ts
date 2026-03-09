@@ -3,6 +3,7 @@
  * @module commissions
  */
 
+export { CommissionDetailContent } from './CommissionDetailContent';
 export { CommissionKPICard } from './CommissionKPICard';
 export { CommissionsTable } from './CommissionsTable';
 export { CommissionsChart } from './CommissionsChart';

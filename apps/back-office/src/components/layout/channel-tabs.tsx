@@ -40,6 +40,7 @@ const CHANNEL_TABS: Record<string, Tab[]> = {
     { label: 'Approbations', href: '/canaux-vente/linkme/approbations' },
     { label: 'Commissions', href: '/canaux-vente/linkme/commissions' },
     { label: 'Messages', href: '/canaux-vente/linkme/messages' },
+    { label: 'Stockage', href: '/canaux-vente/linkme/stockage' },
     { label: 'Rapports', href: '/canaux-vente/linkme/analytics/rapports' },
     { label: 'Configuration', href: '/canaux-vente/linkme/configuration' },
   ],

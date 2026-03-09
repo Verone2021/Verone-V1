@@ -4440,6 +4440,8 @@ export type Database = {
           selection_id: string | null;
           status: string | null;
           tax_rate: number | null;
+          total_payout_ht: number | null;
+          total_payout_ttc: number | null;
           updated_at: string | null;
           validated_at: string | null;
           validated_by: string | null;
@@ -4466,6 +4468,8 @@ export type Database = {
           selection_id?: string | null;
           status?: string | null;
           tax_rate?: number | null;
+          total_payout_ht?: number | null;
+          total_payout_ttc?: number | null;
           updated_at?: string | null;
           validated_at?: string | null;
           validated_by?: string | null;
@@ -4492,6 +4496,8 @@ export type Database = {
           selection_id?: string | null;
           status?: string | null;
           tax_rate?: number | null;
+          total_payout_ht?: number | null;
+          total_payout_ttc?: number | null;
           updated_at?: string | null;
           validated_at?: string | null;
           validated_by?: string | null;

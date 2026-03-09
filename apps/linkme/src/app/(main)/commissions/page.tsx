@@ -22,12 +22,12 @@ import {
   CommissionsTable,
   CommissionSelectionModal,
   PaymentRequestModal,
-  PaymentRequestsPanel,
   HowToGetPaidBanner,
 } from '../../../components/commissions';
 import { PageTourTrigger } from '../../../components/onboarding/PageTourTrigger';
 import { useAffiliateAnalytics } from '../../../lib/hooks/use-affiliate-analytics';
 import { useAffiliateCommissions } from '../../../lib/hooks/use-affiliate-commissions';
+import { useAffiliatePaymentRequests } from '../../../lib/hooks/use-payment-requests';
 import type { AnalyticsPeriod } from '../../../types/analytics';
 import { PERIOD_LABELS } from '../../../types/analytics';
 
@@ -50,6 +50,12 @@ export default function CommissionsPage(): JSX.Element {
     isLoading: commissionsLoading,
     refetch,
   } = useAffiliateCommissions({ period });
+
+  // Demandes de versement (pour le count dans le tab)
+  const { data: paymentRequests } = useAffiliatePaymentRequests();
+  const activeRequestsCount = (paymentRequests ?? []).filter(
+    r => r.status === 'pending' || r.status === 'invoice_received'
+  ).length;
 
   const isLoading = analyticsLoading || commissionsLoading;
 
@@ -161,34 +167,23 @@ export default function CommissionsPage(): JSX.Element {
         />
       </div>
 
-      {/* Layout 2 colonnes : Table (60%) | Panel Demandes (40%) */}
-      <div
-        data-tour="commissions-list"
-        className="grid grid-cols-1 lg:grid-cols-5 gap-4"
-      >
-        {/* Colonne gauche : Table des commissions (3/5 = 60%) */}
-        <div className="lg:col-span-3">
-          {/* Indicateur période du tableau */}
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="text-lg font-semibold text-gray-900">
-              Commissions {period !== 'all' && `(${PERIOD_LABELS[period]})`}
-            </h2>
-            <span className="text-sm text-gray-500">
-              {commissions?.length ?? 0} résultat
-              {(commissions?.length ?? 0) > 1 ? 's' : ''}
-            </span>
-          </div>
-          <CommissionsTable
-            commissions={commissions ?? []}
-            isLoading={commissionsLoading}
-            onRequestPayment={handleRequestPayment}
-          />
+      {/* Table des commissions (full-width) */}
+      <div data-tour="commissions-list">
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-lg font-semibold text-gray-900">
+            Commissions {period !== 'all' && `(${PERIOD_LABELS[period]})`}
+          </h2>
+          <span className="text-sm text-gray-500">
+            {commissions?.length ?? 0} resultat
+            {(commissions?.length ?? 0) > 1 ? 's' : ''}
+          </span>
         </div>
-
-        {/* Colonne droite : Panel demandes (2/5 = 40%) */}
-        <div className="lg:col-span-2">
-          <PaymentRequestsPanel />
-        </div>
+        <CommissionsTable
+          commissions={commissions ?? []}
+          isLoading={commissionsLoading}
+          onRequestPayment={handleRequestPayment}
+          paymentRequestsCount={activeRequestsCount}
+        />
       </div>
 
       {/* Modal sélection des commissions (depuis banner) */}

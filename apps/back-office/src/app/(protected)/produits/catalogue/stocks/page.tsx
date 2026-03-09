@@ -38,7 +38,6 @@ import {
   TrendingUp,
   History,
   RefreshCw,
-  Download,
   ArrowUpDown,
   Clock,
   Boxes,
@@ -111,15 +110,26 @@ export default function CatalogueStocksPage() {
     getStockAlerts,
   } = useStock();
 
-  // Charger les données au montage
+  // Charger les données au montage avec stale guard (StrictMode safe)
   useEffect(() => {
+    let stale = false;
+
     void loadCatalogueData().catch(error => {
-      console.error('[CatalogueStocks] loadCatalogueData failed:', error);
+      if (!stale) {
+        console.error('[CatalogueStocks] loadCatalogueData failed:', error);
+      }
     });
     void fetchAllStock().catch(error => {
-      console.error('[CatalogueStocks] fetchAllStock failed:', error);
+      if (!stale) {
+        console.error('[CatalogueStocks] fetchAllStock failed:', error);
+      }
     });
-  }, [loadCatalogueData, fetchAllStock]);
+
+    return () => {
+      stale = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Données enrichies produits + stock
   const enrichedProducts = useMemo(() => {
@@ -279,10 +289,6 @@ export default function CatalogueStocksPage() {
               className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`}
             />
             Actualiser
-          </ButtonV2>
-          <ButtonV2 variant="outline">
-            <Download className="h-4 w-4 mr-2" />
-            Exporter
           </ButtonV2>
         </div>
       </div>

@@ -57,7 +57,7 @@ export function InvoiceTemplate({
   // Calculs des montants
   const totals = useMemo(() => {
     const totalHT = commissions.reduce(
-      (sum, c) => sum + (c.affiliateCommission || 0),
+      (sum, c) => sum + (c.totalPayoutHT || 0),
       0
     );
     const tva = totalHT * taxRate;
@@ -72,7 +72,7 @@ export function InvoiceTemplate({
       '',
       ...commissions.map(
         c =>
-          `• Commande #${c.orderNumber} - ${c.selectionName ?? 'Sélection'} : ${formatCurrency(c.affiliateCommission)}`
+          `• Commande #${c.orderNumber} - ${c.selectionName ?? 'Sélection'} : ${formatCurrency(c.totalPayoutHT)}`
       ),
     ];
     try {
@@ -277,7 +277,7 @@ export function InvoiceTemplate({
                     )}
                   </td>
                   <td className="px-4 py-2 text-xs text-right font-medium text-gray-900">
-                    {formatCurrency(c.affiliateCommission)}
+                    {formatCurrency(c.totalPayoutHT)}
                   </td>
                 </tr>
               ))}

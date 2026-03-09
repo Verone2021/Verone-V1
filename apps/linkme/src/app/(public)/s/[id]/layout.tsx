@@ -261,12 +261,19 @@ export default function SelectionLayout({
     return cart.reduce((sum, item) => sum + item.quantity, 0);
   }, [cart]);
 
+  const priceDisplayMode = selection?.price_display_mode ?? 'TTC';
+
   const cartTotal = useMemo(() => {
     return cart.reduce(
-      (sum, item) => sum + item.selling_price_ttc * item.quantity,
+      (sum, item) =>
+        sum +
+        (priceDisplayMode === 'HT'
+          ? item.selling_price_ht
+          : item.selling_price_ttc) *
+          item.quantity,
       0
     );
-  }, [cart]);
+  }, [cart, priceDisplayMode]);
 
   const categories: ICategory[] = useMemo(() => {
     const catMap = new Map<string, ICategory>();
@@ -458,7 +465,9 @@ export default function SelectionLayout({
             <span className="font-medium">
               {cartCount} article{cartCount > 1 ? 's' : ''}
             </span>
-            <span className="font-bold">{formatPrice(cartTotal)}</span>
+            <span className="font-bold">
+              {formatPrice(cartTotal)} {priceDisplayMode}
+            </span>
           </button>
         )}
 

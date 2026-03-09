@@ -125,8 +125,8 @@ export interface CreateLinkMeOrderInput {
   handling_cost_ht?: number;
   /** Taux de TVA sur les frais (decimal, ex: 0.2 pour 20%) - defaut 20% */
   frais_tax_rate?: number;
-  /** Date de commande (format YYYY-MM-DD, défaut: aujourd'hui) */
-  order_date?: string | null;
+  /** Date de commande (format YYYY-MM-DD) — OBLIGATOIRE */
+  order_date: string;
   /** Date de livraison souhaitée */
   expected_delivery_date?: string | null;
   /** Livraison en centre commercial (logistique spéciale) */
@@ -539,7 +539,7 @@ async function createLinkMeOrder(
     total_ht: totalHt,
     total_ttc: totalTtc,
     tax_rate: 0, // TVA calculee par ligne, pas globale
-    order_date: input.order_date ?? new Date().toISOString().split('T')[0],
+    order_date: input.order_date,
     notes: input.internal_notes ?? null,
     // Frais additionnels
     shipping_cost_ht: shippingCostHt,

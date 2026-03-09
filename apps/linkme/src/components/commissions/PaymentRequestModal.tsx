@@ -69,11 +69,11 @@ export function PaymentRequestModal({
   // Calculs des totaux
   const totals = useMemo(() => {
     const totalHT = selectedCommissions.reduce(
-      (sum, c) => sum + (c.affiliateCommission || 0),
+      (sum, c) => sum + (c.totalPayoutHT || 0),
       0
     );
     const totalTTC = selectedCommissions.reduce(
-      (sum, c) => sum + (c.affiliateCommissionTTC || 0),
+      (sum, c) => sum + (c.totalPayoutTTC || 0),
       0
     );
     return { totalHT, totalTTC, count: selectedCommissions.length };
@@ -240,7 +240,7 @@ export function PaymentRequestModal({
                         </span>
                       </div>
                       <span className="text-sm font-semibold text-emerald-600">
-                        {formatCurrency(c.affiliateCommissionTTC)}
+                        {formatCurrency(c.totalPayoutTTC)}
                       </span>
                     </div>
                   ))}

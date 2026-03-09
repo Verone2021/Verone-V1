@@ -12,8 +12,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { createClient } from '@verone/utils/supabase/client';
 
-const supabase = createClient();
-
 import { useUserAffiliate } from './use-user-selection';
 import type {
   AnalyticsPeriod,
@@ -39,8 +37,7 @@ export function useAffiliateCommissions(
     queryFn: async (): Promise<CommissionItem[]> => {
       if (!affiliate) return [];
 
-      // Construction de la requête
-      // PERF: Limiter à 100 commissions pour éviter chargement lent
+      const supabase = createClient();
       const query = supabase
         .from('linkme_commissions')
         .select(
@@ -52,6 +49,8 @@ export function useAffiliateCommissions(
           order_amount_ht,
           affiliate_commission,
           affiliate_commission_ttc,
+          total_payout_ht,
+          total_payout_ttc,
           linkme_commission,
           margin_rate_applied,
           status,
@@ -60,12 +59,17 @@ export function useAffiliateCommissions(
           paid_at,
           linkme_selections!inner (
             name
+          ),
+          sales_order:sales_orders!linkme_commissions_order_id_fkey (
+            order_date,
+            created_at,
+            linkme_display_number,
+            total_ttc
           )
         `
         )
         .eq('affiliate_id', affiliate.id)
-        .order('created_at', { ascending: false })
-        .limit(100);
+        .order('created_at', { ascending: false });
 
       // Récupérer les order_ids pour chercher les noms clients
       const { data: commissionsData, error: commissionsError } = await query;
@@ -75,15 +79,26 @@ export function useAffiliateCommissions(
         throw commissionsError;
       }
 
-      // Filtrer par période si spécifiée
+      // Filtrer par période si spécifiée (basé sur order_date, pas created_at)
       let filteredByPeriod = commissionsData || [];
       if (period !== 'all') {
         const periodStart = getPeriodStartDate(period);
         if (periodStart) {
-          const periodStartISO = periodStart.toISOString();
-          filteredByPeriod = filteredByPeriod.filter(
-            c => c.created_at && c.created_at >= periodStartISO
-          );
+          const periodStartISO = periodStart.toISOString().slice(0, 10);
+          filteredByPeriod = filteredByPeriod.filter(c => {
+            const salesOrder = c.sales_order as unknown as {
+              order_date: string;
+              created_at: string;
+              linkme_display_number: string | null;
+              total_ttc: number | null;
+            } | null;
+            const dateStr =
+              salesOrder?.order_date ??
+              salesOrder?.created_at?.slice(0, 10) ??
+              c.created_at ??
+              '';
+            return dateStr >= periodStartISO;
+          });
         }
       }
 
@@ -112,27 +127,49 @@ export function useAffiliateCommissions(
       }
 
       // Transformer les données
-      return filteredData.map(item => {
+      const mapped = filteredData.map(item => {
         const selection = item.linkme_selections as unknown as { name: string };
+        const salesOrder = item.sales_order as unknown as {
+          order_date: string;
+          created_at: string;
+          linkme_display_number: string | null;
+          total_ttc: number | null;
+        } | null;
         const customerName =
           customerNameMap.get(item.order_id) ?? 'Client inconnu';
 
         return {
           id: item.id,
-          orderNumber: item.order_number ?? '',
+          orderId: item.order_id,
+          orderNumber:
+            salesOrder?.linkme_display_number ?? item.order_number ?? '',
           orderAmountHT: item.order_amount_ht ?? 0,
+          orderAmountTTC: salesOrder?.total_ttc ?? 0,
           affiliateCommission: item.affiliate_commission ?? 0,
           affiliateCommissionTTC: item.affiliate_commission_ttc ?? 0,
+          totalPayoutHT: item.total_payout_ht ?? item.affiliate_commission ?? 0,
+          totalPayoutTTC:
+            item.total_payout_ttc ?? item.affiliate_commission_ttc ?? 0,
           linkmeCommission: item.linkme_commission ?? 0,
           marginRateApplied: item.margin_rate_applied ?? 0,
           status: item.status as CommissionStatus,
           createdAt: item.created_at ?? '',
+          orderDate:
+            salesOrder?.order_date ??
+            salesOrder?.created_at?.slice(0, 10) ??
+            item.created_at ??
+            '',
           validatedAt: item.validated_at,
           paidAt: item.paid_at,
           selectionName: selection?.name ?? 'Sélection inconnue',
           customerName,
         };
       });
+
+      // Trier par date de commande décroissante (le .order() Supabase ne trie pas sur la table jointe)
+      mapped.sort((a, b) => b.orderDate.localeCompare(a.orderDate));
+
+      return mapped;
     },
     enabled: !!affiliate,
     staleTime: 30000, // 30 secondes
@@ -151,6 +188,7 @@ export function useCommissionsCounts() {
     queryFn: async () => {
       if (!affiliate) return { pending: 0, validated: 0, paid: 0, total: 0 };
 
+      const supabase = createClient();
       const { data, error } = await supabase
         .from('linkme_commissions')
         .select('status')
