@@ -700,24 +700,14 @@ export function useSourcingProducts(filters?: SourcingFilters) {
   // Créer un produit en sourcing rapide
   const createSourcingProduct = async (data: {
     name: string;
-    supplier_page_url: string;
-    cost_price: number; // REQUIRED - validation > 0
+    supplier_page_url?: string;
+    cost_price?: number;
     supplier_id?: string;
     assigned_client_id?: string;
-    enseigne_id?: string; // Enseigne pour sourcing groupe magasins
-    imageFile?: File; // Upload image optionnel
+    enseigne_id?: string;
+    imageFiles?: File[];
   }) => {
     try {
-      // 🔥 FIX: Validation prix OBLIGATOIRE
-      if (!data.cost_price || data.cost_price <= 0) {
-        toast({
-          title: 'Erreur',
-          description: "Le prix d'achat est obligatoire et doit être > 0€",
-          variant: 'destructive',
-        });
-        return null;
-      }
-
       // Validation nom
       if (!data.name?.trim()) {
         toast({
@@ -731,22 +721,22 @@ export function useSourcingProducts(filters?: SourcingFilters) {
       // Déterminer sourcing_type : 'client' si enseigne OU organisation, sinon 'interne'
       const isClientSourcing = !!(data.enseigne_id || data.assigned_client_id);
 
-      // Créer le produit
+      // Créer le produit (champs facultatifs envoyés uniquement si renseignés)
       const { data: newProduct, error } = await supabase
         .from('products')
         .insert([
           {
             name: data.name,
-            supplier_page_url: data.supplier_page_url,
-            cost_price: data.cost_price,
-            supplier_id: data.supplier_id,
-            assigned_client_id: data.assigned_client_id,
-            enseigne_id: data.enseigne_id, // Nouvelle colonne pour traçabilité enseigne
+            supplier_page_url: data.supplier_page_url || null,
+            cost_price: data.cost_price || null,
+            supplier_id: data.supplier_id || null,
+            assigned_client_id: data.assigned_client_id || null,
+            enseigne_id: data.enseigne_id || null,
             creation_mode: 'sourcing',
             sourcing_type: isClientSourcing ? 'client' : 'interne',
-            product_status: 'draft', // ✅ FIXED: Use 'draft' (valid enum value)
-            completion_status: 'draft', // Produit en cours de sourcing
-            stock_status: 'out_of_stock', // Pas encore commandé
+            product_status: 'draft',
+            completion_status: 'draft',
+            stock_status: 'out_of_stock',
           },
         ] as any)
         .select()
@@ -761,41 +751,40 @@ export function useSourcingProducts(filters?: SourcingFilters) {
         return null;
       }
 
-      // 🔥 FIX: Upload image si fournie
-      if (data.imageFile && newProduct) {
-        try {
-          const fileExt = data.imageFile.name.split('.').pop();
-          const fileName = `${newProduct.id}-${Date.now()}.${fileExt}`;
-          const filePath = `products/${fileName}`;
+      // Upload images si fournies (multi)
+      if (data.imageFiles && data.imageFiles.length > 0 && newProduct) {
+        for (let i = 0; i < data.imageFiles.length; i++) {
+          const file = data.imageFiles[i];
+          try {
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${newProduct.id}-${Date.now()}-${i}.${fileExt}`;
+            const filePath = `products/${fileName}`;
 
-          // Upload vers Supabase Storage
-          const { error: uploadError } = await supabase.storage
-            .from('product-images')
-            .upload(filePath, data.imageFile);
+            const { error: uploadError } = await supabase.storage
+              .from('product-images')
+              .upload(filePath, file);
 
-          if (uploadError) {
-            console.error('Erreur upload image:', uploadError);
-            // Ne pas bloquer la création du produit, juste logger
-          } else {
-            // Obtenir l'URL publique
+            if (uploadError) {
+              console.error(`Erreur upload image ${i}:`, uploadError);
+              continue;
+            }
+
             const {
               data: { publicUrl },
             } = supabase.storage.from('product-images').getPublicUrl(filePath);
 
-            // Créer entrée product_images
             await supabase.from('product_images').insert([
               {
                 product_id: newProduct.id,
                 public_url: publicUrl,
                 storage_path: filePath,
-                is_primary: true,
-                image_type: 'primary', // ✅ FIX: Utiliser valeur enum valide
+                is_primary: i === 0,
+                image_type: i === 0 ? 'primary' : 'gallery',
               },
             ] as any);
+          } catch (imgError) {
+            console.error(`Erreur gestion image ${i}:`, imgError);
           }
-        } catch (imgError) {
-          console.error('Erreur gestion image:', imgError);
-          // Ne pas bloquer la création
         }
       }
 
