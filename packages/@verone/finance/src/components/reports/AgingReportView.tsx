@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 import { useToast } from '@verone/common/hooks';
 import { Badge } from '@verone/ui';
-import { ButtonV2 } from '@verone/ui';
+import { Button } from '@verone/ui';
 import {
   Card,
   CardContent,
@@ -31,16 +31,9 @@ import {
   Download,
 } from 'lucide-react';
 
-import {
-  useAgingReport,
-  AGING_BUCKETS,
-  type AgingReportData,
-} from '../../hooks/use-aging-report';
-import {
-  exportAgingReportToPDF,
-  exportAgingReportToExcel,
-  exportAgingReportToCSV,
-} from '../../utils/export-aging-report';
+import { useAgingReport, AGING_BUCKETS } from '../../hooks/use-aging-report';
+import { AgingReportPdf } from '../../pdf-templates/AgingReportPdf';
+import { PdfPreviewModalDynamic as PdfPreviewModal } from '../PdfPreviewModalDynamic';
 
 interface AgingReportViewProps {
   dateFrom?: string;
@@ -50,6 +43,7 @@ interface AgingReportViewProps {
 export function AgingReportView({ dateFrom, dateTo }: AgingReportViewProps) {
   const { report, loading, error, generateReport } = useAgingReport();
   const { toast } = useToast();
+  const [showPdfPreview, setShowPdfPreview] = useState(false);
 
   useEffect(() => {
     generateReport(dateFrom, dateTo);
@@ -57,53 +51,7 @@ export function AgingReportView({ dateFrom, dateTo }: AgingReportViewProps) {
 
   const handleExportPDF = () => {
     if (!report) return;
-    try {
-      exportAgingReportToPDF(report);
-      toast({
-        title: 'Export PDF réussi',
-        description: 'Le rapport a été téléchargé au format PDF.',
-      });
-    } catch (error) {
-      toast({
-        title: 'Erreur export PDF',
-        description: 'Impossible de générer le PDF.',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  const handleExportExcel = async () => {
-    if (!report) return;
-    try {
-      await exportAgingReportToExcel(report);
-      toast({
-        title: 'Export Excel réussi',
-        description: 'Le rapport a été téléchargé au format Excel.',
-      });
-    } catch (error) {
-      toast({
-        title: 'Erreur export Excel',
-        description: 'Impossible de générer le fichier Excel.',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  const handleExportCSV = () => {
-    if (!report) return;
-    try {
-      exportAgingReportToCSV(report);
-      toast({
-        title: 'Export CSV réussi',
-        description: 'Le rapport a été téléchargé au format CSV.',
-      });
-    } catch (error) {
-      toast({
-        title: 'Erreur export CSV',
-        description: 'Impossible de générer le fichier CSV.',
-        variant: 'destructive',
-      });
-    }
+    setShowPdfPreview(true);
   };
 
   if (loading) {
@@ -146,49 +94,28 @@ export function AgingReportView({ dateFrom, dateTo }: AgingReportViewProps) {
             <p className="text-sm font-semibold text-gray-900">
               Exporter le rapport
             </p>
-            <p className="text-xs text-gray-600">
-              Télécharger dans le format de votre choix
-            </p>
+            <p className="text-xs text-gray-600">Telecharger au format PDF</p>
           </div>
         </div>
-        <div className="flex gap-2">
-          <ButtonV2
-            onClick={handleExportPDF}
-            variant="outline"
-            size="sm"
-            className="h-9"
-          >
-            <FileText className="h-4 w-4 mr-2" />
-            PDF
-          </ButtonV2>
-          <ButtonV2
-            onClick={handleExportExcel}
-            variant="outline"
-            size="sm"
-            className="h-9"
-          >
-            <FileText className="h-4 w-4 mr-2" />
-            Excel
-          </ButtonV2>
-          <ButtonV2
-            onClick={handleExportCSV}
-            variant="outline"
-            size="sm"
-            className="h-9"
-          >
-            <FileText className="h-4 w-4 mr-2" />
-            CSV
-          </ButtonV2>
-        </div>
+        <Button
+          onClick={handleExportPDF}
+          disabled={!report || loading}
+          variant="outline"
+          size="sm"
+          className="h-9"
+        >
+          <FileText className="h-4 w-4 mr-2" />
+          {loading ? 'Chargement...' : 'PDF'}
+        </Button>
       </div>
 
-      {/* Métriques globales */}
+      {/* Metriques globales */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-3">
             <CardDescription className="text-xs flex items-center gap-1">
               <Package className="h-3 w-3" />
-              Produits analysés
+              Produits analyses
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -196,7 +123,7 @@ export function AgingReportView({ dateFrom, dateTo }: AgingReportViewProps) {
               {report.summary.total_products}
             </p>
             <p className="text-xs text-gray-500 mt-1">
-              {report.summary.total_quantity.toLocaleString('fr-FR')} unités
+              {report.summary.total_quantity.toLocaleString('fr-FR')} unites
             </p>
           </CardContent>
         </Card>
@@ -213,7 +140,7 @@ export function AgingReportView({ dateFrom, dateTo }: AgingReportViewProps) {
               {report.summary.total_value.toLocaleString('fr-FR', {
                 maximumFractionDigits: 0,
               })}{' '}
-              €
+              EUR
             </p>
             <p className="text-xs text-gray-500 mt-1">Stock total</p>
           </CardContent>
@@ -223,7 +150,7 @@ export function AgingReportView({ dateFrom, dateTo }: AgingReportViewProps) {
           <CardHeader className="pb-3">
             <CardDescription className="text-xs flex items-center gap-1">
               <Clock className="h-3 w-3" />
-              Âge moyen
+              Age moyen
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -253,7 +180,7 @@ export function AgingReportView({ dateFrom, dateTo }: AgingReportViewProps) {
               {report.summary.immobilized_value.toLocaleString('fr-FR', {
                 maximumFractionDigits: 0,
               })}{' '}
-              € immobilisés
+              EUR immobilises
             </p>
           </CardContent>
         </Card>
@@ -262,9 +189,9 @@ export function AgingReportView({ dateFrom, dateTo }: AgingReportViewProps) {
       {/* Histogramme par tranches */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Distribution par âge</CardTitle>
+          <CardTitle className="text-base">Distribution par age</CardTitle>
           <CardDescription className="text-xs">
-            Répartition de la valeur du stock par tranches temporelles
+            Repartition de la valeur du stock par tranches temporelles
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -283,7 +210,7 @@ export function AgingReportView({ dateFrom, dateTo }: AgingReportViewProps) {
                       {bucket.value.toLocaleString('fr-FR', {
                         maximumFractionDigits: 0,
                       })}{' '}
-                      €
+                      EUR
                     </span>
                     <Badge
                       variant="outline"
@@ -320,7 +247,7 @@ export function AgingReportView({ dateFrom, dateTo }: AgingReportViewProps) {
             Top 20 - Produits les plus anciens
           </CardTitle>
           <CardDescription className="text-xs">
-            Produits nécessitant une attention prioritaire
+            Produits necessitant une attention prioritaire
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -333,7 +260,7 @@ export function AgingReportView({ dateFrom, dateTo }: AgingReportViewProps) {
                   </TableHead>
                   <TableHead className="text-xs font-semibold">SKU</TableHead>
                   <TableHead className="text-xs font-semibold text-right">
-                    Âge (jours)
+                    Age (jours)
                   </TableHead>
                   <TableHead className="text-xs font-semibold text-right">
                     Stock
@@ -375,7 +302,7 @@ export function AgingReportView({ dateFrom, dateTo }: AgingReportViewProps) {
                         {product.value.toLocaleString('fr-FR', {
                           maximumFractionDigits: 0,
                         })}{' '}
-                        €
+                        EUR
                       </TableCell>
                       <TableCell>
                         <Badge
@@ -401,11 +328,22 @@ export function AgingReportView({ dateFrom, dateTo }: AgingReportViewProps) {
         </CardContent>
       </Card>
 
-      {/* Timestamp génération */}
+      {/* Timestamp generation */}
       <div className="text-xs text-gray-500 text-center">
-        Rapport généré le{' '}
+        Rapport genere le{' '}
         {new Date(report.generated_at).toLocaleString('fr-FR')}
       </div>
+
+      {/* PDF Preview Modal */}
+      {showPdfPreview && (
+        <PdfPreviewModal
+          isOpen={showPdfPreview}
+          onClose={() => setShowPdfPreview(false)}
+          document={<AgingReportPdf report={report} />}
+          title="Rapport Aging Inventaire"
+          filename={`rapport-aging-inventaire-${new Date().toISOString().split('T')[0]}.pdf`}
+        />
+      )}
     </div>
   );
 }

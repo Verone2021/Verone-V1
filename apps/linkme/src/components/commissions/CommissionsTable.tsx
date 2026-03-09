@@ -1,17 +1,16 @@
 /**
  * CommissionsTable
- * Tableau des commissions avec filtrage par statut, pagination et sélection multiple
- *
- * Permet la sélection des commissions payables pour demander un versement
+ * Tableau des commissions avec filtrage par statut, pagination, sélection multiple
+ * et lignes expandables avec detail produit
  *
  * @module CommissionsTable
  * @since 2025-12-10
- * @updated 2026-01-10 - Ajout pagination, fix statut payable
+ * @updated 2026-03-05 - Lignes expandables + tab "Mes Demandes"
  */
 
 'use client';
 
-import { useState, useMemo } from 'react';
+import { Fragment, useState, useMemo } from 'react';
 
 import {
   Card,
@@ -22,11 +21,15 @@ import {
   TabPanel,
 } from '@tremor/react';
 import {
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
   Inbox,
   Banknote,
   Check,
   ChevronLeft,
   ChevronRight,
+  FileText,
 } from 'lucide-react';
 
 import type { CommissionItem, CommissionStatus } from '../../types/analytics';
@@ -34,11 +37,16 @@ import {
   formatCurrency,
   COMMISSION_STATUS_LABELS,
 } from '../../types/analytics';
+import { CommissionDetailContent } from './CommissionDetailContent';
+import { PaymentRequestsPanel } from './PaymentRequestsPanel';
 
 // ============================================
-// CONSTANTS
+// CONSTANTS & TYPES
 // ============================================
 const ITEMS_PER_PAGE = 15;
+
+type SortField = 'date' | 'order' | null;
+type SortDirection = 'asc' | 'desc';
 
 // Helper pour vérifier si une commission est payable
 const isPayableStatus = (status: CommissionStatus | null): boolean =>
@@ -48,6 +56,7 @@ interface ICommissionsTableProps {
   commissions: CommissionItem[];
   isLoading?: boolean;
   onRequestPayment?: (selectedIds: string[]) => void;
+  paymentRequestsCount?: number;
 }
 
 // ============================================
@@ -109,20 +118,24 @@ function Checkbox({
   );
 }
 
-// Ligne du tableau avec checkbox
+// Ligne du tableau avec checkbox et expansion
 function CommissionRow({
   commission,
   isSelected,
   onSelect,
   showCheckbox,
+  isExpanded,
+  onToggleExpand,
 }: {
   commission: CommissionItem;
   isSelected: boolean;
   onSelect: (id: string, selected: boolean) => void;
   showCheckbox: boolean;
+  isExpanded: boolean;
+  onToggleExpand: () => void;
 }): JSX.Element {
-  const date = commission.createdAt
-    ? new Date(commission.createdAt).toLocaleDateString('fr-FR', {
+  const date = commission.orderDate
+    ? new Date(commission.orderDate).toLocaleDateString('fr-FR', {
         day: '2-digit',
         month: 'short',
         year: 'numeric',
@@ -130,44 +143,73 @@ function CommissionRow({
     : '-';
 
   const isPayable = isPayableStatus(commission.status);
+  const colCount = showCheckbox ? 10 : 9;
 
   return (
-    <tr
-      className={`
-        hover:bg-gray-50 transition-colors
-        ${isSelected ? 'bg-teal-50/50' : ''}
-      `}
-    >
-      {/* Checkbox - visible seulement pour payables */}
-      {showCheckbox && (
-        <td className="px-3 py-2.5 w-10">
-          {isPayable ? (
-            <Checkbox
-              checked={isSelected}
-              onChange={checked => onSelect(commission.id, checked)}
-            />
-          ) : (
-            <div className="w-4 h-4" />
-          )}
+    <Fragment>
+      <tr
+        className={`
+          hover:bg-gray-50 transition-colors cursor-pointer
+          ${isSelected ? 'bg-teal-50/50' : ''}
+        `}
+        onClick={onToggleExpand}
+      >
+        {/* Chevron expand */}
+        <td className="px-2 py-2.5 w-8">
+          <ChevronRight
+            className={`h-3.5 w-3.5 text-gray-400 transition-transform duration-200 ${
+              isExpanded ? 'rotate-90' : ''
+            }`}
+          />
         </td>
+        {/* Checkbox - visible seulement pour payables */}
+        {showCheckbox && (
+          <td className="px-3 py-2.5 w-10" onClick={e => e.stopPropagation()}>
+            {isPayable ? (
+              <Checkbox
+                checked={isSelected}
+                onChange={checked => onSelect(commission.id, checked)}
+              />
+            ) : (
+              <div className="w-4 h-4" />
+            )}
+          </td>
+        )}
+        <td className="px-3 py-2.5 text-xs text-gray-600">{date}</td>
+        <td className="px-3 py-2.5 text-xs font-medium text-gray-900">
+          #{commission.orderNumber}
+        </td>
+        <td className="px-3 py-2.5 text-xs text-gray-600 max-w-[150px] truncate">
+          {commission.customerName ?? commission.selectionName}
+        </td>
+        <td className="px-3 py-2.5 text-xs text-gray-600">
+          {formatCurrency(commission.orderAmountHT)}
+        </td>
+        <td className="px-3 py-2.5 text-xs text-gray-600">
+          {formatCurrency(commission.orderAmountTTC)}
+        </td>
+        <td className="px-3 py-2.5 text-xs text-gray-600">
+          {formatCurrency(commission.totalPayoutHT)}
+        </td>
+        <td className="px-3 py-2.5 text-xs font-semibold text-emerald-600">
+          {formatCurrency(commission.totalPayoutTTC)}
+        </td>
+        <td className="px-3 py-2.5">
+          <StatusBadge status={commission.status} />
+        </td>
+      </tr>
+      {/* Detail row */}
+      {isExpanded && (
+        <tr className="bg-gray-50/30">
+          <td colSpan={colCount} className="px-6 py-1">
+            <CommissionDetailContent
+              key={commission.orderId}
+              commission={commission}
+            />
+          </td>
+        </tr>
       )}
-      <td className="px-3 py-2.5 text-xs text-gray-600">{date}</td>
-      <td className="px-3 py-2.5 text-xs font-medium text-gray-900">
-        #{commission.orderNumber}
-      </td>
-      <td className="px-3 py-2.5 text-xs text-gray-600 max-w-[150px] truncate">
-        {commission.customerName ?? commission.selectionName}
-      </td>
-      <td className="px-3 py-2.5 text-xs text-gray-600">
-        {formatCurrency(commission.orderAmountHT)}
-      </td>
-      <td className="px-3 py-2.5 text-xs font-semibold text-emerald-600">
-        {formatCurrency(commission.affiliateCommissionTTC)}
-      </td>
-      <td className="px-3 py-2.5">
-        <StatusBadge status={commission.status} />
-      </td>
-    </tr>
+    </Fragment>
   );
 }
 
@@ -175,6 +217,9 @@ function CommissionRow({
 function SkeletonRow({ showCheckbox }: { showCheckbox: boolean }): JSX.Element {
   return (
     <tr className="animate-pulse">
+      <td className="px-2 py-2.5">
+        <div className="h-3.5 w-3.5 bg-gray-200 rounded" />
+      </td>
       {showCheckbox && (
         <td className="px-3 py-2.5">
           <div className="h-4 w-4 bg-gray-200 rounded" />
@@ -191,6 +236,12 @@ function SkeletonRow({ showCheckbox }: { showCheckbox: boolean }): JSX.Element {
       </td>
       <td className="px-3 py-2.5">
         <div className="h-3 bg-gray-200 rounded w-16" />
+      </td>
+      <td className="px-3 py-2.5">
+        <div className="h-3 bg-gray-200 rounded w-16" />
+      </td>
+      <td className="px-3 py-2.5">
+        <div className="h-3 bg-gray-200 rounded w-14" />
       </td>
       <td className="px-3 py-2.5">
         <div className="h-3 bg-gray-200 rounded w-14" />
@@ -306,15 +357,51 @@ export function CommissionsTable({
   commissions,
   isLoading,
   onRequestPayment,
+  paymentRequestsCount = 0,
 }: ICommissionsTableProps): JSX.Element {
   const [selectedTab, setSelectedTab] = useState(0);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [currentPage, setCurrentPage] = useState(1);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [sortField, setSortField] = useState<SortField>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
-  // Reset page when tab changes
+  // Reset page, expanded and sort when tab changes
   const handleTabChange = (index: number): void => {
     setSelectedTab(index);
     setCurrentPage(1);
+    setExpandedId(null);
+    setSortField(null);
+    setSortDirection('desc');
+  };
+
+  // Toggle sort on a column
+  const handleSort = (field: SortField): void => {
+    if (sortField === field) {
+      setSortDirection(prev => (prev === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortField(field);
+      setSortDirection('desc');
+    }
+    setCurrentPage(1);
+  };
+
+  // Sort helper
+  const applySorting = (items: CommissionItem[]): CommissionItem[] => {
+    if (!sortField) return items;
+    const sorted = [...items];
+    sorted.sort((a, b) => {
+      let cmp = 0;
+      if (sortField === 'date') {
+        cmp = a.orderDate.localeCompare(b.orderDate);
+      } else if (sortField === 'order') {
+        cmp = a.orderNumber.localeCompare(b.orderNumber, undefined, {
+          numeric: true,
+        });
+      }
+      return sortDirection === 'asc' ? cmp : -cmp;
+    });
+    return sorted;
   };
 
   // Filtrer les commissions par onglet
@@ -329,11 +416,16 @@ export function CommissionsTable({
     return commissions.filter(c => c.status === status);
   };
 
-  const tabs: { label: string; status: CommissionStatus | 'all' }[] = [
+  const tabs: {
+    label: string;
+    status: CommissionStatus | 'all' | 'requests';
+    icon?: typeof FileText;
+  }[] = [
     { label: 'Toutes', status: 'all' },
     { label: 'Payables', status: 'validated' },
     { label: 'En attente', status: 'pending' },
-    { label: 'Payées', status: 'paid' },
+    { label: 'Payees', status: 'paid' },
+    { label: 'Mes Demandes', status: 'requests', icon: FileText },
   ];
 
   // Compter par statut (inclut 'payable' dans validated)
@@ -343,8 +435,9 @@ export function CommissionsTable({
       pending: commissions.filter(c => c.status === 'pending').length,
       validated: commissions.filter(c => isPayableStatus(c.status)).length,
       paid: commissions.filter(c => c.status === 'paid').length,
+      requests: paymentRequestsCount,
     }),
-    [commissions]
+    [commissions, paymentRequestsCount]
   );
 
   // Commissions payables (éligibles au versement) - inclut 'validated' ET 'payable'
@@ -357,7 +450,7 @@ export function CommissionsTable({
   const selectedTotal = useMemo(() => {
     return commissions
       .filter(c => selectedIds.has(c.id))
-      .reduce((sum, c) => sum + c.affiliateCommissionTTC, 0);
+      .reduce((sum, c) => sum + c.totalPayoutTTC, 0);
   }, [commissions, selectedIds]);
 
   // Handlers sélection
@@ -397,6 +490,9 @@ export function CommissionsTable({
     }
   };
 
+  // Is the "Mes Demandes" tab selected?
+  const isRequestsTab = tabs[selectedTab]?.status === 'requests';
+
   return (
     <Card className="p-0 overflow-hidden">
       {/* Header avec titre et bouton CTA */}
@@ -406,7 +502,7 @@ export function CommissionsTable({
         </h3>
 
         {/* Bouton CTA - TOUJOURS visible si commissions payables existent */}
-        {payableCommissions.length > 0 && (
+        {payableCommissions.length > 0 && !isRequestsTab && (
           <button
             onClick={handleRequestPayment}
             disabled={selectedIds.size === 0}
@@ -430,7 +526,7 @@ export function CommissionsTable({
                 </span>
               </>
             ) : (
-              'Sélectionnez des commissions'
+              'Selectionnez des commissions'
             )}
           </button>
         )}
@@ -451,6 +547,9 @@ export function CommissionsTable({
                 }
               `}
             >
+              {tab.icon && (
+                <tab.icon className="inline-block h-3 w-3 mr-1 -mt-0.5" />
+              )}
               {tab.label}
               <span
                 className={`
@@ -462,7 +561,7 @@ export function CommissionsTable({
                   }
                 `}
               >
-                {counts[tab.status]}
+                {counts[tab.status as keyof typeof counts]}
               </span>
             </Tab>
           ))}
@@ -470,7 +569,18 @@ export function CommissionsTable({
 
         <TabPanels>
           {tabs.map(tab => {
-            const filtered = filterByStatus(tab.status);
+            // Tab "Mes Demandes" renders the PaymentRequestsPanel
+            if (tab.status === 'requests') {
+              return (
+                <TabPanel key={tab.status}>
+                  <div className="p-4">
+                    <PaymentRequestsPanel />
+                  </div>
+                </TabPanel>
+              );
+            }
+
+            const filtered = applySorting(filterByStatus(tab.status));
             const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
             const paginatedItems = filtered.slice(
               (currentPage - 1) * ITEMS_PER_PAGE,
@@ -479,6 +589,7 @@ export function CommissionsTable({
             const showSelectAllForTab =
               showCheckbox &&
               (tab.status === 'all' || tab.status === 'validated');
+            const colCount = showCheckbox ? 10 : 9;
 
             return (
               <TabPanel key={tab.status}>
@@ -486,6 +597,8 @@ export function CommissionsTable({
                   <table className="w-full">
                     <thead className="bg-gray-50 sticky top-0">
                       <tr>
+                        {/* Chevron column header */}
+                        <th className="w-8" />
                         {/* Header checkbox - sélectionner tous les payables */}
                         {showCheckbox && (
                           <th className="px-3 py-2 w-10">
@@ -497,11 +610,39 @@ export function CommissionsTable({
                             )}
                           </th>
                         )}
-                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">
-                          Date
+                        <th
+                          className="px-3 py-2 text-left text-xs font-medium text-gray-500 cursor-pointer select-none hover:text-gray-700 transition-colors"
+                          onClick={() => handleSort('date')}
+                        >
+                          <span className="inline-flex items-center gap-1">
+                            Date
+                            {sortField === 'date' ? (
+                              sortDirection === 'asc' ? (
+                                <ArrowUp className="h-3 w-3" />
+                              ) : (
+                                <ArrowDown className="h-3 w-3" />
+                              )
+                            ) : (
+                              <ArrowUpDown className="h-3 w-3 opacity-40" />
+                            )}
+                          </span>
                         </th>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">
-                          Commande
+                        <th
+                          className="px-3 py-2 text-left text-xs font-medium text-gray-500 cursor-pointer select-none hover:text-gray-700 transition-colors"
+                          onClick={() => handleSort('order')}
+                        >
+                          <span className="inline-flex items-center gap-1">
+                            Commande
+                            {sortField === 'order' ? (
+                              sortDirection === 'asc' ? (
+                                <ArrowUp className="h-3 w-3" />
+                              ) : (
+                                <ArrowDown className="h-3 w-3" />
+                              )
+                            ) : (
+                              <ArrowUpDown className="h-3 w-3 opacity-40" />
+                            )}
+                          </span>
                         </th>
                         <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">
                           Client
@@ -510,7 +651,13 @@ export function CommissionsTable({
                           CA HT
                         </th>
                         <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">
-                          Commission
+                          CA TTC
+                        </th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">
+                          Remuneration HT
+                        </th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">
+                          Remuneration TTC
                         </th>
                         <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">
                           Statut
@@ -524,7 +671,7 @@ export function CommissionsTable({
                         ))
                       ) : paginatedItems.length === 0 ? (
                         <tr>
-                          <td colSpan={showCheckbox ? 7 : 6}>
+                          <td colSpan={colCount}>
                             <EmptyState message="Aucune commission pour ce filtre" />
                           </td>
                         </tr>
@@ -536,6 +683,12 @@ export function CommissionsTable({
                             isSelected={selectedIds.has(commission.id)}
                             onSelect={handleSelect}
                             showCheckbox={showCheckbox}
+                            isExpanded={expandedId === commission.id}
+                            onToggleExpand={() =>
+                              setExpandedId(prev =>
+                                prev === commission.id ? null : commission.id
+                              )
+                            }
                           />
                         ))
                       )}
@@ -559,20 +712,20 @@ export function CommissionsTable({
       </TabGroup>
 
       {/* Footer sticky - Résumé sélection */}
-      {selectedIds.size > 0 && (
+      {selectedIds.size > 0 && !isRequestsTab && (
         <div className="sticky bottom-0 bg-gradient-to-r from-teal-50 to-cyan-50 border-t border-teal-100 p-3">
           <div className="flex items-center justify-between text-sm">
             <div className="flex items-center gap-4">
               <span className="text-teal-700 font-medium">
                 {selectedIds.size} commission
-                {selectedIds.size > 1 ? 's' : ''} sélectionnée
+                {selectedIds.size > 1 ? 's' : ''} selectionnee
                 {selectedIds.size > 1 ? 's' : ''}
               </span>
               <button
                 onClick={() => setSelectedIds(new Set())}
                 className="text-teal-600 hover:text-teal-800 text-xs underline"
               >
-                Tout désélectionner
+                Tout deselectionner
               </button>
             </div>
             <div className="flex items-center gap-3">

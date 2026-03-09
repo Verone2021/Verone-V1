@@ -4,4 +4,4 @@
  */
 
 export * from './pricing-utils';
-export * from './export-aging-report';
+export * from '../types/historique-report';

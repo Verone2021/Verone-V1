@@ -202,7 +202,7 @@ export function useOrganisationDetail(organisationId: string | null) {
       if (orderIds.length > 0) {
         const { data: commissions } = await supabase
           .from('linkme_commissions')
-          .select('order_id, affiliate_commission')
+          .select('order_id, affiliate_commission, total_payout_ht')
           .in('order_id', orderIds);
 
         if (commissions) {
@@ -210,7 +210,7 @@ export function useOrganisationDetail(organisationId: string | null) {
             if (c.order_id) {
               commissionsMap.set(
                 c.order_id,
-                Number(c.affiliate_commission) || 0
+                Number(c.total_payout_ht ?? c.affiliate_commission) || 0
               );
             }
           });

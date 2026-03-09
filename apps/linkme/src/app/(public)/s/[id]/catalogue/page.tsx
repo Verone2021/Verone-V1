@@ -199,10 +199,14 @@ export default function CataloguePage() {
                             className="text-xl font-bold"
                             style={{ color: branding.text_color }}
                           >
-                            {formatPrice(item.selling_price_ttc)}
+                            {formatPrice(
+                              selection?.price_display_mode === 'HT'
+                                ? item.selling_price_ht
+                                : item.selling_price_ttc
+                            )}
                           </span>
                           <span className="text-sm text-gray-500 ml-1">
-                            TTC
+                            {selection?.price_display_mode ?? 'TTC'}
                           </span>
                         </div>
 
@@ -299,6 +303,7 @@ export default function CataloguePage() {
           cart={cart}
           onAddToCart={addToCart}
           onUpdateQuantity={updateQuantity}
+          priceDisplayMode={selection.price_display_mode}
         />
       )}
     </div>

@@ -584,7 +584,7 @@ export function CreateLinkMeOrderModal({
         linkme_selection_item_id: item.linkme_selection_item_id,
         is_affiliate_product: item.is_affiliate_product,
       })),
-      order_date: orderDate || undefined,
+      order_date: orderDate,
       internal_notes: internalNotes ?? undefined,
       // Frais additionnels
       shipping_cost_ht: shippingCostHt ?? 0,
@@ -1751,12 +1751,13 @@ export function CreateLinkMeOrderModal({
             {selectedSelectionId && (
               <div className="space-y-2 border-t pt-6">
                 <label className="block text-sm font-medium text-gray-700">
-                  Date de commande
+                  Date de commande <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="date"
                   value={orderDate}
                   onChange={e => setOrderDate(e.target.value)}
+                  required
                   className="w-full max-w-xs px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
                 />
               </div>

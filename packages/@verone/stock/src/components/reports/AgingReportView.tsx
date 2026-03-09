@@ -1,18 +1,11 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 import { useToast } from '@verone/common/hooks';
-import {
-  useAgingReport,
-  AGING_BUCKETS,
-  type AgingReportData,
-} from '@verone/finance/hooks';
-import {
-  exportAgingReportToPDF,
-  exportAgingReportToExcel,
-  exportAgingReportToCSV,
-} from '@verone/finance/utils';
+import { PdfPreviewModalDynamic as PdfPreviewModal } from '@verone/finance/components';
+import { useAgingReport, AGING_BUCKETS } from '@verone/finance/hooks';
+import { AgingReportPdf } from '@verone/finance/pdf-templates';
 import { Badge } from '@verone/ui';
 import { Button } from '@verone/ui';
 import {
@@ -49,6 +42,7 @@ interface AgingReportViewProps {
 export function AgingReportView({ dateFrom, dateTo }: AgingReportViewProps) {
   const { report, loading, error, generateReport } = useAgingReport();
   const { toast } = useToast();
+  const [showPdfPreview, setShowPdfPreview] = useState(false);
 
   useEffect(() => {
     generateReport(dateFrom, dateTo);
@@ -56,53 +50,7 @@ export function AgingReportView({ dateFrom, dateTo }: AgingReportViewProps) {
 
   const handleExportPDF = () => {
     if (!report) return;
-    try {
-      exportAgingReportToPDF(report);
-      toast({
-        title: 'Export PDF réussi',
-        description: 'Le rapport a été téléchargé au format PDF.',
-      });
-    } catch (error) {
-      toast({
-        title: 'Erreur export PDF',
-        description: 'Impossible de générer le PDF.',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  const handleExportExcel = async () => {
-    if (!report) return;
-    try {
-      await exportAgingReportToExcel(report);
-      toast({
-        title: 'Export Excel réussi',
-        description: 'Le rapport a été téléchargé au format Excel.',
-      });
-    } catch (error) {
-      toast({
-        title: 'Erreur export Excel',
-        description: 'Impossible de générer le fichier Excel.',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  const handleExportCSV = () => {
-    if (!report) return;
-    try {
-      exportAgingReportToCSV(report);
-      toast({
-        title: 'Export CSV réussi',
-        description: 'Le rapport a été téléchargé au format CSV.',
-      });
-    } catch (error) {
-      toast({
-        title: 'Erreur export CSV',
-        description: 'Impossible de générer le fichier CSV.',
-        variant: 'destructive',
-      });
-    }
+    setShowPdfPreview(true);
   };
 
   if (loading) {
@@ -146,39 +94,20 @@ export function AgingReportView({ dateFrom, dateTo }: AgingReportViewProps) {
               Exporter le rapport
             </p>
             <p className="text-xs text-gray-600">
-              Télécharger dans le format de votre choix
+              Telecharger dans le format de votre choix
             </p>
           </div>
         </div>
-        <div className="flex gap-2">
-          <Button
-            onClick={handleExportPDF}
-            variant="outline"
-            size="sm"
-            className="h-9"
-          >
-            <FileText className="h-4 w-4 mr-2" />
-            PDF
-          </Button>
-          <Button
-            onClick={handleExportExcel}
-            variant="outline"
-            size="sm"
-            className="h-9"
-          >
-            <FileText className="h-4 w-4 mr-2" />
-            Excel
-          </Button>
-          <Button
-            onClick={handleExportCSV}
-            variant="outline"
-            size="sm"
-            className="h-9"
-          >
-            <FileText className="h-4 w-4 mr-2" />
-            CSV
-          </Button>
-        </div>
+        <Button
+          onClick={handleExportPDF}
+          disabled={!report || loading}
+          variant="outline"
+          size="sm"
+          className="h-9"
+        >
+          <FileText className="h-4 w-4 mr-2" />
+          {loading ? 'Chargement...' : 'Voir PDF'}
+        </Button>
       </div>
 
       {/* Métriques globales */}
@@ -405,6 +334,17 @@ export function AgingReportView({ dateFrom, dateTo }: AgingReportViewProps) {
         Rapport généré le{' '}
         {new Date(report.generated_at).toLocaleString('fr-FR')}
       </div>
+
+      {/* PDF Preview Modal */}
+      {showPdfPreview && (
+        <PdfPreviewModal
+          isOpen={showPdfPreview}
+          onClose={() => setShowPdfPreview(false)}
+          document={<AgingReportPdf report={report} />}
+          title="Rapport Aging Inventaire"
+          filename={`rapport-aging-inventaire-${new Date().toISOString().split('T')[0]}.pdf`}
+        />
+      )}
     </div>
   );
 }

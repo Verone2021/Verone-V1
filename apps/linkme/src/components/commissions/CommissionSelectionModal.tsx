@@ -48,7 +48,7 @@ export function CommissionSelectionModal({
   const selectedTotal = useMemo(() => {
     return payableCommissions
       .filter(c => selectedIds.has(c.id))
-      .reduce((sum, c) => sum + c.affiliateCommissionTTC, 0);
+      .reduce((sum, c) => sum + c.totalPayoutTTC, 0);
   }, [payableCommissions, selectedIds]);
 
   // Handlers sélection
@@ -208,7 +208,7 @@ export function CommissionSelectionModal({
                     </div>
                     <div className="flex items-center gap-3">
                       <span className="text-sm font-semibold text-emerald-600">
-                        {formatCurrency(commission.affiliateCommissionTTC)}
+                        {formatCurrency(commission.totalPayoutTTC)}
                       </span>
                       <div
                         className={`

@@ -61,11 +61,25 @@ export default function InventairePage() {
   const [isReportsModalOpen, setIsReportsModalOpen] = useState(false);
   const [isAdjustmentModalOpen, setIsAdjustmentModalOpen] = useState(false);
 
+  // Charger les données au montage avec stale guard (StrictMode safe)
   useEffect(() => {
-    void fetchInventory().catch(error => {
-      console.error('[Inventaire] fetchInventory failed:', error);
-    });
-  }, [fetchInventory]);
+    let stale = false;
+
+    void fetchInventory()
+      .then(() => {
+        // fetchInventory sets state internally, stale guard handled by React
+      })
+      .catch(error => {
+        if (!stale) {
+          console.error('[Inventaire] fetchInventory failed:', error);
+        }
+      });
+
+    return () => {
+      stale = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Ouvrir automatiquement le modal si query param ?id= présent (venant des notifications)
   useEffect(() => {

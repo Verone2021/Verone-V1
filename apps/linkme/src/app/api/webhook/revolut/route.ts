@@ -155,6 +155,9 @@ async function handleOrderCompleted(event: RevolutWebhookEvent) {
           orderAmountHt * (affiliate.default_margin_rate / 100);
         const linkmeCommission =
           orderAmountHt * (affiliate.linkme_commission_rate / 100);
+        // total_payout = catalogue retrocession (no affiliate products via Revolut checkout)
+        const totalPayoutHt = affiliateCommission;
+        const totalPayoutTtc = Math.round(totalPayoutHt * 1.2 * 100) / 100;
 
         await supabase.from('linkme_commissions').insert({
           affiliate_id: affiliateId,
@@ -163,6 +166,8 @@ async function handleOrderCompleted(event: RevolutWebhookEvent) {
           order_amount_ht: orderAmountHt,
           affiliate_commission: affiliateCommission,
           linkme_commission: linkmeCommission,
+          total_payout_ht: totalPayoutHt,
+          total_payout_ttc: totalPayoutTtc,
           margin_rate_applied: affiliate.default_margin_rate,
           linkme_rate_applied: affiliate.linkme_commission_rate,
           status: 'pending',

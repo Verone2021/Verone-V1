@@ -46,8 +46,8 @@ export interface CreateLinkMeOrderInput {
   affiliate_id: string;
   /** Lignes de commande */
   items: LinkMeOrderItemInput[];
-  /** Date de la commande (format YYYY-MM-DD) */
-  order_date?: string;
+  /** Date de la commande (format YYYY-MM-DD) — OBLIGATOIRE */
+  order_date: string;
   /** Frais de livraison HT */
   shipping_cost_ht?: number;
   /** Frais de manutention HT */

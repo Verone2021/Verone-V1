@@ -232,9 +232,11 @@ export function useAgingReport() {
 
         setReport(reportData);
         return reportData;
-      } catch (err: any) {
+      } catch (err: unknown) {
         const errorMessage =
-          err.message || 'Erreur lors de la génération du rapport aging';
+          err instanceof Error
+            ? err.message
+            : 'Erreur lors de la génération du rapport aging';
         setError(errorMessage);
         toast({
           title: 'Erreur',

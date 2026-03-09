@@ -51,7 +51,9 @@ export function useAffiliateCommissionStats() {
 
       const { data, error } = await supabase
         .from('linkme_commissions')
-        .select('status, affiliate_commission, affiliate_commission_ttc')
+        .select(
+          'status, affiliate_commission, affiliate_commission_ttc, total_payout_ht, total_payout_ttc'
+        )
         .eq('affiliate_id', affiliate.id);
 
       if (error) {
@@ -70,8 +72,10 @@ export function useAffiliateCommissionStats() {
       };
 
       commissions.forEach(c => {
-        const ht = Number(c.affiliate_commission ?? 0);
-        const ttc = Number(c.affiliate_commission_ttc ?? 0);
+        const ht = Number(c.total_payout_ht ?? c.affiliate_commission ?? 0);
+        const ttc = Number(
+          c.total_payout_ttc ?? c.affiliate_commission_ttc ?? 0
+        );
 
         // Par statut
         if (c.status === 'pending') {
