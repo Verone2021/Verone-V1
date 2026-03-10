@@ -10,7 +10,7 @@ import {
 import { ButtonV2 } from '@verone/ui';
 import { cn } from '@verone/utils';
 import { generateVariantName } from '@verone/utils/business-rules/naming-rules';
-import { Edit2, Save, X, FileText } from 'lucide-react';
+import { Edit, Save, X, FileText } from 'lucide-react';
 
 interface Product {
   id: string;
@@ -101,7 +101,7 @@ export function GeneralInfoEditSection({
       <div className={cn('card-verone p-4', className)}>
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-lg font-medium text-black flex items-center">
-            <Edit2 className="h-5 w-5 mr-2" />
+            <Edit className="h-5 w-5 mr-2" />
             Informations Générales
           </h3>
           <div className="flex space-x-2">
@@ -194,7 +194,7 @@ export function GeneralInfoEditSection({
           Informations Générales
         </h3>
         <ButtonV2 variant="outline" size="sm" onClick={handleStartEdit}>
-          <Edit2 className="h-3 w-3 mr-1" />
+          <Edit className="h-3 w-3 mr-1" />
           Modifier
         </ButtonV2>
       </div>

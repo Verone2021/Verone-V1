@@ -6,7 +6,6 @@ import { Save, X, Package, Plus, Home, Edit } from 'lucide-react';
 
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
-import { ButtonUnified } from '@verone/ui';
 import { Input } from '@verone/ui';
 import { Label } from '@verone/ui';
 // import { RoomMultiSelect } from '@verone/ui';
@@ -166,13 +165,12 @@ export function CharacteristicsEditSection({
             <Package className="h-5 w-5 mr-2" />
             Caractéristiques
           </h3>
-          <div className="flex space-x-1">
+          <div className="flex space-x-2">
             <ButtonV2
               variant="outline"
               size="sm"
               onClick={handleCancel}
               disabled={isSaving(section)}
-              className="text-xs px-2 py-1 h-6"
             >
               <X className="h-3 w-3 mr-1" />
               Annuler
@@ -182,7 +180,6 @@ export function CharacteristicsEditSection({
               size="sm"
               onClick={handleSave}
               disabled={!hasChanges(section) || isSaving(section)}
-              className="text-xs px-2 py-1 h-6"
             >
               <Save className="h-3 w-3 mr-1" />
               {isSaving(section) ? 'Sauvegarde...' : 'Sauvegarder'}
@@ -452,14 +449,10 @@ export function CharacteristicsEditSection({
           <Package className="h-5 w-5 mr-2" />
           Caractéristiques & Spécifications
         </h3>
-        <ButtonUnified
-          variant="outline"
-          size="sm"
-          icon={Edit}
-          onClick={handleStartEdit}
-        >
+        <ButtonV2 variant="outline" size="sm" onClick={handleStartEdit}>
+          <Edit className="h-3 w-3 mr-1" />
           Modifier
-        </ButtonUnified>
+        </ButtonV2>
       </div>
 
       {hasAnyData ? (

@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 
-import { Edit2, X, Save } from 'lucide-react';
+import { Edit, X, Save } from 'lucide-react';
 
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
@@ -211,7 +211,7 @@ export const ProductInfoSection = React.memo(
                 variant="outline"
                 onClick={() => setIsEditingName(true)}
               >
-                <Edit2 className="h-3.5 w-3.5 mr-1.5" />
+                <Edit className="h-3 w-3 mr-1" />
                 Modifier
               </ButtonV2>
             )}

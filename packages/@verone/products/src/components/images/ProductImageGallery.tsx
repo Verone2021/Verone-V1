@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 
 import { Badge } from '@verone/ui';
-import { Button } from '@verone/ui';
+import { ButtonV2 } from '@verone/ui';
 import { cn } from '@verone/utils';
 import { Edit, Upload, Trash2, RotateCw, Eye } from 'lucide-react';
 
@@ -128,6 +128,17 @@ export function ProductImageGallery({
 
   return (
     <div className={cn('space-y-2', className)}>
+      {/* Header with Modifier button */}
+      {onManagePhotos && (
+        <div className="flex items-center justify-between px-1">
+          <span className="text-xs font-medium text-black">Images</span>
+          <ButtonV2 variant="outline" size="sm" onClick={onManagePhotos}>
+            <Edit className="h-3 w-3 mr-1" />
+            Modifier
+          </ButtonV2>
+        </div>
+      )}
+
       {/* Container image + badges */}
       <div className="flex gap-2 items-start">
         {/* Image principale 400x400 */}
@@ -150,7 +161,7 @@ export function ProductImageGallery({
           {hasImages && (
             <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-30 transition-all duration-300 flex items-center justify-center opacity-0 hover:opacity-100">
               <div className="flex space-x-2">
-                <Button
+                <ButtonV2
                   size="sm"
                   variant="secondary"
                   className="text-xs"
@@ -158,9 +169,9 @@ export function ProductImageGallery({
                 >
                   <Eye className="h-3 w-3 mr-1" />
                   Voir
-                </Button>
+                </ButtonV2>
                 {!displayImage?.is_primary && (
-                  <Button
+                  <ButtonV2
                     size="sm"
                     variant="secondary"
                     className="text-xs"
@@ -173,7 +184,7 @@ export function ProductImageGallery({
                   >
                     <RotateCw className="h-3 w-3 mr-1" />
                     Définir principale
-                  </Button>
+                  </ButtonV2>
                 )}
               </div>
             </div>
@@ -202,9 +213,9 @@ export function ProductImageGallery({
         </div>
       </div>
 
-      {/* Bouton actualiser compacté */}
+      {/* Footer info */}
       <div className="flex items-center justify-between px-2">
-        <Button
+        <ButtonV2
           onClick={fetchImages}
           disabled={loading}
           variant="outline"
@@ -213,27 +224,12 @@ export function ProductImageGallery({
         >
           <RotateCw className="h-3 w-3 mr-1" />
           Actualiser
-        </Button>
+        </ButtonV2>
         <div className="text-[10px] text-gray-500">
           {images.length} image{images.length !== 1 ? 's' : ''} •
           {images.filter(i => i.is_primary).length} principale •
           {images.filter(i => !i.is_primary).length} galerie
         </div>
-      </div>
-
-      {/* Actions section */}
-      <div className="card-verone p-3">
-        <h3 className="text-xs font-semibold mb-2">Actions</h3>
-        <Button
-          onClick={onManagePhotos}
-          variant="outline"
-          size="sm"
-          className="w-full text-xs h-7"
-          disabled={uploading || !onManagePhotos}
-        >
-          <Upload className="h-3 w-3 mr-1" />
-          Gérer photos ({galleryImages.length})
-        </Button>
       </div>
 
       {/* Product Image Viewer Modal */}
