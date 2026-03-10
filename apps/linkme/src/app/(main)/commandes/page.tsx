@@ -411,7 +411,7 @@ export default function CommandesPage(): JSX.Element {
 
                             <div>
                               <p className="font-semibold text-[#183559]">
-                                {order.linkme_display_number ||
+                                {order.linkme_display_number ??
                                   order.order_number}
                               </p>
                               <p className="text-sm text-gray-500">

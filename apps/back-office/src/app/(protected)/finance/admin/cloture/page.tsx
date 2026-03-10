@@ -216,10 +216,8 @@ export default function CloturePage() {
         `/api/finance/export-fec?year=${selectedYear}`
       );
       if (!response.ok) {
-        const err = await response.json();
-        throw new Error(
-          (err as { error?: string }).error ?? 'Erreur export FEC'
-        );
+        const err = (await response.json()) as { error?: string };
+        throw new Error(err.error ?? 'Erreur export FEC');
       }
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
@@ -247,10 +245,8 @@ export default function CloturePage() {
         `/api/finance/export-justificatifs?year=${selectedYear}`
       );
       if (!response.ok) {
-        const err = await response.json();
-        throw new Error(
-          (err as { error?: string }).error ?? 'Erreur export justificatifs'
-        );
+        const err = (await response.json()) as { error?: string };
+        throw new Error(err.error ?? 'Erreur export justificatifs');
       }
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);

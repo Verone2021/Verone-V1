@@ -11,11 +11,7 @@ import { useState, useMemo } from 'react';
 
 import Link from 'next/link';
 
-import {
-  useBankReconciliation,
-  getPcgCategory,
-  type BankTransaction,
-} from '@verone/finance';
+import { useBankReconciliation, type BankTransaction } from '@verone/finance';
 import {
   Card,
   CardContent,

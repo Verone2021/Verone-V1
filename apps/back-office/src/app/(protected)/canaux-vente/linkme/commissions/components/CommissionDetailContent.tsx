@@ -108,12 +108,17 @@ export function CommissionDetailContent({
         setItems([]);
       } else {
         setItems(
-          (data ?? []).map(row => ({
-            ...row,
-            product: Array.isArray(row.product)
-              ? (row.product[0] ?? null)
-              : row.product,
-          })) as OrderItem[]
+          (data ?? []).map(row => {
+            const rawProduct = row.product as
+              | OrderItem['product']
+              | OrderItem['product'][];
+            return {
+              ...row,
+              product: Array.isArray(rawProduct)
+                ? (rawProduct[0] ?? null)
+                : rawProduct,
+            };
+          }) as OrderItem[]
         );
       }
       setLoading(false);

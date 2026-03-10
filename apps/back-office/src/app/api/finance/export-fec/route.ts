@@ -132,7 +132,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     let skippedCount = 0;
 
     for (const tx of transactions ?? []) {
-      const categoryPcg = tx.category_pcg as string | null;
+      const categoryPcg = tx.category_pcg;
 
       // Skip transactions without PCG classification (no fictitious accounts)
       if (!categoryPcg) {

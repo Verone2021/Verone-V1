@@ -83,7 +83,7 @@ export async function POST(
         try {
           const qontoClient = getQontoClient();
           const finalized = await qontoClient.finalizeClientQuote(
-            localQuote.qonto_invoice_id as string
+            localQuote.qonto_invoice_id
           );
           const updatePayload: Record<string, unknown> = {
             qonto_pdf_url: finalized.pdf_url ?? null,

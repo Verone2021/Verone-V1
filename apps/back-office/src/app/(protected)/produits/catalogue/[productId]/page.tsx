@@ -5,8 +5,6 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 
 import { CategoryHierarchySelector } from '@verone/categories';
-import { ProductStatusCompact } from '@verone/products';
-import { SampleHistoryCompact } from '@verone/products';
 import { ProductCharacteristicsModal } from '@verone/products';
 import { ProductDescriptionsModal } from '@verone/products';
 import { ProductPhotosModal } from '@verone/products';
@@ -195,7 +193,7 @@ export default function ProductDetailPage() {
             console.error('[ProductDetail] Rollback fetch failed:', fetchError);
           });
         } else {
-          console.log(
+          console.warn(
             '[ProductDetail] Produit sauvegardé en DB:',
             Object.keys(updatedData)
           );

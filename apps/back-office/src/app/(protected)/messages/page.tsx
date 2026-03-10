@@ -222,7 +222,7 @@ function EmptyState({ message }: { message: string }) {
 function LoadingSkeleton({ count = 5 }: { count?: number }) {
   return (
     <div className="space-y-3">
-      {[...Array(count)].map((_, i) => (
+      {Array.from({ length: count }, (_, i) => (
         <Card key={i} className="animate-pulse">
           <CardContent className="p-4">
             <div className="flex items-start gap-3">
