@@ -157,26 +157,26 @@ export function StockDisplay({
         </div>
 
         {/* Prévisions entrées */}
-        {stock_forecasted_in > 0 && (
-          <div className="flex justify-between items-center text-sm text-green-600">
-            <span className="flex items-center gap-1">
-              <TrendingUp className="h-3 w-3" />
-              Entrées prévues
-            </span>
-            <span className="font-medium">+{stock_forecasted_in}</span>
-          </div>
-        )}
+        <div className="flex justify-between items-center text-sm text-green-600">
+          <span className="flex items-center gap-1">
+            <TrendingUp className="h-3 w-3" />
+            Entrées prévues
+          </span>
+          <span className="font-medium">
+            +{Math.max(0, stock_forecasted_in)}
+          </span>
+        </div>
 
         {/* Prévisions sorties */}
-        {stock_forecasted_out > 0 && (
-          <div className="flex justify-between items-center text-sm text-red-600">
-            <span className="flex items-center gap-1">
-              <TrendingDown className="h-3 w-3" />
-              Sorties prévues
-            </span>
-            <span className="font-medium">-{stock_forecasted_out}</span>
-          </div>
-        )}
+        <div className="flex justify-between items-center text-sm text-red-600">
+          <span className="flex items-center gap-1">
+            <TrendingDown className="h-3 w-3" />
+            Sorties prévues
+          </span>
+          <span className="font-medium">
+            -{Math.max(0, stock_forecasted_out)}
+          </span>
+        </div>
 
         {/* Stock disponible calculé */}
         {(stock_forecasted_in > 0 || stock_forecasted_out > 0) && (
