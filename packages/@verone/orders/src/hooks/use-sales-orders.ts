@@ -29,6 +29,16 @@ export type ManualPaymentType =
   | 'compensation'
   | 'verified_bubble';
 
+export interface OrderPayment {
+  id: string;
+  payment_type: ManualPaymentType;
+  amount: number;
+  payment_date: string;
+  reference: string | null;
+  note: string | null;
+  created_at: string;
+}
+
 export interface SalesOrder {
   id: string;
   order_number: string;
@@ -36,7 +46,7 @@ export interface SalesOrder {
   customer_type: 'organization' | 'individual';
   individual_customer_id?: string | null;
   status: SalesOrderStatus;
-  payment_status_v2?: 'pending' | 'partially_paid' | 'paid' | null; // Statut calculé via rapprochement bancaire
+  payment_status_v2?: 'pending' | 'partially_paid' | 'paid' | 'overpaid' | null; // Statut calculé via rapprochement bancaire
   // 🆕 Paiement manuel
   manual_payment_type?: ManualPaymentType | null;
   manual_payment_date?: string | null;
@@ -87,6 +97,9 @@ export interface SalesOrder {
 
   created_at: string;
   updated_at: string;
+
+  // Facture associée (financial_documents)
+  invoice_number?: string | null;
 
   // 🆕 Rapprochement bancaire (jointure transaction_document_links)
   is_matched?: boolean;
@@ -456,6 +469,23 @@ export function useSalesOrders() {
           }
         }
 
+        // 🆕 Récupérer les factures associées (batch pour performance)
+        const invoiceMap = new Map<string, string>();
+        if (orderIds.length > 0) {
+          const { data: invoicesData } = await supabase
+            .from('financial_documents')
+            .select('sales_order_id, document_number')
+            .in('sales_order_id', orderIds)
+            .eq('document_type', 'customer_invoice')
+            .is('deleted_at', null);
+
+          for (const inv of invoicesData || []) {
+            if (inv.sales_order_id) {
+              invoiceMap.set(inv.sales_order_id, inv.document_number);
+            }
+          }
+        }
+
         // 🆕 Récupérer les infos des créateurs (batch pour performance)
         const uniqueCreatorIds = [
           ...new Set(
@@ -571,6 +601,7 @@ export function useSalesOrders() {
             ...order,
             sales_order_items: enrichedItems,
             creator: creatorInfo || null,
+            invoice_number: invoiceMap.get(order.id) ?? null,
             is_matched: !!matchInfo,
             matched_transaction_id: matchInfo?.transaction_id || null,
             matched_transaction_label: matchInfo?.label || null,
@@ -982,7 +1013,7 @@ export function useSalesOrders() {
     [supabase, toast, fetchOrders, fetchOrder]
   );
 
-  // Marquer comme payé manuellement (avec mise à jour payment_status_v2 via RPC)
+  // Marquer comme payé manuellement (insère dans order_payments via RPC)
   const markAsManuallyPaid = useCallback(
     async (
       orderId: string,
@@ -996,18 +1027,22 @@ export function useSalesOrders() {
     ) => {
       setLoading(true);
       try {
-        // 1. Appeler la RPC pour mettre à jour payment_status_v2 et paid_amount
+        // RPC inserts into order_payments + recalculates paid_amount
         const { error: rpcError } = await supabase.rpc(
           'mark_payment_received',
           {
             p_order_id: orderId,
             p_amount: amount,
+            p_payment_type: paymentType,
+            p_reference: options?.reference ?? null,
+            p_note: options?.note ?? null,
+            p_date: options?.date?.toISOString() ?? null,
           }
         );
 
         if (rpcError) throw rpcError;
 
-        // 2. Mettre à jour les champs manuels (type, date, référence, note)
+        // Update legacy manual_payment_* fields for backward compat
         const { error: updateError } = await supabase
           .from('sales_orders')
           .update({
@@ -1054,6 +1089,53 @@ export function useSalesOrders() {
       }
     },
     [supabase, toast, fetchOrders, fetchOrder]
+  );
+
+  // Fetch manual payments for an order from order_payments table
+  const fetchOrderPayments = useCallback(
+    async (orderId: string): Promise<OrderPayment[]> => {
+      const { data, error } = await supabase
+        .from('order_payments')
+        .select(
+          'id, payment_type, amount, payment_date, reference, note, created_at'
+        )
+        .eq('sales_order_id', orderId)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching order payments:', error);
+        return [];
+      }
+      return (data ?? []) as OrderPayment[];
+    },
+    [supabase]
+  );
+
+  // Delete a manual payment from order_payments
+  const deleteManualPayment = useCallback(
+    async (paymentId: string) => {
+      const { error } = await supabase.rpc('delete_order_payment', {
+        p_payment_id: paymentId,
+      });
+
+      if (error) {
+        console.error('Error deleting payment:', error);
+        toast({
+          title: 'Erreur',
+          description: 'Impossible de supprimer le paiement',
+          variant: 'destructive',
+        });
+        throw error;
+      }
+
+      toast({
+        title: 'Paiement supprimé',
+        description: 'Le paiement manuel a été supprimé',
+      });
+
+      await fetchOrders();
+    },
+    [supabase, toast, fetchOrders]
   );
 
   // Marquer la sortie entrepôt
@@ -1969,6 +2051,8 @@ export function useSalesOrders() {
     deleteOrder,
     markAsPaid,
     markAsManuallyPaid,
+    fetchOrderPayments,
+    deleteManualPayment,
     markWarehouseExit,
 
     // Utilitaires

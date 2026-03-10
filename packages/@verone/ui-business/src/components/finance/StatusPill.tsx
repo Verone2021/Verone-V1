@@ -129,8 +129,11 @@ export function StatusPill({
  */
 export const orderPaymentStatusConfig: Record<string, StatusConfig> = {
   unpaid: { label: 'Non payée', variant: 'outline' },
+  pending: { label: 'En attente', variant: 'outline' },
   partial: { label: 'Paiement partiel', variant: 'warning' },
+  partially_paid: { label: 'Paiement partiel', variant: 'warning' },
   paid: { label: 'Payée', variant: 'success' },
+  overpaid: { label: 'Surpayé', variant: 'destructive' },
   refunded: { label: 'Remboursée', variant: 'secondary' },
 };
 

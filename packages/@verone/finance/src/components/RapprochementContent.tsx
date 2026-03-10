@@ -37,14 +37,27 @@ export interface OrderForLink {
   customer_name?: string | null;
   customer_name_alt?: string | null;
   total_ttc: number;
+  paid_amount?: number;
   created_at: string;
   order_date?: string | null;
   shipped_at?: string | null;
+  payment_status_v2?: string | null;
+}
+
+export interface ExistingLink {
+  id: string;
+  transaction_id: string;
+  transaction_label: string;
+  counterparty_name: string | null;
+  transaction_date: string;
+  allocated_amount: number;
+  bank_provider: string | null;
 }
 
 export interface RapprochementContentProps {
   order: OrderForLink | null;
   onSuccess?: () => void;
+  onLinksChanged?: (links: ExistingLink[]) => void;
   // 'avoir' = credit note (negative total_ttc): uses debit transactions like purchase_order
   // but links via p_sales_order_id (not p_purchase_order_id)
   orderType?: 'sales_order' | 'purchase_order' | 'avoir';
@@ -171,7 +184,8 @@ function extractSearchKeyword(name: string, altName?: string | null): string {
 function calculateMatch(
   order: OrderForLink,
   transaction: CreditTransaction,
-  allTransactions: CreditTransaction[]
+  allTransactions: CreditTransaction[],
+  orderType: 'sales_order' | 'purchase_order' | 'avoir' = 'sales_order'
 ): { priority: string; score: number; reasons: string[]; sortOrder: number } {
   const reasons: string[] = [];
 
@@ -225,7 +239,9 @@ function calculateMatch(
   }
 
   if (nameMatches) {
-    reasons.push('Nom fournisseur');
+    reasons.push(
+      orderType === 'purchase_order' ? 'Nom fournisseur' : 'Nom client'
+    );
   }
 
   // --- STEP 0: Exact reference match (short-circuit) ---
@@ -485,6 +501,7 @@ function getMatchLabel(priority: string): {
 export function RapprochementContent({
   order,
   onSuccess,
+  onLinksChanged,
   orderType = 'sales_order',
 }: RapprochementContentProps) {
   // Avoirs (credit notes) behave like purchase orders for display: debit side, red color, '-' sign
@@ -580,12 +597,58 @@ export function RapprochementContent({
     }
   }, [supabase]);
 
+  // Stable ref for onLinksChanged to avoid re-triggering effects
+  const onLinksChangedRef = useRef(onLinksChanged);
+  onLinksChangedRef.current = onLinksChanged;
+
+  // Fetch existing links for THIS order and notify parent
+  const fetchExistingLinks = useCallback(async () => {
+    if (!order || !onLinksChangedRef.current) return;
+    try {
+      const orderIdField =
+        orderType === 'purchase_order' ? 'purchase_order_id' : 'sales_order_id';
+      const { data } = await supabase
+        .from('v_transactions_unified')
+        .select(
+          'id, transaction_id, label, amount, counterparty_name, emitted_at, settled_at, bank_provider, transaction_document_links!inner(id, allocated_amount)'
+        )
+        .eq(`transaction_document_links.${orderIdField}`, order.id);
+
+      if (data) {
+        const links: ExistingLink[] = data.map(row => {
+          const linkData = Array.isArray(row.transaction_document_links)
+            ? row.transaction_document_links[0]
+            : row.transaction_document_links;
+          const ld = linkData as Record<string, unknown> | undefined;
+          return {
+            id: (ld?.id as string) ?? row.id,
+            transaction_id: row.transaction_id ?? '',
+            transaction_label: row.label ?? '',
+            counterparty_name: row.counterparty_name,
+            transaction_date: row.settled_at || row.emitted_at || '',
+            allocated_amount:
+              (ld?.allocated_amount as number | null) ??
+              Math.abs(row.amount ?? 0),
+            bank_provider:
+              ((row as Record<string, unknown>).bank_provider as
+                | string
+                | null) ?? null,
+          };
+        });
+        onLinksChangedRef.current(links);
+      }
+    } catch (err) {
+      console.error('Error fetching existing links:', err);
+    }
+  }, [order, orderType, supabase]);
+
   useEffect(() => {
     if (order) {
       void fetchTransactions();
       void fetchLinkedIds();
+      void fetchExistingLinks();
     }
-  }, [order, fetchTransactions, fetchLinkedIds]);
+  }, [order, fetchTransactions, fetchLinkedIds, fetchExistingLinks]);
 
   // Server-side search: when user types >= 3 chars, search ALL transactions in DB
   useEffect(() => {
@@ -682,7 +745,8 @@ export function RapprochementContent({
         const { priority, score, reasons, sortOrder } = calculateMatch(
           order,
           tx,
-          allTransactions
+          allTransactions,
+          orderType
         );
         return {
           ...tx,
@@ -698,7 +762,7 @@ export function RapprochementContent({
 
     // Sort purely by score — exact amount match always first
     return withScores.sort((a, b) => a.sortOrder - b.sortOrder);
-  }, [order, allTransactions]);
+  }, [order, allTransactions, orderType]);
 
   const filteredSuggestions = useMemo(() => {
     if (!searchQuery) return suggestions;
@@ -735,20 +799,29 @@ export function RapprochementContent({
     setIsLinking(true);
 
     try {
-      // Use RPC to ensure cross-references (document_id, amount_paid, payment_status)
-      // are properly updated — matching the pattern in RapprochementModal.handleLinkOrder()
+      // Use the transaction's actual amount, not the order total.
+      // This enables multi-payment: order 4827€ = tx 1000€ + tx 2000€ + tx 1827€
+      const linkedTx = allTransactions.find(t => t.id === transactionId);
+      const transactionAmount = linkedTx ? Math.abs(linkedTx.amount) : 0;
+
+      if (transactionAmount <= 0) {
+        toast.error('Montant de transaction invalide');
+        setIsLinking(false);
+        return;
+      }
+
       const rpcParams =
         orderType === 'purchase_order'
           ? {
               p_transaction_id: transactionId,
               p_purchase_order_id: order.id,
-              p_allocated_amount: Math.abs(order.total_ttc),
+              p_allocated_amount: transactionAmount,
             }
           : {
               // sales_order and avoir both link via p_sales_order_id
               p_transaction_id: transactionId,
               p_sales_order_id: order.id,
-              p_allocated_amount: Math.abs(order.total_ttc),
+              p_allocated_amount: transactionAmount,
             };
 
       const { error: linkError } = await (supabase.rpc as CallableFunction)(
@@ -761,11 +834,13 @@ export function RapprochementContent({
       // Immediately add to linked set so it disappears from suggestions
       setLinkedTxIds(prev => new Set([...prev, transactionId]));
 
+      // Notify parent of updated links
+      void fetchExistingLinks();
+
       // Show success confirmation screen instead of closing immediately
-      const linkedTx = allTransactions.find(t => t.id === transactionId);
       setLinkSuccess({
         transactionLabel: linkedTx?.label ?? 'Transaction',
-        transactionAmount: linkedTx ? Math.abs(linkedTx.amount) : 0,
+        transactionAmount: transactionAmount,
       });
     } catch (err) {
       console.error('Error linking transaction:', err);

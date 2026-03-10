@@ -545,8 +545,8 @@ export function SalesOrdersTable({
         switch (sortColumn) {
           case 'date':
             comparison =
-              new Date(a.created_at).getTime() -
-              new Date(b.created_at).getTime();
+              new Date(a.order_date ?? a.created_at).getTime() -
+              new Date(b.order_date ?? b.created_at).getTime();
             break;
           case 'client': {
             const nameA =
@@ -1397,21 +1397,21 @@ export function SalesOrdersTable({
                       <TableHead className="w-20 text-center">
                         Articles
                       </TableHead>
-                      {/* Date - sortable si sortableColumns.date */}
+                      {/* Date commande - sortable si sortableColumns.date */}
                       {sortableColumns?.date !== false ? (
                         <TableHead
                           className="cursor-pointer hover:bg-gray-50"
                           onClick={() => handleSort('date')}
                         >
                           <span className="inline-flex items-center gap-1">
-                            Date création
+                            Date commande
                             {renderSortIcon('date')}
                           </span>
                         </TableHead>
                       ) : (
-                        <TableHead>Date création</TableHead>
+                        <TableHead>Date commande</TableHead>
                       )}
-                      <TableHead>Date commande</TableHead>
+                      <TableHead>Facture</TableHead>
                       {showChannelColumn && <TableHead>Canal</TableHead>}
                       {/* Colonnes additionnelles */}
                       {additionalColumns.map(col => (
@@ -1516,7 +1516,11 @@ export function SalesOrdersTable({
                             </TableCell>
                             <TableCell>
                               <div className="flex items-center gap-2">
-                                {order.payment_status_v2 === 'paid' ? (
+                                {order.payment_status_v2 === 'overpaid' ? (
+                                  <Badge className="bg-red-100 text-red-800">
+                                    Surpayé
+                                  </Badge>
+                                ) : order.payment_status_v2 === 'paid' ? (
                                   <Badge className="bg-green-100 text-green-800">
                                     Payé
                                   </Badge>
@@ -1541,12 +1545,18 @@ export function SalesOrdersTable({
                               </span>
                             </TableCell>
                             <TableCell>
-                              {formatDate(order.created_at)}
-                            </TableCell>
-                            <TableCell>
                               {order.order_date
                                 ? formatDate(order.order_date)
-                                : '-'}
+                                : formatDate(order.created_at)}
+                            </TableCell>
+                            <TableCell>
+                              {order.invoice_number ? (
+                                <span className="text-xs font-mono font-medium">
+                                  {order.invoice_number}
+                                </span>
+                              ) : (
+                                <span className="text-gray-400 text-sm">-</span>
+                              )}
                             </TableCell>
                             {showChannelColumn && (
                               <TableCell>
@@ -1962,6 +1972,7 @@ export function SalesOrdersTable({
                 created_at: selectedOrderForLink.created_at,
                 order_date: selectedOrderForLink.order_date ?? null,
                 shipped_at: selectedOrderForLink.shipped_at,
+                payment_status_v2: selectedOrderForLink.payment_status_v2,
               }
             : null
         }
