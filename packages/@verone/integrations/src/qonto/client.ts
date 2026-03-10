@@ -1527,6 +1527,8 @@ export class QontoClient {
         );
       case 404:
         return new QontoError('Resource not found', 'NOT_FOUND', status, data);
+      case 422:
+        return new QontoError(message, 'VALIDATION_ERROR', status, data);
       case 429:
         return new QontoError(
           'Qonto rate limit exceeded',
