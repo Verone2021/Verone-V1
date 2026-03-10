@@ -29,7 +29,7 @@ export function ProductStockTab({
           stock_forecasted_in={product.stock_forecasted_in ?? 0}
           stock_forecasted_out={product.stock_forecasted_out ?? 0}
           min_stock={product.min_stock ?? 5}
-          showDetails={true}
+          showDetails
         />
       </section>
 

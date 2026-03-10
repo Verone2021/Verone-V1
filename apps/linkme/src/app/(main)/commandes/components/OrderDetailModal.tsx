@@ -196,7 +196,7 @@ export function OrderDetailModal({
         <DialogHeader className="flex flex-row items-center justify-between">
           <div className="flex items-center gap-4">
             <DialogTitle className="text-xl font-semibold text-[#183559]">
-              Commande {order.linkme_display_number || order.order_number}
+              Commande {order.linkme_display_number ?? order.order_number}
             </DialogTitle>
             <Badge variant="outline" className={`${statusColor} font-medium`}>
               {statusLabel}

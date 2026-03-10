@@ -14,7 +14,6 @@ import Link from 'next/link';
 import { Button } from '@verone/ui';
 import { cn } from '@verone/utils';
 import {
-  BookOpenCheck,
   TrendingUp,
   TrendingDown,
   Calculator,
@@ -22,7 +21,6 @@ import {
   FileText,
   Landmark,
   Download,
-  Eye,
   Percent,
   Paperclip,
   FolderOpen,

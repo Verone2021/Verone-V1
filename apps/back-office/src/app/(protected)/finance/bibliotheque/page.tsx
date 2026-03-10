@@ -33,7 +33,7 @@ import { createClient } from '@verone/utils/supabase/client';
 import {
   FolderArchive,
   FileText,
-  Image,
+  Image as ImageIcon,
   Download,
   Trash2,
   Calendar,
@@ -178,12 +178,10 @@ function useStorageStats() {
   const fetchFiles = useCallback(
     async (bucket: string, path = '') => {
       try {
-        const { data, error } = await supabase.storage
-          .from(bucket)
-          .list(path, {
-            limit: 500,
-            sortBy: { column: 'created_at', order: 'desc' },
-          });
+        const { data, error } = await supabase.storage.from(bucket).list(path, {
+          limit: 500,
+          sortBy: { column: 'created_at', order: 'desc' },
+        });
 
         if (error) {
           console.error('[Bibliothèque] Error listing files:', error);
@@ -448,7 +446,7 @@ export default function BibliothequeDocumentsPage() {
                 >
                   <div className="flex items-center gap-2 mb-2">
                     {bucket.icon === 'image' ? (
-                      <Image className="h-5 w-5 text-blue-500" />
+                      <ImageIcon className="h-5 w-5 text-blue-500" />
                     ) : bucket.icon === 'archive' ? (
                       <FolderArchive className="h-5 w-5 text-amber-500" />
                     ) : (
