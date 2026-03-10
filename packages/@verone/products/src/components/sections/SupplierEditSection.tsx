@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 import { Truck, Save, X, Edit, ExternalLink, AlertCircle } from 'lucide-react';
 
-import { Button } from '@verone/ui';
+import { ButtonV2 } from '@verone/ui';
 import { cn } from '@verone/utils';
 import {
   useInlineEdit,
@@ -114,27 +114,25 @@ export function SupplierEditSection({
             <Truck className="h-5 w-5 mr-2" />
             Informations Fournisseur
           </h3>
-          <div className="flex space-x-1">
-            <Button
+          <div className="flex space-x-2">
+            <ButtonV2
               variant="outline"
-              size="xs"
+              size="sm"
               onClick={handleCancel}
               disabled={isSaving(section)}
-              className="text-xs px-2 py-1"
             >
               <X className="h-3 w-3 mr-1" />
               Annuler
-            </Button>
-            <Button
+            </ButtonV2>
+            <ButtonV2
               variant="secondary"
-              size="xs"
+              size="sm"
               onClick={handleSave}
               disabled={!hasChanges(section) || isSaving(section)}
-              className="text-xs px-2 py-1"
             >
               <Save className="h-3 w-3 mr-1" />
               {isSaving(section) ? 'Sauvegarde...' : 'Sauvegarder'}
-            </Button>
+            </ButtonV2>
           </div>
         </div>
 
@@ -202,7 +200,7 @@ export function SupplierEditSection({
                   placeholder="https://fournisseur.com/produit/123"
                 />
                 {editData?.supplier_page_url && (
-                  <Button
+                  <ButtonV2
                     variant="outline"
                     size="sm"
                     onClick={() =>
@@ -211,7 +209,7 @@ export function SupplierEditSection({
                     type="button"
                   >
                     <ExternalLink className="h-4 w-4" />
-                  </Button>
+                  </ButtonV2>
                 )}
               </div>
               <div className="text-xs text-gray-600 mt-1">
@@ -245,10 +243,10 @@ export function SupplierEditSection({
             ℹ️ Géré par le groupe de variantes
           </p>
         ) : (
-          <Button variant="outline" size="sm" onClick={handleStartEdit}>
+          <ButtonV2 variant="outline" size="sm" onClick={handleStartEdit}>
             <Edit className="h-3 w-3 mr-1" />
             Modifier
-          </Button>
+          </ButtonV2>
         )}
       </div>
 

@@ -251,6 +251,43 @@ export function PurchaseOrderDetailModal({
     );
   }, [order?.purchase_order_items]);
 
+  // Memoize order object for RapprochementContent BEFORE early return (Rules of Hooks)
+  const rapprochementOrder = useMemo(() => {
+    if (!order) return null;
+    const supplierName = order.organisations
+      ? order.organisations.trade_name || order.organisations.legal_name
+      : 'Fournisseur inconnu';
+    return {
+      id: order.id,
+      order_number: order.po_number,
+      customer_name: supplierName,
+      customer_name_alt:
+        order.organisations?.trade_name &&
+        order.organisations?.legal_name !== order.organisations?.trade_name
+          ? order.organisations.legal_name
+          : null,
+      total_ttc:
+        order.total_ttc ||
+        (order.total_ht || 0) * (1 + (order.tax_rate || 0.2)),
+      paid_amount: order.paid_amount || 0,
+      created_at: order.created_at,
+      order_date: order.order_date ?? null,
+      shipped_at: null,
+      payment_status_v2: order.payment_status_v2,
+    };
+  }, [
+    order?.id,
+    order?.po_number,
+    order?.total_ttc,
+    order?.total_ht,
+    order?.tax_rate,
+    order?.paid_amount,
+    order?.created_at,
+    order?.order_date,
+    order?.payment_status_v2,
+    order?.organisations,
+  ]);
+
   if (!order) return null;
 
   const formatDate = (date: string | null) => {
@@ -623,18 +660,22 @@ export function PurchaseOrderDetailModal({
                       <span className="text-gray-600">Statut :</span>
                       <Badge
                         className={`text-xs ${
-                          order.payment_status_v2 === 'paid'
-                            ? 'bg-green-100 text-green-800'
-                            : order.payment_status_v2 === 'partially_paid'
-                              ? 'bg-yellow-100 text-yellow-800'
-                              : 'bg-orange-100 text-orange-800'
+                          order.payment_status_v2 === 'overpaid'
+                            ? 'bg-red-100 text-red-800'
+                            : order.payment_status_v2 === 'paid'
+                              ? 'bg-green-100 text-green-800'
+                              : order.payment_status_v2 === 'partially_paid'
+                                ? 'bg-yellow-100 text-yellow-800'
+                                : 'bg-orange-100 text-orange-800'
                         }`}
                       >
-                        {order.payment_status_v2 === 'paid'
-                          ? 'Payé'
-                          : order.payment_status_v2 === 'partially_paid'
-                            ? 'Partiellement payé'
-                            : 'En attente'}
+                        {order.payment_status_v2 === 'overpaid'
+                          ? 'Surpayé'
+                          : order.payment_status_v2 === 'paid'
+                            ? 'Payé'
+                            : order.payment_status_v2 === 'partially_paid'
+                              ? 'Partiellement payé'
+                              : 'En attente'}
                       </Badge>
                     </div>
                   )}
@@ -1053,23 +1094,7 @@ export function PurchaseOrderDetailModal({
 
             <TabsContent value="rapprochement" className="mt-4">
               <RapprochementContent
-                order={{
-                  id: order.id,
-                  order_number: order.po_number,
-                  customer_name: getSupplierName(),
-                  customer_name_alt:
-                    order.organisations?.trade_name &&
-                    order.organisations?.legal_name !==
-                      order.organisations?.trade_name
-                      ? order.organisations.legal_name
-                      : null,
-                  total_ttc:
-                    order.total_ttc ||
-                    (order.total_ht || 0) * (1 + (order.tax_rate || 0.2)),
-                  created_at: order.created_at,
-                  order_date: order.order_date ?? null,
-                  shipped_at: null,
-                }}
+                order={rapprochementOrder}
                 orderType="purchase_order"
                 onSuccess={() => {
                   setShowPaymentDialog(false);

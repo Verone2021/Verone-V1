@@ -229,41 +229,43 @@ export function ProductPhotosModal({
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader className="pb-4 border-b">
           <DialogTitle className="flex items-center gap-3">
-            <Camera className="h-6 w-6 text-black" />
-            <div className="flex flex-col">
-              <span className="text-xl font-semibold text-black">
+            <div className="w-10 h-10 rounded-full bg-black flex items-center justify-center">
+              <Camera className="h-5 w-5 text-white" />
+            </div>
+            <div>
+              <span className="text-lg font-semibold text-black block">
                 Gestion des photos
               </span>
-              <span className="text-sm text-gray-600 font-normal">
+              <span className="text-sm text-gray-500 font-normal">
                 {productName}
               </span>
             </div>
           </DialogTitle>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto space-y-6 py-6">
-          {/* Statistiques en haut */}
-          <div className="flex items-center justify-between bg-gray-50 p-4 rounded-lg">
-            <div className="flex items-center gap-6">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-black">
+        <div className="flex-1 overflow-y-auto space-y-4 py-4">
+          {/* Statistiques */}
+          <div className="flex items-center justify-between bg-gray-50 px-4 py-3 rounded-lg">
+            <div className="flex items-center gap-6 text-sm">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center text-sm font-bold">
                   {images.length}
                 </div>
-                <div className="text-xs text-gray-600">
-                  Photo{images.length > 1 ? 's' : ''}
-                </div>
+                <span className="text-gray-700">
+                  photo{images.length > 1 ? 's' : ''}
+                </span>
               </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-blue-600">
-                  {primaryImage ? '1' : '0'}
-                </div>
-                <div className="text-xs text-gray-600">Principale</div>
+              <div className="flex items-center gap-1.5">
+                <Star className="h-4 w-4 text-blue-500" />
+                <span className="text-blue-600 font-medium">
+                  {primaryImage ? '1' : '0'} principale
+                </span>
               </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-green-600">
-                  {maxImages - images.length}
-                </div>
-                <div className="text-xs text-gray-600">Restantes</div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-green-600 font-medium">
+                  {maxImages - images.length} restante
+                  {maxImages - images.length > 1 ? 's' : ''}
+                </span>
               </div>
             </div>
             <ButtonV2
@@ -272,7 +274,7 @@ export function ProductPhotosModal({
               onClick={() => fetchImages()}
               disabled={loading}
             >
-              <Upload className="h-4 w-4 mr-2" />
+              <Upload className="h-3.5 w-3.5 mr-1.5" />
               Actualiser
             </ButtonV2>
           </div>
@@ -281,7 +283,7 @@ export function ProductPhotosModal({
           {images.length < maxImages && (
             <div
               className={cn(
-                'relative border-2 border-dashed border-gray-300 rounded-lg p-8 text-center transition-all',
+                'relative border-2 border-dashed border-gray-300 rounded-lg p-5 text-center transition-all',
                 dragActive && 'border-black bg-gray-100',
                 error && 'border-red-500 bg-red-50',
                 !uploading &&
@@ -292,7 +294,7 @@ export function ProductPhotosModal({
               onDragOver={handleDrag}
               onDrop={handleDrop}
             >
-              {/* Input file invisible qui couvre toute la zone - cliquable ET draggable */}
+              {/* Input file invisible */}
               <input
                 ref={fileInputRef}
                 type="file"
@@ -307,31 +309,26 @@ export function ProductPhotosModal({
                 onDrop={handleDrop}
               />
 
-              <div className="flex flex-col items-center space-y-3">
-                <div className="w-16 h-16 rounded-full bg-black flex items-center justify-center">
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-12 h-12 rounded-full bg-black flex items-center justify-center">
                   {uploading ? (
-                    <Loader2 className="w-8 h-8 text-white animate-spin" />
+                    <Loader2 className="w-6 h-6 text-white animate-spin" />
                   ) : (
-                    <Plus className="w-8 h-8 text-white" />
+                    <Plus className="w-6 h-6 text-white" />
                   )}
                 </div>
                 <div>
-                  <p className="text-lg font-medium text-black mb-1">
+                  <p className="text-sm font-medium text-black">
                     {uploading ? 'Upload en cours...' : 'Ajouter des photos'}
                   </p>
-                  <p className="text-sm text-gray-600">
-                    Cliquez ou glissez-déposez vos images ici
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    Cliquez ou glissez-déposez · JPG, PNG, WebP · Max 10MB
+                    {images.length === 0 && (
+                      <span className="text-blue-600 ml-1">
+                        · Première image = principale
+                      </span>
+                    )}
                   </p>
-                  <p className="text-xs text-gray-500 mt-2">
-                    JPG, PNG, WebP • Max 10MB par image • Jusqu'à{' '}
-                    {maxImages - images.length} image(s)
-                  </p>
-                  {images.length === 0 && (
-                    <p className="text-xs text-blue-600 mt-2">
-                      🌟 La première image sera automatiquement définie comme
-                      principale
-                    </p>
-                  )}
                 </div>
               </div>
             </div>
@@ -356,79 +353,74 @@ export function ProductPhotosModal({
 
           {/* Galerie d'images */}
           {hasImages && !loading && (
-            <div className="space-y-4">
+            <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-black">
+                <h3 className="text-sm font-semibold text-black">
                   Photos du produit
                 </h3>
-                <p className="text-sm text-gray-500">
-                  Cliquez sur l'⭐ pour définir comme image principale
+                <p className="text-xs text-gray-500">
+                  Survolez pour définir comme principale ou supprimer
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-5 gap-2.5">
                 {images.map((image, index) => (
                   <div
                     key={image.id}
                     className={cn(
-                      'relative group border-2 rounded-xl overflow-hidden transition-all duration-200 hover:shadow-lg',
+                      'relative group border rounded-lg overflow-hidden transition-all duration-200 hover:shadow-md',
                       image.is_primary
-                        ? 'border-blue-500 shadow-lg ring-4 ring-blue-100'
+                        ? 'border-blue-500 ring-2 ring-blue-100'
                         : 'border-gray-200 hover:border-gray-300'
                     )}
                   >
                     {/* Image */}
-                    <div className="aspect-square relative">
+                    <div className="aspect-square relative bg-gray-50">
                       {image.public_url ? (
                         <Image
                           src={image.public_url}
                           alt={image.alt_text || `Photo ${index + 1}`}
                           fill
-                          className="object-cover"
-                          sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+                          className="object-contain"
+                          sizes="(max-width: 1200px) 25vw, 200px"
                         />
                       ) : (
                         <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                          <Camera className="h-12 w-12 text-gray-400" />
+                          <Camera className="h-8 w-8 text-gray-400" />
                         </div>
                       )}
                     </div>
 
                     {/* Badge image principale */}
                     {image.is_primary && (
-                      <div className="absolute top-3 left-3 z-10">
-                        <Badge className="bg-blue-500 text-white text-xs font-medium flex items-center gap-1 px-2 py-1">
-                          <Star className="h-3 w-3 fill-white" />
+                      <div className="absolute top-1.5 left-1.5 z-10">
+                        <Badge className="bg-blue-500 text-white text-[10px] font-medium flex items-center gap-0.5 px-1.5 py-0.5">
+                          <Star className="h-2.5 w-2.5 fill-white" />
                           Principale
                         </Badge>
                       </div>
                     )}
 
-                    {/* Overlay avec contrôles - Z-index élevé pour assurer les clicks */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-200 flex items-end justify-center p-3 z-20">
-                      <div className="flex space-x-2 z-30">
-                        {/* Bouton définir comme principale */}
+                    {/* Overlay avec contrôles */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-200 flex items-end justify-center p-2 z-20">
+                      <div className="flex space-x-1.5 z-30">
                         {!image.is_primary && (
                           <ButtonV2
                             size="sm"
                             variant="secondary"
                             onClick={() => handleSetPrimary(image.id)}
                             disabled={settingPrimaryId === image.id}
-                            className="h-9 px-3 bg-white/90 hover:bg-white text-black border-0 relative z-40"
+                            className="h-7 px-2 text-xs bg-white/90 hover:bg-white text-black border-0 relative z-40"
                             title="Définir comme image principale"
                           >
                             {settingPrimaryId === image.id ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
+                              <Loader2 className="h-3 w-3 animate-spin" />
                             ) : (
-                              <>
-                                <Star className="h-4 w-4 mr-1" />
-                                Principal
-                              </>
+                              <Star className="h-3 w-3" />
                             )}
                           </ButtonV2>
                         )}
 
-                        {/* Bouton suppression */}
                         <ButtonV2
                           size="sm"
                           variant="destructive"
@@ -439,28 +431,28 @@ export function ProductPhotosModal({
                             )
                           }
                           disabled={deletingImageId === image.id}
-                          className="h-9 px-3 bg-red-500/90 hover:bg-red-600 text-white border-0 relative z-40"
+                          className="h-7 px-2 text-xs bg-red-500/90 hover:bg-red-600 text-white border-0 relative z-40"
                           title="Supprimer la photo"
                         >
                           {deletingImageId === image.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <Loader2 className="h-3 w-3 animate-spin" />
                           ) : (
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className="h-3 w-3" />
                           )}
                         </ButtonV2>
                       </div>
                     </div>
 
-                    {/* Informations image en bas - Z-index plus bas pour ne pas interférer */}
-                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent text-white p-3 pt-6 z-10 pointer-events-none">
-                      <p className="text-xs font-medium truncate">
+                    {/* Info en bas */}
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent text-white px-2 py-1.5 pt-4 z-10 pointer-events-none">
+                      <p className="text-[10px] font-medium truncate">
                         Photo {index + 1}
+                        {image.file_size && (
+                          <span className="text-gray-300 ml-1">
+                            · {Math.round(image.file_size / 1024)} KB
+                          </span>
+                        )}
                       </p>
-                      {image.file_size && (
-                        <p className="text-xs text-gray-300">
-                          {Math.round(image.file_size / 1024)} KB
-                        </p>
-                      )}
                     </div>
                   </div>
                 ))}
@@ -468,44 +460,39 @@ export function ProductPhotosModal({
             </div>
           )}
 
-          {/* Message vide stylé */}
+          {/* Message vide */}
           {!hasImages && !loading && !uploading && (
-            <div className="text-center py-16">
-              <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-6">
-                <Camera className="h-12 w-12 text-gray-400" />
+            <div className="text-center py-8">
+              <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-3">
+                <Camera className="h-8 w-8 text-gray-400" />
               </div>
-              <h3 className="text-xl font-semibold text-black mb-2">
+              <h3 className="text-base font-semibold text-black mb-1">
                 Aucune photo
               </h3>
-              <p className="text-gray-600 mb-6">
-                Commencez par ajouter vos premières photos au produit
+              <p className="text-sm text-gray-600">
+                Utilisez la zone ci-dessus pour ajouter vos premières photos
               </p>
-              <ButtonV2
-                onClick={() => fileInputRef.current?.click()}
-                className="bg-black hover:bg-gray-800 text-white"
-              >
-                <Camera className="h-4 w-4 mr-2" />
-                Ajouter des photos
-              </ButtonV2>
             </div>
           )}
         </div>
 
-        {/* Footer avec résumé et actions */}
-        <div className="border-t pt-4 bg-gray-50 -mx-6 -mb-6 px-6 pb-6 mt-6">
+        {/* Footer */}
+        <div className="border-t pt-4 bg-gray-50 -mx-6 -mb-6 px-6 pb-5 mt-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-6 text-sm text-gray-600">
-              <span>
-                {images.length} photo{images.length > 1 ? 's' : ''} au total
+            <div className="flex items-center gap-4 text-sm text-gray-600">
+              <span className="font-medium">
+                {images.length} photo{images.length > 1 ? 's' : ''}
               </span>
               {primaryImage && (
                 <span className="flex items-center text-green-600">
                   <CheckCircle className="h-4 w-4 mr-1" />
-                  Image principale définie
+                  Principale définie
                 </span>
               )}
               {images.length === maxImages && (
-                <span className="text-black">Limite d'images atteinte</span>
+                <Badge variant="secondary" className="text-xs">
+                  Limite atteinte
+                </Badge>
               )}
             </div>
             <ButtonV2 onClick={onClose} variant="outline">

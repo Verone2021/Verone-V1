@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 import { FileText, Save, X, Edit, AlertCircle, Plus } from 'lucide-react';
 
-import { Button } from '@verone/ui';
+import { ButtonV2 } from '@verone/ui';
 import { cn } from '@verone/utils';
 import {
   useInlineEdit,
@@ -115,27 +115,25 @@ export function ProductDescriptionsEditSection({
             <FileText className="h-5 w-5 mr-2" />
             Descriptions
           </h3>
-          <div className="flex space-x-1">
-            <Button
+          <div className="flex space-x-2">
+            <ButtonV2
               variant="outline"
-              size="xs"
+              size="sm"
               onClick={handleCancel}
               disabled={isSaving(section)}
-              className="text-xs px-2 py-1"
             >
               <X className="h-3 w-3 mr-1" />
               Annuler
-            </Button>
-            <Button
+            </ButtonV2>
+            <ButtonV2
               variant="secondary"
-              size="xs"
+              size="sm"
               onClick={handleSave}
               disabled={!hasChanges(section) || isSaving(section)}
-              className="text-xs px-2 py-1"
             >
               <Save className="h-3 w-3 mr-1" />
               {isSaving(section) ? 'Sauvegarde...' : 'Sauvegarder'}
-            </Button>
+            </ButtonV2>
           </div>
         </div>
 
@@ -207,14 +205,14 @@ export function ProductDescriptionsEditSection({
                     <span className="flex-1 text-sm text-green-900">
                       {point}
                     </span>
-                    <Button
+                    <ButtonV2
                       variant="ghost"
-                      size="xs"
+                      size="sm"
                       onClick={() => handleRemoveSellingPoint(index)}
                       className="text-red-600 hover:text-red-800 h-6 w-6 p-0"
                     >
                       <X className="h-3 w-3" />
-                    </Button>
+                    </ButtonV2>
                   </div>
                 ))}
               </div>
@@ -234,7 +232,7 @@ export function ProductDescriptionsEditSection({
                   className="flex-1 px-3 py-2 border border-green-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm"
                   placeholder="ex: Livraison rapide et gratuite"
                 />
-                <Button
+                <ButtonV2
                   variant="outline"
                   size="sm"
                   onClick={handleAddSellingPoint}
@@ -242,7 +240,7 @@ export function ProductDescriptionsEditSection({
                   className="border-green-500 text-green-700 hover:bg-green-50"
                 >
                   <Plus className="h-4 w-4" />
-                </Button>
+                </ButtonV2>
               </div>
               <div className="text-xs text-green-600 mt-1">
                 Arguments de vente : avantages, points forts, différenciation,
@@ -271,10 +269,10 @@ export function ProductDescriptionsEditSection({
           <FileText className="h-5 w-5 mr-2" />
           Descriptions
         </h3>
-        <Button variant="outline" size="sm" onClick={handleStartEdit}>
+        <ButtonV2 variant="outline" size="sm" onClick={handleStartEdit}>
           <Edit className="h-3 w-3 mr-1" />
           Modifier
-        </Button>
+        </ButtonV2>
       </div>
 
       <div className="space-y-3">

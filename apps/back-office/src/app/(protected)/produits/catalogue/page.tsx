@@ -54,6 +54,10 @@ import {
   AlertTriangle,
   Ruler,
   Weight,
+  Building2,
+  Tag,
+  DollarSign,
+  Camera,
 } from 'lucide-react';
 
 import {
@@ -64,6 +68,16 @@ import {
 // Nouveaux composants UX/UI 2025
 // Interface Produit selon business rules - utilise maintenant celle du hook useCatalogue
 
+// Options de filtres par champ manquant (onglet "À compléter")
+const MISSING_FIELD_OPTIONS = [
+  { key: 'supplier', label: 'Fournisseur', icon: Building2 },
+  { key: 'subcategory', label: 'Sous-catégorie', icon: Tag },
+  { key: 'price', label: "Prix d'achat", icon: DollarSign },
+  { key: 'photo', label: 'Photo', icon: Camera },
+  { key: 'dimensions', label: 'Dimensions', icon: Ruler },
+  { key: 'weight', label: 'Poids', icon: Weight },
+] as const;
+
 // Interface filtres - NOUVEAU: multi-niveaux (Famille > Catégorie > Sous-catégorie)
 interface Filters {
   search: string;
@@ -72,6 +86,7 @@ interface Filters {
   subcategories: string[];
   suppliers: string[];
   statuses: string[];
+  missingFields: string[]; // Filtre par champs manquants (onglet "À compléter")
 }
 
 export default function CataloguePage() {
@@ -128,6 +143,8 @@ export default function CataloguePage() {
       suppliers:
         searchParams.get('suppliers')?.split(',').filter(Boolean) ?? [],
       statuses: searchParams.get('statuses')?.split(',').filter(Boolean) ?? [],
+      missingFields:
+        searchParams.get('missing')?.split(',').filter(Boolean) ?? [],
     }),
     [searchParams]
   );
@@ -147,6 +164,7 @@ export default function CataloguePage() {
   const [incompleteTotal, setIncompleteTotal] = useState(0);
   const [incompleteLoading, setIncompleteLoading] = useState(false);
   const [incompletePage, setIncompletePage] = useState(1);
+  const [incompleteReloadKey, setIncompleteReloadKey] = useState(0);
 
   // Batch fetch images pour produits incomplets (onglet "À compléter")
   const incompleteProductIds = useMemo(
@@ -193,6 +211,8 @@ export default function CataloguePage() {
         params.set('suppliers', newFilters.suppliers.join(','));
       if (newFilters.statuses.length)
         params.set('statuses', newFilters.statuses.join(','));
+      if (newFilters.missingFields.length)
+        params.set('missing', newFilters.missingFields.join(','));
 
       const qs = params.toString();
       router.replace(qs ? `?${qs}` : '/produits/catalogue', { scroll: false });
@@ -211,9 +231,16 @@ export default function CataloguePage() {
         subcategories: newFilters.subcategories,
         suppliers: newFilters.suppliers,
         statuses: newFilters.statuses,
+        missingFields: newFilters.missingFields,
         page: 1, // Reset pagination quand les filtres changent
       });
       syncFiltersToUrl(newFilters, tab ?? activeTab);
+      // Trigger reload pour l'onglet incomplets
+      const currentTab = tab ?? activeTab;
+      if (currentTab === 'incomplete') {
+        setIncompletePage(1);
+        setIncompleteReloadKey(k => k + 1);
+      }
     },
     [setCatalogueFilters, syncFiltersToUrl, activeTab]
   );
@@ -230,7 +257,8 @@ export default function CataloguePage() {
         urlFilters.categories.length > 0 ||
         urlFilters.subcategories.length > 0 ||
         urlFilters.suppliers.length > 0 ||
-        urlFilters.statuses.length > 0;
+        urlFilters.statuses.length > 0 ||
+        urlFilters.missingFields.length > 0;
 
       if (hasUrlFilters) {
         setCatalogueFilters({
@@ -240,6 +268,7 @@ export default function CataloguePage() {
           subcategories: urlFilters.subcategories,
           suppliers: urlFilters.suppliers,
           statuses: urlFilters.statuses,
+          missingFields: urlFilters.missingFields,
         });
       }
     }
@@ -280,6 +309,7 @@ export default function CataloguePage() {
       subcategories: [],
       suppliers: [],
       statuses: [],
+      missingFields: [],
     };
     applyFilters(emptyFilters);
   };
@@ -291,7 +321,8 @@ export default function CataloguePage() {
     filters.categories.length > 0 ||
     filters.subcategories.length > 0 ||
     filters.suppliers.length > 0 ||
-    filters.statuses.length > 0;
+    filters.statuses.length > 0 ||
+    filters.missingFields.length > 0;
 
   // useRef pour éviter dépendances instables (pattern MEMORY.md)
   const filtersRef = useRef(filters);
@@ -363,7 +394,7 @@ export default function CataloguePage() {
         console.error('[Catalogue] loadIncomplete failed:', error);
       });
     }
-  }, [activeTab, incompletePage]);
+  }, [activeTab, incompletePage, incompleteReloadKey]);
 
   // Listener global ⌘K pour CommandPalette
   useEffect(() => {
@@ -405,6 +436,7 @@ export default function CataloguePage() {
       subcategories: newFilterState.subcategories,
       suppliers: newFilterState.suppliers,
       statuses: newFilterState.statuses,
+      missingFields: filters.missingFields, // Preserve missing fields filter
     };
     applyFilters(newFilters);
   };
@@ -851,11 +883,57 @@ export default function CataloguePage() {
               {/* Compteur résultats avec pagination */}
               {/* Texte explicatif pour onglet incomplets */}
               {activeTab === 'incomplete' && (
-                <p className="text-sm text-orange-700 bg-orange-50 border border-orange-200 rounded px-3 py-2 mb-3">
-                  Produits sans fournisseur, sous-catégorie, prix d&apos;achat,
-                  photo, dimensions ou poids. Complétez-les pour améliorer la
-                  qualité du catalogue.
-                </p>
+                <>
+                  <p className="text-sm text-orange-700 bg-orange-50 border border-orange-200 rounded px-3 py-2 mb-3">
+                    Produits sans fournisseur, sous-catégorie, prix
+                    d&apos;achat, photo, dimensions ou poids. Complétez-les pour
+                    améliorer la qualité du catalogue.
+                  </p>
+                  <div className="flex flex-wrap items-center gap-2 mb-3">
+                    <span className="text-xs font-medium text-gray-600">
+                      Filtrer par :
+                    </span>
+                    {MISSING_FIELD_OPTIONS.map(({ key, label, icon: Icon }) => {
+                      const isActive = filters.missingFields.includes(key);
+                      return (
+                        <button
+                          key={key}
+                          type="button"
+                          onClick={() => {
+                            const newMissing = isActive
+                              ? filters.missingFields.filter(f => f !== key)
+                              : [...filters.missingFields, key];
+                            applyFilters({
+                              ...filters,
+                              missingFields: newMissing,
+                            });
+                          }}
+                          className={cn(
+                            'inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full border transition-colors',
+                            isActive
+                              ? 'bg-orange-100 border-orange-400 text-orange-800'
+                              : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50'
+                          )}
+                        >
+                          <Icon className="h-3.5 w-3.5" />
+                          {label}
+                        </button>
+                      );
+                    })}
+                    {filters.missingFields.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          applyFilters({ ...filters, missingFields: [] })
+                        }
+                        className="inline-flex items-center gap-1 px-2 py-1.5 text-xs text-gray-500 hover:text-gray-700 transition-colors"
+                      >
+                        <X className="h-3 w-3" />
+                        Effacer
+                      </button>
+                    )}
+                  </div>
+                </>
               )}
 
               <div className="flex items-center justify-between text-sm text-black opacity-70">

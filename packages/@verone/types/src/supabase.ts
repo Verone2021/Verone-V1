@@ -5570,6 +5570,95 @@ export type Database = {
           },
         ];
       };
+      order_payments: {
+        Row: {
+          amount: number;
+          created_at: string | null;
+          created_by: string | null;
+          id: string;
+          note: string | null;
+          payment_date: string;
+          payment_type: Database['public']['Enums']['manual_payment_type'];
+          purchase_order_id: string | null;
+          reference: string | null;
+          sales_order_id: string | null;
+        };
+        Insert: {
+          amount: number;
+          created_at?: string | null;
+          created_by?: string | null;
+          id?: string;
+          note?: string | null;
+          payment_date?: string;
+          payment_type: Database['public']['Enums']['manual_payment_type'];
+          purchase_order_id?: string | null;
+          reference?: string | null;
+          sales_order_id?: string | null;
+        };
+        Update: {
+          amount?: number;
+          created_at?: string | null;
+          created_by?: string | null;
+          id?: string;
+          note?: string | null;
+          payment_date?: string;
+          payment_type?: Database['public']['Enums']['manual_payment_type'];
+          purchase_order_id?: string | null;
+          reference?: string | null;
+          sales_order_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'order_payments_created_by_fkey';
+            columns: ['created_by'];
+            isOneToOne: false;
+            referencedRelation: 'v_linkme_users';
+            referencedColumns: ['user_id'];
+          },
+          {
+            foreignKeyName: 'order_payments_purchase_order_id_fkey';
+            columns: ['purchase_order_id'];
+            isOneToOne: false;
+            referencedRelation: 'purchase_orders';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'order_payments_sales_order_id_fkey';
+            columns: ['sales_order_id'];
+            isOneToOne: false;
+            referencedRelation: 'affiliate_pending_orders';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'order_payments_sales_order_id_fkey';
+            columns: ['sales_order_id'];
+            isOneToOne: false;
+            referencedRelation: 'linkme_orders_enriched';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'order_payments_sales_order_id_fkey';
+            columns: ['sales_order_id'];
+            isOneToOne: false;
+            referencedRelation: 'linkme_orders_with_margins';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'order_payments_sales_order_id_fkey';
+            columns: ['sales_order_id'];
+            isOneToOne: false;
+            referencedRelation: 'sales_orders';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'order_payments_sales_order_id_fkey';
+            columns: ['sales_order_id'];
+            isOneToOne: false;
+            referencedRelation: 'v_transactions_missing_invoice';
+            referencedColumns: ['sales_order_id'];
+          },
+        ];
+      };
       organisations: {
         Row: {
           abby_customer_id: string | null;
@@ -11258,6 +11347,7 @@ export type Database = {
           applied_rule_id: string | null;
           attachment_count: number | null;
           attachment_ids: string[] | null;
+          bank_provider: Database['public']['Enums']['bank_provider'] | null;
           category_pcg: string | null;
           confidence_score: number | null;
           counterparty_iban: string | null;
@@ -12106,6 +12196,10 @@ export type Database = {
       decrement_selection_products_count: {
         Args: { p_selection_id: string };
         Returns: undefined;
+      };
+      delete_order_payment: {
+        Args: { p_payment_id: string };
+        Returns: boolean;
       };
       delete_organisation_safe: { Args: { p_org_id: string }; Returns: Json };
       detect_orphaned_stock: {
@@ -13413,10 +13507,23 @@ export type Database = {
         Args: { p_document_id: string; p_transaction_id: string };
         Returns: Json;
       };
-      mark_payment_received: {
-        Args: { p_amount: number; p_order_id: string; p_user_id?: string };
-        Returns: undefined;
-      };
+      mark_payment_received:
+        | {
+            Args: { p_amount: number; p_order_id: string; p_user_id?: string };
+            Returns: undefined;
+          }
+        | {
+            Args: {
+              p_amount: number;
+              p_date?: string;
+              p_note?: string;
+              p_order_id: string;
+              p_payment_type?: string;
+              p_reference?: string;
+              p_user_id?: string;
+            };
+            Returns: string;
+          };
       mark_po_payment_received: {
         Args: { p_amount: number; p_order_id: string };
         Returns: undefined;
@@ -13509,6 +13616,10 @@ export type Database = {
       };
       recalculate_forecasted_stock: {
         Args: { p_product_id: string };
+        Returns: undefined;
+      };
+      recalculate_order_paid_amount: {
+        Args: { p_purchase_order_id?: string; p_sales_order_id?: string };
         Returns: undefined;
       };
       recalculate_product_stock: {

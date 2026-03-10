@@ -52,8 +52,6 @@ interface ChannelPricingRow {
   public_price_ht: number | null;
   custom_price_ht: number | null;
   discount_rate: number | null;
-  markup_rate: number | null;
-  suggested_margin_rate: number | null;
   is_active: boolean;
 }
 
@@ -622,9 +620,6 @@ export function SupplierVsPricingEditSection({
                     <th className="text-right py-1.5 px-2 font-medium">
                       Remise
                     </th>
-                    <th className="text-right py-1.5 px-2 font-medium">
-                      Marge
-                    </th>
                     <th className="text-right py-1.5 pl-2 font-medium">
                       Statut
                     </th>
@@ -648,11 +643,6 @@ export function SupplierVsPricingEditSection({
                         <td className="py-1.5 px-2 text-right text-neutral-700">
                           {ch.discount_rate != null
                             ? `${ch.discount_rate}%`
-                            : '--'}
-                        </td>
-                        <td className="py-1.5 px-2 text-right text-neutral-700">
-                          {ch.suggested_margin_rate != null
-                            ? `${ch.suggested_margin_rate}%`
                             : '--'}
                         </td>
                         <td className="py-1.5 pl-2 text-right">
