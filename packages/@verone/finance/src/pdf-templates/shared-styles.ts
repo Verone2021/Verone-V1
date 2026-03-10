@@ -43,15 +43,9 @@ export const styles = StyleSheet.create({
   headerContainer: {
     marginBottom: 20,
   },
-  brand: {
-    fontSize: 22,
-    fontFamily: 'Helvetica-Bold',
-    letterSpacing: 1,
-  },
-  subtitle: {
-    fontSize: 9,
-    color: colors.gray500,
-    marginTop: 2,
+  logoImage: {
+    height: 35,
+    objectFit: 'contain' as const,
   },
   reportTitle: {
     fontSize: 16,

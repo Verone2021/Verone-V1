@@ -1061,6 +1061,7 @@ export default function ConsultationDetailPage() {
             id: q.id,
             document_number: q.document_number,
             qonto_pdf_url: q.qonto_pdf_url,
+            qonto_invoice_id: q.qonto_invoice_id,
           }))}
           onSent={() => {
             void fetchHistory().catch(err => {

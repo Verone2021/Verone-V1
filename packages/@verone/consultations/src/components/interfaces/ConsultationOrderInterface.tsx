@@ -52,6 +52,7 @@ export function ConsultationOrderInterface({
     consultationItems,
     loading,
     error,
+    addItem,
     updateItem,
     removeItem,
     toggleFreeItem,
@@ -76,14 +77,16 @@ export function ConsultationOrderInterface({
     // archived filter removed - not supported in ProductFilters
   });
 
-  // Gérer le changement d'items
+  // Gérer le changement d'items — ne dépend PAS de onItemsChanged pour éviter les boucles
+  const itemsCount = consultationItems.length;
   useEffect(() => {
     onItemsChanged?.();
-  }, [consultationItems, onItemsChanged]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- onItemsChanged volontairement exclu pour éviter boucle infinie
+  }, [itemsCount]);
 
   // Handler après ajout de produit via modal
   const handleProductAdded = () => {
-    fetchConsultationItems(consultationId);
+    void fetchConsultationItems(consultationId);
     onItemsChanged?.();
   };
 
@@ -96,7 +99,7 @@ export function ConsultationOrderInterface({
   };
 
   // Sauvegarder l'édition d'un item
-  const saveEditItem = async (itemId: string) => {
+  const saveEditItem = async (itemId: string): Promise<void> => {
     const success = await updateItem(itemId, {
       quantity: editQuantity,
       unit_price: editPrice ? parseFloat(editPrice) : undefined,
@@ -228,18 +231,31 @@ export function ConsultationOrderInterface({
                     <tr key={item.id} className="border-b hover:bg-gray-50">
                       {/* Produit */}
                       <td className="p-4">
-                        <div>
-                          <p className="font-medium">{item.product?.name}</p>
-                          <p className="text-sm text-gray-500">
-                            {item.product?.sku}
-                            {item.product?.supplier_name &&
-                              ` • ${item.product.supplier_name}`}
-                          </p>
-                          {item.notes && (
-                            <p className="text-sm text-blue-600 mt-1">
-                              {item.notes}
-                            </p>
+                        <div className="flex items-center gap-3">
+                          {item.product?.image_url ? (
+                            <img
+                              src={item.product.image_url}
+                              alt={item.product.name}
+                              className="w-10 h-10 object-cover rounded border border-gray-200 flex-shrink-0"
+                            />
+                          ) : (
+                            <div className="w-10 h-10 bg-gray-100 rounded border border-gray-200 flex items-center justify-center flex-shrink-0">
+                              <Package className="h-5 w-5 text-gray-400" />
+                            </div>
                           )}
+                          <div>
+                            <p className="font-medium">{item.product?.name}</p>
+                            <p className="text-sm text-gray-500">
+                              {item.product?.sku}
+                              {item.product?.supplier_name &&
+                                ` • ${item.product.supplier_name}`}
+                            </p>
+                            {item.notes && (
+                              <p className="text-sm text-blue-600 mt-1">
+                                {item.notes}
+                              </p>
+                            )}
+                          </div>
                         </div>
                       </td>
 
@@ -413,9 +429,16 @@ export function ConsultationOrderInterface({
         open={showAddModal}
         onClose={() => setShowAddModal(false)}
         onSelect={async (products: SelectedProduct[]) => {
-          // TODO: Implémenter ajout produits avec quantité dans consultation
-          console.log('Produits sélectionnés pour consultation:', products);
-          await handleProductAdded();
+          for (const product of products) {
+            await addItem({
+              consultation_id: consultationId,
+              product_id: product.id,
+              quantity: product.quantity || 1,
+              unit_price: product.unit_price || undefined,
+              is_free: false,
+            });
+          }
+          setShowAddModal(false);
         }}
         mode="multi"
         context="consultations"

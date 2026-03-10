@@ -1,13 +1,19 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 
 import { useRouter } from 'next/navigation';
 
 import { useToast } from '@verone/common';
 import type { CreateConsultationData } from '@verone/consultations';
+import type { ContactBO } from '@verone/orders';
+import {
+  ContactCardBO,
+  useEnseigneContactsBO,
+  useOrganisationContactsBO,
+} from '@verone/orders';
 import { ClientOrEnseigneSelector } from '@verone/products';
-import { ButtonUnified } from '@verone/ui';
+import { ButtonUnified, ImageUploadZone } from '@verone/ui';
 import {
   Card,
   CardContent,
@@ -26,9 +32,19 @@ import {
 } from '@verone/ui';
 import { Textarea } from '@verone/ui';
 import { createClient } from '@verone/utils/supabase/client';
-import { ArrowLeft, Send, Upload, Calendar, AlertCircle } from 'lucide-react';
+import Image from 'next/image';
+import { ArrowLeft, Send, Calendar, AlertCircle, Users, X } from 'lucide-react';
 
 import { createConsultation as createConsultationAction } from '@/app/actions/consultations';
+
+const MAX_IMAGES = 5;
+
+interface UploadedImage {
+  publicUrl: string;
+  storagePath: string;
+  fileName: string;
+  fileSize: number;
+}
 
 // Interface pour le formulaire
 interface ConsultationFormData {
@@ -37,7 +53,6 @@ interface ConsultationFormData {
   client_email: string;
   client_phone?: string;
   descriptif: string;
-  image_url?: string;
   tarif_maximum?: number;
   priority_level: number;
   source_channel: 'website' | 'email' | 'phone' | 'other';
@@ -50,13 +65,13 @@ export default function CreateConsultationPage() {
   const { toast } = useToast();
 
   const [loading, setLoading] = useState(false);
+  const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
   const [formData, setFormData] = useState<ConsultationFormData>({
     enseigne_id: null,
     organisation_id: null,
     client_email: '',
     client_phone: '',
     descriptif: '',
-    image_url: '',
     tarif_maximum: undefined,
     priority_level: 2,
     source_channel: 'website',
@@ -64,6 +79,49 @@ export default function CreateConsultationPage() {
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [selectedContactId, setSelectedContactId] = useState<string | null>(
+    null
+  );
+
+  // Fetch contacts when enseigne or organisation is selected
+  const { data: enseigneContacts } = useEnseigneContactsBO(
+    formData.enseigne_id
+  );
+  const { data: orgContacts } = useOrganisationContactsBO(
+    formData.organisation_id
+  );
+
+  const contacts: ContactBO[] =
+    enseigneContacts?.contacts ?? orgContacts?.contacts ?? [];
+
+  const handleContactSelect = useCallback(
+    (contact: ContactBO) => {
+      if (selectedContactId === contact.id) {
+        // Deselect
+        setSelectedContactId(null);
+        setFormData(prev => ({
+          ...prev,
+          client_email: '',
+          client_phone: '',
+        }));
+      } else {
+        // Select and pre-fill
+        setSelectedContactId(contact.id);
+        setFormData(prev => ({
+          ...prev,
+          client_email: contact.email,
+          client_phone: contact.phone ?? contact.mobile ?? '',
+        }));
+        // Clear email/phone errors
+        setErrors(prev => ({
+          ...prev,
+          client_email: '',
+          client_phone: '',
+        }));
+      }
+    },
+    [selectedContactId]
+  );
 
   const handleInputChange = (
     field: keyof ConsultationFormData,
@@ -77,6 +135,47 @@ export default function CreateConsultationPage() {
     }
   };
 
+  // Handlers images multi-upload
+  const handleImageUploadSuccess = useCallback(
+    (
+      publicUrl: string,
+      fileName: string,
+      storagePath?: string,
+      fileSize?: number
+    ) => {
+      setUploadedImages(prev => [
+        ...prev,
+        {
+          publicUrl,
+          fileName,
+          storagePath: storagePath ?? '',
+          fileSize: fileSize ?? 0,
+        },
+      ]);
+    },
+    []
+  );
+
+  const handleRemoveImage = useCallback(
+    (index: number) => {
+      const imageToRemove = uploadedImages[index];
+      // Supprimer du storage Supabase
+      if (imageToRemove?.storagePath) {
+        void supabase.storage
+          .from('product-images')
+          .remove([imageToRemove.storagePath])
+          .catch((err: unknown) => {
+            console.error(
+              '[CreateConsultation] Failed to delete image from storage:',
+              err
+            );
+          });
+      }
+      setUploadedImages(prev => prev.filter((_, i) => i !== index));
+    },
+    [uploadedImages, supabase.storage]
+  );
+
   // Handlers pour ClientOrEnseigneSelector
   const handleEnseigneChange = (
     enseigneId: string | null,
@@ -86,8 +185,11 @@ export default function CreateConsultationPage() {
     setFormData(prev => ({
       ...prev,
       enseigne_id: enseigneId,
+      client_email: '',
+      client_phone: '',
     }));
-    // Clear error when selection changes
+    // Reset contact selection when client changes
+    setSelectedContactId(null);
     if (errors.client) {
       setErrors(prev => ({ ...prev, client: '' }));
     }
@@ -100,8 +202,11 @@ export default function CreateConsultationPage() {
     setFormData(prev => ({
       ...prev,
       organisation_id: organisationId,
+      client_email: '',
+      client_phone: '',
     }));
-    // Clear error when selection changes
+    // Reset contact selection when client changes
+    setSelectedContactId(null);
     if (errors.client) {
       setErrors(prev => ({ ...prev, client: '' }));
     }
@@ -175,8 +280,10 @@ export default function CreateConsultationPage() {
         dataToSubmit.client_phone = formData.client_phone.trim();
       }
 
-      if (formData.image_url?.trim()) {
-        dataToSubmit.image_url = formData.image_url.trim();
+      // Ajouter les images uploadées
+      if (uploadedImages.length > 0) {
+        dataToSubmit.image_url = uploadedImages[0]?.publicUrl;
+        dataToSubmit.images = uploadedImages;
       }
 
       if (formData.tarif_maximum && formData.tarif_maximum > 0) {
@@ -299,6 +406,30 @@ export default function CreateConsultationPage() {
                       )}
                     </div>
 
+                    {/* Contacts list when enseigne/org selected */}
+                    {contacts.length > 0 && (
+                      <div className="space-y-2">
+                        <Label className="flex items-center gap-1.5">
+                          <Users className="h-4 w-4" />
+                          Contacts existants
+                        </Label>
+                        <div className="grid grid-cols-1 gap-2">
+                          {contacts.map(contact => (
+                            <ContactCardBO
+                              key={contact.id}
+                              contact={contact}
+                              isSelected={selectedContactId === contact.id}
+                              onClick={() => handleContactSelect(contact)}
+                            />
+                          ))}
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Cliquez sur un contact pour pré-remplir email et
+                          téléphone
+                        </p>
+                      </div>
+                    )}
+
                     <div className="space-y-2">
                       <Label htmlFor="client_email">
                         Email client <span className="text-red-500">*</span>
@@ -372,22 +503,71 @@ export default function CreateConsultationPage() {
                     )}
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="image_url">
-                      <Upload className="h-4 w-4 inline mr-1" />
-                      URL d'image (optionnel)
-                    </Label>
-                    <Input
-                      id="image_url"
-                      type="url"
-                      value={formData.image_url}
-                      onChange={e =>
-                        handleInputChange('image_url', e.target.value)
+                  {/* Images uploadées */}
+                  {uploadedImages.length > 0 && (
+                    <div className="space-y-2">
+                      <Label>
+                        Images ajoutées ({uploadedImages.length}/{MAX_IMAGES})
+                      </Label>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        {uploadedImages.map((img, index) => (
+                          <div
+                            key={img.publicUrl}
+                            className="relative group rounded-lg border border-green-200 bg-green-50 overflow-hidden"
+                          >
+                            <div className="relative aspect-square">
+                              <Image
+                                src={img.publicUrl}
+                                alt={img.fileName}
+                                fill
+                                className="object-cover"
+                              />
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveImage(index)}
+                              className="absolute top-1 right-1 rounded-full bg-red-500 p-1 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                            <p className="text-xs text-gray-600 truncate px-2 py-1">
+                              {img.fileName}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Zone upload (visible tant que < MAX_IMAGES) */}
+                  {uploadedImages.length < MAX_IMAGES && (
+                    <ImageUploadZone
+                      key={`upload-zone-${uploadedImages.length}`}
+                      bucket="product-images"
+                      folder="consultations"
+                      onUploadSuccess={handleImageUploadSuccess}
+                      onUploadError={(error: Error) => {
+                        console.error(
+                          '[CreateConsultation] Image upload failed:',
+                          error
+                        );
+                        toast({
+                          title: 'Erreur upload',
+                          description: error.message,
+                          variant: 'destructive',
+                        });
+                      }}
+                      label={
+                        uploadedImages.length === 0
+                          ? 'Images (optionnel, max 5)'
+                          : 'Ajouter une image'
                       }
-                      placeholder="https://example.com/image.jpg"
-                      className="border-black"
+                      helperText="Glissez-déposez une image du projet ou cliquez pour sélectionner"
+                      acceptedFormats={{
+                        'image/*': ['.png', '.jpg', '.jpeg', '.webp'],
+                      }}
                     />
-                  </div>
+                  )}
                 </div>
 
                 {/* Paramètres de la consultation */}

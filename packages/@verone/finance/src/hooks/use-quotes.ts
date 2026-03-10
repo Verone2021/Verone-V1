@@ -5,7 +5,7 @@
  * Quotes are stored in financial_documents with document_type = 'customer_quote'.
  * They can optionally be synced to Qonto for PDF generation and sending.
  *
- * Lifecycle: draft -> sent -> accepted/declined/expired -> converted (to invoice)
+ * Lifecycle: draft -> validated -> sent -> accepted/declined/expired -> converted (to invoice)
  */
 
 'use client';
@@ -22,6 +22,7 @@ import { toast } from 'react-hot-toast';
 
 export type QuoteStatus =
   | 'draft'
+  | 'validated'
   | 'sent'
   | 'accepted'
   | 'declined'
@@ -144,6 +145,7 @@ export interface QuoteFilters {
 export interface QuoteStats {
   total: number;
   draft: number;
+  validated: number;
   sent: number;
   accepted: number;
   declined: number;
@@ -189,6 +191,8 @@ export interface CreateQuoteData {
   // LinkMe metadata
   linkme_selection_id?: string | null;
   linkme_affiliate_id?: string | null;
+  // Consultation link
+  consultation_id?: string | null;
 }
 
 export interface UpdateQuoteData
@@ -202,16 +206,17 @@ export interface UpdateQuoteData
 
 /** Valid status transitions map */
 const VALID_TRANSITIONS: Record<QuoteStatus, QuoteStatus[]> = {
-  draft: ['sent'],
-  sent: ['draft', 'accepted', 'declined', 'expired'],
+  draft: ['validated'],
+  validated: ['sent', 'draft'],
+  sent: ['accepted', 'declined', 'expired'],
   accepted: ['converted'],
   declined: [],
   expired: [],
   converted: [],
 };
 
-/** Fields editable when quote is in 'sent' status */
-const SENT_EDITABLE_FIELDS = new Set([
+/** Fields editable when quote is in 'validated' or 'sent' status */
+const LOCKED_EDITABLE_FIELDS = new Set([
   'notes',
   'billing_address',
   'shipping_address',
@@ -258,6 +263,7 @@ export function useQuotes(initialFilters?: QuoteFilters) {
   const [stats, setStats] = useState<QuoteStats>({
     total: 0,
     draft: 0,
+    validated: 0,
     sent: 0,
     accepted: 0,
     declined: 0,
@@ -338,6 +344,7 @@ export function useQuotes(initialFilters?: QuoteFilters) {
       const newStats: QuoteStats = {
         total: typedData.length,
         draft: 0,
+        validated: 0,
         sent: 0,
         accepted: 0,
         declined: 0,
@@ -348,6 +355,7 @@ export function useQuotes(initialFilters?: QuoteFilters) {
       for (const q of typedData) {
         const status = q.quote_status;
         if (status === 'draft') newStats.draft += 1;
+        else if (status === 'validated') newStats.validated += 1;
         else if (status === 'sent') newStats.sent += 1;
         else if (status === 'accepted') newStats.accepted += 1;
         else if (status === 'declined') newStats.declined += 1;
@@ -437,6 +445,7 @@ export function useQuotes(initialFilters?: QuoteFilters) {
           created_by: userData.user.id,
           linkme_selection_id: data.linkme_selection_id ?? null,
           linkme_affiliate_id: data.linkme_affiliate_id ?? null,
+          consultation_id: data.consultation_id ?? null,
         };
 
         const { data: doc, error: docError } = await supabase
@@ -474,6 +483,28 @@ export function useQuotes(initialFilters?: QuoteFilters) {
         if (itemsError) throw new Error(itemsError.message);
 
         toast.success('Devis créé avec succès');
+
+        // Push to Qonto in background (non-blocking: if it fails, quote stays local)
+        try {
+          const pushRes = await fetch(`/api/quotes/${doc.id}/push-to-qonto`, {
+            method: 'POST',
+          });
+          if (pushRes.ok) {
+            toast.success('Devis synchronisé avec Qonto');
+          } else {
+            const pushData = (await pushRes.json()) as { error?: string };
+            console.warn(
+              '[useQuotes] Push to Qonto failed (non-blocking):',
+              pushData.error
+            );
+          }
+        } catch (pushErr) {
+          console.warn(
+            '[useQuotes] Push to Qonto error (non-blocking):',
+            pushErr
+          );
+        }
+
         await fetchQuotes();
         return doc.id;
       } catch (err) {
@@ -513,21 +544,21 @@ export function useQuotes(initialFilters?: QuoteFilters) {
           return false;
         }
 
-        // Only draft and sent can be edited
-        if (status !== 'draft' && status !== 'sent') {
+        // Only draft, validated and sent can be edited
+        if (status !== 'draft' && status !== 'validated' && status !== 'sent') {
           toast.error('Ce devis ne peut plus être modifié');
           return false;
         }
 
-        // In sent status, only certain fields are editable
-        if (status === 'sent') {
+        // In validated/sent status, only certain fields are editable
+        if (status === 'validated' || status === 'sent') {
           const dataKeys = Object.keys(data) as (keyof UpdateQuoteData)[];
           const disallowedKeys = dataKeys.filter(
-            key => data[key] !== undefined && !SENT_EDITABLE_FIELDS.has(key)
+            key => data[key] !== undefined && !LOCKED_EDITABLE_FIELDS.has(key)
           );
           if (disallowedKeys.length > 0) {
             toast.error(
-              'En statut "envoyé", seuls les notes, adresses et date de validité sont modifiables'
+              'En statut "validé" ou "envoyé", seuls les notes, adresses et date de validité sont modifiables'
             );
             return false;
           }
@@ -675,11 +706,7 @@ export function useQuotes(initialFilters?: QuoteFilters) {
         }
 
         // Cannot revert to draft if synced to Qonto
-        if (
-          newStatus === 'draft' &&
-          currentStatus === 'sent' &&
-          existing.qonto_invoice_id
-        ) {
+        if (newStatus === 'draft' && existing.qonto_invoice_id) {
           toast.error(
             'Impossible de revenir en brouillon : devis déjà synchronisé avec Qonto'
           );
@@ -697,8 +724,38 @@ export function useQuotes(initialFilters?: QuoteFilters) {
 
         if (updateErr) throw new Error(updateErr.message);
 
+        // When validating, push/finalize to Qonto
+        // If not linked: creates draft + finalizes on Qonto
+        // If already linked: finalizes existing draft on Qonto (generates PDF)
+        if (newStatus === 'validated') {
+          try {
+            const pushRes = await fetch(
+              `/api/quotes/${quoteId}/push-to-qonto`,
+              { method: 'POST' }
+            );
+            if (pushRes.ok) {
+              toast.success('Devis synchronisé avec Qonto (PDF disponible)');
+            } else {
+              const pushData = (await pushRes.json()) as { error?: string };
+              console.warn(
+                '[useQuotes] Push to Qonto on validation failed:',
+                pushData.error
+              );
+              toast.error(
+                'Devis validé localement mais erreur Qonto — réessayez via "Lier à Qonto"'
+              );
+            }
+          } catch (pushErr) {
+            console.warn(
+              '[useQuotes] Push to Qonto on validation error:',
+              pushErr
+            );
+          }
+        }
+
         const statusLabels: Record<QuoteStatus, string> = {
           draft: 'brouillon',
+          validated: 'validé',
           sent: 'envoyé',
           accepted: 'accepté',
           declined: 'refusé',

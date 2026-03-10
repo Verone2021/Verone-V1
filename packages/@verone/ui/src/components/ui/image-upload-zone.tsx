@@ -29,7 +29,12 @@ interface ImageUploadZoneProps {
   folder: string;
 
   /** Callback avec URL publique fichier uploadé */
-  onUploadSuccess: (publicUrl: string, fileName: string) => void;
+  onUploadSuccess: (
+    publicUrl: string,
+    fileName: string,
+    storagePath?: string,
+    fileSize?: number
+  ) => void;
 
   /** Callback erreur upload */
   onUploadError?: (error: Error) => void;
@@ -168,7 +173,12 @@ export function ImageUploadZone({
         const uploadedFile = await uploadFile(file);
 
         setUploadedFile(uploadedFile);
-        onUploadSuccess(uploadedFile.url, uploadedFile.name);
+        onUploadSuccess(
+          uploadedFile.url,
+          uploadedFile.name,
+          uploadedFile.storagePath,
+          file.size
+        );
       } catch (err) {
         const errorMessage =
           err instanceof Error ? err.message : 'Erreur upload inconnue';
@@ -216,15 +226,15 @@ export function ImageUploadZone({
 
       {/* Zone upload */}
       {!uploadedFile && (
-        <Card
+        <div
           {...getRootProps()}
-          className={`border-2 border-dashed cursor-pointer transition-colors ${
+          className={`rounded-xl border-2 border-dashed cursor-pointer transition-colors ${
             isDragActive
               ? 'border-primary bg-primary/5'
               : 'border-gray-300 hover:border-gray-400'
           } ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
-          <CardContent className="flex flex-col items-center justify-center py-10 px-6">
+          <div className="flex flex-col items-center justify-center py-10 px-6">
             <input {...getInputProps()} />
 
             {uploading ? (
@@ -246,8 +256,8 @@ export function ImageUploadZone({
                 </p>
               </>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
       {/* Fichier uploadé */}

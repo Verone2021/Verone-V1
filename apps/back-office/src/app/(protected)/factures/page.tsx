@@ -992,6 +992,43 @@ export default function FacturationPage() {
     }
   };
 
+  const handleDownloadQuotePdf = async (quote: LocalQuote): Promise<void> => {
+    if (!quote.qonto_invoice_id) return;
+    try {
+      const response = await fetch(
+        `/api/qonto/quotes/${quote.qonto_invoice_id}/pdf`
+      );
+      if (!response.ok) {
+        const errorData = (await response.json().catch(() => ({}))) as {
+          error?: string;
+        };
+        throw new Error(
+          errorData.error ?? `Erreur ${response.status}: ${response.statusText}`
+        );
+      }
+      const blob = await response.blob();
+      if (blob.size === 0) {
+        throw new Error('Le PDF est vide');
+      }
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `devis-${quote.document_number}.pdf`;
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      }, 1000);
+    } catch (err) {
+      console.error('[Quote] Download PDF error:', err);
+      toast.error(
+        err instanceof Error ? err.message : 'Erreur de téléchargement'
+      );
+    }
+  };
+
   // Quote handlers
   const handleQuoteOrderSelected = (order: IOrderForDocument): void => {
     setSelectedQuoteOrder(order);
@@ -1706,20 +1743,39 @@ export default function FacturationPage() {
                                 </Button>
                               </Link>
                               {hasSyncedQonto && (
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() =>
-                                    window.open(
-                                      `/api/qonto/quotes/${quote.qonto_invoice_id}/view`,
-                                      '_blank'
-                                    )
-                                  }
-                                  title="Voir PDF Qonto"
-                                  className="text-primary hover:text-primary hover:bg-primary/10"
-                                >
-                                  <FileEdit className="h-4 w-4" />
-                                </Button>
+                                <>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() =>
+                                      window.open(
+                                        `/api/qonto/quotes/${quote.qonto_invoice_id}/pdf`,
+                                        '_blank'
+                                      )
+                                    }
+                                    title="Voir PDF"
+                                    className="text-primary hover:text-primary hover:bg-primary/10"
+                                  >
+                                    <FileText className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => {
+                                      void handleDownloadQuotePdf(quote).catch(
+                                        (error: unknown) => {
+                                          console.error(
+                                            '[Factures] handleDownloadQuotePdf failed:',
+                                            error
+                                          );
+                                        }
+                                      );
+                                    }}
+                                    title="Télécharger PDF"
+                                  >
+                                    <Download className="h-4 w-4" />
+                                  </Button>
+                                </>
                               )}
                               {canDeleteQuote && (
                                 <Button

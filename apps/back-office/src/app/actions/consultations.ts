@@ -19,6 +19,13 @@ interface CreateConsultationData {
   priority_level?: number;
   source_channel?: 'website' | 'email' | 'phone' | 'other';
   estimated_response_date?: string;
+  /** Images uploadées (max 5) — insertion dans consultation_images */
+  images?: Array<{
+    publicUrl: string;
+    storagePath: string;
+    fileName: string;
+    fileSize: number;
+  }>;
 }
 
 interface CreateConsultationResult {
@@ -107,6 +114,33 @@ export async function createConsultation(
     console.warn(
       `✅ [Server Action] Consultation créée avec succès: ${newConsultation.id}`
     );
+
+    // Insérer les images dans consultation_images si présentes
+    if (consultationData.images && consultationData.images.length > 0) {
+      const imageRows = consultationData.images.map((img, index) => ({
+        consultation_id: newConsultation.id,
+        storage_path: img.storagePath,
+        public_url: img.publicUrl,
+        display_order: index,
+        is_primary: index === 0,
+        file_size: img.fileSize,
+        format: img.fileName.split('.').pop()?.toLowerCase() ?? null,
+        created_by: userId,
+      }));
+
+      const { error: imagesError } = await supabase
+        .from('consultation_images')
+        .insert(imageRows);
+
+      if (imagesError) {
+        console.error('⚠️ [Server Action] Erreur INSERT images:', imagesError);
+        // Non bloquant : la consultation est créée, les images sont en erreur
+      } else {
+        console.warn(
+          `✅ [Server Action] ${imageRows.length} image(s) associée(s)`
+        );
+      }
+    }
 
     // Revalider le cache Next.js pour la page des consultations
     revalidatePath('/consultations');
