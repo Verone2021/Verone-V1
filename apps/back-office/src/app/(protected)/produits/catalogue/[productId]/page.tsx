@@ -257,7 +257,7 @@ export default function ProductDetailPage() {
       const { data: pricing } = await supabase
         .from('channel_pricing')
         .select(
-          'channel_id, public_price_ht, custom_price_ht, discount_rate, markup_rate, suggested_margin_rate, is_active'
+          'channel_id, public_price_ht, custom_price_ht, discount_rate, is_active'
         )
         .eq('product_id', productId);
 
@@ -272,8 +272,6 @@ export default function ProductDetailPage() {
           public_price_ht: p?.public_price_ht ?? null,
           custom_price_ht: p?.custom_price_ht ?? null,
           discount_rate: p?.discount_rate ?? null,
-          markup_rate: p?.markup_rate ?? null,
-          suggested_margin_rate: p?.suggested_margin_rate ?? null,
           is_active: p?.is_active ?? false,
         };
       });

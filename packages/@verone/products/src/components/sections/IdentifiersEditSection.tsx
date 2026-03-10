@@ -8,7 +8,7 @@ import {
 } from '@verone/common/hooks/use-inline-edit';
 import { ButtonV2 } from '@verone/ui';
 import { cn } from '@verone/utils';
-import { Tag, Save, X, RefreshCw, Loader2 } from 'lucide-react';
+import { Tag, Save, X, RefreshCw, Loader2, Edit } from 'lucide-react';
 
 interface Product {
   id: string;
@@ -337,7 +337,7 @@ export function IdentifiersEditSection({
           Identifiants & Références
         </h3>
         <ButtonV2 variant="outline" size="sm" onClick={handleStartEdit}>
-          <Tag className="h-3 w-3 mr-1" />
+          <Edit className="h-3 w-3 mr-1" />
           Modifier
         </ButtonV2>
       </div>

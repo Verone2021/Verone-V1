@@ -109,10 +109,10 @@ export function WeightEditSection({
             <Weight className="h-5 w-5 mr-2" />
             Poids
           </h3>
-          <div className="flex space-x-1">
+          <div className="flex space-x-2">
             <ButtonV2
               variant="outline"
-              size="xs"
+              size="sm"
               onClick={handleCancel}
               disabled={isSaving(section)}
             >
@@ -121,7 +121,7 @@ export function WeightEditSection({
             </ButtonV2>
             <ButtonV2
               variant="secondary"
-              size="xs"
+              size="sm"
               onClick={handleSave}
               disabled={!hasChanges(section) || isSaving(section)}
             >

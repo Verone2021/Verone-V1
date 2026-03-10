@@ -5,7 +5,6 @@ import { useState } from 'react';
 import { Save, X, Edit } from 'lucide-react';
 
 import { ButtonV2 } from '@verone/ui';
-import { ButtonUnified } from '@verone/ui';
 import { Input } from '@verone/ui';
 import { Label } from '@verone/ui';
 import { cn, formatPrice } from '@verone/utils';
@@ -95,13 +94,12 @@ export function ProductNameEditSection({
               SKU: {product.sku || 'Non défini'}
             </div>
           </div>
-          <div className="flex space-x-1 ml-4">
+          <div className="flex space-x-2 ml-4">
             <ButtonV2
               variant="outline"
               size="sm"
               onClick={handleCancel}
               disabled={isSaving(section)}
-              className="text-xs px-2 py-1 h-6"
             >
               <X className="h-3 w-3 mr-1" />
               Annuler
@@ -111,7 +109,6 @@ export function ProductNameEditSection({
               size="sm"
               onClick={handleSave}
               disabled={!hasChanges(section) || isSaving(section)}
-              className="text-xs px-2 py-1 h-6"
             >
               <Save className="h-3 w-3 mr-1" />
               {isSaving(section) ? 'Sauvegarde...' : 'Sauvegarder'}
@@ -139,14 +136,10 @@ export function ProductNameEditSection({
             SKU: {product.sku || 'Non défini'}
           </div>
         </div>
-        <ButtonUnified
-          variant="outline"
-          size="sm"
-          icon={Edit}
-          onClick={handleStartEdit}
-        >
+        <ButtonV2 variant="outline" size="sm" onClick={handleStartEdit}>
+          <Edit className="h-3 w-3 mr-1" />
           Modifier
-        </ButtonUnified>
+        </ButtonV2>
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -9,6 +9,7 @@ import {
   InvoiceCreateFromOrderModal,
   RapprochementContent,
 } from '@verone/finance/components';
+import type { ExistingLink } from '@verone/finance/components';
 import { OrganisationQuickViewModal } from '@verone/organisations';
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
@@ -45,10 +46,12 @@ import {
   Store,
   ExternalLink,
   Link2,
+  Link2Off,
   Banknote,
   History,
   CheckCircle2,
   Pencil,
+  Trash2,
 } from 'lucide-react';
 
 // NOTE: SalesOrderShipmentModal supprimé - sera recréé ultérieurement
@@ -58,6 +61,7 @@ import type {
   SalesOrder,
   ManualPaymentType,
   OrderItem,
+  OrderPayment,
 } from '@verone/orders/hooks';
 import { EditableOrderItemRow } from '../tables/EditableOrderItemRow';
 import { AddProductToOrderModal } from './AddProductToOrderModal';
@@ -105,7 +109,8 @@ export function OrderDetailModal({
   channelRedirectUrl,
 }: OrderDetailModalProps) {
   // NOTE: showShippingModal supprimé - modal sera recréé ultérieurement
-  const { markAsManuallyPaid } = useSalesOrders();
+  const { markAsManuallyPaid, fetchOrderPayments, deleteManualPayment } =
+    useSalesOrders();
   const { addItem, updateItem, removeItem } = useOrderItems({
     orderId: order?.id ?? '',
     orderType: 'sales',
@@ -127,6 +132,13 @@ export function OrderDetailModal({
   const [manualPaymentDate, setManualPaymentDate] = useState('');
   const [manualPaymentRef, setManualPaymentRef] = useState('');
   const [manualPaymentNote, setManualPaymentNote] = useState('');
+
+  // Unified payment summary state
+  const [orderPayments, setOrderPayments] = useState<OrderPayment[]>([]);
+  const [existingLinks, setExistingLinks] = useState<ExistingLink[]>([]);
+  const [deletingPaymentId, setDeletingPaymentId] = useState<string | null>(
+    null
+  );
 
   // Fees editable state
   const [shippingCostHt, setShippingCostHt] = useState(
@@ -259,6 +271,45 @@ export function OrderDetailModal({
     setFeesVatRate(order?.fees_vat_rate ?? 0.2);
   }, [order?.id]);
 
+  // Memoize order object for RapprochementContent BEFORE early return (Rules of Hooks)
+  const rapprochementOrder = useMemo(() => {
+    if (!order) return null;
+    const customerName =
+      order.customer_type === 'organization' && order.organisations
+        ? order.organisations.trade_name || order.organisations.legal_name
+        : order.customer_type === 'individual' && order.individual_customers
+          ? `${order.individual_customers.first_name} ${order.individual_customers.last_name}`
+          : 'Client inconnu';
+    const customerNameAlt =
+      order.customer_type === 'organization' && order.organisations?.trade_name
+        ? order.organisations.legal_name
+        : null;
+    return {
+      id: order.id,
+      order_number: order.order_number,
+      customer_name: customerName,
+      customer_name_alt: customerNameAlt,
+      total_ttc: order.total_ttc || 0,
+      paid_amount: order.paid_amount || 0,
+      created_at: order.created_at,
+      order_date: order.order_date ?? null,
+      shipped_at: order.shipped_at ?? null,
+      payment_status_v2: order.payment_status_v2,
+    };
+  }, [
+    order?.id,
+    order?.order_number,
+    order?.total_ttc,
+    order?.paid_amount,
+    order?.created_at,
+    order?.order_date,
+    order?.shipped_at,
+    order?.payment_status_v2,
+    order?.customer_type,
+    order?.organisations,
+    order?.individual_customers,
+  ]);
+
   if (!order) return null;
 
   const formatDate = (date: string | null) => {
@@ -316,28 +367,47 @@ export function OrderDetailModal({
     setManualPaymentRef('');
     setManualPaymentNote('');
     setShowPaymentDialog(true);
+    // Fetch manual payments for unified summary
+    void fetchOrderPayments(order.id)
+      .then(setOrderPayments)
+      .catch(console.error);
   };
 
-  const handleManualPaymentSubmit = () => {
-    const amount = parseFloat(manualPaymentAmount);
-    if (isNaN(amount) || amount <= 0) return;
+  const refreshPayments = () => {
+    void fetchOrderPayments(order.id)
+      .then(setOrderPayments)
+      .catch(console.error);
+    onUpdate?.();
+  };
 
-    setPaymentSubmitting(true);
-    void markAsManuallyPaid(order.id, manualPaymentType, amount, {
-      reference: manualPaymentRef || undefined,
-      note: manualPaymentNote || undefined,
-      date: manualPaymentDate ? new Date(manualPaymentDate) : undefined,
-    })
+  const handleDeletePayment = (paymentId: string) => {
+    setDeletingPaymentId(paymentId);
+    void deleteManualPayment(paymentId)
       .then(() => {
-        setShowPaymentDialog(false);
-        onUpdate?.();
+        refreshPayments();
       })
-      .catch((err: unknown) => {
-        console.error('[OrderDetailModal] Manual payment failed:', err);
-      })
-      .finally(() => {
-        setPaymentSubmitting(false);
-      });
+      .catch(console.error)
+      .finally(() => setDeletingPaymentId(null));
+  };
+
+  // Unified totals for the payment summary
+  const manualTotal = orderPayments.reduce((sum, p) => sum + p.amount, 0);
+  const linksTotal = existingLinks.reduce(
+    (sum, l) => sum + l.allocated_amount,
+    0
+  );
+  const totalPaid = manualTotal + linksTotal;
+  const orderTotalTtc = Math.abs(order.total_ttc || 0);
+  const unifiedRemaining = Math.max(0, orderTotalTtc - totalPaid);
+  const isFullyPaid = totalPaid >= orderTotalTtc && orderTotalTtc > 0;
+
+  const paymentTypeLabels: Record<string, string> = {
+    cash: 'Espèces',
+    check: 'Chèque',
+    transfer_other: 'Virement bancaire',
+    card: 'Carte bancaire',
+    compensation: 'Compensation',
+    verified_bubble: 'Vérifié Bubble',
   };
 
   const saveFees = async () => {
@@ -941,18 +1011,22 @@ export function OrderDetailModal({
                       <span className="text-gray-600">Statut :</span>
                       <Badge
                         className={`text-xs ${
-                          order.payment_status_v2 === 'paid'
-                            ? 'bg-green-100 text-green-800'
-                            : order.payment_status_v2 === 'partially_paid'
-                              ? 'bg-yellow-100 text-yellow-800'
-                              : 'bg-orange-100 text-orange-800'
+                          order.payment_status_v2 === 'overpaid'
+                            ? 'bg-red-100 text-red-800'
+                            : order.payment_status_v2 === 'paid'
+                              ? 'bg-green-100 text-green-800'
+                              : order.payment_status_v2 === 'partially_paid'
+                                ? 'bg-yellow-100 text-yellow-800'
+                                : 'bg-orange-100 text-orange-800'
                         }`}
                       >
-                        {order.payment_status_v2 === 'paid'
-                          ? 'Payé'
-                          : order.payment_status_v2 === 'partially_paid'
-                            ? 'Partiellement payé'
-                            : 'En attente'}
+                        {order.payment_status_v2 === 'overpaid'
+                          ? 'Surpayé'
+                          : order.payment_status_v2 === 'paid'
+                            ? 'Payé'
+                            : order.payment_status_v2 === 'partially_paid'
+                              ? 'Partiellement payé'
+                              : 'En attente'}
                       </Badge>
                     </div>
                   )}
@@ -1309,24 +1383,135 @@ export function OrderDetailModal({
         }}
       />
 
-      {/* Dialog Enregistrer un paiement (2 onglets) */}
+      {/* Dialog Enregistrer un paiement (synthèse + 2 onglets) */}
       <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Enregistrer un paiement</DialogTitle>
             <p className="text-sm text-gray-500">
-              Commande {order.order_number} — Total :{' '}
-              {formatCurrency(order.total_ttc || 0)}
+              Commande {order.order_number}
             </p>
-            {(order.paid_amount || 0) > 0 && (
-              <p className="text-sm text-gray-500">
-                Déjà payé : {formatCurrency(order.paid_amount || 0)} — Reste :{' '}
-                {formatCurrency(remainingAmount)}
-              </p>
-            )}
           </DialogHeader>
 
-          <Tabs defaultValue="manual" className="mt-2">
+          {/* === Unified payment summary (always visible) === */}
+          <div className="p-3 bg-slate-100 rounded-lg">
+            <div className="grid grid-cols-3 gap-3 text-center">
+              <div>
+                <p className="text-xs text-slate-500">Montant total</p>
+                <p className="text-sm font-bold text-slate-900">
+                  {formatCurrency(orderTotalTtc)}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-500">Deja paye</p>
+                <p className="text-sm font-bold text-green-600">
+                  {formatCurrency(totalPaid)}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-500">Reste a payer</p>
+                <p
+                  className={`text-sm font-bold ${isFullyPaid ? 'text-green-600' : 'text-orange-600'}`}
+                >
+                  {formatCurrency(unifiedRemaining)}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* === Payment history (manual + bank links) === */}
+          {(orderPayments.length > 0 || existingLinks.length > 0) && (
+            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <History className="h-4 w-4 text-blue-600" />
+                <span className="text-sm font-medium text-blue-800">
+                  Historique des paiements (
+                  {orderPayments.length + existingLinks.length})
+                </span>
+              </div>
+              <div className="space-y-1.5">
+                {/* Manual payments */}
+                {orderPayments.map(payment => (
+                  <div
+                    key={payment.id}
+                    className="flex items-center justify-between p-2 bg-white rounded border text-sm"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <Banknote className="h-3.5 w-3.5 text-green-600 flex-shrink-0" />
+                        <span className="font-medium truncate">
+                          {paymentTypeLabels[payment.payment_type] ||
+                            payment.payment_type}
+                        </span>
+                        <span className="font-bold text-green-700">
+                          {formatCurrency(payment.amount)}
+                        </span>
+                      </div>
+                      <div className="text-xs text-slate-500 ml-5.5 flex gap-2">
+                        <span>
+                          {new Date(payment.payment_date).toLocaleDateString(
+                            'fr-FR'
+                          )}
+                        </span>
+                        {payment.reference && (
+                          <span className="truncate">
+                            Ref: {payment.reference}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleDeletePayment(payment.id)}
+                      disabled={deletingPaymentId === payment.id}
+                      className="ml-2 p-1 text-red-400 hover:text-red-600 hover:bg-red-50 rounded disabled:opacity-50"
+                      title="Supprimer ce paiement"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ))}
+                {/* Bank reconciliation links */}
+                {existingLinks.map(link => (
+                  <div
+                    key={link.id}
+                    className="flex items-center justify-between p-2 bg-white rounded border text-sm"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <Link2 className="h-3.5 w-3.5 text-blue-600 flex-shrink-0" />
+                        <span className="font-medium truncate">
+                          {link.counterparty_name || link.transaction_label}
+                        </span>
+                        <span className="font-bold text-blue-700">
+                          {formatCurrency(link.allocated_amount)}
+                        </span>
+                      </div>
+                      <div className="text-xs text-slate-500 ml-5.5 flex gap-2">
+                        <span>
+                          {new Date(link.transaction_date).toLocaleDateString(
+                            'fr-FR'
+                          )}
+                        </span>
+                        {link.bank_provider && (
+                          <span>{link.bank_provider}</span>
+                        )}
+                      </div>
+                    </div>
+                    <span
+                      className="ml-2 p-1 text-slate-300"
+                      title="Delier depuis l'onglet Rapprochement"
+                    >
+                      <Link2Off className="h-3.5 w-3.5" />
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* === Tabs (below the summary) === */}
+          <Tabs defaultValue="manual" className="mt-1">
             <TabsList className="w-full">
               <TabsTrigger value="rapprochement" className="flex-1">
                 Rapprochement bancaire
@@ -1338,21 +1523,12 @@ export function OrderDetailModal({
 
             <TabsContent value="rapprochement" className="mt-4">
               <RapprochementContent
-                order={{
-                  id: order.id,
-                  order_number: order.order_number,
-                  customer_name: getCustomerName(),
-                  customer_name_alt: getCustomerNameAlt(),
-                  total_ttc: order.total_ttc || 0,
-                  created_at: order.created_at,
-                  order_date: order.order_date ?? null,
-                  shipped_at: order.shipped_at ?? null,
-                }}
+                order={rapprochementOrder}
                 orderType={(order.total_ttc ?? 0) < 0 ? 'avoir' : 'sales_order'}
                 onSuccess={() => {
-                  setShowPaymentDialog(false);
-                  onUpdate?.();
+                  refreshPayments();
                 }}
+                onLinksChanged={setExistingLinks}
               />
             </TabsContent>
 
@@ -1384,15 +1560,29 @@ export function OrderDetailModal({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="payment-amount">Montant (€)</Label>
+                <Label htmlFor="payment-amount">
+                  Montant (EUR)
+                  {unifiedRemaining > 0 && (
+                    <span className="text-muted-foreground font-normal ml-1">
+                      — Reste a payer : {unifiedRemaining.toFixed(2)} EUR
+                    </span>
+                  )}
+                </Label>
                 <Input
                   id="payment-amount"
                   type="number"
                   step="0.01"
                   min="0.01"
+                  max={unifiedRemaining}
                   value={manualPaymentAmount}
                   onChange={e => setManualPaymentAmount(e.target.value)}
                 />
+                {parseFloat(manualPaymentAmount) > unifiedRemaining + 0.01 && (
+                  <p className="text-sm text-destructive">
+                    Le montant depasse le reste a payer (
+                    {unifiedRemaining.toFixed(2)} EUR)
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -1407,12 +1597,12 @@ export function OrderDetailModal({
 
               <div className="space-y-2">
                 <Label htmlFor="payment-ref">
-                  Référence{' '}
+                  Reference{' '}
                   <span className="text-gray-400 font-normal">(optionnel)</span>
                 </Label>
                 <Input
                   id="payment-ref"
-                  placeholder="N° chèque, réf. virement..."
+                  placeholder="N° cheque, ref. virement..."
                   value={manualPaymentRef}
                   onChange={e => setManualPaymentRef(e.target.value)}
                 />
@@ -1432,11 +1622,47 @@ export function OrderDetailModal({
               </div>
 
               <ButtonV2
-                onClick={handleManualPaymentSubmit}
+                onClick={() => {
+                  setPaymentSubmitting(true);
+                  void markAsManuallyPaid(
+                    order.id,
+                    manualPaymentType,
+                    parseFloat(manualPaymentAmount),
+                    {
+                      reference: manualPaymentRef || undefined,
+                      note: manualPaymentNote || undefined,
+                      date: manualPaymentDate
+                        ? new Date(manualPaymentDate)
+                        : undefined,
+                    }
+                  )
+                    .then(() => {
+                      refreshPayments();
+                      // Reset form for next payment
+                      setManualPaymentAmount(
+                        Math.max(
+                          0,
+                          unifiedRemaining -
+                            parseFloat(manualPaymentAmount || '0')
+                        ).toFixed(2)
+                      );
+                      setManualPaymentRef('');
+                      setManualPaymentNote('');
+                    })
+                    .catch((err: unknown) => {
+                      console.error(
+                        '[OrderDetailModal] Manual payment failed:',
+                        err
+                      );
+                    })
+                    .finally(() => setPaymentSubmitting(false));
+                }}
                 disabled={
                   paymentSubmitting ||
                   !manualPaymentAmount ||
-                  parseFloat(manualPaymentAmount) <= 0
+                  parseFloat(manualPaymentAmount) <= 0 ||
+                  parseFloat(manualPaymentAmount) > unifiedRemaining + 0.01 ||
+                  unifiedRemaining <= 0
                 }
                 className="w-full bg-green-600 hover:bg-green-700"
               >

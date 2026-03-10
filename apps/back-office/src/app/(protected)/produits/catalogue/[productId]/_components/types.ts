@@ -78,8 +78,6 @@ export interface ChannelPricingRow {
   public_price_ht: number | null;
   custom_price_ht: number | null;
   discount_rate: number | null;
-  markup_rate: number | null;
-  suggested_margin_rate: number | null;
   is_active: boolean;
 }
 

@@ -5,6 +5,7 @@ import { useCallback, useRef, useState } from 'react';
 import Image from 'next/image';
 
 import {
+  Edit,
   Eye,
   ImageIcon,
   ImagePlus,
@@ -15,7 +16,7 @@ import {
 } from 'lucide-react';
 
 import { ProductImageViewerModal, useProductImages } from '@verone/products';
-import { Badge, Button } from '@verone/ui';
+import { Badge, ButtonV2 } from '@verone/ui';
 import { cn } from '@verone/utils';
 
 interface ProductImagesTabProps {
@@ -192,19 +193,10 @@ export function ProductImagesTab({
               </span>
             )}
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={triggerFileInput}
-            disabled={uploading}
-          >
-            {uploading ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              <Upload className="h-4 w-4 mr-2" />
-            )}
-            Ajouter des images
-          </Button>
+          <ButtonV2 variant="outline" size="sm" onClick={onOpenPhotosModal}>
+            <Edit className="h-3 w-3 mr-1" />
+            Modifier
+          </ButtonV2>
         </div>
 
         {/* Empty state */}
@@ -337,21 +329,6 @@ export function ProductImagesTab({
           </div>
         )}
       </section>
-
-      {/* Footer - Gérer photos avancé */}
-      {hasImages && (
-        <div className="flex justify-center">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onOpenPhotosModal}
-            className="text-xs"
-          >
-            <ImageIcon className="h-3.5 w-3.5 mr-1.5" />
-            Gérer photos ({images.length})
-          </Button>
-        </div>
-      )}
 
       {/* Lightbox viewer */}
       {viewerOpen && images.length > 0 && (
