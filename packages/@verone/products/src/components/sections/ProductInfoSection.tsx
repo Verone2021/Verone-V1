@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 
-import { Edit2, Check, X } from 'lucide-react';
+import { Edit2, X, Save } from 'lucide-react';
 
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
@@ -186,23 +186,23 @@ export const ProductInfoSection = React.memo(
               <div className="flex items-center gap-1">
                 <ButtonV2
                   size="sm"
-                  variant="ghost"
-                  className="h-7 w-7 p-0"
+                  variant="outline"
+                  onClick={handleCancelEdit}
+                  disabled={isSaving}
+                >
+                  <X className="h-3 w-3 mr-1" />
+                  Annuler
+                </ButtonV2>
+                <ButtonV2
+                  size="sm"
+                  variant="secondary"
                   onClick={() => {
                     void handleSaveName().catch(console.error);
                   }}
                   disabled={isSaving}
                 >
-                  <Check className="h-3.5 w-3.5 text-green-600" />
-                </ButtonV2>
-                <ButtonV2
-                  size="sm"
-                  variant="ghost"
-                  className="h-7 w-7 p-0"
-                  onClick={handleCancelEdit}
-                  disabled={isSaving}
-                >
-                  <X className="h-3.5 w-3.5 text-red-500" />
+                  <Save className="h-3 w-3 mr-1" />
+                  {isSaving ? 'Sauvegarde...' : 'Sauvegarder'}
                 </ButtonV2>
               </div>
             ) : (
