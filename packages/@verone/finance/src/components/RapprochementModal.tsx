@@ -31,6 +31,7 @@ import { createClient } from '@verone/utils/supabase/client';
 import {
   FileText,
   Check,
+  CheckCircle2,
   Search,
   Building2,
   Package,
@@ -233,6 +234,11 @@ export function RapprochementModal({
   const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isLinking, setIsLinking] = useState(false);
+  const [linkSuccess, setLinkSuccess] = useState<{
+    type: 'document' | 'sales_order' | 'purchase_order';
+    label: string;
+    amount: number;
+  } | null>(null);
   const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(
     null
   );
@@ -569,6 +575,7 @@ export function RapprochementModal({
     setSelectedOrderId(null);
     setSelectedPurchaseOrderId(null);
     setAllocatedAmount('');
+    setLinkSuccess(null);
 
     // Onglet par défaut selon le type de transaction
     // Débit = dépense = commandes fournisseurs, Crédit = recette = commandes clients
@@ -622,11 +629,12 @@ export function RapprochementModal({
 
       if (error) throw error;
 
-      toast.success('Document lié');
-      setSelectedDocumentId(null);
-      setAllocatedAmount('');
-      onSuccess?.();
-      onOpenChange(false);
+      const linkedDoc = documents.find(d => d.id === selectedDocumentId);
+      setLinkSuccess({
+        type: 'document',
+        label: linkedDoc?.document_number ?? 'Document',
+        amount: amountToAllocate,
+      });
     } catch (err) {
       console.error('[RapprochementModal] Link error:', err);
       toast.error('Erreur lors du rapprochement');
@@ -657,11 +665,12 @@ export function RapprochementModal({
 
       if (error) throw error;
 
-      toast.success('Commande liée');
-      setSelectedOrderId(null);
-      setAllocatedAmount('');
-      onSuccess?.();
-      onOpenChange(false);
+      const linkedOrder = orders.find(o => o.id === selectedOrderId);
+      setLinkSuccess({
+        type: 'sales_order',
+        label: `Commande #${linkedOrder?.order_number ?? ''}`,
+        amount: amountToAllocate,
+      });
     } catch (err) {
       console.error('[RapprochementModal] Link order error:', err);
       toast.error('Erreur lors du rapprochement');
@@ -692,11 +701,14 @@ export function RapprochementModal({
 
       if (error) throw error;
 
-      toast.success('Commande fournisseur liée');
-      setSelectedPurchaseOrderId(null);
-      setAllocatedAmount('');
-      onSuccess?.();
-      onOpenChange(false);
+      const linkedPO = purchaseOrders.find(
+        po => po.id === selectedPurchaseOrderId
+      );
+      setLinkSuccess({
+        type: 'purchase_order',
+        label: `Commande #${linkedPO?.po_number ?? ''}`,
+        amount: amountToAllocate,
+      });
     } catch (err) {
       console.error('[RapprochementModal] Link purchase order error:', err);
       toast.error('Erreur lors du rapprochement');
@@ -731,542 +743,580 @@ export function RapprochementModal({
           </DialogDescription>
         </DialogHeader>
 
-        {/* Info transaction */}
-        <div className="p-4 bg-slate-50 rounded-lg space-y-2">
-          <div className="flex justify-between items-start">
-            <div>
-              <p className="font-medium text-slate-900">{label}</p>
-              {counterpartyName && (
-                <p className="text-sm text-slate-600">{counterpartyName}</p>
+        {/* Success confirmation screen */}
+        {linkSuccess ? (
+          <div className="flex flex-col items-center justify-center py-8 space-y-4">
+            <div className="h-16 w-16 rounded-full bg-green-100 flex items-center justify-center">
+              <CheckCircle2 className="h-8 w-8 text-green-600" />
+            </div>
+            <div className="text-center space-y-1">
+              <h3 className="font-semibold text-lg text-slate-900">
+                Rapprochement effectué
+              </h3>
+              <p className="text-sm text-slate-600">
+                {linkSuccess.label} liée à la transaction
+              </p>
+              <p className="text-sm font-medium text-green-600">
+                {formatAmount(linkSuccess.amount)}
+              </p>
+            </div>
+            <Button
+              onClick={() => {
+                onSuccess?.();
+                onOpenChange(false);
+              }}
+              className="mt-4"
+            >
+              Fermer
+            </Button>
+          </div>
+        ) : (
+          <>
+            {/* Info transaction */}
+            <div className="p-4 bg-slate-50 rounded-lg space-y-2">
+              <div className="flex justify-between items-start">
+                <div>
+                  <p className="font-medium text-slate-900">{label}</p>
+                  {counterpartyName && (
+                    <p className="text-sm text-slate-600">{counterpartyName}</p>
+                  )}
+                </div>
+                <div className="text-right">
+                  <span
+                    className={`text-lg font-bold ${amount < 0 ? 'text-red-600' : 'text-green-600'}`}
+                  >
+                    {amount < 0 ? '' : '+'}
+                    {formatAmount(amount)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Organisation liée */}
+              {organisationName && (
+                <div className="flex items-center gap-2 pt-2 border-t border-slate-200 mt-2">
+                  <Building2 className="h-4 w-4 text-emerald-600" />
+                  <span className="text-sm text-emerald-700 font-medium">
+                    {organisationName}
+                  </span>
+                  <Badge variant="outline" className="text-xs">
+                    Organisation liée
+                  </Badge>
+                </div>
               )}
             </div>
-            <div className="text-right">
-              <span
-                className={`text-lg font-bold ${amount < 0 ? 'text-red-600' : 'text-green-600'}`}
-              >
-                {amount < 0 ? '' : '+'}
-                {formatAmount(amount)}
-              </span>
-            </div>
-          </div>
 
-          {/* Organisation liée */}
-          {organisationName && (
-            <div className="flex items-center gap-2 pt-2 border-t border-slate-200 mt-2">
-              <Building2 className="h-4 w-4 text-emerald-600" />
-              <span className="text-sm text-emerald-700 font-medium">
-                {organisationName}
-              </span>
-              <Badge variant="outline" className="text-xs">
-                Organisation liée
-              </Badge>
-            </div>
-          )}
-        </div>
-
-        {/* Suggestions automatiques */}
-        {suggestions.length > 0 && !selectedOrderId && (
-          <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
-            <div className="flex items-center gap-2 mb-2">
-              <Sparkles className="h-4 w-4 text-amber-600" />
-              <span className="text-sm font-medium text-amber-800">
-                Suggestions de rapprochement
-              </span>
-            </div>
-            <div className="space-y-2">
-              {suggestions.map(order => (
-                <button
-                  key={order.id}
-                  onClick={() => handleQuickLink(order.id)}
-                  className="w-full flex items-center justify-between p-2 bg-white rounded border border-amber-200 hover:border-amber-400 transition-colors text-left"
-                >
-                  <div className="flex items-center gap-2">
-                    <Package className="h-4 w-4 text-slate-500" />
-                    <div>
-                      <span className="font-medium text-sm">
-                        #{order.order_number}
-                      </span>
-                      {order.customer_name && (
-                        <span className="text-xs text-slate-500 ml-2">
-                          {order.customer_name}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold">
-                      {formatAmount(order.total_ttc)}
-                    </span>
-                    <Badge
-                      variant="outline"
-                      className={`text-xs ${
-                        (order.matchScore || 0) >= 60
-                          ? 'border-green-500 text-green-700'
-                          : 'border-amber-500 text-amber-700'
-                      }`}
-                    >
-                      {order.matchScore}%
-                    </Badge>
-                    <ArrowRight className="h-4 w-4 text-slate-400" />
-                  </div>
-                </button>
-              ))}
-            </div>
-            {suggestions[0]?.matchReasons && (
-              <p className="text-xs text-amber-600 mt-2">
-                Critères: {suggestions[0].matchReasons.join(', ')}
-              </p>
-            )}
-          </div>
-        )}
-
-        {/* Tabs */}
-        <Tabs
-          value={activeTab}
-          onValueChange={v =>
-            setActiveTab(v as 'orders' | 'purchase_orders' | 'documents')
-          }
-          className="flex-1 flex flex-col min-h-0"
-        >
-          <TabsList className="grid grid-cols-3 w-full">
-            <TabsTrigger value="orders" className="gap-1 text-xs px-2">
-              <Package className="h-3 w-3" />
-              Clients
-            </TabsTrigger>
-            <TabsTrigger value="purchase_orders" className="gap-1 text-xs px-2">
-              <Building2 className="h-3 w-3" />
-              Fournisseurs
-            </TabsTrigger>
-            <TabsTrigger value="documents" className="gap-1 text-xs px-2">
-              <FileText className="h-3 w-3" />
-              Documents
-            </TabsTrigger>
-          </TabsList>
-
-          {/* Tab: Documents */}
-          <TabsContent value="documents" className="flex-1 min-h-0 mt-4">
-            {/* Recherche */}
-            <div className="relative mb-4">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-              <Input
-                placeholder="Rechercher par référence, organisation..."
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                className="pl-9"
-              />
-            </div>
-
-            <ScrollArea className="h-[220px]">
-              {isLoading ? (
-                <div className="flex items-center justify-center h-32">
-                  <RefreshCw className="h-6 w-6 animate-spin text-slate-400" />
+            {/* Suggestions automatiques */}
+            {suggestions.length > 0 && !selectedOrderId && (
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <Sparkles className="h-4 w-4 text-amber-600" />
+                  <span className="text-sm font-medium text-amber-800">
+                    Suggestions de rapprochement
+                  </span>
                 </div>
-              ) : filteredDocuments.length === 0 ? (
-                <div className="text-center py-8 text-slate-500">
-                  <FileText className="h-10 w-10 mx-auto mb-2 opacity-50" />
-                  <p>Aucun document disponible</p>
-                </div>
-              ) : (
                 <div className="space-y-2">
-                  {filteredDocuments.map(doc => {
-                    const remaining = doc.total_ttc - doc.amount_paid;
-                    return (
-                      <div
-                        key={doc.id}
-                        onClick={() => setSelectedDocumentId(doc.id)}
-                        className={`
+                  {suggestions.map(order => (
+                    <button
+                      key={order.id}
+                      onClick={() => handleQuickLink(order.id)}
+                      className="w-full flex items-center justify-between p-2 bg-white rounded border border-amber-200 hover:border-amber-400 transition-colors text-left"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Package className="h-4 w-4 text-slate-500" />
+                        <div>
+                          <span className="font-medium text-sm">
+                            #{order.order_number}
+                          </span>
+                          {order.customer_name && (
+                            <span className="text-xs text-slate-500 ml-2">
+                              {order.customer_name}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold">
+                          {formatAmount(order.total_ttc)}
+                        </span>
+                        <Badge
+                          variant="outline"
+                          className={`text-xs ${
+                            (order.matchScore || 0) >= 60
+                              ? 'border-green-500 text-green-700'
+                              : 'border-amber-500 text-amber-700'
+                          }`}
+                        >
+                          {order.matchScore}%
+                        </Badge>
+                        <ArrowRight className="h-4 w-4 text-slate-400" />
+                      </div>
+                    </button>
+                  ))}
+                </div>
+                {suggestions[0]?.matchReasons && (
+                  <p className="text-xs text-amber-600 mt-2">
+                    Critères: {suggestions[0].matchReasons.join(', ')}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Tabs */}
+            <Tabs
+              value={activeTab}
+              onValueChange={v =>
+                setActiveTab(v as 'orders' | 'purchase_orders' | 'documents')
+              }
+              className="flex-1 flex flex-col min-h-0"
+            >
+              <TabsList className="grid grid-cols-3 w-full">
+                <TabsTrigger value="orders" className="gap-1 text-xs px-2">
+                  <Package className="h-3 w-3" />
+                  Clients
+                </TabsTrigger>
+                <TabsTrigger
+                  value="purchase_orders"
+                  className="gap-1 text-xs px-2"
+                >
+                  <Building2 className="h-3 w-3" />
+                  Fournisseurs
+                </TabsTrigger>
+                <TabsTrigger value="documents" className="gap-1 text-xs px-2">
+                  <FileText className="h-3 w-3" />
+                  Documents
+                </TabsTrigger>
+              </TabsList>
+
+              {/* Tab: Documents */}
+              <TabsContent value="documents" className="flex-1 min-h-0 mt-4">
+                {/* Recherche */}
+                <div className="relative mb-4">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <Input
+                    placeholder="Rechercher par référence, organisation..."
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
+
+                <ScrollArea className="h-[220px]">
+                  {isLoading ? (
+                    <div className="flex items-center justify-center h-32">
+                      <RefreshCw className="h-6 w-6 animate-spin text-slate-400" />
+                    </div>
+                  ) : filteredDocuments.length === 0 ? (
+                    <div className="text-center py-8 text-slate-500">
+                      <FileText className="h-10 w-10 mx-auto mb-2 opacity-50" />
+                      <p>Aucun document disponible</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {filteredDocuments.map(doc => {
+                        const remaining = doc.total_ttc - doc.amount_paid;
+                        return (
+                          <div
+                            key={doc.id}
+                            onClick={() => setSelectedDocumentId(doc.id)}
+                            className={`
                           p-3 rounded-lg border cursor-pointer transition-colors
                           ${selectedDocumentId === doc.id ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:border-slate-300'}
                         `}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            {selectedDocumentId === doc.id ? (
-                              <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
-                                <Check className="h-4 w-4 text-blue-600" />
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                {selectedDocumentId === doc.id ? (
+                                  <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
+                                    <Check className="h-4 w-4 text-blue-600" />
+                                  </div>
+                                ) : (
+                                  <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center">
+                                    <FileText className="h-4 w-4 text-slate-500" />
+                                  </div>
+                                )}
+                                <div>
+                                  <p className="font-medium text-sm">
+                                    {doc.document_number}
+                                  </p>
+                                  <p className="text-xs text-slate-500">
+                                    {doc.partner_name || 'Sans partenaire'} -{' '}
+                                    {formatDate(doc.document_date)}
+                                  </p>
+                                </div>
                               </div>
-                            ) : (
-                              <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center">
-                                <FileText className="h-4 w-4 text-slate-500" />
+                              <div className="text-right">
+                                <span className="font-semibold text-sm">
+                                  {formatAmount(doc.total_ttc)}
+                                </span>
+                                {doc.amount_paid > 0 && (
+                                  <p className="text-xs text-slate-500">
+                                    Reste: {formatAmount(remaining)}
+                                  </p>
+                                )}
                               </div>
-                            )}
-                            <div>
-                              <p className="font-medium text-sm">
-                                {doc.document_number}
-                              </p>
-                              <p className="text-xs text-slate-500">
-                                {doc.partner_name || 'Sans partenaire'} -{' '}
-                                {formatDate(doc.document_date)}
-                              </p>
                             </div>
                           </div>
-                          <div className="text-right">
-                            <span className="font-semibold text-sm">
-                              {formatAmount(doc.total_ttc)}
-                            </span>
-                            {doc.amount_paid > 0 && (
-                              <p className="text-xs text-slate-500">
-                                Reste: {formatAmount(remaining)}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </ScrollArea>
+                        );
+                      })}
+                    </div>
+                  )}
+                </ScrollArea>
 
-            {selectedDocumentId && (
-              <div className="pt-4 border-t mt-4 space-y-3">
-                <div>
-                  <label className="text-sm text-slate-600">
-                    Montant à allouer (€)
-                  </label>
+                {selectedDocumentId && (
+                  <div className="pt-4 border-t mt-4 space-y-3">
+                    <div>
+                      <label className="text-sm text-slate-600">
+                        Montant à allouer (€)
+                      </label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        placeholder={String(remainingAmount.toFixed(2))}
+                        value={allocatedAmount}
+                        onChange={e => setAllocatedAmount(e.target.value)}
+                        className="mt-1"
+                      />
+                    </div>
+                    <Button
+                      className="w-full"
+                      onClick={handleLinkDocument}
+                      disabled={isLinking}
+                    >
+                      {isLinking ? (
+                        <>
+                          <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                          Liaison...
+                        </>
+                      ) : (
+                        <>
+                          <Plus className="h-4 w-4 mr-2" />
+                          Ajouter ce document
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                )}
+              </TabsContent>
+
+              {/* Tab: Commandes */}
+              <TabsContent value="orders" className="flex-1 min-h-0 mt-4">
+                {/* Recherche */}
+                <div className="relative mb-4">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                   <Input
-                    type="number"
-                    step="0.01"
-                    placeholder={String(remainingAmount.toFixed(2))}
-                    value={allocatedAmount}
-                    onChange={e => setAllocatedAmount(e.target.value)}
-                    className="mt-1"
+                    placeholder="Rechercher par numéro de commande..."
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    className="pl-9"
                   />
                 </div>
-                <Button
-                  className="w-full"
-                  onClick={handleLinkDocument}
-                  disabled={isLinking}
-                >
-                  {isLinking ? (
-                    <>
-                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                      Liaison...
-                    </>
+
+                <ScrollArea className="h-[220px]">
+                  {isLoading ? (
+                    <div className="flex items-center justify-center h-32">
+                      <RefreshCw className="h-6 w-6 animate-spin text-slate-400" />
+                    </div>
+                  ) : filteredOrders.length === 0 ? (
+                    <div className="text-center py-8 text-slate-500">
+                      <Package className="h-10 w-10 mx-auto mb-2 opacity-50" />
+                      <p>Aucune commande trouvée</p>
+                    </div>
                   ) : (
-                    <>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Ajouter ce document
-                    </>
-                  )}
-                </Button>
-              </div>
-            )}
-          </TabsContent>
-
-          {/* Tab: Commandes */}
-          <TabsContent value="orders" className="flex-1 min-h-0 mt-4">
-            {/* Recherche */}
-            <div className="relative mb-4">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-              <Input
-                placeholder="Rechercher par numéro de commande..."
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                className="pl-9"
-              />
-            </div>
-
-            <ScrollArea className="h-[220px]">
-              {isLoading ? (
-                <div className="flex items-center justify-center h-32">
-                  <RefreshCw className="h-6 w-6 animate-spin text-slate-400" />
-                </div>
-              ) : filteredOrders.length === 0 ? (
-                <div className="text-center py-8 text-slate-500">
-                  <Package className="h-10 w-10 mx-auto mb-2 opacity-50" />
-                  <p>Aucune commande trouvée</p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {filteredOrders.map(order => (
-                    <div
-                      key={order.id}
-                      onClick={() => setSelectedOrderId(order.id)}
-                      className={`
+                    <div className="space-y-2">
+                      {filteredOrders.map(order => (
+                        <div
+                          key={order.id}
+                          onClick={() => setSelectedOrderId(order.id)}
+                          className={`
                         p-3 rounded-lg border cursor-pointer transition-colors
                         ${selectedOrderId === order.id ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:border-slate-300'}
                         ${(order.matchScore || 0) >= 40 ? 'border-l-4 border-l-amber-400' : ''}
                       `}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          {selectedOrderId === order.id ? (
-                            <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
-                              <Check className="h-4 w-4 text-blue-600" />
-                            </div>
-                          ) : (order.matchScore || 0) >= 40 ? (
-                            <div className="h-8 w-8 rounded-full bg-amber-100 flex items-center justify-center">
-                              <Sparkles className="h-4 w-4 text-amber-600" />
-                            </div>
-                          ) : (
-                            <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center">
-                              <Package className="h-4 w-4 text-slate-500" />
-                            </div>
-                          )}
-                          <div>
-                            <p className="font-medium text-sm">
-                              #{order.order_number}
-                            </p>
-                            <p className="text-xs text-slate-500">
-                              {order.customer_name || 'Client'} -{' '}
-                              {formatDate(order.created_at)}
-                            </p>
-                            {order.matchReasons &&
-                              order.matchReasons.length > 0 && (
-                                <p className="text-xs text-amber-600 mt-0.5">
-                                  {order.matchReasons.join(' • ')}
-                                </p>
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              {selectedOrderId === order.id ? (
+                                <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
+                                  <Check className="h-4 w-4 text-blue-600" />
+                                </div>
+                              ) : (order.matchScore || 0) >= 40 ? (
+                                <div className="h-8 w-8 rounded-full bg-amber-100 flex items-center justify-center">
+                                  <Sparkles className="h-4 w-4 text-amber-600" />
+                                </div>
+                              ) : (
+                                <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center">
+                                  <Package className="h-4 w-4 text-slate-500" />
+                                </div>
                               )}
+                              <div>
+                                <p className="font-medium text-sm">
+                                  #{order.order_number}
+                                </p>
+                                <p className="text-xs text-slate-500">
+                                  {order.customer_name || 'Client'} -{' '}
+                                  {formatDate(order.created_at)}
+                                </p>
+                                {order.matchReasons &&
+                                  order.matchReasons.length > 0 && (
+                                    <p className="text-xs text-amber-600 mt-0.5">
+                                      {order.matchReasons.join(' • ')}
+                                    </p>
+                                  )}
+                              </div>
+                            </div>
+                            <div className="text-right flex items-center gap-2">
+                              <div>
+                                <span className="font-semibold text-sm">
+                                  {formatAmount(order.total_ttc)}
+                                </span>
+                                {order.amount_paid > 0 && (
+                                  <p className="text-xs text-slate-500">
+                                    Payé: {formatAmount(order.amount_paid)} —
+                                    Reste: {formatAmount(order.remaining)}
+                                  </p>
+                                )}
+                                {(order.matchScore || 0) > 0 && (
+                                  <Badge
+                                    variant="outline"
+                                    className={`ml-2 text-xs ${
+                                      (order.matchScore || 0) >= 60
+                                        ? 'border-green-500 text-green-700'
+                                        : (order.matchScore || 0) >= 40
+                                          ? 'border-amber-500 text-amber-700'
+                                          : 'border-slate-300 text-slate-500'
+                                    }`}
+                                  >
+                                    {order.matchScore}%
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
                           </div>
                         </div>
-                        <div className="text-right flex items-center gap-2">
-                          <div>
-                            <span className="font-semibold text-sm">
-                              {formatAmount(order.total_ttc)}
-                            </span>
-                            {order.amount_paid > 0 && (
-                              <p className="text-xs text-slate-500">
-                                Payé: {formatAmount(order.amount_paid)} — Reste:{' '}
-                                {formatAmount(order.remaining)}
-                              </p>
-                            )}
-                            {(order.matchScore || 0) > 0 && (
-                              <Badge
-                                variant="outline"
-                                className={`ml-2 text-xs ${
-                                  (order.matchScore || 0) >= 60
-                                    ? 'border-green-500 text-green-700'
-                                    : (order.matchScore || 0) >= 40
-                                      ? 'border-amber-500 text-amber-700'
-                                      : 'border-slate-300 text-slate-500'
-                                }`}
-                              >
-                                {order.matchScore}%
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                      </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              )}
-            </ScrollArea>
+                  )}
+                </ScrollArea>
 
-            {selectedOrderId && (
-              <div className="pt-4 border-t mt-4 space-y-3">
-                <div>
-                  <label className="text-sm text-slate-600">
-                    Montant à allouer (€)
-                  </label>
+                {selectedOrderId && (
+                  <div className="pt-4 border-t mt-4 space-y-3">
+                    <div>
+                      <label className="text-sm text-slate-600">
+                        Montant à allouer (€)
+                      </label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        placeholder={String(remainingAmount.toFixed(2))}
+                        value={allocatedAmount}
+                        onChange={e => setAllocatedAmount(e.target.value)}
+                        className="mt-1"
+                      />
+                    </div>
+                    <Button
+                      className="w-full"
+                      onClick={handleLinkOrder}
+                      disabled={isLinking}
+                    >
+                      {isLinking ? (
+                        <>
+                          <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                          Liaison...
+                        </>
+                      ) : (
+                        <>
+                          <Plus className="h-4 w-4 mr-2" />
+                          Ajouter cette commande
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                )}
+              </TabsContent>
+
+              {/* Tab: Commandes Fournisseurs */}
+              <TabsContent
+                value="purchase_orders"
+                className="flex-1 min-h-0 mt-4"
+              >
+                {/* Recherche */}
+                <div className="relative mb-4">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                   <Input
-                    type="number"
-                    step="0.01"
-                    placeholder={String(remainingAmount.toFixed(2))}
-                    value={allocatedAmount}
-                    onChange={e => setAllocatedAmount(e.target.value)}
-                    className="mt-1"
+                    placeholder="Rechercher par numéro, fournisseur..."
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    className="pl-9"
                   />
                 </div>
-                <Button
-                  className="w-full"
-                  onClick={handleLinkOrder}
-                  disabled={isLinking}
-                >
-                  {isLinking ? (
-                    <>
-                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                      Liaison...
-                    </>
-                  ) : (
-                    <>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Ajouter cette commande
-                    </>
-                  )}
-                </Button>
-              </div>
-            )}
-          </TabsContent>
 
-          {/* Tab: Commandes Fournisseurs */}
-          <TabsContent value="purchase_orders" className="flex-1 min-h-0 mt-4">
-            {/* Recherche */}
-            <div className="relative mb-4">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-              <Input
-                placeholder="Rechercher par numéro, fournisseur..."
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                className="pl-9"
-              />
-            </div>
-
-            {/* Suggestions pour commandes fournisseurs */}
-            {purchaseOrderSuggestions.length > 0 &&
-              !selectedPurchaseOrderId && (
-                <div className="p-3 mb-4 bg-orange-50 border border-orange-200 rounded-lg">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Sparkles className="h-4 w-4 text-orange-600" />
-                    <span className="text-sm font-medium text-orange-800">
-                      Suggestions
-                    </span>
-                  </div>
-                  <div className="space-y-2">
-                    {purchaseOrderSuggestions.map(po => (
-                      <button
-                        key={po.id}
-                        onClick={() => handleQuickLinkPurchaseOrder(po.id)}
-                        className="w-full flex items-center justify-between p-2 bg-white rounded border border-orange-200 hover:border-orange-400 transition-colors text-left"
-                      >
-                        <div className="flex items-center gap-2">
-                          <Building2 className="h-4 w-4 text-slate-500" />
-                          <div>
-                            <span className="font-medium text-sm">
-                              #{po.po_number}
-                            </span>
-                            {po.supplier_name && (
-                              <span className="text-xs text-slate-500 ml-2">
-                                {po.supplier_name}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-semibold">
-                            {formatAmount(po.total_ttc)}
-                          </span>
-                          <Badge
-                            variant="outline"
-                            className={`text-xs ${(po.matchScore || 0) >= 60 ? 'border-green-500 text-green-700' : 'border-orange-500 text-orange-700'}`}
+                {/* Suggestions pour commandes fournisseurs */}
+                {purchaseOrderSuggestions.length > 0 &&
+                  !selectedPurchaseOrderId && (
+                    <div className="p-3 mb-4 bg-orange-50 border border-orange-200 rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Sparkles className="h-4 w-4 text-orange-600" />
+                        <span className="text-sm font-medium text-orange-800">
+                          Suggestions
+                        </span>
+                      </div>
+                      <div className="space-y-2">
+                        {purchaseOrderSuggestions.map(po => (
+                          <button
+                            key={po.id}
+                            onClick={() => handleQuickLinkPurchaseOrder(po.id)}
+                            className="w-full flex items-center justify-between p-2 bg-white rounded border border-orange-200 hover:border-orange-400 transition-colors text-left"
                           >
-                            {po.matchScore}%
-                          </Badge>
-                          <ArrowRight className="h-4 w-4 text-slate-400" />
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
+                            <div className="flex items-center gap-2">
+                              <Building2 className="h-4 w-4 text-slate-500" />
+                              <div>
+                                <span className="font-medium text-sm">
+                                  #{po.po_number}
+                                </span>
+                                {po.supplier_name && (
+                                  <span className="text-xs text-slate-500 ml-2">
+                                    {po.supplier_name}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-semibold">
+                                {formatAmount(po.total_ttc)}
+                              </span>
+                              <Badge
+                                variant="outline"
+                                className={`text-xs ${(po.matchScore || 0) >= 60 ? 'border-green-500 text-green-700' : 'border-orange-500 text-orange-700'}`}
+                              >
+                                {po.matchScore}%
+                              </Badge>
+                              <ArrowRight className="h-4 w-4 text-slate-400" />
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
-            <ScrollArea className="h-[180px]">
-              {isLoading ? (
-                <div className="flex items-center justify-center h-32">
-                  <RefreshCw className="h-6 w-6 animate-spin text-slate-400" />
-                </div>
-              ) : filteredPurchaseOrders.length === 0 ? (
-                <div className="text-center py-8 text-slate-500">
-                  <Building2 className="h-10 w-10 mx-auto mb-2 opacity-50" />
-                  <p>Aucune commande fournisseur trouvée</p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {filteredPurchaseOrders.map(po => (
-                    <div
-                      key={po.id}
-                      onClick={() => setSelectedPurchaseOrderId(po.id)}
-                      className={`
+                <ScrollArea className="h-[180px]">
+                  {isLoading ? (
+                    <div className="flex items-center justify-center h-32">
+                      <RefreshCw className="h-6 w-6 animate-spin text-slate-400" />
+                    </div>
+                  ) : filteredPurchaseOrders.length === 0 ? (
+                    <div className="text-center py-8 text-slate-500">
+                      <Building2 className="h-10 w-10 mx-auto mb-2 opacity-50" />
+                      <p>Aucune commande fournisseur trouvée</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {filteredPurchaseOrders.map(po => (
+                        <div
+                          key={po.id}
+                          onClick={() => setSelectedPurchaseOrderId(po.id)}
+                          className={`
                         p-3 rounded-lg border cursor-pointer transition-colors
                         ${selectedPurchaseOrderId === po.id ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:border-slate-300'}
                         ${(po.matchScore || 0) >= 40 ? 'border-l-4 border-l-orange-400' : ''}
                       `}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          {selectedPurchaseOrderId === po.id ? (
-                            <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
-                              <Check className="h-4 w-4 text-blue-600" />
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              {selectedPurchaseOrderId === po.id ? (
+                                <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
+                                  <Check className="h-4 w-4 text-blue-600" />
+                                </div>
+                              ) : (po.matchScore || 0) >= 40 ? (
+                                <div className="h-8 w-8 rounded-full bg-orange-100 flex items-center justify-center">
+                                  <Sparkles className="h-4 w-4 text-orange-600" />
+                                </div>
+                              ) : (
+                                <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center">
+                                  <Building2 className="h-4 w-4 text-slate-500" />
+                                </div>
+                              )}
+                              <div>
+                                <p className="font-medium text-sm">
+                                  #{po.po_number}
+                                </p>
+                                <p className="text-xs text-slate-500">
+                                  {po.supplier_name || 'Fournisseur'} -{' '}
+                                  {formatDate(po.created_at)}
+                                </p>
+                                {po.matchReasons &&
+                                  po.matchReasons.length > 0 && (
+                                    <p className="text-xs text-orange-600 mt-0.5">
+                                      {po.matchReasons.join(' • ')}
+                                    </p>
+                                  )}
+                              </div>
                             </div>
-                          ) : (po.matchScore || 0) >= 40 ? (
-                            <div className="h-8 w-8 rounded-full bg-orange-100 flex items-center justify-center">
-                              <Sparkles className="h-4 w-4 text-orange-600" />
+                            <div className="text-right flex items-center gap-2">
+                              <div>
+                                <span className="font-semibold text-sm">
+                                  {formatAmount(po.total_ttc)}
+                                </span>
+                                {(po.matchScore || 0) > 0 && (
+                                  <Badge
+                                    variant="outline"
+                                    className={`ml-2 text-xs ${
+                                      (po.matchScore || 0) >= 60
+                                        ? 'border-green-500 text-green-700'
+                                        : (po.matchScore || 0) >= 40
+                                          ? 'border-orange-500 text-orange-700'
+                                          : 'border-slate-300 text-slate-500'
+                                    }`}
+                                  >
+                                    {po.matchScore}%
+                                  </Badge>
+                                )}
+                              </div>
                             </div>
-                          ) : (
-                            <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center">
-                              <Building2 className="h-4 w-4 text-slate-500" />
-                            </div>
-                          )}
-                          <div>
-                            <p className="font-medium text-sm">
-                              #{po.po_number}
-                            </p>
-                            <p className="text-xs text-slate-500">
-                              {po.supplier_name || 'Fournisseur'} -{' '}
-                              {formatDate(po.created_at)}
-                            </p>
-                            {po.matchReasons && po.matchReasons.length > 0 && (
-                              <p className="text-xs text-orange-600 mt-0.5">
-                                {po.matchReasons.join(' • ')}
-                              </p>
-                            )}
                           </div>
                         </div>
-                        <div className="text-right flex items-center gap-2">
-                          <div>
-                            <span className="font-semibold text-sm">
-                              {formatAmount(po.total_ttc)}
-                            </span>
-                            {(po.matchScore || 0) > 0 && (
-                              <Badge
-                                variant="outline"
-                                className={`ml-2 text-xs ${
-                                  (po.matchScore || 0) >= 60
-                                    ? 'border-green-500 text-green-700'
-                                    : (po.matchScore || 0) >= 40
-                                      ? 'border-orange-500 text-orange-700'
-                                      : 'border-slate-300 text-slate-500'
-                                }`}
-                              >
-                                {po.matchScore}%
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                      </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              )}
-            </ScrollArea>
-
-            {selectedPurchaseOrderId && (
-              <div className="pt-4 border-t mt-4 space-y-3">
-                <div>
-                  <label className="text-sm text-slate-600">
-                    Montant à allouer (€)
-                  </label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    placeholder={String(remainingAmount.toFixed(2))}
-                    value={allocatedAmount}
-                    onChange={e => setAllocatedAmount(e.target.value)}
-                    className="mt-1"
-                  />
-                </div>
-                <Button
-                  className="w-full"
-                  onClick={handleLinkPurchaseOrder}
-                  disabled={isLinking}
-                >
-                  {isLinking ? (
-                    <>
-                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                      Liaison...
-                    </>
-                  ) : (
-                    <>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Ajouter cette commande fournisseur
-                    </>
                   )}
-                </Button>
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
+                </ScrollArea>
+
+                {selectedPurchaseOrderId && (
+                  <div className="pt-4 border-t mt-4 space-y-3">
+                    <div>
+                      <label className="text-sm text-slate-600">
+                        Montant à allouer (€)
+                      </label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        placeholder={String(remainingAmount.toFixed(2))}
+                        value={allocatedAmount}
+                        onChange={e => setAllocatedAmount(e.target.value)}
+                        className="mt-1"
+                      />
+                    </div>
+                    <Button
+                      className="w-full"
+                      onClick={handleLinkPurchaseOrder}
+                      disabled={isLinking}
+                    >
+                      {isLinking ? (
+                        <>
+                          <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                          Liaison...
+                        </>
+                      ) : (
+                        <>
+                          <Plus className="h-4 w-4 mr-2" />
+                          Ajouter cette commande fournisseur
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
+          </>
+        )}
       </DialogContent>
     </Dialog>
   );

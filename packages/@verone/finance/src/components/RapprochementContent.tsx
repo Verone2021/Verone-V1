@@ -12,7 +12,7 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 
-import { Badge, Input, ScrollArea } from '@verone/ui';
+import { Badge, Button, Input, ScrollArea } from '@verone/ui';
 import { formatCurrency } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
 import {
@@ -23,6 +23,7 @@ import {
   Sparkles,
   Calendar,
   ArrowRight,
+  CheckCircle2,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -495,6 +496,10 @@ export function RapprochementContent({
   const [isLoading, setIsLoading] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [isLinking, setIsLinking] = useState(false);
+  const [linkSuccess, setLinkSuccess] = useState<{
+    transactionLabel: string;
+    transactionAmount: number;
+  } | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [error, setError] = useState<string | null>(null);
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -756,8 +761,12 @@ export function RapprochementContent({
       // Immediately add to linked set so it disappears from suggestions
       setLinkedTxIds(prev => new Set([...prev, transactionId]));
 
-      toast.success('Commande liée à la transaction');
-      onSuccess?.();
+      // Show success confirmation screen instead of closing immediately
+      const linkedTx = allTransactions.find(t => t.id === transactionId);
+      setLinkSuccess({
+        transactionLabel: linkedTx?.label ?? 'Transaction',
+        transactionAmount: linkedTx ? Math.abs(linkedTx.amount) : 0,
+      });
     } catch (err) {
       console.error('Error linking transaction:', err);
       toast.error('Erreur lors du rapprochement');
@@ -767,6 +776,31 @@ export function RapprochementContent({
   };
 
   if (!order) return null;
+
+  // Success confirmation screen
+  if (linkSuccess) {
+    return (
+      <div className="flex flex-col items-center justify-center py-8 space-y-4">
+        <div className="h-16 w-16 rounded-full bg-green-100 flex items-center justify-center">
+          <CheckCircle2 className="h-8 w-8 text-green-600" />
+        </div>
+        <div className="text-center space-y-1">
+          <h3 className="font-semibold text-lg text-slate-900">
+            Rapprochement effectué
+          </h3>
+          <p className="text-sm text-slate-600">
+            Commande #{order.order_number} liée à {linkSuccess.transactionLabel}
+          </p>
+          <p className="text-sm font-medium text-green-600">
+            {formatCurrency(linkSuccess.transactionAmount)}
+          </p>
+        </div>
+        <Button onClick={() => onSuccess?.()} className="mt-4">
+          Fermer
+        </Button>
+      </div>
+    );
+  }
 
   const topSuggestions = filteredSuggestions.slice(0, 3);
   const restSuggestions = filteredSuggestions.slice(3);
