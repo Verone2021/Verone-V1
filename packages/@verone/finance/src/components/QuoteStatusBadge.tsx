@@ -7,6 +7,7 @@ const QUOTE_STATUS_VARIANTS: Record<
   'default' | 'secondary' | 'destructive' | 'outline'
 > = {
   draft: 'secondary',
+  validated: 'default',
   sent: 'outline',
   pending_approval: 'outline',
   finalized: 'default',
@@ -18,6 +19,7 @@ const QUOTE_STATUS_VARIANTS: Record<
 
 const QUOTE_STATUS_LABELS: Record<string, string> = {
   draft: 'Brouillon',
+  validated: 'Validé',
   sent: 'Envoyé',
   pending_approval: 'En attente',
   finalized: 'Finalisé',

@@ -1,8 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
-import { Alert, AlertDescription } from '@verone/ui';
+import type { ContactBO } from '@verone/orders';
+import {
+  ContactCardBO,
+  useEnseigneContactsBO,
+  useOrganisationContactsBO,
+} from '@verone/orders';
+import { ClientOrEnseigneSelector } from '@verone/products';
 import { ButtonV2 } from '@verone/ui';
 import {
   Dialog,
@@ -30,9 +36,25 @@ import {
   Phone,
   Building,
   AlertCircle,
+  Users,
 } from 'lucide-react';
 
 import type { ClientConsultation } from '@verone/consultations/hooks';
+
+type SourceChannel = 'website' | 'email' | 'phone' | 'other';
+
+interface EditFormData {
+  enseigne_id: string | null;
+  organisation_id: string | null;
+  client_email: string;
+  client_phone: string;
+  descriptif: string;
+  notes_internes: string;
+  tarif_maximum: number;
+  estimated_response_date: string;
+  priority_level: number;
+  source_channel: SourceChannel;
+}
 
 interface EditConsultationModalProps {
   open: boolean;
@@ -47,7 +69,9 @@ export function EditConsultationModal({
   consultation,
   onUpdated,
 }: EditConsultationModalProps) {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<EditFormData>({
+    enseigne_id: null,
+    organisation_id: null,
     client_email: '',
     client_phone: '',
     descriptif: '',
@@ -55,15 +79,31 @@ export function EditConsultationModal({
     tarif_maximum: 0,
     estimated_response_date: '',
     priority_level: 2,
-    source_channel: 'website' as 'website' | 'email' | 'phone' | 'other',
+    source_channel: 'website',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [selectedContactId, setSelectedContactId] = useState<string | null>(
+    null
+  );
 
-  // Initialiser le formulaire avec les données de la consultation
+  // Fetch contacts when enseigne or organisation is selected
+  const { data: enseigneContacts } = useEnseigneContactsBO(
+    formData.enseigne_id
+  );
+  const { data: orgContacts } = useOrganisationContactsBO(
+    formData.organisation_id
+  );
+
+  const contacts: ContactBO[] =
+    enseigneContacts?.contacts ?? orgContacts?.contacts ?? [];
+
+  // Initialize form from consultation data
   useEffect(() => {
     if (consultation) {
       setFormData({
+        enseigne_id: consultation.enseigne_id ?? null,
+        organisation_id: consultation.organisation_id ?? null,
         client_email: consultation.client_email || '',
         client_phone: consultation.client_phone || '',
         descriptif: consultation.descriptif || '',
@@ -77,11 +117,102 @@ export function EditConsultationModal({
         priority_level: consultation.priority_level || 2,
         source_channel: consultation.source_channel || 'website',
       });
+      // Reset contact selection — will be auto-matched below
+      setSelectedContactId(null);
     }
   }, [consultation]);
 
+  // Auto-select contact matching consultation email when contacts load
+  useEffect(() => {
+    if (
+      contacts.length > 0 &&
+      consultation.client_email &&
+      !selectedContactId
+    ) {
+      const matchingContact = contacts.find(
+        c => c.email === consultation.client_email
+      );
+      if (matchingContact) {
+        setSelectedContactId(matchingContact.id);
+      }
+    }
+  }, [contacts, consultation.client_email, selectedContactId]);
+
+  // Handlers for ClientOrEnseigneSelector
+  const handleEnseigneChange = useCallback(
+    (
+      enseigneId: string | null,
+      _enseigneName: string | null,
+      _parentOrgId: string | null
+    ) => {
+      setFormData(prev => ({
+        ...prev,
+        enseigne_id: enseigneId,
+        organisation_id: null,
+        client_email: '',
+        client_phone: '',
+      }));
+      setSelectedContactId(null);
+      if (errors.client) {
+        setErrors(prev => ({ ...prev, client: '' }));
+      }
+    },
+    [errors.client]
+  );
+
+  const handleOrganisationChange = useCallback(
+    (organisationId: string | null, _organisationName: string | null) => {
+      setFormData(prev => ({
+        ...prev,
+        organisation_id: organisationId,
+        enseigne_id: null,
+        client_email: '',
+        client_phone: '',
+      }));
+      setSelectedContactId(null);
+      if (errors.client) {
+        setErrors(prev => ({ ...prev, client: '' }));
+      }
+    },
+    [errors.client]
+  );
+
+  const handleContactSelect = useCallback(
+    (contact: ContactBO) => {
+      if (selectedContactId === contact.id) {
+        // Deselect
+        setSelectedContactId(null);
+        setFormData(prev => ({
+          ...prev,
+          client_email: '',
+          client_phone: '',
+        }));
+      } else {
+        // Select and pre-fill
+        setSelectedContactId(contact.id);
+        setFormData(prev => ({
+          ...prev,
+          client_email: contact.email,
+          client_phone: contact.phone ?? contact.mobile ?? '',
+        }));
+        // Clear email/phone errors
+        setErrors(prev => ({
+          ...prev,
+          client_email: '',
+          client_phone: '',
+        }));
+      }
+    },
+    [selectedContactId]
+  );
+
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
+
+    if (!formData.enseigne_id && !formData.organisation_id) {
+      newErrors.client =
+        'Veuillez sélectionner une enseigne ou une organisation';
+    }
 
     if (!formData.client_email.trim()) {
       newErrors.client_email = "L'email client est obligatoire";
@@ -112,6 +243,8 @@ export function EditConsultationModal({
 
     try {
       const updates: Partial<ClientConsultation> = {
+        enseigne_id: formData.enseigne_id ?? undefined,
+        organisation_id: formData.organisation_id ?? undefined,
         client_email: formData.client_email,
         client_phone: formData.client_phone || undefined,
         descriptif: formData.descriptif,
@@ -137,7 +270,7 @@ export function EditConsultationModal({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center justify-between">
             <DialogTitle className="text-xs font-bold flex items-center gap-1">
@@ -153,209 +286,289 @@ export function EditConsultationModal({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-1 mt-1">
-          {/* Email Client */}
-          <div className="space-y-1">
-            <Label htmlFor="client-email" className="text-xs font-medium">
-              Email client *
-            </Label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3 w-3 text-gray-400" />
-              <Input
-                id="client-email"
-                type="email"
-                value={formData.client_email}
-                onChange={e => {
-                  setFormData(prev => ({
-                    ...prev,
-                    client_email: e.target.value,
-                  }));
-                  if (errors.client_email)
-                    setErrors(prev => ({ ...prev, client_email: '' }));
-                }}
-                placeholder="client@example.com"
-                className={cn(
-                  'pl-10',
-                  errors.client_email && 'border-red-300 focus:border-red-500'
-                )}
-              />
-            </div>
-            {errors.client_email && (
-              <p className="text-xs text-red-600">{errors.client_email}</p>
+        <form
+          onSubmit={e => {
+            void handleSubmit(e).catch((submitError: unknown) => {
+              console.error(
+                '[EditConsultationModal] Submit failed:',
+                submitError
+              );
+            });
+          }}
+          className="space-y-4 mt-2"
+        >
+          {/* SECTION 1: Client */}
+          <div className="space-y-3">
+            <h3 className="text-sm font-semibold text-black">Client</h3>
+
+            <ClientOrEnseigneSelector
+              enseigneId={formData.enseigne_id}
+              organisationId={formData.organisation_id}
+              onEnseigneChange={handleEnseigneChange}
+              onOrganisationChange={handleOrganisationChange}
+              label="Client (enseigne ou organisation)"
+              required
+              className={errors.client ? 'border-red-500' : ''}
+            />
+            {errors.client && (
+              <p className="text-xs text-red-500 flex items-center">
+                <AlertCircle className="h-3 w-3 mr-1" />
+                {errors.client}
+              </p>
+            )}
+
+            {/* Contacts grid */}
+            {contacts.length > 0 && (
+              <div className="space-y-2">
+                <Label className="flex items-center gap-1.5 text-xs">
+                  <Users className="h-3 w-3" />
+                  Contacts existants
+                </Label>
+                <div className="grid grid-cols-1 gap-2">
+                  {contacts.map(contact => (
+                    <ContactCardBO
+                      key={contact.id}
+                      contact={contact}
+                      isSelected={selectedContactId === contact.id}
+                      onClick={() => handleContactSelect(contact)}
+                    />
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Cliquez sur un contact pour pré-remplir email et téléphone
+                </p>
+              </div>
             )}
           </div>
 
-          {/* Téléphone Client */}
-          <div className="space-y-1">
-            <Label htmlFor="client-phone" className="text-xs font-medium">
-              Téléphone client
-            </Label>
-            <div className="relative">
-              <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3 w-3 text-gray-400" />
-              <Input
-                id="client-phone"
-                type="tel"
-                value={formData.client_phone}
-                onChange={e =>
-                  setFormData(prev => ({
-                    ...prev,
-                    client_phone: e.target.value,
-                  }))
-                }
-                placeholder="+33 6 12 34 56 78"
-                className="pl-10"
-              />
-            </div>
-          </div>
+          {/* SECTION 2: Contact details */}
+          <div className="space-y-3">
+            <h3 className="text-sm font-semibold text-black">
+              Coordonnées contact
+            </h3>
 
-          {/* Description */}
-          <div className="space-y-1">
-            <Label htmlFor="descriptif" className="text-xs font-medium">
-              Description de la consultation *
-            </Label>
-            <Textarea
-              id="descriptif"
-              value={formData.descriptif}
-              onChange={e => {
-                setFormData(prev => ({ ...prev, descriptif: e.target.value }));
-                if (errors.descriptif)
-                  setErrors(prev => ({ ...prev, descriptif: '' }));
-              }}
-              placeholder="Décrivez les besoins du client..."
-              rows={4}
-              className={cn(
-                errors.descriptif && 'border-red-300 focus:border-red-500'
-              )}
-            />
-            {errors.descriptif && (
-              <p className="text-xs text-red-600">{errors.descriptif}</p>
-            )}
-          </div>
-
-          {/* Notes internes */}
-          <div className="space-y-1">
-            <Label htmlFor="notes-internes" className="text-xs font-medium">
-              Notes internes
-            </Label>
-            <Textarea
-              id="notes-internes"
-              value={formData.notes_internes}
-              onChange={e =>
-                setFormData(prev => ({
-                  ...prev,
-                  notes_internes: e.target.value,
-                }))
-              }
-              placeholder="Notes privées visibles uniquement par l'équipe..."
-              rows={3}
-            />
-            <p className="text-xs text-gray-500">
-              Ces notes ne sont pas visibles par le client
-            </p>
-          </div>
-
-          {/* Grid pour Budget et Date */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-1">
-            {/* Budget Maximum */}
-            <div className="space-y-1">
-              <Label htmlFor="tarif-maximum" className="text-xs font-medium">
-                Budget maximum (€)
-              </Label>
-              <Input
-                id="tarif-maximum"
-                type="number"
-                step="0.01"
-                min="0"
-                value={formData.tarif_maximum || ''}
-                onChange={e => {
-                  const value = parseFloat(e.target.value) || 0;
-                  setFormData(prev => ({ ...prev, tarif_maximum: value }));
-                  if (errors.tarif_maximum)
-                    setErrors(prev => ({ ...prev, tarif_maximum: '' }));
-                }}
-                placeholder="5000"
-                className={cn(
-                  errors.tarif_maximum && 'border-red-300 focus:border-red-500'
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {/* Email */}
+              <div className="space-y-1">
+                <Label htmlFor="client-email" className="text-xs font-medium">
+                  Email client *
+                </Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3 w-3 text-gray-400" />
+                  <Input
+                    id="client-email"
+                    type="email"
+                    value={formData.client_email}
+                    onChange={e => {
+                      setFormData(prev => ({
+                        ...prev,
+                        client_email: e.target.value,
+                      }));
+                      if (errors.client_email)
+                        setErrors(prev => ({ ...prev, client_email: '' }));
+                    }}
+                    placeholder="client@example.com"
+                    className={cn(
+                      'pl-10',
+                      errors.client_email &&
+                        'border-red-300 focus:border-red-500'
+                    )}
+                  />
+                </div>
+                {errors.client_email && (
+                  <p className="text-xs text-red-600">{errors.client_email}</p>
                 )}
-              />
-              {errors.tarif_maximum && (
-                <p className="text-xs text-red-600">{errors.tarif_maximum}</p>
-              )}
-            </div>
+              </div>
 
-            {/* Date Réponse Estimée */}
-            <div className="space-y-1">
-              <Label htmlFor="estimated-date" className="text-xs font-medium">
-                Date de réponse estimée
-              </Label>
-              <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3 w-3 text-gray-400" />
-                <Input
-                  id="estimated-date"
-                  type="date"
-                  value={formData.estimated_response_date}
-                  onChange={e =>
-                    setFormData(prev => ({
-                      ...prev,
-                      estimated_response_date: e.target.value,
-                    }))
-                  }
-                  className="pl-10"
-                />
+              {/* Phone */}
+              <div className="space-y-1">
+                <Label htmlFor="client-phone" className="text-xs font-medium">
+                  Téléphone client
+                </Label>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3 w-3 text-gray-400" />
+                  <Input
+                    id="client-phone"
+                    type="tel"
+                    value={formData.client_phone}
+                    onChange={e =>
+                      setFormData(prev => ({
+                        ...prev,
+                        client_phone: e.target.value,
+                      }))
+                    }
+                    placeholder="+33 6 12 34 56 78"
+                    className="pl-10"
+                  />
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Grid pour Priorité et Canal */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-1">
-            {/* Priorité */}
+          {/* SECTION 3: Projet */}
+          <div className="space-y-3">
+            <h3 className="text-sm font-semibold text-black">Projet</h3>
+
+            {/* Description */}
             <div className="space-y-1">
-              <Label htmlFor="priority" className="text-xs font-medium">
-                Niveau de priorité
+              <Label htmlFor="descriptif" className="text-xs font-medium">
+                Description de la consultation *
               </Label>
-              <Select
-                value={formData.priority_level.toString()}
-                onValueChange={value =>
+              <Textarea
+                id="descriptif"
+                value={formData.descriptif}
+                onChange={e => {
                   setFormData(prev => ({
                     ...prev,
-                    priority_level: parseInt(value),
-                  }))
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="5">Très urgent (5)</SelectItem>
-                  <SelectItem value="4">Urgent (4)</SelectItem>
-                  <SelectItem value="3">Normal+ (3)</SelectItem>
-                  <SelectItem value="2">Normal (2)</SelectItem>
-                  <SelectItem value="1">Faible (1)</SelectItem>
-                </SelectContent>
-              </Select>
+                    descriptif: e.target.value,
+                  }));
+                  if (errors.descriptif)
+                    setErrors(prev => ({ ...prev, descriptif: '' }));
+                }}
+                placeholder="Décrivez les besoins du client..."
+                rows={4}
+                className={cn(
+                  errors.descriptif && 'border-red-300 focus:border-red-500'
+                )}
+              />
+              {errors.descriptif && (
+                <p className="text-xs text-red-600">{errors.descriptif}</p>
+              )}
             </div>
 
-            {/* Canal Source */}
+            {/* Notes internes */}
             <div className="space-y-1">
-              <Label htmlFor="source-channel" className="text-xs font-medium">
-                Canal d'origine
+              <Label htmlFor="notes-internes" className="text-xs font-medium">
+                Notes internes
               </Label>
-              <Select
-                value={formData.source_channel}
-                onValueChange={(value: any) =>
-                  setFormData(prev => ({ ...prev, source_channel: value }))
+              <Textarea
+                id="notes-internes"
+                value={formData.notes_internes}
+                onChange={e =>
+                  setFormData(prev => ({
+                    ...prev,
+                    notes_internes: e.target.value,
+                  }))
                 }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="website">Site web</SelectItem>
-                  <SelectItem value="email">Email</SelectItem>
-                  <SelectItem value="phone">Téléphone</SelectItem>
-                  <SelectItem value="other">Autre</SelectItem>
-                </SelectContent>
-              </Select>
+                placeholder="Notes privées visibles uniquement par l'équipe..."
+                rows={3}
+              />
+              <p className="text-xs text-gray-500">
+                Ces notes ne sont pas visibles par le client
+              </p>
+            </div>
+          </div>
+
+          {/* SECTION 4: Paramètres */}
+          <div className="space-y-3">
+            <h3 className="text-sm font-semibold text-black">Paramètres</h3>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {/* Budget */}
+              <div className="space-y-1">
+                <Label htmlFor="tarif-maximum" className="text-xs font-medium">
+                  Budget maximum (€)
+                </Label>
+                <Input
+                  id="tarif-maximum"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={formData.tarif_maximum || ''}
+                  onChange={e => {
+                    const value = parseFloat(e.target.value) || 0;
+                    setFormData(prev => ({
+                      ...prev,
+                      tarif_maximum: value,
+                    }));
+                    if (errors.tarif_maximum)
+                      setErrors(prev => ({ ...prev, tarif_maximum: '' }));
+                  }}
+                  placeholder="5000"
+                  className={cn(
+                    errors.tarif_maximum &&
+                      'border-red-300 focus:border-red-500'
+                  )}
+                />
+                {errors.tarif_maximum && (
+                  <p className="text-xs text-red-600">{errors.tarif_maximum}</p>
+                )}
+              </div>
+
+              {/* Canal */}
+              <div className="space-y-1">
+                <Label htmlFor="source-channel" className="text-xs font-medium">
+                  Canal d'origine
+                </Label>
+                <Select
+                  value={formData.source_channel}
+                  onValueChange={(value: string) =>
+                    setFormData(prev => ({
+                      ...prev,
+                      source_channel: value as SourceChannel,
+                    }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="website">Site web</SelectItem>
+                    <SelectItem value="email">Email</SelectItem>
+                    <SelectItem value="phone">Téléphone</SelectItem>
+                    <SelectItem value="other">Autre</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Priorité */}
+              <div className="space-y-1">
+                <Label htmlFor="priority" className="text-xs font-medium">
+                  Niveau de priorité
+                </Label>
+                <Select
+                  value={formData.priority_level.toString()}
+                  onValueChange={value =>
+                    setFormData(prev => ({
+                      ...prev,
+                      priority_level: parseInt(value),
+                    }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="5">Très urgent (5)</SelectItem>
+                    <SelectItem value="4">Urgent (4)</SelectItem>
+                    <SelectItem value="3">Normal+ (3)</SelectItem>
+                    <SelectItem value="2">Normal (2)</SelectItem>
+                    <SelectItem value="1">Faible (1)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Date réponse */}
+              <div className="space-y-1">
+                <Label htmlFor="estimated-date" className="text-xs font-medium">
+                  Date de réponse estimée
+                </Label>
+                <div className="relative">
+                  <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3 w-3 text-gray-400" />
+                  <Input
+                    id="estimated-date"
+                    type="date"
+                    value={formData.estimated_response_date}
+                    onChange={e =>
+                      setFormData(prev => ({
+                        ...prev,
+                        estimated_response_date: e.target.value,
+                      }))
+                    }
+                    className="pl-10"
+                  />
+                </div>
+              </div>
             </div>
           </div>
 
@@ -386,7 +599,7 @@ export function EditConsultationModal({
                 ) : (
                   <>
                     <Save className="h-3 w-3 mr-2" />
-                    Enregistrer
+                    Enregistrer les modifs
                   </>
                 )}
               </ButtonV2>

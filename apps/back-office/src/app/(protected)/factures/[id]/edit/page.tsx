@@ -42,6 +42,12 @@ interface QontoClient {
   id: string;
   name: string;
   email?: string;
+  billing_address?: {
+    street_address?: string;
+    city?: string;
+    zip_code?: string;
+    country_code?: string;
+  };
 }
 
 interface QontoInvoiceItem {
@@ -350,13 +356,20 @@ export default function EditDraftPage({ params }: IPageProps) {
               setExpiryDate(doc.expiry_date ?? '');
               setReason(doc.reason ?? '');
 
-              // Initialize addresses from local data
+              // Initialize addresses: priority local DB, fallback Qonto client address
               if (data.localData?.billing_address) {
                 setBillingAddress({
                   street: data.localData.billing_address.street ?? '',
                   city: data.localData.billing_address.city ?? '',
                   zip_code: data.localData.billing_address.zip_code ?? '',
                   country: data.localData.billing_address.country ?? '',
+                });
+              } else if (doc.client?.billing_address) {
+                setBillingAddress({
+                  street: doc.client.billing_address.street_address ?? '',
+                  city: doc.client.billing_address.city ?? '',
+                  zip_code: doc.client.billing_address.zip_code ?? '',
+                  country: doc.client.billing_address.country_code ?? '',
                 });
               }
               if (data.localData?.shipping_address) {

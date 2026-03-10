@@ -180,7 +180,8 @@ function isFieldEditable(
   ]);
 
   if (status === 'draft') return true;
-  if (status === 'sent') return draftAndSentFields.has(field);
+  if (status === 'validated' || status === 'sent')
+    return draftAndSentFields.has(field);
   return false;
 }
 
@@ -206,17 +207,26 @@ function getStatusActions(
 
   if (currentStatus === 'draft') {
     actions.push({
-      label: 'Valider et envoyer',
-      targetStatus: 'sent',
+      label: 'Valider',
+      targetStatus: 'validated',
       variant: 'default',
-      icon: <Send className="mr-2 h-4 w-4" />,
+      icon: <Check className="mr-2 h-4 w-4" />,
       confirmTitle: 'Valider le devis ?',
       confirmDescription:
-        'Le devis passera en statut "Envoyé". Les articles et informations principales ne seront plus modifiables.',
+        'Le devis sera validé. Les articles et informations principales ne seront plus modifiables.',
     });
   }
 
-  if (currentStatus === 'sent') {
+  if (currentStatus === 'validated') {
+    actions.push({
+      label: 'Envoyer',
+      targetStatus: 'sent',
+      variant: 'default',
+      icon: <Send className="mr-2 h-4 w-4" />,
+      confirmTitle: 'Envoyer le devis ?',
+      confirmDescription:
+        'Le devis passera en statut "Envoyé" et pourra être marqué comme accepté ou refusé.',
+    });
     if (!hasQonto) {
       actions.push({
         label: 'Revenir en brouillon',
@@ -229,6 +239,9 @@ function getStatusActions(
         requiresNoQonto: true,
       });
     }
+  }
+
+  if (currentStatus === 'sent') {
     actions.push({
       label: 'Marquer accepté',
       targetStatus: 'accepted',
@@ -284,6 +297,7 @@ export default function QuoteDetailPage({ params }: QuoteDetailPageProps) {
   const [showAddProduct, setShowAddProduct] = useState(false);
   const [showLinkMeProducts, setShowLinkMeProducts] = useState(false);
   const [linkMeSearchTerm, setLinkMeSearchTerm] = useState('');
+  const [linkingQonto, setLinkingQonto] = useState(false);
 
   // Editable state
   const [editFields, setEditFields] = useState<EditableFields>({
@@ -727,7 +741,9 @@ export default function QuoteDetailPage({ params }: QuoteDetailPageProps) {
 
   const status = quote.quote_status;
   const hasQonto = !!quote.qonto_invoice_id;
-  const canEdit = (status === 'draft' || status === 'sent') && !hasQonto;
+  const canEdit =
+    (status === 'draft' || status === 'validated' || status === 'sent') &&
+    !hasQonto;
   const canDelete = !quote.converted_to_invoice_id;
   const statusActions = getStatusActions(status, hasQonto);
   const isLinkMe = quote.channel?.code === 'linkme';
@@ -827,13 +843,60 @@ export default function QuoteDetailPage({ params }: QuoteDetailPageProps) {
                   variant="outline"
                   onClick={() =>
                     window.open(
-                      `/api/qonto/quotes/${quote.qonto_invoice_id}/view`,
+                      `/api/qonto/quotes/${quote.qonto_invoice_id}/pdf`,
                       '_blank'
                     )
                   }
                 >
                   <ExternalLink className="mr-2 h-4 w-4" />
                   PDF Qonto
+                </Button>
+              )}
+
+              {/* Link to Qonto (when not yet linked) */}
+              {!hasQonto && status !== 'draft' && (
+                <Button
+                  variant="outline"
+                  disabled={linkingQonto}
+                  onClick={() => {
+                    setLinkingQonto(true);
+                    void fetch(`/api/quotes/${quote.id}/link-qonto`, {
+                      method: 'POST',
+                    })
+                      .then(async res => {
+                        const body = (await res.json()) as {
+                          success: boolean;
+                          error?: string;
+                        };
+                        if (!body.success) {
+                          toast.error(
+                            body.error ?? 'Devis non trouvé sur Qonto'
+                          );
+                          return;
+                        }
+                        toast.success('Devis lié à Qonto avec succès');
+                        void loadQuote().catch((err: unknown) => {
+                          console.error(
+                            '[QuoteDetail] reload after link:',
+                            err
+                          );
+                        });
+                      })
+                      .catch((err: unknown) => {
+                        console.error('[QuoteDetail] link-qonto error:', err);
+                        toast.error('Erreur lors de la liaison Qonto');
+                      })
+                      .finally(() => {
+                        setLinkingQonto(false);
+                      });
+                  }}
+                >
+                  {linkingQonto ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                  )}
+                  Lier à Qonto
                 </Button>
               )}
 
