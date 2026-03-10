@@ -1854,6 +1854,66 @@ export type Database = {
           },
         ];
       };
+      consultation_emails: {
+        Row: {
+          attachments: Json | null;
+          consultation_id: string;
+          created_at: string;
+          error_message: string | null;
+          id: string;
+          message_body: string | null;
+          recipient_email: string;
+          resend_email_id: string | null;
+          sent_at: string | null;
+          sent_by: string | null;
+          status: string;
+          subject: string;
+        };
+        Insert: {
+          attachments?: Json | null;
+          consultation_id: string;
+          created_at?: string;
+          error_message?: string | null;
+          id?: string;
+          message_body?: string | null;
+          recipient_email: string;
+          resend_email_id?: string | null;
+          sent_at?: string | null;
+          sent_by?: string | null;
+          status?: string;
+          subject: string;
+        };
+        Update: {
+          attachments?: Json | null;
+          consultation_id?: string;
+          created_at?: string;
+          error_message?: string | null;
+          id?: string;
+          message_body?: string | null;
+          recipient_email?: string;
+          resend_email_id?: string | null;
+          sent_at?: string | null;
+          sent_by?: string | null;
+          status?: string;
+          subject?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'consultation_emails_consultation_id_fkey';
+            columns: ['consultation_id'];
+            isOneToOne: false;
+            referencedRelation: 'client_consultations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'consultation_emails_sent_by_fkey';
+            columns: ['sent_by'];
+            isOneToOne: false;
+            referencedRelation: 'v_linkme_users';
+            referencedColumns: ['user_id'];
+          },
+        ];
+      };
       consultation_images: {
         Row: {
           alt_text: string | null;
@@ -3083,6 +3143,7 @@ export type Database = {
           billing_address: Json | null;
           billing_contact_id: string | null;
           channel_id: string | null;
+          consultation_id: string | null;
           converted_to_invoice_id: string | null;
           created_at: string;
           created_by: string;
@@ -3151,6 +3212,7 @@ export type Database = {
           billing_address?: Json | null;
           billing_contact_id?: string | null;
           channel_id?: string | null;
+          consultation_id?: string | null;
           converted_to_invoice_id?: string | null;
           created_at?: string;
           created_by: string;
@@ -3219,6 +3281,7 @@ export type Database = {
           billing_address?: Json | null;
           billing_contact_id?: string | null;
           channel_id?: string | null;
+          consultation_id?: string | null;
           converted_to_invoice_id?: string | null;
           created_at?: string;
           created_by?: string;
@@ -3291,6 +3354,13 @@ export type Database = {
             columns: ['channel_id'];
             isOneToOne: false;
             referencedRelation: 'sales_channels';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'financial_documents_consultation_id_fkey';
+            columns: ['consultation_id'];
+            isOneToOne: false;
+            referencedRelation: 'client_consultations';
             referencedColumns: ['id'];
           },
           {
@@ -11702,6 +11772,7 @@ export type Database = {
           billing_address: Json | null;
           billing_contact_id: string | null;
           channel_id: string | null;
+          consultation_id: string | null;
           converted_to_invoice_id: string | null;
           created_at: string;
           created_by: string;
@@ -11955,6 +12026,7 @@ export type Database = {
           billing_address: Json | null;
           billing_contact_id: string | null;
           channel_id: string | null;
+          consultation_id: string | null;
           converted_to_invoice_id: string | null;
           created_at: string;
           created_by: string;

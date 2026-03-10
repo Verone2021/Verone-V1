@@ -1,8 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
-import { BlobProvider, pdf } from '@react-pdf/renderer';
+import { pdf } from '@react-pdf/renderer';
 import { saveAs } from 'file-saver';
 import { ArrowLeft, Download, Loader2 } from 'lucide-react';
 
@@ -24,15 +24,62 @@ export function PdfPreviewModal({
   title,
   filename,
 }: PdfPreviewModalProps) {
-  const handleDownload = () => {
+  const [blobUrl, setBlobUrl] = useState<string | null>(null);
+  const [generating, setGenerating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const blobRef = useRef<Blob | null>(null);
+  const urlRef = useRef<string | null>(null);
+
+  // One-shot PDF generation — runs once when modal opens, no re-render loop
+  useEffect(() => {
+    if (!isOpen) return;
+
+    let cancelled = false;
+    setGenerating(true);
+    setError(null);
+
     void pdf(pdfDocument)
       .toBlob()
       .then(blob => {
-        saveAs(blob, filename || 'rapport.pdf');
+        if (cancelled) return;
+        blobRef.current = blob;
+        const url = URL.createObjectURL(blob);
+        urlRef.current = url;
+        setBlobUrl(url);
       })
       .catch((err: unknown) => {
-        console.error('[PdfPreviewModal] Download failed:', err);
+        if (cancelled) return;
+        console.error('[PdfPreviewModal] Generation failed:', err);
+        setError(String(err));
+      })
+      .finally(() => {
+        if (!cancelled) setGenerating(false);
       });
+
+    return () => {
+      cancelled = true;
+      if (urlRef.current) {
+        URL.revokeObjectURL(urlRef.current);
+        urlRef.current = null;
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-shot on open
+  }, [isOpen]);
+
+  const handleDownload = () => {
+    if (blobRef.current) {
+      saveAs(blobRef.current, filename || 'rapport.pdf');
+    } else {
+      // Fallback: regenerate
+      void pdf(pdfDocument)
+        .toBlob()
+        .then(blob => {
+          saveAs(blob, filename || 'rapport.pdf');
+        })
+        .catch((err: unknown) => {
+          console.error('[PdfPreviewModal] Download failed:', err);
+        });
+    }
   };
 
   return (
@@ -63,33 +110,25 @@ export function PdfPreviewModal({
           </div>
         </DialogHeader>
 
-        {/* Preview iframe via BlobProvider */}
-        <BlobProvider document={pdfDocument}>
-          {({ url, loading, error }) => (
-            <div className="flex-1 overflow-hidden">
-              {loading ? (
-                <div className="flex items-center justify-center h-full">
-                  <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-                  <p className="text-sm text-gray-500 ml-3">
-                    Generation du PDF...
-                  </p>
-                </div>
-              ) : error ? (
-                <div className="flex items-center justify-center h-full">
-                  <p className="text-sm text-red-600">
-                    Erreur: {String(error)}
-                  </p>
-                </div>
-              ) : url ? (
-                <iframe
-                  src={url}
-                  className="w-full h-full border-0"
-                  title={title}
-                />
-              ) : null}
+        {/* Preview iframe — one-shot blob, no BlobProvider re-render loop */}
+        <div className="flex-1 overflow-hidden">
+          {generating ? (
+            <div className="flex items-center justify-center h-full">
+              <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+              <p className="text-sm text-gray-500 ml-3">Generation du PDF...</p>
             </div>
-          )}
-        </BlobProvider>
+          ) : error ? (
+            <div className="flex items-center justify-center h-full">
+              <p className="text-sm text-red-600">Erreur: {error}</p>
+            </div>
+          ) : blobUrl ? (
+            <iframe
+              src={blobUrl}
+              className="w-full h-full border-0"
+              title={title}
+            />
+          ) : null}
+        </div>
       </DialogContent>
     </Dialog>
   );

@@ -44,7 +44,7 @@ export function SourcingProductModal({
         consultation_id: consultationId,
         product_id: productId,
         quantity: 1,
-        proposed_price: product.cost_price ? product.cost_price * 1.3 : 0, // Marge 30% par défaut
+        proposed_price: product.cost_price ? product.cost_price * 1.3 : null, // Marge 30% par défaut
         is_free: false,
         notes: `Produit sourcé spécifiquement pour cette consultation`,
       };

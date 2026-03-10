@@ -81,6 +81,7 @@ export interface ConsultationItem {
     requires_sample: boolean;
     supplier_name?: string;
     cost_price?: number;
+    image_url?: string | null;
   };
 }
 
@@ -95,6 +96,13 @@ export interface CreateConsultationData {
   priority_level?: number;
   source_channel?: 'website' | 'email' | 'phone' | 'other';
   estimated_response_date?: string;
+  /** Images uploadées (max 5) — insertion dans consultation_images */
+  images?: Array<{
+    publicUrl: string;
+    storagePath: string;
+    fileName: string;
+    fileSize: number;
+  }>;
 }
 
 // Interface existante maintenue pour rétrocompatibilité
@@ -152,7 +160,9 @@ export function useConsultations() {
 
         let query = supabase
           .from('client_consultations')
-          .select('*')
+          .select(
+            '*, enseigne:enseignes(id, name), organisation:organisations(id, legal_name, trade_name)'
+          )
           .is('deleted_at', null)
           .order('created_at', { ascending: false });
 
@@ -588,7 +598,7 @@ export function useConsultationItems(consultationId?: string) {
   const { toast } = useToast();
 
   // Charger les items de la consultation
-  const fetchConsultationItems = async (id: string) => {
+  const fetchConsultationItems = useCallback(async (id: string) => {
     try {
       setLoading(true);
       setError(null);
@@ -611,7 +621,8 @@ export function useConsultationItems(consultationId?: string) {
             name,
             sku,
             requires_sample,
-            cost_price
+            cost_price,
+            product_images(public_url, is_primary)
           )
         `
         )
@@ -639,11 +650,28 @@ export function useConsultationItems(consultationId?: string) {
               requires_sample: item.product.requires_sample,
               supplier_name: undefined, // Temporairement désactivé
               cost_price: item.product.cost_price,
+              image_url:
+                (
+                  item.product as unknown as {
+                    product_images?: Array<{
+                      is_primary: boolean;
+                      public_url: string;
+                    }>;
+                  }
+                ).product_images?.find(
+                  (img: { is_primary: boolean }) => img.is_primary
+                )?.public_url ||
+                (
+                  item.product as unknown as {
+                    product_images?: Array<{ public_url: string }>;
+                  }
+                ).product_images?.[0]?.public_url ||
+                null,
             }
           : undefined,
       }));
 
-      setConsultationItems(items as any);
+      setConsultationItems(items as ConsultationItem[]);
     } catch (err) {
       const message =
         err instanceof Error
@@ -654,35 +682,35 @@ export function useConsultationItems(consultationId?: string) {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   // Charger les produits éligibles
-  const fetchEligibleProducts = async (targetConsultationId?: string) => {
-    try {
-      setLoading(true);
-      setError(null);
+  const fetchEligibleProducts = useCallback(
+    async (targetConsultationId?: string) => {
+      try {
+        setError(null);
 
-      const { data, error } = await supabase.rpc(
-        'get_consultation_eligible_products',
-        {
-          target_consultation_id: targetConsultationId || undefined,
-        }
-      );
+        const { data, error } = await supabase.rpc(
+          'get_consultation_eligible_products',
+          {
+            target_consultation_id: targetConsultationId || undefined,
+          }
+        );
 
-      if (error) throw error;
+        if (error) throw error;
 
-      setEligibleProducts(data || []);
-    } catch (err) {
-      const message =
-        err instanceof Error
-          ? err.message
-          : 'Erreur lors du chargement des produits éligibles';
-      setError(message);
-      console.error('Erreur fetchEligibleProducts:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+        setEligibleProducts(data || []);
+      } catch (err) {
+        const message =
+          err instanceof Error
+            ? err.message
+            : 'Erreur lors du chargement des produits éligibles';
+        setError(message);
+        console.error('Erreur fetchEligibleProducts:', err);
+      }
+    },
+    []
+  );
 
   // Ajouter un item à la consultation
   const addItem = async (
@@ -853,10 +881,10 @@ export function useConsultationItems(consultationId?: string) {
   // Charger les items au changement de consultation
   useEffect(() => {
     if (consultationId) {
-      fetchConsultationItems(consultationId);
-      fetchEligibleProducts(consultationId);
+      void fetchConsultationItems(consultationId);
+      void fetchEligibleProducts(consultationId);
     }
-  }, [consultationId]);
+  }, [consultationId, fetchConsultationItems, fetchEligibleProducts]);
 
   return {
     // État

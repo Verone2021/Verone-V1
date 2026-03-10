@@ -1,5 +1,5 @@
 import React from 'react';
-import { Document, Page, View, Text } from '@react-pdf/renderer';
+import { Document, Page, View, Text, Image } from '@react-pdf/renderer';
 
 import type { AgingReportData } from '../hooks/use-aging-report';
 import {
@@ -12,6 +12,7 @@ import {
   formatDateTime,
   truncate,
 } from './shared-styles';
+import { VERONE_LOGO_BASE64 } from './logo-base64';
 import { DonutChart, HorizontalBarChart, ProgressGauge } from './charts';
 
 interface AgingReportPdfProps {
@@ -56,8 +57,7 @@ export function AgingReportPdf({ report }: AgingReportPdfProps) {
         />
         {/* Header */}
         <View style={styles.headerContainer}>
-          <Text style={styles.brand}>VERONE</Text>
-          <Text style={styles.subtitle}>Back Office - CRM/ERP</Text>
+          <Image src={VERONE_LOGO_BASE64} style={styles.logoImage} />
           <Text
             style={[
               styles.reportTitle,

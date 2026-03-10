@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
 
 import { useRouter } from 'next/navigation';
 
@@ -9,7 +9,15 @@ import { Button } from '@verone/ui';
 import { Input } from '@verone/ui';
 import { Label } from '@verone/ui';
 import { cn } from '@verone/utils';
-import { Upload, Link, Package, ArrowRight, Loader2, Euro } from 'lucide-react';
+import {
+  Upload,
+  Link,
+  Package,
+  ArrowRight,
+  Loader2,
+  Euro,
+  X,
+} from 'lucide-react';
 
 import { useSourcingProducts } from '@verone/products/hooks';
 
@@ -43,30 +51,51 @@ export function SourcingQuickForm({
     assigned_client_id: '', // Facultatif - détermine automatiquement le type de sourcing
     enseigne_id: '', // Facultatif - enseigne pour sourcing groupe de magasins
   });
-  const [selectedImage, setSelectedImage] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string>('');
+  const [selectedImages, setSelectedImages] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Référence pour l'input file (pattern React 2024)
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Gestion upload image
-  const handleImageSelect = (file: File) => {
-    setSelectedImage(file);
+  // Gestion upload images (multi)
+  const handleImagesSelect = useCallback(
+    (files: File[]) => {
+      const imageFiles = files.filter(f => f.type.startsWith('image/'));
+      if (imageFiles.length === 0) {
+        toast({
+          title: 'Format invalide',
+          description: 'Seules les images sont acceptées',
+          variant: 'destructive',
+        });
+        return;
+      }
 
-    // Créer preview
-    const reader = new FileReader();
-    reader.onload = e => {
-      setImagePreview(e.target?.result as string);
-    };
-    reader.readAsDataURL(file);
+      setSelectedImages(prev => [...prev, ...imageFiles]);
 
-    // Effacer erreur image
-    if (errors.image) {
-      setErrors(prev => ({ ...prev, image: '' }));
-    }
-  };
+      // Créer previews
+      for (const file of imageFiles) {
+        const reader = new FileReader();
+        reader.onload = e => {
+          setImagePreviews(prev => [...prev, e.target?.result as string]);
+        };
+        reader.readAsDataURL(file);
+      }
+
+      // Effacer erreur image
+      if (errors.image) {
+        setErrors(prev => ({ ...prev, image: '' }));
+      }
+    },
+    [errors.image, toast]
+  );
+
+  // Supprimer une image par index
+  const removeImage = useCallback((index: number) => {
+    setSelectedImages(prev => prev.filter((_, i) => i !== index));
+    setImagePreviews(prev => prev.filter((_, i) => i !== index));
+  }, []);
 
   // Gestion drag & drop
   const handleDragOver = (e: React.DragEvent) => {
@@ -77,19 +106,8 @@ export function SourcingQuickForm({
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-
     const files = Array.from(e.dataTransfer.files);
-    const imageFile = files.find(file => file.type.startsWith('image/'));
-
-    if (imageFile) {
-      handleImageSelect(imageFile);
-    } else {
-      toast({
-        title: 'Format invalide',
-        description: 'Seules les images sont acceptées',
-        variant: 'destructive',
-      });
-    }
+    handleImagesSelect(files);
   };
 
   // Validation formulaire
@@ -100,11 +118,8 @@ export function SourcingQuickForm({
       newErrors.name = 'Le nom du produit est obligatoire';
     }
 
-    if (!formData.supplier_page_url.trim()) {
-      newErrors.supplier_page_url =
-        "L'URL de la page fournisseur est obligatoire";
-    } else {
-      // Validation format URL
+    // Validation format URL uniquement si renseignée
+    if (formData.supplier_page_url.trim()) {
       try {
         new URL(formData.supplier_page_url);
       } catch {
@@ -112,10 +127,9 @@ export function SourcingQuickForm({
       }
     }
 
-    // Validation prix fournisseur OBLIGATOIRE
-    if (!formData.cost_price || formData.cost_price <= 0) {
-      newErrors.cost_price =
-        "Le prix d'achat fournisseur est obligatoire et doit être > 0€";
+    // Validation prix si renseigné (doit être > 0)
+    if (formData.cost_price && formData.cost_price < 0) {
+      newErrors.cost_price = "Le prix d'achat doit être positif";
     }
 
     // 🔥 FIX: Image facultative (BD accepte image_url NULL)
@@ -146,12 +160,12 @@ export function SourcingQuickForm({
     try {
       const productData = {
         name: formData.name,
-        supplier_page_url: formData.supplier_page_url,
-        cost_price: formData.cost_price, // 🔥 FIX: Prix réel saisi par utilisateur
-        supplier_id: formData.supplier_id || undefined, // Facultatif - pour activer lien fournisseur
+        supplier_page_url: formData.supplier_page_url || undefined,
+        cost_price: formData.cost_price || undefined,
+        supplier_id: formData.supplier_id || undefined,
         assigned_client_id: formData.assigned_client_id || undefined,
-        enseigne_id: formData.enseigne_id || undefined, // Enseigne pour sourcing groupe magasins
-        imageFile: selectedImage || undefined, // Upload image si fournie
+        enseigne_id: formData.enseigne_id || undefined,
+        imageFiles: selectedImages.length > 0 ? selectedImages : undefined,
       };
 
       const newProduct = await createSourcingProduct(productData);
@@ -207,16 +221,49 @@ export function SourcingQuickForm({
 
       {/* Formulaire */}
       <form onSubmit={handleSubmit} className="p-6 space-y-6">
-        {/* 1. UPLOAD IMAGE - Facultatif */}
+        {/* 1. UPLOAD IMAGES - Facultatif, multi */}
         <div className="space-y-2">
           <Label className="text-sm font-medium">
-            Image du produit (facultatif)
+            Images du produit (facultatif)
           </Label>
+
+          {/* Grille des images sélectionnées */}
+          {imagePreviews.length > 0 && (
+            <div className="grid grid-cols-4 gap-3 mb-3">
+              {imagePreviews.map((preview, index) => (
+                <div key={index} className="relative group">
+                  <img
+                    src={preview}
+                    alt={`Image ${index + 1}`}
+                    className={cn(
+                      'h-24 w-full object-cover rounded-lg border-2',
+                      index === 0 ? 'border-green-400' : 'border-gray-200'
+                    )}
+                  />
+                  {index === 0 && (
+                    <span className="absolute top-1 left-1 bg-green-500 text-white text-[10px] px-1.5 py-0.5 rounded">
+                      Principale
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => removeImage(index)}
+                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full h-5 w-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                  <div className="text-[10px] text-gray-500 truncate mt-1">
+                    {selectedImages[index]?.name}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
 
           <div
             className={cn(
               'border-2 border-dashed rounded-lg p-6 text-center transition-colors',
-              selectedImage
+              selectedImages.length > 0
                 ? 'border-green-300 bg-green-50'
                 : errors.image
                   ? 'border-red-300 bg-red-50'
@@ -225,57 +272,41 @@ export function SourcingQuickForm({
             onDragOver={handleDragOver}
             onDrop={handleDrop}
           >
-            {imagePreview ? (
-              <div className="space-y-3">
-                <img
-                  src={imagePreview}
-                  alt="Aperçu"
-                  className="mx-auto h-32 w-32 object-cover rounded-lg"
-                />
-                <div className="text-sm text-gray-600">
-                  {selectedImage?.name}
-                </div>
+            <div className="space-y-3">
+              <Upload className="mx-auto h-12 w-12 text-gray-400" />
+              <div>
+                <p className="text-gray-600">
+                  {selectedImages.length > 0
+                    ? 'Glissez-déposez pour ajouter des images ou'
+                    : 'Glissez-déposez des images ou'}
+                </p>
                 <Button
                   type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setSelectedImage(null);
-                    setImagePreview('');
-                  }}
+                  variant="ghost"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="text-black hover:underline p-0 h-auto font-normal"
                 >
-                  Changer d'image
+                  cliquez pour sélectionner
                 </Button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={e => {
+                    const files = Array.from(e.target.files || []);
+                    if (files.length > 0) handleImagesSelect(files);
+                    // Reset input pour permettre re-sélection même fichier
+                    e.target.value = '';
+                  }}
+                />
               </div>
-            ) : (
-              <div className="space-y-3">
-                <Upload className="mx-auto h-12 w-12 text-gray-400" />
-                <div>
-                  <p className="text-gray-600">Glissez-déposez une image ou</p>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="text-black hover:underline p-0 h-auto font-normal"
-                  >
-                    cliquez pour sélectionner
-                  </Button>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={e => {
-                      const file = e.target.files?.[0];
-                      if (file) handleImageSelect(file);
-                    }}
-                  />
-                </div>
-                <p className="text-xs text-gray-500">
-                  PNG, JPG, WEBP jusqu'à 10MB
-                </p>
-              </div>
-            )}
+              <p className="text-xs text-gray-500">
+                PNG, JPG, WEBP jusqu&apos;à 10MB — La 1ère image sera
+                l&apos;image principale
+              </p>
+            </div>
           </div>
 
           {errors.image && (
@@ -304,10 +335,10 @@ export function SourcingQuickForm({
           {errors.name && <p className="text-sm text-red-600">{errors.name}</p>}
         </div>
 
-        {/* 3. URL FOURNISSEUR - Obligatoire */}
+        {/* 3. URL FOURNISSEUR - Facultatif */}
         <div className="space-y-2">
           <Label htmlFor="supplier_url" className="text-sm font-medium">
-            URL de la page fournisseur *
+            URL de la page fournisseur (facultatif)
           </Label>
           <div className="relative">
             <Link className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -339,10 +370,10 @@ export function SourcingQuickForm({
           </p>
         </div>
 
-        {/* 4. PRIX FOURNISSEUR - Obligatoire */}
+        {/* 4. PRIX FOURNISSEUR - Facultatif */}
         <div className="space-y-2">
           <Label htmlFor="cost_price" className="text-sm font-medium">
-            Prix d'achat fournisseur HT (€) *
+            Prix d&apos;achat fournisseur HT (€) (facultatif)
           </Label>
           <div className="relative">
             <Euro className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -350,7 +381,7 @@ export function SourcingQuickForm({
               id="cost_price"
               type="number"
               step="0.01"
-              min="0.01"
+              min="0"
               value={formData.cost_price || ''}
               onChange={e => {
                 const value = parseFloat(e.target.value) || 0;
@@ -369,8 +400,8 @@ export function SourcingQuickForm({
             <p className="text-sm text-red-600">{errors.cost_price}</p>
           )}
           <p className="text-xs text-gray-500">
-            Prix d'achat HT chez le fournisseur (requis pour validation
-            sourcing)
+            Prix d&apos;achat HT chez le fournisseur (requis pour validation
+            sourcing, peut être ajouté plus tard)
           </p>
         </div>
 
