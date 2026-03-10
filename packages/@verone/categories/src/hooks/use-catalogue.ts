@@ -101,6 +101,7 @@ interface CatalogueFilters {
   subcategories?: string[]; // Filtre par sous-catégories (niveau 2)
   statuses?: string[];
   suppliers?: string[]; // Filtre par fournisseurs (supplier_id)
+  missingFields?: string[]; // Filtre par champs manquants (onglet "À compléter")
   priceMin?: number;
   priceMax?: number;
   limit?: number;
@@ -413,9 +414,22 @@ export const useCatalogue = () => {
 
     // Filtre principal : produits incomplets (6 critères)
     // Fournisseur, sous-catégorie, prix d'achat, photo, dimensions, poids
-    query = query.or(
-      'supplier_id.is.null,subcategory_id.is.null,cost_price.is.null,has_images.eq.false,dimensions.is.null,weight.is.null'
-    );
+    const missing = filters.missingFields ?? [];
+    if (missing.length > 0) {
+      // AND logic — chaque champ sélectionné doit être manquant
+      if (missing.includes('supplier')) query = query.is('supplier_id', null);
+      if (missing.includes('subcategory'))
+        query = query.is('subcategory_id', null);
+      if (missing.includes('price')) query = query.is('cost_price', null);
+      if (missing.includes('photo')) query = query.eq('has_images', false);
+      if (missing.includes('dimensions')) query = query.is('dimensions', null);
+      if (missing.includes('weight')) query = query.is('weight', null);
+    } else {
+      // Default OR (comportement actuel : tout produit incomplet)
+      query = query.or(
+        'supplier_id.is.null,subcategory_id.is.null,cost_price.is.null,has_images.eq.false,dimensions.is.null,weight.is.null'
+      );
+    }
 
     // Filtres utilisateur
     if (filters.search) {
