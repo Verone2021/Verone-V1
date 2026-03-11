@@ -32,6 +32,7 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { createClient } from '@verone/utils/supabase/client';
 
 // =====================================================================
 // TYPES
@@ -290,6 +291,7 @@ export default function EditDraftPage({ params }: IPageProps) {
   });
   const [partnerLegalName, setPartnerLegalName] = useState<string | null>(null);
   const [partnerTradeName, setPartnerTradeName] = useState<string | null>(null);
+  const [minIssueDate, setMinIssueDate] = useState<string>('');
 
   // Load document
   useEffect(() => {
@@ -413,6 +415,35 @@ export default function EditDraftPage({ params }: IPageProps) {
     });
   }, [id, typeParam]);
 
+  // Load min issue date from last finalized invoice
+  // Finalized invoices have workflow_status NULL or 'finalized'/'sent'/'paid'
+  // Drafts have 'synchronized', cancelled have 'cancelled' — exclude those
+  useEffect(() => {
+    if (documentType !== 'invoice') return;
+    const loadMinDate = async () => {
+      try {
+        const supabase = createClient();
+        const { data } = await supabase
+          .from('financial_documents')
+          .select('document_date')
+          .eq('document_type', 'customer_invoice')
+          .or(
+            'workflow_status.is.null,workflow_status.in.("finalized","sent","paid")'
+          )
+          .not('document_number', 'ilike', '%PROFORMA%')
+          .is('deleted_at', null)
+          .order('document_date', { ascending: false })
+          .limit(1);
+        if (data && data.length > 0 && data[0].document_date) {
+          setMinIssueDate(data[0].document_date);
+        }
+      } catch (err) {
+        console.error('[FacturesEdit] Failed to load min issue date:', err);
+      }
+    };
+    void loadMinDate();
+  }, [documentType]);
+
   // Item handlers
   const handleItemChange = useCallback(
     (itemId: string, field: keyof IEditableItem, value: string) => {
@@ -450,6 +481,19 @@ export default function EditDraftPage({ params }: IPageProps) {
     const validItems = items.filter(item => item.title.trim());
     if (validItems.length === 0) {
       toast.error('Veuillez ajouter au moins une ligne avec un titre');
+      return;
+    }
+
+    // Validate issue date against last finalized invoice
+    if (
+      documentType === 'invoice' &&
+      minIssueDate &&
+      issueDate &&
+      issueDate < minIssueDate
+    ) {
+      toast.error(
+        `La date d'émission ne peut pas être antérieure au ${new Date(minIssueDate).toLocaleDateString('fr-FR')} (dernière facture finalisée)`
+      );
       return;
     }
 
@@ -843,8 +887,16 @@ export default function EditDraftPage({ params }: IPageProps) {
                   id="issueDate"
                   type="date"
                   value={issueDate}
+                  min={minIssueDate || undefined}
                   onChange={e => setIssueDate(e.target.value)}
                 />
+                {minIssueDate && (
+                  <p className="text-xs text-muted-foreground">
+                    Date minimum :{' '}
+                    {new Date(minIssueDate).toLocaleDateString('fr-FR')}{' '}
+                    (dernière facture finalisée)
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="dueDate">Date d&apos;échéance</Label>

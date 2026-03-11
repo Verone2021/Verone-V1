@@ -7,6 +7,7 @@ import Link from 'next/link';
 
 import {
   InvoiceCreateFromOrderModal,
+  QuoteCreateFromOrderModal,
   RapprochementContent,
 } from '@verone/finance/components';
 import type { ExistingLink } from '@verone/finance/components';
@@ -50,6 +51,7 @@ import {
   Banknote,
   History,
   CheckCircle2,
+  FileEdit,
   Pencil,
   Trash2,
   User,
@@ -69,6 +71,14 @@ import { EditableOrderItemRow } from '../tables/EditableOrderItemRow';
 import { AddProductToOrderModal } from './AddProductToOrderModal';
 
 interface ILinkedInvoice {
+  id: string;
+  document_number: string | null;
+  workflow_status: string | null;
+  total_ttc: number;
+  qonto_invoice_id: string | null;
+}
+
+interface ILinkedQuote {
   id: string;
   document_number: string | null;
   workflow_status: string | null;
@@ -236,11 +246,14 @@ export function OrderDetailModal({
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+  const [showQuoteModal, setShowQuoteModal] = useState(false);
   const [showAddProductModal, setShowAddProductModal] = useState(false);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [paymentSubmitting, setPaymentSubmitting] = useState(false);
   const [linkedInvoices, setLinkedInvoices] = useState<ILinkedInvoice[]>([]);
   const [loadingLinkedInvoices, setLoadingLinkedInvoices] = useState(false);
+  const [linkedQuotes, setLinkedQuotes] = useState<ILinkedQuote[]>([]);
+  const [loadingLinkedQuotes, setLoadingLinkedQuotes] = useState(false);
   const [showOrgModal, setShowOrgModal] = useState(false);
 
   // Form state for manual payment
@@ -379,6 +392,32 @@ export function OrderDetailModal({
       })
       .catch(() => setLinkedInvoices([]))
       .finally(() => setLoadingLinkedInvoices(false));
+  }, [order?.id, open]);
+
+  // Charger les devis liés à cette commande
+  useEffect(() => {
+    if (!order?.id || !open) return;
+    setLoadingLinkedQuotes(true);
+    const loadQuotes = async () => {
+      try {
+        const supabaseClient = createClient();
+        const { data } = await supabaseClient
+          .from('financial_documents')
+          .select(
+            'id, document_number, workflow_status, total_ttc, qonto_invoice_id'
+          )
+          .eq('sales_order_id', order.id)
+          .eq('document_type', 'customer_quote')
+          .is('deleted_at', null)
+          .order('created_at', { ascending: false });
+        setLinkedQuotes((data as ILinkedQuote[]) ?? []);
+      } catch {
+        setLinkedQuotes([]);
+      } finally {
+        setLoadingLinkedQuotes(false);
+      }
+    };
+    void loadQuotes();
   }, [order?.id, open]);
 
   // Sync fees state when order changes
@@ -551,6 +590,17 @@ export function OrderDetailModal({
     inv => inv.workflow_status !== 'cancelled'
   );
   const hasActiveInvoice = activeInvoices.length > 0;
+
+  const activeQuotes = linkedQuotes.filter(
+    q => q.workflow_status !== 'cancelled'
+  );
+  const hasActiveQuote = activeQuotes.length > 0;
+
+  const isOrderPaid =
+    order.payment_status_v2 === 'paid' ||
+    order.payment_status_v2 === 'overpaid';
+
+  const isOrderShipped = ['shipped', 'delivered'].includes(order.status);
 
   const isLocked =
     readOnly || isOrderLockedFn(order.status) || hasActiveInvoice;
@@ -1281,14 +1331,69 @@ export function OrderDetailModal({
                         Facturation
                       </CardTitle>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="space-y-3">
+                      {/* Devis existants */}
+                      {loadingLinkedQuotes ? (
+                        <div className="text-xs text-muted-foreground animate-pulse">
+                          Chargement devis...
+                        </div>
+                      ) : hasActiveQuote ? (
+                        <div className="space-y-1">
+                          <p className="text-xs font-medium text-muted-foreground">
+                            Devis
+                          </p>
+                          {activeQuotes.map(q => (
+                            <div
+                              key={q.id}
+                              className="flex items-center gap-2 text-sm p-2 rounded border bg-muted/30"
+                            >
+                              <FileEdit className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                              {q.qonto_invoice_id ? (
+                                <Link
+                                  href={`/factures/${q.qonto_invoice_id}?type=quote`}
+                                  target="_blank"
+                                  className="font-mono text-xs flex-1 text-blue-600 hover:underline"
+                                >
+                                  {q.document_number ?? q.id.slice(0, 8)}
+                                </Link>
+                              ) : (
+                                <span className="font-mono text-xs flex-1">
+                                  {q.document_number ?? q.id.slice(0, 8)}
+                                </span>
+                              )}
+                              {q.workflow_status && (
+                                <Badge
+                                  variant="outline"
+                                  className="text-xs px-1.5 py-0"
+                                >
+                                  {q.workflow_status === 'synchronized'
+                                    ? 'Brouillon'
+                                    : q.workflow_status === 'finalized'
+                                      ? 'Définitif'
+                                      : q.workflow_status === 'sent'
+                                        ? 'Envoyé'
+                                        : q.workflow_status === 'accepted'
+                                          ? 'Accepté'
+                                          : q.workflow_status === 'declined'
+                                            ? 'Refusé'
+                                            : q.workflow_status}
+                                </Badge>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      ) : null}
+
+                      {/* Factures existantes */}
                       {loadingLinkedInvoices ? (
-                        <ButtonV2 size="sm" className="w-full" disabled>
-                          <FileText className="h-3 w-3 mr-1 animate-pulse" />
-                          Chargement...
-                        </ButtonV2>
+                        <div className="text-xs text-muted-foreground animate-pulse">
+                          Chargement factures...
+                        </div>
                       ) : hasActiveInvoice ? (
                         <div className="space-y-1">
+                          <p className="text-xs font-medium text-muted-foreground">
+                            Factures
+                          </p>
                           {activeInvoices.map(inv => (
                             <div
                               key={inv.id}
@@ -1308,34 +1413,58 @@ export function OrderDetailModal({
                                   {inv.document_number ?? inv.id.slice(0, 8)}
                                 </span>
                               )}
-                              {inv.workflow_status && (
-                                <Badge
-                                  variant="outline"
-                                  className="text-xs px-1.5 py-0"
-                                >
-                                  {inv.workflow_status === 'synchronized'
-                                    ? 'Synchronisé'
-                                    : inv.workflow_status === 'finalized'
-                                      ? 'Définitif'
-                                      : inv.workflow_status === 'sent'
-                                        ? 'Envoyé'
-                                        : inv.workflow_status === 'paid'
-                                          ? 'Payé'
-                                          : inv.workflow_status}
-                                </Badge>
-                              )}
+                              <Badge
+                                variant="outline"
+                                className="text-xs px-1.5 py-0"
+                              >
+                                {inv.workflow_status === 'finalized'
+                                  ? 'Définitif'
+                                  : inv.workflow_status === 'sent'
+                                    ? 'Envoyé'
+                                    : inv.workflow_status === 'paid'
+                                      ? 'Payé'
+                                      : 'Brouillon'}
+                              </Badge>
                             </div>
                           ))}
                         </div>
-                      ) : (
-                        <ButtonV2
-                          size="sm"
-                          className="w-full"
-                          onClick={() => setShowInvoiceModal(true)}
-                        >
-                          <FileText className="h-3 w-3 mr-1" />
-                          Générer facture
-                        </ButtonV2>
+                      ) : null}
+
+                      {/* Boutons génération */}
+                      {!loadingLinkedInvoices && !loadingLinkedQuotes && (
+                        <div className="space-y-2">
+                          {/* Bouton Devis : grisé si commande payée, expédiée, facture existe, ou devis existe */}
+                          <ButtonV2
+                            size="sm"
+                            variant="outline"
+                            className="w-full"
+                            disabled={
+                              isOrderPaid ||
+                              isOrderShipped ||
+                              hasActiveInvoice ||
+                              hasActiveQuote
+                            }
+                            onClick={() => setShowQuoteModal(true)}
+                          >
+                            <FileEdit className="h-3 w-3 mr-1" />
+                            Générer un devis
+                          </ButtonV2>
+                          {/* Bouton Facture : grisé si commande payée ou facture existe */}
+                          <ButtonV2
+                            size="sm"
+                            className="w-full"
+                            disabled={isOrderPaid || hasActiveInvoice}
+                            onClick={() => setShowInvoiceModal(true)}
+                          >
+                            <FileText className="h-3 w-3 mr-1" />
+                            Générer une facture
+                          </ButtonV2>
+                          {isOrderPaid && (
+                            <p className="text-xs text-muted-foreground text-center">
+                              Commande déjà payée
+                            </p>
+                          )}
+                        </div>
                       )}
                     </CardContent>
                   </Card>
@@ -1864,6 +1993,39 @@ export function OrderDetailModal({
         }
         open={showInvoiceModal}
         onOpenChange={setShowInvoiceModal}
+        onSuccess={() => {
+          onUpdate?.();
+        }}
+      />
+
+      {/* Modal Création Devis */}
+      <QuoteCreateFromOrderModal
+        order={
+          order
+            ? {
+                id: order.id,
+                order_number: order.order_number,
+                total_ht: order.total_ht,
+                total_ttc: order.total_ttc,
+                tax_rate: order.tax_rate,
+                currency: order.currency,
+                payment_terms: order.payment_terms || 'net_30',
+                customer_id: order.customer_id,
+                customer_type: order.customer_type,
+                billing_address: order.billing_address,
+                shipping_address: order.shipping_address,
+                shipping_cost_ht: order.shipping_cost_ht,
+                handling_cost_ht: order.handling_cost_ht,
+                insurance_cost_ht: order.insurance_cost_ht,
+                fees_vat_rate: order.fees_vat_rate,
+                organisations: order.organisations,
+                individual_customers: order.individual_customers,
+                sales_order_items: order.sales_order_items,
+              }
+            : null
+        }
+        open={showQuoteModal}
+        onOpenChange={setShowQuoteModal}
         onSuccess={() => {
           onUpdate?.();
         }}
