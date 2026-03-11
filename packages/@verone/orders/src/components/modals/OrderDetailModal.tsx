@@ -52,6 +52,7 @@ import {
   CheckCircle2,
   Pencil,
   Trash2,
+  User,
 } from 'lucide-react';
 
 // NOTE: SalesOrderShipmentModal supprimé - sera recréé ultérieurement
@@ -100,6 +101,122 @@ const orderStatusColors: Record<string, string> = {
   delivered: 'bg-green-100 text-green-800',
   cancelled: 'bg-red-100 text-red-800',
 };
+
+/** Format an address from JSONB (handles structured, legacy text, and string formats) */
+function formatOrderAddress(
+  addr: unknown
+): { lines: string[]; cityLine: string } | null {
+  if (!addr) return null;
+  if (typeof addr === 'string') {
+    const trimmed = addr.trim();
+    if (!trimmed) return null;
+    // Try to parse JSON strings (handles double-encoded JSONB)
+    if (trimmed.startsWith('{')) {
+      try {
+        const parsed: unknown = JSON.parse(trimmed);
+        if (typeof parsed === 'object' && parsed !== null) {
+          return formatOrderAddress(parsed);
+        }
+      } catch {
+        // Not valid JSON, treat as plain text
+      }
+    }
+    return { lines: [trimmed], cityLine: '' };
+  }
+  if (typeof addr !== 'object') return null;
+  const obj = addr as Record<string, string | null | undefined>;
+
+  // Legacy format: single "address" field with newlines
+  if (obj.address && typeof obj.address === 'string') {
+    const lines = obj.address
+      .split('\n')
+      .map(l => l.trim())
+      .filter(Boolean);
+    return lines.length > 0 ? { lines, cityLine: '' } : null;
+  }
+
+  // Structured format: address_line1, city, postal_code, etc.
+  const streetLines = [obj.address_line1, obj.line1, obj.address_line2]
+    .filter((v): v is string => typeof v === 'string' && v.trim().length > 0)
+    .map(v => v.trim());
+  const cityLine = [obj.postal_code, obj.city]
+    .filter((v): v is string => typeof v === 'string' && v.trim().length > 0)
+    .map(v => v.trim())
+    .join(' ');
+  const country =
+    typeof obj.country === 'string' && obj.country.trim()
+      ? obj.country.trim()
+      : '';
+
+  if (streetLines.length === 0 && !cityLine && !country) return null;
+
+  const fullCityLine = [cityLine, country].filter(Boolean).join(', ');
+  return { lines: streetLines, cityLine: fullCityLine };
+}
+
+/** Compare two formatted addresses (normalized: trim + lowercase) */
+function isSameFormattedAddress(
+  a: { lines: string[]; cityLine: string },
+  b: { lines: string[]; cityLine: string }
+): boolean {
+  const normalize = (s: string) => s.trim().toLowerCase();
+  if (a.lines.length !== b.lines.length) return false;
+  for (let i = 0; i < a.lines.length; i++) {
+    if (normalize(a.lines[i]) !== normalize(b.lines[i])) return false;
+  }
+  return normalize(a.cityLine) === normalize(b.cityLine);
+}
+
+/** Build org address object for billing (billing fields with fallback to main address) */
+function buildOrgBillingAddress(org: NonNullable<SalesOrder['organisations']>) {
+  return {
+    address_line1: org.billing_address_line1 ?? org.address_line1,
+    address_line2: org.billing_address_line2 ?? org.address_line2,
+    postal_code: org.billing_postal_code ?? org.postal_code,
+    city: org.billing_city ?? org.city,
+    country: org.billing_country,
+  };
+}
+
+/** Build org address object for shipping (main address only, no shipping-specific fields) */
+function buildOrgShippingAddress(
+  org: NonNullable<SalesOrder['organisations']>
+) {
+  return {
+    address_line1: org.address_line1,
+    address_line2: org.address_line2,
+    postal_code: org.postal_code,
+    city: org.city,
+  };
+}
+
+interface EffectiveAddress {
+  formatted: { lines: string[]; cityLine: string };
+  source: 'manual' | 'organisation';
+}
+
+/** Determine the effective address + its source */
+function getEffectiveAddress(
+  orderAddr: unknown,
+  orgAddr: Record<string, string | null | undefined> | null
+): EffectiveAddress | null {
+  const fromOrder = formatOrderAddress(orderAddr);
+  if (fromOrder) {
+    // Compare with org to determine source
+    const fromOrg = orgAddr ? formatOrderAddress(orgAddr) : null;
+    const isSameAsOrg = fromOrg && isSameFormattedAddress(fromOrder, fromOrg);
+    return {
+      formatted: fromOrder,
+      source: isSameAsOrg ? 'organisation' : 'manual',
+    };
+  }
+  // Fallback to org address
+  if (orgAddr) {
+    const fromOrg = formatOrderAddress(orgAddr);
+    if (fromOrg) return { formatted: fromOrg, source: 'organisation' };
+  }
+  return null;
+}
 
 export function OrderDetailModal({
   order,
@@ -909,6 +1026,15 @@ export function OrderDetailModal({
                     <Calendar className="h-3 w-3" />
                     <span>Créée : {formatDate(order.created_at)}</span>
                   </div>
+                  {order.creator && (
+                    <div className="flex items-center gap-2 text-gray-600">
+                      <User className="h-3 w-3" />
+                      <span>
+                        Par : {order.creator.first_name}{' '}
+                        {order.creator.last_name}
+                      </span>
+                    </div>
+                  )}
                   {order.expected_delivery_date && (
                     <div className="flex items-center gap-2 text-gray-600">
                       <Truck className="h-3 w-3" />
@@ -929,73 +1055,97 @@ export function OrderDetailModal({
                       <span>Livrée : {formatDate(order.delivered_at)}</span>
                     </div>
                   )}
-                  {/* Adresses condensées */}
-                  {order.billing_address && (
-                    <div className="flex items-start gap-2 text-gray-600 pt-1 border-t mt-2">
-                      <FileText className="h-3 w-3 mt-0.5 flex-shrink-0" />
-                      <div className="text-xs">
-                        <p className="font-medium text-gray-700 mb-0.5">
-                          Facturation
-                        </p>
-                        <p>
-                          {typeof order.billing_address === 'string'
-                            ? order.billing_address
-                            : [
-                                order.billing_address.address,
-                                order.billing_address.address_line1,
-                                order.billing_address.address_line2,
-                              ]
-                                .filter(Boolean)
-                                .join(', ')}
-                        </p>
-                        {typeof order.billing_address === 'object' &&
-                          (order.billing_address.postal_code ||
-                            order.billing_address.city) && (
-                            <p>
-                              {[
-                                order.billing_address.postal_code,
-                                order.billing_address.city,
-                              ]
-                                .filter(Boolean)
-                                .join(' ')}
+                  {/* Adresses condensées - logique conditionnelle */}
+                  {(() => {
+                    const org = order.organisations;
+                    const orgBilling = org ? buildOrgBillingAddress(org) : null;
+                    const orgShipping = org
+                      ? buildOrgShippingAddress(org)
+                      : null;
+
+                    const billing = getEffectiveAddress(
+                      order.billing_address,
+                      orgBilling
+                    );
+                    const shipping = getEffectiveAddress(
+                      order.shipping_address,
+                      orgShipping
+                    );
+
+                    if (!billing && !shipping) return null;
+
+                    // Check if both addresses are identical (same content + same source)
+                    const areSame =
+                      billing &&
+                      shipping &&
+                      billing.source === shipping.source &&
+                      isSameFormattedAddress(
+                        billing.formatted,
+                        shipping.formatted
+                      );
+
+                    const sourceLabel = (s: 'manual' | 'organisation') =>
+                      s === 'organisation' ? '(organisation)' : '(manuelle)';
+
+                    if (areSame && billing) {
+                      // Merged: single block
+                      return (
+                        <div className="flex items-start gap-2 text-gray-600 pt-1 border-t mt-2">
+                          <FileText className="h-3 w-3 mt-0.5 flex-shrink-0" />
+                          <div className="text-xs">
+                            <p className="font-medium text-gray-700 mb-0.5">
+                              Facturation et livraison{' '}
+                              {sourceLabel(billing.source)}
                             </p>
-                          )}
-                      </div>
-                    </div>
-                  )}
-                  {order.shipping_address && (
-                    <div className="flex items-start gap-2 text-gray-600 pt-1 border-t mt-2">
-                      <MapPin className="h-3 w-3 mt-0.5 flex-shrink-0" />
-                      <div className="text-xs">
-                        <p className="font-medium text-gray-700 mb-0.5">
-                          Livraison
-                        </p>
-                        <p>
-                          {typeof order.shipping_address === 'string'
-                            ? order.shipping_address
-                            : [
-                                order.shipping_address.address,
-                                order.shipping_address.address_line1,
-                                order.shipping_address.address_line2,
-                              ]
-                                .filter(Boolean)
-                                .join(', ')}
-                        </p>
-                        {typeof order.shipping_address === 'object' &&
-                          (order.shipping_address.postal_code ||
-                            order.shipping_address.city) && (
-                            <p>
-                              {[
-                                order.shipping_address.postal_code,
-                                order.shipping_address.city,
-                              ]
-                                .filter(Boolean)
-                                .join(' ')}
-                            </p>
-                          )}
-                      </div>
-                    </div>
-                  )}
+                            {billing.formatted.lines.map((line, i) => (
+                              <p key={i}>{line}</p>
+                            ))}
+                            {billing.formatted.cityLine && (
+                              <p>{billing.formatted.cityLine}</p>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    // Separate blocks
+                    return (
+                      <>
+                        {billing && (
+                          <div className="flex items-start gap-2 text-gray-600 pt-1 border-t mt-2">
+                            <FileText className="h-3 w-3 mt-0.5 flex-shrink-0" />
+                            <div className="text-xs">
+                              <p className="font-medium text-gray-700 mb-0.5">
+                                Facturation {sourceLabel(billing.source)}
+                              </p>
+                              {billing.formatted.lines.map((line, i) => (
+                                <p key={i}>{line}</p>
+                              ))}
+                              {billing.formatted.cityLine && (
+                                <p>{billing.formatted.cityLine}</p>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                        {shipping && (
+                          <div className="flex items-start gap-2 text-gray-600 pt-1 border-t mt-2">
+                            <MapPin className="h-3 w-3 mt-0.5 flex-shrink-0" />
+                            <div className="text-xs">
+                              <p className="font-medium text-gray-700 mb-0.5">
+                                Livraison {sourceLabel(shipping.source)}
+                              </p>
+                              {shipping.formatted.lines.map((line, i) => (
+                                <p key={i}>{line}</p>
+                              ))}
+                              {shipping.formatted.cityLine && (
+                                <p>{shipping.formatted.cityLine}</p>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
                 </CardContent>
               </Card>
 

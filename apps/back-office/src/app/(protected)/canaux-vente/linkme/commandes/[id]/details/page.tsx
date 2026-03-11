@@ -530,11 +530,11 @@ export default function LinkMeOrderDetailsPage() {
         linkmeDetails: linkmeData,
         infoRequests,
         is_matched: !!matchInfo,
-        matched_transaction_id: matchInfo?.transaction_id || null,
-        matched_transaction_label: matchInfo?.label || null,
-        matched_transaction_amount: matchInfo?.amount || null,
-        matched_transaction_emitted_at: matchInfo?.emitted_at || null,
-        matched_transaction_attachment_ids: matchInfo?.attachment_ids || null,
+        matched_transaction_id: matchInfo?.transaction_id ?? null,
+        matched_transaction_label: matchInfo?.label ?? null,
+        matched_transaction_amount: matchInfo?.amount ?? null,
+        matched_transaction_emitted_at: matchInfo?.emitted_at ?? null,
+        matched_transaction_attachment_ids: matchInfo?.attachment_ids ?? null,
       });
 
       // Enriched items with commission info

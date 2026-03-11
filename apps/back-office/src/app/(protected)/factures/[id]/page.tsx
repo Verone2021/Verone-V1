@@ -36,6 +36,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  OrganisationNameDisplay,
 } from '@verone/ui';
 import { StatusPill, qontoInvoiceStatusConfig } from '@verone/ui-business';
 import { createClient } from '@verone/utils/supabase/client';
@@ -81,6 +82,8 @@ interface QontoApiResponse {
     shipping_address?: Record<string, unknown>;
     sales_order_id?: string | null;
     order_number?: string | null;
+    partner_legal_name?: string | null;
+    partner_trade_name?: string | null;
   } | null;
 }
 
@@ -307,6 +310,8 @@ export default function DocumentDetailPage({
   const [showArchiveDialog, setShowArchiveDialog] = useState(false);
   const [showOrgModal, setShowOrgModal] = useState(false);
   const [organisationId, setOrganisationId] = useState<string | null>(null);
+  const [partnerLegalName, setPartnerLegalName] = useState<string | null>(null);
+  const [partnerTradeName, setPartnerTradeName] = useState<string | null>(null);
 
   // Fetch document data
   useEffect(() => {
@@ -338,11 +343,19 @@ export default function DocumentDetailPage({
             if (doc) {
               setDocument(doc);
               setDocumentType(type);
-              if (type === 'invoice' && data.localData?.sales_order_id) {
-                setOrderLink({
-                  sales_order_id: data.localData.sales_order_id,
-                  order_number: data.localData.order_number ?? null,
-                });
+              if (type === 'invoice' && data.localData) {
+                if (data.localData.sales_order_id) {
+                  setOrderLink({
+                    sales_order_id: data.localData.sales_order_id,
+                    order_number: data.localData.order_number ?? null,
+                  });
+                }
+                if (data.localData.partner_legal_name) {
+                  setPartnerLegalName(data.localData.partner_legal_name);
+                  setPartnerTradeName(
+                    data.localData.partner_trade_name ?? null
+                  );
+                }
               }
               setLoading(false);
               return;
@@ -375,27 +388,41 @@ export default function DocumentDetailPage({
     });
   }, [id, typeParam]);
 
-  // Resolve organisation ID from linked sales order
+  // Resolve organisation ID and names from linked sales order
   useEffect(() => {
     if (!orderLink?.sales_order_id) return;
 
     const supabase = createClient();
-    const loadCustomerId = async () => {
+    const loadCustomerData = async () => {
       const { data } = await supabase
         .from('sales_orders')
-        .select('customer_id')
+        .select(
+          'customer_id, customer:organisations!sales_orders_customer_id_fkey(legal_name, trade_name)'
+        )
         .eq('id', orderLink.sales_order_id)
         .single();
 
       if (data?.customer_id) {
         setOrganisationId(data.customer_id);
+
+        // Set org names if not already populated from localData
+        if (!partnerLegalName) {
+          const org = data.customer as {
+            legal_name: string | null;
+            trade_name: string | null;
+          } | null;
+          if (org?.legal_name) {
+            setPartnerLegalName(org.legal_name);
+            setPartnerTradeName(org.trade_name ?? null);
+          }
+        }
       }
     };
 
-    void loadCustomerId().catch((err: unknown) => {
-      console.error('[DocumentDetail] Failed to load customer_id:', err);
+    void loadCustomerData().catch((err: unknown) => {
+      console.error('[DocumentDetail] Failed to load customer data:', err);
     });
-  }, [orderLink]);
+  }, [orderLink, partnerLegalName]);
 
   // ===== ACTION HANDLERS =====
 
@@ -1140,9 +1167,16 @@ export default function DocumentDetailPage({
                     <button
                       type="button"
                       onClick={() => setShowOrgModal(true)}
-                      className="font-medium text-primary hover:underline text-left"
+                      className="text-primary hover:underline text-left"
                     >
-                      {document.client.name}
+                      {partnerLegalName ? (
+                        <OrganisationNameDisplay
+                          legalName={partnerLegalName}
+                          tradeName={partnerTradeName}
+                        />
+                      ) : (
+                        <p className="font-medium">{document.client.name}</p>
+                      )}
                     </button>
                   ) : (
                     <p className="font-medium">{document.client.name}</p>

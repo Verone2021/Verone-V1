@@ -129,6 +129,11 @@ export interface SalesOrder {
     enseigne_id?: string | null; // 🆕 AJOUTÉ - Pour filtrer organisations indépendantes vs enseignes
     siret?: string | null;
     vat_number?: string | null;
+    billing_address_line1?: string | null;
+    billing_address_line2?: string | null;
+    billing_city?: string | null;
+    billing_postal_code?: string | null;
+    billing_country?: string | null;
   };
   individual_customers?: {
     id: string;
@@ -559,7 +564,7 @@ export function useSalesOrders() {
           const { data: orgs } = await supabase
             .from('organisations')
             .select(
-              'id, legal_name, trade_name, email, phone, website, address_line1, address_line2, postal_code, city, region, enseigne_id, siret, vat_number'
+              'id, legal_name, trade_name, email, phone, website, address_line1, address_line2, postal_code, city, region, enseigne_id, siret, vat_number, billing_address_line1, billing_address_line2, billing_city, billing_postal_code, billing_country'
             )
             .in('id', orgIds);
           for (const org of orgs ?? []) {

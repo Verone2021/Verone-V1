@@ -13,6 +13,7 @@ import {
   ProductPricingCard,
   ProductInfoCard,
   ProductVariantsCard,
+  ProductSelectionsCard,
 } from '../../components';
 import {
   useLinkMeProductDetail,
@@ -21,6 +22,8 @@ import {
   useToggleLinkMeProductField,
   useLinkMeProductVariants,
   useUpdateAffiliateCommission,
+  useProductSelections,
+  usePropagatePrice,
 } from '../../hooks/use-linkme-catalog';
 import type { LinkMePricingUpdate, LinkMeMetadataUpdate } from '../../types';
 
@@ -44,8 +47,13 @@ export default function LinkMeProductDetailPage(): React.JSX.Element {
   const { data: variants, isLoading: variantsLoading } =
     useLinkMeProductVariants(product?.product_id ?? null);
 
+  // Hook sélections (présence dans les sélections LinkMe)
+  const { data: selections, isLoading: selectionsLoading } =
+    useProductSelections(product?.product_id ?? null);
+
   // Hooks mutations
   const updatePricing = useUpdateLinkMePricing();
+  const propagatePrice = usePropagatePrice();
   const updateMetadata = useUpdateLinkMeMetadata();
   const toggleField = useToggleLinkMeProductField();
   const updateAffiliateCommission = useUpdateAffiliateCommission();
@@ -312,7 +320,18 @@ export default function LinkMeProductDetailPage(): React.JSX.Element {
         )}
       </div>
 
-      {/* Section 3 : Variantes - Masqué pour produits affiliés */}
+      {/* Section 3 : Présence dans les sélections */}
+      <ProductSelectionsCard
+        selections={selections ?? []}
+        publicPriceHt={product.public_price_ht ?? null}
+        isLoading={selectionsLoading}
+        onPropagate={async () => {
+          await propagatePrice.mutateAsync(product.product_id);
+        }}
+        isPropagating={propagatePrice.isPending}
+      />
+
+      {/* Section 4 : Variantes - Masqué pour produits affiliés */}
       {!product.created_by_affiliate && (
         <ProductVariantsCard
           variants={variants ?? []}

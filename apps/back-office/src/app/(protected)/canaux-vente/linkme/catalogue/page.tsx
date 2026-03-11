@@ -30,6 +30,7 @@ import {
   Users,
   ShoppingBag,
   UserPlus,
+  AlertTriangle,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -700,6 +701,18 @@ export default function LinkMeCataloguePage() {
                             </Badge>
                           </div>
                         )}
+                        {/* Badge prix désynchronisé */}
+                        {product.selections_price_mismatch > 0 && (
+                          <div className="mt-1">
+                            <Badge
+                              variant="outline"
+                              className="text-xs border-orange-400 text-orange-700 bg-orange-50"
+                            >
+                              <AlertTriangle className="h-3 w-3 mr-1" />
+                              Prix désynchronisé
+                            </Badge>
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -818,6 +831,16 @@ export default function LinkMeCataloguePage() {
                               <Users className="h-3 w-3 mr-1" />
                               {product.enseigne_name ??
                                 product.assigned_client_name}
+                            </Badge>
+                          )}
+                          {/* Badge prix désynchronisé */}
+                          {product.selections_price_mismatch > 0 && (
+                            <Badge
+                              variant="outline"
+                              className="text-xs border-orange-400 text-orange-700 bg-orange-50"
+                            >
+                              <AlertTriangle className="h-3 w-3 mr-1" />
+                              Prix désynchronisé
                             </Badge>
                           )}
                         </div>
