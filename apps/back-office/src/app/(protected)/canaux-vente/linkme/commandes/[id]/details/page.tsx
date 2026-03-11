@@ -62,6 +62,7 @@ import {
   Clock,
   CreditCard,
   ExternalLink,
+  Lock,
   Mail,
   MapPin,
   Package,
@@ -90,6 +91,7 @@ import {
 
 import { ContactCardBO } from '../../../components/contacts/ContactCardBO';
 import { NewContactForm } from '../../../components/contacts/NewContactForm';
+import { isOrderLocked } from '@verone/orders';
 import { PaymentSection } from '@/components/orders/PaymentSection';
 import { FeesSection } from '@/components/orders/FeesSection';
 import { InvoicesSection } from '@/components/orders/InvoicesSection';
@@ -875,6 +877,7 @@ export default function LinkMeOrderDetailsPage() {
 
   const details = order.linkmeDetails;
   const org = order.organisation;
+  const locked = isOrderLocked(order.status);
 
   // Contact fusion logic: group by contact_id when same contact has multiple roles
   const respContact = order.responsable_contact;
@@ -973,6 +976,12 @@ export default function LinkMeOrderDetailsPage() {
               </span>
             )}
             {getStatusBadge(order.status)}
+            {locked && (
+              <span className="flex items-center gap-1.5 text-amber-600 text-xs bg-amber-50 px-2 py-0.5 rounded-md">
+                <Lock className="h-3 w-3" />
+                Informations verrouillées
+              </span>
+            )}
             {(() => {
               const channel = getOrderChannel(
                 order.created_by_affiliate_id,
@@ -1193,7 +1202,8 @@ export default function LinkMeOrderDetailsPage() {
                               )}
                             </TableCell>
                             <TableCell className="text-center">
-                              {order.status === 'draft' ? (
+                              {order.status === 'draft' ||
+                              order.status === 'validated' ? (
                                 <Input
                                   type="number"
                                   min={1}
@@ -1284,6 +1294,7 @@ export default function LinkMeOrderDetailsPage() {
             handlingCostHt={order.handling_cost_ht ?? 0}
             insuranceCostHt={order.insurance_cost_ht ?? 0}
             feesVatRate={order.fees_vat_rate ?? 0.2}
+            readOnly={locked}
           />
 
           {/* TOTAUX — after fees */}
@@ -1324,18 +1335,20 @@ export default function LinkMeOrderDetailsPage() {
                         <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Contact livraison
                         </p>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 text-xs"
-                          onClick={() => {
-                            setSelectedContactId(null);
-                            setContactDialogFor('delivery');
-                          }}
-                        >
-                          <Pencil className="h-3 w-3 mr-1" />
-                          Changer
-                        </Button>
+                        {!locked && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 text-xs"
+                            onClick={() => {
+                              setSelectedContactId(null);
+                              setContactDialogFor('delivery');
+                            }}
+                          >
+                            <Pencil className="h-3 w-3 mr-1" />
+                            Changer
+                          </Button>
+                        )}
                       </div>
                       {details.delivery_contact_name ? (
                         <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
@@ -1370,15 +1383,17 @@ export default function LinkMeOrderDetailsPage() {
                       <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Adresse
                       </p>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 text-xs"
-                        onClick={() => openEditDialog('delivery_address')}
-                      >
-                        <Pencil className="h-3 w-3 mr-1" />
-                        Modifier
-                      </Button>
+                      {!locked && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 text-xs"
+                          onClick={() => openEditDialog('delivery_address')}
+                        >
+                          <Pencil className="h-3 w-3 mr-1" />
+                          Modifier
+                        </Button>
+                      )}
                     </div>
                     {details.delivery_address ? (
                       <div>
@@ -1415,7 +1430,8 @@ export default function LinkMeOrderDetailsPage() {
                         Aucune adresse renseignée
                       </p>
                     )}
-                    {org &&
+                    {!locked &&
+                      org &&
                       (org.address_line1 ?? org.shipping_address_line1) &&
                       !deliveryAddressMatchesOrg && (
                         <button
@@ -1462,15 +1478,17 @@ export default function LinkMeOrderDetailsPage() {
                       <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Options
                       </p>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 text-xs"
-                        onClick={() => openEditDialog('delivery_options')}
-                      >
-                        <Pencil className="h-3 w-3 mr-1" />
-                        Modifier
-                      </Button>
+                      {!locked && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 text-xs"
+                          onClick={() => openEditDialog('delivery_options')}
+                        >
+                          <Pencil className="h-3 w-3 mr-1" />
+                          Modifier
+                        </Button>
+                      )}
                     </div>
                     <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-600">
                       <span>
@@ -1797,38 +1815,40 @@ export default function LinkMeOrderDetailsPage() {
                 <Card key={group.contact.id}>
                   <CardContent className="p-3">
                     {/* Buttons row — above everything */}
-                    <div className="flex items-center justify-end gap-1 mb-1.5">
-                      {group.roles.length === 1 ? (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-5 text-[10px] px-1.5 text-gray-400 hover:text-gray-600"
-                          onClick={() => {
-                            setSelectedContactId(null);
-                            setContactDialogFor(group.roles[0]);
-                          }}
-                        >
-                          <Pencil className="h-2.5 w-2.5 mr-0.5" />
-                          Changer
-                        </Button>
-                      ) : (
-                        group.roles.map(role => (
+                    {!locked && (
+                      <div className="flex items-center justify-end gap-1 mb-1.5">
+                        {group.roles.length === 1 ? (
                           <Button
-                            key={role}
                             variant="ghost"
                             size="sm"
                             className="h-5 text-[10px] px-1.5 text-gray-400 hover:text-gray-600"
                             onClick={() => {
                               setSelectedContactId(null);
-                              setContactDialogFor(role);
+                              setContactDialogFor(group.roles[0]);
                             }}
                           >
                             <Pencil className="h-2.5 w-2.5 mr-0.5" />
-                            {roleLabels[role]}
+                            Changer
                           </Button>
-                        ))
-                      )}
-                    </div>
+                        ) : (
+                          group.roles.map(role => (
+                            <Button
+                              key={role}
+                              variant="ghost"
+                              size="sm"
+                              className="h-5 text-[10px] px-1.5 text-gray-400 hover:text-gray-600"
+                              onClick={() => {
+                                setSelectedContactId(null);
+                                setContactDialogFor(role);
+                              }}
+                            >
+                              <Pencil className="h-2.5 w-2.5 mr-0.5" />
+                              {roleLabels[role]}
+                            </Button>
+                          ))
+                        )}
+                      </div>
+                    )}
                     {/* Contact info + badges inline */}
                     <div className="flex items-center gap-2">
                       <div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
@@ -1910,17 +1930,19 @@ export default function LinkMeOrderDetailsPage() {
                       </div>
                       <CardTitle className="text-base">Responsable</CardTitle>
                     </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setSelectedContactId(null);
-                        setContactDialogFor('responsable');
-                      }}
-                    >
-                      <Pencil className="h-3 w-3 mr-1" />
-                      Changer
-                    </Button>
+                    {!locked && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedContactId(null);
+                          setContactDialogFor('responsable');
+                        }}
+                      >
+                        <Pencil className="h-3 w-3 mr-1" />
+                        Changer
+                      </Button>
+                    )}
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -1973,17 +1995,19 @@ export default function LinkMeOrderDetailsPage() {
                       </div>
                       <CardTitle className="text-base">Facturation</CardTitle>
                     </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setSelectedContactId(null);
-                        setContactDialogFor('billing');
-                      }}
-                    >
-                      <Pencil className="h-3 w-3 mr-1" />
-                      Changer
-                    </Button>
+                    {!locked && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedContactId(null);
+                          setContactDialogFor('billing');
+                        }}
+                      >
+                        <Pencil className="h-3 w-3 mr-1" />
+                        Changer
+                      </Button>
+                    )}
                   </div>
                 </CardHeader>
                 <CardContent>

@@ -56,6 +56,7 @@ import {
 
 // NOTE: SalesOrderShipmentModal supprimé - sera recréé ultérieurement
 import { useSalesOrders, useOrderItems } from '@verone/orders/hooks';
+import { isOrderLocked as isOrderLockedFn } from '../../validators/order-status';
 import { createClient } from '@verone/utils/supabase/client';
 import type {
   SalesOrder,
@@ -434,7 +435,8 @@ export function OrderDetailModal({
   );
   const hasActiveInvoice = activeInvoices.length > 0;
 
-  const isLocked = readOnly || order.status === 'shipped' || hasActiveInvoice;
+  const isLocked =
+    readOnly || isOrderLockedFn(order.status) || hasActiveInvoice;
 
   return (
     <>

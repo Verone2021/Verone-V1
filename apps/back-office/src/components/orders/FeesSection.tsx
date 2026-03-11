@@ -12,6 +12,7 @@ interface IFeesSectionProps {
   handlingCostHt: number;
   insuranceCostHt: number;
   feesVatRate: number;
+  readOnly?: boolean;
 }
 
 const VAT_RATE_OPTIONS: Array<{ value: number; label: string }> = [
@@ -28,6 +29,7 @@ export function FeesSection(props: IFeesSectionProps): React.ReactNode {
     handlingCostHt: initialHandling,
     insuranceCostHt: initialInsurance,
     feesVatRate: initialVatRate,
+    readOnly = false,
   } = props;
 
   const [shippingCostHt, setShippingCostHt] = useState<number>(initialShipping);
@@ -113,12 +115,13 @@ export function FeesSection(props: IFeesSectionProps): React.ReactNode {
               <button
                 key={option.value}
                 type="button"
+                disabled={readOnly}
                 onClick={() => setFeesVatRate(option.value)}
                 className={`px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors ${
                   feesVatRate === option.value
                     ? 'bg-gray-900 text-white'
                     : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                }`}
+                } ${readOnly ? 'cursor-not-allowed opacity-60' : ''}`}
               >
                 {option.label}
               </button>
@@ -138,6 +141,7 @@ export function FeesSection(props: IFeesSectionProps): React.ReactNode {
               min="0"
               value={shippingCostHt}
               onChange={e => setShippingCostHt(parseFloat(e.target.value) || 0)}
+              disabled={readOnly}
               className="h-7 text-xs pr-6"
             />
             <span className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs">
@@ -161,22 +165,25 @@ export function FeesSection(props: IFeesSectionProps): React.ReactNode {
                 onChange={e =>
                   setHandlingCostHt(parseFloat(e.target.value) || 0)
                 }
+                disabled={readOnly}
                 className="h-7 text-xs pr-6"
               />
               <span className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs">
                 €
               </span>
             </div>
-            <button
-              type="button"
-              className="text-gray-400 hover:text-red-500 flex-shrink-0"
-              onClick={() => {
-                setShowHandling(false);
-                setHandlingCostHt(0);
-              }}
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
+            {!readOnly && (
+              <button
+                type="button"
+                className="text-gray-400 hover:text-red-500 flex-shrink-0"
+                onClick={() => {
+                  setShowHandling(false);
+                  setHandlingCostHt(0);
+                }}
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
           </div>
         )}
 
@@ -195,29 +202,32 @@ export function FeesSection(props: IFeesSectionProps): React.ReactNode {
                 onChange={e =>
                   setInsuranceCostHt(parseFloat(e.target.value) || 0)
                 }
+                disabled={readOnly}
                 className="h-7 text-xs pr-6"
               />
               <span className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs">
                 €
               </span>
             </div>
-            <button
-              type="button"
-              className="text-gray-400 hover:text-red-500 flex-shrink-0"
-              onClick={() => {
-                setShowInsurance(false);
-                setInsuranceCostHt(0);
-              }}
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
+            {!readOnly && (
+              <button
+                type="button"
+                className="text-gray-400 hover:text-red-500 flex-shrink-0"
+                onClick={() => {
+                  setShowInsurance(false);
+                  setInsuranceCostHt(0);
+                }}
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
           </div>
         )}
 
         {/* Add more fees + save */}
         <div className="flex items-center justify-between">
           <div className="flex gap-1">
-            {canAddMore && (
+            {canAddMore && !readOnly && (
               <>
                 {!showHandling && (
                   <button
@@ -242,7 +252,7 @@ export function FeesSection(props: IFeesSectionProps): React.ReactNode {
               </>
             )}
           </div>
-          {hasChanges && (
+          {hasChanges && !readOnly && (
             <Button
               size="sm"
               className="h-6 text-xs px-2"
