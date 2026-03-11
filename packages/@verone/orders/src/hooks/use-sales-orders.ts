@@ -99,6 +99,8 @@ export interface SalesOrder {
   updated_at: string;
 
   // Facture associée (financial_documents)
+  invoice_id?: string | null;
+  invoice_qonto_id?: string | null;
   invoice_number?: string | null;
 
   // 🆕 Rapprochement bancaire (jointure transaction_document_links)
@@ -470,18 +472,25 @@ export function useSalesOrders() {
         }
 
         // 🆕 Récupérer les factures associées (batch pour performance)
-        const invoiceMap = new Map<string, string>();
+        const invoiceMap = new Map<
+          string,
+          { id: string; qontoId: string | null; number: string }
+        >();
         if (orderIds.length > 0) {
           const { data: invoicesData } = await supabase
             .from('financial_documents')
-            .select('sales_order_id, document_number')
+            .select('id, sales_order_id, document_number, qonto_invoice_id')
             .in('sales_order_id', orderIds)
             .eq('document_type', 'customer_invoice')
             .is('deleted_at', null);
 
-          for (const inv of invoicesData || []) {
+          for (const inv of invoicesData ?? []) {
             if (inv.sales_order_id) {
-              invoiceMap.set(inv.sales_order_id, inv.document_number);
+              invoiceMap.set(inv.sales_order_id, {
+                id: inv.id,
+                qontoId: inv.qonto_invoice_id,
+                number: inv.document_number,
+              });
             }
           }
         }
@@ -601,7 +610,9 @@ export function useSalesOrders() {
             ...order,
             sales_order_items: enrichedItems,
             creator: creatorInfo || null,
-            invoice_number: invoiceMap.get(order.id) ?? null,
+            invoice_id: invoiceMap.get(order.id)?.id ?? null,
+            invoice_qonto_id: invoiceMap.get(order.id)?.qontoId ?? null,
+            invoice_number: invoiceMap.get(order.id)?.number ?? null,
             is_matched: !!matchInfo,
             matched_transaction_id: matchInfo?.transaction_id || null,
             matched_transaction_label: matchInfo?.label || null,
