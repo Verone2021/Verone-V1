@@ -32,7 +32,6 @@ import {
 } from '@verone/ui';
 import { Badge } from '@verone/ui';
 import { ButtonUnified } from '@verone/ui';
-import { IconButton } from '@verone/ui';
 import {
   Card,
   CardContent,
@@ -62,22 +61,13 @@ import { createClient } from '@verone/utils/supabase/client';
 import {
   Plus,
   Search,
-  Eye,
-  Edit,
-  Trash2,
-  CheckCircle,
-  XCircle,
   RotateCcw,
-  Ban,
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
   FileText,
   FileSpreadsheet,
-  Truck,
   ChevronDown,
-  ExternalLink,
-  Link2,
 } from 'lucide-react';
 
 import type { SalesAdvancedFilters } from '../types/advanced-filters';
@@ -91,6 +81,7 @@ import { CreateLinkMeOrderModal } from './modals/CreateLinkMeOrderModal';
 import { OrderDetailModal } from './modals/OrderDetailModal';
 import { SalesOrderFormModal } from './modals/SalesOrderFormModal';
 import { SalesOrderShipmentModal } from './modals/SalesOrderShipmentModal';
+import { SalesOrderActionMenu } from './SalesOrderActionMenu';
 
 // Canaux de vente connus
 const LINKME_CHANNEL_ID = '93c68db1-5a30-4168-89ec-6383152be405';
@@ -1359,15 +1350,15 @@ export function SalesOrdersTable({
             </div>
           ) : (
             <div className="overflow-x-auto -mx-6">
-              <div className="inline-block min-w-full px-6">
-                <Table>
+              <div className="px-6">
+                <Table className="w-auto [&_th]:px-2.5 [&_td]:px-2.5">
                   <TableHeader>
                     <TableRow>
                       <TableHead className="w-10" />
                       {/* N° Commande - sortable si sortableColumns.orderNumber */}
                       {sortableColumns?.orderNumber !== false ? (
                         <TableHead
-                          className="cursor-pointer hover:bg-gray-50"
+                          className="cursor-pointer hover:bg-gray-50 whitespace-nowrap"
                           onClick={() => handleSort('order_number')}
                         >
                           <span className="inline-flex items-center gap-1">
@@ -1376,7 +1367,9 @@ export function SalesOrdersTable({
                           </span>
                         </TableHead>
                       ) : (
-                        <TableHead>N Commande</TableHead>
+                        <TableHead className="whitespace-nowrap">
+                          N Commande
+                        </TableHead>
                       )}
                       {/* Client - sortable si sortableColumns.client */}
                       {sortableColumns?.client !== false ? (
@@ -1392,15 +1385,19 @@ export function SalesOrdersTable({
                       ) : (
                         <TableHead>Client</TableHead>
                       )}
-                      <TableHead>Statut</TableHead>
-                      <TableHead>Paiement</TableHead>
-                      <TableHead className="w-20 text-center">
-                        Articles
+                      <TableHead className="whitespace-nowrap">
+                        Statut
+                      </TableHead>
+                      <TableHead className="whitespace-nowrap">
+                        Paiement
+                      </TableHead>
+                      <TableHead className="whitespace-nowrap text-center">
+                        Art.
                       </TableHead>
                       {/* Date commande - sortable si sortableColumns.date */}
                       {sortableColumns?.date !== false ? (
                         <TableHead
-                          className="cursor-pointer hover:bg-gray-50"
+                          className="cursor-pointer hover:bg-gray-50 whitespace-nowrap"
                           onClick={() => handleSort('date')}
                         >
                           <span className="inline-flex items-center gap-1">
@@ -1409,10 +1406,15 @@ export function SalesOrdersTable({
                           </span>
                         </TableHead>
                       ) : (
-                        <TableHead>Date commande</TableHead>
+                        <TableHead className="whitespace-nowrap">
+                          Date commande
+                        </TableHead>
                       )}
-                      <TableHead>Facture</TableHead>
-                      {showChannelColumn && <TableHead>Canal</TableHead>}
+                      {showChannelColumn && (
+                        <TableHead className="whitespace-nowrap">
+                          Canal
+                        </TableHead>
+                      )}
                       {/* Colonnes additionnelles */}
                       {additionalColumns.map(col => (
                         <TableHead key={col.key}>{col.header}</TableHead>
@@ -1420,7 +1422,7 @@ export function SalesOrdersTable({
                       {/* Montant - sortable si sortableColumns.amount */}
                       {sortableColumns?.amount !== false ? (
                         <TableHead
-                          className="cursor-pointer hover:bg-gray-50"
+                          className="cursor-pointer hover:bg-gray-50 whitespace-nowrap"
                           onClick={() => handleSort('amount')}
                         >
                           <span className="inline-flex items-center gap-1">
@@ -1429,9 +1431,13 @@ export function SalesOrdersTable({
                           </span>
                         </TableHead>
                       ) : (
-                        <TableHead>Montant TTC</TableHead>
+                        <TableHead className="whitespace-nowrap">
+                          Montant TTC
+                        </TableHead>
                       )}
-                      <TableHead>Actions</TableHead>
+                      <TableHead className="whitespace-nowrap">
+                        Actions
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -1484,24 +1490,48 @@ export function SalesOrdersTable({
                                 </button>
                               )}
                             </TableCell>
-                            <TableCell className="font-medium">
-                              {order.order_number}
+                            <TableCell className="w-[80px]">
+                              <div className="space-y-0.5">
+                                <span className="text-xs font-mono font-medium break-all leading-tight">
+                                  {order.order_number}
+                                </span>
+                                {order.invoice_number && (
+                                  <Link
+                                    href={
+                                      order.invoice_qonto_id
+                                        ? `/factures/${order.invoice_qonto_id}`
+                                        : '#'
+                                    }
+                                    target="_blank"
+                                    className="flex items-center gap-1 text-[10px] font-mono text-blue-600 hover:text-blue-800 hover:underline"
+                                    title={`Voir facture ${order.invoice_number}`}
+                                  >
+                                    <FileText className="h-3 w-3 shrink-0" />
+                                    {order.invoice_number}
+                                  </Link>
+                                )}
+                              </div>
                             </TableCell>
                             <TableCell>
                               <div>
-                                <div className="font-medium">
+                                <div className="text-sm font-medium leading-tight break-words">
                                   {customerDisplayName || 'Non defini'}
                                 </div>
                                 <div className="text-xs text-gray-500 mt-0.5">
                                   {order.customer_type === 'organization'
-                                    ? 'Professionnel'
+                                    ? 'Pro'
                                     : 'Particulier'}
                                 </div>
                               </div>
                             </TableCell>
                             <TableCell>
                               <div className="flex items-center gap-2">
-                                <Badge className={statusColors[order.status]}>
+                                <Badge
+                                  className={cn(
+                                    'text-xs',
+                                    statusColors[order.status]
+                                  )}
+                                >
                                   {statusLabels[order.status]}
                                 </Badge>
                                 {hasSamples && (
@@ -1517,58 +1547,51 @@ export function SalesOrdersTable({
                             <TableCell>
                               <div className="flex items-center gap-2">
                                 {order.payment_status_v2 === 'overpaid' ? (
-                                  <Badge className="bg-red-100 text-red-800">
+                                  <Badge className="text-xs bg-red-100 text-red-800">
                                     Surpayé
                                   </Badge>
                                 ) : order.payment_status_v2 === 'paid' ? (
-                                  <Badge className="bg-green-100 text-green-800">
+                                  <Badge className="text-xs bg-green-100 text-green-800">
                                     Payé
                                   </Badge>
                                 ) : order.payment_status_v2 ===
                                   'partially_paid' ? (
-                                  <Badge className="bg-amber-100 text-amber-800">
+                                  <Badge className="text-xs bg-amber-100 text-amber-800">
                                     Partiel
                                   </Badge>
                                 ) : (
-                                  <Badge className="bg-orange-100 text-orange-800">
+                                  <Badge className="text-xs bg-orange-100 text-orange-800">
                                     En attente
                                   </Badge>
                                 )}
                               </div>
                             </TableCell>
-                            <TableCell className="text-center">
-                              <span className="font-medium">
+                            <TableCell className="text-center whitespace-nowrap">
+                              <span className="text-xs font-medium">
                                 {items.length}
                               </span>
-                              <span className="text-muted-foreground text-xs ml-1">
+                              <span className="text-muted-foreground text-[10px] ml-0.5">
                                 ref.
                               </span>
                             </TableCell>
-                            <TableCell>
-                              {order.order_date
-                                ? formatDate(order.order_date)
-                                : formatDate(order.created_at)}
-                            </TableCell>
-                            <TableCell>
-                              {order.invoice_number ? (
-                                <span className="text-xs font-mono font-medium">
-                                  {order.invoice_number}
-                                </span>
-                              ) : (
-                                <span className="text-gray-400 text-sm">-</span>
-                              )}
+                            <TableCell className="whitespace-nowrap">
+                              <span className="text-xs">
+                                {order.order_date
+                                  ? formatDate(order.order_date)
+                                  : formatDate(order.created_at)}
+                              </span>
                             </TableCell>
                             {showChannelColumn && (
-                              <TableCell>
+                              <TableCell className="whitespace-nowrap">
                                 {order.sales_channel?.name ? (
                                   <Badge
                                     variant="outline"
-                                    className="text-xs font-medium"
+                                    className="text-[10px] font-medium px-1.5 py-0"
                                   >
                                     {order.sales_channel.name}
                                   </Badge>
                                 ) : (
-                                  <span className="text-gray-400 text-sm">
+                                  <span className="text-gray-400 text-xs">
                                     -
                                   </span>
                                 )}
@@ -1580,159 +1603,49 @@ export function SalesOrdersTable({
                                 {col.cell(order)}
                               </TableCell>
                             ))}
-                            <TableCell>
-                              <div className="font-medium">
+                            <TableCell className="whitespace-nowrap">
+                              <span className="text-xs font-medium">
                                 {formatCurrency(
                                   order.total_ttc || order.total_ht
                                 )}
-                              </div>
+                              </span>
                             </TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-2">
-                                {/* Voir */}
-                                <IconButton
-                                  icon={Eye}
-                                  variant="outline"
-                                  size="sm"
-                                  label="Voir details"
-                                  onClick={() =>
-                                    onViewOrder
-                                      ? onViewOrder(order)
-                                      : openOrderDetail(order)
-                                  }
-                                />
-
-                                {/* Lien externe pour commandes de canaux (si pas filtre) */}
-                                {!channelId && getChannelRedirectUrl(order) && (
-                                  <Link
-                                    href={getChannelRedirectUrl(order) || '#'}
-                                  >
-                                    <IconButton
-                                      icon={ExternalLink}
-                                      variant="outline"
-                                      size="sm"
-                                      label={`Gerer dans ${order.sales_channel?.name || 'le CMS du canal'}`}
-                                    />
-                                  </Link>
+                            <TableCell className="whitespace-nowrap">
+                              <SalesOrderActionMenu
+                                order={order}
+                                channelId={channelId}
+                                channelRedirectUrl={getChannelRedirectUrl(
+                                  order
                                 )}
-
-                                {/* Modifier */}
-                                {allowEdit &&
-                                  (order.status === 'draft' ||
-                                    order.status === 'validated') &&
-                                  isOrderEditable(order, channelId) && (
-                                    <IconButton
-                                      icon={Edit}
-                                      variant="outline"
-                                      size="sm"
-                                      label="Modifier"
-                                      onClick={() => openEditOrder(order.id)}
-                                    />
-                                  )}
-
-                                {/* Valider */}
-                                {allowValidate && order.status === 'draft' && (
-                                  <IconButton
-                                    icon={CheckCircle}
-                                    variant="success"
-                                    size="sm"
-                                    label="Valider"
-                                    onClick={() =>
-                                      handleStatusChange(order.id, 'validated')
-                                    }
-                                  />
-                                )}
-
-                                {/* Devalider */}
-                                {allowValidate &&
-                                  order.status === 'validated' && (
-                                    <IconButton
-                                      icon={RotateCcw}
-                                      variant="outline"
-                                      size="sm"
-                                      label="Devalider (retour brouillon)"
-                                      onClick={() =>
-                                        handleStatusChange(order.id, 'draft')
-                                      }
-                                    />
-                                  )}
-
-                                {/* Expedier */}
-                                {allowShip &&
-                                  (order.status === 'validated' ||
-                                    order.status === 'partially_shipped') && (
-                                    <IconButton
-                                      icon={Truck}
-                                      variant="outline"
-                                      size="sm"
-                                      label="Expedier"
-                                      onClick={() => openShipmentModal(order)}
-                                    />
-                                  )}
-
-                                {/* Annuler (brouillon uniquement) */}
-                                {allowCancel && order.status === 'draft' && (
-                                  <IconButton
-                                    icon={Ban}
-                                    variant="danger"
-                                    size="sm"
-                                    label="Annuler la commande"
-                                    onClick={() => handleCancel(order.id)}
-                                  />
-                                )}
-
-                                {/* Annuler disabled pour validated */}
-                                {allowCancel &&
-                                  order.status === 'validated' && (
-                                    <IconButton
-                                      icon={Ban}
-                                      variant="outline"
-                                      size="sm"
-                                      label="Devalider d'abord pour annuler"
-                                      disabled
-                                    />
-                                  )}
-
-                                {/* Supprimer */}
-                                {allowDelete &&
-                                  order.status === 'cancelled' && (
-                                    <IconButton
-                                      icon={Trash2}
-                                      variant="danger"
-                                      size="sm"
-                                      label="Supprimer"
-                                      onClick={() => handleDelete(order.id)}
-                                    />
-                                  )}
-
-                                {/* Lier transaction / Rapprochée */}
-                                {(order.status === 'validated' ||
-                                  order.status === 'shipped') && (
-                                  <>
-                                    {order.is_matched ? (
-                                      <Badge
-                                        variant="outline"
-                                        className="text-xs bg-green-50 text-green-700 border-green-300 cursor-help"
-                                        title={`Rapprochée: ${order.matched_transaction_label || 'Transaction'} (${formatCurrency(Math.abs(order.matched_transaction_amount || 0))})`}
-                                      >
-                                        <Link2 className="h-3 w-3 mr-1 text-green-600" />
-                                        Rapprochée
-                                      </Badge>
-                                    ) : (
-                                      <IconButton
-                                        icon={Link2}
-                                        variant="outline"
-                                        size="sm"
-                                        label="Lier transaction"
-                                        onClick={() => {
-                                          setSelectedOrderForLink(order);
-                                          setShowLinkTransactionModal(true);
-                                        }}
-                                      />
-                                    )}
-                                  </>
-                                )}
-                              </div>
+                                channelName={
+                                  order.sales_channel?.name || 'le CMS du canal'
+                                }
+                                isEditable={isOrderEditable(order, channelId)}
+                                allowEdit={allowEdit}
+                                allowValidate={allowValidate}
+                                allowShip={allowShip}
+                                allowCancel={allowCancel}
+                                allowDelete={allowDelete}
+                                onView={() =>
+                                  onViewOrder
+                                    ? onViewOrder(order)
+                                    : openOrderDetail(order)
+                                }
+                                onEdit={() => openEditOrder(order.id)}
+                                onValidate={() =>
+                                  handleStatusChange(order.id, 'validated')
+                                }
+                                onDevalidate={() =>
+                                  handleStatusChange(order.id, 'draft')
+                                }
+                                onShip={() => openShipmentModal(order)}
+                                onCancel={() => handleCancel(order.id)}
+                                onDelete={() => handleDelete(order.id)}
+                                onLinkTransaction={() => {
+                                  setSelectedOrderForLink(order);
+                                  setShowLinkTransactionModal(true);
+                                }}
+                              />
                             </TableCell>
                           </TableRow>
 
@@ -1741,7 +1654,7 @@ export function SalesOrdersTable({
                             <TableRow className="bg-muted/50 hover:bg-muted/50">
                               <TableCell
                                 colSpan={
-                                  10 +
+                                  9 +
                                   additionalColumns.length +
                                   (showChannelColumn ? 1 : 0)
                                 }
