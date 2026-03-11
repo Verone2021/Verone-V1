@@ -182,10 +182,20 @@ export function isFinalStatus(status: SalesOrderStatus): boolean {
 }
 
 /**
+ * Vérifier si commande est verrouillée (shipped, partially_shipped, delivered, cancelled)
+ * Commande verrouillée = informations non modifiables (sauf paiement/factures/rapprochement)
+ */
+export function isOrderLocked(status: SalesOrderStatus | string): boolean {
+  return ['shipped', 'partially_shipped', 'delivered', 'cancelled'].includes(
+    status
+  );
+}
+
+/**
  * Vérifier si status permet modification items
  */
 export function canEditItems(status: SalesOrderStatus): boolean {
-  return status === 'draft';
+  return status === 'draft' || status === 'validated';
 }
 
 /**
@@ -452,6 +462,7 @@ export default {
   validateStatusChange,
   getAllowedTransitions,
   isFinalStatus,
+  isOrderLocked,
   canEditItems,
   canCancel,
   canConfirm,

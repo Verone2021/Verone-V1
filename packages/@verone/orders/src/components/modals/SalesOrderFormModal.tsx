@@ -1161,10 +1161,10 @@ export function SalesOrderFormModal({
         <DialogHeader>
           <DialogTitle>
             {mode === 'edit'
-              ? 'Modifier la Commande Client'
+              ? 'Back-office - Modifier la commande client'
               : wizardStep === 'channel-selection'
-                ? 'Nouvelle Commande Client'
-                : `Commande ${selectedSalesChannel === 'manual' ? 'Manuelle' : selectedSalesChannel === 'site-internet' ? 'Site Internet' : 'LinkMe'}`}
+                ? 'Back-office - Nouvelle commande client'
+                : `Back-office - Commande ${selectedSalesChannel === 'manual' ? 'Manuelle' : selectedSalesChannel === 'site-internet' ? 'Site Internet' : 'LinkMe'}`}
           </DialogTitle>
           <DialogDescription>
             {mode === 'edit'

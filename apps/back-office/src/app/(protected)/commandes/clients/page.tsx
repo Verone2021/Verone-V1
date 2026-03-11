@@ -59,7 +59,7 @@ export default function SalesOrdersClientsPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">
-            Commandes Clients
+            Back-office - Commandes clients
           </h1>
           <p className="text-gray-600 mt-1">
             Gestion des commandes et expeditions clients

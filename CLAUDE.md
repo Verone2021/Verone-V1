@@ -2,28 +2,68 @@
 
 CRM/ERP modulaire pour decoration et mobilier d'interieur haut de gamme.
 
-## Comportement : Expert Mentor (MODE TEACH-FIRST STRICT)
+## REGLES CRITIQUES (Claude DOIT verifier cette liste AVANT chaque action git)
 
-Tu es un **developpeur senior**, pas un executant. Pattern TEACH-FIRST **NON NEGOCIABLE** :
+Avant chaque commit, push, merge ou PR, **relire cette liste** :
 
-1. **INVESTIGUER** : Chercher patterns officiels (MCP Context7) + patterns projet (Serena/Grep)
-2. **CHALLENGER** : Si demande != best practice 2026, **DIRE NON** explicitement
-3. **EDUQUER** : Expliquer pourquoi + proposer alternative recommandee
-4. **ATTENDRE** : Confirmation utilisateur AVANT de coder
-5. **IMPLEMENTER** : Uniquement apres validation
+1. **JAMAIS `any` TypeScript** → `unknown` + validation Zod ou types DB
+2. **JAMAIS commit sans** : `git diff --staged` + `type-check` filtre + `eslint` fichiers modifies
+3. **JAMAIS merge PR** sans attendre CI checks verts (Vercel) + validation Romeo
+4. **JAMAIS build global** → TOUJOURS `pnpm --filter @verone/[app] build`
+5. **TOUJOURS feature branch** depuis `staging` avant de coder
+6. **TOUJOURS demander a Romeo** avant commit/push/PR (regle Serena memory)
+7. **TOUJOURS repondre en francais** (code et commits en anglais)
+8. **TOUJOURS utiliser `/pr`** pour les PRs — JAMAIS faire manuellement
 
-> **Regle d'Or** : Si tu penses "c'est pas une bonne idee mais bon il demande", tu DOIS dire NON et proposer alternative. Romeo est novice et compte sur toi pour le guider. Exemples detailles : `.claude/rules/general.md` (section "Exemples TEACH-FIRST").
+> Si tu ne te souviens plus de ces regles en cours de session → **STOP, relis CLAUDE.md**.
 
 ---
 
-## Avant de Commencer (OBLIGATOIRE A CHAQUE SESSION)
+## Comportement TEACH-FIRST
 
-1. **Identifier l'app cible** : Lire le `CLAUDE.md` de l'app (`apps/[app]/CLAUDE.md`)
-2. **Consulter la table ci-dessous** : Trouver la tache dans "Documentation par Tache"
-3. **Lire les docs AVANT de coder** : Chaque ligne de la table pointe vers un doc obligatoire
-4. **Verifier le schema DB** : `mcp__supabase__execute_sql` avec `SELECT column_name FROM information_schema.columns WHERE table_name = '...'`
-5. **Memories Serena pertinentes** : `list_memories` puis `read_memory` sur celles liees a la tache
-6. **Credentials** : `.serena/memories/*-credentials-*` (JAMAIS inventer)
+Tu es un **developpeur senior**. Si une demande != best practice → **DIRE NON** + proposer alternative. Romeo est novice et compte sur toi. Details + exemples : `.claude/rules/general.md`
+
+## Avant de Commencer
+
+1. Lire le `CLAUDE.md` de l'app cible (`apps/[app]/CLAUDE.md`)
+2. Consulter "Documentation par Tache" ci-dessous → lire le doc AVANT de coder
+3. Verifier schema DB : `mcp__supabase__execute_sql` + Serena memories pertinentes
+
+---
+
+## Stack Technique
+
+| Couche     | Technologies                                        |
+| ---------- | --------------------------------------------------- |
+| Frontend   | Next.js 15 (App Router, RSC) + shadcn/ui + Tailwind |
+| Backend    | Supabase (PostgreSQL + Auth + RLS)                  |
+| Monorepo   | Turborepo v2.6.0 + pnpm                             |
+| Validation | Zod + TypeScript strict                             |
+| Tests      | Playwright E2E                                      |
+| Types DB   | `packages/@verone/types/src/supabase.ts`            |
+
+**Ports** : back-office=3000, site-internet=3001, linkme=3002
+
+## Commandes Essentielles
+
+```bash
+pnpm dev:safe                              # Serveurs (SEUL l'utilisateur peut lancer)
+pnpm --filter @verone/[app] build          # Build filtre (JAMAIS pnpm build global)
+pnpm --filter @verone/[app] type-check     # Type-check filtre
+pnpm lint:fix                              # ESLint auto-fix
+```
+
+## Workflow (5 Etapes)
+
+1. **RESEARCH** : Serena, MCP Context7, Grep, Read
+2. **PLAN** : `/plan` pour features complexes
+3. **TEST** : TDD si applicable
+4. **EXECUTE** : Minimum necessaire, commits frequents sur feature branch
+5. **VERIFY** : `type-check` + `build` filtres
+
+**Git** : Feature branch depuis **`staging`**. Format : `[APP-DOMAIN-NNN] type: description`
+**Deploiement** : PRs → `staging` → `main`. PR staging→main = Claude le fait (JAMAIS Romeo).
+**Details** : `.claude/rules/dev/git-workflow.md`
 
 ---
 
@@ -52,100 +92,17 @@ Tu es un **developpeur senior**, pas un executant. Pattern TEACH-FIRST **NON NEG
 
 ---
 
-## Stack Technique
-
-| Couche     | Technologies                                        |
-| ---------- | --------------------------------------------------- |
-| Frontend   | Next.js 15 (App Router, RSC) + shadcn/ui + Tailwind |
-| Backend    | Supabase (PostgreSQL + Auth + RLS)                  |
-| Monorepo   | Turborepo v2.6.0 + pnpm                             |
-| Validation | Zod + TypeScript strict                             |
-| Tests      | Playwright E2E                                      |
-| Types DB   | `packages/@verone/types/src/supabase.ts`            |
-
-**Ports** : back-office=3000, site-internet=3001, linkme=3002
-
----
-
-## Commandes Essentielles
-
-```bash
-pnpm dev:safe                              # Serveurs (SEUL l'utilisateur peut lancer)
-pnpm --filter @verone/[app] build          # Build filtre (JAMAIS pnpm build global)
-pnpm --filter @verone/[app] type-check     # Type-check filtre
-pnpm lint:fix                              # ESLint auto-fix
-```
-
----
-
-## Workflow (5 Etapes)
-
-1. **RESEARCH** : Serena, MCP Context7, Grep, Read
-2. **PLAN** : `/plan` pour features complexes
-3. **TEST** : TDD si applicable
-4. **EXECUTE** : Minimum necessaire, commits frequents sur feature branch
-5. **VERIFY** : `type-check` + `build` filtres
-
-**Git** : Feature branch AVANT de coder. Format : `[APP-DOMAIN-NNN] type: description`
-**Deploiement** : PRs → `staging` → `main`. Branches feature depuis **`staging`** (pas main).
-**PR staging→main + rebase** : C'est Claude qui le fait (JAMAIS Romeo).
-Details : `.claude/rules/dev/git-workflow.md`
-
----
-
-## Regles Critiques (NON NEGOCIABLES)
-
-### 1. JAMAIS `any` TypeScript
-
-- Interdit : `: any`, `as any`, `any[]`, `eslint-disable no-explicit-any`
-- Utiliser : `unknown` + validation, types DB, type union
-
-### 2. JAMAIS contourner les hooks
-
-- Interdit : `--no-verify`, `chmod -x .husky/*`, `push --force` sans type-check
-- Corriger les erreurs au lieu de les ignorer
-
-### 3. JAMAIS erreurs async silencieuses
-
-- Promesses flottantes : `void fn().catch(err => ...)`
-- Event handlers async : wrapper synchrone
-- React Query : `await invalidateQueries()` dans onSuccess async
-- Details : `.claude/rules/frontend/async-patterns.md`
-
-### 4. JAMAIS doublons UI
-
-- Verifier shadcn/ui + `packages/@verone/ui` AVANT de creer un composant
-
-### 5. JAMAIS build global
-
-- Interdit : `pnpm build` / `pnpm type-check` (3-5 min)
-- Obligatoire : `pnpm --filter @verone/[app] build` (30-60 sec)
-
-### 6. TOUJOURS verifier avant commit
-
-- `git diff --staged` : review code, pas de secrets/fichiers generes
-- `pnpm --filter type-check` : TypeScript OK
-- Details : `.claude/rules/dev/git-workflow.md`
-
-### 7. JAMAIS de donnees test via SQL/migration
-
-- SQL = uniquement pour DDL (CREATE TABLE, ALTER, policies RLS) et requetes lecture (SELECT)
-- Tests se font MANUELLEMENT via l'interface (Playwright ou Romeo)
-
-### 8. JAMAIS inventer de terminologie
-
-- Canaux de vente : `site_internet`, `google_merchant`, `linkme`, `manuel`
-- Il n'existe PAS de canal "affilie" — le canal s'appelle **LinkMe**
-
----
-
 ## Mode de Travail
 
 **MODE MANUEL** : Claude developpe, teste, commit, push autonome.
 Claude **DEMANDE** avant : creer/merger PR, deploiement, migration DB.
-
 **Multi-Agent** : Un agent = une branche. Details : `.claude/rules/dev/multi-agent.md`
+
+## Gestion de Session
+
+- `/clear` entre taches non liees (libere le contexte)
+- Sessions longues (>30 echanges) : re-lire CLAUDE.md avant toute action git
 
 ---
 
-**Version** : 13.0.0 (Restructuration documentation 2026-03-03)
+**Version** : 14.0.0 (Optimisation meta-regles recursives 2026-03-10)

@@ -2,9 +2,9 @@
 
 import { useState, useCallback } from 'react';
 
-import { Button, Card, Input, Label } from '@verone/ui';
+import { Button, Card, Input } from '@verone/ui';
 import { createClient } from '@verone/utils/supabase/client';
-import { Truck, Loader2, Save, Check } from 'lucide-react';
+import { Loader2, Save, Check, Plus, X } from 'lucide-react';
 
 interface IFeesSectionProps {
   orderId: string;
@@ -12,6 +12,7 @@ interface IFeesSectionProps {
   handlingCostHt: number;
   insuranceCostHt: number;
   feesVatRate: number;
+  readOnly?: boolean;
 }
 
 const VAT_RATE_OPTIONS: Array<{ value: number; label: string }> = [
@@ -28,6 +29,7 @@ export function FeesSection(props: IFeesSectionProps): React.ReactNode {
     handlingCostHt: initialHandling,
     insuranceCostHt: initialInsurance,
     feesVatRate: initialVatRate,
+    readOnly = false,
   } = props;
 
   const [shippingCostHt, setShippingCostHt] = useState<number>(initialShipping);
@@ -38,12 +40,18 @@ export function FeesSection(props: IFeesSectionProps): React.ReactNode {
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [saveSuccess, setSaveSuccess] = useState<boolean>(false);
 
-  // Calcul des totaux
+  // Show extra fee rows if they have a value, or user explicitly added them
+  const [showHandling, setShowHandling] = useState<boolean>(
+    initialHandling > 0
+  );
+  const [showInsurance, setShowInsurance] = useState<boolean>(
+    initialInsurance > 0
+  );
+
   const totalFeesHt: number = shippingCostHt + handlingCostHt + insuranceCostHt;
   const totalFeesTva: number = totalFeesHt * feesVatRate;
   const totalFeesTtc: number = totalFeesHt + totalFeesTva;
 
-  // Vérifie si des modifications ont été faites
   const hasChanges: boolean =
     shippingCostHt !== initialShipping ||
     handlingCostHt !== initialHandling ||
@@ -72,7 +80,6 @@ export function FeesSection(props: IFeesSectionProps): React.ReactNode {
       }
 
       setSaveSuccess(true);
-      // Reset success message after 2 seconds
       setTimeout(() => setSaveSuccess(false), 2000);
     } catch (err) {
       console.error('[FeesSection] Failed to save fees:', err);
@@ -88,111 +95,33 @@ export function FeesSection(props: IFeesSectionProps): React.ReactNode {
     }).format(value);
   };
 
-  const handleShippingChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ): void => {
-    setShippingCostHt(parseFloat(e.target.value) || 0);
-  };
-
-  const handleHandlingChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ): void => {
-    setHandlingCostHt(parseFloat(e.target.value) || 0);
-  };
-
-  const handleInsuranceChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ): void => {
-    setInsuranceCostHt(parseFloat(e.target.value) || 0);
-  };
-
-  const handleVatRateChange = (value: number): void => {
-    setFeesVatRate(value);
-  };
-
   const onSaveClick = (): void => {
     void handleSave();
   };
 
+  const canAddMore = !showHandling || !showInsurance;
+
   return (
-    <Card className="p-6">
-      <div className="flex items-center gap-2 mb-4">
-        <Truck className="h-5 w-5 text-muted-foreground" />
-        <h2 className="text-xl font-semibold">Frais de service</h2>
-      </div>
-
-      <div className="space-y-4">
-        {/* Frais de livraison */}
-        <div className="space-y-2">
-          <Label htmlFor="shipping">Frais de livraison HT</Label>
-          <div className="relative">
-            <Input
-              id="shipping"
-              type="number"
-              step="0.01"
-              min="0"
-              value={shippingCostHt}
-              onChange={handleShippingChange}
-              className="pr-8"
-            />
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
-              €
-            </span>
-          </div>
-        </div>
-
-        {/* Frais de manutention */}
-        <div className="space-y-2">
-          <Label htmlFor="handling">Frais de manutention HT</Label>
-          <div className="relative">
-            <Input
-              id="handling"
-              type="number"
-              step="0.01"
-              min="0"
-              value={handlingCostHt}
-              onChange={handleHandlingChange}
-              className="pr-8"
-            />
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
-              €
-            </span>
-          </div>
-        </div>
-
-        {/* Frais d'assurance */}
-        <div className="space-y-2">
-          <Label htmlFor="insurance">Frais d&apos;assurance HT</Label>
-          <div className="relative">
-            <Input
-              id="insurance"
-              type="number"
-              step="0.01"
-              min="0"
-              value={insuranceCostHt}
-              onChange={handleInsuranceChange}
-              className="pr-8"
-            />
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
-              €
-            </span>
-          </div>
-        </div>
-
-        {/* TVA sur les frais */}
-        <div className="space-y-2">
-          <Label>TVA sur les frais</Label>
-          <div className="flex gap-2">
+    <Card>
+      <div className="p-3 space-y-2">
+        {/* Header compact */}
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+            Frais de service
+          </span>
+          <div className="flex items-center gap-1">
+            {/* TVA pills — compact */}
             {VAT_RATE_OPTIONS.map(option => (
               <button
                 key={option.value}
                 type="button"
-                onClick={() => handleVatRateChange(option.value)}
-                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                disabled={readOnly}
+                onClick={() => setFeesVatRate(option.value)}
+                className={`px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors ${
                   feesVatRate === option.value
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-muted hover:bg-muted/80 text-muted-foreground'
-                }`}
+                    ? 'bg-gray-900 text-white'
+                    : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                } ${readOnly ? 'cursor-not-allowed opacity-60' : ''}`}
               >
                 {option.label}
               </button>
@@ -200,52 +129,165 @@ export function FeesSection(props: IFeesSectionProps): React.ReactNode {
           </div>
         </div>
 
-        {/* Totaux calculés */}
-        {totalFeesHt > 0 && (
-          <div className="pt-4 border-t space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Total frais HT</span>
-              <span className="font-medium">{formatCurrency(totalFeesHt)}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">
-                TVA ({(feesVatRate * 100).toFixed(1)}%)
+        {/* Shipping — always visible */}
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-600 w-20 flex-shrink-0">
+            Livraison
+          </span>
+          <div className="relative flex-1">
+            <Input
+              type="number"
+              step="0.01"
+              min="0"
+              value={shippingCostHt}
+              onChange={e => setShippingCostHt(parseFloat(e.target.value) || 0)}
+              disabled={readOnly}
+              className="h-7 text-xs pr-6"
+            />
+            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs">
+              €
+            </span>
+          </div>
+        </div>
+
+        {/* Handling — shown on demand */}
+        {showHandling && (
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-600 w-20 flex-shrink-0">
+              Manutention
+            </span>
+            <div className="relative flex-1">
+              <Input
+                type="number"
+                step="0.01"
+                min="0"
+                value={handlingCostHt}
+                onChange={e =>
+                  setHandlingCostHt(parseFloat(e.target.value) || 0)
+                }
+                disabled={readOnly}
+                className="h-7 text-xs pr-6"
+              />
+              <span className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs">
+                €
               </span>
-              <span className="font-medium">
-                {formatCurrency(totalFeesTva)}
-              </span>
             </div>
-            <div className="flex justify-between text-sm font-semibold">
-              <span>Total frais TTC</span>
-              <span>{formatCurrency(totalFeesTtc)}</span>
-            </div>
+            {!readOnly && (
+              <button
+                type="button"
+                className="text-gray-400 hover:text-red-500 flex-shrink-0"
+                onClick={() => {
+                  setShowHandling(false);
+                  setHandlingCostHt(0);
+                }}
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
           </div>
         )}
 
-        {/* Bouton sauvegarder */}
-        {hasChanges && (
-          <Button
-            onClick={onSaveClick}
-            disabled={isSaving}
-            className="w-full mt-4"
-          >
-            {isSaving ? (
+        {/* Insurance — shown on demand */}
+        {showInsurance && (
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-600 w-20 flex-shrink-0">
+              Assurance
+            </span>
+            <div className="relative flex-1">
+              <Input
+                type="number"
+                step="0.01"
+                min="0"
+                value={insuranceCostHt}
+                onChange={e =>
+                  setInsuranceCostHt(parseFloat(e.target.value) || 0)
+                }
+                disabled={readOnly}
+                className="h-7 text-xs pr-6"
+              />
+              <span className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs">
+                €
+              </span>
+            </div>
+            {!readOnly && (
+              <button
+                type="button"
+                className="text-gray-400 hover:text-red-500 flex-shrink-0"
+                onClick={() => {
+                  setShowInsurance(false);
+                  setInsuranceCostHt(0);
+                }}
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Add more fees + save */}
+        <div className="flex items-center justify-between">
+          <div className="flex gap-1">
+            {canAddMore && !readOnly && (
               <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Enregistrement...
-              </>
-            ) : saveSuccess ? (
-              <>
-                <Check className="h-4 w-4 mr-2" />
-                Enregistré
-              </>
-            ) : (
-              <>
-                <Save className="h-4 w-4 mr-2" />
-                Enregistrer les frais
+                {!showHandling && (
+                  <button
+                    type="button"
+                    className="flex items-center gap-0.5 text-[10px] text-blue-600 hover:text-blue-800"
+                    onClick={() => setShowHandling(true)}
+                  >
+                    <Plus className="h-3 w-3" />
+                    Manutention
+                  </button>
+                )}
+                {!showInsurance && (
+                  <button
+                    type="button"
+                    className="flex items-center gap-0.5 text-[10px] text-blue-600 hover:text-blue-800"
+                    onClick={() => setShowInsurance(true)}
+                  >
+                    <Plus className="h-3 w-3" />
+                    Assurance
+                  </button>
+                )}
               </>
             )}
-          </Button>
+          </div>
+          {hasChanges && !readOnly && (
+            <Button
+              size="sm"
+              className="h-6 text-xs px-2"
+              onClick={onSaveClick}
+              disabled={isSaving}
+            >
+              {isSaving ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : saveSuccess ? (
+                <>
+                  <Check className="h-3 w-3 mr-1" />
+                  OK
+                </>
+              ) : (
+                <>
+                  <Save className="h-3 w-3 mr-1" />
+                  Sauver
+                </>
+              )}
+            </Button>
+          )}
+        </div>
+
+        {/* Totals — only if fees > 0 */}
+        {totalFeesHt > 0 && (
+          <div className="flex items-center justify-between pt-1 border-t border-gray-100 text-xs">
+            <span className="text-gray-500">
+              Total frais : {formatCurrency(totalFeesHt)} HT
+              {' + '}
+              {formatCurrency(totalFeesTva)} TVA
+            </span>
+            <span className="font-semibold">
+              {formatCurrency(totalFeesTtc)} TTC
+            </span>
+          </div>
         )}
       </div>
     </Card>

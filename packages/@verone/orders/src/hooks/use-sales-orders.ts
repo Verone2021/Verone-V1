@@ -9,7 +9,6 @@ import { useState, useCallback, useMemo, useRef } from 'react';
 
 import { useToast } from '@verone/common/hooks';
 import { useStockMovements } from '@verone/stock/hooks/use-stock-movements';
-import type { Database } from '@verone/types';
 import { createClient } from '@verone/utils/supabase/client';
 
 // Types pour les commandes clients
@@ -62,7 +61,9 @@ export interface SalesOrder {
   paid_amount?: number;
   order_date?: string | null;
   expected_delivery_date?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- JSONB from Supabase, shape varies per context
   shipping_address?: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- JSONB from Supabase, shape varies per context
   billing_address?: any;
   payment_terms?: string;
   notes?: string;
@@ -99,6 +100,8 @@ export interface SalesOrder {
   updated_at: string;
 
   // Facture associée (financial_documents)
+  invoice_id?: string | null;
+  invoice_qonto_id?: string | null;
   invoice_number?: string | null;
 
   // 🆕 Rapprochement bancaire (jointure transaction_document_links)
@@ -224,7 +227,9 @@ export interface CreateSalesOrderData {
   channel_id?: string | null; // 🆕 Canal vente (optional - si null, pas de traçabilité stock)
   eco_tax_vat_rate?: number | null;
   expected_delivery_date?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- JSONB from Supabase, shape varies per context
   shipping_address?: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- JSONB from Supabase, shape varies per context
   billing_address?: any;
   payment_terms?: string;
   payment_terms_type?: string | null;
@@ -253,7 +258,9 @@ export interface CreateSalesOrderItemData {
 
 export interface UpdateSalesOrderData {
   expected_delivery_date?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- JSONB from Supabase, shape varies per context
   shipping_address?: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- JSONB from Supabase, shape varies per context
   billing_address?: any;
   payment_terms?: string;
   notes?: string;
@@ -355,12 +362,13 @@ export function useSalesOrders() {
   const { toast } = useToast();
   // ✅ FIX: useMemo pour éviter recréation du client à chaque render
   const supabase = useMemo(() => createClient(), []);
-  const { createMovement, getAvailableStock } = useStockMovements();
+  const { createMovement: _createMovement, getAvailableStock } =
+    useStockMovements();
 
   // Récupérer toutes les commandes avec filtres
   const fetchOrders = useCallback(
     async (filters?: SalesOrderFilters) => {
-      console.log('🔄 [FETCH] Début fetchOrders, filtres:', filters);
+      console.warn('[FETCH] Début fetchOrders, filtres:', filters);
       setLoading(true);
       try {
         let query = supabase
@@ -414,17 +422,17 @@ export function useSalesOrders() {
 
         const { data: ordersData, error } = await query;
 
-        console.log(
-          '📊 [FETCH] Données reçues:',
+        console.warn(
+          '[FETCH] Données reçues:',
           ordersData?.length,
           'commandes'
         );
-        console.log('📊 [FETCH] Erreur:', error);
+        if (error) console.error('[FETCH] Erreur:', error);
 
         if (error) throw error;
 
         // 🆕 Récupérer les rapprochements bancaires (batch pour performance)
-        const orderIds = (ordersData || []).map(o => o.id);
+        const orderIds = (ordersData ?? []).map(o => o.id);
         const matchedOrdersMap = new Map<
           string,
           {
@@ -455,33 +463,46 @@ export function useSalesOrders() {
             .in('sales_order_id', orderIds)
             .eq('link_type', 'sales_order');
 
-          for (const link of links || []) {
+          for (const link of links ?? []) {
             if (link.sales_order_id && link.bank_transactions) {
-              const bt = link.bank_transactions as any;
+              const bt = link.bank_transactions as {
+                id: string;
+                label: string | null;
+                amount: number | null;
+                emitted_at: string | null;
+                attachment_ids: string[] | null;
+              };
               matchedOrdersMap.set(link.sales_order_id, {
                 transaction_id: bt.id,
-                label: bt.label || '',
-                amount: bt.amount || 0,
-                emitted_at: bt.emitted_at || null,
-                attachment_ids: bt.attachment_ids || null,
+                label: bt.label ?? '',
+                amount: bt.amount ?? 0,
+                emitted_at: bt.emitted_at ?? null,
+                attachment_ids: bt.attachment_ids ?? null,
               });
             }
           }
         }
 
         // 🆕 Récupérer les factures associées (batch pour performance)
-        const invoiceMap = new Map<string, string>();
+        const invoiceMap = new Map<
+          string,
+          { id: string; qontoId: string | null; number: string }
+        >();
         if (orderIds.length > 0) {
           const { data: invoicesData } = await supabase
             .from('financial_documents')
-            .select('sales_order_id, document_number')
+            .select('id, sales_order_id, document_number, qonto_invoice_id')
             .in('sales_order_id', orderIds)
             .eq('document_type', 'customer_invoice')
             .is('deleted_at', null);
 
-          for (const inv of invoicesData || []) {
+          for (const inv of invoicesData ?? []) {
             if (inv.sales_order_id) {
-              invoiceMap.set(inv.sales_order_id, inv.document_number);
+              invoiceMap.set(inv.sales_order_id, {
+                id: inv.id,
+                qontoId: inv.qonto_invoice_id,
+                number: inv.document_number,
+              });
             }
           }
         }
@@ -489,7 +510,7 @@ export function useSalesOrders() {
         // 🆕 Récupérer les infos des créateurs (batch pour performance)
         const uniqueCreatorIds = [
           ...new Set(
-            (ordersData || [])
+            (ordersData ?? [])
               .map(o => o.created_by)
               .filter((id): id is string => !!id)
           ),
@@ -508,11 +529,11 @@ export function useSalesOrders() {
             .in('user_id', uniqueCreatorIds);
 
           // Mapper les profils directement (pas de boucle avec RPC)
-          for (const profile of profiles || []) {
+          for (const profile of profiles ?? []) {
             if (profile.user_id) {
               creatorsMap.set(profile.user_id, {
-                first_name: profile.first_name || 'Utilisateur',
-                last_name: profile.last_name || '',
+                first_name: profile.first_name ?? 'Utilisateur',
+                last_name: profile.last_name ?? '',
                 email: null, // email pas accessible depuis user_profiles
               });
             }
@@ -521,11 +542,11 @@ export function useSalesOrders() {
 
         // ✅ OPTIMISÉ: Batch fetch des clients (2 requêtes au lieu de N)
         // Collecter tous les IDs par type de client
-        const orgIds = (ordersData || [])
+        const orgIds = (ordersData ?? [])
           .filter(o => o.customer_type === 'organization' && o.customer_id)
           .map(o => o.customer_id)
           .filter((id): id is string => id !== null);
-        const individualIds = (ordersData || [])
+        const individualIds = (ordersData ?? [])
           .filter(
             o => o.customer_type === 'individual' && o.individual_customer_id
           )
@@ -533,7 +554,7 @@ export function useSalesOrders() {
           .filter((id): id is string => id !== null);
 
         // Batch fetch organisations (1 seule requête)
-        const orgsMap = new Map<string, any>();
+        const orgsMap = new Map<string, Record<string, unknown>>();
         if (orgIds.length > 0) {
           const { data: orgs } = await supabase
             .from('organisations')
@@ -541,13 +562,13 @@ export function useSalesOrders() {
               'id, legal_name, trade_name, email, phone, website, address_line1, address_line2, postal_code, city, region, enseigne_id, siret, vat_number'
             )
             .in('id', orgIds);
-          for (const org of orgs || []) {
+          for (const org of orgs ?? []) {
             orgsMap.set(org.id, org);
           }
         }
 
         // Batch fetch individual_customers (1 seule requête)
-        const individualsMap = new Map<string, any>();
+        const individualsMap = new Map<string, Record<string, unknown>>();
         if (individualIds.length > 0) {
           const { data: individuals } = await supabase
             .from('individual_customers')
@@ -555,14 +576,15 @@ export function useSalesOrders() {
               'id, first_name, last_name, email, phone, address_line1, address_line2, postal_code, city'
             )
             .in('id', individualIds);
-          for (const ind of individuals || []) {
+          for (const ind of individuals ?? []) {
             individualsMap.set(ind.id, ind);
           }
         }
 
         // Mapper les commandes avec les données clients (sans requêtes supplémentaires)
-        const ordersWithCustomers = (ordersData || []).map(order => {
-          let customerData: any = null;
+        const ordersWithCustomers = (ordersData ?? []).map(order => {
+          let customerData: Record<string, Record<string, unknown>> | null =
+            null;
 
           if (order.customer_type === 'organization' && order.customer_id) {
             const org = orgsMap.get(order.customer_id);
@@ -578,13 +600,13 @@ export function useSalesOrders() {
           }
 
           // Enrichir les produits avec primary_image_url (BR-TECH-002)
-          const enrichedItems = (order.sales_order_items || []).map(item => ({
+          const enrichedItems = (order.sales_order_items ?? []).map(item => ({
             ...item,
             products: item.products
               ? {
                   ...item.products,
                   primary_image_url:
-                    item.products.product_images?.[0]?.public_url || null,
+                    item.products.product_images?.[0]?.public_url ?? null,
                 }
               : null,
           }));
@@ -600,30 +622,34 @@ export function useSalesOrders() {
           return {
             ...order,
             sales_order_items: enrichedItems,
-            creator: creatorInfo || null,
-            invoice_number: invoiceMap.get(order.id) ?? null,
+            creator: creatorInfo ?? null,
+            invoice_id: invoiceMap.get(order.id)?.id ?? null,
+            invoice_qonto_id: invoiceMap.get(order.id)?.qontoId ?? null,
+            invoice_number: invoiceMap.get(order.id)?.number ?? null,
             is_matched: !!matchInfo,
-            matched_transaction_id: matchInfo?.transaction_id || null,
-            matched_transaction_label: matchInfo?.label || null,
-            matched_transaction_amount: matchInfo?.amount || null,
-            matched_transaction_emitted_at: matchInfo?.emitted_at || null,
+            matched_transaction_id: matchInfo?.transaction_id ?? null,
+            matched_transaction_label: matchInfo?.label ?? null,
+            matched_transaction_amount: matchInfo?.amount ?? null,
+            matched_transaction_emitted_at: matchInfo?.emitted_at ?? null,
             matched_transaction_attachment_ids:
-              matchInfo?.attachment_ids || null,
+              matchInfo?.attachment_ids ?? null,
             ...customerData,
           };
         });
 
-        console.log(
-          '✅ [FETCH] Mise à jour state avec',
+        console.warn(
+          '[FETCH] Mise à jour state avec',
           ordersWithCustomers.length,
           'commandes'
         );
-        setOrders(ordersWithCustomers as any);
-        console.log('🎉 [FETCH] fetchOrders terminé avec succès');
-      } catch (error: any) {
+        setOrders(ordersWithCustomers as unknown as SalesOrder[]);
+        console.warn('[FETCH] fetchOrders terminé avec succès');
+      } catch (error: unknown) {
+        const errMsg =
+          error instanceof Error ? error.message : 'Erreur inconnue';
         console.error(
-          '❌ [FETCH] Erreur lors de la récupération des commandes:',
-          error?.message || 'Erreur inconnue',
+          '[FETCH] Erreur lors de la récupération des commandes:',
+          errMsg,
           error
         );
         toast({
@@ -632,7 +658,7 @@ export function useSalesOrders() {
           variant: 'destructive',
         });
       } finally {
-        console.log('🏁 [FETCH] fetchOrders finally block');
+        console.warn('[FETCH] fetchOrders finally block');
         setLoading(false);
       }
     },
@@ -677,7 +703,10 @@ export function useSalesOrders() {
         if (error) throw error;
 
         // Fetch manuel des données client selon le type (relation polymorphique)
-        let customerData: any = null;
+        let customerData: Record<
+          string,
+          Record<string, unknown> | null
+        > | null = null;
 
         if (
           orderData.customer_type === 'organization' &&
@@ -706,13 +735,13 @@ export function useSalesOrders() {
         }
 
         // Enrichir les produits avec primary_image_url (BR-TECH-002)
-        const enrichedItems = (orderData.sales_order_items || []).map(item => ({
+        const enrichedItems = (orderData.sales_order_items ?? []).map(item => ({
           ...item,
           products: item.products
             ? {
                 ...item.products,
                 primary_image_url:
-                  item.products.product_images?.[0]?.public_url || null,
+                  item.products.product_images?.[0]?.public_url ?? null,
               }
             : null,
         }));
@@ -725,16 +754,21 @@ export function useSalesOrders() {
         } | null = null;
 
         if (orderData.created_by) {
-          const { data: userInfo } = await (supabase.rpc as any)(
-            'get_user_info',
-            { p_user_id: orderData.created_by }
-          );
+          const { data: userInfo } = await supabase.rpc('get_user_info', {
+            p_user_id: orderData.created_by,
+          });
 
-          if (userInfo && userInfo.length > 0) {
+          const userInfoArray = userInfo as unknown as Array<{
+            first_name: string | null;
+            last_name: string | null;
+            email: string | null;
+          }> | null;
+
+          if (userInfoArray && userInfoArray.length > 0) {
             creatorInfo = {
-              first_name: userInfo[0].first_name || 'Utilisateur',
-              last_name: userInfo[0].last_name || '',
-              email: userInfo[0].email || null,
+              first_name: userInfoArray[0].first_name ?? 'Utilisateur',
+              last_name: userInfoArray[0].last_name ?? '',
+              email: userInfoArray[0].email ?? null,
             };
           }
         }
@@ -767,13 +801,19 @@ export function useSalesOrders() {
           .maybeSingle();
 
         if (linkData?.bank_transactions) {
-          const bt = linkData.bank_transactions as any;
+          const bt = linkData.bank_transactions as {
+            id: string;
+            label: string | null;
+            amount: number | null;
+            emitted_at: string | null;
+            attachment_ids: string[] | null;
+          };
           matchInfo = {
             transaction_id: bt.id,
-            label: bt.label || '',
-            amount: bt.amount || 0,
-            emitted_at: bt.emitted_at || null,
-            attachment_ids: bt.attachment_ids || null,
+            label: bt.label ?? '',
+            amount: bt.amount ?? 0,
+            emitted_at: bt.emitted_at ?? null,
+            attachment_ids: bt.attachment_ids ?? null,
           };
         }
 
@@ -783,16 +823,16 @@ export function useSalesOrders() {
           creator: creatorInfo,
           // 🆕 Rapprochement
           is_matched: !!matchInfo,
-          matched_transaction_id: matchInfo?.transaction_id || null,
-          matched_transaction_label: matchInfo?.label || null,
-          matched_transaction_amount: matchInfo?.amount || null,
-          matched_transaction_emitted_at: matchInfo?.emitted_at || null,
-          matched_transaction_attachment_ids: matchInfo?.attachment_ids || null,
+          matched_transaction_id: matchInfo?.transaction_id ?? null,
+          matched_transaction_label: matchInfo?.label ?? null,
+          matched_transaction_amount: matchInfo?.amount ?? null,
+          matched_transaction_emitted_at: matchInfo?.emitted_at ?? null,
+          matched_transaction_attachment_ids: matchInfo?.attachment_ids ?? null,
           ...customerData,
         };
 
-        setCurrentOrder(orderWithCustomer);
-        return orderWithCustomer;
+        setCurrentOrder(orderWithCustomer as unknown as SalesOrder);
+        return orderWithCustomer as unknown as SalesOrder;
       } catch (error) {
         console.error('Erreur lors de la récupération de la commande:', error);
         toast({
@@ -830,8 +870,8 @@ export function useSalesOrders() {
         const statsData = data?.reduce(
           (acc, order) => {
             acc.total_orders++;
-            acc.total_ht += order.total_ht || 0;
-            acc.total_ttc += order.total_ttc || 0;
+            acc.total_ht += order.total_ht ?? 0;
+            acc.total_ttc += order.total_ttc ?? 0;
 
             // Compteurs par statut
             switch (order.status) {
@@ -892,11 +932,13 @@ export function useSalesOrders() {
           statsData.total_value = statsData.total_ttc;
         }
 
-        setStats(statsData || null);
-      } catch (error: any) {
+        setStats(statsData ?? null);
+      } catch (error: unknown) {
+        const errMsg =
+          error instanceof Error ? error.message : 'Erreur inconnue';
         console.error(
           'Erreur lors de la récupération des statistiques:',
-          error?.message || 'Erreur inconnue'
+          errMsg
         );
       }
     },
@@ -909,7 +951,7 @@ export function useSalesOrders() {
       const availabilityCheck: Array<{
         product_id: string;
         requested_quantity: number;
-        available_stock: any;
+        available_stock: unknown;
         is_available: boolean;
       }> = [];
 
@@ -941,15 +983,15 @@ export function useSalesOrders() {
         if (error) throw error;
 
         return {
-          stock_real: data?.stock_real || 0,
-          stock_forecasted_in: data?.stock_forecasted_in || 0,
-          stock_forecasted_out: data?.stock_forecasted_out || 0,
+          stock_real: data?.stock_real ?? 0,
+          stock_forecasted_in: data?.stock_forecasted_in ?? 0,
+          stock_forecasted_out: data?.stock_forecasted_out ?? 0,
           stock_available:
-            (data?.stock_real || 0) +
-            (data?.stock_forecasted_in || 0) -
-            (data?.stock_forecasted_out || 0),
+            (data?.stock_real ?? 0) +
+            (data?.stock_forecasted_in ?? 0) -
+            (data?.stock_forecasted_out ?? 0),
           stock_future:
-            (data?.stock_real || 0) + (data?.stock_forecasted_in || 0),
+            (data?.stock_real ?? 0) + (data?.stock_forecasted_in ?? 0),
         };
       } catch (error) {
         console.error('Erreur lors de la récupération du stock:', error);
@@ -978,7 +1020,7 @@ export function useSalesOrders() {
 
         if (!order) throw new Error('Commande non trouvée');
 
-        const paidAmount = amount || order.total_ttc;
+        const paidAmount = amount ?? order.total_ttc;
 
         const { error } = await supabase.rpc('mark_payment_received', {
           p_order_id: orderId,
@@ -1002,7 +1044,7 @@ export function useSalesOrders() {
         console.error("Erreur lors de l'enregistrement du paiement:", error);
         toast({
           title: 'Erreur',
-          description: message || "Impossible d'enregistrer le paiement",
+          description: message ?? "Impossible d'enregistrer le paiement",
           variant: 'destructive',
         });
         throw error;
@@ -1080,7 +1122,7 @@ export function useSalesOrders() {
         console.error('Erreur lors du paiement manuel:', error);
         toast({
           title: 'Erreur',
-          description: message || "Impossible d'enregistrer le paiement manuel",
+          description: message ?? "Impossible d'enregistrer le paiement manuel",
           variant: 'destructive',
         });
         throw error;
@@ -1158,12 +1200,15 @@ export function useSalesOrders() {
         if (currentOrderRef.current?.id === orderId) {
           await fetchOrder(orderId);
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Erreur lors de la sortie entrepôt:', error);
+        const errMsg =
+          error instanceof Error
+            ? error.message
+            : "Impossible d'enregistrer la sortie entrepôt";
         toast({
           title: 'Erreur',
-          description:
-            error.message || "Impossible d'enregistrer la sortie entrepôt",
+          description: errMsg,
           variant: 'destructive',
         });
         throw error;
@@ -1193,12 +1238,12 @@ export function useSalesOrders() {
                 .eq('id', item.product_id)
                 .single();
               return {
-                name: product?.name || item.product_id,
+                name: product?.name ?? item.product_id,
                 product_id: item.product_id,
                 requested: item.requested_quantity,
                 available: item.available_stock,
-                current_forecasted_out: product?.stock_forecasted_out || 0,
-                stock_real: product?.stock_real || 0,
+                current_forecasted_out: product?.stock_forecasted_out ?? 0,
+                stock_real: product?.stock_real ?? 0,
               };
             })
           );
@@ -1224,7 +1269,7 @@ export function useSalesOrders() {
           const itemTotal =
             item.quantity *
             item.unit_price_ht *
-            (1 - (item.discount_percentage || 0) / 100);
+            (1 - (item.discount_percentage ?? 0) / 100);
           return sum + itemTotal;
         }, 0);
 
@@ -1241,12 +1286,14 @@ export function useSalesOrders() {
               customer_type: data.customer_type,
               individual_customer_id:
                 data.customer_type === 'individual'
-                  ? data.individual_customer_id || data.customer_id
+                  ? (data.individual_customer_id ?? data.customer_id)
                   : null,
-              order_date: data.order_date || null,
-              channel_id: data.channel_id || null, // 🆕 Canal vente pour traçabilité stock
-              expected_delivery_date: data.expected_delivery_date || null,
+              order_date: data.order_date ?? null,
+              channel_id: data.channel_id ?? null, // 🆕 Canal vente pour traçabilité stock
+              expected_delivery_date: data.expected_delivery_date ?? null,
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- JSONB address passthrough
               shipping_address: data.shipping_address,
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- JSONB address passthrough
               billing_address: data.billing_address,
               payment_terms: data.payment_terms,
               notes: data.notes,
@@ -1255,11 +1302,11 @@ export function useSalesOrders() {
               created_by: (await supabase.auth.getUser()).data.user?.id,
               tax_rate: 0.2, // TVA FR par defaut (triggers utilisent item.tax_rate pour TTC)
               // Frais additionnels clients
-              shipping_cost_ht: data.shipping_cost_ht || 0,
-              insurance_cost_ht: data.insurance_cost_ht || 0,
-              handling_cost_ht: data.handling_cost_ht || 0,
+              shipping_cost_ht: data.shipping_cost_ht ?? 0,
+              insurance_cost_ht: data.insurance_cost_ht ?? 0,
+              handling_cost_ht: data.handling_cost_ht ?? 0,
             },
-          ] as any)
+          ] as never)
           .select()
           .single();
 
@@ -1275,9 +1322,9 @@ export function useSalesOrders() {
               quantity: item.quantity,
               unit_price_ht: item.unit_price_ht,
               tax_rate: item.tax_rate ?? 0.2, // TVA par défaut 20%
-              discount_percentage: item.discount_percentage || 0,
+              discount_percentage: item.discount_percentage ?? 0,
               eco_tax: item.eco_tax ?? 0, // Éco-taxe (défaut 0)
-              expected_delivery_date: item.expected_delivery_date || null,
+              expected_delivery_date: item.expected_delivery_date ?? null,
               notes: item.notes,
               is_sample: item.is_sample ?? false, // Échantillon (défaut false)
             }))
@@ -1293,7 +1340,7 @@ export function useSalesOrders() {
 
         // On met à jour stock_forecasted_out UNIQUEMENT si la commande est créée directement en statut 'validated'
         // Sinon, la mise à jour se fera lors de la validation (transition draft → validated)
-        const initialStatus = order.status || 'draft'; // Par défaut: brouillon
+        const initialStatus = order.status ?? 'draft'; // Par défaut: brouillon
 
         if (initialStatus === 'validated') {
           // Commande validée → Impact stock prévisionnel pour TOUS les produits
@@ -1313,8 +1360,8 @@ export function useSalesOrders() {
               continue;
             }
 
-            const currentReal = product?.stock_real || 0;
-            const currentForecastedOut = product?.stock_forecasted_out || 0;
+            const currentReal = product?.stock_real ?? 0;
+            const currentForecastedOut = product?.stock_forecasted_out ?? 0;
 
             // Nouvelle quantité prévue en sortie (additionnée)
             const newForecastedOut = currentForecastedOut + item.quantity;
@@ -1333,8 +1380,8 @@ export function useSalesOrders() {
                 updateError
               );
             } else {
-              console.log(
-                `✅ Stock prévisionnel mis à jour pour produit ${item.product_id}: forecasted_out=${newForecastedOut}, disponible=${currentReal - newForecastedOut}`
+              console.warn(
+                `[STOCK] Stock prévisionnel mis à jour pour produit ${item.product_id}: forecasted_out=${newForecastedOut}, disponible=${currentReal - newForecastedOut}`
               );
 
               // Si le stock disponible devient négatif, le trigger notify_negative_forecast_stock()
@@ -1342,8 +1389,8 @@ export function useSalesOrders() {
             }
           }
         } else {
-          console.log(
-            `ℹ️ Commande créée en statut '${initialStatus}' → Pas d'impact stock prévisionnel (sera mis à jour lors de la validation)`
+          console.warn(
+            `[STOCK] Commande créée en statut '${initialStatus}' - Pas d'impact stock prévisionnel (sera mis à jour lors de la validation)`
           );
         }
 
@@ -1372,7 +1419,7 @@ export function useSalesOrders() {
                         ).toISOString()
                       : null, // 7 jours après la livraison prévue
                   },
-                ] as any);
+                ] as never);
               }
             }
           } catch (reservationError) {
@@ -1411,7 +1458,7 @@ export function useSalesOrders() {
         console.error('[createOrder] Erreur:', errMsg, error);
         toast({
           title: 'Erreur',
-          description: errMsg || 'Impossible de créer la commande',
+          description: errMsg ?? 'Impossible de créer la commande',
           variant: 'destructive',
         });
         throw error;
@@ -1419,7 +1466,7 @@ export function useSalesOrders() {
         setLoading(false);
       }
     },
-    [supabase, toast, fetchOrders, checkStockAvailability, getAvailableStock]
+    [supabase, toast, fetchOrders, checkStockAvailability]
   );
 
   // Mettre à jour une commande (métadonnées uniquement)
@@ -1443,12 +1490,15 @@ export function useSalesOrders() {
         if (currentOrderRef.current?.id === orderId) {
           await fetchOrder(orderId);
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Erreur lors de la mise à jour:', error);
+        const errMsg =
+          error instanceof Error
+            ? error.message
+            : 'Impossible de mettre à jour la commande';
         toast({
           title: 'Erreur',
-          description:
-            error.message || 'Impossible de mettre à jour la commande',
+          description: errMsg,
           variant: 'destructive',
         });
         throw error;
@@ -1494,7 +1544,7 @@ export function useSalesOrders() {
 
         // 3. Vérifier la disponibilité du stock en tenant compte des quantités actuelles
         const existingItemsMap = new Map(
-          (existingItems || []).map(item => [item.product_id, item])
+          (existingItems ?? []).map(item => [item.product_id, item])
         );
 
         // Pour chaque item demandé, vérifier le stock disponible
@@ -1509,11 +1559,11 @@ export function useSalesOrders() {
         }> = [];
         for (const item of items) {
           const availableStockData = await getAvailableStock(item.product_id);
-          const availableStock = availableStockData.stock_available || 0;
+          const availableStock = availableStockData.stock_available ?? 0;
 
           // Quantité actuellement allouée dans cette commande
           const currentlyAllocated =
-            existingItemsMap.get(item.product_id)?.quantity || 0;
+            existingItemsMap.get(item.product_id)?.quantity ?? 0;
 
           // Stock disponible réel = stock disponible + quantité actuellement allouée
           const effectiveAvailableStock = availableStock + currentlyAllocated;
@@ -1544,7 +1594,7 @@ export function useSalesOrders() {
                 .select('name')
                 .eq('id', item.product_id)
                 .single();
-              return `${product?.name || item.product_id} (demandé: ${item.requested_quantity}, disponible: ${item.effective_available_stock})`;
+              return `${product?.name ?? item.product_id} (demandé: ${item.requested_quantity}, disponible: ${item.effective_available_stock})`;
             })
           );
 
@@ -1559,7 +1609,7 @@ export function useSalesOrders() {
         const newItemsMap = new Map(items.map(item => [item.product_id, item]));
 
         // Items à supprimer (présents dans existing mais pas dans new)
-        const itemsToDelete = (existingItems || []).filter(
+        const itemsToDelete = (existingItems ?? []).filter(
           item => !newItemsMap.has(item.product_id)
         );
 
@@ -1576,8 +1626,8 @@ export function useSalesOrders() {
           return (
             existingItem.quantity !== newItem.quantity ||
             existingItem.unit_price_ht !== newItem.unit_price_ht ||
-            (existingItem.discount_percentage || 0) !==
-              (newItem.discount_percentage || 0)
+            (existingItem.discount_percentage ?? 0) !==
+              (newItem.discount_percentage ?? 0)
           );
         });
 
@@ -1605,7 +1655,7 @@ export function useSalesOrders() {
                 quantity: item.quantity,
                 unit_price_ht: item.unit_price_ht,
                 tax_rate: item.tax_rate ?? 0.2, // TVA par défaut 20%
-                discount_percentage: item.discount_percentage || 0,
+                discount_percentage: item.discount_percentage ?? 0,
                 eco_tax: item.eco_tax ?? 0, // Éco-taxe (défaut 0)
                 expected_delivery_date: item.expected_delivery_date,
                 notes: item.notes,
@@ -1631,7 +1681,7 @@ export function useSalesOrders() {
                 quantity: itemToUpdate.quantity,
                 unit_price_ht: itemToUpdate.unit_price_ht,
                 tax_rate: itemToUpdate.tax_rate ?? 0.2,
-                discount_percentage: itemToUpdate.discount_percentage || 0,
+                discount_percentage: itemToUpdate.discount_percentage ?? 0,
                 eco_tax: itemToUpdate.eco_tax ?? 0,
                 expected_delivery_date: itemToUpdate.expected_delivery_date,
                 notes: itemToUpdate.notes,
@@ -1643,7 +1693,7 @@ export function useSalesOrders() {
           if (updatePayloads.length > 0) {
             const { error: updateItemsError } = await supabase
               .from('sales_order_items')
-              .upsert(updatePayloads as any);
+              .upsert(updatePayloads as never);
 
             if (updateItemsError) throw updateItemsError;
           }
@@ -1654,7 +1704,7 @@ export function useSalesOrders() {
           const itemTotal =
             item.quantity *
             item.unit_price_ht *
-            (1 - (item.discount_percentage || 0) / 100);
+            (1 - (item.discount_percentage ?? 0) / 100);
           return sum + itemTotal;
         }, 0);
 
@@ -1683,12 +1733,15 @@ export function useSalesOrders() {
         }
 
         return true;
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Erreur lors de la mise à jour de la commande:', error);
+        const errMsg =
+          error instanceof Error
+            ? error.message
+            : 'Impossible de mettre à jour la commande';
         toast({
           title: 'Erreur',
-          description:
-            error.message || 'Impossible de mettre à jour la commande',
+          description: errMsg,
           variant: 'destructive',
         });
         throw error;
@@ -1728,8 +1781,8 @@ export function useSalesOrders() {
 
         // Valider transition FSM (throws Error si invalide)
         validateStatusTransition(currentStatus, newStatus);
-        console.log(
-          `✅ [FSM] Transition validée: ${currentStatus} → ${newStatus}`
+        console.warn(
+          `[FSM] Transition validée: ${currentStatus} → ${newStatus}`
         );
 
         // ✅ DÉVALIDATION: Bloquer si expédition a commencé (même règle que PO)
@@ -1740,15 +1793,15 @@ export function useSalesOrders() {
             .eq('sales_order_id', orderId);
 
           const hasShipped = items?.some(
-            item => (item.quantity_shipped || 0) > 0
+            item => (item.quantity_shipped ?? 0) > 0
           );
           if (hasShipped) {
             throw new Error(
               'Impossible de dévalider : des expéditions ont déjà été effectuées'
             );
           }
-          console.log(
-            `✅ [DEVALIDATION] Aucune expédition, dévalidation autorisée`
+          console.warn(
+            `[DEVALIDATION] Aucune expédition, dévalidation autorisée`
           );
 
           // ✅ DÉVALIDATION: Bloquer si facture finalisée/payée existe
@@ -1770,8 +1823,8 @@ export function useSalesOrders() {
                 `Créez d'abord un avoir pour annuler cette facture.`
             );
           }
-          console.log(
-            `✅ [DEVALIDATION] Aucune facture finalisée, dévalidation autorisée`
+          console.warn(
+            `[DEVALIDATION] Aucune facture finalisée, dévalidation autorisée`
           );
         }
 
@@ -1792,10 +1845,10 @@ export function useSalesOrders() {
 
         if (updateError) {
           throw new Error(
-            updateError.message || 'Erreur lors de la mise à jour du statut'
+            updateError.message ?? 'Erreur lors de la mise à jour du statut'
           );
         }
-        console.log(`✅ [STATUS] Statut mis à jour: ${newStatus}`);
+        console.warn(`[STATUS] Statut mis à jour: ${newStatus}`);
 
         // Libérer les réservations de stock en cas d'annulation OU dévalidation (via client car pas bloqué par RLS)
         if (newStatus === 'cancelled' || newStatus === 'draft') {
@@ -1809,8 +1862,8 @@ export function useSalesOrders() {
             .eq('reference_type', 'sales_order')
             .eq('reference_id', orderId)
             .is('released_at', null);
-          console.log(
-            `✅ [STOCK] Réservations libérées pour commande ${orderId}`
+          console.warn(
+            `[STOCK] Réservations libérées pour commande ${orderId}`
           );
         }
 
@@ -1827,13 +1880,17 @@ export function useSalesOrders() {
         // ✅ Notifier les composants d'alertes stock pour rafraîchissement immédiat
         if (typeof window !== 'undefined') {
           window.dispatchEvent(new CustomEvent('stock-alerts-refresh'));
-          console.log('📢 [EVENT] stock-alerts-refresh émis');
+          console.warn('[EVENT] stock-alerts-refresh émis');
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Erreur lors du changement de statut:', error);
+        const errMsg =
+          error instanceof Error
+            ? error.message
+            : 'Impossible de changer le statut';
         toast({
           title: 'Erreur',
-          description: error.message || 'Impossible de changer le statut',
+          description: errMsg,
           variant: 'destructive',
         });
         throw error;
@@ -1862,7 +1919,7 @@ export function useSalesOrders() {
 
           // Mettre à jour avec la nouvelle quantité
           const newQuantity =
-            (currentItem.quantity_shipped || 0) + item.quantity_shipped;
+            (currentItem.quantity_shipped ?? 0) + item.quantity_shipped;
 
           const { error: updateError } = await supabase
             .from('sales_order_items')
@@ -1906,11 +1963,15 @@ export function useSalesOrders() {
           title: 'Succès',
           description: 'Expédition enregistrée avec succès',
         });
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error("Erreur lors de l'expédition:", error);
+        const errMsg =
+          error instanceof Error
+            ? error.message
+            : "Impossible d'enregistrer l'expédition";
         toast({
           title: 'Erreur',
-          description: error.message || "Impossible d'enregistrer l'expédition",
+          description: errMsg,
           variant: 'destructive',
         });
         throw error;
@@ -1918,7 +1979,7 @@ export function useSalesOrders() {
         setLoading(false);
       }
     },
-    [supabase, toast, createMovement, updateStatus]
+    [supabase, toast, updateStatus]
   );
 
   // Supprimer une commande (draft seulement)
@@ -1938,7 +1999,7 @@ export function useSalesOrders() {
           .eq('reference_id', orderId)
           .is('released_at', null);
 
-        console.log('🔍 [DELETE] Début suppression commande:', orderId);
+        console.warn('[DELETE] Début suppression commande:', orderId);
 
         // Vérifier d'abord le statut de la commande
         const { data: order, error: fetchError } = await supabase
@@ -1947,12 +2008,7 @@ export function useSalesOrders() {
           .eq('id', orderId)
           .single();
 
-        console.log(
-          '📊 [DELETE] Statut récupéré:',
-          order,
-          'Erreur:',
-          fetchError
-        );
+        console.warn('[DELETE] Statut récupéré:', order, 'Erreur:', fetchError);
 
         if (fetchError) {
           console.error('❌ [DELETE] Erreur fetch status:', fetchError);
@@ -1967,9 +2023,7 @@ export function useSalesOrders() {
           );
         }
 
-        console.log(
-          '✅ [DELETE] Validation statut OK, suppression en cours...'
-        );
+        console.warn('[DELETE] Validation statut OK, suppression en cours...');
 
         // Supprimer la commande (avec count pour vérifier si suppression effective)
         const { data, error, count } = await supabase
@@ -1978,8 +2032,8 @@ export function useSalesOrders() {
           .eq('id', orderId)
           .select();
 
-        console.log(
-          '🗑️ [DELETE] Résultat suppression - Data:',
+        console.warn(
+          '[DELETE] Résultat suppression - Data:',
           data,
           'Count:',
           count,
@@ -2002,8 +2056,8 @@ export function useSalesOrders() {
           );
         }
 
-        console.log(
-          '🎉 [DELETE] Suppression réussie !',
+        console.warn(
+          '[DELETE] Suppression réussie !',
           data.length,
           'ligne(s) supprimée(s)'
         );
@@ -2017,11 +2071,15 @@ export function useSalesOrders() {
         if (currentOrderRef.current?.id === orderId) {
           setCurrentOrder(null);
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Erreur lors de la suppression:', error);
+        const errMsg =
+          error instanceof Error
+            ? error.message
+            : 'Impossible de supprimer la commande';
         toast({
           title: 'Erreur',
-          description: error.message || 'Impossible de supprimer la commande',
+          description: errMsg,
           variant: 'destructive',
         });
         throw error;

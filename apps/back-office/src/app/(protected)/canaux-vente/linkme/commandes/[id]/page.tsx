@@ -121,6 +121,16 @@ interface CreatedByProfile {
   email: string | null;
 }
 
+/** Contact résolu via FK JOIN sur sales_orders → contacts */
+interface ContactRef {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string | null;
+  title: string | null;
+}
+
 interface OrderWithDetails {
   id: string;
   order_number: string;
@@ -181,6 +191,13 @@ interface OrderWithDetails {
   }>;
   linkmeDetails: LinkMeOrderDetails | null;
   infoRequests: InfoRequest[];
+  // Contacts via FK (source de vérité)
+  responsable_contact_id: string | null;
+  billing_contact_id: string | null;
+  delivery_contact_id: string | null;
+  responsable_contact: ContactRef | null;
+  billing_contact: ContactRef | null;
+  delivery_contact: ContactRef | null;
 }
 
 interface InfoRequest {
@@ -372,6 +389,16 @@ export default function LinkMeOrderDetailPage() {
           handling_cost_ht,
           insurance_cost_ht,
           fees_vat_rate,
+          responsable_contact_id, billing_contact_id, delivery_contact_id,
+          responsable_contact:contacts!sales_orders_responsable_contact_id_fkey (
+            id, first_name, last_name, email, phone, title
+          ),
+          billing_contact:contacts!sales_orders_billing_contact_id_fkey (
+            id, first_name, last_name, email, phone, title
+          ),
+          delivery_contact:contacts!sales_orders_delivery_contact_id_fkey (
+            id, first_name, last_name, email, phone, title
+          ),
           organisations!sales_orders_customer_id_fkey (
             id,
             trade_name,
@@ -541,6 +568,22 @@ export default function LinkMeOrderDetailPage() {
         fees_vat_rate: orderData.fees_vat_rate ?? null,
         createdByProfile,
         organisation: organisation,
+        // Contacts via FK
+        responsable_contact_id: (orderData as Record<string, unknown>)
+          .responsable_contact_id as string | null,
+        billing_contact_id: (orderData as Record<string, unknown>)
+          .billing_contact_id as string | null,
+        delivery_contact_id: (orderData as Record<string, unknown>)
+          .delivery_contact_id as string | null,
+        responsable_contact:
+          ((orderData as Record<string, unknown>)
+            .responsable_contact as ContactRef | null) ?? null,
+        billing_contact:
+          ((orderData as Record<string, unknown>)
+            .billing_contact as ContactRef | null) ?? null,
+        delivery_contact:
+          ((orderData as Record<string, unknown>)
+            .delivery_contact as ContactRef | null) ?? null,
         items: ((orderData.sales_order_items ?? []) as SalesOrderItemRaw[]).map(
           (item: SalesOrderItemRaw) => ({
             id: item.id,
@@ -748,38 +791,26 @@ export default function LinkMeOrderDetailPage() {
     }
   };
 
-  // Confirmer la sélection d'un contact (responsable ou facturation)
+  // Confirmer la sélection d'un contact → update FK sur sales_orders
   const handleConfirmContact = async () => {
     if (!contactDialogFor || !selectedContactId) return;
-    const contact = availableContacts.find(c => c.id === selectedContactId);
-    if (!contact) return;
 
-    const fullName = `${contact.firstName} ${contact.lastName}`;
-    let updates: Partial<LinkMeOrderDetails>;
-    if (contactDialogFor === 'responsable') {
-      updates = {
-        requester_name: fullName,
-        requester_email: contact.email,
-        requester_phone: contact.phone ?? undefined,
-        requester_position: contact.title ?? undefined,
-      };
-    } else if (contactDialogFor === 'delivery') {
-      updates = {
-        delivery_contact_name: fullName,
-        delivery_contact_email: contact.email,
-        delivery_contact_phone: contact.phone ?? undefined,
-      };
-    } else {
-      updates = {
-        billing_name: fullName,
-        billing_email: contact.email,
-        billing_phone: contact.phone ?? undefined,
-        billing_contact_source: 'custom',
-      };
-    }
+    const supabase = createClient();
+    const fkField =
+      contactDialogFor === 'responsable'
+        ? 'responsable_contact_id'
+        : contactDialogFor === 'billing'
+          ? 'billing_contact_id'
+          : 'delivery_contact_id';
 
     try {
-      await updateDetails.mutateAsync({ orderId, updates });
+      const { error: updateError } = await supabase
+        .from('sales_orders')
+        .update({ [fkField]: selectedContactId })
+        .eq('id', orderId);
+
+      if (updateError) throw updateError;
+
       setContactDialogFor(null);
       setSelectedContactId(null);
       void fetchOrder().catch(err => {
@@ -798,7 +829,7 @@ export default function LinkMeOrderDetailPage() {
     contactData: NewContactFormData
   ) => {
     // 1. Créer le contact en BD (lié à org ou enseigne selon type)
-    await createContactBO.mutateAsync({
+    const result = await createContactBO.mutateAsync({
       organisationId: isSuccursale ? undefined : (organisationId ?? undefined),
       enseigneId: isSuccursale ? (enseigneId ?? undefined) : undefined,
       firstName: contactData.firstName,
@@ -810,32 +841,19 @@ export default function LinkMeOrderDetailPage() {
       isBillingContact: contactDialogFor === 'billing',
     });
 
-    // 2. Mettre à jour la commande avec ce nouveau contact
-    const fullName = `${contactData.firstName} ${contactData.lastName}`;
-    let updates: Partial<LinkMeOrderDetails>;
-    if (contactDialogFor === 'responsable') {
-      updates = {
-        requester_name: fullName,
-        requester_email: contactData.email,
-        requester_phone: contactData.phone || undefined,
-        requester_position: contactData.title || undefined,
-      };
-    } else if (contactDialogFor === 'delivery') {
-      updates = {
-        delivery_contact_name: fullName,
-        delivery_contact_email: contactData.email,
-        delivery_contact_phone: contactData.phone || undefined,
-      };
-    } else {
-      updates = {
-        billing_name: fullName,
-        billing_email: contactData.email,
-        billing_phone: contactData.phone || undefined,
-        billing_contact_source: 'custom',
-      };
-    }
+    // 2. Mettre à jour le FK sur sales_orders (source de vérité)
+    const supabase = createClient();
+    const fkField =
+      contactDialogFor === 'responsable'
+        ? 'responsable_contact_id'
+        : contactDialogFor === 'billing'
+          ? 'billing_contact_id'
+          : 'delivery_contact_id';
 
-    await updateDetails.mutateAsync({ orderId, updates });
+    await supabase
+      .from('sales_orders')
+      .update({ [fkField]: result.id })
+      .eq('id', orderId);
 
     // 3. Fermer dialog + refetch
     setContactDialogFor(null);
@@ -920,6 +938,31 @@ export default function LinkMeOrderDetailPage() {
   }
 
   const details = order.linkmeDetails;
+
+  // Contact fusion logic: group by contact_id when same contact has multiple roles
+  type ContactRole = 'responsable' | 'billing' | 'delivery';
+  interface FusedContactGroup {
+    contact: ContactRef;
+    roles: ContactRole[];
+  }
+
+  const fusedContacts: FusedContactGroup[] = [];
+  const seenIds = new Set<string>();
+  const addOrMerge = (contact: ContactRef | null, role: ContactRole) => {
+    if (!contact) return;
+    if (seenIds.has(contact.id)) {
+      const existing = fusedContacts.find(g => g.contact.id === contact.id);
+      if (existing && !existing.roles.includes(role)) {
+        existing.roles.push(role);
+      }
+    } else {
+      seenIds.add(contact.id);
+      fusedContacts.push({ contact, roles: [role] });
+    }
+  };
+  addOrMerge(order.responsable_contact, 'responsable');
+  addOrMerge(order.billing_contact, 'billing');
+  addOrMerge(order.delivery_contact, 'delivery');
 
   // Calcul des champs manquants (réutilisé pour badge bouton + dialog)
   const missingFieldsResult = details
@@ -1475,167 +1518,246 @@ export default function LinkMeOrderDetailPage() {
         </Card>
 
         {/* ------------------------------------------ */}
-        {/* SECTION 4: RESPONSABLE */}
+        {/* SECTIONS 4-5: CONTACTS (fusionnés via FK) */}
         {/* ------------------------------------------ */}
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-blue-100">
-                  <User className="h-4 w-4 text-blue-600" />
-                </div>
-                <CardTitle className="text-lg">
-                  Responsable établissement
-                </CardTitle>
-                {details?.requester_type && (
-                  <span className="flex items-center gap-1.5">
-                    <span className="text-xs text-gray-400">Rôle :</span>
-                    <span
-                      className={`px-2.5 py-1 text-xs font-semibold rounded-full ${
-                        details.requester_type === 'responsable_enseigne'
-                          ? 'bg-blue-100 text-blue-700'
-                          : details.requester_type === 'architecte'
-                            ? 'bg-amber-100 text-amber-700'
-                            : 'bg-violet-100 text-violet-700'
-                      }`}
-                    >
-                      {details.requester_type === 'responsable_enseigne'
-                        ? 'Resp. Enseigne'
-                        : details.requester_type === 'architecte'
-                          ? 'Architecte'
-                          : 'Franchisé'}
-                    </span>
-                  </span>
-                )}
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setSelectedContactId(null);
-                  setContactDialogFor('responsable');
-                }}
-              >
-                <Pencil className="h-3 w-3 mr-1" />
-                Changer contact
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {details ? (
-              <div className="flex items-start gap-4 p-4 bg-gray-50 rounded-xl">
-                {/* Avatar initiales */}
-                <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                  <span className="text-blue-700 font-bold text-lg">
-                    {(details.requester_name ?? '')
-                      .split(' ')
-                      .map(n => n[0])
-                      .join('')
-                      .slice(0, 2)
-                      .toUpperCase()}
-                  </span>
-                </div>
-                {/* Infos contact */}
-                <div className="min-w-0 flex-1 space-y-1.5">
-                  <p className="text-base font-semibold text-gray-900">
-                    {details.requester_name}
-                  </p>
-                  {details.requester_position && (
-                    <p className="text-sm text-gray-500">
-                      {details.requester_position}
-                    </p>
-                  )}
-                  <div className="flex flex-wrap gap-4 mt-2">
-                    {details.requester_email && (
-                      <a
-                        href={`mailto:${details.requester_email}`}
-                        className="flex items-center gap-1.5 text-sm text-blue-600 hover:underline"
-                      >
-                        <Mail className="h-3.5 w-3.5" />
-                        {details.requester_email}
-                      </a>
-                    )}
-                    {details.requester_phone && (
-                      <span className="flex items-center gap-1.5 text-sm text-gray-600">
-                        <Phone className="h-3.5 w-3.5" />
-                        {details.requester_phone}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <p className="text-gray-500">Données non disponibles</p>
-            )}
-          </CardContent>
-        </Card>
+        {fusedContacts.length > 0 ? (
+          fusedContacts
+            .filter(
+              g =>
+                g.roles.includes('responsable') || g.roles.includes('billing')
+            )
+            .map(group => {
+              const roleLabels: Record<ContactRole, string> = {
+                responsable: 'Responsable',
+                billing: 'Facturation',
+                delivery: 'Livraison',
+              };
+              const roleBadgeColors: Record<ContactRole, string> = {
+                responsable: 'bg-blue-100 text-blue-700',
+                billing: 'bg-green-100 text-green-700',
+                delivery: 'bg-cyan-100 text-cyan-700',
+              };
+              const initials =
+                `${group.contact.first_name[0] ?? ''}${group.contact.last_name[0] ?? ''}`.toUpperCase();
+              const fullName = `${group.contact.first_name} ${group.contact.last_name}`;
 
-        {/* ------------------------------------------ */}
-        {/* SECTION 5: FACTURATION */}
-        {/* ------------------------------------------ */}
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-green-100">
-                  <CreditCard className="h-4 w-4 text-green-600" />
-                </div>
-                <CardTitle className="text-lg">
-                  Responsable facturation
-                </CardTitle>
-                {details?.billing_contact_source && (
-                  <span
-                    className={`px-2.5 py-1 text-xs font-semibold rounded-full ${
-                      details.billing_contact_source === 'step1'
-                        ? 'bg-blue-100 text-blue-700'
-                        : details.billing_contact_source === 'step2'
-                          ? 'bg-green-100 text-green-700'
-                          : 'bg-gray-100 text-gray-700'
-                    }`}
-                  >
-                    {details.billing_contact_source === 'step1'
-                      ? 'Identique responsable'
-                      : details.billing_contact_source === 'step2'
-                        ? 'Identique propriétaire'
-                        : 'Contact personnalisé'}
-                  </span>
-                )}
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setSelectedContactId(null);
-                  setContactDialogFor('billing');
-                }}
-              >
-                <Pencil className="h-3 w-3 mr-1" />
-                Changer contact
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {details ? (
-              <div className="space-y-4">
-                {/* Contact facturation */}
-                <div className="flex items-start gap-4 p-4 bg-gray-50 rounded-xl">
-                  {/* Avatar initiales */}
-                  <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
-                    <span className="text-green-700 font-bold text-lg">
-                      {(details.billing_name ?? '')
-                        .split(' ')
-                        .map(n => n[0])
-                        .join('')
-                        .slice(0, 2)
-                        .toUpperCase()}
-                    </span>
+              return (
+                <Card key={group.contact.id}>
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-blue-100">
+                          <User className="h-4 w-4 text-blue-600" />
+                        </div>
+                        {group.roles.map(role => (
+                          <span
+                            key={role}
+                            className={`px-2 py-0.5 text-xs font-semibold rounded-full ${roleBadgeColors[role]}`}
+                          >
+                            {roleLabels[role]}
+                          </span>
+                        ))}
+                      </div>
+                      <div className="flex gap-1">
+                        {group.roles.map(role => (
+                          <Button
+                            key={role}
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedContactId(null);
+                              setContactDialogFor(role);
+                            }}
+                          >
+                            <Pencil className="h-3 w-3 mr-1" />
+                            {group.roles.length > 1
+                              ? roleLabels[role]
+                              : 'Changer'}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-start gap-4 p-4 bg-gray-50 rounded-xl">
+                      <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                        <span className="text-blue-700 font-bold text-lg">
+                          {initials}
+                        </span>
+                      </div>
+                      <div className="min-w-0 flex-1 space-y-1.5">
+                        <p className="text-base font-semibold text-gray-900">
+                          {fullName}
+                        </p>
+                        {group.contact.title && (
+                          <p className="text-sm text-gray-500">
+                            {group.contact.title}
+                          </p>
+                        )}
+                        <div className="flex flex-wrap gap-4 mt-2">
+                          {group.contact.email && (
+                            <a
+                              href={`mailto:${group.contact.email}`}
+                              className="flex items-center gap-1.5 text-sm text-blue-600 hover:underline"
+                            >
+                              <Mail className="h-3.5 w-3.5" />
+                              {group.contact.email}
+                            </a>
+                          )}
+                          {group.contact.phone && (
+                            <span className="flex items-center gap-1.5 text-sm text-gray-600">
+                              <Phone className="h-3.5 w-3.5" />
+                              {group.contact.phone}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    {/* Adresse de facturation si rôle billing */}
+                    {group.roles.includes('billing') && order.organisation && (
+                      <div className="flex items-start gap-3 p-3 mt-3 bg-green-50/50 rounded-lg border border-green-100">
+                        <MapPin className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm text-gray-600">
+                            {order.organisation.billing_address_line1
+                              ? [
+                                  order.organisation.billing_address_line1,
+                                  order.organisation.billing_address_line2,
+                                ]
+                                  .filter(Boolean)
+                                  .join(', ')
+                              : [
+                                  order.organisation.address_line1,
+                                  order.organisation.address_line2,
+                                ]
+                                  .filter(Boolean)
+                                  .join(', ')}
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            {order.organisation.billing_address_line1
+                              ? [
+                                  order.organisation.billing_postal_code,
+                                  order.organisation.billing_city,
+                                ]
+                                  .filter(Boolean)
+                                  .join(' ')
+                              : [
+                                  order.organisation.postal_code,
+                                  order.organisation.city,
+                                ]
+                                  .filter(Boolean)
+                                  .join(' ')}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })
+        ) : (
+          /* Fallback: anciennes commandes sans FK */
+          <>
+            <Card>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-blue-100">
+                      <User className="h-4 w-4 text-blue-600" />
+                    </div>
+                    <CardTitle className="text-lg">Responsable</CardTitle>
                   </div>
-                  {/* Infos contact */}
-                  <div className="min-w-0 flex-1 space-y-1.5">
-                    <p className="text-base font-semibold text-gray-900">
-                      {details.billing_name ?? 'Non renseigné'}
-                    </p>
-                    <div className="flex flex-wrap gap-4 mt-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setSelectedContactId(null);
+                      setContactDialogFor('responsable');
+                    }}
+                  >
+                    <Pencil className="h-3 w-3 mr-1" />
+                    Changer
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {details ? (
+                  <div className="flex items-start gap-4 p-4 bg-gray-50 rounded-xl">
+                    <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                      <span className="text-blue-700 font-bold text-lg">
+                        {(details.requester_name ?? '')
+                          .split(' ')
+                          .map(n => n[0])
+                          .join('')
+                          .slice(0, 2)
+                          .toUpperCase()}
+                      </span>
+                    </div>
+                    <div className="min-w-0 flex-1 space-y-1.5">
+                      <p className="text-base font-semibold text-gray-900">
+                        {details.requester_name}
+                      </p>
+                      {details.requester_email && (
+                        <a
+                          href={`mailto:${details.requester_email}`}
+                          className="flex items-center gap-1.5 text-sm text-blue-600 hover:underline"
+                        >
+                          <Mail className="h-3.5 w-3.5" />
+                          {details.requester_email}
+                        </a>
+                      )}
+                      {details.requester_phone && (
+                        <span className="flex items-center gap-1.5 text-sm text-gray-600">
+                          <Phone className="h-3.5 w-3.5" />
+                          {details.requester_phone}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-gray-500">Données non disponibles</p>
+                )}
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-green-100">
+                      <CreditCard className="h-4 w-4 text-green-600" />
+                    </div>
+                    <CardTitle className="text-lg">Facturation</CardTitle>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setSelectedContactId(null);
+                      setContactDialogFor('billing');
+                    }}
+                  >
+                    <Pencil className="h-3 w-3 mr-1" />
+                    Changer
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {details ? (
+                  <div className="flex items-start gap-4 p-4 bg-gray-50 rounded-xl">
+                    <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                      <span className="text-green-700 font-bold text-lg">
+                        {(details.billing_name ?? '')
+                          .split(' ')
+                          .map(n => n[0])
+                          .join('')
+                          .slice(0, 2)
+                          .toUpperCase()}
+                      </span>
+                    </div>
+                    <div className="min-w-0 flex-1 space-y-1.5">
+                      <p className="text-base font-semibold text-gray-900">
+                        {details.billing_name ?? 'Non renseigné'}
+                      </p>
                       {details.billing_email && (
                         <a
                           href={`mailto:${details.billing_email}`}
@@ -1653,70 +1775,13 @@ export default function LinkMeOrderDetailPage() {
                       )}
                     </div>
                   </div>
-                </div>
-
-                {/* Adresse de facturation (organisation) */}
-                {order.organisation && (
-                  <div className="flex items-start gap-3 p-3 bg-green-50/50 rounded-lg border border-green-100">
-                    <MapPin className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <p className="text-sm font-medium text-gray-700">
-                          {order.organisation.billing_address_line1
-                            ? 'Adresse de facturation'
-                            : 'Adresse siège'}
-                        </p>
-                        <span
-                          className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${
-                            order.organisation.billing_address_line1
-                              ? 'bg-green-100 text-green-700'
-                              : 'bg-blue-100 text-blue-700'
-                          }`}
-                        >
-                          {order.organisation.billing_address_line1
-                            ? 'Facturation'
-                            : 'Siège social'}
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-600">
-                        {order.organisation.billing_address_line1
-                          ? [
-                              order.organisation.billing_address_line1,
-                              order.organisation.billing_address_line2,
-                            ]
-                              .filter(Boolean)
-                              .join(', ')
-                          : [
-                              order.organisation.address_line1,
-                              order.organisation.address_line2,
-                            ]
-                              .filter(Boolean)
-                              .join(', ')}
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        {order.organisation.billing_address_line1
-                          ? [
-                              order.organisation.billing_postal_code,
-                              order.organisation.billing_city,
-                            ]
-                              .filter(Boolean)
-                              .join(' ')
-                          : [
-                              order.organisation.postal_code,
-                              order.organisation.city,
-                            ]
-                              .filter(Boolean)
-                              .join(' ')}
-                      </p>
-                    </div>
-                  </div>
+                ) : (
+                  <p className="text-gray-500">Données non disponibles</p>
                 )}
-              </div>
-            ) : (
-              <p className="text-gray-500">Données non disponibles</p>
-            )}
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
+          </>
+        )}
 
         {/* ------------------------------------------ */}
         {/* SECTION 6: LIVRAISON (TOUJOURS visible) */}
@@ -1753,7 +1818,31 @@ export default function LinkMeOrderDetailPage() {
                       Changer contact
                     </Button>
                   </div>
-                  {details.delivery_contact_name ? (
+                  {order.delivery_contact ? (
+                    <div className="space-y-1">
+                      <p className="font-medium">
+                        {order.delivery_contact.first_name}{' '}
+                        {order.delivery_contact.last_name}
+                      </p>
+                      {order.delivery_contact.email && (
+                        <div className="flex items-center gap-2 text-sm">
+                          <Mail className="h-4 w-4 text-gray-400" />
+                          <a
+                            href={`mailto:${order.delivery_contact.email}`}
+                            className="text-blue-600 hover:underline"
+                          >
+                            {order.delivery_contact.email}
+                          </a>
+                        </div>
+                      )}
+                      {order.delivery_contact.phone && (
+                        <div className="flex items-center gap-2 text-sm">
+                          <Phone className="h-4 w-4 text-gray-400" />
+                          <span>{order.delivery_contact.phone}</span>
+                        </div>
+                      )}
+                    </div>
+                  ) : details.delivery_contact_name ? (
                     <div className="space-y-1">
                       <p className="font-medium">
                         {details.delivery_contact_name}

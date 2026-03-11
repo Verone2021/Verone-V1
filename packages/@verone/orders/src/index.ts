@@ -21,5 +21,8 @@ export * from './types/advanced-filters';
 // Hooks
 export * from './hooks';
 
+// Validators
+export { isOrderLocked, canEditItems } from './validators/order-status';
+
 // Lib (LinkMe orders - shared between CMS and Front)
 export * from './lib';

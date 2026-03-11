@@ -695,7 +695,7 @@ export default function ConsultationDetailPage() {
                             300,
                             0.6
                           );
-                          return [item.product_id, base64 || ''] as const;
+                          return [item.product_id, base64 ?? ''] as const;
                         })
                     );
                     setEmailPdfImages({
@@ -737,7 +737,7 @@ export default function ConsultationDetailPage() {
                             300,
                             0.6
                           );
-                          return [item.product_id, base64 || ''] as const;
+                          return [item.product_id, base64 ?? ''] as const;
                         })
                     );
 

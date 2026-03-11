@@ -39,7 +39,6 @@ import {
 } from '@verone/ui';
 import { Badge } from '@verone/ui';
 import { ButtonUnified } from '@verone/ui';
-import { IconButton } from '@verone/ui';
 import {
   Card,
   CardContent,
@@ -78,29 +77,23 @@ import { createClient } from '@verone/utils/supabase/client';
 import { getOrganisationDisplayName } from '@verone/utils/utils/organisation-helpers';
 import {
   Search,
-  Eye,
-  Edit,
-  Trash2,
-  Ban,
   Package,
-  Truck,
   CheckCircle,
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
   RotateCcw,
   ChevronDown,
-  XCircle,
   PackageCheck,
   Banknote,
   Receipt,
   Building2,
   CreditCard,
   CheckSquare,
-  Link2,
 } from 'lucide-react';
 
 import { updatePurchaseOrderStatus } from '@/app/actions/purchase-orders';
+import { PurchaseOrderActionMenu } from './components/PurchaseOrderActionMenu';
 
 type PurchaseOrderRow = Database['public']['Tables']['purchase_orders']['Row'];
 
@@ -1133,35 +1126,43 @@ export default function PurchaseOrdersPage() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <Table>
+              <Table className="w-auto [&_th]:px-2.5 [&_td]:px-2.5">
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-10" />
                     <TableHead
-                      className="cursor-pointer hover:bg-gray-50"
+                      className="cursor-pointer hover:bg-gray-50 whitespace-nowrap"
                       onClick={() => handleSort('po_number')}
                     >
                       N° Commande {renderSortIcon('po_number')}
                     </TableHead>
                     <TableHead>Fournisseur</TableHead>
-                    <TableHead>Statut</TableHead>
-                    <TableHead>Paiement</TableHead>
-                    <TableHead className="w-20 text-center">Articles</TableHead>
+                    <TableHead className="whitespace-nowrap">Statut</TableHead>
+                    <TableHead className="whitespace-nowrap">
+                      Paiement
+                    </TableHead>
+                    <TableHead className="text-center whitespace-nowrap">
+                      Articles
+                    </TableHead>
                     <TableHead
-                      className="cursor-pointer hover:bg-gray-50"
+                      className="cursor-pointer hover:bg-gray-50 whitespace-nowrap"
                       onClick={() => handleSort('date')}
                     >
                       Date création {renderSortIcon('date')}
                     </TableHead>
-                    <TableHead>Date commande</TableHead>
-                    <TableHead>Livraison</TableHead>
+                    <TableHead className="whitespace-nowrap">
+                      Date commande
+                    </TableHead>
+                    <TableHead className="whitespace-nowrap">
+                      Livraison
+                    </TableHead>
                     <TableHead
-                      className="cursor-pointer hover:bg-gray-50"
+                      className="cursor-pointer hover:bg-gray-50 whitespace-nowrap"
                       onClick={() => handleSort('amount')}
                     >
                       Montant TTC {renderSortIcon('amount')}
                     </TableHead>
-                    <TableHead>Actions</TableHead>
+                    <TableHead className="whitespace-nowrap">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -1189,17 +1190,28 @@ export default function PurchaseOrdersPage() {
                               </button>
                             )}
                           </TableCell>
-                          <TableCell className="font-medium">
-                            {order.po_number}
+                          <TableCell className="w-[80px]">
+                            <span className="text-xs font-mono font-medium break-all leading-tight">
+                              {order.po_number}
+                            </span>
                           </TableCell>
                           <TableCell>
-                            {order.organisations
-                              ? getOrganisationDisplayName(order.organisations)
-                              : 'Non défini'}
+                            <div className="text-sm leading-tight break-words">
+                              {order.organisations
+                                ? getOrganisationDisplayName(
+                                    order.organisations
+                                  )
+                                : 'Non défini'}
+                            </div>
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
-                              <Badge className={statusColors[order.status]}>
+                              <Badge
+                                className={cn(
+                                  'text-xs',
+                                  statusColors[order.status]
+                                )}
+                              >
                                 {statusLabels[order.status]}
                               </Badge>
                               {hasSamples && (
@@ -1214,20 +1226,18 @@ export default function PurchaseOrdersPage() {
                             <div className="flex items-center gap-2">
                               {(order as PurchaseOrderExtended)
                                 .payment_status_v2 === 'paid' ? (
-                                <Badge className="bg-green-100 text-green-800">
+                                <Badge className="text-xs bg-green-100 text-green-800">
                                   Payé
                                   {(order as PurchaseOrderExtended)
                                     .manual_payment_type && (
-                                    <span className="ml-1 opacity-70">
-                                      (manuel)
-                                    </span>
+                                    <span className="ml-1 opacity-70">(m)</span>
                                   )}
                                 </Badge>
                               ) : (
                                 <DropdownMenu>
                                   <DropdownMenuTrigger asChild>
                                     <button className="flex items-center gap-1 cursor-pointer">
-                                      <Badge className="bg-orange-100 text-orange-800 hover:bg-orange-200 transition-colors">
+                                      <Badge className="text-xs bg-orange-100 text-orange-800 hover:bg-orange-200 transition-colors">
                                         En attente
                                         <ChevronDown className="h-3 w-3 ml-1" />
                                       </Badge>
@@ -1366,178 +1376,59 @@ export default function PurchaseOrdersPage() {
                             {formatCurrency(order.total_ttc)}
                           </TableCell>
                           <TableCell>
-                            <div className="flex items-center gap-2">
-                              <IconButton
-                                icon={Eye}
-                                variant="outline"
-                                size="sm"
-                                label="Voir les détails"
-                                onClick={() => openOrderDetail(order)}
-                              />
-
-                              {/* DRAFT : Éditer + Valider + Annuler (Supprimer uniquement si cancelled) */}
-                              {order.status === 'draft' && (
-                                <>
-                                  <IconButton
-                                    icon={Edit}
-                                    variant="outline"
-                                    size="sm"
-                                    label="Éditer la commande"
-                                    onClick={() => {
-                                      void openEditModal(order);
-                                    }}
-                                  />
-                                  <IconButton
-                                    icon={CheckCircle}
-                                    variant="success"
-                                    size="sm"
-                                    label="Valider la commande"
-                                    onClick={() => {
-                                      void handleStatusChange(
-                                        order.id,
-                                        'validated'
-                                      ).catch(error => {
-                                        console.error(
-                                          '[PurchaseOrders] Status change failed:',
-                                          error
-                                        );
-                                      });
-                                    }}
-                                  />
-                                  <IconButton
-                                    icon={Ban}
-                                    variant="danger"
-                                    size="sm"
-                                    label="Annuler la commande"
-                                    onClick={() => {
-                                      void handleCancel(order.id).catch(
-                                        error => {
-                                          console.error(
-                                            '[PurchaseOrders] Cancel failed:',
-                                            error
-                                          );
-                                        }
-                                      );
-                                    }}
-                                  />
-                                </>
-                              )}
-
-                              {/* VALIDATED : Réceptionner + Dévalider (PAS d'annulation directe!) */}
-                              {order.status === 'validated' && (
-                                <>
-                                  <IconButton
-                                    icon={Truck}
-                                    variant="success"
-                                    size="sm"
-                                    label="Réceptionner la commande"
-                                    onClick={() => openReceptionModal(order)}
-                                  />
-                                  <IconButton
-                                    icon={RotateCcw}
-                                    variant="outline"
-                                    size="sm"
-                                    label="Dévalider (retour brouillon)"
-                                    onClick={() => {
-                                      void handleStatusChange(
-                                        order.id,
-                                        'draft'
-                                      ).catch(error => {
-                                        console.error(
-                                          '[PurchaseOrders] Status change failed:',
-                                          error
-                                        );
-                                      });
-                                    }}
-                                  />
-                                  {/* ❌ Bouton Annuler RETIRÉ - Workflow strict: validated → draft → cancelled */}
-                                </>
-                              )}
-
-                              {/* PARTIALLY_RECEIVED : Réceptionner + Annuler Reliquat (PAS d'annulation complète!) */}
-                              {order.status === 'partially_received' && (
-                                <>
-                                  <IconButton
-                                    icon={Truck}
-                                    variant="outline"
-                                    size="sm"
-                                    label="Réceptionner la commande"
-                                    onClick={() => openReceptionModal(order)}
-                                  />
-                                  <IconButton
-                                    icon={XCircle}
-                                    variant="outline"
-                                    size="sm"
-                                    label="Annuler le reliquat"
-                                    className="border-orange-500 text-orange-600 hover:bg-orange-50"
-                                    onClick={() =>
-                                      openCancelRemainderModal(order)
-                                    }
-                                  />
-                                  {/* ❌ Bouton Annuler RETIRÉ - Impossible d'annuler une commande avec réceptions */}
-                                </>
-                              )}
-
-                              {/* RECEIVED : Aucune action (commande terminée) */}
-
-                              {/* CANCELLED : Supprimer */}
-                              {order.status === 'cancelled' && (
-                                <IconButton
-                                  icon={Trash2}
-                                  variant="danger"
-                                  size="sm"
-                                  label="Supprimer"
-                                  onClick={() => {
-                                    void handleDelete(order.id).catch(error => {
-                                      console.error(
-                                        '[PurchaseOrders] Delete failed:',
-                                        error
-                                      );
-                                    });
-                                  }}
-                                />
-                              )}
-
-                              {/* Lier transaction / Rapprochée */}
-                              {(order.status === 'validated' ||
-                                order.status === 'partially_received' ||
-                                order.status === 'received') && (
-                                <>
-                                  {(order as PurchaseOrderExtended)
-                                    .is_matched ? (
-                                    <Badge
-                                      variant="outline"
-                                      className="text-xs bg-green-50 text-green-700 border-green-300 cursor-help"
-                                      title={`Rapprochée: ${(order as PurchaseOrderExtended).matched_transaction_label ?? 'Transaction'} (${formatCurrency(Math.abs((order as PurchaseOrderExtended).matched_transaction_amount ?? 0))})`}
-                                    >
-                                      <Link2 className="h-3 w-3 mr-1 text-green-600" />
-                                      Rapprochée
-                                    </Badge>
-                                  ) : (order as PurchaseOrderExtended)
-                                      .payment_status_v2 === 'paid' ? (
-                                    <Badge
-                                      variant="outline"
-                                      className="text-xs bg-gray-100 text-gray-500 border-gray-300 cursor-help"
-                                      title="Rapprochement non nécessaire : commande payée manuellement"
-                                    >
-                                      <Link2 className="h-3 w-3 mr-1 text-gray-400" />
-                                      Payé
-                                    </Badge>
-                                  ) : (
-                                    <IconButton
-                                      icon={Link2}
-                                      variant="outline"
-                                      size="sm"
-                                      label="Lier à une transaction"
-                                      onClick={() => {
-                                        setRapprochementOrder(order);
-                                        setShowRapprochementModal(true);
-                                      }}
-                                    />
-                                  )}
-                                </>
-                              )}
-                            </div>
+                            <PurchaseOrderActionMenu
+                              order={order as PurchaseOrderExtended}
+                              onView={() => openOrderDetail(order)}
+                              onEdit={() => {
+                                void openEditModal(order);
+                              }}
+                              onValidate={() => {
+                                void handleStatusChange(
+                                  order.id,
+                                  'validated'
+                                ).catch(error => {
+                                  console.error(
+                                    '[PurchaseOrders] Status change failed:',
+                                    error
+                                  );
+                                });
+                              }}
+                              onDevalidate={() => {
+                                void handleStatusChange(
+                                  order.id,
+                                  'draft'
+                                ).catch(error => {
+                                  console.error(
+                                    '[PurchaseOrders] Status change failed:',
+                                    error
+                                  );
+                                });
+                              }}
+                              onReceive={() => openReceptionModal(order)}
+                              onCancel={() => {
+                                void handleCancel(order.id).catch(error => {
+                                  console.error(
+                                    '[PurchaseOrders] Cancel failed:',
+                                    error
+                                  );
+                                });
+                              }}
+                              onDelete={() => {
+                                void handleDelete(order.id).catch(error => {
+                                  console.error(
+                                    '[PurchaseOrders] Delete failed:',
+                                    error
+                                  );
+                                });
+                              }}
+                              onCancelRemainder={() =>
+                                openCancelRemainderModal(order)
+                              }
+                              onLinkTransaction={() => {
+                                setRapprochementOrder(order);
+                                setShowRapprochementModal(true);
+                              }}
+                            />
                           </TableCell>
                         </TableRow>
 

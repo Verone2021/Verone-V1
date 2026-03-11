@@ -957,7 +957,7 @@ export function EditOrderPage({ data }: EditOrderPageProps) {
             <div>
               <div className="flex items-center gap-3">
                 <h1 className="text-xl font-semibold text-[#183559]">
-                  Modifier {order.linkme_display_number || order.order_number}
+                  Modifier {order.linkme_display_number ?? order.order_number}
                 </h1>
                 <Badge
                   variant="outline"

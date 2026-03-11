@@ -431,7 +431,7 @@ export function PaymentNotificationsTab() {
   if (loading) {
     return (
       <div className="space-y-3">
-        {[...Array(3)].map((_, i) => (
+        {Array.from({ length: 3 }, (_, i) => (
           <Card key={i} className="animate-pulse">
             <CardContent className="p-4">
               <div className="flex items-start gap-3">

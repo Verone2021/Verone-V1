@@ -4,23 +4,8 @@ import { useState } from 'react';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { InvoiceDetailModal } from '@verone/finance';
-import {
-  Badge,
-  Button,
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-} from '@verone/ui';
-import {
-  FileText,
-  Download,
-  Check,
-  Send,
-  Loader2,
-  AlertCircle,
-  Eye,
-} from 'lucide-react';
+import { Badge, Button, Card, CardContent } from '@verone/ui';
+import { FileText, Download, Check, Send, Loader2, Eye } from 'lucide-react';
 
 interface InvoiceLinked {
   id: string;
@@ -62,7 +47,7 @@ const WORKFLOW_STATUS_LABELS: Record<
   NonNullable<InvoiceLinked['workflow_status']>,
   { label: string; color: string }
 > = {
-  synchronized: { label: 'Synchronisé', color: 'bg-blue-100 text-blue-700' },
+  synchronized: { label: 'Sync', color: 'bg-blue-100 text-blue-700' },
   draft_validated: {
     label: 'Brouillon',
     color: 'bg-yellow-100 text-yellow-700',
@@ -80,7 +65,6 @@ export function InvoicesSection({ orderId }: { orderId: string }) {
   );
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
-  // Fetch factures liées
   const { data, isLoading } = useQuery<InvoicesByOrderResponse>({
     queryKey: ['invoices-by-order', orderId],
     queryFn: async (): Promise<InvoicesByOrderResponse> => {
@@ -90,14 +74,11 @@ export function InvoicesSection({ orderId }: { orderId: string }) {
     },
   });
 
-  // Mutation validation synchronized → draft_validated
   const validateToDraft = useMutation({
     mutationFn: async (invoiceId: string): Promise<ApiSuccessResponse> => {
       const res = await fetch(
         `/api/qonto/invoices/${invoiceId}/validate-to-draft`,
-        {
-          method: 'POST',
-        }
+        { method: 'POST' }
       );
       if (!res.ok) {
         const error = (await res.json().catch(() => ({}))) as ApiErrorResponse;
@@ -120,14 +101,11 @@ export function InvoicesSection({ orderId }: { orderId: string }) {
     },
   });
 
-  // Mutation finalisation draft_validated → finalized
   const finalizeWorkflow = useMutation({
     mutationFn: async (invoiceId: string): Promise<ApiSuccessResponse> => {
       const res = await fetch(
         `/api/qonto/invoices/${invoiceId}/finalize-workflow`,
-        {
-          method: 'POST',
-        }
+        { method: 'POST' }
       );
       if (!res.ok) {
         const error = (await res.json().catch(() => ({}))) as ApiErrorResponse;
@@ -155,15 +133,23 @@ export function InvoicesSection({ orderId }: { orderId: string }) {
   if (isLoading) {
     return (
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5" />
-            Factures liées
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+        <CardContent className="p-3">
+          <div className="flex items-center gap-2">
+            <Loader2 className="h-3.5 w-3.5 animate-spin text-gray-400" />
+            <span className="text-xs text-gray-400">Factures...</span>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (invoices.length === 0) {
+    return (
+      <Card>
+        <CardContent className="p-3">
+          <div className="flex items-center gap-1.5">
+            <FileText className="h-3.5 w-3.5 text-gray-300" />
+            <span className="text-xs text-gray-400">Aucune facture</span>
           </div>
         </CardContent>
       </Card>
@@ -172,143 +158,127 @@ export function InvoicesSection({ orderId }: { orderId: string }) {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <FileText className="h-5 w-5" />
-          Factures liées ({invoices.length})
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        {invoices.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            <AlertCircle className="h-8 w-8 mx-auto mb-2 text-gray-300" />
-            <p className="text-sm">Aucune facture créée pour cette commande</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {invoices.map(invoice => (
-              <div
-                key={invoice.id}
-                className="border rounded-lg p-4 hover:bg-gray-50 transition-colors"
-              >
-                {/* Header */}
-                <div className="flex items-start justify-between mb-3">
-                  <div>
-                    <p className="font-medium text-gray-900">
-                      {invoice.document_number}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      {new Date(invoice.document_date).toLocaleDateString(
-                        'fr-FR'
-                      )}
-                    </p>
-                  </div>
-                  <Badge
-                    className={
-                      invoice.workflow_status
-                        ? WORKFLOW_STATUS_LABELS[invoice.workflow_status].color
-                        : 'bg-gray-100 text-gray-600'
-                    }
-                  >
-                    {invoice.workflow_status
-                      ? WORKFLOW_STATUS_LABELS[invoice.workflow_status].label
-                      : '—'}
-                  </Badge>
-                </div>
+      <CardContent className="p-3 space-y-2">
+        <div className="flex items-center gap-1.5">
+          <FileText className="h-3.5 w-3.5 text-gray-400" />
+          <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+            Factures ({invoices.length})
+          </span>
+        </div>
 
-                {/* Montants */}
-                <div className="flex items-center gap-4 mb-3 text-sm">
-                  <span className="text-gray-600">
-                    Total:{' '}
-                    <span className="font-semibold">
-                      {invoice.total_ttc.toFixed(2)} €
-                    </span>
+        {invoices.map(invoice => {
+          const wsLabel = invoice.workflow_status
+            ? WORKFLOW_STATUS_LABELS[invoice.workflow_status]
+            : null;
+
+          return (
+            <div
+              key={invoice.id}
+              className="border rounded p-2 space-y-1.5 bg-gray-50/50"
+            >
+              {/* Header row */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs font-medium">
+                    {invoice.document_number}
                   </span>
-                  <span className="text-gray-600">
-                    Payé:{' '}
-                    <span className="font-semibold">
-                      {invoice.amount_paid.toFixed(2)} €
-                    </span>
-                  </span>
+                  {wsLabel && (
+                    <Badge className={`${wsLabel.color} text-[10px] px-1 py-0`}>
+                      {wsLabel.label}
+                    </Badge>
+                  )}
                 </div>
+                <span className="text-xs font-semibold">
+                  {invoice.total_ttc.toFixed(2)} €
+                </span>
+              </div>
 
-                {/* Actions */}
-                <div className="flex items-center gap-2">
-                  {/* Bouton "Valider brouillon" si synchronized */}
-                  {invoice.workflow_status === 'synchronized' && (
-                    <Button
-                      size="sm"
-                      variant="default"
-                      onClick={() => {
-                        setActionLoading(invoice.id);
-                        validateToDraft.mutate(invoice.id);
-                      }}
-                      disabled={actionLoading === invoice.id}
-                    >
-                      {actionLoading === invoice.id ? (
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      ) : (
-                        <Check className="h-4 w-4 mr-2" />
-                      )}
-                      Valider brouillon
-                    </Button>
-                  )}
+              {/* Amounts + date */}
+              <div className="flex items-center gap-3 text-[10px] text-gray-500">
+                <span>
+                  {new Date(invoice.document_date).toLocaleDateString('fr-FR')}
+                </span>
+                <span>Payé : {invoice.amount_paid.toFixed(2)} €</span>
+              </div>
 
-                  {/* Bouton "Finaliser" si draft_validated */}
-                  {invoice.workflow_status === 'draft_validated' && (
-                    <Button
-                      size="sm"
-                      variant="default"
-                      onClick={() => {
-                        setActionLoading(invoice.id);
-                        finalizeWorkflow.mutate(invoice.id);
-                      }}
-                      disabled={actionLoading === invoice.id}
-                    >
-                      {actionLoading === invoice.id ? (
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      ) : (
-                        <Send className="h-4 w-4 mr-2" />
-                      )}
-                      Finaliser (PDF)
-                    </Button>
-                  )}
-
-                  {/* Bouton "Download PDF" si finalized */}
-                  {invoice.workflow_status === 'finalized' &&
-                    invoice.qonto_pdf_url && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
-                          window.open(
-                            `/api/qonto/invoices/${invoice.id}/pdf`,
-                            '_blank'
-                          );
-                        }}
-                      >
-                        <Download className="h-4 w-4 mr-2" />
-                        Télécharger PDF
-                      </Button>
-                    )}
-
-                  {/* Bouton "Voir détails" - toujours visible */}
+              {/* Actions — compact row */}
+              <div className="flex items-center gap-1">
+                {invoice.workflow_status === 'synchronized' && (
                   <Button
                     size="sm"
-                    variant="outline"
+                    className="h-6 text-[10px] px-2"
                     onClick={() => {
-                      setSelectedInvoiceId(invoice.id);
-                      setIsDetailModalOpen(true);
+                      setActionLoading(invoice.id);
+                      validateToDraft.mutate(invoice.id);
                     }}
+                    disabled={actionLoading === invoice.id}
                   >
-                    <Eye className="h-4 w-4 mr-2" />
-                    Voir détails
+                    {actionLoading === invoice.id ? (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : (
+                      <>
+                        <Check className="h-3 w-3 mr-0.5" />
+                        Valider
+                      </>
+                    )}
                   </Button>
-                </div>
+                )}
+
+                {invoice.workflow_status === 'draft_validated' && (
+                  <Button
+                    size="sm"
+                    className="h-6 text-[10px] px-2"
+                    onClick={() => {
+                      setActionLoading(invoice.id);
+                      finalizeWorkflow.mutate(invoice.id);
+                    }}
+                    disabled={actionLoading === invoice.id}
+                  >
+                    {actionLoading === invoice.id ? (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : (
+                      <>
+                        <Send className="h-3 w-3 mr-0.5" />
+                        Finaliser
+                      </>
+                    )}
+                  </Button>
+                )}
+
+                {invoice.workflow_status === 'finalized' &&
+                  invoice.qonto_pdf_url && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-6 text-[10px] px-2"
+                      onClick={() => {
+                        window.open(
+                          `/api/qonto/invoices/${invoice.id}/pdf`,
+                          '_blank'
+                        );
+                      }}
+                    >
+                      <Download className="h-3 w-3 mr-0.5" />
+                      PDF
+                    </Button>
+                  )}
+
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-6 text-[10px] px-2 ml-auto"
+                  onClick={() => {
+                    setSelectedInvoiceId(invoice.id);
+                    setIsDetailModalOpen(true);
+                  }}
+                >
+                  <Eye className="h-3 w-3 mr-0.5" />
+                  Détails
+                </Button>
               </div>
-            ))}
-          </div>
-        )}
+            </div>
+          );
+        })}
       </CardContent>
 
       {/* Modal de détail de facture */}

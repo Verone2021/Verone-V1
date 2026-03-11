@@ -133,6 +133,40 @@ export interface CreateLinkMeOrderInput {
   is_shopping_center_delivery?: boolean;
   /** Accepte semi-remorque (défaut true) */
   accepts_semi_truck?: boolean;
+  /** ID de la sélection LinkMe */
+  linkme_selection_id?: string | null;
+  /** Contact responsable (FK vers contacts) */
+  responsable_contact_id?: string | null;
+  /** Contact de facturation (FK vers contacts) */
+  billing_contact_id?: string | null;
+  /** Contact de livraison (FK vers contacts) */
+  delivery_contact_id?: string | null;
+  /** Adresse de facturation custom */
+  billing_address?: {
+    address_line1: string;
+    city: string;
+    postal_code: string;
+    country: string;
+  };
+  /** Détails LinkMe (contacts/adresses pour sales_order_linkme_details) */
+  linkme_details?: LinkMeDetailsInput | null;
+}
+
+export interface LinkMeDetailsInput {
+  requester_phone?: string | null;
+  billing_name?: string | null;
+  billing_email?: string | null;
+  billing_phone?: string | null;
+  delivery_contact_name?: string | null;
+  delivery_contact_email?: string | null;
+  delivery_contact_phone?: string | null;
+  delivery_address?: string | null;
+  delivery_postal_code?: string | null;
+  delivery_city?: string | null;
+  is_mall_delivery?: boolean;
+  semi_trailer_accessible?: boolean;
+  desired_delivery_date?: string | null;
+  delivery_notes?: string | null;
 }
 
 export interface LinkMeOrder {
@@ -545,6 +579,19 @@ async function createLinkMeOrder(
     shipping_cost_ht: shippingCostHt,
     insurance_cost_ht: insuranceCostHt,
     handling_cost_ht: handlingCostHt,
+    // Contacts (FK vers table contacts — source de vérité)
+    responsable_contact_id: input.responsable_contact_id ?? null,
+    billing_contact_id: input.billing_contact_id ?? null,
+    delivery_contact_id: input.delivery_contact_id ?? null,
+    // Adresse de facturation (JSON)
+    billing_address: input.billing_address
+      ? JSON.stringify({
+          address_line1: input.billing_address.address_line1,
+          city: input.billing_address.city,
+          postal_code: input.billing_address.postal_code,
+          country: input.billing_address.country ?? 'FR',
+        })
+      : null,
     // Adresse de livraison (JSON)
     shipping_address: input.shipping_address
       ? JSON.stringify({
@@ -606,17 +653,31 @@ async function createLinkMeOrder(
   }
 
   // 6. Creer le record sales_order_linkme_details (requis pour le centre de messagerie)
-  // Les champs NOT NULL utilisent des valeurs placeholder vides - ils apparaîtront
-  // comme "manquants" dans le centre de messagerie et devront être complétés.
+  const ld = input.linkme_details;
   const { error: detailsError } = await supabase
     .from('sales_order_linkme_details')
     .insert({
       sales_order_id: order.id,
       requester_type: 'manual_entry' as const,
-      requester_name: '',
-      requester_email: '',
+      requester_name: user.email ?? 'Back Office',
+      requester_email: user.email ?? '',
+      requester_phone: ld?.requester_phone ?? null,
       is_new_restaurant: false,
       delivery_terms_accepted: false,
+      // Contacts/adresses (si fournis via le formulaire)
+      billing_name: ld?.billing_name ?? null,
+      billing_email: ld?.billing_email ?? null,
+      billing_phone: ld?.billing_phone ?? null,
+      delivery_contact_name: ld?.delivery_contact_name ?? null,
+      delivery_contact_email: ld?.delivery_contact_email ?? null,
+      delivery_contact_phone: ld?.delivery_contact_phone ?? null,
+      delivery_address: ld?.delivery_address ?? null,
+      delivery_postal_code: ld?.delivery_postal_code ?? null,
+      delivery_city: ld?.delivery_city ?? null,
+      is_mall_delivery: ld?.is_mall_delivery ?? false,
+      semi_trailer_accessible: ld?.semi_trailer_accessible ?? true,
+      desired_delivery_date: ld?.desired_delivery_date ?? null,
+      delivery_notes: ld?.delivery_notes ?? null,
     });
 
   if (detailsError) {
