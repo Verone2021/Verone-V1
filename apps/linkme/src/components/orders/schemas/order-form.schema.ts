@@ -383,8 +383,8 @@ export const deliveryStepSchema = z
     postalCode: z.string().min(4, 'Code postal requis'),
     city: z.string().min(2, 'Ville requise'),
 
-    // Date souhaitée (optionnelle)
-    desiredDate: z.date().optional().nullable(),
+    // Date souhaitée (optionnelle) — string ISO format YYYY-MM-DD
+    desiredDate: z.string().optional().nullable(),
 
     // Options
     isMallDelivery: z.boolean().default(false),
