@@ -411,14 +411,8 @@ export function ShippingStep({
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     onUpdateDelivery({
-      desiredDate: value ? new Date(value) : null,
+      desiredDate: value || null,
     });
-  };
-
-  const formatDateForInput = (date: Date | null | undefined): string => {
-    if (!date) return '';
-    const d = new Date(date);
-    return d.toISOString().split('T')[0];
   };
 
   return (
@@ -859,7 +853,7 @@ export function ShippingStep({
           <Input
             id="desiredDate"
             type="date"
-            value={formatDateForInput(delivery.desiredDate)}
+            value={delivery.desiredDate ?? ''}
             onChange={handleDateChange}
             min={new Date().toISOString().split('T')[0]}
           />

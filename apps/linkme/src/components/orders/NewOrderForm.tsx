@@ -1,15 +1,15 @@
 'use client';
 
 /**
- * NewOrderForm - Formulaire authentifie de commande LinkMe (dashboard)
+ * NewOrderForm — Formulaire Commande Utilisateur (UserOrderForm)
  *
+ * Nom officiel : UserOrderForm
  * Formulaire accessible aux utilisateurs connectes via /commandes/nouvelle.
  * 8 etapes : Restaurant, Selection, Produits, Panier, Responsable, Facturation, Livraison, Validation.
  * Schema Zod : order-form.schema.ts | Hook : use-order-form.ts
  *
- * ATTENTION : Ce formulaire n'est PAS aligne avec OrderFormUnified (public).
- * Divergences documentees dans docs/current/linkme/formulaires-commande-comparaison.md
- * Principales divergences : firstName/lastName vs name, date livraison type, conditions absentes.
+ * Divergences avec ClientOrderForm (public) documentees dans :
+ * docs/current/linkme/formulaires-commande-comparaison.md
  *
  * @see OrderFormUnified (formulaire public) - components/OrderFormUnified.tsx
  * @see docs/current/linkme/formulaires-commande-comparaison.md

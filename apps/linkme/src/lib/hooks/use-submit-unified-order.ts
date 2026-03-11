@@ -24,6 +24,11 @@ import type {
   OrderFormUnifiedData,
   CartItem,
 } from '@/components/OrderFormUnified';
+import {
+  clientRequesterSchema,
+  clientNewRestaurantSchema,
+  clientDeliverySchema,
+} from '@/components/orders/schemas/client-order-form.schema';
 
 // =====================================================================
 // TYPES
@@ -140,6 +145,32 @@ export function useSubmitUnifiedOrder() {
         // CAS 2: Ouverture de restaurant → Validation requise
         // =============================================================
         if (data.isNewRestaurant) {
+          // Validation Zod avant soumission
+          const requesterResult = clientRequesterSchema.safeParse(
+            data.requester
+          );
+          if (!requesterResult.success) {
+            throw new Error(
+              `Données demandeur invalides: ${requesterResult.error.issues.map(i => i.message).join(', ')}`
+            );
+          }
+
+          const restaurantResult = clientNewRestaurantSchema.safeParse(
+            data.newRestaurant
+          );
+          if (!restaurantResult.success) {
+            throw new Error(
+              `Données restaurant invalides: ${restaurantResult.error.issues.map(i => i.message).join(', ')}`
+            );
+          }
+
+          const deliveryResult = clientDeliverySchema.safeParse(data.delivery);
+          if (!deliveryResult.success) {
+            throw new Error(
+              `Données livraison invalides: ${deliveryResult.error.issues.map(i => i.message).join(', ')}`
+            );
+          }
+
           // Panier format RPC
           const p_cart = cart.map(item => ({
             product_id: item.product_id,

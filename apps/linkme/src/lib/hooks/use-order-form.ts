@@ -639,9 +639,7 @@ export function useOrderForm(): UseOrderFormReturn {
         delivery_postal_code: emptyToNull(formData.delivery.postalCode),
         delivery_city: emptyToNull(formData.delivery.city),
         // Step 7: Delivery options
-        desired_delivery_date: formData.delivery.desiredDate
-          ? formData.delivery.desiredDate.toISOString().split('T')[0]
-          : null,
+        desired_delivery_date: formData.delivery.desiredDate ?? null,
         is_mall_delivery: formData.delivery.isMallDelivery,
         mall_email: formData.delivery.mallEmail ?? null,
         semi_trailer_accessible: formData.delivery.semiTrailerAccessible,

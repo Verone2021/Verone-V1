@@ -63,7 +63,7 @@ export interface SelectionItem {
     affiliate_payout_ht?: number | null;
   };
   product_image_url?: string | null;
-  /** Commission NITMI/LinkMe en décimal (0.05 = 5%) - depuis channel_pricing */
+  /** Commission LinkMe en décimal (0.05 = 5%) - depuis channel_pricing */
   commission_rate?: number | null;
   /** Prix client LinkMe calculé (custom_price_ht) - depuis channel_pricing du catalogue général */
   catalog_price_ht?: number | null;

@@ -1,8 +1,9 @@
 'use client';
 
 /**
- * OrderFormUnified - Formulaire public de commande LinkMe (enseignes)
+ * OrderFormUnified — Formulaire Commande Client (ClientOrderForm)
  *
+ * Nom officiel : ClientOrderForm
  * Formulaire accessible sans authentification via les pages publiques /s/[id]/catalogue.
  * Scope : enseignes uniquement (orgs independantes = formulaire separe a creer).
  *
