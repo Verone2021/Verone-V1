@@ -40,6 +40,7 @@ import {
   useCreateLinkMeOrder,
   type CreateLinkMeOrderInput,
   type LinkMeOrderItemInput,
+  type LinkMeDetailsInput,
 } from '../hooks/use-linkme-orders';
 import {
   useLinkMeSelection,
@@ -75,6 +76,43 @@ interface CartItem extends LinkMeOrderItemInput {
   is_affiliate_product: boolean;
   /** Taux de commission Verone sur produit affilié (ex: 0.15 = 15%) */
   affiliate_commission_rate: number;
+}
+
+/**
+ * Transforme les données contacts/adresses du formulaire en format DB linkme_details
+ */
+function buildLinkMeDetails(data: ContactsAddressesData) {
+  const deliveryContact = data.deliverySameAsBillingContact
+    ? data.billingContact
+    : data.deliveryContact;
+  const deliveryAddr = data.deliverySameAsBillingAddress
+    ? data.billingAddress
+    : data.deliveryAddress;
+
+  const hasAnyData =
+    deliveryContact ??
+    deliveryAddr ??
+    data.billingContact ??
+    data.billingAddress;
+
+  if (!hasAnyData) return null;
+
+  return {
+    requester_phone: data.billingContact?.phone ?? null,
+    delivery_contact_name: deliveryContact
+      ? `${deliveryContact.firstName} ${deliveryContact.lastName}`.trim()
+      : null,
+    delivery_contact_email: deliveryContact?.email ?? null,
+    delivery_contact_phone: deliveryContact?.phone ?? null,
+    delivery_address: deliveryAddr?.customAddress?.addressLine1 ?? null,
+    delivery_postal_code: deliveryAddr?.customAddress?.postalCode ?? null,
+    delivery_city: deliveryAddr?.customAddress?.city ?? null,
+    billing_name: data.billingContact
+      ? `${data.billingContact.firstName} ${data.billingContact.lastName}`.trim()
+      : null,
+    billing_email: data.billingContact?.email ?? null,
+    billing_phone: data.billingContact?.phone ?? null,
+  };
 }
 
 /**
@@ -556,7 +594,8 @@ export function CreateLinkMeOrderModal({
     selectedAffiliateId &&
     selectedSelectionId &&
     selectedCustomerId &&
-    cart.length > 0;
+    cart.length > 0 &&
+    !!contactsAddressesData.billingAddress;
 
   // Soumettre commande
   const handleSubmit = async () => {
@@ -591,6 +630,49 @@ export function CreateLinkMeOrderModal({
       handling_cost_ht: handlingCostHt ?? 0,
       insurance_cost_ht: insuranceCostHt ?? 0,
       frais_tax_rate: fraisTaxRate,
+      // Sélection LinkMe
+      linkme_selection_id: selectedSelectionId || null,
+      // Contacts (FK vers table contacts — source de vérité)
+      responsable_contact_id: contactsAddressesData.billingContact?.id ?? null,
+      billing_contact_id: contactsAddressesData.billingContact?.id ?? null,
+      delivery_contact_id: contactsAddressesData.deliverySameAsBillingContact
+        ? (contactsAddressesData.billingContact?.id ?? null)
+        : (contactsAddressesData.deliveryContact?.id ?? null),
+      // Adresse de facturation
+      billing_address: contactsAddressesData.billingAddress?.customAddress
+        ? {
+            address_line1:
+              contactsAddressesData.billingAddress.customAddress.addressLine1,
+            city: contactsAddressesData.billingAddress.customAddress.city,
+            postal_code:
+              contactsAddressesData.billingAddress.customAddress.postalCode,
+            country:
+              contactsAddressesData.billingAddress.customAddress.country ??
+              'FR',
+          }
+        : undefined,
+      // Adresse de livraison
+      shipping_address: (() => {
+        const deliveryAddr = contactsAddressesData.deliverySameAsBillingAddress
+          ? contactsAddressesData.billingAddress
+          : contactsAddressesData.deliveryAddress;
+        if (!deliveryAddr?.customAddress) return undefined;
+        return {
+          address_line1: deliveryAddr.customAddress.addressLine1,
+          city: deliveryAddr.customAddress.city,
+          postal_code: deliveryAddr.customAddress.postalCode,
+          country: deliveryAddr.customAddress.country ?? 'FR',
+        };
+      })(),
+      // Détails LinkMe (contacts/adresses pour sales_order_linkme_details)
+      linkme_details: (() => {
+        const contactDetails = buildLinkMeDetails(contactsAddressesData);
+        if (!contactDetails) return null;
+        const details: LinkMeDetailsInput = {
+          ...contactDetails,
+        };
+        return details;
+      })(),
     };
 
     try {
@@ -619,7 +701,7 @@ export function CreateLinkMeOrderModal({
               </div>
               <div>
                 <h2 className="text-lg font-semibold">
-                  Nouvelle commande LinkMe
+                  Back-office - Canal de vente LinkMe - Nouvelle commande
                 </h2>
                 <p className="text-sm text-gray-500">
                   Créer une commande depuis une sélection affilié

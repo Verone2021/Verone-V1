@@ -4,8 +4,8 @@
  * Page: Gestion complète Commande LinkMe
  *
  * Layout 2 colonnes:
- * - Gauche: Restaurant, Items (éditables), Contacts, Livraison, Historique
- * - Droite: Statut + Actions, Totaux, Frais, Paiement, Factures, Notes
+ * - Gauche: Restaurant, Items (éditables), Livraison, Historique, Frais, Totaux
+ * - Droite: Statut + Actions, Contacts (Responsable, Facturation), Paiement, Rapprochement, Factures, Notes
  *
  * Différences vs page approbation ([id]/page.tsx):
  * - PAS de dialogs approve/reject/request info
@@ -23,7 +23,6 @@ import {
   Button,
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
   Dialog,
@@ -107,6 +106,16 @@ interface CreatedByProfile {
   email: string | null;
 }
 
+/** Contact résolu via FK JOIN sur sales_orders → contacts */
+interface ContactRef {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string | null;
+  title: string | null;
+}
+
 interface OrderWithDetails {
   id: string;
   order_number: string;
@@ -167,6 +176,20 @@ interface OrderWithDetails {
   }>;
   linkmeDetails: LinkMeOrderDetails | null;
   infoRequests: InfoRequest[];
+  // Contacts via FK (source de vérité)
+  responsable_contact_id: string | null;
+  billing_contact_id: string | null;
+  delivery_contact_id: string | null;
+  responsable_contact: ContactRef | null;
+  billing_contact: ContactRef | null;
+  delivery_contact: ContactRef | null;
+  // Rapprochement bancaire (from transaction_document_links)
+  is_matched: boolean;
+  matched_transaction_id: string | null;
+  matched_transaction_label: string | null;
+  matched_transaction_amount: number | null;
+  matched_transaction_emitted_at: string | null;
+  matched_transaction_attachment_ids: string[] | null;
 }
 
 interface InfoRequest {
@@ -325,6 +348,16 @@ export default function LinkMeOrderDetailsPage() {
           created_by_affiliate_id, linkme_selection_id, created_by,
           payment_status_v2, payment_terms, currency, tax_rate,
           shipping_cost_ht, handling_cost_ht, insurance_cost_ht, fees_vat_rate,
+          responsable_contact_id, billing_contact_id, delivery_contact_id,
+          responsable_contact:contacts!sales_orders_responsable_contact_id_fkey (
+            id, first_name, last_name, email, phone, title
+          ),
+          billing_contact:contacts!sales_orders_billing_contact_id_fkey (
+            id, first_name, last_name, email, phone, title
+          ),
+          delivery_contact:contacts!sales_orders_delivery_contact_id_fkey (
+            id, first_name, last_name, email, phone, title
+          ),
           organisations!sales_orders_customer_id_fkey (
             id, trade_name, legal_name, approval_status, enseigne_id,
             address_line1, address_line2, postal_code, city,
@@ -402,6 +435,43 @@ export default function LinkMeOrderDetailsPage() {
         }
       }
 
+      // Fetch rapprochement bancaire
+      let matchInfo: {
+        transaction_id: string;
+        label: string;
+        amount: number;
+        emitted_at: string | null;
+        attachment_ids: string[] | null;
+      } | null = null;
+      const { data: linkData } = await supabase
+        .from('transaction_document_links')
+        .select(
+          `
+          sales_order_id,
+          transaction_id,
+          bank_transactions!inner (
+            id, label, amount, emitted_at, attachment_ids
+          )
+        `
+        )
+        .eq('sales_order_id', orderId)
+        .eq('link_type', 'sales_order')
+        .limit(1);
+
+      if (linkData && linkData.length > 0) {
+        const link = linkData[0];
+        if (link.bank_transactions) {
+          const bt = link.bank_transactions as Record<string, unknown>;
+          matchInfo = {
+            transaction_id: (bt.id as string) || '',
+            label: (bt.label as string) || '',
+            amount: (bt.amount as number) || 0,
+            emitted_at: (bt.emitted_at as string) || null,
+            attachment_ids: (bt.attachment_ids as string[]) || null,
+          };
+        }
+      }
+
       setOrder({
         id: orderData.id,
         order_number: orderData.order_number,
@@ -429,6 +499,22 @@ export default function LinkMeOrderDetailsPage() {
         fees_vat_rate: orderData.fees_vat_rate ?? null,
         createdByProfile,
         organisation,
+        // Contacts via FK
+        responsable_contact_id: (orderData as Record<string, unknown>)
+          .responsable_contact_id as string | null,
+        billing_contact_id: (orderData as Record<string, unknown>)
+          .billing_contact_id as string | null,
+        delivery_contact_id: (orderData as Record<string, unknown>)
+          .delivery_contact_id as string | null,
+        responsable_contact:
+          ((orderData as Record<string, unknown>)
+            .responsable_contact as ContactRef | null) ?? null,
+        billing_contact:
+          ((orderData as Record<string, unknown>)
+            .billing_contact as ContactRef | null) ?? null,
+        delivery_contact:
+          ((orderData as Record<string, unknown>)
+            .delivery_contact as ContactRef | null) ?? null,
         items: ((orderData.sales_order_items ?? []) as SalesOrderItemRaw[]).map(
           (item: SalesOrderItemRaw) => ({
             id: item.id,
@@ -441,6 +527,12 @@ export default function LinkMeOrderDetailsPage() {
         ),
         linkmeDetails: linkmeData,
         infoRequests,
+        is_matched: !!matchInfo,
+        matched_transaction_id: matchInfo?.transaction_id || null,
+        matched_transaction_label: matchInfo?.label || null,
+        matched_transaction_amount: matchInfo?.amount || null,
+        matched_transaction_emitted_at: matchInfo?.emitted_at || null,
+        matched_transaction_attachment_ids: matchInfo?.attachment_ids || null,
       });
 
       // Enriched items with commission info
@@ -629,35 +721,24 @@ export default function LinkMeOrderDetailsPage() {
 
   const handleConfirmContact = async () => {
     if (!contactDialogFor || !selectedContactId) return;
-    const contact = availableContacts.find(c => c.id === selectedContactId);
-    if (!contact) return;
 
-    const fullName = `${contact.firstName} ${contact.lastName}`;
-    let updates: Partial<LinkMeOrderDetails>;
-    if (contactDialogFor === 'responsable') {
-      updates = {
-        requester_name: fullName,
-        requester_email: contact.email,
-        requester_phone: contact.phone ?? undefined,
-        requester_position: contact.title ?? undefined,
-      };
-    } else if (contactDialogFor === 'delivery') {
-      updates = {
-        delivery_contact_name: fullName,
-        delivery_contact_email: contact.email,
-        delivery_contact_phone: contact.phone ?? undefined,
-      };
-    } else {
-      updates = {
-        billing_name: fullName,
-        billing_email: contact.email,
-        billing_phone: contact.phone ?? undefined,
-        billing_contact_source: 'custom',
-      };
-    }
+    // Mettre à jour le FK sur sales_orders (source de vérité)
+    const supabase = createClient();
+    const fkField =
+      contactDialogFor === 'responsable'
+        ? 'responsable_contact_id'
+        : contactDialogFor === 'billing'
+          ? 'billing_contact_id'
+          : 'delivery_contact_id';
 
     try {
-      await updateDetails.mutateAsync({ orderId, updates });
+      const { error: updateError } = await supabase
+        .from('sales_orders')
+        .update({ [fkField]: selectedContactId })
+        .eq('id', orderId);
+
+      if (updateError) throw updateError;
+
       setContactDialogFor(null);
       setSelectedContactId(null);
       void fetchOrder().catch(err => {
@@ -674,8 +755,14 @@ export default function LinkMeOrderDetailsPage() {
   const handleCreateAndSelectContact = async (
     contactData: NewContactFormData
   ) => {
-    await createContactBO.mutateAsync({
-      organisationId: isSuccursale ? undefined : (organisationId ?? undefined),
+    // 1. Créer le contact en BD
+    const isDeliveryOnly =
+      contactDialogFor === 'delivery' && !organisationId && !enseigneId;
+    const result = await createContactBO.mutateAsync({
+      organisationId:
+        isDeliveryOnly || isSuccursale
+          ? undefined
+          : (organisationId ?? undefined),
       enseigneId: isSuccursale ? (enseigneId ?? undefined) : undefined,
       firstName: contactData.firstName,
       lastName: contactData.lastName,
@@ -686,31 +773,20 @@ export default function LinkMeOrderDetailsPage() {
       isBillingContact: contactDialogFor === 'billing',
     });
 
-    const fullName = `${contactData.firstName} ${contactData.lastName}`;
-    let updates: Partial<LinkMeOrderDetails>;
-    if (contactDialogFor === 'responsable') {
-      updates = {
-        requester_name: fullName,
-        requester_email: contactData.email,
-        requester_phone: contactData.phone || undefined,
-        requester_position: contactData.title || undefined,
-      };
-    } else if (contactDialogFor === 'delivery') {
-      updates = {
-        delivery_contact_name: fullName,
-        delivery_contact_email: contactData.email,
-        delivery_contact_phone: contactData.phone || undefined,
-      };
-    } else {
-      updates = {
-        billing_name: fullName,
-        billing_email: contactData.email,
-        billing_phone: contactData.phone || undefined,
-        billing_contact_source: 'custom',
-      };
-    }
+    // 2. Mettre à jour le FK sur sales_orders (source de vérité)
+    const supabase = createClient();
+    const fkField =
+      contactDialogFor === 'responsable'
+        ? 'responsable_contact_id'
+        : contactDialogFor === 'billing'
+          ? 'billing_contact_id'
+          : 'delivery_contact_id';
 
-    await updateDetails.mutateAsync({ orderId, updates });
+    await supabase
+      .from('sales_orders')
+      .update({ [fkField]: result.id })
+      .eq('id', orderId);
+
     setContactDialogFor(null);
     setSelectedContactId(null);
     void fetchOrder().catch(err => {
@@ -800,6 +876,39 @@ export default function LinkMeOrderDetailsPage() {
   const details = order.linkmeDetails;
   const org = order.organisation;
 
+  // Contact fusion logic: group by contact_id when same contact has multiple roles
+  const respContact = order.responsable_contact;
+  const billContact = order.billing_contact;
+  const delContact = order.delivery_contact;
+
+  // Build fused contact groups
+  type ContactRole = 'responsable' | 'billing' | 'delivery';
+  interface FusedContactGroup {
+    contact: ContactRef;
+    roles: ContactRole[];
+  }
+
+  const fusedContacts: FusedContactGroup[] = [];
+  const seenIds = new Set<string>();
+
+  // Helper to add or merge a contact
+  const addOrMerge = (contact: ContactRef | null, role: ContactRole) => {
+    if (!contact) return;
+    if (seenIds.has(contact.id)) {
+      const existing = fusedContacts.find(g => g.contact.id === contact.id);
+      if (existing && !existing.roles.includes(role)) {
+        existing.roles.push(role);
+      }
+    } else {
+      seenIds.add(contact.id);
+      fusedContacts.push({ contact, roles: [role] });
+    }
+  };
+
+  addOrMerge(respContact, 'responsable');
+  addOrMerge(billContact, 'billing');
+  addOrMerge(delContact, 'delivery');
+
   // Address matching
   const orgAddress = org?.has_different_shipping_address
     ? org.shipping_address_line1
@@ -842,26 +951,27 @@ export default function LinkMeOrderDetailsPage() {
   };
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-4 p-4">
       {/* HEADER */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3">
         <Button
           variant="ghost"
           size="icon"
+          className="h-8 w-8"
           onClick={() => router.push('/canaux-vente/linkme/commandes')}
         >
-          <ArrowLeft className="h-5 w-5" />
+          <ArrowLeft className="h-4 w-4" />
         </Button>
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            Commande {order.order_number}
+        <div className="flex-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h1 className="text-xl font-bold text-gray-900">
+              {order.order_number}
+            </h1>
             {order.linkme_display_number && (
-              <span className="ml-2 text-lg font-normal text-gray-500">
+              <span className="text-sm font-normal text-gray-500">
                 ({order.linkme_display_number})
               </span>
             )}
-          </h1>
-          <div className="flex items-center gap-2 mt-1">
             {getStatusBadge(order.status)}
             {(() => {
               const channel = getOrderChannel(
@@ -876,82 +986,57 @@ export default function LinkMeOrderDetailsPage() {
                 </span>
               );
             })()}
-            <span className="text-gray-500 text-sm">
+            <span className="text-gray-400 text-xs">
               {new Date(order.created_at).toLocaleDateString('fr-FR', {
                 day: 'numeric',
-                month: 'long',
+                month: 'short',
                 year: 'numeric',
               })}
             </span>
-          </div>
-        </div>
-      </div>
-
-      {/* DEMANDEUR */}
-      {order.createdByProfile && (
-        <div className="flex items-center gap-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-          <User className="h-5 w-5 text-blue-600 flex-shrink-0" />
-          <div className="text-sm">
-            <span className="font-medium text-blue-800">Demandeur : </span>
-            <span className="text-blue-700">
-              {[
-                order.createdByProfile.first_name,
-                order.createdByProfile.last_name,
-              ]
-                .filter(Boolean)
-                .join(' ') || 'Utilisateur inconnu'}
-            </span>
-            {order.createdByProfile.email && (
-              <span className="text-blue-600 ml-2">
-                ({order.createdByProfile.email})
+            {order.createdByProfile && (
+              <span className="text-xs text-blue-600">
+                par{' '}
+                {[
+                  order.createdByProfile.first_name,
+                  order.createdByProfile.last_name,
+                ]
+                  .filter(Boolean)
+                  .join(' ') || 'Inconnu'}
               </span>
             )}
           </div>
         </div>
-      )}
+      </div>
 
       {/* ============================================ */}
       {/* LAYOUT 2 COLONNES */}
       {/* ============================================ */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* ============================================ */}
         {/* COLONNE GAUCHE (2/3) */}
         {/* ============================================ */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* RESTAURANT */}
+        <div className="lg:col-span-2 space-y-4">
+          {/* RESTAURANT — compact inline */}
           <Card>
-            <CardHeader className="pb-3">
-              <div className="flex items-center gap-2">
-                <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-orange-100">
-                  <Building2 className="h-4 w-4 text-orange-600" />
-                </div>
-                <CardTitle className="text-lg">Restaurant</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent>
+            <CardContent className="p-4">
               {order.organisation ? (
-                <div className="space-y-4">
-                  <div className="p-4 bg-gray-50 rounded-xl">
-                    <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wider">
-                      Établissement
-                    </p>
-                    <p className="text-lg font-semibold mt-1">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Building2 className="h-4 w-4 text-orange-600 flex-shrink-0" />
+                    <span className="font-semibold text-gray-900">
                       {order.organisation.trade_name ??
                         order.organisation.legal_name}
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
+                    </span>
                     {details?.owner_type && (
                       <span
-                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold rounded-full ${
+                        className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full ${
                           details.owner_type === 'franchise'
-                            ? 'bg-violet-100 text-violet-800 ring-1 ring-violet-200'
-                            : 'bg-blue-100 text-blue-800 ring-1 ring-blue-200'
+                            ? 'bg-violet-100 text-violet-700'
+                            : 'bg-blue-100 text-blue-700'
                         }`}
                       >
-                        <Building2 className="h-3.5 w-3.5" />
                         {details.owner_type === 'propre'
-                          ? 'Restaurant propre'
+                          ? 'Propre'
                           : details.owner_type === 'succursale'
                             ? 'Succursale'
                             : details.owner_type === 'franchise'
@@ -960,82 +1045,71 @@ export default function LinkMeOrderDetailsPage() {
                       </span>
                     )}
                     {details?.is_new_restaurant && (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold rounded-full bg-emerald-100 text-emerald-800 ring-1 ring-emerald-200">
-                        <Check className="h-3.5 w-3.5" />
-                        Nouveau restaurant
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full bg-emerald-100 text-emerald-700">
+                        Nouveau
                       </span>
                     )}
                     {order.organisation.approval_status ===
                       'pending_validation' && (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold rounded-full bg-amber-100 text-amber-800 ring-1 ring-amber-200">
-                        <AlertTriangle className="h-3.5 w-3.5" />
-                        En attente validation
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full bg-amber-100 text-amber-700">
+                        <AlertTriangle className="h-3 w-3" />
+                        Validation
                       </span>
                     )}
                   </div>
-                  <div className="space-y-2 text-sm">
+                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500">
                     {order.organisation.siret && (
-                      <div className="flex items-center gap-2 text-gray-600">
-                        <CreditCard className="h-3.5 w-3.5 text-gray-400" />
-                        <span>SIRET : {order.organisation.siret}</span>
-                      </div>
+                      <span>SIRET : {order.organisation.siret}</span>
                     )}
                     {(order.organisation.address_line1 ??
                       order.organisation.postal_code) && (
-                      <div className="flex items-center gap-2 text-gray-600">
-                        <MapPin className="h-3.5 w-3.5 text-gray-400" />
-                        <span>
-                          {[
-                            order.organisation.address_line1,
-                            order.organisation.address_line2,
-                          ]
-                            .filter(Boolean)
-                            .join(', ')}
-                          {order.organisation.postal_code &&
-                            `, ${order.organisation.postal_code}`}
-                          {order.organisation.city &&
-                            ` ${order.organisation.city}`}
-                        </span>
-                      </div>
+                      <span className="flex items-center gap-1">
+                        <MapPin className="h-3 w-3" />
+                        {[
+                          order.organisation.address_line1,
+                          order.organisation.postal_code,
+                          order.organisation.city,
+                        ]
+                          .filter(Boolean)
+                          .join(', ')}
+                      </span>
                     )}
                     {order.organisation.email && (
-                      <div className="flex items-center gap-2 text-gray-600">
-                        <Mail className="h-3.5 w-3.5 text-gray-400" />
-                        <a
-                          href={`mailto:${order.organisation.email}`}
-                          className="text-blue-600 hover:underline"
-                        >
-                          {order.organisation.email}
-                        </a>
-                      </div>
+                      <a
+                        href={`mailto:${order.organisation.email}`}
+                        className="text-blue-600 hover:underline flex items-center gap-1"
+                      >
+                        <Mail className="h-3 w-3" />
+                        {order.organisation.email}
+                      </a>
                     )}
                     {order.organisation.phone && (
-                      <div className="flex items-center gap-2 text-gray-600">
-                        <Phone className="h-3.5 w-3.5 text-gray-400" />
-                        <span>{order.organisation.phone}</span>
-                      </div>
+                      <span className="flex items-center gap-1">
+                        <Phone className="h-3 w-3" />
+                        {order.organisation.phone}
+                      </span>
                     )}
                   </div>
                 </div>
               ) : (
-                <p className="text-gray-500">Organisation non renseignée</p>
+                <p className="text-gray-500 text-sm">
+                  Organisation non renseignée
+                </p>
               )}
             </CardContent>
           </Card>
 
           {/* ITEMS TABLE (editable) */}
           <Card>
-            <CardHeader>
+            <CardHeader className="pb-2 pt-4 px-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Package className="h-5 w-5 text-orange-600" />
-                  <CardTitle className="text-lg">
-                    Récapitulatif commande
-                  </CardTitle>
+                  <Package className="h-4 w-4 text-orange-600" />
+                  <CardTitle className="text-base">Articles</CardTitle>
+                  <span className="text-xs text-gray-400">
+                    ({order.items.length})
+                  </span>
                 </div>
-                <CardDescription>
-                  {order.items.length} article(s)
-                </CardDescription>
               </div>
             </CardHeader>
             <CardContent>
@@ -1203,253 +1277,103 @@ export default function LinkMeOrderDetailsPage() {
             </CardContent>
           </Card>
 
-          {/* CONTACTS: Responsable + Facturation side by side */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* RESPONSABLE */}
-            <Card>
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-blue-100">
-                      <User className="h-4 w-4 text-blue-600" />
-                    </div>
-                    <CardTitle className="text-base">Responsable</CardTitle>
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setSelectedContactId(null);
-                      setContactDialogFor('responsable');
-                    }}
-                  >
-                    <Pencil className="h-3 w-3 mr-1" />
-                    Changer
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {details ? (
-                  <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-xl">
-                    <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                      <span className="text-blue-700 font-bold text-sm">
-                        {(details.requester_name ?? '')
-                          .split(' ')
-                          .map(n => n[0])
-                          .join('')
-                          .slice(0, 2)
-                          .toUpperCase()}
-                      </span>
-                    </div>
-                    <div className="min-w-0 flex-1 space-y-1">
-                      <p className="text-sm font-semibold text-gray-900">
-                        {details.requester_name}
-                      </p>
-                      {details.requester_position && (
-                        <p className="text-xs text-gray-500">
-                          {details.requester_position}
-                        </p>
-                      )}
-                      {details.requester_email && (
-                        <a
-                          href={`mailto:${details.requester_email}`}
-                          className="flex items-center gap-1 text-xs text-blue-600 hover:underline"
-                        >
-                          <Mail className="h-3 w-3" />
-                          {details.requester_email}
-                        </a>
-                      )}
-                      {details.requester_phone && (
-                        <span className="flex items-center gap-1 text-xs text-gray-600">
-                          <Phone className="h-3 w-3" />
-                          {details.requester_phone}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                ) : (
-                  <p className="text-gray-500 text-sm">Non disponible</p>
-                )}
-              </CardContent>
-            </Card>
+          {/* FRAIS DE SERVICE — after articles */}
+          <FeesSection
+            orderId={order.id}
+            shippingCostHt={order.shipping_cost_ht ?? 0}
+            handlingCostHt={order.handling_cost_ht ?? 0}
+            insuranceCostHt={order.insurance_cost_ht ?? 0}
+            feesVatRate={order.fees_vat_rate ?? 0.2}
+          />
 
-            {/* FACTURATION */}
-            <Card>
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-green-100">
-                      <CreditCard className="h-4 w-4 text-green-600" />
-                    </div>
-                    <CardTitle className="text-base">Facturation</CardTitle>
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setSelectedContactId(null);
-                      setContactDialogFor('billing');
-                    }}
-                  >
-                    <Pencil className="h-3 w-3 mr-1" />
-                    Changer
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {details ? (
-                  <div className="space-y-3">
-                    <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-xl">
-                      <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
-                        <span className="text-green-700 font-bold text-sm">
-                          {(details.billing_name ?? '')
-                            .split(' ')
-                            .map(n => n[0])
-                            .join('')
-                            .slice(0, 2)
-                            .toUpperCase()}
-                        </span>
-                      </div>
-                      <div className="min-w-0 flex-1 space-y-1">
-                        <p className="text-sm font-semibold text-gray-900">
-                          {details.billing_name ?? 'Non renseigné'}
-                        </p>
-                        {details.billing_email && (
-                          <a
-                            href={`mailto:${details.billing_email}`}
-                            className="flex items-center gap-1 text-xs text-blue-600 hover:underline"
-                          >
-                            <Mail className="h-3 w-3" />
-                            {details.billing_email}
-                          </a>
-                        )}
-                        {details.billing_phone && (
-                          <span className="flex items-center gap-1 text-xs text-gray-600">
-                            <Phone className="h-3 w-3" />
-                            {details.billing_phone}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    {order.organisation && (
-                      <div className="flex items-start gap-2 p-2 bg-green-50/50 rounded-lg border border-green-100 text-xs">
-                        <MapPin className="h-3.5 w-3.5 text-green-600 mt-0.5 flex-shrink-0" />
-                        <div>
-                          <p className="text-gray-600">
-                            {order.organisation.billing_address_line1
-                              ? [
-                                  order.organisation.billing_address_line1,
-                                  order.organisation.billing_address_line2,
-                                ]
-                                  .filter(Boolean)
-                                  .join(', ')
-                              : [
-                                  order.organisation.address_line1,
-                                  order.organisation.address_line2,
-                                ]
-                                  .filter(Boolean)
-                                  .join(', ')}
-                          </p>
-                          <p className="text-gray-600">
-                            {order.organisation.billing_address_line1
-                              ? [
-                                  order.organisation.billing_postal_code,
-                                  order.organisation.billing_city,
-                                ]
-                                  .filter(Boolean)
-                                  .join(' ')
-                              : [
-                                  order.organisation.postal_code,
-                                  order.organisation.city,
-                                ]
-                                  .filter(Boolean)
-                                  .join(' ')}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <p className="text-gray-500 text-sm">Non disponible</p>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* LIVRAISON */}
+          {/* TOTAUX — after fees */}
           <Card>
-            <CardHeader className="pb-3">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm text-gray-600">Total HT</span>
+                <span className="text-sm font-medium">
+                  {formatCurrency(order.total_ht)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between py-2 border-t border-gray-200">
+                <span className="font-bold">Total TTC</span>
+                <span className="font-bold text-lg">
+                  {formatCurrency(order.total_ttc)}
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* LIVRAISON — after totals */}
+          <Card>
+            <CardHeader className="pb-2 pt-4 px-4">
               <div className="flex items-center gap-2">
-                <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-cyan-100">
-                  <Truck className="h-4 w-4 text-cyan-600" />
-                </div>
-                <CardTitle className="text-lg">Livraison</CardTitle>
+                <Truck className="h-4 w-4 text-cyan-600" />
+                <CardTitle className="text-base">Livraison</CardTitle>
                 {order.status === 'validated' &&
                   renderStepBadge(isStep4Complete())}
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-4 pb-4 pt-0">
               {details ? (
-                <div className="space-y-6">
-                  {/* Contact livraison */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-medium text-gray-700">
-                        Contact livraison
-                      </p>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedContactId(null);
-                          setContactDialogFor('delivery');
-                        }}
-                      >
-                        <Pencil className="h-3 w-3 mr-1" />
-                        Changer contact
-                      </Button>
-                    </div>
-                    {details.delivery_contact_name ? (
-                      <div className="space-y-1">
-                        <p className="font-medium">
-                          {details.delivery_contact_name}
+                <div className="space-y-3">
+                  {/* Contact livraison — only show if NOT already in fused cards */}
+                  {!fusedContacts.some(g => g.roles.includes('delivery')) && (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Contact livraison
                         </p>
-                        {details.delivery_contact_email && (
-                          <div className="flex items-center gap-2 text-sm">
-                            <Mail className="h-4 w-4 text-gray-400" />
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 text-xs"
+                          onClick={() => {
+                            setSelectedContactId(null);
+                            setContactDialogFor('delivery');
+                          }}
+                        >
+                          <Pencil className="h-3 w-3 mr-1" />
+                          Changer
+                        </Button>
+                      </div>
+                      {details.delivery_contact_name ? (
+                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
+                          <span className="font-medium">
+                            {details.delivery_contact_name}
+                          </span>
+                          {details.delivery_contact_email && (
                             <a
                               href={`mailto:${details.delivery_contact_email}`}
-                              className="text-blue-600 hover:underline"
+                              className="text-blue-600 hover:underline text-xs"
                             >
                               {details.delivery_contact_email}
                             </a>
-                          </div>
-                        )}
-                        {details.delivery_contact_phone && (
-                          <div className="flex items-center gap-2 text-sm">
-                            <Phone className="h-4 w-4 text-gray-400" />
-                            <span>{details.delivery_contact_phone}</span>
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <p className="text-sm text-gray-400 italic">
-                        Aucun contact renseigné
-                      </p>
-                    )}
-                  </div>
-
-                  <Separator />
+                          )}
+                          {details.delivery_contact_phone && (
+                            <span className="text-xs text-gray-500">
+                              {details.delivery_contact_phone}
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-gray-400 italic">
+                          Aucun contact renseigné
+                        </p>
+                      )}
+                    </div>
+                  )}
 
                   {/* Adresse livraison */}
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <p className="text-sm font-medium text-gray-700">
-                        Adresse de livraison
+                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Adresse
                       </p>
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
+                        className="h-7 text-xs"
                         onClick={() => openEditDialog('delivery_address')}
                       >
                         <Pencil className="h-3 w-3 mr-1" />
@@ -1492,19 +1416,13 @@ export default function LinkMeOrderDetailsPage() {
                       </p>
                     )}
                     {org &&
-                      (org.address_line1 ?? org.shipping_address_line1) && (
+                      (org.address_line1 ?? org.shipping_address_line1) &&
+                      !deliveryAddressMatchesOrg && (
                         <button
                           type="button"
-                          disabled={
-                            deliveryAddressMatchesOrg || updateDetails.isPending
-                          }
-                          className={`w-full text-left p-3 rounded-lg border transition-colors ${
-                            deliveryAddressMatchesOrg
-                              ? 'bg-blue-50 border-blue-100 cursor-default'
-                              : 'bg-blue-50 border-blue-200 cursor-pointer hover:bg-blue-100 hover:border-blue-300'
-                          }`}
+                          disabled={updateDetails.isPending}
+                          className="w-full text-left p-2 rounded-lg border border-blue-200 bg-blue-50 hover:bg-blue-100 transition-colors text-xs"
                           onClick={() => {
-                            if (deliveryAddressMatchesOrg) return;
                             void handleUseOrgAddress().catch((err: unknown) => {
                               console.error(
                                 '[LinkMeOrderDetails] Use org address failed:',
@@ -1513,146 +1431,104 @@ export default function LinkMeOrderDetailsPage() {
                             });
                           }}
                         >
-                          <div className="flex items-center justify-between mb-1">
-                            <div className="flex items-center gap-2">
-                              <MapPin className="h-3.5 w-3.5 text-blue-600" />
-                              <p className="text-xs font-medium text-blue-700">
-                                Adresse restaurant (organisation)
-                              </p>
-                            </div>
-                            {!deliveryAddressMatchesOrg &&
-                              !updateDetails.isPending && (
-                                <span className="text-[10px] font-medium text-blue-600 bg-blue-100 px-2 py-0.5 rounded">
-                                  Utiliser cette adresse
-                                </span>
-                              )}
+                          <div className="flex items-center gap-2">
+                            <MapPin className="h-3 w-3 text-blue-600 flex-shrink-0" />
+                            <span className="text-blue-700 font-medium">
+                              Utiliser adresse restaurant
+                            </span>
+                            <span className="text-gray-500 truncate">
+                              {org.has_different_shipping_address
+                                ? [
+                                    org.shipping_address_line1,
+                                    org.shipping_postal_code,
+                                    org.shipping_city,
+                                  ]
+                                    .filter(Boolean)
+                                    .join(', ')
+                                : [org.address_line1, org.postal_code, org.city]
+                                    .filter(Boolean)
+                                    .join(', ')}
+                            </span>
                           </div>
-                          <p className="text-sm text-gray-600">
-                            {org.has_different_shipping_address
-                              ? [
-                                  org.shipping_address_line1,
-                                  org.shipping_address_line2,
-                                ]
-                                  .filter(Boolean)
-                                  .join(', ')
-                              : [org.address_line1, org.address_line2]
-                                  .filter(Boolean)
-                                  .join(', ')}
-                          </p>
-                          <p className="text-sm text-gray-600">
-                            {org.has_different_shipping_address
-                              ? [org.shipping_postal_code, org.shipping_city]
-                                  .filter(Boolean)
-                                  .join(' ')
-                              : [org.postal_code, org.city]
-                                  .filter(Boolean)
-                                  .join(' ')}
-                          </p>
                         </button>
                       )}
                   </div>
 
-                  <Separator />
+                  <Separator className="my-2" />
 
-                  {/* Options livraison */}
-                  <div className="space-y-3">
+                  {/* Options livraison — compact */}
+                  <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <p className="text-sm font-medium text-gray-700">
+                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Options
                       </p>
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
+                        className="h-7 text-xs"
                         onClick={() => openEditDialog('delivery_options')}
                       >
                         <Pencil className="h-3 w-3 mr-1" />
                         Modifier
                       </Button>
                     </div>
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm">Modalités acceptées</span>
-                          <Badge
-                            variant={
-                              details.delivery_terms_accepted
-                                ? 'default'
-                                : 'outline'
-                            }
-                          >
-                            {details.delivery_terms_accepted ? 'Oui' : 'Non'}
-                          </Badge>
-                        </div>
-                        {details.desired_delivery_date && (
-                          <div className="flex items-center gap-2 text-sm">
-                            <Calendar className="h-4 w-4 text-gray-400" />
-                            <span>
-                              Souhaitée :{' '}
-                              {new Date(
-                                details.desired_delivery_date
-                              ).toLocaleDateString('fr-FR')}
-                            </span>
-                          </div>
-                        )}
-                        {details.delivery_notes && (
-                          <div>
-                            <Label className="text-xs text-gray-500">
-                              Notes
-                            </Label>
-                            <p className="text-sm text-gray-600">
-                              {details.delivery_notes}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm">Centre commercial</span>
-                          <Badge
-                            variant={
-                              details.is_mall_delivery ? 'default' : 'outline'
-                            }
-                          >
-                            {details.is_mall_delivery ? 'Oui' : 'Non'}
-                          </Badge>
-                        </div>
-                        {details.is_mall_delivery && details.mall_email && (
-                          <div className="text-sm text-gray-600">
-                            Email direction : {details.mall_email}
-                          </div>
-                        )}
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm">Accès semi-remorque</span>
-                          <Badge
-                            variant={
-                              details.semi_trailer_accessible
-                                ? 'default'
-                                : 'outline'
-                            }
-                          >
-                            {details.semi_trailer_accessible ? 'Oui' : 'Non'}
-                          </Badge>
-                        </div>
-                        {details.access_form_required && (
-                          <div className="p-3 bg-gray-50 rounded-lg text-sm">
-                            <p className="font-medium">
-                              Formulaire accès requis
-                            </p>
-                            {details.access_form_url && (
-                              <a
-                                href={details.access_form_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-600 hover:underline flex items-center gap-1 mt-1"
-                              >
-                                <ExternalLink className="h-3 w-3" />
-                                Voir le formulaire
-                              </a>
-                            )}
-                          </div>
-                        )}
-                      </div>
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-600">
+                      <span>
+                        Modalités :{' '}
+                        <strong>
+                          {details.delivery_terms_accepted ? 'Oui' : 'Non'}
+                        </strong>
+                      </span>
+                      <span>
+                        Centre co. :{' '}
+                        <strong>
+                          {details.is_mall_delivery ? 'Oui' : 'Non'}
+                        </strong>
+                      </span>
+                      <span>
+                        Semi-remorque :{' '}
+                        <strong>
+                          {details.semi_trailer_accessible ? 'Oui' : 'Non'}
+                        </strong>
+                      </span>
+                      {details.desired_delivery_date && (
+                        <span className="flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          Souhaitée :{' '}
+                          {new Date(
+                            details.desired_delivery_date
+                          ).toLocaleDateString('fr-FR')}
+                        </span>
+                      )}
                     </div>
+                    {details.is_mall_delivery && details.mall_email && (
+                      <p className="text-xs text-gray-500">
+                        Email direction : {details.mall_email}
+                      </p>
+                    )}
+                    {details.delivery_notes && (
+                      <p className="text-xs text-gray-500">
+                        Notes : {details.delivery_notes}
+                      </p>
+                    )}
+                    {details.access_form_required && (
+                      <div className="flex items-center gap-2 text-xs">
+                        <span className="text-amber-600 font-medium">
+                          Formulaire accès requis
+                        </span>
+                        {details.access_form_url && (
+                          <a
+                            href={details.access_form_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:underline flex items-center gap-1"
+                          >
+                            <ExternalLink className="h-3 w-3" />
+                            Voir
+                          </a>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   {/* Post-approbation */}
@@ -1732,13 +1608,11 @@ export default function LinkMeOrderDetailsPage() {
           {/* HISTORIQUE DEMANDES */}
           {order.infoRequests.length > 0 && (
             <Card>
-              <CardHeader className="pb-3">
+              <CardHeader className="pb-2 pt-4 px-4">
                 <div className="flex items-center gap-2">
-                  <Mail className="h-5 w-5 text-indigo-600" />
-                  <CardTitle className="text-lg">
-                    Historique des demandes
-                  </CardTitle>
-                  <Badge variant="secondary" className="ml-auto">
+                  <Mail className="h-4 w-4 text-indigo-600" />
+                  <CardTitle className="text-base">Demandes</CardTitle>
+                  <Badge variant="secondary" className="ml-auto text-xs">
                     {order.infoRequests.length}
                   </Badge>
                 </div>
@@ -1827,22 +1701,12 @@ export default function LinkMeOrderDetailsPage() {
         {/* ============================================ */}
         {/* COLONNE DROITE - SIDEBAR (1/3) */}
         {/* ============================================ */}
-        <div className="space-y-6">
+        <div className="space-y-4">
           {/* STATUT + ACTIONS */}
           <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg">Statut</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="p-4 space-y-3">
               <div className="flex items-center gap-2">
                 {getStatusBadge(order.status)}
-                <span className="text-sm text-gray-500">
-                  {new Date(order.created_at).toLocaleDateString('fr-FR', {
-                    day: 'numeric',
-                    month: 'long',
-                    year: 'numeric',
-                  })}
-                </span>
               </div>
               <div className="space-y-2">
                 {order.status === 'draft' && (
@@ -1892,7 +1756,8 @@ export default function LinkMeOrderDetailsPage() {
                 )}
                 {/* shipped is a terminal status before delivery — no further action */}
                 {order.status !== 'cancelled' &&
-                  order.status !== 'delivered' && (
+                  order.status !== 'delivered' &&
+                  order.status !== 'shipped' && (
                     <Button
                       variant="outline"
                       className="w-full gap-2 text-red-600 hover:text-red-700 hover:bg-red-50"
@@ -1911,38 +1776,259 @@ export default function LinkMeOrderDetailsPage() {
             </CardContent>
           </Card>
 
-          {/* TOTAUX */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg">Totaux</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span>Total HT</span>
-                  <span className="font-medium">
-                    {formatCurrency(order.total_ht)}
-                  </span>
-                </div>
-                <Separator />
-                <div className="flex justify-between font-bold text-lg">
-                  <span>Total TTC</span>
-                  <span>{formatCurrency(order.total_ttc)}</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          {/* CONTACTS: Cards fusionnées via FK — compact */}
+          {fusedContacts.length > 0 ? (
+            fusedContacts.map(group => {
+              const roleLabels: Record<ContactRole, string> = {
+                responsable: 'Resp.',
+                billing: 'Fact.',
+                delivery: 'Livr.',
+              };
+              const roleBadgeColors: Record<ContactRole, string> = {
+                responsable: 'bg-blue-100 text-blue-700',
+                billing: 'bg-green-100 text-green-700',
+                delivery: 'bg-cyan-100 text-cyan-700',
+              };
+              const initials =
+                `${group.contact.first_name[0] ?? ''}${group.contact.last_name[0] ?? ''}`.toUpperCase();
+              const fullName = `${group.contact.first_name} ${group.contact.last_name}`;
 
-          {/* FRAIS */}
-          <FeesSection
-            orderId={order.id}
-            shippingCostHt={order.shipping_cost_ht ?? 0}
-            handlingCostHt={order.handling_cost_ht ?? 0}
-            insuranceCostHt={order.insurance_cost_ht ?? 0}
-            feesVatRate={order.fees_vat_rate ?? 0.2}
-          />
+              return (
+                <Card key={group.contact.id}>
+                  <CardContent className="p-3">
+                    {/* Buttons row — above everything */}
+                    <div className="flex items-center justify-end gap-1 mb-1.5">
+                      {group.roles.length === 1 ? (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-5 text-[10px] px-1.5 text-gray-400 hover:text-gray-600"
+                          onClick={() => {
+                            setSelectedContactId(null);
+                            setContactDialogFor(group.roles[0]);
+                          }}
+                        >
+                          <Pencil className="h-2.5 w-2.5 mr-0.5" />
+                          Changer
+                        </Button>
+                      ) : (
+                        group.roles.map(role => (
+                          <Button
+                            key={role}
+                            variant="ghost"
+                            size="sm"
+                            className="h-5 text-[10px] px-1.5 text-gray-400 hover:text-gray-600"
+                            onClick={() => {
+                              setSelectedContactId(null);
+                              setContactDialogFor(role);
+                            }}
+                          >
+                            <Pencil className="h-2.5 w-2.5 mr-0.5" />
+                            {roleLabels[role]}
+                          </Button>
+                        ))
+                      )}
+                    </div>
+                    {/* Contact info + badges inline */}
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                        <span className="text-blue-700 font-bold text-[10px]">
+                          {initials}
+                        </span>
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1 flex-wrap">
+                          <span className="text-sm font-semibold text-gray-900 leading-tight">
+                            {fullName}
+                          </span>
+                          {group.roles.map(role => (
+                            <span
+                              key={role}
+                              className={`px-1.5 py-0 text-[9px] font-semibold rounded-full leading-4 ${roleBadgeColors[role]}`}
+                            >
+                              {roleLabels[role]}
+                            </span>
+                          ))}
+                          {group.contact.title && (
+                            <span className="text-[10px] text-gray-400">
+                              {group.contact.title}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex flex-wrap gap-x-3 gap-y-0 text-xs text-gray-500">
+                          {group.contact.email && (
+                            <a
+                              href={`mailto:${group.contact.email}`}
+                              className="text-blue-600 hover:underline"
+                            >
+                              {group.contact.email}
+                            </a>
+                          )}
+                          {group.contact.phone && (
+                            <span>{group.contact.phone}</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    {/* Billing address if billing role */}
+                    {group.roles.includes('billing') && order.organisation && (
+                      <div className="flex items-center gap-1.5 mt-2 text-[11px] text-gray-500">
+                        <MapPin className="h-3 w-3 text-green-600 flex-shrink-0" />
+                        <span>
+                          {order.organisation.billing_address_line1
+                            ? [
+                                order.organisation.billing_address_line1,
+                                order.organisation.billing_postal_code,
+                                order.organisation.billing_city,
+                              ]
+                                .filter(Boolean)
+                                .join(', ')
+                            : [
+                                order.organisation.address_line1,
+                                order.organisation.postal_code,
+                                order.organisation.city,
+                              ]
+                                .filter(Boolean)
+                                .join(', ')}
+                        </span>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })
+          ) : (
+            /* Fallback: anciennes commandes sans FK — afficher depuis flat fields */
+            <>
+              {/* Responsable (flat) */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-blue-100">
+                        <User className="h-4 w-4 text-blue-600" />
+                      </div>
+                      <CardTitle className="text-base">Responsable</CardTitle>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedContactId(null);
+                        setContactDialogFor('responsable');
+                      }}
+                    >
+                      <Pencil className="h-3 w-3 mr-1" />
+                      Changer
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {details ? (
+                    <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-xl">
+                      <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                        <span className="text-blue-700 font-bold text-sm">
+                          {(details.requester_name ?? '')
+                            .split(' ')
+                            .map(n => n[0])
+                            .join('')
+                            .slice(0, 2)
+                            .toUpperCase()}
+                        </span>
+                      </div>
+                      <div className="min-w-0 flex-1 space-y-1">
+                        <p className="text-sm font-semibold text-gray-900">
+                          {details.requester_name}
+                        </p>
+                        {details.requester_email && (
+                          <a
+                            href={`mailto:${details.requester_email}`}
+                            className="flex items-center gap-1 text-xs text-blue-600 hover:underline"
+                          >
+                            <Mail className="h-3 w-3" />
+                            {details.requester_email}
+                          </a>
+                        )}
+                        {details.requester_phone && (
+                          <span className="flex items-center gap-1 text-xs text-gray-600">
+                            <Phone className="h-3 w-3" />
+                            {details.requester_phone}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-gray-500 text-sm">Non disponible</p>
+                  )}
+                </CardContent>
+              </Card>
 
-          {/* PAIEMENT */}
+              {/* Facturation (flat) */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-green-100">
+                        <CreditCard className="h-4 w-4 text-green-600" />
+                      </div>
+                      <CardTitle className="text-base">Facturation</CardTitle>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedContactId(null);
+                        setContactDialogFor('billing');
+                      }}
+                    >
+                      <Pencil className="h-3 w-3 mr-1" />
+                      Changer
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {details ? (
+                    <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-xl">
+                      <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                        <span className="text-green-700 font-bold text-sm">
+                          {(details.billing_name ?? '')
+                            .split(' ')
+                            .map(n => n[0])
+                            .join('')
+                            .slice(0, 2)
+                            .toUpperCase()}
+                        </span>
+                      </div>
+                      <div className="min-w-0 flex-1 space-y-1">
+                        <p className="text-sm font-semibold text-gray-900">
+                          {details.billing_name ?? 'Non renseigné'}
+                        </p>
+                        {details.billing_email && (
+                          <a
+                            href={`mailto:${details.billing_email}`}
+                            className="flex items-center gap-1 text-xs text-blue-600 hover:underline"
+                          >
+                            <Mail className="h-3 w-3" />
+                            {details.billing_email}
+                          </a>
+                        )}
+                        {details.billing_phone && (
+                          <span className="flex items-center gap-1 text-xs text-gray-600">
+                            <Phone className="h-3 w-3" />
+                            {details.billing_phone}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-gray-500 text-sm">Non disponible</p>
+                  )}
+                </CardContent>
+              </Card>
+            </>
+          )}
+
+          {/* PAIEMENT + RAPPROCHEMENT (intégrés) */}
           <PaymentSection
             orderId={order.id}
             orderNumber={order.order_number}
@@ -1973,6 +2059,11 @@ export default function LinkMeOrderDetailsPage() {
               tax_rate: order.tax_rate ?? 20,
               products: item.product ? { name: item.product.name } : null,
             }))}
+            isMatched={order.is_matched}
+            matchedTransactionLabel={order.matched_transaction_label}
+            matchedTransactionAmount={order.matched_transaction_amount}
+            matchedTransactionEmittedAt={order.matched_transaction_emitted_at}
+            matchedTransactionId={order.matched_transaction_id}
           />
 
           {/* FACTURES */}
@@ -1981,11 +2072,11 @@ export default function LinkMeOrderDetailsPage() {
           {/* NOTES */}
           {order.notes && (
             <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg">Notes</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-gray-600">{order.notes}</p>
+              <CardContent className="p-3">
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">
+                  Notes
+                </p>
+                <p className="text-xs text-gray-600">{order.notes}</p>
               </CardContent>
             </Card>
           )}

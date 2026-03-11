@@ -164,7 +164,9 @@ export default function CommandesClient() {
     <div className="space-y-6 p-6">
       {/* En-tete */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Commandes LinkMe</h1>
+        <h1 className="text-3xl font-bold text-gray-900">
+          Back-office - Canaux de vente LinkMe - Commandes
+        </h1>
         <p className="text-gray-600 mt-1">
           Commandes via le canal affilies - Meme workflow que les commandes
           generales

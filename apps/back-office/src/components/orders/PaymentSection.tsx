@@ -11,11 +11,11 @@ import {
 } from '@verone/finance/components';
 import { Badge, Button, Card, Skeleton, SuccessDialog } from '@verone/ui';
 import {
-  AlertCircle,
   CheckCircle,
   CreditCard,
   ExternalLink,
   FileText,
+  Link2,
   Loader2,
 } from 'lucide-react';
 
@@ -63,6 +63,12 @@ interface PaymentSectionProps {
       name: string;
     } | null;
   }>;
+  // Rapprochement (intégré)
+  isMatched?: boolean;
+  matchedTransactionLabel?: string | null;
+  matchedTransactionAmount?: number | null;
+  matchedTransactionEmittedAt?: string | null;
+  matchedTransactionId?: string | null;
 }
 
 function getInvoiceStatusLabel(status: string): {
@@ -120,6 +126,11 @@ export function PaymentSection({
   billingAddress,
   shippingAddress,
   orderItems,
+  isMatched,
+  matchedTransactionLabel,
+  matchedTransactionAmount,
+  matchedTransactionEmittedAt,
+  matchedTransactionId,
 }: PaymentSectionProps): React.ReactNode {
   const router = useRouter();
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
@@ -214,57 +225,91 @@ export function PaymentSection({
 
   return (
     <>
-      <Card className="p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <CreditCard className="h-5 w-5 text-muted-foreground" />
-          <h2 className="text-xl font-semibold">Paiement</h2>
-        </div>
-
-        <div className="space-y-3">
-          {/* Statut paiement */}
+      <Card>
+        <div className="p-3 space-y-2">
+          {/* Header: statut paiement */}
           <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Statut</span>
+            <div className="flex items-center gap-1.5">
+              <CreditCard className="h-3.5 w-3.5 text-gray-400" />
+              <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Paiement
+              </span>
+            </div>
             {paymentStatus === 'paid' ? (
               <Badge
                 variant="default"
-                className="bg-green-100 text-green-800 border-green-200"
+                className="bg-green-100 text-green-800 border-green-200 text-[10px] px-1.5 py-0"
               >
-                <CheckCircle className="h-3 w-3 mr-1" />
-                Paye
+                <CheckCircle className="h-2.5 w-2.5 mr-0.5" />
+                Payé
               </Badge>
             ) : paymentStatus === 'partial' ||
               paymentStatus === 'partially_paid' ? (
               <Badge
                 variant="secondary"
-                className="bg-yellow-100 text-yellow-800 border-yellow-200"
+                className="bg-yellow-100 text-yellow-800 border-yellow-200 text-[10px] px-1.5 py-0"
               >
-                <AlertCircle className="h-3 w-3 mr-1" />
                 Partiel
               </Badge>
             ) : (
               <Badge
                 variant="outline"
-                className="bg-red-50 text-red-700 border-red-200"
+                className="bg-red-50 text-red-700 border-red-200 text-[10px] px-1.5 py-0"
               >
-                <AlertCircle className="h-3 w-3 mr-1" />
-                Non paye
+                Non payé
               </Badge>
             )}
           </div>
 
-          {/* Montant TTC */}
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Montant</span>
-            <span className="font-medium">{totalTtc?.toFixed(2)} EUR</span>
-          </div>
-
-          {/* Factures liees */}
-          {loadingInvoices ? (
-            <div className="pt-2">
-              <Skeleton className="h-10 w-full" />
+          {/* Rapprochement — intégré */}
+          {isMatched ? (
+            <div className="bg-green-50 p-2 rounded border border-green-200 text-xs space-y-0.5">
+              <div className="flex items-center justify-between">
+                <span className="text-green-800 font-medium flex items-center gap-1">
+                  <Link2 className="h-3 w-3" />
+                  {matchedTransactionLabel ?? 'Transaction liée'}
+                </span>
+                <span className="font-bold text-green-700">
+                  {new Intl.NumberFormat('fr-FR', {
+                    style: 'currency',
+                    currency: 'EUR',
+                  }).format(Math.abs(matchedTransactionAmount ?? 0))}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 text-gray-500">
+                {matchedTransactionEmittedAt && (
+                  <span>
+                    Payé le{' '}
+                    {new Date(matchedTransactionEmittedAt).toLocaleDateString(
+                      'fr-FR'
+                    )}
+                  </span>
+                )}
+                {matchedTransactionId && (
+                  <a
+                    href={`https://app.qonto.com/transactions/${matchedTransactionId}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:underline flex items-center gap-1"
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                    Qonto
+                  </a>
+                )}
+              </div>
             </div>
+          ) : (
+            <p className="text-[10px] text-gray-400 italic flex items-center gap-1">
+              <Link2 className="h-3 w-3" />
+              Non rapprochée
+            </p>
+          )}
+
+          {/* Factures liées — compact */}
+          {loadingInvoices ? (
+            <Skeleton className="h-6 w-full" />
           ) : hasActiveInvoice ? (
-            <div className="pt-2 space-y-2">
+            <div className="space-y-1">
               {activeInvoices.map(invoice => {
                 const statusInfo = getInvoiceStatusLabel(
                   invoice.workflow_status ?? invoice.status
@@ -272,26 +317,31 @@ export function PaymentSection({
                 return (
                   <div
                     key={invoice.id}
-                    className="flex items-center justify-between rounded-md border p-3 bg-muted/30"
+                    className="flex items-center justify-between rounded border p-1.5 bg-gray-50 text-xs"
                   >
-                    <div className="flex items-center gap-2">
-                      <FileText className="h-4 w-4 text-muted-foreground" />
-                      <div>
-                        <p className="text-sm font-medium">
-                          {invoice.document_number}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {invoice.total_ttc?.toFixed(2)} EUR
-                        </p>
-                      </div>
+                    <div className="flex items-center gap-1.5">
+                      <FileText className="h-3 w-3 text-gray-400" />
+                      <span className="font-medium">
+                        {invoice.document_number}
+                      </span>
+                      <span className="text-gray-400">
+                        {invoice.total_ttc?.toFixed(2)} €
+                      </span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className={statusInfo.className}>
+                    <div className="flex items-center gap-1">
+                      <Badge
+                        variant="outline"
+                        className={`${statusInfo.className} text-[10px] px-1 py-0`}
+                      >
                         {statusInfo.label}
                       </Badge>
                       <Link href={`/factures/${invoice.id}/edit`}>
-                        <Button variant="ghost" size="sm">
-                          <ExternalLink className="h-3.5 w-3.5" />
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-5 w-5 p-0"
+                        >
+                          <ExternalLink className="h-3 w-3" />
                         </Button>
                       </Link>
                     </div>
@@ -301,46 +351,49 @@ export function PaymentSection({
             </div>
           ) : null}
 
-          {/* Boutons d'action */}
-          <div className="pt-2 space-y-2">
-            {/* Bouton Générer facture */}
+          {/* Action buttons — compact */}
+          <div className="flex gap-1">
             {!loadingInvoices && canCreateInvoice ? (
               <Button
-                variant="default"
-                className="w-full"
+                size="sm"
+                className="flex-1 h-7 text-xs"
                 onClick={() => setShowInvoiceModal(true)}
               >
-                <FileText className="h-4 w-4 mr-2" />
+                <FileText className="h-3 w-3 mr-1" />
                 Générer facture
               </Button>
             ) : loadingInvoices ? (
-              <Button variant="default" className="w-full" disabled>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Chargement...
+              <Button size="sm" className="flex-1 h-7 text-xs" disabled>
+                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                ...
               </Button>
             ) : !loadingInvoices && hasDraftInvoice ? (
-              <Button variant="default" className="w-full" disabled>
-                <FileText className="h-4 w-4 mr-2" />
-                Générer facture
+              <Button size="sm" className="flex-1 h-7 text-xs" disabled>
+                <FileText className="h-3 w-3 mr-1" />
+                Facture brouillon
               </Button>
             ) : !hasActiveInvoice && orderStatus === 'draft' ? (
-              <p className="text-xs text-muted-foreground text-center">
-                La commande doit etre validee ou expediee pour creer une facture
+              <p className="text-[10px] text-gray-400 text-center flex-1">
+                Valider commande pour facturer
               </p>
             ) : !hasActiveInvoice && paymentStatus === 'paid' ? (
-              <p className="text-xs text-muted-foreground text-center">
-                Commande deja payee
+              <p className="text-[10px] text-gray-400 text-center flex-1">
+                Déjà payée
               </p>
             ) : null}
 
-            {/* Bouton Associer un paiement (masqué en draft) */}
             {paymentStatus !== 'paid' && orderStatus !== 'draft' && (
               <Link
                 href={`/finance/rapprochement?orderId=${orderId}&amount=${totalTtc}`}
+                className="flex-1"
               >
-                <Button variant="outline" className="w-full">
-                  <CreditCard className="h-4 w-4 mr-2" />
-                  Associer un paiement
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full h-7 text-xs"
+                >
+                  <CreditCard className="h-3 w-3 mr-1" />
+                  Associer paiement
                 </Button>
               </Link>
             )}
