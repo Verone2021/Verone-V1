@@ -45,6 +45,7 @@ import {
   useCreateLinkMeOrder,
   type CreateLinkMeOrderInput,
   type LinkMeOrderItemInput,
+  type LinkMeDetailsInput,
 } from '../../hooks/linkme/use-linkme-orders';
 import {
   useLinkMeSelection,
@@ -98,6 +99,7 @@ function buildLinkMeDetails(data: ContactsAddressesData) {
   if (!hasAnyData) return null;
 
   return {
+    requester_phone: data.billingContact?.phone ?? null,
     delivery_contact_name: deliveryContact
       ? `${deliveryContact.firstName} ${deliveryContact.lastName}`.trim()
       : null,
@@ -433,10 +435,10 @@ export function CreateLinkMeOrderModal({
       const lineTva = roundMoney(lineHt * (item.tax_rate ?? 0.2));
       productsHt = roundMoney(productsHt + lineHt);
       totalTva = roundMoney(totalTva + lineTva);
-      // Commission calculee sur base_price_ht (135EUR), pas sur unit_price_ht (168.75EUR)
+      // Commission calculee sur unit_price_ht (editable par le staff)
       totalRetrocession = roundMoney(
         totalRetrocession +
-          item.quantity * item.base_price_ht * item.retrocession_rate
+          item.quantity * item.unit_price_ht * item.retrocession_rate
       );
     }
 
@@ -522,12 +524,37 @@ export function CreateLinkMeOrderModal({
     setCart(cart.filter(item => item.id !== itemId));
   };
 
+  // Modifier prix de vente HT
+  const updateUnitPrice = (itemId: string, newPrice: number) => {
+    if (newPrice < 0 || isNaN(newPrice)) return;
+    setCart(prev =>
+      prev.map(item =>
+        item.id === itemId
+          ? { ...item, unit_price_ht: Math.round(newPrice * 100) / 100 }
+          : item
+      )
+    );
+  };
+
+  // Modifier taux de commission
+  const updateRetrocessionRate = (itemId: string, newRatePercent: number) => {
+    if (newRatePercent < 0 || newRatePercent > 100 || isNaN(newRatePercent))
+      return;
+    const newRate = newRatePercent / 100;
+    setCart(prev =>
+      prev.map(item =>
+        item.id === itemId ? { ...item, retrocession_rate: newRate } : item
+      )
+    );
+  };
+
   // Validation formulaire
   const canSubmit =
     selectedAffiliateId &&
     selectedSelectionId &&
     selectedCustomerId &&
-    cart.length > 0;
+    cart.length > 0 &&
+    !!contactsAddressesData.billingAddress;
 
   // Soumettre commande
   const handleSubmit = async () => {
@@ -564,8 +591,12 @@ export function CreateLinkMeOrderModal({
       accepts_semi_truck: acceptsSemiTruck,
       // Sélection LinkMe
       linkme_selection_id: selectedSelectionId || null,
-      // Contact et adresse de facturation
+      // Contacts (FK vers table contacts — source de vérité)
+      responsable_contact_id: contactsAddressesData.billingContact?.id ?? null,
       billing_contact_id: contactsAddressesData.billingContact?.id ?? null,
+      delivery_contact_id: contactsAddressesData.deliverySameAsBillingContact
+        ? (contactsAddressesData.billingContact?.id ?? null)
+        : (contactsAddressesData.deliveryContact?.id ?? null),
       billing_address: contactsAddressesData.billingAddress?.customAddress
         ? {
             address_line1:
@@ -578,8 +609,32 @@ export function CreateLinkMeOrderModal({
               'FR',
           }
         : undefined,
-      // Détails LinkMe (contacts/adresses pour sales_order_linkme_details)
-      linkme_details: buildLinkMeDetails(contactsAddressesData),
+      // Adresse de livraison
+      shipping_address: (() => {
+        const deliveryAddr = contactsAddressesData.deliverySameAsBillingAddress
+          ? contactsAddressesData.billingAddress
+          : contactsAddressesData.deliveryAddress;
+        if (!deliveryAddr?.customAddress) return undefined;
+        return {
+          address_line1: deliveryAddr.customAddress.addressLine1,
+          city: deliveryAddr.customAddress.city,
+          postal_code: deliveryAddr.customAddress.postalCode,
+          country: deliveryAddr.customAddress.country ?? 'FR',
+        };
+      })(),
+      // Détails LinkMe (contacts/adresses/options livraison pour sales_order_linkme_details)
+      linkme_details: (() => {
+        const contactDetails = buildLinkMeDetails(contactsAddressesData);
+        if (!contactDetails) return null;
+        const details: LinkMeDetailsInput = {
+          ...contactDetails,
+          // Options de livraison
+          is_mall_delivery: isShoppingCenterDelivery,
+          semi_trailer_accessible: acceptsSemiTruck,
+          desired_delivery_date: expectedDeliveryDate || null,
+        };
+        return details;
+      })(),
     };
 
     try {
@@ -601,7 +656,9 @@ export function CreateLinkMeOrderModal({
             <ShoppingCart className="h-5 w-5 text-purple-600" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold">Nouvelle commande LinkMe</h2>
+            <h2 className="text-lg font-semibold">
+              Back-office - Canal de vente LinkMe - Nouvelle commande
+            </h2>
             <p className="text-sm text-gray-500">
               Créer une commande depuis une sélection affilié
             </p>
@@ -1647,12 +1704,55 @@ export function CreateLinkMeOrderModal({
                               Commission:{' '}
                               {(item.retrocession_rate * 100).toFixed(0)}% (
                               {(
-                                item.base_price_ht *
+                                item.unit_price_ht *
                                 item.quantity *
                                 item.retrocession_rate
                               ).toFixed(2)}
                               €)
                             </p>
+                            <div className="mt-1 flex items-center gap-4">
+                              <div className="flex items-center gap-2">
+                                <label className="text-xs text-gray-600 whitespace-nowrap">
+                                  Prix vente HT
+                                </label>
+                                <input
+                                  type="number"
+                                  value={item.unit_price_ht}
+                                  onChange={e =>
+                                    updateUnitPrice(
+                                      item.id,
+                                      parseFloat(e.target.value) || 0
+                                    )
+                                  }
+                                  min={0}
+                                  step={0.01}
+                                  className="w-24 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                />
+                                <span className="text-xs text-gray-500">€</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <label className="text-xs text-gray-600 whitespace-nowrap">
+                                  Commission
+                                </label>
+                                <input
+                                  type="number"
+                                  value={parseFloat(
+                                    (item.retrocession_rate * 100).toFixed(2)
+                                  )}
+                                  onChange={e =>
+                                    updateRetrocessionRate(
+                                      item.id,
+                                      parseFloat(e.target.value) || 0
+                                    )
+                                  }
+                                  min={0}
+                                  max={100}
+                                  step={0.5}
+                                  className="w-20 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                />
+                                <span className="text-xs text-gray-500">%</span>
+                              </div>
+                            </div>
                           </div>
                           <div className="flex items-center gap-1">
                             <button

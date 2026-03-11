@@ -35,6 +35,23 @@ export interface LinkMeOrderItemInput {
   base_price_ht: number;
 }
 
+export interface LinkMeDetailsInput {
+  requester_phone?: string | null;
+  billing_name?: string | null;
+  billing_email?: string | null;
+  billing_phone?: string | null;
+  delivery_contact_name?: string | null;
+  delivery_contact_email?: string | null;
+  delivery_contact_phone?: string | null;
+  delivery_address?: string | null;
+  delivery_postal_code?: string | null;
+  delivery_city?: string | null;
+  is_mall_delivery?: boolean;
+  semi_trailer_accessible?: boolean;
+  desired_delivery_date?: string | null;
+  delivery_notes?: string | null;
+}
+
 export interface CreateLinkMeOrderInput {
   /** Type de client: 'organization' ou 'individual' */
   customer_type: 'organization' | 'individual';
@@ -64,8 +81,12 @@ export interface CreateLinkMeOrderInput {
   accepts_semi_truck?: boolean;
   /** ID de la sélection LinkMe */
   linkme_selection_id?: string | null;
-  /** Contact de facturation */
+  /** Contact responsable (FK vers contacts) */
+  responsable_contact_id?: string | null;
+  /** Contact de facturation (FK vers contacts) */
   billing_contact_id?: string | null;
+  /** Contact de livraison (FK vers contacts) */
+  delivery_contact_id?: string | null;
   /** Adresse de facturation custom */
   billing_address?: {
     address_line1: string;
@@ -73,8 +94,8 @@ export interface CreateLinkMeOrderInput {
     postal_code: string;
     country: string;
   };
-  /** Détails LinkMe (contacts/adresses) */
-  linkme_details?: Record<string, unknown> | null;
+  /** Détails LinkMe (contacts/adresses pour sales_order_linkme_details) */
+  linkme_details?: LinkMeDetailsInput | null;
   /** Notes internes */
   internal_notes?: string;
   /** Adresse de livraison */
@@ -207,6 +228,10 @@ async function createLinkMeOrder(
     total_ttc: totalTtc,
     tax_rate: 0.2,
     notes: input.internal_notes || null,
+    // Contacts (FK vers table contacts — source de vérité)
+    responsable_contact_id: input.responsable_contact_id ?? null,
+    billing_contact_id: input.billing_contact_id ?? null,
+    delivery_contact_id: input.delivery_contact_id ?? null,
     // Adresse de livraison (JSON)
     shipping_address: input.shipping_address
       ? JSON.stringify({
@@ -262,6 +287,44 @@ async function createLinkMeOrder(
     throw new Error(
       `Erreur création lignes: ${itemsError.message || 'Erreur inconnue'}`
     );
+  }
+
+  // 6. Créer les détails LinkMe (contacts/adresses/options livraison)
+  if (input.linkme_details) {
+    const ld = input.linkme_details;
+    // requester_type/name/email sont NOT NULL — en contexte BO, c'est l'utilisateur connecté
+    const { error: detailsError } = await supabase
+      .from('sales_order_linkme_details')
+      .insert({
+        sales_order_id: order.id,
+        // Requester = utilisateur back-office (champs NOT NULL)
+        requester_type: 'back_office',
+        requester_name: user.email ?? 'Back Office',
+        requester_email: user.email ?? '',
+        requester_phone: ld.requester_phone ?? null,
+        // Contacts facturation
+        billing_name: ld.billing_name ?? null,
+        billing_email: ld.billing_email ?? null,
+        billing_phone: ld.billing_phone ?? null,
+        // Contacts livraison
+        delivery_contact_name: ld.delivery_contact_name ?? null,
+        delivery_contact_email: ld.delivery_contact_email ?? null,
+        delivery_contact_phone: ld.delivery_contact_phone ?? null,
+        // Adresse livraison
+        delivery_address: ld.delivery_address ?? null,
+        delivery_postal_code: ld.delivery_postal_code ?? null,
+        delivery_city: ld.delivery_city ?? null,
+        // Options livraison
+        is_mall_delivery: ld.is_mall_delivery ?? false,
+        semi_trailer_accessible: ld.semi_trailer_accessible ?? true,
+        desired_delivery_date: ld.desired_delivery_date ?? null,
+        delivery_notes: ld.delivery_notes ?? null,
+      });
+
+    if (detailsError) {
+      console.error('Erreur création détails LinkMe:', detailsError);
+      // Non-bloquant: la commande est créée, on log l'erreur
+    }
   }
 
   return order as unknown as LinkMeOrder;

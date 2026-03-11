@@ -13,7 +13,7 @@
  * @since 2026-01-20
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 
 import { User, MapPin, Loader2, ChevronDown, Check } from 'lucide-react';
 
@@ -181,6 +181,27 @@ export function ContactsAddressesSection({
   const billingAddresses = addressesData?.billing ?? [];
   const hasEnseigne = !!orgWithEnseigne?.enseigne;
 
+  // Auto-select restaurant address when org loads and no billing address selected
+  useEffect(() => {
+    if (!orgWithEnseigne || data.billingAddress !== null) return;
+    const addr = orgWithEnseigne.address;
+    if (!addr?.line1) return;
+
+    onUpdate({
+      billingAddress: {
+        mode: 'restaurant',
+        addressId: null,
+        customAddress: {
+          addressLine1: addr.line1,
+          postalCode: addr.postalCode ?? '',
+          city: addr.city ?? '',
+          country: addr.country ?? 'FR',
+        },
+      },
+      deliverySameAsBillingAddress: true,
+    });
+  }, [orgWithEnseigne, data.billingAddress, onUpdate]);
+
   // Completion status
   const billingContactComplete = !!data.billingContact;
   const billingAddressComplete = !!data.billingAddress;
@@ -232,7 +253,7 @@ export function ContactsAddressesSection({
           firstName: result.first_name,
           lastName: result.last_name,
           email: result.email,
-          phone: null,
+          phone: formData.phone ?? null,
         },
       });
       setShowNewBillingContactForm(false);
@@ -247,30 +268,46 @@ export function ContactsAddressesSection({
   // ============================================================================
 
   const handleSelectBillingAddressEnseigne = useCallback(() => {
+    const enseigneAddr = orgWithEnseigne?.enseigne?.address;
     onUpdate({
       billingAddress: {
         mode: 'enseigne',
         addressId: null,
-        customAddress: null,
+        customAddress: enseigneAddr?.line1
+          ? {
+              addressLine1: enseigneAddr.line1,
+              postalCode: enseigneAddr.postalCode ?? '',
+              city: enseigneAddr.city ?? '',
+              country: enseigneAddr.country ?? 'FR',
+            }
+          : null,
       },
     });
     setShowNewBillingAddressForm(false);
     setBillingAddressOpen(false);
     setDeliveryContactOpen(true);
-  }, [onUpdate]);
+  }, [onUpdate, orgWithEnseigne]);
 
   const handleSelectBillingAddressRestaurant = useCallback(() => {
+    const restaurantAddr = orgWithEnseigne?.address;
     onUpdate({
       billingAddress: {
         mode: 'restaurant',
         addressId: null,
-        customAddress: null,
+        customAddress: restaurantAddr?.line1
+          ? {
+              addressLine1: restaurantAddr.line1,
+              postalCode: restaurantAddr.postalCode ?? '',
+              city: restaurantAddr.city ?? '',
+              country: restaurantAddr.country ?? 'FR',
+            }
+          : null,
       },
     });
     setShowNewBillingAddressForm(false);
     setBillingAddressOpen(false);
     setDeliveryContactOpen(true);
-  }, [onUpdate]);
+  }, [onUpdate, orgWithEnseigne]);
 
   const handleSelectBillingAddressExisting = useCallback(
     (address: AddressBO) => {
@@ -278,7 +315,12 @@ export function ContactsAddressesSection({
         billingAddress: {
           mode: 'existing',
           addressId: address.id,
-          customAddress: null,
+          customAddress: {
+            addressLine1: address.addressLine1,
+            postalCode: address.postalCode,
+            city: address.city,
+            country: address.country,
+          },
         },
       });
       setShowNewBillingAddressForm(false);
@@ -383,7 +425,7 @@ export function ContactsAddressesSection({
           firstName: result.first_name,
           lastName: result.last_name,
           email: result.email,
-          phone: null,
+          phone: formData.phone ?? null,
         },
         deliverySameAsBillingContact: false,
       });
@@ -412,17 +454,25 @@ export function ContactsAddressesSection({
   );
 
   const handleSelectDeliveryAddressRestaurant = useCallback(() => {
+    const restaurantAddr = orgWithEnseigne?.address;
     onUpdate({
       deliveryAddress: {
         mode: 'restaurant',
         addressId: null,
-        customAddress: null,
+        customAddress: restaurantAddr?.line1
+          ? {
+              addressLine1: restaurantAddr.line1,
+              postalCode: restaurantAddr.postalCode ?? '',
+              city: restaurantAddr.city ?? '',
+              country: restaurantAddr.country ?? 'FR',
+            }
+          : null,
       },
       deliverySameAsBillingAddress: false,
     });
     setShowNewDeliveryAddressForm(false);
     setDeliveryAddressOpen(false);
-  }, [onUpdate]);
+  }, [onUpdate, orgWithEnseigne]);
 
   const handleCreateDeliveryAddress = useCallback(
     async (formData: NewAddressFormData) => {
