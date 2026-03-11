@@ -37,40 +37,6 @@ const LINKME_CHANNEL_ID = '93c68db1-5a30-4168-89ec-6383152be405';
 
 // Fonction pour determiner le canal de la commande
 // 3 canaux mutuellement exclusifs:
-// 1. Affilié = commande créée par un affilié depuis l'app LinkMe
-// 2. Sélection publique = commande créée par client final via catalogue public
-// 3. Manuel = commande créée manuellement par admin dans le back-office
-function getOrderChannel(order: SalesOrder): {
-  label: string;
-  color: string;
-  bg: string;
-} {
-  // Canal 1: Commande créée par un affilié depuis l'app LinkMe
-  if (order.created_by_affiliate_id) {
-    return {
-      label: 'Affilié',
-      color: 'text-teal-700',
-      bg: 'bg-teal-100',
-    };
-  }
-
-  // Canal 2: Commande via sélection publique (client final)
-  if (order.linkme_selection_id) {
-    return {
-      label: 'Sélection publique',
-      color: 'text-amber-700',
-      bg: 'bg-amber-100',
-    };
-  }
-
-  // Canal 3: Créée manuellement par admin dans le back-office
-  return {
-    label: 'Manuel',
-    color: 'text-blue-700',
-    bg: 'bg-blue-100',
-  };
-}
-
 // Calculer la marge affilié depuis les items de la commande
 function getAffiliateMargin(order: SalesOrder): number {
   if (!order.sales_order_items) return 0;
@@ -104,23 +70,9 @@ export default function CommandesClient() {
   // Compter les commandes en attente de validation via hook dédié
   const { data: pendingValidationCount = 0 } = usePendingOrdersCount();
 
-  // Colonnes additionnelles pour LinkMe (avec colonne Canal et Approbation)
+  // Colonnes additionnelles pour LinkMe (approbation + commission)
   const additionalColumns = useMemo(
     () => [
-      {
-        key: 'order_channel',
-        header: 'Canal',
-        cell: (order: SalesOrder) => {
-          const channel = getOrderChannel(order);
-          return (
-            <span
-              className={`px-2 py-1 text-xs font-medium rounded-full ${channel.bg} ${channel.color}`}
-            >
-              {channel.label}
-            </span>
-          );
-        },
-      },
       {
         key: 'validation_dot',
         header: '',

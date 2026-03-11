@@ -75,7 +75,11 @@ import {
   DEFAULT_SALES_FILTERS,
   countActiveFilters,
 } from '../types/advanced-filters';
-import type { SalesOrder, SalesOrderStatus } from '../hooks/use-sales-orders';
+import type {
+  SalesOrder,
+  SalesOrderItem,
+  SalesOrderStatus,
+} from '../hooks/use-sales-orders';
 import { useSalesOrders } from '../hooks/use-sales-orders';
 import { CreateLinkMeOrderModal } from './modals/CreateLinkMeOrderModal';
 import { OrderDetailModal } from './modals/OrderDetailModal';
@@ -354,8 +358,12 @@ export function SalesOrdersTable({
     if (preloadedOrders) return;
 
     const filters = channelId ? { channel_id: channelId } : undefined;
-    fetchOrders(filters);
-    fetchStats(filters);
+    void fetchOrders(filters).catch((err: unknown) => {
+      console.error('[SalesOrdersTable] fetchOrders failed:', err);
+    });
+    void fetchStats(filters).catch((err: unknown) => {
+      console.error('[SalesOrdersTable] fetchStats failed:', err);
+    });
   }, [fetchOrders, fetchStats, channelId, preloadedOrders]);
 
   // Ouvrir automatiquement le modal si query param ?id= present
@@ -505,8 +513,8 @@ export function SalesOrdersTable({
           term
         );
         const matchesOrgName = normalizeString(
-          order.organisations?.trade_name ||
-            order.organisations?.legal_name ||
+          order.organisations?.trade_name ??
+            order.organisations?.legal_name ??
             ''
         ).includes(term);
         const matchesIndividualName =
@@ -542,9 +550,9 @@ export function SalesOrdersTable({
           case 'client': {
             const nameA =
               a.customer_type === 'organization'
-                ? a.organisations?.trade_name ||
-                  a.organisations?.legal_name ||
-                  ''
+                ? (a.organisations?.trade_name ??
+                  a.organisations?.legal_name ??
+                  '')
                 : a.individual_customers
                   ? [
                       a.individual_customers.first_name,
@@ -555,9 +563,9 @@ export function SalesOrdersTable({
                   : '';
             const nameB =
               b.customer_type === 'organization'
-                ? b.organisations?.trade_name ||
-                  b.organisations?.legal_name ||
-                  ''
+                ? (b.organisations?.trade_name ??
+                  b.organisations?.legal_name ??
+                  '')
                 : b.individual_customers
                   ? [
                       b.individual_customers.first_name,
@@ -592,6 +600,7 @@ export function SalesOrdersTable({
     sortColumn,
     sortDirection,
     customFilter,
+    currentYear,
   ]);
 
   // KPI dynamiques calcules sur commandes filtrees
@@ -743,7 +752,7 @@ export function SalesOrdersTable({
           user.id
         );
         if (!result.success) {
-          throw new Error(result.error || 'Erreur lors de la validation');
+          throw new Error(result.error ?? 'Erreur lors de la validation');
         }
       } else {
         await updateStatus(orderToValidate, 'validated');
@@ -803,7 +812,7 @@ export function SalesOrdersTable({
             user.id
           );
           if (!result.success) {
-            throw new Error(result.error || "Erreur lors de l'annulation");
+            throw new Error(result.error ?? "Erreur lors de l'annulation");
           }
         } else {
           await updateStatus(orderId, 'cancelled');
@@ -843,7 +852,7 @@ export function SalesOrdersTable({
     }
   };
 
-  const handlePrintPDF = async (order: SalesOrder) => {
+  const _handlePrintPDF = async (order: SalesOrder) => {
     try {
       toast({
         title: 'Generation PDF...',
@@ -949,8 +958,12 @@ export function SalesOrdersTable({
     setShowShipmentModal(false);
     setOrderToShip(null);
     const filters = channelId ? { channel_id: channelId } : undefined;
-    fetchOrders(filters);
-    fetchStats(filters);
+    void fetchOrders(filters).catch((err: unknown) => {
+      console.error('[SalesOrdersTable] fetchOrders failed:', err);
+    });
+    void fetchStats(filters).catch((err: unknown) => {
+      console.error('[SalesOrdersTable] fetchStats failed:', err);
+    });
     toast({
       title: 'Succes',
       description: 'Expedition enregistree avec succes',
@@ -961,8 +974,12 @@ export function SalesOrdersTable({
   const handleCreateSuccess = () => {
     setShowCreateModal(false);
     const filters = channelId ? { channel_id: channelId } : undefined;
-    fetchOrders(filters);
-    fetchStats(filters);
+    void fetchOrders(filters).catch((err: unknown) => {
+      console.error('[SalesOrdersTable] fetchOrders failed:', err);
+    });
+    void fetchStats(filters).catch((err: unknown) => {
+      console.error('[SalesOrdersTable] fetchStats failed:', err);
+    });
     onOrderCreated?.();
   };
 
@@ -970,8 +987,12 @@ export function SalesOrdersTable({
     setShowEditModal(false);
     setEditingOrderId(null);
     const filters = channelId ? { channel_id: channelId } : undefined;
-    fetchOrders(filters);
-    fetchStats(filters);
+    void fetchOrders(filters).catch((err: unknown) => {
+      console.error('[SalesOrdersTable] fetchOrders failed:', err);
+    });
+    void fetchStats(filters).catch((err: unknown) => {
+      console.error('[SalesOrdersTable] fetchStats failed:', err);
+    });
     onOrderUpdated?.();
   };
 
@@ -981,7 +1002,9 @@ export function SalesOrdersTable({
       description: 'La transaction a ete liee a la commande.',
     });
     const filters = channelId ? { channel_id: channelId } : undefined;
-    fetchOrders(filters);
+    void fetchOrders(filters).catch((err: unknown) => {
+      console.error('[SalesOrdersTable] fetchOrders failed:', err);
+    });
     setShowLinkTransactionModal(false);
     setSelectedOrderForLink(null);
   };
@@ -1094,7 +1117,11 @@ export function SalesOrdersTable({
             <CardTitle>Filtres</CardTitle>
             <div className="flex gap-2">
               <ButtonUnified
-                onClick={handleExportExcel}
+                onClick={() => {
+                  void handleExportExcel().catch((err: unknown) => {
+                    console.error('[SalesOrdersTable] export failed:', err);
+                  });
+                }}
                 variant="outline"
                 icon={FileSpreadsheet}
               >
@@ -1173,7 +1200,7 @@ export function SalesOrdersTable({
                 onValueChange={value =>
                   setAdvancedFilters(prev => ({
                     ...prev,
-                    customerType: value as SalesAdvancedFilters['customerType'],
+                    customerType: value,
                     enseigneId: value !== 'enseigne' ? null : prev.enseigneId,
                   }))
                 }
@@ -1449,9 +1476,9 @@ export function SalesOrdersTable({
                             order.organisations.trade_name !==
                               order.organisations.legal_name
                             ? `${order.organisations.trade_name} (${order.organisations.legal_name})`
-                            : order.organisations.legal_name ||
-                              order.organisations.trade_name ||
-                              ''
+                            : (order.organisations.legal_name ??
+                              order.organisations.trade_name ??
+                              '')
                           : order.individual_customers
                             ? [
                                 order.individual_customers.first_name,
@@ -1461,13 +1488,13 @@ export function SalesOrdersTable({
                                 .join(' ')
                             : '';
 
-                      const canDelete =
+                      const _canDelete =
                         order.status === 'draft' ||
                         order.status === 'cancelled';
 
-                      const items = order.sales_order_items || [];
+                      const items = order.sales_order_items ?? [];
                       const hasSamples = items.some(
-                        (item: any) => item.is_sample === true
+                        item => item.is_sample === true
                       );
                       const isExpanded = expandedRows.has(order.id);
 
@@ -1618,7 +1645,7 @@ export function SalesOrdersTable({
                                   order
                                 )}
                                 channelName={
-                                  order.sales_channel?.name || 'le CMS du canal'
+                                  order.sales_channel?.name ?? 'le CMS du canal'
                                 }
                                 isEditable={isOrderEditable(order, channelId)}
                                 allowEdit={allowEdit}
@@ -1632,15 +1659,49 @@ export function SalesOrdersTable({
                                     : openOrderDetail(order)
                                 }
                                 onEdit={() => openEditOrder(order.id)}
-                                onValidate={() =>
-                                  handleStatusChange(order.id, 'validated')
-                                }
-                                onDevalidate={() =>
-                                  handleStatusChange(order.id, 'draft')
-                                }
+                                onValidate={() => {
+                                  void handleStatusChange(
+                                    order.id,
+                                    'validated'
+                                  ).catch((err: unknown) => {
+                                    console.error(
+                                      '[SalesOrdersTable] validate failed:',
+                                      err
+                                    );
+                                  });
+                                }}
+                                onDevalidate={() => {
+                                  void handleStatusChange(
+                                    order.id,
+                                    'draft'
+                                  ).catch((err: unknown) => {
+                                    console.error(
+                                      '[SalesOrdersTable] devalidate failed:',
+                                      err
+                                    );
+                                  });
+                                }}
                                 onShip={() => openShipmentModal(order)}
-                                onCancel={() => handleCancel(order.id)}
-                                onDelete={() => handleDelete(order.id)}
+                                onCancel={() => {
+                                  void handleCancel(order.id).catch(
+                                    (err: unknown) => {
+                                      console.error(
+                                        '[SalesOrdersTable] cancel failed:',
+                                        err
+                                      );
+                                    }
+                                  );
+                                }}
+                                onDelete={() => {
+                                  void handleDelete(order.id).catch(
+                                    (err: unknown) => {
+                                      console.error(
+                                        '[SalesOrdersTable] delete failed:',
+                                        err
+                                      );
+                                    }
+                                  );
+                                }}
                                 onLinkTransaction={() => {
                                   setSelectedOrderForLink(order);
                                   setShowLinkTransactionModal(true);
@@ -1661,25 +1722,25 @@ export function SalesOrdersTable({
                                 className="p-0"
                               >
                                 <div className="py-3 px-6 space-y-2">
-                                  {items.map((item: any) => (
+                                  {items.map((item: SalesOrderItem) => (
                                     <div
                                       key={item.id}
                                       className="flex items-center gap-4 text-sm py-1"
                                     >
                                       <ProductThumbnail
                                         src={item.products?.primary_image_url}
-                                        alt={item.products?.name || 'Produit'}
+                                        alt={item.products?.name ?? 'Produit'}
                                         size="xs"
                                       />
                                       <span className="flex-1 font-medium">
-                                        {item.products?.name ||
+                                        {item.products?.name ??
                                           'Produit inconnu'}
                                       </span>
                                       <span className="text-muted-foreground">
                                         x{item.quantity}
                                       </span>
                                       <span className="font-medium w-24 text-right">
-                                        {formatCurrency(item.total_ht || 0)}
+                                        {formatCurrency(item.total_ht ?? 0)}
                                       </span>
                                       {item.is_sample && (
                                         <Badge
@@ -1773,8 +1834,12 @@ export function SalesOrdersTable({
         onClose={handleCloseOrderDetail}
         onUpdate={() => {
           const filters = channelId ? { channel_id: channelId } : undefined;
-          fetchOrders(filters);
-          fetchStats(filters);
+          void fetchOrders(filters).catch((err: unknown) => {
+            console.error('[SalesOrdersTable] fetchOrders failed:', err);
+          });
+          void fetchStats(filters).catch((err: unknown) => {
+            console.error('[SalesOrdersTable] fetchStats failed:', err);
+          });
           onOrderUpdated?.();
         }}
       />
@@ -1854,7 +1919,16 @@ export function SalesOrdersTable({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={handleValidateConfirmed}>
+            <AlertDialogAction
+              onClick={() => {
+                void handleValidateConfirmed().catch((err: unknown) => {
+                  console.error(
+                    '[SalesOrdersTable] validate confirmed failed:',
+                    err
+                  );
+                });
+              }}
+            >
               Valider la commande
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -1871,8 +1945,8 @@ export function SalesOrdersTable({
                 id: selectedOrderForLink.id,
                 order_number: selectedOrderForLink.order_number,
                 customer_name:
-                  selectedOrderForLink.organisations?.legal_name ||
-                  (selectedOrderForLink.individual_customers
+                  selectedOrderForLink.organisations?.legal_name ??
+                  ((selectedOrderForLink.individual_customers
                     ? [
                         selectedOrderForLink.individual_customers.first_name,
                         selectedOrderForLink.individual_customers.last_name,
@@ -1880,7 +1954,7 @@ export function SalesOrdersTable({
                         .filter(Boolean)
                         .join(' ')
                     : '') ||
-                  'Non défini',
+                    'Non défini'),
                 total_ttc: selectedOrderForLink.total_ttc,
                 created_at: selectedOrderForLink.created_at,
                 order_date: selectedOrderForLink.order_date ?? null,
