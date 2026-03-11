@@ -119,6 +119,8 @@ export interface LinkMeCatalogProduct {
   affiliate_commission_rate: number | null;
   /** Payout affilié par unité vendue (HT) */
   affiliate_payout_ht: number | null;
+  /** Nombre de sélections avec base_price_ht != public_price_ht */
+  selections_price_mismatch: number;
 }
 
 /**
@@ -314,6 +316,34 @@ async function fetchLinkMeCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
     );
   }
 
+  // Récupérer les mismatches de prix entre catalogue et sélections
+  const { data: selectionItems } = await supabase
+    .from('linkme_selection_items')
+    .select('product_id, base_price_ht')
+    .in('product_id', productIds);
+
+  // Compter les mismatches par product_id
+  const mismatchCountMap = new Map<string, number>();
+  if (selectionItems) {
+    // Build a map of public_price_ht by product_id from channel_pricing data
+    const publicPriceMap = new Map<string, number>();
+    data.forEach(cp => {
+      if (cp.public_price_ht != null) {
+        publicPriceMap.set(cp.product_id, Number(cp.public_price_ht));
+      }
+    });
+
+    selectionItems.forEach(si => {
+      const catalogPrice = publicPriceMap.get(si.product_id);
+      if (catalogPrice != null && Number(si.base_price_ht) !== catalogPrice) {
+        mismatchCountMap.set(
+          si.product_id,
+          (mismatchCountMap.get(si.product_id) ?? 0) + 1
+        );
+      }
+    });
+  }
+
   // Mapper les données avec hiérarchie complète
   return (
     data
@@ -382,6 +412,7 @@ async function fetchLinkMeCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
           affiliate_commission_rate:
             cp.products?.affiliate_commission_rate ?? null,
           affiliate_payout_ht: cp.products?.affiliate_payout_ht ?? null,
+          selections_price_mismatch: mismatchCountMap.get(cp.product_id) ?? 0,
         };
       })
       // Filtre: exclure les produits sourcés sans affiliés actifs
@@ -1651,5 +1682,112 @@ export function useSourcingProducts() {
     queryFn: fetchSourcingProducts,
     staleTime: 30000,
     refetchOnWindowFocus: true,
+  });
+}
+
+// =============================================================================
+// PROPAGATION PRIX CATALOGUE → SÉLECTIONS
+// =============================================================================
+
+/**
+ * Interface: présence d'un produit dans une sélection avec comparaison prix
+ */
+export interface ProductSelectionPresence {
+  selection_id: string;
+  selection_name: string;
+  base_price_ht: number;
+  margin_rate: number | null;
+  selling_price_ht: number | null;
+}
+
+/**
+ * Hook: récupère les sélections contenant un produit donné
+ * Compare base_price_ht (sélection) avec public_price_ht (catalogue)
+ */
+export function useProductSelections(productId: string | null) {
+  return useQuery({
+    queryKey: ['linkme-product-selections', productId],
+    queryFn: async (): Promise<ProductSelectionPresence[]> => {
+      if (!productId) return [];
+
+      const supabase = getSupabaseClient();
+
+      const { data, error } = await supabase
+        .from('linkme_selection_items')
+        .select(
+          `
+          selection_id,
+          base_price_ht,
+          margin_rate,
+          selling_price_ht,
+          linkme_selections!inner(id, name)
+        `
+        )
+        .eq('product_id', productId);
+
+      if (error) {
+        console.error('Erreur fetch product selections:', error);
+        throw error;
+      }
+
+      if (!data || data.length === 0) return [];
+
+      return data.map(item => ({
+        selection_id: item.selection_id,
+        selection_name:
+          (
+            item.linkme_selections as unknown as {
+              id: string;
+              name: string;
+            }
+          )?.name ?? 'Sans nom',
+        base_price_ht: Number(item.base_price_ht ?? 0),
+        margin_rate: item.margin_rate != null ? Number(item.margin_rate) : null,
+        selling_price_ht:
+          item.selling_price_ht != null ? Number(item.selling_price_ht) : null,
+      }));
+    },
+    enabled: !!productId,
+    staleTime: 30000,
+  });
+}
+
+/**
+ * Hook: propage le prix catalogue vers toutes les sélections
+ * Active le flag propagate_to_selections sur channel_pricing
+ * Le trigger DB fait le reste (sync base_price_ht)
+ */
+export function usePropagatePrice() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (productId: string) => {
+      const supabase = getSupabaseClient();
+
+      // propagate_to_selections added by migration but not yet in generated types
+      const updateData = {
+        propagate_to_selections: true,
+      } as Database['public']['Tables']['channel_pricing']['Update'];
+      const { error } = await supabase
+        .from('channel_pricing')
+        .update(updateData)
+        .eq('product_id', productId)
+        .eq('channel_id', LINKME_CHANNEL_ID);
+
+      if (error) throw error;
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ['linkme-product-selections'],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ['linkme-product-detail'],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ['linkme-catalog-products'],
+        }),
+      ]);
+    },
   });
 }
