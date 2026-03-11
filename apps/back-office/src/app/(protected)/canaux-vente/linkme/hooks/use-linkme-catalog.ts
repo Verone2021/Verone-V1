@@ -323,18 +323,19 @@ async function fetchLinkMeCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
     .in('product_id', productIds);
 
   // Compter les mismatches par product_id
+  // Compare custom_price_ht (prix LinkMe catalogue) vs base_price_ht (prix LinkMe sélection)
+  // NOTE: public_price_ht est informatif uniquement, ne PAS utiliser pour la comparaison
   const mismatchCountMap = new Map<string, number>();
   if (selectionItems) {
-    // Build a map of public_price_ht by product_id from channel_pricing data
-    const publicPriceMap = new Map<string, number>();
+    const catalogPriceMap = new Map<string, number>();
     data.forEach(cp => {
-      if (cp.public_price_ht != null) {
-        publicPriceMap.set(cp.product_id, Number(cp.public_price_ht));
+      if (cp.custom_price_ht != null) {
+        catalogPriceMap.set(cp.product_id, Number(cp.custom_price_ht));
       }
     });
 
     selectionItems.forEach(si => {
-      const catalogPrice = publicPriceMap.get(si.product_id);
+      const catalogPrice = catalogPriceMap.get(si.product_id);
       if (catalogPrice != null && Number(si.base_price_ht) !== catalogPrice) {
         mismatchCountMap.set(
           si.product_id,
@@ -377,10 +378,9 @@ async function fetchLinkMeCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
           product_name: cp.products?.name ?? '',
           product_reference: cp.products?.sku ?? '',
           product_price_ht: cp.products?.cost_price ?? 0, // Toujours cost_price (prix d'achat réel)
-          // Prix de vente HT = public_price_ht (prix catalogue LinkMe) - source de vérité
-          // Fallback sur custom_price_ht si public_price_ht non défini
-          product_selling_price_ht:
-            cp.public_price_ht ?? cp.custom_price_ht ?? null,
+          // Prix de vente LinkMe = custom_price_ht UNIQUEMENT (source de vérité)
+          // JAMAIS public_price_ht (informatif seulement, pas utilisé pour la vente)
+          product_selling_price_ht: cp.custom_price_ht ?? null,
           product_image_url: imageMap.get(cp.product_id) ?? null,
           product_stock_real: cp.products?.stock_real ?? 0,
           product_is_active: cp.products?.product_status === 'active',
@@ -521,26 +521,35 @@ export function useEligibleProducts() {
  * Hook: ajouter des produits au catalogue LinkMe
  * Utilise fonction RPC SECURITY DEFINER pour bypasser RLS
  */
+export type AddProductWithPricing = {
+  productId: string;
+  customPriceHt: number;
+  commissionRate: number;
+};
+
 export function useAddProductsToCatalog() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (productIds: string[]) => {
+    mutationFn: async (products: AddProductWithPricing[]) => {
       const supabase = getSupabaseClient();
-      // Appel RPC SECURITY DEFINER pour bypasser RLS
-      // Note: Cast via unknown car fonction RPC custom pas dans types Supabase générés
-      const rpcCall = supabase.rpc as unknown as (
-        fn: string,
-        args: { p_product_ids: string[] }
-      ) => Promise<{ data: number | null; error: { message: string } | null }>;
 
-      const { data, error } = await rpcCall('add_products_to_linkme_catalog', {
-        p_product_ids: productIds,
-      });
+      const rows = products.map(p => ({
+        product_id: p.productId,
+        channel_id: LINKME_CHANNEL_ID,
+        is_active: true,
+        custom_price_ht: p.customPriceHt,
+        channel_commission_rate: p.commissionRate,
+      }));
+
+      const { data, error } = await supabase
+        .from('channel_pricing')
+        .upsert(rows, { onConflict: 'channel_id,product_id' })
+        .select('id');
 
       if (error) throw new Error(error.message);
 
-      return data ?? 0;
+      return data?.length ?? 0;
     },
     onSuccess: async count => {
       await queryClient.invalidateQueries({
@@ -984,6 +993,10 @@ async function fetchLinkMeProductDetail(
     .single();
 
   if (cpError) {
+    // Produit supprimé du catalogue → retourner null au lieu de throw
+    if (cpError.code === 'PGRST116') {
+      return null;
+    }
     console.error('Erreur fetch détail produit LinkMe:', cpError);
     throw cpError;
   }
@@ -1693,6 +1706,7 @@ export function useSourcingProducts() {
  * Interface: présence d'un produit dans une sélection avec comparaison prix
  */
 export interface ProductSelectionPresence {
+  item_id: string;
   selection_id: string;
   selection_name: string;
   base_price_ht: number;
@@ -1716,6 +1730,7 @@ export function useProductSelections(productId: string | null) {
         .from('linkme_selection_items')
         .select(
           `
+          id,
           selection_id,
           base_price_ht,
           margin_rate,
@@ -1733,6 +1748,7 @@ export function useProductSelections(productId: string | null) {
       if (!data || data.length === 0) return [];
 
       return data.map(item => ({
+        item_id: item.id,
         selection_id: item.selection_id,
         selection_name:
           (
@@ -1786,6 +1802,96 @@ export function usePropagatePrice() {
         }),
         queryClient.invalidateQueries({
           queryKey: ['linkme-catalog-products'],
+        }),
+      ]);
+    },
+  });
+}
+
+/**
+ * Hook: supprimer un produit du catalogue LinkMe
+ * Retire d'abord le produit de toutes les sélections, puis supprime la ligne channel_pricing.
+ * Le produit doit être désactivé (is_active = false) avant suppression.
+ */
+export function useDeleteLinkMeCatalogProduct() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      catalogProductId,
+      productId,
+    }: {
+      catalogProductId: string;
+      productId: string;
+    }) => {
+      const supabase = getSupabaseClient();
+
+      // Safety check: verify product is deactivated before deletion
+      const { data: cp, error: fetchError } = await supabase
+        .from('channel_pricing')
+        .select('is_active')
+        .eq('id', catalogProductId)
+        .single();
+
+      if (fetchError) throw fetchError;
+      if (cp.is_active) {
+        throw new Error(
+          'Le produit doit être désactivé avant de pouvoir être supprimé du catalogue.'
+        );
+      }
+
+      // Step 1: Remove product from all selections
+      const { data: selectionItems, error: itemsError } = await supabase
+        .from('linkme_selection_items')
+        .select('id, selection_id')
+        .eq('product_id', productId);
+
+      if (itemsError) throw itemsError;
+
+      if (selectionItems && selectionItems.length > 0) {
+        // Delete all selection items for this product
+        const { error: deleteItemsError } = await supabase
+          .from('linkme_selection_items')
+          .delete()
+          .eq('product_id', productId);
+
+        if (deleteItemsError) throw deleteItemsError;
+
+        // Decrement product counts for each affected selection
+        const uniqueSelectionIds = [
+          ...new Set(selectionItems.map(i => i.selection_id)),
+        ];
+        for (const selectionId of uniqueSelectionIds) {
+          await supabase.rpc('decrement_selection_products_count', {
+            p_selection_id: selectionId,
+          });
+        }
+      }
+
+      // Step 2: Delete the channel_pricing row
+      const { error } = await supabase
+        .from('channel_pricing')
+        .delete()
+        .eq('id', catalogProductId);
+
+      if (error) throw error;
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ['linkme-catalog-products'],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ['linkme-product-detail'],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ['linkme-selections'],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ['linkme-selection'],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ['linkme-product-selections'],
         }),
       ]);
     },
