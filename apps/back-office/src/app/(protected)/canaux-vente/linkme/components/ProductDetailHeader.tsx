@@ -1,7 +1,7 @@
 'use client';
 
 import { ProductThumbnail } from '@verone/products';
-import { Badge, Switch, Label } from '@verone/ui';
+import { Badge, Switch, Label, Button } from '@verone/ui';
 import {
   Package,
   Eye,
@@ -10,6 +10,7 @@ import {
   Ruler,
   Home,
   ExternalLink,
+  Trash2,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -19,14 +20,18 @@ interface ProductDetailHeaderProps {
   product: LinkMeProductDetail;
   onToggleActive: (value: boolean) => void;
   onToggleFeatured: (value: boolean) => void;
+  onDelete?: () => void;
   isUpdating?: boolean;
+  isDeleting?: boolean;
 }
 
 export function ProductDetailHeader({
   product,
   onToggleActive,
   onToggleFeatured,
+  onDelete,
   isUpdating = false,
+  isDeleting = false,
 }: ProductDetailHeaderProps) {
   return (
     <div className="space-y-6">
@@ -113,7 +118,7 @@ export function ProductDetailHeader({
       </div>
 
       {/* Toggles de configuration - Simplifiés */}
-      <div className="flex gap-6 p-4 bg-muted/50 rounded-lg">
+      <div className="flex items-center gap-6 p-4 bg-muted/50 rounded-lg">
         {/* Toggle Activé (visible sur catalogue LinkMe) */}
         <div className="flex items-center gap-3">
           <Switch
@@ -145,6 +150,22 @@ export function ProductDetailHeader({
             </Label>
           </div>
         </div>
+
+        {/* Spacer */}
+        <div className="flex-1" />
+
+        {/* Delete button - only visible when product is deactivated */}
+        {!product.is_enabled && onDelete && (
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={onDelete}
+            disabled={isDeleting}
+          >
+            <Trash2 className="h-4 w-4 mr-1" />
+            Retirer du catalogue
+          </Button>
+        )}
       </div>
     </div>
   );

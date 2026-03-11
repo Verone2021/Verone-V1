@@ -41,6 +41,12 @@ import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
+  ConfirmDialog,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from '@verone/ui';
 import {
   ArrowLeft,
@@ -60,7 +66,10 @@ import {
   Store,
   BookOpen,
   ChevronDown,
+  RefreshCw,
+  MoreVertical,
 } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { SelectionProductDetailModal } from '../../components/SelectionProductDetailModal';
 import {
@@ -140,6 +149,7 @@ export default function SelectionDetailPage({
   // Modal Édition produit (avec jauge de marge interactive) - ouvert par Pencil
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editItem, setEditItem] = useState<SelectionItem | null>(null);
+  const [deleteItemId, setDeleteItemId] = useState<string | null>(null);
   const _updateMargin = useUpdateProductMargin();
   const updateItem = useUpdateSelectionItem();
 
@@ -151,6 +161,59 @@ export default function SelectionDetailPage({
   // Section produits collapsible + recherche
   const [isProductsOpen, setIsProductsOpen] = useState(false);
   const [productSearchQuery, setProductSearchQuery] = useState('');
+
+  // Synchronisation prix catalogue → sélection
+  const [syncingItemIds, setSyncingItemIds] = useState<Set<string>>(new Set());
+  const [isSyncingAll, setIsSyncingAll] = useState(false);
+
+  // Calcul des items divergents (prix catalogue ≠ prix sélection)
+  const divergentItems = (selection?.items ?? []).filter(
+    (item: SelectionItem) =>
+      item.catalog_price_ht !== null &&
+      item.catalog_price_ht !== item.base_price_ht
+  );
+
+  // Sync un seul item
+  const handleSyncItem = async (item: SelectionItem) => {
+    if (!selection || item.catalog_price_ht === null) return;
+    setSyncingItemIds(prev => new Set(prev).add(item.id));
+    try {
+      await updateItem.mutateAsync({
+        itemId: item.id,
+        selectionId: selection.id,
+        data: { base_price_ht: item.catalog_price_ht },
+      });
+    } catch (error) {
+      console.error('[Selections] syncItem failed:', error);
+    } finally {
+      setSyncingItemIds(prev => {
+        const next = new Set(prev);
+        next.delete(item.id);
+        return next;
+      });
+    }
+  };
+
+  // Sync tous les items divergents
+  const handleSyncAll = async () => {
+    if (!selection || divergentItems.length === 0) return;
+    setIsSyncingAll(true);
+    try {
+      await Promise.all(
+        divergentItems.map(item =>
+          updateItem.mutateAsync({
+            itemId: item.id,
+            selectionId: selection.id,
+            data: { base_price_ht: item.catalog_price_ht! },
+          })
+        )
+      );
+    } catch (error) {
+      console.error('[Selections] syncAll failed:', error);
+    } finally {
+      setIsSyncingAll(false);
+    }
+  };
 
   // Note: Les marges ne sont plus éditables depuis cette vue
   // L'utilisateur doit aller dans la page détail du produit pour modifier
@@ -219,10 +282,14 @@ export default function SelectionDetailPage({
         (p: CatalogProduct) => p.product_id === selectedProductId
       );
       if (!product) return;
-      // Utiliser le prix de vente HT (custom_price_ht de channel_pricing)
-      // Fallback sur prix d'achat si pas de prix de vente défini
-      basePriceHt =
-        product.product_selling_price_ht ?? product.product_price_ht;
+      // Utiliser le prix de vente LinkMe (custom_price_ht de channel_pricing)
+      if (product.product_selling_price_ht == null) {
+        toast.error(
+          "Ce produit n'a pas de prix LinkMe défini dans le catalogue."
+        );
+        return;
+      }
+      basePriceHt = product.product_selling_price_ht;
     } else {
       const product = sourcedProducts?.find(
         (p: SourcedProduct) => p.id === selectedProductId
@@ -546,10 +613,31 @@ export default function SelectionDetailPage({
                   </div>
                 </button>
               </CollapsibleTrigger>
-              <Button onClick={() => setIsAddModalOpen(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Ajouter un produit
-              </Button>
+              <div className="flex gap-2">
+                {divergentItems.length > 0 && (
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      void handleSyncAll().catch(error => {
+                        console.error('[Selections] syncAll failed:', error);
+                      });
+                    }}
+                    disabled={isSyncingAll}
+                    className="text-orange-600 border-orange-300 hover:bg-orange-50"
+                  >
+                    {isSyncingAll ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                    )}
+                    Synchroniser ({divergentItems.length})
+                  </Button>
+                )}
+                <Button onClick={() => setIsAddModalOpen(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Ajouter un produit
+                </Button>
+              </div>
             </div>
             {isProductsOpen && (
               <div className="flex flex-col gap-3">
@@ -645,7 +733,7 @@ export default function SelectionDetailPage({
                           ? 'Encaissement affilié'
                           : 'Prix affilié HT'}
                       </TableHead>
-                      <TableHead className="text-right w-24">Actions</TableHead>
+                      <TableHead className="text-right w-12">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -876,86 +964,105 @@ export default function SelectionDetailPage({
                             >
                               {prixAffilieHT.toFixed(2)} €
                             </TableCell>
-                            {/* Actions */}
+                            {/* Actions — Menu trois points */}
                             <TableCell className="text-right">
-                              <div className="flex items-center justify-end gap-1">
-                                {/* Bouton Masquer/Afficher (toggle visibility) */}
-                                <Button
-                                  size="icon"
-                                  variant="ghost"
-                                  className={`h-8 w-8 ${
-                                    item.is_hidden_by_staff
-                                      ? 'text-orange-500 hover:text-orange-600'
-                                      : 'text-gray-400 hover:text-orange-500'
-                                  }`}
-                                  onClick={() => {
-                                    void toggleVisibility
-                                      .mutateAsync({
-                                        itemId: item.id,
-                                        isHidden: !item.is_hidden_by_staff,
-                                        selectionId: id,
-                                      })
-                                      .catch(error => {
-                                        console.error(
-                                          '[Selections] toggleVisibility failed:',
-                                          error
-                                        );
-                                      });
-                                  }}
-                                  disabled={toggleVisibility.isPending}
-                                  title={
-                                    item.is_hidden_by_staff
-                                      ? 'Rendre visible publiquement'
-                                      : 'Masquer de la sélection publique'
-                                  }
-                                >
-                                  {item.is_hidden_by_staff ? (
-                                    <EyeOff className="h-4 w-4" />
-                                  ) : (
-                                    <Eye className="h-4 w-4" />
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8"
+                                  >
+                                    <MoreVertical className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  {/* Voir fiche produit */}
+                                  <DropdownMenuItem
+                                    onClick={() => handleOpenViewModal(item)}
+                                  >
+                                    <BookOpen className="h-4 w-4 mr-2" />
+                                    Voir la fiche
+                                  </DropdownMenuItem>
+                                  {/* Modifier */}
+                                  <DropdownMenuItem
+                                    onClick={() => handleOpenEditModal(item)}
+                                  >
+                                    <Pencil className="h-4 w-4 mr-2" />
+                                    Modifier
+                                  </DropdownMenuItem>
+                                  {/* Sync prix (si divergence) */}
+                                  {item.catalog_price_ht !== null &&
+                                    item.catalog_price_ht !==
+                                      item.base_price_ht && (
+                                      <DropdownMenuItem
+                                        onClick={() => {
+                                          void handleSyncItem(item).catch(
+                                            error => {
+                                              console.error(
+                                                '[Selections] syncItem failed:',
+                                                error
+                                              );
+                                            }
+                                          );
+                                        }}
+                                        disabled={syncingItemIds.has(item.id)}
+                                        className="text-orange-600 focus:text-orange-600"
+                                      >
+                                        {syncingItemIds.has(item.id) ? (
+                                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                        ) : (
+                                          <RefreshCw className="h-4 w-4 mr-2" />
+                                        )}
+                                        Synchroniser prix ({item.base_price_ht}€
+                                        → {item.catalog_price_ht}€)
+                                      </DropdownMenuItem>
+                                    )}
+                                  <DropdownMenuSeparator />
+                                  {/* Masquer / Afficher */}
+                                  <DropdownMenuItem
+                                    onClick={() => {
+                                      void toggleVisibility
+                                        .mutateAsync({
+                                          itemId: item.id,
+                                          isHidden: !item.is_hidden_by_staff,
+                                          selectionId: id,
+                                        })
+                                        .catch(error => {
+                                          console.error(
+                                            '[Selections] toggleVisibility failed:',
+                                            error
+                                          );
+                                        });
+                                    }}
+                                    disabled={toggleVisibility.isPending}
+                                    className="text-gray-600 focus:text-gray-600"
+                                  >
+                                    {item.is_hidden_by_staff ? (
+                                      <>
+                                        <Eye className="h-4 w-4 mr-2" />
+                                        Rendre visible
+                                      </>
+                                    ) : (
+                                      <>
+                                        <EyeOff className="h-4 w-4 mr-2" />
+                                        Masquer le produit
+                                      </>
+                                    )}
+                                  </DropdownMenuItem>
+                                  {/* Supprimer — uniquement si masqué */}
+                                  {item.is_hidden_by_staff && (
+                                    <DropdownMenuItem
+                                      onClick={() => setDeleteItemId(item.id)}
+                                      disabled={removeProduct.isPending}
+                                      className="text-red-600 focus:text-red-600"
+                                    >
+                                      <Trash2 className="h-4 w-4 mr-2" />
+                                      Supprimer
+                                    </DropdownMenuItem>
                                   )}
-                                </Button>
-                                {/* Bouton Vue fiche (READ-ONLY) */}
-                                <Button
-                                  size="icon"
-                                  variant="ghost"
-                                  className="h-8 w-8 text-gray-600 hover:text-gray-700"
-                                  onClick={() => handleOpenViewModal(item)}
-                                  title="Voir fiche produit"
-                                >
-                                  <BookOpen className="h-4 w-4" />
-                                </Button>
-                                {/* Bouton Édition (Pencil) */}
-                                <Button
-                                  size="icon"
-                                  variant="ghost"
-                                  className="h-8 w-8 text-blue-600 hover:text-blue-700"
-                                  onClick={() => handleOpenEditModal(item)}
-                                  title="Modifier"
-                                >
-                                  <Pencil className="h-4 w-4" />
-                                </Button>
-                                {/* Bouton Supprimer */}
-                                <Button
-                                  size="icon"
-                                  variant="ghost"
-                                  className="h-8 w-8 text-destructive hover:text-destructive"
-                                  onClick={() => {
-                                    void handleRemoveProduct(item.id).catch(
-                                      error => {
-                                        console.error(
-                                          '[Selections] handleRemoveProduct failed:',
-                                          error
-                                        );
-                                      }
-                                    );
-                                  }}
-                                  disabled={removeProduct.isPending}
-                                  title="Supprimer"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
                             </TableCell>
                           </TableRow>
                         );
@@ -1085,12 +1192,14 @@ export default function SelectionDetailPage({
                             {product.product_name}
                           </p>
                           <p className="text-sm text-muted-foreground">
-                            {product.product_reference} -{' '}
-                            {(
-                              product.product_selling_price_ht ??
-                              product.product_price_ht
-                            ).toFixed(2)}{' '}
-                            € HT
+                            {product.product_reference}
+                            {product.product_selling_price_ht != null && (
+                              <>
+                                {' - '}
+                                {product.product_selling_price_ht.toFixed(2)} €
+                                HT
+                              </>
+                            )}
                           </p>
                         </div>
                         {selectedProductId === product.product_id && (
@@ -1232,6 +1341,24 @@ export default function SelectionDetailPage({
         item={editItem}
         onSave={handleSaveFromDetail}
         isSaving={updateItem.isPending}
+      />
+
+      {/* Modal confirmation suppression produit */}
+      <ConfirmDialog
+        open={deleteItemId !== null}
+        onOpenChange={open => {
+          if (!open) setDeleteItemId(null);
+        }}
+        variant="destructive"
+        title="Supprimer définitivement ce produit ?"
+        description="Le produit sera retiré de cette sélection. Cette action est irréversible."
+        confirmText="Supprimer"
+        onConfirm={async () => {
+          if (deleteItemId) {
+            await handleRemoveProduct(deleteItemId);
+          }
+        }}
+        loading={removeProduct.isPending}
       />
     </div>
   );
