@@ -122,7 +122,14 @@ export async function POST(request: NextRequest): Promise<
       }
       customer = org;
       customerEmail = org.email ?? null;
-      customerName = org.trade_name ?? org.legal_name ?? 'Client';
+      // Legal name first (raison sociale obligatoire sur factures)
+      const legalName = org.legal_name ?? org.trade_name ?? 'Client';
+      const tradeName = org.trade_name;
+      // Concatenate if trade_name is different from legal_name
+      customerName =
+        tradeName && tradeName !== legalName
+          ? `${legalName} (${tradeName})`
+          : legalName;
     } else {
       const { data: indiv, error: indivError } = await supabase
         .from('individual_customers')

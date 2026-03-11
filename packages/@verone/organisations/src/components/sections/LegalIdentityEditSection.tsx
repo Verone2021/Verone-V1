@@ -11,7 +11,6 @@ interface Organisation {
   legal_name: string;
   trade_name?: string | null;
   has_different_trade_name?: boolean;
-  siren?: string | null;
   siret?: string | null;
 }
 
@@ -26,7 +25,6 @@ interface LegalEditData {
   legal_name?: string;
   trade_name?: string | null;
   has_different_trade_name?: boolean;
-  siren?: string | null;
   siret?: string | null;
 }
 
@@ -64,7 +62,6 @@ export function LegalIdentityEditSection({
       legal_name: organisation.legal_name,
       trade_name: organisation.trade_name || '',
       has_different_trade_name: organisation.has_different_trade_name || false,
-      siren: organisation.siren || '',
       siret: organisation.siret || '',
     });
   };
@@ -91,18 +88,6 @@ export function LegalIdentityEditSection({
 
     // Récupérer les données nettoyées pour validation
     const dataToValidate = getEditedData(section) as LegalEditData | null;
-
-    // Validation SIREN (9 chiffres)
-    const sirenValue = dataToValidate?.siren;
-    if (sirenValue && typeof sirenValue === 'string' && sirenValue.trim()) {
-      const sirenClean = sirenValue.replace(/\s/g, '');
-      if (!/^\d{9}$/.test(sirenClean)) {
-        updateEditedData(section, {
-          _error: 'Le SIREN doit contenir exactement 9 chiffres',
-        });
-        return;
-      }
-    }
 
     // Validation SIRET (14 chiffres)
     const siretValue = dataToValidate?.siret;
@@ -141,8 +126,8 @@ export function LegalIdentityEditSection({
     let processedValue = value;
 
     if (typeof value === 'string') {
-      // Nettoyage SIREN/SIRET (enlever espaces)
-      if (field === 'siren' || field === 'siret') {
+      // Nettoyage SIRET (enlever espaces)
+      if (field === 'siret') {
         processedValue = value.replace(/\s/g, '');
       }
     }
@@ -246,46 +231,6 @@ export function LegalIdentityEditSection({
             </div>
           )}
 
-          {/* SIREN */}
-          <div>
-            <label className="block text-sm font-medium text-black mb-1">
-              SIREN
-            </label>
-            <input
-              type="text"
-              value={editData?.siren || ''}
-              onChange={e => handleFieldChange('siren', e.target.value)}
-              className={cn(
-                'w-full px-3 py-2 font-mono border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black',
-                editData?.siren &&
-                  !/^\d{9}$/.test(editData.siren.replace(/\s/g, ''))
-                  ? 'border-red-300'
-                  : 'border-gray-300'
-              )}
-              placeholder="123 456 789"
-              maxLength={11}
-            />
-            <div className="flex items-center justify-between mt-1">
-              <div className="text-xs text-gray-500">
-                9 chiffres • Obligatoire sur factures depuis juillet 2024
-              </div>
-              {editData?.siren && (
-                <div
-                  className={cn(
-                    'text-xs font-medium',
-                    /^\d{9}$/.test(editData.siren.replace(/\s/g, ''))
-                      ? 'text-green-600'
-                      : 'text-red-600'
-                  )}
-                >
-                  {/^\d{9}$/.test(editData.siren.replace(/\s/g, ''))
-                    ? '✓ Valide'
-                    : '✗ Format invalide'}
-                </div>
-              )}
-            </div>
-          </div>
-
           {/* SIRET */}
           <div>
             <label className="block text-sm font-medium text-black mb-1">
@@ -375,16 +320,6 @@ export function LegalIdentityEditSection({
           </div>
         )}
 
-        {/* SIREN */}
-        {organisation.siren && (
-          <div>
-            <span className="text-sm text-black opacity-70">SIREN:</span>
-            <div className="font-mono text-sm font-medium text-black">
-              {organisation.siren}
-            </div>
-          </div>
-        )}
-
         {/* SIRET */}
         {organisation.siret && (
           <div>
@@ -396,13 +331,11 @@ export function LegalIdentityEditSection({
         )}
 
         {/* Message si aucune info */}
-        {!organisation.siren &&
-          !organisation.siret &&
-          !organisation.trade_name && (
-            <div className="text-center text-gray-400 text-xs italic py-2">
-              Informations légales complémentaires non renseignées
-            </div>
-          )}
+        {!organisation.siret && !organisation.trade_name && (
+          <div className="text-center text-gray-400 text-xs italic py-2">
+            Informations légales complémentaires non renseignées
+          </div>
+        )}
       </div>
     </div>
   );

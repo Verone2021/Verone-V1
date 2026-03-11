@@ -61,6 +61,7 @@ import {
   TableHeader,
   TableRow,
   Skeleton,
+  OrganisationNameDisplay,
 } from '@verone/ui';
 import {
   Money,
@@ -189,6 +190,8 @@ interface Invoice {
   order_number?: string | null;
   local_amount_paid?: number | null;
   partner_id?: string | null;
+  partner_legal_name?: string | null;
+  partner_trade_name?: string | null;
 }
 
 // =====================================================================
@@ -412,12 +415,16 @@ function InvoicesTable({
           <TableRow key={invoice.id}>
             <TableCell className="font-mono">{invoice.number}</TableCell>
             <TableCell>
-              {invoice.partner_id && invoice.client?.name ? (
+              {invoice.partner_id && invoice.partner_legal_name ? (
                 <button
                   onClick={() => onOpenOrg?.(invoice.partner_id!)}
                   className="inline-flex items-center gap-1 text-left text-primary hover:underline cursor-pointer"
                 >
-                  {invoice.client.name}
+                  <OrganisationNameDisplay
+                    legalName={invoice.partner_legal_name}
+                    tradeName={invoice.partner_trade_name}
+                    variant="compact"
+                  />
                   <ExternalLink className="h-3 w-3 opacity-60" />
                 </button>
               ) : (

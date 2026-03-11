@@ -96,6 +96,8 @@ export async function GET(request: NextRequest): Promise<
       local_status: string | null;
       local_amount_paid: number | null;
       partner_id: string | null;
+      partner_legal_name: string | null;
+      partner_trade_name: string | null;
     }
 
     let localDataMap: Record<string, ILocalDocData> = {};
@@ -105,7 +107,7 @@ export async function GET(request: NextRequest): Promise<
       const { data: localDocs } = await supabase
         .from('financial_documents')
         .select(
-          'id, qonto_invoice_id, workflow_status, deleted_at, sales_order_id, status, amount_paid, partner_id, sales_orders!financial_documents_sales_order_id_fkey(order_number)'
+          'id, qonto_invoice_id, workflow_status, deleted_at, sales_order_id, status, amount_paid, partner_id, sales_orders!financial_documents_sales_order_id_fkey(order_number), organisations!financial_documents_partner_id_fkey(legal_name, trade_name)'
         )
         .in('qonto_invoice_id', qontoInvoiceIds);
 
@@ -122,6 +124,10 @@ export async function GET(request: NextRequest): Promise<
           amount_paid?: number | null;
           partner_id?: string | null;
           sales_orders?: { order_number: string | null } | null;
+          organisations?: {
+            legal_name: string | null;
+            trade_name: string | null;
+          } | null;
         };
 
         localDataMap = (localDocs as DocWithExtras[]).reduce(
@@ -139,6 +145,8 @@ export async function GET(request: NextRequest): Promise<
                   ? parseFloat(String(doc.amount_paid))
                   : null,
                 partner_id: doc.partner_id ?? null,
+                partner_legal_name: doc.organisations?.legal_name ?? null,
+                partner_trade_name: doc.organisations?.trade_name ?? null,
               };
             }
             return acc;
@@ -172,6 +180,8 @@ export async function GET(request: NextRequest): Promise<
           order_number: localData?.order_number ?? null,
           local_amount_paid: localData?.local_amount_paid ?? null,
           partner_id: localData?.partner_id ?? null,
+          partner_legal_name: localData?.partner_legal_name ?? null,
+          partner_trade_name: localData?.partner_trade_name ?? null,
         };
       }
     );
@@ -393,7 +403,14 @@ export async function POST(request: NextRequest): Promise<
     if (typedOrder.customer_type === 'organization' && typedOrder.customer) {
       const org = typedOrder.customer as Organisation;
       customerEmail = org.email ?? null;
-      customerName = org.trade_name ?? org.legal_name ?? 'Client';
+      // Legal name first (raison sociale obligatoire sur factures)
+      const legalName = org.legal_name ?? org.trade_name ?? 'Client';
+      const tradeName = org.trade_name;
+      // Concatenate if trade_name is different from legal_name
+      customerName =
+        tradeName && tradeName !== legalName
+          ? `${legalName} (${tradeName})`
+          : legalName;
       // Priority: vat_number (TVA intra-communautaire), then siret
       vatNumber = org.vat_number ?? org.siret ?? undefined;
     } else if (

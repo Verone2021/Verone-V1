@@ -54,8 +54,8 @@ interface OrderHeader {
   customer_name?: string;
   customer_trade_name?: string | null;
   supplier_name?: string;
-  billing_address?: string | null;
-  shipping_address?: string | null;
+  billing_address?: Record<string, unknown> | string | null;
+  shipping_address?: Record<string, unknown> | string | null;
   delivery_address?: string | null;
   payment_terms?: string | null;
   tax_rate?: number;
@@ -295,12 +295,8 @@ export function UniversalOrderDetailsModal({
             total_ttc: order.total_ttc,
             customer_name: customerName,
             customer_trade_name: customerTradeName,
-            billing_address: order.billing_address
-              ? JSON.stringify(order.billing_address)
-              : null,
-            shipping_address: order.shipping_address
-              ? JSON.stringify(order.shipping_address)
-              : null,
+            billing_address: order.billing_address ?? null,
+            shipping_address: order.shipping_address ?? null,
             payment_terms: order.payment_terms,
             tax_rate: order.tax_rate,
             eco_tax_vat_rate: order.eco_tax_vat_rate,

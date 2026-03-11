@@ -300,7 +300,11 @@ async function fetchSelectionById(
       channel_pricing_id: channelPricingIdByProductId[item.product_id] ?? null,
       commission_rate: commissionByProductId[item.product_id] ?? null,
       catalog_price_ht: catalogPriceByProductId[item.product_id] ?? null,
-      public_price_ht: channelData?.public_price_ht ?? null,
+      public_price_ht:
+        channelData?.public_price_ht ??
+        (catalogPriceByProductId[item.product_id] != null
+          ? catalogPriceByProductId[item.product_id]! * 1.5
+          : null),
       min_margin_rate: channelData?.min_margin_rate ?? null,
       max_margin_rate: channelData?.max_margin_rate ?? null,
       suggested_margin_rate: channelData?.suggested_margin_rate ?? null,
