@@ -24,6 +24,12 @@ import type {
   OrderFormUnifiedData,
   CartItem,
 } from '@/components/OrderFormUnified';
+import {
+  clientRequesterSchema,
+  clientNewRestaurantSchema,
+  clientDeliverySchema,
+  clientExistingResponsableSchema,
+} from '@/components/orders/schemas/client-order-form.schema';
 
 // =====================================================================
 // TYPES
@@ -74,13 +80,93 @@ export function useSubmitUnifiedOrder() {
 
       try {
         // =============================================================
-        // CAS 1: Restaurant existant → pending_approval (même statut que nouveau)
+        // CAS 1: Restaurant existant → draft + linkme_details
         // =============================================================
         if (!data.isNewRestaurant && data.existingOrganisationId) {
+          // Validation Zod avant soumission
+          const requesterResult = clientRequesterSchema.safeParse(
+            data.requester
+          );
+          if (!requesterResult.success) {
+            throw new Error(
+              `Données demandeur invalides: ${requesterResult.error.issues.map(i => i.message).join(', ')}`
+            );
+          }
+
+          const responsableResult = clientExistingResponsableSchema.safeParse(
+            data.responsable
+          );
+          if (!responsableResult.success) {
+            throw new Error(
+              `Données responsable invalides: ${responsableResult.error.issues.map(i => i.message).join(', ')}`
+            );
+          }
+
+          const deliveryResult = clientDeliverySchema.safeParse(data.delivery);
+          if (!deliveryResult.success) {
+            throw new Error(
+              `Données livraison invalides: ${deliveryResult.error.issues.map(i => i.message).join(', ')}`
+            );
+          }
+
           const items = cart.map(item => ({
             selection_item_id: item.id,
             quantity: item.quantity,
           }));
+
+          // Build linkme_details with all collected data
+          const linkmeDetails = {
+            // Requester (Step 1)
+            requester_type: 'responsable_enseigne',
+            requester_name: data.requester.name,
+            requester_email: data.requester.email,
+            requester_phone: data.requester.phone || null,
+            requester_position: data.requester.position || null,
+            is_new_restaurant: false,
+            // Responsable (Step 3)
+            owner_type: null,
+            // Billing (Step 4)
+            billing_contact_source: data.billing.useParentOrganisation
+              ? 'parent'
+              : data.billing.contactSource,
+            billing_name:
+              data.billing.contactSource === 'custom'
+                ? data.billing.name
+                : data.responsable.name,
+            billing_email:
+              data.billing.contactSource === 'custom'
+                ? data.billing.email
+                : data.responsable.email,
+            billing_phone:
+              data.billing.contactSource === 'custom'
+                ? data.billing.phone || null
+                : data.responsable.phone || null,
+            // Delivery (Step 5)
+            delivery_contact_name: data.delivery.useResponsableContact
+              ? null
+              : data.delivery.contactName || null,
+            delivery_contact_email: data.delivery.useResponsableContact
+              ? null
+              : data.delivery.contactEmail || null,
+            delivery_contact_phone: data.delivery.useResponsableContact
+              ? null
+              : data.delivery.contactPhone || null,
+            delivery_address: data.delivery.address || null,
+            delivery_postal_code: data.delivery.postalCode || null,
+            delivery_city: data.delivery.city || null,
+            delivery_latitude: data.delivery.latitude ?? null,
+            delivery_longitude: data.delivery.longitude ?? null,
+            desired_delivery_date: data.delivery.deliveryDate || null,
+            is_mall_delivery: data.delivery.isMallDelivery || false,
+            mall_email: data.delivery.isMallDelivery
+              ? data.delivery.mallEmail || null
+              : null,
+            semi_trailer_accessible:
+              data.delivery.semiTrailerAccessible !== false,
+            access_form_url: data.delivery.accessFormUrl ?? null,
+            delivery_notes: data.delivery.notes || null,
+            delivery_terms_accepted: data.deliveryTermsAccepted || false,
+          };
 
           const { data: orderId, error: rpcError } = await supabase.rpc(
             'create_affiliate_order',
@@ -91,6 +177,7 @@ export function useSubmitUnifiedOrder() {
               p_selection_id: selectionId,
               p_items: items,
               p_notes: data.finalNotes ?? null,
+              p_linkme_details: linkmeDetails,
             }
           );
 
@@ -140,6 +227,32 @@ export function useSubmitUnifiedOrder() {
         // CAS 2: Ouverture de restaurant → Validation requise
         // =============================================================
         if (data.isNewRestaurant) {
+          // Validation Zod avant soumission
+          const requesterResult = clientRequesterSchema.safeParse(
+            data.requester
+          );
+          if (!requesterResult.success) {
+            throw new Error(
+              `Données demandeur invalides: ${requesterResult.error.issues.map(i => i.message).join(', ')}`
+            );
+          }
+
+          const restaurantResult = clientNewRestaurantSchema.safeParse(
+            data.newRestaurant
+          );
+          if (!restaurantResult.success) {
+            throw new Error(
+              `Données restaurant invalides: ${restaurantResult.error.issues.map(i => i.message).join(', ')}`
+            );
+          }
+
+          const deliveryResult = clientDeliverySchema.safeParse(data.delivery);
+          if (!deliveryResult.success) {
+            throw new Error(
+              `Données livraison invalides: ${deliveryResult.error.issues.map(i => i.message).join(', ')}`
+            );
+          }
+
           // Panier format RPC
           const p_cart = cart.map(item => ({
             product_id: item.product_id,

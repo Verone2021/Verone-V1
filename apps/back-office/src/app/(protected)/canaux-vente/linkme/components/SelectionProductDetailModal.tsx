@@ -140,17 +140,17 @@ export function SelectionProductDetailModal({
     ? basePrice - affiliateCommissionAmount
     : 0;
 
-  // Prix client LinkMe catalogue NITMI (pour comparaison)
+  // Prix catalogue LinkMe (pour comparaison)
   // C'est le prix que le client paie si on utilise le prix catalogue standard
-  const prixClientNITMI = item?.catalog_price_ht
+  const prixCatalogueLinkMe = item?.catalog_price_ht
     ? item.catalog_price_ht * (1 + commissionRate)
     : null;
 
   // Remise vs catalogue (en %)
   // Négatif = moins cher que le catalogue, Positif = plus cher
   const remiseVsCatalogue =
-    prixClientNITMI && prixClientLinkMe
-      ? ((prixClientLinkMe - prixClientNITMI) / prixClientNITMI) * 100
+    prixCatalogueLinkMe && prixClientLinkMe
+      ? ((prixClientLinkMe - prixCatalogueLinkMe) / prixCatalogueLinkMe) * 100
       : null;
 
   // Buffer rate pour les calculs
@@ -341,21 +341,21 @@ export function SelectionProductDetailModal({
 
           <Separator />
 
-          {/* === COMPARATIF PRIX (NITMI vs Sélection) === */}
-          {prixClientNITMI && (
+          {/* === COMPARATIF PRIX (Catalogue vs Sélection) === */}
+          {prixCatalogueLinkMe && (
             <div className="rounded-xl border bg-blue-50/50 p-4 space-y-3">
               <h4 className="font-medium text-sm flex items-center gap-2">
                 <TrendingDown className="h-4 w-4 text-blue-600" />
                 Comparatif Prix
               </h4>
               <div className="grid grid-cols-2 gap-4 text-sm">
-                {/* Prix catalogue NITMI */}
+                {/* Prix catalogue LinkMe */}
                 <div>
                   <p className="text-xs text-muted-foreground">
-                    Prix client NITMI (catalogue)
+                    Prix LinkMe (catalogue)
                   </p>
                   <p className="font-mono font-semibold text-lg">
-                    {prixClientNITMI.toFixed(2)} €
+                    {prixCatalogueLinkMe.toFixed(2)} €
                   </p>
                 </div>
                 {/* Prix sélection */}

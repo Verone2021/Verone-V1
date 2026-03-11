@@ -1,15 +1,17 @@
 'use client';
 
 /**
- * OrderFormUnified - Formulaire public de commande LinkMe (enseignes)
+ * OrderFormUnified — Formulaire Commande Client (ClientOrderForm)
  *
+ * Nom officiel : ClientOrderForm
  * Formulaire accessible sans authentification via les pages publiques /s/[id]/catalogue.
  * Scope : enseignes uniquement (orgs independantes = formulaire separe a creer).
  *
  * Question initiale : "Est-ce une ouverture de restaurant ?"
- * - Oui (nouveau) → stepper 6 etapes → status PENDING_APPROVAL
+ * - Oui (nouveau) → stepper 6 etapes → RPC create_public_linkme_order → status PENDING_APPROVAL
  *   1. Demandeur, 2. Restaurant, 3. Responsable, 4. Facturation, 5. Livraison, 6. Validation
- * - Non (existant) → formulaire simple (sélecteur restaurant + notes) → status PENDING_APPROVAL
+ * - Non (existant) → stepper 6 etapes → RPC create_affiliate_order + p_linkme_details → status DRAFT
+ *   1. Demandeur, 2. Restaurant (select), 3. Responsable (manual), 4. Facturation, 5. Livraison, 6. Validation
  *
  * Soumission : use-submit-unified-order.ts (RPCs create_public_linkme_order / create_affiliate_order)
  *
@@ -337,6 +339,15 @@ const OPENING_STEPS = [
   { id: 6, title: 'Validation', icon: ShoppingCart },
 ];
 
+const EXISTING_STEPS = [
+  { id: 1, title: 'Demandeur', icon: User },
+  { id: 2, title: 'Restaurant', icon: Store },
+  { id: 3, title: 'Responsable', icon: UserCircle },
+  { id: 4, title: 'Facturation', icon: FileText },
+  { id: 5, title: 'Livraison', icon: Truck },
+  { id: 6, title: 'Validation', icon: ShoppingCart },
+];
+
 // =====================================================================
 // COMPOSANT PRINCIPAL
 // =====================================================================
@@ -374,34 +385,8 @@ export function OrderFormUnified({
     return { totalHt, totalTtc, totalTva, totalItems };
   }, [cart]);
 
-  // Hook pour charger les contacts de l'organisation sélectionnée
-  const { data: organisationContacts } = useOrganisationContacts(
-    data.existingOrganisationId
-  );
-
-  // Pré-remplir quand organisation existante sélectionnée
-  useEffect(() => {
-    if (data.existingOrganisationId && organisationContacts?.primaryContact) {
-      const primary = organisationContacts.primaryContact;
-
-      setData(prev => ({
-        ...prev,
-        responsable: {
-          ...prev.responsable,
-          name: `${primary.firstName} ${primary.lastName}`,
-          email: primary.email ?? '',
-          phone: primary.phone ?? primary.mobile ?? '',
-        },
-        billing: {
-          ...prev.billing,
-          contactSource: 'responsable',
-          name: `${primary.firstName} ${primary.lastName}`,
-          email: primary.email ?? '',
-          phone: primary.phone ?? primary.mobile ?? '',
-        },
-      }));
-    }
-  }, [data.existingOrganisationId, organisationContacts]);
+  // NOTE: Pas de pré-remplissage depuis les contacts DB pour le formulaire public.
+  // Les contacts sont saisis manuellement et vérifiés par le staff lors de l'approbation.
 
   // Charger depuis localStorage au montage (seulement pour utilisateurs publics sans org existante)
   useEffect(() => {
@@ -471,20 +456,6 @@ export function OrderFormUnified({
   // VALIDATION
   // ============================================
 
-  const validateExistingRestaurant = useCallback((): boolean => {
-    const newErrors: Record<string, string> = {};
-
-    if (!data.existingOrganisationId) {
-      newErrors.existingOrganisationId = 'Veuillez sélectionner un restaurant';
-    }
-    if (cart.length === 0) {
-      newErrors.cart = 'Le panier est vide';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  }, [data.existingOrganisationId, cart.length]);
-
   // Validation Step 1 : Demandeur
   const validateStep1 = useCallback((): boolean => {
     const newErrors: Record<string, string> = {};
@@ -541,25 +512,17 @@ export function OrderFormUnified({
     const newErrors: Record<string, string> = {};
 
     if (data.isNewRestaurant === false) {
-      // Restaurant existant : doit avoir sélectionné un contact OU rempli formulaire nouveau
-      if (
-        !data.existingContact.selectedContactId ||
-        data.existingContact.selectedContactId === ''
-      ) {
-        newErrors['existingContact.selectedContactId'] =
-          'Veuillez sélectionner un contact';
+      // Restaurant existant (public) : saisie manuelle uniquement, pas de contacts DB
+      if (!data.responsable.name.trim()) {
+        newErrors['responsable.name'] = 'Le nom du responsable est requis';
       }
-      // Si "nouveau" sélectionné, valider le formulaire
-      if (data.existingContact.isNewContact) {
-        if (!data.responsable.name.trim()) {
-          newErrors['responsable.name'] = 'Le nom est requis';
-        }
-        if (!data.responsable.email.trim()) {
-          newErrors['responsable.email'] = "L'email est requis";
-        }
-        if (!data.responsable.phone.trim()) {
-          newErrors['responsable.phone'] = 'Le téléphone est requis';
-        }
+      if (!data.responsable.email.trim()) {
+        newErrors['responsable.email'] = "L'email est requis";
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.responsable.email)) {
+        newErrors['responsable.email'] = 'Email invalide';
+      }
+      if (!data.responsable.phone.trim()) {
+        newErrors['responsable.phone'] = 'Le téléphone est requis';
       }
     } else if (data.isNewRestaurant === true) {
       // Nouveau restaurant : formulaire obligatoire
@@ -595,7 +558,6 @@ export function OrderFormUnified({
     return Object.keys(newErrors).length === 0;
   }, [
     data.isNewRestaurant,
-    data.existingContact,
     data.responsable,
     data.newRestaurant.ownershipType,
   ]);
@@ -690,22 +652,19 @@ export function OrderFormUnified({
   // ============================================
 
   const handleNext = useCallback(() => {
-    if (data.isNewRestaurant) {
-      // Validation de chaque étape avant de passer à la suivante
-      if (currentStep === 1 && !validateStep1()) return;
-      if (currentStep === 2 && !validateStep2()) return;
-      if (currentStep === 3 && !validateStep3()) return;
-      if (currentStep === 4 && !validateStep4()) return;
-      if (currentStep === 5 && !validateStep5()) return;
-      // Step 6 : le bouton "Valider la commande" gère la confirmation
-      if (currentStep === 6) return;
+    // Validation de chaque étape avant de passer à la suivante (BOTH workflows)
+    if (currentStep === 1 && !validateStep1()) return;
+    if (currentStep === 2 && !validateStep2()) return;
+    if (currentStep === 3 && !validateStep3()) return;
+    if (currentStep === 4 && !validateStep4()) return;
+    if (currentStep === 5 && !validateStep5()) return;
+    // Step 6 : le bouton "Valider la commande" gère la confirmation
+    if (currentStep === 6) return;
 
-      // Passer à l'étape suivante (max 6)
-      setCurrentStep(prev => Math.min(prev + 1, 6));
-    }
+    // Passer à l'étape suivante (max 6)
+    setCurrentStep(prev => Math.min(prev + 1, 6));
   }, [
     currentStep,
-    data.isNewRestaurant,
     validateStep1,
     validateStep2,
     validateStep3,
@@ -763,10 +722,7 @@ export function OrderFormUnified({
     await handleSubmit();
   }, [handleSubmit, updateData]);
 
-  const handleSubmitExisting = useCallback(async () => {
-    if (!validateExistingRestaurant()) return;
-    await handleSubmit();
-  }, [validateExistingRestaurant, handleSubmit]);
+  // handleSubmitExisting removed — existing restaurant now uses the same 6-step stepper
 
   // ============================================
   // RENDER
@@ -840,7 +796,7 @@ export function OrderFormUnified({
     );
   }
 
-  // Restaurant existant - Formulaire simple
+  // Restaurant existant - Stepper 6 étapes (identique au nouveau restaurant)
   if (!data.isNewRestaurant) {
     return (
       <div className="flex h-full bg-white">
@@ -854,75 +810,95 @@ export function OrderFormUnified({
 
         <div className="flex-1 flex flex-col min-w-0">
           <Header
-            title="Commande restaurant existant"
-            subtitle="Sélectionnez le restaurant et validez"
+            title={`${currentStep}. ${EXISTING_STEPS[currentStep - 1].title}`}
+            subtitle={`Étape ${currentStep}/${EXISTING_STEPS.length}`}
+            steps={EXISTING_STEPS}
+            currentStep={currentStep}
             onClose={onClose}
           />
 
           <div className="flex-1 overflow-y-auto p-6">
-            <div className="max-w-lg space-y-6">
-              {/* Sélection restaurant */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Restaurant *
-                </label>
-                <RestaurantSelectorModal
-                  organisations={organisations}
-                  selectedId={data.existingOrganisationId}
-                  onSelect={org =>
-                    updateData({ existingOrganisationId: org.id })
-                  }
-                  isLoading={isLoadingOrganisations}
-                  error={errors.existingOrganisationId}
-                />
-              </div>
-
-              {/* Notes */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Notes (optionnel)
-                </label>
-                <textarea
-                  value={data.finalNotes}
-                  onChange={e => updateData({ finalNotes: e.target.value })}
-                  placeholder="Instructions spéciales, commentaires..."
-                  rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-
-              {/* Info */}
-              <div className="flex items-start gap-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <AlertCircle className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-medium text-blue-800">
-                    Validation requise
-                  </p>
-                  <p className="text-sm text-blue-700 mt-0.5">
-                    Cette commande sera soumise pour validation par
-                    l&apos;équipe Verone.
-                  </p>
-                </div>
-              </div>
-
-              {errors.cart && (
-                <p className="text-sm text-red-600">{errors.cart}</p>
-              )}
-              {errors.submit && (
-                <p className="text-sm text-red-600">{errors.submit}</p>
-              )}
-            </div>
+            {currentStep === 1 && (
+              <OpeningStep1Requester
+                data={data}
+                errors={errors}
+                updateData={updateData}
+                affiliateId={affiliateId}
+              />
+            )}
+            {currentStep === 2 && (
+              <ExistingStep2Restaurant
+                data={data}
+                errors={errors}
+                updateData={updateData}
+                organisations={organisations}
+                isLoadingOrganisations={isLoadingOrganisations}
+              />
+            )}
+            {currentStep === 3 && (
+              <ExistingStep3Responsable
+                data={data}
+                errors={errors}
+                updateData={updateData}
+              />
+            )}
+            {currentStep === 4 && (
+              <OpeningStep4Billing
+                data={data}
+                errors={errors}
+                updateData={updateData}
+                affiliateId={affiliateId}
+              />
+            )}
+            {currentStep === 5 && (
+              <OpeningStep5Delivery
+                data={data}
+                errors={errors}
+                updateData={updateData}
+                affiliateId={affiliateId}
+              />
+            )}
+            {currentStep === 6 && (
+              <OpeningStep6Validation
+                data={data}
+                errors={errors}
+                updateData={updateData}
+                affiliateId={affiliateId}
+                cart={cart}
+                cartTotals={cartTotals}
+                formatPrice={formatPrice}
+                onUpdateQuantity={onUpdateQuantity}
+                onRemoveItem={onRemoveItem}
+                onOpenConfirmation={handleOpenConfirmation}
+              />
+            )}
           </div>
 
-          <Footer
-            onBack={() => updateData({ isNewRestaurant: null })}
-            onNext={() => void handleSubmitExisting()}
-            nextLabel="Soumettre la commande"
-            isSubmitting={isSubmitting}
-            cartTotals={cartTotals}
-            formatPrice={formatPrice}
-          />
+          {/* Footer - masqué en step 6 car le bouton est dans OpeningStep6Validation */}
+          {currentStep < 6 && (
+            <Footer
+              onBack={handleBack}
+              onNext={handleNext}
+              nextLabel="Suivant"
+              isSubmitting={isSubmitting}
+              cartTotals={cartTotals}
+              formatPrice={formatPrice}
+              showBackButton
+            />
+          )}
         </div>
+
+        {/* Modal de confirmation */}
+        <ConfirmationModal
+          isOpen={showConfirmation}
+          onClose={() => setShowConfirmation(false)}
+          onConfirm={() => void handleConfirmOrder()}
+          isSubmitting={isSubmitting}
+          data={data}
+          cart={cart}
+          cartTotals={cartTotals}
+          formatPrice={formatPrice}
+        />
       </div>
     );
   }
@@ -2049,6 +2025,157 @@ function OpeningStep3Responsable({ data, errors, updateData }: StepProps) {
 }
 
 // =====================================================================
+// EXISTING STEP 2 : RESTAURANT (sélection restaurant existant)
+// =====================================================================
+
+interface ExistingStep2Props {
+  data: OrderFormUnifiedData;
+  errors: Record<string, string>;
+  updateData: (updates: Partial<OrderFormUnifiedData>) => void;
+  organisations: Organisation[];
+  isLoadingOrganisations?: boolean;
+}
+
+function ExistingStep2Restaurant({
+  data,
+  errors,
+  updateData,
+  organisations,
+  isLoadingOrganisations = false,
+}: ExistingStep2Props) {
+  const selectedOrg = organisations.find(
+    o => o.id === data.existingOrganisationId
+  );
+
+  const handleSelectOrg = useCallback(
+    (org: Organisation) => {
+      // Pre-fill delivery address from organisation
+      const deliveryAddress =
+        org.shipping_address_line1 ?? org.address_line1 ?? '';
+      const deliveryCity = org.shipping_city ?? org.city ?? '';
+      const deliveryPostalCode =
+        org.shipping_postal_code ?? org.postal_code ?? '';
+
+      updateData({
+        existingOrganisationId: org.id,
+        delivery: {
+          ...data.delivery,
+          address: deliveryAddress,
+          city: deliveryCity,
+          postalCode: deliveryPostalCode,
+          latitude: org.latitude,
+          longitude: org.longitude,
+        },
+      });
+    },
+    [data.delivery, updateData]
+  );
+
+  return (
+    <div className="space-y-6 max-w-lg">
+      <div>
+        <h3 className="text-lg font-medium">Restaurant</h3>
+        <p className="text-sm text-gray-500 mt-1">
+          Sélectionnez le restaurant pour cette commande
+        </p>
+      </div>
+
+      <div>
+        <Label>
+          Restaurant <span className="text-red-500">*</span>
+        </Label>
+        <RestaurantSelectorModal
+          organisations={organisations}
+          selectedId={data.existingOrganisationId}
+          onSelect={handleSelectOrg}
+          isLoading={isLoadingOrganisations}
+          error={errors.existingOrganisationId}
+        />
+      </div>
+
+      {/* Résumé du restaurant sélectionné */}
+      {selectedOrg && (
+        <Card className="bg-green-50 border-green-200">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
+              <div>
+                <p className="font-medium text-gray-900">
+                  {selectedOrg.trade_name ?? selectedOrg.legal_name}
+                </p>
+                {selectedOrg.address_line1 && (
+                  <p className="text-sm text-gray-600 mt-0.5">
+                    {selectedOrg.address_line1}
+                    {selectedOrg.postal_code &&
+                      `, ${selectedOrg.postal_code}`}{' '}
+                    {selectedOrg.city}
+                  </p>
+                )}
+                {selectedOrg.ownership_type && (
+                  <Badge variant="outline" className="mt-1">
+                    {selectedOrg.ownership_type === 'franchise'
+                      ? 'Franchise'
+                      : 'Restaurant propre'}
+                  </Badge>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {errors.existingOrganisationId && (
+        <p className="text-sm text-red-600">{errors.existingOrganisationId}</p>
+      )}
+    </div>
+  );
+}
+
+// =====================================================================
+// EXISTING STEP 3 : RESPONSABLE (saisie manuelle, PAS de contacts DB)
+// =====================================================================
+
+interface ExistingStep3Props {
+  data: OrderFormUnifiedData;
+  errors: Record<string, string>;
+  updateData: (updates: Partial<OrderFormUnifiedData>) => void;
+}
+
+function ExistingStep3Responsable({
+  data,
+  errors,
+  updateData,
+}: ExistingStep3Props) {
+  return (
+    <div className="space-y-6 max-w-lg">
+      <div>
+        <h3 className="text-lg font-medium">Responsable du restaurant</h3>
+        <p className="text-sm text-gray-500 mt-1">
+          Coordonnées du responsable pour cette commande
+        </p>
+      </div>
+
+      {/* Info : saisie manuelle */}
+      <div className="flex items-start gap-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+        <AlertCircle className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+        <div>
+          <p className="text-sm text-blue-700">
+            Les coordonnées saisies seront vérifiées par l&apos;équipe Verone
+            lors de la validation de la commande.
+          </p>
+        </div>
+      </div>
+
+      <ResponsableContactForm
+        data={data}
+        errors={errors}
+        updateData={updateData}
+      />
+    </div>
+  );
+}
+
+// =====================================================================
 // STEP 5 : LIVRAISON
 // =====================================================================
 
@@ -2430,8 +2557,11 @@ function OpeningStep4Billing({
 }: StepProps) {
   const { data: enseigneId } = useEnseigneIdFromAffiliate(affiliateId);
   const { data: parentOrg } = useEnseigneParentOrganisation(enseigneId ?? null);
+  // For existing restaurants, default to isPropre=true (most common case)
+  // For new restaurants, check ownershipType
   const isPropre =
-    !data.isNewRestaurant || data.newRestaurant.ownershipType === 'succursale';
+    data.isNewRestaurant === false ||
+    data.newRestaurant.ownershipType === 'succursale';
 
   return (
     <div className="max-w-lg space-y-6">
@@ -3089,35 +3219,46 @@ function ConfirmationModal({
               Restaurant
             </h3>
             <div className="grid grid-cols-2 gap-2 text-sm">
-              <div>
-                <span className="text-gray-500">Nom :</span>
-                <span className="ml-2 text-gray-900 font-medium">
-                  {data.newRestaurant.tradeName}
-                </span>
-              </div>
-              <div>
-                <span className="text-gray-500">Ville :</span>
-                <span className="ml-2 text-gray-900 font-medium">
-                  {data.newRestaurant.city}
-                </span>
-              </div>
-              {data.newRestaurant.ownershipType && (
-                <div>
-                  <span className="text-gray-500">Type :</span>
-                  <span className="ml-2 text-gray-900">
-                    {data.newRestaurant.ownershipType === 'franchise'
-                      ? 'Franchise'
-                      : 'Restaurant propre'}
-                  </span>
-                </div>
-              )}
-              {data.newRestaurant.address && (
+              {data.isNewRestaurant ? (
+                <>
+                  <div>
+                    <span className="text-gray-500">Nom :</span>
+                    <span className="ml-2 text-gray-900 font-medium">
+                      {data.newRestaurant.tradeName}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Ville :</span>
+                    <span className="ml-2 text-gray-900 font-medium">
+                      {data.newRestaurant.city}
+                    </span>
+                  </div>
+                  {data.newRestaurant.ownershipType && (
+                    <div>
+                      <span className="text-gray-500">Type :</span>
+                      <span className="ml-2 text-gray-900">
+                        {data.newRestaurant.ownershipType === 'franchise'
+                          ? 'Franchise'
+                          : 'Restaurant propre'}
+                      </span>
+                    </div>
+                  )}
+                  {data.newRestaurant.address && (
+                    <div className="col-span-2">
+                      <span className="text-gray-500">Adresse :</span>
+                      <span className="ml-2 text-gray-900">
+                        {data.newRestaurant.address}
+                        {data.newRestaurant.postalCode &&
+                          `, ${data.newRestaurant.postalCode}`}
+                      </span>
+                    </div>
+                  )}
+                </>
+              ) : (
                 <div className="col-span-2">
-                  <span className="text-gray-500">Adresse :</span>
-                  <span className="ml-2 text-gray-900">
-                    {data.newRestaurant.address}
-                    {data.newRestaurant.postalCode &&
-                      `, ${data.newRestaurant.postalCode}`}
+                  <span className="text-gray-500">Restaurant :</span>
+                  <span className="ml-2 text-gray-900 font-medium">
+                    Restaurant existant sélectionné
                   </span>
                 </div>
               )}
