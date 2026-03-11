@@ -20,6 +20,7 @@ import {
   SelectValue,
   Separator,
   Textarea,
+  OrganisationNameDisplay,
 } from '@verone/ui';
 import {
   ArrowLeft,
@@ -106,6 +107,8 @@ interface QontoApiResponse {
   localData?: {
     billing_address?: IAddress | null;
     shipping_address?: IAddress | null;
+    partner_legal_name?: string | null;
+    partner_trade_name?: string | null;
   } | null;
   error?: string;
 }
@@ -285,6 +288,8 @@ export default function EditDraftPage({ params }: IPageProps) {
   const [shippingAddress, setShippingAddress] = useState<IAddress>({
     ...emptyAddress,
   });
+  const [partnerLegalName, setPartnerLegalName] = useState<string | null>(null);
+  const [partnerTradeName, setPartnerTradeName] = useState<string | null>(null);
 
   // Load document
   useEffect(() => {
@@ -379,6 +384,11 @@ export default function EditDraftPage({ params }: IPageProps) {
                   zip_code: data.localData.shipping_address.zip_code ?? '',
                   country: data.localData.shipping_address.country ?? '',
                 });
+              }
+
+              if (data.localData?.partner_legal_name) {
+                setPartnerLegalName(data.localData.partner_legal_name);
+                setPartnerTradeName(data.localData.partner_trade_name ?? null);
               }
 
               setLoading(false);
@@ -612,7 +622,14 @@ export default function EditDraftPage({ params }: IPageProps) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="font-medium">{document.client?.name ?? 'Client'}</p>
+          {partnerLegalName ? (
+            <OrganisationNameDisplay
+              legalName={partnerLegalName}
+              tradeName={partnerTradeName}
+            />
+          ) : (
+            <p className="font-medium">{document.client?.name ?? 'Client'}</p>
+          )}
           {document.client?.email && (
             <p className="text-sm text-muted-foreground">
               {document.client.email}

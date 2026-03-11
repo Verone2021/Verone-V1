@@ -45,6 +45,8 @@ export async function GET(
       shipping_address?: Record<string, unknown>;
       sales_order_id?: string | null;
       order_number?: string | null;
+      partner_legal_name?: string | null;
+      partner_trade_name?: string | null;
     } | null;
     error?: string;
   }>
@@ -55,18 +57,20 @@ export async function GET(
     const supabase = await createServerClient();
     const invoice = await client.getClientInvoiceById(id);
 
-    // Enrich with local data (addresses + linked order)
+    // Enrich with local data (addresses + linked order + organisation names)
     let localData: {
       billing_address?: Record<string, unknown>;
       shipping_address?: Record<string, unknown>;
       sales_order_id?: string | null;
       order_number?: string | null;
+      partner_legal_name?: string | null;
+      partner_trade_name?: string | null;
     } | null = null;
 
     const { data: localDoc } = await supabase
       .from('financial_documents')
       .select(
-        'billing_address, shipping_address, sales_order_id, sales_orders!financial_documents_sales_order_id_fkey(order_number)'
+        'billing_address, shipping_address, sales_order_id, partner_id, sales_orders!financial_documents_sales_order_id_fkey(order_number), organisations!financial_documents_partner_id_fkey(legal_name, trade_name)'
       )
       .eq('qonto_invoice_id', id)
       .maybeSingle();
@@ -74,6 +78,10 @@ export async function GET(
     if (localDoc) {
       const linkedOrder = localDoc.sales_orders as {
         order_number: string | null;
+      } | null;
+      const linkedOrg = localDoc.organisations as {
+        legal_name: string | null;
+        trade_name: string | null;
       } | null;
       localData = {
         billing_address: localDoc.billing_address as
@@ -84,6 +92,8 @@ export async function GET(
           | undefined,
         sales_order_id: localDoc.sales_order_id ?? null,
         order_number: linkedOrder?.order_number ?? null,
+        partner_legal_name: linkedOrg?.legal_name ?? null,
+        partner_trade_name: linkedOrg?.trade_name ?? null,
       };
     }
 
