@@ -97,6 +97,20 @@ export const clientResponsableSchema = clientResponsableBaseSchema.refine(
 
 export type ClientResponsableData = z.infer<typeof clientResponsableSchema>;
 
+/**
+ * Schema responsable simplifie pour restaurant existant (pas de champs franchise)
+ * Formulaire public : saisie manuelle uniquement, pas de contacts DB
+ */
+export const clientExistingResponsableSchema = z.object({
+  name: z.string().min(1, 'Nom requis'),
+  email: emailSchema,
+  phone: z.string().min(1, 'Telephone requis'),
+});
+
+export type ClientExistingResponsableData = z.infer<
+  typeof clientExistingResponsableSchema
+>;
+
 // ============================================================================
 // ETAPE 4 : FACTURATION
 // ============================================================================
