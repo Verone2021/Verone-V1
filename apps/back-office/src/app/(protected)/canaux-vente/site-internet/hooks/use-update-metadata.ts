@@ -41,7 +41,7 @@ export function useUpdateMetadata() {
           },
           { onConflict: 'product_id,channel_id' }
         )
-        .select();
+        .select('id');
 
       if (error) {
         console.error('❌ Erreur update metadata:', error);

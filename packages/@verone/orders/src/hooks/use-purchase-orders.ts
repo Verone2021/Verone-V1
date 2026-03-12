@@ -21,14 +21,9 @@ export type PurchaseOrderStatus =
   | 'received'
   | 'cancelled';
 
-// Type local (le type exporté est dans use-sales-orders.ts)
-type ManualPaymentType =
-  | 'cash'
-  | 'check'
-  | 'transfer_other'
-  | 'card'
-  | 'compensation'
-  | 'verified_bubble';
+import type { ManualPaymentType, OrderPayment } from './use-sales-orders';
+
+export type { OrderPayment };
 
 export interface PurchaseOrder {
   id: string;
@@ -643,7 +638,7 @@ export function usePurchaseOrders() {
             insurance_cost_ht: data.insurance_cost_ht || 0,
             created_by: user.id,
           })
-          .select()
+          .select('id, po_number, status')
           .single();
 
         if (orderError) throw orderError;
@@ -963,18 +958,22 @@ export function usePurchaseOrders() {
     ) => {
       setLoading(true);
       try {
-        // 1. Appeler la RPC pour mettre à jour payment_status_v2 et paid_amount
+        // 1. Appeler la RPC (insère dans order_payments + recalcule paid_amount)
         const { error: rpcError } = await supabase.rpc(
           'mark_po_payment_received',
           {
             p_order_id: orderId,
             p_amount: amount,
+            p_payment_type: paymentType,
+            p_reference: options?.reference ?? null,
+            p_note: options?.note ?? null,
+            p_date: options?.date?.toISOString() ?? null,
           }
         );
 
         if (rpcError) throw rpcError;
 
-        // 2. Mettre à jour les champs manuels (type, date, référence, note)
+        // 2. Mettre à jour les champs legacy (type, date, référence, note)
         const { error: updateError } = await supabase
           .from('purchase_orders')
           .update({
@@ -1023,6 +1022,53 @@ export function usePurchaseOrders() {
     [supabase, toast, fetchOrders, currentOrder, fetchOrder]
   );
 
+  // Fetch payment history from order_payments table
+  const fetchOrderPayments = useCallback(
+    async (orderId: string): Promise<OrderPayment[]> => {
+      const { data, error } = await supabase
+        .from('order_payments')
+        .select(
+          'id, payment_type, amount, payment_date, reference, note, created_at'
+        )
+        .eq('purchase_order_id', orderId)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching PO payments:', error);
+        return [];
+      }
+      return (data ?? []) as OrderPayment[];
+    },
+    [supabase]
+  );
+
+  // Delete a manual payment from order_payments
+  const deleteManualPayment = useCallback(
+    async (paymentId: string) => {
+      const { error } = await supabase.rpc('delete_order_payment', {
+        p_payment_id: paymentId,
+      });
+
+      if (error) {
+        console.error('Error deleting PO payment:', error);
+        toast({
+          title: 'Erreur',
+          description: 'Impossible de supprimer le paiement',
+          variant: 'destructive',
+        });
+        throw error;
+      }
+
+      toast({
+        title: 'Paiement supprime',
+        description: 'Le paiement manuel a ete supprime',
+      });
+
+      await fetchOrders();
+    },
+    [supabase, toast, fetchOrders]
+  );
+
   return {
     // État
     loading,
@@ -1042,6 +1088,8 @@ export function usePurchaseOrders() {
     confirmOrder,
     markAsReceived,
     markAsManuallyPaid,
+    fetchOrderPayments,
+    deleteManualPayment,
 
     // Utilitaires
     getStockWithForecasted,

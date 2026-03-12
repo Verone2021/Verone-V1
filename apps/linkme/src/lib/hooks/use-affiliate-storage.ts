@@ -216,7 +216,7 @@ export function useStoragePricingTiers() {
 
       return data ?? [];
     },
-    staleTime: 300000, // 5 minutes
+    staleTime: 300_0000, // 5 minutes
   });
 }
 

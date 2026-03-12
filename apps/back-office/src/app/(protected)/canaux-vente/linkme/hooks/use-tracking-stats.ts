@@ -96,7 +96,7 @@ export function useTrackingStats() {
         updated_at: selection.updated_at ?? new Date().toISOString(),
       }));
     },
-    staleTime: 30000, // 30 seconds cache
+    staleTime: 300_000, // 5 minutes cache
   });
 }
 
@@ -137,7 +137,7 @@ export function useTrackingKPIs() {
             : 0,
       };
     },
-    staleTime: 30000,
+    staleTime: 300_000,
   });
 }
 
@@ -179,6 +179,6 @@ export function useRecentConversions(limit = 10) {
         created_at: commission.created_at ?? new Date().toISOString(),
       }));
     },
-    staleTime: 30000,
+    staleTime: 300_000,
   });
 }

@@ -102,7 +102,7 @@ export function useAffiliateCommissionStats() {
       return stats;
     },
     enabled: !!affiliate?.id,
-    staleTime: 30000, // 30 secondes
+    staleTime: 300_000, // 5 minutes
     refetchOnWindowFocus: false,
   });
 }

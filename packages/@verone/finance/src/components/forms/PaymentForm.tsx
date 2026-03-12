@@ -118,7 +118,7 @@ export function PaymentForm({
           reference: values.reference || null,
           notes: values.notes || null,
         })
-        .select()
+        .select('id')
         .single();
 
       if (paymentError) {

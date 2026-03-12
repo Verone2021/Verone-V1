@@ -34,7 +34,7 @@ export function useSubcategories(categoryId?: string) {
       setError(null);
 
       let baseQuery = supabase.from('subcategories').select(`
-          *,
+          id, name, slug, category_id, description, image_url, is_active, display_order, created_at, updated_at,
           categories!subcategories_category_id_fkey(
             id,
             name,
@@ -117,7 +117,9 @@ export function useSubcategories(categoryId?: string) {
             display_order: subcategoryData.display_order || 0,
           },
         ])
-        .select()
+        .select(
+          'id, name, slug, category_id, description, image_url, is_active, display_order, created_at, updated_at'
+        )
         .single();
 
       if (error) {
@@ -161,7 +163,9 @@ export function useSubcategories(categoryId?: string) {
         .from('subcategories')
         .update(updateData)
         .eq('id', id)
-        .select()
+        .select(
+          'id, name, slug, category_id, description, image_url, is_active, display_order, created_at, updated_at'
+        )
         .single();
 
       if (error) throw error;
@@ -218,7 +222,9 @@ export function useSubcategories(categoryId?: string) {
           updated_at: new Date().toISOString(),
         })
         .eq('id', id)
-        .select()
+        .select(
+          'id, name, slug, is_active, display_order, created_at, updated_at'
+        )
         .single();
 
       if (error) throw error;
@@ -247,7 +253,7 @@ export function useSubcategories(categoryId?: string) {
           updated_at: new Date().toISOString(),
         })
         .eq('id', id)
-        .select()
+        .select('id, name, slug, display_order, created_at, updated_at')
         .single();
 
       if (error) throw error;
@@ -272,7 +278,7 @@ export function useSubcategories(categoryId?: string) {
         .from('subcategories')
         .select(
           `
-          *,
+          id, name, slug, category_id, description, image_url, is_active, display_order, created_at, updated_at,
           categories!subcategories_category_id_fkey(
             id,
             name,

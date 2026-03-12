@@ -475,7 +475,9 @@ export function useCreateSelection() {
           orders_count: 0,
           total_revenue: 0,
         })
-        .select()
+        .select(
+          'id, affiliate_id, name, slug, description, image_url, share_token, products_count, views_count, view_count, orders_count, total_revenue, published_at, price_display_mode, created_at, updated_at'
+        )
         .single<LinkMeSelectionRow>();
 
       if (error) throw error;

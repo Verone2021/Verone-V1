@@ -275,7 +275,9 @@ export function useStock() {
             affects_forecast: false, // Mouvement manuel = stock réel uniquement
             performed_by: user.id,
           })
-          .select()
+          .select(
+            'id, product_id, movement_type, quantity_change, quantity_before, quantity_after, performed_at'
+          )
           .single();
 
         if (movementError) {

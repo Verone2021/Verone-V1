@@ -247,7 +247,9 @@ async function createLinkMeOrder(
   const { data: order, error: orderError } = await supabase
     .from('sales_orders')
     .insert(orderData)
-    .select()
+    .select(
+      'id, order_number, channel_id, customer_type, status, payment_status_v2, total_ht, total_ttc, created_at, updated_at'
+    )
     .single();
 
   if (orderError) {

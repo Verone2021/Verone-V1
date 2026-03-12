@@ -210,7 +210,7 @@ function usePaymentRequestsAdmin(statusFilter: PaymentRequestStatus | 'all') {
         };
       });
     },
-    staleTime: 30000,
+    staleTime: 300_000,
   });
 }
 

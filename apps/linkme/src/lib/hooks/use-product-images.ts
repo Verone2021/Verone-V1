@@ -38,7 +38,9 @@ export function useProductImages(productId: string | undefined) {
       const supabase = createClient();
       const { data, error } = await supabase
         .from('product_images')
-        .select('*')
+        .select(
+          'id, product_id, storage_path, public_url, is_primary, display_order, alt_text, created_at'
+        )
         .eq('product_id', productId)
         .order('display_order', { ascending: true });
 
@@ -153,7 +155,9 @@ export function useUploadProductImage() {
           display_order: maxOrder + 1,
           created_by: user.id,
         })
-        .select()
+        .select(
+          'id, product_id, storage_path, public_url, is_primary, display_order, alt_text, created_at'
+        )
         .single();
 
       if (insertError) {

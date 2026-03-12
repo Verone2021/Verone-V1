@@ -119,7 +119,30 @@ export function useFinancialDocuments(filters?: FinancialDocumentFilters) {
           .from('financial_documents')
           .select(
             `
-            *,
+            id,
+            document_type,
+            document_direction,
+            partner_id,
+            partner_type,
+            document_number,
+            document_date,
+            due_date,
+            total_ht,
+            total_ttc,
+            tva_amount,
+            amount_paid,
+            status,
+            abby_invoice_id,
+            abby_invoice_number,
+            abby_pdf_url,
+            uploaded_file_url,
+            sales_order_id,
+            purchase_order_id,
+            description,
+            notes,
+            created_at,
+            updated_at,
+            created_by,
             partner:organisations!fk_partner(id, legal_name, trade_name, type)
           `
           )
@@ -362,7 +385,7 @@ export function useFinancialDocuments(filters?: FinancialDocumentFilters) {
           notes: params.notes || null,
           status: 'draft',
         } as any)
-        .select()
+        .select('id')
         .single();
 
       if (insertError) throw insertError;

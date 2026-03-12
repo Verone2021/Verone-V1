@@ -86,7 +86,28 @@ export function useCollections(filters?: CollectionFilters) {
         .from('collections')
         .select(
           `
-          *,
+          id,
+          name,
+          description,
+          is_featured,
+          created_by,
+          created_at,
+          updated_at,
+          is_active,
+          visibility,
+          shared_link_token,
+          product_count,
+          shared_count,
+          last_shared,
+          style,
+          suitable_rooms,
+          theme_tags,
+          display_order,
+          meta_title,
+          meta_description,
+          image_url,
+          color_theme,
+          archived_at,
           collection_images (
             public_url,
             is_primary
@@ -199,9 +220,7 @@ export function useCollections(filters?: CollectionFilters) {
       const { data, error } = await supabase
         .from('collections')
         .select(
-          `
-          *
-        `
+          'id, name, description, is_featured, created_by, created_at, updated_at, is_active, visibility, shared_link_token, product_count, shared_count, last_shared, style, suitable_rooms, theme_tags, display_order, meta_title, meta_description, image_url, color_theme, archived_at'
         )
         .not('archived_at', 'is', null)
         .order('archived_at', { ascending: false });
@@ -266,7 +285,9 @@ export function useCollections(filters?: CollectionFilters) {
             theme_tags: data.theme_tags || null,
           },
         ])
-        .select()
+        .select(
+          'id, name, description, is_featured, created_by, created_at, updated_at, is_active, visibility, product_count, shared_count, archived_at'
+        )
         .single();
 
       if (error) {
@@ -305,7 +326,7 @@ export function useCollections(filters?: CollectionFilters) {
           updated_at: new Date().toISOString(),
         })
         .eq('id', data.id)
-        .select()
+        .select('id')
         .single();
 
       if (error) {
@@ -644,7 +665,28 @@ export function useCollection(id: string) {
         .from('collections')
         .select(
           `
-          *,
+          id,
+          name,
+          description,
+          is_featured,
+          created_by,
+          created_at,
+          updated_at,
+          is_active,
+          visibility,
+          shared_link_token,
+          product_count,
+          shared_count,
+          last_shared,
+          style,
+          suitable_rooms,
+          theme_tags,
+          display_order,
+          meta_title,
+          meta_description,
+          image_url,
+          color_theme,
+          archived_at,
           collection_images (
             public_url,
             is_primary

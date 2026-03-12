@@ -6,7 +6,6 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 
 import { useToast } from '@verone/common';
-import { RapprochementFromOrderModal } from '@verone/finance';
 import type { PurchaseOrder, PurchaseOrderStatus } from '@verone/orders';
 import { PurchaseOrderFormModal } from '@verone/orders';
 import { PurchaseOrderReceptionModal } from '@verone/orders';
@@ -21,7 +20,13 @@ import type { Database } from '@verone/types';
 
 // Type étendu pour les champs payment V2 et rapprochement (non encore dans schema DB)
 type PurchaseOrderExtended = PurchaseOrder & {
-  payment_status_v2?: 'paid' | 'pending' | 'failed' | null;
+  payment_status_v2?:
+    | 'paid'
+    | 'pending'
+    | 'partially_paid'
+    | 'overpaid'
+    | 'failed'
+    | null;
   manual_payment_type?: string | null;
   is_matched?: boolean | null;
   matched_transaction_label?: string | null;
@@ -63,14 +68,6 @@ import {
   TableRow,
 } from '@verone/ui';
 import { Tabs, TabsList, TabsTrigger } from '@verone/ui';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@verone/ui';
 import { formatCurrency, formatDate } from '@verone/utils';
 import { cn } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
@@ -78,18 +75,12 @@ import { getOrganisationDisplayName } from '@verone/utils/utils/organisation-hel
 import {
   Search,
   Package,
-  CheckCircle,
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
   RotateCcw,
   ChevronDown,
   PackageCheck,
-  Banknote,
-  Receipt,
-  Building2,
-  CreditCard,
-  CheckSquare,
 } from 'lucide-react';
 
 import { updatePurchaseOrderStatus } from '@/app/actions/purchase-orders';
@@ -125,7 +116,6 @@ export default function PurchaseOrdersPage() {
     fetchStats,
     updateStatus: _updateStatus,
     deleteOrder,
-    markAsManuallyPaid,
   } = usePurchaseOrders();
 
   const { toast } = useToast();
@@ -172,12 +162,18 @@ export default function PurchaseOrdersPage() {
     null
   );
   const [showOrderDetail, setShowOrderDetail] = useState(false);
+  const [initialPaymentOpen, setInitialPaymentOpen] = useState(false);
   const [showReceptionModal, setShowReceptionModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [orderToEdit, setOrderToEdit] = useState<PurchaseOrderRow | null>(null);
   const [showValidateConfirmation, setShowValidateConfirmation] =
     useState(false);
   const [orderToValidate, setOrderToValidate] = useState<string | null>(null);
+  const [showDevalidateConfirmation, setShowDevalidateConfirmation] =
+    useState(false);
+  const [orderToDevalidate, setOrderToDevalidate] = useState<string | null>(
+    null
+  );
 
   // États pour le modal d'avertissement quantité insuffisante
   const [showShortageWarning, setShowShortageWarning] = useState(false);
@@ -209,25 +205,6 @@ export default function PurchaseOrdersPage() {
       quantity_remaining: number;
     }>
   >([]);
-
-  // État pour modal rapprochement bancaire
-  const [showRapprochementModal, setShowRapprochementModal] = useState(false);
-  const [rapprochementOrder, setRapprochementOrder] =
-    useState<PurchaseOrder | null>(null);
-
-  // État pour confirmation paiement manuel (évite double-clic)
-  const [pendingPayment, setPendingPayment] = useState<{
-    orderId: string;
-    poNumber: string;
-    type:
-      | 'cash'
-      | 'check'
-      | 'transfer_other'
-      | 'card'
-      | 'compensation'
-      | 'verified_bubble';
-    amount: number;
-  } | null>(null);
 
   const toggleRow = (orderId: string) => {
     setExpandedRows(prev => {
@@ -378,8 +355,8 @@ export default function PurchaseOrdersPage() {
         switch (sortColumn) {
           case 'date':
             comparison =
-              new Date(a.created_at).getTime() -
-              new Date(b.created_at).getTime();
+              new Date(a.order_date || a.created_at).getTime() -
+              new Date(b.order_date || b.created_at).getTime();
             break;
           case 'po_number':
             comparison = (a.po_number || '').localeCompare(b.po_number || '');
@@ -620,6 +597,12 @@ export default function PurchaseOrdersPage() {
       return;
     }
 
+    if (newStatus === 'draft') {
+      setOrderToDevalidate(orderId);
+      setShowDevalidateConfirmation(true);
+      return;
+    }
+
     // Sinon, exécuter directement
     try {
       // Récupérer l'utilisateur courant
@@ -721,6 +704,57 @@ export default function PurchaseOrdersPage() {
     }
   };
 
+  const handleDevalidateConfirmed = async () => {
+    if (!orderToDevalidate) return;
+
+    try {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user?.id) {
+        toast({
+          title: 'Erreur',
+          description: 'Utilisateur non authentifié',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      const result = await updatePurchaseOrderStatus(
+        orderToDevalidate,
+        'draft',
+        user.id
+      );
+
+      if (!result.success) {
+        throw new Error(result.error ?? 'Erreur lors de la devalidation');
+      }
+
+      toast({
+        title: 'Succès',
+        description:
+          'Commande fournisseur devalidee avec succes. Elle est de nouveau en brouillon.',
+      });
+
+      await fetchOrders();
+    } catch (error) {
+      console.error('Erreur lors de la devalidation:', error);
+      toast({
+        title: 'Erreur',
+        description:
+          error instanceof Error
+            ? error.message
+            : 'Impossible de devalider la commande',
+        variant: 'destructive',
+      });
+    } finally {
+      setShowDevalidateConfirmation(false);
+      setOrderToDevalidate(null);
+    }
+  };
+
   const handleDelete = async (orderId: string) => {
     if (confirm('Êtes-vous sûr de vouloir supprimer cette commande ?')) {
       try {
@@ -782,6 +816,13 @@ export default function PurchaseOrdersPage() {
   };
 
   const openOrderDetail = (order: PurchaseOrder) => {
+    setInitialPaymentOpen(false);
+    setSelectedOrder(order);
+    setShowOrderDetail(true);
+  };
+
+  const openOrderDetailWithPayment = (order: PurchaseOrder) => {
+    setInitialPaymentOpen(true);
     setSelectedOrder(order);
     setShowOrderDetail(true);
   };
@@ -1134,24 +1175,27 @@ export default function PurchaseOrdersPage() {
                       className="cursor-pointer hover:bg-gray-50 whitespace-nowrap"
                       onClick={() => handleSort('po_number')}
                     >
-                      N° Commande {renderSortIcon('po_number')}
+                      <span className="inline-flex items-center gap-1">
+                        N Commande
+                        {renderSortIcon('po_number')}
+                      </span>
                     </TableHead>
                     <TableHead>Fournisseur</TableHead>
                     <TableHead className="whitespace-nowrap">Statut</TableHead>
                     <TableHead className="whitespace-nowrap">
                       Paiement
                     </TableHead>
-                    <TableHead className="text-center whitespace-nowrap">
-                      Articles
+                    <TableHead className="whitespace-nowrap text-center">
+                      Art.
                     </TableHead>
                     <TableHead
                       className="cursor-pointer hover:bg-gray-50 whitespace-nowrap"
                       onClick={() => handleSort('date')}
                     >
-                      Date création {renderSortIcon('date')}
-                    </TableHead>
-                    <TableHead className="whitespace-nowrap">
-                      Date commande
+                      <span className="inline-flex items-center gap-1">
+                        Date commande
+                        {renderSortIcon('date')}
+                      </span>
                     </TableHead>
                     <TableHead className="whitespace-nowrap">
                       Livraison
@@ -1160,7 +1204,10 @@ export default function PurchaseOrdersPage() {
                       className="cursor-pointer hover:bg-gray-50 whitespace-nowrap"
                       onClick={() => handleSort('amount')}
                     >
-                      Montant TTC {renderSortIcon('amount')}
+                      <span className="inline-flex items-center gap-1">
+                        Montant TTC
+                        {renderSortIcon('amount')}
+                      </span>
                     </TableHead>
                     <TableHead className="whitespace-nowrap">Actions</TableHead>
                   </TableRow>
@@ -1196,7 +1243,7 @@ export default function PurchaseOrdersPage() {
                             </span>
                           </TableCell>
                           <TableCell>
-                            <div className="text-sm leading-tight break-words">
+                            <div className="text-sm font-medium leading-tight break-words">
                               {order.organisations
                                 ? getOrganisationDisplayName(
                                     order.organisations
@@ -1221,161 +1268,68 @@ export default function PurchaseOrdersPage() {
                               )}
                             </div>
                           </TableCell>
-                          {/* Colonne Paiement */}
+                          {/* Colonne Paiement (badges simples — aligned with SO) */}
                           <TableCell>
-                            <div className="flex items-center gap-2">
-                              {(order as PurchaseOrderExtended)
+                            {(order as PurchaseOrderExtended)
+                              .payment_status_v2 === 'overpaid' ? (
+                              <Badge className="text-xs bg-red-100 text-red-800">
+                                Surpaye
+                              </Badge>
+                            ) : (order as PurchaseOrderExtended)
                                 .payment_status_v2 === 'paid' ? (
-                                <Badge className="text-xs bg-green-100 text-green-800">
-                                  Payé
-                                  {(order as PurchaseOrderExtended)
-                                    .manual_payment_type && (
-                                    <span className="ml-1 opacity-70">(m)</span>
-                                  )}
-                                </Badge>
-                              ) : (
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <button className="flex items-center gap-1 cursor-pointer">
-                                      <Badge className="text-xs bg-orange-100 text-orange-800 hover:bg-orange-200 transition-colors">
-                                        En attente
-                                        <ChevronDown className="h-3 w-3 ml-1" />
-                                      </Badge>
-                                    </button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent align="start">
-                                    <DropdownMenuLabel>
-                                      Marquer comme payé
-                                    </DropdownMenuLabel>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem
-                                      onClick={() =>
-                                        setPendingPayment({
-                                          orderId: order.id,
-                                          poNumber:
-                                            order.po_number ||
-                                            order.id.slice(0, 8),
-                                          type: 'cash',
-                                          amount: order.total_ttc || 0,
-                                        })
-                                      }
-                                    >
-                                      <Banknote className="h-4 w-4 mr-2" />
-                                      Espèces
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem
-                                      onClick={() =>
-                                        setPendingPayment({
-                                          orderId: order.id,
-                                          poNumber:
-                                            order.po_number ||
-                                            order.id.slice(0, 8),
-                                          type: 'check',
-                                          amount: order.total_ttc || 0,
-                                        })
-                                      }
-                                    >
-                                      <Receipt className="h-4 w-4 mr-2" />
-                                      Chèque
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem
-                                      onClick={() =>
-                                        setPendingPayment({
-                                          orderId: order.id,
-                                          poNumber:
-                                            order.po_number ||
-                                            order.id.slice(0, 8),
-                                          type: 'transfer_other',
-                                          amount: order.total_ttc || 0,
-                                        })
-                                      }
-                                    >
-                                      <Building2 className="h-4 w-4 mr-2" />
-                                      Virement autre banque
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem
-                                      onClick={() =>
-                                        setPendingPayment({
-                                          orderId: order.id,
-                                          poNumber:
-                                            order.po_number ||
-                                            order.id.slice(0, 8),
-                                          type: 'card',
-                                          amount: order.total_ttc || 0,
-                                        })
-                                      }
-                                    >
-                                      <CreditCard className="h-4 w-4 mr-2" />
-                                      Carte bancaire
-                                    </DropdownMenuItem>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem
-                                      onClick={() =>
-                                        setPendingPayment({
-                                          orderId: order.id,
-                                          poNumber:
-                                            order.po_number ||
-                                            order.id.slice(0, 8),
-                                          type: 'compensation',
-                                          amount: order.total_ttc || 0,
-                                        })
-                                      }
-                                    >
-                                      <CheckSquare className="h-4 w-4 mr-2" />
-                                      Compensation
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem
-                                      onClick={() =>
-                                        setPendingPayment({
-                                          orderId: order.id,
-                                          poNumber:
-                                            order.po_number ||
-                                            order.id.slice(0, 8),
-                                          type: 'verified_bubble',
-                                          amount: order.total_ttc || 0,
-                                        })
-                                      }
-                                    >
-                                      <CheckCircle className="h-4 w-4 mr-2" />
-                                      Vérifié Bubble
-                                    </DropdownMenuItem>
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
-                              )}
-                            </div>
-                          </TableCell>
-                          {/* Colonne Articles */}
-                          <TableCell className="text-center">
-                            <span className="font-medium">{items.length}</span>
-                            <span className="text-muted-foreground text-xs ml-1">
-                              réf.
-                            </span>
-                          </TableCell>
-                          <TableCell>{formatDate(order.created_at)}</TableCell>
-                          <TableCell>
-                            {order.order_date
-                              ? formatDate(order.order_date)
-                              : '-'}
-                          </TableCell>
-                          <TableCell>
-                            {['received', 'partially_received'].includes(
-                              order.status
-                            ) && order.received_at ? (
-                              <span className="text-green-700">
-                                {formatDate(order.received_at)}
-                              </span>
-                            ) : order.expected_delivery_date ? (
-                              formatDate(order.expected_delivery_date)
+                              <Badge className="text-xs bg-green-100 text-green-800">
+                                Paye
+                              </Badge>
+                            ) : (order as PurchaseOrderExtended)
+                                .payment_status_v2 === 'partially_paid' ? (
+                              <Badge className="text-xs bg-amber-100 text-amber-800">
+                                Partiel
+                              </Badge>
                             ) : (
-                              <span className="text-muted-foreground">
-                                Non définie
-                              </span>
+                              <Badge className="text-xs bg-orange-100 text-orange-800">
+                                En attente
+                              </Badge>
                             )}
                           </TableCell>
-                          <TableCell>
-                            {formatCurrency(order.total_ttc)}
+                          {/* Colonne Articles */}
+                          <TableCell className="text-center whitespace-nowrap">
+                            <span className="text-xs font-medium">
+                              {items.length}
+                            </span>
+                            <span className="text-muted-foreground text-[10px] ml-0.5">
+                              ref.
+                            </span>
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="whitespace-nowrap">
+                            <span className="text-xs">
+                              {order.order_date
+                                ? formatDate(order.order_date)
+                                : formatDate(order.created_at)}
+                            </span>
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap">
+                            <span className="text-xs">
+                              {['received', 'partially_received'].includes(
+                                order.status
+                              ) && order.received_at ? (
+                                <span className="text-green-700">
+                                  {formatDate(order.received_at)}
+                                </span>
+                              ) : order.expected_delivery_date ? (
+                                formatDate(order.expected_delivery_date)
+                              ) : (
+                                <span className="text-muted-foreground">
+                                  Non définie
+                                </span>
+                              )}
+                            </span>
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap">
+                            <span className="text-xs font-medium">
+                              {formatCurrency(order.total_ttc)}
+                            </span>
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap">
                             <PurchaseOrderActionMenu
                               order={order as PurchaseOrderExtended}
                               onView={() => openOrderDetail(order)}
@@ -1424,10 +1378,9 @@ export default function PurchaseOrdersPage() {
                               onCancelRemainder={() =>
                                 openCancelRemainderModal(order)
                               }
-                              onLinkTransaction={() => {
-                                setRapprochementOrder(order);
-                                setShowRapprochementModal(true);
-                              }}
+                              onLinkTransaction={() =>
+                                openOrderDetailWithPayment(order)
+                              }
                             />
                           </TableCell>
                         </TableRow>
@@ -1489,12 +1442,14 @@ export default function PurchaseOrdersPage() {
         onClose={() => {
           setShowOrderDetail(false);
           setSelectedOrder(null);
+          setInitialPaymentOpen(false);
         }}
         onUpdate={() => {
           void fetchOrders().catch(error => {
             console.error('[PurchaseOrders] Fetch after update failed:', error);
           });
         }}
+        initialPaymentOpen={initialPaymentOpen}
       />
 
       {/* Modal de réception */}
@@ -1571,6 +1526,42 @@ export default function PurchaseOrdersPage() {
               }}
             >
               Confirmer la commande
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* AlertDialog Confirmation Devalidation */}
+      <AlertDialog
+        open={showDevalidateConfirmation}
+        onOpenChange={setShowDevalidateConfirmation}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmer la devalidation</AlertDialogTitle>
+            <AlertDialogDescription>
+              Vous etes sur le point de devalider cette commande fournisseur.
+              Elle repassera en statut brouillon et ne pourra plus etre
+              receptionnee tant qu&apos;elle ne sera pas revalidee.
+              <br />
+              <br />
+              Voulez-vous continuer ?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                void handleDevalidateConfirmed().catch(error => {
+                  console.error(
+                    '[PurchaseOrders] Devalidate confirmed failed:',
+                    error
+                  );
+                });
+              }}
+              className="bg-orange-600 hover:bg-orange-700"
+            >
+              Devalider la commande
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -1677,84 +1668,7 @@ export default function PurchaseOrdersPage() {
         />
       )}
 
-      {/* Modal Rapprochement Bancaire */}
-      {rapprochementOrder && (
-        <RapprochementFromOrderModal
-          open={showRapprochementModal}
-          onOpenChange={setShowRapprochementModal}
-          order={{
-            id: rapprochementOrder.id,
-            order_number: rapprochementOrder.po_number,
-            customer_name:
-              rapprochementOrder.organisations?.trade_name ??
-              rapprochementOrder.organisations?.legal_name ??
-              null,
-            total_ttc: rapprochementOrder.total_ttc,
-            created_at: rapprochementOrder.created_at,
-            order_date: rapprochementOrder.order_date ?? null,
-          }}
-          orderType="purchase_order"
-          onSuccess={() => {
-            void fetchOrders().catch(error => {
-              console.error(
-                '[PurchaseOrders] Fetch after success failed:',
-                error
-              );
-            });
-            setShowRapprochementModal(false);
-            setRapprochementOrder(null);
-          }}
-        />
-      )}
-
-      {/* AlertDialog Confirmation Paiement Manuel */}
-      <AlertDialog
-        open={pendingPayment !== null}
-        onOpenChange={open => {
-          if (!open) setPendingPayment(null);
-        }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirmer le paiement manuel</AlertDialogTitle>
-            <AlertDialogDescription>
-              Marquer la commande <strong>{pendingPayment?.poNumber}</strong>{' '}
-              comme payée par{' '}
-              <strong>
-                {pendingPayment?.type === 'cash' && 'Espèces'}
-                {pendingPayment?.type === 'check' && 'Chèque'}
-                {pendingPayment?.type === 'transfer_other' &&
-                  'Virement autre banque'}
-                {pendingPayment?.type === 'card' && 'Carte bancaire'}
-                {pendingPayment?.type === 'compensation' && 'Compensation'}
-                {pendingPayment?.type === 'verified_bubble' && 'Vérifié Bubble'}
-              </strong>{' '}
-              pour <strong>{pendingPayment?.amount.toFixed(2)} €</strong> ?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                if (!pendingPayment) return;
-                void markAsManuallyPaid(
-                  pendingPayment.orderId,
-                  pendingPayment.type,
-                  pendingPayment.amount
-                ).catch(error => {
-                  console.error(
-                    '[PurchaseOrders] Manual payment failed:',
-                    error
-                  );
-                });
-                setPendingPayment(null);
-              }}
-            >
-              Confirmer le paiement
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* Rapprochement + Payment managed via PurchaseOrderDetailModal */}
     </div>
   );
 }

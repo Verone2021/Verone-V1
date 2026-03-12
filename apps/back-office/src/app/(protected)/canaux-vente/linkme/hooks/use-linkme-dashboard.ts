@@ -370,6 +370,6 @@ export function useRecentActivity(limit: number = 5) {
         )
         .slice(0, limit);
     },
-    staleTime: 30000, // 30 secondes
+    staleTime: 300_000, // 5 minutes
   });
 }

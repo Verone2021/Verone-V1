@@ -233,7 +233,9 @@ export function useConsultations() {
             estimated_response_date: data.estimated_response_date,
           },
         ])
-        .select()
+        .select(
+          'id, enseigne_id, organisation_id, client_email, client_phone, descriptif, image_url, tarif_maximum, status, assigned_to, notes_internes, priority_level, source_channel, estimated_response_date, created_at, updated_at, created_by, responded_at, responded_by, validated_at, validated_by, archived_at, archived_by, deleted_at, deleted_by'
+        )
         .single();
 
       if (error) throw error;

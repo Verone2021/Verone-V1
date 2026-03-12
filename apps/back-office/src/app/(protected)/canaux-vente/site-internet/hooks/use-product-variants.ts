@@ -42,7 +42,7 @@ export function useProductDetail(productId: string) {
     queryKey: ['product-detail', productId],
     queryFn: () => fetchProductDetail(productId),
     enabled: !!productId,
-    staleTime: 30000, // 30 secondes
+    staleTime: 300_000, // 5 minutes
   });
 }
 
@@ -62,7 +62,7 @@ export function useProductVariants(productId: string) {
     queryKey: ['product-variants', productId],
     queryFn: () => fetchProductVariants(productId),
     enabled: !!productId,
-    staleTime: 30000,
+    staleTime: 300_000,
   });
 }
 

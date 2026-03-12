@@ -23,7 +23,7 @@ export function useFeaturedSelections() {
         .from('linkme_selections')
         .select(
           `
-          *,
+          id, affiliate_id, name, slug, description, image_url, share_token, products_count, views_count, orders_count, published_at, archived_at, status, created_at, updated_at,
           affiliate:linkme_affiliates!inner(
             display_name,
             slug,
@@ -56,7 +56,9 @@ export function useActiveAffiliates() {
     queryFn: async (): Promise<LinkMeAffiliate[]> => {
       const { data, error } = await supabase
         .from('linkme_affiliates')
-        .select('*')
+        .select(
+          'id, organisation_id, enseigne_id, affiliate_type, display_name, slug, logo_url, bio, default_margin_rate, linkme_commission_rate, status, verified_at, created_at, updated_at'
+        )
         .eq('status', 'active')
         .order('created_at', { ascending: false })
         .limit(12);
@@ -82,7 +84,9 @@ export function useAffiliateBySlug(slug: string) {
       // Récupérer l'affilié
       const { data: affiliate, error: affiliateError } = await supabase
         .from('linkme_affiliates')
-        .select('*')
+        .select(
+          'id, organisation_id, enseigne_id, affiliate_type, display_name, slug, logo_url, bio, default_margin_rate, linkme_commission_rate, status, verified_at, created_at, updated_at'
+        )
         .eq('slug', slug)
         .eq('status', 'active')
         .single();
@@ -99,9 +103,11 @@ export function useAffiliateBySlug(slug: string) {
       // Récupérer ses sélections publiques (published_at NOT NULL)
       const { data: selections, error: selectionsError } = await supabase
         .from('linkme_selections')
-        .select('*')
+        .select(
+          'id, affiliate_id, name, slug, description, image_url, share_token, products_count, views_count, orders_count, published_at, archived_at, created_at, updated_at'
+        )
         .eq('affiliate_id', affiliate.id)
-        .eq('status', 'active')
+        .is('archived_at', null)
         .not('published_at', 'is', null)
         .order('created_at', { ascending: false });
 
@@ -118,7 +124,7 @@ export function useAffiliateBySlug(slug: string) {
       };
     },
     enabled: !!slug,
-    staleTime: 30000,
+    staleTime: 300_000,
   });
 }
 
@@ -151,10 +157,12 @@ export function useSelectionWithProducts(
       // Récupérer la sélection
       const { data: selection, error: selectionError } = await supabase
         .from('linkme_selections')
-        .select('*')
+        .select(
+          'id, affiliate_id, name, slug, description, image_url, share_token, products_count, views_count, orders_count, published_at, archived_at, created_at, updated_at'
+        )
         .eq('affiliate_id', affiliate.id)
         .eq('slug', selectionSlug)
-        .eq('status', 'active')
+        .is('archived_at', null)
         .single();
 
       if (selectionError) {
@@ -170,7 +178,7 @@ export function useSelectionWithProducts(
         .from('linkme_selection_items')
         .select(
           `
-          *,
+          id, selection_id, product_id, base_price_ht, margin_rate, selling_price_ht, display_order, is_featured, created_at,
           product:products(
             id,
             name,
@@ -232,7 +240,7 @@ export function useSelectionWithProducts(
       } as unknown as SelectionWithProducts;
     },
     enabled: !!affiliateSlug && !!selectionSlug,
-    staleTime: 30000,
+    staleTime: 300_000,
   });
 }
 

@@ -245,7 +245,7 @@ export function OrderDetailModal({
 
   // Form state for manual payment
   const [manualPaymentType, setManualPaymentType] =
-    useState<ManualPaymentType>('transfer_other');
+    useState<ManualPaymentType>('card');
   const [manualPaymentAmount, setManualPaymentAmount] = useState('');
   const [manualPaymentDate, setManualPaymentDate] = useState('');
   const [manualPaymentRef, setManualPaymentRef] = useState('');
@@ -479,9 +479,17 @@ export function OrderDetailModal({
 
   const openPaymentDialog = () => {
     // Pre-fill form with defaults
-    setManualPaymentType('transfer_other');
-    setManualPaymentAmount(remainingAmount.toFixed(2));
-    setManualPaymentDate(new Date().toISOString().split('T')[0]);
+    setManualPaymentType('card');
+    setManualPaymentAmount(
+      remainingAmount > 0
+        ? remainingAmount.toFixed(2)
+        : Math.abs(order.total_ttc || 0).toFixed(2)
+    );
+    setManualPaymentDate(
+      (order.order_date || order.created_at || new Date().toISOString()).split(
+        'T'
+      )[0]
+    );
     setManualPaymentRef('');
     setManualPaymentNote('');
     setShowPaymentDialog(true);
@@ -1591,6 +1599,9 @@ export function OrderDetailModal({
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <Banknote className="h-3.5 w-3.5 text-green-600 flex-shrink-0" />
+                        <Badge className="text-[10px] px-1.5 py-0 bg-green-100 text-green-700 border-green-200">
+                          Manuel
+                        </Badge>
                         <span className="font-medium truncate">
                           {paymentTypeLabels[payment.payment_type] ||
                             payment.payment_type}
@@ -1632,6 +1643,9 @@ export function OrderDetailModal({
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <Link2 className="h-3.5 w-3.5 text-blue-600 flex-shrink-0" />
+                        <Badge className="text-[10px] px-1.5 py-0 bg-blue-100 text-blue-700 border-blue-200">
+                          Auto
+                        </Badge>
                         <span className="font-medium truncate">
                           {link.counterparty_name || link.transaction_label}
                         </span>
@@ -1652,7 +1666,7 @@ export function OrderDetailModal({
                     </div>
                     <span
                       className="ml-2 p-1 text-slate-300"
-                      title="Delier depuis l'onglet Rapprochement"
+                      title="Délier depuis l'onglet Rapprochement"
                     >
                       <Link2Off className="h-3.5 w-3.5" />
                     </span>
@@ -1731,7 +1745,7 @@ export function OrderDetailModal({
                 />
                 {parseFloat(manualPaymentAmount) > unifiedRemaining + 0.01 && (
                   <p className="text-sm text-destructive">
-                    Le montant depasse le reste a payer (
+                    Le montant dépasse le reste à payer (
                     {unifiedRemaining.toFixed(2)} EUR)
                   </p>
                 )}
@@ -1754,7 +1768,7 @@ export function OrderDetailModal({
                 </Label>
                 <Input
                   id="payment-ref"
-                  placeholder="N° cheque, ref. virement..."
+                  placeholder="N° chèque, réf. virement..."
                   value={manualPaymentRef}
                   onChange={e => setManualPaymentRef(e.target.value)}
                 />

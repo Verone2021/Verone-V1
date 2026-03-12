@@ -330,7 +330,7 @@ export function useLinkMeCatalogProducts() {
   return useQuery({
     queryKey: ['linkme-catalog-products'],
     queryFn: fetchCatalogProducts,
-    staleTime: 30000,
+    staleTime: 300_000,
     refetchOnWindowFocus: false,
   });
 }
@@ -481,7 +481,7 @@ export function useCatalogProduct(catalogId: string | null) {
       };
     },
     enabled: !!catalogId,
-    staleTime: 30000,
+    staleTime: 300_000,
   });
 }
 

@@ -41,7 +41,9 @@ export function useCategories() {
 
         const { data: categoriesData, error: categoriesError } = await supabase
           .from('categories')
-          .select('*')
+          .select(
+            'id, name, slug, level, family_id, display_order, is_active, description, image_url, google_category_id, facebook_category, meta_title, meta_description, is_visible_menu, created_at, updated_at'
+          )
           .order('level')
           .order('display_order');
 
@@ -124,7 +126,9 @@ export function useCategories() {
       const { data, error } = await supabase
         .from('categories')
         .insert([{ ...categoryData, slug }])
-        .select()
+        .select(
+          'id, name, slug, level, family_id, display_order, is_active, description, image_url, created_at, updated_at'
+        )
         .single();
 
       if (error) {
@@ -159,7 +163,9 @@ export function useCategories() {
           updated_at: new Date().toISOString(),
         })
         .eq('id', id)
-        .select()
+        .select(
+          'id, name, slug, level, family_id, display_order, is_active, description, image_url, created_at, updated_at'
+        )
         .single();
 
       if (error) throw error;

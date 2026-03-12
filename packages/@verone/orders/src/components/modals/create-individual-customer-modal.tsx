@@ -98,7 +98,7 @@ export function CreateIndividualCustomerModal({
       const { data, error } = await supabase
         .from('individual_customers')
         .insert([formData as CreateIndividualCustomerData])
-        .select()
+        .select('id')
         .single();
 
       if (error) throw error;

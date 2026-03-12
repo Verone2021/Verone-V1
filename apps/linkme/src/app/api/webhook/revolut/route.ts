@@ -123,7 +123,7 @@ async function handleOrderCompleted(event: RevolutWebhookEvent) {
         linkme_selection_id: selectionId ?? null,
         notes: `Paiement Revolut - ${revolutOrder.payments?.[0]?.payment_method?.type ?? 'card'}`,
       })
-      .select()
+      .select('id')
       .single()) as {
       data: { id: string } | null;
       error: Error | null;

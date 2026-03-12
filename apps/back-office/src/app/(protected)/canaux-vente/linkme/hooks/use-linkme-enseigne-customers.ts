@@ -222,7 +222,7 @@ export function useLinkMeEnseigneOrganisations(enseigneId: string | null) {
     queryKey: ['linkme-enseigne-organisations', enseigneId],
     queryFn: () => fetchEnseigneOrganisations(enseigneId!),
     enabled: !!enseigneId,
-    staleTime: 30000,
+    staleTime: 300_000,
   });
 }
 
@@ -236,7 +236,7 @@ export function useLinkMeEnseigneIndividualCustomers(
     queryKey: ['linkme-enseigne-individual-customers', enseigneId],
     queryFn: () => fetchEnseigneIndividualCustomers(enseigneId!),
     enabled: !!enseigneId,
-    staleTime: 30000,
+    staleTime: 300_000,
   });
 }
 
@@ -283,7 +283,7 @@ export function useLinkMeOrganisationIndividualCustomers(
         affiliateId ?? undefined
       ),
     enabled: !!organisationId,
-    staleTime: 30000,
+    staleTime: 300_000,
   });
 }
 
@@ -413,7 +413,9 @@ export function useCreateEnseigneOrganisation() {
           source_type: input.source_type ?? 'linkme', // Par défaut depuis CMS LinkMe
           source_affiliate_id: input.source_affiliate_id ?? null,
         })
-        .select()
+        .select(
+          'id, legal_name, trade_name, email, phone, address_line1, city, postal_code, siret, is_active, created_at, source_type, source_affiliate_id'
+        )
         .single();
 
       if (error) throw error;
@@ -463,7 +465,9 @@ export function useCreateEnseigneIndividualCustomer() {
       const { data, error } = await supabase
         .from('individual_customers')
         .insert(insertData)
-        .select()
+        .select(
+          'id, first_name, last_name, email, phone, address_line1, city, postal_code, created_at, source_type, source_affiliate_id'
+        )
         .single();
 
       if (error) {

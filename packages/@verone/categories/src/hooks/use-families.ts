@@ -30,7 +30,7 @@ export function useFamilies() {
         .from('families')
         .select(
           `
-          *,
+          id, name, slug, description, image_url, is_active, display_order, created_by, meta_title, meta_description, created_at, updated_at,
           categories!categories_family_id_fkey(id)
         `
         )
@@ -71,7 +71,9 @@ export function useFamilies() {
             display_order: familyData.display_order || 0,
           },
         ])
-        .select()
+        .select(
+          'id, name, slug, description, image_url, is_active, display_order, created_at, updated_at'
+        )
         .single();
 
       if (error) {
@@ -117,7 +119,9 @@ export function useFamilies() {
         .from('families')
         .update(updateData)
         .eq('id', id)
-        .select()
+        .select(
+          'id, name, slug, description, image_url, is_active, display_order, created_at, updated_at'
+        )
         .single();
 
       if (error) throw error;
@@ -173,7 +177,9 @@ export function useFamilies() {
           updated_at: new Date().toISOString(),
         })
         .eq('id', id)
-        .select()
+        .select(
+          'id, name, slug, is_active, display_order, created_at, updated_at'
+        )
         .single();
 
       if (error) throw error;
@@ -202,7 +208,7 @@ export function useFamilies() {
           updated_at: new Date().toISOString(),
         })
         .eq('id', id)
-        .select()
+        .select('id, name, slug, display_order, created_at, updated_at')
         .single();
 
       if (error) throw error;

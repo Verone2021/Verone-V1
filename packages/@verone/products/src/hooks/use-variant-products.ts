@@ -275,7 +275,6 @@ export function useVariantProducts() {
             variant_attributes: data.variant_attributes,
             variant_group_id: variantGroupId,
             variant_position: nextPosition,
-            is_variant_parent: false,
             stock_quantity: data.stock_quantity || 0,
             subcategory_id: data.subcategory_id || baseProduct.subcategory_id,
             supplier_id: data.supplier_id || baseProduct.supplier_id,
@@ -284,7 +283,9 @@ export function useVariantProducts() {
             technical_description: baseProduct.technical_description,
           },
         ])
-        .select()
+        .select(
+          'id, name, sku, cost_price, stock_status, product_status, variant_attributes, variant_group_id, variant_position, created_at, updated_at'
+        )
         .single();
 
       if (createError) {

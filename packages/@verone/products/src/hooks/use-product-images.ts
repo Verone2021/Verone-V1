@@ -149,7 +149,9 @@ export function useProductImages({
         const { data: dbData, error: dbError } = await supabase
           .from('product_images')
           .insert([imageData])
-          .select()
+          .select(
+            'id, product_id, public_url, storage_path, display_order, alt_text, is_primary, image_type, file_size, format, width, height, created_by, created_at, updated_at'
+          )
           .single();
 
         if (dbError) {
