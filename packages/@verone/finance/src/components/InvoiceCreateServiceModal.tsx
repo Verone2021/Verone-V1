@@ -67,6 +67,12 @@ interface CreatedInvoice {
   currency: string;
 }
 
+interface IServiceInvoiceApiResponse {
+  success: boolean;
+  error?: string;
+  invoice: CreatedInvoice;
+}
+
 function formatAmount(amount: number, currency = 'EUR'): string {
   return new Intl.NumberFormat('fr-FR', {
     style: 'currency',
@@ -234,10 +240,10 @@ export function InvoiceCreateServiceModal({
         }),
       });
 
-      const data = await response.json();
+      const data = (await response.json()) as IServiceInvoiceApiResponse;
 
       if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Failed to create invoice');
+        throw new Error(data.error ?? 'Failed to create invoice');
       }
 
       // Fallback: calculate total locally (API may not return total_amount for drafts)
@@ -285,7 +291,7 @@ export function InvoiceCreateServiceModal({
           </DialogTitle>
           <DialogDescription>
             {status === 'success'
-              ? `Facture ${createdInvoice?.invoice_number} - ${formatAmount(createdInvoice?.total_amount || 0)}`
+              ? `Facture ${createdInvoice?.invoice_number} - ${formatAmount(createdInvoice?.total_amount ?? 0)}`
               : 'Créez une facture pour des prestations de services'}
           </DialogDescription>
         </DialogHeader>

@@ -74,6 +74,17 @@ interface ICreatedInvoice {
   currency: string;
 }
 
+interface IInvoiceApiResponse {
+  success: boolean;
+  error?: string;
+  invoice: ICreatedInvoice;
+}
+
+interface IInvoiceListApiResponse {
+  success: boolean;
+  invoices?: { invoice_number: string }[];
+}
+
 /**
  * Normalize country name to ISO 3166-1 alpha-2 code.
  * Handles common French text values from org data vs ISO codes from order JSONB.
@@ -185,8 +196,8 @@ export function InvoiceCreateFromOrderModal({
     // Priority 1: order billing_address JSONB
     if (order.billing_address?.city && order.billing_address?.postal_code) {
       return {
-        address_line1: order.billing_address.address_line1 || '',
-        address_line2: order.billing_address.address_line2 || '',
+        address_line1: order.billing_address.address_line1 ?? '',
+        address_line2: order.billing_address.address_line2 ?? '',
         postal_code: order.billing_address.postal_code,
         city: order.billing_address.city,
         country: normalizeCountryCode(order.billing_address.country),
@@ -199,7 +210,7 @@ export function InvoiceCreateFromOrderModal({
     // Priority 2: org billing_* columns
     if (org.billing_city && org.billing_postal_code) {
       return {
-        address_line1: org.billing_address_line1 || '',
+        address_line1: org.billing_address_line1 ?? '',
         postal_code: org.billing_postal_code,
         city: org.billing_city,
         country: normalizeCountryCode(org.billing_country),
@@ -209,7 +220,7 @@ export function InvoiceCreateFromOrderModal({
     // Priority 3: org main address
     if (org.city && org.postal_code) {
       return {
-        address_line1: org.address_line1 || '',
+        address_line1: org.address_line1 ?? '',
         postal_code: org.postal_code,
         city: org.city,
         country: normalizeCountryCode(org.country),
@@ -225,8 +236,8 @@ export function InvoiceCreateFromOrderModal({
     // Si la commande a une shipping_address
     if (order.shipping_address?.city && order.shipping_address?.postal_code) {
       return {
-        address_line1: order.shipping_address.address_line1 || '',
-        address_line2: order.shipping_address.address_line2 || '',
+        address_line1: order.shipping_address.address_line1 ?? '',
+        address_line2: order.shipping_address.address_line2 ?? '',
         postal_code: order.shipping_address.postal_code,
         city: order.shipping_address.city,
         country: normalizeCountryCode(order.shipping_address.country),
@@ -239,7 +250,7 @@ export function InvoiceCreateFromOrderModal({
     // Org shipping columns
     if (org.shipping_city && org.shipping_postal_code) {
       return {
-        address_line1: org.shipping_address_line1 || '',
+        address_line1: org.shipping_address_line1 ?? '',
         postal_code: org.shipping_postal_code,
         city: org.shipping_city,
         country: normalizeCountryCode(org.shipping_country),
@@ -288,10 +299,10 @@ export function InvoiceCreateFromOrderModal({
     if (!open) return;
     setLoadingNextNumber(true);
     void fetch('/api/qonto/invoices?per_page=1&sort_by=number:desc')
-      .then(res => res.json())
+      .then(res => res.json() as Promise<IInvoiceListApiResponse>)
       .then(data => {
         if (data.success && data.invoices?.[0]?.invoice_number) {
-          const lastNumber = data.invoices[0].invoice_number as string;
+          const lastNumber = data.invoices[0].invoice_number;
           // Tenter d'incrémenter le numéro (format F-2026-XXXX)
           const match = lastNumber.match(/(\d+)$/);
           if (match) {
@@ -410,10 +421,10 @@ export function InvoiceCreateFromOrderModal({
         }),
       });
 
-      const data = await response.json();
+      const data = (await response.json()) as IInvoiceApiResponse;
 
       if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Failed to create invoice');
+        throw new Error(data.error ?? 'Failed to create invoice');
       }
 
       // Fallback: use order total (API may not return total_amount for drafts)
@@ -442,14 +453,14 @@ export function InvoiceCreateFromOrderModal({
   if (!order) return null;
 
   const customerName =
-    order.organisations?.trade_name ||
-    order.organisations?.legal_name ||
-    order.organisations?.name ||
-    `${order.individual_customers?.first_name || ''} ${order.individual_customers?.last_name || ''}`.trim() ||
+    (order.organisations?.trade_name ??
+      order.organisations?.legal_name ??
+      order.organisations?.name ??
+      `${order.individual_customers?.first_name ?? ''} ${order.individual_customers?.last_name ?? ''}`.trim()) ||
     'Client';
 
   const customerEmail =
-    order.organisations?.email || order.individual_customers?.email;
+    order.organisations?.email ?? order.individual_customers?.email;
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -461,7 +472,7 @@ export function InvoiceCreateFromOrderModal({
           </DialogTitle>
           <DialogDescription>
             {status === 'success'
-              ? `Facture ${createdInvoice?.invoice_number} - ${formatAmount(createdInvoice?.total_amount || 0)}`
+              ? `Facture ${createdInvoice?.invoice_number} - ${formatAmount(createdInvoice?.total_amount ?? 0)}`
               : `Commande ${order.order_number} - ${customerName}`}
           </DialogDescription>
         </DialogHeader>
@@ -845,7 +856,7 @@ export function InvoiceCreateFromOrderModal({
                       {order.sales_order_items?.map(item => (
                         <TableRow key={item.id}>
                           <TableCell>
-                            {item.products?.name || 'Article'}
+                            {item.products?.name ?? 'Article'}
                           </TableCell>
                           <TableCell className="text-right">
                             {item.quantity}
