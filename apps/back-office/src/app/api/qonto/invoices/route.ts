@@ -338,9 +338,12 @@ export async function POST(request: NextRequest): Promise<
       .from('sales_orders')
       .select(
         `
-        *,
+        id, order_number, customer_id, customer_type, individual_customer_id,
+        billing_address, shipping_address, payment_terms,
+        shipping_cost_ht, handling_cost_ht, insurance_cost_ht, fees_vat_rate,
+        billing_contact_id, delivery_contact_id, responsable_contact_id,
         sales_order_items (
-          *,
+          id, quantity, unit_price_ht, tax_rate, notes,
           products:product_id (id, name, sku)
         )
       `
@@ -366,20 +369,22 @@ export async function POST(request: NextRequest): Promise<
       if (orderWithItems.customer_type === 'organization') {
         const { data: org } = await supabase
           .from('organisations')
-          .select('*')
+          .select(
+            'id, legal_name, trade_name, email, vat_number, siret, address_line1, city, postal_code, country'
+          )
           .eq('id', orderWithItems.customer_id)
           .single();
-        customer = org;
+        customer = org as Organisation | null;
       } else if (
         orderWithItems.customer_type === 'individual' &&
         orderWithItems.individual_customer_id
       ) {
         const { data: indiv } = await supabase
           .from('individual_customers')
-          .select('*')
+          .select('id, first_name, last_name, email')
           .eq('id', orderWithItems.individual_customer_id)
           .single();
-        customer = indiv;
+        customer = indiv as IndividualCustomer | null;
       }
     }
 

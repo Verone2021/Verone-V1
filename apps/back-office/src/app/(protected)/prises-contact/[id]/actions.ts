@@ -139,7 +139,9 @@ export async function convertToOrder(
     // Fetch submission data
     const { data: _submission, error: fetchError } = await supabase
       .from('form_submissions')
-      .select('*')
+      .select(
+        'id, first_name, last_name, email, phone, status, form_type, message, subject, metadata, created_at'
+      )
       .eq('id', submissionId)
       .single();
 
@@ -209,7 +211,9 @@ export async function convertToConsultation(
     // Fetch submission data
     const { data: _submission, error: fetchError } = await supabase
       .from('form_submissions')
-      .select('*')
+      .select(
+        'id, first_name, last_name, email, phone, status, form_type, message, subject, metadata, created_at'
+      )
       .eq('id', submissionId)
       .single();
 
@@ -283,7 +287,9 @@ export async function convertToSourcing(
     // Fetch submission data
     const { data: _submission, error: fetchError } = await supabase
       .from('form_submissions')
-      .select('*')
+      .select(
+        'id, first_name, last_name, email, phone, status, form_type, message, subject, metadata, created_at'
+      )
       .eq('id', submissionId)
       .single();
 
@@ -348,7 +354,9 @@ export async function convertToContact(
     // Fetch submission data
     const { data: submission, error: fetchError } = await supabase
       .from('form_submissions')
-      .select('*')
+      .select(
+        'id, first_name, last_name, email, phone, status, form_type, message, subject, metadata, created_at'
+      )
       .eq('id', submissionId)
       .single();
 
@@ -424,7 +432,9 @@ export async function convertToLead(
     // Fetch submission data
     const { data: _submission, error: fetchError } = await supabase
       .from('form_submissions')
-      .select('*')
+      .select(
+        'id, first_name, last_name, email, phone, status, form_type, message, subject, metadata, created_at'
+      )
       .eq('id', submissionId)
       .single();
 

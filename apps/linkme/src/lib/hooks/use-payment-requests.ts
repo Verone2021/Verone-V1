@@ -100,7 +100,12 @@ export function usePaymentRequestDetail(requestId: string | null) {
       // Récupérer la demande
       const { data: request, error: requestError } = await supabase
         .from('linkme_payment_requests')
-        .select('*')
+        .select(
+          `id, affiliate_id, request_number, total_amount_ht, total_amount_ttc,
+          tax_rate, status, invoice_file_url, invoice_file_name,
+          invoice_received_at, paid_at, paid_by, payment_reference,
+          payment_proof_url, notes, created_at, updated_at`
+        )
         .eq('id', requestId)
         .single();
 

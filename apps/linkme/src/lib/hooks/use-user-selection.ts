@@ -140,7 +140,11 @@ export function useUserAffiliate() {
 
       // Construire la requête selon le rôle
       const supabase: SupabaseClient<Database> = createClient();
-      let query = supabase.from('linkme_affiliates').select('*');
+      let query = supabase
+        .from('linkme_affiliates')
+        .select(
+          'id, user_id, enseigne_id, organisation_id, display_name, slug, email, phone, logo_url, bio, status, default_margin_rate, max_margin_rate, linkme_commission_rate'
+        );
       let queryDescription = '';
 
       // Chercher par enseigne_id pour enseigne_admin
@@ -240,7 +244,9 @@ export function useUserSelections() {
       const supabase: SupabaseClient<Database> = createClient();
       const { data, error } = await supabase
         .from('linkme_selections')
-        .select('*')
+        .select(
+          'id, affiliate_id, name, slug, description, image_url, share_token, products_count, views_count, view_count, orders_count, total_revenue, published_at, price_display_mode, created_at, updated_at'
+        )
         .eq('affiliate_id', affiliate.id)
         .order('created_at', { ascending: false })
         .returns<LinkMeSelectionRow[]>();
