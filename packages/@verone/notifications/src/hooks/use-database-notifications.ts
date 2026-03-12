@@ -123,7 +123,9 @@ export function useDatabaseNotifications(): DatabaseNotificationsHook {
 
       const { data, error } = await supabase
         .from('notifications')
-        .select('*')
+        .select(
+          'id, type, severity, title, message, action_url, action_label, user_id, read, created_at, updated_at'
+        )
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(50); // Limiter à 50 notifications récentes
@@ -275,7 +277,9 @@ export function useDatabaseNotifications(): DatabaseNotificationsHook {
         const { data: newNotification, error } = await supabase
           .from('notifications')
           .insert([notificationData])
-          .select()
+          .select(
+            'id, type, severity, title, message, action_url, action_label, user_id, read, created_at, updated_at'
+          )
           .single();
 
         if (error) throw error;

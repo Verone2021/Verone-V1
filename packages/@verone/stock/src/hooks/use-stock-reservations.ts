@@ -79,7 +79,19 @@ export function useStockReservations() {
           .from('stock_reservations')
           .select(
             `
-          *,
+          id,
+          product_id,
+          reserved_quantity,
+          reference_type,
+          reference_id,
+          reserved_by,
+          reserved_at,
+          expires_at,
+          released_at,
+          released_by,
+          notes,
+          created_at,
+          updated_at,
           products (
             id,
             name,
@@ -248,7 +260,7 @@ export function useStockReservations() {
               reserved_by: (await supabase.auth.getUser()).data.user?.id,
             },
           ] as any)
-          .select()
+          .select('id')
           .single();
 
         if (reservationError) throw reservationError;
@@ -332,7 +344,7 @@ export function useStockReservations() {
           .eq('reference_type', referenceType)
           .eq('reference_id', referenceId)
           .is('released_at', null)
-          .select();
+          .select('id');
 
         if (error) throw error;
 
@@ -416,7 +428,7 @@ export function useStockReservations() {
         })
         .lt('expires_at', now)
         .is('released_at', null)
-        .select();
+        .select('id');
 
       if (error) throw error;
 
@@ -451,7 +463,9 @@ export function useStockReservations() {
       try {
         const { data, error } = await supabase
           .from('stock_reservations')
-          .select('*')
+          .select(
+            'id, product_id, reserved_quantity, reference_type, reference_id, reserved_by, reserved_at, expires_at, released_at, released_by, notes, created_at, updated_at'
+          )
           .eq('product_id', productId)
           .is('released_at', null)
           .order('reserved_at', { ascending: false });

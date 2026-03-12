@@ -126,7 +126,23 @@ export function useStockMovements() {
           .from('stock_movements')
           .select(
             `
-          *,
+          id,
+          product_id,
+          movement_type,
+          quantity_change,
+          quantity_before,
+          quantity_after,
+          unit_cost,
+          reference_type,
+          reference_id,
+          notes,
+          reason_code,
+          affects_forecast,
+          forecast_type,
+          performed_by,
+          performed_at,
+          created_at,
+          updated_at,
           products (
             id,
             name,
@@ -356,7 +372,7 @@ export function useStockMovements() {
               performed_by: (await supabase.auth.getUser()).data.user?.id,
             },
           ] as any)
-          .select()
+          .select('id')
           .single();
 
         if (movementError) throw movementError;
@@ -434,7 +450,9 @@ export function useStockMovements() {
         // ✅ FIX Phase 3.7: Filtrer UNIQUEMENT mouvements réels (affects_forecast = false OU NULL)
         const { data: movements, error: movementsError } = await supabase
           .from('stock_movements')
-          .select('*')
+          .select(
+            'id, product_id, movement_type, quantity_change, quantity_before, quantity_after, unit_cost, reference_type, reference_id, notes, reason_code, affects_forecast, forecast_type, performed_by, performed_at, created_at, updated_at'
+          )
           .eq('product_id', productId)
           .or('affects_forecast.is.null,affects_forecast.eq.false') // Exclut mouvements prévisionnels
           .order('performed_at', { ascending: false });

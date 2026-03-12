@@ -51,7 +51,9 @@ async function fetchPageConfigurations(): Promise<LinkMePageConfiguration[]> {
 
   const { data, error } = await supabase
     .from('linkme_page_configurations')
-    .select('*')
+    .select(
+      'id, page_id, page_name, page_description, page_icon, globe_enabled, globe_rotation_speed, config, created_at, updated_at, updated_by'
+    )
     .order('page_id');
 
   if (error) {
@@ -141,7 +143,9 @@ async function updatePageConfiguration(
       updated_at: new Date().toISOString(),
     })
     .eq('page_id', pageId)
-    .select()
+    .select(
+      'id, page_id, page_name, page_description, page_icon, globe_enabled, globe_rotation_speed, config, created_at, updated_at, updated_by'
+    )
     .single();
 
   if (error) {

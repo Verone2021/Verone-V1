@@ -501,7 +501,7 @@ export function useLinkMeCatalogProducts() {
   return useQuery({
     queryKey: ['linkme-catalog-products'],
     queryFn: fetchLinkMeCatalogProducts,
-    staleTime: 30000,
+    staleTime: 300_000,
     refetchOnWindowFocus: true,
   });
 }
@@ -1146,7 +1146,7 @@ export function useLinkMeProductDetail(catalogProductId: string | null) {
     queryFn: () =>
       catalogProductId ? fetchLinkMeProductDetail(catalogProductId) : null,
     enabled: !!catalogProductId,
-    staleTime: 30000,
+    staleTime: 300_000,
   });
 }
 
@@ -1693,7 +1693,7 @@ export function useSourcingProducts() {
   return useQuery({
     queryKey: ['linkme-sourcing-products'],
     queryFn: fetchSourcingProducts,
-    staleTime: 30000,
+    staleTime: 300_000,
     refetchOnWindowFocus: true,
   });
 }
@@ -1764,7 +1764,7 @@ export function useProductSelections(productId: string | null) {
       }));
     },
     enabled: !!productId,
-    staleTime: 30000,
+    staleTime: 300_000,
   });
 }
 

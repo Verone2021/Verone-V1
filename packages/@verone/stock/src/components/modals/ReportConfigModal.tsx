@@ -94,23 +94,31 @@ export function ReportConfigModal({
     onClose();
   };
 
+  // Key to force remount when dates change (ensures hooks reinitialize with new filters)
+  const reportKey = `${reportId}-${config.dateFrom}-${config.dateTo}`;
+
   const renderReportView = () => {
     switch (reportId) {
       case 'aging':
         return (
-          <AgingReportView dateFrom={config.dateFrom} dateTo={config.dateTo} />
+          <AgingReportView
+            key={reportKey}
+            dateFrom={config.dateFrom}
+            dateTo={config.dateTo}
+          />
         );
       case 'valorisation':
-        return <ValorisationReportView />;
+        return <ValorisationReportView key={reportKey} />;
       case 'mouvements':
         return (
           <HistoriqueReportView
+            key={reportKey}
             dateFrom={config.dateFrom}
             dateTo={config.dateTo}
           />
         );
       case 'abc-xyz':
-        return <ABCAnalysisView />;
+        return <ABCAnalysisView key={reportKey} />;
       default:
         return (
           <div className="flex items-center justify-center h-40 text-gray-500 text-sm">

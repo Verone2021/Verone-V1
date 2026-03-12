@@ -630,15 +630,20 @@ export function useInvalidateAffiliateAnalytics() {
   const queryClient = useQueryClient();
 
   return {
-    invalidateAll: () =>
-      queryClient.invalidateQueries({ queryKey: affiliateAnalyticsKeys.all }),
-    invalidateAnalytics: (affiliateId: string, period: string) =>
-      queryClient.invalidateQueries({
+    invalidateAll: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: affiliateAnalyticsKeys.all,
+      });
+    },
+    invalidateAnalytics: async (affiliateId: string, period: string) => {
+      await queryClient.invalidateQueries({
         queryKey: affiliateAnalyticsKeys.analytics(affiliateId, period),
-      }),
-    invalidateSelectionProducts: (selectionId: string) =>
-      queryClient.invalidateQueries({
+      });
+    },
+    invalidateSelectionProducts: async (selectionId: string) => {
+      await queryClient.invalidateQueries({
         queryKey: affiliateAnalyticsKeys.selectionProducts(selectionId),
-      }),
+      });
+    },
   };
 }

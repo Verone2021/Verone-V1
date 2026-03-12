@@ -174,7 +174,7 @@ export function useProductColors() {
           hex_code: finalHexCode,
           is_predefined: false,
         })
-        .select()
+        .select('id, name, hex_code, is_predefined, created_at')
         .single();
 
       if (error) {

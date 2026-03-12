@@ -243,7 +243,7 @@ export function useInlineEdit(options: UseInlineEditOptions) {
             .from('organisations')
             .update(cleanedData)
             .eq('id', organisationId)
-            .select();
+            .select('id');
 
           success = !error;
           if (error) {
@@ -285,7 +285,7 @@ export function useInlineEdit(options: UseInlineEditOptions) {
             .from('contacts')
             .update(cleanedData)
             .eq('id', contactId)
-            .select();
+            .select('id');
 
           success = !error;
           if (error) {
@@ -324,7 +324,7 @@ export function useInlineEdit(options: UseInlineEditOptions) {
             .from('sales_orders')
             .update(cleanedData)
             .eq('id', salesOrderId)
-            .select();
+            .select('id');
 
           success = !error;
           if (error) {
@@ -362,7 +362,7 @@ export function useInlineEdit(options: UseInlineEditOptions) {
             .from('purchase_orders')
             .update(cleanedData)
             .eq('id', purchaseOrderId)
-            .select();
+            .select('id');
 
           success = !error;
           if (error) {

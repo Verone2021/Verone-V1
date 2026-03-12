@@ -265,7 +265,7 @@ export function EditSiteInternetProductModal({
             : null,
         })
         .eq('id', product.product_id)
-        .select()
+        .select('id')
         .single();
 
       if (productsError) {
@@ -299,7 +299,7 @@ export function EditSiteInternetProductModal({
             },
             { onConflict: 'product_id,channel_id' }
           )
-          .select();
+          .select('id');
 
         if (metadataError) {
           console.error('❌ Erreur metadata upsert:', metadataError);
@@ -325,7 +325,7 @@ export function EditSiteInternetProductModal({
             },
             { onConflict: 'product_id,channel_id,min_quantity' }
           )
-          .select();
+          .select('id');
 
         if (pricingError) {
           console.error('❌ Erreur pricing upsert:', pricingError);

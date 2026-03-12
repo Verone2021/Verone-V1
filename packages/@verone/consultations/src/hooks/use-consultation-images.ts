@@ -82,7 +82,9 @@ export function useConsultationImages({
     try {
       const { data, error } = await supabase
         .from('consultation_images')
-        .select('*')
+        .select(
+          'id, consultation_id, storage_path, public_url, display_order, is_primary, image_type, alt_text, width, height, file_size, format, created_by, created_at, updated_at'
+        )
         .eq('consultation_id', consultationId)
         .order('display_order', { ascending: true });
 
@@ -150,7 +152,9 @@ export function useConsultationImages({
         const { data: newImage, error: dbError } = await supabase
           .from('consultation_images')
           .insert(imageData)
-          .select()
+          .select(
+            'id, consultation_id, storage_path, public_url, display_order, is_primary, image_type, alt_text, width, height, file_size, format, created_by, created_at, updated_at'
+          )
           .single();
 
         if (dbError) {

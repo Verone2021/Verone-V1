@@ -84,7 +84,10 @@ export function useAgingReport() {
       setError(null);
 
       try {
-        const today = new Date();
+        // Reference date: use dateTo if provided, otherwise today
+        const referenceDate = dateTo ? new Date(dateTo) : new Date();
+        // Cutoff date: only consider movements up to dateFrom for "last movement"
+        const cutoffDate = dateFrom ? new Date(dateFrom) : null;
 
         // ============================================
         // QUERY 1: Récupérer tous les produits non archivés avec stock
@@ -99,15 +102,33 @@ export function useAgingReport() {
 
         // ============================================
         // QUERY 2: Récupérer le dernier mouvement pour chaque produit
+        // Filtré par période si dateFrom/dateTo fournis
         // ============================================
         const productIds = products.map(p => p.id);
 
-        const { data: lastMovements, error: movementsError } = await supabase
+        let movementsQuery = supabase
           .from('stock_movements')
           .select('product_id, performed_at')
           .in('product_id', productIds)
-          .or('affects_forecast.is.null,affects_forecast.is.false') // ✅ BEST PRACTICE: is pour boolean et null
+          .or('affects_forecast.is.null,affects_forecast.is.false')
           .order('performed_at', { ascending: false });
+
+        // Apply date filters to movements query
+        if (dateFrom) {
+          movementsQuery = movementsQuery.gte('performed_at', dateFrom);
+        }
+        if (dateTo) {
+          // Add 1 day to include the full dateTo day
+          const dateToEnd = new Date(dateTo);
+          dateToEnd.setDate(dateToEnd.getDate() + 1);
+          movementsQuery = movementsQuery.lt(
+            'performed_at',
+            dateToEnd.toISOString()
+          );
+        }
+
+        const { data: lastMovements, error: movementsError } =
+          await movementsQuery;
 
         if (movementsError) throw movementsError;
 
@@ -121,14 +142,20 @@ export function useAgingReport() {
 
         // ============================================
         // CALCUL DE L'ÂGE DE CHAQUE PRODUIT
+        // Age = referenceDate - dernier mouvement dans la période
         // ============================================
         const productsWithAge: ProductWithAge[] = products.map(product => {
           const lastMovementDate = lastMovementMap.get(product.id);
           const ageMs = lastMovementDate
-            ? today.getTime() - new Date(lastMovementDate).getTime()
-            : today.getTime(); // Si pas de mouvement, considérer depuis début
+            ? referenceDate.getTime() - new Date(lastMovementDate).getTime()
+            : cutoffDate
+              ? referenceDate.getTime() - cutoffDate.getTime()
+              : referenceDate.getTime(); // Fallback: age from start of period or epoch
 
-          const ageDays = Math.floor(ageMs / (1000 * 60 * 60 * 24));
+          const ageDays = Math.max(
+            0,
+            Math.floor(ageMs / (1000 * 60 * 60 * 24))
+          );
           const value =
             (product.stock_quantity || 0) * (product.cost_price || 0);
 

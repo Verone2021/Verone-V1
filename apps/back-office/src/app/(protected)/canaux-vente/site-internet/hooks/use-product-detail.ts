@@ -29,6 +29,6 @@ export function useProductDetail(productId: string | null) {
       return data as SiteInternetProduct;
     },
     enabled: !!productId,
-    staleTime: 30000, // 30s
+    staleTime: 300_000, // 5 minutes
   });
 }

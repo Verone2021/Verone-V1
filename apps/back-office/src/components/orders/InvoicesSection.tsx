@@ -86,11 +86,11 @@ export function InvoicesSection({ orderId }: { orderId: string }) {
       }
       return res.json() as Promise<ApiSuccessResponse>;
     },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
         queryKey: ['invoices-by-order', orderId],
       });
-      void queryClient.invalidateQueries({
+      await queryClient.invalidateQueries({
         queryKey: ['invoice-details', selectedInvoiceId],
       });
       setActionLoading(null);
@@ -113,11 +113,11 @@ export function InvoicesSection({ orderId }: { orderId: string }) {
       }
       return res.json() as Promise<ApiSuccessResponse>;
     },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
         queryKey: ['invoices-by-order', orderId],
       });
-      void queryClient.invalidateQueries({
+      await queryClient.invalidateQueries({
         queryKey: ['invoice-details', selectedInvoiceId],
       });
       setActionLoading(null);

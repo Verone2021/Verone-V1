@@ -330,7 +330,7 @@ export function useLinkMeSelection(selectionId: string | null) {
     queryKey: ['linkme-selection', selectionId],
     queryFn: () => (selectionId ? fetchSelectionById(selectionId) : null),
     enabled: !!selectionId,
-    staleTime: 30000, // 30 secondes
+    staleTime: 300_000, // 5 minutes
   });
 }
 
@@ -870,7 +870,7 @@ export function useLinkMeSelectionsByEnseigne(enseigneId: string | null) {
     queryKey: ['linkme-selections-by-enseigne', enseigneId],
     queryFn: () => (enseigneId ? fetchSelectionsByEnseigne(enseigneId) : []),
     enabled: !!enseigneId,
-    staleTime: 30000, // 30 secondes
+    staleTime: 300_000, // 5 minutes
   });
 }
 

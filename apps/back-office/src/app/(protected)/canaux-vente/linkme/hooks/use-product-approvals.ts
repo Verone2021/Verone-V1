@@ -111,7 +111,7 @@ export function usePendingApprovals() {
             ?.display_name ?? null,
       })) as PendingProduct[];
     },
-    staleTime: 30000,
+    staleTime: 300_000,
   });
 }
 
@@ -197,7 +197,7 @@ export function useAllAffiliateProducts(
         };
       }) as PendingProduct[];
     },
-    staleTime: 30000,
+    staleTime: 300_000,
   });
 }
 
@@ -434,6 +434,6 @@ export function useProductCommissionHistory(productId: string | undefined) {
       return data ?? [];
     },
     enabled: !!productId,
-    staleTime: 30000,
+    staleTime: 300_000,
   });
 }

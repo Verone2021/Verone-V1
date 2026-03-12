@@ -157,7 +157,9 @@ export function useCollectionImages({
         const { data: dbData, error: dbError } = await supabase
           .from('collection_images')
           .insert([imageData])
-          .select()
+          .select(
+            'id, collection_id, storage_path, public_url, display_order, is_primary, image_type, alt_text, file_name, file_size, mime_type, width, height, created_at, updated_at'
+          )
           .single();
 
         if (dbError) {

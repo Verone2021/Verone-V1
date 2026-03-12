@@ -403,7 +403,9 @@ async function updateLinkMeOrder(
   // 1. Récupérer la commande actuelle pour calcul
   const { data: currentOrder, error: fetchError } = await supabase
     .from('sales_orders')
-    .select('*, sales_order_items(*)')
+    .select(
+      'id, tax_rate, shipping_cost_ht, insurance_cost_ht, handling_cost_ht, notes, sales_order_items(quantity, unit_price_ht)'
+    )
     .eq('id', input.id)
     .single();
 
@@ -611,7 +613,9 @@ async function createLinkMeOrder(
   const { data: order, error: orderError } = await supabase
     .from('sales_orders')
     .insert(orderData)
-    .select()
+    .select(
+      'id, order_number, linkme_display_number, channel_id, customer_id, customer_type, status, payment_status_v2, total_ht, total_ttc, tax_rate, shipping_cost_ht, insurance_cost_ht, handling_cost_ht, notes, created_at, updated_at'
+    )
     .single();
 
   if (orderError) {
@@ -704,7 +708,7 @@ export function useLinkMeOrders() {
   return useQuery({
     queryKey: ['linkme-orders'],
     queryFn: fetchLinkMeOrders,
-    staleTime: 30000,
+    staleTime: 300_000,
   });
 }
 
@@ -734,7 +738,7 @@ export function useLinkMeOrder(orderId: string | null) {
     queryKey: ['linkme-order', orderId],
     queryFn: () => fetchLinkMeOrderById(orderId!),
     enabled: !!orderId,
-    staleTime: 30000,
+    staleTime: 300_000,
   });
 }
 

@@ -286,10 +286,16 @@ export function useMovementsHistory(options?: UseMovementsHistoryOptions) {
     [supabase, toast, getReasonDescription]
   );
 
-  // Récupérer les statistiques (avec support filtres movementTypes)
+  // Récupérer les statistiques (avec support filtres movementTypes + dateRange)
   const fetchStats = useCallback(
     async (appliedFilters: MovementHistoryFilters = {}) => {
       try {
+        // Use dateRange from filters if provided, otherwise fallback to defaults
+        const hasDateRange = !!appliedFilters.dateRange;
+        const rangeFrom = appliedFilters.dateRange?.from;
+        const rangeTo = appliedFilters.dateRange?.to;
+
+        // Fallback dates for sub-period counts (only used when no dateRange filter)
         const now = new Date();
         const today = new Date(
           now.getFullYear(),
@@ -301,9 +307,8 @@ export function useMovementsHistory(options?: UseMovementsHistoryOptions) {
         );
         const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
-        // ✅ Helper pour appliquer les filtres communs (movementTypes, affects_forecast)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase query builder types are complex
         const applyCommonFilters = (query: any) => {
-          // Filtre par types de mouvement (ex: ADJUST uniquement pour page ajustements)
           if (
             appliedFilters.movementTypes &&
             appliedFilters.movementTypes.length > 0
@@ -317,56 +322,72 @@ export function useMovementsHistory(options?: UseMovementsHistoryOptions) {
           query = query.or(
             'affects_forecast.is.null,affects_forecast.eq.false'
           );
+          // Apply date range filter
+          if (hasDateRange && rangeFrom) {
+            query = query.gte('performed_at', rangeFrom.toISOString());
+          }
+          if (hasDateRange && rangeTo) {
+            query = query.lte('performed_at', rangeTo.toISOString());
+          }
           return query;
         };
 
-        // Compter tous les mouvements (avec filtres)
+        // Compter tous les mouvements (dans la période)
         let totalQuery = supabase
           .from('stock_movements')
           .select('*', { count: 'exact', head: true });
         totalQuery = applyCommonFilters(totalQuery);
         const { count: totalCount } = await totalQuery;
 
-        // Mouvements du jour (avec filtres)
-        let todayQuery = supabase
-          .from('stock_movements')
-          .select('*', { count: 'exact', head: true })
-          .gte('performed_at', today.toISOString());
-        todayQuery = applyCommonFilters(todayQuery);
-        const { count: todayCount } = await todayQuery;
+        // Sub-period counts: only meaningful without dateRange filter
+        let todayCount = 0;
+        let weekCount = 0;
+        let monthCount = 0;
 
-        // Mouvements de la semaine (avec filtres)
-        let weekQuery = supabase
-          .from('stock_movements')
-          .select('*', { count: 'exact', head: true })
-          .gte('performed_at', weekStart.toISOString());
-        weekQuery = applyCommonFilters(weekQuery);
-        const { count: weekCount } = await weekQuery;
+        if (!hasDateRange) {
+          let todayQuery = supabase
+            .from('stock_movements')
+            .select('*', { count: 'exact', head: true })
+            .gte('performed_at', today.toISOString());
+          todayQuery = applyCommonFilters(todayQuery);
+          const todayResult = await todayQuery;
+          todayCount = todayResult.count ?? 0;
 
-        // Mouvements du mois (avec filtres)
-        let monthQuery = supabase
-          .from('stock_movements')
-          .select('*', { count: 'exact', head: true })
-          .gte('performed_at', monthStart.toISOString());
-        monthQuery = applyCommonFilters(monthQuery);
-        const { count: monthCount } = await monthQuery;
+          let weekQuery = supabase
+            .from('stock_movements')
+            .select('*', { count: 'exact', head: true })
+            .gte('performed_at', weekStart.toISOString());
+          weekQuery = applyCommonFilters(weekQuery);
+          const weekResult = await weekQuery;
+          weekCount = weekResult.count ?? 0;
 
-        // Répartition par type (avec filtres)
+          let monthQuery = supabase
+            .from('stock_movements')
+            .select('*', { count: 'exact', head: true })
+            .gte('performed_at', monthStart.toISOString());
+          monthQuery = applyCommonFilters(monthQuery);
+          const monthResult = await monthQuery;
+          monthCount = monthResult.count ?? 0;
+        }
+
+        // Répartition par type (dans la période)
         let typeQuery = supabase
           .from('stock_movements')
-          .select('movement_type')
-          .gte('performed_at', monthStart.toISOString());
+          .select('movement_type');
         typeQuery = applyCommonFilters(typeQuery);
+        if (!hasDateRange) {
+          typeQuery = typeQuery.gte('performed_at', monthStart.toISOString());
+        }
         const { data: typeStats } = await typeQuery;
 
         const byType = {
-          IN: typeStats?.filter(m => m.movement_type === 'IN').length || 0,
-          OUT: typeStats?.filter(m => m.movement_type === 'OUT').length || 0,
+          IN: typeStats?.filter(m => m.movement_type === 'IN').length ?? 0,
+          OUT: typeStats?.filter(m => m.movement_type === 'OUT').length ?? 0,
           ADJUST:
-            typeStats?.filter(m => m.movement_type === 'ADJUST').length || 0,
+            typeStats?.filter(m => m.movement_type === 'ADJUST').length ?? 0,
         };
 
-        // Comptage mouvements réels vs prévisionnels (global, sans filtre movementTypes)
+        // Comptage mouvements réels vs prévisionnels (global)
         const { count: realCount } = await supabase
           .from('stock_movements')
           .select('*', { count: 'exact', head: true })
@@ -377,55 +398,65 @@ export function useMovementsHistory(options?: UseMovementsHistoryOptions) {
           .select('*', { count: 'exact', head: true })
           .eq('affects_forecast', true);
 
-        // Top motifs du mois (avec filtres)
+        // Top motifs (dans la période)
         let reasonQuery = supabase
           .from('stock_movements')
           .select('reason_code')
-          .gte('performed_at', monthStart.toISOString())
           .not('reason_code', 'is', null);
         reasonQuery = applyCommonFilters(reasonQuery);
+        if (!hasDateRange) {
+          reasonQuery = reasonQuery.gte(
+            'performed_at',
+            monthStart.toISOString()
+          );
+        }
         const { data: reasonStats } = await reasonQuery;
 
         const reasonCounts =
           reasonStats?.reduce(
             (acc, item) => {
               if (item.reason_code) {
-                acc[item.reason_code] = (acc[item.reason_code] || 0) + 1;
+                acc[item.reason_code] = (acc[item.reason_code] ?? 0) + 1;
               }
               return acc;
             },
             {} as Record<string, number>
-          ) || {};
+          ) ?? {};
 
         const topReasons = Object.entries(reasonCounts)
           .sort(([, a], [, b]) => b - a)
           .slice(0, 5)
           .map(([code, count]) => ({
             code,
-            description: getReasonDescription(code as any),
+            description: getReasonDescription(
+              code as Parameters<typeof getReasonDescription>[0]
+            ),
             count,
           }));
 
-        // Top utilisateurs du mois (avec filtres)
-        let userQuery = supabase
-          .from('stock_movements')
-          .select('performed_by')
-          .gte('performed_at', monthStart.toISOString());
+        // Top utilisateurs (dans la période)
+        let userQuery = supabase.from('stock_movements').select('performed_by');
         userQuery = applyCommonFilters(userQuery);
+        if (!hasDateRange) {
+          userQuery = userQuery.gte('performed_at', monthStart.toISOString());
+        }
         const { data: userStats } = await userQuery;
 
-        // Récupérer les utilisateurs uniques
         const statsUserIds = [
-          ...new Set(userStats?.map(m => m.performed_by).filter(Boolean) || []),
+          ...new Set(userStats?.map(m => m.performed_by).filter(Boolean) ?? []),
         ];
 
-        let statsUserProfiles: any[] = [];
+        let statsUserProfiles: Array<{
+          user_id: string;
+          first_name: string | null;
+          last_name: string | null;
+        }> = [];
         if (statsUserIds.length > 0) {
           const { data } = await supabase
             .from('user_profiles')
             .select('user_id, first_name, last_name')
             .in('user_id', statsUserIds);
-          statsUserProfiles = data || [];
+          statsUserProfiles = data ?? [];
         }
 
         const userCounts =
@@ -436,7 +467,7 @@ export function useMovementsHistory(options?: UseMovementsHistoryOptions) {
                 profile => profile.user_id === userId
               );
               const userName = userProfile
-                ? `${userProfile.first_name || ''} ${userProfile.last_name || ''}`.trim()
+                ? `${userProfile.first_name ?? ''} ${userProfile.last_name ?? ''}`.trim()
                 : 'Utilisateur inconnu';
 
               if (!acc[userId]) {
@@ -453,20 +484,20 @@ export function useMovementsHistory(options?: UseMovementsHistoryOptions) {
               string,
               { user_id: string; user_name: string; count: number }
             >
-          ) || {};
+          ) ?? {};
 
         const topUsers = Object.values(userCounts)
           .sort((a, b) => b.count - a.count)
           .slice(0, 5);
 
         setStats({
-          totalMovements: totalCount || 0,
-          movementsToday: todayCount || 0,
-          movementsThisWeek: weekCount || 0,
-          movementsThisMonth: monthCount || 0,
+          totalMovements: totalCount ?? 0,
+          movementsToday: todayCount,
+          movementsThisWeek: weekCount,
+          movementsThisMonth: monthCount,
           byType,
-          realMovements: realCount || 0,
-          forecastMovements: forecastCount || 0,
+          realMovements: realCount ?? 0,
+          forecastMovements: forecastCount ?? 0,
           topReasons,
           topUsers,
         });

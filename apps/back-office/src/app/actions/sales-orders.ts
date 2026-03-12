@@ -110,7 +110,7 @@ export async function updateSalesOrderStatus(
       .from('sales_orders')
       .update(updateFields)
       .eq('id', orderId)
-      .select();
+      .select('id');
 
     if (updateError) {
       console.error('❌ [Server Action] Erreur UPDATE:', updateError);

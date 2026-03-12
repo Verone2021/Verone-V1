@@ -76,7 +76,9 @@ export function useEnseignes(filters?: EnseigneFilters) {
     try {
       let query = (supabase as any)
         .from('enseignes')
-        .select('*')
+        .select(
+          'id, name, description, logo_url, member_count, is_active, created_at, updated_at, created_by'
+        )
         .order('name', { ascending: true });
 
       // Filtres
@@ -120,7 +122,9 @@ export function useEnseignes(filters?: EnseigneFilters) {
         // Récupérer l'enseigne
         const { data: enseigne, error: enseigneError } = await (supabase as any)
           .from('enseignes')
-          .select('*')
+          .select(
+            'id, name, description, logo_url, member_count, is_active, created_at, updated_at, created_by'
+          )
           .eq('id', id)
           .single();
 
@@ -182,7 +186,9 @@ export function useEnseignes(filters?: EnseigneFilters) {
             is_active: data.is_active ?? true,
           },
         ])
-        .select()
+        .select(
+          'id, name, description, logo_url, member_count, is_active, created_at, updated_at, created_by'
+        )
         .single();
 
       if (createError) {
@@ -221,7 +227,9 @@ export function useEnseignes(filters?: EnseigneFilters) {
         .from('enseignes')
         .update(updateData)
         .eq('id', data.id)
-        .select()
+        .select(
+          'id, name, description, logo_url, member_count, is_active, created_at, updated_at, created_by'
+        )
         .single();
 
       if (updateError) {
@@ -415,7 +423,9 @@ export function useEnseigne(id: string) {
         supabase as any
       )
         .from('enseignes')
-        .select('*')
+        .select(
+          'id, name, description, logo_url, member_count, is_active, created_at, updated_at, created_by'
+        )
         .eq('id', id)
         .single();
 

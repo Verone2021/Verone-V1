@@ -445,7 +445,7 @@ export function usePerformanceAnalytics(filters: PerformanceFilters) {
         selectionName,
       };
     },
-    staleTime: 30000, // 30 seconds cache
+    staleTime: 300_000, // 5 minutes cache
   });
 }
 

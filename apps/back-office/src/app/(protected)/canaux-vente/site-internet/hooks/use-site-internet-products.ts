@@ -36,7 +36,7 @@ export function useSiteInternetProducts() {
   return useQuery({
     queryKey: ['site-internet-products'],
     queryFn: fetchSiteInternetProducts,
-    staleTime: 30000, // 30 secondes
+    staleTime: 300_000, // 5 minutes
     refetchOnWindowFocus: true,
   });
 }

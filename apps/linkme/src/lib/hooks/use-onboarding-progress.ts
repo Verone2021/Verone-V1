@@ -332,11 +332,11 @@ export function useOnboardingProgress(): OnboardingProgress & {
       void raw
         .from('linkme_onboarding_progress')
         .upsert(rows, { onConflict: 'user_id,step_id' })
-        .then(({ error }) => {
+        .then(async ({ error }) => {
           if (error) {
             console.error('[useOnboardingProgress] sync error:', error);
           } else {
-            void queryClient.invalidateQueries({
+            await queryClient.invalidateQueries({
               queryKey: onboardingKeys.progress(userId),
             });
           }

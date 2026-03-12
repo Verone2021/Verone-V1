@@ -32,7 +32,13 @@ import {
 // =====================================================================
 
 type PurchaseOrderExtended = PurchaseOrder & {
-  payment_status_v2?: 'paid' | 'pending' | 'failed' | null;
+  payment_status_v2?:
+    | 'paid'
+    | 'pending'
+    | 'partially_paid'
+    | 'overpaid'
+    | 'failed'
+    | null;
   manual_payment_type?: string | null;
   is_matched?: boolean | null;
   matched_transaction_label?: string | null;
@@ -76,7 +82,7 @@ export function PurchaseOrderActionMenu({
     menuItems.push(
       <DropdownMenuItem key="edit" onClick={onEdit}>
         <Edit className="h-4 w-4 mr-2" />
-        Éditer
+        Editer
       </DropdownMenuItem>
     );
     menuItems.push(
@@ -91,13 +97,13 @@ export function PurchaseOrderActionMenu({
     menuItems.push(
       <DropdownMenuItem key="receive" onClick={onReceive}>
         <Truck className="h-4 w-4 mr-2 text-green-600" />
-        Réceptionner
+        Receptionner
       </DropdownMenuItem>
     );
     menuItems.push(
       <DropdownMenuItem key="devalidate" onClick={onDevalidate}>
         <RotateCcw className="h-4 w-4 mr-2" />
-        Dévalider
+        Devalider
       </DropdownMenuItem>
     );
   }
@@ -106,7 +112,7 @@ export function PurchaseOrderActionMenu({
     menuItems.push(
       <DropdownMenuItem key="receive" onClick={onReceive}>
         <Truck className="h-4 w-4 mr-2" />
-        Réceptionner
+        Receptionner
       </DropdownMenuItem>
     );
     menuItems.push(
@@ -121,12 +127,11 @@ export function PurchaseOrderActionMenu({
     );
   }
 
-  // Group 2: Finance (link transaction)
+  // Group 2: Finance (link transaction) — aligned with SalesOrderActionMenu
   if (
     (status === 'validated' ||
       status === 'partially_received' ||
       status === 'received') &&
-    !order.is_matched &&
     order.payment_status_v2 !== 'paid'
   ) {
     if (menuItems.length > 0) {
@@ -135,7 +140,7 @@ export function PurchaseOrderActionMenu({
     menuItems.push(
       <DropdownMenuItem key="link-transaction" onClick={onLinkTransaction}>
         <Link2 className="h-4 w-4 mr-2" />
-        Lier transaction
+        Paiement / Rapprochement
       </DropdownMenuItem>
     );
   }
@@ -189,29 +194,23 @@ export function PurchaseOrderActionMenu({
         icon={Eye}
         variant="outline"
         size="sm"
-        label="Voir les détails"
+        label="Voir les details"
         onClick={onView}
       />
 
-      {/* Badge: Reconciliation indicators (icon only) */}
-      {showReconciliation && order.is_matched && (
-        <Badge
-          variant="outline"
-          className="px-1.5 py-0.5 bg-green-50 border-green-300 cursor-help"
-          title={`Rapprochée: ${order.matched_transaction_label ?? 'Transaction'} (${formatCurrency(Math.abs(order.matched_transaction_amount ?? 0))})`}
-        >
-          <Link2 className="h-3 w-3 text-green-600" />
-        </Badge>
-      )}
+      {/* Badge: Payment/Reconciliation indicator */}
       {showReconciliation &&
-        !order.is_matched &&
-        order.payment_status_v2 === 'paid' && (
+        (order.is_matched === true || order.payment_status_v2 === 'paid') && (
           <Badge
             variant="outline"
-            className="px-1.5 py-0.5 bg-gray-100 border-gray-300 cursor-help"
-            title="Rapprochement non nécessaire : commande payée manuellement"
+            className="px-1.5 py-0.5 bg-green-50 border-green-300 cursor-help"
+            title={
+              order.is_matched
+                ? `Rapprochée: ${order.matched_transaction_label ?? 'Transaction'} (${formatCurrency(Math.abs(order.matched_transaction_amount ?? 0))})`
+                : 'Payée'
+            }
           >
-            <Link2 className="h-3 w-3 text-gray-400" />
+            <Link2 className="h-3 w-3 text-green-600" />
           </Badge>
         )}
 

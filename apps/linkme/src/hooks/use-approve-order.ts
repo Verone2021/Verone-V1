@@ -87,9 +87,8 @@ export function useApproveOrder() {
 
   return useMutation({
     mutationFn: approveOrderFn,
-    onSuccess: () => {
-      // Invalider les queries pour rafraîchir les données
-      void queryClient.invalidateQueries({ queryKey: ['linkme-orders'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['linkme-orders'] });
     },
   });
 }

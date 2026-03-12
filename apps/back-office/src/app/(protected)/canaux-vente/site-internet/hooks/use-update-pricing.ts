@@ -52,7 +52,7 @@ export function useUpdatePricing() {
         .upsert(upsertData, {
           onConflict: 'product_id,channel_id,min_quantity',
         })
-        .select();
+        .select('id');
 
       if (error) {
         console.error('❌ Erreur upsert channel_pricing:', error);
