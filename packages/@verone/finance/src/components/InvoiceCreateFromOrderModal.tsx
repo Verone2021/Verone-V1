@@ -38,12 +38,10 @@ import {
   Building2,
   Calendar,
   CheckCircle2,
-  Download,
   ExternalLink,
   FileText,
   Info,
   Loader2,
-  Mail,
   MapPin,
   Pencil,
   Plus,
@@ -121,9 +119,6 @@ export function InvoiceCreateFromOrderModal({
   const [createdInvoice, setCreatedInvoice] = useState<ICreatedInvoice | null>(
     null
   );
-  const [isSendingEmail, setIsSendingEmail] = useState(false);
-  const [emailSent, setEmailSent] = useState(false);
-
   // SIRET guard states
   const [siretInput, setSiretInput] = useState<string>('');
   const [savingSiret, setSavingSiret] = useState(false);
@@ -239,7 +234,7 @@ export function InvoiceCreateFromOrderModal({
     }
 
     const org = order.organisations;
-    if (!org || !org.has_different_shipping_address) return null;
+    if (!org?.has_different_shipping_address) return null;
 
     // Org shipping columns
     if (org.shipping_city && org.shipping_postal_code) {
@@ -369,7 +364,6 @@ export function InvoiceCreateFromOrderModal({
   const resetState = useCallback((): void => {
     setStatus('idle');
     setCreatedInvoice(null);
-    setEmailSent(false);
     setIssueDate(new Date().toISOString().split('T')[0]);
     setInvoiceLabel('');
     setSiretInput('');
@@ -422,13 +416,18 @@ export function InvoiceCreateFromOrderModal({
         throw new Error(data.error || 'Failed to create invoice');
       }
 
-      setCreatedInvoice(data.invoice);
+      // Fallback: use order total (API may not return total_amount for drafts)
+      setCreatedInvoice({
+        ...data.invoice,
+        total_amount: data.invoice.total_amount ?? order.total_ttc ?? 0,
+        invoice_number: data.invoice.invoice_number ?? 'Brouillon',
+      });
       setStatus('success');
       toast({
         title: 'Facture créée',
-        description: `Facture ${data.invoice.invoice_number} créée en brouillon`,
+        description: `Facture ${data.invoice.invoice_number ?? 'Brouillon'} créée en brouillon`,
       });
-      onSuccess?.(data.invoice.id, data.invoice.invoice_number ?? '');
+      onSuccess?.(data.invoice.id, data.invoice.invoice_number ?? 'Brouillon');
     } catch (error) {
       setStatus('error');
       toast({
@@ -437,91 +436,6 @@ export function InvoiceCreateFromOrderModal({
           error instanceof Error ? error.message : 'Erreur lors de la création',
         variant: 'destructive',
       });
-    }
-  };
-
-  const handleDownloadPdf = async (): Promise<void> => {
-    if (!createdInvoice?.id) return;
-
-    try {
-      const response = await fetch(
-        `/api/qonto/invoices/${createdInvoice.id}/pdf`
-      );
-
-      if (!response.ok) {
-        throw new Error('Failed to download PDF');
-      }
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `facture-${createdInvoice.invoice_number}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-
-      toast({
-        title: 'PDF téléchargé',
-        description: 'La facture a été téléchargée',
-      });
-    } catch (error) {
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de télécharger le PDF',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  const handleSendEmail = async (): Promise<void> => {
-    if (!createdInvoice?.id || !order) return;
-
-    const customerEmail =
-      order.organisations?.email || order.individual_customers?.email;
-
-    if (!customerEmail) {
-      toast({
-        title: 'Erreur',
-        description: 'Aucune adresse email client disponible',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    setIsSendingEmail(true);
-
-    try {
-      const response = await fetch('/api/emails/send-invoice', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          invoiceId: createdInvoice.id,
-          to: customerEmail,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Failed to send email');
-      }
-
-      setEmailSent(true);
-      toast({
-        title: 'Email envoyé',
-        description: `Facture envoyée à ${customerEmail}`,
-      });
-    } catch (error) {
-      toast({
-        title: 'Erreur',
-        description:
-          error instanceof Error ? error.message : "Erreur lors de l'envoi",
-        variant: 'destructive',
-      });
-    } finally {
-      setIsSendingEmail(false);
     }
   };
 
@@ -569,32 +483,16 @@ export function InvoiceCreateFromOrderModal({
                 </div>
               </div>
 
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  variant="outline"
-                  onClick={handleDownloadPdf}
-                  disabled={!createdInvoice.pdf_url}
-                >
-                  <Download className="mr-2 h-4 w-4" />
-                  Télécharger PDF
-                </Button>
+              <div className="flex items-center gap-2 rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-700">
+                <Info className="h-4 w-4 shrink-0" />
+                <span>
+                  Facture créée en brouillon. Finalisez-la sur Qonto pour
+                  générer le PDF.
+                </span>
+              </div>
 
-                <Button
-                  variant="outline"
-                  onClick={handleSendEmail}
-                  disabled={!customerEmail || isSendingEmail || emailSent}
-                >
-                  {isSendingEmail ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : emailSent ? (
-                    <CheckCircle2 className="mr-2 h-4 w-4 text-green-600" />
-                  ) : (
-                    <Mail className="mr-2 h-4 w-4" />
-                  )}
-                  {emailSent ? 'Email envoyé' : 'Envoyer par email'}
-                </Button>
-
-                {createdInvoice.public_url && (
+              {createdInvoice.public_url && (
+                <div className="flex flex-wrap gap-2">
                   <Button variant="outline" asChild>
                     <a
                       href={createdInvoice.public_url}
@@ -605,13 +503,7 @@ export function InvoiceCreateFromOrderModal({
                       Voir sur Qonto
                     </a>
                   </Button>
-                )}
-              </div>
-
-              {customerEmail && (
-                <p className="text-xs text-muted-foreground">
-                  Email client: {customerEmail}
-                </p>
+                </div>
               )}
             </div>
           ) : (

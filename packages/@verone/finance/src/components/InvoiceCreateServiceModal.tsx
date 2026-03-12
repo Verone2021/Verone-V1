@@ -32,8 +32,8 @@ import {
 import {
   Calendar,
   CheckCircle2,
-  Download,
   ExternalLink,
+  Info,
   Loader2,
   Plus,
   Send,
@@ -240,11 +240,21 @@ export function InvoiceCreateServiceModal({
         throw new Error(data.error || 'Failed to create invoice');
       }
 
-      setCreatedInvoice(data.invoice);
+      // Fallback: calculate total locally (API may not return total_amount for drafts)
+      const localTotalTTC = validItems.reduce(
+        (sum, item) =>
+          sum + item.quantity * item.unitPrice * (1 + item.vatRate),
+        0
+      );
+      setCreatedInvoice({
+        ...data.invoice,
+        total_amount: data.invoice.total_amount ?? localTotalTTC,
+        invoice_number: data.invoice.invoice_number ?? 'Brouillon',
+      });
       setStatus('success');
       toast({
         title: 'Facture créée',
-        description: `Facture ${data.invoice.invoice_number} créée avec succès`,
+        description: `Facture ${data.invoice.invoice_number ?? 'Brouillon'} créée avec succès`,
       });
       onSuccess?.(data.invoice.id);
     } catch (error) {
@@ -253,41 +263,6 @@ export function InvoiceCreateServiceModal({
         title: 'Erreur',
         description:
           error instanceof Error ? error.message : 'Erreur lors de la création',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  const handleDownloadPdf = async (): Promise<void> => {
-    if (!createdInvoice?.id) return;
-
-    try {
-      const response = await fetch(
-        `/api/qonto/invoices/${createdInvoice.id}/pdf`
-      );
-
-      if (!response.ok) {
-        throw new Error('Failed to download PDF');
-      }
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `facture-${createdInvoice.invoice_number}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-
-      toast({
-        title: 'PDF téléchargé',
-        description: 'La facture a été téléchargée',
-      });
-    } catch (error) {
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de télécharger le PDF',
         variant: 'destructive',
       });
     }
@@ -330,17 +305,16 @@ export function InvoiceCreateServiceModal({
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-2">
-              <Button
-                variant="outline"
-                onClick={handleDownloadPdf}
-                disabled={!createdInvoice.pdf_url}
-              >
-                <Download className="mr-2 h-4 w-4" />
-                Télécharger PDF
-              </Button>
+            <div className="flex items-center gap-2 rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-700">
+              <Info className="h-4 w-4 shrink-0" />
+              <span>
+                Facture créée en brouillon. Finalisez-la sur Qonto pour générer
+                le PDF.
+              </span>
+            </div>
 
-              {createdInvoice.public_url && (
+            {createdInvoice.public_url && (
+              <div className="flex flex-wrap gap-2">
                 <Button variant="outline" asChild>
                   <a
                     href={createdInvoice.public_url}
@@ -351,8 +325,8 @@ export function InvoiceCreateServiceModal({
                     Voir sur Qonto
                   </a>
                 </Button>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         ) : (
           <div className="space-y-4">
