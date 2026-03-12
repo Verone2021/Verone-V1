@@ -355,8 +355,8 @@ export default function PurchaseOrdersPage() {
         switch (sortColumn) {
           case 'date':
             comparison =
-              new Date(a.order_date || a.created_at).getTime() -
-              new Date(b.order_date || b.created_at).getTime();
+              new Date(a.order_date ?? a.created_at).getTime() -
+              new Date(b.order_date ?? b.created_at).getTime();
             break;
           case 'po_number':
             comparison = (a.po_number || '').localeCompare(b.po_number || '');

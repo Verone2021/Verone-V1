@@ -200,7 +200,7 @@ export function PurchaseOrderActionMenu({
 
       {/* Badge: Payment/Reconciliation indicator */}
       {showReconciliation &&
-        (order.is_matched || order.payment_status_v2 === 'paid') && (
+        (order.is_matched === true || order.payment_status_v2 === 'paid') && (
           <Badge
             variant="outline"
             className="px-1.5 py-0.5 bg-green-50 border-green-300 cursor-help"
