@@ -332,6 +332,11 @@ export function SalesOrdersTable({
   const [showValidateConfirmation, setShowValidateConfirmation] =
     useState(false);
   const [orderToValidate, setOrderToValidate] = useState<string | null>(null);
+  const [showDevalidateConfirmation, setShowDevalidateConfirmation] =
+    useState(false);
+  const [orderToDevalidate, setOrderToDevalidate] = useState<string | null>(
+    null
+  );
   const [showLinkTransactionModal, setShowLinkTransactionModal] =
     useState(false);
   const [selectedOrderForLink, setSelectedOrderForLink] =
@@ -720,15 +725,45 @@ export function SalesOrdersTable({
       return;
     }
 
+    if (newStatus === 'draft') {
+      setOrderToDevalidate(orderId);
+      setShowDevalidateConfirmation(true);
+      return;
+    }
+
     try {
       await updateStatus(orderId, newStatus);
       toast({
         title: 'Succes',
-        description: `Commande ${newStatus === 'draft' ? 'devalidee' : 'mise a jour'} avec succes`,
+        description: 'Commande mise a jour avec succes',
       });
       onOrderUpdated?.();
     } catch (error) {
       console.error('Erreur lors du changement de statut:', error);
+    }
+  };
+
+  const handleDevalidateConfirmed = async () => {
+    if (!orderToDevalidate) return;
+
+    try {
+      await updateStatus(orderToDevalidate, 'draft');
+      toast({
+        title: 'Succes',
+        description:
+          'Commande devalidee avec succes. Elle est de nouveau en brouillon.',
+      });
+      onOrderUpdated?.();
+    } catch (error) {
+      console.error('Erreur lors de la devalidation:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de devalider la commande',
+        variant: 'destructive',
+      });
+    } finally {
+      setShowDevalidateConfirmation(false);
+      setOrderToDevalidate(null);
     }
   };
 
@@ -1930,6 +1965,42 @@ export function SalesOrdersTable({
               }}
             >
               Valider la commande
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* AlertDialog Confirmation Devalidation */}
+      <AlertDialog
+        open={showDevalidateConfirmation}
+        onOpenChange={setShowDevalidateConfirmation}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmer la devalidation</AlertDialogTitle>
+            <AlertDialogDescription>
+              Vous etes sur le point de devalider cette commande client. Elle
+              repassera en statut brouillon et ne pourra plus etre expediee tant
+              qu&apos;elle ne sera pas revalidee.
+              <br />
+              <br />
+              Voulez-vous continuer ?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                void handleDevalidateConfirmed().catch((err: unknown) => {
+                  console.error(
+                    '[SalesOrdersTable] devalidate confirmed failed:',
+                    err
+                  );
+                });
+              }}
+              className="bg-orange-600 hover:bg-orange-700"
+            >
+              Devalider la commande
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

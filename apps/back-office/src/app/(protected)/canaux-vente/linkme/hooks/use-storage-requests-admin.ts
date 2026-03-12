@@ -155,7 +155,7 @@ export function usePendingStorageRequests(status?: string) {
             : '',
       }));
     },
-    staleTime: 30000,
+    staleTime: 300_000,
   });
 }
 

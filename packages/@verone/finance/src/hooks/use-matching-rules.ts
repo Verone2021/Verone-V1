@@ -148,7 +148,9 @@ export function useMatchingRules(): UseMatchingRulesReturn {
         supabase as { from: CallableFunction }
       )
         .from('v_matching_rules_with_org')
-        .select('*')
+        .select(
+          'id, priority, enabled, match_type, match_value, match_patterns, display_label, organisation_id, individual_customer_id, counterparty_type, default_category, default_role_type, allow_multiple_categories, default_vat_rate, created_at, created_by, organisation_name, organisation_type, matched_expenses_count'
+        )
         .order('priority', { ascending: true });
 
       if (fetchError) {
@@ -209,7 +211,7 @@ export function useMatchingRules(): UseMatchingRulesReturn {
             .from('matching_rules')
             .update(ruleData)
             .eq('id', existingRule.id)
-            .select()
+            .select('id')
             .single();
 
           if (updateError) {
@@ -232,7 +234,7 @@ export function useMatchingRules(): UseMatchingRulesReturn {
             match_value: data.match_value,
             ...ruleData,
           })
-          .select()
+          .select('id')
           .single();
 
         if (createError) {
@@ -301,7 +303,7 @@ export function useMatchingRules(): UseMatchingRulesReturn {
           .from('matching_rules')
           .update(cleanData)
           .eq('id', id)
-          .select()
+          .select('id')
           .single();
 
         console.log('[useMatchingRules] update response:', {

@@ -156,7 +156,9 @@ export function useEntityAddresses(
       // Build query based on parameters
       let query = supabase
         .from('addresses')
-        .select('*')
+        .select(
+          'id, owner_type, owner_id, address_type, source_app, label, legal_name, trade_name, siret, vat_number, address_line1, address_line2, postal_code, city, region, country, latitude, longitude, contact_name, contact_email, contact_phone, is_default, is_active, created_at, updated_at, archived_at'
+        )
         .eq('owner_type', ownerType)
         .eq('owner_id', ownerId)
         .eq('is_active', true)

@@ -166,7 +166,7 @@ export function usePendingOrganisations() {
         affiliate_display_name: displayNameMap.get(org.id as string) ?? null,
       })) as PendingOrganisation[];
     },
-    staleTime: 30000,
+    staleTime: 300_000,
   });
 }
 
@@ -251,7 +251,7 @@ export function useAllOrganisationsWithApproval(
         affiliate_display_name: displayNameMap.get(org.id as string) ?? null,
       })) as PendingOrganisation[];
     },
-    staleTime: 30000,
+    staleTime: 300_000,
   });
 }
 

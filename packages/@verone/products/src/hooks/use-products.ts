@@ -353,7 +353,9 @@ export function useProducts(filters?: ProductFilters, page: number = 0) {
           min_stock: productData.min_stock,
           reorder_point: productData.reorder_point,
         } as any)
-        .select('*')
+        .select(
+          'id, name, sku, slug, cost_price, margin_percentage, stock_status, product_status, condition, variant_attributes, dimensions, weight, video_url, supplier_reference, gtin, stock_quantity, supplier_page_url, supplier_id, description, technical_description, selling_points, product_type, assigned_client_id, creation_mode, created_at, updated_at'
+        )
         .single();
 
       if (error) throw error;
@@ -387,7 +389,9 @@ export function useProducts(filters?: ProductFilters, page: number = 0) {
         .from('products')
         .update(productData as any)
         .eq('id', id)
-        .select()
+        .select(
+          'id, name, sku, slug, cost_price, margin_percentage, stock_status, product_status, condition, variant_attributes, dimensions, weight, video_url, supplier_reference, gtin, stock_quantity, supplier_page_url, supplier_id, description, technical_description, selling_points, product_type, assigned_client_id, creation_mode, created_at, updated_at'
+        )
         .single();
 
       if (error) throw error;

@@ -264,7 +264,7 @@ export function useStorageEventsHistory(
       return data ?? [];
     },
     enabled: !!ownerId && !!ownerType,
-    staleTime: 30000,
+    staleTime: 300_000,
   });
 }
 

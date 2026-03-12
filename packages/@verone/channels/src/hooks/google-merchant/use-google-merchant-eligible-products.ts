@@ -62,7 +62,7 @@ export function useGoogleMerchantEligibleProducts() {
 
       return (data as GoogleMerchantEligibleProduct[]) || [];
     },
-    staleTime: 30000, // 30s (données changent souvent)
+    staleTime: 300_000, // 5 minutes
     gcTime: 300000, // 5 minutes
     refetchOnWindowFocus: true,
     retry: 2,

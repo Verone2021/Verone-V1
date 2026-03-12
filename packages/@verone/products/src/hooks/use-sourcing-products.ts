@@ -393,7 +393,9 @@ export function useSourcingProducts(filters?: SourcingFilters) {
       // 2. Vérifier s'il existe une commande fournisseur en "draft" pour ce fournisseur
       const { data: existingDraftOrders, error: ordersError } = await supabase
         .from('purchase_orders')
-        .select('*')
+        .select(
+          'id, po_number, supplier_id, status, total_ht, total_ttc, created_at'
+        )
         .eq('supplier_id', product.supplier_id)
         .eq('status', 'draft')
         .order('created_at', { ascending: false })
@@ -739,7 +741,7 @@ export function useSourcingProducts(filters?: SourcingFilters) {
             stock_status: 'out_of_stock',
           },
         ] as any)
-        .select()
+        .select('id, name, sku, product_status, creation_mode, sourcing_type')
         .single();
 
       if (error) {

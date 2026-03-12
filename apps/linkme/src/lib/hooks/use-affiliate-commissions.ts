@@ -172,7 +172,7 @@ export function useAffiliateCommissions(
       return mapped;
     },
     enabled: !!affiliate,
-    staleTime: 30000, // 30 secondes
+    staleTime: 300_000, // 5 minutes
     refetchOnWindowFocus: false,
   });
 }
@@ -209,6 +209,6 @@ export function useCommissionsCounts() {
       };
     },
     enabled: !!affiliate,
-    staleTime: 30000,
+    staleTime: 300_000,
   });
 }

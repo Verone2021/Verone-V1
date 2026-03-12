@@ -86,7 +86,9 @@ export interface UpdateLinkMeUserInput {
 async function fetchLinkMeUsers(): Promise<LinkMeUser[]> {
   const { data, error } = await supabase
     .from('v_linkme_users')
-    .select('*')
+    .select(
+      'user_id, user_role_id, email, first_name, last_name, avatar_url, phone, linkme_role, enseigne_id, organisation_id, permissions, is_active, role_created_at, default_margin_rate, enseigne_name, enseigne_logo, organisation_name, organisation_logo'
+    )
     .order('role_created_at', { ascending: false });
 
   if (error) {
@@ -121,7 +123,9 @@ async function fetchLinkMeUsers(): Promise<LinkMeUser[]> {
 async function fetchLinkMeUserById(userId: string): Promise<LinkMeUser | null> {
   const { data, error } = await supabase
     .from('v_linkme_users')
-    .select('*')
+    .select(
+      'user_id, user_role_id, email, first_name, last_name, avatar_url, phone, linkme_role, enseigne_id, organisation_id, permissions, is_active, role_created_at, default_margin_rate, enseigne_name, enseigne_logo, organisation_name, organisation_logo'
+    )
     .eq('user_id', userId)
     .single();
 
@@ -163,7 +167,9 @@ async function fetchLinkMeUsersByEnseigne(
 ): Promise<LinkMeUser[]> {
   const { data, error } = await supabase
     .from('v_linkme_users')
-    .select('*')
+    .select(
+      'user_id, user_role_id, email, first_name, last_name, avatar_url, phone, linkme_role, enseigne_id, organisation_id, permissions, is_active, role_created_at, default_margin_rate, enseigne_name, enseigne_logo, organisation_name, organisation_logo'
+    )
     .eq('enseigne_id', enseigneId)
     .order('linkme_role')
     .order('role_created_at', { ascending: false });
@@ -280,7 +286,7 @@ export function useLinkMeUsers() {
   return useQuery({
     queryKey: ['linkme-users'],
     queryFn: fetchLinkMeUsers,
-    staleTime: 30000,
+    staleTime: 300_000,
     refetchOnWindowFocus: true,
   });
 }
@@ -293,7 +299,7 @@ export function useLinkMeUser(userId: string | null) {
     queryKey: ['linkme-user', userId],
     queryFn: () => fetchLinkMeUserById(userId!),
     enabled: !!userId,
-    staleTime: 30000,
+    staleTime: 300_000,
   });
 }
 
@@ -305,7 +311,7 @@ export function useLinkMeUsersByEnseigne(enseigneId: string | null) {
     queryKey: ['linkme-users-enseigne', enseigneId],
     queryFn: () => fetchLinkMeUsersByEnseigne(enseigneId!),
     enabled: !!enseigneId,
-    staleTime: 30000,
+    staleTime: 300_000,
   });
 }
 
@@ -424,7 +430,9 @@ export function useUpdateLinkMeUser() {
         .update(roleUpdate)
         .eq('user_id', userId)
         .eq('app', 'linkme')
-        .select()
+        .select(
+          'id, user_id, app, role, enseigne_id, organisation_id, permissions, is_active, updated_at'
+        )
         .single();
 
       if (error) throw error;

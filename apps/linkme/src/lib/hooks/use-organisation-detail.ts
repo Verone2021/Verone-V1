@@ -234,7 +234,7 @@ export function useOrganisationDetail(organisationId: string | null) {
       };
     },
     enabled: !!organisationId,
-    staleTime: 30000, // 30 seconds
+    staleTime: 300_000, // 5 minutes
   });
 }
 

@@ -142,7 +142,9 @@ export function usePriceLists(filters?: {
       try {
         let query = (supabase as any)
           .from('price_lists')
-          .select('*')
+          .select(
+            'id, code, name, description, list_type, priority, currency, valid_from, valid_until, is_active, created_at, updated_at, created_by, updated_by'
+          )
           .order('priority', { ascending: true });
 
         if (filters?.list_type) {
@@ -198,7 +200,9 @@ export function usePriceList(priceListId: string | null) {
       try {
         const { data, error } = await (supabase as any)
           .from('price_lists')
-          .select('*')
+          .select(
+            'id, code, name, description, list_type, priority, currency, valid_from, valid_until, is_active, created_at, updated_at, created_by, updated_by'
+          )
           .eq('id', priceListId)
           .single();
 
@@ -243,7 +247,21 @@ export function usePriceListItems(priceListId: string | null) {
           .from('price_list_items')
           .select(
             `
-            *,
+            id,
+            price_list_id,
+            product_id,
+            cost_price,
+            discount_rate,
+            min_quantity,
+            max_quantity,
+            margin_rate,
+            currency,
+            valid_from,
+            valid_until,
+            is_active,
+            notes,
+            created_at,
+            updated_at,
             products (
               id,
               name,
@@ -334,7 +352,7 @@ export function useCreatePriceList() {
             is_active: data.is_active !== undefined ? data.is_active : true,
             created_by: user.user?.id || null,
           })
-          .select()
+          .select('id')
           .single();
 
         if (error) {
@@ -412,7 +430,7 @@ export function useUpdatePriceList() {
             updated_at: new Date().toISOString(),
           })
           .eq('id', priceListId)
-          .select()
+          .select('id')
           .single();
 
         if (error) {
@@ -549,7 +567,7 @@ export function useCreatePriceListItem() {
             is_active: data.is_active !== undefined ? data.is_active : true,
             notes: data.notes || null,
           })
-          .select()
+          .select('id')
           .single();
 
         if (error) {
@@ -628,7 +646,7 @@ export function useUpdatePriceListItem() {
             updated_at: new Date().toISOString(),
           })
           .eq('id', itemId)
-          .select()
+          .select('id')
           .single();
 
         if (error) {

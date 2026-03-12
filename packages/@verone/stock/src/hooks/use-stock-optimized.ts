@@ -152,7 +152,23 @@ export function useStockOptimized(filters: StockFilters = {}) {
     `stock-movements:${JSON.stringify(filters)}`,
     async supabase => {
       let query = supabase.from('stock_movements').select(`
-          *,
+          id,
+          product_id,
+          movement_type,
+          quantity_change,
+          quantity_before,
+          quantity_after,
+          unit_cost,
+          reference_type,
+          reference_id,
+          notes,
+          reason_code,
+          affects_forecast,
+          forecast_type,
+          performed_by,
+          performed_at,
+          created_at,
+          updated_at,
           products!inner(id, name, sku),
           user_profiles!performed_by(first_name, last_name)
         `);
@@ -255,7 +271,7 @@ export function useStockOptimized(filters: StockFilters = {}) {
           performed_at: new Date().toISOString(),
         },
       ] as any)
-      .select()
+      .select('id')
       .single();
 
     if (error) throw error;

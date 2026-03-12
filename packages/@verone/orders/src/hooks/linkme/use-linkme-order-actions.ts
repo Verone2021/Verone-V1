@@ -1065,7 +1065,7 @@ export function usePendingOrders() {
 
       return enrichedOrders;
     },
-    staleTime: 30000,
+    staleTime: 300_000,
   });
 }
 
@@ -1301,6 +1301,6 @@ export function useAllLinkMeOrders(status?: OrderValidationStatus) {
 
       return enrichedOrders;
     },
-    staleTime: 30000,
+    staleTime: 300_000,
   });
 }

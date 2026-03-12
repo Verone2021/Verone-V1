@@ -85,7 +85,9 @@ export function useAffiliateStorageRequests() {
 
       const { data, error } = await supabase
         .from('affiliate_storage_requests')
-        .select('*')
+        .select(
+          'id, product_id, affiliate_id, quantity, notes, status, rejection_reason, reception_id, reviewed_at, created_at, updated_at'
+        )
         .eq('affiliate_id', affiliateId)
         .order('created_at', { ascending: false });
 
@@ -131,7 +133,7 @@ export function useAffiliateStorageRequests() {
       }));
     },
     enabled: !!enseigneId || (isOrganisationAdmin && !!organisationId),
-    staleTime: 30000,
+    staleTime: 300_000,
   });
 }
 
@@ -204,7 +206,9 @@ export function useCreateStorageRequest() {
       const { data, error } = await supabase
         .from('affiliate_storage_requests')
         .insert(insertData)
-        .select()
+        .select(
+          'id, product_id, affiliate_id, quantity, notes, status, rejection_reason, reception_id, reviewed_at, created_at, updated_at'
+        )
         .single();
 
       if (error) {

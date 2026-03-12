@@ -122,9 +122,8 @@ export function useAffiliateBranding(
         throw updateError;
       }
     },
-    onSuccess: (): void => {
-      // Invalidate query to refetch
-      void queryClient.invalidateQueries({
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
         queryKey: ['affiliate-branding', affiliateId],
       });
     },

@@ -129,7 +129,22 @@ export function usePaymentRequestsAdmin(statusFilter?: string) {
         .from('linkme_payment_requests')
         .select(
           `
-          *,
+          id,
+          affiliate_id,
+          request_number,
+          total_amount_ht,
+          total_amount_ttc,
+          tax_rate,
+          status,
+          invoice_file_url,
+          invoice_file_name,
+          invoice_received_at,
+          paid_at,
+          paid_by,
+          payment_reference,
+          notes,
+          created_at,
+          updated_at,
           linkme_affiliates (
             display_name,
             email,
@@ -157,7 +172,7 @@ export function usePaymentRequestsAdmin(statusFilter?: string) {
         affiliate: item.linkme_affiliates ?? undefined,
       }));
     },
-    staleTime: 30000,
+    staleTime: 300_000,
   });
 }
 
@@ -319,7 +334,9 @@ export function useCreatePaymentRequestAdmin() {
           total_amount_ttc: totalTTC,
           status: 'pending',
         })
-        .select()
+        .select(
+          'id, affiliate_id, request_number, total_amount_ht, total_amount_ttc, tax_rate, status, invoice_file_url, invoice_file_name, invoice_received_at, paid_at, paid_by, payment_reference, notes, created_at, updated_at'
+        )
         .single()
         .returns<PaymentRequestRaw>();
 
@@ -392,7 +409,22 @@ export function useRecentPaymentRequests(limit: number = 5) {
         .from('linkme_payment_requests')
         .select(
           `
-          *,
+          id,
+          affiliate_id,
+          request_number,
+          total_amount_ht,
+          total_amount_ttc,
+          tax_rate,
+          status,
+          invoice_file_url,
+          invoice_file_name,
+          invoice_received_at,
+          paid_at,
+          paid_by,
+          payment_reference,
+          notes,
+          created_at,
+          updated_at,
           linkme_affiliates (
             display_name,
             email,
@@ -417,6 +449,6 @@ export function useRecentPaymentRequests(limit: number = 5) {
         affiliate: item.linkme_affiliates ?? undefined,
       }));
     },
-    staleTime: 30000,
+    staleTime: 300_000,
   });
 }

@@ -223,7 +223,9 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
           },
           // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase strict enum types pour suitable_rooms nécessitent cast
         ] as any)
-        .select()
+        .select(
+          'id, name, base_sku, subcategory_id, variant_type, product_count, has_common_supplier, supplier_id, dimensions_length, dimensions_width, dimensions_height, dimensions_unit, style, suitable_rooms, common_weight, has_common_weight, archived_at, created_at, updated_at'
+        )
         .single();
 
       if (createError || !newGroup) {
@@ -527,7 +529,9 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
         const { error: createError, data: createdProduct } = await supabase
           .from('products')
           .insert(newProduct)
-          .select()
+          .select(
+            'id, name, sku, variant_group_id, variant_position, cost_price, product_status, stock_status'
+          )
           .single();
 
         if (createError) {
@@ -876,7 +880,9 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
         .from('variant_groups')
         .update(updateData)
         .eq('id', groupId)
-        .select()
+        .select(
+          'id, name, base_sku, subcategory_id, variant_type, product_count, has_common_supplier, supplier_id, dimensions_length, dimensions_width, dimensions_height, dimensions_unit, style, suitable_rooms, common_weight, has_common_weight, archived_at, created_at, updated_at'
+        )
         .single();
 
       if (updateError) {
@@ -1308,7 +1314,9 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
     try {
       const { data, error: fetchError } = await supabase
         .from('variant_groups')
-        .select('*')
+        .select(
+          'id, name, base_sku, subcategory_id, variant_type, product_count, has_common_supplier, supplier_id, dimensions_length, dimensions_width, dimensions_height, dimensions_unit, style, suitable_rooms, common_weight, has_common_weight, archived_at, created_at, updated_at'
+        )
         .not('archived_at', 'is', null)
         .order('archived_at', { ascending: false });
 

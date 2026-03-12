@@ -1312,7 +1312,7 @@ export function useSalesOrders() {
               handling_cost_ht: data.handling_cost_ht ?? 0,
             },
           ] as never)
-          .select()
+          .select('id, order_number, status')
           .single();
 
         if (orderError) throw orderError;
@@ -2035,7 +2035,7 @@ export function useSalesOrders() {
           .from('sales_orders')
           .delete()
           .eq('id', orderId)
-          .select();
+          .select('id');
 
         console.warn(
           '[DELETE] Résultat suppression - Data:',

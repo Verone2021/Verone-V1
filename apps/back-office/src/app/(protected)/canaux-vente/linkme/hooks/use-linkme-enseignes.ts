@@ -66,7 +66,9 @@ async function fetchEnseignesWithStats(): Promise<EnseigneWithStats[]> {
   // Fetch enseignes d'abord (nécessaire pour avoir les IDs)
   const { data: enseignes, error } = await supabase
     .from('enseignes')
-    .select('*')
+    .select(
+      'id, name, description, logo_url, member_count, is_active, created_at, updated_at, created_by'
+    )
     .order('name');
 
   if (error) {
@@ -163,7 +165,9 @@ async function fetchEnseigneById(
 
   const { data: enseigne, error } = await supabase
     .from('enseignes')
-    .select('*')
+    .select(
+      'id, name, description, logo_url, member_count, is_active, created_at, updated_at, created_by'
+    )
     .eq('id', enseigneId)
     .single();
 
@@ -264,7 +268,7 @@ export function useLinkMeEnseignes() {
   return useQuery({
     queryKey: ['linkme-enseignes'],
     queryFn: fetchEnseignesWithStats,
-    staleTime: 30000,
+    staleTime: 300_000,
     refetchOnWindowFocus: true,
   });
 }
@@ -277,7 +281,7 @@ export function useLinkMeEnseigne(enseigneId: string | null) {
     queryKey: ['linkme-enseigne', enseigneId],
     queryFn: () => fetchEnseigneById(enseigneId!),
     enabled: !!enseigneId,
-    staleTime: 30000,
+    staleTime: 300_000,
   });
 }
 
@@ -289,7 +293,7 @@ export function useLinkMeEnseigneOrganisations(enseigneId: string | null) {
     queryKey: ['linkme-enseigne-organisations', enseigneId],
     queryFn: () => fetchEnseigneOrganisations(enseigneId!),
     enabled: !!enseigneId,
-    staleTime: 30000,
+    staleTime: 300_000,
   });
 }
 
@@ -311,7 +315,9 @@ export function useCreateEnseigne() {
           is_active: input.is_active ?? true,
           member_count: 0,
         })
-        .select()
+        .select(
+          'id, name, description, logo_url, member_count, is_active, created_at, updated_at, created_by'
+        )
         .single();
 
       if (error) throw error;
@@ -345,7 +351,9 @@ export function useUpdateEnseigne() {
           updated_at: new Date().toISOString(),
         })
         .eq('id', enseigneId)
-        .select()
+        .select(
+          'id, name, description, logo_url, member_count, is_active, created_at, updated_at, created_by'
+        )
         .single();
 
       if (error) throw error;

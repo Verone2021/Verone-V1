@@ -160,7 +160,7 @@ export function useAffiliateProducts() {
       }));
     },
     enabled: !!enseigneId || (isOrganisationAdmin && !!organisationId),
-    staleTime: 30000,
+    staleTime: 300_000,
   });
 }
 
@@ -290,7 +290,9 @@ export function useCreateAffiliateProduct() {
       const { data, error } = await supabase
         .from('products')
         .insert(insertData)
-        .select()
+        .select(
+          'id, name, sku, description, affiliate_payout_ht, affiliate_commission_rate, affiliate_approval_status, affiliate_rejection_reason, dimensions, store_at_verone, created_at, updated_at'
+        )
         .single<AffiliateProduct>();
 
       if (error) {
@@ -344,7 +346,9 @@ export function useUpdateAffiliateProduct() {
         .eq('id', productId)
         .eq('enseigne_id', enseigneId)
         .eq('affiliate_approval_status', 'draft')
-        .select()
+        .select(
+          'id, name, sku, description, affiliate_payout_ht, affiliate_commission_rate, affiliate_approval_status, affiliate_rejection_reason, dimensions, store_at_verone, created_at, updated_at'
+        )
         .single<AffiliateProduct>();
 
       if (error) {
