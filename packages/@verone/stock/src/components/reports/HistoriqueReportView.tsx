@@ -48,16 +48,30 @@ export function HistoriqueReportView({
   dateFrom,
   dateTo,
 }: HistoriqueReportViewProps) {
-  const { movements, stats, loading, applyFilters, filters } =
-    useMovementsHistory();
+  // Pass date filters as initial filters so hook loads filtered data from start
+  const initialFilters = useMemo(() => {
+    if (dateFrom && dateTo) {
+      return {
+        dateRange: {
+          from: new Date(dateFrom),
+          to: new Date(dateTo),
+        },
+        limit: 100,
+      };
+    }
+    return { limit: 100 };
+  }, [dateFrom, dateTo]);
+
+  const { movements, stats, loading, applyFilters } = useMovementsHistory({
+    initialFilters,
+  });
   const { toast } = useToast();
   const [showPdfPreview, setShowPdfPreview] = useState(false);
 
-  // Appliquer filtres de date si fournis
+  // Re-apply filters when dates change (for dynamic updates)
   useEffect(() => {
     if (dateFrom && dateTo) {
       applyFilters({
-        ...filters,
         dateRange: {
           from: new Date(dateFrom),
           to: new Date(dateTo),
