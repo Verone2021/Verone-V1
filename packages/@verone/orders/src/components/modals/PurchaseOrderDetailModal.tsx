@@ -116,7 +116,6 @@ const paymentTermsLabels: Record<string, string> = {
 interface SupplierInvoice {
   id: string;
   document_number: string;
-  workflow_status: string;
   status: string;
   total_ttc: number;
   amount_paid: number;
@@ -838,14 +837,12 @@ export function PurchaseOrderDetailModal({
                           <Badge
                             variant="outline"
                             className={
-                              inv.workflow_status === 'paid'
+                              inv.status === 'paid'
                                 ? 'bg-green-50 text-green-700 border-green-300'
                                 : 'bg-amber-50 text-amber-700 border-amber-300'
                             }
                           >
-                            {inv.workflow_status === 'paid'
-                              ? 'Payée'
-                              : 'En attente'}
+                            {inv.status === 'paid' ? 'Payée' : 'En attente'}
                           </Badge>
                         </div>
                         <div className="flex justify-between text-gray-500">

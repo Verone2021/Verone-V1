@@ -75,12 +75,6 @@ export interface InvoiceDetail {
   document_type: string;
   document_date: string;
   due_date: string | null;
-  workflow_status:
-    | 'synchronized'
-    | 'draft_validated'
-    | 'finalized'
-    | 'sent'
-    | 'paid';
   status: string;
   total_ht: number;
   total_ttc: number;
@@ -125,7 +119,6 @@ interface RawInvoiceData {
   document_type: string;
   document_date: string;
   due_date: string | null;
-  workflow_status: string | null;
   status: string;
   total_ht: number;
   total_ttc: number;
@@ -205,7 +198,6 @@ export async function GET(
         document_type,
         document_date,
         due_date,
-        workflow_status,
         status,
         total_ht,
         total_ttc,
@@ -359,8 +351,6 @@ export async function GET(
       document_type: rawInvoice.document_type,
       document_date: rawInvoice.document_date,
       due_date: rawInvoice.due_date,
-      workflow_status: (rawInvoice.workflow_status ??
-        'synchronized') as InvoiceDetail['workflow_status'],
       status: rawInvoice.status,
       total_ht: rawInvoice.total_ht,
       total_ttc: rawInvoice.total_ttc,

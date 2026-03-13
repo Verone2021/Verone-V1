@@ -203,7 +203,6 @@ export async function POST(
             tva_amount: tvaAmount,
             amount_paid: amountPaid,
             status,
-            workflow_status: null,
             sales_order_id: order.id,
             qonto_invoice_id: invoice.id,
             qonto_pdf_url: invoice.pdf_url ?? null,

@@ -70,7 +70,7 @@ export async function GET(
     const { data: localDoc } = await supabase
       .from('financial_documents')
       .select(
-        'billing_address, shipping_address, sales_order_id, partner_id, sales_orders!financial_documents_sales_order_id_fkey(order_number), organisations!financial_documents_partner_id_fkey(legal_name, trade_name)'
+        'billing_address, shipping_address, sales_order_id, partner_id, sales_orders!financial_documents_sales_order_id_fkey(order_number, billing_address, shipping_address), organisations!financial_documents_partner_id_fkey(legal_name, trade_name, billing_address_line1, billing_city, billing_postal_code, billing_country, shipping_address_line1, shipping_city, shipping_postal_code, shipping_country, address_line1, city, postal_code, country)'
       )
       .eq('qonto_invoice_id', id)
       .maybeSingle();
@@ -78,18 +78,90 @@ export async function GET(
     if (localDoc) {
       const linkedOrder = localDoc.sales_orders as {
         order_number: string | null;
+        billing_address: Record<string, unknown> | null;
+        shipping_address: Record<string, unknown> | null;
       } | null;
       const linkedOrg = localDoc.organisations as {
         legal_name: string | null;
         trade_name: string | null;
+        billing_address_line1: string | null;
+        billing_city: string | null;
+        billing_postal_code: string | null;
+        billing_country: string | null;
+        shipping_address_line1: string | null;
+        shipping_city: string | null;
+        shipping_postal_code: string | null;
+        shipping_country: string | null;
+        address_line1: string | null;
+        city: string | null;
+        postal_code: string | null;
+        country: string | null;
       } | null;
+
+      // Resolve billing address with fallback chain:
+      // 1. financial_documents.billing_address
+      // 2. sales_orders.billing_address (JSONB)
+      // 3. organisations.billing_address_* columns
+      // 4. organisations main address (address_line1, city, etc.)
+      let resolvedBilling = localDoc.billing_address as
+        | Record<string, unknown>
+        | undefined;
+
+      if (!resolvedBilling || !Object.values(resolvedBilling).some(Boolean)) {
+        // Try sales order billing address
+        const soBilling = linkedOrder?.billing_address;
+        if (soBilling && Object.values(soBilling).some(Boolean)) {
+          resolvedBilling = soBilling;
+        } else if (
+          linkedOrg?.billing_address_line1 ||
+          linkedOrg?.billing_city
+        ) {
+          // Try organisation billing address columns
+          resolvedBilling = {
+            street: linkedOrg.billing_address_line1 ?? '',
+            city: linkedOrg.billing_city ?? '',
+            zip_code: linkedOrg.billing_postal_code ?? '',
+            country: linkedOrg.billing_country ?? '',
+          };
+        } else if (linkedOrg?.address_line1 || linkedOrg?.city) {
+          // Fallback to organisation main address
+          resolvedBilling = {
+            street: linkedOrg.address_line1 ?? '',
+            city: linkedOrg.city ?? '',
+            zip_code: linkedOrg.postal_code ?? '',
+            country: linkedOrg.country ?? '',
+          };
+        }
+      }
+
+      // Resolve shipping address with fallback chain:
+      // 1. financial_documents.shipping_address
+      // 2. sales_orders.shipping_address (JSONB)
+      // 3. organisations.shipping_address_* columns
+      let resolvedShipping = localDoc.shipping_address as
+        | Record<string, unknown>
+        | undefined;
+
+      if (!resolvedShipping || !Object.values(resolvedShipping).some(Boolean)) {
+        const soShipping = linkedOrder?.shipping_address;
+        if (soShipping && Object.values(soShipping).some(Boolean)) {
+          resolvedShipping = soShipping;
+        } else if (
+          linkedOrg?.shipping_address_line1 ||
+          linkedOrg?.shipping_city
+        ) {
+          resolvedShipping = {
+            street: linkedOrg.shipping_address_line1 ?? '',
+            city: linkedOrg.shipping_city ?? '',
+            zip_code: linkedOrg.shipping_postal_code ?? '',
+            country: linkedOrg.shipping_country ?? '',
+          };
+        }
+      }
+
       localData = {
-        billing_address: localDoc.billing_address as
-          | Record<string, unknown>
-          | undefined,
-        shipping_address: localDoc.shipping_address as
-          | Record<string, unknown>
-          | undefined,
+        billing_address: resolvedBilling,
+        shipping_address: resolvedShipping,
         sales_order_id: localDoc.sales_order_id ?? null,
         order_number: linkedOrder?.order_number ?? null,
         partner_legal_name: linkedOrg?.legal_name ?? null,
@@ -156,7 +228,6 @@ interface IPatchRequestBody {
 
 interface ILocalInvoice {
   id: string;
-  workflow_status: string | null;
   sales_order_id: string | null;
 }
 
@@ -198,29 +269,14 @@ export async function PATCH(
       );
     }
 
-    // Verifier le workflow_status local (permet modification seulement si synchronized ou draft_validated)
+    // Recuperer les donnees locales pour la synchronisation
     const { data: localInvoice } = await supabase
       .from('financial_documents')
-      .select('id, workflow_status, sales_order_id')
+      .select('id, sales_order_id')
       .eq('qonto_invoice_id', id)
       .single();
 
     const typedLocalInvoice = localInvoice as ILocalInvoice | null;
-
-    if (
-      typedLocalInvoice?.workflow_status &&
-      !['synchronized', 'draft_validated'].includes(
-        typedLocalInvoice.workflow_status
-      )
-    ) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: `Cannot modify invoice with workflow_status ${typedLocalInvoice.workflow_status}. Only synchronized or draft_validated invoices are editable.`,
-        },
-        { status: 400 }
-      );
-    }
 
     // 1. Mettre a jour Qonto avec les donnees compatibles
     const qontoUpdateData: {

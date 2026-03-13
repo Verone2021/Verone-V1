@@ -38,7 +38,7 @@ interface IInvoiceItem {
 interface ILocalInvoice {
   id: string;
   document_number: string;
-  workflow_status: string;
+  status: string;
   partner_id: string | null;
   due_date: string | null;
   total_ht: number;
@@ -95,7 +95,7 @@ export async function POST(
         `
         id,
         document_number,
-        workflow_status,
+        status,
         partner_id,
         due_date,
         total_ht,
@@ -125,12 +125,12 @@ export async function POST(
     // Supabase query result has billing_address as Json, incompatible with Record<string, unknown>
     const typedInvoice = invoice as unknown as ILocalInvoice;
 
-    // 2. Verifier que la facture est en brouillon valide
-    if (typedInvoice.workflow_status !== 'draft_validated') {
+    // 2. Verifier que la facture est en brouillon
+    if (typedInvoice.status !== 'draft') {
       return NextResponse.json(
         {
           success: false,
-          error: `La facture doit etre en brouillon valide (statut actuel: ${typedInvoice.workflow_status})`,
+          error: `La facture doit etre en brouillon (statut actuel: ${typedInvoice.status})`,
         },
         { status: 400 }
       );

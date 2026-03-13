@@ -182,7 +182,6 @@ export async function POST(
         qonto_pdf_url: invoice.pdf_url ?? null,
         qonto_public_url: invoice.public_url ?? null,
         invoice_source: 'qonto_conversion',
-        workflow_status: 'synchronized',
         sales_order_id: typedLocalQuote?.sales_order_id ?? null,
         customer_type: typedLocalQuote?.customer_type ?? null,
         individual_customer_id: typedLocalQuote?.individual_customer_id ?? null,

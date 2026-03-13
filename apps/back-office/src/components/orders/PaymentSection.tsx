@@ -23,7 +23,6 @@ import {
 interface ILinkedInvoice {
   id: string;
   document_number: string;
-  workflow_status: string;
   status: string;
   total_ttc: number;
   amount_paid: number;
@@ -166,14 +165,12 @@ export function PaymentSection({
 
   // Active invoices = not cancelled
   const activeInvoices = linkedInvoices.filter(
-    inv => inv.workflow_status !== 'cancelled'
+    inv => inv.status !== 'cancelled'
   );
   const hasActiveInvoice = activeInvoices.length > 0;
 
   // Draft invoice = synchronized or draft_validated (not yet finalized)
-  const hasDraftInvoice = activeInvoices.some(inv =>
-    ['synchronized', 'draft_validated', 'draft'].includes(inv.workflow_status)
-  );
+  const hasDraftInvoice = activeInvoices.some(inv => inv.status === 'draft');
 
   // Can create invoice if: not draft, not paid, AND no active invoice exists
   const canCreateInvoice =
@@ -311,9 +308,7 @@ export function PaymentSection({
           ) : hasActiveInvoice ? (
             <div className="space-y-1">
               {activeInvoices.map(invoice => {
-                const statusInfo = getInvoiceStatusLabel(
-                  invoice.workflow_status ?? invoice.status
-                );
+                const statusInfo = getInvoiceStatusLabel(invoice.status);
                 return (
                   <div
                     key={invoice.id}

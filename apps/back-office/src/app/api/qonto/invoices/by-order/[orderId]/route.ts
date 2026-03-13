@@ -13,7 +13,6 @@ import { createServerClient } from '@verone/utils/supabase/server';
 interface Invoice {
   id: string;
   document_number: string;
-  workflow_status: string;
   status: string;
   total_ttc: number;
   amount_paid: number;
@@ -22,7 +21,6 @@ interface Invoice {
   qonto_invoice_id: string | null;
   qonto_pdf_url: string | null;
   synchronized_at: string | null;
-  validated_to_draft_at: string | null;
   finalized_at: string | null;
   sent_at: string | null;
 }
@@ -78,7 +76,6 @@ export async function GET(
         `
         id,
         document_number,
-        workflow_status,
         status,
         total_ttc,
         amount_paid,
@@ -87,7 +84,6 @@ export async function GET(
         qonto_invoice_id,
         qonto_pdf_url,
         synchronized_at,
-        validated_to_draft_at,
         finalized_at,
         sent_at
       `
