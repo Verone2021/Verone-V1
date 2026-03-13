@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react';
 
 import { ScrollArea } from '@verone/ui';
-import { FolderArchive } from 'lucide-react';
+import { AlertCircle, FolderArchive } from 'lucide-react';
 
 import { useLibraryDocuments } from '@verone/finance';
 import type { LibraryDocument } from '@verone/finance';
@@ -19,23 +19,24 @@ interface TreeSelection {
   category?: 'achats' | 'ventes' | 'avoirs';
 }
 
+const MONTH_NAMES = [
+  '',
+  'Janvier',
+  'Février',
+  'Mars',
+  'Avril',
+  'Mai',
+  'Juin',
+  'Juillet',
+  'Août',
+  'Septembre',
+  'Octobre',
+  'Novembre',
+  'Décembre',
+];
+
 function getSelectionLabel(sel: TreeSelection | null): string {
   if (!sel) return '';
-  const months = [
-    '',
-    'Janvier',
-    'Fevrier',
-    'Mars',
-    'Avril',
-    'Mai',
-    'Juin',
-    'Juillet',
-    'Aout',
-    'Septembre',
-    'Octobre',
-    'Novembre',
-    'Decembre',
-  ];
   const parts: string[] = [];
   if (sel.category) {
     parts.push(
@@ -46,7 +47,7 @@ function getSelectionLabel(sel: TreeSelection | null): string {
           : 'Avoirs'
     );
   }
-  if (sel.month) parts.push(months[sel.month]);
+  if (sel.month) parts.push(MONTH_NAMES[sel.month]);
   parts.push(String(sel.year));
   return parts.join(' — ');
 }
@@ -61,7 +62,7 @@ export default function BibliothequeComptablePage() {
   const [selectedDoc, setSelectedDoc] = useState<LibraryDocument | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
-  const { documents, isLoading, refetch } = useLibraryDocuments({
+  const { documents, isLoading, error, refetch } = useLibraryDocuments({
     year: treeSelection?.year,
     month: treeSelection?.month,
     category: treeSelection?.category,
@@ -75,6 +76,13 @@ export default function BibliothequeComptablePage() {
 
   const handleTreeSelect = useCallback((sel: TreeSelection) => {
     setTreeSelection(sel);
+  }, []);
+
+  const handleCloseModal = useCallback((open: boolean) => {
+    setModalOpen(open);
+    if (!open) {
+      setSelectedDoc(null);
+    }
   }, []);
 
   return (
@@ -117,11 +125,20 @@ export default function BibliothequeComptablePage() {
             />
           </div>
 
+          {/* Error banner */}
+          {error && (
+            <div className="mx-4 mt-4 flex items-center gap-2 rounded-md border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+              <AlertCircle className="h-4 w-4 flex-shrink-0" />
+              <p>{error}</p>
+            </div>
+          )}
+
           {/* Document grid */}
           <ScrollArea className="flex-1 p-4">
             <DocumentList
               documents={documents}
               onSelectDocument={handleSelectDocument}
+              onPdfDeleted={refetch}
               loading={isLoading}
               label={getSelectionLabel(treeSelection)}
             />
@@ -133,7 +150,8 @@ export default function BibliothequeComptablePage() {
       <DocumentModal
         document={selectedDoc}
         open={modalOpen}
-        onOpenChange={setModalOpen}
+        onOpenChange={handleCloseModal}
+        onPdfDeleted={refetch}
       />
     </div>
   );

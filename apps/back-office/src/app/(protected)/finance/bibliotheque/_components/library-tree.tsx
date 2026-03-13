@@ -12,17 +12,17 @@ import {
 
 const MONTHS = [
   'Janvier',
-  'Fevrier',
+  'Février',
   'Mars',
   'Avril',
   'Mai',
   'Juin',
   'Juillet',
-  'Aout',
+  'Août',
   'Septembre',
   'Octobre',
   'Novembre',
-  'Decembre',
+  'Décembre',
 ];
 
 const CATEGORIES = [

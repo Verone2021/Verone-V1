@@ -39,6 +39,9 @@ export * from './lib/payment-methods';
 // Lib - PCG Themes (classification thématique style Indy)
 export * from './lib/pcg-themes';
 
+// Lib - Document formatting (shared by DocumentCard, DocumentModal)
+export * from './lib/document-formatting';
+
 // Services - NE PAS EXPORTER ICI
 // Les services serveur contiennent du code server-only (next/headers)
 // Utiliser: import { ... } from '@verone/finance/services' dans les API routes uniquement

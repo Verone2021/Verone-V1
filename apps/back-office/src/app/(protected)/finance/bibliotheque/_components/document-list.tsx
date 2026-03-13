@@ -9,6 +9,7 @@ import { DocumentCard } from './document-card';
 interface DocumentListProps {
   documents: LibraryDocument[];
   onSelectDocument: (doc: LibraryDocument) => void;
+  onPdfDeleted?: () => Promise<void>;
   loading?: boolean;
   label?: string;
 }
@@ -16,6 +17,7 @@ interface DocumentListProps {
 export function DocumentList({
   documents,
   onSelectDocument,
+  onPdfDeleted,
   loading,
   label,
 }: DocumentListProps) {
@@ -46,12 +48,13 @@ export function DocumentList({
           {documents.length} document{documents.length > 1 ? 's' : ''} — {label}
         </p>
       )}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-1">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 p-1">
         {documents.map(doc => (
           <DocumentCard
             key={`${doc.source_table}-${doc.id}`}
             document={doc}
             onSelect={onSelectDocument}
+            onPdfDeleted={onPdfDeleted}
           />
         ))}
       </div>
