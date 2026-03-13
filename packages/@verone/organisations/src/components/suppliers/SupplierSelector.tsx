@@ -1,7 +1,5 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-
 import { Label } from '@verone/ui';
 import {
   Select,
@@ -11,12 +9,6 @@ import {
   SelectValue,
 } from '@verone/ui';
 import { useSuppliers } from '@verone/organisations/hooks';
-
-interface Supplier {
-  id: string;
-  name: string;
-  type: string;
-}
 
 interface SupplierSelectorProps {
   selectedSupplierId: string | null;
@@ -47,8 +39,6 @@ export function SupplierSelector({
     }
   };
 
-  const selectedSupplier = suppliers.find(s => s.id === selectedSupplierId);
-
   return (
     <div className={className}>
       <Label className="text-sm font-medium text-black">
@@ -57,7 +47,7 @@ export function SupplierSelector({
       </Label>
 
       <Select
-        value={selectedSupplierId || 'none'}
+        value={selectedSupplierId ?? 'none'}
         onValueChange={handleSupplierChange}
         disabled={disabled || loading}
       >
@@ -89,7 +79,7 @@ export function SupplierSelector({
             <SelectItem key={supplier.id} value={supplier.id}>
               <div className="flex items-center">
                 <span className="font-medium">
-                  {supplier.trade_name || supplier.legal_name}
+                  {supplier.trade_name ?? supplier.legal_name}
                 </span>
                 <span className="text-xs text-gray-500 ml-2">
                   ({supplier.type})
@@ -108,37 +98,11 @@ export function SupplierSelector({
         </SelectContent>
       </Select>
 
-      {selectedSupplier && (
-        <div className="text-xs text-gray-600 mt-1">
-          Sélectionné:{' '}
-          {selectedSupplier.trade_name || selectedSupplier.legal_name}
-        </div>
-      )}
-
       {error && (
         <div className="text-xs text-red-600 mt-1">
-          ⚠️ Impossible de charger les fournisseurs: {error}
+          Impossible de charger les fournisseurs: {error}
         </div>
       )}
     </div>
   );
 }
-
-/**
- * Composant de sélection de fournisseurs réutilisable
- *
- * FONCTIONNALITÉS:
- * - Chargement automatique des fournisseurs via useSuppliers()
- * - Support des états loading, error, empty
- * - Option required avec validation visuelle
- * - Gestion du cas "aucun fournisseur"
- * - Affichage nom + type de fournisseur
- * - Interface cohérente avec CustomerSelector
- *
- * USAGE:
- * <SupplierSelector
- *   selectedSupplierId={formData.supplier_id}
- *   onSupplierChange={(id) => setFormData(prev => ({...prev, supplier_id: id}))}
- *   required={true}
- * />
- */

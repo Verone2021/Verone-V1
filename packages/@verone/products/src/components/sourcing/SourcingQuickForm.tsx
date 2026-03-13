@@ -5,9 +5,20 @@ import { useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { useToast } from '@verone/common/hooks';
+import { useOrganisations } from '@verone/organisations/hooks';
 import { Button } from '@verone/ui';
 import { Input } from '@verone/ui';
 import { Label } from '@verone/ui';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@verone/ui';
+import { Textarea } from '@verone/ui';
+import { Checkbox } from '@verone/ui';
+import { CountrySelect } from '@verone/ui';
 import { cn } from '@verone/utils';
 import {
   Upload,
@@ -25,11 +36,13 @@ import { ClientOrEnseigneSelector } from './ClientOrEnseigneSelector';
 import { ConsultationSuggestions } from './consultation-suggestions';
 import { SupplierSelector } from './supplier-selector';
 
+type SupplierMode = 'existing' | 'new';
+
 interface SourcingQuickFormProps {
   onSuccess?: (draftId: string) => void;
   onCancel?: () => void;
   className?: string;
-  showHeader?: boolean; // Afficher le header (défaut: true)
+  showHeader?: boolean;
 }
 
 export function SourcingQuickForm({
@@ -41,25 +54,42 @@ export function SourcingQuickForm({
   const router = useRouter();
   const { toast } = useToast();
   const { createSourcingProduct } = useSourcingProducts({});
+  const { createOrganisation } = useOrganisations();
 
-  // États du formulaire - Simplifié pour la nouvelle logique
+  // Supplier mode
+  const [supplierMode, setSupplierMode] = useState<SupplierMode>('existing');
+
+  // New supplier form data
+  const [newSupplier, setNewSupplier] = useState({
+    legal_name: '',
+    has_different_trade_name: false,
+    trade_name: '',
+    website: '',
+    country: 'FR',
+  });
+
+  // Product form data
   const [formData, setFormData] = useState({
     name: '',
     supplier_page_url: '',
-    cost_price: 0, // Prix d'achat fournisseur HT - OBLIGATOIRE
-    supplier_id: '', // Facultatif - fournisseur assigné
-    assigned_client_id: '', // Facultatif - détermine automatiquement le type de sourcing
-    enseigne_id: '', // Facultatif - enseigne pour sourcing groupe de magasins
+    cost_price: 0,
+    supplier_reference: '',
+    brand: '',
+    description: '',
+    supplier_moq: 0,
+    sourcing_channel: '',
+    supplier_id: '',
+    assigned_client_id: '',
+    enseigne_id: '',
   });
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Référence pour l'input file (pattern React 2024)
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Gestion upload images (multi)
+  // Image handling
   const handleImagesSelect = useCallback(
     (files: File[]) => {
       const imageFiles = files.filter(f => f.type.startsWith('image/'));
@@ -74,7 +104,6 @@ export function SourcingQuickForm({
 
       setSelectedImages(prev => [...prev, ...imageFiles]);
 
-      // Créer previews
       for (const file of imageFiles) {
         const reader = new FileReader();
         reader.onload = e => {
@@ -83,7 +112,6 @@ export function SourcingQuickForm({
         reader.readAsDataURL(file);
       }
 
-      // Effacer erreur image
       if (errors.image) {
         setErrors(prev => ({ ...prev, image: '' }));
       }
@@ -91,13 +119,11 @@ export function SourcingQuickForm({
     [errors.image, toast]
   );
 
-  // Supprimer une image par index
   const removeImage = useCallback((index: number) => {
     setSelectedImages(prev => prev.filter((_, i) => i !== index));
     setImagePreviews(prev => prev.filter((_, i) => i !== index));
   }, []);
 
-  // Gestion drag & drop
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -110,16 +136,43 @@ export function SourcingQuickForm({
     handleImagesSelect(files);
   };
 
-  // Validation formulaire
+  // Validation
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
+    // Supplier validation
+    if (supplierMode === 'new') {
+      if (!newSupplier.legal_name.trim()) {
+        newErrors.supplier_legal_name =
+          'La dénomination sociale est obligatoire';
+      }
+      if (
+        newSupplier.has_different_trade_name &&
+        !newSupplier.trade_name.trim()
+      ) {
+        newErrors.supplier_trade_name =
+          'Le nom commercial est obligatoire si coché';
+      }
+      if (!newSupplier.website.trim()) {
+        newErrors.supplier_website = 'Le site web est obligatoire';
+      } else {
+        try {
+          new URL(newSupplier.website);
+        } catch {
+          newErrors.supplier_website = "Format d'URL invalide";
+        }
+      }
+    }
+
+    // Product validation
     if (!formData.name.trim()) {
       newErrors.name = 'Le nom du produit est obligatoire';
     }
 
-    // Validation format URL uniquement si renseignée
-    if (formData.supplier_page_url.trim()) {
+    if (!formData.supplier_page_url.trim()) {
+      newErrors.supplier_page_url =
+        "L'URL de la page fournisseur est obligatoire";
+    } else {
       try {
         new URL(formData.supplier_page_url);
       } catch {
@@ -127,22 +180,15 @@ export function SourcingQuickForm({
       }
     }
 
-    // Validation prix si renseigné (doit être > 0)
-    if (formData.cost_price && formData.cost_price < 0) {
-      newErrors.cost_price = "Le prix d'achat doit être positif";
+    if (!formData.cost_price || formData.cost_price <= 0) {
+      newErrors.cost_price = "Le prix d'achat est obligatoire et doit être > 0";
     }
-
-    // 🔥 FIX: Image facultative (BD accepte image_url NULL)
-    // L'image peut être ajoutée plus tard via édition
-    // if (!selectedImage) {
-    //   newErrors.image = 'Une image est obligatoire'
-    // }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  // Soumission formulaire
+  // Submit
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -158,11 +204,44 @@ export function SourcingQuickForm({
     setIsSubmitting(true);
 
     try {
+      let supplierId = formData.supplier_id || undefined;
+
+      // Create supplier first if "new" mode
+      if (supplierMode === 'new') {
+        const newOrg = await createOrganisation({
+          legal_name: newSupplier.legal_name,
+          trade_name: newSupplier.has_different_trade_name
+            ? newSupplier.trade_name
+            : null,
+          has_different_trade_name: newSupplier.has_different_trade_name,
+          type: 'supplier',
+          is_active: true,
+          website: newSupplier.website || null,
+          country: newSupplier.country || 'FR',
+        });
+
+        if (!newOrg) {
+          toast({
+            title: 'Erreur',
+            description: 'Impossible de créer le fournisseur',
+            variant: 'destructive',
+          });
+          return;
+        }
+
+        supplierId = newOrg.id;
+      }
+
       const productData = {
         name: formData.name,
         supplier_page_url: formData.supplier_page_url || undefined,
         cost_price: formData.cost_price || undefined,
-        supplier_id: formData.supplier_id || undefined,
+        supplier_reference: formData.supplier_reference || undefined,
+        brand: formData.brand || undefined,
+        description: formData.description || undefined,
+        supplier_moq: formData.supplier_moq || undefined,
+        sourcing_channel: formData.sourcing_channel || undefined,
+        supplier_id: supplierId,
         assigned_client_id: formData.assigned_client_id || undefined,
         enseigne_id: formData.enseigne_id || undefined,
         imageFiles: selectedImages.length > 0 ? selectedImages : undefined,
@@ -171,12 +250,16 @@ export function SourcingQuickForm({
       const newProduct = await createSourcingProduct(productData);
 
       if (newProduct) {
+        const toastMessage =
+          supplierMode === 'new'
+            ? 'Produit et fournisseur créés. La fiche fournisseur pourra être complétée plus tard.'
+            : 'Le produit a été ajouté au sourcing';
+
         toast({
           title: 'Sourcing enregistré',
-          description: 'Le produit a été ajouté au sourcing',
+          description: toastMessage,
         });
 
-        // Callback ou redirection
         if (onSuccess) {
           onSuccess(newProduct.id);
         } else {
@@ -220,14 +303,222 @@ export function SourcingQuickForm({
       )}
 
       {/* Formulaire */}
-      <form onSubmit={handleSubmit} className="p-6 space-y-6">
-        {/* 1. UPLOAD IMAGES - Facultatif, multi */}
+      <form
+        onSubmit={e => {
+          void handleSubmit(e).catch(error => {
+            console.error('[SourcingQuickForm] Submit error:', error);
+          });
+        }}
+        className="p-6 space-y-6"
+      >
+        {/* 1. FOURNISSEUR - Radio existant/nouveau */}
+        <div className="space-y-3">
+          <Label className="text-sm font-medium">Fournisseur</Label>
+
+          <div className="space-y-3 rounded-lg border border-gray-200 p-4">
+            {/* Radio: Existing supplier */}
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="radio"
+                name="supplier_mode"
+                value="existing"
+                checked={supplierMode === 'existing'}
+                onChange={() => setSupplierMode('existing')}
+                className="h-4 w-4 text-black accent-black"
+              />
+              <span className="text-sm font-medium">Fournisseur existant</span>
+            </label>
+
+            {supplierMode === 'existing' && (
+              <div className="ml-7">
+                <SupplierSelector
+                  selectedSupplierId={formData.supplier_id || null}
+                  onSupplierChange={supplierId => {
+                    setFormData(prev => ({
+                      ...prev,
+                      supplier_id: supplierId || '',
+                    }));
+                  }}
+                  label=""
+                  placeholder="Sélectionner un fournisseur..."
+                  required={false}
+                />
+              </div>
+            )}
+
+            {/* Radio: New supplier */}
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="radio"
+                name="supplier_mode"
+                value="new"
+                checked={supplierMode === 'new'}
+                onChange={() => setSupplierMode('new')}
+                className="h-4 w-4 text-black accent-black"
+              />
+              <span className="text-sm font-medium">Nouveau fournisseur</span>
+            </label>
+
+            {supplierMode === 'new' && (
+              <div className="ml-7 space-y-3">
+                {/* Legal name */}
+                <div className="space-y-1">
+                  <Label
+                    htmlFor="sf_legal_name"
+                    className="text-sm font-medium"
+                  >
+                    Dénomination sociale *
+                  </Label>
+                  <Input
+                    id="sf_legal_name"
+                    value={newSupplier.legal_name}
+                    onChange={e => {
+                      setNewSupplier(prev => ({
+                        ...prev,
+                        legal_name: e.target.value,
+                      }));
+                      if (errors.supplier_legal_name)
+                        setErrors(prev => ({
+                          ...prev,
+                          supplier_legal_name: '',
+                        }));
+                    }}
+                    placeholder="Ex: Zentrada GmbH, Maisons du Monde SAS..."
+                    className={cn(
+                      errors.supplier_legal_name &&
+                        'border-red-300 focus:border-red-500'
+                    )}
+                  />
+                  {errors.supplier_legal_name && (
+                    <p className="text-sm text-red-600">
+                      {errors.supplier_legal_name}
+                    </p>
+                  )}
+                </div>
+
+                {/* Checkbox trade name */}
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="sf_has_different_trade_name"
+                    checked={newSupplier.has_different_trade_name}
+                    onCheckedChange={(checked: boolean) => {
+                      setNewSupplier(prev => ({
+                        ...prev,
+                        has_different_trade_name: checked,
+                        trade_name: checked ? prev.trade_name : '',
+                      }));
+                      if (!checked && errors.supplier_trade_name) {
+                        setErrors(prev => ({
+                          ...prev,
+                          supplier_trade_name: '',
+                        }));
+                      }
+                    }}
+                  />
+                  <Label
+                    htmlFor="sf_has_different_trade_name"
+                    className="text-sm cursor-pointer"
+                  >
+                    Le nom commercial est différent
+                  </Label>
+                </div>
+
+                {/* Trade name (conditional) */}
+                {newSupplier.has_different_trade_name && (
+                  <div className="space-y-1">
+                    <Label
+                      htmlFor="sf_trade_name"
+                      className="text-sm font-medium"
+                    >
+                      Nom commercial *
+                    </Label>
+                    <Input
+                      id="sf_trade_name"
+                      value={newSupplier.trade_name}
+                      onChange={e => {
+                        setNewSupplier(prev => ({
+                          ...prev,
+                          trade_name: e.target.value,
+                        }));
+                        if (errors.supplier_trade_name)
+                          setErrors(prev => ({
+                            ...prev,
+                            supplier_trade_name: '',
+                          }));
+                      }}
+                      placeholder="Ex: Zentrada, MdM..."
+                      className={cn(
+                        errors.supplier_trade_name &&
+                          'border-red-300 focus:border-red-500'
+                      )}
+                    />
+                    {errors.supplier_trade_name && (
+                      <p className="text-sm text-red-600">
+                        {errors.supplier_trade_name}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* Website */}
+                <div className="space-y-1">
+                  <Label htmlFor="sf_website" className="text-sm font-medium">
+                    Site web *
+                  </Label>
+                  <Input
+                    id="sf_website"
+                    type="url"
+                    value={newSupplier.website}
+                    onChange={e => {
+                      setNewSupplier(prev => ({
+                        ...prev,
+                        website: e.target.value,
+                      }));
+                      if (errors.supplier_website)
+                        setErrors(prev => ({
+                          ...prev,
+                          supplier_website: '',
+                        }));
+                    }}
+                    placeholder="https://www.fournisseur.com"
+                    className={cn(
+                      errors.supplier_website &&
+                        'border-red-300 focus:border-red-500'
+                    )}
+                  />
+                  {errors.supplier_website && (
+                    <p className="text-sm text-red-600">
+                      {errors.supplier_website}
+                    </p>
+                  )}
+                </div>
+
+                {/* Country */}
+                <div className="space-y-1">
+                  <Label className="text-sm font-medium">Pays</Label>
+                  <CountrySelect
+                    value={newSupplier.country}
+                    onChange={value => {
+                      setNewSupplier(prev => ({
+                        ...prev,
+                        country: value || 'FR',
+                      }));
+                    }}
+                    placeholder="Sélectionner un pays"
+                    className="w-full"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* 2. UPLOAD IMAGES - Facultatif, multi */}
         <div className="space-y-2">
           <Label className="text-sm font-medium">
             Images du produit (facultatif)
           </Label>
 
-          {/* Grille des images sélectionnées */}
           {imagePreviews.length > 0 && (
             <div className="grid grid-cols-4 gap-3 mb-3">
               {imagePreviews.map((preview, index) => (
@@ -297,7 +588,6 @@ export function SourcingQuickForm({
                   onChange={e => {
                     const files = Array.from(e.target.files || []);
                     if (files.length > 0) handleImagesSelect(files);
-                    // Reset input pour permettre re-sélection même fichier
                     e.target.value = '';
                   }}
                 />
@@ -314,7 +604,7 @@ export function SourcingQuickForm({
           )}
         </div>
 
-        {/* 2. NOM PRODUIT - Obligatoire */}
+        {/* 3. NOM PRODUIT - Obligatoire */}
         <div className="space-y-2">
           <Label htmlFor="name" className="text-sm font-medium">
             Nom du produit *
@@ -335,10 +625,10 @@ export function SourcingQuickForm({
           {errors.name && <p className="text-sm text-red-600">{errors.name}</p>}
         </div>
 
-        {/* 3. URL FOURNISSEUR - Facultatif */}
+        {/* 4. URL FOURNISSEUR - Obligatoire */}
         <div className="space-y-2">
           <Label htmlFor="supplier_url" className="text-sm font-medium">
-            URL de la page fournisseur (facultatif)
+            URL de la page fournisseur *
           </Label>
           <div className="relative">
             <Link className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -370,10 +660,10 @@ export function SourcingQuickForm({
           </p>
         </div>
 
-        {/* 4. PRIX FOURNISSEUR - Facultatif */}
+        {/* 5. PRIX FOURNISSEUR - Obligatoire */}
         <div className="space-y-2">
           <Label htmlFor="cost_price" className="text-sm font-medium">
-            Prix d&apos;achat fournisseur HT (€) (facultatif)
+            Prix d&apos;achat fournisseur HT (€) *
           </Label>
           <div className="relative">
             <Euro className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -400,35 +690,120 @@ export function SourcingQuickForm({
             <p className="text-sm text-red-600">{errors.cost_price}</p>
           )}
           <p className="text-xs text-gray-500">
-            Prix d&apos;achat HT chez le fournisseur (requis pour validation
-            sourcing, peut être ajouté plus tard)
+            Prix d&apos;achat HT chez le fournisseur
           </p>
         </div>
 
-        {/* 5. FOURNISSEUR - Facultatif */}
+        {/* 6. RÉFÉRENCE FOURNISSEUR - Facultatif */}
         <div className="space-y-2">
-          <SupplierSelector
-            selectedSupplierId={formData.supplier_id || null}
-            onSupplierChange={supplierId => {
-              setFormData(prev => ({ ...prev, supplier_id: supplierId || '' }));
+          <Label htmlFor="supplier_reference" className="text-sm font-medium">
+            Réf. fournisseur (facultatif)
+          </Label>
+          <Input
+            id="supplier_reference"
+            value={formData.supplier_reference}
+            onChange={e => {
+              setFormData(prev => ({
+                ...prev,
+                supplier_reference: e.target.value,
+              }));
             }}
-            label="Fournisseur (facultatif)"
-            placeholder="Sélectionner un fournisseur..."
-            required={false}
+            placeholder="Ex: ART-12345, SKU-FOURN-001..."
+            className="transition-colors"
           />
           <p className="text-xs text-gray-500">
-            Assignez un fournisseur pour activer le lien "détail fournisseur"
-            dans la liste
+            Référence du produit chez le fournisseur
           </p>
         </div>
 
-        {/* 6. CLIENT DESTINATAIRE (ENSEIGNE OU ORGANISATION) - Facultatif */}
+        {/* 7. MARQUE - Facultatif */}
+        <div className="space-y-2">
+          <Label htmlFor="brand" className="text-sm font-medium">
+            Marque (facultatif)
+          </Label>
+          <Input
+            id="brand"
+            value={formData.brand}
+            onChange={e => {
+              setFormData(prev => ({ ...prev, brand: e.target.value }));
+            }}
+            placeholder="Ex: HAY, Fermob, Kartell..."
+            className="transition-colors"
+          />
+        </div>
+
+        {/* 8. DESCRIPTION - Facultatif */}
+        <div className="space-y-2">
+          <Label htmlFor="description" className="text-sm font-medium">
+            Description (facultatif)
+          </Label>
+          <Textarea
+            id="description"
+            value={formData.description}
+            onChange={e => {
+              setFormData(prev => ({ ...prev, description: e.target.value }));
+            }}
+            placeholder="Description courte du produit..."
+            rows={3}
+            className="transition-colors resize-none"
+          />
+        </div>
+
+        {/* 9. MOQ - Facultatif */}
+        <div className="space-y-2">
+          <Label htmlFor="supplier_moq" className="text-sm font-medium">
+            Quantité min. de commande (MOQ) (facultatif)
+          </Label>
+          <Input
+            id="supplier_moq"
+            type="number"
+            min="1"
+            value={formData.supplier_moq || ''}
+            onChange={e => {
+              const value = parseInt(e.target.value) || 0;
+              setFormData(prev => ({ ...prev, supplier_moq: value }));
+            }}
+            placeholder="Ex: 10"
+            className="transition-colors"
+          />
+        </div>
+
+        {/* 10. CANAL DE SOURCING - Facultatif */}
+        <div className="space-y-2">
+          <Label className="text-sm font-medium">
+            Canal de sourcing (facultatif)
+          </Label>
+          <Select
+            value={formData.sourcing_channel || 'none'}
+            onValueChange={value => {
+              setFormData(prev => ({
+                ...prev,
+                sourcing_channel: value === 'none' ? '' : value,
+              }));
+            }}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Sélectionner le canal..." />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">
+                <span className="text-gray-500">Non spécifié</span>
+              </SelectItem>
+              <SelectItem value="online">En ligne</SelectItem>
+              <SelectItem value="trade_show">Salon professionnel</SelectItem>
+              <SelectItem value="referral">Recommandation</SelectItem>
+              <SelectItem value="visit">Visite fournisseur</SelectItem>
+              <SelectItem value="other">Autre</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* 11. CLIENT DESTINATAIRE - Facultatif */}
         <div className="space-y-2">
           <ClientOrEnseigneSelector
             enseigneId={formData.enseigne_id || null}
             organisationId={formData.assigned_client_id || null}
             onEnseigneChange={(enseigneId, _enseigneName, parentOrgId) => {
-              // Quand enseigne sélectionnée → assigned_client_id = société mère
               setFormData(prev => ({
                 ...prev,
                 enseigne_id: enseigneId || '',
@@ -436,7 +811,6 @@ export function SourcingQuickForm({
               }));
             }}
             onOrganisationChange={(organisationId, _organisationName) => {
-              // Quand organisation sélectionnée → enseigne_id = null
               setFormData(prev => ({
                 ...prev,
                 assigned_client_id: organisationId || '',
@@ -461,7 +835,6 @@ export function SourcingQuickForm({
             clientId={formData.assigned_client_id}
             onLinkToConsultation={consultationId => {
               console.log('Suggestion consultation:', consultationId);
-              // TODO: Stocker l'association pour après création du produit
             }}
             className="bg-blue-50 border-blue-200"
           />
