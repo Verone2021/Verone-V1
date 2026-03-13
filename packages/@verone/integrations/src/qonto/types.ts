@@ -430,10 +430,41 @@ export interface UploadSupplierInvoiceParams {
  */
 export interface QontoSupplierInvoice {
   id: string;
-  invoice_number?: string;
-  supplier_name?: string;
-  total_amount?: QontoAmount;
+  invoice_number: string | null;
+  supplier_name: string | null;
+  supplier_id: string | null;
+  total_amount: QontoAmount | null;
+  total_vat_amount: QontoAmount | null;
   status: 'to_review' | 'to_pay' | 'paid' | 'canceled';
+  issue_date: string | null;
+  due_date: string | null;
+  attachment_ids: string[];
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * Parameters for listing supplier invoices
+ * Doc: https://docs.qonto.com/api-reference/business-api/expense-management/supplier-invoices
+ */
+export interface GetSupplierInvoicesParams {
+  status?: ('to_review' | 'to_pay' | 'paid' | 'canceled')[];
+  updated_at_from?: string;
+  updated_at_to?: string;
+  page?: number;
+  per_page?: number;
+}
+
+export interface GetSupplierInvoicesResult {
+  supplier_invoices: QontoSupplierInvoice[];
+  meta: {
+    current_page: number;
+    next_page: number | null;
+    prev_page: number | null;
+    total_pages: number;
+    total_count: number;
+    per_page: number;
+  };
 }
 
 /**

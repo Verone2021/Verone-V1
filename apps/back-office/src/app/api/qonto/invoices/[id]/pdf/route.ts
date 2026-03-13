@@ -188,6 +188,42 @@ export async function GET(
     }
 
     // ========================================
+    // ÉTAPE 1.5: Fallback uploaded_file_url (supplier invoices without Qonto)
+    // ========================================
+    if (isUUID && documentId) {
+      const { data: docFull } = await supabase
+        .from('financial_documents')
+        .select('uploaded_file_url, document_type')
+        .eq('id', documentId)
+        .single();
+
+      if (docFull?.uploaded_file_url) {
+        try {
+          const uploadedResponse = await fetch(docFull.uploaded_file_url);
+          if (uploadedResponse.ok) {
+            const uploadedBuffer = await uploadedResponse.arrayBuffer();
+            if (uploadedBuffer.byteLength > 0) {
+              return new NextResponse(uploadedBuffer, {
+                headers: {
+                  'Content-Type': 'application/pdf',
+                  'Content-Disposition': `inline; filename="${documentNumber ?? id}.pdf"`,
+                  'Content-Length': String(uploadedBuffer.byteLength),
+                  'X-PDF-Source': 'uploaded',
+                },
+              });
+            }
+          }
+        } catch (uploadError) {
+          console.warn(
+            '[API Invoice PDF] uploaded_file_url fetch failed:',
+            uploadError
+          );
+          // Continue to Qonto fallback
+        }
+      }
+    }
+
+    // ========================================
     // ÉTAPE 2: Fallback vers Qonto
     // ========================================
     const client = getQontoClient();

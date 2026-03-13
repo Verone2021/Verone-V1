@@ -21,6 +21,9 @@ import type {
   CreateClientParams,
   UploadSupplierInvoiceParams,
   UploadSupplierInvoicesResult,
+  QontoSupplierInvoice,
+  GetSupplierInvoicesParams,
+  GetSupplierInvoicesResult,
   // Credit Notes (Avoirs) - 2026-01-07
   QontoClientCreditNote,
   CreateClientCreditNoteParams,
@@ -1138,6 +1141,59 @@ export class QontoClient {
         idempotencyKey: idempotencyKey || generateIdempotencyKey(),
       },
     ]);
+  }
+
+  // ===================================================================
+  // SUPPLIER INVOICES - GET
+  // ===================================================================
+
+  /**
+   * Liste les factures fournisseurs
+   * Doc: https://docs.qonto.com/api-reference/business-api/expense-management/supplier-invoices
+   */
+  async getSupplierInvoices(
+    params?: GetSupplierInvoicesParams
+  ): Promise<GetSupplierInvoicesResult> {
+    const queryParams = new URLSearchParams();
+
+    if (params?.status) {
+      for (const s of params.status) {
+        queryParams.append('status[]', s);
+      }
+    }
+    if (params?.updated_at_from)
+      queryParams.append('updated_at_from', params.updated_at_from);
+    if (params?.updated_at_to)
+      queryParams.append('updated_at_to', params.updated_at_to);
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.per_page)
+      queryParams.append('per_page', params.per_page.toString());
+
+    const endpoint = `/v2/supplier_invoices${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+
+    const response = await this.request<
+      QontoApiResponse<{
+        supplier_invoices: QontoSupplierInvoice[];
+        meta: GetSupplierInvoicesResult['meta'];
+      }>
+    >('GET', endpoint);
+
+    return {
+      supplier_invoices: response.supplier_invoices,
+      meta: response.meta,
+    };
+  }
+
+  /**
+   * Récupère une facture fournisseur par ID
+   */
+  async getSupplierInvoiceById(
+    invoiceId: string
+  ): Promise<QontoSupplierInvoice> {
+    const response = await this.request<
+      QontoApiResponse<{ supplier_invoice: QontoSupplierInvoice }>
+    >('GET', `/v2/supplier_invoices/${invoiceId}`);
+    return response.supplier_invoice;
   }
 
   // ===================================================================

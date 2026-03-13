@@ -13,3 +13,13 @@ export type {
   SyncProgress,
   LastSyncStatus,
 } from './qonto-sync';
+
+export {
+  SupplierInvoiceSyncService,
+  getSupplierInvoiceSyncService,
+} from './supplier-invoice-sync';
+
+export type {
+  SupplierInvoiceSyncOptions,
+  SupplierInvoiceSyncResult,
+} from './supplier-invoice-sync';
