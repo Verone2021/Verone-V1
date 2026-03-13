@@ -42,9 +42,9 @@ async function storeLocalPdf(
   }
 ): Promise<void> {
   try {
-    // Upload vers Supabase Storage (bucket 'invoices')
+    // Upload vers Supabase Storage (bucket 'justificatifs')
     const { error: uploadError } = await supabase.storage
-      .from('invoices')
+      .from('justificatifs')
       .upload(storagePath, pdfBuffer, {
         contentType: 'application/pdf',
         upsert: true,
@@ -116,6 +116,7 @@ export async function GET(
     let documentId: string | null = null;
     let documentNumber: string | null = null;
     let documentType: string | null = null;
+    let documentDate: string | null = null;
     let qontoInvoiceId: string | null = null;
 
     if (isUUID) {
@@ -123,7 +124,7 @@ export async function GET(
       const { data: doc } = await supabase
         .from('financial_documents')
         .select(
-          'id, document_number, document_type, qonto_invoice_id, local_pdf_path'
+          'id, document_number, document_type, document_date, qonto_invoice_id, local_pdf_path'
         )
         .eq('id', id)
         .single();
@@ -132,6 +133,7 @@ export async function GET(
         documentId = doc.id;
         documentNumber = doc.document_number;
         documentType = doc.document_type;
+        documentDate = doc.document_date ?? null;
         qontoInvoiceId = doc.qonto_invoice_id;
         localPdfPath = doc.local_pdf_path ?? null;
       } else {
@@ -141,7 +143,7 @@ export async function GET(
         const { data: docByQonto } = await supabase
           .from('financial_documents')
           .select(
-            'id, document_number, document_type, qonto_invoice_id, local_pdf_path'
+            'id, document_number, document_type, document_date, qonto_invoice_id, local_pdf_path'
           )
           .eq('qonto_invoice_id', id)
           .single();
@@ -150,6 +152,7 @@ export async function GET(
           documentId = docByQonto.id;
           documentNumber = docByQonto.document_number;
           documentType = docByQonto.document_type;
+          documentDate = docByQonto.document_date ?? null;
           qontoInvoiceId = docByQonto.qonto_invoice_id;
           localPdfPath = docByQonto.local_pdf_path ?? null;
         }
@@ -164,7 +167,7 @@ export async function GET(
       );
 
       const { data: pdfData, error: downloadError } = await supabase.storage
-        .from('invoices')
+        .from('justificatifs')
         .download(localPdfPath);
 
       if (!downloadError && pdfData) {
@@ -184,6 +187,42 @@ export async function GET(
           downloadError
         );
         // Continue vers Qonto fallback
+      }
+    }
+
+    // ========================================
+    // ÉTAPE 1.5: Fallback uploaded_file_url (supplier invoices without Qonto)
+    // ========================================
+    if (isUUID && documentId) {
+      const { data: docFull } = await supabase
+        .from('financial_documents')
+        .select('uploaded_file_url, document_type')
+        .eq('id', documentId)
+        .single();
+
+      if (docFull?.uploaded_file_url) {
+        try {
+          const uploadedResponse = await fetch(docFull.uploaded_file_url);
+          if (uploadedResponse.ok) {
+            const uploadedBuffer = await uploadedResponse.arrayBuffer();
+            if (uploadedBuffer.byteLength > 0) {
+              return new NextResponse(uploadedBuffer, {
+                headers: {
+                  'Content-Type': 'application/pdf',
+                  'Content-Disposition': `inline; filename="${documentNumber ?? id}.pdf"`,
+                  'Content-Length': String(uploadedBuffer.byteLength),
+                  'X-PDF-Source': 'uploaded',
+                },
+              });
+            }
+          }
+        } catch (uploadError) {
+          console.warn(
+            '[API Invoice PDF] uploaded_file_url fetch failed:',
+            uploadError
+          );
+          // Continue to Qonto fallback
+        }
       }
     }
 
@@ -282,7 +321,9 @@ export async function GET(
       // Construire le chemin de stockage : {type}/{year}/{document_number}.pdf
       const typeFolder =
         documentType === 'supplier_invoice' ? 'supplier' : 'customer';
-      const year = new Date().getFullYear();
+      const year = documentDate
+        ? new Date(documentDate).getFullYear()
+        : new Date().getFullYear();
       const fileName = `${documentNumber ?? id}.pdf`;
       const storagePath = `${typeFolder}/${year}/${fileName}`;
 

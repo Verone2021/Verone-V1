@@ -244,7 +244,7 @@ export interface RuleModalProps {
       default_category?: string | null;
       enabled?: boolean;
       allow_multiple_categories?: boolean;
-      // TVA retirée des règles - vient de Qonto OCR ou saisie manuelle
+      justification_optional?: boolean;
       match_patterns?: string[] | null;
     }
   ) => Promise<boolean>;
@@ -286,6 +286,7 @@ export function RuleModal({
   const [showApplyWizard, setShowApplyWizard] = useState(false);
   const [createdRule, setCreatedRule] = useState<MatchingRule | null>(null);
   const [allowMultipleCategories, setAllowMultipleCategories] = useState(false);
+  const [justificationOptional, setJustificationOptional] = useState(false);
 
   // State - Catégorie
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -328,6 +329,7 @@ export function RuleModal({
         // Multi-patterns: charger depuis match_patterns ou fallback sur match_value
         setMatchPatterns(rule.match_patterns ?? [rule.match_value]);
         setAllowMultipleCategories(rule.allow_multiple_categories ?? false);
+        setJustificationOptional(rule.justification_optional ?? false);
         setSelectedCategory(rule.default_category);
         const catInfo = rule.default_category
           ? getPcgCategory(rule.default_category)
@@ -345,6 +347,7 @@ export function RuleModal({
         setMatchValue(initialLabel || '');
         setMatchPatterns(initialLabel ? [initialLabel] : []);
         setAllowMultipleCategories(false);
+        setJustificationOptional(false);
         setSelectedCategory(initialCategory || null);
         const catInfo = initialCategory
           ? getPcgCategory(initialCategory)
@@ -455,12 +458,12 @@ export function RuleModal({
     try {
       if (isEditMode && rule && onUpdate) {
         // Mode édition - mettre à jour la règle + auto-sync
-        // TVA gérée automatiquement par Qonto OCR (plus de default_vat_rate)
         const updateData = {
           organisation_id: selectedOrg?.id ?? null,
           default_category: selectedCategory,
           enabled,
           allow_multiple_categories: allowMultipleCategories,
+          justification_optional: justificationOptional,
           match_patterns: matchPatterns.length > 0 ? matchPatterns : null,
         };
 
@@ -482,7 +485,6 @@ export function RuleModal({
           ? 'partner'
           : 'supplier';
 
-        // TVA gérée automatiquement par Qonto OCR (plus de default_vat_rate)
         const newRule = await onCreate({
           match_type: 'label_contains',
           match_value: matchValue.trim(),
@@ -494,6 +496,7 @@ export function RuleModal({
           default_role_type: roleType,
           priority: 100,
           allow_multiple_categories: allowMultipleCategories,
+          justification_optional: justificationOptional,
         });
 
         if (newRule) {
@@ -670,6 +673,23 @@ export function RuleModal({
             <Switch
               checked={allowMultipleCategories}
               onCheckedChange={setAllowMultipleCategories}
+            />
+          </div>
+
+          {/* Justificatif facultatif */}
+          <div className="flex items-center justify-between rounded-lg border p-4">
+            <div>
+              <span className="font-medium text-slate-900">
+                Justificatif facultatif
+              </span>
+              <p className="text-sm text-slate-500">
+                Les transactions matchees n&apos;auront pas besoin de
+                justificatif
+              </p>
+            </div>
+            <Switch
+              checked={justificationOptional}
+              onCheckedChange={setJustificationOptional}
             />
           </div>
 
