@@ -21,3 +21,4 @@ export * from './use-unified-transactions';
 export * from './use-unreconciled-orders';
 export * from './use-quotes';
 export * from './use-valorisation-report';
+export * from './use-library-documents';
