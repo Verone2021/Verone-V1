@@ -1,158 +1,201 @@
 'use client';
 
+import { useState } from 'react';
+import { Badge } from '@verone/ui';
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-  Badge,
-  ScrollArea,
-} from '@verone/ui';
-import { cn } from '@verone/utils';
-import { FolderArchive, TrendingUp, TrendingDown, Receipt } from 'lucide-react';
+  ChevronRight,
+  ChevronDown,
+  Calendar,
+  FolderOpen,
+  Folder,
+} from 'lucide-react';
 
-import type { LibraryTreeYear, LibraryCategory } from '@verone/finance/hooks';
+const MONTHS = [
+  'Janvier',
+  'Février',
+  'Mars',
+  'Avril',
+  'Mai',
+  'Juin',
+  'Juillet',
+  'Août',
+  'Septembre',
+  'Octobre',
+  'Novembre',
+  'Décembre',
+];
 
-// =====================================================================
-// TYPES
-// =====================================================================
+const CATEGORIES = [
+  { key: 'achats' as const, label: 'Achats' },
+  { key: 'ventes' as const, label: 'Ventes' },
+  { key: 'avoirs' as const, label: 'Avoirs' },
+];
 
-export interface TreeSelection {
-  year?: number;
-  category?: LibraryCategory;
+interface TreeSelection {
+  year: number;
   month?: number;
+  category?: 'achats' | 'ventes' | 'avoirs';
 }
 
 interface LibraryTreeProps {
-  tree: LibraryTreeYear[];
-  selection: TreeSelection;
   onSelect: (selection: TreeSelection) => void;
+  selection: TreeSelection | null;
 }
 
-// =====================================================================
-// HELPERS
-// =====================================================================
+export function LibraryTree({ onSelect, selection }: LibraryTreeProps) {
+  const currentYear = new Date().getFullYear();
+  const years = [currentYear, currentYear - 1, currentYear - 2];
 
-const CATEGORY_ICONS: Record<LibraryCategory, typeof TrendingUp> = {
-  ventes: TrendingUp,
-  achats: TrendingDown,
-  avoirs: Receipt,
-};
+  const [expandedYears, setExpandedYears] = useState<Set<number>>(
+    new Set([currentYear])
+  );
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
+    new Set()
+  );
 
-const CATEGORY_COLORS: Record<LibraryCategory, string> = {
-  ventes: 'text-green-600',
-  achats: 'text-red-600',
-  avoirs: 'text-amber-600',
-};
+  const toggleYear = (year: number) => {
+    setExpandedYears(prev => {
+      const next = new Set(prev);
+      if (next.has(year)) {
+        next.delete(year);
+      } else {
+        next.add(year);
+      }
+      return next;
+    });
+  };
 
-// =====================================================================
-// COMPONENT
-// =====================================================================
+  const toggleCategory = (key: string) => {
+    setExpandedCategories(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
+  };
 
-export function LibraryTree({ tree, selection, onSelect }: LibraryTreeProps) {
+  const isSelected = (year: number, category?: string, month?: number) => {
+    if (!selection) return false;
+    if (selection.year !== year) return false;
+    if (category && selection.category !== category) return false;
+    if (month !== undefined && selection.month !== month) return false;
+    if (!category && selection.category) return false;
+    if (month === undefined && selection.month) return false;
+    return true;
+  };
+
   return (
-    <ScrollArea className="h-full">
-      <div className="p-3">
-        <div className="flex items-center gap-2 mb-4 px-1">
-          <FolderArchive className="h-5 w-5 text-muted-foreground" />
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-            Arborescence
-          </h2>
-        </div>
+    <div className="space-y-1">
+      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide px-2 mb-2">
+        Navigation
+      </p>
+      {years.map(year => {
+        const yearExpanded = expandedYears.has(year);
+        return (
+          <div key={year}>
+            {/* Year node */}
+            <button
+              onClick={() => {
+                toggleYear(year);
+                onSelect({ year });
+              }}
+              className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm transition-colors ${
+                isSelected(year)
+                  ? 'bg-primary/10 text-primary font-medium'
+                  : 'hover:bg-muted'
+              }`}
+            >
+              {yearExpanded ? (
+                <ChevronDown className="h-3.5 w-3.5 flex-shrink-0" />
+              ) : (
+                <ChevronRight className="h-3.5 w-3.5 flex-shrink-0" />
+              )}
+              <Calendar className="h-3.5 w-3.5 flex-shrink-0" />
+              <span>{year}</span>
+            </button>
 
-        {tree.length === 0 ? (
-          <p className="text-sm text-muted-foreground px-1">Aucun document</p>
-        ) : (
-          <Accordion
-            type="multiple"
-            defaultValue={tree.length > 0 ? [String(tree[0].year)] : []}
-          >
-            {tree.map(yearNode => (
-              <AccordionItem key={yearNode.year} value={String(yearNode.year)}>
-                <AccordionTrigger className="py-2 px-1 text-sm hover:no-underline">
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold">{yearNode.year}</span>
-                    <Badge variant="secondary" className="text-xs px-1.5 py-0">
-                      {yearNode.count}
-                    </Badge>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="pb-0">
-                  <Accordion
-                    type="multiple"
-                    defaultValue={yearNode.categories.map(
-                      c => `${yearNode.year}-${c.category}`
-                    )}
-                  >
-                    {yearNode.categories.map(catNode => {
-                      const Icon = CATEGORY_ICONS[catNode.category];
-                      const colorClass = CATEGORY_COLORS[catNode.category];
-                      return (
-                        <AccordionItem
-                          key={`${yearNode.year}-${catNode.category}`}
-                          value={`${yearNode.year}-${catNode.category}`}
-                          className="border-none"
-                        >
-                          <AccordionTrigger className="py-1.5 pl-4 pr-1 text-sm hover:no-underline">
-                            <div className="flex items-center gap-2">
-                              <Icon className={cn('h-4 w-4', colorClass)} />
-                              <span className="font-medium">
-                                {catNode.label}
-                              </span>
-                              <Badge
-                                variant="outline"
-                                className="text-xs px-1.5 py-0"
+            {/* Categories under year */}
+            {yearExpanded && (
+              <div className="ml-4 space-y-0.5">
+                {CATEGORIES.map(cat => {
+                  const catKey = `${year}-${cat.key}`;
+                  const catExpanded = expandedCategories.has(catKey);
+
+                  return (
+                    <div key={catKey}>
+                      <button
+                        onClick={() => {
+                          toggleCategory(catKey);
+                          onSelect({ year, category: cat.key });
+                        }}
+                        className={`w-full flex items-center gap-2 px-2 py-1 rounded-md text-sm transition-colors ${
+                          isSelected(year, cat.key)
+                            ? 'bg-primary/10 text-primary font-medium'
+                            : 'hover:bg-muted'
+                        }`}
+                      >
+                        {catExpanded ? (
+                          <ChevronDown className="h-3 w-3 flex-shrink-0" />
+                        ) : (
+                          <ChevronRight className="h-3 w-3 flex-shrink-0" />
+                        )}
+                        {catExpanded ? (
+                          <FolderOpen className="h-3.5 w-3.5 flex-shrink-0 text-amber-500" />
+                        ) : (
+                          <Folder className="h-3.5 w-3.5 flex-shrink-0 text-amber-500" />
+                        )}
+                        <span>{cat.label}</span>
+                      </button>
+
+                      {/* Months under category */}
+                      {catExpanded && (
+                        <div className="ml-6 space-y-0.5">
+                          {MONTHS.map((monthName, idx) => {
+                            const monthNum = idx + 1;
+                            const isCurrent =
+                              year === currentYear &&
+                              monthNum === new Date().getMonth() + 1;
+                            return (
+                              <button
+                                key={monthNum}
+                                onClick={() =>
+                                  onSelect({
+                                    year,
+                                    category: cat.key,
+                                    month: monthNum,
+                                  })
+                                }
+                                className={`w-full flex items-center gap-2 px-2 py-1 rounded-md text-xs transition-colors ${
+                                  isSelected(year, cat.key, monthNum)
+                                    ? 'bg-primary/10 text-primary font-medium'
+                                    : 'hover:bg-muted text-muted-foreground'
+                                }`}
                               >
-                                {catNode.count}
-                              </Badge>
-                            </div>
-                          </AccordionTrigger>
-                          <AccordionContent className="pb-0">
-                            <div className="space-y-0.5 pl-6">
-                              {catNode.months.map(monthNode => {
-                                const isSelected =
-                                  selection.year === yearNode.year &&
-                                  selection.category === catNode.category &&
-                                  selection.month === monthNode.month;
-
-                                return (
-                                  <button
-                                    key={`${yearNode.year}-${catNode.category}-${monthNode.month}`}
-                                    onClick={() =>
-                                      onSelect({
-                                        year: yearNode.year,
-                                        category: catNode.category,
-                                        month: monthNode.month,
-                                      })
-                                    }
-                                    className={cn(
-                                      'w-full text-left px-3 py-1.5 rounded-md text-sm transition-colors',
-                                      'hover:bg-muted/80',
-                                      isSelected &&
-                                        'bg-primary/10 text-primary font-medium'
-                                    )}
+                                <span>{monthName}</span>
+                                {isCurrent && (
+                                  <Badge
+                                    variant="outline"
+                                    className="text-[9px] px-1 py-0"
                                   >
-                                    <div className="flex items-center justify-between">
-                                      <span>{monthNode.label}</span>
-                                      <span className="text-xs text-muted-foreground">
-                                        {monthNode.count}
-                                      </span>
-                                    </div>
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          </AccordionContent>
-                        </AccordionItem>
-                      );
-                    })}
-                  </Accordion>
-                </AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
-        )}
-      </div>
-    </ScrollArea>
+                                    en cours
+                                  </Badge>
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
   );
 }

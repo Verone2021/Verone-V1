@@ -1,235 +1,96 @@
-/**
- * Hook: useLibraryDocuments
- * Description: Hook pour la bibliotheque comptable — recupere les documents
- * financiers avec colonnes PDF et les organise en arborescence
- * Annee > Categorie (Ventes/Achats/Avoirs) > Mois
- *
- * NOTE: Ne depend PAS du feature flag financeEnabled (acces direct)
- */
+'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { createClient } from '@verone/utils/supabase/client';
 
-// =====================================================================
-// TYPES
-// =====================================================================
-
-export type LibraryDocumentType =
-  | 'customer_invoice'
-  | 'customer_credit_note'
-  | 'supplier_invoice'
-  | 'supplier_credit_note'
-  | 'expense';
-
-export type LibraryCategory = 'ventes' | 'achats' | 'avoirs';
-
 export interface LibraryDocument {
   id: string;
-  document_type: LibraryDocumentType;
+  source_table: 'financial_documents' | 'invoices' | 'bank_transactions';
+  document_type: string;
   document_direction: string;
   document_number: string | null;
   document_date: string | null;
-  partner_id: string | null;
+  partner_name: string | null;
   total_ht: number | null;
   total_ttc: number | null;
   status: string | null;
-  local_pdf_path: string | null;
-  qonto_pdf_url: string | null;
-  qonto_attachment_id: string | null;
-  uploaded_file_url: string | null;
+  pdf_url: string | null;
   pcg_code: string | null;
   created_at: string;
-  partner: {
-    id: string;
-    legal_name: string;
-    trade_name: string | null;
-    type: string | null;
-  } | null;
 }
 
-export interface LibraryTreeMonth {
-  month: number;
-  label: string;
-  count: number;
+export interface UseLibraryDocumentsReturn {
   documents: LibraryDocument[];
+  isLoading: boolean;
+  error: string | null;
+  refetch: () => Promise<void>;
 }
 
-export interface LibraryTreeCategory {
-  category: LibraryCategory;
-  label: string;
-  count: number;
-  months: LibraryTreeMonth[];
+/**
+ * Returns the PDF URL for a library document.
+ * - financial_documents: Qonto invoice proxy (with store-on-read)
+ * - bank_transactions: Qonto attachment proxy (with store-on-read)
+ * - invoices: direct Abby URL
+ */
+export function getPdfUrl(doc: LibraryDocument): string | null {
+  if (doc.source_table === 'financial_documents') {
+    return `/api/qonto/invoices/${doc.id}/pdf`;
+  }
+  if (doc.source_table === 'bank_transactions') {
+    if (!doc.pdf_url) return null;
+    // pdf_url contains either local_pdf_path (e.g. "justificatifs/2024/xxx.pdf")
+    // or attachment_id from Qonto. Both are served via the attachments route.
+    if (doc.pdf_url.startsWith('justificatifs/')) {
+      // Local PDF stored — extract attachment_id from filename
+      const filename = doc.pdf_url.split('/').pop()?.replace('.pdf', '') ?? '';
+      return `/api/qonto/attachments/${filename}`;
+    }
+    // Qonto attachment_id — proxy + store-on-read
+    return `/api/qonto/attachments/${doc.pdf_url}`;
+  }
+  return doc.pdf_url ?? null;
 }
 
-export interface LibraryTreeYear {
-  year: number;
-  count: number;
-  categories: LibraryTreeCategory[];
-}
-
-export interface LibraryFilters {
+/**
+ * Hook to fetch documents from v_library_documents view.
+ * Supports filtering by year, month, category, and search term.
+ */
+export function useLibraryDocuments(filters?: {
   year?: number;
   month?: number;
-  category?: LibraryCategory;
+  category?: 'achats' | 'ventes' | 'avoirs';
   search?: string;
-  status?: string[];
-  documentTypes?: LibraryDocumentType[];
-}
-
-// =====================================================================
-// HELPERS
-// =====================================================================
-
-const MONTH_LABELS = [
-  'Janvier',
-  'Février',
-  'Mars',
-  'Avril',
-  'Mai',
-  'Juin',
-  'Juillet',
-  'Août',
-  'Septembre',
-  'Octobre',
-  'Novembre',
-  'Décembre',
-];
-
-const CATEGORY_CONFIG: Record<
-  LibraryCategory,
-  { label: string; types: LibraryDocumentType[] }
-> = {
-  ventes: {
-    label: 'Ventes',
-    types: ['customer_invoice'],
-  },
-  achats: {
-    label: 'Achats',
-    types: ['supplier_invoice', 'expense'],
-  },
-  avoirs: {
-    label: 'Avoirs',
-    types: ['customer_credit_note', 'supplier_credit_note'],
-  },
-};
-
-function getCategory(docType: LibraryDocumentType): LibraryCategory {
-  for (const [cat, config] of Object.entries(CATEGORY_CONFIG)) {
-    if (config.types.includes(docType)) {
-      return cat as LibraryCategory;
-    }
-  }
-  return 'achats';
-}
-
-function buildTree(documents: LibraryDocument[]): LibraryTreeYear[] {
-  const yearMap = new Map<
-    number,
-    Map<LibraryCategory, Map<number, LibraryDocument[]>>
-  >();
-
-  for (const doc of documents) {
-    const date = doc.document_date
-      ? new Date(doc.document_date)
-      : new Date(doc.created_at);
-    const year = date.getFullYear();
-    const month = date.getMonth(); // 0-indexed
-    const category = getCategory(doc.document_type);
-
-    if (!yearMap.has(year)) yearMap.set(year, new Map());
-    const catMap = yearMap.get(year)!;
-    if (!catMap.has(category)) catMap.set(category, new Map());
-    const monthMap = catMap.get(category)!;
-    if (!monthMap.has(month)) monthMap.set(month, []);
-    monthMap.get(month)!.push(doc);
-  }
-
-  const tree: LibraryTreeYear[] = [];
-  const sortedYears = Array.from(yearMap.keys()).sort((a, b) => b - a);
-
-  for (const year of sortedYears) {
-    const catMap = yearMap.get(year)!;
-    const categories: LibraryTreeCategory[] = [];
-    let yearCount = 0;
-
-    for (const cat of ['ventes', 'achats', 'avoirs'] as LibraryCategory[]) {
-      const monthMap = catMap.get(cat);
-      if (!monthMap) continue;
-
-      const months: LibraryTreeMonth[] = [];
-      let catCount = 0;
-
-      const sortedMonths = Array.from(monthMap.keys()).sort((a, b) => a - b);
-      for (const m of sortedMonths) {
-        const docs = monthMap.get(m)!;
-        months.push({
-          month: m,
-          label: MONTH_LABELS[m],
-          count: docs.length,
-          documents: docs,
-        });
-        catCount += docs.length;
-      }
-
-      categories.push({
-        category: cat,
-        label: CATEGORY_CONFIG[cat].label,
-        count: catCount,
-        months,
-      });
-      yearCount += catCount;
-    }
-
-    tree.push({ year, count: yearCount, categories });
-  }
-
-  return tree;
-}
-
-// =====================================================================
-// HOOK
-// =====================================================================
-
-const SELECT_COLUMNS = `
-  id,
-  document_type,
-  document_direction,
-  document_number,
-  document_date,
-  partner_id,
-  total_ht,
-  total_ttc,
-  status,
-  local_pdf_path,
-  qonto_pdf_url,
-  qonto_attachment_id,
-  uploaded_file_url,
-  pcg_code,
-  created_at,
-  partner:organisations!fk_partner(id, legal_name, trade_name, type)
-`;
-
-export function useLibraryDocuments(filters?: LibraryFilters) {
+}): UseLibraryDocumentsReturn {
   const [documents, setDocuments] = useState<LibraryDocument[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const supabase = useMemo(() => createClient(), []);
-
   const fetchDocuments = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+
     try {
-      setLoading(true);
-      setError(null);
+      const supabase = createClient();
 
-      let query = supabase
-        .from('financial_documents')
-        .select(SELECT_COLUMNS)
-        .is('deleted_at', null)
-        .order('document_date', { ascending: false });
+      let query = (supabase as { from: CallableFunction })
+        .from('v_library_documents')
+        .select(
+          'id, source_table, document_type, document_direction, document_number, document_date, partner_name, total_ht, total_ttc, status, pdf_url, pcg_code, created_at'
+        )
+        .order('document_date', { ascending: false })
+        .limit(200);
 
-      // Filter by year
-      if (filters?.year) {
+      // Filter by month (includes year) or year only
+      if (filters?.month && filters?.year) {
+        const month = String(filters.month).padStart(2, '0');
+        const startDate = `${filters.year}-${month}-01`;
+        const lastDay = new Date(filters.year, filters.month, 0).getDate();
+        const endDate = `${filters.year}-${month}-${lastDay}`;
+        query = query
+          .gte('document_date', startDate)
+          .lte('document_date', endDate);
+      } else if (filters?.year) {
         const startDate = `${filters.year}-01-01`;
         const endDate = `${filters.year}-12-31`;
         query = query
@@ -237,107 +98,43 @@ export function useLibraryDocuments(filters?: LibraryFilters) {
           .lte('document_date', endDate);
       }
 
-      // Filter by document types (from category or explicit)
-      if (filters?.documentTypes && filters.documentTypes.length > 0) {
-        query = query.in('document_type', filters.documentTypes);
-      } else if (filters?.category) {
-        const types = CATEGORY_CONFIG[filters.category].types;
-        query = query.in('document_type', types);
-      }
-
-      // Filter by status
-      if (filters?.status && filters.status.length > 0) {
-        query = query.in(
-          'status',
-          filters.status as unknown as readonly (
-            | 'draft'
-            | 'sent'
-            | 'received'
-            | 'paid'
-            | 'partially_paid'
-            | 'overdue'
-            | 'cancelled'
-            | 'refunded'
-          )[]
-        );
+      // Filter by category
+      if (filters?.category === 'achats') {
+        query = query.eq('document_direction', 'inbound');
+      } else if (filters?.category === 'ventes') {
+        query = query.eq('document_direction', 'outbound');
+      } else if (filters?.category === 'avoirs') {
+        query = query.eq('document_type', 'credit_note');
       }
 
       // Search
       if (filters?.search) {
-        query = query.or(`document_number.ilike.%${filters.search}%`);
+        query = query.ilike('partner_name', `%${filters.search}%`);
       }
 
       const { data, error: fetchError } = await query;
 
-      if (fetchError) throw fetchError;
+      if (fetchError) {
+        throw new Error(fetchError.message);
+      }
 
-      setDocuments((data as unknown as LibraryDocument[]) || []);
+      setDocuments((data ?? []) as LibraryDocument[]);
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : 'Erreur chargement documents';
-      setError(message);
-      console.error('[useLibraryDocuments] Fetch error:', err);
+      console.error('[useLibraryDocuments] Error:', err);
+      setError(err instanceof Error ? err.message : 'Erreur inconnue');
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
-  }, [
-    supabase,
-    filters?.year,
-    filters?.category,
-    filters?.documentTypes,
-    filters?.status,
-    filters?.search,
-  ]);
+  }, [filters?.year, filters?.month, filters?.category, filters?.search]);
 
   useEffect(() => {
     void fetchDocuments();
   }, [fetchDocuments]);
 
-  // Build tree from all documents (client-side grouping)
-  const tree = useMemo(() => buildTree(documents), [documents]);
-
-  // Filter documents for the list view (by month if selected)
-  const filteredDocuments = useMemo(() => {
-    if (filters?.month !== undefined && filters?.month !== null) {
-      return documents.filter(doc => {
-        const date = doc.document_date
-          ? new Date(doc.document_date)
-          : new Date(doc.created_at);
-        return date.getMonth() === filters.month;
-      });
-    }
-    return documents;
-  }, [documents, filters?.month]);
-
-  // Stats
-  const stats = useMemo(() => {
-    const ventesTotal = documents
-      .filter(d => getCategory(d.document_type) === 'ventes')
-      .reduce((sum, d) => sum + (d.total_ht ?? 0), 0);
-    const achatsTotal = documents
-      .filter(d => getCategory(d.document_type) === 'achats')
-      .reduce((sum, d) => sum + (d.total_ht ?? 0), 0);
-    const sansPdf = documents.filter(
-      d => !d.local_pdf_path && !d.qonto_pdf_url && !d.uploaded_file_url
-    ).length;
-
-    return {
-      totalDocuments: documents.length,
-      ventesTotal,
-      achatsTotal,
-      sansPdf,
-    };
-  }, [documents]);
-
   return {
-    documents: filteredDocuments,
-    allDocuments: documents,
-    tree,
-    stats,
-    loading,
+    documents,
+    isLoading,
     error,
-    refresh: fetchDocuments,
+    refetch: fetchDocuments,
   };
 }
-
-export { CATEGORY_CONFIG, MONTH_LABELS, getCategory };
