@@ -722,7 +722,7 @@ function TransactionsPageV2() {
                       </div>
 
                       {/* Icone justificatif */}
-                      <div className="flex-shrink-0">
+                      <div className="flex-shrink-0 flex items-center gap-1">
                         {(tx.attachment_ids?.length ?? 0) > 0 ? (
                           <div className="relative">
                             <Paperclip className="h-4 w-4 text-muted-foreground" />
@@ -730,6 +730,14 @@ function TransactionsPageV2() {
                           </div>
                         ) : (
                           <Paperclip className="h-4 w-4 text-muted-foreground/30" />
+                        )}
+                        {tx.justification_optional && (
+                          <Badge
+                            variant="outline"
+                            className="text-[10px] px-1 py-0 text-amber-600 border-amber-300"
+                          >
+                            Facultatif
+                          </Badge>
                         )}
                       </div>
 

@@ -41,6 +41,8 @@ export interface MatchingRule {
    * Si FALSE (défaut), la catégorie est verrouillée par la règle.
    */
   allow_multiple_categories: boolean;
+  /** Si TRUE, les transactions matchées n'ont pas besoin de justificatif */
+  justification_optional: boolean;
   default_vat_rate: number | null;
   created_at: string;
   created_by: string | null;
@@ -99,6 +101,8 @@ export interface CreateRuleData {
   priority?: number;
   /** Si TRUE, permet de modifier la catégorie individuellement par transaction */
   allow_multiple_categories?: boolean;
+  /** Si TRUE, les transactions matchées n'ont pas besoin de justificatif */
+  justification_optional?: boolean;
   /** Taux TVA par défaut (0, 5.5, 10, 20) — appliqué automatiquement aux transactions matchées */
   default_vat_rate?: number | null;
 }
@@ -149,7 +153,7 @@ export function useMatchingRules(): UseMatchingRulesReturn {
       )
         .from('v_matching_rules_with_org')
         .select(
-          'id, priority, enabled, match_type, match_value, match_patterns, display_label, organisation_id, individual_customer_id, counterparty_type, default_category, default_role_type, allow_multiple_categories, default_vat_rate, created_at, created_by, organisation_name, organisation_type, matched_expenses_count'
+          'id, priority, enabled, match_type, match_value, match_patterns, display_label, organisation_id, individual_customer_id, counterparty_type, default_category, default_role_type, allow_multiple_categories, justification_optional, default_vat_rate, created_at, created_by, organisation_name, organisation_type, matched_expenses_count'
         )
         .order('priority', { ascending: true });
 
@@ -197,6 +201,7 @@ export function useMatchingRules(): UseMatchingRulesReturn {
           default_role_type: data.default_role_type,
           priority: data.priority ?? 100,
           allow_multiple_categories: data.allow_multiple_categories ?? false,
+          justification_optional: data.justification_optional ?? false,
           default_vat_rate: data.default_vat_rate ?? null,
           // Multi-patterns: si non fourni, utiliser [match_value]
           match_patterns: data.match_patterns ?? [data.match_value],
@@ -285,6 +290,9 @@ export function useMatchingRules(): UseMatchingRulesReturn {
         if (data.allow_multiple_categories !== undefined)
           cleanData.allow_multiple_categories =
             data.allow_multiple_categories ?? false;
+        if (data.justification_optional !== undefined)
+          cleanData.justification_optional =
+            data.justification_optional ?? false;
         if (data.enabled !== undefined) cleanData.enabled = data.enabled;
         if (data.match_type !== undefined)
           cleanData.match_type = data.match_type;
