@@ -18,6 +18,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@verone/ui';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@verone/ui';
 import { Separator } from '@verone/ui';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@verone/ui';
 import {
@@ -149,6 +159,9 @@ export function PurchaseOrderDetailModal({
   const [deletingPaymentId, setDeletingPaymentId] = useState<string | null>(
     null
   );
+  const [showDeletePaymentConfirmation, setShowDeletePaymentConfirmation] =
+    useState(false);
+  const [paymentToDelete, setPaymentToDelete] = useState<string | null>(null);
 
   const [receptionHistory, setReceptionHistory] = useState<
     Array<{
@@ -376,13 +389,23 @@ export function PurchaseOrderDetailModal({
   };
 
   const handleDeletePayment = (paymentId: string) => {
-    setDeletingPaymentId(paymentId);
-    void deleteManualPayment(paymentId)
+    setPaymentToDelete(paymentId);
+    setShowDeletePaymentConfirmation(true);
+  };
+
+  const handleDeletePaymentConfirmed = () => {
+    if (!paymentToDelete) return;
+    setDeletingPaymentId(paymentToDelete);
+    void deleteManualPayment(paymentToDelete)
       .then(() => {
         refreshPayments();
       })
       .catch(console.error)
-      .finally(() => setDeletingPaymentId(null));
+      .finally(() => {
+        setDeletingPaymentId(null);
+        setShowDeletePaymentConfirmation(false);
+        setPaymentToDelete(null);
+      });
   };
 
   // Unified totals for the payment summary
@@ -1462,6 +1485,33 @@ export function PurchaseOrderDetailModal({
           </Tabs>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog
+        open={showDeletePaymentConfirmation}
+        onOpenChange={setShowDeletePaymentConfirmation}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer ce paiement ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Vous etes sur le point de supprimer ce paiement manuel. Le statut
+              de paiement de la commande sera recalcule automatiquement.
+              <br />
+              <br />
+              Voulez-vous continuer ?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeletePaymentConfirmed}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Supprimer le paiement
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

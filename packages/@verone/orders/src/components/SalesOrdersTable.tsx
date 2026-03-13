@@ -337,6 +337,10 @@ export function SalesOrdersTable({
   const [orderToDevalidate, setOrderToDevalidate] = useState<string | null>(
     null
   );
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [orderToDelete, setOrderToDelete] = useState<string | null>(null);
+  const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
+  const [orderToCancel, setOrderToCancel] = useState<string | null>(null);
   const [showLinkTransactionModal, setShowLinkTransactionModal] =
     useState(false);
   const [selectedOrderForLink, setSelectedOrderForLink] =
@@ -818,72 +822,98 @@ export function SalesOrdersTable({
     }
   };
 
-  const handleDelete = async (orderId: string) => {
-    if (confirm('Etes-vous sur de vouloir supprimer cette commande ?')) {
-      try {
-        await deleteOrder(orderId);
-        onOrderUpdated?.();
-      } catch (error) {
-        console.error('Erreur lors de la suppression:', error);
-      }
+  const handleDelete = (orderId: string) => {
+    setOrderToDelete(orderId);
+    setShowDeleteConfirmation(true);
+  };
+
+  const handleDeleteConfirmed = async () => {
+    if (!orderToDelete) return;
+    try {
+      await deleteOrder(orderToDelete);
+      onOrderUpdated?.();
+      toast({
+        title: 'Succes',
+        description: 'Commande supprimee avec succes',
+      });
+    } catch (error) {
+      console.error('Erreur lors de la suppression:', error);
+      toast({
+        title: 'Erreur',
+        description:
+          error instanceof Error
+            ? error.message
+            : 'Impossible de supprimer la commande',
+        variant: 'destructive',
+      });
+    } finally {
+      setShowDeleteConfirmation(false);
+      setOrderToDelete(null);
     }
   };
 
-  const handleCancel = async (orderId: string) => {
-    if (confirm('Etes-vous sur de vouloir annuler cette commande ?')) {
-      try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
+  const handleCancel = (orderId: string) => {
+    setOrderToCancel(orderId);
+    setShowCancelConfirmation(true);
+  };
 
-        if (!user?.id) {
-          throw new Error('Utilisateur non authentifie');
-        }
+  const handleCancelConfirmed = async () => {
+    if (!orderToCancel) return;
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-        if (updateStatusAction) {
-          const result = await updateStatusAction(
-            orderId,
-            'cancelled',
-            user.id
-          );
-          if (!result.success) {
-            throw new Error(result.error ?? "Erreur lors de l'annulation");
-          }
-        } else {
-          await updateStatus(orderId, 'cancelled');
-        }
-
-        // Liberer les reservations de stock
-        await supabase
-          .from('stock_reservations')
-          .update({
-            released_at: new Date().toISOString(),
-            released_by: user.id,
-          })
-          .eq('reference_type', 'sales_order')
-          .eq('reference_id', orderId)
-          .is('released_at', null);
-
-        toast({
-          title: 'Succes',
-          description: 'Commande annulee avec succes',
-        });
-
-        const filters = channelId ? { channel_id: channelId } : undefined;
-        await fetchOrders(filters);
-        await fetchStats(filters);
-        onOrderUpdated?.();
-      } catch (error) {
-        console.error("Erreur lors de l'annulation:", error);
-        toast({
-          title: 'Erreur',
-          description:
-            error instanceof Error
-              ? error.message
-              : "Impossible d'annuler la commande",
-          variant: 'destructive',
-        });
+      if (!user?.id) {
+        throw new Error('Utilisateur non authentifie');
       }
+
+      if (updateStatusAction) {
+        const result = await updateStatusAction(
+          orderToCancel,
+          'cancelled',
+          user.id
+        );
+        if (!result.success) {
+          throw new Error(result.error ?? "Erreur lors de l'annulation");
+        }
+      } else {
+        await updateStatus(orderToCancel, 'cancelled');
+      }
+
+      // Liberer les reservations de stock
+      await supabase
+        .from('stock_reservations')
+        .update({
+          released_at: new Date().toISOString(),
+          released_by: user.id,
+        })
+        .eq('reference_type', 'sales_order')
+        .eq('reference_id', orderToCancel)
+        .is('released_at', null);
+
+      toast({
+        title: 'Succes',
+        description: 'Commande annulee avec succes',
+      });
+
+      const filters = channelId ? { channel_id: channelId } : undefined;
+      await fetchOrders(filters);
+      await fetchStats(filters);
+      onOrderUpdated?.();
+    } catch (error) {
+      console.error("Erreur lors de l'annulation:", error);
+      toast({
+        title: 'Erreur',
+        description:
+          error instanceof Error
+            ? error.message
+            : "Impossible d'annuler la commande",
+        variant: 'destructive',
+      });
+    } finally {
+      setShowCancelConfirmation(false);
+      setOrderToCancel(null);
     }
   };
 
@@ -1718,24 +1748,10 @@ export function SalesOrdersTable({
                                 }}
                                 onShip={() => openShipmentModal(order)}
                                 onCancel={() => {
-                                  void handleCancel(order.id).catch(
-                                    (err: unknown) => {
-                                      console.error(
-                                        '[SalesOrdersTable] cancel failed:',
-                                        err
-                                      );
-                                    }
-                                  );
+                                  handleCancel(order.id);
                                 }}
                                 onDelete={() => {
-                                  void handleDelete(order.id).catch(
-                                    (err: unknown) => {
-                                      console.error(
-                                        '[SalesOrdersTable] delete failed:',
-                                        err
-                                      );
-                                    }
-                                  );
+                                  handleDelete(order.id);
                                 }}
                                 onLinkTransaction={() => {
                                   setSelectedOrderForLink(order);
@@ -2001,6 +2017,76 @@ export function SalesOrdersTable({
               className="bg-orange-600 hover:bg-orange-700"
             >
               Devalider la commande
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* AlertDialog Confirmation Suppression */}
+      <AlertDialog
+        open={showDeleteConfirmation}
+        onOpenChange={setShowDeleteConfirmation}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
+            <AlertDialogDescription>
+              Vous etes sur le point de supprimer cette commande client. Cette
+              action est irreversible.
+              <br />
+              <br />
+              Voulez-vous continuer ?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                void handleDeleteConfirmed().catch((err: unknown) => {
+                  console.error(
+                    '[SalesOrdersTable] delete confirmed failed:',
+                    err
+                  );
+                });
+              }}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Supprimer la commande
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* AlertDialog Confirmation Annulation */}
+      <AlertDialog
+        open={showCancelConfirmation}
+        onOpenChange={setShowCancelConfirmation}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmer l&apos;annulation</AlertDialogTitle>
+            <AlertDialogDescription>
+              Vous etes sur le point d&apos;annuler cette commande client. Elle
+              passera en statut annule et ne pourra plus etre modifiee.
+              <br />
+              <br />
+              Voulez-vous continuer ?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Retour</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                void handleCancelConfirmed().catch((err: unknown) => {
+                  console.error(
+                    '[SalesOrdersTable] cancel confirmed failed:',
+                    err
+                  );
+                });
+              }}
+              className="bg-orange-600 hover:bg-orange-700"
+            >
+              Annuler la commande
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
