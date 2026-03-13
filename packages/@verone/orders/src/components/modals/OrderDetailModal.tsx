@@ -71,7 +71,7 @@ import { AddProductToOrderModal } from './AddProductToOrderModal';
 interface ILinkedInvoice {
   id: string;
   document_number: string | null;
-  workflow_status: string | null;
+  status: string | null;
   total_ttc: number;
   qonto_invoice_id: string | null;
 }
@@ -556,7 +556,7 @@ export function OrderDetailModal({
   const canShip = ['validated', 'partially_shipped'].includes(order.status);
 
   const activeInvoices = linkedInvoices.filter(
-    inv => inv.workflow_status !== 'cancelled'
+    inv => inv.status !== 'cancelled'
   );
   const hasActiveInvoice = activeInvoices.length > 0;
 
@@ -1315,22 +1315,6 @@ export function OrderDetailModal({
                                 <span className="font-mono text-xs flex-1">
                                   {inv.document_number ?? inv.id.slice(0, 8)}
                                 </span>
-                              )}
-                              {inv.workflow_status && (
-                                <Badge
-                                  variant="outline"
-                                  className="text-xs px-1.5 py-0"
-                                >
-                                  {inv.workflow_status === 'synchronized'
-                                    ? 'Synchronisé'
-                                    : inv.workflow_status === 'finalized'
-                                      ? 'Définitif'
-                                      : inv.workflow_status === 'sent'
-                                        ? 'Envoyé'
-                                        : inv.workflow_status === 'paid'
-                                          ? 'Payé'
-                                          : inv.workflow_status}
-                                </Badge>
                               )}
                             </div>
                           ))}

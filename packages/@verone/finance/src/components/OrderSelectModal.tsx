@@ -246,7 +246,7 @@ export function OrderSelectModal({
           .select('sales_order_id, document_type')
           .in('sales_order_id', orderIds)
           .is('deleted_at', null)
-          .neq('workflow_status', 'cancelled');
+          .neq('status', 'cancelled');
 
         // Count invoices and credit notes per order
         const invoiceCount = new Map<string, number>();

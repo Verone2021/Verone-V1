@@ -3,8 +3,8 @@
  * Archive une facture validée (soft delete via deleted_at)
  *
  * RÈGLES MÉTIER:
- * - Seules les factures validées peuvent être archivées (workflow_status IN draft_validated, finalized, sent, paid)
- * - Les brouillons non validés (synchronized) doivent être supprimés, pas archivés
+ * - Seules les factures finalisées peuvent être archivées (status !== 'draft')
+ * - Les brouillons doivent être supprimés, pas archivés
  * - Les factures annulées (cancelled) restent visibles avec badge, pas d'archivage
  * - Implémentation: Soft delete via deleted_at
  * - Traçabilité: Log audit avec user_id + timestamp
@@ -48,9 +48,7 @@ export async function POST(
     // Note: l'id passé en paramètre est le qonto_invoice_id, pas l'id UUID de financial_documents
     const { data: document, error: fetchError } = await supabase
       .from('financial_documents')
-      .select(
-        'id, document_number, status, workflow_status, qonto_invoice_id, deleted_at'
-      )
+      .select('id, document_number, status, qonto_invoice_id, deleted_at')
       .eq('qonto_invoice_id', id)
       .is('deleted_at', null)
       .single();
@@ -66,21 +64,13 @@ export async function POST(
       );
     }
 
-    // 3. Vérifier que la facture est validée (archivage autorisé)
-    const canArchive = [
-      'draft_validated',
-      'finalized',
-      'sent',
-      'paid',
-    ].includes(document.workflow_status ?? '');
-
-    if (!canArchive) {
+    // 3. Vérifier que la facture n'est pas un brouillon (seules les factures finalisées peuvent être archivées)
+    if (document.status === 'draft') {
       return NextResponse.json(
         {
           success: false,
-          error: `Cannot archive document with workflow_status "${document.workflow_status}". Only validated invoices can be archived.`,
-          currentWorkflowStatus: document.workflow_status,
-          hint: 'Use DELETE for draft invoices with workflow_status=synchronized',
+          error: `Cannot archive a draft document. Only finalized invoices can be archived.`,
+          hint: 'Use DELETE for draft invoices',
         },
         { status: 400 }
       );
@@ -101,7 +91,7 @@ export async function POST(
 
     // 5. Log de l'action (audit trail)
     console.warn(
-      `[API Financial Documents Archive] User ${user.id} archived document ${document.id} (${document.document_number}) with workflow_status=${document.workflow_status}`
+      `[API Financial Documents Archive] User ${user.id} archived document ${document.id} (${document.document_number}) with status=${document.status}`
     );
 
     return NextResponse.json({
