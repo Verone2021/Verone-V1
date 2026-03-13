@@ -47,6 +47,7 @@ import {
   ArrowLeftRight,
   Grid3x3,
   BookOpenCheck,
+  FolderArchive,
 } from 'lucide-react';
 
 import { PhaseIndicator } from '@/components/ui/phase-indicator';
@@ -310,6 +311,11 @@ const getNavItems = (
         icon: BookOpenCheck,
       },
       {
+        title: 'Bibliothèque',
+        href: '/finance/bibliotheque',
+        icon: FolderArchive,
+      },
+      {
         title: 'Clôture exercice',
         href: '/finance/admin/cloture',
         icon: Banknote,
@@ -521,6 +527,7 @@ function SidebarContent() {
       Finance: 'finance',
       Pilotage: 'finance',
       Documents: 'finance',
+      Bibliothèque: 'finance',
       'Clôture exercice': 'finance',
       Facturation: 'factures',
       Factures: 'factures',

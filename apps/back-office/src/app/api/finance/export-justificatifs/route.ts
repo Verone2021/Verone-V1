@@ -88,6 +88,162 @@ async function createSimpleZip(
   return Buffer.concat([...entries, ...centralDir, endRecord]);
 }
 
+// Category mapping for ZIP folder organization
+const DOC_TYPE_FOLDER: Record<string, string> = {
+  customer_invoice: 'Ventes',
+  supplier_invoice: 'Achats',
+  expense: 'Achats',
+  customer_credit_note: 'Avoirs',
+  supplier_credit_note: 'Avoirs',
+};
+
+/**
+ * Export from financial_documents table (bibliotheque mode)
+ */
+async function exportFromBibliotheque(
+  supabase: Awaited<ReturnType<typeof createServerClient>>,
+  params: {
+    year: string;
+    month: string | null;
+    email: string | null;
+    docIds?: string[];
+  }
+): Promise<NextResponse> {
+  // Query documents
+  let query = supabase
+    .from('financial_documents')
+    .select(
+      'id, document_type, document_number, document_date, local_pdf_path, qonto_pdf_url, qonto_attachment_id, uploaded_file_url'
+    )
+    .is('deleted_at', null)
+    .gte('document_date', `${params.year}-01-01`)
+    .lte('document_date', `${params.year}-12-31`);
+
+  if (params.month) {
+    const monthPadded = params.month.padStart(2, '0');
+    query = query
+      .gte('document_date', `${params.year}-${monthPadded}-01`)
+      .lte('document_date', `${params.year}-${monthPadded}-31`);
+  }
+
+  if (params.docIds && params.docIds.length > 0) {
+    query = query.in('id', params.docIds);
+  }
+
+  const { data: docs, error: queryError } = await query;
+
+  if (queryError) {
+    return NextResponse.json(
+      { error: `Query error: ${queryError.message}` },
+      { status: 500 }
+    );
+  }
+
+  if (!docs || docs.length === 0) {
+    return NextResponse.json(
+      { error: 'Aucun document trouvé pour cette période' },
+      { status: 404 }
+    );
+  }
+
+  // Download PDFs and organize by category
+  const zipFiles: { name: string; data: ArrayBuffer }[] = [];
+
+  for (const doc of docs) {
+    const folder = DOC_TYPE_FOLDER[doc.document_type] ?? 'Autres';
+    const filename = `${doc.document_number ?? doc.id}.pdf`;
+    const zipPath = `${folder}/${filename}`;
+
+    let pdfBuffer: ArrayBuffer | null = null;
+
+    // Try local storage first
+    if (doc.local_pdf_path) {
+      const { data } = await supabase.storage
+        .from('invoices')
+        .download(doc.local_pdf_path);
+      if (data) {
+        pdfBuffer = await data.arrayBuffer();
+      }
+    }
+
+    // Fallback: fetch from API route
+    if (!pdfBuffer) {
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000'}/api/qonto/invoices/${doc.id}/pdf`
+        );
+        if (response.ok) {
+          pdfBuffer = await response.arrayBuffer();
+        }
+      } catch {
+        // Skip this document
+      }
+    }
+
+    if (pdfBuffer && pdfBuffer.byteLength > 0) {
+      zipFiles.push({ name: zipPath, data: pdfBuffer });
+    }
+  }
+
+  if (zipFiles.length === 0) {
+    return NextResponse.json(
+      { error: 'Aucun PDF disponible pour ces documents' },
+      { status: 404 }
+    );
+  }
+
+  const zipBuffer = await createSimpleZip(zipFiles);
+  const zipFilename = `bibliotheque-${params.year}${params.month ? `-${params.month}` : ''}.zip`;
+
+  // Send by email if requested
+  if (params.email) {
+    try {
+      const { Resend } = await import('resend');
+      const resend = new Resend(process.env.RESEND_API_KEY);
+
+      await resend.emails.send({
+        from: process.env.RESEND_FROM_EMAIL ?? 'Verone <noreply@verone.fr>',
+        to: [params.email],
+        subject: `Documents comptables ${params.year}${params.month ? `/${params.month}` : ''}`,
+        html: `
+          <h2>Documents comptables</h2>
+          <p>Période : ${params.month ? `${params.month}/${params.year}` : params.year}</p>
+          <p>Nombre de documents : ${zipFiles.length}</p>
+          <p>Organisation : Ventes / Achats / Avoirs</p>
+          <br/>
+          <p><em>Envoyé depuis Verone Back Office</em></p>
+        `,
+        attachments: [
+          {
+            filename: zipFilename,
+            content: zipBuffer.toString('base64'),
+          },
+        ],
+      });
+
+      return NextResponse.json({
+        success: true,
+        message: `${zipFiles.length} documents envoyés à ${params.email}`,
+        filename: zipFilename,
+      });
+    } catch (emailError) {
+      console.error('[Export Bibliotheque] Email error:', emailError);
+      return NextResponse.json(
+        { error: 'ZIP créé mais envoi email échoué' },
+        { status: 500 }
+      );
+    }
+  }
+
+  return new NextResponse(new Uint8Array(zipBuffer), {
+    status: 200,
+    headers: {
+      'Content-Type': 'application/zip',
+      'Content-Disposition': `attachment; filename="${zipFilename}"`,
+    },
+  });
+}
+
 export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
     // 1. Auth
@@ -105,6 +261,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const year = searchParams.get('year');
     const month = searchParams.get('month');
     const email = searchParams.get('email');
+    const source = searchParams.get('source'); // 'bibliotheque' = financial_documents
+    const docIds = searchParams.get('ids'); // comma-separated document IDs
 
     if (!year || !/^\d{4}$/.test(year)) {
       return NextResponse.json(
@@ -113,7 +271,17 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    // 3. List files in the bucket for the given year/month
+    // 2b. Source: bibliotheque — export from financial_documents
+    if (source === 'bibliotheque') {
+      return exportFromBibliotheque(supabase, {
+        year,
+        month,
+        email,
+        docIds: docIds ? docIds.split(',') : undefined,
+      });
+    }
+
+    // 3. List files in the bucket for the given year/month (legacy mode)
     const basePath = month ? `${year}/${month}` : year;
 
     const { data: fileList, error: listError } = await supabase.storage
