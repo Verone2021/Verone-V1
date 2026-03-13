@@ -174,6 +174,10 @@ export default function PurchaseOrdersPage() {
   const [orderToDevalidate, setOrderToDevalidate] = useState<string | null>(
     null
   );
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [orderToDelete, setOrderToDelete] = useState<string | null>(null);
+  const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
+  const [orderToCancel, setOrderToCancel] = useState<string | null>(null);
 
   // États pour le modal d'avertissement quantité insuffisante
   const [showShortageWarning, setShowShortageWarning] = useState(false);
@@ -755,63 +759,87 @@ export default function PurchaseOrdersPage() {
     }
   };
 
-  const handleDelete = async (orderId: string) => {
-    if (confirm('Êtes-vous sûr de vouloir supprimer cette commande ?')) {
-      try {
-        await deleteOrder(orderId);
-      } catch (error) {
-        console.error('Erreur lors de la suppression:', error);
-      }
+  const handleDelete = (orderId: string) => {
+    setOrderToDelete(orderId);
+    setShowDeleteConfirmation(true);
+  };
+
+  const handleDeleteConfirmed = async () => {
+    if (!orderToDelete) return;
+    try {
+      await deleteOrder(orderToDelete);
+      toast({
+        title: 'Succès',
+        description: 'Commande supprimée avec succès',
+      });
+      await fetchOrders();
+    } catch (error) {
+      console.error('Erreur lors de la suppression:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de supprimer la commande',
+        variant: 'destructive',
+      });
+    } finally {
+      setShowDeleteConfirmation(false);
+      setOrderToDelete(null);
     }
   };
 
-  const handleCancel = async (orderId: string) => {
-    if (confirm('Êtes-vous sûr de vouloir annuler cette commande ?')) {
-      try {
-        // Récupérer l'utilisateur courant
-        const supabase = createClient();
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
+  const handleCancel = (orderId: string) => {
+    setOrderToCancel(orderId);
+    setShowCancelConfirmation(true);
+  };
 
-        if (!user?.id) {
-          toast({
-            title: 'Erreur',
-            description: 'Utilisateur non authentifié',
-            variant: 'destructive',
-          });
-          return;
-        }
+  const handleCancelConfirmed = async () => {
+    if (!orderToCancel) return;
+    try {
+      // Récupérer l'utilisateur courant
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-        // Appeler la Server Action pour annuler
-        const result = await updatePurchaseOrderStatus(
-          orderId,
-          'cancelled',
-          user.id
-        );
-
-        if (!result.success) {
-          throw new Error(result.error ?? "Erreur lors de l'annulation");
-        }
-
-        toast({
-          title: 'Succès',
-          description: 'Commande annulée avec succès',
-        });
-
-        // Rafraîchir les données
-        await fetchOrders();
-      } catch (error) {
-        console.error("Erreur lors de l'annulation:", error);
+      if (!user?.id) {
         toast({
           title: 'Erreur',
-          description:
-            error instanceof Error
-              ? error.message
-              : "Impossible d'annuler la commande",
+          description: 'Utilisateur non authentifié',
           variant: 'destructive',
         });
+        return;
       }
+
+      // Appeler la Server Action pour annuler
+      const result = await updatePurchaseOrderStatus(
+        orderToCancel,
+        'cancelled',
+        user.id
+      );
+
+      if (!result.success) {
+        throw new Error(result.error ?? "Erreur lors de l'annulation");
+      }
+
+      toast({
+        title: 'Succès',
+        description: 'Commande annulée avec succès',
+      });
+
+      // Rafraîchir les données
+      await fetchOrders();
+    } catch (error) {
+      console.error("Erreur lors de l'annulation:", error);
+      toast({
+        title: 'Erreur',
+        description:
+          error instanceof Error
+            ? error.message
+            : "Impossible d'annuler la commande",
+        variant: 'destructive',
+      });
+    } finally {
+      setShowCancelConfirmation(false);
+      setOrderToCancel(null);
     }
   };
 
@@ -1360,20 +1388,10 @@ export default function PurchaseOrdersPage() {
                               }}
                               onReceive={() => openReceptionModal(order)}
                               onCancel={() => {
-                                void handleCancel(order.id).catch(error => {
-                                  console.error(
-                                    '[PurchaseOrders] Cancel failed:',
-                                    error
-                                  );
-                                });
+                                handleCancel(order.id);
                               }}
                               onDelete={() => {
-                                void handleDelete(order.id).catch(error => {
-                                  console.error(
-                                    '[PurchaseOrders] Delete failed:',
-                                    error
-                                  );
-                                });
+                                handleDelete(order.id);
                               }}
                               onCancelRemainder={() =>
                                 openCancelRemainderModal(order)
@@ -1562,6 +1580,76 @@ export default function PurchaseOrdersPage() {
               className="bg-orange-600 hover:bg-orange-700"
             >
               Devalider la commande
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* AlertDialog Suppression PO */}
+      <AlertDialog
+        open={showDeleteConfirmation}
+        onOpenChange={setShowDeleteConfirmation}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
+            <AlertDialogDescription>
+              Vous êtes sur le point de supprimer cette commande fournisseur.
+              Cette action est irréversible.
+              <br />
+              <br />
+              Voulez-vous continuer ?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                void handleDeleteConfirmed().catch(error => {
+                  console.error(
+                    '[PurchaseOrders] Delete confirmed failed:',
+                    error
+                  );
+                });
+              }}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Supprimer la commande
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* AlertDialog Annulation PO */}
+      <AlertDialog
+        open={showCancelConfirmation}
+        onOpenChange={setShowCancelConfirmation}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmer l&apos;annulation</AlertDialogTitle>
+            <AlertDialogDescription>
+              Vous êtes sur le point d&apos;annuler cette commande fournisseur.
+              Elle passera en statut annulé et ne pourra plus être modifiée.
+              <br />
+              <br />
+              Voulez-vous continuer ?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                void handleCancelConfirmed().catch(error => {
+                  console.error(
+                    '[PurchaseOrders] Cancel confirmed failed:',
+                    error
+                  );
+                });
+              }}
+              className="bg-orange-600 hover:bg-orange-700"
+            >
+              Annuler la commande
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -24,6 +24,14 @@ import {
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
   Badge,
   Button,
   Card,
@@ -317,6 +325,7 @@ export function EditOrderPage({ data }: EditOrderPageProps) {
 
   // ---- State: Add product dialog ----
   const [isAddProductOpen, setIsAddProductOpen] = useState(false);
+  const [showSaveConfirmation, setShowSaveConfirmation] = useState(false);
 
   // ---- Pre-selection: match existing data with contacts/addresses ----
   const [hasInitialized, setHasInitialized] = useState(false);
@@ -2030,11 +2039,7 @@ export function EditOrderPage({ data }: EditOrderPageProps) {
                 Annuler
               </Button>
               <Button
-                onClick={() => {
-                  void handleSave().catch(err => {
-                    console.error('[EditOrderPage] Save failed:', err);
-                  });
-                }}
+                onClick={() => setShowSaveConfirmation(true)}
                 disabled={!hasChanges || updateOrder.isPending}
                 className="bg-[#5DBEBB] hover:bg-[#4DAEAB] text-white"
               >
@@ -2054,6 +2059,37 @@ export function EditOrderPage({ data }: EditOrderPageProps) {
           </div>
         </div>
       </div>
+
+      {/* Save confirmation dialog */}
+      <AlertDialog
+        open={showSaveConfirmation}
+        onOpenChange={setShowSaveConfirmation}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmer la sauvegarde</AlertDialogTitle>
+            <AlertDialogDescription>
+              Vous etes sur le point de sauvegarder les modifications de cette
+              commande brouillon.
+              <br />
+              <br />
+              Voulez-vous continuer ?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                void handleSave().catch(err => {
+                  console.error('[EditOrderPage] Save failed:', err);
+                });
+              }}
+            >
+              Enregistrer les modifications
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Add product dialog */}
       {selectionId && (
