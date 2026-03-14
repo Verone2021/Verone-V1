@@ -13,6 +13,8 @@
 
 import { X, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 
+import { usePermissions } from '@/hooks/use-permissions';
+
 import type { LinkMeOrder } from '../../../../hooks/use-linkme-orders';
 
 interface ApproveOrderDialogProps {
@@ -32,6 +34,8 @@ export function ApproveOrderDialog({
   isLoading,
   error,
 }: ApproveOrderDialogProps): JSX.Element | null {
+  const { canViewCommissions } = usePermissions();
+
   if (!isOpen || !order) return null;
 
   return (
@@ -89,12 +93,14 @@ export function ApproveOrderDialog({
                 {order.total_ttc.toFixed(2)} EUR
               </span>
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-500">Commission</span>
-              <span className="font-semibold text-emerald-600">
-                +{order.total_affiliate_margin.toFixed(2)} EUR
-              </span>
-            </div>
+            {canViewCommissions && (
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-500">Commission</span>
+                <span className="font-semibold text-emerald-600">
+                  +{order.total_affiliate_margin.toFixed(2)} EUR
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Info synchronisation */}

@@ -12,6 +12,8 @@ import Image from 'next/image';
 import { Card, Badge } from '@tremor/react';
 import { Package, TrendingUp } from 'lucide-react';
 
+import { usePermissions } from '@/hooks/use-permissions';
+
 import type { TopProductData } from '../../types/analytics';
 import { formatCurrency } from '../../types/analytics';
 
@@ -28,6 +30,8 @@ export function TopProductsTable({
   title = 'Top 10 Produits Vendus',
   maxItems = 10,
 }: TopProductsTableProps) {
+  const { canViewCommissions } = usePermissions();
+
   if (isLoading) {
     return (
       <Card className="p-6">
@@ -155,9 +159,11 @@ export function TopProductsTable({
                 <p className="text-sm text-gray-500">
                   {formatCurrency(product.revenueHT)} CA
                 </p>
-                <p className="text-xs text-emerald-600">
-                  {formatCurrency(product.commissionHT)} comm.
-                </p>
+                {canViewCommissions && (
+                  <p className="text-xs text-emerald-600">
+                    {formatCurrency(product.commissionHT)} comm.
+                  </p>
+                )}
               </div>
             </div>
           ))}

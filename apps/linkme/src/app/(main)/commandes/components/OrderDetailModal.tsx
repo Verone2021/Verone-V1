@@ -40,6 +40,8 @@ import {
   XIcon,
 } from 'lucide-react';
 
+import { usePermissions } from '@/hooks/use-permissions';
+
 import type {
   LinkMeOrder,
   StructuredAddress,
@@ -85,11 +87,14 @@ function formatAddress(address: StructuredAddress | null): string[] {
   if (address.contact_name) {
     lines.push(address.contact_name);
   }
-  if (address.line1) {
-    lines.push(address.line1);
+  // Support both key formats: line1 (frontend) and address_line1 (DB JSONB)
+  const line1 = address.line1 ?? address.address_line1;
+  const line2 = address.line2 ?? address.address_line2;
+  if (line1) {
+    lines.push(line1);
   }
-  if (address.line2) {
-    lines.push(address.line2);
+  if (line2) {
+    lines.push(line2);
   }
   if (address.postal_code || address.city) {
     lines.push([address.postal_code, address.city].filter(Boolean).join(' '));
@@ -162,6 +167,8 @@ export function OrderDetailModal({
   isOpen,
   onClose,
 }: OrderDetailModalProps) {
+  const { canViewCommissions } = usePermissions();
+
   if (!order) return null;
 
   const statusColor = STATUS_COLORS[order.status] || STATUS_COLORS.pending;
@@ -445,12 +452,16 @@ export function OrderDetailModal({
                     <TableHead className="text-right text-[#183559]">
                       Total HT
                     </TableHead>
-                    <TableHead className="text-center text-[#183559]">
-                      Marge %
-                    </TableHead>
-                    <TableHead className="text-right text-[#183559]">
-                      Commission TTC
-                    </TableHead>
+                    {canViewCommissions && (
+                      <TableHead className="text-center text-[#183559]">
+                        Marge %
+                      </TableHead>
+                    )}
+                    {canViewCommissions && (
+                      <TableHead className="text-right text-[#183559]">
+                        Commission TTC
+                      </TableHead>
+                    )}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -492,18 +503,22 @@ export function OrderDetailModal({
                       <TableCell className="text-right font-medium">
                         {formatPrice(item.total_ht)}
                       </TableCell>
-                      <TableCell className="text-center">
-                        <Badge variant="secondary" className="text-xs">
-                          {item.margin_rate.toFixed(0)}%
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right font-semibold text-emerald-600">
-                        +
-                        {formatPrice(
-                          item.affiliate_margin *
-                            (1 + LINKME_CONSTANTS.DEFAULT_TAX_RATE)
-                        )}
-                      </TableCell>
+                      {canViewCommissions && (
+                        <TableCell className="text-center">
+                          <Badge variant="secondary" className="text-xs">
+                            {item.margin_rate.toFixed(0)}%
+                          </Badge>
+                        </TableCell>
+                      )}
+                      {canViewCommissions && (
+                        <TableCell className="text-right font-semibold text-emerald-600">
+                          +
+                          {formatPrice(
+                            item.affiliate_margin *
+                              (1 + LINKME_CONSTANTS.DEFAULT_TAX_RATE)
+                          )}
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))}
                 </TableBody>
@@ -537,18 +552,20 @@ export function OrderDetailModal({
                     {formatPrice(order.total_ttc)}
                   </p>
                 </div>
-                <div className="bg-emerald-50 rounded-lg p-3 -m-1">
-                  <p className="text-xs text-emerald-600 mb-1">
-                    Votre Commission TTC
-                  </p>
-                  <p className="text-lg font-bold text-emerald-600">
-                    +
-                    {formatPrice(
-                      order.total_affiliate_margin *
-                        (1 + LINKME_CONSTANTS.DEFAULT_TAX_RATE)
-                    )}
-                  </p>
-                </div>
+                {canViewCommissions && (
+                  <div className="bg-emerald-50 rounded-lg p-3 -m-1">
+                    <p className="text-xs text-emerald-600 mb-1">
+                      Votre Commission TTC
+                    </p>
+                    <p className="text-lg font-bold text-emerald-600">
+                      +
+                      {formatPrice(
+                        order.total_affiliate_margin *
+                          (1 + LINKME_CONSTANTS.DEFAULT_TAX_RATE)
+                      )}
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </section>

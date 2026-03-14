@@ -48,6 +48,8 @@ export interface OrderItem {
 export interface StructuredAddress {
   line1?: string;
   line2?: string;
+  address_line1?: string;
+  address_line2?: string;
   city?: string;
   postal_code?: string;
   country?: string;
@@ -163,6 +165,11 @@ interface QueryOrderRow {
     id: string;
     trade_name: string | null;
     legal_name: string;
+    ownership_type: string | null;
+    address_line1: string | null;
+    city: string | null;
+    postal_code: string | null;
+    country: string | null;
   } | null;
   individual_customer: {
     id: string;
@@ -222,6 +229,8 @@ export interface UseLinkMeOrdersOptions {
   page: number;
   pageSize: number;
   yearFilter?: string; // 'all' | 'current' | '2025' | '2026' etc.
+  periodFilter?: string; // 'all' | 'q1'-'q4' | '01'-'12'
+  ownershipTypeFilter?: string; // 'all' | 'succursale' | 'franchise'
   statusFilter?: 'all' | SalesOrderStatus; // tab filter
 }
 
@@ -267,7 +276,7 @@ const ORDER_SELECT = `
     id, display_name, affiliate_type
   ),
   selection:linkme_selections!sales_orders_linkme_selection_id_fkey(id, name),
-  organisation:organisations!sales_orders_customer_id_fkey(id, trade_name, legal_name),
+  organisation:organisations!sales_orders_customer_id_fkey(id, trade_name, legal_name, ownership_type, address_line1, city, postal_code, country),
   individual_customer:individual_customers!sales_orders_individual_customer_id_fkey(
     id, first_name, last_name
   )
@@ -329,8 +338,18 @@ function mapRowToOrder(
     customer_city: ld?.delivery_city ?? null,
     customer_email: ld?.billing_email ?? ld?.requester_email ?? null,
     customer_phone: ld?.billing_phone ?? ld?.requester_phone ?? null,
-    // Structured addresses
-    billing_address: row.billing_address,
+    // Structured addresses (fallback to organisation address if billing_address is null)
+    billing_address:
+      row.billing_address ??
+      (row.organisation?.address_line1
+        ? {
+            line1: row.organisation.address_line1,
+            city: row.organisation.city ?? undefined,
+            postal_code: row.organisation.postal_code ?? undefined,
+            country: row.organisation.country ?? undefined,
+            contact_name: customerName,
+          }
+        : null),
     shipping_address: row.shipping_address,
     // Dates
     desired_delivery_date: ld?.desired_delivery_date ?? null,
@@ -406,11 +425,26 @@ function mapRowToOrder(
  * - Staff back-office voit tout
  */
 export function useLinkMeOrders(options: UseLinkMeOrdersOptions) {
-  const { page, pageSize, yearFilter = 'all', statusFilter = 'all' } = options;
+  const {
+    page,
+    pageSize,
+    yearFilter = 'all',
+    periodFilter = 'all',
+    ownershipTypeFilter = 'all',
+    statusFilter = 'all',
+  } = options;
 
   // Main paginated query
   const ordersQuery = useQuery({
-    queryKey: ['linkme-orders', page, pageSize, yearFilter, statusFilter],
+    queryKey: [
+      'linkme-orders',
+      page,
+      pageSize,
+      yearFilter,
+      periodFilter,
+      ownershipTypeFilter,
+      statusFilter,
+    ],
     queryFn: async (): Promise<{
       orders: LinkMeOrder[];
       totalCount: number;
@@ -418,21 +452,76 @@ export function useLinkMeOrders(options: UseLinkMeOrdersOptions) {
       const supabase = createClient();
       const offset = page * pageSize;
 
+      // If ownership_type filter is active, pre-fetch matching org IDs
+      let orgIds: string[] | null = null;
+      if (ownershipTypeFilter && ownershipTypeFilter !== 'all') {
+        const { data: orgs } = await supabase
+          .from('organisations')
+          .select('id')
+          .eq(
+            'ownership_type',
+            ownershipTypeFilter as 'succursale' | 'franchise'
+          );
+        orgIds = (orgs ?? []).map(o => o.id);
+      }
+
       let query = supabase
         .from('sales_orders')
         .select(ORDER_SELECT, { count: 'exact' })
         .eq('channel_id', LINKME_CHANNEL_ID)
         .order('created_at', { ascending: false });
 
-      // Year filter
+      // Ownership type filter (via customer_id IN matching org IDs)
+      if (orgIds !== null) {
+        if (orgIds.length === 0) {
+          // No matching orgs → return empty
+          return { orders: [], totalCount: 0 };
+        }
+        query = query
+          .eq('customer_type', 'organization')
+          .in('customer_id', orgIds);
+      }
+
+      // Year + period filter combined
       if (yearFilter && yearFilter !== 'all') {
         const year =
           yearFilter === 'current'
             ? new Date().getFullYear()
             : Number(yearFilter);
-        query = query
-          .gte('created_at', `${year}-01-01`)
-          .lt('created_at', `${year + 1}-01-01`);
+
+        if (periodFilter && periodFilter !== 'all') {
+          // Quarter filter: q1, q2, q3, q4
+          if (periodFilter.startsWith('q')) {
+            const quarter = Number(periodFilter.slice(1));
+            const startMonth = (quarter - 1) * 3 + 1;
+            const endMonth = startMonth + 3;
+            const startDate = `${year}-${String(startMonth).padStart(2, '0')}-01`;
+            const endDate =
+              endMonth <= 12
+                ? `${year}-${String(endMonth).padStart(2, '0')}-01`
+                : `${year + 1}-01-01`;
+            query = query
+              .gte('created_at', startDate)
+              .lt('created_at', endDate);
+          } else {
+            // Month filter: 01-12
+            const month = Number(periodFilter);
+            const nextMonth = month + 1;
+            const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
+            const endDate =
+              nextMonth <= 12
+                ? `${year}-${String(nextMonth).padStart(2, '0')}-01`
+                : `${year + 1}-01-01`;
+            query = query
+              .gte('created_at', startDate)
+              .lt('created_at', endDate);
+          }
+        } else {
+          // Year only
+          query = query
+            .gte('created_at', `${year}-01-01`)
+            .lt('created_at', `${year + 1}-01-01`);
+        }
       }
 
       // Status filter (tab)
@@ -492,24 +581,78 @@ export function useLinkMeOrders(options: UseLinkMeOrdersOptions) {
 
   // Status counts query (lightweight, no pagination, no items)
   const countsQuery = useQuery({
-    queryKey: ['linkme-orders-counts', yearFilter],
+    queryKey: [
+      'linkme-orders-counts',
+      yearFilter,
+      periodFilter,
+      ownershipTypeFilter,
+    ],
     queryFn: async (): Promise<Record<string, number>> => {
       const supabase = createClient();
+
+      // If ownership_type filter is active, pre-fetch matching org IDs
+      let orgIds: string[] | null = null;
+      if (ownershipTypeFilter && ownershipTypeFilter !== 'all') {
+        const { data: orgs } = await supabase
+          .from('organisations')
+          .select('id')
+          .eq(
+            'ownership_type',
+            ownershipTypeFilter as 'succursale' | 'franchise'
+          );
+        orgIds = (orgs ?? []).map(o => o.id);
+      }
 
       let query = supabase
         .from('sales_orders')
         .select('status', { count: 'exact', head: false })
         .eq('channel_id', LINKME_CHANNEL_ID);
 
-      // Apply same year filter
+      // Ownership type filter
+      if (orgIds !== null) {
+        if (orgIds.length === 0) return { all: 0, shipped_tab: 0 };
+        query = query
+          .eq('customer_type', 'organization')
+          .in('customer_id', orgIds);
+      }
+
+      // Apply same year + period filter
       if (yearFilter && yearFilter !== 'all') {
         const year =
           yearFilter === 'current'
             ? new Date().getFullYear()
             : Number(yearFilter);
-        query = query
-          .gte('created_at', `${year}-01-01`)
-          .lt('created_at', `${year + 1}-01-01`);
+
+        if (periodFilter && periodFilter !== 'all') {
+          if (periodFilter.startsWith('q')) {
+            const quarter = Number(periodFilter.slice(1));
+            const startMonth = (quarter - 1) * 3 + 1;
+            const endMonth = startMonth + 3;
+            const startDate = `${year}-${String(startMonth).padStart(2, '0')}-01`;
+            const endDate =
+              endMonth <= 12
+                ? `${year}-${String(endMonth).padStart(2, '0')}-01`
+                : `${year + 1}-01-01`;
+            query = query
+              .gte('created_at', startDate)
+              .lt('created_at', endDate);
+          } else {
+            const month = Number(periodFilter);
+            const nextMonth = month + 1;
+            const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
+            const endDate =
+              nextMonth <= 12
+                ? `${year}-${String(nextMonth).padStart(2, '0')}-01`
+                : `${year + 1}-01-01`;
+            query = query
+              .gte('created_at', startDate)
+              .lt('created_at', endDate);
+          }
+        } else {
+          query = query
+            .gte('created_at', `${year}-01-01`)
+            .lt('created_at', `${year + 1}-01-01`);
+        }
       }
 
       const { data, error } = await query;

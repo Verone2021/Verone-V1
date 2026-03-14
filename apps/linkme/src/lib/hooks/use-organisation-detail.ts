@@ -189,7 +189,7 @@ export function useOrganisationDetail(organisationId: string | null) {
           status
         `
         )
-        .eq('customer_organisation_id', organisationId)
+        .eq('customer_id', organisationId)
         .order('created_at', { ascending: false })
         .limit(5);
 
