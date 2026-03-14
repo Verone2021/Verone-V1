@@ -71,10 +71,9 @@ export function ConsultationOrderInterface({
   const [editPrice, setEditPrice] = useState('');
   const [editNotes, setEditNotes] = useState('');
 
-  // Récupérer tous les produits non archivés pour le modal
+  // Only show active products — draft/sourcing products are added via SourcingProductModal
   const { products } = useProducts({
-    // Note: On ne filtre pas par status pour permettre tous les produits non archivés
-    // archived filter removed - not supported in ProductFilters
+    status: 'active',
   });
 
   // Gérer le changement d'items — ne dépend PAS de onItemsChanged pour éviter les boucles

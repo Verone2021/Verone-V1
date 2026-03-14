@@ -54,6 +54,7 @@ interface ILocalQuote {
   notes: string | null;
   linkme_selection_id: string | null;
   linkme_affiliate_id: string | null;
+  consultation_id: string | null;
 }
 
 export async function POST(
@@ -113,7 +114,7 @@ export async function POST(
     const { data: localQuote } = await supabase
       .from('financial_documents')
       .select(
-        'id, sales_order_id, partner_id, partner_type, customer_type, individual_customer_id, channel_id, billing_address, shipping_address, shipping_cost_ht, handling_cost_ht, insurance_cost_ht, fees_vat_rate, billing_contact_id, delivery_contact_id, responsable_contact_id, created_by, notes, linkme_selection_id, linkme_affiliate_id'
+        'id, sales_order_id, partner_id, partner_type, customer_type, individual_customer_id, channel_id, billing_address, shipping_address, shipping_cost_ht, handling_cost_ht, insurance_cost_ht, fees_vat_rate, billing_contact_id, delivery_contact_id, responsable_contact_id, created_by, notes, linkme_selection_id, linkme_affiliate_id, consultation_id'
       )
       .eq('document_type', 'customer_quote')
       .eq('qonto_invoice_id', id)
@@ -182,7 +183,6 @@ export async function POST(
         qonto_pdf_url: invoice.pdf_url ?? null,
         qonto_public_url: invoice.public_url ?? null,
         invoice_source: 'qonto_conversion',
-        workflow_status: 'synchronized',
         sales_order_id: typedLocalQuote?.sales_order_id ?? null,
         customer_type: typedLocalQuote?.customer_type ?? null,
         individual_customer_id: typedLocalQuote?.individual_customer_id ?? null,
@@ -341,6 +341,7 @@ export async function POST(
             notes: typedLocalQuote.notes ?? null,
             status: 'draft',
             linkme_selection_id: typedLocalQuote.linkme_selection_id ?? null,
+            consultation_id: typedLocalQuote.consultation_id ?? null,
           })
           .select('id')
           .single();

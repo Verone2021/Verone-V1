@@ -46,9 +46,7 @@ export async function POST(
     // Note: l'id passé en paramètre est le qonto_invoice_id, pas l'id UUID de financial_documents
     const { data: document, error: fetchError } = await supabase
       .from('financial_documents')
-      .select(
-        'id, document_number, status, workflow_status, qonto_invoice_id, deleted_at'
-      )
+      .select('id, document_number, status, qonto_invoice_id, deleted_at')
       .eq('qonto_invoice_id', id)
       .not('deleted_at', 'is', null) // Only archived documents
       .single();

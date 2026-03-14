@@ -131,6 +131,7 @@ export * from './help-lexique-section';
 // ADDRESS COMPONENTS
 // ========================================
 export * from './address-autocomplete';
+export * from './country-select';
 
 // ========================================
 // ORGANISATION COMPONENTS

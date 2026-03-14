@@ -56,7 +56,7 @@ export async function GET(
     // ÉTAPE 1: Vérifier si PDF stocké localement
     // ========================================
     const { data: localPdf, error: downloadError } = await supabase.storage
-      .from('invoices')
+      .from('justificatifs')
       .download(storagePath);
 
     if (!downloadError && localPdf) {
@@ -153,7 +153,7 @@ export async function GET(
     void (async () => {
       try {
         const { error: uploadError } = await supabase.storage
-          .from('invoices')
+          .from('justificatifs')
           .upload(storagePath, pdfBuffer, {
             contentType: 'application/pdf',
             upsert: true,

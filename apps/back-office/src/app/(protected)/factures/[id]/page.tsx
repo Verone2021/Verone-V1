@@ -143,8 +143,6 @@ interface QontoDocument {
   credit_note_number?: string;
   invoice_id?: string;
   reason?: string;
-  // Workflow
-  workflow_status?: string;
 }
 
 // =====================================================================
@@ -932,9 +930,7 @@ export default function DocumentDetailPage({
           {/* Archive (validated invoices only) */}
           {documentType === 'invoice' &&
             !isCancelled &&
-            ['draft_validated', 'finalized', 'sent', 'paid'].includes(
-              document?.workflow_status ?? ''
-            ) && (
+            document?.status !== 'draft' && (
               <Button
                 variant="outline"
                 onClick={() => setShowArchiveDialog(true)}

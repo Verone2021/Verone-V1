@@ -109,6 +109,8 @@ interface QontoApiResponse {
     shipping_address?: IAddress | null;
     partner_legal_name?: string | null;
     partner_trade_name?: string | null;
+    sales_order_id?: string | null;
+    order_number?: string | null;
   } | null;
   error?: string;
 }
@@ -175,9 +177,16 @@ interface IItemRowProps {
   onChange: (id: string, field: keyof IEditableItem, value: string) => void;
   onRemove: (id: string) => void;
   canRemove: boolean;
+  readOnly?: boolean;
 }
 
-function ItemRow({ item, onChange, onRemove, canRemove }: IItemRowProps) {
+function ItemRow({
+  item,
+  onChange,
+  onRemove,
+  canRemove,
+  readOnly,
+}: IItemRowProps) {
   return (
     <div className="grid grid-cols-12 gap-2 items-start p-3 bg-slate-50 rounded-lg">
       {/* Title & Description */}
@@ -186,12 +195,14 @@ function ItemRow({ item, onChange, onRemove, canRemove }: IItemRowProps) {
           placeholder="Titre *"
           value={item.title}
           onChange={e => onChange(item.id, 'title', e.target.value)}
+          disabled={readOnly}
         />
         <Input
           placeholder="Description (optionnel)"
           value={item.description}
           onChange={e => onChange(item.id, 'description', e.target.value)}
           className="text-sm"
+          disabled={readOnly}
         />
       </div>
 
@@ -204,6 +215,7 @@ function ItemRow({ item, onChange, onRemove, canRemove }: IItemRowProps) {
           placeholder="Qté"
           value={item.quantity}
           onChange={e => onChange(item.id, 'quantity', e.target.value)}
+          disabled={readOnly}
         />
       </div>
 
@@ -224,6 +236,7 @@ function ItemRow({ item, onChange, onRemove, canRemove }: IItemRowProps) {
         <Select
           value={item.vatRate}
           onValueChange={value => onChange(item.id, 'vatRate', value)}
+          disabled={readOnly}
         >
           <SelectTrigger>
             <SelectValue placeholder="TVA" />
@@ -239,15 +252,17 @@ function ItemRow({ item, onChange, onRemove, canRemove }: IItemRowProps) {
 
       {/* Actions */}
       <div className="col-span-2 flex justify-end">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => onRemove(item.id)}
-          disabled={!canRemove}
-          className="text-red-500 hover:text-red-700"
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
+        {!readOnly && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => onRemove(item.id)}
+            disabled={!canRemove}
+            className="text-red-500 hover:text-red-700"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        )}
       </div>
     </div>
   );
@@ -290,6 +305,10 @@ export default function EditDraftPage({ params }: IPageProps) {
   });
   const [partnerLegalName, setPartnerLegalName] = useState<string | null>(null);
   const [partnerTradeName, setPartnerTradeName] = useState<string | null>(null);
+  const [linkedOrderNumber, setLinkedOrderNumber] = useState<string | null>(
+    null
+  );
+  const [isLinkedToOrder, setIsLinkedToOrder] = useState(false);
 
   // Load document
   useEffect(() => {
@@ -389,6 +408,11 @@ export default function EditDraftPage({ params }: IPageProps) {
               if (data.localData?.partner_legal_name) {
                 setPartnerLegalName(data.localData.partner_legal_name);
                 setPartnerTradeName(data.localData.partner_trade_name ?? null);
+              }
+
+              if (data.localData?.sales_order_id) {
+                setIsLinkedToOrder(true);
+                setLinkedOrderNumber(data.localData.order_number ?? null);
               }
 
               setLoading(false);
@@ -596,21 +620,26 @@ export default function EditDraftPage({ params }: IPageProps) {
             </p>
           </div>
         </div>
-        <Button
-          onClick={() => {
-            void handleSave().catch(error => {
-              console.error('[FacturesEdit] handleSave failed:', error);
-            });
-          }}
-          disabled={saving}
-        >
-          {saving ? (
-            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-          ) : (
-            <Save className="h-4 w-4 mr-2" />
-          )}
-          Enregistrer
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => router.back()}>
+            Annuler
+          </Button>
+          <Button
+            onClick={() => {
+              void handleSave().catch(error => {
+                console.error('[FacturesEdit] handleSave failed:', error);
+              });
+            }}
+            disabled={saving}
+          >
+            {saving ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Save className="h-4 w-4 mr-2" />
+            )}
+            Enregistrer
+          </Button>
+        </div>
       </div>
 
       {/* Client Info (read-only) */}
@@ -768,10 +797,23 @@ export default function EditDraftPage({ params }: IPageProps) {
         <CardHeader>
           <CardTitle>Lignes</CardTitle>
           <CardDescription>
-            Ajoutez ou modifiez les lignes du document
+            {isLinkedToOrder
+              ? `Facture liée à la commande ${linkedOrderNumber ?? ''} — seuls les prix sont modifiables`
+              : 'Ajoutez ou modifiez les lignes du document'}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
+          {isLinkedToOrder && (
+            <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
+              <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+              <span>
+                Facture liée à une commande — seuls les prix HT sont
+                modifiables. Les modifications de prix seront synchronisées vers
+                la commande.
+              </span>
+            </div>
+          )}
+
           {/* Header row */}
           <div className="grid grid-cols-12 gap-2 px-3 text-sm font-medium text-muted-foreground">
             <div className="col-span-4">Désignation</div>
@@ -789,18 +831,21 @@ export default function EditDraftPage({ params }: IPageProps) {
               onChange={handleItemChange}
               onRemove={handleRemoveItem}
               canRemove={items.length > 1}
+              readOnly={isLinkedToOrder}
             />
           ))}
 
           {/* Add button */}
-          <Button
-            variant="outline"
-            onClick={handleAddItem}
-            className="w-full mt-2"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Ajouter une ligne
-          </Button>
+          {!isLinkedToOrder && (
+            <Button
+              variant="outline"
+              onClick={handleAddItem}
+              className="w-full mt-2"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Ajouter une ligne
+            </Button>
+          )}
 
           <Separator className="my-4" />
 
@@ -924,28 +969,6 @@ export default function EditDraftPage({ params }: IPageProps) {
           )}
         </CardContent>
       </Card>
-
-      {/* Actions */}
-      <div className="flex justify-end gap-3">
-        <Button variant="outline" onClick={() => router.back()}>
-          Annuler
-        </Button>
-        <Button
-          onClick={() => {
-            void handleSave().catch(error => {
-              console.error('[FacturesEdit] handleSave failed:', error);
-            });
-          }}
-          disabled={saving}
-        >
-          {saving ? (
-            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-          ) : (
-            <Save className="h-4 w-4 mr-2" />
-          )}
-          Enregistrer les modifications
-        </Button>
-      </div>
     </div>
   );
 }

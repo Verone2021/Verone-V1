@@ -34,7 +34,6 @@ import {
   ArrowRight,
   Building2,
   Calendar,
-  Check,
   Download,
   Edit,
   ExternalLink,
@@ -113,12 +112,6 @@ interface InvoiceDetail {
   document_type: string;
   document_date: string;
   due_date: string | null;
-  workflow_status:
-    | 'synchronized'
-    | 'draft_validated'
-    | 'finalized'
-    | 'sent'
-    | 'paid';
   status: string;
   total_ht: number;
   total_ttc: number;
@@ -162,7 +155,6 @@ interface IInvoiceDetailModalProps {
   invoiceId: string | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onValidateToDraft?: (invoiceId: string) => void;
   onFinalize?: (invoiceId: string) => void;
   isActionLoading?: boolean;
 }
@@ -189,37 +181,6 @@ interface EditState {
   fees_vat_rate: number;
   items: EditableItem[];
 }
-
-const WORKFLOW_STATUS_CONFIG: Record<
-  InvoiceDetail['workflow_status'],
-  { label: string; color: string; description: string }
-> = {
-  synchronized: {
-    label: 'Synchronise',
-    color: 'bg-blue-100 text-blue-700',
-    description: 'Brouillon cree, en attente de validation',
-  },
-  draft_validated: {
-    label: 'Brouillon',
-    color: 'bg-yellow-100 text-yellow-700',
-    description: 'Valide, pret a etre finalise',
-  },
-  finalized: {
-    label: 'Definitif',
-    color: 'bg-green-100 text-green-700',
-    description: 'Facture finalisee avec PDF',
-  },
-  sent: {
-    label: 'Envoye',
-    color: 'bg-purple-100 text-purple-700',
-    description: 'Facture envoyee au client',
-  },
-  paid: {
-    label: 'Paye',
-    color: 'bg-emerald-100 text-emerald-700',
-    description: 'Facture entierement reglee',
-  },
-};
 
 function formatAmount(amount: number, currency = 'EUR'): string {
   return new Intl.NumberFormat('fr-FR', {
@@ -255,7 +216,6 @@ export function InvoiceDetailModal({
   invoiceId,
   open,
   onOpenChange,
-  onValidateToDraft,
   onFinalize,
   isActionLoading = false,
 }: IInvoiceDetailModalProps): React.ReactNode {
@@ -286,12 +246,7 @@ export function InvoiceDetailModal({
   });
 
   const invoice = data?.invoice;
-  const statusConfig = invoice
-    ? WORKFLOW_STATUS_CONFIG[invoice.workflow_status]
-    : null;
-  const isEditable =
-    invoice &&
-    ['synchronized', 'draft_validated'].includes(invoice.workflow_status);
+  const isEditable = invoice && invoice.status === 'draft';
 
   // Initialiser l'etat d'edition quand on entre en mode edition
   const initEditState = useCallback(() => {
@@ -523,7 +478,7 @@ export function InvoiceDetailModal({
     ? {
         id: invoice.id,
         invoice_number: invoice.document_number,
-        status: invoice.workflow_status,
+        status: invoice.status,
         total_amount: invoice.total_ttc,
         total_vat_amount: invoice.tva_amount,
         subtotal_amount: invoice.total_ht,
@@ -661,15 +616,10 @@ export function InvoiceDetailModal({
             )}
           </DialogTitle>
           <DialogDescription>
-            {invoice && statusConfig && (
-              <div className="flex items-center gap-2 mt-1">
-                <Badge className={statusConfig.color}>
-                  {statusConfig.label}
-                </Badge>
-                <span className="text-sm text-muted-foreground">
-                  {statusConfig.description}
-                </span>
-              </div>
+            {invoice && (
+              <span className="text-sm text-muted-foreground">
+                Statut : {invoice.status}
+              </span>
             )}
           </DialogDescription>
         </DialogHeader>
@@ -1456,24 +1406,8 @@ export function InvoiceDetailModal({
                 </Button>
               )}
 
-              {/* Bouton Valider brouillon - visible si synchronized */}
-              {invoice.workflow_status === 'synchronized' &&
-                onValidateToDraft && (
-                  <Button
-                    onClick={() => onValidateToDraft(invoice.id)}
-                    disabled={isActionLoading}
-                  >
-                    {isActionLoading ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                      <Check className="mr-2 h-4 w-4" />
-                    )}
-                    Valider brouillon
-                  </Button>
-                )}
-
-              {/* Bouton Finaliser - visible si draft_validated */}
-              {invoice.workflow_status === 'draft_validated' && onFinalize && (
+              {/* Bouton Finaliser - visible si brouillon */}
+              {invoice.status === 'draft' && onFinalize && (
                 <Button
                   onClick={() => onFinalize(invoice.id)}
                   disabled={isActionLoading}
@@ -1487,8 +1421,8 @@ export function InvoiceDetailModal({
                 </Button>
               )}
 
-              {/* Bouton Creer devis - visible si draft_validated */}
-              {invoice.workflow_status === 'draft_validated' && (
+              {/* Bouton Creer devis - visible si brouillon */}
+              {invoice.status === 'draft' && (
                 <Button
                   variant="outline"
                   onClick={handleCreateQuote}
@@ -1515,9 +1449,7 @@ export function InvoiceDetailModal({
               )}
 
               {/* Bouton Creer un avoir - visible si finalisee/envoyee/payee */}
-              {['finalized', 'sent', 'paid'].includes(
-                invoice.workflow_status
-              ) && (
+              {invoice.status !== 'draft' && invoice.status !== 'cancelled' && (
                 <Button
                   variant="outline"
                   onClick={() => setShowCreditNoteModal(true)}
@@ -1528,9 +1460,8 @@ export function InvoiceDetailModal({
               )}
 
               {/* Bouton Telecharger PDF - visible si finalise */}
-              {['finalized', 'sent', 'paid'].includes(
-                invoice.workflow_status
-              ) &&
+              {invoice.status !== 'draft' &&
+                invoice.status !== 'cancelled' &&
                 invoice.qonto_pdf_url && (
                   <Button variant="outline" onClick={handleDownloadPdf}>
                     <Download className="mr-2 h-4 w-4" />

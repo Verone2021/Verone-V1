@@ -7,7 +7,7 @@
  * Conditions:
  * - La facture doit avoir un sales_order_id
  * - La commande doit etre modifiable (status IN ['draft', 'validated'])
- * - La facture ne doit PAS etre finalisee (workflow_status IN ['synchronized', 'draft_validated'])
+ * - La facture doit etre en brouillon (status = 'draft')
  */
 
 import type { NextRequest } from 'next/server';
@@ -38,7 +38,6 @@ interface IInvoiceItem {
 interface IInvoiceWithOrder {
   id: string;
   sales_order_id: string | null;
-  workflow_status: string | null;
   total_ht: number;
   total_ttc: number;
   tva_amount: number;
@@ -89,7 +88,6 @@ export async function POST(
         `
         id,
         sales_order_id,
-        workflow_status,
         total_ht,
         total_ttc,
         tva_amount,
@@ -132,22 +130,7 @@ export async function POST(
       );
     }
 
-    // 3. Verifier que la facture est modifiable
-    const editableStatuses = ['synchronized', 'draft_validated'];
-    if (
-      typedInvoice.workflow_status &&
-      !editableStatuses.includes(typedInvoice.workflow_status)
-    ) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: `Impossible de synchroniser : la facture est ${typedInvoice.workflow_status}. Seules les factures en brouillon peuvent etre synchronisees.`,
-        },
-        { status: 400 }
-      );
-    }
-
-    // 4. Verifier que la commande est modifiable
+    // 3. Verifier que la commande est modifiable
     const { data: order, error: orderError } = await supabase
       .from('sales_orders')
       .select('id, status')

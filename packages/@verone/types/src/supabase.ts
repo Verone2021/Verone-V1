@@ -543,6 +543,7 @@ export type Database = {
           ignored_by: string | null;
           justification_optional: boolean | null;
           label: string;
+          local_pdf_path: string | null;
           match_reason: string | null;
           matched_document_id: string | null;
           matching_status: Database['public']['Enums']['matching_status'];
@@ -550,6 +551,7 @@ export type Database = {
           note: string | null;
           operation_type: string | null;
           payment_method: string | null;
+          pdf_stored_at: string | null;
           raw_data: Json;
           reference: string | null;
           settled_at: string | null;
@@ -585,6 +587,7 @@ export type Database = {
           ignored_by?: string | null;
           justification_optional?: boolean | null;
           label: string;
+          local_pdf_path?: string | null;
           match_reason?: string | null;
           matched_document_id?: string | null;
           matching_status?: Database['public']['Enums']['matching_status'];
@@ -592,6 +595,7 @@ export type Database = {
           note?: string | null;
           operation_type?: string | null;
           payment_method?: string | null;
+          pdf_stored_at?: string | null;
           raw_data: Json;
           reference?: string | null;
           settled_at?: string | null;
@@ -627,6 +631,7 @@ export type Database = {
           ignored_by?: string | null;
           justification_optional?: boolean | null;
           label?: string;
+          local_pdf_path?: string | null;
           match_reason?: string | null;
           matched_document_id?: string | null;
           matching_status?: Database['public']['Enums']['matching_status'];
@@ -634,6 +639,7 @@ export type Database = {
           note?: string | null;
           operation_type?: string | null;
           payment_method?: string | null;
+          pdf_stored_at?: string | null;
           raw_data?: Json;
           reference?: string | null;
           settled_at?: string | null;
@@ -1001,6 +1007,7 @@ export type Database = {
           min_quantity: number | null;
           notes: string | null;
           product_id: string;
+          propagate_to_selections: boolean | null;
           public_price_ht: number | null;
           requires_assembly: boolean | null;
           selections_count: number | null;
@@ -1037,6 +1044,7 @@ export type Database = {
           min_quantity?: number | null;
           notes?: string | null;
           product_id: string;
+          propagate_to_selections?: boolean | null;
           public_price_ht?: number | null;
           requires_assembly?: boolean | null;
           selections_count?: number | null;
@@ -1073,6 +1081,7 @@ export type Database = {
           min_quantity?: number | null;
           notes?: string | null;
           product_id?: string;
+          propagate_to_selections?: boolean | null;
           public_price_ht?: number | null;
           requires_assembly?: boolean | null;
           selections_count?: number | null;
@@ -2077,6 +2086,7 @@ export type Database = {
           is_active: boolean | null;
           is_billing_contact: boolean | null;
           is_commercial_contact: boolean | null;
+          is_delivery_only: boolean | null;
           is_primary_contact: boolean | null;
           is_technical_contact: boolean | null;
           language_preference: string | null;
@@ -2108,6 +2118,7 @@ export type Database = {
           is_active?: boolean | null;
           is_billing_contact?: boolean | null;
           is_commercial_contact?: boolean | null;
+          is_delivery_only?: boolean | null;
           is_primary_contact?: boolean | null;
           is_technical_contact?: boolean | null;
           language_preference?: string | null;
@@ -2139,6 +2150,7 @@ export type Database = {
           is_active?: boolean | null;
           is_billing_contact?: boolean | null;
           is_commercial_contact?: boolean | null;
+          is_delivery_only?: boolean | null;
           is_primary_contact?: boolean | null;
           is_technical_contact?: boolean | null;
           language_preference?: string | null;
@@ -3198,10 +3210,7 @@ export type Database = {
           uploaded_by: string | null;
           uploaded_file_name: string | null;
           uploaded_file_url: string | null;
-          validated_by: string | null;
-          validated_to_draft_at: string | null;
           validity_date: string | null;
-          workflow_status: string | null;
         };
         Insert: {
           abby_invoice_id?: string | null;
@@ -3267,10 +3276,7 @@ export type Database = {
           uploaded_by?: string | null;
           uploaded_file_name?: string | null;
           uploaded_file_url?: string | null;
-          validated_by?: string | null;
-          validated_to_draft_at?: string | null;
           validity_date?: string | null;
-          workflow_status?: string | null;
         };
         Update: {
           abby_invoice_id?: string | null;
@@ -3336,10 +3342,7 @@ export type Database = {
           uploaded_by?: string | null;
           uploaded_file_name?: string | null;
           uploaded_file_url?: string | null;
-          validated_by?: string | null;
-          validated_to_draft_at?: string | null;
           validity_date?: string | null;
-          workflow_status?: string | null;
         };
         Relationships: [
           {
@@ -3499,13 +3502,6 @@ export type Database = {
           {
             foreignKeyName: 'financial_documents_uploaded_by_fkey';
             columns: ['uploaded_by'];
-            isOneToOne: false;
-            referencedRelation: 'v_linkme_users';
-            referencedColumns: ['user_id'];
-          },
-          {
-            foreignKeyName: 'financial_documents_validated_by_fkey';
-            columns: ['validated_by'];
             isOneToOne: false;
             referencedRelation: 'v_linkme_users';
             referencedColumns: ['user_id'];
@@ -5269,6 +5265,7 @@ export type Database = {
           id: string;
           individual_customer_id: string | null;
           is_active: boolean | null;
+          justification_optional: boolean | null;
           match_patterns: string[] | null;
           match_type: string;
           match_value: string;
@@ -5290,6 +5287,7 @@ export type Database = {
           id?: string;
           individual_customer_id?: string | null;
           is_active?: boolean | null;
+          justification_optional?: boolean | null;
           match_patterns?: string[] | null;
           match_type: string;
           match_value: string;
@@ -5311,6 +5309,7 @@ export type Database = {
           id?: string;
           individual_customer_id?: string | null;
           is_active?: boolean | null;
+          justification_optional?: boolean | null;
           match_patterns?: string[] | null;
           match_type?: string;
           match_value?: string;
@@ -7021,6 +7020,7 @@ export type Database = {
           gtin: string | null;
           has_images: boolean;
           id: string;
+          internal_notes: string | null;
           is_published_online: boolean | null;
           item_group_id: string | null;
           margin_percentage: number | null;
@@ -7039,6 +7039,7 @@ export type Database = {
           show_on_linkme_globe: boolean | null;
           sku: string;
           slug: string | null;
+          sourcing_channel: string | null;
           sourcing_type: string | null;
           stock_forecasted_in: number | null;
           stock_forecasted_out: number | null;
@@ -7102,6 +7103,7 @@ export type Database = {
           gtin?: string | null;
           has_images?: boolean;
           id?: string;
+          internal_notes?: string | null;
           is_published_online?: boolean | null;
           item_group_id?: string | null;
           margin_percentage?: number | null;
@@ -7120,6 +7122,7 @@ export type Database = {
           show_on_linkme_globe?: boolean | null;
           sku: string;
           slug?: string | null;
+          sourcing_channel?: string | null;
           sourcing_type?: string | null;
           stock_forecasted_in?: number | null;
           stock_forecasted_out?: number | null;
@@ -7183,6 +7186,7 @@ export type Database = {
           gtin?: string | null;
           has_images?: boolean;
           id?: string;
+          internal_notes?: string | null;
           is_published_online?: boolean | null;
           item_group_id?: string | null;
           margin_percentage?: number | null;
@@ -7201,6 +7205,7 @@ export type Database = {
           show_on_linkme_globe?: boolean | null;
           sku?: string;
           slug?: string | null;
+          sourcing_channel?: string | null;
           sourcing_type?: string | null;
           stock_forecasted_in?: number | null;
           stock_forecasted_out?: number | null;
@@ -8245,6 +8250,7 @@ export type Database = {
           closed_by: string | null;
           confirmed_at: string | null;
           confirmed_by: string | null;
+          consultation_id: string | null;
           created_at: string;
           created_by: string;
           created_by_affiliate_id: string | null;
@@ -8315,6 +8321,7 @@ export type Database = {
           closed_by?: string | null;
           confirmed_at?: string | null;
           confirmed_by?: string | null;
+          consultation_id?: string | null;
           created_at?: string;
           created_by: string;
           created_by_affiliate_id?: string | null;
@@ -8385,6 +8392,7 @@ export type Database = {
           closed_by?: string | null;
           confirmed_at?: string | null;
           confirmed_by?: string | null;
+          consultation_id?: string | null;
           created_at?: string;
           created_by?: string;
           created_by_affiliate_id?: string | null;
@@ -8475,6 +8483,13 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'v_linkme_users';
             referencedColumns: ['user_id'];
+          },
+          {
+            foreignKeyName: 'sales_orders_consultation_id_fkey';
+            columns: ['consultation_id'];
+            isOneToOne: false;
+            referencedRelation: 'client_consultations';
+            referencedColumns: ['id'];
           },
           {
             foreignKeyName: 'sales_orders_created_by_affiliate_id_fkey';
@@ -11005,6 +11020,24 @@ export type Database = {
           },
         ];
       };
+      v_library_documents: {
+        Row: {
+          created_at: string | null;
+          document_date: string | null;
+          document_direction: string | null;
+          document_number: string | null;
+          document_type: string | null;
+          id: string | null;
+          partner_name: string | null;
+          pcg_code: string | null;
+          pdf_url: string | null;
+          source_table: string | null;
+          status: string | null;
+          total_ht: number | null;
+          total_ttc: number | null;
+        };
+        Relationships: [];
+      };
       v_linkme_users: {
         Row: {
           avatar_url: string | null;
@@ -11068,6 +11101,7 @@ export type Database = {
           id: string | null;
           individual_customer_id: string | null;
           is_active: boolean | null;
+          justification_optional: boolean | null;
           match_patterns: string[] | null;
           match_type: string | null;
           match_value: string | null;
@@ -11917,10 +11951,7 @@ export type Database = {
           uploaded_by: string | null;
           uploaded_file_name: string | null;
           uploaded_file_url: string | null;
-          validated_by: string | null;
-          validated_to_draft_at: string | null;
           validity_date: string | null;
-          workflow_status: string | null;
         };
         SetofOptions: {
           from: '*';
@@ -12171,10 +12202,7 @@ export type Database = {
           uploaded_by: string | null;
           uploaded_file_name: string | null;
           uploaded_file_url: string | null;
-          validated_by: string | null;
-          validated_to_draft_at: string | null;
           validity_date: string | null;
-          workflow_status: string | null;
         };
         SetofOptions: {
           from: '*';
@@ -12852,6 +12880,7 @@ export type Database = {
           is_active: boolean | null;
           is_billing_contact: boolean | null;
           is_commercial_contact: boolean | null;
+          is_delivery_only: boolean | null;
           is_primary_contact: boolean | null;
           is_technical_contact: boolean | null;
           language_preference: string | null;
@@ -13524,10 +13553,20 @@ export type Database = {
             };
             Returns: string;
           };
-      mark_po_payment_received: {
-        Args: { p_amount: number; p_order_id: string };
-        Returns: undefined;
-      };
+      mark_po_payment_received:
+        | { Args: { p_amount: number; p_order_id: string }; Returns: undefined }
+        | {
+            Args: {
+              p_amount: number;
+              p_date?: string;
+              p_note?: string;
+              p_order_id: string;
+              p_payment_type?: string;
+              p_reference?: string;
+              p_user_id?: string;
+            };
+            Returns: string;
+          };
       mark_sample_delivered: {
         Args: { p_draft_id: string };
         Returns: {

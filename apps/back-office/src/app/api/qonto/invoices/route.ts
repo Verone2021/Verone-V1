@@ -53,7 +53,7 @@ function getQontoClient(): QontoClient {
 /**
  * GET /api/qonto/invoices
  * Liste les factures avec filtre optionnel par status
- * Enrichit les factures Qonto avec les données locales (workflow_status, local_pdf_path)
+ * Enrichit les factures Qonto avec les données locales (local_pdf_path, etc.)
  */
 export async function GET(request: NextRequest): Promise<
   NextResponse<{
@@ -87,7 +87,6 @@ export async function GET(request: NextRequest): Promise<
 
     // Type pour les données locales enrichies
     interface ILocalDocData {
-      workflow_status: string | null;
       local_pdf_path: string | null;
       local_document_id: string;
       deleted_at: string | null;
@@ -107,7 +106,7 @@ export async function GET(request: NextRequest): Promise<
       const { data: localDocs } = await supabase
         .from('financial_documents')
         .select(
-          'id, qonto_invoice_id, workflow_status, deleted_at, sales_order_id, status, amount_paid, partner_id, sales_orders!financial_documents_sales_order_id_fkey(order_number), organisations!financial_documents_partner_id_fkey(legal_name, trade_name)'
+          'id, qonto_invoice_id, deleted_at, sales_order_id, status, amount_paid, partner_id, sales_orders!financial_documents_sales_order_id_fkey(order_number), organisations!financial_documents_partner_id_fkey(legal_name, trade_name)'
         )
         .in('qonto_invoice_id', qontoInvoiceIds);
 
@@ -116,7 +115,6 @@ export async function GET(request: NextRequest): Promise<
         type DocWithExtras = {
           id: string;
           qonto_invoice_id: string | null;
-          workflow_status: string | null;
           local_pdf_path?: string | null;
           deleted_at: string | null;
           sales_order_id?: string | null;
@@ -134,7 +132,6 @@ export async function GET(request: NextRequest): Promise<
           (acc, doc) => {
             if (doc.qonto_invoice_id) {
               acc[doc.qonto_invoice_id] = {
-                workflow_status: doc.workflow_status,
                 local_pdf_path: doc.local_pdf_path ?? null,
                 local_document_id: doc.id,
                 deleted_at: doc.deleted_at,
@@ -171,7 +168,6 @@ export async function GET(request: NextRequest): Promise<
           ...invoice,
           status: effectiveStatus,
           // Données locales
-          workflow_status: localData?.workflow_status ?? null,
           local_pdf_path: localData?.local_pdf_path ?? null,
           local_document_id: localData?.local_document_id ?? null,
           has_local_pdf: !!localData?.local_pdf_path,
@@ -312,11 +308,11 @@ export async function POST(request: NextRequest): Promise<
     // Guard anti-doublon : vérifier si une facture active existe déjà pour cette commande
     const { data: existingInvoices, error: checkError } = await supabase
       .from('financial_documents')
-      .select('id, document_number, workflow_status')
+      .select('id, document_number, status')
       .eq('sales_order_id', salesOrderId)
       .eq('document_type', 'customer_invoice')
       .is('deleted_at', null)
-      .not('workflow_status', 'eq', 'cancelled');
+      .not('status', 'eq', 'cancelled');
 
     if (checkError) {
       console.error('[API Qonto Invoices] Duplicate check failed:', checkError);
@@ -764,7 +760,6 @@ export async function POST(request: NextRequest): Promise<
           qonto_invoice_id: finalizedInvoice.id,
           qonto_pdf_url: finalizedInvoice.pdf_url ?? null,
           qonto_public_url: finalizedInvoice.public_url ?? null,
-          workflow_status: autoFinalize ? 'finalized' : 'synchronized',
           synchronized_at: new Date().toISOString(),
           created_by: systemUserId,
           // Données synchronisées : body (édité par l'utilisateur) > commande DB

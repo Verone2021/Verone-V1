@@ -290,6 +290,7 @@ export function useOrganisations(filters?: OrganisationFilters) {
             phone: data.phone || null,
             country: data.country || 'FR',
             is_active: data.is_active ?? true,
+            website: data.website || null,
 
             // ✅ Identifiants légaux
             siren: data.siren || null, // ✅ NOUVEAU - SIREN (9 chiffres)

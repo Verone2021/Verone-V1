@@ -246,6 +246,8 @@ export interface CreateSalesOrderData {
   handling_cost_ht?: number;
   // TVA appliquée aux frais (différente de la TVA produits)
   fees_vat_rate?: number; // Ex: 0.20 = 20%
+  // Link to consultation that generated this order
+  consultation_id?: string | null;
   items: CreateSalesOrderItemData[];
 }
 
@@ -1310,6 +1312,8 @@ export function useSalesOrders() {
               shipping_cost_ht: data.shipping_cost_ht ?? 0,
               insurance_cost_ht: data.insurance_cost_ht ?? 0,
               handling_cost_ht: data.handling_cost_ht ?? 0,
+              // Link to consultation
+              consultation_id: data.consultation_id ?? null,
             },
           ] as never)
           .select('id, order_number, status')
@@ -1812,17 +1816,17 @@ export function useSalesOrders() {
           // ✅ DÉVALIDATION: Bloquer si facture finalisée/payée existe
           const { data: invoices } = await supabase
             .from('financial_documents')
-            .select('id, document_number, workflow_status')
+            .select('id, document_number, status')
             .eq('sales_order_id', orderId)
             .eq('document_type', 'customer_invoice')
-            .in('workflow_status', ['finalized', 'paid'])
+            .in('status', ['sent', 'paid'])
             .is('deleted_at', null)
             .limit(1);
 
           if (invoices && invoices.length > 0) {
             const invoice = invoices[0];
             const statusLabel =
-              invoice.workflow_status === 'paid' ? 'payée' : 'définitive';
+              invoice.status === 'paid' ? 'payée' : 'définitive';
             throw new Error(
               `Impossible de dévalider : la facture ${invoice.document_number} est ${statusLabel}. ` +
                 `Créez d'abord un avoir pour annuler cette facture.`
