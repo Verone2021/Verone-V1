@@ -246,6 +246,8 @@ export interface CreateSalesOrderData {
   handling_cost_ht?: number;
   // TVA appliquée aux frais (différente de la TVA produits)
   fees_vat_rate?: number; // Ex: 0.20 = 20%
+  // Link to consultation that generated this order
+  consultation_id?: string | null;
   items: CreateSalesOrderItemData[];
 }
 
@@ -1310,6 +1312,8 @@ export function useSalesOrders() {
               shipping_cost_ht: data.shipping_cost_ht ?? 0,
               insurance_cost_ht: data.insurance_cost_ht ?? 0,
               handling_cost_ht: data.handling_cost_ht ?? 0,
+              // Link to consultation
+              consultation_id: data.consultation_id ?? null,
             },
           ] as never)
           .select('id, order_number, status')

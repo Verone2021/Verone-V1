@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 
 import { QuickSourcingModal } from '@verone/products';
 import { useSourcingProducts } from '@verone/products';
+import { SupplierSelector } from '@verone/products/components/sourcing/supplier-selector';
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import {
@@ -45,6 +46,7 @@ import {
   TrendingUp,
   AlertTriangle,
   ImageIcon,
+  ExternalLink,
 } from 'lucide-react';
 
 // Interface pour images produit
@@ -66,6 +68,7 @@ export default function SourcingPage() {
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [sourcingTypeFilter, setSourcingTypeFilter] = useState('all');
+  const [supplierFilter, setSupplierFilter] = useState<string | null>(null);
   const [isQuickSourcingModalOpen, setIsQuickSourcingModalOpen] =
     useState(false);
   const [completedThisMonth, setCompletedThisMonth] = useState<number>(0);
@@ -96,6 +99,7 @@ export default function SourcingPage() {
       sourcingTypeFilter === 'all'
         ? undefined
         : (sourcingTypeFilter as 'interne' | 'client'),
+    supplier_id: supplierFilter ?? undefined,
   });
 
   // Charger le nombre de produits complétés ce mois-ci
@@ -406,7 +410,7 @@ export default function SourcingPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="relative">
               <Search
                 className="absolute left-3 top-3 h-4 w-4"
@@ -450,6 +454,14 @@ export default function SourcingPage() {
                 <SelectItem value="interne">Interne</SelectItem>
               </SelectContent>
             </Select>
+
+            <SupplierSelector
+              selectedSupplierId={supplierFilter}
+              onSupplierChange={supplierId => setSupplierFilter(supplierId)}
+              label=""
+              placeholder="Tous les fournisseurs"
+              required={false}
+            />
           </div>
         </CardContent>
       </Card>
@@ -579,6 +591,24 @@ export default function SourcingPage() {
                             </div>
                           )}
 
+                          {product.supplier_page_url && (
+                            <div className="flex items-center space-x-2">
+                              <a
+                                href={product.supplier_page_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center hover:underline"
+                                style={{ color: colors.primary[600] }}
+                                onClick={e => e.stopPropagation()}
+                              >
+                                <ExternalLink className="h-4 w-4 mr-1" />
+                                <span className="text-sm">
+                                  Site fournisseur
+                                </span>
+                              </a>
+                            </div>
+                          )}
+
                           <div className="flex items-center space-x-2">
                             <Calendar
                               className="h-4 w-4"
@@ -624,6 +654,21 @@ export default function SourcingPage() {
                         >
                           Voir
                         </ButtonV2>
+
+                        {/* Bouton Voir fournisseur */}
+                        {product.supplier_id && (
+                          <IconButton
+                            variant="outline"
+                            size="sm"
+                            icon={Building}
+                            label="Voir le fournisseur"
+                            onClick={() =>
+                              router.push(
+                                `/organisations/${product.supplier_id}`
+                              )
+                            }
+                          />
+                        )}
 
                         {/* Bouton Modifier - redirige vers la page détails avec modal */}
                         <IconButton

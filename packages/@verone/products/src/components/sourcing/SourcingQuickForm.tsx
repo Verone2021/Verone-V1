@@ -86,6 +86,9 @@ export function SourcingQuickForm({
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [linkedConsultationId, setLinkedConsultationId] = useState<
+    string | null
+  >(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -250,15 +253,63 @@ export function SourcingQuickForm({
       const newProduct = await createSourcingProduct(productData);
 
       if (newProduct) {
-        const toastMessage =
-          supplierMode === 'new'
-            ? 'Produit et fournisseur créés. La fiche fournisseur pourra être complétée plus tard.'
-            : 'Le produit a été ajouté au sourcing';
+        // Si une consultation est liée, associer le produit
+        if (linkedConsultationId) {
+          try {
+            const response = await fetch('/api/consultations/associations', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                consultation_id: linkedConsultationId,
+                product_id: newProduct.id,
+                quantity: 1,
+                proposed_price: null,
+                is_free: false,
+                notes: 'Produit sourcé via formulaire rapide',
+              }),
+            });
 
-        toast({
-          title: 'Sourcing enregistré',
-          description: toastMessage,
-        });
+            if (response.ok) {
+              toast({
+                title: 'Produit créé et associé',
+                description:
+                  'Le produit a été créé et associé à la consultation',
+              });
+            } else {
+              const result = (await response.json()) as { error?: string };
+              console.error(
+                '[SourcingQuickForm] Association error:',
+                result.error
+              );
+              toast({
+                title: 'Produit créé',
+                description: `Le produit a été créé mais l'association à la consultation a échoué : ${result.error ?? 'Erreur inconnue'}`,
+                variant: 'destructive',
+              });
+            }
+          } catch (assocError) {
+            console.error(
+              '[SourcingQuickForm] Association failed:',
+              assocError
+            );
+            toast({
+              title: 'Produit créé',
+              description:
+                "Le produit a été créé mais l'association à la consultation a échoué",
+              variant: 'destructive',
+            });
+          }
+        } else {
+          const toastMessage =
+            supplierMode === 'new'
+              ? 'Produit et fournisseur créés. La fiche fournisseur pourra être complétée plus tard.'
+              : 'Le produit a été ajouté au sourcing';
+
+          toast({
+            title: 'Sourcing enregistré',
+            description: toastMessage,
+          });
+        }
 
         if (onSuccess) {
           onSuccess(newProduct.id);
@@ -831,13 +882,35 @@ export function SourcingQuickForm({
 
         {/* Suggestions de consultations si client assigné */}
         {formData.assigned_client_id && (
-          <ConsultationSuggestions
-            clientId={formData.assigned_client_id}
-            onLinkToConsultation={consultationId => {
-              console.log('Suggestion consultation:', consultationId);
-            }}
-            className="bg-blue-50 border-blue-200"
-          />
+          <>
+            {linkedConsultationId && (
+              <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+                <Link className="h-4 w-4 text-green-600" />
+                <span className="text-sm text-green-800 font-medium">
+                  Sera associé à une consultation
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setLinkedConsultationId(null)}
+                  className="ml-auto text-green-600 hover:text-green-800"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            )}
+            <ConsultationSuggestions
+              clientId={formData.assigned_client_id}
+              onLinkToConsultation={consultationId => {
+                setLinkedConsultationId(consultationId);
+                toast({
+                  title: 'Consultation sélectionnée',
+                  description:
+                    'Le produit sera associé à cette consultation après création',
+                });
+              }}
+              className="bg-blue-50 border-blue-200"
+            />
+          </>
         )}
 
         {/* Actions */}

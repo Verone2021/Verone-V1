@@ -308,6 +308,7 @@ interface ProductSearchFilters {
   creationMode?: 'complete' | 'sourcing' | null;
   sourcingType?: string | null;
   supplierId?: string | null;
+  productStatus?: string | null;
 }
 
 function useProductSearch(
@@ -397,6 +398,18 @@ function useProductSearch(
       // Filtre par sourcing_type
       if (filters.sourcingType) {
         query = query.eq('sourcing_type', filters.sourcingType);
+      }
+
+      // Filtre par statut produit (ex: consultations = seulement produits actifs)
+      if (filters.productStatus) {
+        query = query.eq(
+          'product_status',
+          filters.productStatus as
+            | 'active'
+            | 'draft'
+            | 'preorder'
+            | 'discontinued'
+        );
       }
 
       // Filtre par fournisseur (CRITIQUE pour commandes fournisseurs)
@@ -862,6 +875,7 @@ export function UniversalProductSelectorV2({
       creationMode: creationModeFilter,
       sourcingType: sourcingFilter,
       supplierId: supplierId,
+      productStatus: context === 'consultations' ? 'active' : null,
     },
     [...excludeProductIds, ...localSelectedProducts.map(p => p.id)],
     searchDebounce

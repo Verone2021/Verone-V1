@@ -1,7 +1,5 @@
 'use client';
 
-import { useState } from 'react';
-
 import Image from 'next/image';
 
 import { useInlineEdit, type EditableSection } from '@verone/common/hooks';
@@ -15,6 +13,7 @@ import {
   CardTitle,
   Input,
   Label,
+  Textarea,
 } from '@verone/ui';
 import { cn, formatPrice } from '@verone/utils';
 import {
@@ -32,6 +31,11 @@ import {
   AlertCircle,
   Link as LinkIcon,
   FileText,
+  Tag,
+  Ruler,
+  Weight,
+  StickyNote,
+  ShoppingCart,
 } from 'lucide-react';
 
 // Types
@@ -40,12 +44,19 @@ interface SourcingProduct {
   name: string;
   sku: string;
   supplier_page_url: string | null;
+  supplier_reference?: string | null;
   cost_price: number | null;
   cost_net_avg?: number | null;
   eco_tax_default?: number | null;
   supplier_id: string | null;
   sourcing_type: 'client' | 'interne' | null;
   requires_sample: boolean;
+  brand?: string | null;
+  description?: string | null;
+  supplier_moq?: number | null;
+  dimensions?: Record<string, number> | null;
+  weight?: number | null;
+  internal_notes?: string | null;
   created_at: string;
   updated_at: string;
   supplier?: {
@@ -126,6 +137,7 @@ export function SourcingProductEditCard({
     startEdit(infoSection, {
       name: product.name,
       supplier_page_url: product.supplier_page_url || '',
+      supplier_reference: product.supplier_reference || '',
     });
   };
 
@@ -190,6 +202,75 @@ export function SourcingProductEditCard({
     const success = await saveChanges(supplierSection);
     if (success) {
       console.log('✅ Fournisseur mis à jour');
+    }
+  };
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // ZONE DÉTAILS PRODUIT - Brand, Description, MOQ, Dimensions, Weight
+  // ═══════════════════════════════════════════════════════════════════════════
+  const detailsSection: EditableSection = 'details';
+  const detailsData = getEditedData(detailsSection);
+  const detailsError = getError(detailsSection);
+
+  const handleStartDetailsEdit = () => {
+    startEdit(detailsSection, {
+      brand: product.brand || '',
+      description: product.description || '',
+      supplier_moq: product.supplier_moq || 0,
+      dimensions_length: product.dimensions?.length || 0,
+      dimensions_width: product.dimensions?.width || 0,
+      dimensions_height: product.dimensions?.height || 0,
+      weight: product.weight || 0,
+    });
+  };
+
+  const handleSaveDetails = async () => {
+    const dims =
+      detailsData?.dimensions_length ||
+      detailsData?.dimensions_width ||
+      detailsData?.dimensions_height
+        ? {
+            length: detailsData.dimensions_length || 0,
+            width: detailsData.dimensions_width || 0,
+            height: detailsData.dimensions_height || 0,
+          }
+        : null;
+
+    // Transform data for save
+    const toSave = {
+      brand: detailsData?.brand || null,
+      description: detailsData?.description || null,
+      supplier_moq: detailsData?.supplier_moq || null,
+      dimensions: dims,
+      weight: detailsData?.weight || null,
+    };
+
+    // Override edited data with transformed values
+    updateEditedData(detailsSection, toSave);
+
+    const success = await saveChanges(detailsSection);
+    if (success) {
+      console.log('✅ Détails produit mis à jour');
+    }
+  };
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // ZONE NOTES INTERNES
+  // ═══════════════════════════════════════════════════════════════════════════
+  const notesSection: EditableSection = 'notes';
+  const notesData = getEditedData(notesSection);
+  const notesError = getError(notesSection);
+
+  const handleStartNotesEdit = () => {
+    startEdit(notesSection, {
+      internal_notes: product.internal_notes || '',
+    });
+  };
+
+  const handleSaveNotes = async () => {
+    const success = await saveChanges(notesSection);
+    if (success) {
+      console.log('✅ Notes mises à jour');
     }
   };
 
@@ -308,6 +389,25 @@ export function SourcingProductEditCard({
                       />
                     </div>
                   </div>
+                  <div>
+                    <Label
+                      htmlFor="supplier_reference"
+                      className="text-xs text-gray-600"
+                    >
+                      Réf. fournisseur
+                    </Label>
+                    <Input
+                      id="supplier_reference"
+                      value={infoData?.supplier_reference || ''}
+                      onChange={e =>
+                        updateEditedData(infoSection, {
+                          supplier_reference: e.target.value,
+                        })
+                      }
+                      placeholder="ART-12345"
+                      className="mt-1"
+                    />
+                  </div>
                 </div>
 
                 {infoError && (
@@ -327,6 +427,12 @@ export function SourcingProductEditCard({
                     </CardTitle>
                     <p className="text-gray-600 mt-1">
                       <span className="font-medium">SKU:</span> {product.sku}
+                      {product.supplier_reference && (
+                        <span className="ml-3">
+                          <span className="font-medium">Réf:</span>{' '}
+                          {product.supplier_reference}
+                        </span>
+                      )}
                     </p>
                     {product.supplier_page_url && (
                       <a
@@ -648,6 +754,331 @@ export function SourcingProductEditCard({
                     Cliquez sur l'icône de modification pour en ajouter un
                   </p>
                 </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* ═══════════════════════════════════════════════════════════════════ */}
+        {/* ZONE DÉTAILS PRODUIT */}
+        {/* ═══════════════════════════════════════════════════════════════════ */}
+        <div className="border-t border-gray-200 pt-4">
+          {isEditing(detailsSection) ? (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-medium text-gray-700 flex items-center">
+                  <Tag className="h-4 w-4 mr-2" />
+                  Détails Produit
+                </h3>
+                <div className="flex space-x-1">
+                  <ButtonV2
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => cancelEdit(detailsSection)}
+                    disabled={isSaving(detailsSection)}
+                  >
+                    <X className="h-4 w-4" />
+                  </ButtonV2>
+                  <ButtonV2
+                    variant="default"
+                    size="sm"
+                    onClick={handleSaveDetails}
+                    disabled={
+                      isSaving(detailsSection) || !hasChanges(detailsSection)
+                    }
+                    className="bg-black hover:bg-gray-800 text-white"
+                  >
+                    {isSaving(detailsSection) ? (
+                      <span className="animate-spin">&#8987;</span>
+                    ) : (
+                      <Save className="h-4 w-4" />
+                    )}
+                  </ButtonV2>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="brand" className="text-xs text-gray-600">
+                    Marque
+                  </Label>
+                  <Input
+                    id="brand"
+                    value={detailsData?.brand || ''}
+                    onChange={e =>
+                      updateEditedData(detailsSection, {
+                        brand: e.target.value,
+                      })
+                    }
+                    placeholder="HAY, Fermob..."
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label
+                    htmlFor="supplier_moq"
+                    className="text-xs text-gray-600"
+                  >
+                    MOQ (quantité min.)
+                  </Label>
+                  <Input
+                    id="supplier_moq"
+                    type="number"
+                    min="1"
+                    value={detailsData?.supplier_moq || ''}
+                    onChange={e =>
+                      updateEditedData(detailsSection, {
+                        supplier_moq: parseInt(e.target.value) || 0,
+                      })
+                    }
+                    placeholder="10"
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="description" className="text-xs text-gray-600">
+                  Description
+                </Label>
+                <Textarea
+                  id="description"
+                  value={detailsData?.description || ''}
+                  onChange={e =>
+                    updateEditedData(detailsSection, {
+                      description: e.target.value,
+                    })
+                  }
+                  placeholder="Description du produit..."
+                  rows={3}
+                  className="mt-1 resize-none"
+                />
+              </div>
+
+              <div>
+                <Label className="text-xs text-gray-600">
+                  Dimensions (cm) L x l x H
+                </Label>
+                <div className="grid grid-cols-3 gap-2 mt-1">
+                  <Input
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    value={detailsData?.dimensions_length || ''}
+                    onChange={e =>
+                      updateEditedData(detailsSection, {
+                        dimensions_length: parseFloat(e.target.value) || 0,
+                      })
+                    }
+                    placeholder="L"
+                  />
+                  <Input
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    value={detailsData?.dimensions_width || ''}
+                    onChange={e =>
+                      updateEditedData(detailsSection, {
+                        dimensions_width: parseFloat(e.target.value) || 0,
+                      })
+                    }
+                    placeholder="l"
+                  />
+                  <Input
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    value={detailsData?.dimensions_height || ''}
+                    onChange={e =>
+                      updateEditedData(detailsSection, {
+                        dimensions_height: parseFloat(e.target.value) || 0,
+                      })
+                    }
+                    placeholder="H"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="weight" className="text-xs text-gray-600">
+                  Poids (kg)
+                </Label>
+                <Input
+                  id="weight"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={detailsData?.weight || ''}
+                  onChange={e =>
+                    updateEditedData(detailsSection, {
+                      weight: parseFloat(e.target.value) || 0,
+                    })
+                  }
+                  placeholder="5.5"
+                  className="mt-1"
+                />
+              </div>
+
+              {detailsError && (
+                <p className="text-sm text-red-600 flex items-center">
+                  <AlertCircle className="h-4 w-4 mr-1" />
+                  {detailsError}
+                </p>
+              )}
+            </div>
+          ) : (
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-medium text-gray-700 flex items-center">
+                  <Tag className="h-4 w-4 mr-2" />
+                  Détails Produit
+                </h3>
+                <ButtonV2
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleStartDetailsEdit}
+                  className="text-gray-500 hover:text-black"
+                >
+                  <Edit className="h-4 w-4" />
+                </ButtonV2>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                {product.brand && (
+                  <div className="flex items-center text-sm text-gray-600">
+                    <Tag className="h-4 w-4 mr-2 text-gray-400" />
+                    <span className="font-medium mr-1">Marque:</span>
+                    {product.brand}
+                  </div>
+                )}
+                {product.supplier_moq != null && product.supplier_moq > 0 && (
+                  <div className="flex items-center text-sm text-gray-600">
+                    <ShoppingCart className="h-4 w-4 mr-2 text-gray-400" />
+                    <span className="font-medium mr-1">MOQ:</span>
+                    {product.supplier_moq}
+                  </div>
+                )}
+                {product.dimensions && (
+                  <div className="flex items-center text-sm text-gray-600">
+                    <Ruler className="h-4 w-4 mr-2 text-gray-400" />
+                    <span className="font-medium mr-1">Dim.:</span>
+                    {product.dimensions.length || 0} x{' '}
+                    {product.dimensions.width || 0} x{' '}
+                    {product.dimensions.height || 0} cm
+                  </div>
+                )}
+                {product.weight != null && product.weight > 0 && (
+                  <div className="flex items-center text-sm text-gray-600">
+                    <Weight className="h-4 w-4 mr-2 text-gray-400" />
+                    <span className="font-medium mr-1">Poids:</span>
+                    {product.weight} kg
+                  </div>
+                )}
+              </div>
+
+              {product.description && (
+                <p className="text-sm text-gray-600 mt-2">
+                  {product.description}
+                </p>
+              )}
+
+              {!product.brand &&
+                !product.description &&
+                !product.supplier_moq &&
+                !product.dimensions &&
+                !product.weight && (
+                  <p className="text-sm text-gray-400 italic">
+                    Aucun détail renseigné
+                  </p>
+                )}
+            </div>
+          )}
+        </div>
+
+        {/* ═══════════════════════════════════════════════════════════════════ */}
+        {/* ZONE NOTES INTERNES */}
+        {/* ═══════════════════════════════════════════════════════════════════ */}
+        <div className="border-t border-gray-200 pt-4">
+          {isEditing(notesSection) ? (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-medium text-gray-700 flex items-center">
+                  <StickyNote className="h-4 w-4 mr-2" />
+                  Notes Internes
+                </h3>
+                <div className="flex space-x-1">
+                  <ButtonV2
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => cancelEdit(notesSection)}
+                    disabled={isSaving(notesSection)}
+                  >
+                    <X className="h-4 w-4" />
+                  </ButtonV2>
+                  <ButtonV2
+                    variant="default"
+                    size="sm"
+                    onClick={handleSaveNotes}
+                    disabled={
+                      isSaving(notesSection) || !hasChanges(notesSection)
+                    }
+                    className="bg-black hover:bg-gray-800 text-white"
+                  >
+                    {isSaving(notesSection) ? (
+                      <span className="animate-spin">&#8987;</span>
+                    ) : (
+                      <Save className="h-4 w-4" />
+                    )}
+                  </ButtonV2>
+                </div>
+              </div>
+
+              <Textarea
+                value={notesData?.internal_notes || ''}
+                onChange={e =>
+                  updateEditedData(notesSection, {
+                    internal_notes: e.target.value,
+                  })
+                }
+                placeholder="Notes internes sur le sourcing de ce produit..."
+                rows={4}
+                className="resize-none"
+              />
+
+              {notesError && (
+                <p className="text-sm text-red-600 flex items-center">
+                  <AlertCircle className="h-4 w-4 mr-1" />
+                  {notesError}
+                </p>
+              )}
+            </div>
+          ) : (
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-medium text-gray-700 flex items-center">
+                  <StickyNote className="h-4 w-4 mr-2" />
+                  Notes Internes
+                </h3>
+                <ButtonV2
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleStartNotesEdit}
+                  className="text-gray-500 hover:text-black"
+                >
+                  <Edit className="h-4 w-4" />
+                </ButtonV2>
+              </div>
+
+              {product.internal_notes ? (
+                <div className="bg-yellow-50 rounded-lg p-3 border border-yellow-200">
+                  <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                    {product.internal_notes}
+                  </p>
+                </div>
+              ) : (
+                <p className="text-sm text-gray-400 italic">
+                  Aucune note interne
+                </p>
               )}
             </div>
           )}
