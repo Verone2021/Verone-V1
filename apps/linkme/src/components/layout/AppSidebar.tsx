@@ -100,11 +100,36 @@ const sidebarItems: SidebarItem[] = [
       },
     ],
   },
-  { icon: ShoppingCart, label: 'Commandes', href: '/commandes' },
-  { icon: Coins, label: 'Commissions', href: '/commissions' },
-  { icon: BarChart3, label: 'Statistiques', href: '/statistiques' },
-  { icon: Warehouse, label: 'Stockage', href: '/stockage' },
-  { icon: HelpCircle, label: 'Aide', href: '/aide' },
+  {
+    icon: ShoppingCart,
+    label: 'Commandes',
+    href: '/commandes',
+    roles: ROUTE_PERMISSIONS['/commandes']?.roles,
+  },
+  {
+    icon: Coins,
+    label: 'Commissions',
+    href: '/commissions',
+    roles: ROUTE_PERMISSIONS['/commissions']?.roles,
+  },
+  {
+    icon: BarChart3,
+    label: 'Statistiques',
+    href: '/statistiques',
+    roles: ROUTE_PERMISSIONS['/statistiques']?.roles,
+  },
+  {
+    icon: Warehouse,
+    label: 'Stockage',
+    href: '/stockage',
+    roles: ROUTE_PERMISSIONS['/stockage']?.roles,
+  },
+  {
+    icon: HelpCircle,
+    label: 'Aide',
+    href: '/aide',
+    roles: ROUTE_PERMISSIONS['/aide']?.roles,
+  },
 ];
 
 function isProduitsPath(pathname: string): boolean {

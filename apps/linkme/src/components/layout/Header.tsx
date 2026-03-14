@@ -18,7 +18,11 @@ import { UserMenu } from '../auth/UserMenu';
 import { useCart } from '../cart/CartProvider';
 
 // Rôles autorisés à voir le catalogue
-const CATALOG_ROLES: LinkMeRole[] = ['enseigne_admin', 'organisation_admin'];
+const CATALOG_ROLES: LinkMeRole[] = [
+  'enseigne_admin',
+  'organisation_admin',
+  'enseigne_collaborateur',
+];
 
 // Rôles autorisés à voir "Mes sélections"
 const SELECTION_ROLES: LinkMeRole[] = ['enseigne_admin', 'organisation_admin'];
@@ -27,6 +31,7 @@ const SELECTION_ROLES: LinkMeRole[] = ['enseigne_admin', 'organisation_admin'];
 const CREATE_PRODUCT_ROLES: LinkMeRole[] = [
   'enseigne_admin',
   'organisation_admin',
+  'enseigne_collaborateur',
 ];
 
 // Rôles autorisés à voir le stockage
