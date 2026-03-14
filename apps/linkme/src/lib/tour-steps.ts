@@ -28,58 +28,66 @@ export type TourId = (typeof TOUR_IDS)[keyof typeof TOUR_IDS];
 
 // ─── Tour 1: Bienvenue (Dashboard) ──────────────────────────────────────────
 
-export const welcomeTourSteps: DriveStep[] = [
-  {
-    element: '[data-tour="dashboard-welcome"]',
-    popover: {
-      title: 'Bienvenue sur LinkMe !',
-      description:
-        "Voici votre tableau de bord. C'est votre point d'entrée pour gérer vos sélections, commandes et commissions.",
-      side: 'bottom',
-      align: 'start',
+export function getWelcomeTourSteps(canViewCommissions: boolean): DriveStep[] {
+  return [
+    {
+      element: '[data-tour="dashboard-welcome"]',
+      popover: {
+        title: 'Bienvenue sur LinkMe !',
+        description: canViewCommissions
+          ? "Voici votre tableau de bord. C'est votre point d'entrée pour gérer vos sélections, commandes et commissions."
+          : "Voici votre tableau de bord. C'est votre point d'entrée pour suivre vos ventes et passer des commandes.",
+        side: 'bottom',
+        align: 'start',
+      },
     },
-  },
-  {
-    element: '[data-tour="onboarding-checklist"]',
-    popover: {
-      title: 'Votre progression',
-      description:
-        'Cette checklist vous guide étape par étape. Complétez-la pour maîtriser toutes les fonctionnalités de LinkMe.',
-      side: 'bottom',
-      align: 'center',
+    {
+      element: '[data-tour="onboarding-checklist"]',
+      popover: {
+        title: 'Votre progression',
+        description:
+          'Cette checklist vous guide étape par étape. Complétez-la pour maîtriser toutes les fonctionnalités de LinkMe.',
+        side: 'bottom',
+        align: 'center',
+      },
     },
-  },
-  {
-    element: '[data-tour="kpi-cards"]',
-    popover: {
-      title: "Vos commissions en un coup d'œil",
-      description:
-        'Suivez vos commissions en temps réel : total gagné, payables, en cours de règlement et en attente.',
-      side: 'bottom',
-      align: 'center',
+    {
+      element: '[data-tour="kpi-cards"]',
+      popover: {
+        title: canViewCommissions
+          ? "Vos commissions en un coup d'œil"
+          : "Vos ventes en un coup d'œil",
+        description: canViewCommissions
+          ? 'Suivez vos commissions en temps réel : total gagné, payables, en cours de règlement et en attente.'
+          : "Suivez vos ventes en temps réel : commandes passées, chiffre d'affaires, produits commandés et catalogue.",
+        side: 'bottom',
+        align: 'center',
+      },
     },
-  },
-  {
-    element: '[data-tour="quick-actions"]',
-    popover: {
-      title: 'Actions rapides',
-      description:
-        'Accédez directement à vos sélections, commandes et profil en un clic.',
-      side: 'top',
-      align: 'center',
+    {
+      element: '[data-tour="quick-actions"]',
+      popover: {
+        title: 'Actions rapides',
+        description: canViewCommissions
+          ? 'Accédez directement à vos sélections, commandes et profil en un clic.'
+          : 'Accédez directement au catalogue, vos commandes et votre profil en un clic.',
+        side: 'top',
+        align: 'center',
+      },
     },
-  },
-  {
-    element: '[data-tour="analytics-link"]',
-    popover: {
-      title: 'Statistiques détaillées',
-      description:
-        'Consultez vos performances complètes : ventes, commissions, produits les plus vendus.',
-      side: 'top',
-      align: 'center',
+    {
+      element: '[data-tour="analytics-link"]',
+      popover: {
+        title: 'Statistiques détaillées',
+        description: canViewCommissions
+          ? 'Consultez vos performances complètes : ventes, commissions, produits les plus vendus.'
+          : 'Consultez vos performances complètes : ventes, produits les plus vendus et tendances.',
+        side: 'top',
+        align: 'center',
+      },
     },
-  },
-];
+  ];
+}
 
 // ─── Tour 2: Créer une sélection ───────────────────────────────────────────
 
@@ -209,11 +217,21 @@ export const commissionsTourSteps: DriveStep[] = [
 // ─── Map Tour ID → Steps ───────────────────────────────────────────────────
 
 export const TOUR_STEPS_MAP: Record<TourId, DriveStep[]> = {
-  [TOUR_IDS.WELCOME]: welcomeTourSteps,
+  [TOUR_IDS.WELCOME]: getWelcomeTourSteps(true), // Default for admin; overridden by hook
   [TOUR_IDS.SELECTION]: selectionTourSteps,
   [TOUR_IDS.ORDER]: orderTourSteps,
   [TOUR_IDS.COMMISSIONS]: commissionsTourSteps,
 };
+
+export function getTourSteps(
+  tourId: TourId,
+  canViewCommissions: boolean
+): DriveStep[] {
+  if (tourId === TOUR_IDS.WELCOME) {
+    return getWelcomeTourSteps(canViewCommissions);
+  }
+  return TOUR_STEPS_MAP[tourId];
+}
 
 // ─── Tour Labels (pour UI replay) ──────────────────────────────────────────
 
