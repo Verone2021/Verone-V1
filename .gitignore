@@ -100,20 +100,22 @@ next-env.d.ts
 # ESLint baseline (local uniquement, régénéré dynamiquement)
 .eslint-baseline.json
 
+# Temp files at root (debug logs, test artifacts)
+console-*.log
+console-*.txt
+test-*.txt
+knip-report.json
+
+# Generated reports
+scripts/reports/*.html
+scripts/reports/*.json
+scripts/reports/*.md
+
 # Husky
 .husky/_
 
-# Playwright MCP Browser outputs
-.playwright-mcp/screenshots/**/*.png
-.playwright-mcp/screenshots/**/*.jpg
-.playwright-mcp/screenshots/**/*.jpeg
-.playwright-mcp/*.png
-.playwright-mcp/*.jpg
-.playwright-mcp/*.jpeg
-.playwright-mcp/lane-*/**
-.playwright-mcp/profiles/
-
-# Keep Playwright MCP documentation
+# Playwright MCP Browser outputs (tout sauf README.md et .gitkeep)
+.playwright-mcp/**
 !.playwright-mcp/README.md
 !.playwright-mcp/screenshots/.gitkeep
 
