@@ -30,12 +30,14 @@ import { useAuth, type LinkMeRole } from '../../contexts/AuthContext';
 const ROLE_LABELS: Record<LinkMeRole, string> = {
   enseigne_admin: 'Enseigne',
   organisation_admin: 'Organisation',
+  enseigne_collaborateur: 'Collaborateur',
 };
 
 // Couleurs des badges par rôle
 const ROLE_COLORS: Record<LinkMeRole, string> = {
   enseigne_admin: 'bg-purple-100 text-purple-700',
   organisation_admin: 'bg-blue-100 text-blue-700',
+  enseigne_collaborateur: 'bg-teal-100 text-teal-700',
 };
 
 interface IUserMenuProps {

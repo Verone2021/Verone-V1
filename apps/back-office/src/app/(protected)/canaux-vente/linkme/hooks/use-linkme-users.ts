@@ -18,7 +18,10 @@ type UserAppRoleUpdate =
 type LinkMeUserView = Database['public']['Views']['v_linkme_users']['Row'];
 
 // Types
-export type LinkMeRole = 'enseigne_admin' | 'organisation_admin';
+export type LinkMeRole =
+  | 'enseigne_admin'
+  | 'enseigne_collaborateur'
+  | 'organisation_admin';
 
 export interface LinkMeUser {
   user_id: string;
@@ -587,6 +590,9 @@ export function useLinkMeUsersStats() {
       const byRole = {
         enseigne_admin: users.filter(u => u.linkme_role === 'enseigne_admin')
           .length,
+        enseigne_collaborateur: users.filter(
+          u => u.linkme_role === 'enseigne_collaborateur'
+        ).length,
         organisation_admin: users.filter(
           u => u.linkme_role === 'organisation_admin'
         ).length,
@@ -614,6 +620,7 @@ export function useLinkMeUsersStats() {
  */
 export const LINKME_ROLE_LABELS: Record<LinkMeRole, string> = {
   enseigne_admin: 'Enseigne',
+  enseigne_collaborateur: 'Collaborateur',
   organisation_admin: 'Organisation',
 };
 
@@ -622,6 +629,7 @@ export const LINKME_ROLE_LABELS: Record<LinkMeRole, string> = {
  */
 export const LINKME_ROLE_COLORS: Record<LinkMeRole, string> = {
   enseigne_admin: 'bg-purple-100 text-purple-800',
+  enseigne_collaborateur: 'bg-teal-100 text-teal-800',
   organisation_admin: 'bg-blue-100 text-blue-800',
 };
 
@@ -634,6 +642,12 @@ export const LINKME_ROLE_PERMISSIONS: Record<LinkMeRole, string[]> = {
     'Vendre aux organisations du réseau',
     "Voir toutes les organisations de l'enseigne",
     'Accès aux statistiques réseau',
+  ],
+  enseigne_collaborateur: [
+    'Consulter le catalogue et passer des commandes',
+    'Accès aux statistiques (sans commissions)',
+    'Pas de gestion des sélections ni du réseau',
+    "Rattaché à l'enseigne de l'admin",
   ],
   organisation_admin: [
     'Créer des sélections de produits',

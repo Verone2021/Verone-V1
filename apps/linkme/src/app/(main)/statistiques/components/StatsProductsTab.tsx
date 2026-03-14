@@ -17,6 +17,7 @@ import { Card } from '@tremor/react';
 import { Package, Award, ArrowRight } from 'lucide-react';
 
 import { TopProductsTable } from '@/components/analytics';
+import { usePermissions } from '@/hooks/use-permissions';
 import type { AffiliateAnalyticsData } from '@/types/analytics';
 import { formatCurrency } from '@/types/analytics';
 
@@ -26,6 +27,7 @@ interface StatsProductsTabProps {
 }
 
 export function StatsProductsTab({ data, isLoading }: StatsProductsTabProps) {
+  const { canViewCommissions } = usePermissions();
   const topProduct = data?.topProducts?.[0];
 
   return (
@@ -70,8 +72,10 @@ export function StatsProductsTab({ data, isLoading }: StatsProductsTabProps) {
                 {topProduct.productName}
               </p>
               <p className="text-xs text-gray-500 mt-1">
-                {topProduct.quantitySold} vendus ·{' '}
-                {formatCurrency(topProduct.commissionHT)} comm.
+                {topProduct.quantitySold} vendus
+                {canViewCommissions && (
+                  <> · {formatCurrency(topProduct.commissionHT)} comm.</>
+                )}
               </p>
             </>
           ) : (

@@ -31,24 +31,30 @@ export interface RoutePermission {
  * - Soit accessibles à tous les utilisateurs authentifiés
  */
 export const ROUTE_PERMISSIONS: Record<string, RoutePermission> = {
-  // Routes restreintes par rôle
+  // Routes restreintes — enseigne_admin only
   '/organisations': {
-    roles: ['enseigne_admin', 'organisation_admin'],
+    roles: ['enseigne_admin', 'enseigne_collaborateur'],
     redirect: '/dashboard',
     description: 'Gestion des organisations de la chaîne',
   },
 
-  // Routes accessibles à tous les rôles actifs (liste explicite pour documentation)
-  '/dashboard': {
-    roles: ['enseigne_admin', 'organisation_admin'],
-    redirect: '/login',
-    description: 'Tableau de bord principal',
+  '/contacts': {
+    roles: ['enseigne_admin'],
+    redirect: '/dashboard',
+    description: 'Contacts et utilisateurs accessibles',
   },
 
-  '/commandes': {
+  '/parametres': {
+    roles: ['enseigne_admin'],
+    redirect: '/dashboard',
+    description: 'Paramètres du compte',
+  },
+
+  // Routes restreintes — enseigne_admin + organisation_admin (pas collaborateur)
+  '/commissions': {
     roles: ['enseigne_admin', 'organisation_admin'],
     redirect: '/dashboard',
-    description: 'Liste des commandes',
+    description: 'Rémunérations et commissions',
   },
 
   '/ma-selection': {
@@ -57,56 +63,51 @@ export const ROUTE_PERMISSIONS: Record<string, RoutePermission> = {
     description: 'Gestion des sélections de produits',
   },
 
-  '/mes-produits': {
-    roles: ['enseigne_admin', 'organisation_admin'],
-    redirect: '/dashboard',
-    description: "Produits créés par l'affilié",
-  },
-
-  '/commissions': {
-    roles: ['enseigne_admin', 'organisation_admin'],
-    redirect: '/dashboard',
-    description: 'Rémunérations et commissions',
-  },
-
-  '/parametres': {
-    roles: ['enseigne_admin', 'organisation_admin'],
-    redirect: '/dashboard',
-    description: 'Paramètres du compte',
-  },
-
-  '/profil': {
-    roles: ['enseigne_admin', 'organisation_admin'],
-    redirect: '/dashboard',
-    description: 'Profil utilisateur',
-  },
-
-  '/catalogue': {
-    roles: ['enseigne_admin', 'organisation_admin'],
-    redirect: '/dashboard',
-    description: 'Catalogue global des produits',
-  },
-
-  '/contacts': {
-    roles: ['enseigne_admin', 'organisation_admin'],
-    redirect: '/dashboard',
-    description: 'Contacts et utilisateurs accessibles',
-  },
-
   '/stockage': {
     roles: ['enseigne_admin', 'organisation_admin'],
     redirect: '/dashboard',
     description: 'Produits stockés et tarification',
   },
 
+  // Routes accessibles à tous les rôles LinkMe (y compris collaborateur)
+  '/dashboard': {
+    roles: ['enseigne_admin', 'organisation_admin', 'enseigne_collaborateur'],
+    redirect: '/login',
+    description: 'Tableau de bord principal',
+  },
+
+  '/commandes': {
+    roles: ['enseigne_admin', 'organisation_admin', 'enseigne_collaborateur'],
+    redirect: '/dashboard',
+    description: 'Liste des commandes',
+  },
+
+  '/mes-produits': {
+    roles: ['enseigne_admin', 'organisation_admin', 'enseigne_collaborateur'],
+    redirect: '/dashboard',
+    description: "Produits créés par l'affilié",
+  },
+
+  '/profil': {
+    roles: ['enseigne_admin', 'organisation_admin', 'enseigne_collaborateur'],
+    redirect: '/dashboard',
+    description: 'Profil utilisateur',
+  },
+
+  '/catalogue': {
+    roles: ['enseigne_admin', 'organisation_admin', 'enseigne_collaborateur'],
+    redirect: '/dashboard',
+    description: 'Catalogue global des produits',
+  },
+
   '/statistiques': {
-    roles: ['enseigne_admin', 'organisation_admin'],
+    roles: ['enseigne_admin', 'organisation_admin', 'enseigne_collaborateur'],
     redirect: '/dashboard',
     description: 'Statistiques et performances',
   },
 
   '/aide': {
-    roles: ['enseigne_admin', 'organisation_admin'],
+    roles: ['enseigne_admin', 'organisation_admin', 'enseigne_collaborateur'],
     redirect: '/dashboard',
     description: "Centre d'aide et documentation",
   },
@@ -162,7 +163,11 @@ export function isRestrictedRoute(pathname: string): boolean {
   const config = ROUTE_PERMISSIONS[pathname];
   if (!config) return false;
 
-  // Une route est restreinte si elle n'inclut pas tous les rôles principaux
-  const allMainRoles: LinkMeRole[] = ['enseigne_admin', 'organisation_admin'];
-  return !allMainRoles.every(role => config.roles.includes(role));
+  // Une route est restreinte si elle n'inclut pas tous les rôles
+  const allRoles: LinkMeRole[] = [
+    'enseigne_admin',
+    'organisation_admin',
+    'enseigne_collaborateur',
+  ];
+  return !allRoles.every(role => config.roles.includes(role));
 }

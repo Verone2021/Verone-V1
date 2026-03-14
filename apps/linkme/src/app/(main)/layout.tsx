@@ -19,6 +19,7 @@ import { createServerClient } from '@/lib/supabase-server';
 
 import { AppSidebar } from '../../components/layout/AppSidebar';
 import { MinimalHeader } from '../../components/layout/MinimalHeader';
+import { RouteGuard } from '../../components/layout/RouteGuard';
 import { SidebarProvider } from '../../components/layout/SidebarProvider';
 import { Providers } from '../../components/providers/Providers';
 
@@ -88,7 +89,9 @@ export default async function MainLayout({
           {/* Main Content Area - ml-16 pour sidebar collapsible (w-16) */}
           <div className="flex-1 flex flex-col min-h-screen lg:ml-16">
             <MinimalHeader />
-            <main className="flex-1 overflow-auto">{children}</main>
+            <main className="flex-1 overflow-auto">
+              <RouteGuard>{children}</RouteGuard>
+            </main>
           </div>
         </div>
       </SidebarProvider>

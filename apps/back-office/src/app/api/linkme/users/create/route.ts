@@ -33,9 +33,13 @@ const CreateLinkMeUserSchema = z.object({
   first_name: z.string().min(1, 'Prénom requis'),
   last_name: z.string().min(1, 'Nom requis'),
   phone: emptyToNull.nullable().optional().default(null),
-  role: z.enum(['enseigne_admin', 'organisation_admin'], {
-    error: 'Rôle invalide. Doit être: enseigne_admin ou organisation_admin',
-  }),
+  role: z.enum(
+    ['enseigne_admin', 'enseigne_collaborateur', 'organisation_admin'],
+    {
+      error:
+        'Rôle invalide. Doit être: enseigne_admin, enseigne_collaborateur ou organisation_admin',
+    }
+  ),
   enseigne_id: emptyToNull.nullable().optional().default(null),
   organisation_id: emptyToNull.nullable().optional().default(null),
   permissions: z.array(z.string()).optional().default([]),
@@ -76,6 +80,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     if (role === 'enseigne_admin' && !enseigneId) {
       return NextResponse.json(
         { message: 'Un admin enseigne doit être associé à une enseigne' },
+        { status: 400 }
+      );
+    }
+
+    if (role === 'enseigne_collaborateur' && !enseigneId) {
+      return NextResponse.json(
+        { message: 'Un collaborateur doit être associé à une enseigne' },
         { status: 400 }
       );
     }
@@ -175,11 +186,15 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       is_primary_contact: true, // Premier contact créé = contact principal
       is_active: true,
       notes: `Contact créé automatiquement pour utilisateur LinkMe (${role})`,
-      enseigne_id: role === 'enseigne_admin' && enseigneId ? enseigneId : null,
+      enseigne_id:
+        (role === 'enseigne_admin' || role === 'enseigne_collaborateur') &&
+        enseigneId
+          ? enseigneId
+          : null,
       organisation_id:
         role === 'organisation_admin' && organisationId ? organisationId : null,
       owner_type:
-        role === 'enseigne_admin'
+        role === 'enseigne_admin' || role === 'enseigne_collaborateur'
           ? 'enseigne'
           : role === 'organisation_admin'
             ? 'organisation'
@@ -198,10 +213,17 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // 5. Vérifier si un affilié LinkMe existe déjà pour cette enseigne/organisation
     //    Un affilié est lié à une ENSEIGNE (pas à un utilisateur).
     //    Plusieurs utilisateurs d'une même enseigne partagent le même affilié.
-    if (role === 'enseigne_admin' || role === 'organisation_admin') {
+    if (
+      role === 'enseigne_admin' ||
+      role === 'enseigne_collaborateur' ||
+      role === 'organisation_admin'
+    ) {
       let existingAffiliate: { id: string } | null = null;
 
-      if (role === 'enseigne_admin' && enseigneId) {
+      if (
+        (role === 'enseigne_admin' || role === 'enseigne_collaborateur') &&
+        enseigneId
+      ) {
         const { data } = await supabaseAdmin
           .from('linkme_affiliates')
           .select('id')
@@ -229,7 +251,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
         let displayName = `${firstName} ${lastName}`;
 
-        if (role === 'enseigne_admin' && enseigneId) {
+        if (
+          (role === 'enseigne_admin' || role === 'enseigne_collaborateur') &&
+          enseigneId
+        ) {
           const { data: enseigne } = await supabaseAdmin
             .from('enseignes')
             .select('name')
@@ -251,7 +276,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
         const affiliateData: LinkmeAffiliateInsert = {
           affiliate_type:
-            role === 'enseigne_admin' ? 'enseigne' : 'prescripteur',
+            role === 'enseigne_admin' || role === 'enseigne_collaborateur'
+              ? 'enseigne'
+              : 'prescripteur',
           display_name: displayName,
           slug: uniqueSlug,
           email: email,
@@ -260,7 +287,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           default_margin_rate: 20,
           linkme_commission_rate: 5,
           enseigne_id:
-            role === 'enseigne_admin' && enseigneId ? enseigneId : null,
+            (role === 'enseigne_admin' || role === 'enseigne_collaborateur') &&
+            enseigneId
+              ? enseigneId
+              : null,
           organisation_id:
             role === 'organisation_admin' && organisationId
               ? organisationId

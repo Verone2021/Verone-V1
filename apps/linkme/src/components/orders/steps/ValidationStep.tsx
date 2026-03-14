@@ -45,6 +45,8 @@ import {
   Loader2 as _Loader2,
 } from 'lucide-react';
 
+import { usePermissions } from '@/hooks/use-permissions';
+
 import type {
   OrderFormData,
   DeliveryStepData,
@@ -104,6 +106,7 @@ export function ValidationStep({
   onUpdateDelivery,
   isSubmitting: _isSubmitting,
 }: ValidationStepProps) {
+  const { canViewCommissions } = usePermissions();
   const [openSections, setOpenSections] = useState<string[]>([
     'restaurant',
     'products',
@@ -571,19 +574,21 @@ export function ValidationStep({
               </div>
 
               {/* Commission */}
-              <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Coins className="h-5 w-5 text-green-600" />
-                    <span className="font-medium text-green-800">
-                      Votre commission
+              {canViewCommissions && (
+                <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Coins className="h-5 w-5 text-green-600" />
+                      <span className="font-medium text-green-800">
+                        Votre commission
+                      </span>
+                    </div>
+                    <span className="text-lg font-bold text-green-700">
+                      +{formatCurrency(cartTotals.totalCommission)} € HT
                     </span>
                   </div>
-                  <span className="text-lg font-bold text-green-700">
-                    +{formatCurrency(cartTotals.totalCommission)} € HT
-                  </span>
                 </div>
-              </div>
+              )}
             </div>
           </CollapsibleContent>
         </Card>

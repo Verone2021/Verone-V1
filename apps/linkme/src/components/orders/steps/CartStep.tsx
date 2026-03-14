@@ -29,6 +29,8 @@ import {
   ArrowDownCircle,
 } from 'lucide-react';
 
+import { usePermissions } from '@/hooks/use-permissions';
+
 import { useAffiliateCommissionTotal } from '../../../lib/hooks/use-affiliate-commission';
 import type { OrderFormData } from '../schemas/order-form.schema';
 
@@ -73,6 +75,7 @@ export function CartStep({
   onRemove,
   onUpdateQuantity,
 }: CartStepProps) {
+  const { canViewCommissions } = usePermissions();
   const items = formData.cart.items;
 
   // Calculer la commission prélevée sur les produits affiliés
@@ -143,13 +146,13 @@ export function CartStep({
                           <span className="text-sm text-gray-600">
                             {formatCurrency(item.unitPriceHt)} € HT / unité
                           </span>
-                          {/* Badge: "Votre produit" pour affilié, marge pour catalogue */}
+                          {/* Badge: "Votre produit" pour affilié, marge pour catalogue (si autorisé) */}
                           {item.isAffiliateProduct ? (
                             <span className="text-xs px-1.5 py-0.5 rounded bg-blue-100 text-blue-600 flex items-center gap-1">
                               <User className="h-3 w-3" />
                               Votre produit
                             </span>
-                          ) : (
+                          ) : canViewCommissions ? (
                             <span
                               className={cn(
                                 'text-xs px-1.5 py-0.5 rounded',
@@ -162,7 +165,7 @@ export function CartStep({
                             >
                               Marge {item.marginRate}%
                             </span>
-                          )}
+                          ) : null}
                         </div>
                       </div>
 
@@ -284,7 +287,7 @@ export function CartStep({
             </div>
 
             {/* Commission gagnée (uniquement si produits catalogue avec marge > 0) */}
-            {cartTotals.totalCommission > 0 && (
+            {canViewCommissions && cartTotals.totalCommission > 0 && (
               <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
                 <div className="flex items-center gap-2 mb-1">
                   <Coins className="h-4 w-4 text-green-600" />
@@ -302,7 +305,7 @@ export function CartStep({
             )}
 
             {/* Commission prélevée (si produits affiliés) */}
-            {affiliateCommission.hasAffiliateProducts && (
+            {canViewCommissions && affiliateCommission.hasAffiliateProducts && (
               <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                 <div className="flex items-center gap-2 mb-1">
                   <ArrowDownCircle className="h-4 w-4 text-blue-600" />

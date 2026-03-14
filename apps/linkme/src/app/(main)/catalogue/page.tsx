@@ -52,7 +52,11 @@ import {
 } from './components';
 
 // Rôles autorisés à accéder au catalogue
-const AUTHORIZED_ROLES: LinkMeRole[] = ['enseigne_admin', 'organisation_admin'];
+const AUTHORIZED_ROLES: LinkMeRole[] = [
+  'enseigne_admin',
+  'organisation_admin',
+  'enseigne_collaborateur',
+];
 
 // Rôles autorisés à ajouter des produits à leur sélection
 const CAN_ADD_TO_SELECTION_ROLES: LinkMeRole[] = [

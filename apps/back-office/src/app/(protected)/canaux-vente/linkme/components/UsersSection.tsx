@@ -39,7 +39,12 @@ import {
  * Badge Rôle avec couleur
  */
 function RoleBadge({ role }: { role: LinkMeRole }) {
-  const Icon = role === 'enseigne_admin' ? Building2 : Store;
+  const Icon =
+    role === 'enseigne_admin'
+      ? Building2
+      : role === 'enseigne_collaborateur'
+        ? Users
+        : Store;
 
   return (
     <span
@@ -349,6 +354,12 @@ export function UsersSection() {
           color="bg-purple-500"
         />
         <StatCard
+          title="Collaborateurs"
+          value={stats?.byRole.enseigne_collaborateur ?? 0}
+          icon={Users}
+          color="bg-teal-500"
+        />
+        <StatCard
           title="Admins Organisation"
           value={stats?.byRole.organisation_admin ?? 0}
           icon={Store}
@@ -383,8 +394,8 @@ export function UsersSection() {
             >
               <option value="all">Tous les rôles</option>
               <option value="enseigne_admin">Admin Enseigne</option>
+              <option value="enseigne_collaborateur">Collaborateur</option>
               <option value="organisation_admin">Admin Organisation</option>
-              <option value="client">Client</option>
             </select>
           </div>
 

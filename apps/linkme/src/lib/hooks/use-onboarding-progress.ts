@@ -197,7 +197,7 @@ async function detectCompletedSteps(
     supabase
       .from('sales_orders')
       .select('id')
-      .eq('affiliate_id', affiliateId)
+      .eq('created_by_affiliate_id', affiliateId)
       .limit(1),
   ]);
 
