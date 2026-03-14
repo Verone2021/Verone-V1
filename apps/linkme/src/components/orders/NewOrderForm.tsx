@@ -1,24 +1,24 @@
 'use client';
 
 /**
- * NewOrderForm — Formulaire Commande Utilisateur (UserOrderForm)
+ * NewOrderForm — Formulaire Utilisateur
  *
- * Nom officiel : UserOrderForm
  * Formulaire accessible aux utilisateurs connectes via /commandes/nouvelle.
  * 8 etapes : Restaurant, Selection, Produits, Panier, Responsable, Facturation, Livraison, Validation.
  * Schema Zod : order-form.schema.ts | Hook : use-order-form.ts
  *
- * Divergences avec ClientOrderForm (public) documentees dans :
- * docs/current/linkme/formulaires-commande-comparaison.md
+ * Nomenclature :
+ * - "Formulaire utilisateur" = ce formulaire (dashboard, avec auth)
+ * - "Formulaire client" = OrderFormUnified.tsx (public, sans auth)
  *
- * @see OrderFormUnified (formulaire public) - components/OrderFormUnified.tsx
+ * @see OrderFormUnified (formulaire client) - components/OrderFormUnified.tsx
  * @see docs/current/linkme/formulaires-commande-comparaison.md
  * @module NewOrderForm
  * @since 2026-01-20
- * @updated 2026-02-22 - Audit comparaison avec formulaire public
+ * @updated 2026-03-14 - Ajout modal confirmation + renommage nomenclature
  */
 
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
@@ -26,6 +26,7 @@ import { cn } from '@verone/ui';
 import { ChevronLeft, ChevronRight, Loader2, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { OrderConfirmationDialog } from './OrderConfirmationDialog';
 import { OrderStepper, ORDER_STEPS } from './OrderStepper';
 
 // Steps components
@@ -72,16 +73,26 @@ export function NewOrderForm() {
     submit,
   } = orderForm;
 
-  // Handler de soumission finale
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+
+  // Handler de soumission finale (appelé depuis le dialog)
   const handleSubmit = useCallback(async () => {
-    const orderId = await submit();
-    if (orderId) {
-      toast.success('Commande créée avec succès !', {
-        description: 'Vous allez être redirigé vers la liste des commandes.',
-      });
-      router.push('/commandes');
+    const result = await submit();
+    if (result) {
+      toast.success('Commande envoyée !');
+      router.push(
+        `/confirmation?order=${encodeURIComponent(result.orderNumber)}`
+      );
     }
   }, [submit, router]);
+
+  // Données pour le dialog
+  const restaurantName =
+    formData.restaurant.existingName ??
+    formData.restaurant.newRestaurant?.tradeName ??
+    '';
+  const selectionName = formData.selection.selectionName ?? '';
+  const requesterEmail = formData.contacts.responsable.email ?? '';
 
   // Rendu de l'étape courante
   const renderStep = () => {
@@ -220,11 +231,7 @@ export function NewOrderForm() {
               ) : (
                 <button
                   type="button"
-                  onClick={() => {
-                    void handleSubmit().catch(error => {
-                      console.error('[NewOrderForm] Submit failed:', error);
-                    });
-                  }}
+                  onClick={() => setShowConfirmDialog(true)}
                   disabled={isSubmitting}
                   className={cn(
                     'flex items-center gap-1.5 px-5 py-2 rounded-lg font-medium text-sm transition-colors',
@@ -290,6 +297,22 @@ export function NewOrderForm() {
           </div>
         )}
       </main>
+
+      {/* Modal de confirmation */}
+      <OrderConfirmationDialog
+        open={showConfirmDialog}
+        onOpenChange={setShowConfirmDialog}
+        onConfirm={handleSubmit}
+        restaurantName={restaurantName}
+        selectionName={selectionName}
+        itemsCount={cartTotals.itemsCount}
+        totalHT={cartTotals.totalHT}
+        totalTVA={cartTotals.totalTVA}
+        totalTTC={cartTotals.totalTTC}
+        requesterEmail={requesterEmail}
+        effectiveTaxRate={cartTotals.effectiveTaxRate}
+        hasDeliveryDate={!!formData.delivery.desiredDate}
+      />
     </div>
   );
 }

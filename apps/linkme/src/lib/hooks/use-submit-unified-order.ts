@@ -156,7 +156,10 @@ export function useSubmitUnifiedOrder() {
             delivery_city: data.delivery.city || null,
             delivery_latitude: data.delivery.latitude ?? null,
             delivery_longitude: data.delivery.longitude ?? null,
-            desired_delivery_date: data.delivery.deliveryDate || null,
+            desired_delivery_date: data.delivery.deliveryAsap
+              ? null
+              : data.delivery.deliveryDate || null,
+            delivery_asap: data.delivery.deliveryAsap || false,
             is_mall_delivery: data.delivery.isMallDelivery || false,
             mall_email: data.delivery.isMallDelivery
               ? data.delivery.mallEmail || null
