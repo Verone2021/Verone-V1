@@ -44,8 +44,16 @@ export interface TopProductData {
   isRevendeur: boolean;
 }
 
+export interface OrderStats {
+  ordersCount: number;
+  totalHT: number;
+  productsOrdered: number;
+  catalogProductsCount: number;
+}
+
 export interface DashboardData {
   commissionsByStatus: CommissionsByStatus;
+  orderStats: OrderStats;
   topProductsCatalogue: TopProductData[];
   topProductsRevendeur: TopProductData[];
 }

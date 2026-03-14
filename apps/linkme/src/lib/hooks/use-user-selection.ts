@@ -3,8 +3,7 @@
  * Gestion de la sélection de l'utilisateur connecté
  *
  * L'utilisateur est lié à un affilié via:
- * - user_id (direct)
- * - enseigne_id (si enseigne_admin)
+ * - enseigne_id (si enseigne_admin ou enseigne_collaborateur)
  * - organisation_id (si organisation_admin)
  *
  * @module use-user-selection
@@ -28,7 +27,6 @@ import { useAuth } from '../../contexts/AuthContext';
  */
 export interface UserAffiliate {
   id: string;
-  user_id: string | null;
   enseigne_id: string | null;
   organisation_id: string | null;
   display_name: string;
@@ -39,7 +37,6 @@ export interface UserAffiliate {
   bio: string | null;
   status: string;
   default_margin_rate: number;
-  max_margin_rate: number;
   linkme_commission_rate: number;
 }
 
@@ -102,7 +99,6 @@ export interface SelectionItem {
  */
 interface LinkMeAffiliateRow {
   id: string;
-  user_id: string | null;
   enseigne_id: string | null;
   organisation_id: string | null;
   display_name: string;
@@ -113,7 +109,6 @@ interface LinkMeAffiliateRow {
   bio: string | null;
   status: string | null;
   default_margin_rate: number | null;
-  max_margin_rate: number | null;
   linkme_commission_rate: number | null;
 }
 
@@ -143,12 +138,16 @@ export function useUserAffiliate() {
       let query = supabase
         .from('linkme_affiliates')
         .select(
-          'id, user_id, enseigne_id, organisation_id, display_name, slug, email, phone, logo_url, bio, status, default_margin_rate, max_margin_rate, linkme_commission_rate'
+          'id, enseigne_id, organisation_id, display_name, slug, email, phone, logo_url, bio, status, default_margin_rate, linkme_commission_rate'
         );
       let queryDescription = '';
 
-      // Chercher par enseigne_id pour enseigne_admin
-      if (linkMeRole.role === 'enseigne_admin' && linkMeRole.enseigne_id) {
+      // Chercher par enseigne_id pour enseigne_admin ou enseigne_collaborateur
+      if (
+        (linkMeRole.role === 'enseigne_admin' ||
+          linkMeRole.role === 'enseigne_collaborateur') &&
+        linkMeRole.enseigne_id
+      ) {
         query = query.eq('enseigne_id', linkMeRole.enseigne_id);
         queryDescription = `enseigne_id = ${linkMeRole.enseigne_id}`;
       }
@@ -160,10 +159,17 @@ export function useUserAffiliate() {
         query = query.eq('organisation_id', linkMeRole.organisation_id);
         queryDescription = `organisation_id = ${linkMeRole.organisation_id}`;
       }
-      // Chercher par user_id en fallback
+      // Rôle non supporté ou données manquantes
       else {
-        query = query.eq('user_id', user.id);
-        queryDescription = `user_id = ${user.id}`;
+        console.error(
+          '❌ useUserAffiliate: rôle non supporté ou données manquantes',
+          {
+            role: linkMeRole.role,
+            enseigne_id: linkMeRole.enseigne_id,
+            organisation_id: linkMeRole.organisation_id,
+          }
+        );
+        return null;
       }
 
       const { data, error } = await query.maybeSingle<LinkMeAffiliateRow>();
@@ -185,7 +191,6 @@ export function useUserAffiliate() {
 
       return {
         id: data.id,
-        user_id: data.user_id,
         enseigne_id: data.enseigne_id,
         organisation_id: data.organisation_id,
         display_name: data.display_name ?? '',
@@ -197,7 +202,6 @@ export function useUserAffiliate() {
         status: data.status ?? 'active',
         default_margin_rate:
           data.default_margin_rate ?? DEFAULT_SELECTION_ITEM_MARGIN,
-        max_margin_rate: data.max_margin_rate ?? 50,
         linkme_commission_rate:
           data.linkme_commission_rate ?? PLATFORM_COMMISSION_RATE,
       };
@@ -221,7 +225,6 @@ interface LinkMeSelectionRow {
   share_token: string | null;
   products_count: number | null;
   views_count: number | null;
-  view_count: number | null; // Ancien nom de colonne (legacy)
   orders_count: number | null;
   total_revenue: number | null;
   published_at: string | null;
@@ -245,7 +248,7 @@ export function useUserSelections() {
       const { data, error } = await supabase
         .from('linkme_selections')
         .select(
-          'id, affiliate_id, name, slug, description, image_url, share_token, products_count, views_count, view_count, orders_count, total_revenue, published_at, price_display_mode, created_at, updated_at'
+          'id, affiliate_id, name, slug, description, image_url, share_token, products_count, views_count, orders_count, total_revenue, published_at, price_display_mode, created_at, updated_at'
         )
         .eq('affiliate_id', affiliate.id)
         .order('created_at', { ascending: false })
@@ -267,7 +270,7 @@ export function useUserSelections() {
         is_public: s.published_at !== null,
         share_token: s.share_token,
         products_count: s.products_count ?? 0,
-        views_count: s.views_count ?? s.view_count ?? 0,
+        views_count: s.views_count ?? 0,
         orders_count: s.orders_count ?? 0,
         total_revenue: s.total_revenue ?? 0,
         published_at: s.published_at,
@@ -476,7 +479,7 @@ export function useCreateSelection() {
           total_revenue: 0,
         })
         .select(
-          'id, affiliate_id, name, slug, description, image_url, share_token, products_count, views_count, view_count, orders_count, total_revenue, published_at, price_display_mode, created_at, updated_at'
+          'id, affiliate_id, name, slug, description, image_url, share_token, products_count, views_count, orders_count, total_revenue, published_at, price_display_mode, created_at, updated_at'
         )
         .single<LinkMeSelectionRow>();
 

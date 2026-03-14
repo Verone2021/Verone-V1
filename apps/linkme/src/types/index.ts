@@ -9,7 +9,6 @@
 
 export interface LinkMeAffiliate {
   id: string;
-  user_id: string | null;
   organisation_id: string | null;
   enseigne_id: string | null;
   affiliate_type: 'enseigne' | 'prescripteur';
@@ -18,7 +17,6 @@ export interface LinkMeAffiliate {
   logo_url: string | null;
   bio: string | null;
   default_margin_rate: number;
-  max_margin_rate: number;
   linkme_commission_rate: number;
   status: 'pending' | 'active' | 'suspended';
   verified_at: string | null;

@@ -6,6 +6,7 @@ import { cn } from '@verone/utils';
 import {
   X,
   User,
+  Users,
   Mail,
   Lock,
   Phone,
@@ -107,6 +108,10 @@ export function UserCreateModal({ isOpen, onClose }: UserCreateModalProps) {
 
     if (role === 'enseigne_admin' && !enseigneId) {
       newErrors.enseigneId = 'Enseigne requise pour un Admin Enseigne';
+    }
+
+    if (role === 'enseigne_collaborateur' && !enseigneId) {
+      newErrors.enseigneId = 'Enseigne requise pour un Collaborateur';
     }
 
     if (role === 'organisation_admin' && !organisationId) {
@@ -316,42 +321,51 @@ export function UserCreateModal({ isOpen, onClose }: UserCreateModalProps) {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Rôle *
               </label>
-              <div className="grid grid-cols-2 gap-2">
-                {(['enseigne_admin', 'organisation_admin'] as LinkMeRole[]).map(
-                  r => {
-                    const Icon = r === 'enseigne_admin' ? Building2 : Store;
-                    const isSelected = role === r;
+              <div className="grid grid-cols-3 gap-2">
+                {(
+                  [
+                    'enseigne_admin',
+                    'enseigne_collaborateur',
+                    'organisation_admin',
+                  ] as LinkMeRole[]
+                ).map(r => {
+                  const Icon =
+                    r === 'enseigne_admin'
+                      ? Building2
+                      : r === 'enseigne_collaborateur'
+                        ? Users
+                        : Store;
+                  const isSelected = role === r;
 
-                    return (
-                      <button
-                        key={r}
-                        type="button"
-                        onClick={() => setRole(r)}
+                  return (
+                    <button
+                      key={r}
+                      type="button"
+                      onClick={() => setRole(r)}
+                      className={cn(
+                        'flex flex-col items-center gap-1 p-3 rounded-lg border-2 transition-all',
+                        isSelected
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                      )}
+                    >
+                      <Icon
                         className={cn(
-                          'flex flex-col items-center gap-1 p-3 rounded-lg border-2 transition-all',
-                          isSelected
-                            ? 'border-blue-500 bg-blue-50'
-                            : 'border-gray-200 hover:border-gray-300'
+                          'h-5 w-5',
+                          isSelected ? 'text-blue-600' : 'text-gray-400'
+                        )}
+                      />
+                      <span
+                        className={cn(
+                          'text-xs font-medium text-center',
+                          isSelected ? 'text-blue-700' : 'text-gray-600'
                         )}
                       >
-                        <Icon
-                          className={cn(
-                            'h-5 w-5',
-                            isSelected ? 'text-blue-600' : 'text-gray-400'
-                          )}
-                        />
-                        <span
-                          className={cn(
-                            'text-xs font-medium text-center',
-                            isSelected ? 'text-blue-700' : 'text-gray-600'
-                          )}
-                        >
-                          {LINKME_ROLE_LABELS[r]}
-                        </span>
-                      </button>
-                    );
-                  }
-                )}
+                        {LINKME_ROLE_LABELS[r]}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
 
               {/* Permissions du rôle */}
@@ -373,11 +387,12 @@ export function UserCreateModal({ isOpen, onClose }: UserCreateModalProps) {
               </div>
             </div>
 
-            {/* Enseigne (si enseigne_admin) */}
-            {role === 'enseigne_admin' && (
+            {/* Enseigne (si enseigne_admin ou enseigne_collaborateur) */}
+            {(role === 'enseigne_admin' ||
+              role === 'enseigne_collaborateur') && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Enseigne {role === 'enseigne_admin' ? '*' : ''}
+                  Enseigne *
                 </label>
                 <div className="relative">
                   <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />

@@ -67,6 +67,8 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { usePermissions } from '@/hooks/use-permissions';
+
 import { CreateContactDialog } from './CreateContactDialog';
 import {
   useOrganisationContacts,
@@ -391,7 +393,10 @@ function StatCard({
 
 function OrderRow({ order }: { order: OrganisationOrder }) {
   return (
-    <div className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
+    <a
+      href={`/commandes?detail=${order.id}`}
+      className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0 hover:bg-gray-100 rounded-lg px-2 -mx-2 transition-colors cursor-pointer"
+    >
       <div className="flex items-center gap-3">
         <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
           <FileText className="h-4 w-4 text-gray-500" />
@@ -410,7 +415,7 @@ function OrderRow({ order }: { order: OrganisationOrder }) {
         </p>
         {getStatusBadge(order.status)}
       </div>
-    </div>
+    </a>
   );
 }
 
@@ -426,6 +431,7 @@ export function OrganisationDetailSheet({
   defaultTab = 'infos',
 }: OrganisationDetailSheetProps) {
   const [activeTab, setActiveTab] = useState(defaultTab);
+  const { canViewCommissions } = usePermissions();
 
   // Sync activeTab when sheet opens with a specific tab
   useEffect(() => {
@@ -1301,19 +1307,23 @@ export function OrganisationDetailSheet({
             {/* Onglet Activité */}
             <TabsContent value="activite" className="mt-4 space-y-4">
               {/* Stats */}
-              <div className="grid grid-cols-3 gap-2">
+              <div
+                className={`grid ${canViewCommissions ? 'grid-cols-3' : 'grid-cols-2'} gap-2`}
+              >
                 <StatCard
                   icon={Euro}
                   label="CA HT"
                   value={formatCurrency(data.stats.totalRevenueHT)}
                   color="turquoise"
                 />
-                <StatCard
-                  icon={Coins}
-                  label="Commissions"
-                  value={formatCurrency(data.stats.totalCommissionsHT)}
-                  color="green"
-                />
+                {canViewCommissions && (
+                  <StatCard
+                    icon={Coins}
+                    label="Commissions"
+                    value={formatCurrency(data.stats.totalCommissionsHT)}
+                    color="green"
+                  />
+                )}
                 <StatCard
                   icon={Package}
                   label="Commandes"

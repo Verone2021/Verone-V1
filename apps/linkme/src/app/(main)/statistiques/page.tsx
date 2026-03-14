@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 
 import { useAffiliateAnalytics } from '@/lib/hooks/use-affiliate-analytics';
+import { usePermissions } from '@/hooks/use-permissions';
 import type { AnalyticsPeriod } from '@/types/analytics';
 
 import { StatsCommissionsTab } from './components/StatsCommissionsTab';
@@ -58,11 +59,26 @@ const PRESET_TO_PERIOD: Record<FilterPreset, AnalyticsPeriod> = {
   custom: 'year',
 };
 
-const TABS: { id: StatsTab; label: string; icon: typeof ShoppingCart }[] = [
+const ALL_TABS: {
+  id: StatsTab;
+  label: string;
+  icon: typeof ShoppingCart;
+  permission?: 'viewCommissions' | 'manageSelections';
+}[] = [
   { id: 'orders', label: 'Commandes', icon: ShoppingCart },
-  { id: 'commissions', label: 'Commissions', icon: Coins },
+  {
+    id: 'commissions',
+    label: 'Commissions',
+    icon: Coins,
+    permission: 'viewCommissions',
+  },
   { id: 'products', label: 'Produits', icon: Package },
-  { id: 'selections', label: 'Sélections', icon: Star },
+  {
+    id: 'selections',
+    label: 'Sélections',
+    icon: Star,
+    permission: 'manageSelections',
+  },
 ];
 
 // ─── Contenu ──────────────────────────────────────────────────────────────────
@@ -70,6 +86,9 @@ const TABS: { id: StatsTab; label: string; icon: typeof ShoppingCart }[] = [
 function StatistiquesContent(): JSX.Element {
   const [filter, setFilter] = useState<PeriodFilter>({ preset: 'all' });
   const [activeTab, setActiveTab] = useState<StatsTab>('orders');
+  const { can } = usePermissions();
+
+  const tabs = ALL_TABS.filter(tab => !tab.permission || can(tab.permission));
 
   const apiPeriod = PRESET_TO_PERIOD[filter.preset];
   const { data, isLoading, error, refetch } = useAffiliateAnalytics(apiPeriod);
@@ -209,7 +228,7 @@ function StatistiquesContent(): JSX.Element {
         {/* Onglets */}
         <div className="border-b border-gray-200">
           <nav className="flex gap-1" aria-label="Onglets statistiques">
-            {TABS.map(tab => {
+            {tabs.map(tab => {
               const isActive = activeTab === tab.id;
               const Icon = tab.icon;
               return (

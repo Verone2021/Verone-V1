@@ -92,6 +92,11 @@ function LoginContent(): JSX.Element {
       role: 'Enseigne Admin (Black & White Burger)',
     },
     {
+      email: 'collaborateur@pokawa-test.fr',
+      password: 'TestLinkMe2025',
+      role: 'Collaborateur (Pokawa)',
+    },
+    {
       email: 'test-org@verone.fr',
       password: 'TestLinkMe2025',
       role: 'Org Independante',

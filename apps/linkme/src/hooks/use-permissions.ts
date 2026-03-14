@@ -19,28 +19,56 @@ import { useAuth, type LinkMeRole } from '@/contexts/AuthContext';
  */
 const PERMISSION_MATRIX = {
   // Gestion des organisations (chaînes/enseignes)
-  manageOrganisations: ['enseigne_admin'] as LinkMeRole[],
+  manageOrganisations: [
+    'enseigne_admin',
+    'enseigne_collaborateur',
+  ] as LinkMeRole[],
 
   // Création de produits
-  createProducts: ['enseigne_admin', 'organisation_admin'] as LinkMeRole[],
+  createProducts: [
+    'enseigne_admin',
+    'organisation_admin',
+    'enseigne_collaborateur',
+  ] as LinkMeRole[],
 
   // Gestion des sélections
   manageSelections: ['enseigne_admin', 'organisation_admin'] as LinkMeRole[],
 
   // Voir les commandes
-  viewOrders: ['enseigne_admin', 'organisation_admin'] as LinkMeRole[],
+  viewOrders: [
+    'enseigne_admin',
+    'organisation_admin',
+    'enseigne_collaborateur',
+  ] as LinkMeRole[],
+
+  // Créer/modifier des commandes
+  createOrders: [
+    'enseigne_admin',
+    'organisation_admin',
+    'enseigne_collaborateur',
+  ] as LinkMeRole[],
 
   // Voir les commissions/rémunérations
   viewCommissions: ['enseigne_admin', 'organisation_admin'] as LinkMeRole[],
 
   // Voir les analytiques
-  viewAnalytics: ['enseigne_admin', 'organisation_admin'] as LinkMeRole[],
+  viewAnalytics: [
+    'enseigne_admin',
+    'organisation_admin',
+    'enseigne_collaborateur',
+  ] as LinkMeRole[],
 
   // Accès paramètres avancés
   accessAdvancedSettings: ['enseigne_admin'] as LinkMeRole[],
 
   // Inviter des utilisateurs
   inviteUsers: ['enseigne_admin', 'organisation_admin'] as LinkMeRole[],
+
+  // Gérer les contacts
+  manageContacts: ['enseigne_admin'] as LinkMeRole[],
+
+  // Gérer le stockage
+  manageStorage: ['enseigne_admin', 'organisation_admin'] as LinkMeRole[],
 } as const;
 
 export type PermissionKey = keyof typeof PERMISSION_MATRIX;
@@ -60,10 +88,13 @@ export interface UsePermissionsReturn {
   canCreateProducts: boolean;
   canManageSelections: boolean;
   canViewOrders: boolean;
+  canCreateOrders: boolean;
   canViewCommissions: boolean;
   canViewAnalytics: boolean;
   canAccessAdvancedSettings: boolean;
   canInviteUsers: boolean;
+  canManageContacts: boolean;
+  canManageStorage: boolean;
 
   /** Indique si le contexte auth est en cours de chargement */
   isLoading: boolean;
@@ -118,10 +149,13 @@ export function usePermissions(): UsePermissionsReturn {
         canCreateProducts: false,
         canManageSelections: false,
         canViewOrders: false,
+        canCreateOrders: false,
         canViewCommissions: false,
         canViewAnalytics: false,
         canAccessAdvancedSettings: false,
         canInviteUsers: false,
+        canManageContacts: false,
+        canManageStorage: false,
       };
     }
 
@@ -131,11 +165,14 @@ export function usePermissions(): UsePermissionsReturn {
       canCreateProducts: PERMISSION_MATRIX.createProducts.includes(role),
       canManageSelections: PERMISSION_MATRIX.manageSelections.includes(role),
       canViewOrders: PERMISSION_MATRIX.viewOrders.includes(role),
+      canCreateOrders: PERMISSION_MATRIX.createOrders.includes(role),
       canViewCommissions: PERMISSION_MATRIX.viewCommissions.includes(role),
       canViewAnalytics: PERMISSION_MATRIX.viewAnalytics.includes(role),
       canAccessAdvancedSettings:
         PERMISSION_MATRIX.accessAdvancedSettings.includes(role),
       canInviteUsers: PERMISSION_MATRIX.inviteUsers.includes(role),
+      canManageContacts: PERMISSION_MATRIX.manageContacts.includes(role),
+      canManageStorage: PERMISSION_MATRIX.manageStorage.includes(role),
     };
   }, [role]);
 

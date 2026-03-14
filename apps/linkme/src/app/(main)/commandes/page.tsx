@@ -13,10 +13,11 @@
  * @updated 2026-02-25 - Pagination server-side, filtre année, KPIs corrigés
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 
 import {
   useMonthlyKPIs,
@@ -48,6 +49,7 @@ import {
   type LinkMeOrder,
 } from '../../../hooks/use-linkme-orders';
 import { useAffiliateCommissionStats } from '../../../lib/hooks/use-affiliate-commission-stats';
+import { usePermissions } from '../../../hooks/use-permissions';
 
 // Mapping des statuts DB → Labels
 const STATUS_LABELS: Record<string, string> = {
@@ -80,21 +82,58 @@ type TabType =
 
 const ITEMS_PER_PAGE = 20;
 
-// Available years for filter
+// Available years for filter (from first order year to current)
 const YEAR_OPTIONS = [
   { value: 'all', label: 'Toutes les années' },
   { value: '2026', label: '2026' },
   { value: '2025', label: '2025' },
+  { value: '2024', label: '2024' },
+  { value: '2023', label: '2023' },
+];
+
+// Period filter options (quarters + months)
+const PERIOD_OPTIONS = [
+  { value: 'all', label: 'Toute la période' },
+  { value: 'q1', label: 'T1 (Jan-Mar)' },
+  { value: 'q2', label: 'T2 (Avr-Jun)' },
+  { value: 'q3', label: 'T3 (Jul-Sep)' },
+  { value: 'q4', label: 'T4 (Oct-Déc)' },
+  { value: '01', label: 'Janvier' },
+  { value: '02', label: 'Février' },
+  { value: '03', label: 'Mars' },
+  { value: '04', label: 'Avril' },
+  { value: '05', label: 'Mai' },
+  { value: '06', label: 'Juin' },
+  { value: '07', label: 'Juillet' },
+  { value: '08', label: 'Août' },
+  { value: '09', label: 'Septembre' },
+  { value: '10', label: 'Octobre' },
+  { value: '11', label: 'Novembre' },
+  { value: '12', label: 'Décembre' },
+];
+
+// Ownership type filter options
+const OWNERSHIP_TYPE_OPTIONS = [
+  { value: 'all', label: 'Tous les restaurants' },
+  { value: 'succursale', label: 'Propre (succursale)' },
+  { value: 'franchise', label: 'Franchise' },
 ];
 
 export default function CommandesPage(): JSX.Element {
+  const searchParams = useSearchParams();
+
   // State
   const [activeTab, setActiveTab] = useState<TabType>('all');
   const [page, setPage] = useState(0);
   const [yearFilter, setYearFilter] = useState('all');
+  const [periodFilter, setPeriodFilter] = useState('all');
+  const [ownershipTypeFilter, setOwnershipTypeFilter] = useState('all');
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<LinkMeOrder | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [pendingDetailId, setPendingDetailId] = useState<string | null>(
+    searchParams?.get('detail') ?? null
+  );
 
   // Data - Commandes avec pagination server-side
   const {
@@ -107,6 +146,8 @@ export default function CommandesPage(): JSX.Element {
     page,
     pageSize: ITEMS_PER_PAGE,
     yearFilter,
+    periodFilter,
+    ownershipTypeFilter,
     statusFilter: activeTab,
   });
 
@@ -115,13 +156,30 @@ export default function CommandesPage(): JSX.Element {
     enabled: true,
   });
 
+  const { canViewCommissions } = usePermissions();
+
   // SOURCE DE VÉRITÉ: Statistiques commissions depuis linkme_commissions
   const { data: commissionStats, isLoading: commissionStatsLoading } =
     useAffiliateCommissionStats();
 
-  const isLoading = ordersLoading || kpisLoading || commissionStatsLoading;
+  const isLoading =
+    ordersLoading ||
+    kpisLoading ||
+    (canViewCommissions && commissionStatsLoading);
 
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
+
+  // Auto-open detail modal from ?detail=ORDER_ID (e.g. from organisation detail)
+  useEffect(() => {
+    if (pendingDetailId && orders.length > 0) {
+      const order = orders.find(o => o.id === pendingDetailId);
+      if (order) {
+        setSelectedOrder(order);
+        setIsDetailModalOpen(true);
+      }
+      setPendingDetailId(null);
+    }
+  }, [pendingDetailId, orders]);
 
   // Handlers
   const handleTabChange = useCallback((tab: TabType) => {
@@ -131,8 +189,27 @@ export default function CommandesPage(): JSX.Element {
 
   const handleYearChange = useCallback(
     (e: React.ChangeEvent<HTMLSelectElement>) => {
-      setYearFilter(e.target.value);
-      setPage(0); // Reset pagination on filter change
+      const value = e.target.value;
+      setYearFilter(value);
+      // Reset period when switching to "all years"
+      if (value === 'all') setPeriodFilter('all');
+      setPage(0);
+    },
+    []
+  );
+
+  const handlePeriodChange = useCallback(
+    (e: React.ChangeEvent<HTMLSelectElement>) => {
+      setPeriodFilter(e.target.value);
+      setPage(0);
+    },
+    []
+  );
+
+  const handleOwnershipTypeChange = useCallback(
+    (e: React.ChangeEvent<HTMLSelectElement>) => {
+      setOwnershipTypeFilter(e.target.value);
+      setPage(0);
     },
     []
   );
@@ -236,23 +313,39 @@ export default function CommandesPage(): JSX.Element {
             } €`}
             isLoading={kpisLoading}
           />
-          <KPICard
-            title="Commissions TTC"
-            icon={Wallet}
-            variant="marine"
-            compact
-            mainValue={`${(
-              commissionStats?.total.amountTTC ?? 0
-            ).toLocaleString('fr-FR', {
-              minimumFractionDigits: 0,
-              maximumFractionDigits: 0,
-            })} €`}
-            isLoading={commissionStatsLoading}
-          />
+          {canViewCommissions && (
+            <KPICard
+              title="Commissions TTC"
+              icon={Wallet}
+              variant="marine"
+              compact
+              mainValue={`${(
+                commissionStats?.total.amountTTC ?? 0
+              ).toLocaleString('fr-FR', {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0,
+              })} €`}
+              isLoading={commissionStatsLoading}
+            />
+          )}
         </div>
 
-        {/* Filtre année */}
-        <div className="flex items-center justify-end gap-3">
+        {/* Filtres */}
+        <div className="flex items-center justify-end gap-3 flex-wrap">
+          {/* Filtre type de restaurant */}
+          <select
+            value={ownershipTypeFilter}
+            onChange={handleOwnershipTypeChange}
+            className="text-sm border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#5DBEBB] focus:border-[#5DBEBB]"
+          >
+            {OWNERSHIP_TYPE_OPTIONS.map(opt => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+
+          {/* Filtre année */}
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4 text-gray-400" />
             <select
@@ -267,6 +360,20 @@ export default function CommandesPage(): JSX.Element {
               ))}
             </select>
           </div>
+
+          {/* Filtre période (mois/trimestre) — actif uniquement quand une année est sélectionnée */}
+          <select
+            value={periodFilter}
+            onChange={handlePeriodChange}
+            disabled={yearFilter === 'all'}
+            className="text-sm border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#5DBEBB] focus:border-[#5DBEBB] disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {PERIOD_OPTIONS.map(opt => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
         </div>
 
         {/* Tabs de filtrage */}
@@ -446,14 +553,16 @@ export default function CommandesPage(): JSX.Element {
                                 {order.total_ttc.toFixed(2)} €
                               </p>
                             </div>
-                            <div>
-                              <p className="text-sm text-gray-500">
-                                Commission
-                              </p>
-                              <p className="font-semibold text-[#5DBEBB]">
-                                +{order.total_affiliate_margin.toFixed(2)} €
-                              </p>
-                            </div>
+                            {canViewCommissions && (
+                              <div>
+                                <p className="text-sm text-gray-500">
+                                  Commission
+                                </p>
+                                <p className="font-semibold text-[#5DBEBB]">
+                                  +{order.total_affiliate_margin.toFixed(2)} €
+                                </p>
+                              </div>
+                            )}
 
                             {order.status === 'pending_approval' && (
                               <span className="px-3 py-1.5 text-xs font-medium text-amber-700 bg-amber-100 rounded-full">
@@ -526,9 +635,11 @@ export default function CommandesPage(): JSX.Element {
                                   {order.total_ttc.toFixed(2)} €
                                 </span>
                               </span>
-                              <span className="text-[#5DBEBB] font-semibold">
-                                +{order.total_affiliate_margin.toFixed(2)} €
-                              </span>
+                              {canViewCommissions && (
+                                <span className="text-[#5DBEBB] font-semibold">
+                                  +{order.total_affiliate_margin.toFixed(2)} €
+                                </span>
+                              )}
                             </div>
                           </div>
 
@@ -549,9 +660,11 @@ export default function CommandesPage(): JSX.Element {
                                     <th className="px-3 py-2 text-right w-24">
                                       Total HT
                                     </th>
-                                    <th className="px-3 py-2 text-right w-24">
-                                      Marge
-                                    </th>
+                                    {canViewCommissions && (
+                                      <th className="px-3 py-2 text-right w-24">
+                                        Marge
+                                      </th>
+                                    )}
                                   </tr>
                                 </thead>
                                 <tbody className="divide-y">
@@ -593,11 +706,13 @@ export default function CommandesPage(): JSX.Element {
                                       <td className="px-3 py-2 text-right font-medium text-gray-900">
                                         {item.total_ht.toFixed(2)} €
                                       </td>
-                                      <td className="px-3 py-2 text-right font-medium text-[#5DBEBB]">
-                                        {item.affiliate_margin > 0
-                                          ? `+${item.affiliate_margin.toFixed(2)} €`
-                                          : '-'}
-                                      </td>
+                                      {canViewCommissions && (
+                                        <td className="px-3 py-2 text-right font-medium text-[#5DBEBB]">
+                                          {item.affiliate_margin > 0
+                                            ? `+${item.affiliate_margin.toFixed(2)} €`
+                                            : '-'}
+                                        </td>
+                                      )}
                                     </tr>
                                   ))}
                                 </tbody>

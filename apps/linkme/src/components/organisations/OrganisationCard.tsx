@@ -37,6 +37,8 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { usePermissions } from '@/hooks/use-permissions';
+
 import type { EnseigneOrganisation } from '../../lib/hooks/use-enseigne-organisations';
 import type { OrganisationStats } from '../../lib/hooks/use-organisation-stats';
 
@@ -128,6 +130,7 @@ export function OrganisationCard({
   onEditOwnershipType,
 }: OrganisationCardProps) {
   const queryClient = useQueryClient();
+  const { canViewCommissions } = usePermissions();
   const displayName = organisation.trade_name ?? organisation.legal_name;
   const address = getAddressLines(organisation);
   const hasAddress = Boolean(address.line1) || Boolean(address.line2);
@@ -319,13 +322,15 @@ export function OrganisationCard({
             {formatCurrency(totalCA)}
           </span>
         </div>
-        <div className="flex items-center gap-1">
-          <Coins className="h-3 w-3 text-green-500" />
-          <span className="text-green-600">Com.</span>
-          <span className="font-semibold text-green-700">
-            {formatCurrency(totalCommissions)}
-          </span>
-        </div>
+        {canViewCommissions && (
+          <div className="flex items-center gap-1">
+            <Coins className="h-3 w-3 text-green-500" />
+            <span className="text-green-600">Com.</span>
+            <span className="font-semibold text-green-700">
+              {formatCurrency(totalCommissions)}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Actions - Icônes compactes */}

@@ -62,7 +62,11 @@ const MapLibreMapView = dynamic(
 const ITEMS_PER_PAGE = 18; // 3 colonnes x 6 lignes
 
 // Rôles autorisés à voir cette page
-const ALLOWED_ROLES = ['enseigne_admin', 'organisation_admin'];
+const ALLOWED_ROLES = [
+  'enseigne_admin',
+  'organisation_admin',
+  'enseigne_collaborateur',
+];
 
 function OrganisationsPageContent(): JSX.Element | null {
   const router = useRouter();
