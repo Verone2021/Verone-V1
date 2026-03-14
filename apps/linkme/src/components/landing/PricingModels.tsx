@@ -111,7 +111,7 @@ const ZONE_LABELS = {
     description: 'Prix attractif, ventes optimales',
   },
   orange: { label: 'Equilibre', description: 'Bon compromis marge/volume' },
-  red: { label: 'Premium', description: 'Marge elevee, volume reduit' },
+  red: { label: 'Eleve', description: 'Marge elevee, volume reduit' },
 };
 
 export function LandingPricing(): JSX.Element {
@@ -148,8 +148,8 @@ export function LandingPricing(): JSX.Element {
             </span>
           </h2>
           <p className="mt-4 text-lg text-[#183559]/60 max-w-2xl mx-auto">
-            Notre commission plateforme est fixe a 5%. Vous definissez librement
-            votre marge sur chaque produit.
+            Commissions affichees sur chaque produit. Vous definissez librement
+            votre marge.
           </p>
         </div>
 
@@ -335,7 +335,7 @@ export function LandingPricing(): JSX.Element {
                 <div className="flex items-start gap-3 p-3 rounded-lg bg-red-50 border border-red-100">
                   <div className="w-4 h-4 rounded-full bg-red-400 mt-0.5" />
                   <div>
-                    <div className="font-medium text-red-800">Premium</div>
+                    <div className="font-medium text-red-800">Eleve</div>
                     <div className="text-sm text-red-700/70">
                       {Math.round(zones.orange.max)}% - {zones.maxMargin}% de
                       marge
@@ -355,10 +355,9 @@ export function LandingPricing(): JSX.Element {
               </h3>
               <ul className="space-y-3">
                 {[
-                  'Commission fixe de 5% seulement',
+                  'Commissions affichees sur chaque produit',
                   'Liberte totale sur votre marge',
                   "Pas de frais caches ni d'abonnement",
-                  'Paiement rapide et securise',
                   'Suivi transparent en temps reel',
                 ].map((item, i) => (
                   <li key={i} className="flex items-center gap-3">

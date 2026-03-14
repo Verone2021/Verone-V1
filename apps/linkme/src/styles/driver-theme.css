@@ -76,6 +76,7 @@
   padding: 8px 16px !important;
   font-size: 13px !important;
   font-weight: 500 !important;
+  text-shadow: none !important;
   transition: all 0.15s ease !important;
 }
 
@@ -93,6 +94,7 @@
   padding: 8px 16px !important;
   font-size: 13px !important;
   font-weight: 600 !important;
+  text-shadow: none !important;
   transition: all 0.15s ease !important;
 }
 

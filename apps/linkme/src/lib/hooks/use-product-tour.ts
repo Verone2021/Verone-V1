@@ -23,7 +23,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createClient } from '@verone/utils/supabase/client';
 
 import { useAuth } from '../../contexts/AuthContext';
-import { type TourId, TOUR_STEPS_MAP } from '../tour-steps';
+import { usePermissions } from '../../hooks/use-permissions';
+import { type TourId, getTourSteps } from '../tour-steps';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -99,6 +100,7 @@ export function useProductTour({
   autoStartDelay = 1000,
 }: UseProductTourOptions): UseProductTourReturn {
   const { user } = useAuth();
+  const { canViewCommissions } = usePermissions();
   const queryClient = useQueryClient();
   const driverRef = useRef<ReturnType<
     typeof import('driver.js').driver
@@ -155,7 +157,7 @@ export function useProductTour({
 
   // 3. Démarrer un tour
   const startTour = useCallback(() => {
-    const steps = TOUR_STEPS_MAP[tourId];
+    const steps = getTourSteps(tourId, canViewCommissions);
     if (!steps || steps.length === 0) return;
 
     // Import dynamique pour éviter SSR
@@ -196,14 +198,16 @@ export function useProductTour({
       .catch((err: unknown) => {
         console.error('[useProductTour] Failed to load driver.js:', err);
       });
-  }, [tourId, markSeenMutation]);
+  }, [tourId, canViewCommissions, markSeenMutation]);
 
   // 4. Auto-start si configuré et pas encore vu
+  // Note: autoStartedRef is set INSIDE the timeout to handle React 18 Strict Mode
+  // (effects double-fire in dev: first timer is cleaned up, ref must stay false for retry)
   useEffect(() => {
     if (!autoStart || isLoading || isSeen || autoStartedRef.current) return;
 
-    autoStartedRef.current = true;
     const timer = setTimeout(() => {
+      autoStartedRef.current = true;
       startTour();
     }, autoStartDelay);
 

@@ -37,7 +37,7 @@ const faqItems: FaqItemProps[] = [
   {
     question: 'Quand puis-je demander le versement de mes commissions ?',
     answer:
-      'Des que la commande est marquee comme livree, votre commission passe en statut "Payable". Vous pouvez alors faire une demande de versement depuis la page Commissions.',
+      'Une fois que le client a paye sa commande, votre commission passe en statut "Payable". Vous pouvez alors faire une demande de versement depuis la page Commissions.',
   },
   {
     question: 'Comment fonctionne le stockage ?',
@@ -45,9 +45,9 @@ const faqItems: FaqItemProps[] = [
       'Si vous vendez vos propres produits (produits revendeur), Verone propose un service de stockage. Les tarifs sont au m³ occupe avec un tarif degressif. Consultez la page Stockage pour les details.',
   },
   {
-    question: 'Mes clients voient-ils le prix fournisseur ?',
+    question: 'Mes clients voient-ils le detail de ma marge ?',
     answer:
-      'Non, jamais. Vos clients voient uniquement le prix TTC final (prix fournisseur + votre marge + TVA). Votre marge reste confidentielle.',
+      'Non, jamais. Vos clients voient uniquement le prix TTC final que vous avez configure. Votre marge reste confidentielle.',
   },
   {
     question: 'Que faire si un produit est en rupture de stock ?',
