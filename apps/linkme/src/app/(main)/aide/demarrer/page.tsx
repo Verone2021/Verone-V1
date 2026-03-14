@@ -47,7 +47,7 @@ export default function AideDemarrerPage(): JSX.Element {
           <AideStep
             number={5}
             title="Configurez vos marges"
-            description="Pour chaque produit de votre selection, definissez votre marge. Le prix client sera calcule automatiquement : prix HT + votre marge."
+            description="Definissez votre taux de marque pour chaque produit. Le prix de vente client sera calcule automatiquement en fonction du taux choisi."
           />
           <AideStep
             number={6}

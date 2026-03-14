@@ -40,7 +40,7 @@ export default function AideCommandesPage(): JSX.Element {
           <AideStep
             number={3}
             title="Ajouter les produits"
-            description="Selectionnez les produits a commander et les quantites. Les prix sont calcules automatiquement avec vos marges."
+            description="Selectionnez les produits a commander et les quantites. Les prix sont calcules selon le taux de marque defini dans votre selection."
           />
           <AideStep
             number={4}
