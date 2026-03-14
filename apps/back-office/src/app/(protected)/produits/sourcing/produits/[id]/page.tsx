@@ -7,6 +7,8 @@ import { useRouter } from 'next/navigation';
 import { useParams } from 'next/navigation';
 
 import { useToast } from '@verone/common';
+import { useProductConsultations } from '@verone/consultations/hooks';
+import { ConsultationSuggestions } from '@verone/consultations/components/suggestions';
 import {
   ProductPhotosModal,
   SourcingProductEditCard,
@@ -28,6 +30,10 @@ import {
   Package,
   AlertCircle,
   Building2,
+  FileText,
+  Clock,
+  Link,
+  ExternalLink,
 } from 'lucide-react';
 
 export default function SourcingProductDetailPage() {
@@ -46,6 +52,13 @@ export default function SourcingProductDetailPage() {
 
   const productId = params.id as string;
   const product = products.find(p => p.id === productId);
+
+  // Hook pour les consultations liées au produit
+  const {
+    linkedConsultations,
+    loading: consultationsLoading,
+    refetch: refetchConsultations,
+  } = useProductConsultations(productId);
 
   // Hook pour les images du produit
   const {
@@ -69,6 +82,42 @@ export default function SourcingProductDetailPage() {
       toast({
         title: 'Erreur',
         description: "Impossible de commander l'échantillon",
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleLinkToConsultation = async (consultationId: string) => {
+    try {
+      const response = await fetch('/api/consultations/associations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          consultation_id: consultationId,
+          product_id: productId,
+          quantity: 1,
+          proposed_price: null,
+          is_free: false,
+        }),
+      });
+
+      if (!response.ok) {
+        const result = (await response.json()) as { error?: string };
+        throw new Error(result.error ?? "Erreur lors de l'association");
+      }
+
+      toast({
+        title: 'Produit associé',
+        description: 'Le produit a été associé à la consultation',
+      });
+      await refetchConsultations();
+    } catch (error) {
+      toast({
+        title: 'Erreur',
+        description:
+          error instanceof Error
+            ? error.message
+            : "Impossible d'associer le produit",
         variant: 'destructive',
       });
     }
@@ -301,6 +350,109 @@ export default function SourcingProductDetailPage() {
                   catalogue.
                 </AlertDescription>
               </Alert>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Consultations liées */}
+        <Card className="border-blue-200">
+          <CardHeader>
+            <CardTitle className="flex items-center text-black">
+              <FileText className="h-5 w-5 mr-2" />
+              Consultations
+              {linkedConsultations.length > 0 && (
+                <Badge variant="secondary" className="ml-2">
+                  {linkedConsultations.length}
+                </Badge>
+              )}
+            </CardTitle>
+            <CardDescription>
+              Consultations liées à ce produit sourcing
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Consultations déjà liées */}
+            {consultationsLoading ? (
+              <div className="text-center py-4">
+                <p className="text-sm text-gray-500">Chargement...</p>
+              </div>
+            ) : linkedConsultations.length > 0 ? (
+              <div className="space-y-3">
+                {linkedConsultations.map(item => (
+                  <div
+                    key={item.id}
+                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Link className="h-4 w-4 text-blue-600" />
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">
+                          {item.consultation?.organisation_name ??
+                            'Consultation'}
+                        </p>
+                        <p className="text-xs text-gray-500 line-clamp-1">
+                          {item.consultation?.descriptif}
+                        </p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Badge
+                            variant="outline"
+                            className={
+                              item.consultation?.status === 'en_cours'
+                                ? 'border-blue-300 text-blue-600'
+                                : item.consultation?.status === 'terminee'
+                                  ? 'border-green-300 text-green-600'
+                                  : 'border-gray-300 text-gray-600'
+                            }
+                          >
+                            {item.consultation?.status?.replace('_', ' ')}
+                          </Badge>
+                          <span className="text-xs text-gray-400 flex items-center">
+                            <Clock className="h-3 w-3 mr-1" />
+                            {new Date(
+                              item.consultation?.created_at || ''
+                            ).toLocaleDateString('fr-FR')}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <ButtonV2
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        router.push(`/consultations/${item.consultation_id}`)
+                      }
+                    >
+                      <ExternalLink className="h-3 w-3 mr-1" />
+                      Voir
+                    </ButtonV2>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500 text-center py-2">
+                Aucune consultation liée
+              </p>
+            )}
+
+            {/* Suggestions pour associer */}
+            {product.assigned_client_id && (
+              <div className="pt-2 border-t border-gray-200">
+                <ConsultationSuggestions
+                  clientId={product.assigned_client_id}
+                  productId={productId}
+                  onLinkToConsultation={consultationId => {
+                    void handleLinkToConsultation(consultationId).catch(
+                      error => {
+                        console.error(
+                          '[SourcingDetail] Link consultation failed:',
+                          error
+                        );
+                      }
+                    );
+                  }}
+                  className="bg-blue-50 border-blue-200"
+                />
+              </div>
             )}
           </CardContent>
         </Card>

@@ -31,37 +31,27 @@ export function SourcingProductModal({
     setIsAddingToConsultation(true);
 
     try {
-      // Récupérer les infos du produit créé pour obtenir le cost_price
-      const productResponse = await fetch(`/api/products/${productId}`);
-      if (!productResponse.ok) {
-        throw new Error('Impossible de récupérer les infos du produit');
-      }
-
-      const product = await productResponse.json();
-
-      // ÉTAPE 2: Ajouter automatiquement le produit à la consultation
-      const consultationItemData = {
-        consultation_id: consultationId,
-        product_id: productId,
-        quantity: 1,
-        proposed_price: product.cost_price ? product.cost_price * 1.3 : null, // Marge 30% par défaut
-        is_free: false,
-        notes: `Produit sourcé spécifiquement pour cette consultation`,
-      };
-
+      // Ajouter automatiquement le produit à la consultation
       const itemResponse = await fetch('/api/consultations/associations', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(consultationItemData),
+        body: JSON.stringify({
+          consultation_id: consultationId,
+          product_id: productId,
+          quantity: 1,
+          proposed_price: null, // Prix défini manuellement dans la consultation
+          is_free: false,
+          notes: 'Produit sourcé spécifiquement pour cette consultation',
+        }),
       });
 
-      const itemResult = await itemResponse.json();
+      const itemResult = (await itemResponse.json()) as { error?: string };
 
       if (!itemResponse.ok) {
         throw new Error(
-          itemResult.error || "Erreur lors de l'ajout à la consultation"
+          itemResult.error ?? "Erreur lors de l'ajout à la consultation"
         );
       }
 
@@ -108,7 +98,14 @@ export function SourcingProductModal({
         <div className="mt-4">
           <SourcingQuickForm
             showHeader={false}
-            onSuccess={handleProductCreated}
+            onSuccess={(productId: string) => {
+              void handleProductCreated(productId).catch(error => {
+                console.error(
+                  '[SourcingProductModal] handleProductCreated failed:',
+                  error
+                );
+              });
+            }}
             onCancel={onClose}
           />
         </div>

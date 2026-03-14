@@ -147,7 +147,7 @@ export async function POST() {
         const storagePath = `${typeFolder}/${year}/${fileName}`;
 
         const { error: uploadError } = await supabase.storage
-          .from('invoices')
+          .from('justificatifs')
           .upload(storagePath, pdfBuffer, {
             contentType: 'application/pdf',
             upsert: true,

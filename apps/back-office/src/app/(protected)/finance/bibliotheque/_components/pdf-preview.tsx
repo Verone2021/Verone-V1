@@ -4,7 +4,7 @@ import { Button, ScrollArea } from '@verone/ui';
 import { Money, StatusPill } from '@verone/ui-business';
 import { Download, ExternalLink, FileText } from 'lucide-react';
 
-import type { LibraryDocument } from '@verone/finance/hooks';
+import { type LibraryDocument, getPdfUrl } from '@verone/finance/hooks';
 
 // =====================================================================
 // TYPES
@@ -18,32 +18,13 @@ interface PdfPreviewProps {
 // HELPERS
 // =====================================================================
 
-function getPdfUrl(doc: LibraryDocument): string | null {
-  // Priority: API route (handles local storage + Qonto fallback)
-  if (doc.local_pdf_path || doc.qonto_pdf_url || doc.qonto_attachment_id) {
-    return `/api/qonto/invoices/${doc.id}/pdf`;
-  }
-  // Direct uploaded URL
-  if (doc.uploaded_file_url) {
-    return doc.uploaded_file_url;
-  }
-  return null;
-}
-
 function formatDate(dateStr: string | null): string {
-  if (!dateStr) return '—';
+  if (!dateStr) return '\u2014';
   return new Date(dateStr).toLocaleDateString('fr-FR', {
     day: '2-digit',
     month: 'long',
     year: 'numeric',
   });
-}
-
-function getPartnerName(doc: LibraryDocument): string {
-  if (doc.partner) {
-    return doc.partner.trade_name ?? doc.partner.legal_name;
-  }
-  return '—';
 }
 
 // =====================================================================
@@ -94,12 +75,14 @@ export function PdfPreview({ document: doc }: PdfPreviewProps) {
               <span className="text-muted-foreground">Date</span>
               <span>{formatDate(doc.document_date)}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Partenaire</span>
-              <span className="text-right truncate ml-2">
-                {getPartnerName(doc)}
-              </span>
-            </div>
+            {doc.partner_name && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Partenaire</span>
+                <span className="text-right truncate ml-2">
+                  {doc.partner_name}
+                </span>
+              </div>
+            )}
             <div className="flex justify-between items-center">
               <span className="text-muted-foreground">Montant HT</span>
               <Money amount={doc.total_ht} size="sm" bold />

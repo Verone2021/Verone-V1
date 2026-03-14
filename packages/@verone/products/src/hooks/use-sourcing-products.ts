@@ -83,6 +83,7 @@ export function useSourcingProducts(filters?: SourcingFilters) {
           sku,
           name,
           supplier_page_url,
+          supplier_reference,
           cost_price,
           cost_net_avg,
           eco_tax_default,
@@ -94,6 +95,13 @@ export function useSourcingProducts(filters?: SourcingFilters) {
           requires_sample,
           assigned_client_id,
           margin_percentage,
+          brand,
+          description,
+          supplier_moq,
+          dimensions,
+          weight,
+          internal_notes,
+          sourcing_channel,
           created_at,
           updated_at,
           archived_at,
@@ -704,6 +712,11 @@ export function useSourcingProducts(filters?: SourcingFilters) {
     name: string;
     supplier_page_url?: string;
     cost_price?: number;
+    supplier_reference?: string;
+    brand?: string;
+    description?: string;
+    supplier_moq?: number;
+    sourcing_channel?: string;
     supplier_id?: string;
     assigned_client_id?: string;
     enseigne_id?: string;
@@ -731,6 +744,11 @@ export function useSourcingProducts(filters?: SourcingFilters) {
             name: data.name,
             supplier_page_url: data.supplier_page_url || null,
             cost_price: data.cost_price || null,
+            supplier_reference: data.supplier_reference || null,
+            brand: data.brand || null,
+            description: data.description || null,
+            supplier_moq: data.supplier_moq || null,
+            sourcing_channel: data.sourcing_channel || null,
             supplier_id: data.supplier_id || null,
             assigned_client_id: data.assigned_client_id || null,
             enseigne_id: data.enseigne_id || null,
@@ -814,9 +832,16 @@ export function useSourcingProducts(filters?: SourcingFilters) {
       name?: string;
       supplier_page_url?: string | null;
       cost_price?: number | null;
-      eco_tax_default?: number | null; // ✅ Ajout éco-taxe
+      eco_tax_default?: number | null;
       supplier_id?: string | null;
+      supplier_reference?: string | null;
       margin_percentage?: number | null;
+      brand?: string | null;
+      description?: string | null;
+      supplier_moq?: number | null;
+      dimensions?: Record<string, number> | null;
+      weight?: number | null;
+      internal_notes?: string | null;
     }
   ) => {
     try {
@@ -844,14 +869,7 @@ export function useSourcingProducts(filters?: SourcingFilters) {
       }
 
       // Construire l'objet de mise à jour avec uniquement les champs fournis
-      const updateData: Partial<{
-        name: string;
-        supplier_page_url: string | null;
-        cost_price: number | null;
-        eco_tax_default: number | null; // ✅ Ajout éco-taxe
-        supplier_id: string | null;
-        margin_percentage: number | null;
-      }> = {};
+      const updateData: Record<string, unknown> = {};
 
       if (data.name !== undefined) updateData.name = data.name;
       if (data.supplier_page_url !== undefined)
@@ -859,9 +877,21 @@ export function useSourcingProducts(filters?: SourcingFilters) {
       if (data.cost_price !== undefined)
         updateData.cost_price = data.cost_price;
       if (data.eco_tax_default !== undefined)
-        updateData.eco_tax_default = data.eco_tax_default; // ✅ Ajout éco-taxe
+        updateData.eco_tax_default = data.eco_tax_default;
       if (data.margin_percentage !== undefined)
         updateData.margin_percentage = data.margin_percentage;
+      if (data.supplier_reference !== undefined)
+        updateData.supplier_reference = data.supplier_reference;
+      if (data.brand !== undefined) updateData.brand = data.brand;
+      if (data.description !== undefined)
+        updateData.description = data.description;
+      if (data.supplier_moq !== undefined)
+        updateData.supplier_moq = data.supplier_moq;
+      if (data.dimensions !== undefined)
+        updateData.dimensions = data.dimensions;
+      if (data.weight !== undefined) updateData.weight = data.weight;
+      if (data.internal_notes !== undefined)
+        updateData.internal_notes = data.internal_notes;
 
       // Gérer supplier_id (peut être null pour retirer le fournisseur)
       if (data.supplier_id !== undefined) {

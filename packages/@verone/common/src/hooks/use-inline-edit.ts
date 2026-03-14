@@ -24,6 +24,9 @@ export type EditableSection =
   | 'personal'
   | 'roles'
   | 'preferences'
+  // Sections sourcing
+  | 'details'
+  | 'notes'
   // Sections commandes
   | 'order_header'
   | 'order_items';

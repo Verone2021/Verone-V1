@@ -1,8 +1,9 @@
 /**
  * API Route: /api/qonto/attachments/[id]
  *
- * GET: Récupère l'URL temporaire d'un attachment Qonto (valide 30 min)
- *      et redirige vers cette URL pour afficher/télécharger le PDF.
+ * GET: Serves a Qonto attachment PDF with store-on-read pattern.
+ *      Priority: 1) Local Supabase Storage  2) Qonto proxy + store locally
+ *      Optional query param: ?transactionId={uuid} to skip DB lookup
  *
  * DELETE: Supprime un attachment d'une transaction
  *         Requiert: transactionId (query param) - ID de la transaction dans notre DB
@@ -17,6 +18,56 @@ import { NextResponse } from 'next/server';
 
 import { QontoClient } from '@verone/integrations/qonto';
 import { createServerClient } from '@verone/utils/supabase/server';
+
+/**
+ * Store-on-read: Upload attachment PDF to Supabase Storage and update bank_transactions.
+ * Non-blocking: errors are logged but don't fail the request.
+ */
+async function storeAttachmentLocally(
+  supabase: Awaited<ReturnType<typeof createServerClient>>,
+  transactionId: string,
+  attachmentId: string,
+  pdfBuffer: ArrayBuffer,
+  settledAt: string | null
+): Promise<void> {
+  try {
+    const year = settledAt
+      ? new Date(settledAt).getFullYear()
+      : new Date().getFullYear();
+    const storagePath = `justificatifs/${year}/${attachmentId}.pdf`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('justificatifs')
+      .upload(storagePath, pdfBuffer, {
+        contentType: 'application/pdf',
+        upsert: true,
+      });
+
+    if (uploadError) {
+      console.error('[Attachment Store] Upload failed:', uploadError);
+      return;
+    }
+
+    const { error: updateError } = await supabase
+      .from('bank_transactions')
+      .update({
+        local_pdf_path: storagePath,
+        pdf_stored_at: new Date().toISOString(),
+      })
+      .eq('id', transactionId);
+
+    if (updateError) {
+      console.error('[Attachment Store] DB update failed:', updateError);
+      return;
+    }
+
+    console.warn(
+      `[Attachment Store] Success: ${storagePath} for tx ${transactionId}`
+    );
+  } catch (error) {
+    console.error('[Attachment Store] Error:', error);
+  }
+}
 
 export async function GET(
   request: NextRequest,
@@ -43,7 +94,55 @@ export async function GET(
       );
     }
 
-    // 3. Créer le client Qonto et récupérer l'URL temporaire
+    // 3. Check if we have this attachment stored locally
+    const { searchParams } = new URL(request.url);
+    const transactionIdParam = searchParams.get('transactionId');
+
+    let transactionId: string | null = transactionIdParam;
+    let localPdfPath: string | null = null;
+    let settledAt: string | null = null;
+
+    // Look up the bank_transaction that owns this attachment
+    const { data: transaction } = await supabase
+      .from('bank_transactions')
+      .select('id, local_pdf_path, settled_at')
+      .contains('attachment_ids', [attachmentId])
+      .single();
+
+    if (transaction) {
+      transactionId = transaction.id;
+      localPdfPath = transaction.local_pdf_path ?? null;
+      settledAt = transaction.settled_at ?? null;
+    }
+
+    // 4. If PDF stored locally, serve from Supabase Storage
+    if (localPdfPath) {
+      console.warn('[Attachment] Serving from local storage:', localPdfPath);
+
+      const { data: pdfData, error: downloadError } = await supabase.storage
+        .from('justificatifs')
+        .download(localPdfPath);
+
+      if (!downloadError && pdfData) {
+        const pdfBuffer = await pdfData.arrayBuffer();
+
+        return new NextResponse(pdfBuffer, {
+          headers: {
+            'Content-Type': 'application/pdf',
+            'Content-Disposition': `inline; filename="justificatif-${attachmentId}.pdf"`,
+            'Content-Length': String(pdfBuffer.byteLength),
+            'X-PDF-Source': 'local',
+          },
+        });
+      }
+      // If local download fails, fall through to Qonto
+      console.warn(
+        '[Attachment] Local storage download failed, falling back to Qonto:',
+        downloadError
+      );
+    }
+
+    // 5. Fetch from Qonto (proxy)
     const qontoClient = new QontoClient();
     const attachmentUrl = await qontoClient.getAttachmentUrl(attachmentId);
 
@@ -54,13 +153,11 @@ export async function GET(
       );
     }
 
-    // 4. Proxy le contenu au lieu de redirect (évite problèmes CORS)
-    // On télécharge le fichier côté serveur et on le renvoie au client
     const fileResponse = await fetch(attachmentUrl);
 
     if (!fileResponse.ok) {
       console.error(
-        `[Qonto Attachment] Failed to fetch from Qonto: ${fileResponse.status}`
+        `[Attachment] Failed to fetch from Qonto: ${fileResponse.status}`
       );
       return NextResponse.json(
         { error: `Erreur Qonto: ${fileResponse.status}` },
@@ -68,16 +165,31 @@ export async function GET(
       );
     }
 
-    const blob = await fileResponse.blob();
+    const pdfBuffer = await fileResponse.arrayBuffer();
     const contentType =
       fileResponse.headers.get('Content-Type') ?? 'application/pdf';
 
-    // Retourner le fichier avec les bons headers
-    return new NextResponse(blob, {
+    // 6. Store-on-read: save locally in background (non-blocking)
+    if (transactionId && !localPdfPath && pdfBuffer.byteLength > 0) {
+      void storeAttachmentLocally(
+        supabase,
+        transactionId,
+        attachmentId,
+        pdfBuffer,
+        settledAt
+      ).catch((error: unknown) => {
+        console.error('[Attachment] Store-on-read error:', error);
+      });
+    }
+
+    // Return the file
+    return new NextResponse(pdfBuffer, {
       headers: {
         'Content-Type': contentType,
-        'Content-Disposition': `inline; filename="qonto-${attachmentId}.pdf"`,
-        'Cache-Control': 'private, max-age=1800', // Cache 30 min (durée URL Qonto)
+        'Content-Disposition': `inline; filename="justificatif-${attachmentId}.pdf"`,
+        'Content-Length': String(pdfBuffer.byteLength),
+        'X-PDF-Source': 'qonto',
+        'Cache-Control': 'private, max-age=1800',
       },
     });
   } catch (error) {
@@ -85,7 +197,6 @@ export async function GET(
 
     const message = error instanceof Error ? error.message : 'Erreur inconnue';
 
-    // Gérer les erreurs spécifiques Qonto
     if (message.includes('AUTH_ERROR') || message.includes('401')) {
       return NextResponse.json(
         { error: 'Credentials Qonto invalides' },

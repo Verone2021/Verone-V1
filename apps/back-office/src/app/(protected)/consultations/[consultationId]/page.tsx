@@ -18,7 +18,9 @@ import { useConsultationHistory } from '@verone/consultations';
 import { useConsultationImages } from '@verone/consultations';
 import { useConsultationItems } from '@verone/consultations';
 import { useConsultationQuotes } from '@verone/consultations';
+import { useConsultationSalesOrders } from '@verone/consultations';
 import { useQuotes } from '@verone/finance/hooks';
+import { useSalesOrders } from '@verone/orders';
 import { Badge } from '@verone/ui';
 import { createClient } from '@verone/utils/supabase/client';
 import { ButtonUnified } from '@verone/ui';
@@ -52,6 +54,7 @@ import {
   Trash2,
   Plus,
   Loader2,
+  ShoppingCart,
 } from 'lucide-react';
 
 // Pre-load images as compressed base64 for @react-pdf (remote URLs block the renderer)
@@ -166,6 +169,15 @@ export default function ConsultationDetailPage() {
 
   const { createQuote } = useQuotes();
   const [creatingQuote, setCreatingQuote] = useState(false);
+
+  const { createOrder } = useSalesOrders();
+  const [creatingOrder, setCreatingOrder] = useState(false);
+
+  const {
+    salesOrders: linkedSalesOrders,
+    loading: salesOrdersLoading,
+    refetch: refetchLinkedSalesOrders,
+  } = useConsultationSalesOrders(consultationId);
 
   const {
     events: historyEvents,
@@ -366,6 +378,116 @@ export default function ConsultationDetailPage() {
       console.error('[ConsultationDetail] Create quote failed:', error);
     } finally {
       setCreatingQuote(false);
+    }
+  };
+
+  const handleCreateOrder = async () => {
+    if (!consultation || consultationItems.length === 0) return;
+    setCreatingOrder(true);
+    try {
+      const supabase = createClient();
+
+      // Resolve partner (same logic as handleCreateQuote)
+      let partnerId: string | null = null;
+      let billingAddress: Record<string, unknown> | undefined;
+
+      if (consultation.enseigne_id) {
+        const { data: parentOrg } = await supabase
+          .from('organisations')
+          .select('id, legal_name, address_line1, city, postal_code, country')
+          .eq('enseigne_id', consultation.enseigne_id)
+          .eq('is_enseigne_parent', true)
+          .single();
+
+        if (parentOrg) {
+          partnerId = parentOrg.id;
+          if (parentOrg.address_line1) {
+            billingAddress = {
+              street: parentOrg.address_line1,
+              city: parentOrg.city ?? '',
+              postal_code: parentOrg.postal_code ?? '',
+              country: parentOrg.country ?? 'FR',
+            };
+          }
+        } else {
+          const { data: firstOrg } = await supabase
+            .from('organisations')
+            .select('id, legal_name, address_line1, city, postal_code, country')
+            .eq('enseigne_id', consultation.enseigne_id)
+            .order('created_at', { ascending: true })
+            .limit(1)
+            .single();
+          if (firstOrg) {
+            partnerId = firstOrg.id;
+            if (firstOrg.address_line1) {
+              billingAddress = {
+                street: firstOrg.address_line1,
+                city: firstOrg.city ?? '',
+                postal_code: firstOrg.postal_code ?? '',
+                country: firstOrg.country ?? 'FR',
+              };
+            }
+          }
+        }
+      } else if (consultation.organisation_id) {
+        partnerId = consultation.organisation_id;
+        const { data: directOrg } = await supabase
+          .from('organisations')
+          .select('address_line1, city, postal_code, country')
+          .eq('id', consultation.organisation_id)
+          .single();
+        if (directOrg?.address_line1) {
+          billingAddress = {
+            street: directOrg.address_line1,
+            city: directOrg.city ?? '',
+            postal_code: directOrg.postal_code ?? '',
+            country: directOrg.country ?? 'FR',
+          };
+        }
+      }
+
+      if (!partnerId) {
+        console.error(
+          '[ConsultationDetail] No partner found for order creation'
+        );
+        return;
+      }
+
+      // Map consultation items to order items (exclude free items)
+      const items = consultationItems
+        .filter(item => !item.is_free)
+        .map(item => ({
+          product_id: item.product_id,
+          quantity: item.quantity,
+          unit_price_ht: item.unit_price ?? 0,
+          tax_rate: 0.2,
+          discount_percentage: 0,
+          eco_tax: 0,
+        }));
+
+      if (items.length === 0) {
+        console.error('[ConsultationDetail] No billable items for order');
+        return;
+      }
+
+      const order = await createOrder({
+        customer_id: partnerId,
+        customer_type: 'organization',
+        items,
+        notes: consultation.descriptif ?? undefined,
+        consultation_id: consultationId,
+        billing_address: billingAddress,
+      });
+
+      if (order) {
+        await refetchLinkedSalesOrders();
+        await fetchHistory();
+        router.push(`/commandes/clients`);
+      }
+    } catch (error) {
+      console.error('[ConsultationDetail] Create order failed:', error);
+    } finally {
+      setCreatingOrder(false);
     }
   };
 
@@ -905,8 +1027,8 @@ export default function ConsultationDetailPage() {
           onItemsChanged={handleItemsChanged}
         />
 
-        {/* Devis liés + Timeline side by side */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-1">
+        {/* Devis + Commandes + Timeline */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-1">
           {/* Devis liés */}
           <Card>
             <CardContent className="pt-4">
@@ -1009,6 +1131,117 @@ export default function ConsultationDetailPage() {
                             onClick={() =>
                               router.push(`/factures/devis/${quote.id}`)
                             }
+                          >
+                            <ExternalLink className="h-3 w-3" />
+                          </ButtonUnified>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Commandes de vente liées */}
+          <Card>
+            <CardContent className="pt-4">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <ShoppingCart className="h-4 w-4 text-gray-500" />
+                  <span className="text-sm font-semibold">Commandes</span>
+                  <span className="text-xs text-gray-400">
+                    ({linkedSalesOrders.length})
+                  </span>
+                </div>
+                <ButtonUnified
+                  variant="outline"
+                  size="sm"
+                  disabled={creatingOrder || consultationItems.length === 0}
+                  onClick={() => {
+                    void handleCreateOrder().catch(error => {
+                      console.error(
+                        '[ConsultationDetail] Create order failed:',
+                        error
+                      );
+                    });
+                  }}
+                >
+                  {creatingOrder ? (
+                    <Loader2 className="h-3 w-3 mr-2 animate-spin" />
+                  ) : (
+                    <Plus className="h-3 w-3 mr-2" />
+                  )}
+                  {creatingOrder ? 'Creation...' : 'Creer une commande'}
+                </ButtonUnified>
+              </div>
+
+              {salesOrdersLoading ? (
+                <div className="flex items-center justify-center py-4">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400" />
+                </div>
+              ) : linkedSalesOrders.length === 0 ? (
+                <p className="text-sm text-gray-500 text-center py-4">
+                  Aucune commande liee a cette consultation
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {linkedSalesOrders.map(order => {
+                    const soStatusColors: Record<string, string> = {
+                      draft: 'bg-gray-100 text-gray-700',
+                      pending_approval: 'bg-amber-100 text-amber-700',
+                      validated: 'bg-blue-100 text-blue-700',
+                      partially_shipped: 'bg-indigo-100 text-indigo-700',
+                      shipped: 'bg-green-100 text-green-700',
+                      cancelled: 'bg-red-100 text-red-700',
+                    };
+                    const soStatusLabels: Record<string, string> = {
+                      draft: 'Brouillon',
+                      pending_approval: 'En attente',
+                      validated: 'Validee',
+                      partially_shipped: 'Part. expediee',
+                      shipped: 'Expediee',
+                      cancelled: 'Annulee',
+                    };
+
+                    return (
+                      <div
+                        key={order.id}
+                        className="flex items-center justify-between p-2 rounded border border-gray-100 hover:bg-gray-50"
+                      >
+                        <div className="flex items-center gap-3">
+                          <ShoppingCart className="h-4 w-4 text-gray-400" />
+                          <div>
+                            <p className="text-sm font-medium">
+                              {order.order_number}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {new Date(order.created_at).toLocaleDateString(
+                                'fr-FR'
+                              )}{' '}
+                              —{' '}
+                              {new Intl.NumberFormat('fr-FR', {
+                                style: 'currency',
+                                currency: 'EUR',
+                              }).format(order.total_ht)}{' '}
+                              HT
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge
+                            variant="outline"
+                            className={
+                              soStatusColors[order.status] ??
+                              'bg-gray-100 text-gray-700'
+                            }
+                          >
+                            {soStatusLabels[order.status] ?? order.status}
+                          </Badge>
+                          <ButtonUnified
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => router.push(`/commandes/clients`)}
                           >
                             <ExternalLink className="h-3 w-3" />
                           </ButtonUnified>
