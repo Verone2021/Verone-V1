@@ -33,7 +33,8 @@ export default function AideProduitsPage(): JSX.Element {
               </p>
               <ul className="space-y-1.5 text-sm text-gray-500">
                 <li>Vos propres produits (revendeur)</li>
-                <li>Vous encaissez le prix de vente</li>
+                <li>Vous fixez le prix de vente</li>
+                <li>LinkMe preleve une commission variable (a partir de 5%)</li>
                 <li>Doivent etre approuves par Verone</li>
                 <li>Possibilite de stockage chez Verone</li>
               </ul>
@@ -95,15 +96,66 @@ export default function AideProduitsPage(): JSX.Element {
         </div>
       </AideSection>
 
-      <AideSection title="Stockage chez Verone">
+      <AideSection title="Vendez vos produits, on gere la logistique">
         <p>
-          Verone propose un service de stockage pour vos produits revendeur. Les
-          tarifs sont calcules au m³ occupe, avec un tarif degressif selon le
-          volume total.
+          Avec LinkMe, vous pouvez integrer vos propres produits a votre
+          catalogue et les proposer dans vos selections, exactement comme les
+          produits Verone. Vos clients les commandent de la meme maniere, sans
+          difference visible.
         </p>
         <p>
-          Consultez la page Stockage pour voir les tarifs en vigueur et le
-          volume actuellement occupe.
+          L&apos;avantage : vous vous concentrez sur la vente. Verone coordonne
+          la logistique avec vos fournisseurs pour chaque commande. Vous
+          n&apos;avez pas a gerer l&apos;expedition vous-meme.
+        </p>
+
+        <div className="p-4 rounded-lg bg-green-50 border border-green-100">
+          <p className="font-semibold text-linkme-marine mb-2">
+            Comment ca fonctionne
+          </p>
+          <ul className="space-y-2 text-sm text-gray-600">
+            <li className="flex gap-2">
+              <span className="text-green-500 font-bold">1.</span>
+              <span>
+                Ajoutez vos produits avec leurs informations (nom, description,
+                photos, prix).
+              </span>
+            </li>
+            <li className="flex gap-2">
+              <span className="text-green-500 font-bold">2.</span>
+              <span>
+                Integrez-les dans vos selections et vendez-les a vos clients.
+              </span>
+            </li>
+            <li className="flex gap-2">
+              <span className="text-green-500 font-bold">3.</span>
+              <span>
+                A chaque commande, Verone coordonne la logistique avec votre
+                fournisseur pour l&apos;expedition.
+              </span>
+            </li>
+            <li className="flex gap-2">
+              <span className="text-green-500 font-bold">4.</span>
+              <span>
+                Vous gerez vos conditions commerciales directement avec vos
+                fournisseurs (paiements, delais, etc.).
+              </span>
+            </li>
+          </ul>
+        </div>
+
+        <div className="p-4 rounded-lg bg-amber-50 border border-amber-100">
+          <p className="font-medium text-linkme-marine mb-1">A noter</p>
+          <p className="text-sm text-gray-600">
+            LinkMe transmet les demandes de commande a votre fournisseur mais ne
+            gere pas les paiements entre vous et vos fournisseurs. Veillez a
+            definir vos conditions commerciales avec eux au prealable.
+          </p>
+        </div>
+
+        <p className="text-sm text-gray-500">
+          Verone propose egalement un service de stockage pour vos produits
+          (tarifs au m³). Consultez la page Stockage pour les details.
         </p>
       </AideSection>
 
