@@ -1103,24 +1103,30 @@ export default function LinkMeOrderDetailPage() {
       </div>
 
       {/* ============================================ */}
-      {/* DEMANDEUR (created_by = user session) */}
+      {/* DEMANDEUR (created_by ou linkmeDetails.requester) */}
       {/* ============================================ */}
-      {order.createdByProfile && (
+      {(order.createdByProfile || order.linkmeDetails?.requester_name) && (
         <div className="flex items-center gap-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
           <User className="h-5 w-5 text-blue-600 flex-shrink-0" />
           <div className="text-sm">
             <span className="font-medium text-blue-800">Demandeur : </span>
             <span className="text-blue-700">
-              {[
-                order.createdByProfile.first_name,
-                order.createdByProfile.last_name,
-              ]
-                .filter(Boolean)
-                .join(' ') || 'Utilisateur inconnu'}
+              {order.createdByProfile
+                ? [
+                    order.createdByProfile.first_name,
+                    order.createdByProfile.last_name,
+                  ]
+                    .filter(Boolean)
+                    .join(' ') || 'Utilisateur inconnu'
+                : (order.linkmeDetails?.requester_name ?? 'Visiteur anonyme')}
             </span>
-            {order.createdByProfile.email && (
+            {(order.createdByProfile?.email ||
+              order.linkmeDetails?.requester_email) && (
               <span className="text-blue-600 ml-2">
-                ({order.createdByProfile.email})
+                (
+                {order.createdByProfile?.email ??
+                  order.linkmeDetails?.requester_email}
+                )
               </span>
             )}
           </div>
