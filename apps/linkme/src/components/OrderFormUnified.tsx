@@ -29,6 +29,8 @@ import { useState, useMemo, useCallback, useEffect } from 'react';
 
 import Image from 'next/image';
 
+// ClientConfirmationDialog replaced by inline confirmation section (no modal-on-modal)
+
 import {
   AddressAutocomplete,
   type AddressResult,
@@ -64,6 +66,11 @@ import {
   ChevronLeft,
   ChevronRight,
   CheckCircle,
+  Mail,
+  Calendar,
+  Clock,
+  HelpCircle,
+  ExternalLink,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -232,6 +239,8 @@ interface OrderFormUnifiedProps {
   // Context
   affiliateId: string;
   selectionId: string;
+  selectionName?: string;
+  selectionSlug?: string;
 
   // Cart
   cart: CartItem[];
@@ -361,6 +370,8 @@ const EXISTING_STEPS = [
 export function OrderFormUnified({
   affiliateId,
   selectionId: _selectionId,
+  selectionName = '',
+  selectionSlug,
   cart,
   onUpdateQuantity,
   onRemoveItem,
@@ -374,6 +385,7 @@ export function OrderFormUnified({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [currentStep, setCurrentStep] = useState(1);
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [confirmTermsAccepted, setConfirmTermsAccepted] = useState(false);
 
   // Calculs des totaux
   const cartTotals = useMemo(() => {
@@ -817,72 +829,114 @@ export function OrderFormUnified({
 
         <div className="flex-1 flex flex-col min-w-0">
           <Header
-            title={`${currentStep}. ${EXISTING_STEPS[currentStep - 1].title}`}
-            subtitle={`Étape ${currentStep}/${EXISTING_STEPS.length}`}
-            steps={EXISTING_STEPS}
-            currentStep={currentStep}
+            title={
+              showConfirmation
+                ? 'Confirmer votre commande'
+                : `${currentStep}. ${EXISTING_STEPS[currentStep - 1].title}`
+            }
+            subtitle={
+              showConfirmation
+                ? undefined
+                : `Étape ${currentStep}/${EXISTING_STEPS.length}`
+            }
+            steps={showConfirmation ? undefined : EXISTING_STEPS}
+            currentStep={showConfirmation ? undefined : currentStep}
             onClose={onClose}
           />
 
           <div className="flex-1 overflow-y-auto p-6">
-            {currentStep === 1 && (
-              <OpeningStep1Requester
-                data={data}
-                errors={errors}
-                updateData={updateData}
-                affiliateId={affiliateId}
-              />
-            )}
-            {currentStep === 2 && (
-              <ExistingStep2Restaurant
-                data={data}
-                errors={errors}
-                updateData={updateData}
-                organisations={organisations}
-                isLoadingOrganisations={isLoadingOrganisations}
-              />
-            )}
-            {currentStep === 3 && (
-              <ExistingStep3Responsable
-                data={data}
-                errors={errors}
-                updateData={updateData}
-              />
-            )}
-            {currentStep === 4 && (
-              <OpeningStep4Billing
-                data={data}
-                errors={errors}
-                updateData={updateData}
-                affiliateId={affiliateId}
-              />
-            )}
-            {currentStep === 5 && (
-              <OpeningStep5Delivery
-                data={data}
-                errors={errors}
-                updateData={updateData}
-                affiliateId={affiliateId}
-              />
-            )}
-            {currentStep === 6 && (
-              <OpeningStep6Validation
-                data={data}
-                errors={errors}
-                updateData={updateData}
-                affiliateId={affiliateId}
+            {showConfirmation ? (
+              <InlineConfirmation
+                onBack={() => setShowConfirmation(false)}
+                onConfirm={() => void handleConfirmOrder()}
+                isSubmitting={isSubmitting}
+                termsAccepted={confirmTermsAccepted}
+                onTermsChange={setConfirmTermsAccepted}
+                requesterName={data.requester.name}
+                requesterEmail={data.requester.email}
+                restaurantName={
+                  organisations.find(o => o.id === data.existingOrganisationId)
+                    ?.trade_name || 'Restaurant existant'
+                }
+                isNewRestaurant={false}
+                responsableName={data.responsable.name}
                 cart={cart}
-                cartTotals={cartTotals}
-                formatPrice={formatPrice}
-                onUpdateQuantity={onUpdateQuantity}
-                onRemoveItem={onRemoveItem}
-                onOpenConfirmation={handleOpenConfirmation}
+                itemsCount={cartTotals.totalItems}
+                totalHT={cartTotals.totalHt}
+                totalTVA={cartTotals.totalTva}
+                totalTTC={cartTotals.totalTtc}
+                hasDeliveryDate={!!data.delivery.deliveryDate}
+                deliveryAsap={data.delivery.deliveryAsap}
+                deliveryAddress={
+                  data.delivery.address
+                    ? `${data.delivery.address}, ${data.delivery.postalCode} ${data.delivery.city}`
+                    : ''
+                }
+                selectionName={selectionName}
+                faqUrl={selectionSlug ? `/s/${selectionSlug}/faq` : '#'}
               />
+            ) : (
+              <>
+                {currentStep === 1 && (
+                  <OpeningStep1Requester
+                    data={data}
+                    errors={errors}
+                    updateData={updateData}
+                    affiliateId={affiliateId}
+                  />
+                )}
+                {currentStep === 2 && (
+                  <ExistingStep2Restaurant
+                    data={data}
+                    errors={errors}
+                    updateData={updateData}
+                    organisations={organisations}
+                    isLoadingOrganisations={isLoadingOrganisations}
+                  />
+                )}
+                {currentStep === 3 && (
+                  <ExistingStep3Responsable
+                    data={data}
+                    errors={errors}
+                    updateData={updateData}
+                  />
+                )}
+                {currentStep === 4 && (
+                  <OpeningStep4Billing
+                    data={data}
+                    errors={errors}
+                    updateData={updateData}
+                    affiliateId={affiliateId}
+                  />
+                )}
+                {currentStep === 5 && (
+                  <OpeningStep5Delivery
+                    data={data}
+                    errors={errors}
+                    updateData={updateData}
+                    affiliateId={affiliateId}
+                  />
+                )}
+                {currentStep === 6 && (
+                  <OpeningStep6Validation
+                    data={data}
+                    errors={errors}
+                    updateData={updateData}
+                    affiliateId={affiliateId}
+                    cart={cart}
+                    cartTotals={cartTotals}
+                    formatPrice={formatPrice}
+                    onUpdateQuantity={onUpdateQuantity}
+                    onRemoveItem={onRemoveItem}
+                    onOpenConfirmation={handleOpenConfirmation}
+                  />
+                )}
+              </>
             )}
           </div>
 
-          {/* Footer - masqué en step 6 car le bouton est dans OpeningStep6Validation */}
-          {currentStep < 6 && (
+          {/* Footer - masqué en step 6 et confirmation */}
+          {!showConfirmation && currentStep < 6 && (
             <Footer
               onBack={handleBack}
               onNext={handleNext}
@@ -894,18 +948,6 @@ export function OrderFormUnified({
             />
           )}
         </div>
-
-        {/* Modal de confirmation */}
-        <ConfirmationModal
-          isOpen={showConfirmation}
-          onClose={() => setShowConfirmation(false)}
-          onConfirm={() => void handleConfirmOrder()}
-          isSubmitting={isSubmitting}
-          data={data}
-          cart={cart}
-          cartTotals={cartTotals}
-          formatPrice={formatPrice}
-        />
       </div>
     );
   }
@@ -923,72 +965,113 @@ export function OrderFormUnified({
 
       <div className="flex-1 flex flex-col min-w-0">
         <Header
-          title={`${currentStep}. ${OPENING_STEPS[currentStep - 1].title}`}
-          subtitle={`Étape ${currentStep}/${OPENING_STEPS.length}`}
-          steps={OPENING_STEPS}
-          currentStep={currentStep}
+          title={
+            showConfirmation
+              ? 'Confirmer votre commande'
+              : `${currentStep}. ${OPENING_STEPS[currentStep - 1].title}`
+          }
+          subtitle={
+            showConfirmation
+              ? undefined
+              : `Étape ${currentStep}/${OPENING_STEPS.length}`
+          }
+          steps={showConfirmation ? undefined : OPENING_STEPS}
+          currentStep={showConfirmation ? undefined : currentStep}
           onClose={onClose}
         />
 
         <div className="flex-1 overflow-y-auto p-6">
-          {currentStep === 1 && (
-            <OpeningStep1Requester
-              data={data}
-              errors={errors}
-              updateData={updateData}
-              affiliateId={affiliateId}
-            />
-          )}
-          {currentStep === 2 && (
-            <OpeningStep2Restaurant
-              data={data}
-              errors={errors}
-              updateData={updateData}
-              affiliateId={affiliateId}
-            />
-          )}
-          {currentStep === 3 && (
-            <OpeningStep3Responsable
-              data={data}
-              errors={errors}
-              updateData={updateData}
-              affiliateId={affiliateId}
-            />
-          )}
-          {currentStep === 4 && (
-            <OpeningStep4Billing
-              data={data}
-              errors={errors}
-              updateData={updateData}
-              affiliateId={affiliateId}
-            />
-          )}
-          {currentStep === 5 && (
-            <OpeningStep5Delivery
-              data={data}
-              errors={errors}
-              updateData={updateData}
-              affiliateId={affiliateId}
-            />
-          )}
-          {currentStep === 6 && (
-            <OpeningStep6Validation
-              data={data}
-              errors={errors}
-              updateData={updateData}
-              affiliateId={affiliateId}
+          {showConfirmation ? (
+            <InlineConfirmation
+              onBack={() => setShowConfirmation(false)}
+              onConfirm={() => void handleConfirmOrder()}
+              isSubmitting={isSubmitting}
+              termsAccepted={confirmTermsAccepted}
+              onTermsChange={setConfirmTermsAccepted}
+              requesterName={data.requester.name}
+              requesterEmail={data.requester.email}
+              restaurantName={
+                data.newRestaurant.tradeName || 'Nouveau restaurant'
+              }
+              isNewRestaurant={true}
+              responsableName={data.responsable.name}
               cart={cart}
-              cartTotals={cartTotals}
-              formatPrice={formatPrice}
-              onUpdateQuantity={onUpdateQuantity}
-              onRemoveItem={onRemoveItem}
-              onOpenConfirmation={handleOpenConfirmation}
+              itemsCount={cartTotals.totalItems}
+              totalHT={cartTotals.totalHt}
+              totalTVA={cartTotals.totalTva}
+              totalTTC={cartTotals.totalTtc}
+              hasDeliveryDate={!!data.delivery.deliveryDate}
+              deliveryAsap={data.delivery.deliveryAsap}
+              deliveryAddress={
+                data.delivery.address
+                  ? `${data.delivery.address}, ${data.delivery.postalCode} ${data.delivery.city}`
+                  : ''
+              }
+              selectionName={selectionName}
+              faqUrl={selectionSlug ? `/s/${selectionSlug}/faq` : '#'}
             />
+          ) : (
+            <>
+              {currentStep === 1 && (
+                <OpeningStep1Requester
+                  data={data}
+                  errors={errors}
+                  updateData={updateData}
+                  affiliateId={affiliateId}
+                />
+              )}
+              {currentStep === 2 && (
+                <OpeningStep2Restaurant
+                  data={data}
+                  errors={errors}
+                  updateData={updateData}
+                  affiliateId={affiliateId}
+                />
+              )}
+              {currentStep === 3 && (
+                <OpeningStep3Responsable
+                  data={data}
+                  errors={errors}
+                  updateData={updateData}
+                  affiliateId={affiliateId}
+                />
+              )}
+              {currentStep === 4 && (
+                <OpeningStep4Billing
+                  data={data}
+                  errors={errors}
+                  updateData={updateData}
+                  affiliateId={affiliateId}
+                />
+              )}
+              {currentStep === 5 && (
+                <OpeningStep5Delivery
+                  data={data}
+                  errors={errors}
+                  updateData={updateData}
+                  affiliateId={affiliateId}
+                />
+              )}
+              {currentStep === 6 && (
+                <OpeningStep6Validation
+                  data={data}
+                  errors={errors}
+                  updateData={updateData}
+                  affiliateId={affiliateId}
+                  cart={cart}
+                  cartTotals={cartTotals}
+                  formatPrice={formatPrice}
+                  onUpdateQuantity={onUpdateQuantity}
+                  onRemoveItem={onRemoveItem}
+                  onOpenConfirmation={handleOpenConfirmation}
+                />
+              )}
+            </>
           )}
         </div>
 
-        {/* Footer - masqué en step 6 car le bouton est dans OpeningStep6Validation */}
-        {currentStep < 6 && (
+        {/* Footer - masqué en step 6 et confirmation */}
+        {!showConfirmation && currentStep < 6 && (
           <Footer
             onBack={handleBack}
             onNext={handleNext}
@@ -1001,7 +1084,7 @@ export function OrderFormUnified({
         )}
 
         {/* Footer simplifié pour step 4 - uniquement retour */}
-        {currentStep === 4 && (
+        {!showConfirmation && currentStep === 4 && (
           <div className="flex-shrink-0 border-t bg-gray-50 px-4 py-3">
             <button
               type="button"
@@ -1014,18 +1097,6 @@ export function OrderFormUnified({
           </div>
         )}
       </div>
-
-      {/* Modal de confirmation */}
-      <ConfirmationModal
-        isOpen={showConfirmation}
-        onClose={() => setShowConfirmation(false)}
-        onConfirm={() => void handleConfirmOrder()}
-        isSubmitting={isSubmitting}
-        data={data}
-        cart={cart}
-        cartTotals={cartTotals}
-        formatPrice={formatPrice}
-      />
     </div>
   );
 }
@@ -1055,7 +1126,7 @@ function CartSummary({
   onRemoveItem,
 }: CartSummaryProps) {
   return (
-    <div className="hidden md:flex w-1/2 bg-gray-50 border-r flex-col">
+    <div className="hidden md:flex w-[35%] bg-gray-50 border-r flex-col">
       <div className="flex-shrink-0 px-4 py-3 border-b bg-white flex items-center justify-between">
         <div>
           <h3 className="font-semibold text-gray-900">Récapitulatif</h3>
@@ -1212,23 +1283,28 @@ function Header({ title, subtitle, steps, currentStep, onClose }: HeaderProps) {
         </div>
 
         {steps && currentStep && (
-          <div className="flex items-center gap-1">
-            {steps.map(step => {
-              const isActive = currentStep === step.id;
-              const isCompleted = currentStep > step.id;
-              return (
-                <div
-                  key={step.id}
-                  className={`w-2 h-2 rounded-full ${
-                    isCompleted
-                      ? 'bg-green-500'
-                      : isActive
-                        ? 'bg-blue-600'
-                        : 'bg-gray-300'
-                  }`}
-                />
-              );
-            })}
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-gray-500 hidden sm:inline">
+              {currentStep}/{steps.length}
+            </span>
+            <div className="flex items-center gap-1">
+              {steps.map(step => {
+                const isActive = currentStep === step.id;
+                const isCompleted = currentStep > step.id;
+                return (
+                  <div
+                    key={step.id}
+                    className={`w-2 h-2 rounded-full ${
+                      isCompleted
+                        ? 'bg-green-500'
+                        : isActive
+                          ? 'bg-blue-600'
+                          : 'bg-gray-300'
+                    }`}
+                  />
+                );
+              })}
+            </div>
           </div>
         )}
 
@@ -1306,6 +1382,375 @@ function Footer({
             <>
               {nextLabel}
               <ChevronRight className="h-4 w-4" />
+            </>
+          )}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// =====================================================================
+// CONFIRMATION INLINE (remplace ClientConfirmationDialog)
+// =====================================================================
+
+interface InlineConfirmationProps {
+  onBack: () => void;
+  onConfirm: () => void;
+  isSubmitting: boolean;
+  termsAccepted: boolean;
+  onTermsChange: (checked: boolean) => void;
+  requesterName: string;
+  requesterEmail: string;
+  restaurantName: string;
+  isNewRestaurant: boolean;
+  responsableName: string;
+  cart: CartItem[];
+  itemsCount: number;
+  totalHT: number;
+  totalTVA: number;
+  totalTTC: number;
+  hasDeliveryDate: boolean;
+  deliveryAsap: boolean;
+  deliveryAddress: string;
+  selectionName: string;
+  faqUrl: string;
+}
+
+function formatCurrency(value: number): string {
+  return value.toLocaleString('fr-FR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
+function InlineConfirmation({
+  onBack,
+  onConfirm,
+  isSubmitting,
+  termsAccepted,
+  onTermsChange,
+  requesterName,
+  requesterEmail,
+  restaurantName,
+  isNewRestaurant,
+  responsableName,
+  cart,
+  itemsCount,
+  totalHT,
+  totalTVA,
+  totalTTC,
+  hasDeliveryDate,
+  deliveryAsap,
+  deliveryAddress,
+  selectionName,
+  faqUrl,
+}: InlineConfirmationProps) {
+  return (
+    <div className="max-w-2xl mx-auto space-y-6">
+      {/* Header */}
+      <div className="pb-6 border-b bg-gradient-to-b from-green-50 to-transparent rounded-t-xl -mx-6 -mt-6 px-8 pt-8">
+        <div className="flex items-center gap-4">
+          <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+            <CheckCircle className="h-7 w-7 text-green-600" />
+          </div>
+          <div>
+            <h3 className="text-xl font-bold text-gray-900">
+              Confirmer votre commande
+            </h3>
+            <p className="text-sm text-gray-600 mt-1">
+              Verifiez attentivement le recapitulatif ci-dessous avant de
+              valider votre commande.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Demandeur */}
+      <div className="flex items-center gap-3 pb-3 border-b">
+        <User className="h-5 w-5 text-gray-400" />
+        <div className="flex-1">
+          <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">
+            Demandeur
+          </p>
+          <p className="text-sm font-semibold text-gray-900">{requesterName}</p>
+          <p className="text-xs text-gray-500">{requesterEmail}</p>
+        </div>
+      </div>
+
+      {/* Restaurant */}
+      <div className="flex items-center gap-3 pb-3 border-b">
+        <Store className="h-5 w-5 text-gray-400" />
+        <div className="flex-1">
+          <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">
+            Restaurant
+          </p>
+          <p className="text-sm font-semibold text-gray-900">
+            {restaurantName}
+          </p>
+          {selectionName && (
+            <p className="text-xs text-gray-500">Selection : {selectionName}</p>
+          )}
+        </div>
+        {isNewRestaurant && (
+          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
+            Nouveau
+          </span>
+        )}
+      </div>
+
+      {/* Responsable */}
+      {responsableName && (
+        <div className="flex items-center gap-3 pb-3 border-b">
+          <UserCircle className="h-5 w-5 text-gray-400" />
+          <div className="flex-1">
+            <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">
+              Responsable
+            </p>
+            <p className="text-sm font-semibold text-gray-900">
+              {responsableName}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Articles — Detail */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-3">
+          <Package className="h-5 w-5 text-gray-400" />
+          <p className="text-xs text-gray-500 uppercase tracking-wide font-medium flex-1">
+            Articles commandes
+          </p>
+          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+            {itemsCount} article{itemsCount > 1 ? 's' : ''}
+          </span>
+        </div>
+        <div className="bg-gray-50 rounded-lg divide-y divide-gray-100">
+          {cart.map(item => (
+            <div key={item.id} className="flex items-center gap-3 px-4 py-3">
+              {item.product_image ? (
+                <Image
+                  src={item.product_image}
+                  alt={item.product_name}
+                  width={40}
+                  height={40}
+                  className="rounded-md object-cover flex-shrink-0"
+                />
+              ) : (
+                <div className="w-10 h-10 bg-gray-200 rounded-md flex items-center justify-center flex-shrink-0">
+                  <Package className="h-4 w-4 text-gray-400" />
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900 truncate">
+                  {item.product_name}
+                </p>
+                <p className="text-xs text-gray-500">{item.product_sku}</p>
+              </div>
+              <div className="text-right flex-shrink-0">
+                <p className="text-sm font-medium text-gray-900">
+                  {formatCurrency(item.selling_price_ttc * item.quantity)}{' '}
+                  &euro;
+                </p>
+                <p className="text-xs text-gray-500">
+                  {item.quantity} x {formatCurrency(item.selling_price_ttc)}{' '}
+                  &euro;
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Livraison */}
+      {deliveryAddress && (
+        <div className="flex items-start gap-3 pb-3 border-b">
+          <Truck className="h-5 w-5 text-gray-400 mt-0.5" />
+          <div className="flex-1">
+            <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">
+              Livraison
+            </p>
+            <p className="text-sm text-gray-900 mt-1">{deliveryAddress}</p>
+            {deliveryAsap && (
+              <span className="inline-flex items-center gap-1.5 mt-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                <Clock className="h-3 w-3" />
+                Des que possible
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Totals */}
+      <div className="bg-gray-50 rounded-xl p-5 space-y-3">
+        <div className="flex justify-between text-sm">
+          <span className="text-gray-600">Total HT</span>
+          <span className="font-medium text-gray-900">
+            {formatCurrency(totalHT)} &euro;
+          </span>
+        </div>
+        <div className="flex justify-between text-sm">
+          <span className="text-gray-600">TVA (20%)</span>
+          <span className="font-medium text-gray-900">
+            {formatCurrency(totalTVA)} &euro;
+          </span>
+        </div>
+        <div className="flex justify-between pt-3 border-t border-gray-200">
+          <span className="text-base font-bold text-gray-900">Total TTC</span>
+          <span className="text-2xl font-bold text-gray-900">
+            {formatCurrency(totalTTC)} &euro;
+          </span>
+        </div>
+      </div>
+
+      {/* Transport Notice */}
+      <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+        <div className="flex items-start gap-3">
+          <Truck className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+          <div className="text-sm text-amber-800">
+            <p className="font-semibold mb-1">Frais de transport non inclus</p>
+            <p className="leading-relaxed">
+              Le montant ci-dessus correspond uniquement aux produits. Les frais
+              de transport seront calcules en fonction de vos informations de
+              livraison et vous seront communiques dans le devis detaille.
+            </p>
+            {!hasDeliveryDate && !deliveryAsap && (
+              <div className="flex items-center gap-2 mt-2 text-amber-900 font-medium">
+                <Calendar className="h-4 w-4" />
+                <span>
+                  Pensez a indiquer votre date de livraison souhaitee pour
+                  permettre l&apos;estimation du transport.
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Prochaines etapes */}
+      <div className="bg-green-50 border border-green-200 rounded-xl p-5">
+        <p className="text-sm font-semibold text-green-900 mb-4">
+          Prochaines etapes
+        </p>
+        <div className="space-y-4">
+          <div className="flex items-start gap-3">
+            <div className="w-6 h-6 rounded-full bg-green-600 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <Check className="h-3.5 w-3.5 text-white" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-green-900">
+                Commande recue
+              </p>
+              <p className="text-xs text-green-700">
+                Votre commande sera enregistree des validation
+              </p>
+            </div>
+          </div>
+          <div className="flex items-start gap-3">
+            <div className="w-6 h-6 rounded-full bg-green-200 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <Clock className="h-3.5 w-3.5 text-green-700" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-green-900">
+                Validation sous 24h
+              </p>
+              <p className="text-xs text-green-700">
+                Notre equipe verifie et valide votre commande sous 24h ouvrees
+              </p>
+            </div>
+          </div>
+          <div className="flex items-start gap-3">
+            <div className="w-6 h-6 rounded-full bg-green-200 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <Mail className="h-3.5 w-3.5 text-green-700" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-green-900">
+                Devis detaille par email
+              </p>
+              <p className="text-xs text-green-700">
+                Vous recevrez un devis incluant les frais de transport a{' '}
+                <span className="font-medium">{requesterEmail}</span>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Email Info */}
+      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+        <div className="flex items-center gap-3">
+          <Mail className="h-5 w-5 text-blue-600 flex-shrink-0" />
+          <p className="text-sm text-blue-800">
+            Un email de confirmation avec le recapitulatif de votre commande
+            sera envoye a{' '}
+            <span className="font-semibold">{requesterEmail}</span>
+          </p>
+        </div>
+      </div>
+
+      {/* FAQ Link */}
+      <a
+        href={faqUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center gap-3 p-4 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors group"
+      >
+        <HelpCircle className="h-5 w-5 text-gray-400 group-hover:text-gray-600 flex-shrink-0" />
+        <span className="text-sm text-gray-600 group-hover:text-gray-800 flex-1">
+          Des questions ? Consultez notre FAQ
+        </span>
+        <ExternalLink className="h-4 w-4 text-gray-400 group-hover:text-gray-600" />
+      </a>
+
+      {/* Conditions */}
+      <div className="flex items-start gap-3">
+        <Checkbox
+          id="inlineTermsAccepted"
+          checked={termsAccepted}
+          onCheckedChange={(checked: boolean) => onTermsChange(checked)}
+          disabled={isSubmitting}
+        />
+        <label
+          htmlFor="inlineTermsAccepted"
+          className="text-xs text-gray-600 cursor-pointer leading-relaxed"
+        >
+          Je confirme que les informations ci-dessus sont exactes et
+          j&apos;accepte les conditions generales de vente ainsi que les
+          modalites de livraison. Je comprends que cette commande necessite une
+          validation par l&apos;equipe Verone sous 24h ouvrees.
+        </label>
+      </div>
+
+      {/* Buttons */}
+      <div className="flex gap-3 pt-4 border-t">
+        <button
+          type="button"
+          onClick={onBack}
+          disabled={isSubmitting}
+          className="flex-1 py-2.5 px-6 border border-gray-300 rounded-lg font-medium text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition-colors flex items-center justify-center gap-1"
+        >
+          <ChevronLeft className="h-4 w-4" />
+          Retour
+        </button>
+        <button
+          type="button"
+          onClick={onConfirm}
+          disabled={isSubmitting || !termsAccepted}
+          className={cn(
+            'flex-1 py-2.5 px-8 text-sm font-semibold rounded-lg transition-colors flex items-center justify-center gap-2',
+            'bg-green-600 hover:bg-green-700 text-white',
+            (!termsAccepted || isSubmitting) && 'opacity-50 cursor-not-allowed'
+          )}
+        >
+          {isSubmitting ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Envoi en cours...
+            </>
+          ) : (
+            <>
+              <CheckCircle className="h-4 w-4" />
+              Confirmer la commande
             </>
           )}
         </button>
@@ -1536,6 +1981,15 @@ function OpeningStep2Restaurant({
               newRestaurant: {
                 ...data.newRestaurant,
                 ownershipType: value,
+              },
+              // Reset useParentOrganisation when switching to franchise
+              // (parent org billing only applies to succursales)
+              billing: {
+                ...data.billing,
+                useParentOrganisation:
+                  value === 'succursale'
+                    ? data.billing.useParentOrganisation
+                    : false,
               },
             })
           }

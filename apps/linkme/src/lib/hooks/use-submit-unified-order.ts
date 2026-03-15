@@ -192,7 +192,7 @@ export function useSubmitUnifiedOrder() {
             throw new Error(`Erreur création commande: ${rpcError.message}`);
           }
 
-          console.error(
+          console.info(
             '[useSubmitUnifiedOrder] Order created (existing org):',
             orderId
           );
@@ -206,6 +206,47 @@ export function useSubmitUnifiedOrder() {
               .eq('id', orderId)
               .single();
             orderNumber = orderData?.order_number ?? undefined;
+          }
+
+          // Send confirmation email to requester (non-blocking)
+          try {
+            const { data: selectionData } = await supabase
+              .from('linkme_selections')
+              .select('name')
+              .eq('id', selectionId)
+              .single();
+
+            const { data: orgData } = await supabase
+              .from('organisations')
+              .select('trade_name')
+              .eq('id', data.existingOrganisationId)
+              .single();
+
+            await fetch('/api/emails/order-confirmation', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                orderNumber: orderNumber ?? '',
+                requesterName: data.requester.name,
+                requesterEmail: data.requester.email,
+                restaurantName: orgData?.trade_name ?? 'Restaurant',
+                selectionName: selectionData?.name ?? '',
+                itemsCount: cart.length,
+                totalHT: cart.reduce(
+                  (sum, item) => sum + item.selling_price_ht * item.quantity,
+                  0
+                ),
+                totalTTC: cart.reduce(
+                  (sum, item) => sum + item.selling_price_ttc * item.quantity,
+                  0
+                ),
+              }),
+            });
+          } catch (emailError) {
+            console.error(
+              '[useSubmitUnifiedOrder] Email confirmation error:',
+              emailError
+            );
           }
 
           // Invalider les caches
@@ -298,6 +339,7 @@ export function useSubmitUnifiedOrder() {
                 name: data.responsable.name,
                 email: data.responsable.email,
                 phone: data.responsable.phone ?? null,
+                type: data.newRestaurant.ownershipType ?? null,
                 company_legal_name:
                   data.newRestaurant.ownershipType === 'franchise'
                     ? (data.responsable.companyLegalName ?? null)
@@ -324,7 +366,12 @@ export function useSubmitUnifiedOrder() {
                 };
 
           // Facturation (Step 4)
-          const p_billing = data.billing.useParentOrganisation
+          // useParentOrganisation only applies to succursales (propre), never franchises
+          const isFranchiseOrder =
+            data.newRestaurant?.ownershipType === 'franchise';
+          const useParent =
+            data.billing.useParentOrganisation && !isFranchiseOrder;
+          const p_billing = useParent
             ? {
                 use_parent: true,
                 contact_source: null,
@@ -421,7 +468,7 @@ export function useSubmitUnifiedOrder() {
 
           const rpcResult = result as unknown as RpcResponse;
 
-          console.error(
+          console.info(
             '[useSubmitUnifiedOrder] Order created (new org):',
             rpcResult
           );

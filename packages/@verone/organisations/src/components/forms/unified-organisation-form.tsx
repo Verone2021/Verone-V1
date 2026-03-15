@@ -248,6 +248,8 @@ const getDefaultValues = (
     supplier_segment: organisation.supplier_segment || '',
     enseigne_id: organisation.enseigne_id ?? null,
     ownership_type: organisation.ownership_type ?? null,
+    latitude: organisation.latitude ?? null,
+    longitude: organisation.longitude ?? null,
   };
 };
 

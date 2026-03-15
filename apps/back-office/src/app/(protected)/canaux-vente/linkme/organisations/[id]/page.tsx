@@ -58,6 +58,8 @@ interface OrganisationDetail {
   phone: string | null;
   email: string | null;
   show_on_linkme_globe: boolean | null;
+  latitude: number | null;
+  longitude: number | null;
 }
 
 /**
@@ -111,7 +113,7 @@ function useOrganisation(organisationId: string | null) {
           id, legal_name, trade_name, logo_url,
           siret, siren,
           address_line1, address_line2, city, postal_code, country,
-          phone, email, show_on_linkme_globe
+          phone, email, show_on_linkme_globe, latitude, longitude
         `
         )
         .eq('id', organisationId)
