@@ -352,10 +352,38 @@ export function useUpdateSelection() {
       selectionId: string;
       data: UpdateSelectionData;
     }) => {
+      // Si le nom change, régénérer le slug
+      let slug: string | undefined;
+      if (data.name) {
+        const baseSlug = data.name
+          .toLowerCase()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/(^-|-$)/g, '');
+
+        // Vérifier unicité (exclure la sélection courante)
+        slug = baseSlug;
+        let suffix = 2;
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- loop until unique slug found
+        while (true) {
+          const { data: existing } = await supabase
+            .from('linkme_selections')
+            .select('id')
+            .eq('slug', slug)
+            .neq('id', selectionId)
+            .maybeSingle();
+          if (!existing) break;
+          slug = `${baseSlug}-${suffix}`;
+          suffix++;
+        }
+      }
+
       const { error } = await supabase
         .from('linkme_selections')
         .update({
           ...data,
+          ...(slug ? { slug } : {}),
           updated_at: new Date().toISOString(),
         })
         .eq('id', selectionId);

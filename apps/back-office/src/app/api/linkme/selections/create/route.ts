@@ -173,14 +173,28 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       affiliateId = newAffiliate.id;
     }
 
-    // 3. Générer un slug unique pour la sélection
-    const selectionBaseSlug = name
+    // 3. Générer un slug unique pour la sélection (nom exact, sans timestamp)
+    const baseSlug = name
       .toLowerCase()
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/(^-|-$)/g, '');
-    const selectionSlug = `${selectionBaseSlug}-${Date.now().toString(36)}`;
+
+    // Vérifier unicité en DB, ajouter suffixe numérique si doublon
+    let selectionSlug = baseSlug;
+    let suffix = 2;
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- loop until unique slug found
+    while (true) {
+      const { data: existing } = await supabaseAdmin
+        .from('linkme_selections')
+        .select('id')
+        .eq('slug', selectionSlug)
+        .maybeSingle();
+      if (!existing) break;
+      selectionSlug = `${baseSlug}-${suffix}`;
+      suffix++;
+    }
 
     // 4. Créer la sélection
     const selectionData: LinkmeSelectionInsert = {
