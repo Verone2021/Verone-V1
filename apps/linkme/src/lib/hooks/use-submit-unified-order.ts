@@ -127,8 +127,8 @@ export function useSubmitUnifiedOrder() {
             owner_type: null,
             // Billing (Step 4)
             billing_contact_source: data.billing.useParentOrganisation
-              ? 'parent'
-              : data.billing.contactSource,
+              ? 'parent_organisation'
+              : data.billing.contactSource || 'responsable',
             billing_name:
               data.billing.contactSource === 'custom'
                 ? data.billing.name
