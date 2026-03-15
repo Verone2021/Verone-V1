@@ -149,7 +149,8 @@ export const clientDeliveryBaseSchema = z.object({
   city: z.string().optional(),
   latitude: z.number().nullable().optional(),
   longitude: z.number().nullable().optional(),
-  deliveryDate: z.string().min(1, 'Date de livraison requise'),
+  deliveryDate: z.string().optional().default(''),
+  deliveryAsap: z.boolean().default(false),
   isMallDelivery: z.boolean().default(false),
   mallEmail: z.string().optional(),
   accessFormRequired: z.boolean().default(false),
@@ -162,6 +163,19 @@ export const clientDeliveryBaseSchema = z.object({
  * Schema livraison avec validations conditionnelles (pour validation par etape)
  */
 export const clientDeliverySchema = clientDeliveryBaseSchema
+  .refine(
+    data => {
+      // deliveryDate requis seulement si deliveryAsap est false
+      if (!data.deliveryAsap) {
+        return !!data.deliveryDate && data.deliveryDate.length > 0;
+      }
+      return true;
+    },
+    {
+      message: 'Date de livraison requise (ou cochez "Dès que possible")',
+      path: ['deliveryDate'],
+    }
+  )
   .refine(
     data => {
       if (!data.useResponsableContact) {
