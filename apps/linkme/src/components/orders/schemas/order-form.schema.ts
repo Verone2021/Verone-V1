@@ -385,6 +385,8 @@ export const deliveryStepSchema = z
 
     // Date souhaitée (optionnelle) — string ISO format YYYY-MM-DD
     desiredDate: z.string().optional().nullable(),
+    // Livraison dès que possible (remplace la date si coché)
+    deliveryAsap: z.boolean().default(false),
 
     // Options
     isMallDelivery: z.boolean().default(false),
@@ -525,6 +527,7 @@ export const defaultDeliveryStep: DeliveryStepData = {
   postalCode: '',
   city: '',
   desiredDate: null,
+  deliveryAsap: false,
   isMallDelivery: false,
   mallEmail: null,
   semiTrailerAccessible: true,

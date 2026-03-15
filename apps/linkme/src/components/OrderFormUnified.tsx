@@ -1,9 +1,8 @@
 'use client';
 
 /**
- * OrderFormUnified — Formulaire Commande Client (ClientOrderForm)
+ * OrderFormUnified — Formulaire Client
  *
- * Nom officiel : ClientOrderForm
  * Formulaire accessible sans authentification via les pages publiques /s/[id]/catalogue.
  * Scope : enseignes uniquement (orgs independantes = formulaire separe a creer).
  *
@@ -15,10 +14,15 @@
  *
  * Soumission : use-submit-unified-order.ts (RPCs create_public_linkme_order / create_affiliate_order)
  *
- * @see NewOrderForm (formulaire auth dashboard) - docs/current/linkme/formulaires-commande-comparaison.md
+ * Nomenclature :
+ * - "Formulaire client" = ce formulaire (public, sans auth)
+ * - "Formulaire utilisateur" = NewOrderForm.tsx (dashboard, avec auth)
+ *
+ * @see NewOrderForm (formulaire utilisateur) - components/orders/NewOrderForm.tsx
+ * @see docs/current/linkme/formulaires-commande-comparaison.md
  * @module OrderFormUnified
  * @since 2026-01-11
- * @updated 2026-02-22 - Audit comparaison avec formulaire auth
+ * @updated 2026-03-14 - Renommage nomenclature
  */
 
 import { useState, useMemo, useCallback, useEffect } from 'react';
@@ -180,6 +184,7 @@ export interface OrderFormUnifiedData {
     latitude: number | null;
     longitude: number | null;
     deliveryDate: string; // Format ISO
+    deliveryAsap: boolean; // Livraison dès que possible
     // Centre commercial
     isMallDelivery: boolean;
     mallEmail: string;
@@ -317,6 +322,7 @@ const INITIAL_DATA: OrderFormUnifiedData = {
     latitude: null,
     longitude: null,
     deliveryDate: '',
+    deliveryAsap: false,
     isMallDelivery: false,
     mallEmail: '',
     accessFormRequired: false,
@@ -621,8 +627,9 @@ export function OrderFormUnified({
     if (!data.delivery.address.trim()) {
       newErrors['delivery.address'] = "L'adresse de livraison est requise";
     }
-    if (!data.delivery.deliveryDate) {
-      newErrors['delivery.deliveryDate'] = 'La date de livraison est requise';
+    if (!data.delivery.deliveryDate && !data.delivery.deliveryAsap) {
+      newErrors['delivery.deliveryDate'] =
+        'Indiquez une date ou cochez "Dès que possible"';
     }
 
     // Si centre commercial
@@ -2364,17 +2371,44 @@ function OpeningStep5Delivery({ data, errors, updateData }: StepProps) {
         <Label htmlFor="deliveryDate">
           Date de livraison souhaitée <span className="text-red-500">*</span>
         </Label>
-        <Input
-          id="deliveryDate"
-          type="date"
-          value={data.delivery.deliveryDate}
-          onChange={e =>
-            updateData({
-              delivery: { ...data.delivery, deliveryDate: e.target.value },
-            })
-          }
-          min={new Date().toISOString().split('T')[0]}
-        />
+
+        {/* Checkbox dès que possible */}
+        <div className="flex items-center gap-3 my-2">
+          <Checkbox
+            id="deliveryAsap"
+            checked={data.delivery.deliveryAsap}
+            onCheckedChange={(checked: boolean) =>
+              updateData({
+                delivery: {
+                  ...data.delivery,
+                  deliveryAsap: checked,
+                  deliveryDate: checked ? '' : data.delivery.deliveryDate,
+                },
+              })
+            }
+          />
+          <Label
+            htmlFor="deliveryAsap"
+            className="text-sm font-medium cursor-pointer"
+          >
+            Dès que possible
+          </Label>
+        </div>
+
+        {/* Champ date (masqué si "dès que possible" coché) */}
+        {!data.delivery.deliveryAsap && (
+          <Input
+            id="deliveryDate"
+            type="date"
+            value={data.delivery.deliveryDate}
+            onChange={e =>
+              updateData({
+                delivery: { ...data.delivery, deliveryDate: e.target.value },
+              })
+            }
+            min={new Date().toISOString().split('T')[0]}
+          />
+        )}
         {errors['delivery.deliveryDate'] && (
           <p className="text-sm text-red-600 mt-1">
             {errors['delivery.deliveryDate']}

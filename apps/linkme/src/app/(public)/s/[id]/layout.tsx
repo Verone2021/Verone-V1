@@ -335,6 +335,12 @@ export default function SelectionLayout({
       if (result.success && (result.orderNumber ?? result.orderId)) {
         setOrderNumber(result.orderNumber ?? result.orderId ?? null);
       }
+
+      if (!result.success) {
+        throw new Error(
+          result.error ?? 'Erreur lors de la creation de la commande'
+        );
+      }
     },
     [selection, submitOrder]
   );

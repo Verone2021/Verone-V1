@@ -827,12 +827,12 @@ export function ShippingStep({
           <div
             className={cn(
               'w-10 h-10 rounded-full flex items-center justify-center',
-              delivery.desiredDate
+              delivery.desiredDate || delivery.deliveryAsap
                 ? 'bg-green-100 text-green-600'
                 : 'bg-blue-100 text-blue-600'
             )}
           >
-            {delivery.desiredDate ? (
+            {delivery.desiredDate || delivery.deliveryAsap ? (
               <Check className="h-5 w-5" />
             ) : (
               <Calendar className="h-5 w-5" />
@@ -849,18 +849,44 @@ export function ShippingStep({
           </div>
         </div>
 
-        <div className="space-y-2">
-          <Input
-            id="desiredDate"
-            type="date"
-            value={delivery.desiredDate ?? ''}
-            onChange={handleDateChange}
-            min={new Date().toISOString().split('T')[0]}
-          />
-          {!delivery.desiredDate && (
-            <p className="text-xs text-amber-600">
-              Veuillez indiquer une date de livraison souhaitee.
-            </p>
+        <div className="space-y-3">
+          {/* Checkbox dès que possible */}
+          <div className="flex items-center gap-3">
+            <Checkbox
+              id="deliveryAsap"
+              checked={delivery.deliveryAsap}
+              onCheckedChange={(checked: boolean) => {
+                onUpdateDelivery({
+                  deliveryAsap: checked,
+                  desiredDate: checked ? null : delivery.desiredDate,
+                });
+              }}
+            />
+            <Label
+              htmlFor="deliveryAsap"
+              className="text-sm font-medium cursor-pointer"
+            >
+              Des que possible
+            </Label>
+          </div>
+
+          {/* Champ date (masqué si "dès que possible" coché) */}
+          {!delivery.deliveryAsap && (
+            <>
+              <Input
+                id="desiredDate"
+                type="date"
+                value={delivery.desiredDate ?? ''}
+                onChange={handleDateChange}
+                min={new Date().toISOString().split('T')[0]}
+              />
+              {!delivery.desiredDate && (
+                <p className="text-xs text-amber-600">
+                  Veuillez indiquer une date de livraison souhaitee ou cocher
+                  &quot;Des que possible&quot;.
+                </p>
+              )}
+            </>
           )}
           <p className="text-xs text-gray-500">
             La date finale sera confirmee par notre equipe apres validation de
