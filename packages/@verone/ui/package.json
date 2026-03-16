@@ -29,7 +29,7 @@
   "scripts": {
     "build": "tsc",
     "clean": "rm -rf dist",
-    "lint": "eslint src --max-warnings=60",
+    "lint": "eslint src --max-warnings=0",
     "type-check": "tsc --noEmit",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"

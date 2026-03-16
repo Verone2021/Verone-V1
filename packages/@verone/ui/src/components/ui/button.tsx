@@ -138,7 +138,7 @@ export function ButtonV2({
   asChild: _asChild, // Extraire pour ne pas passer au DOM (non supporté par ButtonV2)
   ...props
 }: ButtonV2Props & { asChild?: boolean }) {
-  const isDisabled = disabled || loading;
+  const isDisabled = (disabled ?? false) || loading;
 
   // Mapper les alias vers les variants réels
   const normalizedVariant =

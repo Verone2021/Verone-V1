@@ -6,7 +6,7 @@
  */
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import Image from 'next/image';
 
@@ -111,45 +111,48 @@ export function ImageUploadZone({
   );
   const [error, setError] = useState<string | null>(null);
 
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   // Upload fichier vers Supabase Storage
-  const uploadFile = async (file: File): Promise<UploadedFile> => {
-    // Générer nom unique avec timestamp
-    const timestamp = Date.now();
-    const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-    const fileName = `${timestamp}_${sanitizedName}`;
-    const storagePath = `${folder}/${fileName}`;
+  const uploadFile = useCallback(
+    async (file: File): Promise<UploadedFile> => {
+      // Générer nom unique avec timestamp
+      const timestamp = Date.now();
+      const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+      const fileName = `${timestamp}_${sanitizedName}`;
+      const storagePath = `${folder}/${fileName}`;
 
-    // Upload vers Supabase Storage
-    const { error: uploadError } = await supabase.storage
-      .from(bucket)
-      .upload(storagePath, file, {
-        cacheControl: '3600',
-        upsert: false,
-      });
+      // Upload vers Supabase Storage
+      const { error: uploadError } = await supabase.storage
+        .from(bucket)
+        .upload(storagePath, file, {
+          cacheControl: '3600',
+          upsert: false,
+        });
 
-    if (uploadError) {
-      throw new Error(`Échec upload: ${uploadError.message}`);
-    }
+      if (uploadError) {
+        throw new Error(`Échec upload: ${uploadError.message}`);
+      }
 
-    // Récupérer URL publique (bucket privé → signedUrl requise)
-    // Note: Pour buckets publics, utiliser getPublicUrl()
-    const { data: urlData } = supabase.storage
-      .from(bucket)
-      .getPublicUrl(storagePath);
+      // Récupérer URL publique (bucket privé → signedUrl requise)
+      // Note: Pour buckets publics, utiliser getPublicUrl()
+      const { data: urlData } = supabase.storage
+        .from(bucket)
+        .getPublicUrl(storagePath);
 
-    if (!urlData?.publicUrl) {
-      throw new Error('Impossible de récupérer URL publique');
-    }
+      if (!urlData?.publicUrl) {
+        throw new Error('Impossible de récupérer URL publique');
+      }
 
-    return {
-      name: file.name,
-      size: file.size,
-      url: urlData.publicUrl,
-      storagePath,
-    };
-  };
+      return {
+        name: file.name,
+        size: file.size,
+        url: urlData.publicUrl,
+        storagePath,
+      };
+    },
+    [supabase, bucket, folder]
+  );
 
   // Handler drop fichiers
   const onDrop = useCallback(
@@ -190,12 +193,12 @@ export function ImageUploadZone({
         setUploading(false);
       }
     },
-    [bucket, folder, maxSizeMB, onUploadSuccess, onUploadError]
+    [maxSizeMB, onUploadSuccess, onUploadError, uploadFile]
   );
 
   // Configuration react-dropzone
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
+    onDrop: files => void onDrop(files),
     accept: acceptedFormats,
     maxSize: maxSizeMB * 1024 * 1024,
     multiple,
@@ -296,7 +299,7 @@ export function ImageUploadZone({
                 type="button"
                 variant="ghost"
                 size="sm"
-                onClick={handleRemoveFile}
+                onClick={() => void handleRemoveFile()}
                 className="h-8 w-8"
               >
                 <X className="h-4 w-4" />

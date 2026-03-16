@@ -165,7 +165,7 @@ const ButtonUnified = React.forwardRef<HTMLButtonElement, ButtonUnifiedProps>(
     ref
   ) => {
     const Comp = asChild ? Slot : 'button';
-    const isDisabled = disabled || loading;
+    const isDisabled = (disabled ?? false) || loading;
 
     // Taille icône selon size du bouton
     const iconSizeMap = {
@@ -176,7 +176,7 @@ const ButtonUnified = React.forwardRef<HTMLButtonElement, ButtonUnifiedProps>(
       xl: 20,
       icon: 18,
     };
-    const iconSize = iconSizeMap[size || 'md'];
+    const iconSize = iconSizeMap[size ?? 'md'];
 
     return (
       <Comp

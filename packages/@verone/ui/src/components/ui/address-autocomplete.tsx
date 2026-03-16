@@ -156,15 +156,15 @@ async function searchBan(query: string): Promise<AddressResult[]> {
       throw new Error(`BAN API error: ${response.status}`);
     }
 
-    const data: BanResponse = await response.json();
+    const data = (await response.json()) as BanResponse;
 
     return data.features.map(feature => ({
       label: feature.properties.label,
       streetAddress: feature.properties.housenumber
-        ? `${feature.properties.housenumber} ${feature.properties.street || feature.properties.name || ''}`
-        : feature.properties.street ||
-          feature.properties.name ||
-          feature.properties.label,
+        ? `${feature.properties.housenumber} ${feature.properties.street ?? feature.properties.name ?? ''}`
+        : (feature.properties.street ??
+          feature.properties.name ??
+          feature.properties.label),
       city: feature.properties.city,
       postalCode: feature.properties.postcode,
       region: feature.properties.context?.split(',')[1]?.trim(),
@@ -203,18 +203,18 @@ async function searchGeoapify(
       throw new Error(`Geoapify API error: ${response.status}`);
     }
 
-    const data: GeoapifyResponse = await response.json();
+    const data = (await response.json()) as GeoapifyResponse;
 
     return data.features.map(feature => ({
       label: feature.properties.formatted,
       streetAddress: feature.properties.housenumber
-        ? `${feature.properties.housenumber} ${feature.properties.street || ''}`
-        : feature.properties.street || feature.properties.name || '',
-      city: feature.properties.city || '',
-      postalCode: feature.properties.postcode || '',
+        ? `${feature.properties.housenumber} ${feature.properties.street ?? ''}`
+        : (feature.properties.street ?? feature.properties.name ?? ''),
+      city: feature.properties.city ?? '',
+      postalCode: feature.properties.postcode ?? '',
       region: feature.properties.state,
-      countryCode: feature.properties.country_code?.toUpperCase() || '',
-      country: feature.properties.country || '',
+      countryCode: feature.properties.country_code?.toUpperCase() ?? '',
+      country: feature.properties.country ?? '',
       latitude: feature.properties.lat,
       longitude: feature.properties.lon,
       source: 'geoapify' as const,
@@ -288,7 +288,7 @@ export function AddressAutocomplete({
 
   // Get API key from props or environment
   const apiKey =
-    geoapifyApiKey ||
+    geoapifyApiKey ??
     (typeof window !== 'undefined'
       ? (process.env.NEXT_PUBLIC_GEOAPIFY_API_KEY ?? '')
       : '');
@@ -356,7 +356,7 @@ export function AddressAutocomplete({
 
       // Debounce search
       debounceRef.current = setTimeout(() => {
-        handleSearch(newValue);
+        void handleSearch(newValue);
       }, 300);
     },
     [onChange, handleSearch]
@@ -441,7 +441,7 @@ export function AddressAutocomplete({
     };
   }, []);
 
-  const inputId = id || 'address-autocomplete';
+  const inputId = id ?? 'address-autocomplete';
 
   return (
     <div className={cn('relative', className)}>
@@ -470,6 +470,7 @@ export function AddressAutocomplete({
         <input
           ref={inputRef}
           id={inputId}
+          role="combobox"
           type="text"
           value={inputValue}
           onChange={handleInputChange}
@@ -507,7 +508,7 @@ export function AddressAutocomplete({
               onClick={() => {
                 setUseInternational(!useInternational);
                 if (inputValue.length >= 3) {
-                  handleSearch(inputValue);
+                  void handleSearch(inputValue);
                 }
               }}
               title={
@@ -613,7 +614,7 @@ export function AddressAutocomplete({
                 type="button"
                 onClick={() => {
                   setUseInternational(true);
-                  handleSearch(inputValue);
+                  void handleSearch(inputValue);
                 }}
                 className="mt-2 text-sm text-blue-600 hover:underline"
               >

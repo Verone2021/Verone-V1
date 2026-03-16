@@ -56,7 +56,7 @@ export interface VeroneNotification {
   persistent: boolean;
   autoClose?: number; // ms
   actions?: NotificationAction[];
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   priority: 'low' | 'medium' | 'high' | 'critical';
   source?: string;
   relatedErrorId?: string;
@@ -202,7 +202,13 @@ export function NotificationProvider({
 
       return notification.id;
     },
-    [enableBrowserNotifications, enableSounds, isPermissionGranted]
+    [
+      enableBrowserNotifications,
+      enableSounds,
+      isPermissionGranted,
+      markAsRead,
+      removeNotification,
+    ]
   );
 
   // Supprimer une notification
@@ -528,10 +534,13 @@ function NotificationItem({
               variant="ghost"
               size="sm"
               className="w-6 h-6 p-0"
-              onClick={() =>
-                onDismiss?.(notification.id) ||
-                removeNotification(notification.id)
-              }
+              onClick={() => {
+                if (onDismiss) {
+                  onDismiss(notification.id);
+                } else {
+                  removeNotification(notification.id);
+                }
+              }}
             >
               <X className="w-3 h-3" />
             </Button>
@@ -551,9 +560,9 @@ function NotificationItem({
                 variant={
                   action.variant === 'primary'
                     ? 'default'
-                    : action.variant || 'outline'
+                    : (action.variant ?? 'outline')
                 }
-                onClick={() => handleActionClick(action)}
+                onClick={() => void handleActionClick(action)}
                 disabled={isExecuting}
               >
                 {isExecuting ? (

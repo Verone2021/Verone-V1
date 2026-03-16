@@ -146,9 +146,9 @@ export function useCollectionImages({
           collection_id: collectionId,
           storage_path: uploadData.path,
           display_order: nextOrder,
-          is_primary: options.isPrimary || false,
-          image_type: options.imageType || 'cover',
-          alt_text: options.altText || file.name,
+          is_primary: options.isPrimary ?? false,
+          image_type: options.imageType ?? 'cover',
+          alt_text: options.altText ?? file.name,
           file_name: file.name,
           file_size: file.size,
           mime_type: file.type,
@@ -209,7 +209,7 @@ export function useCollectionImages({
         const file = files[i];
         try {
           const result = await uploadImage(file, {
-            imageType: options.imageType || 'gallery',
+            imageType: options.imageType ?? 'gallery',
             altText: options.altTextPrefix
               ? `${options.altTextPrefix} ${i + 1}`
               : file.name,
@@ -232,7 +232,7 @@ export function useCollectionImages({
 
       return results;
     },
-    [uploadImage]
+    [uploadImage, collectionId]
   );
 
   // ✨ Delete simplifiée
@@ -323,7 +323,7 @@ export function useCollectionImages({
         throw err;
       }
     },
-    [supabase, fetchImages]
+    [supabase, fetchImages, collectionId]
   );
 
   // ✨ Primary image - trigger automatique gère la logique "single primary"
@@ -408,7 +408,7 @@ export function useCollectionImages({
 
   // 🎯 Helpers optimisés
   const getPrimaryImage = useCallback(() => {
-    return images.find(img => img.is_primary) || images[0] || null;
+    return images.find(img => img.is_primary) ?? images[0] ?? null;
   }, [images]);
 
   const getImagesByType = useCallback(
@@ -425,9 +425,9 @@ export function useCollectionImages({
         operation: 'auto_fetch_collection_images',
         collectionId,
       });
-      fetchImages();
+      void fetchImages();
     }
-  }, [collectionId, autoFetch]); // fetchImages exclu pour éviter boucle infinie
+  }, [collectionId, autoFetch, fetchImages]);
 
   return {
     // 📊 Data

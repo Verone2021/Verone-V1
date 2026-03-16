@@ -25,6 +25,24 @@ interface CollectionProductWithMeta {
   products: CollectionProduct;
 }
 
+interface CollectionProductRaw {
+  id: string;
+  collection_id: string;
+  product_id: string;
+  position: number;
+  products: CollectionProduct & {
+    product_images: Array<{
+      id: string;
+      public_url: string | null;
+      storage_path: string;
+      is_primary: boolean;
+      display_order: number;
+      image_type: string;
+      alt_text: string | null;
+    }>;
+  };
+}
+
 interface UseCollectionProductsReturn {
   products: CollectionProductWithMeta[];
   productIds: string[];
@@ -37,9 +55,10 @@ export function useCollectionProducts(
   collectionId: string
 ): UseCollectionProductsReturn {
   // ✅ BASE HOOK : Remplace 40 lignes de boilerplate (useState, useEffect, supabase client)
-  const { data, loading, error, refetch } = useSupabaseQuery<any>({
-    tableName: 'collection_products',
-    select: `
+  const { data, loading, error, refetch } =
+    useSupabaseQuery<CollectionProductRaw>({
+      tableName: 'collection_products',
+      select: `
       id,
       collection_id,
       product_id,
@@ -62,21 +81,27 @@ export function useCollectionProducts(
         )
       )
     `,
-    filters: query => {
-      if (!collectionId) return query.limit(0); // Return empty if no collection
-      return query
-        .eq('collection_id', collectionId)
-        .eq('products.creation_mode', 'complete'); // Exclure sourcing
-    },
-    orderBy: { column: 'position', ascending: true },
-    autoFetch: !!collectionId, // Only fetch if collectionId exists
-  });
+      filters: (query: {
+        limit: (n: number) => unknown;
+        eq: (
+          col: string,
+          val: string
+        ) => { eq: (col: string, val: string) => unknown };
+      }) => {
+        if (!collectionId) return query.limit(0); // Return empty if no collection
+        return query
+          .eq('collection_id', collectionId)
+          .eq('products.creation_mode', 'complete'); // Exclure sourcing
+      },
+      orderBy: { column: 'position', ascending: true },
+      autoFetch: !!collectionId, // Only fetch if collectionId exists
+    });
 
   // ✅ LOGIQUE MÉTIER CONSERVÉE : Transformation spécifique au domaine
   const products = useMemo(() => {
     return (data || [])
-      .filter((item: any) => item.products) // Sécurité contre données corrompues
-      .map((item: any) => ({
+      .filter(item => item.products) // Sécurité contre données corrompues
+      .map(item => ({
         id: item.id,
         collection_id: item.collection_id,
         product_id: item.product_id,
