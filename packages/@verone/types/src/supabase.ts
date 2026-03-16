@@ -14201,8 +14201,7 @@ export type Database = {
         | 'check'
         | 'transfer_other'
         | 'card'
-        | 'compensation'
-        | 'verified_bubble';
+        | 'compensation';
       matching_status:
         | 'unmatched'
         | 'auto_matched'
@@ -14560,7 +14559,6 @@ export const Constants = {
         'transfer_other',
         'card',
         'compensation',
-        'verified_bubble',
       ],
       matching_status: [
         'unmatched',

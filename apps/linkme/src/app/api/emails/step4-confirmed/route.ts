@@ -145,7 +145,7 @@ export async function POST(request: NextRequest) {
     `;
 
     const fromEmail = process.env.RESEND_FROM_EMAIL ?? 'commandes@verone.fr';
-    const replyTo = process.env.RESEND_REPLY_TO ?? 'commandes@verone.fr';
+    const replyTo = process.env.RESEND_REPLY_TO ?? 'romeo@veronecollections.fr';
 
     const results = await Promise.allSettled([
       resendClient.emails.send({

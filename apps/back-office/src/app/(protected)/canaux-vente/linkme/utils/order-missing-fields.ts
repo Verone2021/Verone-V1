@@ -439,7 +439,7 @@ export function getOrderMissingFields(
       inputType: 'text',
     });
   }
-  // desired_delivery_date : champ optionnel dans Bubble (date "souhaitée"), pas obligatoire
+  // desired_delivery_date : champ optionnel (date "souhaitée"), pas obligatoire
 
   // Mall email (only if is_mall_delivery)
   if (details.is_mall_delivery && !details.mall_email) {

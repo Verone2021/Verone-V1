@@ -6,38 +6,13 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
-import fs from 'fs';
-import path from 'path';
-
 import { createClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
 
 import type { Database } from '@verone/types';
 
-// LinkMe logo for CID embedding (Resend official approach)
-const LOGO_CID = 'linkme-logo';
-function getLogoAttachment(): {
-  content: string;
-  filename: string;
-  contentId: string;
-} | null {
-  try {
-    const logoPath = path.join(
-      process.cwd(),
-      'public',
-      'images',
-      'linkme-logo.png'
-    );
-    const content = fs.readFileSync(logoPath).toString('base64');
-    return { content, filename: 'linkme-logo.png', contentId: LOGO_CID };
-  } catch (error) {
-    console.error(
-      '[Order Confirmation] Logo attachment failed:',
-      error instanceof Error ? error.message : error
-    );
-    return null;
-  }
-}
+import { getLogoAttachments } from '../_shared/email-logo';
+import { buildEmailHtml } from '../_shared/email-template';
 
 function getResendClient(): Resend | null {
   const apiKey = process.env.RESEND_API_KEY;
@@ -78,7 +53,6 @@ export async function POST(request: NextRequest) {
       requesterName,
       requesterEmail,
       restaurantName,
-      selectionName,
       itemsCount,
       totalHT,
       totalTTC,
@@ -105,101 +79,55 @@ export async function POST(request: NextRequest) {
 
     const subject = `Confirmation de votre commande ${orderNumber}`;
 
-    const emailHtml = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #1a1a1a; max-width: 600px; margin: 0 auto; padding: 0; background-color: #f5f5f5;">
-  <div style="background-color: #ffffff; margin: 20px auto; border-radius: 8px; overflow: hidden; border: 1px solid #e5e5e5;">
-
-    <!-- Header -->
-    <div style="padding: 30px 40px; border-bottom: 1px solid #f0f0f0;">
-      <img src="cid:${LOGO_CID}" alt="LinkMe" style="height: 32px; display: block;" />
-    </div>
-
-    <!-- Body -->
-    <div style="padding: 40px;">
-      <h1 style="font-size: 22px; font-weight: 600; color: #1a1a1a; margin: 0 0 24px 0;">
-        Confirmation de votre commande
-      </h1>
-
-      <p style="margin: 0 0 16px 0; color: #333;">
-        Bonjour ${requesterName},
-      </p>
-
-      <p style="margin: 0 0 28px 0; color: #333;">
-        Nous avons bien recu votre commande <strong>${orderNumber}</strong>.
-      </p>
-
-      <!-- Order summary table -->
-      <table style="width: 100%; border-collapse: collapse; margin: 0 0 28px 0; font-size: 14px;">
-        <tr style="border-bottom: 1px solid #f0f0f0;">
-          <td style="padding: 12px 0; color: #666;">Restaurant</td>
-          <td style="padding: 12px 0; text-align: right; font-weight: 500; color: #1a1a1a;">${restaurantName}</td>
-        </tr>
-        <tr style="border-bottom: 1px solid #f0f0f0;">
-          <td style="padding: 12px 0; color: #666;">Articles</td>
-          <td style="padding: 12px 0; text-align: right; font-weight: 500; color: #1a1a1a;">${itemsCount}</td>
-        </tr>
-        <tr style="border-bottom: 1px solid #f0f0f0;">
-          <td style="padding: 12px 0; color: #666;">Total HT</td>
-          <td style="padding: 12px 0; text-align: right; font-weight: 500; color: #1a1a1a;">${formatPrice(totalHT)}</td>
-        </tr>
-        <tr>
-          <td style="padding: 12px 0; color: #666; font-weight: 600;">Total TTC</td>
-          <td style="padding: 12px 0; text-align: right; font-weight: 700; color: #1a1a1a; font-size: 16px;">${formatPrice(totalTTC)}</td>
-        </tr>
-      </table>
-
-      <!-- Transport notice -->
-      <div style="background-color: #f8f9fa; border-left: 3px solid #6b7280; padding: 16px 20px; margin: 0 0 24px 0; border-radius: 0 6px 6px 0;">
-        <p style="margin: 0; font-size: 14px; color: #4b5563;">
-          Un devis detaille incluant les frais de transport vous sera adresse prochainement.
+    const bodyHtml = `
+        <p style="margin: 0 0 16px 0;">
+          Nous avons bien re&ccedil;u votre commande <strong>${orderNumber}</strong>.
         </p>
-      </div>
 
-      <!-- Next steps -->
-      <p style="margin: 0 0 8px 0; color: #333;">
-        Notre equipe va etudier votre commande et vous recontactera sous 48h.
-      </p>
-    </div>
+        <!-- Order summary table -->
+        <table style="width: 100%; border-collapse: collapse; margin: 0 0 20px 0; font-size: 14px;">
+          <tr style="border-bottom: 1px solid ${/* teal hr */ '#99d5d1'};">
+            <td style="padding: 10px 0; color: #4b5563;">Restaurant</td>
+            <td style="padding: 10px 0; text-align: right; font-weight: 500; color: #1f2937;">${restaurantName}</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #99d5d1;">
+            <td style="padding: 10px 0; color: #4b5563;">Articles</td>
+            <td style="padding: 10px 0; text-align: right; font-weight: 500; color: #1f2937;">${itemsCount}</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #99d5d1;">
+            <td style="padding: 10px 0; color: #4b5563;">Total HT</td>
+            <td style="padding: 10px 0; text-align: right; font-weight: 500; color: #1f2937;">${formatPrice(totalHT)}</td>
+          </tr>
+          <tr>
+            <td style="padding: 10px 0; color: #4b5563; font-weight: 600;">Total TTC</td>
+            <td style="padding: 10px 0; text-align: right; font-weight: 700; color: #1f2937; font-size: 16px;">${formatPrice(totalTTC)}</td>
+          </tr>
+        </table>
 
-    <!-- Footer -->
-    <div style="padding: 24px 40px; background-color: #fafafa; border-top: 1px solid #f0f0f0;">
-      <p style="margin: 0 0 4px 0; font-size: 13px; color: #1a1a1a; font-weight: 600;">
-        LinkMe by Verone
-      </p>
-      <p style="margin: 0 0 4px 0; font-size: 12px; color: #6b7280;">
-        229 rue Saint-Honore, 75001 Paris
-      </p>
-      <p style="margin: 0 0 12px 0; font-size: 12px; color: #6b7280;">
-        Ceci est un message automatique, merci de ne pas y repondre.
-        Pour toute question : <a href="mailto:romeo@veronecollections.fr" style="color: #6b7280; text-decoration: none;">romeo@veronecollections.fr</a>
-      </p>
-      <p style="margin: 0; font-size: 11px; color: #9ca3af;">
-        Cet email est un accuse de reception. Il ne constitue pas un devis ni une facture.
-      </p>
-    </div>
+        <div style="background-color: #ccfbf1; padding: 16px; border-radius: 6px; margin: 0 0 16px 0; border: 1px solid #99d5d1;">
+          <p style="margin: 0 0 8px 0; font-size: 14px; color: #0f766e;">
+            Votre commande va &ecirc;tre analys&eacute;e par notre &eacute;quipe et approuv&eacute;e dans un d&eacute;lai de 48h.
+          </p>
+          <p style="margin: 0; font-size: 14px; color: #0f766e;">
+            Un devis vous sera envoy&eacute; avec les informations de livraison.
+          </p>
+        </div>`;
 
-  </div>
-</body>
-</html>
-    `;
+    const emailHtml = buildEmailHtml({
+      title: 'Confirmation de votre commande',
+      recipientName: requesterName,
+      accentColor: 'teal',
+      bodyHtml,
+    });
 
-    // Send email (logo degrades gracefully if file not found)
-    const logoAttachment = getLogoAttachment();
-    const attachments = logoAttachment ? [logoAttachment] : [];
-
+    // Send email
     const result = await resendClient.emails.send({
-      from: process.env.RESEND_FROM_EMAIL ?? 'contact@verone.fr',
+      from: process.env.RESEND_FROM_EMAIL ?? 'commandes@verone.fr',
       to: requesterEmail,
-      subject: subject,
+      subject,
       html: emailHtml,
       replyTo: process.env.RESEND_REPLY_TO ?? 'romeo@veronecollections.fr',
-      attachments,
+      attachments: getLogoAttachments(),
     });
 
     // Log event in sales_order_events (non-blocking)

@@ -70,7 +70,6 @@ export const Constants = {
         'transfer_other',
         'card',
         'compensation',
-        'verified_bubble',
       ],
       matching_status: [
         'unmatched',

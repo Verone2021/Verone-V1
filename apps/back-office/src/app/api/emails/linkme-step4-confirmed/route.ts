@@ -122,7 +122,7 @@ export async function POST(request: NextRequest) {
       to: requesterEmail,
       subject: `Commande ${orderNumber} - Livraison confirm\u00e9e`,
       html: requesterHtml,
-      replyTo: process.env.RESEND_REPLY_TO ?? 'commandes@verone.fr',
+      replyTo: process.env.RESEND_REPLY_TO ?? 'romeo@veronecollections.fr',
       attachments: getLogoAttachments(),
     });
 

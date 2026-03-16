@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
       to: requesterEmail,
       subject: `Commande ${orderNumber} - Non valid\u00e9e`,
       html: emailHtml,
-      replyTo: process.env.RESEND_REPLY_TO ?? 'commandes@verone.fr',
+      replyTo: process.env.RESEND_REPLY_TO ?? 'romeo@veronecollections.fr',
       attachments: getLogoAttachments(),
     });
 

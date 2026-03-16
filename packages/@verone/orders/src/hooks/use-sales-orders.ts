@@ -25,8 +25,7 @@ export type ManualPaymentType =
   | 'check'
   | 'transfer_other'
   | 'card'
-  | 'compensation'
-  | 'verified_bubble';
+  | 'compensation';
 
 export interface OrderPayment {
   id: string;
@@ -1109,7 +1108,6 @@ export function useSalesOrders() {
           transfer_other: 'Virement autre banque',
           card: 'Carte bancaire',
           compensation: 'Compensation',
-          verified_bubble: 'Vérifié Bubble',
         };
 
         toastRef.current({

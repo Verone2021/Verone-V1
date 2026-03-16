@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
           to: email,
           subject: `Demande de stockage non valid\u00e9e - ${productName}`,
           html: emailHtml,
-          replyTo: process.env.RESEND_REPLY_TO ?? 'commandes@verone.fr',
+          replyTo: process.env.RESEND_REPLY_TO ?? 'romeo@veronecollections.fr',
           attachments: getLogoAttachments(),
         })
       )
