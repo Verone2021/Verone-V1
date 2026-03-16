@@ -316,6 +316,10 @@ export function useOrganisations(filters?: OrganisationFilters) {
             has_different_shipping_address:
               data.has_different_shipping_address ?? false,
 
+            // ✅ Coordonnées GPS (remplies par AddressAutocomplete)
+            latitude: data.latitude ?? null,
+            longitude: data.longitude ?? null,
+
             // ✅ Classification client (existantes en BD)
             customer_type: data.customer_type || null,
             prepayment_required: data.prepayment_required ?? false,
@@ -387,6 +391,8 @@ export function useOrganisations(filters?: OrganisationFilters) {
         'shipping_region',
         'shipping_country',
         'has_different_shipping_address',
+        'latitude',
+        'longitude',
         'customer_type',
         'prepayment_required',
         'enseigne_id',

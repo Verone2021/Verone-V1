@@ -11,7 +11,13 @@
  * Les triggers stock sont agnostiques du canal - meme workflow pour tous.
  */
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  useRef,
+} from 'react';
 
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -222,7 +228,7 @@ const isOrderEditable = (order: SalesOrder, channelId?: string | null) => {
 
 const getChannelRedirectUrl = (order: SalesOrder) => {
   if (order.channel_id === LINKME_CHANNEL_ID) {
-    if (order.status === 'pending_approval') {
+    if (order.status === 'draft' && order.pending_admin_validation === true) {
       return '/canaux-vente/linkme/approbations';
     }
     return '/canaux-vente/linkme/commandes';
@@ -361,19 +367,31 @@ export function SalesOrdersTable({
     });
   };
 
-  // Fetch initial avec filtre canal
+  // ✅ FIX: Refs stables pour éviter re-fetch en StrictMode
+  const fetchOrdersRef = useRef(fetchOrders);
+  fetchOrdersRef.current = fetchOrders;
+  const fetchStatsRef = useRef(fetchStats);
+  fetchStatsRef.current = fetchStats;
+
+  // Fetch initial avec filtre canal (StrictMode safe)
   useEffect(() => {
     // ✅ OPTIMISÉ: Ne pas fetch si preloadedOrders fourni (évite double fetch)
     if (preloadedOrders) return;
 
+    let stale = false;
     const filters = channelId ? { channel_id: channelId } : undefined;
-    void fetchOrders(filters).catch((err: unknown) => {
-      console.error('[SalesOrdersTable] fetchOrders failed:', err);
-    });
-    void fetchStats(filters).catch((err: unknown) => {
-      console.error('[SalesOrdersTable] fetchStats failed:', err);
-    });
-  }, [fetchOrders, fetchStats, channelId, preloadedOrders]);
+    if (!stale) {
+      void fetchOrdersRef.current(filters).catch((err: unknown) => {
+        console.error('[SalesOrdersTable] fetchOrders failed:', err);
+      });
+      void fetchStatsRef.current(filters).catch((err: unknown) => {
+        console.error('[SalesOrdersTable] fetchStats failed:', err);
+      });
+    }
+    return () => {
+      stale = true;
+    };
+  }, [channelId, preloadedOrders]);
 
   // Ouvrir automatiquement le modal si query param ?id= present
   useEffect(() => {
@@ -405,8 +423,25 @@ export function SalesOrdersTable({
 
     const filtered = orders.filter(order => {
       // Filtre onglet statut (accès direct, prioritaire)
-      if (activeTab !== 'all' && order.status !== activeTab) {
-        return false;
+      // pending_approval = status 'pending_approval' OU legacy 'draft' + pending_admin_validation
+      if (activeTab !== 'all') {
+        if (activeTab === 'pending_approval') {
+          if (
+            !(
+              order.status === 'draft' &&
+              order.pending_admin_validation === true
+            )
+          )
+            return false;
+        } else if (activeTab === 'draft') {
+          if (
+            order.status !== 'draft' ||
+            order.pending_admin_validation === true
+          )
+            return false;
+        } else if (order.status !== activeTab) {
+          return false;
+        }
       }
 
       // Filtre avancé: statuts multi-select (si onglet = 'all')
@@ -686,9 +721,12 @@ export function SalesOrdersTable({
   const tabCounts = useMemo(() => {
     return {
       all: orders.length,
-      pending_approval: orders.filter(o => o.status === 'pending_approval')
-        .length,
-      draft: orders.filter(o => o.status === 'draft').length,
+      pending_approval: orders.filter(
+        o => o.status === 'draft' && o.pending_admin_validation === true
+      ).length,
+      draft: orders.filter(
+        o => o.status === 'draft' && o.pending_admin_validation !== true
+      ).length,
       validated: orders.filter(o => o.status === 'validated').length,
       shipped: orders.filter(
         o => o.status === 'shipped' || o.status === 'partially_shipped'
@@ -1621,10 +1659,16 @@ export function SalesOrdersTable({
                                 <Badge
                                   className={cn(
                                     'text-xs',
-                                    statusColors[order.status]
+                                    order.status === 'draft' &&
+                                      order.pending_admin_validation === true
+                                      ? statusColors['pending_approval']
+                                      : statusColors[order.status]
                                   )}
                                 >
-                                  {statusLabels[order.status]}
+                                  {order.status === 'draft' &&
+                                  order.pending_admin_validation === true
+                                    ? statusLabels['pending_approval']
+                                    : statusLabels[order.status]}
                                 </Badge>
                                 {hasSamples && (
                                   <Badge

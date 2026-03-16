@@ -5,7 +5,7 @@ import { Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 
-import { CheckCircle, Package, ArrowRight, Mail, Phone } from 'lucide-react';
+import { CheckCircle, Package, ArrowRight } from 'lucide-react';
 
 function ConfirmationContent() {
   const searchParams = useSearchParams();
@@ -49,57 +49,45 @@ function ConfirmationContent() {
                   1
                 </span>
                 <span>
-                  Vous allez recevoir un email de confirmation avec les détails
-                  de votre commande.
+                  Un email de confirmation vous a ete envoye avec les details de
+                  votre commande.
                 </span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="w-5 h-5 bg-blue-600 text-white rounded-full flex items-center justify-center flex-shrink-0 text-xs">
                   2
                 </span>
-                <span>Notre équipe prépare votre commande avec soin.</span>
+                <span>
+                  Notre equipe etudie votre commande et vous enverra un devis
+                  detaille incluant les frais de transport sous 48h.
+                </span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="w-5 h-5 bg-blue-600 text-white rounded-full flex items-center justify-center flex-shrink-0 text-xs">
                   3
                 </span>
                 <span>
-                  Vous recevrez un email avec le suivi de livraison dès
-                  l'expédition.
+                  Vous recevrez une notification des que votre commande sera
+                  approuvee, avec le montant global incluant le transport.
                 </span>
               </li>
             </ul>
           </div>
 
-          {/* Contact Info */}
-          <div className="border-t pt-6 mb-6">
-            <p className="text-sm text-gray-600 mb-3">
-              Des questions ? Contactez-nous :
-            </p>
-            <div className="flex flex-wrap justify-center gap-4 text-sm">
-              <a
-                href="mailto:support@verone.fr"
-                className="flex items-center gap-2 text-blue-600 hover:text-blue-800"
-              >
-                <Mail className="h-4 w-4" />
-                support@verone.fr
-              </a>
-              <a
-                href="tel:+33123456789"
-                className="flex items-center gap-2 text-blue-600 hover:text-blue-800"
-              >
-                <Phone className="h-4 w-4" />
-                01 23 45 67 89
-              </a>
-            </div>
-          </div>
+          {/* Info suivi */}
+          <p className="text-sm text-gray-500 mb-6">
+            Suivez l&apos;avancement de votre commande directement depuis votre
+            espace commandes. Si aucune date de livraison souhaitee n&apos;a ete
+            indiquee, pensez a la renseigner pour que votre commande puisse etre
+            expediee.
+          </p>
 
           {/* CTA */}
           <Link
-            href="/"
+            href="/commandes"
             className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
           >
-            Continuer mes achats
+            Voir mes commandes
             <ArrowRight className="h-4 w-4" />
           </Link>
         </div>

@@ -10,6 +10,7 @@ import { NextResponse } from 'next/server';
 
 import { Resend } from 'resend';
 
+import { getLogoAttachments } from '../_shared/email-logo';
 import { buildEmailHtml } from '../_shared/email-template';
 
 function getResendClient(): Resend {
@@ -133,6 +134,7 @@ export async function POST(request: NextRequest) {
       to: recipients,
       subject: `[LinkMe] Informations compl\u00e9t\u00e9es - ${orderNumber}`,
       html: emailHtml,
+      attachments: getLogoAttachments(),
     });
 
     if (error) {

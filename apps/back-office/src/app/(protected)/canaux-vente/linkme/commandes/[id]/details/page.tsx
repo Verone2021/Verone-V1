@@ -91,7 +91,7 @@ import {
 
 import { ContactCardBO } from '../../../components/contacts/ContactCardBO';
 import { NewContactForm } from '../../../components/contacts/NewContactForm';
-import { isOrderLocked } from '@verone/orders';
+import { isOrderLocked, OrderTimeline, useOrderHistory } from '@verone/orders';
 import { PaymentSection } from '@/components/orders/PaymentSection';
 import { FeesSection } from '@/components/orders/FeesSection';
 import { InvoicesSection } from '@/components/orders/InvoicesSection';
@@ -284,6 +284,10 @@ export default function LinkMeOrderDetailsPage() {
   const [enrichedItems, setEnrichedItems] = useState<EnrichedOrderItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Order history timeline
+  const { events: historyEvents, loading: historyLoading } =
+    useOrderHistory(orderId);
 
   // Status management
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
@@ -2104,6 +2108,9 @@ export default function LinkMeOrderDetailsPage() {
               </CardContent>
             </Card>
           )}
+
+          {/* HISTORIQUE */}
+          <OrderTimeline events={historyEvents} loading={historyLoading} />
         </div>
       </div>
 

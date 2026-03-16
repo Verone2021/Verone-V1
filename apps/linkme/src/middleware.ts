@@ -40,6 +40,8 @@ const PUBLIC_ROUTES: RegExp[] = [
   /^\/api\/health/,
   /^\/api\/globe-items/,
   /^\/api\/page-config/,
+  /^\/api\/emails\/order-confirmation/,
+  /^\/api\/emails\/step4-confirmed/,
   // Assets statiques
   /^\/_next/,
   /\.\w+$/,

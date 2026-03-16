@@ -15,6 +15,9 @@ export type * from './components/shipments';
 export { SalesOrdersTable } from './components/SalesOrdersTable';
 export type { SalesOrdersTableProps } from './components/SalesOrdersTable';
 
+// OrderTimeline - Timeline historique commandes
+export { OrderTimeline } from './components/OrderTimeline';
+
 // Types
 export * from './types/advanced-filters';
 

@@ -99,10 +99,13 @@ export async function POST(request: Request, { params }: RouteParams) {
     // Separate fields: linkme_details vs organisation
     const linkmeDetailsUpdate: Record<string, string> = {};
     let organisationSiret: string | null = null;
+    let organisationVatNumber: string | null = null;
 
     for (const [key, value] of Object.entries(fields)) {
       if (key === 'organisation_siret') {
         organisationSiret = value;
+      } else if (key === 'organisation_vat_number') {
+        organisationVatNumber = value;
       } else if (LINKME_DETAILS_FIELDS.has(key)) {
         linkmeDetailsUpdate[key] = value;
       }
@@ -127,8 +130,8 @@ export async function POST(request: Request, { params }: RouteParams) {
       }
     }
 
-    // Update organisation SIRET if provided
-    if (organisationSiret) {
+    // Update organisation SIRET or VAT number if provided
+    if (organisationSiret || organisationVatNumber) {
       // Get customer_id from sales_order
       const { data: order } = await supabase
         .from('sales_orders')
@@ -137,9 +140,13 @@ export async function POST(request: Request, { params }: RouteParams) {
         .single();
 
       if (order?.customer_id) {
+        const orgUpdate: Record<string, string> = {};
+        if (organisationSiret) orgUpdate.siret = organisationSiret;
+        if (organisationVatNumber) orgUpdate.vat_number = organisationVatNumber;
+
         const { error: orgError } = await supabase
           .from('organisations')
-          .update({ siret: organisationSiret })
+          .update(orgUpdate)
           .eq('id', order.customer_id);
 
         if (orgError) {
@@ -147,7 +154,7 @@ export async function POST(request: Request, { params }: RouteParams) {
             '[API complete-info submit] organisation update error:',
             orgError
           );
-          // Non-blocking: SIRET update failure doesn't block form submission
+          // Non-blocking: organisation update failure doesn't block form submission
         }
       }
     }

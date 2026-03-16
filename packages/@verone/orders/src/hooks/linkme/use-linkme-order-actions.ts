@@ -166,103 +166,146 @@ async function approveOrder(
     throw new Error('Détails LinkMe non trouvés pour cette commande');
   }
 
-  // 2. Vérifier que l'Étape 2 est complète (owner_email présent)
-  const ownerEmail = details.owner_contact_same_as_requester
-    ? details.requester_email
-    : details.owner_email;
+  // 2. Déterminer l'email destinataire
+  // - Ouverture (is_new_restaurant) : propriétaire (owner_email)
+  // - Restaurant existant : demandeur (requester_email)
+  const ownerEmail = details.is_new_restaurant
+    ? details.owner_contact_same_as_requester
+      ? details.requester_email
+      : details.owner_email
+    : details.requester_email;
 
   if (!ownerEmail) {
-    throw new Error(
-      'Étape 2 incomplète: contact propriétaire requis pour approbation'
-    );
+    throw new Error("Email destinataire manquant pour l'approbation");
   }
 
-  // 2b. CASCADE: Si ouverture (is_new_restaurant = true), créer organisation + contacts
-  const _createdOrganisationIdDecl: string | null = null;
+  // 2b. CASCADE: Si ouverture (is_new_restaurant = true), approuver l'organisation + vérifier contacts
   if (details.is_new_restaurant) {
-    // a) Créer l'organisation avec les données du formulaire
-    const { data: newOrg, error: orgError } = await supabase
-      .from('organisations')
-      .insert({
-        legal_name:
-          details.owner_company_legal_name ??
-          details.owner_company_trade_name ??
-          'À compléter',
-        trade_name: details.owner_company_trade_name,
-        email: details.owner_email ?? null,
-        phone: details.owner_phone ?? null,
-        approval_status: 'approved',
-        approved_at: new Date().toISOString(),
-      })
-      .select('id')
+    // Fetch current order to check if org + contacts already exist (created by RPC)
+    const { data: orderCheck } = await supabase
+      .from('sales_orders')
+      .select('customer_id, responsable_contact_id, billing_contact_id')
+      .eq('id', input.orderId)
       .single();
 
-    if (orgError) {
-      console.error('Erreur création organisation:', orgError);
-      throw new Error(`Erreur création organisation: ${orgError.message}`);
+    if (orderCheck?.customer_id) {
+      // Organisation already created by RPC — just approve it
+      const { error: approveOrgError } = await supabase
+        .from('organisations')
+        .update({
+          approval_status: 'approved',
+          approved_at: new Date().toISOString(),
+        })
+        .eq('id', orderCheck.customer_id);
+
+      if (approveOrgError) {
+        console.error('Erreur approbation organisation:', approveOrgError);
+        throw new Error(
+          `Erreur approbation organisation: ${approveOrgError.message}`
+        );
+      }
     }
 
-    const _createdOrganisationId = newOrg.id;
+    // Contacts: dedup by email — prefer existing contact in the org
+    const orgId = orderCheck?.customer_id ?? '';
 
-    // b) Lier la commande à l'organisation nouvellement créée
-    const { error: linkError } = await supabase
-      .from('sales_orders')
-      .update({
-        customer_id: newOrg.id,
-        customer_type: 'organization',
-      })
-      .eq('id', input.orderId);
+    if (!orderCheck?.responsable_contact_id && details.owner_email) {
+      // Check if a contact with this email already exists in the org
+      const { data: existingContact } = await supabase
+        .from('contacts')
+        .select('id')
+        .eq('organisation_id', orgId)
+        .eq('email', details.owner_email)
+        .limit(1)
+        .maybeSingle();
 
-    if (linkError) {
-      console.error('Erreur liaison commande-organisation:', linkError);
-      throw new Error(`Erreur liaison commande: ${linkError.message}`);
+      if (existingContact) {
+        // Reuse existing contact
+        await supabase
+          .from('sales_orders')
+          .update({ responsable_contact_id: existingContact.id })
+          .eq('id', input.orderId);
+      } else {
+        // Create new contact (edge case: RPC didn't create it)
+        const ownerName = details.owner_name ?? '';
+        const ownerNameParts = ownerName.split(' ');
+        const contactData: Database['public']['Tables']['contacts']['Insert'] =
+          {
+            organisation_id: orgId,
+            first_name: ownerNameParts[0] ?? '',
+            last_name: ownerNameParts.slice(1).join(' ') ?? '',
+            email: details.owner_email,
+            phone: details.owner_phone ?? null,
+            is_primary_contact: true,
+          };
+        const { data: newContact, error: ownerContactError } = await supabase
+          .from('contacts')
+          .insert(contactData)
+          .select('id')
+          .single();
+
+        if (ownerContactError) {
+          console.error(
+            'Erreur création contact propriétaire:',
+            ownerContactError
+          );
+        } else if (newContact) {
+          await supabase
+            .from('sales_orders')
+            .update({ responsable_contact_id: newContact.id })
+            .eq('id', input.orderId);
+        }
+      }
     }
 
-    // c) Créer contact propriétaire
-    const ownerName = details.owner_name ?? '';
-    const ownerNameParts = ownerName.split(' ');
-    const contactData: Database['public']['Tables']['contacts']['Insert'] = {
-      organisation_id: newOrg.id,
-      first_name: ownerNameParts[0] ?? '',
-      last_name: ownerNameParts.slice(1).join(' ') ?? '',
-      email: details.owner_email ?? '',
-      phone: details.owner_phone ?? null,
-      is_primary_contact: true,
-    };
-    const { error: ownerContactError } = await supabase
-      .from('contacts')
-      .insert(contactData);
-
-    if (ownerContactError) {
-      console.error('Erreur création contact propriétaire:', ownerContactError);
-      // Non bloquant, on continue
-    }
-
-    // d) Créer contact facturation si différent
     if (
+      !orderCheck?.billing_contact_id &&
       details.billing_contact_source === 'custom' &&
       details.billing_email &&
       details.billing_email !== details.owner_email
     ) {
-      const billingName = details.billing_name ?? '';
-      const billingNameParts = billingName.split(' ');
-      const { error: billingContactError } = await supabase
+      // Check if a contact with this email already exists in the org
+      const { data: existingBilling } = await supabase
         .from('contacts')
-        .insert({
-          organisation_id: newOrg.id,
-          first_name: billingNameParts[0] ?? '',
-          last_name: billingNameParts.slice(1).join(' ') ?? '',
-          email: details.billing_email,
-          phone: details.billing_phone,
-          is_billing_contact: true,
-        });
+        .select('id')
+        .eq('organisation_id', orgId)
+        .eq('email', details.billing_email)
+        .limit(1)
+        .maybeSingle();
 
-      if (billingContactError) {
-        console.error(
-          'Erreur création contact facturation:',
-          billingContactError
-        );
-        // Non bloquant, on continue
+      if (existingBilling) {
+        // Reuse existing contact
+        await supabase
+          .from('sales_orders')
+          .update({ billing_contact_id: existingBilling.id })
+          .eq('id', input.orderId);
+      } else {
+        const billingName = details.billing_name ?? '';
+        const billingNameParts = billingName.split(' ');
+        const { data: newBilling, error: billingContactError } = await supabase
+          .from('contacts')
+          .insert({
+            organisation_id: orgId,
+            first_name: billingNameParts[0] ?? '',
+            last_name: billingNameParts.slice(1).join(' ') ?? '',
+            email: details.billing_email,
+            phone: details.billing_phone,
+            is_billing_contact: true,
+          })
+          .select('id')
+          .single();
+
+        if (billingContactError) {
+          console.error(
+            'Erreur création contact facturation:',
+            billingContactError
+          );
+        } else if (newBilling) {
+          await supabase
+            .from('sales_orders')
+            .update({ billing_contact_id: newBilling.id })
+            .eq('id', input.orderId);
+        }
       }
     }
   }
@@ -309,9 +352,11 @@ async function approveOrder(
     .select('order_number, total_ttc, customer_id, customer_type')
     .eq('id', input.orderId)
     .single();
-  const ownerName = details.owner_contact_same_as_requester
-    ? details.requester_name
-    : (details.owner_name ?? details.requester_name);
+  const ownerName = details.is_new_restaurant
+    ? details.owner_contact_same_as_requester
+      ? details.requester_name
+      : (details.owner_name ?? details.requester_name)
+    : details.requester_name;
   // Requête séparée pour l'organisation (pas de FK car customer_id est polymorphique)
   let organisationName: string | null = null;
   if (orderData?.customer_type === 'organization' && orderData?.customer_id) {
@@ -329,6 +374,7 @@ async function approveOrder(
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        salesOrderId: input.orderId,
         orderNumber: orderData?.order_number,
         ownerEmail,
         ownerName,
@@ -555,12 +601,110 @@ async function rejectOrder(
     throw new Error(`Erreur mise à jour commande: ${updateError.message}`);
   }
 
+  // 4b. Si ouverture de restaurant, rejeter l'organisation + supprimer les contacts
+  if (details.is_new_restaurant && order.customer_id) {
+    // Reject the organisation
+    const { error: rejectOrgError } = await supabase
+      .from('organisations')
+      .update({
+        approval_status: 'rejected',
+        archived_at: new Date().toISOString(),
+      } as Record<string, unknown>)
+      .eq('id', order.customer_id);
+
+    if (rejectOrgError) {
+      console.error('Erreur rejet organisation:', rejectOrgError);
+    }
+
+    // Fetch order to get contact IDs
+    const { data: orderForContacts } = await supabase
+      .from('sales_orders')
+      .select('responsable_contact_id, billing_contact_id, delivery_contact_id')
+      .eq('id', input.orderId)
+      .single();
+
+    if (orderForContacts) {
+      const contactIds = [
+        orderForContacts.responsable_contact_id,
+        orderForContacts.billing_contact_id,
+        orderForContacts.delivery_contact_id,
+      ].filter((id): id is string => id != null);
+
+      // Deduplicate (delivery may = responsable)
+      const uniqueContactIds = [...new Set(contactIds)];
+
+      if (uniqueContactIds.length > 0) {
+        // Check which contacts are referenced by OTHER orders (not this one)
+        const { data: referencedContacts } = await supabase
+          .from('sales_orders')
+          .select(
+            'responsable_contact_id, billing_contact_id, delivery_contact_id'
+          )
+          .neq('id', input.orderId)
+          .or(
+            uniqueContactIds
+              .flatMap(id => [
+                `responsable_contact_id.eq.${id}`,
+                `billing_contact_id.eq.${id}`,
+                `delivery_contact_id.eq.${id}`,
+              ])
+              .join(',')
+          );
+
+        // Collect contact IDs used by other orders
+        const usedByOtherOrders = new Set<string>();
+        if (referencedContacts) {
+          for (const row of referencedContacts) {
+            if (row.responsable_contact_id)
+              usedByOtherOrders.add(row.responsable_contact_id);
+            if (row.billing_contact_id)
+              usedByOtherOrders.add(row.billing_contact_id);
+            if (row.delivery_contact_id)
+              usedByOtherOrders.add(row.delivery_contact_id);
+          }
+        }
+
+        // Only delete contacts NOT used by other orders
+        const safeToDelete = uniqueContactIds.filter(
+          id => !usedByOtherOrders.has(id)
+        );
+
+        if (safeToDelete.length > 0) {
+          // 1. Nullify FKs on the order first (avoid constraint violation)
+          const { error: nullifyError } = await supabase
+            .from('sales_orders')
+            .update({
+              responsable_contact_id: null,
+              billing_contact_id: null,
+              delivery_contact_id: null,
+            } as Record<string, unknown>)
+            .eq('id', input.orderId);
+
+          if (nullifyError) {
+            console.error('Erreur nullify contact FKs:', nullifyError);
+          } else {
+            // 2. Hard DELETE the contacts
+            const { error: deleteError } = await supabase
+              .from('contacts')
+              .delete()
+              .in('id', safeToDelete);
+
+            if (deleteError) {
+              console.error('Erreur suppression contacts:', deleteError);
+            }
+          }
+        }
+      }
+    }
+  }
+
   // 5. Envoyer email au demandeur
   try {
     await fetch('/api/emails/linkme-order-rejected', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        salesOrderId: input.orderId,
         orderNumber: order.order_number,
         requesterEmail: details.requester_email,
         requesterName: details.requester_name,

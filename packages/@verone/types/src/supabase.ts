@@ -7776,6 +7776,76 @@ export type Database = {
           },
         ];
       };
+      sales_order_events: {
+        Row: {
+          created_at: string;
+          created_by: string | null;
+          event_type: string;
+          id: string;
+          metadata: Json | null;
+          sales_order_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          created_by?: string | null;
+          event_type: string;
+          id?: string;
+          metadata?: Json | null;
+          sales_order_id: string;
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string | null;
+          event_type?: string;
+          id?: string;
+          metadata?: Json | null;
+          sales_order_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'sales_order_events_created_by_fkey';
+            columns: ['created_by'];
+            isOneToOne: false;
+            referencedRelation: 'v_linkme_users';
+            referencedColumns: ['user_id'];
+          },
+          {
+            foreignKeyName: 'sales_order_events_sales_order_id_fkey';
+            columns: ['sales_order_id'];
+            isOneToOne: false;
+            referencedRelation: 'affiliate_pending_orders';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'sales_order_events_sales_order_id_fkey';
+            columns: ['sales_order_id'];
+            isOneToOne: false;
+            referencedRelation: 'linkme_orders_enriched';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'sales_order_events_sales_order_id_fkey';
+            columns: ['sales_order_id'];
+            isOneToOne: false;
+            referencedRelation: 'linkme_orders_with_margins';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'sales_order_events_sales_order_id_fkey';
+            columns: ['sales_order_id'];
+            isOneToOne: false;
+            referencedRelation: 'sales_orders';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'sales_order_events_sales_order_id_fkey';
+            columns: ['sales_order_id'];
+            isOneToOne: false;
+            referencedRelation: 'v_transactions_missing_invoice';
+            referencedColumns: ['sales_order_id'];
+          },
+        ];
+      };
       sales_order_items: {
         Row: {
           base_price_ht_locked: number | null;
@@ -7940,6 +8010,7 @@ export type Database = {
           confirmed_delivery_date: string | null;
           created_at: string | null;
           delivery_address: string | null;
+          delivery_asap: boolean | null;
           delivery_city: string | null;
           delivery_contact_email: string | null;
           delivery_contact_name: string | null;
@@ -7992,6 +8063,7 @@ export type Database = {
           confirmed_delivery_date?: string | null;
           created_at?: string | null;
           delivery_address?: string | null;
+          delivery_asap?: boolean | null;
           delivery_city?: string | null;
           delivery_contact_email?: string | null;
           delivery_contact_name?: string | null;
@@ -8044,6 +8116,7 @@ export type Database = {
           confirmed_delivery_date?: string | null;
           created_at?: string | null;
           delivery_address?: string | null;
+          delivery_asap?: boolean | null;
           delivery_city?: string | null;
           delivery_contact_email?: string | null;
           delivery_contact_name?: string | null;
@@ -8252,7 +8325,7 @@ export type Database = {
           confirmed_by: string | null;
           consultation_id: string | null;
           created_at: string;
-          created_by: string;
+          created_by: string | null;
           created_by_affiliate_id: string | null;
           currency: string;
           customer_id: string | null;
@@ -8323,7 +8396,7 @@ export type Database = {
           confirmed_by?: string | null;
           consultation_id?: string | null;
           created_at?: string;
-          created_by: string;
+          created_by?: string | null;
           created_by_affiliate_id?: string | null;
           currency?: string;
           customer_id?: string | null;
@@ -8394,7 +8467,7 @@ export type Database = {
           confirmed_by?: string | null;
           consultation_id?: string | null;
           created_at?: string;
-          created_by?: string;
+          created_by?: string | null;
           created_by_affiliate_id?: string | null;
           currency?: string;
           customer_id?: string | null;
@@ -14128,8 +14201,7 @@ export type Database = {
         | 'check'
         | 'transfer_other'
         | 'card'
-        | 'compensation'
-        | 'verified_bubble';
+        | 'compensation';
       matching_status:
         | 'unmatched'
         | 'auto_matched'
@@ -14487,7 +14559,6 @@ export const Constants = {
         'transfer_other',
         'card',
         'compensation',
-        'verified_bubble',
       ],
       matching_status: [
         'unmatched',

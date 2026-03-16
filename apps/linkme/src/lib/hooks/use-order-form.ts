@@ -100,7 +100,7 @@ export interface UseOrderFormReturn {
   // Actions
   resetForm: () => void;
   validateCurrentStep: () => boolean;
-  submit: () => Promise<string | null>; // Retourne order_id ou null si erreur
+  submit: () => Promise<{ orderId: string; orderNumber: string } | null>;
 }
 
 // ============================================================================
@@ -372,7 +372,10 @@ export function useOrderForm(): UseOrderFormReturn {
     setErrors([]);
   }, []);
 
-  const submit = useCallback(async (): Promise<string | null> => {
+  const submit = useCallback(async (): Promise<{
+    orderId: string;
+    orderNumber: string;
+  } | null> => {
     // Valider toutes les étapes
     if (!validateStep(8, formData)) {
       setErrors(getStepErrors(8, formData));
@@ -639,7 +642,10 @@ export function useOrderForm(): UseOrderFormReturn {
         delivery_postal_code: emptyToNull(formData.delivery.postalCode),
         delivery_city: emptyToNull(formData.delivery.city),
         // Step 7: Delivery options
-        desired_delivery_date: formData.delivery.desiredDate ?? null,
+        desired_delivery_date: formData.delivery.deliveryAsap
+          ? null
+          : (formData.delivery.desiredDate ?? null),
+        delivery_asap: formData.delivery.deliveryAsap,
         is_mall_delivery: formData.delivery.isMallDelivery,
         mall_email: formData.delivery.mallEmail ?? null,
         semi_trailer_accessible: formData.delivery.semiTrailerAccessible,
@@ -687,10 +693,42 @@ export function useOrderForm(): UseOrderFormReturn {
         queryKey: ['affiliate-orders', affiliate.id],
       });
 
+      // Fetch order_number for redirect + email
+      const { data: orderData } = await supabase
+        .from('sales_orders')
+        .select('order_number')
+        .eq('id', orderId)
+        .single();
+
+      const orderNumber = orderData?.order_number ?? orderId;
+
+      // Send confirmation email (non-blocking)
+      try {
+        await fetch('/api/emails/order-confirmation', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            orderNumber,
+            requesterName: `${formData.contacts.responsable.firstName} ${formData.contacts.responsable.lastName}`,
+            requesterEmail: formData.contacts.responsable.email,
+            restaurantName:
+              formData.restaurant.existingName ??
+              formData.restaurant.newRestaurant?.tradeName ??
+              'N/A',
+            selectionName: formData.selection.selectionName,
+            itemsCount: cartTotals.itemsCount,
+            totalHT: cartTotals.totalHT,
+            totalTTC: cartTotals.totalTTC,
+          }),
+        });
+      } catch (emailError) {
+        console.error('[useOrderForm] Email confirmation error:', emailError);
+      }
+
       // Réinitialiser le formulaire après succès
       resetForm();
 
-      return orderId;
+      return { orderId, orderNumber };
     } catch (error) {
       console.error('Error submitting order:', error);
       const message =
@@ -702,7 +740,7 @@ export function useOrderForm(): UseOrderFormReturn {
     } finally {
       setIsSubmitting(false);
     }
-  }, [formData, resetForm, affiliate, queryClient]);
+  }, [formData, resetForm, affiliate, queryClient, cartTotals]);
 
   // ============================================
   // RETURN
