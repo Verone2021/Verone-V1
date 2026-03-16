@@ -75,7 +75,7 @@ export function useSimpleImageUpload(
       const filePath = `products/${fileName}`;
 
       // Upload vers Supabase Storage
-      const { data, error: uploadError } = await supabase.storage
+      const { data: _uploadData, error: uploadError } = await supabase.storage
         .from(bucket)
         .upload(filePath, file, {
           cacheControl: '3600',

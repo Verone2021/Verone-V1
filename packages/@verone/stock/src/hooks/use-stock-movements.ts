@@ -188,18 +188,18 @@ export function useStockMovements() {
         if (error) throw error;
 
         // Enrichir les produits avec primary_image_url (BR-TECH-002)
-        const enrichedMovements = (data || []).map(movement => ({
+        const enrichedMovements = (data ?? []).map(movement => ({
           ...movement,
           products: movement.products
             ? {
                 ...movement.products,
                 primary_image_url:
-                  movement.products.product_images?.[0]?.public_url || null,
+                  movement.products.product_images?.[0]?.public_url ?? null,
               }
             : null,
         }));
 
-        setMovements(enrichedMovements as any);
+        setMovements(enrichedMovements as readonly string[]);
       } catch (error) {
         console.error(
           'Erreur lors de la récupération des mouvements:',
@@ -269,7 +269,7 @@ export function useStockMovements() {
           }
         );
 
-        setStats(statsData || null);
+        setStats(statsData ?? null);
       } catch (error) {
         console.error(
           'Erreur lors de la récupération des statistiques:',
@@ -296,7 +296,7 @@ export function useStockMovements() {
 
         if (productError) throw productError;
 
-        const currentStock = product.stock_real || product.stock_quantity || 0;
+        const currentStock = product.stock_real ?? product.stock_quantity ?? 0;
 
         // 2. Calculer la nouvelle quantité selon le type de mouvement
         let newQuantity: number;
@@ -307,7 +307,7 @@ export function useStockMovements() {
             quantityChange = Math.abs(data.quantity_change);
             newQuantity = currentStock + quantityChange;
             break;
-          case 'OUT':
+          case 'OUT': {
             const quantityToRemove = Math.abs(data.quantity_change);
 
             // Validation stricte ERP : impossible de retirer plus que le stock disponible
@@ -320,7 +320,8 @@ export function useStockMovements() {
             quantityChange = -quantityToRemove;
             newQuantity = currentStock + quantityChange;
             break;
-          case 'ADJUST':
+          }
+          case 'ADJUST': {
             // Pour un ajustement, quantity_change représente la nouvelle quantité souhaitée
             const newTargetQuantity = Math.abs(data.quantity_change);
 
@@ -334,7 +335,8 @@ export function useStockMovements() {
             newQuantity = newTargetQuantity;
             quantityChange = newQuantity - currentStock;
             break;
-          case 'TRANSFER':
+          }
+          case 'TRANSFER': {
             // Pour un transfert, on gère comme une sortie pour l'instant
             const quantityToTransfer = Math.abs(data.quantity_change);
 
@@ -348,6 +350,7 @@ export function useStockMovements() {
             quantityChange = -quantityToTransfer;
             newQuantity = currentStock + quantityChange;
             break;
+          }
           default:
             throw new Error('Type de mouvement invalide');
         }
@@ -367,11 +370,11 @@ export function useStockMovements() {
               reference_id: data.reference_id,
               notes: data.notes,
               reason_code: data.reason_code,
-              affects_forecast: data.affects_forecast || false,
+              affects_forecast: data.affects_forecast ?? false,
               forecast_type: data.forecast_type,
               performed_by: (await supabase.auth.getUser()).data.user?.id,
             },
-          ] as any)
+          ] as readonly string[])
           .select('id')
           .single();
 
@@ -388,12 +391,13 @@ export function useStockMovements() {
         await fetchMovements();
 
         return movement;
-      } catch (error: any) {
+      } catch (err: unknown) {
+        const error = err instanceof Error ? err : new Error(String(err));
         console.error('Erreur lors de la création du mouvement:', error);
         toast({
           title: 'Erreur',
           description:
-            error.message || 'Impossible de créer le mouvement de stock',
+            error.message ?? 'Impossible de créer le mouvement de stock',
           variant: 'destructive',
         });
         throw error;
@@ -416,7 +420,7 @@ export function useStockMovements() {
         if (error) throw error;
 
         return (
-          data?.[0] || {
+          data?.[0] ?? {
             stock_real: 0,
             stock_forecasted_in: 0,
             stock_forecasted_out: 0,
@@ -484,7 +488,7 @@ export function useStockMovements() {
           user_profiles:
             userProfiles?.find(
               profile => profile.user_id === movement.performed_by
-            ) || null,
+            ) ?? null,
         }));
 
         return enrichedMovements;
@@ -535,7 +539,7 @@ export function useStockMovements() {
         product_id: productId,
         movement_type: 'OUT',
         quantity_change: quantity,
-        reference_type: referenceType || 'manual_entry',
+        reference_type: referenceType ?? 'manual_entry',
         reference_id: referenceId,
         notes: notes,
       });
@@ -592,7 +596,7 @@ export function useStockMovements() {
         found_inventory: 'Trouvaille inventaire',
         manual_adjustment: 'Ajustement manuel',
       };
-      return descriptions[reasonCode] || 'Motif inconnu';
+      return descriptions[reasonCode] ?? 'Motif inconnu';
     },
     []
   );

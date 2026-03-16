@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from 'react';
 
-import { useToast } from '@verone/common/hooks';
 import { PdfPreviewModalDynamic as PdfPreviewModal } from '@verone/finance/components';
 import {
   buildHistoriqueReportData,
@@ -65,7 +64,6 @@ export function HistoriqueReportView({
   const { movements, stats, loading, applyFilters } = useMovementsHistory({
     initialFilters,
   });
-  const { toast } = useToast();
   const [showPdfPreview, setShowPdfPreview] = useState(false);
 
   // Re-apply filters when dates change (for dynamic updates)
@@ -265,7 +263,7 @@ export function HistoriqueReportView({
                   </div>
                   <div className="w-full bg-gray-100 rounded-full h-6 overflow-hidden">
                     <div
-                      className={`${colors[t.type] || 'bg-gray-200'} h-full transition-all`}
+                      className={`${colors[t.type] ?? 'bg-gray-200'} h-full transition-all`}
                       style={{
                         width: `${maxCount > 0 ? (t.count / maxCount) * 100 : 0}%`,
                       }}
@@ -352,7 +350,7 @@ export function HistoriqueReportView({
                       )}
                     </TableCell>
                     <TableCell className="text-xs font-medium max-w-[180px] truncate">
-                      {movement.product_name || 'N/A'}
+                      {movement.product_name ?? 'N/A'}
                     </TableCell>
                     <TableCell>
                       {getMovementTypeBadge(movement.movement_type)}
@@ -368,7 +366,7 @@ export function HistoriqueReportView({
                       {movement.quantity_after}
                     </TableCell>
                     <TableCell className="text-xs text-gray-500 max-w-[150px] truncate">
-                      {movement.reason_description || movement.notes || '-'}
+                      {movement.reason_description ?? movement.notes ?? '-'}
                     </TableCell>
                   </TableRow>
                 ))}

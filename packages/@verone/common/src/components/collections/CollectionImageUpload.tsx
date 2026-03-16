@@ -49,12 +49,12 @@ export function CollectionImageUpload({
   // Hook useCollectionImages pour gestion cohérente
   const {
     primaryImage,
-    loading,
+    loading: _loading,
     uploading,
     error,
     uploadImage,
     deleteImage,
-    hasImages,
+    hasImages: _hasImages,
     fetchImages,
   } = useCollectionImages({
     collectionId,
@@ -64,14 +64,14 @@ export function CollectionImageUpload({
   // 🔄 Synchronisation avec useCollectionImages
   useEffect(() => {
     if (collectionId && collectionId.trim() !== '') {
-      fetchImages();
+      void fetchImages();
     }
   }, [collectionId, fetchImages]);
 
   // 🎯 Callback après upload réussi
   useEffect(() => {
     if (primaryImage && onImageUpload) {
-      onImageUpload(primaryImage.id, primaryImage.public_url || '');
+      onImageUpload(primaryImage.id, primaryImage.public_url ?? '');
     }
   }, [primaryImage, onImageUpload]);
 
@@ -86,13 +86,13 @@ export function CollectionImageUpload({
 
     try {
       // Upload l'image en tant qu'image de couverture primaire
-      const result = await uploadImage(file, {
+      const _result = await uploadImage(file, {
         isPrimary: true,
         imageType: 'cover',
         altText: `Image couverture - ${file.name}`,
       });
 
-      console.log('✅ Image couverture collection uploadée avec succès');
+      console.warn('✅ Image couverture collection uploadée avec succès');
     } catch (error) {
       console.error('❌ Erreur upload image collection:', error);
     }
@@ -107,7 +107,7 @@ export function CollectionImageUpload({
     try {
       await deleteImage(primaryImage.id);
       onImageRemove?.();
-      console.log('✅ Image collection supprimée');
+      console.warn('✅ Image collection supprimée');
     } catch (error) {
       console.error('❌ Erreur suppression image collection:', error);
     }
@@ -131,21 +131,21 @@ export function CollectionImageUpload({
     e.stopPropagation();
     setDragActive(false);
 
-    if (disabled || !collectionId) return;
+    if (disabled ?? !collectionId) return;
 
     const files = e.dataTransfer.files;
-    if (files && files[0]) {
-      handleFileSelect(files[0]);
+    if (files?.[0]) {
+      void handleFileSelect(files[0]);
     }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
-    if (disabled || !collectionId) return;
+    if (disabled ?? !collectionId) return;
 
     const files = e.target.files;
-    if (files && files[0]) {
-      handleFileSelect(files[0]);
+    if (files?.[0]) {
+      void handleFileSelect(files[0]);
     }
   };
 
@@ -172,8 +172,8 @@ export function CollectionImageUpload({
         <div className="relative group">
           <div className="relative aspect-video w-full max-w-md rounded-lg border-2 border-gray-200 overflow-hidden bg-gray-50">
             <Image
-              src={primaryImage.public_url || ''}
-              alt={primaryImage.alt_text || 'Collection cover'}
+              src={primaryImage.public_url ?? ''}
+              alt={primaryImage.alt_text ?? 'Collection cover'}
               fill
               className="object-cover"
               sizes="(max-width: 768px) 100vw, 400px"
@@ -183,7 +183,7 @@ export function CollectionImageUpload({
               <ButtonV2
                 variant="destructive"
                 size="sm"
-                onClick={handleRemoveImage}
+                onClick={() => void handleRemoveImage()}
                 disabled={disabled}
               >
                 <X className="w-4 h-4 mr-2" />
@@ -227,7 +227,7 @@ export function CollectionImageUpload({
             className="hidden"
             accept="image/*"
             onChange={handleChange}
-            disabled={disabled || !collectionId}
+            disabled={disabled ?? !collectionId}
           />
 
           <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
@@ -254,7 +254,7 @@ export function CollectionImageUpload({
                   variant="outline"
                   size="sm"
                   onClick={handleButtonClick}
-                  disabled={disabled || !collectionId}
+                  disabled={disabled ?? !collectionId}
                 >
                   <ImageIcon className="w-4 h-4 mr-2" />
                   Parcourir

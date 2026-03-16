@@ -1,19 +1,8 @@
-// @ts-nocheck - Types manquants
 'use client';
 
 import type { Collection, CreateCollectionData } from '@verone/types';
 import { useState, useEffect } from 'react';
 
-import {
-  ComponentInstanceIcon,
-  DesktopIcon,
-  RocketIcon,
-  FrameIcon,
-  GearIcon,
-  ReaderIcon,
-  SewingPinIcon,
-  DrawingPinIcon,
-} from '@radix-ui/react-icons';
 import { X, Tag, Plus } from 'lucide-react';
 
 // TODO: Déplacer CollectionImageUpload vers @verone/common
@@ -33,9 +22,7 @@ import { Label } from '@verone/ui';
 // import { RoomMultiSelect } from '@verone/ui';
 import { Textarea } from '@verone/ui';
 import { cn } from '@verone/utils';
-import type { Collection, CreateCollectionData } from '@verone/common/hooks';
-import type { RoomCategory, CollectionStyle } from '@verone/types';
-import type { RoomType } from '@verone/types';
+import type { CollectionStyle } from '@verone/types';
 
 const COLLECTION_STYLES: {
   value: CollectionStyle;
@@ -93,19 +80,18 @@ const COLLECTION_STYLES: {
   },
 ];
 
-const ROOM_CATEGORIES: { value: RoomCategory; label: string; icon: string }[] =
-  [
-    { value: 'chambre', label: 'Chambre', icon: '🛏️' },
-    { value: 'wc_salle_bain', label: 'WC / Salle de bain', icon: '🚿' },
-    { value: 'salon', label: 'Salon', icon: '🛋️' },
-    { value: 'cuisine', label: 'Cuisine', icon: '🍽️' },
-    { value: 'bureau', label: 'Bureau', icon: '💼' },
-    { value: 'salle_a_manger', label: 'Salle à manger', icon: '🍷' },
-    { value: 'entree', label: 'Entrée', icon: '🚪' },
-    { value: 'plusieurs_pieces', label: 'Plusieurs pièces', icon: '🏠' },
-    { value: 'exterieur_balcon', label: 'Extérieur - Balcon', icon: '🌿' },
-    { value: 'exterieur_jardin', label: 'Extérieur - Jardin', icon: '🌳' },
-  ];
+const _ROOM_CATEGORIES: { value: string; label: string; icon: string }[] = [
+  { value: 'chambre', label: 'Chambre', icon: '🛏️' },
+  { value: 'wc_salle_bain', label: 'WC / Salle de bain', icon: '🚿' },
+  { value: 'salon', label: 'Salon', icon: '🛋️' },
+  { value: 'cuisine', label: 'Cuisine', icon: '🍽️' },
+  { value: 'bureau', label: 'Bureau', icon: '💼' },
+  { value: 'salle_a_manger', label: 'Salle à manger', icon: '🍷' },
+  { value: 'entree', label: 'Entrée', icon: '🚪' },
+  { value: 'plusieurs_pieces', label: 'Plusieurs pièces', icon: '🏠' },
+  { value: 'exterieur_balcon', label: 'Extérieur - Balcon', icon: '🌿' },
+  { value: 'exterieur_jardin', label: 'Extérieur - Jardin', icon: '🌳' },
+];
 
 interface CollectionFormModalProps {
   isOpen: boolean;
@@ -125,7 +111,7 @@ export function CollectionFormModal({
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [style, setStyle] = useState<CollectionStyle | undefined>();
-  const [suitableRooms, setSuitableRooms] = useState<RoomType[]>([]);
+  const [suitableRooms, setSuitableRooms] = useState<string[]>([]);
   const [tags, setTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState('');
   const [visibility, setVisibility] = useState<'public' | 'private'>('private');
@@ -135,10 +121,10 @@ export function CollectionFormModal({
   useEffect(() => {
     if (collection && mode === 'edit') {
       setName(collection.name);
-      setDescription(collection.description || '');
-      setStyle(collection.style as any);
-      setSuitableRooms((collection.suitable_rooms || []) as RoomType[]);
-      setTags(collection.theme_tags || []);
+      setDescription(collection.description ?? '');
+      setStyle(collection.style as CollectionStyle | undefined);
+      setSuitableRooms(collection.suitable_rooms ?? []);
+      setTags(collection.theme_tags ?? []);
       setVisibility(collection.visibility);
       setIsActive(collection.is_active);
     } else {
@@ -171,7 +157,7 @@ export function CollectionFormModal({
     try {
       await onSubmit({
         name: name.trim(),
-        description: description.trim() || undefined,
+        description: description.trim() ?? undefined,
         style,
         suitable_rooms: suitableRooms.length > 0 ? suitableRooms : undefined,
         theme_tags: tags,
@@ -201,7 +187,7 @@ export function CollectionFormModal({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={e => void handleSubmit(e)} className="space-y-6">
           {/* Informations de base */}
           <div className="space-y-4">
             <div>
@@ -239,7 +225,7 @@ export function CollectionFormModal({
               <div className="mt-2 w-full">
                 <CollectionImageUpload
                   {...({
-                    collectionId: collection?.id || '',
+                    collectionId: collection?.id ?? '',
                     onImageUpload: (imageId, publicUrl) => {
                       console.log('✅ Image collection uploadée:', imageId);
                     },

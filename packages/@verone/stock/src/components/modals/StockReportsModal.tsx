@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import {
   FileText,
@@ -198,7 +198,7 @@ export function StockReportsModal({ isOpen, onClose }: StockReportsModalProps) {
     }
   };
 
-  const activeReportId = pdfReportId || directReportId;
+  const activeReportId = pdfReportId ?? directReportId;
 
   const handleCloseAll = () => {
     setPdfReportId(null);

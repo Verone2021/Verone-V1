@@ -51,7 +51,7 @@ export interface LockEvent {
   timestamp: Date;
   completionRate: number;
   reason?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 interface UseSectionLockingOptions {
@@ -203,7 +203,7 @@ export function useSectionLocking(
     > = {};
 
     sections.forEach(section => {
-      const config = lockConfigs[section.id] || {
+      const config = lockConfigs[section.id] ?? {
         sectionId: section.id,
         completionThreshold: 100,
         requiresValidation: false,
@@ -294,12 +294,12 @@ export function useSectionLocking(
         ...event,
         id: `lock_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         timestamp: new Date(),
-        triggeredBy: event.triggeredBy || user?.id || 'system',
+        triggeredBy: event.triggeredBy ?? user?.id ?? 'system',
       };
 
       // Sauvegarder dans Supabase
       try {
-        await supabase.from('test_sections_lock_events' as any).insert({
+        await supabase.from('test_sections_lock_events' as string).insert({
           id: lockEvent.id,
           section_id: lockEvent.sectionId,
           event_type: lockEvent.eventType,
@@ -349,7 +349,7 @@ export function useSectionLocking(
           sectionId,
           eventType: 'validation_required',
           completionRate: sectionStatus.completionRate,
-          reason: reason || 'Validation required before lock',
+          reason: reason ?? 'Validation required before lock',
           triggeredBy: 'system',
         });
 
@@ -359,7 +359,7 @@ export function useSectionLocking(
       try {
         // Mettre à jour dans Supabase
         const { error } = await supabase
-          .from('test_sections_lock' as any)
+          .from('test_sections_lock' as string)
           .upsert(
             {
               section_id: sectionId,
@@ -382,7 +382,7 @@ export function useSectionLocking(
           eventType: force ? 'force_lock' : 'auto_lock',
           completionRate: sectionStatus.completionRate,
           reason:
-            reason || `Section completed at ${sectionStatus.completionRate}%`,
+            reason ?? `Section completed at ${sectionStatus.completionRate}%`,
           triggeredBy: force ? 'user' : 'system',
         });
 
@@ -395,7 +395,7 @@ export function useSectionLocking(
 
         // Notification si activée
         if (enableNotifications) {
-          console.log(`🔒 Section "${sectionId}" verrouillée avec succès`);
+          console.warn(`🔒 Section "${sectionId}" verrouillée avec succès`);
         }
 
         return true;
@@ -429,7 +429,7 @@ export function useSectionLocking(
       try {
         // Mettre à jour dans Supabase
         const { error } = await supabase
-          .from('test_sections_lock' as any)
+          .from('test_sections_lock' as string)
           .upsert(
             {
               section_id: sectionId,
@@ -449,12 +449,12 @@ export function useSectionLocking(
           sectionId,
           eventType: 'unlock',
           completionRate: sectionStatus.completionRate,
-          reason: reason || 'Manual unlock',
+          reason: reason ?? 'Manual unlock',
           triggeredBy: 'user',
         });
 
         if (enableNotifications) {
-          console.log(`🔓 Section "${sectionId}" déverrouillée`);
+          console.warn(`🔓 Section "${sectionId}" déverrouillée`);
         }
 
         return true;
@@ -475,7 +475,7 @@ export function useSectionLocking(
         const success = await lockSection(
           sectionId,
           true,
-          reason || 'Manually validated'
+          reason ?? 'Manually validated'
         );
         if (success) {
           setPendingValidations(prev => {
@@ -496,8 +496,8 @@ export function useSectionLocking(
         await logLockEvent({
           sectionId,
           eventType: 'validation_required',
-          completionRate: sectionLockStatuses[sectionId]?.completionRate || 0,
-          reason: reason || 'Validation rejected',
+          completionRate: sectionLockStatuses[sectionId]?.completionRate ?? 0,
+          reason: reason ?? 'Validation rejected',
           triggeredBy: 'user',
         });
 
@@ -514,7 +514,7 @@ export function useSectionLocking(
     const eligibleSections = getEligibleForAutoLock();
 
     eligibleSections.forEach(sectionId => {
-      lockSection(sectionId, false, 'Auto-lock triggered');
+      void lockSection(sectionId, false, 'Auto-lock triggered');
     });
   }, [enableAutoLock, getEligibleForAutoLock, lockSection]);
 
@@ -598,8 +598,8 @@ export function useSectionLocking(
         .map(section => ({
           sectionId: section.id,
           isLocked: section.isLocked,
-          completionRate: sectionLockStatuses[section.id]?.completionRate || 0,
-          canLock: sectionLockStatuses[section.id]?.canLock || false,
+          completionRate: sectionLockStatuses[section.id]?.completionRate ?? 0,
+          canLock: sectionLockStatuses[section.id]?.canLock ?? false,
         }));
     },
 

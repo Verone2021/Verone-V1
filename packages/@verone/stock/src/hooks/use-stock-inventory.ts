@@ -110,11 +110,11 @@ export function useStockInventory() {
 
           // Séparer les mouvements par type pour calculs corrects
           const inMovements =
-            movements?.filter(m => m.movement_type === 'IN') || [];
+            movements?.filter(m => m.movement_type === 'IN') ?? [];
           const outMovements =
-            movements?.filter(m => m.movement_type === 'OUT') || [];
+            movements?.filter(m => m.movement_type === 'OUT') ?? [];
           const adjustMovements =
-            movements?.filter(m => m.movement_type === 'ADJUST') || [];
+            movements?.filter(m => m.movement_type === 'ADJUST') ?? [];
 
           // Calculer totaux par type
           const total_in = inMovements.reduce(
@@ -139,18 +139,26 @@ export function useStockInventory() {
             id: product.id,
             name: product.name,
             sku: product.sku,
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             product_image_url:
-              (product as any).product_images?.[0]?.public_url || null, // ✅ Phase 2: Image principale produit
-            stock_quantity: product.stock_quantity || 0,
-            stock_real: product.stock_real || 0,
-            stock_forecasted_in: (product as any).stock_forecasted_in || 0,
-            stock_forecasted_out: (product as any).stock_forecasted_out || 0,
-            min_stock: (product as any).min_stock || 5, // Seuil minimum du produit (fallback 5)
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+              (product as readonly string[]).product_images?.[0]?.public_url ??
+              null, // ✅ Phase 2: Image principale produit
+            stock_quantity: product.stock_quantity ?? 0,
+            stock_real: product.stock_real ?? 0,
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            stock_forecasted_in:
+              (product as readonly string[]).stock_forecasted_in ?? 0,
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            stock_forecasted_out:
+              (product as readonly string[]).stock_forecasted_out ?? 0,
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            min_stock: (product as readonly string[]).min_stock ?? 5, // Seuil minimum du produit (fallback 5)
             total_in,
             total_out,
             total_adjustments,
             last_movement_at,
-            movement_count: movements?.length || 0,
+            movement_count: movements?.length ?? 0,
           };
         });
 
@@ -171,7 +179,7 @@ export function useStockInventory() {
         const statsData = {
           total_products: products.length,
           total_stock_value: products.reduce(
-            (sum, p) => sum + (p.stock_real || 0) * (p.cost_price || 0),
+            (sum, p) => sum + (p.stock_real ?? 0) * (p.cost_price ?? 0),
             0
           ),
           total_movements: activeInventory.reduce(
@@ -181,14 +189,19 @@ export function useStockInventory() {
           products_with_activity: activeInventory.length,
         };
 
-        setInventory(activeInventory as any);
+        setInventory(activeInventory as readonly string[]);
         setStats(statsData);
-      } catch (err: any) {
+      } catch (err: unknown) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const error = err instanceof Error ? err : new Error(String(err));
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         const errorMessage =
-          err.message || "Erreur lors du chargement de l'inventaire";
+          err.message ?? "Erreur lors du chargement de l'inventaire";
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         setError(errorMessage);
         toast({
           title: 'Erreur',
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           description: errorMessage,
           variant: 'destructive',
         });

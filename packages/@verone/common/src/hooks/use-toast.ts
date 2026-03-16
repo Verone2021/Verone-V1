@@ -23,12 +23,12 @@ const defaultToasts: ToastState = {
 let globalState = defaultToasts;
 let listeners: Array<(state: ToastState) => void> = [];
 
-function dispatch(action: { type: string; payload?: any }) {
+function dispatch(action: { type: string; payload?: Toast | string }) {
   switch (action.type) {
     case 'ADD_TOAST':
       globalState = {
         ...globalState,
-        toasts: [...globalState.toasts, action.payload],
+        toasts: [...globalState.toasts, action.payload as Toast],
       };
       break;
     case 'REMOVE_TOAST':

@@ -31,12 +31,9 @@ import {
   TableRow,
 } from '@verone/ui';
 import { useToast } from '@verone/common/hooks';
-import {
-  useABCAnalysis,
-  ABC_CLASSES,
-  type ABCReportData,
-} from '@verone/finance/hooks';
+import { useABCAnalysis, ABC_CLASSES } from '@verone/finance/hooks';
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface ABCAnalysisViewProps {
   // Future : dateFrom, dateTo si on veut filtrer par période
 }
@@ -46,7 +43,7 @@ export function ABCAnalysisView(_props: ABCAnalysisViewProps) {
   const { toast } = useToast();
 
   useEffect(() => {
-    generateReport();
+    void generateReport();
   }, [generateReport]);
 
   const handleExportCSV = () => {
@@ -110,7 +107,7 @@ export function ABCAnalysisView(_props: ABCAnalysisViewProps) {
         title: 'Export CSV réussi',
         description: 'Le rapport ABC a été téléchargé au format CSV.',
       });
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: 'Erreur export CSV',
         description: 'Impossible de générer le fichier CSV.',

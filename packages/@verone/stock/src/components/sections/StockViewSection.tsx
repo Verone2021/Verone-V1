@@ -57,8 +57,8 @@ export function StockViewSection({
   };
 
   const stockStatus = getStockStatus(
-    product.stock_quantity || 0,
-    product.min_stock || 5
+    product.stock_quantity ?? 0,
+    product.min_stock ?? 5
   );
   const currentStatus = STATUS_OPTIONS.find(
     opt => opt.value === product.status
@@ -67,7 +67,7 @@ export function StockViewSection({
   const handleNavigateToStock = () => {
     // Navigation vers la page de gestion stock avec filtrage automatique
     // Utilise SKU en priorité, puis nom, puis ID comme fallback
-    const searchParam = product.sku || product.name || product.id;
+    const searchParam = product.sku ?? product.name ?? product.id;
     router.push(`/catalogue/stocks?search=${encodeURIComponent(searchParam)}`);
   };
 
@@ -112,13 +112,13 @@ export function StockViewSection({
         <div className="flex justify-between items-center">
           <span className="text-black opacity-70">Quantité:</span>
           <span className={cn('font-semibold', stockStatus.color)}>
-            {product.stock_quantity || 0} unités
+            {product.stock_quantity ?? 0} unités
           </span>
         </div>
 
         <div className="flex justify-between items-center">
           <span className="text-black opacity-70">Seuil minimum:</span>
-          <span className="text-black">{product.min_stock || 5} unités</span>
+          <span className="text-black">{product.min_stock ?? 5} unités</span>
         </div>
 
         <div className="flex justify-between items-center">

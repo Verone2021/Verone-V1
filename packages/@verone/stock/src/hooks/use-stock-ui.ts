@@ -49,7 +49,6 @@ import {
   type CreateMovementParams,
   type MovementFilters,
   type StockMovement,
-  type StockItem,
 } from '../hooks/core/use-stock-core';
 
 // ============================================================================
@@ -131,7 +130,7 @@ export function useStockUI(config: UseStockUIConfig = {}): UseStockUIReturn {
         if (user) {
           setUserId(user.id);
           setIsAuthenticated(true);
-          console.log('✅ [useStockUI] Auth OK, user:', user.id);
+          console.warn('✅ [useStockUI] Auth OK, user:', user.id);
         } else {
           setIsAuthenticated(false);
           setUserId(null);
@@ -148,7 +147,7 @@ export function useStockUI(config: UseStockUIConfig = {}): UseStockUIReturn {
       }
     };
 
-    getUser();
+    void getUser();
   }, [supabase]);
 
   /**
@@ -184,7 +183,7 @@ export function useStockUI(config: UseStockUIConfig = {}): UseStockUIReturn {
 
         if (data) {
           setCurrentChannel({ id: data.id, name: data.name });
-          console.log(
+          console.warn(
             `✅ [useStockUI] Canal actif: ${data.name} (${data.code})`
           );
         }
@@ -194,7 +193,7 @@ export function useStockUI(config: UseStockUIConfig = {}): UseStockUIReturn {
       }
     };
 
-    fetchChannel();
+    void fetchChannel();
   }, [channelId, supabase]);
 
   // =========================================================================
@@ -204,7 +203,7 @@ export function useStockUI(config: UseStockUIConfig = {}): UseStockUIReturn {
   const stockCore = useStockCore({
     supabase,
     channelId,
-    userId: userId || 'anonymous', // Fallback si pas auth
+    userId: userId ?? 'anonymous', // Fallback si pas auth
   });
 
   // =========================================================================
@@ -213,12 +212,12 @@ export function useStockUI(config: UseStockUIConfig = {}): UseStockUIReturn {
 
   useEffect(() => {
     if (autoLoad && isAuthenticated && userId) {
-      console.log('🔄 [useStockUI] Auto-load stocks au montage');
+      console.warn('🔄 [useStockUI] Auto-load stocks au montage');
 
       // Charger stocks + mouvements initiaux
       Promise.all([
         stockCore.getStockItems({ archived: false }),
-        stockCore.getMovements(initialFilters || { limit: 100 }),
+        stockCore.getMovements(initialFilters ?? { limit: 100 }),
       ]).catch(err => {
         // ✅ FIX 4-ter: Ne pas afficher toast si AuthSessionMissingError (logout en cours)
         const isAuthSessionMissing =
@@ -233,6 +232,7 @@ export function useStockUI(config: UseStockUIConfig = {}): UseStockUIReturn {
         // Sinon on ignore silencieusement (logout en cours)
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoLoad, isAuthenticated, userId, initialFilters]);
 
   // =========================================================================
@@ -265,7 +265,7 @@ export function useStockUI(config: UseStockUIConfig = {}): UseStockUIReturn {
 
       // Toast succès
       toast.success(
-        successMessage ||
+        successMessage ??
           `Mouvement créé : ${params.movement_type} de ${Math.abs(params.quantity_change)} unités`
       );
 

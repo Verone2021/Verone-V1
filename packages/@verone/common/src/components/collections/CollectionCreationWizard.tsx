@@ -7,7 +7,6 @@ import {
   ArrowLeft,
   ArrowRight,
   Check,
-  Upload,
   Palette,
   Settings,
   Info,
@@ -23,22 +22,32 @@ import type {
   CollectionFormErrors,
   CreateCollectionInput,
 } from '@verone/types';
-import {
-  CollectionStyle,
-  CollectionVisibility,
-  COLLECTION_STYLE_OPTIONS,
-} from '@verone/types';
+import { COLLECTION_STYLE_OPTIONS } from '@verone/types';
 
 // ✅ Export pour utilisation externe
 export type { CreateCollectionInput };
-import type { RoomType } from '@verone/types';
+
+interface EditingCollectionData {
+  id?: string;
+  name?: string;
+  description?: string;
+  image_url?: string;
+  style?: string | null;
+  suitable_rooms?: string[];
+  color_theme?: string;
+  visibility?: string;
+  theme_tags?: string[];
+  meta_title?: string;
+  meta_description?: string;
+  display_order?: number;
+}
 
 interface CollectionCreationWizardProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: CreateCollectionInput) => Promise<boolean>;
   loading?: boolean;
-  editingCollection?: any; // Type étendu pour support édition
+  editingCollection?: EditingCollectionData;
 }
 
 type WizardStep = 1 | 2 | 3;
@@ -77,21 +86,25 @@ export function CollectionCreationWizard({
   useEffect(() => {
     if (isOpen) {
       setCurrentStep(1);
-      setCollectionId(editingCollection?.id || '');
+      setCollectionId(editingCollection?.id ?? '');
       setFormData(
         editingCollection
           ? {
-              name: editingCollection.name || '',
-              description: editingCollection.description || '',
-              image_url: editingCollection.image_url || '',
-              style: editingCollection.style || null,
-              suitable_rooms: editingCollection.suitable_rooms || [],
-              color_theme: editingCollection.color_theme || '#FFFFFF',
-              visibility: editingCollection.visibility || 'private',
-              theme_tags: editingCollection.theme_tags || [],
-              meta_title: editingCollection.meta_title || '',
-              meta_description: editingCollection.meta_description || '',
-              display_order: editingCollection.display_order || 0,
+              name: editingCollection.name ?? '',
+              description: editingCollection.description ?? '',
+              image_url: editingCollection.image_url ?? '',
+              style:
+                (editingCollection.style as CollectionFormState['style']) ??
+                null,
+              suitable_rooms: editingCollection.suitable_rooms ?? [],
+              color_theme: editingCollection.color_theme ?? '#FFFFFF',
+              visibility:
+                (editingCollection.visibility as CollectionFormState['visibility']) ??
+                'private',
+              theme_tags: editingCollection.theme_tags ?? [],
+              meta_title: editingCollection.meta_title ?? '',
+              meta_description: editingCollection.meta_description ?? '',
+              display_order: editingCollection.display_order ?? 0,
             }
           : {
               name: '',
@@ -167,7 +180,7 @@ export function CollectionCreationWizard({
     return Object.keys(newErrors).length === 0;
   };
 
-  const isValidUrl = (url: string): boolean => {
+  const _isValidUrl = (url: string): boolean => {
     try {
       new URL(url);
       return true;
@@ -207,9 +220,9 @@ export function CollectionCreationWizard({
 
     const submitData: CreateCollectionInput = {
       name: formData.name,
-      description: formData.description || undefined,
-      image_url: formData.image_url || undefined,
-      style: formData.style || undefined,
+      description: formData.description ?? undefined,
+      image_url: formData.image_url ?? undefined,
+      style: formData.style ?? undefined,
       suitable_rooms:
         formData.suitable_rooms.length > 0
           ? formData.suitable_rooms
@@ -395,8 +408,8 @@ export function CollectionCreationWizard({
                 <CollectionImageUpload
                   collectionId={collectionId}
                   disabled={!collectionId}
-                  onImageUpload={(imageId, publicUrl) => {
-                    console.log('✅ Image collection uploadée:', imageId);
+                  onImageUpload={(imageId, _publicUrl) => {
+                    console.warn('✅ Image collection uploadée:', imageId);
                   }}
                 />
                 {!collectionId && (
@@ -692,7 +705,7 @@ export function CollectionCreationWizard({
               </ButtonV2>
             ) : (
               <ButtonV2
-                onClick={handleSubmit}
+                onClick={() => void handleSubmit()}
                 disabled={loading}
                 className="bg-black hover:bg-gray-800 text-white"
               >

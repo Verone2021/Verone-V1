@@ -7,14 +7,20 @@
 
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 
 import { createClient } from '@verone/utils/supabase/client';
 
-export interface QueryOptions<T> {
+type SupabaseQuery = Record<string, unknown> & {
+  order: (...args: unknown[]) => SupabaseQuery;
+  limit: (...args: unknown[]) => SupabaseQuery;
+  then: (...args: unknown[]) => unknown;
+};
+
+export interface QueryOptions<_T> {
   tableName: string;
   select?: string;
-  filters?: (query: any) => any;
+  filters?: (query: SupabaseQuery) => SupabaseQuery;
   orderBy?: { column: string; ascending?: boolean };
   limit?: number;
   autoFetch?: boolean;
@@ -36,14 +42,14 @@ export function useSupabaseQuery<T>(options: QueryOptions<T>): QueryState<T> {
   // ✅ FIX: useMemo garantit createClient() appelé une seule fois par instance
   const supabase = useMemo(() => createClient(), []);
 
-  const fetch = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
 
-      let query: any = supabase
-        .from(options.tableName as any)
-        .select(options.select || '*');
+      let query = supabase
+        .from(options.tableName)
+        .select(options.select ?? '*') as unknown as SupabaseQuery;
 
       // Apply filters
       if (options.filters) {
@@ -62,11 +68,15 @@ export function useSupabaseQuery<T>(options: QueryOptions<T>): QueryState<T> {
         query = query.limit(options.limit);
       }
 
-      const { data: result, error: fetchError } = await query;
+      const { data: result, error: fetchError } =
+        await (query as unknown as Promise<{
+          data: T[] | null;
+          error: { message: string } | null;
+        }>);
 
-      if (fetchError) throw fetchError;
+      if (fetchError) throw new Error(fetchError.message);
 
-      setData(result as T[]);
+      setData(result ?? []);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erreur inconnue';
       setError(message);
@@ -77,19 +87,27 @@ export function useSupabaseQuery<T>(options: QueryOptions<T>): QueryState<T> {
     } finally {
       setLoading(false);
     }
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    supabase,
+    options.tableName,
+    options.select,
+    options.filters,
+    options.orderBy,
+    options.limit,
+  ]);
 
   useEffect(() => {
     if (options.autoFetch !== false) {
-      fetch();
+      void fetchData();
     }
-  }, [options.tableName]);
+  }, [options.autoFetch, fetchData]);
 
   return {
     data,
     loading,
     error,
-    fetch,
-    refetch: fetch,
+    fetch: fetchData,
+    refetch: fetchData,
   };
 }

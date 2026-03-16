@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 
-import { MapPin, Home, Building, Copy } from 'lucide-react';
+import { Home, Building, Copy } from 'lucide-react';
 import type { UseFormReturn } from 'react-hook-form';
 
 import { ButtonV2 } from '@verone/ui';
@@ -12,7 +12,7 @@ import { Input } from '@verone/ui';
 import { Label } from '@verone/ui';
 import { Separator } from '@verone/ui';
 
-interface AddressData {
+interface _AddressData {
   address_line1?: string;
   address_line2?: string;
   postal_code?: string;
@@ -22,6 +22,7 @@ interface AddressData {
 }
 
 interface AddressSelectorProps {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   form: UseFormReturn<any>;
   className?: string;
 }
@@ -30,21 +31,23 @@ export function AddressSelector({ form, className }: AddressSelectorProps) {
   const [hasDifferentShipping, setHasDifferentShipping] = useState(false);
 
   // Surveiller les changements du checkbox dans le formulaire
-  const formHasDifferentShipping = form.watch('has_different_shipping_address');
+  const formHasDifferentShipping = form.watch(
+    'has_different_shipping_address'
+  ) as boolean | undefined;
 
   useEffect(() => {
-    setHasDifferentShipping(formHasDifferentShipping || false);
+    setHasDifferentShipping(formHasDifferentShipping ?? false);
   }, [formHasDifferentShipping]);
 
   // Fonction pour copier l'adresse de facturation vers la livraison
   const copyBillingToShipping = () => {
     const billingData = {
-      shipping_address_line1: form.getValues('billing_address_line1'),
-      shipping_address_line2: form.getValues('billing_address_line2'),
-      shipping_postal_code: form.getValues('billing_postal_code'),
-      shipping_city: form.getValues('billing_city'),
-      shipping_region: form.getValues('billing_region'),
-      shipping_country: form.getValues('billing_country'),
+      shipping_address_line1: form.getValues('billing_address_line1') as string,
+      shipping_address_line2: form.getValues('billing_address_line2') as string,
+      shipping_postal_code: form.getValues('billing_postal_code') as string,
+      shipping_city: form.getValues('billing_city') as string,
+      shipping_region: form.getValues('billing_region') as string,
+      shipping_country: form.getValues('billing_country') as string,
     };
 
     Object.entries(billingData).forEach(([key, value]) => {
@@ -101,7 +104,7 @@ export function AddressSelector({ form, className }: AddressSelectorProps) {
               {form.formState.errors.billing_address_line1 && (
                 <p className="text-sm text-red-600 mt-1">
                   {String(
-                    form.formState.errors.billing_address_line1?.message ||
+                    form.formState.errors.billing_address_line1?.message ??
                       'Champ requis'
                   )}
                 </p>
@@ -127,7 +130,7 @@ export function AddressSelector({ form, className }: AddressSelectorProps) {
               {form.formState.errors.billing_postal_code && (
                 <p className="text-sm text-red-600 mt-1">
                   {String(
-                    form.formState.errors.billing_postal_code?.message ||
+                    form.formState.errors.billing_postal_code?.message ??
                       'Champ requis'
                   )}
                 </p>
@@ -144,7 +147,7 @@ export function AddressSelector({ form, className }: AddressSelectorProps) {
               {form.formState.errors.billing_city && (
                 <p className="text-sm text-red-600 mt-1">
                   {String(
-                    form.formState.errors.billing_city?.message ||
+                    form.formState.errors.billing_city?.message ??
                       'Champ requis'
                   )}
                 </p>
@@ -221,7 +224,7 @@ export function AddressSelector({ form, className }: AddressSelectorProps) {
                 {form.formState.errors.shipping_address_line1 && (
                   <p className="text-sm text-red-600 mt-1">
                     {String(
-                      form.formState.errors.shipping_address_line1?.message ||
+                      form.formState.errors.shipping_address_line1?.message ??
                         'Champ requis'
                     )}
                   </p>
@@ -247,7 +250,7 @@ export function AddressSelector({ form, className }: AddressSelectorProps) {
                 {form.formState.errors.shipping_postal_code && (
                   <p className="text-sm text-red-600 mt-1">
                     {String(
-                      form.formState.errors.shipping_postal_code?.message ||
+                      form.formState.errors.shipping_postal_code?.message ??
                         'Champ requis'
                     )}
                   </p>
@@ -264,7 +267,7 @@ export function AddressSelector({ form, className }: AddressSelectorProps) {
                 {form.formState.errors.shipping_city && (
                   <p className="text-sm text-red-600 mt-1">
                     {String(
-                      form.formState.errors.shipping_city?.message ||
+                      form.formState.errors.shipping_city?.message ??
                         'Champ requis'
                     )}
                   </p>

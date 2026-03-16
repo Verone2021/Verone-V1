@@ -137,7 +137,7 @@ export function useStockReservations() {
         if (error) throw error;
 
         // ✅ FIX: Utiliser primary_image_url directement depuis products (plus besoin d'enrichissement)
-        setReservations(data || []);
+        setReservations(data ?? []);
       } catch (error) {
         console.error(
           'Erreur lors de la récupération des réservations:',
@@ -216,7 +216,7 @@ export function useStockReservations() {
           }
         );
 
-        setStats(statsData || null);
+        setStats(statsData ?? null);
       } catch (error) {
         console.error(
           'Erreur lors de la récupération des statistiques:',
@@ -259,7 +259,7 @@ export function useStockReservations() {
               notes: data.notes,
               reserved_by: (await supabase.auth.getUser()).data.user?.id,
             },
-          ] as any)
+          ] as readonly string[])
           .select('id')
           .single();
 
@@ -272,11 +272,12 @@ export function useStockReservations() {
 
         await fetchReservations();
         return reservation;
-      } catch (error: any) {
+      } catch (err: unknown) {
+        const error = err instanceof Error ? err : new Error(String(err));
         console.error('Erreur lors de la création de la réservation:', error);
         toast({
           title: 'Erreur',
-          description: error.message || 'Impossible de créer la réservation',
+          description: error.message ?? 'Impossible de créer la réservation',
           variant: 'destructive',
         });
         throw error;
@@ -299,7 +300,7 @@ export function useStockReservations() {
           .update({
             released_at: new Date().toISOString(),
             released_by: userId,
-            notes: notes || null,
+            notes: notes ?? null,
           })
           .eq('id', reservationId)
           .is('released_at', null); // Sécurité : ne libérer que les réservations actives
@@ -312,11 +313,12 @@ export function useStockReservations() {
         });
 
         await fetchReservations();
-      } catch (error: any) {
+      } catch (err: unknown) {
+        const error = err instanceof Error ? err : new Error(String(err));
         console.error('Erreur lors de la libération:', error);
         toast({
           title: 'Erreur',
-          description: error.message || 'Impossible de libérer la réservation',
+          description: error.message ?? 'Impossible de libérer la réservation',
           variant: 'destructive',
         });
         throw error;
@@ -339,7 +341,7 @@ export function useStockReservations() {
           .update({
             released_at: new Date().toISOString(),
             released_by: userId,
-            notes: notes || null,
+            notes: notes ?? null,
           })
           .eq('reference_type', referenceType)
           .eq('reference_id', referenceId)
@@ -348,7 +350,7 @@ export function useStockReservations() {
 
         if (error) throw error;
 
-        const releasedCount = data?.length || 0;
+        const releasedCount = data?.length ?? 0;
 
         if (releasedCount > 0) {
           toast({
@@ -359,12 +361,13 @@ export function useStockReservations() {
 
         await fetchReservations();
         return releasedCount;
-      } catch (error: any) {
+      } catch (err: unknown) {
+        const error = err instanceof Error ? err : new Error(String(err));
         console.error('Erreur lors de la libération des réservations:', error);
         toast({
           title: 'Erreur',
           description:
-            error.message || 'Impossible de libérer les réservations',
+            error.message ?? 'Impossible de libérer les réservations',
           variant: 'destructive',
         });
         throw error;
@@ -396,12 +399,13 @@ export function useStockReservations() {
         });
 
         await fetchReservations();
-      } catch (error: any) {
+      } catch (err: unknown) {
+        const error = err instanceof Error ? err : new Error(String(err));
         console.error("Erreur lors de l'extension:", error);
         toast({
           title: 'Erreur',
           description:
-            error.message || "Impossible de mettre à jour l'expiration",
+            error.message ?? "Impossible de mettre à jour l'expiration",
           variant: 'destructive',
         });
         throw error;
@@ -432,7 +436,7 @@ export function useStockReservations() {
 
       if (error) throw error;
 
-      const cleanedCount = data?.length || 0;
+      const cleanedCount = data?.length ?? 0;
 
       if (cleanedCount > 0) {
         toast({
@@ -443,12 +447,13 @@ export function useStockReservations() {
 
       await fetchReservations();
       return cleanedCount;
-    } catch (error: any) {
+    } catch (err: unknown) {
+      const error = err instanceof Error ? err : new Error(String(err));
       console.error('Erreur lors du nettoyage:', error);
       toast({
         title: 'Erreur',
         description:
-          error.message || 'Impossible de nettoyer les réservations expirées',
+          error.message ?? 'Impossible de nettoyer les réservations expirées',
         variant: 'destructive',
       });
       throw error;
@@ -472,7 +477,7 @@ export function useStockReservations() {
 
         if (error) throw error;
 
-        return data || [];
+        return data ?? [];
       } catch (error) {
         console.error(
           'Erreur lors de la récupération des réservations produit:',
@@ -494,7 +499,7 @@ export function useStockReservations() {
 
         if (error) throw error;
 
-        return data || 0;
+        return data ?? 0;
       } catch (error) {
         console.error('Erreur lors du calcul du stock disponible:', error);
         return 0;

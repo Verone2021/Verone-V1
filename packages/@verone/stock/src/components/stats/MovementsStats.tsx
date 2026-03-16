@@ -1,8 +1,6 @@
 'use client';
 
-import React from 'react';
-
-import { TrendingUp, Activity, Clock, BarChart3 } from 'lucide-react';
+import type React from 'react';
 
 // FIXME: StockKPICard component can't be imported from apps/back-office in package
 // import { StockKPICard } from '@/components/ui-v2/stock/stock-kpi-card';
@@ -21,7 +19,7 @@ export function MovementsStatsCards({
   if (loading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        {[...Array(4)].map((_, i) => (
+        {Array.from({ length: 4 }).map((_, i) => (
           <div key={i} className="h-20 bg-gray-200 rounded-lg animate-pulse" />
         ))}
       </div>

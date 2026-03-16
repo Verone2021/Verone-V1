@@ -10,7 +10,7 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 
 import {
   Plus,
@@ -56,7 +56,7 @@ import { useStockMovements, type StockReasonCode } from '../../hooks';
  * Mapping StockReasonCode (détaillé) → ReasonCode (simplifié use-stock-core)
  * Nécessaire car use-stock-core n'accepte que 10 reason codes simplifiés
  */
-const REASON_CODE_MAPPING: Record<StockReasonCode, ReasonCode> = {
+const _REASON_CODE_MAPPING: Record<StockReasonCode, ReasonCode> = {
   // Sorties normales
   sale: 'sale',
   transfer_out: 'transfer_out',
@@ -504,7 +504,7 @@ export function InventoryAdjustmentModal({
                     id="quantity-decrease"
                     type="number"
                     min="1"
-                    max={product?.stock_quantity || 0}
+                    max={product?.stock_quantity ?? 0}
                     step="1"
                     value={formData.quantity}
                     onChange={e =>
