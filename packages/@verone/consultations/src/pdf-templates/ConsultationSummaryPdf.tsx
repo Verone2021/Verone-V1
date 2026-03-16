@@ -270,7 +270,7 @@ export interface ConsultationSummaryPdfProps {
 export function ConsultationSummaryPdf({
   consultation,
   items,
-  images,
+  images: _images,
   totalHT,
   clientName,
   preloadedImages,
@@ -292,6 +292,7 @@ export function ConsultationSummaryPdf({
 
         {/* Header: Logo + Title */}
         <View style={s.headerRow}>
+          {/* eslint-disable-next-line jsx-a11y/alt-text */}
           <Image src={VERONE_LOGO_BASE64} style={s.logoImage} />
           <View style={{ alignItems: 'flex-end' }}>
             <Text style={{ fontSize: 14, fontFamily: 'Helvetica-Bold' }}>
@@ -311,10 +312,10 @@ export function ConsultationSummaryPdf({
           <View style={s.twoColItem}>
             <Text style={s.infoSectionTitle}>Client</Text>
             <InfoRow label="Nom" value={clientName} />
-            <InfoRow label="Email" value={consultation.client_email || '-'} />
+            <InfoRow label="Email" value={consultation.client_email ?? '-'} />
             <InfoRow
               label="Telephone"
-              value={consultation.client_phone || '-'}
+              value={consultation.client_phone ?? '-'}
             />
           </View>
 
@@ -351,7 +352,7 @@ export function ConsultationSummaryPdf({
           </Text>
           <View style={s.descriptionBox}>
             <Text style={{ fontSize: 7, lineHeight: 1.5 }}>
-              {consultation.descriptif || 'Aucune description'}
+              {consultation.descriptif ?? 'Aucune description'}
             </Text>
           </View>
         </View>
@@ -390,6 +391,7 @@ export function ConsultationSummaryPdf({
                 <View key={item.id} style={cardStyle} wrap={false}>
                   {/* Product image (base64) */}
                   {productBase64[item.product_id] ? (
+                    /* eslint-disable-next-line jsx-a11y/alt-text */
                     <Image
                       src={productBase64[item.product_id]}
                       style={s.productImage}

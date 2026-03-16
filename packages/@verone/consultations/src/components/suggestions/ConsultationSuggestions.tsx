@@ -14,71 +14,74 @@ import {
   CardHeader,
   CardTitle,
 } from '@verone/ui';
+import type { ClientConsultation } from '@verone/consultations/hooks';
 import { useConsultations } from '@verone/consultations/hooks';
 import { useToast } from '@verone/common/hooks';
 
 interface ConsultationSuggestionsProps {
   clientId?: string;
-  productId?: string;
+  _productId?: string;
   onLinkToConsultation?: (consultationId: string) => void;
   className?: string;
 }
 
 export function ConsultationSuggestions({
   clientId,
-  productId,
+  _productId,
   onLinkToConsultation,
   className,
 }: ConsultationSuggestionsProps) {
   const { toast } = useToast();
   const { consultations, fetchConsultations } = useConsultations();
-  const [relevantConsultations, setRelevantConsultations] = useState<any[]>([]);
+  const [relevantConsultations, setRelevantConsultations] = useState<
+    ClientConsultation[]
+  >([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (clientId) {
-      loadRelevantConsultations();
-    }
-  }, [clientId]);
+    if (!clientId) return;
 
-  const loadRelevantConsultations = async () => {
-    setLoading(true);
-    try {
-      await fetchConsultations();
+    const loadRelevantConsultations = async () => {
+      setLoading(true);
+      try {
+        await fetchConsultations();
 
-      // Filtrer les consultations du client spécifique
-      const clientConsultations = consultations.filter(consultation => {
-        // Si on a un client ID, filtrer par client
-        if (clientId) {
-          // TODO: Ajouter une relation client_id dans consultations ou filtrer par organisation_name
-          // Pour l'instant, on montre toutes les consultations actives
+        // Filtrer les consultations du client spécifique
+        const clientConsultations = consultations.filter(consultation => {
+          // Si on a un client ID, filtrer par client
+          if (clientId) {
+            // TODO: Ajouter une relation client_id dans consultations ou filtrer par organisation_name
+            // Pour l'instant, on montre toutes les consultations actives
+            return (
+              consultation.status === 'en_attente' ||
+              consultation.status === 'en_cours'
+            );
+          }
+          return false;
+        });
+
+        // Trier par priorité et date
+        const sorted = clientConsultations.sort((a, b) => {
+          // D'abord par niveau de priorité (plus élevé = plus urgent)
+          if (a.priority_level !== b.priority_level) {
+            return b.priority_level - a.priority_level;
+          }
+          // Puis par date de création (plus récent en premier)
           return (
-            consultation.status === 'en_attente' ||
-            consultation.status === 'en_cours'
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
           );
-        }
-        return false;
-      });
+        });
 
-      // Trier par priorité et date
-      const sorted = clientConsultations.sort((a, b) => {
-        // D'abord par niveau de priorité (plus élevé = plus urgent)
-        if (a.priority_level !== b.priority_level) {
-          return b.priority_level - a.priority_level;
-        }
-        // Puis par date de création (plus récent en premier)
-        return (
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        );
-      });
+        setRelevantConsultations(sorted.slice(0, 3)); // Max 3 suggestions
+      } catch (loadError) {
+        console.error('Erreur chargement consultations:', loadError);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-      setRelevantConsultations(sorted.slice(0, 3)); // Max 3 suggestions
-    } catch (error) {
-      console.error('Erreur chargement consultations:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    void loadRelevantConsultations();
+  }, [clientId, consultations, fetchConsultations]);
 
   const handleLinkToConsultation = (consultationId: string) => {
     if (onLinkToConsultation) {

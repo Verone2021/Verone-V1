@@ -14,7 +14,6 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 
 import {
-  Upload,
   X,
   Star,
   Trash2,
@@ -180,14 +179,14 @@ export function ConsultationPhotosModal({
 
     const files = e.dataTransfer.files;
     if (files) {
-      handleFilesDrop(files);
+      void handleFilesDrop(files);
     }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
-      handleFilesDrop(files);
+      void handleFilesDrop(files);
     }
     // Reset input
     if (e.target) {
@@ -244,7 +243,7 @@ export function ConsultationPhotosModal({
             <ButtonV2
               variant="outline"
               size="sm"
-              onClick={() => fetchImages()}
+              onClick={() => void fetchImages()}
               disabled={loading}
             >
               <RotateCw className="h-3 w-3 mr-2" />
@@ -324,8 +323,8 @@ export function ConsultationPhotosModal({
                   className="group relative aspect-square bg-gray-100 rounded overflow-hidden border-2 border-gray-200 hover:border-purple-400 transition-all"
                 >
                   <Image
-                    src={image.public_url || '/placeholder-consultation.svg'}
-                    alt={image.alt_text || 'Photo consultation'}
+                    src={image.public_url ?? '/placeholder-consultation.svg'}
+                    alt={image.alt_text ?? 'Photo consultation'}
                     fill
                     className="object-cover"
                     sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
@@ -346,7 +345,7 @@ export function ConsultationPhotosModal({
                         <ButtonV2
                           size="sm"
                           variant="secondary"
-                          onClick={() => handleSetPrimary(image.id)}
+                          onClick={() => void handleSetPrimary(image.id)}
                           disabled={settingPrimaryId === image.id}
                         >
                           {settingPrimaryId === image.id ? (
@@ -363,7 +362,7 @@ export function ConsultationPhotosModal({
                         size="sm"
                         variant="destructive"
                         onClick={() =>
-                          handleDeleteImage(image.id, image.is_primary)
+                          void handleDeleteImage(image.id, image.is_primary)
                         }
                         disabled={deletingImageId === image.id}
                       >
