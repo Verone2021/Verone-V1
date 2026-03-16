@@ -109,13 +109,15 @@ products -> channel_pricing -> linkme_selection_items -> sales_order_items -> li
 
 ### `linkme_commissions`
 
-| Column                     | Description                          |
-| -------------------------- | ------------------------------------ |
-| `affiliate_commission`     | HT commission earned by affiliate    |
-| `affiliate_commission_ttc` | TTC commission                       |
-| `linkme_commission`        | Verone's commission                  |
-| `margin_rate_applied`      | Rate applied at order time           |
-| `status`                   | pending, validated, in_payment, paid |
+| Column                     | Description                                                        |
+| -------------------------- | ------------------------------------------------------------------ |
+| `affiliate_commission`     | HT commission earned by affiliate (catalogue products only)        |
+| `affiliate_commission_ttc` | TTC commission (catalogue products only)                           |
+| `linkme_commission`        | Verone's commission                                                |
+| `total_payout_ht`          | **Total amount due to affiliate HT** (commission + net revendeur)  |
+| `total_payout_ttc`         | **Total amount due to affiliate TTC** (commission + net revendeur) |
+| `margin_rate_applied`      | Rate applied at order time                                         |
+| `status`                   | pending, validated, in_payment, paid                               |
 
 ---
 
@@ -185,7 +187,41 @@ FROM products WHERE created_by_affiliate IS NOT NULL;
 
 ---
 
-## 7. Business Rules (non-negotiable)
+## 7. Source-of-Truth: Montant a Verser (total_payout)
+
+### Definition
+
+`total_payout_ht` / `total_payout_ttc` = **montant total du a l'affilie** pour une commande.
+
+```
+total_payout = affiliate_commission (catalogue) + encaissement_net_revendeur
+encaissement_net_revendeur = revenue_produits_revendeur - commission_linkme_15%
+```
+
+### Regle
+
+- **Dashboard et Page Commissions** : TOUJOURS utiliser `total_payout_ttc` pour les KPIs de remuneration
+- Quand `total_payout` est NULL (anciennes commandes) : fallback sur `affiliate_commission`
+- SQL pattern : `COALESCE(total_payout_ttc, affiliate_commission_ttc)`
+
+### Pourquoi deux colonnes ?
+
+| Colonne                | Contenu                                     | Usage                       |
+| ---------------------- | ------------------------------------------- | --------------------------- |
+| `affiliate_commission` | Commission catalogue uniquement             | Detail par type de produit  |
+| `total_payout_ht/ttc`  | Tout ce qu'on verse (catalogue + revendeur) | KPIs, versements, dashboard |
+
+### Exemple
+
+```
+Commande avec 2 produits catalogue (commission 50 EUR) + 1 produit revendeur (500 EUR - 15% = 425 EUR net)
+- affiliate_commission = 50 EUR
+- total_payout_ht = 50 + 425 = 475 EUR
+```
+
+---
+
+## 8. Business Rules (non-negotiable)
 
 1. `margin_rate = 0` for affiliate products -- NEVER modify
 2. `affiliate_commission_rate` is mandatory before approving an affiliate product
@@ -194,7 +230,7 @@ FROM products WHERE created_by_affiliate IS NOT NULL;
 
 ---
 
-## 8. Validation Query
+## 9. Validation Query
 
 ```sql
 -- Verify all affiliate products have correct 15% platform fee
@@ -216,7 +252,7 @@ WHERE lsi.margin_rate = 0 AND so.status = 'shipped';
 
 ---
 
-## 9. Obsolete Tables/Fields
+## 10. Obsolete Tables/Fields
 
 | Item                            | Status             | Replacement            |
 | ------------------------------- | ------------------ | ---------------------- |

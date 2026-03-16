@@ -103,7 +103,29 @@ affiliate_total_ttc = affiliate_total_ht * 1.20
 
 ---
 
-## 7. Audit Bubble vs Notre Base (5 mars 2026)
+## 7. Colonnes de Versement (total_payout)
+
+### Definition
+
+| Colonne            | Type    | Description                                                   |
+| ------------------ | ------- | ------------------------------------------------------------- |
+| `total_payout_ht`  | NUMERIC | Montant total du a l'affilie HT (commission + net revendeur)  |
+| `total_payout_ttc` | NUMERIC | Montant total du a l'affilie TTC (commission + net revendeur) |
+
+### Formule
+
+```sql
+total_payout = affiliate_commission + (revenue_produits_revendeur - commission_linkme_15%)
+```
+
+### Regle
+
+TOUJOURS utiliser `total_payout_ht/ttc` pour les KPIs de remuneration (Dashboard, Page Commissions).
+Fallback : `COALESCE(total_payout_ttc, affiliate_commission_ttc)` pour anciennes commandes sans `total_payout`.
+
+---
+
+## 8. Audit Bubble vs Notre Base (5 mars 2026)
 
 **Resultat global : donnees correctes a ~97%.**
 
@@ -117,7 +139,7 @@ affiliate_total_ttc = affiliate_total_ht * 1.20
 
 ---
 
-## 8. Historique Corrections
+## 9. Historique Corrections
 
 | Date       | Migration                                | Description                                                             |
 | ---------- | ---------------------------------------- | ----------------------------------------------------------------------- |

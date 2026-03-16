@@ -27,13 +27,14 @@ products → channel_pricing → linkme_selection_items → sales_order_items �
 
 ## Sources de Verite par Donnee
 
-| Donnee                   | Source       | Table                         | Colonne                |
-| ------------------------ | ------------ | ----------------------------- | ---------------------- |
-| Prix produit catalogue   | products     | `products`                    | `price_ht`             |
-| **Marge affilie (%)**    | Selection    | `linkme_selection_items`      | `margin_rate`          |
-| Prix vente affilie       | Selection    | `linkme_selection_items`      | `selling_price_ht`     |
-| **Commission par ligne** | Vue enrichie | `linkme_order_items_enriched` | `affiliate_margin`     |
-| Commission par commande  | Commissions  | `linkme_commissions`          | `affiliate_commission` |
+| Donnee                     | Source       | Table                         | Colonne                |
+| -------------------------- | ------------ | ----------------------------- | ---------------------- |
+| Prix produit catalogue     | products     | `products`                    | `price_ht`             |
+| **Marge affilie (%)**      | Selection    | `linkme_selection_items`      | `margin_rate`          |
+| Prix vente affilie         | Selection    | `linkme_selection_items`      | `selling_price_ht`     |
+| **Commission par ligne**   | Vue enrichie | `linkme_order_items_enriched` | `affiliate_margin`     |
+| Commission par commande    | Commissions  | `linkme_commissions`          | `affiliate_commission` |
+| **Montant total a verser** | Commissions  | `linkme_commissions`          | `total_payout_ht/ttc`  |
 
 ---
 
@@ -174,7 +175,8 @@ commission_ht = selling_price_ht × (margin_rate / 100)
 
 | Interface             | Affichage par défaut | Configurable               |
 | --------------------- | -------------------- | -------------------------- |
-| Dashboard commissions | **HT**               | Non                        |
+| Dashboard commissions | **TTC**              | Non                        |
+| Page commissions      | **TTC**              | Non                        |
 | Détail commande       | HT                   | Non                        |
 | Page sélection        | HT ou TTC            | Oui (`price_display_mode`) |
 | Checkout client       | **TTC**              | Non                        |
