@@ -199,16 +199,21 @@ export function LinkmeApprovalsDropdown({
         throw new Error(queryError.message);
       }
 
-      const enrichedApprovals: PendingApproval[] = (data || []).map(
-        (o: any) => ({
-          id: o.id,
-          order_number: o.order_number || 'N/A',
-          total_ttc: o.total_ttc || 0,
-          customer_name: o.organisation?.name || 'Client inconnu',
-          affiliate_name: o.affiliate?.name || null,
-          created_at: o.created_at,
-          margin_rate: null, // Calcul complexe, simplification
-        })
+      const enrichedApprovals: PendingApproval[] = (data ?? []).map(
+        (o: Record<string, unknown>) => {
+          const org = o.organisation as Record<string, unknown> | null;
+          const affiliate = o.affiliate as Record<string, unknown> | null;
+          return {
+            id: o.id as string,
+            order_number: (o.order_number as string | undefined) ?? 'N/A',
+            total_ttc: (o.total_ttc as number | undefined) ?? 0,
+            customer_name:
+              (org?.name as string | undefined) ?? 'Client inconnu',
+            affiliate_name: (affiliate?.name as string | undefined) ?? null,
+            created_at: o.created_at as string,
+            margin_rate: null, // Calcul complexe, simplification
+          };
+        }
       );
 
       setApprovals(enrichedApprovals);
@@ -222,7 +227,9 @@ export function LinkmeApprovalsDropdown({
 
   useEffect(() => {
     if (open) {
-      fetchApprovals();
+      void fetchApprovals().catch((err: unknown) => {
+        console.error('[LinkmeApprovalsDropdown] Fetch error:', err);
+      });
       onOpen?.();
     }
   }, [open, fetchApprovals, onOpen]);
@@ -256,7 +263,11 @@ export function LinkmeApprovalsDropdown({
             variant="ghost"
             size="sm"
             className="h-7 w-7 p-0"
-            onClick={handleRefresh}
+            onClick={() => {
+              void handleRefresh().catch((err: unknown) => {
+                console.error('[LinkmeApprovalsDropdown] Refresh error:', err);
+              });
+            }}
             disabled={loading}
           >
             <RefreshCw
@@ -269,7 +280,7 @@ export function LinkmeApprovalsDropdown({
         <ScrollArea className="max-h-80">
           {loading && approvals.length === 0 ? (
             <div className="p-4 space-y-3">
-              {[...Array(3)].map((_, i) => (
+              {Array.from({ length: 3 }).map((_, i) => (
                 <div key={i} className="flex items-center gap-3">
                   <Skeleton className="w-8 h-8 rounded-md" />
                   <div className="flex-1 space-y-1.5">
@@ -286,7 +297,14 @@ export function LinkmeApprovalsDropdown({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={handleRefresh}
+                onClick={() => {
+                  void handleRefresh().catch((err: unknown) => {
+                    console.error(
+                      '[LinkmeApprovalsDropdown] Retry error:',
+                      err
+                    );
+                  });
+                }}
                 className="mt-2"
               >
                 Réessayer

@@ -50,7 +50,7 @@ export function useTransactionsUnreconciledCount(options?: {
   enableRealtime?: boolean;
   refetchInterval?: number;
 }): TransactionsUnreconciledCountHook {
-  const { enableRealtime = true, refetchInterval = 60000 } = options || {};
+  const { enableRealtime = true, refetchInterval = 60000 } = options ?? {};
 
   const [count, setCount] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
@@ -97,7 +97,7 @@ export function useTransactionsUnreconciledCount(options?: {
         return; // Sortie anticipée sans exception
       }
 
-      setCount(totalCount || 0);
+      setCount(totalCount ?? 0);
       setLastUpdated(new Date());
     } catch (err) {
       const errorObj =
@@ -129,7 +129,12 @@ export function useTransactionsUnreconciledCount(options?: {
       }
 
       // Initial fetch (authentifié)
-      fetchCount();
+      void fetchCount().catch((err: unknown) => {
+        console.error(
+          '[useTransactionsUnreconciledCount] Initial fetch error:',
+          err
+        );
+      });
 
       // Setup Realtime si activé ET authentifié
       if (enableRealtime) {
@@ -142,20 +147,17 @@ export function useTransactionsUnreconciledCount(options?: {
               schema: 'public',
               table: 'bank_transactions',
             },
-            payload => {
-              console.log(
-                '[useTransactionsUnreconciledCount] Realtime change detected:',
-                payload.eventType
-              );
-              fetchCount();
+            () => {
+              void fetchCount().catch((err: unknown) => {
+                console.error(
+                  '[useTransactionsUnreconciledCount] Refetch error:',
+                  err
+                );
+              });
             }
           )
           .subscribe(status => {
-            if (status === 'SUBSCRIBED') {
-              console.log(
-                '[useTransactionsUnreconciledCount] Realtime subscribed'
-              );
-            } else if (status === 'CHANNEL_ERROR') {
+            if (status === 'CHANNEL_ERROR') {
               // Log silencieux, pas setError pour éviter bruit sur page login
               console.warn(
                 '[useTransactionsUnreconciledCount] Realtime subscription failed'
@@ -167,18 +169,25 @@ export function useTransactionsUnreconciledCount(options?: {
       // Polling fallback (seulement si authentifié, interval plus long pour finance)
       if (!enableRealtime || refetchInterval > 0) {
         intervalRef.current = setInterval(() => {
-          fetchCount();
+          void fetchCount().catch((err: unknown) => {
+            console.error(
+              '[useTransactionsUnreconciledCount] Polling error:',
+              err
+            );
+          });
         }, refetchInterval);
       }
     };
 
-    setupSubscriptions();
+    void setupSubscriptions().catch((err: unknown) => {
+      console.error('[useTransactionsUnreconciledCount] Setup error:', err);
+    });
 
     // Cleanup
     return () => {
       isMounted = false;
       if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
+        void supabase.removeChannel(channelRef.current);
         channelRef.current = null;
       }
       if (intervalRef.current) {

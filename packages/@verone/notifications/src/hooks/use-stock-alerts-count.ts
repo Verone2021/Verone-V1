@@ -48,7 +48,7 @@ export function useStockAlertsCount(options?: {
   enableRealtime?: boolean;
   refetchInterval?: number;
 }): StockAlertsCountHook {
-  const { enableRealtime = true, refetchInterval = 30000 } = options || {};
+  const { enableRealtime = true, refetchInterval = 30000 } = options ?? {};
 
   const [count, setCount] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
@@ -121,7 +121,9 @@ export function useStockAlertsCount(options?: {
       }
 
       // Initial fetch (authentifié)
-      fetchCount();
+      void fetchCount().catch((err: unknown) => {
+        console.error('[useStockAlertsCount] Initial fetch error:', err);
+      });
 
       // Setup Realtime si activé ET authentifié
       if (enableRealtime) {
@@ -134,19 +136,15 @@ export function useStockAlertsCount(options?: {
               schema: 'public',
               table: 'stock_alerts_unified_view',
             },
-            payload => {
-              console.log(
-                '[useStockAlertsCount] Realtime change detected:',
-                payload
-              );
+            () => {
               // Refetch count après changement
-              fetchCount();
+              void fetchCount().catch((err: unknown) => {
+                console.error('[useStockAlertsCount] Refetch error:', err);
+              });
             }
           )
           .subscribe(status => {
-            if (status === 'SUBSCRIBED') {
-              console.log('[useStockAlertsCount] Realtime subscribed ✓');
-            } else if (status === 'CHANNEL_ERROR') {
+            if (status === 'CHANNEL_ERROR') {
               // Log silencieux, pas setError pour éviter bruit sur page login
               console.warn(
                 '[useStockAlertsCount] Realtime subscription failed'
@@ -158,18 +156,22 @@ export function useStockAlertsCount(options?: {
       // Polling fallback (seulement si authentifié)
       if (!enableRealtime || refetchInterval > 0) {
         intervalRef.current = setInterval(() => {
-          fetchCount();
+          void fetchCount().catch((err: unknown) => {
+            console.error('[useStockAlertsCount] Polling error:', err);
+          });
         }, refetchInterval);
       }
     };
 
-    setupSubscriptions();
+    void setupSubscriptions().catch((err: unknown) => {
+      console.error('[useStockAlertsCount] Setup error:', err);
+    });
 
     // Cleanup
     return () => {
       isMounted = false;
       if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
+        void supabase.removeChannel(channelRef.current);
         channelRef.current = null;
       }
       if (intervalRef.current) {

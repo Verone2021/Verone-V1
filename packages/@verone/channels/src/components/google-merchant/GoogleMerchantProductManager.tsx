@@ -4,12 +4,10 @@ import { useState, useMemo } from 'react';
 
 import {
   Search,
-  Filter,
   X,
   XCircle,
   CheckCircle,
   Package,
-  Euro,
   ShoppingCart,
   Loader2,
 } from 'lucide-react';
@@ -147,7 +145,7 @@ export function GoogleMerchantProductManager({
   const [searchTerm, setSearchTerm] = useState('');
   const [familyFilter, setFamilyFilter] = useState<string>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [statusFilter, _setStatusFilter] = useState<string>('all');
 
   // State: Modals
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
@@ -308,7 +306,7 @@ export function GoogleMerchantProductManager({
         setSelectedIds(new Set());
         setCustomData({});
       }
-    } catch (error) {
+    } catch (_error) {
       setSyncResult({
         success: false,
         synced: 0,
@@ -711,7 +709,7 @@ export function GoogleMerchantProductManager({
               Annuler
             </ButtonV2>
             <ButtonV2
-              onClick={handleAddProducts}
+              onClick={() => void handleAddProducts()}
               className="bg-[#3b86d1] hover:bg-[#2a75c0] text-white"
             >
               <CheckCircle className="h-4 w-4 mr-2" />

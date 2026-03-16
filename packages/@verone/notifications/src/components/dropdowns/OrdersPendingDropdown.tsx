@@ -22,6 +22,7 @@ import { cn } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import type { LucideIcon } from 'lucide-react';
 import {
   ShoppingBag,
   FileEdit,
@@ -54,7 +55,7 @@ const STATUS_CONFIG: Record<
     color: string;
     bgColor: string;
     borderColor: string;
-    icon: any;
+    icon: LucideIcon;
   }
 > = {
   draft: {
@@ -74,7 +75,7 @@ interface OrderItemProps {
  * Item individuel de commande
  */
 function OrderItem({ order }: OrderItemProps) {
-  const config = STATUS_CONFIG[order.status] || STATUS_CONFIG.draft;
+  const config = STATUS_CONFIG[order.status] ?? STATUS_CONFIG.draft;
   const Icon = config.icon;
 
   const timeAgo = formatDistanceToNow(new Date(order.created_at), {
@@ -85,7 +86,7 @@ function OrderItem({ order }: OrderItemProps) {
   const formattedPrice = new Intl.NumberFormat('fr-FR', {
     style: 'currency',
     currency: 'EUR',
-  }).format(order.total_ttc || 0);
+  }).format(order.total_ttc ?? 0);
 
   return (
     <Link
@@ -205,14 +206,20 @@ export function OrdersPendingDropdown({
         throw new Error(queryError.message);
       }
 
-      const enrichedOrders: PendingOrder[] = (data || []).map((o: any) => ({
-        id: o.id,
-        order_number: o.order_number || 'N/A',
-        status: o.status,
-        total_ttc: o.total_ttc || 0,
-        customer_name: o.organisation?.name || 'Client inconnu',
-        created_at: o.created_at,
-      }));
+      const enrichedOrders: PendingOrder[] = (data ?? []).map(
+        (o: Record<string, unknown>) => {
+          const org = o.organisation as Record<string, unknown> | null;
+          return {
+            id: o.id as string,
+            order_number: (o.order_number as string | undefined) ?? 'N/A',
+            status: o.status as string,
+            total_ttc: (o.total_ttc as number | undefined) ?? 0,
+            customer_name:
+              (org?.name as string | undefined) ?? 'Client inconnu',
+            created_at: o.created_at as string,
+          };
+        }
+      );
 
       setOrders(enrichedOrders);
     } catch (err) {
@@ -225,7 +232,9 @@ export function OrdersPendingDropdown({
 
   useEffect(() => {
     if (open) {
-      fetchOrders();
+      void fetchOrders().catch((err: unknown) => {
+        console.error('[OrdersPendingDropdown] Fetch error:', err);
+      });
       onOpen?.();
     }
   }, [open, fetchOrders, onOpen]);
@@ -259,7 +268,11 @@ export function OrdersPendingDropdown({
             variant="ghost"
             size="sm"
             className="h-7 w-7 p-0"
-            onClick={handleRefresh}
+            onClick={() => {
+              void handleRefresh().catch((err: unknown) => {
+                console.error('[OrdersPendingDropdown] Refresh error:', err);
+              });
+            }}
             disabled={loading}
           >
             <RefreshCw
@@ -272,7 +285,7 @@ export function OrdersPendingDropdown({
         <ScrollArea className="max-h-80">
           {loading && orders.length === 0 ? (
             <div className="p-4 space-y-3">
-              {[...Array(3)].map((_, i) => (
+              {Array.from({ length: 3 }).map((_, i) => (
                 <div key={i} className="flex items-center gap-3">
                   <Skeleton className="w-8 h-8 rounded-md" />
                   <div className="flex-1 space-y-1.5">
@@ -289,7 +302,11 @@ export function OrdersPendingDropdown({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={handleRefresh}
+                onClick={() => {
+                  void handleRefresh().catch((err: unknown) => {
+                    console.error('[OrdersPendingDropdown] Retry error:', err);
+                  });
+                }}
                 className="mt-2"
               >
                 Réessayer

@@ -53,7 +53,7 @@ export function useLinkmeApprovalsCount(options?: {
   enableRealtime?: boolean;
   refetchInterval?: number;
 }): LinkmeApprovalsCountHook {
-  const { enableRealtime = true, refetchInterval = 30000 } = options || {};
+  const { enableRealtime = true, refetchInterval = 30000 } = options ?? {};
 
   const [count, setCount] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
@@ -98,7 +98,7 @@ export function useLinkmeApprovalsCount(options?: {
         return; // Sortie anticipée sans exception
       }
 
-      setCount(totalCount || 0);
+      setCount(totalCount ?? 0);
       setLastUpdated(new Date());
     } catch (err) {
       const errorObj =
@@ -130,7 +130,9 @@ export function useLinkmeApprovalsCount(options?: {
       }
 
       // Initial fetch (authentifié)
-      fetchCount();
+      void fetchCount().catch((err: unknown) => {
+        console.error('[useLinkmeApprovalsCount] Initial fetch error:', err);
+      });
 
       // Setup Realtime si activé ET authentifié
       if (enableRealtime) {
@@ -145,8 +147,8 @@ export function useLinkmeApprovalsCount(options?: {
               filter: `channel_id=eq.${LINKME_CHANNEL_ID}`,
             },
             payload => {
-              const newRow = payload.new as any;
-              const oldRow = payload.old as any;
+              const newRow = payload.new as Record<string, unknown>;
+              const oldRow = payload.old as Record<string, unknown>;
 
               // Refetch si impact sur draft status
               const shouldRefetch =
@@ -156,18 +158,17 @@ export function useLinkmeApprovalsCount(options?: {
                   (newRow?.status === 'draft' || oldRow?.status === 'draft'));
 
               if (shouldRefetch) {
-                console.log(
-                  '[useLinkmeApprovalsCount] Realtime change detected:',
-                  payload.eventType
-                );
-                fetchCount();
+                void fetchCount().catch((err: unknown) => {
+                  console.error(
+                    '[useLinkmeApprovalsCount] Refetch error:',
+                    err
+                  );
+                });
               }
             }
           )
           .subscribe(status => {
-            if (status === 'SUBSCRIBED') {
-              console.log('[useLinkmeApprovalsCount] Realtime subscribed');
-            } else if (status === 'CHANNEL_ERROR') {
+            if (status === 'CHANNEL_ERROR') {
               // Log silencieux, pas setError pour éviter bruit sur page login
               console.warn(
                 '[useLinkmeApprovalsCount] Realtime subscription failed'
@@ -179,18 +180,22 @@ export function useLinkmeApprovalsCount(options?: {
       // Polling fallback (seulement si authentifié)
       if (!enableRealtime || refetchInterval > 0) {
         intervalRef.current = setInterval(() => {
-          fetchCount();
+          void fetchCount().catch((err: unknown) => {
+            console.error('[useLinkmeApprovalsCount] Polling error:', err);
+          });
         }, refetchInterval);
       }
     };
 
-    setupSubscriptions();
+    void setupSubscriptions().catch((err: unknown) => {
+      console.error('[useLinkmeApprovalsCount] Setup error:', err);
+    });
 
     // Cleanup
     return () => {
       isMounted = false;
       if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
+        void supabase.removeChannel(channelRef.current);
         channelRef.current = null;
       }
       if (intervalRef.current) {

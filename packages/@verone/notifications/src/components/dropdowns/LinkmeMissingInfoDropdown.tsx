@@ -71,7 +71,7 @@ function InfoRequestItem({ request }: InfoRequestItemProps) {
 
         <div className="flex items-center gap-2 mt-0.5 text-xs text-black/60">
           <span className="truncate">
-            {request.recipient_name || request.recipient_email}
+            {request.recipient_name ?? request.recipient_email}
           </span>
         </div>
 
@@ -230,7 +230,7 @@ export function LinkmeMissingInfoDropdown({
         <ScrollArea className="max-h-80">
           {loading && requests.length === 0 ? (
             <div className="p-4 space-y-3">
-              {[...Array(3)].map((_, i) => (
+              {Array.from({ length: 3 }).map((_, i) => (
                 <div key={i} className="flex items-center gap-3">
                   <Skeleton className="w-8 h-8 rounded-md" />
                   <div className="flex-1 space-y-1.5">
