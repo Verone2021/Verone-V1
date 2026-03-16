@@ -264,8 +264,8 @@ export function CustomerFormModal({
     form.setValue('billing_address_line1', address.streetAddress);
     form.setValue('billing_city', address.city);
     form.setValue('billing_postal_code', address.postalCode);
-    form.setValue('billing_region', address.region || '');
-    form.setValue('billing_country', address.countryCode || 'FR');
+    form.setValue('billing_region', address.region ?? '');
+    form.setValue('billing_country', address.countryCode ?? 'FR');
     // GPS si pas d'adresse livraison différente
     if (!form.getValues('has_different_shipping_address')) {
       form.setValue('latitude', address.latitude || null);
@@ -277,15 +277,15 @@ export function CustomerFormModal({
     form.setValue('shipping_address_line1', address.streetAddress);
     form.setValue('shipping_city', address.city);
     form.setValue('shipping_postal_code', address.postalCode);
-    form.setValue('shipping_region', address.region || '');
-    form.setValue('shipping_country', address.countryCode || 'FR');
+    form.setValue('shipping_region', address.region ?? '');
+    form.setValue('shipping_country', address.countryCode ?? 'FR');
     // GPS = adresse de livraison si différente
     form.setValue('latitude', address.latitude || null);
     form.setValue('longitude', address.longitude || null);
   };
 
   // Options de pays fréquents
-  const countries = [
+  const _countries = [
     { code: 'FR', name: 'France' },
     { code: 'BE', name: 'Belgique' },
     { code: 'CH', name: 'Suisse' },
@@ -572,7 +572,7 @@ export function CustomerFormModal({
                 Adresse de facturation
               </h4>
               <AddressAutocomplete
-                value={form.watch('billing_address_line1') || ''}
+                value={form.watch('billing_address_line1') ?? ''}
                 onChange={value =>
                   form.setValue('billing_address_line1', value)
                 }
@@ -618,7 +618,7 @@ export function CustomerFormModal({
                   Adresse de livraison
                 </h4>
                 <AddressAutocomplete
-                  value={form.watch('shipping_address_line1') || ''}
+                  value={form.watch('shipping_address_line1') ?? ''}
                   onChange={value =>
                     form.setValue('shipping_address_line1', value)
                   }
@@ -634,7 +634,7 @@ export function CustomerFormModal({
             )}
 
             {/* Coordonnées GPS (lecture seule) */}
-            {(form.watch('latitude') || form.watch('longitude')) && (
+            {(form.watch('latitude') ?? form.watch('longitude')) && (
               <div className="bg-green-50 border border-green-200 rounded-lg p-3">
                 <div className="flex items-center gap-2 text-green-700">
                   <Navigation className="h-4 w-4" />

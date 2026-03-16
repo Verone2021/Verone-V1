@@ -23,12 +23,29 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@verone/ui';
 import { cn } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
-import { Check, ChevronsUpDown, X } from 'lucide-react';
+import { Check, ChevronsUpDown } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 // =====================================================================
 // TYPES
 // =====================================================================
+
+interface SubcategoryRelation {
+  id: string;
+  name: string;
+  category: {
+    id: string;
+    name: string;
+    family: {
+      id: string;
+      name: string;
+    };
+  } | null;
+}
+
+interface DataRow {
+  subcategory: SubcategoryRelation | null;
+}
 
 export interface CategoryHierarchy {
   subcategoryId: string;
@@ -69,15 +86,30 @@ export function CategoryFilterCombobox({
   const supabase = createClient();
 
   // Fetch catégories avec hiérarchie (UNIQUEMENT celles avec entités)
-  const fetchCategories = async () => {
+  const fetchCategories = React.useCallback(async () => {
     try {
       setLoading(true);
 
-      // Query selon type d'entité
-      let query;
+      // Query selon type d'entité - helper to extract rows
+      const selectQuery = `
+        subcategory:subcategories!inner(
+          id,
+          name,
+          category:categories!inner(
+            id,
+            name,
+            family:families!inner(
+              id,
+              name
+            )
+          )
+        )
+      `;
+
+      let fetchedRows: DataRow[] = [];
 
       if (entityType === 'variant_groups') {
-        query = supabase
+        const { data: vgData, error: vgError } = await supabase
           .from('variant_groups')
           .select(
             `
@@ -97,67 +129,41 @@ export function CategoryFilterCombobox({
           )
           .is('archived_at', null)
           .not('subcategory_id', 'is', null);
+
+        if (vgError) throw vgError;
+        fetchedRows = (vgData ?? []) as unknown as DataRow[];
       } else if (entityType === 'collections') {
-        query = supabase
+        const { data: colData, error: colError } = await supabase
           .from('collections')
-          .select(
-            `
-            subcategory:subcategories!inner(
-              id,
-              name,
-              category:categories!inner(
-                id,
-                name,
-                family:families!inner(
-                  id,
-                  name
-                )
-              )
-            )
-          `
-          )
+          .select(selectQuery)
           .is('archived_at', null);
+
+        if (colError) throw colError;
+        fetchedRows = (colData ?? []) as unknown as DataRow[];
       } else {
         // products
-        query = supabase
+        const { data: prodData, error: prodError } = await supabase
           .from('products')
-          .select(
-            `
-            subcategory:subcategories!inner(
-              id,
-              name,
-              category:categories!inner(
-                id,
-                name,
-                family:families!inner(
-                  id,
-                  name
-                )
-              )
-            )
-          `
-          )
+          .select(selectQuery)
           .is('archived_at', null);
+
+        if (prodError) throw prodError;
+        fetchedRows = (prodData ?? []) as unknown as DataRow[];
       }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
 
       // Construire hiérarchies uniques
       const hierarchiesMap = new Map<string, CategoryHierarchy>();
 
-      if (data) {
-        // collections ou products
-        data.forEach((item: any) => {
+      if (fetchedRows.length > 0) {
+        fetchedRows.forEach(item => {
           const subcategory = item.subcategory;
           if (subcategory) {
             const hierarchy: CategoryHierarchy = {
               subcategoryId: subcategory.id,
-              familyName: subcategory.category?.family?.name || 'N/A',
-              categoryName: subcategory.category?.name || 'N/A',
+              familyName: subcategory.category?.family?.name ?? 'N/A',
+              categoryName: subcategory.category?.name ?? 'N/A',
               subcategoryName: subcategory.name,
-              fullPath: `${subcategory.category?.family?.name || 'N/A'} > ${subcategory.category?.name || 'N/A'} > ${subcategory.name}`,
+              fullPath: `${subcategory.category?.family?.name ?? 'N/A'} > ${subcategory.category?.name ?? 'N/A'} > ${subcategory.name}`,
             };
             hierarchiesMap.set(subcategory.id, hierarchy);
           }
@@ -176,15 +182,15 @@ export function CategoryFilterCombobox({
     } finally {
       setLoading(false);
     }
-  };
+  }, [entityType, supabase]);
 
   React.useEffect(() => {
-    fetchCategories();
-  }, [entityType]);
+    void fetchCategories();
+  }, [fetchCategories]);
 
   // Label affiché
   const selectedCategory = categories.find(c => c.subcategoryId === value);
-  const displayLabel = selectedCategory?.fullPath || placeholder;
+  const displayLabel = selectedCategory?.fullPath ?? placeholder;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>

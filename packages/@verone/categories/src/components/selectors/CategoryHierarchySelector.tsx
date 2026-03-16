@@ -64,14 +64,14 @@ export function CategoryHierarchySelector({
           cat => cat.id === foundSubcategory.category_id
         );
         if (foundCategory) {
-          setSelectedFamily(foundCategory.family_id || '');
+          setSelectedFamily(foundCategory.family_id ?? '');
           setSelectedCategory(foundCategory.id);
           setSelectedSubcategory(foundSubcategory.id);
 
           setCurrentHierarchy({
-            family_id: foundCategory.family_id || '',
+            family_id: foundCategory.family_id ?? '',
             family_name:
-              families.find(f => f.id === foundCategory.family_id)?.name || '',
+              families.find(f => f.id === foundCategory.family_id)?.name ?? '',
             category_id: foundCategory.id,
             category_name: foundCategory.name,
             subcategory_id: foundSubcategory.id,

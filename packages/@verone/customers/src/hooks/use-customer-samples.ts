@@ -115,9 +115,9 @@ export function useCustomerSamples(filters?: SampleFilters) {
       setLoading(true);
       setError(null);
 
-      // @ts-ignore - View customer_samples_view not yet in generated types
+      // @ts-expect-error - View customer_samples_view not yet in generated types
       let query = supabase
-        // @ts-ignore - View customer_samples_view type missing
+        // @ts-expect-error - View customer_samples_view type missing
         .from('customer_samples_view')
         .select('*')
         .order('sample_created_at', { ascending: false });
@@ -148,27 +148,31 @@ export function useCustomerSamples(filters?: SampleFilters) {
       }
 
       if (filters?.po_status) {
-        query = query.eq('po_status', filters.po_status as any);
+        query = query.eq('po_status', filters.po_status);
       }
 
       const { data, error: fetchError } = await query;
 
       if (fetchError) throw fetchError;
 
-      setSamples((data as any) || []);
-    } catch (err: any) {
+      setSamples((data as CustomerSample[]) ?? []);
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : 'Erreur chargement échantillons';
       console.error('Error fetching samples:', err);
-      setError(err.message || 'Erreur chargement échantillons');
-      toast.error(err.message || 'Erreur chargement');
+      setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
   };
 
   // Auto-fetch au mount et quand filtres changent
+  const filtersKey = JSON.stringify(filters);
   useEffect(() => {
-    fetchSamples();
-  }, [JSON.stringify(filters)]);
+    void fetchSamples();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filtersKey]);
 
   // ===================================================================
   // ARCHIVE SAMPLE (retire du PO si draft)
@@ -179,7 +183,7 @@ export function useCustomerSamples(filters?: SampleFilters) {
       // Trigger database vérifie automatiquement que PO status = 'draft'
       const { error: updateError } = await supabase
         .from('purchase_order_items')
-        // @ts-ignore - archived_at column not yet in generated types
+        // @ts-expect-error - archived_at column not yet in generated types
         .update({ archived_at: new Date().toISOString() })
         .eq('id', sampleId);
 
@@ -197,9 +201,11 @@ export function useCustomerSamples(filters?: SampleFilters) {
 
       toast.success('Échantillon archivé avec succès');
       await fetchSamples(); // Refresh liste
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : 'Erreur archivage échantillon';
       console.error('Error archiving sample:', err);
-      toast.error(err.message || 'Erreur archivage échantillon');
+      toast.error(message);
       throw err;
     }
   };
@@ -212,7 +218,7 @@ export function useCustomerSamples(filters?: SampleFilters) {
     try {
       const { error: updateError } = await supabase
         .from('purchase_order_items')
-        // @ts-ignore - archived_at column not yet in generated types
+        // @ts-expect-error - archived_at column not yet in generated types
         .update({ archived_at: null })
         .eq('id', sampleId);
 
@@ -220,9 +226,11 @@ export function useCustomerSamples(filters?: SampleFilters) {
 
       toast.success('Échantillon réactivé avec succès');
       await fetchSamples();
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : 'Erreur réactivation échantillon';
       console.error('Error reactivating sample:', err);
-      toast.error(err.message || 'Erreur réactivation échantillon');
+      toast.error(message);
       throw err;
     }
   };
@@ -253,8 +261,10 @@ export function useCustomerSamples(filters?: SampleFilters) {
 
       if (sampleError) throw sampleError;
 
-      // @ts-ignore - Nested relation type inference
-      const supplierId = (sampleData.purchase_orders as any).supplier_id;
+      // @ts-expect-error - Nested relation type inference
+      const supplierId: string = (
+        sampleData.purchase_orders as { supplier_id: string }
+      ).supplier_id;
 
       // 2. Chercher PO draft existant pour ce fournisseur
       const { data: existingPO, error: poError } = await supabase
@@ -278,7 +288,7 @@ export function useCustomerSamples(filters?: SampleFilters) {
         // Créer nouveau PO draft
         const { data: newPO, error: createPOError } = await supabase
           .from('purchase_orders')
-          // @ts-ignore - created_by handled by database trigger
+          // @ts-expect-error - created_by handled by database trigger
           .insert({
             supplier_id: supplierId,
             status: 'draft',
@@ -295,7 +305,7 @@ export function useCustomerSamples(filters?: SampleFilters) {
       }
 
       // 3. Mettre à jour l'échantillon avec le nouveau PO
-      // @ts-ignore - archived_at column not yet in generated types
+      // @ts-expect-error - archived_at column not yet in generated types
       const { error: updateError } = await supabase
         .from('purchase_order_items')
         .update({
@@ -310,9 +320,11 @@ export function useCustomerSamples(filters?: SampleFilters) {
 
       toast.success('Échantillon inséré dans la commande');
       await fetchSamples();
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : 'Erreur insertion échantillon';
       console.error('Error inserting sample in PO:', err);
-      toast.error(err.message || 'Erreur insertion échantillon');
+      toast.error(message);
       throw err;
     }
   };
@@ -332,9 +344,11 @@ export function useCustomerSamples(filters?: SampleFilters) {
 
       toast.success('Échantillon supprimé définitivement');
       await fetchSamples();
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : 'Erreur suppression échantillon';
       console.error('Error deleting sample:', err);
-      toast.error(err.message || 'Erreur suppression échantillon');
+      toast.error(message);
       throw err;
     }
   };

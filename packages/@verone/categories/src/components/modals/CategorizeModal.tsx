@@ -7,11 +7,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@verone/ui';
 
 import { CategoryHierarchySelector } from '../selectors/CategoryHierarchySelector';
 
+interface ProductWithSubcategory {
+  subcategory_id?: string | null;
+  [key: string]: unknown;
+}
+
 interface CategoryHierarchyModalProps {
   isOpen: boolean;
   onClose: () => void;
-  product: any;
-  onUpdate: (updatedProduct: any) => void;
+  product: ProductWithSubcategory;
+  onUpdate: (updatedProduct: ProductWithSubcategory) => void;
 }
 
 export function CategoryHierarchyModal({
@@ -22,7 +27,7 @@ export function CategoryHierarchyModal({
 }: CategoryHierarchyModalProps) {
   const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<
     string | null
-  >(product.subcategory_id);
+  >(product.subcategory_id ?? null);
 
   const handleSave = () => {
     onUpdate({
@@ -41,7 +46,7 @@ export function CategoryHierarchyModal({
 
         <div className="space-y-4">
           <CategoryHierarchySelector
-            value={selectedSubcategoryId || undefined}
+            value={selectedSubcategoryId ?? undefined}
             onChange={subcategoryId => setSelectedSubcategoryId(subcategoryId)}
             placeholder="Sélectionner une sous-catégorie"
           />
