@@ -367,6 +367,9 @@ export function useSalesOrders() {
   currentOrderRef.current = currentOrder;
   const [stats, setStats] = useState<SalesOrderStats | null>(null);
   const { toast } = useToast();
+  // ✅ FIX: Stabiliser toast via useRef pour éviter recréation des useCallback
+  const toastRef = useRef(toast);
+  toastRef.current = toast;
   // ✅ FIX: useMemo pour éviter recréation du client à chaque render
   const supabase = useMemo(() => createClient(), []);
   const { createMovement: _createMovement, getAvailableStock } =
@@ -405,7 +408,8 @@ export function useSalesOrders() {
           )
         `
           )
-          .order('created_at', { ascending: false });
+          .order('created_at', { ascending: false })
+          .limit(500);
 
         // Appliquer les filtres
         if (filters?.customer_id) {
@@ -659,7 +663,7 @@ export function useSalesOrders() {
           errMsg,
           error
         );
-        toast({
+        toastRef.current({
           title: 'Erreur',
           description: 'Impossible de récupérer les commandes',
           variant: 'destructive',
@@ -669,7 +673,7 @@ export function useSalesOrders() {
         setLoading(false);
       }
     },
-    [supabase, toast]
+    [supabase]
   );
 
   // Récupérer une commande spécifique
@@ -842,7 +846,7 @@ export function useSalesOrders() {
         return orderWithCustomer as unknown as SalesOrder;
       } catch (error) {
         console.error('Erreur lors de la récupération de la commande:', error);
-        toast({
+        toastRef.current({
           title: 'Erreur',
           description: 'Impossible de récupérer la commande',
           variant: 'destructive',
@@ -852,7 +856,7 @@ export function useSalesOrders() {
         setLoading(false);
       }
     },
-    [supabase, toast]
+    [supabase]
   );
 
   // Récupérer les statistiques
@@ -1036,7 +1040,7 @@ export function useSalesOrders() {
 
         if (error) throw error;
 
-        toast({
+        toastRef.current({
           title: 'Succès',
           description: 'Paiement enregistré avec succès',
         });
@@ -1049,7 +1053,7 @@ export function useSalesOrders() {
         const message =
           error instanceof Error ? error.message : 'Erreur inconnue';
         console.error("Erreur lors de l'enregistrement du paiement:", error);
-        toast({
+        toastRef.current({
           title: 'Erreur',
           description: message ?? "Impossible d'enregistrer le paiement",
           variant: 'destructive',
@@ -1059,7 +1063,7 @@ export function useSalesOrders() {
         setLoading(false);
       }
     },
-    [supabase, toast, fetchOrders, fetchOrder]
+    [supabase, fetchOrders, fetchOrder]
   );
 
   // Marquer comme payé manuellement (insère dans order_payments via RPC)
@@ -1114,7 +1118,7 @@ export function useSalesOrders() {
           verified_bubble: 'Vérifié Bubble',
         };
 
-        toast({
+        toastRef.current({
           title: 'Paiement manuel enregistré',
           description: `Type: ${paymentLabels[paymentType]} — ${amount.toFixed(2)} €`,
         });
@@ -1127,7 +1131,7 @@ export function useSalesOrders() {
         const message =
           error instanceof Error ? error.message : 'Erreur inconnue';
         console.error('Erreur lors du paiement manuel:', error);
-        toast({
+        toastRef.current({
           title: 'Erreur',
           description: message ?? "Impossible d'enregistrer le paiement manuel",
           variant: 'destructive',
@@ -1137,7 +1141,7 @@ export function useSalesOrders() {
         setLoading(false);
       }
     },
-    [supabase, toast, fetchOrders, fetchOrder]
+    [supabase, fetchOrders, fetchOrder]
   );
 
   // Fetch manual payments for an order from order_payments table
@@ -1169,7 +1173,7 @@ export function useSalesOrders() {
 
       if (error) {
         console.error('Error deleting payment:', error);
-        toast({
+        toastRef.current({
           title: 'Erreur',
           description: 'Impossible de supprimer le paiement',
           variant: 'destructive',
@@ -1177,14 +1181,14 @@ export function useSalesOrders() {
         throw error;
       }
 
-      toast({
+      toastRef.current({
         title: 'Paiement supprimé',
         description: 'Le paiement manuel a été supprimé',
       });
 
       await fetchOrders();
     },
-    [supabase, toast, fetchOrders]
+    [supabase, fetchOrders]
   );
 
   // Marquer la sortie entrepôt
@@ -1198,7 +1202,7 @@ export function useSalesOrders() {
 
         if (error) throw error;
 
-        toast({
+        toastRef.current({
           title: 'Succès',
           description: 'Sortie entrepôt enregistrée avec succès',
         });
@@ -1213,7 +1217,7 @@ export function useSalesOrders() {
           error instanceof Error
             ? error.message
             : "Impossible d'enregistrer la sortie entrepôt";
-        toast({
+        toastRef.current({
           title: 'Erreur',
           description: errMsg,
           variant: 'destructive',
@@ -1223,7 +1227,7 @@ export function useSalesOrders() {
         setLoading(false);
       }
     },
-    [supabase, toast, fetchOrders, fetchOrder]
+    [supabase, fetchOrders, fetchOrder]
   );
 
   // Créer une nouvelle commande avec vérification de stock
@@ -1258,7 +1262,7 @@ export function useSalesOrders() {
           console.warn('⚠️ Commande avec stock insuffisant:', itemNames);
 
           // Afficher un toast informatif (non bloquant)
-          toast({
+          toastRef.current({
             title: '⚠️ Attention Stock',
             description: `Stock insuffisant pour ${itemNames.length} produit(s). La commande sera créée en stock prévisionnel négatif.`,
             variant: 'default',
@@ -1440,7 +1444,7 @@ export function useSalesOrders() {
           }
         }
 
-        toast({
+        toastRef.current({
           title: 'Succès',
           description: `Commande ${soNumber} créée avec succès`,
         });
@@ -1465,7 +1469,7 @@ export function useSalesOrders() {
               ? String((error as Record<string, unknown>).message)
               : String(error);
         console.error('[createOrder] Erreur:', errMsg, error);
-        toast({
+        toastRef.current({
           title: 'Erreur',
           description: errMsg ?? 'Impossible de créer la commande',
           variant: 'destructive',
@@ -1475,7 +1479,7 @@ export function useSalesOrders() {
         setLoading(false);
       }
     },
-    [supabase, toast, fetchOrders, checkStockAvailability]
+    [supabase, fetchOrders, checkStockAvailability]
   );
 
   // Mettre à jour une commande (métadonnées uniquement)
@@ -1490,7 +1494,7 @@ export function useSalesOrders() {
 
         if (error) throw error;
 
-        toast({
+        toastRef.current({
           title: 'Succès',
           description: 'Commande mise à jour avec succès',
         });
@@ -1505,7 +1509,7 @@ export function useSalesOrders() {
           error instanceof Error
             ? error.message
             : 'Impossible de mettre à jour la commande';
-        toast({
+        toastRef.current({
           title: 'Erreur',
           description: errMsg,
           variant: 'destructive',
@@ -1515,7 +1519,7 @@ export function useSalesOrders() {
         setLoading(false);
       }
     },
-    [supabase, toast, fetchOrders, fetchOrder]
+    [supabase, fetchOrders, fetchOrder]
   );
 
   // Mettre à jour une commande avec ses items (édition complète)
@@ -1731,7 +1735,7 @@ export function useSalesOrders() {
 
         if (updateOrderError) throw updateOrderError;
 
-        toast({
+        toastRef.current({
           title: 'Succès',
           description: `Commande ${existingOrder.order_number} mise à jour avec succès`,
         });
@@ -1748,7 +1752,7 @@ export function useSalesOrders() {
           error instanceof Error
             ? error.message
             : 'Impossible de mettre à jour la commande';
-        toast({
+        toastRef.current({
           title: 'Erreur',
           description: errMsg,
           variant: 'destructive',
@@ -1758,7 +1762,7 @@ export function useSalesOrders() {
         setLoading(false);
       }
     },
-    [supabase, toast, fetchOrders, fetchOrder, getAvailableStock]
+    [supabase, fetchOrders, fetchOrder, getAvailableStock]
   );
 
   // Changer le statut d'une commande
@@ -1876,7 +1880,7 @@ export function useSalesOrders() {
           );
         }
 
-        toast({
+        toastRef.current({
           title: 'Succès',
           description: `Commande marquée comme ${newStatus}`,
         });
@@ -1897,7 +1901,7 @@ export function useSalesOrders() {
           error instanceof Error
             ? error.message
             : 'Impossible de changer le statut';
-        toast({
+        toastRef.current({
           title: 'Erreur',
           description: errMsg,
           variant: 'destructive',
@@ -1907,7 +1911,7 @@ export function useSalesOrders() {
         setLoading(false);
       }
     },
-    [supabase, toast, fetchOrders, fetchOrder]
+    [supabase, fetchOrders, fetchOrder]
   );
 
   // Expédier des items (totalement ou partiellement)
@@ -1968,7 +1972,7 @@ export function useSalesOrders() {
         // 5. Mettre à jour le statut de la commande
         await updateStatus(orderId, newStatus);
 
-        toast({
+        toastRef.current({
           title: 'Succès',
           description: 'Expédition enregistrée avec succès',
         });
@@ -1978,7 +1982,7 @@ export function useSalesOrders() {
           error instanceof Error
             ? error.message
             : "Impossible d'enregistrer l'expédition";
-        toast({
+        toastRef.current({
           title: 'Erreur',
           description: errMsg,
           variant: 'destructive',
@@ -1988,7 +1992,7 @@ export function useSalesOrders() {
         setLoading(false);
       }
     },
-    [supabase, toast, updateStatus]
+    [supabase, updateStatus]
   );
 
   // Supprimer une commande (draft seulement)
@@ -2071,7 +2075,7 @@ export function useSalesOrders() {
           'ligne(s) supprimée(s)'
         );
 
-        toast({
+        toastRef.current({
           title: 'Succès',
           description: 'Commande supprimée avec succès',
         });
@@ -2086,7 +2090,7 @@ export function useSalesOrders() {
           error instanceof Error
             ? error.message
             : 'Impossible de supprimer la commande';
-        toast({
+        toastRef.current({
           title: 'Erreur',
           description: errMsg,
           variant: 'destructive',
@@ -2096,7 +2100,7 @@ export function useSalesOrders() {
         setLoading(false);
       }
     },
-    [supabase, toast, fetchOrders]
+    [supabase, fetchOrders]
   );
 
   return {

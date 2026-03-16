@@ -232,7 +232,7 @@ export type BillingContactData = z.infer<typeof billingContactSchema>;
 export const customBillingOrgSchema = z.object({
   legalName: z.string().min(1, 'Raison sociale requise'),
   tradeName: z.string().optional(),
-  siret: z.string().min(9, 'SIRET requis'),
+  siret: z.string().optional(),
   vatNumber: z.string().optional(),
   addressLine1: z.string().min(1, 'Adresse requise'),
   addressLine2: z.string().optional(),
@@ -243,12 +243,30 @@ export const customBillingOrgSchema = z.object({
 
 export type CustomBillingOrg = z.infer<typeof customBillingOrgSchema>;
 
-export const billingOrgSchema = z.object({
-  mode: z.enum(['restaurant', 'parent_org', 'other']),
-  organisationId: z.string().uuid().nullable(),
-  customOrganisation: customBillingOrgSchema.nullable(),
-  saveAsDefault: z.boolean().default(false),
-});
+export const billingOrgSchema = z
+  .object({
+    mode: z.enum(['restaurant', 'parent_org', 'other']),
+    organisationId: z.string().uuid().nullable(),
+    customOrganisation: customBillingOrgSchema.nullable(),
+    saveAsDefault: z.boolean().default(false),
+  })
+  .refine(
+    data => {
+      // Only validate SIRET/VAT when custom organisation is provided
+      if (data.mode !== 'other' || !data.customOrganisation) return true;
+      const org = data.customOrganisation;
+      const isFrench = !org.country || org.country.toUpperCase() === 'FR';
+      if (isFrench) {
+        return !!org.siret && org.siret.length >= 9;
+      }
+      return !!org.vatNumber && org.vatNumber.length >= 4;
+    },
+    {
+      message:
+        'SIRET requis (France) ou N° TVA intracommunautaire requis (étranger)',
+      path: ['customOrganisation', 'siret'],
+    }
+  );
 
 export type BillingOrgData = z.infer<typeof billingOrgSchema>;
 

@@ -179,7 +179,7 @@ Merci de nous transmettre ces informations dans les meilleurs délais.`;
 
 Pour finaliser le dossier de votre commande, nous avons besoin des informations suivantes concernant votre entreprise :
 
-${fieldsList || '  - SIRET'}
+${fieldsList || '  - SIRET ou N° TVA intracommunautaire'}
 
 Merci de nous transmettre ces informations dans les meilleurs délais.`;
     },
@@ -243,6 +243,10 @@ export interface GetOrderMissingFieldsOptions {
   details: LinkMeOrderDetails | null;
   /** SIRET from the linked organisation (pass null/undefined if unknown) */
   organisationSiret?: string | null;
+  /** Country code of the organisation (ISO 3166-1 alpha-2, e.g. 'FR', 'BE') */
+  organisationCountry?: string | null;
+  /** VAT number (n° TVA intracommunautaire) from the linked organisation */
+  organisationVatNumber?: string | null;
   /** Type de restaurant (propre/succursale/franchise) - owner fields requis uniquement pour franchises */
   ownerType?: string | null;
   /** Field keys explicitly ignored by back-office staff for this order */
@@ -258,7 +262,14 @@ export interface GetOrderMissingFieldsOptions {
 export function getOrderMissingFields(
   options: GetOrderMissingFieldsOptions
 ): MissingFieldsResult {
-  const { details, organisationSiret, ownerType, ignoredFields } = options;
+  const {
+    details,
+    organisationSiret,
+    organisationCountry,
+    organisationVatNumber,
+    ownerType,
+    ignoredFields,
+  } = options;
   const ignored = new Set(ignoredFields ?? []);
   const fields: MissingField[] = [];
 
@@ -441,10 +452,20 @@ export function getOrderMissingFields(
   }
 
   // --- Organisation ---
-  if (!organisationSiret) {
+  const isFrench =
+    !organisationCountry || organisationCountry.toUpperCase() === 'FR';
+  if (isFrench && !organisationSiret) {
     fields.push({
       key: 'organisation_siret',
       label: 'SIRET',
+      category: 'organisation',
+      inputType: 'text',
+    });
+  }
+  if (!isFrench && !organisationVatNumber) {
+    fields.push({
+      key: 'organisation_vat_number',
+      label: 'N° TVA intracommunautaire',
       category: 'organisation',
       inputType: 'text',
     });

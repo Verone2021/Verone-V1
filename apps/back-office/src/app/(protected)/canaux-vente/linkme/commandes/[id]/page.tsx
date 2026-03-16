@@ -179,6 +179,8 @@ interface OrderWithDetails {
     phone: string | null;
     email: string | null;
     siret: string | null;
+    country: string | null;
+    vat_number: string | null;
   } | null;
   items: Array<{
     id: string;
@@ -510,7 +512,7 @@ export default function LinkMeOrderDetailPage() {
         const { data: orgData } = await supabase
           .from('organisations')
           .select(
-            'id, trade_name, legal_name, approval_status, enseigne_id, address_line1, address_line2, postal_code, city, billing_address_line1, billing_address_line2, billing_city, billing_postal_code, shipping_address_line1, shipping_address_line2, shipping_city, shipping_postal_code, has_different_shipping_address, phone, email, siret'
+            'id, trade_name, legal_name, approval_status, enseigne_id, address_line1, address_line2, postal_code, city, billing_address_line1, billing_address_line2, billing_city, billing_postal_code, shipping_address_line1, shipping_address_line2, shipping_city, shipping_postal_code, has_different_shipping_address, phone, email, siret, country, vat_number'
           )
           .eq('id', orderData.customer_id)
           .single();
@@ -688,6 +690,8 @@ export default function LinkMeOrderDetailPage() {
       const missingFields = getOrderMissingFields({
         details,
         organisationSiret: order?.organisation?.siret,
+        organisationCountry: order?.organisation?.country,
+        organisationVatNumber: order?.organisation?.vat_number,
         ownerType: details?.owner_type,
       });
       await requestInfo.mutateAsync({
@@ -975,6 +979,8 @@ export default function LinkMeOrderDetailPage() {
     ? getOrderMissingFields({
         details,
         organisationSiret: order.organisation?.siret,
+        organisationCountry: order.organisation?.country,
+        organisationVatNumber: order.organisation?.vat_number,
         ownerType: details?.owner_type,
       })
     : null;
@@ -1489,6 +1495,12 @@ export default function LinkMeOrderDetailPage() {
                     <div className="flex items-center gap-2 text-gray-600">
                       <CreditCard className="h-3.5 w-3.5 text-gray-400" />
                       <span>SIRET : {order.organisation.siret}</span>
+                    </div>
+                  )}
+                  {order.organisation.vat_number && (
+                    <div className="flex items-center gap-2 text-gray-600">
+                      <CreditCard className="h-3.5 w-3.5 text-gray-400" />
+                      <span>TVA intra. : {order.organisation.vat_number}</span>
                     </div>
                   )}
                   {(order.organisation.address_line1 ??
@@ -2393,6 +2405,8 @@ export default function LinkMeOrderDetailPage() {
             const mf = getOrderMissingFields({
               details,
               organisationSiret: order?.organisation?.siret,
+              organisationCountry: order?.organisation?.country,
+              organisationVatNumber: order?.organisation?.vat_number,
               ownerType: details?.owner_type,
             });
             const cats = new Set<MissingFieldCategory>(
@@ -2429,6 +2443,8 @@ export default function LinkMeOrderDetailPage() {
               const missingFields = getOrderMissingFields({
                 details,
                 organisationSiret: order?.organisation?.siret,
+                organisationCountry: order?.organisation?.country,
+                organisationVatNumber: order?.organisation?.vat_number,
                 ownerType: details?.owner_type,
               });
               const relevantCategories = (

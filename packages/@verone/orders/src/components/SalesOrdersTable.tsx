@@ -11,7 +11,13 @@
  * Les triggers stock sont agnostiques du canal - meme workflow pour tous.
  */
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  useRef,
+} from 'react';
 
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -361,19 +367,31 @@ export function SalesOrdersTable({
     });
   };
 
-  // Fetch initial avec filtre canal
+  // ✅ FIX: Refs stables pour éviter re-fetch en StrictMode
+  const fetchOrdersRef = useRef(fetchOrders);
+  fetchOrdersRef.current = fetchOrders;
+  const fetchStatsRef = useRef(fetchStats);
+  fetchStatsRef.current = fetchStats;
+
+  // Fetch initial avec filtre canal (StrictMode safe)
   useEffect(() => {
     // ✅ OPTIMISÉ: Ne pas fetch si preloadedOrders fourni (évite double fetch)
     if (preloadedOrders) return;
 
+    let stale = false;
     const filters = channelId ? { channel_id: channelId } : undefined;
-    void fetchOrders(filters).catch((err: unknown) => {
-      console.error('[SalesOrdersTable] fetchOrders failed:', err);
-    });
-    void fetchStats(filters).catch((err: unknown) => {
-      console.error('[SalesOrdersTable] fetchStats failed:', err);
-    });
-  }, [fetchOrders, fetchStats, channelId, preloadedOrders]);
+    if (!stale) {
+      void fetchOrdersRef.current(filters).catch((err: unknown) => {
+        console.error('[SalesOrdersTable] fetchOrders failed:', err);
+      });
+      void fetchStatsRef.current(filters).catch((err: unknown) => {
+        console.error('[SalesOrdersTable] fetchStats failed:', err);
+      });
+    }
+    return () => {
+      stale = true;
+    };
+  }, [channelId, preloadedOrders]);
 
   // Ouvrir automatiquement le modal si query param ?id= present
   useEffect(() => {

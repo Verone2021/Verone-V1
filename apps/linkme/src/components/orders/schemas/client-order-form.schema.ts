@@ -85,12 +85,14 @@ export const clientResponsableBaseSchema = z.object({
 export const clientResponsableSchema = clientResponsableBaseSchema.refine(
   data => {
     if (data.type === 'franchise') {
-      return !!data.companyLegalName && !!data.siret;
+      // companyLegalName is always required for franchises
+      // SIRET is only required for French restaurants (handled at form level by country)
+      return !!data.companyLegalName;
     }
     return true;
   },
   {
-    message: 'Raison sociale et SIRET requis pour les franchises',
+    message: 'Raison sociale requise pour les franchises',
     path: ['companyLegalName'],
   }
 );
