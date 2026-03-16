@@ -7,6 +7,7 @@
   "scripts": {
     "build": "tsc",
     "clean": "rm -rf dist",
+    "lint": "eslint src --max-warnings=263",
     "type-check": "tsc --noEmit"
   },
   "author": "Romeo Dos Santos",

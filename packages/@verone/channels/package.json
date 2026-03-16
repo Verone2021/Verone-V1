@@ -5,6 +5,7 @@
   "main": "src/index.ts",
   "types": "src/index.ts",
   "scripts": {
+    "lint": "eslint src --max-warnings=180",
     "type-check": "tsc --noEmit"
   },
   "author": "Romeo Dos Santos",
