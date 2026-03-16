@@ -228,7 +228,7 @@ const isOrderEditable = (order: SalesOrder, channelId?: string | null) => {
 
 const getChannelRedirectUrl = (order: SalesOrder) => {
   if (order.channel_id === LINKME_CHANNEL_ID) {
-    if (order.status === 'pending_approval') {
+    if (order.status === 'draft' && order.pending_admin_validation === true) {
       return '/canaux-vente/linkme/approbations';
     }
     return '/canaux-vente/linkme/commandes';
@@ -423,8 +423,25 @@ export function SalesOrdersTable({
 
     const filtered = orders.filter(order => {
       // Filtre onglet statut (accès direct, prioritaire)
-      if (activeTab !== 'all' && order.status !== activeTab) {
-        return false;
+      // pending_approval = status 'pending_approval' OU legacy 'draft' + pending_admin_validation
+      if (activeTab !== 'all') {
+        if (activeTab === 'pending_approval') {
+          if (
+            !(
+              order.status === 'draft' &&
+              order.pending_admin_validation === true
+            )
+          )
+            return false;
+        } else if (activeTab === 'draft') {
+          if (
+            order.status !== 'draft' ||
+            order.pending_admin_validation === true
+          )
+            return false;
+        } else if (order.status !== activeTab) {
+          return false;
+        }
       }
 
       // Filtre avancé: statuts multi-select (si onglet = 'all')
@@ -704,9 +721,12 @@ export function SalesOrdersTable({
   const tabCounts = useMemo(() => {
     return {
       all: orders.length,
-      pending_approval: orders.filter(o => o.status === 'pending_approval')
-        .length,
-      draft: orders.filter(o => o.status === 'draft').length,
+      pending_approval: orders.filter(
+        o => o.status === 'draft' && o.pending_admin_validation === true
+      ).length,
+      draft: orders.filter(
+        o => o.status === 'draft' && o.pending_admin_validation !== true
+      ).length,
       validated: orders.filter(o => o.status === 'validated').length,
       shipped: orders.filter(
         o => o.status === 'shipped' || o.status === 'partially_shipped'
@@ -1639,10 +1659,16 @@ export function SalesOrdersTable({
                                 <Badge
                                   className={cn(
                                     'text-xs',
-                                    statusColors[order.status]
+                                    order.status === 'draft' &&
+                                      order.pending_admin_validation === true
+                                      ? statusColors['pending_approval']
+                                      : statusColors[order.status]
                                   )}
                                 >
-                                  {statusLabels[order.status]}
+                                  {order.status === 'draft' &&
+                                  order.pending_admin_validation === true
+                                    ? statusLabels['pending_approval']
+                                    : statusLabels[order.status]}
                                 </Badge>
                                 {hasSamples && (
                                   <Badge

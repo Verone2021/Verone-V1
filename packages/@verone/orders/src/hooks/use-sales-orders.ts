@@ -378,20 +378,28 @@ export function useSalesOrders() {
   // Récupérer toutes les commandes avec filtres
   const fetchOrders = useCallback(
     async (filters?: SalesOrderFilters) => {
-      console.warn('[FETCH] Début fetchOrders, filtres:', filters);
       setLoading(true);
       try {
         let query = supabase
           .from('sales_orders')
           .select(
             `
-          *,
+          id, order_number, linkme_display_number, created_at, status,
+          total_ht, total_ttc, customer_id, customer_type,
+          expected_delivery_date, created_by_affiliate_id,
+          linkme_selection_id, pending_admin_validation,
+          payment_status_v2, notes, currency, channel_id,
+          individual_customer_id, tax_rate, eco_tax_total,
+          eco_tax_vat_rate, shipping_cost_ht, handling_cost_ht,
+          insurance_cost_ht, fees_vat_rate,
+          created_by,
+          responsable_contact_id, billing_contact_id, delivery_contact_id,
           sales_channel:sales_channels!left(id, name, code),
           billing_contact:contacts!sales_orders_billing_contact_id_fkey(id, first_name, last_name, email, phone),
           delivery_contact:contacts!sales_orders_delivery_contact_id_fkey(id, first_name, last_name, email, phone),
           responsable_contact:contacts!sales_orders_responsable_contact_id_fkey(id, first_name, last_name, email, phone),
           sales_order_items (
-            *,
+            id, product_id, quantity, unit_price_ht, total_ht,
             products (
               id,
               name,
@@ -432,13 +440,6 @@ export function useSalesOrders() {
         }
 
         const { data: ordersData, error } = await query;
-
-        console.warn(
-          '[FETCH] Données reçues:',
-          ordersData?.length,
-          'commandes'
-        );
-        if (error) console.error('[FETCH] Erreur:', error);
 
         if (error) throw error;
 
@@ -648,13 +649,7 @@ export function useSalesOrders() {
           };
         });
 
-        console.warn(
-          '[FETCH] Mise à jour state avec',
-          ordersWithCustomers.length,
-          'commandes'
-        );
         setOrders(ordersWithCustomers as unknown as SalesOrder[]);
-        console.warn('[FETCH] fetchOrders terminé avec succès');
       } catch (error: unknown) {
         const errMsg =
           error instanceof Error ? error.message : 'Erreur inconnue';
@@ -669,7 +664,6 @@ export function useSalesOrders() {
           variant: 'destructive',
         });
       } finally {
-        console.warn('[FETCH] fetchOrders finally block');
         setLoading(false);
       }
     },
@@ -1259,8 +1253,6 @@ export function useSalesOrders() {
             })
           );
 
-          console.warn('⚠️ Commande avec stock insuffisant:', itemNames);
-
           // Afficher un toast informatif (non bloquant)
           toastRef.current({
             title: '⚠️ Attention Stock',
@@ -1373,7 +1365,6 @@ export function useSalesOrders() {
               continue;
             }
 
-            const currentReal = product?.stock_real ?? 0;
             const currentForecastedOut = product?.stock_forecasted_out ?? 0;
 
             // Nouvelle quantité prévue en sortie (additionnée)
@@ -1392,19 +1383,8 @@ export function useSalesOrders() {
                 'Erreur mise à jour stock prévisionnel:',
                 updateError
               );
-            } else {
-              console.warn(
-                `[STOCK] Stock prévisionnel mis à jour pour produit ${item.product_id}: forecasted_out=${newForecastedOut}, disponible=${currentReal - newForecastedOut}`
-              );
-
-              // Si le stock disponible devient négatif, le trigger notify_negative_forecast_stock()
-              // créera automatiquement une notification pour commander chez le fournisseur
             }
           }
-        } else {
-          console.warn(
-            `[STOCK] Commande créée en statut '${initialStatus}' - Pas d'impact stock prévisionnel (sera mis à jour lors de la validation)`
-          );
         }
 
         // 7. Réserver le stock automatiquement si demandé (seulement pour items disponibles)
@@ -1435,11 +1415,7 @@ export function useSalesOrders() {
                 ] as never);
               }
             }
-          } catch (reservationError) {
-            console.warn(
-              'Erreur lors de la réservation automatique:',
-              reservationError
-            );
+          } catch {
             // Ne pas faire échouer la création de commande pour une erreur de réservation
           }
         }
@@ -1452,12 +1428,8 @@ export function useSalesOrders() {
         // Refresh liste en best-effort (non bloquant)
         try {
           await fetchOrders();
-        } catch (refreshError) {
-          // Log pour debug, mais ne pas faire échouer createOrder
-          console.warn(
-            '[createOrder] fetchOrders refresh failed (non-blocking):',
-            refreshError
-          );
+        } catch {
+          // Non-blocking: ne pas faire échouer createOrder
         }
         return order;
       } catch (error: unknown) {
@@ -1600,22 +1572,12 @@ export function useSalesOrders() {
         );
 
         if (unavailableItems.length > 0) {
-          const itemNames = await Promise.all(
-            unavailableItems.map(async item => {
-              const { data: product } = await supabase
-                .from('products')
-                .select('name')
-                .eq('id', item.product_id)
-                .single();
-              return `${product?.name ?? item.product_id} (demandé: ${item.requested_quantity}, disponible: ${item.effective_available_stock})`;
-            })
-          );
-
-          // BACKORDERS AUTORISÉS: Warning au lieu de throw (Politique 2025-10-14)
-          // Stock négatif = backorder selon standards ERP 2025
-          console.warn(
-            `⚠️ Stock insuffisant (backorder autorisé): ${itemNames.join(', ')}`
-          );
+          // Afficher un toast informatif (non bloquant)
+          toastRef.current({
+            title: '⚠️ Attention Stock',
+            description: `Stock insuffisant pour ${unavailableItems.length} produit(s). La commande sera créée en stock prévisionnel négatif.`,
+            variant: 'default',
+          });
         }
 
         // 4. Calculer le diff des items (existingItems et existingItemsMap déjà créés ci-dessus)
@@ -1794,9 +1756,6 @@ export function useSalesOrders() {
 
         // Valider transition FSM (throws Error si invalide)
         validateStatusTransition(currentStatus, newStatus);
-        console.warn(
-          `[FSM] Transition validée: ${currentStatus} → ${newStatus}`
-        );
 
         // ✅ DÉVALIDATION: Bloquer si expédition a commencé (même règle que PO)
         if (currentStatus === 'validated' && newStatus === 'draft') {
@@ -1813,10 +1772,6 @@ export function useSalesOrders() {
               'Impossible de dévalider : des expéditions ont déjà été effectuées'
             );
           }
-          console.warn(
-            `[DEVALIDATION] Aucune expédition, dévalidation autorisée`
-          );
-
           // ✅ DÉVALIDATION: Bloquer si facture finalisée/payée existe
           const { data: invoices } = await supabase
             .from('financial_documents')
@@ -1836,9 +1791,6 @@ export function useSalesOrders() {
                 `Créez d'abord un avoir pour annuler cette facture.`
             );
           }
-          console.warn(
-            `[DEVALIDATION] Aucune facture finalisée, dévalidation autorisée`
-          );
         }
 
         // ✅ Mettre à jour le statut dans la base de données
@@ -1861,8 +1813,6 @@ export function useSalesOrders() {
             updateError.message ?? 'Erreur lors de la mise à jour du statut'
           );
         }
-        console.warn(`[STATUS] Statut mis à jour: ${newStatus}`);
-
         // Libérer les réservations de stock en cas d'annulation OU dévalidation (via client car pas bloqué par RLS)
         if (newStatus === 'cancelled' || newStatus === 'draft') {
           const userId = (await supabase.auth.getUser()).data.user?.id;
@@ -1875,9 +1825,6 @@ export function useSalesOrders() {
             .eq('reference_type', 'sales_order')
             .eq('reference_id', orderId)
             .is('released_at', null);
-          console.warn(
-            `[STOCK] Réservations libérées pour commande ${orderId}`
-          );
         }
 
         toastRef.current({
@@ -1893,7 +1840,6 @@ export function useSalesOrders() {
         // ✅ Notifier les composants d'alertes stock pour rafraîchissement immédiat
         if (typeof window !== 'undefined') {
           window.dispatchEvent(new CustomEvent('stock-alerts-refresh'));
-          console.warn('[EVENT] stock-alerts-refresh émis');
         }
       } catch (error: unknown) {
         console.error('Erreur lors du changement de statut:', error);
@@ -2012,8 +1958,6 @@ export function useSalesOrders() {
           .eq('reference_id', orderId)
           .is('released_at', null);
 
-        console.warn('[DELETE] Début suppression commande:', orderId);
-
         // Vérifier d'abord le statut de la commande
         const { data: order, error: fetchError } = await supabase
           .from('sales_orders')
@@ -2021,59 +1965,30 @@ export function useSalesOrders() {
           .eq('id', orderId)
           .single();
 
-        console.warn('[DELETE] Statut récupéré:', order, 'Erreur:', fetchError);
-
-        if (fetchError) {
-          console.error('❌ [DELETE] Erreur fetch status:', fetchError);
-          throw fetchError;
-        }
+        if (fetchError) throw fetchError;
 
         // Sécurité : seules les commandes draft ou cancelled peuvent être supprimées
         if (order.status !== 'draft' && order.status !== 'cancelled') {
-          console.error('🚫 [DELETE] Statut invalide:', order.status);
           throw new Error(
             'Seules les commandes en brouillon ou annulées peuvent être supprimées'
           );
         }
 
-        console.warn('[DELETE] Validation statut OK, suppression en cours...');
-
         // Supprimer la commande (avec count pour vérifier si suppression effective)
-        const { data, error, count } = await supabase
+        const { data, error } = await supabase
           .from('sales_orders')
           .delete()
           .eq('id', orderId)
           .select('id');
 
-        console.warn(
-          '[DELETE] Résultat suppression - Data:',
-          data,
-          'Count:',
-          count,
-          'Erreur:',
-          error
-        );
-
-        if (error) {
-          console.error('❌ [DELETE] Erreur Supabase delete:', error);
-          throw error;
-        }
+        if (error) throw error;
 
         // Vérifier si la suppression a réellement eu lieu (RLS peut bloquer silencieusement)
         if (!data || data.length === 0) {
-          console.error(
-            '❌ [DELETE] RLS POLICY BLOQUE LA SUPPRESSION - Aucune ligne affectée'
-          );
           throw new Error(
             'Impossible de supprimer : permissions insuffisantes (RLS policy). Vérifiez que vous êtes le créateur de la commande.'
           );
         }
-
-        console.warn(
-          '[DELETE] Suppression réussie !',
-          data.length,
-          'ligne(s) supprimée(s)'
-        );
 
         toastRef.current({
           title: 'Succès',

@@ -48,15 +48,43 @@ export function useOrderHistory(orderId: string | undefined) {
       const supabase = createClient();
       const allEvents: OrderHistoryEvent[] = [];
 
-      // ─── Source A: Lifecycle timestamps from sales_orders ───
-      const { data: order } = await supabase
-        .from('sales_orders')
-        .select(
-          'created_at, confirmed_at, shipped_at, delivered_at, cancelled_at, paid_at, invoiced_at'
-        )
-        .eq('id', orderId)
-        .single();
+      // ─── Parallel fetch all 4 sources ───
+      const [
+        { data: order },
+        { data: infoRequests },
+        { data: trackedEvents },
+        { data: financialDocs },
+      ] = await Promise.all([
+        supabase
+          .from('sales_orders')
+          .select(
+            'created_at, confirmed_at, shipped_at, delivered_at, cancelled_at, paid_at, invoiced_at'
+          )
+          .eq('id', orderId)
+          .single(),
+        supabase
+          .from('linkme_info_requests')
+          .select(
+            'id, sent_at, completed_at, cancelled_at, recipient_email, recipient_name, requested_fields'
+          )
+          .eq('sales_order_id', orderId)
+          .order('sent_at', { ascending: false }),
+        supabase
+          .from('sales_order_events')
+          .select('id, event_type, metadata, created_at')
+          .eq('sales_order_id', orderId)
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('financial_documents')
+          .select(
+            'id, document_type, document_number, total_ht, quote_status, created_at'
+          )
+          .eq('sales_order_id', orderId)
+          .is('deleted_at', null)
+          .order('created_at', { ascending: false }),
+      ]);
 
+      // ─── Source A: Lifecycle timestamps from sales_orders ───
       if (order) {
         allEvents.push({
           id: `created-${orderId}`,
@@ -128,14 +156,6 @@ export function useOrderHistory(orderId: string | undefined) {
       }
 
       // ─── Source B: Info requests from linkme_info_requests ───
-      const { data: infoRequests } = await supabase
-        .from('linkme_info_requests')
-        .select(
-          'id, sent_at, completed_at, cancelled_at, recipient_email, recipient_name, requested_fields'
-        )
-        .eq('sales_order_id', orderId)
-        .order('sent_at', { ascending: false });
-
       if (infoRequests) {
         for (const req of infoRequests) {
           const fields = req.requested_fields as Array<{
@@ -183,12 +203,6 @@ export function useOrderHistory(orderId: string | undefined) {
       }
 
       // ─── Source C: Tracked events from sales_order_events ───
-      const { data: trackedEvents } = await supabase
-        .from('sales_order_events')
-        .select('id, event_type, metadata, created_at')
-        .eq('sales_order_id', orderId)
-        .order('created_at', { ascending: false });
-
       if (trackedEvents) {
         const eventLabels: Record<
           string,
@@ -246,15 +260,6 @@ export function useOrderHistory(orderId: string | undefined) {
       }
 
       // ─── Source D: Financial documents (quotes & invoices) ───
-      const { data: financialDocs } = await supabase
-        .from('financial_documents')
-        .select(
-          'id, document_type, document_number, total_ht, quote_status, created_at'
-        )
-        .eq('sales_order_id', orderId)
-        .is('deleted_at', null)
-        .order('created_at', { ascending: false });
-
       if (financialDocs) {
         const quoteStatusLabels: Record<string, string> = {
           draft: 'Brouillon',

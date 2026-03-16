@@ -36,7 +36,7 @@ export function useSiteInternetConfig() {
   return useQuery({
     queryKey: ['site-internet-config'],
     queryFn: fetchSiteInternetConfig,
-    staleTime: 300_0000, // 5 minutes (config change rarement)
+    staleTime: 300_000, // 5 minutes (config change rarement)
     refetchOnWindowFocus: false,
   });
 }

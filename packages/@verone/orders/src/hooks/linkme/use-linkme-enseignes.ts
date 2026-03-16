@@ -123,7 +123,7 @@ export function useLinkMeEnseignes() {
   return useQuery({
     queryKey: ['linkme-enseignes'],
     queryFn: fetchEnseignesWithStats,
-    staleTime: 300_0000, // 5 minutes (was 30s - trop agressif)
+    staleTime: 300_000, // 5 minutes (was 30s - trop agressif)
     refetchOnWindowFocus: false,
   });
 }
