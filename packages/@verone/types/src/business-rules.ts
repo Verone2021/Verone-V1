@@ -27,7 +27,7 @@ export interface BusinessRuleValidation {
   ruleName: string;
   errorMessage?: string;
   warningMessage?: string;
-  context?: Record<string, any>;
+  context?: Record<string, unknown>;
 }
 
 // Configuration des règles business pour les échantillons
@@ -41,7 +41,7 @@ export interface SampleBusinessRuleConfig {
 }
 
 // Règle business générique
-export interface BusinessRule<T = any> {
+export interface BusinessRule<T = unknown> {
   id: string;
   name: string;
   description: string;
@@ -70,5 +70,5 @@ export interface BusinessRuleAuditLog {
   action: string;
   result: BusinessRuleValidation;
   timestamp: string;
-  context: Record<string, any>;
+  context: Record<string, unknown>;
 }
