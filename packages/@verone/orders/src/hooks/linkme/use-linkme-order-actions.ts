@@ -166,15 +166,17 @@ async function approveOrder(
     throw new Error('Détails LinkMe non trouvés pour cette commande');
   }
 
-  // 2. Vérifier que l'Étape 2 est complète (owner_email présent)
-  const ownerEmail = details.owner_contact_same_as_requester
-    ? details.requester_email
-    : details.owner_email;
+  // 2. Déterminer l'email destinataire
+  // - Ouverture (is_new_restaurant) : propriétaire (owner_email)
+  // - Restaurant existant : demandeur (requester_email)
+  const ownerEmail = details.is_new_restaurant
+    ? details.owner_contact_same_as_requester
+      ? details.requester_email
+      : details.owner_email
+    : details.requester_email;
 
   if (!ownerEmail) {
-    throw new Error(
-      'Étape 2 incomplète: contact propriétaire requis pour approbation'
-    );
+    throw new Error("Email destinataire manquant pour l'approbation");
   }
 
   // 2b. CASCADE: Si ouverture (is_new_restaurant = true), approuver l'organisation + vérifier contacts
@@ -350,9 +352,11 @@ async function approveOrder(
     .select('order_number, total_ttc, customer_id, customer_type')
     .eq('id', input.orderId)
     .single();
-  const ownerName = details.owner_contact_same_as_requester
-    ? details.requester_name
-    : (details.owner_name ?? details.requester_name);
+  const ownerName = details.is_new_restaurant
+    ? details.owner_contact_same_as_requester
+      ? details.requester_name
+      : (details.owner_name ?? details.requester_name)
+    : details.requester_name;
   // Requête séparée pour l'organisation (pas de FK car customer_id est polymorphique)
   let organisationName: string | null = null;
   if (orderData?.customer_type === 'organization' && orderData?.customer_id) {
@@ -370,6 +374,7 @@ async function approveOrder(
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        salesOrderId: input.orderId,
         orderNumber: orderData?.order_number,
         ownerEmail,
         ownerName,
@@ -699,6 +704,7 @@ async function rejectOrder(
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        salesOrderId: input.orderId,
         orderNumber: order.order_number,
         requesterEmail: details.requester_email,
         requesterName: details.requester_name,

@@ -368,6 +368,7 @@ export default function DeliveryInfoPage() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
+            salesOrderId: validation.order.id,
             orderNumber: validation.order.order_number,
             requesterEmail: validation.order.linkmeDetails.requester_email,
             requesterName: validation.order.linkmeDetails.requester_name,

@@ -6,7 +6,38 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
+import fs from 'fs';
+import path from 'path';
+
+import { createClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
+
+import type { Database } from '@verone/types';
+
+// LinkMe logo for CID embedding (Resend official approach)
+const LOGO_CID = 'linkme-logo';
+function getLogoAttachment(): {
+  content: string;
+  filename: string;
+  contentId: string;
+} | null {
+  try {
+    const logoPath = path.join(
+      process.cwd(),
+      'public',
+      'images',
+      'linkme-logo.png'
+    );
+    const content = fs.readFileSync(logoPath).toString('base64');
+    return { content, filename: 'linkme-logo.png', contentId: LOGO_CID };
+  } catch (error) {
+    console.error(
+      '[Order Confirmation] Logo attachment failed:',
+      error instanceof Error ? error.message : error
+    );
+    return null;
+  }
+}
 
 function getResendClient(): Resend | null {
   const apiKey = process.env.RESEND_API_KEY;
@@ -20,6 +51,7 @@ function getResendClient(): Resend | null {
 }
 
 interface OrderConfirmationRequest {
+  salesOrderId?: string;
   orderNumber: string;
   requesterName: string;
   requesterEmail: string;
@@ -85,7 +117,7 @@ export async function POST(request: NextRequest) {
 
     <!-- Header -->
     <div style="padding: 30px 40px; border-bottom: 1px solid #f0f0f0;">
-      <img src="https://www.verone.fr/logo-verone.png" alt="Verone" style="height: 32px; display: block;" />
+      <img src="cid:${LOGO_CID}" alt="LinkMe" style="height: 32px; display: block;" />
     </div>
 
     <!-- Body -->
@@ -107,10 +139,6 @@ export async function POST(request: NextRequest) {
         <tr style="border-bottom: 1px solid #f0f0f0;">
           <td style="padding: 12px 0; color: #666;">Restaurant</td>
           <td style="padding: 12px 0; text-align: right; font-weight: 500; color: #1a1a1a;">${restaurantName}</td>
-        </tr>
-        <tr style="border-bottom: 1px solid #f0f0f0;">
-          <td style="padding: 12px 0; color: #666;">Selection</td>
-          <td style="padding: 12px 0; text-align: right; font-weight: 500; color: #1a1a1a;">${selectionName}</td>
         </tr>
         <tr style="border-bottom: 1px solid #f0f0f0;">
           <td style="padding: 12px 0; color: #666;">Articles</td>
@@ -142,16 +170,14 @@ export async function POST(request: NextRequest) {
     <!-- Footer -->
     <div style="padding: 24px 40px; background-color: #fafafa; border-top: 1px solid #f0f0f0;">
       <p style="margin: 0 0 4px 0; font-size: 13px; color: #1a1a1a; font-weight: 600;">
-        Verone
-      </p>
-      <p style="margin: 0 0 4px 0; font-size: 12px; color: #6b7280;">
-        Decoration et mobilier d&apos;interieur
+        LinkMe by Verone
       </p>
       <p style="margin: 0 0 4px 0; font-size: 12px; color: #6b7280;">
         229 rue Saint-Honore, 75001 Paris
       </p>
-      <p style="margin: 0 0 12px 0; font-size: 12px;">
-        <a href="mailto:commandes@verone.fr" style="color: #6b7280; text-decoration: none;">commandes@verone.fr</a>
+      <p style="margin: 0 0 12px 0; font-size: 12px; color: #6b7280;">
+        Ceci est un message automatique, merci de ne pas y repondre.
+        Pour toute question : <a href="mailto:romeo@veronecollections.fr" style="color: #6b7280; text-decoration: none;">romeo@veronecollections.fr</a>
       </p>
       <p style="margin: 0; font-size: 11px; color: #9ca3af;">
         Cet email est un accuse de reception. Il ne constitue pas un devis ni une facture.
@@ -163,14 +189,41 @@ export async function POST(request: NextRequest) {
 </html>
     `;
 
-    // Send email
+    // Send email (logo degrades gracefully if file not found)
+    const logoAttachment = getLogoAttachment();
+    const attachments = logoAttachment ? [logoAttachment] : [];
+
     const result = await resendClient.emails.send({
       from: process.env.RESEND_FROM_EMAIL ?? 'contact@verone.fr',
       to: requesterEmail,
       subject: subject,
       html: emailHtml,
-      replyTo: process.env.RESEND_REPLY_TO ?? 'commandes@verone.fr',
+      replyTo: process.env.RESEND_REPLY_TO ?? 'romeo@veronecollections.fr',
+      attachments,
     });
+
+    // Log event in sales_order_events (non-blocking)
+    if (body.salesOrderId) {
+      try {
+        const supabase = createClient<Database>(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.SUPABASE_SERVICE_ROLE_KEY!
+        );
+        await supabase.from('sales_order_events').insert({
+          sales_order_id: body.salesOrderId,
+          event_type: 'email_confirmation_sent',
+          metadata: {
+            recipient_email: requesterEmail,
+            resend_id: result.data?.id,
+          },
+        });
+      } catch (logError) {
+        console.error(
+          '[API Order Confirmation] Failed to log event:',
+          logError
+        );
+      }
+    }
 
     return NextResponse.json({
       success: true,

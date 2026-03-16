@@ -14,3 +14,4 @@ export * from './use-organisation-addresses-bo';
 export * from './use-enseigne-details';
 export * from './use-affiliate-activity';
 export * from './affiliate-activity-utils';
+export * from './use-order-history';

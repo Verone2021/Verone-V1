@@ -574,7 +574,13 @@ export default function SelectionLayout({
                               {submittedOrderData.items.length > 1 ? 's' : ''}
                             </span>
                             <span className="font-medium text-gray-900">
-                              {formatPrice(submittedOrderData.totalTTC)}
+                              {formatPrice(submittedOrderData.totalHT)} HT
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-600">Total TTC</span>
+                            <span className="font-bold text-gray-900">
+                              {formatPrice(submittedOrderData.totalTTC)} TTC
                             </span>
                           </div>
                           <div className="flex justify-between text-sm">

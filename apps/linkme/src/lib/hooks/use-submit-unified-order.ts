@@ -222,26 +222,40 @@ export function useSubmitUnifiedOrder() {
               .eq('id', data.existingOrganisationId)
               .single();
 
-            await fetch('/api/emails/order-confirmation', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                orderNumber: orderNumber ?? '',
-                requesterName: data.requester.name,
-                requesterEmail: data.requester.email,
-                restaurantName: orgData?.trade_name ?? 'Restaurant',
-                selectionName: selectionData?.name ?? '',
-                itemsCount: cart.length,
-                totalHT: cart.reduce(
-                  (sum, item) => sum + item.selling_price_ht * item.quantity,
-                  0
-                ),
-                totalTTC: cart.reduce(
-                  (sum, item) => sum + item.selling_price_ttc * item.quantity,
-                  0
-                ),
-              }),
-            });
+            const emailResponse = await fetch(
+              '/api/emails/order-confirmation',
+              {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  salesOrderId: orderId,
+                  orderNumber: orderNumber ?? '',
+                  requesterName: data.requester.name,
+                  requesterEmail: data.requester.email,
+                  restaurantName: orgData?.trade_name ?? 'Restaurant',
+                  selectionName: selectionData?.name ?? '',
+                  itemsCount: cart.length,
+                  totalHT: cart.reduce(
+                    (sum, item) => sum + item.selling_price_ht * item.quantity,
+                    0
+                  ),
+                  totalTTC: cart.reduce(
+                    (sum, item) => sum + item.selling_price_ttc * item.quantity,
+                    0
+                  ),
+                }),
+              }
+            );
+            if (!emailResponse.ok) {
+              const errorBody = (await emailResponse
+                .json()
+                .catch(() => null)) as { error?: string } | null;
+              console.error(
+                '[useSubmitUnifiedOrder] Email confirmation HTTP error:',
+                emailResponse.status,
+                errorBody?.error ?? 'no details'
+              );
+            }
           } catch (emailError) {
             console.error(
               '[useSubmitUnifiedOrder] Email confirmation error:',

@@ -13,6 +13,7 @@ import { z } from 'zod';
 
 import type { Database } from '@verone/types';
 
+import { getLogoAttachments } from '../_shared/email-logo';
 import { buildEmailHtml } from '../_shared/email-template';
 
 // ── Clients ──────────────────────────────────────────────────────────
@@ -139,10 +140,13 @@ export async function POST(request: NextRequest) {
         to: [to],
         subject,
         html: emailHtml,
-        attachments: attachments.map(a => ({
-          filename: a.filename,
-          content: a.contentBase64,
-        })),
+        attachments: [
+          ...getLogoAttachments(),
+          ...attachments.map(a => ({
+            filename: a.filename,
+            content: a.contentBase64,
+          })),
+        ],
       });
 
     if (emailError) {

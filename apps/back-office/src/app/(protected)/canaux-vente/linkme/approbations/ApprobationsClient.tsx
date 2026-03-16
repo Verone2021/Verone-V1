@@ -98,6 +98,29 @@ import {
 } from '../hooks/use-product-approvals';
 
 // ============================================================================
+// HELPERS
+// ============================================================================
+
+function formatRelativeDate(dateStr: string): {
+  text: string;
+  isUrgent: boolean;
+} {
+  const now = Date.now();
+  const created = new Date(dateStr).getTime();
+  const diffMs = now - created;
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffDays > 0) {
+    return { text: `il y a ${diffDays}j`, isUrgent: diffDays >= 2 };
+  }
+  if (diffHours > 0) {
+    return { text: `il y a ${diffHours}h`, isUrgent: false };
+  }
+  return { text: "il y a moins d'1h", isUrgent: false };
+}
+
+// ============================================================================
 // MAIN PAGE COMPONENT
 // ============================================================================
 
@@ -438,6 +461,16 @@ function CommandesTab() {
                               'fr-FR'
                             )}
                           </p>
+                          {(() => {
+                            const rel = formatRelativeDate(order.created_at);
+                            return (
+                              <p
+                                className={`text-xs ${rel.isUrgent ? 'text-amber-600 font-medium' : 'text-gray-400'}`}
+                              >
+                                {rel.text}
+                              </p>
+                            );
+                          })()}
                         </div>
                       </td>
                       <td className="px-6 py-4">

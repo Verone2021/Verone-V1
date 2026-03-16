@@ -8,6 +8,7 @@ import { NextResponse } from 'next/server';
 
 import { Resend } from 'resend';
 
+import { getLogoAttachments } from '../_shared/email-logo';
 import { buildEmailHtml } from '../_shared/email-template';
 
 function getResendClient(): Resend | null {
@@ -113,6 +114,7 @@ export async function POST(request: NextRequest) {
           subject: `Demande de stockage approuv\u00e9e - ${productName}`,
           html: emailHtml,
           replyTo: process.env.RESEND_REPLY_TO ?? 'commandes@verone.fr',
+          attachments: getLogoAttachments(),
         })
       )
     );

@@ -9,7 +9,10 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
+import { createClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
+
+import type { Database } from '@verone/types';
 
 function getResendClient(): Resend | null {
   const apiKey = process.env.RESEND_API_KEY;
@@ -23,6 +26,7 @@ function getResendClient(): Resend | null {
 }
 
 interface Step4ConfirmedRequest {
+  salesOrderId?: string;
   orderNumber: string;
   requesterEmail: string;
   requesterName: string;
@@ -162,6 +166,23 @@ export async function POST(request: NextRequest) {
     const failures = results.filter(r => r.status === 'rejected');
     if (failures.length > 0) {
       console.error('[API Step4 Confirmed] Some emails failed:', failures);
+    }
+
+    // Log event in sales_order_events (non-blocking)
+    if (body.salesOrderId) {
+      try {
+        const supabase = createClient<Database>(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.SUPABASE_SERVICE_ROLE_KEY!
+        );
+        await supabase.from('sales_order_events').insert({
+          sales_order_id: body.salesOrderId,
+          event_type: 'email_step4_confirmed',
+          metadata: { recipient_email: requesterEmail },
+        });
+      } catch (logError) {
+        console.error('[API Step4 Confirmed] Failed to log event:', logError);
+      }
     }
 
     return NextResponse.json({

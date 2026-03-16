@@ -90,6 +90,8 @@ import {
   type LinkMeOrderDetails,
 } from '../../hooks/use-linkme-order-actions';
 
+import { useOrderHistory, OrderTimeline } from '@verone/orders';
+
 import {
   getOrderMissingFields,
   generateCombinedMessage,
@@ -328,6 +330,10 @@ export default function LinkMeOrderDetailPage() {
   const [selectedContactId, setSelectedContactId] = useState<string | null>(
     null
   );
+
+  // Order history timeline
+  const { events: historyEvents, loading: historyLoading } =
+    useOrderHistory(orderId);
 
   // Mutations
   const approveOrder = useApproveOrder();
@@ -1408,6 +1414,11 @@ export default function LinkMeOrderDetailPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* ============================================ */}
+      {/* TIMELINE HISTORIQUE */}
+      {/* ============================================ */}
+      <OrderTimeline events={historyEvents} loading={historyLoading} />
 
       {/* ============================================ */}
       {/* 6 SECTIONS MIROIR DU FORMULAIRE */}

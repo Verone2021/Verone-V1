@@ -3,7 +3,7 @@
  * Provides consistent branding with Verone logo, header, footer
  */
 
-type AccentColor = 'green' | 'red' | 'orange' | 'blue';
+type AccentColor = 'green' | 'red' | 'orange' | 'blue' | 'teal';
 
 interface EmailTemplateOptions {
   title: string;
@@ -58,10 +58,17 @@ const COLOR_MAP: Record<
     hrColor: '#93c5fd',
     btnBg: '#2563eb',
   },
+  teal: {
+    bg: '#f0fdfa',
+    border: '#5DBEBB',
+    titleColor: '#0f766e',
+    footerColor: '#0f766e',
+    hrColor: '#99d5d1',
+    btnBg: '#0d9488',
+  },
 };
 
-// Logo hosted on production site
-const LOGO_URL = 'https://www.verone.fr/logo-verone.png';
+import { LOGO_CID } from './email-logo';
 
 export function buildEmailHtml(options: EmailTemplateOptions): string {
   const {
@@ -101,7 +108,7 @@ export function buildEmailHtml(options: EmailTemplateOptions): string {
   <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
     <!-- Logo -->
     <div style="text-align: center; padding: 24px 0 16px 0;">
-      <img src="${LOGO_URL}" alt="Verone" style="height: 40px; width: auto;" />
+      <img src="cid:${LOGO_CID}" alt="LinkMe" style="height: 40px; width: auto;" />
     </div>
 
     <!-- Main card -->
@@ -124,10 +131,13 @@ export function buildEmailHtml(options: EmailTemplateOptions): string {
     <!-- Footer -->
     <div style="text-align: center; padding: 24px 0;">
       <p style="color: #6b7280; font-size: 13px; margin: 0 0 4px 0;">
-        Verone &mdash; D&eacute;coration et mobilier d&rsquo;int&eacute;rieur
+        LinkMe by Verone &mdash; 229 rue Saint-Honor&eacute;, 75001 Paris
+      </p>
+      <p style="color: #9ca3af; font-size: 12px; margin: 0 0 4px 0;">
+        Ceci est un message automatique, merci de ne pas y r&eacute;pondre.
       </p>
       <p style="color: #9ca3af; font-size: 12px; margin: 0;">
-        <a href="mailto:commandes@verone.fr" style="color: #9ca3af; text-decoration: none;">commandes@verone.fr</a>
+        Pour toute question : <a href="mailto:romeo@veronecollections.fr" style="color: #9ca3af; text-decoration: none;">romeo@veronecollections.fr</a>
         &nbsp;&middot;&nbsp; &copy; 2026
       </p>
     </div>
