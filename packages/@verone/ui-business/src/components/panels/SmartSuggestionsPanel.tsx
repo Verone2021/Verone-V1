@@ -20,7 +20,8 @@ import type {
   CollectionStyle,
   RoomCategory,
 } from '@verone/types';
-import { COLLECTION_STYLE_OPTIONS, ROOM_CATEGORY_OPTIONS } from '@verone/types';
+// Style/Room options imported but used elsewhere
+// import { COLLECTION_STYLE_OPTIONS, ROOM_CATEGORY_OPTIONS } from '@verone/types';
 
 interface SmartSuggestionsPanelProps {
   context: {
@@ -56,7 +57,10 @@ export function SmartSuggestionsPanel({
   }, [context, loading, analytics, generateSuggestions]);
 
   const handleApplySuggestion = (suggestion: CollectionSuggestion) => {
-    onApplySuggestion(suggestion.type as any, suggestion.value);
+    onApplySuggestion(
+      suggestion.type as 'style' | 'tag' | 'room',
+      suggestion.value
+    );
     setAppliedSuggestions(prev => new Set([...prev, suggestion.value]));
   };
 

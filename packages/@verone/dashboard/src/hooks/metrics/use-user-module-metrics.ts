@@ -132,14 +132,14 @@ export function useUserModuleMetrics(
         activities.forEach((activity, index) => {
           // Extraire le module depuis page_url (ex: '/dashboard' → 'dashboard')
           const moduleName =
-            extractModuleFromUrl(activity.page_url) || 'autres';
+            extractModuleFromUrl(activity.page_url) ?? 'autres';
 
           if (!moduleStats[moduleName]) {
             moduleStats[moduleName] = {
               page_views: 0,
               actions: 0,
               last_visited: new Date(
-                activity.created_at || new Date().toISOString()
+                activity.created_at ?? new Date().toISOString()
               ),
               time_spent: 0,
             };
@@ -159,7 +159,7 @@ export function useUserModuleMetrics(
 
           // Last visited (date la plus récente)
           const activityDate = new Date(
-            activity.created_at || new Date().toISOString()
+            activity.created_at ?? new Date().toISOString()
           );
           if (activityDate > moduleStats[moduleName].last_visited) {
             moduleStats[moduleName].last_visited = activityDate;
@@ -172,10 +172,10 @@ export function useUserModuleMetrics(
             const nextActivity = activities[index + 1];
             const timeDiff =
               new Date(
-                activity.created_at || new Date().toISOString()
+                activity.created_at ?? new Date().toISOString()
               ).getTime() -
               new Date(
-                nextActivity.created_at || new Date().toISOString()
+                nextActivity.created_at ?? new Date().toISOString()
               ).getTime();
 
             // Limiter à 30 minutes max entre 2 actions (sinon session terminée)
@@ -236,7 +236,7 @@ export function useUserModuleMetrics(
     };
 
     if (userId) {
-      fetchModuleMetrics();
+      void fetchModuleMetrics();
     }
   }, [userId, days]);
 

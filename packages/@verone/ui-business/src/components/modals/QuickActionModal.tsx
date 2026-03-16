@@ -35,7 +35,7 @@ export interface QuickActionField {
   required?: boolean;
   options?: { value: string; label: string }[];
   defaultValue?: string | number;
-  validation?: (value: any) => string | null;
+  validation?: (value: unknown) => string | null;
 }
 
 export interface QuickActionModalProps {
@@ -49,7 +49,7 @@ export interface QuickActionModalProps {
   cancelText?: string;
   destructive?: boolean;
   loading?: boolean;
-  onSubmit: (data: Record<string, any>) => Promise<void> | void;
+  onSubmit: (data: Record<string, unknown>) => Promise<void> | void;
   children?: React.ReactNode;
 }
 
@@ -67,13 +67,13 @@ export function QuickActionModal({
   onSubmit,
   children,
 }: QuickActionModalProps) {
-  const [formData, setFormData] = useState<Record<string, any>>({});
+  const [formData, setFormData] = useState<Record<string, unknown>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Initialiser les valeurs par défaut
   useState(() => {
-    const defaultData: Record<string, any> = {};
+    const defaultData: Record<string, unknown> = {};
     fields.forEach(field => {
       if (field.defaultValue !== undefined) {
         defaultData[field.name] = field.defaultValue;
@@ -86,31 +86,31 @@ export function QuickActionModal({
     switch (actionType) {
       case 'create':
         return {
-          confirmText: confirmText || 'Créer',
+          confirmText: confirmText ?? 'Créer',
           variant: 'secondary' as const,
           icon: null,
         };
       case 'update':
         return {
-          confirmText: confirmText || 'Mettre à jour',
+          confirmText: confirmText ?? 'Mettre à jour',
           variant: 'secondary' as const,
           icon: null,
         };
       case 'delete':
         return {
-          confirmText: confirmText || 'Supprimer',
+          confirmText: confirmText ?? 'Supprimer',
           variant: 'destructive' as const,
           icon: <AlertTriangle className="h-4 w-4" />,
         };
       case 'confirm':
         return {
-          confirmText: confirmText || 'Confirmer',
+          confirmText: confirmText ?? 'Confirmer',
           variant: 'secondary' as const,
           icon: <CheckCircle className="h-4 w-4" />,
         };
       default:
         return {
-          confirmText: confirmText || 'Valider',
+          confirmText: confirmText ?? 'Valider',
           variant: 'secondary' as const,
           icon: null,
         };
@@ -119,7 +119,7 @@ export function QuickActionModal({
 
   const config = getActionConfig();
 
-  const handleInputChange = (name: string, value: any) => {
+  const handleInputChange = (name: string, value: unknown) => {
     setFormData(prev => ({ ...prev, [name]: value }));
 
     // Effacer l'erreur si elle existe
@@ -149,7 +149,11 @@ export function QuickActionModal({
       }
 
       // Validation du type email
-      if (field.type === 'email' && value && !/\S+@\S+\.\S+/.test(value)) {
+      if (
+        field.type === 'email' &&
+        value &&
+        !/\S+@\S+\.\S+/.test(String(value))
+      ) {
         newErrors[field.name] = 'Email invalide';
       }
 
@@ -183,7 +187,7 @@ export function QuickActionModal({
   };
 
   const renderField = (field: QuickActionField) => {
-    const value = formData[field.name] || '';
+    const value = (formData[field.name] as string) ?? '';
     const error = errors[field.name];
 
     switch (field.type) {
@@ -299,7 +303,12 @@ export function QuickActionModal({
         </CardHeader>
 
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form
+            onSubmit={e => {
+              void handleSubmit(e);
+            }}
+            className="space-y-4"
+          >
             {/* Champs personnalisés */}
             {fields.map(renderField)}
 
@@ -361,7 +370,7 @@ export function useQuickActionModal() {
   }: Partial<QuickActionModalProps> & { children?: React.ReactNode }) => (
     <QuickActionModal
       {...config}
-      {...(props as any)}
+      {...(props as Omit<QuickActionModalProps, 'isOpen' | 'onClose'>)}
       isOpen={isOpen}
       onClose={closeModal}
     >

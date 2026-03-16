@@ -1,10 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-
 import { Save, X, FileText, Package, Star, Edit } from 'lucide-react';
 
-import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import { ButtonUnified } from '@verone/ui';
 import { Input } from '@verone/ui';
@@ -17,7 +14,7 @@ interface Product {
   id: string;
   name: string;
   description?: string;
-  variant_attributes?: Record<string, any>;
+  variant_attributes?: Record<string, unknown>;
   selling_points?: string[];
 }
 
@@ -44,49 +41,48 @@ export function UnifiedDescriptionEditSection({
     hasChanges,
   } = useInlineEdit({
     productId: product.id,
-    onUpdate: updatedData => {
+    onUpdate: (updatedData: Partial<Product>) => {
       onUpdate(updatedData);
     },
-    onError: error => {
-      console.error('❌ Erreur mise à jour description unifiée:', error);
+    onError: (error: string) => {
+      console.error('Erreur mise a jour description unifiee:', error);
     },
   });
 
   const section = 'description' as EditableSection;
-  const editData = getEditedData(section);
+  const editData = getEditedData(section) as
+    | Record<string, unknown>
+    | undefined;
   const error = getError(section);
 
   const handleStartEdit = () => {
     startEdit(section, {
-      description: product.description || '',
-      selling_points: product.selling_points || [],
+      description: product.description ?? '',
+      selling_points: product.selling_points ?? [],
     });
   };
 
   const handleSave = async () => {
-    const success = await saveChanges(section);
-    if (success) {
-      console.log('✅ Description unifiée mise à jour avec succès');
-    }
+    await saveChanges(section);
   };
 
   const handleCancel = () => {
     cancelEdit(section);
   };
 
-  const handleFieldChange = (field: string, value: any) => {
+  const handleFieldChange = (field: string, value: unknown) => {
     updateEditedData(section, { [field]: value });
   };
 
   const addSellingPoint = () => {
-    const currentPoints = editData?.selling_points || [];
+    const currentPoints = (editData?.selling_points as string[]) ?? [];
     updateEditedData(section, {
       selling_points: [...currentPoints, ''],
     });
   };
 
   const updateSellingPoint = (index: number, value: string) => {
-    const currentPoints = editData?.selling_points || [];
+    const currentPoints = (editData?.selling_points as string[]) ?? [];
     const newPoints = [...currentPoints];
     newPoints[index] = value;
     updateEditedData(section, {
@@ -95,8 +91,10 @@ export function UnifiedDescriptionEditSection({
   };
 
   const removeSellingPoint = (index: number) => {
-    const currentPoints = editData?.selling_points || [];
-    const newPoints = currentPoints.filter((_: any, i: any) => i !== index);
+    const currentPoints = (editData?.selling_points as string[]) ?? [];
+    const newPoints = currentPoints.filter(
+      (_: string, i: number) => i !== index
+    );
     updateEditedData(section, {
       selling_points: newPoints,
     });
@@ -124,7 +122,9 @@ export function UnifiedDescriptionEditSection({
             <ButtonV2
               variant="secondary"
               size="sm"
-              onClick={handleSave}
+              onClick={() => {
+                void handleSave();
+              }}
               disabled={!hasChanges(section) || isSaving(section)}
               className="text-xs px-2 py-1 h-6"
             >
@@ -141,7 +141,7 @@ export function UnifiedDescriptionEditSection({
               📝 Description + Caractéristiques principales
             </Label>
             <Textarea
-              value={editData?.description || ''}
+              value={(editData?.description as string) ?? ''}
               onChange={e => handleFieldChange('description', e.target.value)}
               className="min-h-[120px] border-gray-300 focus:border-black focus:ring-black"
               placeholder="Description détaillée et caractéristiques principales du produit..."
@@ -154,7 +154,7 @@ export function UnifiedDescriptionEditSection({
               <Star className="h-4 w-4 mr-1" />⭐ Points de vente
             </Label>
             <div className="space-y-2">
-              {(editData?.selling_points || []).map(
+              {((editData?.selling_points as string[]) ?? []).map(
                 (point: string, index: number) => (
                   <div key={index} className="flex items-center space-x-2">
                     <Input

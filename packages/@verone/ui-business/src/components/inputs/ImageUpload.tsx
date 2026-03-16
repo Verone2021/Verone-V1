@@ -60,7 +60,7 @@ export function ImageUpload({
     (event: React.ChangeEvent<HTMLInputElement>) => {
       const file = event.target.files?.[0];
       if (file) {
-        handleFileSelect(file);
+        void handleFileSelect(file);
       }
       // Reset input pour permettre de sélectionner le même fichier
       event.target.value = '';
@@ -91,8 +91,8 @@ export function ImageUpload({
       if (disabled) return;
 
       const file = event.dataTransfer.files[0];
-      if (file && file.type.startsWith('image/')) {
-        handleFileSelect(file);
+      if (file?.type.startsWith('image/')) {
+        void handleFileSelect(file);
       }
     },
     [disabled, handleFileSelect]

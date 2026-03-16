@@ -144,10 +144,10 @@ export function useRevenueMetrics() {
         trend: Math.round(trend * 10) / 10, // Arrondir à 1 décimale
         averageOrderValue: Math.round(averageOrderValue * 100) / 100,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(
         'Erreur lors de la récupération des métriques de revenus:',
-        error?.message || 'Erreur inconnue'
+        error instanceof Error ? error.message : 'Erreur inconnue'
       );
 
       // Retourner des valeurs vides en cas d'erreur

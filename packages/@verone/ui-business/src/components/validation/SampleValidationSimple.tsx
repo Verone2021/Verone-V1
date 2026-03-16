@@ -22,7 +22,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@verone/ui';
 import { Textarea } from '@verone/ui';
 import {
@@ -45,7 +44,9 @@ export function SampleValidationSimple() {
       product_status: 'preorder', // Filtre produits échantillon commandés
     });
 
-  const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const [selectedProduct, setSelectedProduct] = useState<{ id: string } | null>(
+    null
+  );
   const [rejectionReason, setRejectionReason] = useState('');
   const [rejectionDialogOpen, setRejectionDialogOpen] = useState(false);
 
@@ -64,7 +65,10 @@ export function SampleValidationSimple() {
   const handleReject = async () => {
     if (!selectedProduct) return;
 
-    const success = await rejectSample(selectedProduct.id, rejectionReason);
+    const success = await rejectSample(
+      String(selectedProduct.id),
+      rejectionReason
+    );
     if (success) {
       setRejectionDialogOpen(false);
       setSelectedProduct(null);
@@ -218,7 +222,9 @@ export function SampleValidationSimple() {
                       <ButtonV2
                         size="sm"
                         className="bg-green-600 hover:bg-green-700 text-white"
-                        onClick={() => handleApprove(product.id)}
+                        onClick={() => {
+                          void handleApprove(product.id);
+                        }}
                       >
                         <CheckCircle className="h-4 w-4 mr-2" />
                         Approuver
@@ -281,7 +287,9 @@ export function SampleValidationSimple() {
             </ButtonV2>
             <ButtonV2
               variant="destructive"
-              onClick={handleReject}
+              onClick={() => {
+                void handleReject();
+              }}
               className="bg-red-600 hover:bg-red-700 text-white"
             >
               Confirmer le rejet

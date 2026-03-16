@@ -120,11 +120,11 @@ export function useActivityMetrics() {
 
       // Calcul des métriques
       const todayActivity =
-        (productsToday?.length || 0) +
-        (collectionsToday?.length || 0) +
-        (usersToday?.length || 0);
+        (productsToday?.length ?? 0) +
+        (collectionsToday?.length ?? 0) +
+        (usersToday?.length ?? 0);
 
-      const yesterdayActivity = productsYesterday?.length || 0;
+      const yesterdayActivity = productsYesterday?.length ?? 0;
 
       const trend =
         yesterdayActivity > 0

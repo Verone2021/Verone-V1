@@ -1,13 +1,13 @@
 /**
- * 🔔 Hook: Notifications Dashboard - Vérone
+ * Hook: Notifications Dashboard - Verone
  *
- * Agrège les notifications et alertes critiques pour affichage
- * dans le dashboard : stocks bas, commandes urgentes, erreurs système.
+ * Agrege les notifications et alertes critiques pour affichage
+ * dans le dashboard : stocks bas, commandes urgentes, erreurs systeme.
  */
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { createClient } from '@verone/utils/supabase/client';
 
@@ -23,9 +23,9 @@ export interface DashboardNotification {
   timestamp: Date;
   actionUrl?: string;
   actionLabel?: string;
-  commanderUrl?: string; // URL pour créer une commande fournisseur directement
+  commanderUrl?: string; // URL pour creer une commande fournisseur directement
   isRead?: boolean;
-  read_at?: Date; // ✅ Timestamp marquage lu
+  read_at?: Date; // Timestamp marquage lu
 }
 
 interface UseDashboardNotificationsResult {
@@ -37,9 +37,154 @@ interface UseDashboardNotificationsResult {
   markAsRead: (id: string) => Promise<void>;
 }
 
+// ============================================================================
+// Query result types (matching Supabase select shapes)
+// ============================================================================
+
+interface LowStockProduct {
+  id: string;
+  name: string | null;
+  sku: string | null;
+  stock_real: number | null;
+  stock_quantity: number | null;
+  min_stock: number | null;
+  supplier_id: string | null;
+  supplier: {
+    id: string;
+    legal_name: string | null;
+    trade_name: string | null;
+  } | null;
+  subcategories: { id: string; name: string | null } | null;
+}
+
+interface OrgRelation {
+  id: string;
+  legal_name: string | null;
+  trade_name: string | null;
+  city: string | null;
+  country: string | null;
+}
+
+interface IndividualRelation {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+}
+
+interface ProductRelation {
+  id?: string;
+  name: string | null;
+}
+
+interface UrgentSalesOrder {
+  id: string;
+  order_number: string | null;
+  created_at: string;
+  total_ttc: number | null;
+  customer_type: string | null;
+  customer_id: string | null;
+  customer_org: OrgRelation | null;
+  customer_ind: IndividualRelation | null;
+  sales_order_items: Array<{
+    id: string;
+    product_id: string | null;
+    products: ProductRelation | null;
+  }>;
+}
+
+interface UrgentPurchaseOrder {
+  id: string;
+  po_number: string | null;
+  created_at: string;
+  total_ht: number | null;
+  supplier_id: string | null;
+  supplier: OrgRelation | null;
+  purchase_order_items: Array<{
+    id: string;
+    product_id: string | null;
+    products: ProductRelation | null;
+  }>;
+}
+
+interface ErrorLog {
+  id: string;
+  action: string;
+  severity: string;
+  created_at: string;
+  metadata: unknown;
+  user_id: string | null;
+  user_profile: {
+    id: string;
+    first_name: string | null;
+    last_name: string | null;
+    role: string | null;
+  } | null;
+}
+
+interface RecentSalesOrder {
+  id: string;
+  order_number: string | null;
+  created_at: string;
+  customer_type: string | null;
+  customer_org: {
+    id: string;
+    legal_name: string | null;
+    trade_name: string | null;
+  } | null;
+  customer_ind: IndividualRelation | null;
+  sales_order_items: Array<{ id: string; products: ProductRelation | null }>;
+}
+
+interface RecentPurchaseOrder {
+  id: string;
+  po_number: string | null;
+  created_at: string;
+  supplier: {
+    id: string;
+    legal_name: string | null;
+    trade_name: string | null;
+  } | null;
+  purchase_order_items: Array<{ id: string; products: ProductRelation | null }>;
+}
+
+interface OrgRow {
+  id: string;
+  legal_name: string | null;
+  trade_name: string | null;
+  city: string | null;
+  country: string | null;
+  created_at: string;
+}
+
+interface IndividualCustomerRow {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+  city: string | null;
+  country: string | null;
+  created_at: string;
+}
+
+interface SampleOrder {
+  id: string;
+  order_number: string | null;
+  created_at: string;
+  status?: string;
+  supplier: {
+    id: string;
+    legal_name: string | null;
+    trade_name: string | null;
+  } | null;
+  sample_order_items: Array<{
+    id: string;
+    product_id?: string | null;
+    products: ProductRelation | null;
+  }>;
+}
+
 /**
- * Hook pour récupérer les notifications dashboard
- * Analyse plusieurs sources : stocks, commandes, logs activité
+ * Hook pour recuperer les notifications dashboard
+ * Analyse plusieurs sources : stocks, commandes, logs activite
  */
 export function useDashboardNotifications(
   limit = 10
@@ -50,7 +195,7 @@ export function useDashboardNotifications(
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -72,16 +217,16 @@ export function useDashboardNotifications(
         .limit(5);
 
       if (lowStockProducts && lowStockProducts.length > 0) {
-        lowStockProducts.forEach((product: any) => {
+        (lowStockProducts as unknown as LowStockProduct[]).forEach(product => {
           const stock = product.stock_real ?? product.stock_quantity ?? 0;
-          const category = product.subcategories?.name || 'Sans catégorie';
+          const category = product.subcategories?.name ?? 'Sans categorie';
           const supplierName =
-            product.supplier?.trade_name ||
-            product.supplier?.legal_name ||
+            product.supplier?.trade_name ??
+            product.supplier?.legal_name ??
             null;
 
-          // Message enrichi : Nom (Catégorie) - Stock - Fournisseur
-          const message = `${product.name} (${category}) - ${stock} unités${supplierName ? ` - ${supplierName}` : ''}`;
+          // Message enrichi : Nom (Categorie) - Stock - Fournisseur
+          const message = `${product.name} (${category}) - ${stock} unites${supplierName ? ` - ${supplierName}` : ''}`;
 
           allNotifications.push({
             id: `stock-${product.id}`,
@@ -133,91 +278,95 @@ export function useDashboardNotifications(
 
       // Sales orders urgentes
       if (urgentSalesOrders.data && urgentSalesOrders.data.length > 0) {
-        urgentSalesOrders.data.forEach((order: any) => {
-          const daysWaiting = Math.floor(
-            (Date.now() - new Date(order.created_at).getTime()) /
-              (1000 * 60 * 60 * 24)
-          );
+        (urgentSalesOrders.data as unknown as UrgentSalesOrder[]).forEach(
+          order => {
+            const daysWaiting = Math.floor(
+              (Date.now() - new Date(order.created_at).getTime()) /
+                (1000 * 60 * 60 * 24)
+            );
 
-          // Nom client (polymorphique B2B/B2C)
-          const customerName =
-            order.customer_type === 'organization'
-              ? order.customer_org?.trade_name ||
-                order.customer_org?.legal_name ||
-                'Client'
-              : order.customer_ind
-                ? `${order.customer_ind.first_name} ${order.customer_ind.last_name}`
-                : 'Client';
+            // Nom client (polymorphique B2B/B2C)
+            const customerName =
+              order.customer_type === 'organization'
+                ? (order.customer_org?.trade_name ??
+                  order.customer_org?.legal_name ??
+                  'Client')
+                : order.customer_ind
+                  ? `${order.customer_ind.first_name} ${order.customer_ind.last_name}`
+                  : 'Client';
 
-          // Localisation (ville, pays si B2B)
-          const location =
-            order.customer_type === 'organization' &&
-            order.customer_org?.city &&
-            order.customer_org?.country
-              ? ` (${order.customer_org.city}, ${order.customer_org.country})`
-              : '';
+            // Localisation (ville, pays si B2B)
+            const location =
+              order.customer_type === 'organization' &&
+              order.customer_org?.city &&
+              order.customer_org?.country
+                ? ` (${order.customer_org.city}, ${order.customer_org.country})`
+                : '';
 
-          // Produit principal
-          const mainProduct =
-            order.sales_order_items?.[0]?.products?.name || null;
+            // Produit principal
+            const mainProduct =
+              order.sales_order_items?.[0]?.products?.name ?? null;
 
-          // Message enrichi
-          const message = `${order.order_number || 'Sans référence'} - ${customerName}${location}${mainProduct ? ` - ${mainProduct}` : ''} - ${daysWaiting}j d'attente`;
+            // Message enrichi
+            const message = `${order.order_number ?? 'Sans reference'} - ${customerName}${location}${mainProduct ? ` - ${mainProduct}` : ''} - ${daysWaiting}j d'attente`;
 
-          allNotifications.push({
-            id: `sales-order-${order.id}`,
-            type: 'order',
-            severity: daysWaiting > 7 ? 'critical' : 'warning',
-            title: 'Commande vente en attente',
-            message,
-            timestamp: new Date(order.created_at),
-            actionUrl: `/commandes/clients?id=${order.id}`,
-            actionLabel: 'Voir la commande',
-          });
-        });
+            allNotifications.push({
+              id: `sales-order-${order.id}`,
+              type: 'order',
+              severity: daysWaiting > 7 ? 'critical' : 'warning',
+              title: 'Commande vente en attente',
+              message,
+              timestamp: new Date(order.created_at),
+              actionUrl: `/commandes/clients?id=${order.id}`,
+              actionLabel: 'Voir la commande',
+            });
+          }
+        );
       }
 
       // Purchase orders urgentes
       if (urgentPurchaseOrders.data && urgentPurchaseOrders.data.length > 0) {
-        urgentPurchaseOrders.data.forEach((order: any) => {
-          const daysWaiting = Math.floor(
-            (Date.now() - new Date(order.created_at).getTime()) /
-              (1000 * 60 * 60 * 24)
-          );
+        (urgentPurchaseOrders.data as unknown as UrgentPurchaseOrder[]).forEach(
+          order => {
+            const daysWaiting = Math.floor(
+              (Date.now() - new Date(order.created_at).getTime()) /
+                (1000 * 60 * 60 * 24)
+            );
 
-          // Nom fournisseur
-          const supplierName =
-            order.supplier?.trade_name ||
-            order.supplier?.legal_name ||
-            'Fournisseur';
+            // Nom fournisseur
+            const supplierName =
+              order.supplier?.trade_name ??
+              order.supplier?.legal_name ??
+              'Fournisseur';
 
-          // Localisation (ville, pays)
-          const location =
-            order.supplier?.city && order.supplier?.country
-              ? ` (${order.supplier.city}, ${order.supplier.country})`
-              : '';
+            // Localisation (ville, pays)
+            const location =
+              order.supplier?.city && order.supplier?.country
+                ? ` (${order.supplier.city}, ${order.supplier.country})`
+                : '';
 
-          // Produit principal
-          const mainProduct =
-            order.purchase_order_items?.[0]?.products?.name || null;
+            // Produit principal
+            const mainProduct =
+              order.purchase_order_items?.[0]?.products?.name ?? null;
 
-          // Message enrichi
-          const message = `${order.po_number || 'Sans référence'} - ${supplierName}${location}${mainProduct ? ` - ${mainProduct}` : ''} - ${daysWaiting}j d'attente`;
+            // Message enrichi
+            const message = `${order.po_number ?? 'Sans reference'} - ${supplierName}${location}${mainProduct ? ` - ${mainProduct}` : ''} - ${daysWaiting}j d'attente`;
 
-          allNotifications.push({
-            id: `purchase-order-${order.id}`,
-            type: 'order',
-            severity: daysWaiting > 7 ? 'critical' : 'warning',
-            title: 'Commande achat en attente',
-            message,
-            timestamp: new Date(order.created_at),
-            actionUrl: `/commandes/fournisseurs?id=${order.id}`,
-            actionLabel: 'Voir la commande',
-          });
-        });
+            allNotifications.push({
+              id: `purchase-order-${order.id}`,
+              type: 'order',
+              severity: daysWaiting > 7 ? 'critical' : 'warning',
+              title: 'Commande achat en attente',
+              message,
+              timestamp: new Date(order.created_at),
+              actionUrl: `/commandes/fournisseurs?id=${order.id}`,
+              actionLabel: 'Voir la commande',
+            });
+          }
+        );
       }
 
-      // 3. ERREURS SYSTÈME RÉCENTES (logs avec severity error/critical dans les 24h)
+      // 3. ERREURS SYSTEME RECENTES (logs avec severity error/critical dans les 24h)
       const oneDayAgo = new Date();
       oneDayAgo.setHours(oneDayAgo.getHours() - 24);
 
@@ -235,7 +384,7 @@ export function useDashboardNotifications(
         .limit(3);
 
       if (errorLogs && errorLogs.length > 0) {
-        errorLogs.forEach((log: any) => {
+        (errorLogs as unknown as ErrorLog[]).forEach(log => {
           // Nom utilisateur
           const userName =
             log.user_profile?.first_name && log.user_profile?.last_name
@@ -245,23 +394,23 @@ export function useDashboardNotifications(
           // Message enrichi
           const actionFormatted = log.action.replace(/_/g, ' ');
           const message = userName
-            ? `${actionFormatted} - Par: ${userName} (${log.user_profile?.role || 'User'})`
+            ? `${actionFormatted} - Par: ${userName} (${log.user_profile?.role ?? 'User'})`
             : actionFormatted;
 
           allNotifications.push({
             id: `error-${log.id}`,
             type: 'system',
             severity: log.severity as NotificationSeverity,
-            title: 'Erreur système',
+            title: 'Erreur systeme',
             message,
             timestamp: new Date(log.created_at),
             actionUrl: `/admin/activite-utilisateurs?log=${log.id}`,
-            actionLabel: 'Voir les détails',
+            actionLabel: 'Voir les details',
           });
         });
       }
 
-      // 4. ACTIVITÉ IMPORTANTE (nouvelles commandes dans les 2 dernières heures)
+      // 4. ACTIVITE IMPORTANTE (nouvelles commandes dans les 2 dernieres heures)
       const twoHoursAgo = new Date();
       twoHoursAgo.setHours(twoHoursAgo.getHours() - 2);
 
@@ -295,64 +444,68 @@ export function useDashboardNotifications(
 
       // Nouvelles sales orders
       if (recentSalesOrders.data && recentSalesOrders.data.length > 0) {
-        recentSalesOrders.data.forEach((order: any) => {
-          // Nom client (polymorphique)
-          const customerName =
-            order.customer_type === 'organization'
-              ? order.customer_org?.trade_name ||
-                order.customer_org?.legal_name ||
-                'Client'
-              : order.customer_ind
-                ? `${order.customer_ind.first_name} ${order.customer_ind.last_name}`
-                : 'Client';
+        (recentSalesOrders.data as unknown as RecentSalesOrder[]).forEach(
+          order => {
+            // Nom client (polymorphique)
+            const customerName =
+              order.customer_type === 'organization'
+                ? (order.customer_org?.trade_name ??
+                  order.customer_org?.legal_name ??
+                  'Client')
+                : order.customer_ind
+                  ? `${order.customer_ind.first_name} ${order.customer_ind.last_name}`
+                  : 'Client';
 
-          // Produit principal
-          const mainProduct =
-            order.sales_order_items?.[0]?.products?.name || null;
+            // Produit principal
+            const mainProduct =
+              order.sales_order_items?.[0]?.products?.name ?? null;
 
-          // Message enrichi
-          const message = `${order.order_number || 'Sans référence'} - ${customerName}${mainProduct ? ` (${mainProduct})` : ''}`;
+            // Message enrichi
+            const message = `${order.order_number ?? 'Sans reference'} - ${customerName}${mainProduct ? ` (${mainProduct})` : ''}`;
 
-          allNotifications.push({
-            id: `activity-sales-${order.id}`,
-            type: 'activity',
-            severity: 'info',
-            title: 'Nouvelle commande vente',
-            message,
-            timestamp: new Date(order.created_at),
-            actionUrl: `/commandes/clients?id=${order.id}`,
-            actionLabel: 'Voir la commande',
-          });
-        });
+            allNotifications.push({
+              id: `activity-sales-${order.id}`,
+              type: 'activity',
+              severity: 'info',
+              title: 'Nouvelle commande vente',
+              message,
+              timestamp: new Date(order.created_at),
+              actionUrl: `/commandes/clients?id=${order.id}`,
+              actionLabel: 'Voir la commande',
+            });
+          }
+        );
       }
 
       // Nouvelles purchase orders
       if (recentPurchaseOrders.data && recentPurchaseOrders.data.length > 0) {
-        recentPurchaseOrders.data.forEach((order: any) => {
-          // Nom fournisseur
-          const supplierName =
-            order.supplier?.trade_name ||
-            order.supplier?.legal_name ||
-            'Fournisseur';
+        (recentPurchaseOrders.data as unknown as RecentPurchaseOrder[]).forEach(
+          order => {
+            // Nom fournisseur
+            const supplierName =
+              order.supplier?.trade_name ??
+              order.supplier?.legal_name ??
+              'Fournisseur';
 
-          // Produit principal
-          const mainProduct =
-            order.purchase_order_items?.[0]?.products?.name || null;
+            // Produit principal
+            const mainProduct =
+              order.purchase_order_items?.[0]?.products?.name ?? null;
 
-          // Message enrichi
-          const message = `${order.po_number || 'Sans référence'} - ${supplierName}${mainProduct ? ` (${mainProduct})` : ''}`;
+            // Message enrichi
+            const message = `${order.po_number ?? 'Sans reference'} - ${supplierName}${mainProduct ? ` (${mainProduct})` : ''}`;
 
-          allNotifications.push({
-            id: `activity-purchase-${order.id}`,
-            type: 'activity',
-            severity: 'info',
-            title: 'Nouvelle commande achat',
-            message,
-            timestamp: new Date(order.created_at),
-            actionUrl: `/commandes/fournisseurs?id=${order.id}`,
-            actionLabel: 'Voir la commande',
-          });
-        });
+            allNotifications.push({
+              id: `activity-purchase-${order.id}`,
+              type: 'activity',
+              severity: 'info',
+              title: 'Nouvelle commande achat',
+              message,
+              timestamp: new Date(order.created_at),
+              actionUrl: `/commandes/fournisseurs?id=${order.id}`,
+              actionLabel: 'Voir la commande',
+            });
+          }
+        );
       }
 
       // 5. NOUVELLES ORGANISATIONS (clients B2B, B2C, fournisseurs dans les 24h)
@@ -385,8 +538,8 @@ export function useDashboardNotifications(
 
       // Clients B2B
       if (newCustomerOrgs.data && newCustomerOrgs.data.length > 0) {
-        newCustomerOrgs.data.forEach((org: any) => {
-          const name = org.trade_name || org.legal_name;
+        (newCustomerOrgs.data as unknown as OrgRow[]).forEach(org => {
+          const name = org.trade_name ?? org.legal_name;
           const location =
             org.city && org.country ? ` - ${org.city}, ${org.country}` : '';
 
@@ -408,7 +561,9 @@ export function useDashboardNotifications(
         newIndividualCustomers.data &&
         newIndividualCustomers.data.length > 0
       ) {
-        newIndividualCustomers.data.forEach((customer: any) => {
+        (
+          newIndividualCustomers.data as unknown as IndividualCustomerRow[]
+        ).forEach(customer => {
           const name = `${customer.first_name} ${customer.last_name}`;
           const location =
             customer.city && customer.country
@@ -430,8 +585,8 @@ export function useDashboardNotifications(
 
       // Fournisseurs
       if (newSuppliers.data && newSuppliers.data.length > 0) {
-        newSuppliers.data.forEach((supplier: any) => {
-          const name = supplier.trade_name || supplier.legal_name;
+        (newSuppliers.data as unknown as OrgRow[]).forEach(supplier => {
+          const name = supplier.trade_name ?? supplier.legal_name;
           const location =
             supplier.city && supplier.country
               ? ` - ${supplier.city}, ${supplier.country}`
@@ -450,12 +605,12 @@ export function useDashboardNotifications(
         });
       }
 
-      // 6. ÉCHANTILLONS (urgents >7 jours + livrés récemment)
+      // 6. ECHANTILLONS (urgents >7 jours + livres recemment)
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
       const [urgentSamples, deliveredSamples] = await Promise.all([
-        // Échantillons en attente
+        // Echantillons en attente
         supabase
           .from('sample_orders')
           .select(
@@ -469,7 +624,7 @@ export function useDashboardNotifications(
           .lt('created_at', sevenDaysAgo.toISOString())
           .order('created_at', { ascending: true })
           .limit(3),
-        // Échantillons livrés récemment
+        // Echantillons livres recemment
         supabase
           .from('sample_orders')
           .select(
@@ -485,72 +640,72 @@ export function useDashboardNotifications(
           .limit(2),
       ]);
 
-      // Échantillons urgents
+      // Echantillons urgents
       if (urgentSamples.data && urgentSamples.data.length > 0) {
-        urgentSamples.data.forEach((sample: any) => {
+        (urgentSamples.data as unknown as SampleOrder[]).forEach(sample => {
           const daysWaiting = Math.floor(
             (Date.now() - new Date(sample.created_at).getTime()) /
               (1000 * 60 * 60 * 24)
           );
 
           const supplierName =
-            sample.supplier?.trade_name ||
-            sample.supplier?.legal_name ||
+            sample.supplier?.trade_name ??
+            sample.supplier?.legal_name ??
             'Fournisseur';
           const mainProduct =
-            sample.sample_order_items?.[0]?.products?.name || null;
+            sample.sample_order_items?.[0]?.products?.name ?? null;
 
           allNotifications.push({
             id: `sample-urgent-${sample.id}`,
             type: 'order',
             severity: daysWaiting > 14 ? 'critical' : 'warning',
-            title: 'Échantillon en attente',
+            title: 'Echantillon en attente',
             message: `${sample.order_number} - ${supplierName}${mainProduct ? ` (${mainProduct})` : ''} - ${daysWaiting}j d'attente`,
             timestamp: new Date(sample.created_at),
             actionUrl: `/produits/sourcing?sample_id=${sample.id}`,
-            actionLabel: "Voir l'échantillon",
+            actionLabel: "Voir l'echantillon",
           });
         });
       }
 
-      // Échantillons livrés
+      // Echantillons livres
       if (deliveredSamples.data && deliveredSamples.data.length > 0) {
-        deliveredSamples.data.forEach((sample: any) => {
+        (deliveredSamples.data as unknown as SampleOrder[]).forEach(sample => {
           const supplierName =
-            sample.supplier?.trade_name ||
-            sample.supplier?.legal_name ||
+            sample.supplier?.trade_name ??
+            sample.supplier?.legal_name ??
             'Fournisseur';
           const mainProduct =
-            sample.sample_order_items?.[0]?.products?.name || null;
+            sample.sample_order_items?.[0]?.products?.name ?? null;
 
           allNotifications.push({
             id: `sample-delivered-${sample.id}`,
             type: 'activity',
             severity: 'info',
-            title: 'Échantillon livré',
+            title: 'Echantillon livre',
             message: `${sample.order_number} - ${supplierName}${mainProduct ? ` (${mainProduct})` : ''}`,
             timestamp: new Date(sample.created_at),
             actionUrl: `/produits/sourcing?sample_id=${sample.id}`,
-            actionLabel: "Voir l'échantillon",
+            actionLabel: "Voir l'echantillon",
           });
         });
       }
 
-      // Trier par timestamp décroissant et limiter
+      // Trier par timestamp decroissant et limiter
       allNotifications.sort(
         (a, b) => b.timestamp.getTime() - a.timestamp.getTime()
       );
       const limited = allNotifications.slice(0, limit);
 
-      // ✅ Charger l'état "lu" depuis localStorage
+      // Charger l'etat "lu" depuis localStorage
       if (typeof window !== 'undefined') {
         const storageKey = 'verone-dashboard-notifications-read';
         const existingReads = localStorage.getItem(storageKey);
         const readNotifications: Record<string, string> = existingReads
-          ? JSON.parse(existingReads)
+          ? (JSON.parse(existingReads) as Record<string, string>)
           : {};
 
-        // Marquer notifications déjà lues
+        // Marquer notifications deja lues
         limited.forEach(notif => {
           if (readNotifications[notif.id]) {
             notif.isRead = true;
@@ -560,13 +715,17 @@ export function useDashboardNotifications(
       }
 
       setNotifications(limited);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Erreur chargement notifications:', err);
-      setError(err.message || 'Erreur lors du chargement des notifications');
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Erreur lors du chargement des notifications'
+      );
     } finally {
       setLoading(false);
     }
-  };
+  }, [limit]);
 
   const markAsRead = async (id: string) => {
     try {
@@ -580,13 +739,13 @@ export function useDashboardNotifications(
       );
 
       // 2. Persist dans localStorage pour session persistante
-      // (Les notifications dashboard sont des agrégations dynamiques,
-      // pas des entités persistées en DB, donc localStorage est approprié)
+      // (Les notifications dashboard sont des aggregations dynamiques,
+      // pas des entites persistees en DB, donc localStorage est approprie)
       if (typeof window !== 'undefined') {
         const storageKey = 'verone-dashboard-notifications-read';
         const existingReads = localStorage.getItem(storageKey);
         const readNotifications: Record<string, string> = existingReads
-          ? JSON.parse(existingReads)
+          ? (JSON.parse(existingReads) as Record<string, string>)
           : {};
 
         readNotifications[id] = now.toISOString();
@@ -598,13 +757,18 @@ export function useDashboardNotifications(
   };
 
   useEffect(() => {
-    fetchNotifications();
+    void fetchNotifications();
 
-    // Rafraîchir les notifications toutes les 5 minutes
-    const interval = setInterval(fetchNotifications, 5 * 60 * 1000);
+    // Rafraichir les notifications toutes les 5 minutes
+    const interval = setInterval(
+      () => {
+        void fetchNotifications();
+      },
+      5 * 60 * 1000
+    );
 
     return () => clearInterval(interval);
-  }, [limit]);
+  }, [fetchNotifications]);
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
 

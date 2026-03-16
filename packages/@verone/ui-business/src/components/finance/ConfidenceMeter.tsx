@@ -2,7 +2,6 @@
 
 import * as React from 'react';
 
-import { Progress } from '@verone/ui';
 import { cn } from '@verone/utils';
 
 /**

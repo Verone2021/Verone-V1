@@ -69,7 +69,7 @@ export function useProductMetrics() {
           .gte('created_at', fourteenDaysAgo.toISOString())
           .lt('created_at', sevenDaysAgo.toISOString());
 
-        const total = totalResult.count || 0;
+        const total = totalResult.count ?? 0;
 
         // Calcul robuste de la tendance - toujours retourner un nombre valide
         const recentValidCount = Number(recentCount) || 0;
@@ -89,27 +89,18 @@ export function useProductMetrics() {
 
         const result = {
           total,
-          active: activeResult.count || 0,
-          inactive: inactiveResult.count || 0,
-          draft: draftResult.count || 0,
+          active: activeResult.count ?? 0,
+          inactive: inactiveResult.count ?? 0,
+          draft: draftResult.count ?? 0,
           trend,
         };
-
-        // DEBUG: Log pour identifier le problème undefined%
-        console.log('🐛 DEBUG useProductMetrics result:', result);
-        console.log(
-          '🐛 trend value type:',
-          typeof result.trend,
-          'value:',
-          result.trend
-        );
 
         return result;
       }
 
       // Si la RPC existe, utiliser directement ses résultats
       return (
-        statusMetrics || {
+        statusMetrics ?? {
           total: 0,
           active: 0,
           inactive: 0,

@@ -203,7 +203,7 @@ const PAYMENT_TERMS_OPTIONS = [
   { value: 'CUSTOM', label: 'Personnalisé' },
 ];
 
-const SUPPLIER_SEGMENTS = [
+const _SUPPLIER_SEGMENTS = [
   { value: 'STRATEGIC', label: 'Stratégique' },
   { value: 'TACTICAL', label: 'Tactique' },
   { value: 'OPERATIONAL', label: 'Opérationnel' },
@@ -254,36 +254,38 @@ const getDefaultValues = (
 
   return {
     legal_name: organisation.legal_name,
-    trade_name: organisation.trade_name || '',
-    has_different_trade_name: organisation.has_different_trade_name || false,
-    country: organisation.country || 'FR',
+    trade_name: organisation.trade_name ?? '',
+    has_different_trade_name: organisation.has_different_trade_name ?? false,
+    country: organisation.country ?? 'FR',
     is_active: organisation.is_active,
-    notes: organisation.notes || '',
+    notes: organisation.notes ?? '',
     // Adresse de facturation
-    billing_address_line1: organisation.billing_address_line1 || '',
-    billing_address_line2: organisation.billing_address_line2 || '',
-    billing_postal_code: organisation.billing_postal_code || '',
-    billing_city: organisation.billing_city || '',
-    billing_region: organisation.billing_region || '',
-    billing_country: organisation.billing_country || 'FR',
+    billing_address_line1: organisation.billing_address_line1 ?? '',
+    billing_address_line2: organisation.billing_address_line2 ?? '',
+    billing_postal_code: organisation.billing_postal_code ?? '',
+    billing_city: organisation.billing_city ?? '',
+    billing_region: organisation.billing_region ?? '',
+    billing_country: organisation.billing_country ?? 'FR',
     // Adresse de livraison
-    shipping_address_line1: organisation.shipping_address_line1 || '',
-    shipping_address_line2: organisation.shipping_address_line2 || '',
-    shipping_postal_code: organisation.shipping_postal_code || '',
-    shipping_city: organisation.shipping_city || '',
-    shipping_region: organisation.shipping_region || '',
-    shipping_country: organisation.shipping_country || 'FR',
+    shipping_address_line1: organisation.shipping_address_line1 ?? '',
+    shipping_address_line2: organisation.shipping_address_line2 ?? '',
+    shipping_postal_code: organisation.shipping_postal_code ?? '',
+    shipping_city: organisation.shipping_city ?? '',
+    shipping_region: organisation.shipping_region ?? '',
+    shipping_country: organisation.shipping_country ?? 'FR',
     has_different_shipping_address:
-      organisation.has_different_shipping_address || false,
-    legal_form: organisation.legal_form || '',
-    siren: organisation.siren || '',
-    siret: organisation.siret || '',
-    vat_number: organisation.vat_number || '',
-    industry_sector: organisation.industry_sector || '',
-    currency: organisation.currency || 'EUR',
-    payment_terms: organisation.payment_terms || '',
-    prepayment_required: (organisation as any).prepayment_required || false,
-    supplier_segment: organisation.supplier_segment || '',
+      organisation.has_different_shipping_address ?? false,
+    legal_form: organisation.legal_form ?? '',
+    siren: organisation.siren ?? '',
+    siret: organisation.siret ?? '',
+    vat_number: organisation.vat_number ?? '',
+    industry_sector: organisation.industry_sector ?? '',
+    currency: organisation.currency ?? 'EUR',
+    payment_terms: organisation.payment_terms ?? '',
+    prepayment_required:
+      ((organisation as unknown as Record<string, unknown>)
+        .prepayment_required as boolean) ?? false,
+    supplier_segment: organisation.supplier_segment ?? '',
   };
 };
 
@@ -309,7 +311,7 @@ interface UnifiedOrganisationFormProps {
     data: OrganisationFormData,
     organisationId?: string
   ) => Promise<void>;
-  onSuccess?: (organisation: Organisation) => void;
+  _onSuccess?: (organisation: Organisation) => void;
   organisationType: OrganisationType;
   organisation?: Organisation | null;
   mode?: 'create' | 'edit';
@@ -322,7 +324,7 @@ export function UnifiedOrganisationForm({
   isOpen,
   onClose,
   onSubmit,
-  onSuccess,
+  _onSuccess,
   organisationType,
   organisation = null,
   mode = 'create',
@@ -333,8 +335,10 @@ export function UnifiedOrganisationForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isCustomer = organisationType === 'customer';
 
+  const zodResolverResult = zodResolver(baseOrganisationSchema);
   const form = useForm<OrganisationFormData>({
-    resolver: zodResolver(baseOrganisationSchema) as any,
+    // @ts-expect-error -- zodResolver type mismatch with strict mode
+    resolver: zodResolverResult,
     defaultValues: getDefaultValues(organisation),
   });
 
@@ -342,7 +346,7 @@ export function UnifiedOrganisationForm({
     if (isOpen) {
       form.reset(getDefaultValues(organisation));
     }
-  }, [isOpen, organisation]);
+  }, [isOpen, organisation, form]);
 
   const handleSubmit = async (data: OrganisationFormData) => {
     setIsSubmitting(true);
@@ -363,7 +367,7 @@ export function UnifiedOrganisationForm({
   };
 
   const displayTitle =
-    title ||
+    title ??
     `${mode === 'edit' ? 'Modifier' : 'Créer'} ${getOrganisationTypeLabel(organisationType)}`;
 
   return (
@@ -388,7 +392,11 @@ export function UnifiedOrganisationForm({
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={form.handleSubmit(handleSubmit as any)}>
+        <form
+          onSubmit={e => {
+            void form.handleSubmit(handleSubmit)(e);
+          }}
+        >
           <div
             style={{
               display: 'flex',
