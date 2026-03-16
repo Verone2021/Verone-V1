@@ -213,7 +213,7 @@ export function AutoRoadmapWidget({
     useAutoRoadmap(options);
 
   const dynamicDescription =
-    description ||
+    description ??
     (tasks.length > 0
       ? `${tasks.length} tâche${tasks.length > 1 ? 's' : ''} prioritaire${tasks.length > 1 ? 's' : ''} basée${tasks.length > 1 ? 's' : ''} sur vos alertes`
       : 'Aucune action requise');
@@ -230,7 +230,7 @@ export function AutoRoadmapWidget({
             variant="ghost"
             size="sm"
             className="h-7 w-7 p-0"
-            onClick={() => refetch()}
+            onClick={() => void refetch()}
             disabled={loading}
           >
             <RefreshCw
@@ -273,7 +273,7 @@ export function AutoRoadmapWidget({
         <ScrollArea className="max-h-64">
           {loading && tasks.length === 0 ? (
             <div className="space-y-3 p-2">
-              {[...Array(3)].map((_, i) => (
+              {Array.from({ length: 3 }, (_, i) => (
                 <div key={i} className="flex items-center gap-3">
                   <Skeleton className="w-6 h-6 rounded-full" />
                   <div className="flex-1 space-y-1.5">
@@ -290,7 +290,7 @@ export function AutoRoadmapWidget({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => refetch()}
+                onClick={() => void refetch()}
                 className="mt-2"
               >
                 Réessayer

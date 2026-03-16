@@ -10,7 +10,7 @@ import { Card, CardContent } from '@verone/ui';
 import type { SalesOrder } from '@verone/orders/hooks';
 // TODO: Réactiver lors Phase 2+ (module logistics désactivé)
 // import { ShipmentRecapData, ShipmentType } from './shipment-recap-modal'
-type ShipmentRecapData = any;
+type ShipmentRecapData = unknown;
 type ShipmentType = string;
 
 interface ManualShipmentFormProps {
