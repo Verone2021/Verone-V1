@@ -243,9 +243,9 @@ export function sanitizeProfileData(
   data: Partial<ProfileFormData>
 ): Record<string, string | null> {
   return {
-    first_name: data.firstName?.trim() || null,
-    last_name: data.lastName?.trim() || null,
-    phone: data.phone?.replace(/[\s.()-]/g, '') || null,
-    job_title: data.jobTitle?.trim() || null,
+    first_name: data.firstName?.trim() ?? null,
+    last_name: data.lastName?.trim() ?? null,
+    phone: data.phone?.replace(/[\s.()-]/g, '') ?? null,
+    job_title: data.jobTitle?.trim() ?? null,
   };
 }

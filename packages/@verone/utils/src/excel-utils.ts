@@ -76,8 +76,8 @@ export async function generateSalesOrdersExcel(
   orders.forEach(order => {
     const clientName =
       order.customer_type === 'organization'
-        ? order.organisations?.name || 'N/A'
-        : `${order.individual_customers?.first_name || ''} ${order.individual_customers?.last_name || ''}`.trim() ||
+        ? (order.organisations?.name ?? 'N/A')
+        : `${order.individual_customers?.first_name ?? ''} ${order.individual_customers?.last_name ?? ''}`.trim() ||
           'N/A';
 
     const customerTypeLabel =
@@ -97,10 +97,10 @@ export async function generateSalesOrdersExcel(
       client_name: clientName,
       customer_type: customerTypeLabel,
       created_at: new Date(order.created_at),
-      total_ht: order.total_ht || 0,
-      total_tva: (order.total_ttc || 0) - (order.total_ht || 0),
-      total_ttc: order.total_ttc || 0,
-      status: statusLabels[order.status] || order.status,
+      total_ht: order.total_ht ?? 0,
+      total_tva: (order.total_ttc ?? 0) - (order.total_ht ?? 0),
+      total_ttc: order.total_ttc ?? 0,
+      status: statusLabels[order.status] ?? order.status,
     });
 
     // Formatage montants avec 2 décimales

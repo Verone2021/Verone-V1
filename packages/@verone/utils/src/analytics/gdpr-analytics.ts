@@ -31,7 +31,7 @@ export interface AnalyticsEvent {
     | 'business_metric'
     | 'performance_metric';
   event_name: string;
-  properties: Record<string, any>;
+  properties: Record<string, unknown>;
   timestamp: Date;
   session_id: string;
   user_consent: ConsentLevel;
@@ -115,15 +115,21 @@ export class GDPRConsentManager {
     try {
       const stored = localStorage.getItem(this.storage_key);
       if (stored) {
-        const parsed = JSON.parse(stored);
+        const parsed: unknown = JSON.parse(stored);
+        const parsedObj = parsed as {
+          timestamp?: unknown;
+          consent?: ConsentLevel;
+        };
 
         // Vérifier validité (consent expire après 13 mois selon RGPD)
-        const consentDate = new Date(parsed.timestamp);
+        const consentDate = new Date(
+          parsedObj.timestamp as string | number | Date
+        );
         const thirteenMonthsAgo = new Date();
         thirteenMonthsAgo.setMonth(thirteenMonthsAgo.getMonth() - 13);
 
         if (consentDate > thirteenMonthsAgo) {
-          this.consent = parsed.consent;
+          this.consent = parsedObj.consent ?? null;
         } else {
           // Consent expiré, supprimer
           this.clearConsent();
@@ -240,12 +246,12 @@ export class GDPRAnalytics {
     // Vérifier consent avant initialisation
     const consent = this.consentManager.getConsent();
     if (!consent) {
-      console.log('[Analytics] Waiting for user consent...');
+      console.warn('[Analytics] Waiting for user consent...');
       return;
     }
 
     this.isInitialized = true;
-    console.log('[Analytics] Initialized with GDPR compliance');
+    console.warn('[Analytics] Initialized with GDPR compliance');
 
     // Tracking initial si autorisé
     if (this.consentManager.canTrack('analytics')) {
@@ -256,7 +262,7 @@ export class GDPRAnalytics {
   /**
    * 🎯 Tracking événement
    */
-  track(event_name: string, properties: Record<string, any> = {}): void {
+  track(event_name: string, properties: Record<string, unknown> = {}): void {
     const consent = this.consentManager.getConsent();
     if (!consent) return;
 
@@ -280,7 +286,7 @@ export class GDPRAnalytics {
 
     // Envoi différé si analytics autorisé
     if (consent.analytics) {
-      this.sendEventToEndpoint(event);
+      void this.sendEventToEndpoint(event);
     }
   }
 
@@ -309,7 +315,7 @@ export class GDPRAnalytics {
 
     this.addEvent(event);
     this.updateMetrics('page_view', event.properties);
-    this.sendEventToEndpoint(event);
+    void this.sendEventToEndpoint(event);
   }
 
   /**
@@ -318,7 +324,7 @@ export class GDPRAnalytics {
   trackBusinessMetric(
     metric_name: string,
     value: number,
-    context?: Record<string, any>
+    context?: Record<string, unknown>
   ): void {
     const consent = this.consentManager.getConsent();
     if (!consent?.analytics) return;
@@ -328,7 +334,7 @@ export class GDPRAnalytics {
       event_name: metric_name,
       properties: {
         value,
-        context: context || {},
+        context: context ?? {},
         anonymized: true,
       },
       timestamp: new Date(),
@@ -339,7 +345,7 @@ export class GDPRAnalytics {
 
     this.addEvent(event);
     this.updateMetrics('business', { metric_name, value, context });
-    this.sendEventToEndpoint(event);
+    void this.sendEventToEndpoint(event);
   }
 
   /**
@@ -356,7 +362,8 @@ export class GDPRAnalytics {
         timing,
         url: this.anonymizePath(window.location.pathname),
         connection_type:
-          (navigator as any).connection?.effectiveType || 'unknown',
+          (navigator as unknown as { connection?: { effectiveType?: string } })
+            .connection?.effectiveType ?? 'unknown',
       },
       timestamp: new Date(),
       session_id: this.consentManager.getSessionId(),
@@ -366,17 +373,17 @@ export class GDPRAnalytics {
 
     this.addEvent(event);
     this.updateMetrics('performance', { metric_name, timing });
-    this.sendEventToEndpoint(event);
+    void this.sendEventToEndpoint(event);
   }
 
   /**
    * 🔒 Filtrage propriétés selon consent
    */
   private filterPropertiesByConsent(
-    properties: Record<string, any>,
+    properties: Record<string, unknown>,
     consent: ConsentLevel
-  ): Record<string, any> {
-    const filtered: Record<string, any> = {};
+  ): Record<string, unknown> {
+    const filtered: Record<string, unknown> = {};
 
     // Propriétés toujours autorisées (necessary)
     const allowedKeys = ['action', 'category', 'value', 'path', 'duration'];
@@ -482,19 +489,23 @@ export class GDPRAnalytics {
   /**
    * 📈 Mise à jour métriques
    */
-  private updateMetrics(type: string, data: any): void {
+  private updateMetrics(type: string, data: Record<string, unknown>): void {
     switch (type) {
       case 'page_view':
         this.metrics.user_journey.pages_visited++;
         break;
       case 'business':
-        if (data.metric_name.includes('product_view')) {
+        if (
+          typeof data.metric_name === 'string' &&
+          data.metric_name.includes('product_view')
+        ) {
           this.metrics.catalogue_usage.products_viewed++;
         }
         break;
       case 'performance':
         if (data.metric_name === 'page_load_time') {
-          this.metrics.performance_metrics.avg_load_time = data.timing;
+          this.metrics.performance_metrics.avg_load_time =
+            data.timing as number;
         }
         break;
     }
@@ -537,10 +548,11 @@ export class GDPRAnalytics {
     if (typeof window === 'undefined') return;
 
     // Listener consent updates
-    window.addEventListener('gdpr_consent_updated', (event: any) => {
-      const { consent } = event.detail;
-      if (consent.analytics && !this.isInitialized) {
-        this.initialize();
+    window.addEventListener('gdpr_consent_updated', (event: Event) => {
+      const customEvent = event as CustomEvent<{ consent?: ConsentLevel }>;
+      const consent = customEvent.detail?.consent;
+      if (consent?.analytics && !this.isInitialized) {
+        void this.initialize();
       }
     });
 
@@ -563,7 +575,7 @@ export class GDPRAnalytics {
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'hidden') {
         // Session cleanup si nécessaire
-        this.flushEvents();
+        void this.flushEvents();
       }
     });
   }
@@ -620,19 +632,19 @@ export const gdprAnalytics = new GDPRAnalytics();
  */
 export function trackEvent(
   name: string,
-  properties?: Record<string, any>
+  properties?: Record<string, unknown>
 ): void {
   gdprAnalytics.track(name, properties);
 }
 
 export function trackPageView(path?: string): void {
-  gdprAnalytics.trackPageView(path || window.location.pathname);
+  gdprAnalytics.trackPageView(path ?? window.location.pathname);
 }
 
 export function trackBusinessMetric(
   name: string,
   value: number,
-  context?: Record<string, any>
+  context?: Record<string, unknown>
 ): void {
   gdprAnalytics.trackBusinessMetric(name, value, context);
 }

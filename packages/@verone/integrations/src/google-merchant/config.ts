@@ -31,7 +31,7 @@ export const GOOGLE_MERCHANT_CONFIG = {
   },
 
   // URLs
-  productBaseUrl: process.env.NEXT_PUBLIC_APP_URL || 'https://verone.com',
+  productBaseUrl: process.env.NEXT_PUBLIC_APP_URL ?? 'https://verone.com',
 
   // Validation
   validation: {

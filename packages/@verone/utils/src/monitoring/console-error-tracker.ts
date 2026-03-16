@@ -46,23 +46,24 @@ class ConsoleErrorTracker {
     if (this.isSetup || typeof window === 'undefined') return;
 
     // Override console.error
-    console.error = (...args: any[]) => {
+    console.error = (...args: unknown[]) => {
       this.trackError('error', args);
       this.originalError.apply(console, args);
     };
 
     // Override console.warn (optionnel)
-    console.warn = (...args: any[]) => {
+    console.warn = (...args: unknown[]) => {
       this.trackError('warn', args);
       this.originalWarn.apply(console, args);
     };
 
     // Global error handler (catches unhandled errors)
     window.addEventListener('error', (event: ErrorEvent) => {
+      const eventError = event.error as Error | undefined;
       this.trackError(
         'error',
-        [event.error?.message || event.message],
-        event.error?.stack
+        [eventError?.message ?? event.message],
+        eventError?.stack
       );
     });
 
@@ -75,13 +76,13 @@ class ConsoleErrorTracker {
     );
 
     this.isSetup = true;
-    console.log('✅ [ConsoleErrorTracker] Monitoring activé');
+    console.warn('✅ [ConsoleErrorTracker] Monitoring activé');
   }
 
   /**
    * 📝 Track error avec contexte enrichi
    */
-  private trackError(level: 'error' | 'warn', args: any[], stack?: string) {
+  private trackError(level: 'error' | 'warn', args: unknown[], stack?: string) {
     const errorLog: ConsoleErrorLog = {
       timestamp: new Date().toISOString(),
       level,
@@ -94,7 +95,7 @@ class ConsoleErrorTracker {
         .join(' '),
       url: window.location.href,
       userAgent: navigator.userAgent,
-      stack: stack || (args[0] instanceof Error ? args[0].stack : undefined),
+      stack: stack ?? (args[0] instanceof Error ? args[0].stack : undefined),
     };
 
     // Ajouter session/user ID si disponible (localStorage)
@@ -104,7 +105,7 @@ class ConsoleErrorTracker {
 
       const userId = localStorage.getItem('verone_user_id');
       if (userId) errorLog.userId = userId;
-    } catch (e) {
+    } catch (_e) {
       // Ignore localStorage errors
     }
 
@@ -132,7 +133,7 @@ class ConsoleErrorTracker {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(log),
       });
-    } catch (error) {
+    } catch (_error) {
       // Fail silently
     }
   }
@@ -177,5 +178,7 @@ export function useConsoleErrorTracking() {
 
 // 🎯 Export pour accès global (window)
 if (typeof window !== 'undefined') {
-  (window as any).__consoleErrorTracker = consoleErrorTracker;
+  (
+    window as unknown as { __consoleErrorTracker: ConsoleErrorTracker }
+  ).__consoleErrorTracker = consoleErrorTracker;
 }
