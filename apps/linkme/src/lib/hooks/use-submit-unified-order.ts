@@ -192,7 +192,7 @@ export function useSubmitUnifiedOrder() {
             throw new Error(`Erreur création commande: ${rpcError.message}`);
           }
 
-          console.info(
+          console.warn(
             '[useSubmitUnifiedOrder] Order created (existing org):',
             orderId
           );
@@ -482,7 +482,7 @@ export function useSubmitUnifiedOrder() {
 
           const rpcResult = result as unknown as RpcResponse;
 
-          console.info(
+          console.warn(
             '[useSubmitUnifiedOrder] Order created (new org):',
             rpcResult
           );

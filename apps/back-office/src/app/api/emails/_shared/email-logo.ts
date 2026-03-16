@@ -28,9 +28,7 @@ export function getLogoAttachment(): {
   contentId: string;
 } | null {
   try {
-    if (!cachedContent) {
-      cachedContent = fs.readFileSync(LOGO_PATH).toString('base64');
-    }
+    cachedContent ??= fs.readFileSync(LOGO_PATH).toString('base64');
     return {
       content: cachedContent,
       filename: 'linkme-logo.png',
