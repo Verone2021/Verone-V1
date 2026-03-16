@@ -261,6 +261,10 @@ export function useSubmitUnifiedOrder() {
               '[useSubmitUnifiedOrder] Email confirmation error:',
               emailError
             );
+            toast.warning(
+              "Commande enregistrée, mais l'email de confirmation n'a pas pu être envoyé.",
+              { description: "Vous recevrez un email lors de l'approbation." }
+            );
           }
 
           // Invalider les caches
@@ -532,7 +536,17 @@ export function useSubmitUnifiedOrder() {
               }),
             });
           } catch (emailError) {
-            console.error('Erreur envoi notification email:', emailError);
+            console.error(
+              '[useSubmitUnifiedOrder] Notify enseigne email error:',
+              emailError
+            );
+            toast.warning(
+              "Commande enregistrée, mais la notification n'a pas pu être envoyée.",
+              {
+                description:
+                  "L'équipe Verone sera notifiée par un autre canal.",
+              }
+            );
           }
 
           // Invalider les caches
