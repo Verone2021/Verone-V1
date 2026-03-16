@@ -138,23 +138,22 @@ export function useOrderHistory(orderId: string | undefined) {
 
       if (infoRequests) {
         for (const req of infoRequests) {
-          // Build description with requested field labels
           const fields = req.requested_fields as Array<{
             label: string;
             category: string;
           }> | null;
-          const fieldLabels = fields?.map(f => f.label).join(', ') ?? '';
-          const description = fieldLabels
-            ? `→ ${req.recipient_name ?? req.recipient_email} | ${fieldLabels}`
-            : `→ ${req.recipient_name ?? req.recipient_email}`;
 
           allEvents.push({
             id: `info-req-${req.id}`,
             type: 'info_requested',
             date: req.sent_at ?? new Date().toISOString(),
             title: 'Demande de complements envoyee',
-            description,
-            metadata: { recipient_email: req.recipient_email },
+            description: '',
+            metadata: {
+              recipient_email: req.recipient_email,
+              recipient_name: req.recipient_name,
+              requested_fields: fields,
+            },
           });
 
           if (req.completed_at) {
@@ -163,7 +162,11 @@ export function useOrderHistory(orderId: string | undefined) {
               type: 'info_completed',
               date: req.completed_at,
               title: 'Complements recus',
-              description: `De ${req.recipient_name ?? req.recipient_email}`,
+              description: '',
+              metadata: {
+                recipient_email: req.recipient_email,
+                recipient_name: req.recipient_name,
+              },
             });
           }
 
@@ -276,10 +279,16 @@ export function useOrderHistory(orderId: string | undefined) {
             title: isQuote
               ? `Devis ${doc.document_number} cree`
               : `Facture ${doc.document_number} emise`,
-            description: isQuote
-              ? `Montant: ${formatAmount} HT — Statut: ${quoteStatusLabels[doc.quote_status ?? ''] ?? doc.quote_status}`
-              : `Montant: ${formatAmount} HT`,
-            metadata: { documentId: doc.id, documentType: doc.document_type },
+            description: '',
+            metadata: {
+              documentId: doc.id,
+              documentType: doc.document_type,
+              amount: formatAmount,
+              quoteStatus: isQuote
+                ? (quoteStatusLabels[doc.quote_status ?? ''] ??
+                  doc.quote_status)
+                : undefined,
+            },
           });
         }
       }

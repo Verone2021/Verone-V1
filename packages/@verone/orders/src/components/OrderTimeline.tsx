@@ -1,6 +1,12 @@
 'use client';
 
-import { Card, CardContent } from '@verone/ui';
+import {
+  Card,
+  CardContent,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@verone/ui';
 import {
   Mail,
   MailX,
@@ -17,6 +23,7 @@ import {
   ClipboardCheck,
   Check,
   Receipt,
+  MoreHorizontal,
 } from 'lucide-react';
 
 import type {
@@ -64,6 +71,86 @@ function formatEventDate(dateStr: string): string {
       hour: '2-digit',
       minute: '2-digit',
     })
+  );
+}
+
+// ── Detail rows for the popover ─────────────────────────────────────
+
+function DetailRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex justify-between gap-3 text-xs">
+      <span className="text-gray-500 shrink-0">{label}</span>
+      <span className="text-gray-900 text-right truncate">{value}</span>
+    </div>
+  );
+}
+
+function EventDetails({ event }: { event: OrderHistoryEvent }) {
+  const meta = event.metadata ?? {};
+  const rows: { label: string; value: string }[] = [];
+
+  // Recipient email (emails events, info requests)
+  if (meta.recipient_email) {
+    rows.push({ label: 'Destinataire', value: meta.recipient_email as string });
+  }
+
+  // Status transition
+  if (meta.old_status && meta.new_status) {
+    rows.push({
+      label: 'Transition',
+      value: `${meta.old_status as string} → ${meta.new_status as string}`,
+    });
+  }
+
+  // Requested fields (info requests)
+  if (meta.requested_fields) {
+    const fields = meta.requested_fields as Array<{ label: string }>;
+    if (fields.length > 0) {
+      rows.push({
+        label: 'Champs demandes',
+        value: fields.map(f => f.label).join(', '),
+      });
+    }
+  }
+
+  // Recipient name (info requests)
+  if (meta.recipient_name) {
+    rows.push({ label: 'Contact', value: meta.recipient_name as string });
+  }
+
+  // Financial document details
+  if (meta.documentType) {
+    const docType =
+      meta.documentType === 'customer_quote' ? 'Devis' : 'Facture';
+    rows.push({ label: 'Type', value: docType });
+  }
+  if (meta.amount) {
+    rows.push({ label: 'Montant HT', value: meta.amount as string });
+  }
+  if (meta.quoteStatus) {
+    rows.push({ label: 'Statut', value: meta.quoteStatus as string });
+  }
+
+  if (rows.length === 0) return null;
+
+  return (
+    <div className="space-y-1.5">
+      {rows.map((row, i) => (
+        <DetailRow key={i} label={row.label} value={row.value} />
+      ))}
+    </div>
+  );
+}
+
+function hasDetails(event: OrderHistoryEvent): boolean {
+  const meta = event.metadata ?? {};
+  return !!(
+    meta.recipient_email ||
+    (meta.old_status && meta.new_status) ||
+    meta.requested_fields ||
+    meta.recipient_name ||
+    meta.documentType ||
+    meta.amount
   );
 }
 
@@ -124,6 +211,7 @@ export function OrderTimeline({ events, loading }: OrderTimelineProps) {
             {events.map(event => {
               const config = EVENT_CONFIG[event.type];
               const Icon = config.icon;
+              const showDetails = hasDetails(event);
 
               return (
                 <div key={event.id} className="relative flex items-start gap-3">
@@ -135,18 +223,38 @@ export function OrderTimeline({ events, loading }: OrderTimelineProps) {
                   {/* Content */}
                   <div className="flex-1 min-w-0 pt-0.5">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-gray-900">
+                      <span className="text-sm font-medium text-gray-900 truncate">
                         {event.title}
                       </span>
-                      <span className="text-xs text-gray-400 shrink-0">
+
+                      {showDetails && (
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <button
+                              type="button"
+                              className="inline-flex items-center justify-center h-5 w-5 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors shrink-0"
+                              aria-label="Voir les details"
+                            >
+                              <MoreHorizontal className="h-3.5 w-3.5" />
+                            </button>
+                          </PopoverTrigger>
+                          <PopoverContent
+                            side="right"
+                            align="start"
+                            className="w-64 p-3"
+                          >
+                            <p className="text-xs font-semibold text-gray-700 mb-2">
+                              {event.title}
+                            </p>
+                            <EventDetails event={event} />
+                          </PopoverContent>
+                        </Popover>
+                      )}
+
+                      <span className="text-xs text-gray-400 shrink-0 ml-auto">
                         {formatEventDate(event.date)}
                       </span>
                     </div>
-                    {event.description && (
-                      <p className="text-xs text-gray-500 mt-0.5">
-                        {event.description}
-                      </p>
-                    )}
                   </div>
                 </div>
               );
