@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 
-import { Plus, Minus, X } from 'lucide-react';
+import { Plus, Minus } from 'lucide-react';
 
 import { ButtonV2 } from '@verone/ui';
 import { Card } from '@verone/ui';
@@ -45,6 +45,14 @@ interface ProductImage {
   display_order?: number;
 }
 
+/** Extended product fields that may be present from Supabase queries */
+interface ProductWithPricing extends SelectedProduct {
+  cost_price?: number;
+  min_selling_price?: number;
+  eco_tax_default?: number;
+  product_images?: ProductImage[];
+}
+
 export function AddProductToOrderModal({
   open,
   onClose,
@@ -66,14 +74,15 @@ export function AddProductToOrderModal({
   // Auto-remplir prix/éco-taxe quand produit sélectionné
   useEffect(() => {
     if (selectedProduct) {
+      const product = selectedProduct as ProductWithPricing;
       // Prix selon orderType
       const defaultPrice =
         orderType === 'purchase'
-          ? (selectedProduct as any).cost_price || 0
-          : (selectedProduct as any).min_selling_price || 0;
+          ? (product.cost_price ?? 0)
+          : (product.min_selling_price ?? 0);
 
       setUnitPrice(defaultPrice);
-      setEcoTax((selectedProduct as any).eco_tax_default || 0);
+      setEcoTax(product.eco_tax_default ?? 0);
     }
   }, [selectedProduct, orderType]);
 
@@ -93,11 +102,11 @@ export function AddProductToOrderModal({
       : 'Ajouter un produit à la commande client';
 
   // Récupérer image primaire produit
-  const getPrimaryImage = (product: any): string | null => {
-    const images = product.product_images as ProductImage[] | undefined;
+  const getPrimaryImage = (product: ProductWithPricing): string | null => {
+    const images = product.product_images;
     return (
-      images?.find(img => img.is_primary)?.public_url ||
-      images?.[0]?.public_url ||
+      images?.find(img => img.is_primary)?.public_url ??
+      images?.[0]?.public_url ??
       null
     );
   };
@@ -154,7 +163,8 @@ export function AddProductToOrderModal({
         // Product metadata for display
         product_name: selectedProduct.name,
         product_sku: selectedProduct.sku ?? undefined,
-        product_image_url: getPrimaryImage(selectedProduct) ?? undefined,
+        product_image_url:
+          getPrimaryImage(selectedProduct as ProductWithPricing) ?? undefined,
         product_description: selectedProduct.description ?? undefined,
       };
 
@@ -217,9 +227,14 @@ export function AddProductToOrderModal({
               {selectedProduct ? (
                 <Card className="p-4">
                   <div className="flex items-center gap-4">
-                    {getPrimaryImage(selectedProduct) && (
+                    {getPrimaryImage(selectedProduct as ProductWithPricing) && (
+                      // eslint-disable-next-line @next/next/no-img-element
                       <img
-                        src={getPrimaryImage(selectedProduct)!}
+                        src={
+                          getPrimaryImage(
+                            selectedProduct as ProductWithPricing
+                          )!
+                        }
                         alt={selectedProduct.name}
                         className="w-16 h-16 object-cover rounded"
                       />
@@ -231,8 +246,8 @@ export function AddProductToOrderModal({
                       </p>
                       <p className="text-sm text-primary mt-1">
                         {orderType === 'purchase'
-                          ? `Achat: ${formatCurrency((selectedProduct as any).cost_price || 0)}`
-                          : `Vente min: ${formatCurrency((selectedProduct as any).min_selling_price || 0)}`}
+                          ? `Achat: ${formatCurrency((selectedProduct as ProductWithPricing).cost_price ?? 0)}`
+                          : `Vente min: ${formatCurrency((selectedProduct as ProductWithPricing).min_selling_price ?? 0)}`}
                       </p>
                     </div>
                     <ButtonV2
@@ -306,8 +321,10 @@ export function AddProductToOrderModal({
                           ({getPriceLabel()}:{' '}
                           {formatCurrency(
                             orderType === 'purchase'
-                              ? (selectedProduct as any).cost_price || 0
-                              : (selectedProduct as any).min_selling_price || 0
+                              ? ((selectedProduct as ProductWithPricing)
+                                  .cost_price ?? 0)
+                              : ((selectedProduct as ProductWithPricing)
+                                  .min_selling_price ?? 0)
                           )}
                           )
                         </span>
@@ -349,7 +366,8 @@ export function AddProductToOrderModal({
                         <span className="text-xs text-gray-500 ml-2 font-normal">
                           (indicative:{' '}
                           {formatCurrency(
-                            (selectedProduct as any).eco_tax_default || 0
+                            (selectedProduct as ProductWithPricing)
+                              .eco_tax_default ?? 0
                           )}
                           )
                         </span>
@@ -449,7 +467,9 @@ export function AddProductToOrderModal({
               Annuler
             </ButtonV2>
             <ButtonV2
-              onClick={handleAdd}
+              onClick={() => {
+                void handleAdd();
+              }}
               disabled={!selectedProduct || isAdding}
             >
               {isAdding ? (

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-import { Plus, User, X } from 'lucide-react';
+import { Plus, User } from 'lucide-react';
 
 import { Button } from '@verone/ui';
 import { Card, CardContent } from '@verone/ui';
@@ -139,7 +139,7 @@ export function CreateIndividualCustomerModal({
 
   const handleInputChange = (
     field: keyof CreateIndividualCustomerData,
-    value: any
+    value: string | boolean | null
   ) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
@@ -147,7 +147,7 @@ export function CreateIndividualCustomerModal({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        {trigger || (
+        {trigger ?? (
           <Button variant="outline" size="sm" className="border-black">
             <Plus className="h-4 w-4 mr-2" />
             Nouveau client particulier
@@ -166,7 +166,12 @@ export function CreateIndividualCustomerModal({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form
+          onSubmit={e => {
+            void handleSubmit(e);
+          }}
+          className="space-y-6"
+        >
           <Tabs defaultValue="general" className="w-full">
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="general">Général</TabsTrigger>
@@ -185,7 +190,7 @@ export function CreateIndividualCustomerModal({
                       </Label>
                       <Input
                         id="first_name"
-                        value={formData.first_name || ''}
+                        value={formData.first_name ?? ''}
                         onChange={e =>
                           handleInputChange('first_name', e.target.value)
                         }
@@ -201,7 +206,7 @@ export function CreateIndividualCustomerModal({
                       </Label>
                       <Input
                         id="last_name"
-                        value={formData.last_name || ''}
+                        value={formData.last_name ?? ''}
                         onChange={e =>
                           handleInputChange('last_name', e.target.value)
                         }
@@ -219,7 +224,7 @@ export function CreateIndividualCustomerModal({
                     <Input
                       id="email"
                       type="email"
-                      value={formData.email || ''}
+                      value={formData.email ?? ''}
                       onChange={e => handleInputChange('email', e.target.value)}
                       placeholder="jean.dupont@email.com"
                       className="border-black"
@@ -231,7 +236,7 @@ export function CreateIndividualCustomerModal({
                     <Label htmlFor="phone">Téléphone</Label>
                     <Input
                       id="phone"
-                      value={formData.phone || ''}
+                      value={formData.phone ?? ''}
                       onChange={e => handleInputChange('phone', e.target.value)}
                       placeholder="+33 1 23 45 67 89"
                       className="border-black"
@@ -267,7 +272,7 @@ export function CreateIndividualCustomerModal({
                       <Label htmlFor="address_line1">Adresse ligne 1</Label>
                       <Input
                         id="address_line1"
-                        value={formData.address_line1 || ''}
+                        value={formData.address_line1 ?? ''}
                         onChange={e =>
                           handleInputChange('address_line1', e.target.value)
                         }
@@ -280,7 +285,7 @@ export function CreateIndividualCustomerModal({
                       <Label htmlFor="address_line2">Adresse ligne 2</Label>
                       <Input
                         id="address_line2"
-                        value={formData.address_line2 || ''}
+                        value={formData.address_line2 ?? ''}
                         onChange={e =>
                           handleInputChange('address_line2', e.target.value)
                         }
@@ -294,7 +299,7 @@ export function CreateIndividualCustomerModal({
                         <Label htmlFor="postal_code">Code postal</Label>
                         <Input
                           id="postal_code"
-                          value={formData.postal_code || ''}
+                          value={formData.postal_code ?? ''}
                           onChange={e =>
                             handleInputChange('postal_code', e.target.value)
                           }
@@ -307,7 +312,7 @@ export function CreateIndividualCustomerModal({
                         <Label htmlFor="city">Ville</Label>
                         <Input
                           id="city"
-                          value={formData.city || ''}
+                          value={formData.city ?? ''}
                           onChange={e =>
                             handleInputChange('city', e.target.value)
                           }
@@ -322,7 +327,7 @@ export function CreateIndividualCustomerModal({
                         <Label htmlFor="region">Région</Label>
                         <Input
                           id="region"
-                          value={formData.region || ''}
+                          value={formData.region ?? ''}
                           onChange={e =>
                             handleInputChange('region', e.target.value)
                           }
@@ -335,7 +340,7 @@ export function CreateIndividualCustomerModal({
                         <Label htmlFor="country">Pays</Label>
                         <Input
                           id="country"
-                          value={formData.country || ''}
+                          value={formData.country ?? ''}
                           onChange={e =>
                             handleInputChange('country', e.target.value)
                           }
@@ -378,7 +383,7 @@ export function CreateIndividualCustomerModal({
                           </Label>
                           <Input
                             id="billing_address_line1"
-                            value={formData.billing_address_line1 || ''}
+                            value={formData.billing_address_line1 ?? ''}
                             onChange={e =>
                               handleInputChange(
                                 'billing_address_line1',
@@ -396,7 +401,7 @@ export function CreateIndividualCustomerModal({
                           </Label>
                           <Input
                             id="billing_address_line2"
-                            value={formData.billing_address_line2 || ''}
+                            value={formData.billing_address_line2 ?? ''}
                             onChange={e =>
                               handleInputChange(
                                 'billing_address_line2',
@@ -415,7 +420,7 @@ export function CreateIndividualCustomerModal({
                             </Label>
                             <Input
                               id="billing_postal_code"
-                              value={formData.billing_postal_code || ''}
+                              value={formData.billing_postal_code ?? ''}
                               onChange={e =>
                                 handleInputChange(
                                   'billing_postal_code',
@@ -431,7 +436,7 @@ export function CreateIndividualCustomerModal({
                             <Label htmlFor="billing_city">Ville</Label>
                             <Input
                               id="billing_city"
-                              value={formData.billing_city || ''}
+                              value={formData.billing_city ?? ''}
                               onChange={e =>
                                 handleInputChange(
                                   'billing_city',
@@ -449,7 +454,7 @@ export function CreateIndividualCustomerModal({
                             <Label htmlFor="billing_region">Région</Label>
                             <Input
                               id="billing_region"
-                              value={formData.billing_region || ''}
+                              value={formData.billing_region ?? ''}
                               onChange={e =>
                                 handleInputChange(
                                   'billing_region',
@@ -465,7 +470,7 @@ export function CreateIndividualCustomerModal({
                             <Label htmlFor="billing_country">Pays</Label>
                             <Input
                               id="billing_country"
-                              value={formData.billing_country || ''}
+                              value={formData.billing_country ?? ''}
                               onChange={e =>
                                 handleInputChange(
                                   'billing_country',
@@ -524,7 +529,7 @@ export function CreateIndividualCustomerModal({
                     <Label htmlFor="notes">Notes internes</Label>
                     <Input
                       id="notes"
-                      value={formData.notes || ''}
+                      value={formData.notes ?? ''}
                       onChange={e => handleInputChange('notes', e.target.value)}
                       placeholder="Informations complémentaires..."
                       className="border-black"

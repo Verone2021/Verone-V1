@@ -37,7 +37,7 @@ export function useSampleEligibilityRule() {
   const checkSampleEligibility = useCallback(
     async (
       productId: string,
-      context?: Partial<SampleValidationContext>
+      _context?: Partial<SampleValidationContext>
     ): Promise<SampleEligibilityResult> => {
       setLoading(true);
 
@@ -56,7 +56,7 @@ export function useSampleEligibilityRule() {
               'Les échantillons ne sont pas autorisés car ce produit a déjà eu des entrées de stock.',
             details: {
               firstStockMovementDate: firstMovement?.performed_at,
-              totalMovements: firstMovement?.totalCount || 0,
+              totalMovements: firstMovement?.totalCount ?? 0,
             },
           };
         }
@@ -98,6 +98,7 @@ export function useSampleEligibilityRule() {
         setLoading(false);
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
 
@@ -156,7 +157,7 @@ export function useSampleEligibilityRule() {
         return data?.[0]
           ? {
               ...data[0],
-              totalCount: count || 0,
+              totalCount: count ?? 0,
             }
           : null;
       } catch (error) {
@@ -181,7 +182,7 @@ export function useSampleEligibilityRule() {
 
         if (error) throw error;
 
-        return data?.stock_real || data?.stock_quantity || 0;
+        return data?.stock_real ?? data?.stock_quantity ?? 0;
       } catch (error) {
         console.error('❌ Erreur récupération stock actuel:', error);
         return 0;

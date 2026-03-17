@@ -141,14 +141,14 @@ export function useOrdersStatus(): UseOrdersStatusResult {
       threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
 
       // Traiter sales_orders
-      salesOrders.forEach((order: any) => {
+      salesOrders.forEach(order => {
         const mappedStatus = mapSalesStatus(order.status);
         const createdAt = new Date(order.created_at);
 
         // Incrémenter le compteur du statut
         statusCounts.set(
           mappedStatus,
-          (statusCounts.get(mappedStatus) || 0) + 1
+          (statusCounts.get(mappedStatus) ?? 0) + 1
         );
 
         // Commandes récentes (7 derniers jours)
@@ -163,14 +163,14 @@ export function useOrdersStatus(): UseOrdersStatusResult {
       });
 
       // Traiter purchase_orders
-      purchaseOrders.forEach((order: any) => {
+      purchaseOrders.forEach(order => {
         const mappedStatus = mapPurchaseStatus(order.status);
         const createdAt = new Date(order.created_at);
 
         // Incrémenter le compteur du statut
         statusCounts.set(
           mappedStatus,
-          (statusCounts.get(mappedStatus) || 0) + 1
+          (statusCounts.get(mappedStatus) ?? 0) + 1
         );
 
         // Commandes récentes (7 derniers jours)
@@ -188,7 +188,7 @@ export function useOrdersStatus(): UseOrdersStatusResult {
       const byStatus: OrderStatusCount[] = Object.entries(STATUS_CONFIG).map(
         ([status, config]) => ({
           status: status as OrderStatus,
-          count: statusCounts.get(status as OrderStatus) || 0,
+          count: statusCounts.get(status as OrderStatus) ?? 0,
           label: config.label,
           color: config.color,
         })
@@ -200,16 +200,20 @@ export function useOrdersStatus(): UseOrdersStatusResult {
         recentOrders: recentCount,
         urgentOrders: urgentCount,
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Erreur chargement statut commandes:', err);
-      setError(err.message || 'Erreur lors du chargement des commandes');
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Erreur lors du chargement des commandes'
+      );
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchOrdersStatus();
+    void fetchOrdersStatus();
   }, []);
 
   return {

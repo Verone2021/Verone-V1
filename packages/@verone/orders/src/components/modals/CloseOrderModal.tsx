@@ -29,7 +29,7 @@ interface CloseOrderModalProps {
 export function CloseOrderModal({
   open,
   onClose,
-  orderId,
+  orderId: _orderId,
   orderNumber,
   remainingUnits,
   onSuccess,
@@ -128,7 +128,9 @@ export function CloseOrderModal({
           </ButtonV2>
           <ButtonV2
             variant="destructive"
-            onClick={handleConfirm}
+            onClick={() => {
+              void handleConfirm();
+            }}
             loading={loading}
           >
             <AlertTriangle className="h-4 w-4 mr-2" />

@@ -45,15 +45,16 @@ const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
 export function OrganisationSalesOrdersSection({
   organisationId,
   organisationName,
-  onUpdate,
-  className,
+  onUpdate: _onUpdate,
+  className: _className,
 }: OrganisationSalesOrdersSectionProps) {
   const { orders, loading, fetchOrders } = useSalesOrders();
   const [customerOrders, setCustomerOrders] = useState<SalesOrder[]>([]);
 
   // Charger les commandes du client
   useEffect(() => {
-    fetchOrders({ customer_id: organisationId });
+    void fetchOrders({ customer_id: organisationId });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [organisationId]);
 
   // Filtrer les commandes pour ce client
@@ -198,7 +199,7 @@ export function OrganisationSalesOrdersSection({
                       <div>
                         <div className="text-gray-600">Articles</div>
                         <div className="font-medium text-black">
-                          {order.sales_order_items?.length || 0} produit(s)
+                          {order.sales_order_items?.length ?? 0} produit(s)
                         </div>
                       </div>
                     </div>

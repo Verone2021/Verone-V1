@@ -5,7 +5,7 @@
  * Workflow Odoo-inspired avec validation inline
  */
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 
 import { ProductThumbnail } from '@verone/products';
 import type { ReceptionItem } from '@verone/types';
@@ -26,15 +26,7 @@ import {
 import { Textarea } from '@verone/ui';
 import { formatDate, formatCurrency } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
-import {
-  Package,
-  CheckCircle2,
-  AlertTriangle,
-  Calendar,
-  User,
-  TrendingUp,
-  XCircle,
-} from 'lucide-react';
+import { Package, CheckCircle2, AlertTriangle, XCircle } from 'lucide-react';
 
 import {
   usePurchaseReceptions,
@@ -79,7 +71,17 @@ export function PurchaseOrderReceptionForm({
     new Date().toISOString().split('T')[0]
   );
   const [notes, setNotes] = useState('');
-  const [history, setHistory] = useState<any[]>([]);
+  const [history, setHistory] = useState<
+    Array<{
+      received_at: string;
+      total_quantity: number;
+      items?: Array<{
+        product_sku: string;
+        product_name: string;
+        quantity_received: number;
+      }>;
+    }>
+  >([]);
   const [cancellations, setCancellations] = useState<
     Array<{
       id: string;
@@ -104,13 +106,13 @@ export function PurchaseOrderReceptionForm({
 
   // Charger historique réceptions
   useEffect(() => {
-    loadReceptionHistory(purchaseOrder.id).then(setHistory);
+    void loadReceptionHistory(purchaseOrder.id).then(setHistory);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [purchaseOrder.id]);
 
   // Charger historique annulations reliquat
   useEffect(() => {
-    loadCancellationHistory(purchaseOrder.id).then(setCancellations);
+    void loadCancellationHistory(purchaseOrder.id).then(setCancellations);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [purchaseOrder.id]);
 
@@ -261,7 +263,7 @@ export function PurchaseOrderReceptionForm({
           </h3>
           <p className="text-sm text-muted-foreground mt-1">
             Commande {purchaseOrder.po_number} •{' '}
-            {purchaseOrder.organisations?.trade_name ||
+            {purchaseOrder.organisations?.trade_name ??
               purchaseOrder.organisations?.legal_name}
           </p>
         </div>
@@ -454,9 +456,6 @@ export function PurchaseOrderReceptionForm({
           <div className="space-y-3">
             {/* Réceptions */}
             {history.map((h, idx) => {
-              // Calculer stats pour cette réception
-              const totalItemsInReception = h.items?.length || 0;
-
               return (
                 <div
                   key={`reception-${idx}`}
@@ -482,12 +481,12 @@ export function PurchaseOrderReceptionForm({
 
                   {/* Détails par produit */}
                   <div className="space-y-1 ml-6">
-                    {h.items?.map((item: any, itemIdx: number) => {
+                    {h.items?.map((item, itemIdx) => {
                       // Trouver l'item correspondant pour avoir quantity_ordered
                       const orderItem = items.find(
                         i => i.product_sku === item.product_sku
                       );
-                      const qtyOrdered = orderItem?.quantity_ordered || '?';
+                      const qtyOrdered = orderItem?.quantity_ordered ?? '?';
                       const isPartial = orderItem
                         ? item.quantity_received < orderItem.quantity_ordered
                         : false;
@@ -500,7 +499,7 @@ export function PurchaseOrderReceptionForm({
                           <div className="flex items-center gap-2">
                             <span className="text-gray-400">├─</span>
                             <span className="font-medium text-gray-700">
-                              {item.product_name || item.product_sku}
+                              {item.product_name ?? item.product_sku}
                             </span>
                           </div>
                           <div className="flex items-center gap-2">
@@ -536,7 +535,7 @@ export function PurchaseOrderReceptionForm({
             {cancellations.map((c, idx) => {
               // Extraire le motif depuis les notes (format: "Annulation reliquat PO xxx: X unités. Motif")
               const motifMatch = c.notes?.match(/unités\.\s*(.+)$/);
-              const motif = motifMatch?.[1]?.trim() || null;
+              const motif = motifMatch?.[1]?.trim() ?? null;
 
               return (
                 <div
@@ -626,7 +625,9 @@ export function PurchaseOrderReceptionForm({
             Annuler
           </ButtonV2>
           <ButtonV2
-            onClick={handleValidate}
+            onClick={() => {
+              void handleValidate();
+            }}
             disabled={validating || totals.totalQuantityToReceive === 0}
             className="bg-verone-success hover:bg-verone-success/90"
           >

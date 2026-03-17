@@ -33,6 +33,29 @@ export interface LinkMeAffiliate {
   is_active: boolean;
 }
 
+// Internal row shape returned by Supabase untyped queries
+interface AffiliateRow {
+  id: string;
+  display_name: string;
+  slug: string;
+  logo_url: string | null;
+  enseigne_id: string | null;
+  organisation_id: string | null;
+  default_margin_rate: number | null;
+  linkme_commission_rate: number | null;
+  status: string;
+  enseigne: { id: string; name: string } | null;
+  organisation: {
+    id: string;
+    trade_name: string | null;
+    legal_name: string;
+  } | null;
+}
+
+interface SelectionRow {
+  affiliate_id: string;
+}
+
 /**
  * Fetch tous les affiliés LinkMe avec leur type
  * @param type - Optionnel: filtrer par type d'affilié
@@ -43,6 +66,7 @@ async function fetchLinkMeAffiliates(
   const supabase = createClient();
 
   // Récupérer les affiliés avec les enseignes et organisations jointes
+  /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
   const { data: affiliates, error } = await (supabase as any)
     .from('linkme_affiliates')
     .select(
@@ -62,46 +86,52 @@ async function fetchLinkMeAffiliates(
     )
     .eq('status', 'active')
     .order('display_name');
+  /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
 
   if (error) {
     console.error('Erreur fetch affiliates:', error);
     throw error;
   }
 
-  if (!affiliates || affiliates.length === 0) {
+  const typedAffiliates = affiliates as AffiliateRow[] | null;
+
+  if (!typedAffiliates || typedAffiliates.length === 0) {
     return [];
   }
 
   // Récupérer les sélections pour compter par affilié
-  const affiliateIds = affiliates.map((a: any) => a.id);
+  const affiliateIds = typedAffiliates.map(a => a.id);
+  /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
   const { data: selections } = await (supabase as any)
     .from('linkme_selections')
     .select('affiliate_id')
     .in('affiliate_id', affiliateIds)
     .is('archived_at', null);
+  /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
 
   // Compter les sélections par affilié
   const selectionsCountMap = new Map<string, number>();
-  (selections || []).forEach((s: any) => {
+  const typedSelections = (selections ?? []) as SelectionRow[];
+  typedSelections.forEach(s => {
     selectionsCountMap.set(
       s.affiliate_id,
-      (selectionsCountMap.get(s.affiliate_id) || 0) + 1
+      (selectionsCountMap.get(s.affiliate_id) ?? 0) + 1
     );
   });
 
   // Mapper les résultats
-  const result: LinkMeAffiliate[] = affiliates
-    .map((affiliate: any) => {
+  const result: LinkMeAffiliate[] = typedAffiliates
+    .map(affiliate => {
       // Déterminer le type basé sur enseigne_id ou organisation_id
       const affiliateType: AffiliateType = affiliate.enseigne_id
         ? 'enseigne'
         : 'org_independante';
 
       // Nom de l'enseigne ou organisation
-      const enseigneName = affiliate.enseigne?.name || null;
+      const enseigneName = affiliate.enseigne?.name ?? null;
       const organisationName =
-        affiliate.organisation?.trade_name ||
-        affiliate.organisation?.legal_name ||
+        affiliate.organisation?.trade_name ??
+        affiliate.organisation?.legal_name ??
         null;
 
       return {
@@ -116,7 +146,7 @@ async function fetchLinkMeAffiliates(
         logo_url: affiliate.logo_url,
         default_margin_rate: affiliate.default_margin_rate,
         linkme_commission_rate: affiliate.linkme_commission_rate,
-        selections_count: selectionsCountMap.get(affiliate.id) || 0,
+        selections_count: selectionsCountMap.get(affiliate.id) ?? 0,
         is_active: affiliate.status === 'active',
       };
     })
@@ -139,6 +169,7 @@ async function fetchLinkMeAffiliateById(
 ): Promise<LinkMeAffiliate | null> {
   const supabase = createClient();
 
+  /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
   const { data: affiliate, error } = await (supabase as any)
     .from('linkme_affiliates')
     .select(
@@ -158,6 +189,7 @@ async function fetchLinkMeAffiliateById(
     )
     .eq('id', affiliateId)
     .single();
+  /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
 
   if (error) {
     console.error('Erreur fetch affiliate:', error);
@@ -166,34 +198,38 @@ async function fetchLinkMeAffiliateById(
 
   if (!affiliate) return null;
 
+  const typedAffiliate = affiliate as AffiliateRow;
+
   // Compter les sélections
+  /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
   const { count: selectionsCount } = await (supabase as any)
     .from('linkme_selections')
     .select('id', { count: 'exact', head: true })
     .eq('affiliate_id', affiliateId)
     .is('archived_at', null);
+  /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
 
-  const affiliateType: AffiliateType = affiliate.enseigne_id
+  const affiliateType: AffiliateType = typedAffiliate.enseigne_id
     ? 'enseigne'
     : 'org_independante';
 
   return {
-    id: affiliate.id,
-    display_name: affiliate.display_name,
-    slug: affiliate.slug,
+    id: typedAffiliate.id,
+    display_name: typedAffiliate.display_name,
+    slug: typedAffiliate.slug,
     type: affiliateType,
-    enseigne_id: affiliate.enseigne_id,
-    organisation_id: affiliate.organisation_id,
-    enseigne_name: affiliate.enseigne?.name || null,
+    enseigne_id: typedAffiliate.enseigne_id,
+    organisation_id: typedAffiliate.organisation_id,
+    enseigne_name: typedAffiliate.enseigne?.name ?? null,
     organisation_name:
-      affiliate.organisation?.trade_name ||
-      affiliate.organisation?.legal_name ||
+      typedAffiliate.organisation?.trade_name ??
+      typedAffiliate.organisation?.legal_name ??
       null,
-    logo_url: affiliate.logo_url,
-    default_margin_rate: affiliate.default_margin_rate,
-    linkme_commission_rate: affiliate.linkme_commission_rate,
-    selections_count: selectionsCount || 0,
-    is_active: affiliate.status === 'active',
+    logo_url: typedAffiliate.logo_url,
+    default_margin_rate: typedAffiliate.default_margin_rate,
+    linkme_commission_rate: typedAffiliate.linkme_commission_rate,
+    selections_count: (selectionsCount as number | null) ?? 0,
+    is_active: typedAffiliate.status === 'active',
   };
 }
 

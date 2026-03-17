@@ -77,6 +77,13 @@ interface ProductImage {
   display_order?: number;
 }
 
+/** Extended PO fields that may exist in DB but not in the base interface */
+interface PurchaseOrderExtended extends PurchaseOrder {
+  shipping_cost_ht?: number;
+  customs_cost_ht?: number;
+  insurance_cost_ht?: number;
+}
+
 interface PurchaseOrderDetailModalProps {
   order: PurchaseOrder | null;
   open: boolean;
@@ -202,15 +209,15 @@ export function PurchaseOrderDetailModal({
   // Open payment dialog automatically when requested from action menu
   useEffect(() => {
     if (open && order?.id && initialPaymentOpen) {
-      const orderTotal = Math.abs(order.total_ttc || 0);
-      const alreadyPaid = order.paid_amount || 0;
+      const orderTotal = Math.abs(order.total_ttc ?? 0);
+      const alreadyPaid = order.paid_amount ?? 0;
       const remaining = Math.max(0, orderTotal - alreadyPaid);
       setManualPaymentType('card');
       setManualPaymentAmount(remaining.toFixed(2));
       setManualPaymentDate(
         (
-          order.order_date ||
-          order.created_at ||
+          order.order_date ??
+          order.created_at ??
           new Date().toISOString()
         ).split('T')[0]
       );
@@ -316,9 +323,9 @@ export function PurchaseOrderDetailModal({
   const totalEcoTax = useMemo(() => {
     return (
       order?.purchase_order_items?.reduce(
-        (sum, item) => sum + (item.eco_tax || 0) * item.quantity,
+        (sum, item) => sum + (item.eco_tax ?? 0) * item.quantity,
         0
-      ) || 0
+      ) ?? 0
     );
   }, [order?.purchase_order_items]);
 
@@ -326,7 +333,7 @@ export function PurchaseOrderDetailModal({
   const rapprochementOrder = useMemo(() => {
     if (!order) return null;
     const supplierName = order.organisations
-      ? order.organisations.trade_name || order.organisations.legal_name
+      ? (order.organisations.trade_name ?? order.organisations.legal_name)
       : 'Fournisseur inconnu';
     return {
       id: order.id,
@@ -338,14 +345,15 @@ export function PurchaseOrderDetailModal({
           ? order.organisations.legal_name
           : null,
       total_ttc:
-        order.total_ttc ||
-        (order.total_ht || 0) * (1 + (order.tax_rate || 0.2)),
-      paid_amount: order.paid_amount || 0,
+        order.total_ttc ??
+        (order.total_ht ?? 0) * (1 + (order.tax_rate ?? 0.2)),
+      paid_amount: order.paid_amount ?? 0,
       created_at: order.created_at,
       order_date: order.order_date ?? null,
       shipped_at: null,
       payment_status_v2: order.payment_status_v2,
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     order?.id,
     order?.po_number,
@@ -372,7 +380,7 @@ export function PurchaseOrderDetailModal({
 
   const getSupplierName = () => {
     if (order.organisations) {
-      return order.organisations.trade_name || order.organisations.legal_name;
+      return order.organisations.trade_name ?? order.organisations.legal_name;
     }
     return 'Fournisseur inconnu';
   };
@@ -435,7 +443,7 @@ export function PurchaseOrderDetailModal({
         : orderTotalTtc.toFixed(2)
     );
     setManualPaymentDate(
-      (order.order_date || order.created_at || new Date().toISOString()).split(
+      (order.order_date ?? order.created_at ?? new Date().toISOString()).split(
         'T'
       )[0]
     );
@@ -453,7 +461,7 @@ export function PurchaseOrderDetailModal({
 
   // ✅ Récupérer payment_terms depuis organisation si non défini sur commande
   const paymentTerms =
-    order.payment_terms || order.organisations?.payment_terms || null;
+    order.payment_terms ?? order.organisations?.payment_terms ?? null;
 
   return (
     <>
@@ -486,8 +494,8 @@ export function PurchaseOrderDetailModal({
                 <CardHeader>
                   <CardTitle className="text-base flex items-center gap-2">
                     <Package className="h-4 w-4" />
-                    Produits ({order.purchase_order_items?.length || 0} article
-                    {(order.purchase_order_items?.length || 0) > 1 ? 's' : ''})
+                    Produits ({order.purchase_order_items?.length ?? 0} article
+                    {(order.purchase_order_items?.length ?? 0) > 1 ? 's' : ''})
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -516,12 +524,15 @@ export function PurchaseOrderDetailModal({
                       <TableBody>
                         {order.purchase_order_items?.map(item => {
                           // ✅ BR-TECH-002: Récupérer image via product_images
-                          const productImages = (item.products as any)
-                            ?.product_images as ProductImage[] | undefined;
+                          const productImages = (
+                            item.products as unknown as {
+                              product_images?: ProductImage[];
+                            }
+                          )?.product_images;
                           const primaryImageUrl =
                             productImages?.find(img => img.is_primary)
-                              ?.public_url ||
-                            productImages?.[0]?.public_url ||
+                              ?.public_url ??
+                            productImages?.[0]?.public_url ??
                             null;
 
                           // Calcul total HT avec remise et éco-taxe
@@ -540,6 +551,7 @@ export function PurchaseOrderDetailModal({
                               {/* IMAGE PRODUIT */}
                               <TableCell>
                                 {primaryImageUrl ? (
+                                  // eslint-disable-next-line @next/next/no-img-element
                                   <img
                                     src={primaryImageUrl}
                                     alt={item?.products?.name ?? 'Produit'}
@@ -641,31 +653,43 @@ export function PurchaseOrderDetailModal({
                     )}
 
                     {/* Frais additionnels fournisseurs */}
-                    {((order as any).shipping_cost_ht > 0 ||
-                      (order as any).customs_cost_ht > 0 ||
-                      (order as any).insurance_cost_ht > 0) && (
+                    {((order as PurchaseOrderExtended).shipping_cost_ht > 0 ||
+                      (order as PurchaseOrderExtended).customs_cost_ht > 0 ||
+                      (order as PurchaseOrderExtended).insurance_cost_ht >
+                        0) && (
                       <>
-                        {(order as any).shipping_cost_ht > 0 && (
+                        {(order as PurchaseOrderExtended).shipping_cost_ht >
+                          0 && (
                           <div className="flex justify-between text-sm text-gray-600">
                             <span>Frais de livraison HT :</span>
                             <span>
-                              {formatCurrency((order as any).shipping_cost_ht)}
+                              {formatCurrency(
+                                (order as PurchaseOrderExtended)
+                                  .shipping_cost_ht
+                              )}
                             </span>
                           </div>
                         )}
-                        {(order as any).customs_cost_ht > 0 && (
+                        {(order as PurchaseOrderExtended).customs_cost_ht >
+                          0 && (
                           <div className="flex justify-between text-sm text-gray-600">
                             <span>Frais de douane HT :</span>
                             <span>
-                              {formatCurrency((order as any).customs_cost_ht)}
+                              {formatCurrency(
+                                (order as PurchaseOrderExtended).customs_cost_ht
+                              )}
                             </span>
                           </div>
                         )}
-                        {(order as any).insurance_cost_ht > 0 && (
+                        {(order as PurchaseOrderExtended).insurance_cost_ht >
+                          0 && (
                           <div className="flex justify-between text-sm text-gray-600">
                             <span>Frais d'assurance HT :</span>
                             <span>
-                              {formatCurrency((order as any).insurance_cost_ht)}
+                              {formatCurrency(
+                                (order as PurchaseOrderExtended)
+                                  .insurance_cost_ht
+                              )}
                             </span>
                           </div>
                         )}
@@ -674,12 +698,15 @@ export function PurchaseOrderDetailModal({
 
                     <div className="flex justify-between text-sm text-gray-600">
                       <span>
-                        TVA ({((order as any).tax_rate || 0.2) * 100}%) :
+                        TVA (
+                        {((order as PurchaseOrderExtended).tax_rate ?? 0.2) *
+                          100}
+                        %) :
                       </span>
                       <span>
                         {formatCurrency(
-                          (order.total_ht || 0) *
-                            ((order as any).tax_rate || 0.2)
+                          (order.total_ht ?? 0) *
+                            ((order as PurchaseOrderExtended).tax_rate ?? 0.2)
                         )}
                       </span>
                     </div>
@@ -688,8 +715,10 @@ export function PurchaseOrderDetailModal({
                       <span>Total TTC :</span>
                       <span className="text-primary">
                         {formatCurrency(
-                          (order.total_ht || 0) *
-                            (1 + ((order as any).tax_rate || 0.2))
+                          (order.total_ht ?? 0) *
+                            (1 +
+                              ((order as PurchaseOrderExtended).tax_rate ??
+                                0.2))
                         )}
                       </span>
                     </div>
@@ -926,7 +955,7 @@ export function PurchaseOrderDetailModal({
                             </span>
                           </div>
                           <p className="text-gray-700 truncate">
-                            {link.bank_transactions?.label || 'Transaction'}
+                            {link.bank_transactions?.label ?? 'Transaction'}
                           </p>
                           <div className="flex justify-between">
                             <span className="text-gray-500">
@@ -1037,18 +1066,18 @@ export function PurchaseOrderDetailModal({
                           </span>
                         </div>
                         <div className="ml-4 space-y-0.5">
-                          {h.items?.map((item: any, itemIdx: number) => {
+                          {h.items?.map((item, itemIdx) => {
                             const orderItem = order.purchase_order_items?.find(
                               i => i.products?.sku === item.product_sku
                             );
-                            const qtyOrdered = orderItem?.quantity || '?';
+                            const qtyOrdered = orderItem?.quantity ?? '?';
                             return (
                               <div
                                 key={itemIdx}
                                 className="flex items-center justify-between"
                               >
                                 <span className="text-gray-600 truncate max-w-[120px]">
-                                  {item.product_name || item.product_sku}
+                                  {item.product_name ?? item.product_sku}
                                 </span>
                                 <Badge
                                   variant="outline"
@@ -1066,7 +1095,7 @@ export function PurchaseOrderDetailModal({
                     {/* Annulations */}
                     {cancellations.map((c, idx) => {
                       const motifMatch = c.notes?.match(/unités\.\s*(.+)$/);
-                      const motif = motifMatch?.[1]?.trim() || null;
+                      const motif = motifMatch?.[1]?.trim() ?? null;
 
                       return (
                         <div
@@ -1288,7 +1317,7 @@ export function PurchaseOrderDetailModal({
                           Auto
                         </Badge>
                         <span className="font-medium truncate">
-                          {link.counterparty_name || link.transaction_label}
+                          {link.counterparty_name ?? link.transaction_label}
                         </span>
                         <span className="font-bold text-blue-700">
                           {formatCurrency(Math.abs(link.allocated_amount))}

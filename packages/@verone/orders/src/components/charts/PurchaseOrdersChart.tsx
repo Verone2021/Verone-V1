@@ -17,7 +17,6 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  TooltipProps,
 } from 'recharts';
 
 import type { PurchaseOrderDataPoint } from '@verone/dashboard/hooks';
@@ -28,10 +27,16 @@ interface PurchaseOrdersChartProps {
 }
 
 // Custom Tooltip avec formatage €
-const CustomTooltip = ({ active, payload }: any) => {
+const CustomTooltip = ({
+  active,
+  payload,
+}: {
+  active?: boolean;
+  payload?: Array<{ value?: number; payload?: PurchaseOrderDataPoint }>;
+}) => {
   if (!active || !payload?.length) return null;
 
-  const amount = payload[0].value || 0;
+  const amount = payload[0].value ?? 0;
   const dataPoint = payload[0].payload as PurchaseOrderDataPoint;
 
   return (
@@ -43,7 +48,7 @@ const CustomTooltip = ({ active, payload }: any) => {
           currency: 'EUR',
           minimumFractionDigits: 0,
           maximumFractionDigits: 0,
-        }).format(amount as number)}
+        }).format(amount)}
       </p>
     </div>
   );

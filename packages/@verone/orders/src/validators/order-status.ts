@@ -436,7 +436,7 @@ async function checkStockAvailability(
       }
 
       const stockAvailable =
-        (product.stock_real || 0) - (product.stock_forecasted_out || 0);
+        (product.stock_real ?? 0) - (product.stock_forecasted_out ?? 0);
 
       if (stockAvailable < item.quantity) {
         issues.push(
@@ -444,7 +444,7 @@ async function checkStockAvailability(
             `demandé ${item.quantity}, disponible ${stockAvailable}`
         );
       }
-    } catch (err) {
+    } catch (_err) {
       issues.push(`Erreur vérification stock pour ${item.product_id}`);
     }
   }
@@ -456,7 +456,7 @@ async function checkStockAvailability(
 // EXPORTS
 // ============================================================================
 
-export default {
+const orderStatusValidators = {
   validateStatusTransition,
   validateSalesOrderCreation,
   validateStatusChange,
@@ -471,3 +471,5 @@ export default {
   STATUS_LABELS,
   STATUS_COLORS,
 };
+
+export default orderStatusValidators;

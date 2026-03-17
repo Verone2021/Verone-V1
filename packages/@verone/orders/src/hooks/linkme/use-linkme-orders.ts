@@ -227,7 +227,7 @@ async function createLinkMeOrder(
     total_ht: totalHt,
     total_ttc: totalTtc,
     tax_rate: 0.2,
-    notes: input.internal_notes || null,
+    notes: input.internal_notes ?? null,
     // Contacts (FK vers table contacts — source de vérité)
     responsable_contact_id: input.responsable_contact_id ?? null,
     billing_contact_id: input.billing_contact_id ?? null,
@@ -236,10 +236,10 @@ async function createLinkMeOrder(
     shipping_address: input.shipping_address
       ? JSON.stringify({
           address_line1: input.shipping_address.address_line1,
-          address_line2: input.shipping_address.address_line2 || '',
+          address_line2: input.shipping_address.address_line2 ?? '',
           city: input.shipping_address.city,
           postal_code: input.shipping_address.postal_code,
-          country: input.shipping_address.country || 'FR',
+          country: input.shipping_address.country ?? 'FR',
         })
       : null,
   };
@@ -255,7 +255,7 @@ async function createLinkMeOrder(
   if (orderError) {
     console.error('Erreur création commande:', orderError);
     throw new Error(
-      `Erreur création commande: ${orderError.message || 'Erreur inconnue'}`
+      `Erreur création commande: ${orderError.message ?? 'Erreur inconnue'}`
     );
   }
 
@@ -275,7 +275,7 @@ async function createLinkMeOrder(
     retrocession_amount: roundMoney(
       (item.unit_price_ht - item.base_price_ht) * item.quantity
     ),
-    linkme_selection_item_id: item.linkme_selection_item_id || null,
+    linkme_selection_item_id: item.linkme_selection_item_id ?? null,
   }));
 
   const { error: itemsError } = await supabase
@@ -287,7 +287,7 @@ async function createLinkMeOrder(
     // Rollback: supprimer la commande
     await supabase.from('sales_orders').delete().eq('id', order.id);
     throw new Error(
-      `Erreur création lignes: ${itemsError.message || 'Erreur inconnue'}`
+      `Erreur création lignes: ${itemsError.message ?? 'Erreur inconnue'}`
     );
   }
 
@@ -344,9 +344,9 @@ export function useCreateLinkMeOrder() {
 
   return useMutation({
     mutationFn: createLinkMeOrder,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['linkme-orders'] });
-      queryClient.invalidateQueries({ queryKey: ['sales-orders'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['linkme-orders'] });
+      await queryClient.invalidateQueries({ queryKey: ['sales-orders'] });
     },
   });
 }

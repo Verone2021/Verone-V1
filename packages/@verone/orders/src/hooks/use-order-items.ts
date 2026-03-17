@@ -65,7 +65,7 @@ export interface OrderItem {
   retrocession_amount?: number;
 
   // Relations
-  products?: any;
+  products?: Record<string, unknown>;
 
   created_at?: string;
   updated_at?: string;
@@ -164,7 +164,7 @@ export function useOrderItems({
 
   // Charger items au montage et quand orderId change
   useEffect(() => {
-    fetchItems();
+    void fetchItems();
   }, [fetchItems]);
 
   // Ajouter item UNIVERSEL
@@ -176,19 +176,19 @@ export function useOrderItems({
 
       try {
         // Préparer données item selon orderType
-        const itemData: any = {
+        const itemData: Record<string, unknown> = {
           [fkColumn]: orderId,
           product_id: data.product_id,
           quantity: data.quantity,
           unit_price_ht: data.unit_price_ht,
-          discount_percentage: data.discount_percentage || 0,
-          eco_tax: data.eco_tax || 0,
-          notes: data.notes || null,
+          discount_percentage: data.discount_percentage ?? 0,
+          eco_tax: data.eco_tax ?? 0,
+          notes: data.notes ?? null,
         };
 
         // Champs spécifiques ventes
         if (orderType === 'sales') {
-          itemData.tax_rate = data.tax_rate || 0.2; // TVA 20% par défaut
+          itemData.tax_rate = data.tax_rate ?? 0.2; // TVA 20% par défaut
         }
 
         const { data: newItem, error: insertError } = await supabase
@@ -216,10 +216,7 @@ export function useOrderItems({
         if (insertError) throw insertError;
         if (!newItem) throw new Error('Item créé mais non retourné');
 
-        console.log(
-          `✅ [useOrderItems] Item ajouté (${orderType}):`,
-          newItem.id
-        );
+        console.warn(`[useOrderItems] Item ajouté (${orderType}):`, newItem.id);
 
         // Trigger recalcul automatique via DB trigger
         await fetchItems();
@@ -241,7 +238,7 @@ export function useOrderItems({
     async (itemId: string, data: Partial<OrderItem>): Promise<OrderItem> => {
       try {
         // Préparer données à modifier
-        const updateData: any = {};
+        const updateData: Record<string, unknown> = {};
 
         if (data.quantity !== undefined) updateData.quantity = data.quantity;
         if (data.unit_price_ht !== undefined)
@@ -282,7 +279,7 @@ export function useOrderItems({
         if (updateError) throw updateError;
         if (!updated) throw new Error('Item modifié mais non retourné');
 
-        console.log(`✅ [useOrderItems] Item modifié (${orderType}):`, itemId);
+        console.warn(`[useOrderItems] Item modifié (${orderType}):`, itemId);
 
         // Trigger recalcul automatique via DB trigger
         await fetchItems();
@@ -310,7 +307,7 @@ export function useOrderItems({
 
         if (deleteError) throw deleteError;
 
-        console.log(`✅ [useOrderItems] Item supprimé (${orderType}):`, itemId);
+        console.warn(`[useOrderItems] Item supprimé (${orderType}):`, itemId);
 
         // Trigger recalcul automatique via DB trigger
         await fetchItems();
