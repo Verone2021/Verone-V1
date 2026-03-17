@@ -52,7 +52,9 @@ export function usePendingStorageRequests(status?: string) {
 
       let query = supabase
         .from('affiliate_storage_requests')
-        .select('*')
+        .select(
+          'id, product_id, affiliate_id, owner_enseigne_id, owner_organisation_id, quantity, notes, status, rejection_reason, reception_id, reviewed_by, reviewed_at, created_at, updated_at'
+        )
         .order('created_at', { ascending: false });
 
       if (status) {

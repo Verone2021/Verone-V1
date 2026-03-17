@@ -16,7 +16,7 @@ const supabase = createClient();
 async function fetchCategories() {
   const { data, error } = await supabase
     .from('categories')
-    .select('*')
+    .select('id, display_order, is_active, is_visible_menu, family_id')
     .order('display_order', { ascending: true });
 
   if (error) {
@@ -148,7 +148,7 @@ export function useSiteInternetCategoriesStats() {
     queryFn: async () => {
       const { data: categories } = await supabase
         .from('categories')
-        .select('*');
+        .select('id, display_order, is_active, is_visible_menu, family_id');
 
       if (!categories) return null;
 

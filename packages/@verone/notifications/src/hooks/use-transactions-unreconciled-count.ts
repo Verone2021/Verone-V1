@@ -167,7 +167,7 @@ export function useTransactionsUnreconciledCount(options?: {
       }
 
       // Polling fallback (seulement si authentifié, interval plus long pour finance)
-      if (!enableRealtime || refetchInterval > 0) {
+      if (!enableRealtime && refetchInterval > 0) {
         intervalRef.current = setInterval(() => {
           void fetchCount().catch((err: unknown) => {
             console.error(

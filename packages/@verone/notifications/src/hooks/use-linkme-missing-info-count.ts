@@ -125,7 +125,7 @@ export function useLinkmeMissingInfoCount(options?: {
           });
       }
 
-      if (!enableRealtime || refetchInterval > 0) {
+      if (!enableRealtime && refetchInterval > 0) {
         intervalRef.current = setInterval(() => {
           void fetchCount().catch((err: unknown) => {
             console.error('[useLinkmeMissingInfoCount] Polling error:', err);

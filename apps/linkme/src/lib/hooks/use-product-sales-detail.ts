@@ -120,27 +120,22 @@ export function useProductSalesDetail(productId: string | null) {
 
       const ordersMap = new Map((ordersData ?? []).map(o => [o.id, o]));
 
-      // 4. Get product info + image + source detection
-      const [productResult, imageResult, productTypeResult] = await Promise.all(
-        [
-          supabase
-            .from('products')
-            .select('id, name, sku')
-            .eq('id', productId)
-            .single(),
-          supabase
-            .from('product_images')
-            .select('public_url')
-            .eq('product_id', productId)
-            .eq('is_primary', true)
-            .limit(1),
-          supabase
-            .from('products')
-            .select('created_by_affiliate, enseigne_id, assigned_client_id')
-            .eq('id', productId)
-            .single(),
-        ]
-      );
+      // 4. Get product info + image + source detection (single product query)
+      const [productResult, imageResult] = await Promise.all([
+        supabase
+          .from('products')
+          .select(
+            'id, name, sku, created_by_affiliate, enseigne_id, assigned_client_id'
+          )
+          .eq('id', productId)
+          .single(),
+        supabase
+          .from('product_images')
+          .select('public_url')
+          .eq('product_id', productId)
+          .eq('is_primary', true)
+          .limit(1),
+      ]);
 
       const productName = productResult.data?.name ?? 'Produit inconnu';
       const productSku = productResult.data?.sku ?? '';
@@ -148,12 +143,12 @@ export function useProductSalesDetail(productId: string | null) {
 
       // Detect source
       let productSource: ProductSource = 'catalogue';
-      if (productTypeResult.data) {
-        if (productTypeResult.data.created_by_affiliate !== null) {
+      if (productResult.data) {
+        if (productResult.data.created_by_affiliate !== null) {
           productSource = 'mes-produits';
         } else if (
-          productTypeResult.data.enseigne_id !== null ||
-          productTypeResult.data.assigned_client_id !== null
+          productResult.data.enseigne_id !== null ||
+          productResult.data.assigned_client_id !== null
         ) {
           productSource = 'sur-mesure';
         }
