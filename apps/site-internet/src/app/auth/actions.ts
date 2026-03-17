@@ -91,6 +91,50 @@ export async function logout() {
   redirect('/');
 }
 
+export async function updateProfile(formData: FormData) {
+  const supabase = await createClient();
+
+  const firstName = formData.get('firstName') as string;
+  const lastName = formData.get('lastName') as string;
+  const phone = (formData.get('phone') as string) || undefined;
+
+  const { error } = await supabase.auth.updateUser({
+    data: {
+      first_name: firstName,
+      last_name: lastName,
+      phone,
+    },
+  });
+
+  if (error) {
+    redirect(`/compte?error=${encodeURIComponent(error.message)}`);
+  }
+
+  revalidatePath('/compte');
+  redirect('/compte?message=profile_updated');
+}
+
+export async function changePassword(formData: FormData) {
+  const supabase = await createClient();
+
+  const newPassword = formData.get('newPassword') as string;
+
+  if (!newPassword || newPassword.length < 8) {
+    redirect('/compte?error=password_too_short');
+  }
+
+  const { error } = await supabase.auth.updateUser({
+    password: newPassword,
+  });
+
+  if (error) {
+    redirect(`/compte?error=${encodeURIComponent(error.message)}`);
+  }
+
+  revalidatePath('/compte');
+  redirect('/compte?message=password_updated');
+}
+
 export async function deleteAccount() {
   const supabase = await createClient();
 

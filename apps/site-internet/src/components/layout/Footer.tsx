@@ -2,6 +2,8 @@ import Link from 'next/link';
 
 import { Facebook, Instagram, Twitter } from 'lucide-react';
 
+import { NewsletterSignup } from '@/components/NewsletterSignup';
+
 const footerLinks = {
   navigation: [
     { href: '/catalogue', label: 'Catalogue' },
@@ -33,7 +35,7 @@ export function Footer() {
   return (
     <footer className="bg-verone-black text-verone-white">
       <div className="max-w-7xl mx-auto px-6 lg:px-8 py-16 lg:py-20">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 lg:gap-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 lg:gap-12">
           {/* Brand */}
           <div>
             <h3 className="font-playfair text-2xl font-bold text-verone-white mb-4 tracking-tight">
@@ -100,6 +102,11 @@ export function Footer() {
                 </li>
               ))}
             </ul>
+          </div>
+
+          {/* Newsletter */}
+          <div>
+            <NewsletterSignup />
           </div>
         </div>
 

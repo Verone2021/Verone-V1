@@ -19,6 +19,15 @@ import {
 
 import { useCart } from '@/contexts/CartContext';
 
+interface PromoResult {
+  valid: boolean;
+  code: string;
+  name: string;
+  discount_type: string;
+  discount_value: number;
+  discount_amount: number;
+}
+
 const CHECKOUT_STEPS = [
   { label: 'Panier', icon: ShoppingCart, done: true },
   { label: 'Livraison', icon: Truck, done: false },
@@ -30,6 +39,36 @@ export default function CheckoutPage() {
   const { items, itemCount, subtotal } = useCart();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [useSameBillingAddress, setUseSameBillingAddress] = useState(true);
+  const [promoCode, setPromoCode] = useState('');
+  const [promoResult, setPromoResult] = useState<PromoResult | null>(null);
+  const [promoError, setPromoError] = useState('');
+  const [promoLoading, setPromoLoading] = useState(false);
+
+  const applyPromo = async () => {
+    if (!promoCode.trim()) return;
+    setPromoLoading(true);
+    setPromoError('');
+    setPromoResult(null);
+
+    try {
+      const res = await fetch('/api/promo/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: promoCode.trim(), subtotal }),
+      });
+      const data = (await res.json()) as PromoResult & { error?: string };
+
+      if (res.ok && data.valid) {
+        setPromoResult(data);
+      } else {
+        setPromoError(data.error ?? 'Code invalide');
+      }
+    } catch {
+      setPromoError('Erreur de connexion');
+    }
+
+    setPromoLoading(false);
+  };
 
   if (items.length === 0) {
     return (
@@ -100,8 +139,9 @@ export default function CheckoutPage() {
     }
   };
 
+  const discount = promoResult?.discount_amount ?? 0;
   const shippingEstimate = subtotal >= 500 ? 0 : 49;
-  const total = subtotal + shippingEstimate;
+  const total = subtotal - discount + shippingEstimate;
 
   const inputClass =
     'w-full px-4 py-3 border border-verone-gray-300 rounded-lg focus:ring-2 focus:ring-verone-black focus:border-transparent outline-none transition-all text-sm';
@@ -496,11 +536,51 @@ export default function CheckoutPage() {
               })}
             </div>
 
-            <div className="space-y-3 border-t border-verone-gray-100 pt-4">
+            {/* Promo code */}
+            <div className="border-t border-verone-gray-100 pt-4 mb-4">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={promoCode}
+                  onChange={e => setPromoCode(e.target.value.toUpperCase())}
+                  placeholder="Code promo"
+                  className="flex-1 px-3 py-2 border border-verone-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-verone-black"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    void applyPromo().catch(err => {
+                      console.error('[Promo]', err);
+                    });
+                  }}
+                  disabled={promoLoading || !promoCode.trim()}
+                  className="px-4 py-2 text-sm border border-verone-black text-verone-black hover:bg-verone-black hover:text-verone-white transition-colors disabled:opacity-30"
+                >
+                  {promoLoading ? '...' : 'Appliquer'}
+                </button>
+              </div>
+              {promoError && (
+                <p className="text-xs text-red-500 mt-1.5">{promoError}</p>
+              )}
+              {promoResult && (
+                <p className="text-xs text-green-600 mt-1.5">
+                  {promoResult.name} : -
+                  {formatPrice(promoResult.discount_amount)}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-3">
               <div className="flex justify-between text-sm text-verone-gray-600">
                 <span>Sous-total</span>
                 <span>{formatPrice(subtotal)}</span>
               </div>
+              {discount > 0 && (
+                <div className="flex justify-between text-sm text-green-600">
+                  <span>Réduction ({promoResult?.code})</span>
+                  <span>-{formatPrice(discount)}</span>
+                </div>
+              )}
               <div className="flex justify-between text-sm text-verone-gray-600">
                 <span className="flex items-center gap-1">
                   <Truck className="h-3.5 w-3.5" />
