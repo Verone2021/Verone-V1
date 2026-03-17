@@ -421,21 +421,35 @@ export default function LinkMeOrderDetailsPage() {
         Array.isArray(infoRequestsRaw) ? infoRequestsRaw : []
       ) as InfoRequest[];
 
-      let createdByProfile: CreatedByProfile | null = null;
+      // Fetch user profile + bank transaction match in parallel (independent queries)
       const createdByUserId = (orderData as Record<string, unknown>)
         .created_by as string | null;
-      if (createdByUserId) {
-        const { data: profileData } = await supabase
-          .from('user_profiles')
-          .select('first_name, last_name, email')
-          .eq('user_id', createdByUserId)
-          .single();
-        if (profileData) {
-          createdByProfile = profileData as CreatedByProfile;
-        }
-      }
+      const [profileResult, linkResult] = await Promise.all([
+        createdByUserId
+          ? supabase
+              .from('user_profiles')
+              .select('first_name, last_name, email')
+              .eq('user_id', createdByUserId)
+              .single()
+          : Promise.resolve({ data: null }),
+        supabase
+          .from('transaction_document_links')
+          .select(
+            `
+            sales_order_id,
+            transaction_id,
+            bank_transactions!inner (
+              id, label, amount, emitted_at, attachment_ids
+            )
+          `
+          )
+          .eq('sales_order_id', orderId)
+          .eq('link_type', 'sales_order')
+          .limit(1),
+      ]);
 
-      // Fetch rapprochement bancaire
+      const createdByProfile = (profileResult.data as CreatedByProfile) ?? null;
+
       let matchInfo: {
         transaction_id: string;
         label: string;
@@ -443,21 +457,7 @@ export default function LinkMeOrderDetailsPage() {
         emitted_at: string | null;
         attachment_ids: string[] | null;
       } | null = null;
-      const { data: linkData } = await supabase
-        .from('transaction_document_links')
-        .select(
-          `
-          sales_order_id,
-          transaction_id,
-          bank_transactions!inner (
-            id, label, amount, emitted_at, attachment_ids
-          )
-        `
-        )
-        .eq('sales_order_id', orderId)
-        .eq('link_type', 'sales_order')
-        .limit(1);
-
+      const linkData = linkResult.data;
       if (linkData && linkData.length > 0) {
         const link = linkData[0];
         if (link.bank_transactions) {

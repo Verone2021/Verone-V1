@@ -69,7 +69,7 @@ export function usePollGoogleMerchantStatuses() {
 
       return data;
     },
-    onSuccess: data => {
+    onSuccess: async data => {
       const { updatedCount } = data.data ?? {};
 
       logger.info('[usePollGoogleMerchantStatuses] Success', {
@@ -79,10 +79,10 @@ export function usePollGoogleMerchantStatuses() {
       toast.success(`${updatedCount} statut(s) mis à jour depuis Google`);
 
       // Invalidate queries pour refresh dashboard
-      void queryClient.invalidateQueries({
+      await queryClient.invalidateQueries({
         queryKey: ['google-merchant-products'],
       });
-      void queryClient.invalidateQueries({
+      await queryClient.invalidateQueries({
         queryKey: ['google-merchant-stats'],
       });
     },

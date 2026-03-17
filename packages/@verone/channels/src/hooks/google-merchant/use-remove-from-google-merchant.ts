@@ -60,19 +60,19 @@ export function useRemoveFromGoogleMerchant() {
 
       return data;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       logger.info('[useRemoveFromGoogleMerchant] Success');
 
       toast.success('Produit retiré de Google Merchant');
 
       // Invalidate queries
-      void queryClient.invalidateQueries({
+      await queryClient.invalidateQueries({
         queryKey: ['google-merchant-products'],
       });
-      void queryClient.invalidateQueries({
+      await queryClient.invalidateQueries({
         queryKey: ['google-merchant-eligible-products'],
       });
-      void queryClient.invalidateQueries({
+      await queryClient.invalidateQueries({
         queryKey: ['google-merchant-stats'],
       });
     },
