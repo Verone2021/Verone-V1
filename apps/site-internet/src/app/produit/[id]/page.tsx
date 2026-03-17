@@ -20,7 +20,10 @@ import { useQuery } from '@tanstack/react-query';
 
 import type { CatalogueProduct } from '@/hooks/use-catalogue-products';
 import { createClient } from '@/lib/supabase/client';
+import { ShareButtons } from '@/components/product/ShareButtons';
+import { StickyAddToCart } from '@/components/product/StickyAddToCart';
 import { JsonLdProduct } from '@/components/seo/JsonLdProduct';
+import { useCart } from '@/contexts/CartContext';
 
 import { ProductAccordions } from './components/ProductAccordions';
 import { ProductCrossSell } from './components/ProductCrossSell';
@@ -40,7 +43,9 @@ export default function ProductPage({
   params: Promise<{ id: string }>;
 }) {
   const [slug, setSlug] = useState<string | null>(null);
+  const [stickyAdded, setStickyAdded] = useState(false);
   const supabase = createClient();
+  const { addItem } = useCart();
 
   // ✅ Next.js 15 async params
   useEffect(() => {
@@ -251,8 +256,45 @@ export default function ProductPage({
         />
       </div>
 
-      {/* ===== CROSS-SELL ===== */}
+      {/* Share + Cross-sell */}
+      <div className="mt-8 flex justify-end">
+        <ShareButtons
+          url={`/produit/${product.slug}`}
+          title={product.name}
+          imageUrl={product.primary_image_url}
+        />
+      </div>
+
       <ProductCrossSell currentProductId={product.product_id} />
+
+      {/* Sticky mobile add-to-cart */}
+      <StickyAddToCart
+        productName={product.name}
+        priceTTC={product.price_ttc ?? 0}
+        isAdded={stickyAdded}
+        onAddToCart={() => {
+          void addItem({
+            product_id: product.product_id,
+            variant_group_id: product.variant_group_id,
+            quantity: 1,
+            include_assembly: false,
+            name: product.name,
+            slug: product.slug,
+            price_ttc: product.price_ttc ?? 0,
+            assembly_price: product.assembly_price ?? 0,
+            eco_participation: product.eco_participation_amount ?? 0,
+            primary_image_url: product.primary_image_url,
+            sku: product.sku,
+          })
+            .then(() => {
+              setStickyAdded(true);
+              setTimeout(() => setStickyAdded(false), 2000);
+            })
+            .catch(error => {
+              console.error('[StickyCart] Add failed:', error);
+            });
+        }}
+      />
     </div>
   );
 }

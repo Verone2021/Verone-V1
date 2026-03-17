@@ -69,7 +69,7 @@ export default function CollectionsPage() {
                       alt={collection.name}
                       fill
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                      className="object-cover group-hover:scale-105 transition-transform duration-700"
+                      className="object-cover group-hover:scale-[1.02] transition-transform duration-700"
                     />
                   ) : (
                     <div className="flex items-center justify-center h-full">

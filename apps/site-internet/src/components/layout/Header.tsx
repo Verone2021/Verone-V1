@@ -8,11 +8,13 @@ import Link from 'next/link';
 import { ShoppingCart, Menu, Search, User } from 'lucide-react';
 
 import { useCart } from '@/contexts/CartContext';
+import { SearchOverlay } from '@/components/SearchOverlay';
 
 import { MobileNav } from './MobileNav';
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const { itemCount: cartItemsCount } = useCart();
 
   return (
@@ -67,6 +69,7 @@ export function Header() {
               {/* Search Icon */}
               <button
                 type="button"
+                onClick={() => setSearchOpen(true)}
                 className="p-2.5 text-verone-gray-600 hover:text-verone-black hover:bg-verone-gray-50 rounded-full transition-all duration-300"
                 aria-label="Rechercher"
               >
@@ -115,6 +118,9 @@ export function Header() {
         open={mobileMenuOpen}
         onClose={() => setMobileMenuOpen(false)}
       />
+
+      {/* Search Overlay */}
+      <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />
     </>
   );
 }

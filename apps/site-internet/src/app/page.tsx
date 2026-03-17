@@ -88,7 +88,7 @@ export default function HomePage() {
                 >
                   <div className="border border-verone-gray-200 bg-white hover:shadow-luxury transition-all duration-500 overflow-hidden">
                     <div className="bg-verone-gray-100 h-64 overflow-hidden">
-                      <div className="w-full h-full bg-verone-gray-200 group-hover:scale-105 transition-transform duration-700" />
+                      <div className="w-full h-full bg-verone-gray-200 group-hover:scale-[1.02] transition-transform duration-700" />
                     </div>
                     <div className="p-6">
                       <h4 className="font-playfair text-xl font-semibold text-verone-black mb-2">
