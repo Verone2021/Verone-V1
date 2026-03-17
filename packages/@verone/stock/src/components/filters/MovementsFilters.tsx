@@ -20,6 +20,10 @@ import { createClient } from '@verone/utils/supabase/client';
 import { CalendarDays, Filter, RotateCcw, Search, Users } from 'lucide-react';
 
 import type { MovementHistoryFilters } from '../../hooks';
+import type {
+  MovementType,
+  StockReasonCode,
+} from '../../hooks/use-stock-movements';
 import { useStockMovements } from '../../hooks';
 
 interface MovementsFiltersProps {
@@ -166,7 +170,7 @@ export function MovementsFilters({
   };
 
   // Toggle type de mouvement
-  const toggleMovementType = (type: string) => {
+  const toggleMovementType = (type: MovementType) => {
     const currentTypes = localFilters.movementTypes ?? [];
     const newTypes = currentTypes.includes(type)
       ? currentTypes.filter(t => t !== type)
@@ -179,7 +183,7 @@ export function MovementsFilters({
   };
 
   // Toggle motif
-  const toggleReasonCode = (code: string) => {
+  const toggleReasonCode = (code: StockReasonCode) => {
     const currentCodes = localFilters.reasonCodes ?? [];
     const newCodes = currentCodes.includes(code)
       ? currentCodes.filter(c => c !== code)
@@ -355,23 +359,25 @@ export function MovementsFilters({
         <div className="space-y-3">
           <Label>Types de mouvement</Label>
           <div className="grid grid-cols-2 gap-2">
-            {[
-              {
-                value: 'IN',
-                label: 'Entrées',
-                color: 'bg-green-100 text-green-800',
-              },
-              {
-                value: 'OUT',
-                label: 'Sorties',
-                color: 'bg-red-100 text-red-800',
-              },
-              {
-                value: 'ADJUST',
-                label: 'Ajustements',
-                color: 'bg-blue-100 text-blue-800',
-              },
-            ].map(type => (
+            {(
+              [
+                {
+                  value: 'IN' as MovementType,
+                  label: 'Entrées',
+                  color: 'bg-green-100 text-green-800',
+                },
+                {
+                  value: 'OUT' as MovementType,
+                  label: 'Sorties',
+                  color: 'bg-red-100 text-red-800',
+                },
+                {
+                  value: 'ADJUST' as MovementType,
+                  label: 'Ajustements',
+                  color: 'bg-blue-100 text-blue-800',
+                },
+              ] as const
+            ).map(type => (
               <div key={type.value} className="flex items-center space-x-2">
                 <Checkbox
                   id={`type-${type.value}`}

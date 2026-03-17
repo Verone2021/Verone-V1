@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-misused-promises, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unused-vars, @typescript-eslint/prefer-nullish-coalescing */
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-misused-promises, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unused-vars, @typescript-eslint/prefer-nullish-coalescing */
 'use client';
 
 import { useState } from 'react';
@@ -61,7 +61,7 @@ export function CommercialEditSection({
   });
 
   const section: EditableSection = 'commercial';
-  const editData = getEditedData(section);
+  const editData = getEditedData(section) as Organisation | null;
   const error = getError(section);
 
   const handleStartEdit = () => {
@@ -289,8 +289,8 @@ export function CommercialEditSection({
           {/* Résumé des conditions en temps réel */}
           {editData &&
             (editData.payment_terms ||
-              editData.delivery_time_days > 0 ||
-              editData.minimum_order_amount > 0) && (
+              (editData.delivery_time_days ?? 0) > 0 ||
+              (editData.minimum_order_amount ?? 0) > 0) && (
               <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
                 <h4 className="text-sm font-medium text-blue-800 mb-3 flex items-center">
                   <Package className="h-4 w-4 mr-1" />
@@ -307,21 +307,21 @@ export function CommercialEditSection({
                     </div>
                   )}
 
-                  {editData.delivery_time_days > 0 && (
+                  {(editData.delivery_time_days ?? 0) > 0 && (
                     <div className="flex justify-between">
                       <span className="text-blue-700">Livraison:</span>
                       <span className="font-medium text-blue-800">
                         {editData.delivery_time_days} jour
-                        {editData.delivery_time_days > 1 ? 's' : ''}
+                        {(editData.delivery_time_days ?? 0) > 1 ? 's' : ''}
                       </span>
                     </div>
                   )}
 
-                  {editData.minimum_order_amount > 0 && (
+                  {(editData.minimum_order_amount ?? 0) > 0 && (
                     <div className="flex justify-between">
                       <span className="text-blue-700">Commande min:</span>
                       <span className="font-medium text-blue-800">
-                        {editData.minimum_order_amount.toFixed(2)}{' '}
+                        {(editData.minimum_order_amount ?? 0).toFixed(2)}{' '}
                         {editData.currency}
                       </span>
                     </div>

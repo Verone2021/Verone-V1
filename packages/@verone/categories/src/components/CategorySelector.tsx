@@ -100,7 +100,12 @@ export function CategorySelector({
 
       if (fetchError) throw fetchError;
 
-      setFamilies(data ?? []);
+      setFamilies(
+        (data ?? []).map(f => ({
+          ...f,
+          description: f.description ?? undefined,
+        }))
+      );
     } catch (_err) {
       setError('Erreur de chargement');
     } finally {
@@ -119,7 +124,13 @@ export function CategorySelector({
 
         if (fetchError) throw fetchError;
 
-        setCategories(data ?? []);
+        setCategories(
+          (data ?? []).map(c => ({
+            ...c,
+            description: c.description ?? undefined,
+            family_id: c.family_id ?? '',
+          }))
+        );
         setSubcategories([]); // Reset sous-catégories
         setSelectedCategory(null);
         setSelectedSubcategory(null);
@@ -141,7 +152,12 @@ export function CategorySelector({
 
         if (fetchError) throw fetchError;
 
-        setSubcategories(data ?? []);
+        setSubcategories(
+          (data ?? []).map(s => ({
+            ...s,
+            description: s.description ?? undefined,
+          }))
+        );
         setSelectedSubcategory(null);
       } catch (_err) {
         setError('Erreur de chargement');
@@ -182,7 +198,10 @@ export function CategorySelector({
         const typedData = data as unknown as SubcategoryWithRelations | null;
 
         if (typedData?.categories?.families) {
-          const family: Family = typedData.categories.families;
+          const family: Family = {
+            ...typedData.categories.families,
+            description: typedData.categories.families.description ?? undefined,
+          };
           const category: Category = {
             id: typedData.categories.id,
             name: typedData.categories.name,

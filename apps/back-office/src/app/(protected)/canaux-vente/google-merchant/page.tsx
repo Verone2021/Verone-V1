@@ -674,7 +674,11 @@ export default function GoogleMerchantPage() {
                 </Alert>
 
                 <GoogleMerchantProductManager
-                  products={eligibleProducts}
+                  products={
+                    eligibleProducts as unknown as Parameters<
+                      typeof GoogleMerchantProductManager
+                    >[0]['products']
+                  }
                   onAddProducts={handleAddProducts}
                   isLoading={eligibleProductsLoading}
                 />

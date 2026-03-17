@@ -129,8 +129,7 @@ export function useStockDashboard() {
         stock_forecasted_out: p.stock_forecasted_out,
         min_stock: p.min_stock,
         cost_price: p.cost_price ?? 0, // ✅ FIXED: Utilisation du cost_price réel
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        product_image_url: (p as readonly string[]).product_image_url ?? null, // ✅ NOUVEAU - Image produit
+        product_image_url: p.product_image_url ?? null, // ✅ NOUVEAU - Image produit
       }));
 
       // 🆕 QUERY 3: Mouvements 7 derniers jours (via use-stock-ui)
@@ -321,7 +320,7 @@ export function useStockDashboard() {
           min_stock: alert.min_stock,
           cost_price: 0, // Pas besoin ici
           stock_forecasted_out: product?.stock_forecasted_out ?? 0,
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
           product_image_url: product?.product_image_url ?? null, // ✅ NOUVEAU - Image produit
         });
       }
@@ -526,16 +525,13 @@ export function useStockDashboard() {
         outgoing_orders: outgoingOrders,
       });
     } catch (err: unknown) {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const error = err instanceof Error ? err : new Error(String(err));
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const errorMessage =
-        err.message ?? 'Erreur lors du chargement du dashboard';
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+        err instanceof Error
+          ? err.message
+          : 'Erreur lors du chargement du dashboard';
       setError(errorMessage);
       toast({
         title: 'Erreur',
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         description: errorMessage,
         variant: 'destructive',
       });

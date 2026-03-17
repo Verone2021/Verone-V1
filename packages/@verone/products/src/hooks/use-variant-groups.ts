@@ -502,14 +502,15 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
           creation_mode: 'complete' as const, // Contrainte: 'sourcing' ou 'complete' uniquement
           cost_price: 0.01, // Prix minimal symbolique > 0
           // ❌ RETIRÉ: style, suitable_rooms, common_weight (n'existent PAS dans products, seulement dans variant_groups)
-          ...(hasDimensions && {
-            dimensions: {
-              length: commonDims.length ?? null,
-              width: commonDims.width ?? null,
-              height: commonDims.height ?? null,
-              unit: commonDims.unit ?? 'cm',
-            },
-          }),
+          ...(hasDimensions &&
+            commonDims && {
+              dimensions: {
+                length: commonDims.length ?? null,
+                width: commonDims.width ?? null,
+                height: commonDims.height ?? null,
+                unit: commonDims.unit ?? 'cm',
+              },
+            }),
           // ✅ Hériter du fournisseur commun si défini dans le groupe
           ...(group.has_common_supplier &&
             group.supplier_id && {

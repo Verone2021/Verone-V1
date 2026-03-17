@@ -65,7 +65,7 @@ export function OrganisationProductsSection({
     let filtered: OrganisationProduct[] = [];
 
     if (organisationType === 'supplier') {
-      filtered = (products as OrganisationProduct[]).filter(
+      filtered = (products as unknown as OrganisationProduct[]).filter(
         p => p.supplier_id === organisationId
       );
     }

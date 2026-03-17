@@ -108,7 +108,7 @@ export function useSubcategories(categoryId?: string) {
                       family_id: sub.categories.family_id,
                     }
                   : undefined,
-              } as SubcategoryWithDetails;
+              } as unknown as SubcategoryWithDetails;
             }
           )
         );
@@ -320,7 +320,7 @@ export function useSubcategories(categoryId?: string) {
               family_id: sub.categories.family_id,
             }
           : undefined,
-      })) as SubcategoryWithDetails[];
+      })) as unknown as SubcategoryWithDetails[];
     } catch (err) {
       console.error(
         'Erreur lors du chargement des sous-catégories par catégorie:',

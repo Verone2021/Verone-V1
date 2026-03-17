@@ -91,12 +91,15 @@ export function useConsultationImages({
       if (error) throw error;
 
       // Générer les URLs publiques pour chaque image (utilise le même bucket que les produits)
-      const imagesWithUrls: ConsultationImage[] = (data ?? []).map(image => ({
-        ...image,
-        public_url: supabase.storage
-          .from('product-images')
-          .getPublicUrl(image.storage_path).data.publicUrl,
-      }));
+      const imagesWithUrls: ConsultationImage[] = (data ?? []).map(
+        image =>
+          ({
+            ...image,
+            public_url: supabase.storage
+              .from('product-images')
+              .getPublicUrl(image.storage_path).data.publicUrl,
+          }) as unknown as ConsultationImage
+      );
 
       updateDerivedState(imagesWithUrls);
     } catch (err) {
@@ -171,7 +174,7 @@ export function useConsultationImages({
           public_url: supabase.storage
             .from('product-images')
             .getPublicUrl(newImage.storage_path).data.publicUrl,
-        };
+        } as unknown as ConsultationImage;
 
         // 6. Mettre à jour le state local
         const updatedImages: ConsultationImage[] = [

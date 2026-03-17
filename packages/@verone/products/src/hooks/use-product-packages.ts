@@ -55,7 +55,7 @@ export function useProductPackages({
       console.warn(
         `${data?.length ?? 0} packages chargés pour produit ${productId}`
       );
-      setPackages((data ?? []) as ProductPackage[]);
+      setPackages((data ?? []) as unknown as ProductPackage[]);
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Erreur chargement packages';

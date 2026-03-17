@@ -186,7 +186,11 @@ export class GoogleMerchantClient {
   ): Promise<GoogleMerchantApiResponse<ProductInputResponse>> {
     try {
       // 1. Transformer le produit
-      const transformedProduct = transformProductForGoogle(productData);
+      const transformedProduct = transformProductForGoogle(
+        productData as unknown as Parameters<
+          typeof transformProductForGoogle
+        >[0]
+      );
 
       // 2. Valider le produit transformé
       const validation = validateGoogleMerchantProduct(transformedProduct);

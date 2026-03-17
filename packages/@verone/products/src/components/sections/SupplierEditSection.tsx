@@ -73,7 +73,7 @@ export function SupplierEditSection({
   });
 
   const section: EditableSection = 'supplier';
-  const editData = getEditedData(section);
+  const editData = getEditedData(section) as Product | null;
   const error = getError(section);
 
   // Données actuelles (utiliser legal_name ou trade_name selon disponibilité)

@@ -653,42 +653,45 @@ export function PurchaseOrderDetailModal({
                     )}
 
                     {/* Frais additionnels fournisseurs */}
-                    {((order as PurchaseOrderExtended).shipping_cost_ht > 0 ||
-                      (order as PurchaseOrderExtended).customs_cost_ht > 0 ||
-                      (order as PurchaseOrderExtended).insurance_cost_ht >
-                        0) && (
+                    {(((order as PurchaseOrderExtended).shipping_cost_ht ?? 0) >
+                      0 ||
+                      ((order as PurchaseOrderExtended).customs_cost_ht ?? 0) >
+                        0 ||
+                      ((order as PurchaseOrderExtended).insurance_cost_ht ??
+                        0) > 0) && (
                       <>
-                        {(order as PurchaseOrderExtended).shipping_cost_ht >
-                          0 && (
+                        {((order as PurchaseOrderExtended).shipping_cost_ht ??
+                          0) > 0 && (
                           <div className="flex justify-between text-sm text-gray-600">
                             <span>Frais de livraison HT :</span>
                             <span>
                               {formatCurrency(
                                 (order as PurchaseOrderExtended)
-                                  .shipping_cost_ht
+                                  .shipping_cost_ht ?? 0
                               )}
                             </span>
                           </div>
                         )}
-                        {(order as PurchaseOrderExtended).customs_cost_ht >
-                          0 && (
+                        {((order as PurchaseOrderExtended).customs_cost_ht ??
+                          0) > 0 && (
                           <div className="flex justify-between text-sm text-gray-600">
                             <span>Frais de douane HT :</span>
                             <span>
                               {formatCurrency(
-                                (order as PurchaseOrderExtended).customs_cost_ht
+                                (order as PurchaseOrderExtended)
+                                  .customs_cost_ht ?? 0
                               )}
                             </span>
                           </div>
                         )}
-                        {(order as PurchaseOrderExtended).insurance_cost_ht >
-                          0 && (
+                        {((order as PurchaseOrderExtended).insurance_cost_ht ??
+                          0) > 0 && (
                           <div className="flex justify-between text-sm text-gray-600">
                             <span>Frais d'assurance HT :</span>
                             <span>
                               {formatCurrency(
                                 (order as PurchaseOrderExtended)
-                                  .insurance_cost_ht
+                                  .insurance_cost_ht ?? 0
                               )}
                             </span>
                           </div>

@@ -136,7 +136,7 @@ export function PaymentForm({
         throw fetchError;
       }
 
-      const invoiceData = currentInvoice as {
+      const invoiceData = currentInvoice as unknown as {
         amount_paid: number | null;
         total_ttc: number;
       };

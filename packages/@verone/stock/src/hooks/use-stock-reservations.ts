@@ -258,8 +258,8 @@ export function useStockReservations() {
               expires_at: data.expires_at,
               notes: data.notes,
               reserved_by: (await supabase.auth.getUser()).data.user?.id,
-            },
-          ] as readonly string[])
+            } as unknown as import('@verone/types').Database['public']['Tables']['stock_reservations']['Insert'],
+          ])
           .select('id')
           .single();
 

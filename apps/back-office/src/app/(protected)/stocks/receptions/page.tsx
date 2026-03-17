@@ -272,7 +272,7 @@ export default function ReceptionsPage() {
       }
 
       void loadPurchaseOrdersReadyForReception(filters)
-        .then(setOrders)
+        .then(data => setOrders(data as PurchaseOrderWithSupplier[]))
         .catch(error => {
           console.error('[Receptions] Failed to load purchase orders:', error);
         });
@@ -293,7 +293,9 @@ export default function ReceptionsPage() {
       (sourceFilter === 'affiliates' || sourceFilter === 'all')
     ) {
       void loadAffiliateProductReceptions({ search: searchTerm })
-        .then(setAffiliateReceptions)
+        .then(data =>
+          setAffiliateReceptions(data as AffiliateReceptionMapped[])
+        )
         .catch(error => {
           console.error(
             '[Receptions] Failed to load affiliate receptions:',
@@ -316,7 +318,7 @@ export default function ReceptionsPage() {
 
       // Charger historique POs fournisseurs
       void loadPurchaseOrdersReadyForReception(filters)
-        .then(setHistoryOrders)
+        .then(data => setHistoryOrders(data as PurchaseOrderWithSupplier[]))
         .catch(error => {
           console.error('[Receptions] Failed to load history orders:', error);
         });
@@ -326,7 +328,7 @@ export default function ReceptionsPage() {
         status: 'completed',
         search: historySearchTerm,
       })
-        .then(setAffiliateHistory)
+        .then(data => setAffiliateHistory(data as AffiliateReceptionMapped[]))
         .catch(error => {
           console.error(
             '[Receptions] Failed to load affiliate history:',
@@ -354,7 +356,7 @@ export default function ReceptionsPage() {
         console.error('[Receptions] Failed to reload stats:', error);
       });
     void loadPurchaseOrdersReadyForReception()
-      .then(setOrders)
+      .then(data => setOrders(data as PurchaseOrderWithSupplier[]))
       .catch(error => {
         console.error('[Receptions] Failed to reload orders:', error);
       });
@@ -378,7 +380,7 @@ export default function ReceptionsPage() {
   const handleAffiliateReceptionSuccess = () => {
     // Recharger la liste et stats
     void loadAffiliateProductReceptions()
-      .then(setAffiliateReceptions)
+      .then(data => setAffiliateReceptions(data as AffiliateReceptionMapped[]))
       .catch(error => {
         console.error(
           '[Receptions] Failed to reload affiliate receptions:',

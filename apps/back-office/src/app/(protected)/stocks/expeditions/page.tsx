@@ -205,7 +205,7 @@ export default function ExpeditionsPage() {
       }
 
       void loadSalesOrdersReadyForShipment(filters)
-        .then(setOrders)
+        .then(data => setOrders(data as SalesOrder[]))
         .catch(error => {
           console.error('[ExpeditionsPage] Load ready orders failed:', error);
         });
@@ -238,7 +238,7 @@ export default function ExpeditionsPage() {
 
       // ✅ Utiliser la bonne fonction qui gère le filtrage par array de statuts
       void loadShippedOrdersHistory(filters)
-        .then(setHistoryOrders)
+        .then(data => setHistoryOrders(data as SalesOrder[]))
         .catch(error => {
           console.error('[ExpeditionsPage] Load history failed:', error);
         });
@@ -270,7 +270,7 @@ export default function ExpeditionsPage() {
       status: statusFilter !== 'all' ? statusFilter : undefined,
       search: searchTerm ?? undefined,
     })
-      .then(setOrders)
+      .then(data => setOrders(data as SalesOrder[]))
       .catch(error => {
         console.error('[ExpeditionsPage] Reload orders failed:', error);
       });

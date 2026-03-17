@@ -91,7 +91,9 @@ export function PriceListItemFormModal({
   ]);
 
   // Hooks
-  const { products } = useProducts({ search: productSearchTerm }) as {
+  const { products } = useProducts({
+    search: productSearchTerm,
+  }) as unknown as {
     products: SelectedProduct[] | undefined;
   };
   const { data: priceList } = usePriceList(priceListId);

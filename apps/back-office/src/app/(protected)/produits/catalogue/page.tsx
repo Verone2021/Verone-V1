@@ -1695,13 +1695,17 @@ export default function CataloguePage() {
         <CategoryHierarchyModal
           isOpen
           onClose={() => setQuickEditTarget(null)}
-          product={quickEditTarget.product}
+          product={
+            quickEditTarget.product as unknown as Parameters<
+              typeof CategoryHierarchyModal
+            >[0]['product']
+          }
           onUpdate={updatedProduct => {
-            void handleQuickEditSubcategory(updatedProduct as Product).catch(
-              err => {
-                console.error('[QuickEdit] Subcategory update failed:', err);
-              }
-            );
+            void handleQuickEditSubcategory(
+              updatedProduct as unknown as Product
+            ).catch(err => {
+              console.error('[QuickEdit] Subcategory update failed:', err);
+            });
           }}
         />
       )}

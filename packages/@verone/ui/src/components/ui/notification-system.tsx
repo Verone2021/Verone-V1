@@ -145,6 +145,18 @@ export function NotificationProvider({
     }
   }, []);
 
+  // Supprimer une notification
+  const removeNotification = useCallback((id: string) => {
+    setNotifications(prev => prev.filter(n => n.id !== id));
+  }, []);
+
+  // Marquer comme lue
+  const markAsRead = useCallback((id: string) => {
+    setNotifications(prev =>
+      prev.map(n => (n.id === id ? { ...n, read: true } : n))
+    );
+  }, []);
+
   // Ajouter une notification
   const addNotification = useCallback(
     (
@@ -210,18 +222,6 @@ export function NotificationProvider({
       removeNotification,
     ]
   );
-
-  // Supprimer une notification
-  const removeNotification = useCallback((id: string) => {
-    setNotifications(prev => prev.filter(n => n.id !== id));
-  }, []);
-
-  // Marquer comme lue
-  const markAsRead = useCallback((id: string) => {
-    setNotifications(prev =>
-      prev.map(n => (n.id === id ? { ...n, read: true } : n))
-    );
-  }, []);
 
   // Marquer toutes comme lues
   const markAllAsRead = useCallback(() => {

@@ -75,7 +75,7 @@ export function WeightEditSection({
   });
 
   const section: EditableSection = 'weight';
-  const editData = getEditedData(section);
+  const editData = getEditedData(section) as Product | null;
   const error = getError(section);
 
   const currentWeight = product.weight ?? null;

@@ -139,7 +139,6 @@ export function PurchaseOrderFormModal({
   );
   const [notes, setNotes] = useState(order?.notes ?? '');
   const [ecoTaxVatRate, setEcoTaxVatRate] = useState<number | null>(
-    // @ts-expect-error eco_tax_vat_rate exists in DB, types might be stale
     order?.eco_tax_vat_rate ?? null
   );
   const [paymentTerms, setPaymentTerms] = useState(order?.payment_terms ?? '');
@@ -365,7 +364,9 @@ export function PurchaseOrderFormModal({
     } else {
       // Mode création : modifier items locaux
       setLocalItems(prev =>
-        prev.map(item => (item.id === itemId ? { ...item, ...data } : item))
+        prev.map(item =>
+          item.id === itemId ? ({ ...item, ...data } as LocalOrderItem) : item
+        )
       );
     }
   };
@@ -449,7 +450,9 @@ export function PurchaseOrderFormModal({
         const newOrder = await createOrder({
           supplier_id: selectedSupplierId,
           expected_delivery_date: expectedDeliveryDate || undefined,
-          delivery_address: deliveryAddress || undefined,
+          delivery_address: (deliveryAddress || undefined) as
+            | Record<string, unknown>
+            | undefined,
           payment_terms: paymentTerms || undefined,
           notes: notes || undefined,
           eco_tax_vat_rate: ecoTaxVatRate,

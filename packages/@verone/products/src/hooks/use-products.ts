@@ -363,7 +363,7 @@ export function useProducts(filters?: ProductFilters, page: number = 0) {
           stock_forecasted_out: productData.stock_forecasted_out,
           min_stock: productData.min_stock,
           reorder_point: productData.reorder_point,
-        } as Record<string, unknown>)
+        } as unknown as import('@verone/types').Database['public']['Tables']['products']['Insert'])
         .select(
           'id, name, sku, slug, cost_price, margin_percentage, stock_status, product_status, condition, variant_attributes, dimensions, weight, video_url, supplier_reference, gtin, stock_quantity, supplier_page_url, supplier_id, description, technical_description, selling_points, product_type, assigned_client_id, creation_mode, created_at, updated_at'
         )

@@ -267,7 +267,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       data: excelData,
       errors,
       summary,
-    } = prepareExcelData(enrichedProducts);
+    } = prepareExcelData(
+      enrichedProducts as unknown as Parameters<typeof prepareExcelData>[0]
+    );
 
     console.warn(`[API] Excel data prepared:`, summary);
 
@@ -423,7 +425,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     // Transformation et génération
-    const { data: excelData, errors, summary } = prepareExcelData(products);
+    const {
+      data: excelData,
+      errors,
+      summary,
+    } = prepareExcelData(
+      products as unknown as Parameters<typeof prepareExcelData>[0]
+    );
 
     if (excelData.length === 0) {
       return NextResponse.json(

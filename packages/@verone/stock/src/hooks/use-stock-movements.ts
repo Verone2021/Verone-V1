@@ -199,7 +199,7 @@ export function useStockMovements() {
             : null,
         }));
 
-        setMovements(enrichedMovements as readonly string[]);
+        setMovements(enrichedMovements as unknown as StockMovement[]);
       } catch (error) {
         console.error(
           'Erreur lors de la récupération des mouvements:',
@@ -369,12 +369,12 @@ export function useStockMovements() {
               reference_type: data.reference_type,
               reference_id: data.reference_id,
               notes: data.notes,
-              reason_code: data.reason_code,
+              reason_code: data.reason_code as string | null | undefined,
               affects_forecast: data.affects_forecast ?? false,
               forecast_type: data.forecast_type,
               performed_by: (await supabase.auth.getUser()).data.user?.id,
-            },
-          ] as readonly string[])
+            } as unknown as import('@verone/types').Database['public']['Tables']['stock_movements']['Insert'],
+          ])
           .select('id')
           .single();
 

@@ -50,7 +50,7 @@ export function IdentifiersCompleteEditSection({
   });
 
   const section: EditableSection = 'identifiers';
-  const editData = getEditedData(section);
+  const editData = getEditedData(section) as Product | null;
   const error = getError(section);
 
   const currentBrand = product.brand ?? '-';

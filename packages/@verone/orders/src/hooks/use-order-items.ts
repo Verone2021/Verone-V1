@@ -191,7 +191,19 @@ export function useOrderItems({
           itemData.tax_rate = data.tax_rate ?? 0.2; // TVA 20% par défaut
         }
 
-        const { data: newItem, error: insertError } = await supabase
+        const supabaseGeneric = supabase as unknown as {
+          from: (t: string) => {
+            insert: (data: unknown) => {
+              select: (s: string) => {
+                single: () => Promise<{
+                  data: Record<string, unknown> | null;
+                  error: { message: string } | null;
+                }>;
+              };
+            };
+          };
+        };
+        const { data: newItem, error: insertError } = await supabaseGeneric
           .from(table)
           .insert(itemData)
           .select(
@@ -221,7 +233,7 @@ export function useOrderItems({
         // Trigger recalcul automatique via DB trigger
         await fetchItems();
 
-        return newItem as OrderItem;
+        return newItem as unknown as OrderItem;
       } catch (err) {
         console.error(
           `❌ [useOrderItems] Erreur ajout item ${orderType}:`,

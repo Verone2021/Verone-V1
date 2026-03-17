@@ -199,7 +199,7 @@ export async function POST(
     // 5. Synchronisation avec Google Merchant Center
     const googleClient = getGoogleMerchantClient();
     const syncResult = (await googleClient.insertProduct(
-      product
+      product as unknown as Parameters<typeof googleClient.insertProduct>[0]
     )) as GoogleMerchantResult;
 
     if (!syncResult.success) {

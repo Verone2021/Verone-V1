@@ -439,7 +439,7 @@ export default function SourcingProductDetailPage() {
               <div className="pt-2 border-t border-gray-200">
                 <ConsultationSuggestions
                   clientId={product.assigned_client_id}
-                  productId={productId}
+                  _productId={productId}
                   onLinkToConsultation={consultationId => {
                     void handleLinkToConsultation(consultationId).catch(
                       error => {

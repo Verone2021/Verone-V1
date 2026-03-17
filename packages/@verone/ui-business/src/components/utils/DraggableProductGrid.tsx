@@ -394,7 +394,7 @@ export function DraggableProductGrid({
                       updated_at: product.added_at,
                       archived_at: null,
                       supplier: null,
-                    } as Parameters<typeof ProductCard>[0]['product']
+                    } as unknown as Parameters<typeof ProductCard>[0]['product']
                   }
                   showActions={!disabled}
                   onDelete={() => {

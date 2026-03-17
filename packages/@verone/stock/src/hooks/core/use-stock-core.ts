@@ -120,6 +120,7 @@ export interface StockItem {
   min_stock: number | null; // Seuil alerte stock minimum
   cost_price: number | null; // Prix de revient unitaire
   archived_at: string | null;
+  product_image_url?: string | null; // URL image principale produit
 }
 
 /**

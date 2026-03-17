@@ -3,6 +3,20 @@ import { useState, useCallback } from 'react';
 import { useToast } from '@verone/common/hooks';
 import { createClient } from '@verone/utils/supabase/client';
 
+// Type local pour les données renvoyées par la query Supabase (champs sélectionnés explicitement)
+interface ProductQueryRow {
+  id: string;
+  name: string;
+  sku: string;
+  stock_quantity: number | null;
+  stock_real: number | null;
+  stock_forecasted_in: number | null;
+  stock_forecasted_out: number | null;
+  min_stock: number | null;
+  cost_price: number | null;
+  product_images: Array<{ public_url: string }> | null;
+}
+
 interface ProductInventory {
   id: string;
   name: string;
@@ -84,7 +98,9 @@ export function useStockInventory() {
         if (productsError) throw productsError;
 
         // Pour chaque produit, récupérer les mouvements agrégés
-        const inventoryPromises = products.map(async product => {
+        const inventoryPromises = (
+          products as unknown as ProductQueryRow[]
+        ).map(async product => {
           let movementsQuery = supabase
             .from('stock_movements')
             .select('quantity_change, performed_at, movement_type')
@@ -139,21 +155,12 @@ export function useStockInventory() {
             id: product.id,
             name: product.name,
             sku: product.sku,
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-            product_image_url:
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-              (product as readonly string[]).product_images?.[0]?.public_url ??
-              null, // ✅ Phase 2: Image principale produit
+            product_image_url: product.product_images?.[0]?.public_url ?? null, // ✅ Phase 2: Image principale produit
             stock_quantity: product.stock_quantity ?? 0,
             stock_real: product.stock_real ?? 0,
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-            stock_forecasted_in:
-              (product as readonly string[]).stock_forecasted_in ?? 0,
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-            stock_forecasted_out:
-              (product as readonly string[]).stock_forecasted_out ?? 0,
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-            min_stock: (product as readonly string[]).min_stock ?? 5, // Seuil minimum du produit (fallback 5)
+            stock_forecasted_in: product.stock_forecasted_in ?? 0,
+            stock_forecasted_out: product.stock_forecasted_out ?? 0,
+            min_stock: product.min_stock ?? 5, // Seuil minimum du produit (fallback 5)
             total_in,
             total_out,
             total_adjustments,
@@ -178,7 +185,7 @@ export function useStockInventory() {
         // ✅ Valeur stock = stock_real (physique) * cost_price (prix indicatif d'achat)
         const statsData = {
           total_products: products.length,
-          total_stock_value: products.reduce(
+          total_stock_value: (products as unknown as ProductQueryRow[]).reduce(
             (sum, p) => sum + (p.stock_real ?? 0) * (p.cost_price ?? 0),
             0
           ),
@@ -189,19 +196,18 @@ export function useStockInventory() {
           products_with_activity: activeInventory.length,
         };
 
-        setInventory(activeInventory as readonly string[]);
+        setInventory(
+          activeInventory as unknown as Parameters<typeof setInventory>[0]
+        );
         setStats(statsData);
       } catch (err: unknown) {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const error = err instanceof Error ? err : new Error(String(err));
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         const errorMessage =
-          err.message ?? "Erreur lors du chargement de l'inventaire";
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+          err instanceof Error
+            ? err.message
+            : "Erreur lors du chargement de l'inventaire";
         setError(errorMessage);
         toast({
           title: 'Erreur',
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           description: errorMessage,
           variant: 'destructive',
         });
