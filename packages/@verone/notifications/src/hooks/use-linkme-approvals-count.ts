@@ -87,7 +87,7 @@ export function useLinkmeApprovalsCount(options?: {
       // Query commandes LinkMe en draft (nécessitent approbation/validation)
       const { count: totalCount, error: countError } = await supabase
         .from('sales_orders')
-        .select('*', { count: 'exact', head: true })
+        .select('id', { count: 'exact', head: true })
         .eq('channel_id', LINKME_CHANNEL_ID)
         .eq('status', 'draft');
 

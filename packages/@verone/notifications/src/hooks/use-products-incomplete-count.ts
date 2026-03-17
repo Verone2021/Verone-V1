@@ -85,7 +85,7 @@ export function useProductsIncompleteCount(options?: {
       // Incomplet = description vide
       const { count: totalCount, error: countError } = await supabase
         .from('products')
-        .select('*', { count: 'exact', head: true })
+        .select('id', { count: 'exact', head: true })
         .eq('product_status', 'active')
         .or('description.is.null,description.eq.');
 

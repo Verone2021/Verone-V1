@@ -84,7 +84,7 @@ export function useTransactionsUnreconciledCount(options?: {
       // matching_status = 'unmatched' (ENUM remplace is_reconciled boolean)
       const { count: totalCount, error: countError } = await supabase
         .from('bank_transactions')
-        .select('*', { count: 'exact', head: true })
+        .select('id', { count: 'exact', head: true })
         .eq('matching_status', 'unmatched');
 
       if (countError) {

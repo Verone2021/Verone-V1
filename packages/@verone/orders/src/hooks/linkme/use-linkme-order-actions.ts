@@ -936,8 +936,18 @@ export interface PendingOrderLinkMeDetails {
   billing_name: string | null;
   billing_email: string | null;
   billing_phone: string | null;
+  delivery_contact_name: string | null;
+  delivery_contact_email: string | null;
+  delivery_contact_phone: string | null;
+  delivery_address: string | null;
+  delivery_postal_code: string | null;
+  delivery_city: string | null;
+  is_mall_delivery: boolean | null;
+  mall_email: string | null;
   desired_delivery_date: string | null;
   mall_form_required: boolean | null;
+  ignored_missing_fields: string[] | null;
+  missing_fields_count: number | null;
 }
 
 export interface PendingOrder {
@@ -955,6 +965,9 @@ export interface PendingOrder {
   // Organisation
   organisation_name: string | null;
   enseigne_name: string | null;
+  organisation_siret: string | null;
+  organisation_country: string | null;
+  organisation_vat_number: string | null;
   // Enriched data for detail view
   linkme_details: PendingOrderLinkMeDetails | null;
   items: PendingOrderItem[];
@@ -971,7 +984,7 @@ export function usePendingOrdersCount() {
 
       const { count, error } = await supabase
         .from('sales_orders')
-        .select('*', { count: 'exact', head: true })
+        .select('id', { count: 'exact', head: true })
         .eq('pending_admin_validation', true);
 
       if (error) {
@@ -1264,8 +1277,18 @@ export function useAllLinkMeOrders(status?: OrderValidationStatus) {
             billing_name,
             billing_email,
             billing_phone,
+            delivery_contact_name,
+            delivery_contact_email,
+            delivery_contact_phone,
+            delivery_address,
+            delivery_postal_code,
+            delivery_city,
+            is_mall_delivery,
+            mall_email,
             desired_delivery_date,
-            mall_form_required
+            mall_form_required,
+            ignored_missing_fields,
+            missing_fields_count
           ),
           sales_order_items (
             id,
@@ -1314,6 +1337,9 @@ export function useAllLinkMeOrders(status?: OrderValidationStatus) {
           trade_name: string | null;
           legal_name: string | null;
           enseigne_name: string | null;
+          siret: string | null;
+          country: string | null;
+          vat_number: string | null;
         }
       >();
 
@@ -1325,6 +1351,9 @@ export function useAllLinkMeOrders(status?: OrderValidationStatus) {
             id,
             trade_name,
             legal_name,
+            siret,
+            country,
+            vat_number,
             enseignes!left(name)
           `
           )
@@ -1345,6 +1374,9 @@ export function useAllLinkMeOrders(status?: OrderValidationStatus) {
               trade_name: org.trade_name as string | null,
               legal_name: org.legal_name as string | null,
               enseigne_name: enseigneName,
+              siret: (org.siret as string | null) ?? null,
+              country: (org.country as string | null) ?? null,
+              vat_number: (org.vat_number as string | null) ?? null,
             });
           });
         }
@@ -1431,14 +1463,43 @@ export function useAllLinkMeOrders(status?: OrderValidationStatus) {
                 billing_name: linkmeDetails.billing_name as string | null,
                 billing_email: linkmeDetails.billing_email as string | null,
                 billing_phone: linkmeDetails.billing_phone as string | null,
+                delivery_contact_name: linkmeDetails.delivery_contact_name as
+                  | string
+                  | null,
+                delivery_contact_email: linkmeDetails.delivery_contact_email as
+                  | string
+                  | null,
+                delivery_contact_phone: linkmeDetails.delivery_contact_phone as
+                  | string
+                  | null,
+                delivery_address: linkmeDetails.delivery_address as
+                  | string
+                  | null,
+                delivery_postal_code: linkmeDetails.delivery_postal_code as
+                  | string
+                  | null,
+                delivery_city: linkmeDetails.delivery_city as string | null,
+                is_mall_delivery: linkmeDetails.is_mall_delivery as
+                  | boolean
+                  | null,
+                mall_email: linkmeDetails.mall_email as string | null,
                 desired_delivery_date: linkmeDetails.desired_delivery_date as
                   | string
                   | null,
                 mall_form_required: linkmeDetails.mall_form_required as
                   | boolean
                   | null,
+                ignored_missing_fields: linkmeDetails.ignored_missing_fields as
+                  | string[]
+                  | null,
+                missing_fields_count: linkmeDetails.missing_fields_count as
+                  | number
+                  | null,
               }
             : null,
+          organisation_siret: orgData?.siret ?? null,
+          organisation_country: orgData?.country ?? null,
+          organisation_vat_number: orgData?.vat_number ?? null,
           items,
         });
       }

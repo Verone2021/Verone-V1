@@ -83,7 +83,7 @@ export function useOrdersPendingCount(options?: {
       // Note: seul 'draft' est un statut valide pour les commandes en attente
       const { count: totalCount, error: countError } = await supabase
         .from('sales_orders')
-        .select('*', { count: 'exact', head: true })
+        .select('id', { count: 'exact', head: true })
         .eq('status', 'draft');
 
       if (countError) {
