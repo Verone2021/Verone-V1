@@ -145,11 +145,11 @@ function EventDetails({ event }: { event: OrderHistoryEvent }) {
 function hasDetails(event: OrderHistoryEvent): boolean {
   const meta = event.metadata ?? {};
   return !!(
-    meta.recipient_email ||
-    (meta.old_status && meta.new_status) ||
-    meta.requested_fields ||
-    meta.recipient_name ||
-    meta.documentType ||
+    meta.recipient_email ??
+    (meta.old_status && meta.new_status) ??
+    meta.requested_fields ??
+    meta.recipient_name ??
+    meta.documentType ??
     meta.amount
   );
 }

@@ -11,6 +11,7 @@ import {
 } from '@verone/ui';
 
 import { SalesOrderShipmentForm } from '@verone/orders/components/forms/SalesOrderShipmentForm';
+import type { SalesOrderForShipment } from '@verone/orders/hooks';
 import { useSalesShipments } from '@verone/orders/hooks';
 
 interface SalesOrderShipmentModalProps {
@@ -30,13 +31,14 @@ export function SalesOrderShipmentModal({
   onSuccess,
 }: SalesOrderShipmentModalProps) {
   const { loadSalesOrderForShipment } = useSalesShipments();
-  const [enrichedOrder, setEnrichedOrder] = useState<any>(null);
+  const [enrichedOrder, setEnrichedOrder] =
+    useState<SalesOrderForShipment | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (open && order?.id) {
       setLoading(true);
-      loadSalesOrderForShipment(order.id).then(data => {
+      void loadSalesOrderForShipment(order.id).then(data => {
         setEnrichedOrder(data);
         setLoading(false);
       });

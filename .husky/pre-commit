@@ -35,4 +35,7 @@ if [ -n "$STAGED_FILES" ]; then
   echo "$STAGED_FILES" | xargs git add
 fi
 
-echo "✅ Pre-commit OK (< 1s) - Validation complète dans CI/CD"
+# 5. ESLint sur fichiers modifiés (lint-staged, ~2-5s)
+npx lint-staged
+
+echo "✅ Pre-commit OK - Validation complète dans CI/CD"

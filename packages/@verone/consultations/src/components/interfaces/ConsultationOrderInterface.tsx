@@ -1,15 +1,10 @@
-// @ts-nocheck - Table consultation_items non existante
-
 'use client';
 
 import { useState, useEffect } from 'react';
 
-import { useToast } from '@verone/common/hooks';
 import type { SelectedProduct } from '@verone/products/components/selectors/UniversalProductSelectorV2';
 import { UniversalProductSelectorV2 } from '@verone/products/components/selectors/UniversalProductSelectorV2';
 import { SourcingProductModal } from '@verone/products/components/sourcing/SourcingProductModal';
-import { useProducts } from '@verone/products/hooks';
-import type { ConsultationItem } from '@verone/types';
 import { Alert, AlertDescription } from '@verone/ui';
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
@@ -22,7 +17,6 @@ import {
 } from '@verone/ui';
 import { Checkbox } from '@verone/ui';
 import { Input } from '@verone/ui';
-import { Label } from '@verone/ui';
 import {
   Plus,
   Minus,
@@ -36,6 +30,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 
+import type { ConsultationItem } from '@verone/consultations/hooks';
 import { useConsultationItems } from '@verone/consultations/hooks';
 
 interface ConsultationOrderInterfaceProps {
@@ -47,7 +42,6 @@ export function ConsultationOrderInterface({
   consultationId,
   onItemsChanged,
 }: ConsultationOrderInterfaceProps) {
-  const { toast } = useToast();
   const {
     consultationItems,
     loading,
@@ -71,11 +65,6 @@ export function ConsultationOrderInterface({
   const [editPrice, setEditPrice] = useState('');
   const [editNotes, setEditNotes] = useState('');
 
-  // Only show active products — draft/sourcing products are added via SourcingProductModal
-  const { products } = useProducts({
-    status: 'active',
-  });
-
   // Gérer le changement d'items — ne dépend PAS de onItemsChanged pour éviter les boucles
   const itemsCount = consultationItems.length;
   useEffect(() => {
@@ -93,8 +82,8 @@ export function ConsultationOrderInterface({
   const startEditItem = (item: ConsultationItem) => {
     setEditingItem(item.id);
     setEditQuantity(item.quantity);
-    setEditPrice(item.unit_price?.toString() || '');
-    setEditNotes(item.notes || '');
+    setEditPrice(item.unit_price?.toString() ?? '');
+    setEditNotes(item.notes ?? '');
   };
 
   // Sauvegarder l'édition d'un item
@@ -232,6 +221,7 @@ export function ConsultationOrderInterface({
                       <td className="p-4">
                         <div className="flex items-center gap-3">
                           {item.product?.image_url ? (
+                            /* eslint-disable-next-line @next/next/no-img-element */
                             <img
                               src={item.product.image_url}
                               alt={item.product.name}
@@ -275,7 +265,7 @@ export function ConsultationOrderInterface({
                             <ButtonV2
                               variant="outline"
                               size="sm"
-                              onClick={() => changeQuantity(item.id, -1)}
+                              onClick={() => void changeQuantity(item.id, -1)}
                               disabled={item.quantity <= 1}
                             >
                               <Minus className="h-3 w-3" />
@@ -286,7 +276,7 @@ export function ConsultationOrderInterface({
                             <ButtonV2
                               variant="outline"
                               size="sm"
-                              onClick={() => changeQuantity(item.id, 1)}
+                              onClick={() => void changeQuantity(item.id, 1)}
                             >
                               <Plus className="h-3 w-3" />
                             </ButtonV2>
@@ -316,7 +306,7 @@ export function ConsultationOrderInterface({
                           >
                             {item.is_free
                               ? '-'
-                              : `${item.unit_price?.toFixed(2) || '0.00'}€`}
+                              : `${item.unit_price?.toFixed(2) ?? '0.00'}€`}
                           </span>
                         )}
                       </td>
@@ -325,7 +315,7 @@ export function ConsultationOrderInterface({
                       <td className="p-4 text-center">
                         <Checkbox
                           checked={item.is_free}
-                          onCheckedChange={() => toggleFreeItem(item.id)}
+                          onCheckedChange={() => void toggleFreeItem(item.id)}
                           disabled={editingItem === item.id}
                         />
                       </td>
@@ -341,7 +331,7 @@ export function ConsultationOrderInterface({
                               Gratuit
                             </Badge>
                           ) : (
-                            `${((item.unit_price || 0) * item.quantity).toFixed(2)}€`
+                            `${((item.unit_price ?? 0) * item.quantity).toFixed(2)}€`
                           )}
                         </span>
                       </td>
@@ -352,7 +342,7 @@ export function ConsultationOrderInterface({
                           <div className="flex items-center justify-center space-x-1">
                             <ButtonV2
                               size="sm"
-                              onClick={() => saveEditItem(item.id)}
+                              onClick={() => void saveEditItem(item.id)}
                               className="bg-green-600 hover:bg-green-700 text-white"
                             >
                               <Check className="h-3 w-3" />
@@ -378,9 +368,9 @@ export function ConsultationOrderInterface({
                               size="sm"
                               variant="outline"
                               onClick={() =>
-                                handleRemoveItem(
+                                void handleRemoveItem(
                                   item.id,
-                                  item.product?.name || 'ce produit'
+                                  item.product?.name ?? 'ce produit'
                                 )
                               }
                               className="text-red-600 hover:text-red-700"
@@ -432,8 +422,8 @@ export function ConsultationOrderInterface({
             await addItem({
               consultation_id: consultationId,
               product_id: product.id,
-              quantity: product.quantity || 1,
-              unit_price: product.unit_price || undefined,
+              quantity: product.quantity ?? 1,
+              unit_price: product.unit_price ?? undefined,
               is_free: false,
             });
           }

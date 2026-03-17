@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 import { createClient } from '@verone/utils/supabase/client';
 import type { Database } from '@verone/utils/supabase/types';
@@ -26,7 +26,7 @@ export function useCategories() {
   const [error, setError] = useState<string | null>(null);
   const supabase = createClient();
 
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -51,7 +51,7 @@ export function useCategories() {
 
         // Obtenir les comptages pour chaque catégorie
         const categoriesWithCount = await Promise.all(
-          (categoriesData || []).map(async category => {
+          (categoriesData ?? []).map(async category => {
             const { count, error: countError } = await supabase
               .from('subcategories')
               .select('*', { count: 'exact', head: true })
@@ -62,7 +62,7 @@ export function useCategories() {
               return { ...category, subcategory_count: 0 };
             }
 
-            return { ...category, subcategory_count: count || 0 };
+            return { ...category, subcategory_count: count ?? 0 };
           })
         );
 
@@ -73,7 +73,7 @@ export function useCategories() {
       }
 
       // Si la RPC fonctionne, utiliser les données directement
-      const categoriesWithCount = (data || []) as CategoryWithCount[];
+      const categoriesWithCount = (data ?? []) as CategoryWithCount[];
 
       // Stocker la liste plate pour accès par family_id
       setAllCategories(categoriesWithCount);
@@ -87,14 +87,14 @@ export function useCategories() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [supabase]);
 
   const buildHierarchy = (categories: Category[]): CategoryWithChildren[] => {
     const categoryMap = new Map<string, CategoryWithChildren>();
 
     // Convertir en map avec level
     categories.forEach(cat => {
-      categoryMap.set(cat.id, { ...cat, children: [] } as any);
+      categoryMap.set(cat.id, { ...cat, children: [] } as CategoryWithChildren);
     });
 
     const roots: CategoryWithChildren[] = [];
@@ -105,7 +105,7 @@ export function useCategories() {
       if (cat.family_id) {
         const parent = categoryMap.get(cat.family_id);
         if (parent) {
-          parent.children = parent.children || [];
+          parent.children = parent.children ?? [];
           parent.children.push(category);
         }
       } else {
@@ -135,7 +135,7 @@ export function useCategories() {
         // Gestion spécifique des erreurs de contrainte unique
         if (error.code === '23505') {
           // Créer une erreur avec le code préservé pour le form
-          const duplicateError: any = new Error(
+          const duplicateError: Error & { code?: string } = new Error(
             'Une catégorie avec ce nom existe déjà dans cette famille. Veuillez choisir un nom différent.'
           );
           duplicateError.code = '23505';
@@ -206,8 +206,8 @@ export function useCategories() {
   };
 
   useEffect(() => {
-    fetchCategories();
-  }, []);
+    void fetchCategories();
+  }, [fetchCategories]);
 
   const getCategoriesByFamily = (familyId: string): CategoryWithCount[] => {
     return allCategories.filter(category => category.family_id === familyId);

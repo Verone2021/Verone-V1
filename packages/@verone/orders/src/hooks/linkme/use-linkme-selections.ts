@@ -90,6 +90,51 @@ export interface SelectionSummary {
   affiliate_name: string;
 }
 
+// Internal row shapes for untyped Supabase queries
+interface SelectionItemRow {
+  id: string;
+  selection_id: string;
+  product_id: string;
+  base_price_ht: number;
+  margin_rate: number;
+  selling_price_ht: number | null;
+  display_order: number | null;
+  custom_description: string | null;
+  is_featured: boolean | null;
+  created_at: string | null;
+  product: {
+    id: string;
+    name: string;
+    sku: string;
+    cost_price: number | null;
+    product_status: string;
+    subcategory_id: string | null;
+    description: string | null;
+    selling_points: string[] | null;
+    weight: number | null;
+    dimensions: Record<string, number | string> | null;
+    subcategory: { name: string } | null;
+    supplier: { trade_name: string | null; legal_name: string } | null;
+  } | null;
+}
+
+interface ChannelPricingRow {
+  id: string;
+  product_id: string;
+  channel_commission_rate: number | null;
+  custom_price_ht: number | null;
+  public_price_ht: number | null;
+  min_margin_rate: number | null;
+  max_margin_rate: number | null;
+  suggested_margin_rate: number | null;
+  buffer_rate: number | null;
+}
+
+interface AffiliateNameRow {
+  id: string;
+  display_name: string;
+}
+
 /**
  * Récupère une sélection par ID avec ses produits
  */
@@ -122,6 +167,7 @@ async function fetchSelectionById(
   if (!selection) return null;
 
   // Récupérer les items de la sélection avec les produits
+  /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
   const { data: items, error: itemsError } = await (supabase as any)
     .from('linkme_selection_items')
     .select(
@@ -137,14 +183,17 @@ async function fetchSelectionById(
     )
     .eq('selection_id', selectionId)
     .order('display_order', { ascending: true });
+  /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
 
   if (itemsError) {
     console.error('Error fetching selection items:', itemsError);
     throw itemsError;
   }
 
+  const typedItems = items as SelectionItemRow[] | null;
+
   // Récupérer les images des produits
-  const productIds = items?.map((item: SelectionItem) => item.product_id) || [];
+  const productIds = typedItems?.map(item => item.product_id) ?? [];
   let imagesByProductId: Record<string, string> = {};
   const commissionByProductId: Record<string, number | null> = {};
   const catalogPriceByProductId: Record<string, number | null> = {};
@@ -180,6 +229,7 @@ async function fetchSelectionById(
     }
 
     // Récupérer les données channel_pricing
+    /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
     const { data: channelPrices } = await (supabase as any)
       .from('channel_pricing')
       .select(
@@ -187,9 +237,11 @@ async function fetchSelectionById(
       )
       .eq('channel_id', LINKME_CHANNEL_ID)
       .in('product_id', productIds);
+    /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
 
     if (channelPrices) {
-      channelPrices.forEach((cp: any) => {
+      const typedChannelPrices = channelPrices as ChannelPricingRow[];
+      typedChannelPrices.forEach(cp => {
         commissionByProductId[cp.product_id] = cp.channel_commission_rate;
         catalogPriceByProductId[cp.product_id] = cp.custom_price_ht;
         channelPricingIdByProductId[cp.product_id] = cp.id;
@@ -205,7 +257,7 @@ async function fetchSelectionById(
   }
 
   // Combiner les données
-  const itemsWithImages = (items || []).map((item: any) => {
+  const itemsWithImages = (typedItems ?? []).map(item => {
     const channelData = channelPricingDataByProductId[item.product_id];
     const rawProduct = item.product;
     return {
@@ -222,14 +274,14 @@ async function fetchSelectionById(
             selling_points: rawProduct.selling_points,
             weight_kg: rawProduct.weight,
             dimensions_cm: rawProduct.dimensions,
-            category_name: rawProduct.subcategory?.name || null,
+            category_name: rawProduct.subcategory?.name ?? null,
             supplier_name:
-              rawProduct.supplier?.trade_name ||
-              rawProduct.supplier?.legal_name ||
+              rawProduct.supplier?.trade_name ??
+              rawProduct.supplier?.legal_name ??
               null,
           }
         : undefined,
-      product_image_url: imagesByProductId[item.product_id] || null,
+      product_image_url: imagesByProductId[item.product_id] ?? null,
       channel_pricing_id: channelPricingIdByProductId[item.product_id] ?? null,
       commission_rate: commissionByProductId[item.product_id] ?? null,
       catalog_price_ht: catalogPriceByProductId[item.product_id] ?? null,
@@ -255,23 +307,27 @@ async function fetchSelectionsByEnseigne(
   enseigneId: string
 ): Promise<SelectionSummary[]> {
   // Récupérer les affiliés de cette enseigne (lien direct via enseigne_id)
+  /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
   const { data: affiliates, error: affError } = await (supabase as any)
     .from('linkme_affiliates')
     .select('id, display_name')
     .eq('enseigne_id', enseigneId);
+  /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
 
   if (affError) {
     console.error('Error fetching affiliates:', affError);
     throw affError;
   }
 
-  if (!affiliates || affiliates.length === 0) {
+  const typedAffiliates = affiliates as AffiliateNameRow[] | null;
+
+  if (!typedAffiliates || typedAffiliates.length === 0) {
     return [];
   }
 
-  const affiliateIds = affiliates.map((a: any) => a.id);
+  const affiliateIds = typedAffiliates.map(a => a.id);
   const affiliateNamesById: Record<string, string> = {};
-  affiliates.forEach((a: any) => {
+  typedAffiliates.forEach(a => {
     affiliateNamesById[a.id] = a.display_name;
   });
 
@@ -288,14 +344,14 @@ async function fetchSelectionsByEnseigne(
     throw selError;
   }
 
-  return (selections || []).map(s => ({
+  return (selections ?? []).map(s => ({
     id: s.id,
     name: s.name,
     slug: s.slug,
     archived_at: s.archived_at,
     products_count: s.products_count,
     affiliate_id: s.affiliate_id,
-    affiliate_name: affiliateNamesById[s.affiliate_id] || '',
+    affiliate_name: affiliateNamesById[s.affiliate_id] ?? '',
   }));
 }
 

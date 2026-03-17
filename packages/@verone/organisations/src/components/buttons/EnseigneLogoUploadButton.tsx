@@ -6,7 +6,7 @@ import Image from 'next/image';
 
 import { useLogoUpload } from '@verone/common/hooks';
 import { ButtonV2 } from '@verone/ui';
-import { spacing, colors } from '@verone/ui';
+import { colors } from '@verone/ui';
 import { cn } from '@verone/utils';
 import { Upload, Trash2, Loader2, AlertCircle, ImagePlus } from 'lucide-react';
 
@@ -106,8 +106,8 @@ export function EnseigneLogoUploadButton({
     setDragActive(false);
 
     const files = e.dataTransfer.files;
-    if (files && files[0]) {
-      handleFileUpload(files[0]);
+    if (files?.[0]) {
+      void handleFileUpload(files[0]);
     }
   };
 
@@ -122,7 +122,7 @@ export function EnseigneLogoUploadButton({
       const target = e.target as HTMLInputElement;
       const file = target.files?.[0];
       if (file) {
-        handleFileUpload(file);
+        void handleFileUpload(file);
       }
     };
     input.click();
@@ -196,6 +196,7 @@ export function EnseigneLogoUploadButton({
                 </div>
               ) : previewUrl ? (
                 <div className="bo-relative">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={previewUrl}
                     alt="Preview"
@@ -260,7 +261,7 @@ export function EnseigneLogoUploadButton({
           <ButtonV2
             variant="destructive"
             size="sm"
-            onClick={handleDelete}
+            onClick={() => void handleDelete()}
             disabled={isLoading}
             icon={deleting ? Loader2 : Trash2}
             loading={deleting}

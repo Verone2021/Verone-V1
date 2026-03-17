@@ -13,8 +13,6 @@ export interface LinkmeMissingInfoCountHook {
   lastUpdated: Date | null;
 }
 
-const LINKME_CHANNEL_ID = '93c68db1-5a30-4168-89ec-6383152be405';
-
 /**
  * Hook pour compter les demandes d'info LinkMe en attente de retour.
  *
@@ -28,7 +26,7 @@ export function useLinkmeMissingInfoCount(options?: {
   enableRealtime?: boolean;
   refetchInterval?: number;
 }): LinkmeMissingInfoCountHook {
-  const { enableRealtime = true, refetchInterval = 30000 } = options || {};
+  const { enableRealtime = true, refetchInterval = 30000 } = options ?? {};
 
   const [count, setCount] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
@@ -69,7 +67,7 @@ export function useLinkmeMissingInfoCount(options?: {
         return;
       }
 
-      setCount(totalCount || 0);
+      setCount(totalCount ?? 0);
       setLastUpdated(new Date());
     } catch (err) {
       const errorObj =
@@ -95,7 +93,9 @@ export function useLinkmeMissingInfoCount(options?: {
         return;
       }
 
-      fetchCount();
+      void fetchCount().catch((err: unknown) => {
+        console.error('[useLinkmeMissingInfoCount] Initial fetch error:', err);
+      });
 
       if (enableRealtime) {
         channelRef.current = supabase
@@ -108,18 +108,16 @@ export function useLinkmeMissingInfoCount(options?: {
               table: 'linkme_info_requests',
             },
             () => {
-              console.log(
-                '[useLinkmeMissingInfoCount] Realtime change detected'
-              );
-              fetchCount();
+              void fetchCount().catch((err: unknown) => {
+                console.error(
+                  '[useLinkmeMissingInfoCount] Refetch error:',
+                  err
+                );
+              });
             }
           )
           .subscribe(status => {
-            if (status === 'SUBSCRIBED') {
-              console.log(
-                '[useLinkmeMissingInfoCount] Realtime subscribed \u2713'
-              );
-            } else if (status === 'CHANNEL_ERROR') {
+            if (status === 'CHANNEL_ERROR') {
               console.warn(
                 '[useLinkmeMissingInfoCount] Realtime subscription failed'
               );
@@ -129,7 +127,9 @@ export function useLinkmeMissingInfoCount(options?: {
 
       if (!enableRealtime || refetchInterval > 0) {
         intervalRef.current = setInterval(() => {
-          fetchCount();
+          void fetchCount().catch((err: unknown) => {
+            console.error('[useLinkmeMissingInfoCount] Polling error:', err);
+          });
         }, refetchInterval);
       }
     };
@@ -141,7 +141,7 @@ export function useLinkmeMissingInfoCount(options?: {
     return () => {
       isMounted = false;
       if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
+        void supabase.removeChannel(channelRef.current);
         channelRef.current = null;
       }
       if (intervalRef.current) {

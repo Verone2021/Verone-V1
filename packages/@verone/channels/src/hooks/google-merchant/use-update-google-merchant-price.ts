@@ -58,20 +58,23 @@ export function useUpdateGoogleMerchantPrice() {
       );
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `HTTP ${response.status}`);
+        const errorData: { error?: string } = (await response.json()) as {
+          error?: string;
+        };
+        throw new Error(errorData.error ?? `HTTP ${response.status}`);
       }
 
-      const data: UpdatePriceResponse = await response.json();
+      const data: UpdatePriceResponse =
+        (await response.json()) as UpdatePriceResponse;
 
       if (!data.success) {
-        throw new Error(data.error || 'Failed to update price');
+        throw new Error(data.error ?? 'Failed to update price');
       }
 
       return data;
     },
     onSuccess: data => {
-      const { priceHtCents, priceTtcCents } = data.data || {};
+      const { priceHtCents, priceTtcCents } = data.data ?? {};
 
       logger.info('[useUpdateGoogleMerchantPrice] Success', {
         priceHtCents,
@@ -83,7 +86,9 @@ export function useUpdateGoogleMerchantPrice() {
       );
 
       // Invalidate queries
-      queryClient.invalidateQueries({ queryKey: ['google-merchant-products'] });
+      void queryClient.invalidateQueries({
+        queryKey: ['google-merchant-products'],
+      });
     },
     onError: error => {
       logger.error(`[useUpdateGoogleMerchantPrice] Failed: ${error.message}`);

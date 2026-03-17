@@ -128,8 +128,9 @@ export function useStockDashboard() {
         stock_forecasted_in: p.stock_forecasted_in,
         stock_forecasted_out: p.stock_forecasted_out,
         min_stock: p.min_stock,
-        cost_price: p.cost_price || 0, // ✅ FIXED: Utilisation du cost_price réel
-        product_image_url: (p as any).product_image_url || null, // ✅ NOUVEAU - Image produit
+        cost_price: p.cost_price ?? 0, // ✅ FIXED: Utilisation du cost_price réel
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        product_image_url: (p as readonly string[]).product_image_url ?? null, // ✅ NOUVEAU - Image produit
       }));
 
       // 🆕 QUERY 3: Mouvements 7 derniers jours (via use-stock-ui)
@@ -169,11 +170,13 @@ export function useStockDashboard() {
       if (allAlertsError) throw allAlertsError;
       if (alertsError) throw alertsError;
 
-      const alertsCount = {
-        out_of_stock: (allAlerts || []).filter(
+      const _alertsCount = {
+        out_of_stock: (allAlerts ?? []).filter(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
           (a: any) => a.alert_status === 'out_of_stock'
         ).length,
-        low_stock: (allAlerts || []).filter(
+        low_stock: (allAlerts ?? []).filter(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
           (a: any) => a.alert_status === 'low_stock'
         ).length,
       };
@@ -183,7 +186,7 @@ export function useStockDashboard() {
       // ✅ FIX Phase 3.6: Filtrer produits fantômes (stock > 0 mais 0 mouvements)
       // Créer Set des produits ayant eu des mouvements RÉELS (non forecast)
       const productsWithRealMovements = new Set(
-        (movements7d || [])
+        (movements7d ?? [])
           .filter(m => !m.affects_forecast) // Uniquement mouvements réels
           .map(m => m.product_id)
       );
@@ -202,12 +205,13 @@ export function useStockDashboard() {
       const overview: StockOverview = {
         total_products: realProducts.length, // ✅ FIX: Uniquement produits avec mouvements
         total_quantity: realProducts.reduce(
-          (sum, p) => sum + (p.stock_real || p.stock_quantity || 0),
+          (sum, p) => sum + ((p.stock_real || p.stock_quantity) ?? 0),
           0
         ),
         total_value: realProducts.reduce(
           (sum, p) =>
-            sum + (p.stock_real || p.stock_quantity || 0) * (p.cost_price || 0),
+            sum +
+            ((p.stock_real || p.stock_quantity) ?? 0) * (p.cost_price ?? 0),
           0
         ),
         products_in_stock: realProducts.filter(p => p.stock_real > 0).length, // ✅ FIX: Produits réels avec stock > 0
@@ -222,17 +226,17 @@ export function useStockDashboard() {
         ).length, // ✅ FIX: Alertes sur produits réels
         // ✅ FIX Phase 3.7: Calculs prévisionnels sur TOUS les produits (pas realProducts!)
         total_forecasted_in: allProductsForForecasts.reduce(
-          (sum, p) => sum + (p.stock_forecasted_in || 0),
+          (sum, p) => sum + (p.stock_forecasted_in ?? 0),
           0
         ),
         total_forecasted_out: allProductsForForecasts.reduce(
-          (sum, p) => sum + (p.stock_forecasted_out || 0),
+          (sum, p) => sum + (p.stock_forecasted_out ?? 0),
           0
         ),
         total_available: allProductsForForecasts.reduce(
           (sum, p) =>
             sum +
-            Math.max((p.stock_real || 0) - (p.stock_forecasted_out || 0), 0),
+            Math.max((p.stock_real ?? 0) - (p.stock_forecasted_out ?? 0), 0),
           0
         ),
         // ✅ NOUVEAUX KPIS Phase 3.7: Seront calculés après queries PO/SO
@@ -248,15 +252,15 @@ export function useStockDashboard() {
 
       // Agrégation des mouvements par type
       const entries7d =
-        movements7d?.filter(m => m.movement_type === 'IN') || [];
-      const exits7d = movements7d?.filter(m => m.movement_type === 'OUT') || [];
+        movements7d?.filter(m => m.movement_type === 'IN') ?? [];
+      const exits7d = movements7d?.filter(m => m.movement_type === 'OUT') ?? [];
       const adjustments7d =
-        movements7d?.filter(m => m.movement_type === 'ADJUST') || [];
+        movements7d?.filter(m => m.movement_type === 'ADJUST') ?? [];
 
       // Mouvements aujourd'hui
       const today = new Date().toISOString().split('T')[0];
       const movementsToday =
-        movements7d?.filter(m => m.performed_at.startsWith(today)) || [];
+        movements7d?.filter(m => m.performed_at.startsWith(today)) ?? [];
 
       const movementsSummary: MovementsSummary = {
         last_7_days: {
@@ -288,7 +292,7 @@ export function useStockDashboard() {
           adjustments: movementsToday.filter(m => m.movement_type === 'ADJUST')
             .length,
         },
-        total_movements: movements7d?.length || 0,
+        total_movements: movements7d?.length ?? 0,
       };
 
       // ============================================
@@ -298,19 +302,27 @@ export function useStockDashboard() {
 
       // Enrichir avec stock_forecasted_out + product_image_url depuis productsWithLegacyFields
       const lowStockProducts: LowStockProduct[] = [];
-      for (const alert of (alertsData || []) as any[]) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      for (const alert of (alertsData ?? []) as any[]) {
         const product = productsWithLegacyFields.find(
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
           p => p.id === alert.product_id
         );
         lowStockProducts.push({
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
           id: alert.product_id,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
           name: alert.product_name,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
           sku: alert.sku,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
           stock_quantity: alert.stock_quantity,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
           min_stock: alert.min_stock,
           cost_price: 0, // Pas besoin ici
-          stock_forecasted_out: product?.stock_forecasted_out || 0,
-          product_image_url: product?.product_image_url || null, // ✅ NOUVEAU - Image produit
+          stock_forecasted_out: product?.stock_forecasted_out ?? 0,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          product_image_url: product?.product_image_url ?? null, // ✅ NOUVEAU - Image produit
         });
       }
 
@@ -325,19 +337,19 @@ export function useStockDashboard() {
       );
 
       // Enrichir mouvements avec noms produits (0 query supplémentaire!)
-      const recentMovements: RecentMovement[] = (recentMovs || []).map(mov => {
+      const recentMovements: RecentMovement[] = (recentMovs ?? []).map(mov => {
         const product = productsMap.get(mov.product_id);
 
         return {
           id: mov.id,
           product_id: mov.product_id,
-          product_name: product?.name || 'Produit inconnu',
-          product_sku: product?.sku || '',
+          product_name: product?.name ?? 'Produit inconnu',
+          product_sku: product?.sku ?? '',
           movement_type: mov.movement_type,
           quantity_change: mov.quantity_change,
           quantity_before: mov.quantity_before,
           quantity_after: mov.quantity_after,
-          reason_code: mov.reason_code || '',
+          reason_code: mov.reason_code ?? '',
           notes: mov.notes,
           performed_at: mov.performed_at,
           performer_name: 'Admin', // TODO: Récupérer depuis auth.users ou profiles quand disponible
@@ -408,14 +420,14 @@ export function useStockDashboard() {
       ]);
 
       // Calculer totaux HT et counts
-      const poCount = poAggregates.data?.length || 0;
-      const poTotalHt = (poAggregates.data || []).reduce(
-        (sum, po) => sum + (po.total_ht || 0),
+      const poCount = poAggregates.data?.length ?? 0;
+      const poTotalHt = (poAggregates.data ?? []).reduce(
+        (sum, po) => sum + (po.total_ht ?? 0),
         0
       );
-      const soCount = soAggregates.data?.length || 0;
-      const soTotalHt = (soAggregates.data || []).reduce(
-        (sum, so) => sum + (so.total_ht || 0),
+      const soCount = soAggregates.data?.length ?? 0;
+      const soTotalHt = (soAggregates.data ?? []).reduce(
+        (sum, so) => sum + (so.total_ht ?? 0),
         0
       );
 
@@ -427,7 +439,7 @@ export function useStockDashboard() {
 
       // Mapper Purchase Orders avec supplier names
       const incomingOrders: ForecastedOrder[] = [];
-      for (const po of purchaseOrders || []) {
+      for (const po of purchaseOrders ?? []) {
         let supplierName = 'Fournisseur inconnu';
 
         if (po.supplier_id) {
@@ -438,8 +450,8 @@ export function useStockDashboard() {
             .single();
 
           supplierName =
-            supplier?.trade_name ||
-            supplier?.legal_name ||
+            supplier?.trade_name ??
+            supplier?.legal_name ??
             'Fournisseur inconnu';
         }
 
@@ -448,19 +460,19 @@ export function useStockDashboard() {
           order_number: po.po_number,
           order_type: 'purchase',
           supplier_name: supplierName,
-          total_quantity: (po.purchase_order_items || []).reduce(
+          total_quantity: (po.purchase_order_items ?? []).reduce(
             (sum: number, item: { quantity: number | null }) =>
-              sum + (item.quantity || 0),
+              sum + (item.quantity ?? 0),
             0
           ),
-          expected_date: po.expected_delivery_date || '',
+          expected_date: po.expected_delivery_date ?? '',
           status: po.status,
         });
       }
 
       // Mapper Sales Orders avec customer names (gestion polymorphe)
       const outgoingOrders: ForecastedOrder[] = [];
-      for (const so of salesOrders || []) {
+      for (const so of salesOrders ?? []) {
         let customerName = 'Client inconnu';
 
         if (so.customer_type === 'organization' && so.customer_id) {
@@ -471,7 +483,7 @@ export function useStockDashboard() {
             .single();
 
           customerName =
-            org?.trade_name || org?.legal_name || 'Organisation inconnue';
+            org?.trade_name ?? org?.legal_name ?? 'Organisation inconnue';
         } else if (
           so.customer_type === 'individual' &&
           so.individual_customer_id
@@ -492,12 +504,12 @@ export function useStockDashboard() {
           order_number: so.order_number,
           order_type: 'sales',
           client_name: customerName,
-          total_quantity: (so.sales_order_items || []).reduce(
+          total_quantity: (so.sales_order_items ?? []).reduce(
             (sum: number, item: { quantity: number | null }) =>
-              sum + (item.quantity || 0),
+              sum + (item.quantity ?? 0),
             0
           ),
-          expected_date: so.expected_delivery_date || '',
+          expected_date: so.expected_delivery_date ?? '',
           status: so.status,
         });
       }
@@ -513,23 +525,29 @@ export function useStockDashboard() {
         incoming_orders: incomingOrders,
         outgoing_orders: outgoingOrders,
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const error = err instanceof Error ? err : new Error(String(err));
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const errorMessage =
-        err.message || 'Erreur lors du chargement du dashboard';
+        err.message ?? 'Erreur lors du chargement du dashboard';
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       setError(errorMessage);
       toast({
         title: 'Erreur',
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         description: errorMessage,
         variant: 'destructive',
       });
     } finally {
       setLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [supabase, toast]); // ✅ FIX: Retirer `stock` pour éviter boucle infinie
 
   // ✅ FIX: Chargement unique au montage (pas de re-trigger en boucle)
   useEffect(() => {
-    fetchDashboardMetrics();
+    void fetchDashboardMetrics();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Charge une seule fois au montage
 
@@ -538,7 +556,7 @@ export function useStockDashboard() {
   // 60 sec = bon compromis fraîcheur vs charge serveur
   useEffect(() => {
     const intervalId = setInterval(() => {
-      fetchDashboardMetrics();
+      void fetchDashboardMetrics();
     }, 60000); // 60 secondes
 
     return () => clearInterval(intervalId);

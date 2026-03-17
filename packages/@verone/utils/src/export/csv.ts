@@ -7,7 +7,7 @@
 /**
  * Convertit un tableau d'objets en CSV
  */
-export function arrayToCSV<T extends Record<string, any>>(
+export function arrayToCSV<T extends Record<string, unknown>>(
   data: T[],
   headers: { key: keyof T; label: string }[]
 ): string {

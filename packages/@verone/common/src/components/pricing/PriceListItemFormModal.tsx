@@ -54,6 +54,13 @@ interface TierForm {
   notes: string;
 }
 
+interface SelectedProduct {
+  id: string;
+  name: string;
+  sku: string;
+  price_ht: number;
+}
+
 export function PriceListItemFormModal({
   open,
   onClose,
@@ -64,7 +71,8 @@ export function PriceListItemFormModal({
 
   // Product selection state
   const [productSearchTerm, setProductSearchTerm] = useState('');
-  const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const [selectedProduct, setSelectedProduct] =
+    useState<SelectedProduct | null>(null);
   const [showProductSearch, setShowProductSearch] = useState(!isEditMode);
 
   // Tiers configuration state
@@ -83,7 +91,9 @@ export function PriceListItemFormModal({
   ]);
 
   // Hooks
-  const { products } = useProducts({ search: productSearchTerm }) as any;
+  const { products } = useProducts({ search: productSearchTerm }) as {
+    products: SelectedProduct[] | undefined;
+  };
   const { data: priceList } = usePriceList(priceListId);
   const { data: existingItems } = usePriceListItems(priceListId);
   const { mutate: createItem, isPending: isCreating } =
@@ -96,20 +106,22 @@ export function PriceListItemFormModal({
   // Load existing item in edit mode
   useEffect(() => {
     if (itemId && existingItems) {
-      const item = existingItems.find((i: any) => i.id === itemId);
+      const item = existingItems.find((i: { id: string }) => i.id === itemId);
       if (item) {
-        setSelectedProduct(item.products);
+        setSelectedProduct(
+          (item as unknown as { products: SelectedProduct }).products
+        );
         setTiers([
           {
             min_quantity: item.min_quantity,
             max_quantity: item.max_quantity,
-            price_ht: (item as any).price_ht,
-            discount_rate: (item.discount_rate || 0) * 100, // Convert to percentage
-            margin_rate: (item.margin_rate || 0) * 100,
-            valid_from: item.valid_from || '',
-            valid_until: item.valid_until || '',
+            price_ht: (item as unknown as { price_ht: number }).price_ht,
+            discount_rate: (item.discount_rate ?? 0) * 100, // Convert to percentage
+            margin_rate: (item.margin_rate ?? 0) * 100,
+            valid_from: item.valid_from ?? '',
+            valid_until: item.valid_until ?? '',
             is_active: item.is_active,
-            notes: item.notes || '',
+            notes: item.notes ?? '',
           },
         ]);
         setShowProductSearch(false);
@@ -117,14 +129,14 @@ export function PriceListItemFormModal({
     }
   }, [itemId, existingItems]);
 
-  const handleSelectProduct = (product: any) => {
+  const handleSelectProduct = (product: SelectedProduct) => {
     setSelectedProduct(product);
     setShowProductSearch(false);
     // Initialize first tier with product's base price
     setTiers([
       {
         ...tiers[0],
-        price_ht: product.price_ht || 0,
+        price_ht: product.price_ht ?? 0,
       },
     ]);
   };
@@ -161,7 +173,7 @@ export function PriceListItemFormModal({
   const handleTierChange = (
     index: number,
     field: keyof TierForm,
-    value: any
+    value: TierForm[keyof TierForm]
   ) => {
     const newTiers = [...tiers];
     newTiers[index] = {
@@ -215,10 +227,10 @@ export function PriceListItemFormModal({
             max_quantity: tier.max_quantity ?? undefined,
             margin_rate:
               tier.margin_rate > 0 ? tier.margin_rate / 100 : undefined,
-            valid_from: tier.valid_from || undefined,
-            valid_until: tier.valid_until || undefined,
+            valid_from: tier.valid_from ?? undefined,
+            valid_until: tier.valid_until ?? undefined,
             is_active: tier.is_active,
-            notes: tier.notes || undefined,
+            notes: tier.notes ?? undefined,
           },
         },
         {
@@ -246,11 +258,12 @@ export function PriceListItemFormModal({
               max_quantity: tier.max_quantity ?? undefined,
               margin_rate:
                 tier.margin_rate > 0 ? tier.margin_rate / 100 : undefined,
-              currency: (priceList as any)?.currency,
-              valid_from: tier.valid_from || undefined,
-              valid_until: tier.valid_until || undefined,
+              currency: (priceList as unknown as { currency?: string })
+                ?.currency,
+              valid_from: tier.valid_from ?? undefined,
+              valid_until: tier.valid_until ?? undefined,
               is_active: tier.is_active,
-              notes: tier.notes || undefined,
+              notes: tier.notes ?? undefined,
             },
             {
               onSuccess: () => {
@@ -306,7 +319,7 @@ export function PriceListItemFormModal({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={e => void handleSubmit(e)} className="space-y-6">
           {/* Product Selection */}
           {showProductSearch && !isEditMode && (
             <Card>
@@ -339,7 +352,7 @@ export function PriceListItemFormModal({
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {products.map((product: any) => (
+                          {products.map((product: SelectedProduct) => (
                             <TableRow key={product.id}>
                               <TableCell className="font-medium">
                                 {product.name}
@@ -470,7 +483,7 @@ export function PriceListItemFormModal({
                               handleTierChange(
                                 index,
                                 'min_quantity',
-                                parseInt(e.target.value) || 1
+                                parseInt(e.target.value) ?? 1
                               )
                             }
                             required
@@ -485,7 +498,7 @@ export function PriceListItemFormModal({
                             id={`max_qty_${index}`}
                             type="number"
                             min={tier.min_quantity}
-                            value={tier.max_quantity || ''}
+                            value={tier.max_quantity ?? ''}
                             onChange={e =>
                               handleTierChange(
                                 index,
@@ -500,8 +513,12 @@ export function PriceListItemFormModal({
                         {/* Prix et Remises */}
                         <div className="space-y-2">
                           <Label htmlFor={`price_${index}`}>
-                            Prix HT ({(priceList as any)?.currency}){' '}
-                            <span className="text-red-600">*</span>
+                            Prix HT (
+                            {
+                              (priceList as unknown as { currency?: string })
+                                ?.currency
+                            }
+                            ) <span className="text-red-600">*</span>
                           </Label>
                           <Input
                             id={`price_${index}`}
@@ -513,7 +530,7 @@ export function PriceListItemFormModal({
                               handleTierChange(
                                 index,
                                 'price_ht',
-                                parseFloat(e.target.value) || 0
+                                parseFloat(e.target.value) ?? 0
                               )
                             }
                             required
@@ -535,7 +552,7 @@ export function PriceListItemFormModal({
                               handleTierChange(
                                 index,
                                 'discount_rate',
-                                parseFloat(e.target.value) || 0
+                                parseFloat(e.target.value) ?? 0
                               )
                             }
                             placeholder="0"
@@ -555,7 +572,7 @@ export function PriceListItemFormModal({
                               handleTierChange(
                                 index,
                                 'margin_rate',
-                                parseFloat(e.target.value) || 0
+                                parseFloat(e.target.value) ?? 0
                               )
                             }
                             placeholder="0"
@@ -642,7 +659,7 @@ export function PriceListItemFormModal({
             >
               Annuler
             </ButtonV2>
-            <ButtonV2 type="submit" disabled={isLoading || !selectedProduct}>
+            <ButtonV2 type="submit" disabled={isLoading ?? !selectedProduct}>
               {isLoading
                 ? 'Enregistrement...'
                 : isEditMode

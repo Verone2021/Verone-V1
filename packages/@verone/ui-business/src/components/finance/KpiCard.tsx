@@ -116,7 +116,7 @@ export function KpiCard({
       : null;
 
   // Utiliser la tendance forcée ou calculée
-  const actualTrend = forcedTrend || change?.trend || 'neutral';
+  const actualTrend = forcedTrend ?? change?.trend ?? 'neutral';
 
   // Icône de tendance
   const TrendIcon =

@@ -33,8 +33,7 @@ export const VALIDATION_PATTERNS = {
   SAFE_TEXT: /^[^<>{}\\]+$/,
 
   // URL sécurisée
-  SAFE_URL:
-    /^https?:\/\/([\w-]+\.)+[\w-]+(\/[\w._~:/?#[\]@!$&'()*+,;=-]*)?$/,
+  SAFE_URL: /^https?:\/\/([\w-]+\.)+[\w-]+(\/[\w._~:/?#[\]@!$&'()*+,;=-]*)?$/,
 };
 
 /**
@@ -61,16 +60,17 @@ export function sanitizeInput(input: string): string {
 /**
  * Sanitize un objet complet
  */
-export function sanitizeObject<T extends Record<string, any>>(obj: T): T {
+export function sanitizeObject<T extends Record<string, unknown>>(obj: T): T {
   const sanitized = {} as T;
-
   for (const [key, value] of Object.entries(obj)) {
     if (typeof value === 'string') {
       sanitized[key as keyof T] = sanitizeInput(value) as T[keyof T];
     } else if (typeof value === 'object' && value !== null) {
-      sanitized[key as keyof T] = sanitizeObject(value);
+      sanitized[key as keyof T] = sanitizeObject(
+        value as Record<string, unknown>
+      ) as T[keyof T];
     } else {
-      sanitized[key as keyof T] = value;
+      sanitized[key as keyof T] = value as T[keyof T];
     }
   }
 

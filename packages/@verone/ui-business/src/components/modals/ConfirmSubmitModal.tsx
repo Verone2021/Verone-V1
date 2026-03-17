@@ -171,7 +171,9 @@ export function ConfirmSubmitModal({
           </ButtonV2>
           <ButtonV2
             variant="primary"
-            onClick={handleConfirm}
+            onClick={() => {
+              void handleConfirm();
+            }}
             disabled={isSubmitting}
           >
             {isSubmitting ? (

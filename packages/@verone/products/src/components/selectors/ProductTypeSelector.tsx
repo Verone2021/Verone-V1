@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unused-vars */
 'use client';
 
 import { Package, Wrench, Info } from 'lucide-react';
@@ -127,7 +128,7 @@ export function ProductTypeSelector({
                     <ul className="space-y-1">
                       {option.features.map((feature, index) => (
                         <li
-                          key={index}
+                          key={feature}
                           className={cn(
                             'text-xs flex items-start',
                             isSelected ? 'text-white/70' : 'text-gray-500'

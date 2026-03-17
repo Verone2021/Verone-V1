@@ -183,6 +183,7 @@ export function QuoteSummaryPdf({
 
         {/* Header: Logo + Title */}
         <View style={s.headerRow}>
+          {/* eslint-disable-next-line jsx-a11y/alt-text */}
           <Image src={VERONE_LOGO_BASE64} style={s.logoImage} />
           <View style={{ alignItems: 'flex-end' }}>
             <Text style={{ fontSize: 14, fontFamily: 'Helvetica-Bold' }}>

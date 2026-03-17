@@ -45,8 +45,9 @@ export function OrganisationContactsManager({
 
   useEffect(() => {
     if (mode === 'edit' && organisationId) {
-      loadContacts();
+      void loadContacts();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, organisationId]);
 
   const loadContacts = async () => {
@@ -64,7 +65,7 @@ export function OrganisationContactsManager({
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-      setContacts((data as any) || []);
+      setContacts((data as Contact[]) ?? []);
     } catch (err) {
       console.error('Erreur chargement contacts:', err);
     } finally {
@@ -99,7 +100,7 @@ export function OrganisationContactsManager({
         .eq('id', contact.id);
 
       if (error) throw error;
-      console.log('✅ Contact supprimé avec succès');
+      console.warn('Contact supprimé avec succès');
       await loadContacts();
     } catch (err) {
       console.error('❌ Erreur suppression contact:', err);
@@ -334,7 +335,9 @@ export function OrganisationContactsManager({
                   variant="ghost"
                   size="sm"
                   icon={Trash2}
-                  onClick={() => handleDeleteContact(contact)}
+                  onClick={() => {
+                    void handleDeleteContact(contact);
+                  }}
                 />
               </div>
             </div>
@@ -345,13 +348,14 @@ export function OrganisationContactsManager({
       {/* Contact Form Modal */}
       {organisationId && (
         <ContactFormModal
-          {...({
-            isOpen: isModalOpen,
-            onClose: handleModalClose,
-            organisationId: organisationId,
-            contact: selectedContact,
-            onSuccess: handleContactSuccess,
-          } as any)}
+          isOpen={isModalOpen}
+          onClose={handleModalClose}
+          organisationId={organisationId}
+          organisationName=""
+          contact={selectedContact as Contact | undefined}
+          onSave={() => {
+            void handleContactSuccess();
+          }}
         />
       )}
     </div>

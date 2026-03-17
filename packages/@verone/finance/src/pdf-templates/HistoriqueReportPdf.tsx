@@ -62,6 +62,7 @@ export function HistoriqueReportPdf({ report }: HistoriqueReportPdfProps) {
         />
         {/* Header */}
         <View style={styles.headerContainer}>
+          {/* eslint-disable-next-line jsx-a11y/alt-text -- react-pdf Image */}
           <Image src={VERONE_LOGO_BASE64} style={styles.logoImage} />
           <Text
             style={[
@@ -199,7 +200,7 @@ export function HistoriqueReportPdf({ report }: HistoriqueReportPdfProps) {
                 {formatDate(m.performed_at)}
               </Text>
               <Text style={[styles.tableCell, { width: '25%' }]}>
-                {truncate(m.product_name || 'N/A', 25)}
+                {truncate(m.product_name ?? 'N/A', 25)}
               </Text>
               <Text style={[styles.tableCellCenter, { width: '10%' }]}>
                 {m.movement_type}
@@ -216,7 +217,7 @@ export function HistoriqueReportPdf({ report }: HistoriqueReportPdfProps) {
                 {m.quantity_after}
               </Text>
               <Text style={[styles.tableCell, { width: '29%' }]}>
-                {truncate(m.reason_description || m.notes || '', 30)}
+                {truncate(m.reason_description ?? m.notes ?? '', 30)}
               </Text>
             </View>
           ))}

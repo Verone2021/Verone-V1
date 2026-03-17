@@ -26,6 +26,8 @@ CRM/ERP modulaire pour decoration et mobilier d'interieur haut de gamme.
 6. **TOUJOURS demander a Romeo** avant commit/push/PR
 7. **TOUJOURS repondre en francais** (code et commits en anglais)
 8. **TOUJOURS utiliser `/pr`** pour les PRs — JAMAIS faire manuellement
+9. **TOUJOURS ajouter `"lint": "eslint src --max-warnings=0"`** dans le `package.json` de tout nouveau package
+10. **JAMAIS de warning ESLint** — toutes les regles sont en `error`, 0 tolerance
 
 > Si tu ne te souviens plus de ces regles → **STOP, relis CLAUDE.md**.
 

@@ -10,9 +10,7 @@ import {
   Mail,
   Edit,
   Trash2,
-  UserCheck,
   Users,
-  Building2,
   Star,
   StarOff,
   ExternalLink,
@@ -28,7 +26,12 @@ import {
   CardHeader,
   CardTitle,
 } from '@verone/ui';
-import { useContacts, type Contact } from '@verone/organisations/hooks';
+import {
+  useContacts,
+  type Contact,
+  type CreateContactData,
+  type UpdateContactData,
+} from '@verone/organisations/hooks';
 
 import { ContactFormModal } from '../modals/contact-form-modal';
 
@@ -57,12 +60,12 @@ export function ContactsManagementSection({
     deactivateContact,
     setPrimaryContact,
     getContactFullName,
-    getContactRoles,
   } = useContacts();
 
   // Charger les contacts à l'initialisation
   useEffect(() => {
-    loadContacts();
+    void loadContacts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [organisationId]);
 
   // Filtrer les contacts de cette organisation
@@ -75,7 +78,7 @@ export function ContactsManagementSection({
   const loadContacts = async () => {
     try {
       await fetchOrganisationContacts(organisationId);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erreur lors du chargement des contacts:', error);
     }
   };
@@ -90,9 +93,9 @@ export function ContactsManagementSection({
     setIsModalOpen(true);
   };
 
-  const handleContactSaved = async (contactData: any) => {
+  const handleContactSaved = async (contactData: UpdateContactData) => {
     try {
-      console.log('🔄 ContactsManagementSection - Sauvegarde contact:', {
+      console.warn('ContactsManagementSection - Sauvegarde contact:', {
         organisationId,
         organisationName,
         organisationType,
@@ -105,11 +108,11 @@ export function ContactsManagementSection({
         await updateContact(editingContact.id, contactData);
       } else {
         // Création avec association automatique
-        const fullContactData = {
-          ...contactData,
+        const fullContactData: CreateContactData = {
+          ...(contactData as unknown as CreateContactData),
           organisation_id: organisationId,
         };
-        console.log('📝 Données finales pour création:', fullContactData);
+        console.warn('Données finales pour création:', fullContactData);
         await createContact(fullContactData);
       }
 
@@ -117,21 +120,14 @@ export function ContactsManagementSection({
       setEditingContact(null);
       await loadContacts();
       onUpdate?.();
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
       console.error(
         '❌ ERREUR SAUVEGARDE CONTACT - ContactsManagementSection:'
       );
-      console.error('Error object:', error);
-      console.error('Error string:', String(error));
-      console.error('Error message:', error?.message);
+      console.error('Error:', message);
       console.error('OrganisationId:', organisationId);
       console.error('ContactData received:', contactData);
-
-      try {
-        console.error('Error JSON:', JSON.stringify(error, null, 2));
-      } catch (e) {
-        console.error('Cannot stringify error:', e);
-      }
     }
   };
 
@@ -145,7 +141,7 @@ export function ContactsManagementSection({
         await deactivateContact(contact.id);
         await loadContacts();
         onUpdate?.();
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Erreur lors de la suppression:', error);
       }
     }
@@ -156,7 +152,7 @@ export function ContactsManagementSection({
       await setPrimaryContact(contact.id);
       await loadContacts();
       onUpdate?.();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(
         'Erreur lors de la définition du contact principal:',
         error
@@ -337,7 +333,9 @@ export function ContactsManagementSection({
                         <ButtonV2
                           variant="outline"
                           size="sm"
-                          onClick={() => handleSetPrimary(contact)}
+                          onClick={() => {
+                            void handleSetPrimary(contact);
+                          }}
                           className="text-gray-700 border-gray-200 hover:bg-gray-50"
                           title="Définir comme contact principal"
                         >
@@ -367,7 +365,9 @@ export function ContactsManagementSection({
                       <ButtonV2
                         variant="outline"
                         size="sm"
-                        onClick={() => handleDeleteContact(contact)}
+                        onClick={() => {
+                          void handleDeleteContact(contact);
+                        }}
                         className="text-red-600 border-red-200 hover:bg-red-50"
                         title="Supprimer le contact"
                       >
@@ -384,17 +384,17 @@ export function ContactsManagementSection({
 
       {/* Modal de création/édition */}
       <ContactFormModal
-        {...({
-          isOpen: isModalOpen,
-          onClose: () => {
-            setIsModalOpen(false);
-            setEditingContact(null);
-          },
-          onSave: handleContactSaved,
-          contact: (editingContact ?? undefined) as any,
-          organisationId: organisationId,
-          organisationName: organisationName,
-        } as any)}
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setEditingContact(null);
+        }}
+        onSave={contactData => {
+          void handleContactSaved(contactData as unknown as UpdateContactData);
+        }}
+        contact={editingContact ?? undefined}
+        organisationId={organisationId}
+        organisationName={organisationName}
       />
     </>
   );

@@ -20,7 +20,7 @@ interface Product {
   display_order?: number;
 }
 
-interface Collection {
+interface _Collection {
   id: string;
   name: string;
   description?: string;
@@ -201,8 +201,8 @@ export function sortVariantSiblings(
 
     if (aInStock && bInStock) {
       // Toutes deux en stock : trier par display_order puis nom
-      const aSortOrder = a.display_order || 999;
-      const bSortOrder = b.display_order || 999;
+      const aSortOrder = a.display_order ?? 999;
+      const bSortOrder = b.display_order ?? 999;
 
       if (aSortOrder !== bSortOrder) {
         return aSortOrder - bSortOrder;
@@ -231,16 +231,16 @@ export function generateSKU(
   if (variantAttributes) {
     // Extraire et encoder les attributs principaux
     const colorCode =
-      extractAttributeCode(variantAttributes, 'couleur', 'color') || 'DEF';
+      extractAttributeCode(variantAttributes, 'couleur', 'color') ?? 'DEF';
     const materialCode =
       extractAttributeCode(
         variantAttributes,
         'matiere',
         'material',
         'matière'
-      ) || 'DEF';
+      ) ?? 'DEF';
     const sizeCode =
-      extractAttributeCode(variantAttributes, 'taille', 'size', 'dimension') ||
+      extractAttributeCode(variantAttributes, 'taille', 'size', 'dimension') ??
       '';
 
     parts.push(colorCode, materialCode);
@@ -386,7 +386,7 @@ function findAttributeValue(
       attributes[key] ||
       attributes[key.toLowerCase()] ||
       attributes[key.toUpperCase()];
-    if (value && value.trim()) {
+    if (value?.trim()) {
       return value.trim();
     }
   }

@@ -169,7 +169,7 @@ export function DocumentLink({
                 !hasDocument && 'opacity-50',
                 className
               )}
-              onClick={onPreview || (href ? undefined : undefined)}
+              onClick={onPreview ?? (href ? undefined : undefined)}
               {...props}
             >
               <Icon className="h-3.5 w-3.5" />
@@ -215,13 +215,13 @@ export function DocumentLink({
         )}
 
         {/* Téléchargement */}
-        {(onDownload || documentUrl) && hasDocument && (
+        {(onDownload ?? documentUrl) && hasDocument && (
           <Button
             variant="ghost"
             size="icon"
             className="h-6 w-6"
             onClick={
-              onDownload ||
+              onDownload ??
               (() => documentUrl && window.open(documentUrl, '_blank'))
             }
             title="Télécharger"
@@ -294,7 +294,7 @@ export function generateDocumentNumber(
   year?: number
 ): string {
   const prefix = documentTypeConfig[type].prefix;
-  const currentYear = year || new Date().getFullYear();
+  const currentYear = year ?? new Date().getFullYear();
   const paddedSequence = sequence.toString().padStart(4, '0');
   return `${prefix}-${currentYear}-${paddedSequence}`;
 }

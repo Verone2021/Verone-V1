@@ -50,7 +50,7 @@ export function useProductPrimaryImage(productId: string | undefined) {
           throw fetchError;
         }
 
-        setImage(data as any);
+        setImage(data as ProductPrimaryImage);
       } catch (err) {
         console.error('[useProductPrimaryImage] Error:', err);
         setError(err instanceof Error ? err.message : 'Erreur inconnue');
@@ -60,7 +60,7 @@ export function useProductPrimaryImage(productId: string | undefined) {
       }
     };
 
-    fetchPrimaryImage();
+    void fetchPrimaryImage();
   }, [productId, supabase]);
 
   return { image, loading, error };
@@ -76,6 +76,7 @@ export function useProductPrimaryImages(productIds: string[]) {
   const [error, setError] = useState<string | null>(null);
 
   const supabase = createClient();
+  const productIdsKey = productIds.filter(Boolean).sort().join(',');
 
   useEffect(() => {
     if (!productIds || productIds.length === 0) {
@@ -99,7 +100,7 @@ export function useProductPrimaryImages(productIds: string[]) {
         // Transformer en objet indexé par product_id
         const imageMap: Record<string, ProductPrimaryImage> = {};
         data?.forEach(img => {
-          imageMap[img.product_id] = img as any;
+          imageMap[img.product_id] = img as ProductPrimaryImage;
         });
 
         setImages(imageMap);
@@ -112,8 +113,9 @@ export function useProductPrimaryImages(productIds: string[]) {
       }
     };
 
-    fetchPrimaryImages();
-  }, [JSON.stringify(productIds), supabase]);
+    void fetchPrimaryImages();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- productIds serialized as productIdsKey for stable dependency
+  }, [productIdsKey, supabase]);
 
   return { images, loading, error };
 }

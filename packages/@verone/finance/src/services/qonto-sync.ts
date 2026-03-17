@@ -8,6 +8,8 @@
  * - Sync incrémentale (depuis dernière sync)
  */
 
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+
 import type {
   QontoTransaction,
   QontoTransactionSide,
@@ -160,10 +162,13 @@ export class QontoSyncService {
    */
   async getLastSyncStatus(syncType: SyncType): Promise<LastSyncStatus> {
     // NOTE: RPC non typée car la migration n'est pas encore appliquée aux types générés
-    const { data, error } = await (this.supabase.rpc as CallableFunction)(
+    const { data, error } = (await (this.supabase.rpc as CallableFunction)(
       'get_last_sync_status',
       { p_sync_type: syncType }
-    );
+    )) as {
+      data: Array<Record<string, unknown>> | null;
+      error: { message: string } | null;
+    };
 
     if (error || !data || !Array.isArray(data) || data.length === 0) {
       return {
@@ -179,7 +184,7 @@ export class QontoSyncService {
       };
     }
 
-    const row = data[0] as Record<string, unknown>;
+    const row = data[0];
     return {
       syncRunId: row.sync_run_id as string | null,
       status: row.status as SyncRunStatus | null,
@@ -214,7 +219,7 @@ export class QontoSyncService {
     } = options;
 
     // Log mode de sync
-    console.log(
+    console.warn(
       `[Qonto Sync] Starting sync: scope=${syncScope}, fromDate=${fromDate}, maxPages=${maxPages}`
     );
 
@@ -226,21 +231,22 @@ export class QontoSyncService {
     try {
       // 1. Acquérir le lock (anti-boucle)
       // NOTE: RPC non typée car la migration n'est pas encore appliquée aux types générés
-      const lockResult = await (this.supabase.rpc as CallableFunction)(
+      const lockResult = (await (this.supabase.rpc as CallableFunction)(
         'acquire_sync_lock',
         {
           p_sync_type: 'transactions',
           p_lock_duration_seconds: timeoutSeconds,
         }
-      );
+      )) as {
+        data: Array<Record<string, unknown>> | null;
+        error: { message: string } | null;
+      };
 
       if (lockResult.error) {
         throw new Error(`Erreur acquisition lock: ${lockResult.error.message}`);
       }
 
-      const lockData = (
-        lockResult.data as Array<Record<string, unknown>> | null
-      )?.[0];
+      const lockData = lockResult.data?.[0];
       if (!lockData?.success) {
         return {
           success: false,
@@ -266,7 +272,7 @@ export class QontoSyncService {
       if (syncScope === 'all') {
         // Backfill complet depuis fromDate
         syncFrom = new Date(fromDate);
-        console.log(`[Qonto Sync] Backfill mode: syncing from ${fromDate}`);
+        console.warn(`[Qonto Sync] Backfill mode: syncing from ${fromDate}`);
       } else if (fullSync) {
         syncFrom = new Date('2020-01-01');
       } else if (since) {
@@ -386,7 +392,7 @@ export class QontoSyncService {
         } while (true);
 
         // Log par compte bancaire (observabilité)
-        console.log(
+        console.warn(
           `[Qonto Sync] Account ${account.name} (${account.id.slice(0, 8)}...):`,
           `fetched=${accountStats.fetched},`,
           `created=${accountStats.created},`,
@@ -418,18 +424,18 @@ export class QontoSyncService {
         p_items_skipped: totalSkipped,
         p_items_failed: totalFailed,
         p_errors: JSON.stringify(errors),
-        p_cursor: cursor || null,
+        p_cursor: cursor ?? null,
       });
 
       // 6. Auto-créer les expenses pour les nouvelles transactions débit
       let expensesCreated = 0;
       if (autoCreateExpenses && (totalCreated > 0 || totalUpdated > 0)) {
         try {
-          const { data } = await (this.supabase.rpc as CallableFunction)(
+          const { data } = (await (this.supabase.rpc as CallableFunction)(
             'create_expenses_from_debits'
-          );
-          expensesCreated = data || 0;
-          console.log(
+          )) as { data: number | null };
+          expensesCreated = data ?? 0;
+          console.warn(
             `[Qonto Sync] Auto-created ${expensesCreated} expenses for debit transactions`
           );
         } catch (expenseErr) {
@@ -558,7 +564,7 @@ export class QontoSyncService {
       settled_at: tx.settled_at ?? undefined,
       raw_data: tx as unknown as Record<string, unknown>,
       // Pièces jointes - SOURCE UNIQUE pour la colonne attachment_ids
-      attachment_ids: tx.attachment_ids || null,
+      attachment_ids: tx.attachment_ids ?? null,
       updated_at: new Date().toISOString(),
       // TVA Qonto OCR - stocker uniquement si valide (pas -1)
       // amount_vat is computed by trigger trg_calculate_ht_vat from amount + vat_rate
@@ -599,14 +605,14 @@ export class QontoSyncService {
    * Nettoyer les locks expirés
    */
   async cleanupExpiredLocks(): Promise<number> {
-    const { data, error } = await (this.supabase.rpc as CallableFunction)(
+    const { data, error } = (await (this.supabase.rpc as CallableFunction)(
       'cleanup_expired_sync_locks'
-    );
+    )) as { data: number | null; error: { message: string } | null };
     if (error) {
       console.error('Error cleaning up expired locks:', error);
       return 0;
     }
-    return (data as number) || 0;
+    return data ?? 0;
   }
 }
 
@@ -617,9 +623,7 @@ export class QontoSyncService {
 let syncServiceInstance: QontoSyncService | null = null;
 
 export function getQontoSyncService(): QontoSyncService {
-  if (!syncServiceInstance) {
-    syncServiceInstance = new QontoSyncService();
-  }
+  syncServiceInstance ??= new QontoSyncService();
   return syncServiceInstance;
 }
 

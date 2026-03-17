@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-floating-promises, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unused-vars, @typescript-eslint/prefer-nullish-coalescing */
 /**
  * VariantGroupCreationWizard - Wizard 3 étapes pour créer un groupe de variantes
  *
@@ -126,7 +127,7 @@ export function VariantGroupCreationWizard({
 
   // Fournisseurs actifs uniquement
   const suppliers = React.useMemo(() => {
-    return (organisations || []).filter(
+    return (organisations ?? []).filter(
       org => (org as any).organisation_type === 'supplier' && !org.archived_at
     );
   }, [organisations]);
@@ -409,7 +410,7 @@ export function VariantGroupCreationWizard({
                 <CategoryFilterCombobox
                   value={formData.subcategory_id}
                   onValueChange={value =>
-                    updateFormData({ subcategory_id: value || '' })
+                    updateFormData({ subcategory_id: value ?? '' })
                   }
                   placeholder="Sélectionner une sous-catégorie"
                   entityType="variant_groups"

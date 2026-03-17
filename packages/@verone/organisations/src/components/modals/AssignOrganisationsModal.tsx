@@ -12,20 +12,10 @@ import {
   DialogDescription,
 } from '@verone/ui';
 import { Input } from '@verone/ui';
-import { Checkbox } from '@verone/ui';
 import { Badge } from '@verone/ui';
 import { cn } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
-import {
-  Building2,
-  Search,
-  Plus,
-  X,
-  Check,
-  Star,
-  Loader2,
-  Users,
-} from 'lucide-react';
+import { Building2, Search, Plus, X, Star, Loader2, Users } from 'lucide-react';
 
 import type { EnseigneOrganisation, Enseigne } from '../../hooks/use-enseignes';
 
@@ -86,7 +76,7 @@ export function AssignOrganisationsModal({
       setError(null);
 
       try {
-        let query = (supabase as any)
+        let query = supabase
           .from('organisations')
           .select(
             'id, legal_name, trade_name, is_active, city, country, enseigne_id, is_enseigne_parent'
@@ -108,7 +98,7 @@ export function AssignOrganisationsModal({
           return;
         }
 
-        setAvailableOrganisations((data as OrganisationListItem[]) || []);
+        setAvailableOrganisations((data as OrganisationListItem[]) ?? []);
       } catch (err) {
         setError(
           err instanceof Error
@@ -120,7 +110,8 @@ export function AssignOrganisationsModal({
       }
     };
 
-    fetchAvailableOrganisations();
+    void fetchAvailableOrganisations();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- supabase client is stable singleton
   }, [open, searchQuery]);
 
   // Check if there's already a parent organisation
@@ -167,7 +158,7 @@ export function AssignOrganisationsModal({
   };
 
   const getDisplayName = (org: OrganisationListItem | EnseigneOrganisation) => {
-    return org.trade_name || org.legal_name;
+    return org.trade_name ?? org.legal_name;
   };
 
   if (!enseigne) return null;
@@ -245,7 +236,7 @@ export function AssignOrganisationsModal({
                   <ButtonV2
                     variant="ghost"
                     size="sm"
-                    onClick={() => handleUnassign(org.id)}
+                    onClick={() => void handleUnassign(org.id)}
                     disabled={actionLoading === org.id}
                     className="text-red-600 hover:text-red-700 hover:bg-red-50"
                   >
@@ -320,7 +311,7 @@ export function AssignOrganisationsModal({
                     <ButtonV2
                       variant="outline"
                       size="sm"
-                      onClick={() => handleAssign(org.id, false)}
+                      onClick={() => void handleAssign(org.id, false)}
                       disabled={actionLoading === org.id}
                     >
                       {actionLoading === org.id ? (
@@ -338,7 +329,7 @@ export function AssignOrganisationsModal({
                       <ButtonV2
                         variant="secondary"
                         size="sm"
-                        onClick={() => handleAssign(org.id, true)}
+                        onClick={() => void handleAssign(org.id, true)}
                         disabled={actionLoading === org.id}
                       >
                         {actionLoading === org.id ? (

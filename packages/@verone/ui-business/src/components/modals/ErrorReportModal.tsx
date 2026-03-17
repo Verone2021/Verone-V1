@@ -180,18 +180,18 @@ export function ErrorReportModal({
   // État du formulaire
   const [formData, setFormData] = useState<Partial<ErrorReport>>({
     testId,
-    title: existingReport?.title || '',
-    description: existingReport?.description || '',
-    errorType: existingReport?.errorType || 'ui_bug',
-    severity: existingReport?.severity || 'medium',
-    status: existingReport?.status || 'open',
-    screenshots: existingReport?.screenshots || [],
-    codeSnippet: existingReport?.codeSnippet || '',
-    steps: existingReport?.steps || [],
-    expectedBehavior: existingReport?.expectedBehavior || '',
-    actualBehavior: existingReport?.actualBehavior || '',
+    title: existingReport?.title ?? '',
+    description: existingReport?.description ?? '',
+    errorType: existingReport?.errorType ?? 'ui_bug',
+    severity: existingReport?.severity ?? 'medium',
+    status: existingReport?.status ?? 'open',
+    screenshots: existingReport?.screenshots ?? [],
+    codeSnippet: existingReport?.codeSnippet ?? '',
+    steps: existingReport?.steps ?? [],
+    expectedBehavior: existingReport?.expectedBehavior ?? '',
+    actualBehavior: existingReport?.actualBehavior ?? '',
     browserInfo,
-    createdAt: existingReport?.createdAt || new Date(),
+    createdAt: existingReport?.createdAt ?? new Date(),
   });
 
   // Gestion de l'upload de screenshots
@@ -206,7 +206,7 @@ export function ErrorReportModal({
 
     setFormData(prev => ({
       ...prev,
-      screenshots: [...(prev.screenshots || []), ...newFiles],
+      screenshots: [...(prev.screenshots ?? []), ...newFiles],
     }));
   };
 
@@ -214,7 +214,7 @@ export function ErrorReportModal({
   const removeScreenshot = (index: number) => {
     setFormData(prev => ({
       ...prev,
-      screenshots: prev.screenshots?.filter((_, i) => i !== index) || [],
+      screenshots: prev.screenshots?.filter((_, i) => i !== index) ?? [],
     }));
   };
 
@@ -222,21 +222,21 @@ export function ErrorReportModal({
   const addStep = () => {
     setFormData(prev => ({
       ...prev,
-      steps: [...(prev.steps || []), ''],
+      steps: [...(prev.steps ?? []), ''],
     }));
   };
 
   const updateStep = (index: number, value: string) => {
     setFormData(prev => ({
       ...prev,
-      steps: prev.steps?.map((step, i) => (i === index ? value : step)) || [],
+      steps: prev.steps?.map((step, i) => (i === index ? value : step)) ?? [],
     }));
   };
 
   const removeStep = (index: number) => {
     setFormData(prev => ({
       ...prev,
-      steps: prev.steps?.filter((_, i) => i !== index) || [],
+      steps: prev.steps?.filter((_, i) => i !== index) ?? [],
     }));
   };
 
@@ -250,7 +250,7 @@ export function ErrorReportModal({
     try {
       const report: ErrorReport = {
         ...formData,
-        id: existingReport?.id || `error_${Date.now()}`,
+        id: existingReport?.id ?? `error_${Date.now()}`,
         updatedAt: new Date(),
       } as ErrorReport;
 
@@ -274,7 +274,7 @@ export function ErrorReportModal({
 
         const video = document.createElement('video');
         video.srcObject = stream;
-        video.play();
+        void video.play();
 
         video.addEventListener('loadedmetadata', () => {
           const canvas = document.createElement('canvas');
@@ -291,7 +291,7 @@ export function ErrorReportModal({
               });
               setFormData(prev => ({
                 ...prev,
-                screenshots: [...(prev.screenshots || []), file],
+                screenshots: [...(prev.screenshots ?? []), file],
               }));
             }
           });
@@ -300,7 +300,7 @@ export function ErrorReportModal({
         });
       }
     } catch (error) {
-      console.log('Screenshot capture not available:', error);
+      console.warn('Screenshot capture not available:', error);
     }
   };
 
@@ -316,7 +316,12 @@ export function ErrorReportModal({
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="h-full">
+        <form
+          onSubmit={e => {
+            void handleSubmit(e);
+          }}
+          className="h-full"
+        >
           <Tabs
             value={currentTab}
             onValueChange={setCurrentTab}
@@ -514,7 +519,9 @@ export function ErrorReportModal({
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={captureScreenshot}
+                      onClick={() => {
+                        void captureScreenshot();
+                      }}
                     >
                       <Camera className="h-4 w-4 mr-2" />
                       Capture écran
@@ -549,7 +556,11 @@ export function ErrorReportModal({
                   }}
                   onDragOver={e => e.preventDefault()}
                 >
-                  <Image className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+                  {/* eslint-disable-next-line jsx-a11y/alt-text */}
+                  <Image
+                    className="h-12 w-12 mx-auto text-gray-400 mb-4"
+                    aria-hidden="true"
+                  />
                   <p className="text-gray-600">
                     Glissez-déposez vos images ici ou cliquez pour sélectionner
                   </p>
@@ -564,6 +575,7 @@ export function ErrorReportModal({
                     {formData.screenshots.map((file, index) => (
                       <Card key={index} className="relative">
                         <CardContent className="p-2">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={URL.createObjectURL(file)}
                             alt={`Screenshot ${index + 1}`}

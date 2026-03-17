@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 
 import { Badge } from '@verone/ui';
 import { Button } from '@verone/ui';
@@ -16,22 +16,8 @@ import { Checkbox } from '@verone/ui';
 import { Input } from '@verone/ui';
 import { Label } from '@verone/ui';
 import { Popover, PopoverContent, PopoverTrigger } from '@verone/ui';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@verone/ui';
 import { createClient } from '@verone/utils/supabase/client';
-import {
-  CalendarDays,
-  Filter,
-  RotateCcw,
-  Search,
-  Users,
-  Package,
-} from 'lucide-react';
+import { CalendarDays, Filter, RotateCcw, Search, Users } from 'lucide-react';
 
 import type { MovementHistoryFilters } from '../../hooks';
 import { useStockMovements } from '../../hooks';
@@ -107,7 +93,7 @@ export function MovementsFilters({
           const uniqueUsers = userProfiles.map(profile => ({
             id: profile.user_id,
             name:
-              `${profile.first_name || ''} ${profile.last_name || ''}`.trim() ||
+              `${profile.first_name ?? ''} ${profile.last_name ?? ''}`.trim() ||
               'Utilisateur inconnu',
           }));
 
@@ -120,7 +106,7 @@ export function MovementsFilters({
       }
     };
 
-    loadUsers();
+    void loadUsers();
   }, []);
 
   // Synchroniser avec les filtres externes
@@ -148,7 +134,7 @@ export function MovementsFilters({
           },
         }));
         break;
-      case 'week':
+      case 'week': {
         const weekStart = new Date(
           today.getTime() - today.getDay() * 24 * 60 * 60 * 1000
         );
@@ -160,7 +146,8 @@ export function MovementsFilters({
           },
         }));
         break;
-      case 'month':
+      }
+      case 'month': {
         const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
         setLocalFilters(prev => ({
           ...prev,
@@ -170,6 +157,7 @@ export function MovementsFilters({
           },
         }));
         break;
+      }
       case 'custom':
         setShowDateRange(true);
         return;
@@ -179,7 +167,7 @@ export function MovementsFilters({
 
   // Toggle type de mouvement
   const toggleMovementType = (type: string) => {
-    const currentTypes = localFilters.movementTypes || [];
+    const currentTypes = localFilters.movementTypes ?? [];
     const newTypes = currentTypes.includes(type)
       ? currentTypes.filter(t => t !== type)
       : [...currentTypes, type];
@@ -192,7 +180,7 @@ export function MovementsFilters({
 
   // Toggle motif
   const toggleReasonCode = (code: string) => {
-    const currentCodes = localFilters.reasonCodes || [];
+    const currentCodes = localFilters.reasonCodes ?? [];
     const newCodes = currentCodes.includes(code)
       ? currentCodes.filter(c => c !== code)
       : [...currentCodes, code];
@@ -205,7 +193,7 @@ export function MovementsFilters({
 
   // Toggle utilisateur
   const toggleUser = (userId: string) => {
-    const currentUsers = localFilters.userIds || [];
+    const currentUsers = localFilters.userIds ?? [];
     const newUsers = currentUsers.includes(userId)
       ? currentUsers.filter(u => u !== userId)
       : [...currentUsers, userId];
@@ -253,11 +241,11 @@ export function MovementsFilters({
           <Input
             id="product-search"
             placeholder="Nom ou SKU du produit..."
-            value={localFilters.productSearch || ''}
+            value={localFilters.productSearch ?? ''}
             onChange={e =>
               setLocalFilters(prev => ({
                 ...prev,
-                productSearch: e.target.value || undefined,
+                productSearch: e.target.value ?? undefined,
               }))
             }
             onKeyDown={e => e.key === 'Enter' && applyFilters()}
@@ -321,6 +309,7 @@ export function MovementsFilters({
                     if (range?.from) {
                       setLocalFilters(
                         prev =>
+                          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                           ({
                             ...prev,
                             dateRange: range.to
@@ -332,6 +321,7 @@ export function MovementsFilters({
                                   from: range.from,
                                   to: range.from,
                                 },
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
                           }) as any
                       );
                     }
@@ -386,7 +376,7 @@ export function MovementsFilters({
                 <Checkbox
                   id={`type-${type.value}`}
                   checked={
-                    localFilters.movementTypes?.includes(type.value) || false
+                    localFilters.movementTypes?.includes(type.value) ?? false
                   }
                   onCheckedChange={() => toggleMovementType(type.value)}
                 />
@@ -428,7 +418,7 @@ export function MovementsFilters({
                       <Checkbox
                         id={`reason-${reason.code}`}
                         checked={
-                          localFilters.reasonCodes?.includes(reason.code) ||
+                          localFilters.reasonCodes?.includes(reason.code) ??
                           false
                         }
                         onCheckedChange={() => toggleReasonCode(reason.code)}
@@ -461,7 +451,7 @@ export function MovementsFilters({
                 <div key={user.id} className="flex items-center space-x-2">
                   <Checkbox
                     id={`user-${user.id}`}
-                    checked={localFilters.userIds?.includes(user.id) || false}
+                    checked={localFilters.userIds?.includes(user.id) ?? false}
                     onCheckedChange={() => toggleUser(user.id)}
                   />
                   <Label

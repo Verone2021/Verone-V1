@@ -87,7 +87,7 @@ export function useSmartSuggestions() {
         // Popularité des styles
         if (collection.style) {
           stylePopularity[collection.style] =
-            (stylePopularity[collection.style] || 0) + 1;
+            (stylePopularity[collection.style] ?? 0) + 1;
         }
 
         // Note: room_category a été remplacé par suitable_rooms (array)
@@ -113,8 +113,8 @@ export function useSmartSuggestions() {
       });
 
       // 3. Calculer les associations style-tag et room-tag
-      const styleTagAssociations: Record<CollectionStyle, string[]> = {} as any;
-      const roomTagAssociations: Record<RoomCategory, string[]> = {} as any;
+      const styleTagAssociations = {} as Record<CollectionStyle, string[]>;
+      const roomTagAssociations = {} as Record<RoomCategory, string[]>;
 
       // Initialiser avec tous les styles et pièces
       COLLECTION_STYLE_OPTIONS.forEach(option => {
@@ -246,7 +246,7 @@ export function useSmartSuggestions() {
 
       // 3. Suggestions de tags basées sur le style
       if (context.style) {
-        const styleTags = analytics.style_tag_associations[context.style] || [];
+        const styleTags = analytics.style_tag_associations[context.style] ?? [];
         const filteredTags = styleTags
           .filter(tag => !context.existing_tags?.includes(tag))
           .slice(0, 5);
@@ -284,9 +284,9 @@ export function useSmartSuggestions() {
       }
 
       // 6. Suggestions basées sur l'analyse textuelle du nom/description
-      if (context.name || context.description) {
+      if (context.name ?? context.description) {
         const text =
-          `${context.name || ''} ${context.description || ''}`.toLowerCase();
+          `${context.name ?? ''} ${context.description ?? ''}`.toLowerCase();
 
         // Mots-clés → suggestions de style
         const styleKeywords = {
@@ -325,7 +325,7 @@ export function useSmartSuggestions() {
 
   // Initialiser l'analyse au montage
   useEffect(() => {
-    analyzeExistingData();
+    void analyzeExistingData();
   }, [analyzeExistingData]);
 
   return {

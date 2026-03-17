@@ -47,8 +47,8 @@ export function useStockMetrics() {
       const alertsList: StockAlert[] = [];
 
       (items || []).forEach(product => {
-        const stockQty = product.stock_real || 0;
-        const threshold = product.min_stock || 5; // Seuil par défaut
+        const stockQty = product.stock_real ?? 0;
+        const threshold = product.min_stock ?? 5; // Seuil par défaut
 
         // Compteurs
         if (stockQty === 0) {

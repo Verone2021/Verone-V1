@@ -65,10 +65,10 @@ export const ProductCard = memo(function ProductCard({
   product,
   className,
   showActions = true,
-  showPackages = false,
-  showPricing = false,
-  showQuantityBreaks = false,
-  channelId = null,
+  showPackages: _showPackages = false,
+  showPricing: _showPricing = false,
+  showQuantityBreaks: _showQuantityBreaks = false,
+  channelId: _channelId = null,
   priority = false,
   onClick,
   onArchive,
@@ -76,8 +76,8 @@ export const ProductCard = memo(function ProductCard({
   archived = false,
 }: ProductCardProps) {
   const router = useRouter();
-  const status = statusConfig[product.stock_status] || {
-    label: product.stock_status || 'Statut inconnu',
+  const _status = statusConfig[product.stock_status] ?? {
+    label: product.stock_status ?? 'Statut inconnu',
     variant: 'outline' as const,
     className: 'bg-gray-600 text-white',
   };
@@ -168,7 +168,7 @@ export const ProductCard = memo(function ProductCard({
         {primaryImage?.public_url && !imageLoading ? (
           <Image
             src={primaryImage.public_url}
-            alt={primaryImage.alt_text || product.name}
+            alt={primaryImage.alt_text ?? product.name}
             fill
             priority={priority} // 🚀 Optimisation LCP pour première image
             className="object-contain transition-transform duration-300 group-hover:scale-105"
@@ -228,7 +228,7 @@ export const ProductCard = memo(function ProductCard({
 
         {/* Badge "nouveau" pour les produits créés dans les 30 derniers jours - MINI */}
         {(() => {
-          const createdAt = new Date(product.created_at || '');
+          const createdAt = new Date(product.created_at ?? '');
           const thirtyDaysAgo = new Date();
           thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
           return createdAt > thirtyDaysAgo;

@@ -121,7 +121,7 @@ export function StockMovementCard({
     <Card
       role={isClickable ? 'button' : 'article'}
       tabIndex={isClickable ? 0 : undefined}
-      aria-label={`Mouvement ${config.label}: ${movement.products?.name || 'Produit'}`}
+      aria-label={`Mouvement ${config.label}: ${movement.products?.name ?? 'Produit'}`}
       onClick={onClick}
       onKeyDown={
         isClickable
@@ -172,10 +172,10 @@ export function StockMovementCard({
             {/* Info Produit */}
             <div className="flex flex-col gap-1 min-w-0 flex-1">
               <p className="text-sm font-semibold text-gray-900 truncate">
-                {movement.products?.name || 'Produit inconnu'}
+                {movement.products?.name ?? 'Produit inconnu'}
               </p>
               <p className="text-xs text-gray-500 font-mono">
-                {movement.products?.sku || 'N/A'}
+                {movement.products?.sku ?? 'N/A'}
               </p>
               <p className="text-xs text-gray-400 mt-1">
                 {config.label} · {movement.reason_code}

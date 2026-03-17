@@ -9,7 +9,6 @@
 import { useState } from 'react';
 
 import { ProductThumbnail } from '@verone/products';
-import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import { Card } from '@verone/ui';
 import {
@@ -22,13 +21,7 @@ import {
 import { Input } from '@verone/ui';
 import { Label } from '@verone/ui';
 import { Textarea } from '@verone/ui';
-import {
-  Package,
-  Truck,
-  XCircle,
-  CheckCircle2,
-  AlertTriangle,
-} from 'lucide-react';
+import { Truck, XCircle, CheckCircle2, AlertTriangle } from 'lucide-react';
 
 import { usePurchaseReceptions } from '@verone/orders/hooks';
 
@@ -165,7 +158,9 @@ export function AffiliateReceptionModal({
                 Retour
               </ButtonV2>
               <ButtonV2
-                onClick={handleCancelRemainder}
+                onClick={() => {
+                  void handleCancelRemainder();
+                }}
                 disabled={validating}
                 className="bg-orange-600 hover:bg-orange-700"
               >
@@ -331,7 +326,9 @@ export function AffiliateReceptionModal({
                 </ButtonV2>
                 {quantityRemaining > 0 && (
                   <ButtonV2
-                    onClick={handleConfirmReception}
+                    onClick={() => {
+                      void handleConfirmReception();
+                    }}
                     disabled={validating || quantityToReceive <= 0}
                     className="bg-verone-success hover:bg-verone-success/90"
                   >

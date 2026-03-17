@@ -22,6 +22,7 @@ import { cn } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import type { LucideIcon } from 'lucide-react';
 import {
   Truck,
   CheckCircle,
@@ -55,7 +56,7 @@ const STATUS_CONFIG: Record<
     color: string;
     bgColor: string;
     borderColor: string;
-    icon: any;
+    icon: LucideIcon;
   }
 > = {
   validated: {
@@ -217,16 +218,23 @@ export function ExpeditionsPendingDropdown({
         throw new Error(queryError.message);
       }
 
-      const enrichedExpeditions: PendingExpedition[] = (data || []).map(
-        (o: any) => ({
-          id: o.id,
-          order_number: o.order_number || 'N/A',
-          status: o.status,
-          customer_name: o.organisation?.name || 'Client inconnu',
-          customer_city: o.organisation?.city || null,
-          items_count: o.items?.length || 0,
-          validated_at: o.validated_at || o.created_at,
-        })
+      const enrichedExpeditions: PendingExpedition[] = (data ?? []).map(
+        (o: Record<string, unknown>) => {
+          const org = o.organisation as Record<string, unknown> | null;
+          const items = o.items as unknown[] | null;
+          return {
+            id: o.id as string,
+            order_number: (o.order_number as string | undefined) ?? 'N/A',
+            status: o.status as string,
+            customer_name:
+              (org?.name as string | undefined) ?? 'Client inconnu',
+            customer_city: (org?.city as string | undefined) ?? null,
+            items_count: items?.length ?? 0,
+            validated_at:
+              (o.validated_at as string | undefined) ??
+              (o.created_at as string),
+          };
+        }
       );
 
       setExpeditions(enrichedExpeditions);
@@ -240,7 +248,9 @@ export function ExpeditionsPendingDropdown({
 
   useEffect(() => {
     if (open) {
-      fetchExpeditions();
+      void fetchExpeditions().catch((err: unknown) => {
+        console.error('[ExpeditionsPendingDropdown] Fetch error:', err);
+      });
       onOpen?.();
     }
   }, [open, fetchExpeditions, onOpen]);
@@ -274,7 +284,14 @@ export function ExpeditionsPendingDropdown({
             variant="ghost"
             size="sm"
             className="h-7 w-7 p-0"
-            onClick={handleRefresh}
+            onClick={() => {
+              void handleRefresh().catch((err: unknown) => {
+                console.error(
+                  '[ExpeditionsPendingDropdown] Refresh error:',
+                  err
+                );
+              });
+            }}
             disabled={loading}
           >
             <RefreshCw
@@ -287,7 +304,7 @@ export function ExpeditionsPendingDropdown({
         <ScrollArea className="max-h-80">
           {loading && expeditions.length === 0 ? (
             <div className="p-4 space-y-3">
-              {[...Array(3)].map((_, i) => (
+              {Array.from({ length: 3 }).map((_, i) => (
                 <div key={i} className="flex items-center gap-3">
                   <Skeleton className="w-8 h-8 rounded-md" />
                   <div className="flex-1 space-y-1.5">
@@ -304,7 +321,14 @@ export function ExpeditionsPendingDropdown({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={handleRefresh}
+                onClick={() => {
+                  void handleRefresh().catch((err: unknown) => {
+                    console.error(
+                      '[ExpeditionsPendingDropdown] Retry error:',
+                      err
+                    );
+                  });
+                }}
                 className="mt-2"
               >
                 Réessayer

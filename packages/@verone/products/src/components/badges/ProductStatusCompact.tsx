@@ -112,7 +112,7 @@ export function ProductStatusCompact({
               key={option.value}
               onClick={e => {
                 e.stopPropagation();
-                saveStatus(option.value);
+                void saveStatus(option.value);
               }}
               disabled={isSaving}
               className={cn(

@@ -74,7 +74,7 @@ export function useEnseignes(filters?: EnseigneFilters) {
     setError(null);
 
     try {
-      let query = (supabase as any)
+      let query = supabase
         .from('enseignes')
         .select(
           'id, name, description, logo_url, member_count, is_active, created_at, updated_at, created_by'
@@ -99,16 +99,17 @@ export function useEnseignes(filters?: EnseigneFilters) {
         return;
       }
 
-      setEnseignes(data || []);
+      setEnseignes(data ?? []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur inconnue');
     } finally {
       setLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- supabase is stable (useMemo)
   }, [filters?.is_active, filters?.search]);
 
   useEffect(() => {
-    fetchEnseignes();
+    void fetchEnseignes();
   }, [fetchEnseignes]);
 
   /**
@@ -120,7 +121,7 @@ export function useEnseignes(filters?: EnseigneFilters) {
 
       try {
         // Récupérer l'enseigne
-        const { data: enseigne, error: enseigneError } = await (supabase as any)
+        const { data: enseigne, error: enseigneError } = await supabase
           .from('enseignes')
           .select(
             'id, name, description, logo_url, member_count, is_active, created_at, updated_at, created_by'
@@ -134,9 +135,7 @@ export function useEnseignes(filters?: EnseigneFilters) {
         }
 
         // Récupérer les organisations liées
-        const { data: organisations, error: orgsError } = await (
-          supabase as any
-        )
+        const { data: organisations, error: orgsError } = await supabase
           .from('organisations')
           .select(
             'id, legal_name, trade_name, is_enseigne_parent, is_active, city, country, logo_url'
@@ -154,11 +153,11 @@ export function useEnseignes(filters?: EnseigneFilters) {
 
         // Identifier la société mère (is_enseigne_parent = true)
         const parent_company =
-          organisations?.find(org => org.is_enseigne_parent) || null;
+          organisations?.find(org => org.is_enseigne_parent) ?? null;
 
         return {
           ...enseigne,
-          organisations: organisations || [],
+          organisations: organisations ?? [],
           parent_company,
         };
       } catch (err) {
@@ -176,13 +175,13 @@ export function useEnseignes(filters?: EnseigneFilters) {
     data: CreateEnseigneData
   ): Promise<Enseigne | null> => {
     try {
-      const { data: newEnseigne, error: createError } = await (supabase as any)
+      const { data: newEnseigne, error: createError } = await supabase
         .from('enseignes')
         .insert([
           {
             name: data.name,
-            description: data.description || null,
-            logo_url: data.logo_url || null,
+            description: data.description ?? null,
+            logo_url: data.logo_url ?? null,
             is_active: data.is_active ?? true,
           },
         ])
@@ -221,9 +220,7 @@ export function useEnseignes(filters?: EnseigneFilters) {
       if (data.logo_url !== undefined) updateData.logo_url = data.logo_url;
       if (data.is_active !== undefined) updateData.is_active = data.is_active;
 
-      const { data: updatedEnseigne, error: updateError } = await (
-        supabase as any
-      )
+      const { data: updatedEnseigne, error: updateError } = await supabase
         .from('enseignes')
         .update(updateData)
         .eq('id', data.id)
@@ -271,7 +268,7 @@ export function useEnseignes(filters?: EnseigneFilters) {
         return false;
       }
 
-      const { error: deleteError } = await (supabase as any)
+      const { error: deleteError } = await supabase
         .from('enseignes')
         .delete()
         .eq('id', id);
@@ -299,7 +296,7 @@ export function useEnseignes(filters?: EnseigneFilters) {
       const enseigne = enseignes.find(e => e.id === id);
       if (!enseigne) return false;
 
-      const { error: toggleError } = await (supabase as any)
+      const { error: toggleError } = await supabase
         .from('enseignes')
         .update({ is_active: !enseigne.is_active })
         .eq('id', id);
@@ -330,7 +327,7 @@ export function useEnseignes(filters?: EnseigneFilters) {
     isParent: boolean = false
   ): Promise<boolean> => {
     try {
-      const { error: linkError } = await (supabase as any)
+      const { error: linkError } = await supabase
         .from('organisations')
         .update({
           enseigne_id: enseigneId,
@@ -360,7 +357,7 @@ export function useEnseignes(filters?: EnseigneFilters) {
     organisationId: string
   ): Promise<boolean> => {
     try {
-      const { error: unlinkError } = await (supabase as any)
+      const { error: unlinkError } = await supabase
         .from('organisations')
         .update({
           enseigne_id: null,
@@ -419,9 +416,7 @@ export function useEnseigne(id: string) {
 
     try {
       // Récupérer l'enseigne
-      const { data: enseigneData, error: enseigneError } = await (
-        supabase as any
-      )
+      const { data: enseigneData, error: enseigneError } = await supabase
         .from('enseignes')
         .select(
           'id, name, description, logo_url, member_count, is_active, created_at, updated_at, created_by'
@@ -438,7 +433,7 @@ export function useEnseigne(id: string) {
       }
 
       // Récupérer les organisations liées
-      const { data: organisations, error: orgsError } = await (supabase as any)
+      const { data: organisations, error: orgsError } = await supabase
         .from('organisations')
         .select(
           'id, legal_name, trade_name, is_enseigne_parent, is_active, city, country, logo_url'
@@ -453,11 +448,11 @@ export function useEnseigne(id: string) {
 
       // Identifier la société mère
       const parent_company =
-        organisations?.find(org => org.is_enseigne_parent) || null;
+        organisations?.find(org => org.is_enseigne_parent) ?? null;
 
       setEnseigne({
         ...enseigneData,
-        organisations: organisations || [],
+        organisations: organisations ?? [],
         parent_company,
       });
     } catch (err) {
@@ -465,10 +460,11 @@ export function useEnseigne(id: string) {
     } finally {
       setLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- supabase client is stable singleton
   }, [id]);
 
   useEffect(() => {
-    fetchEnseigne();
+    void fetchEnseigne();
   }, [fetchEnseigne]);
 
   return { enseigne, loading, error, refetch: fetchEnseigne };

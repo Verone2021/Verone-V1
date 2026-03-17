@@ -73,8 +73,7 @@ export function useDraftPurchaseOrder() {
       }
 
       // Prix : utiliser celui fourni, sinon cost_price, sinon erreur
-      const finalUnitPrice =
-        unitPrice !== undefined ? unitPrice : product.cost_price || 0;
+      const finalUnitPrice = unitPrice ?? product.cost_price ?? 0;
 
       if (finalUnitPrice <= 0) {
         throw new Error(
@@ -118,7 +117,7 @@ export function useDraftPurchaseOrder() {
               eco_tax: ecoTax, // ✅ Taxe éco-responsable unitaire
               discount_percentage: 0,
               sample_type: itemType === 'regular' ? null : itemType,
-              notes: notes || `Commande ${product.name} (${product.sku})`,
+              notes: notes ?? `Commande ${product.name} (${product.sku})`,
             },
           ]);
 
@@ -127,8 +126,8 @@ export function useDraftPurchaseOrder() {
         }
 
         // Mettre à jour le total de la commande
-        const newTotal = (draftOrders[0].total_ht || 0) + lineTotal;
-        const newTotalTTC = newTotal * (1 + (draftOrders[0].tax_rate || 0.2));
+        const newTotal = (draftOrders[0].total_ht ?? 0) + lineTotal;
+        const newTotalTTC = newTotal * (1 + (draftOrders[0].tax_rate ?? 0.2));
 
         await supabase
           .from('purchase_orders')
@@ -193,7 +192,7 @@ export function useDraftPurchaseOrder() {
               eco_tax: ecoTax, // ✅ Taxe éco-responsable unitaire
               discount_percentage: 0,
               sample_type: itemType === 'regular' ? null : itemType,
-              notes: notes || `Commande ${product.name} (${product.sku})`,
+              notes: notes ?? `Commande ${product.name} (${product.sku})`,
             },
           ]);
 

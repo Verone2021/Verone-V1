@@ -130,8 +130,8 @@ export function createQontoErrorFromResponse(
   responseData?: Record<string, unknown>
 ): QontoError {
   const message = String(
-    responseData?.message ||
-      responseData?.error ||
+    responseData?.message ??
+      responseData?.error ??
       `Qonto API error (${status})`
   );
 

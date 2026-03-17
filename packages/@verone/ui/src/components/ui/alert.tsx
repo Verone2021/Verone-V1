@@ -134,7 +134,7 @@ const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
         {...props}
       >
         {showIcon && (
-          <div>{icon || <IconComponent className={iconSize} />}</div>
+          <div>{icon ?? <IconComponent className={iconSize} />}</div>
         )}
 
         <div className={cn(showIcon && contentPadding)}>

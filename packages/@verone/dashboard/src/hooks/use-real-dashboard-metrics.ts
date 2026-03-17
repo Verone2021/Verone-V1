@@ -52,38 +52,38 @@ const metricsFetcher = async () => {
   if (collectionsError) throw collectionsError;
 
   // 📈 Calculs côté client (rapide)
-  const totalProducts = products?.length || 0;
+  const totalProducts = products?.length ?? 0;
 
   // Produits actifs: disponibles à la vente (active + preorder)
+  const activeStatuses: string[] = ['active', 'preorder'];
   const activeProducts =
-    products?.filter(p =>
-      (['active', 'preorder'] as any).includes(p.product_status)
-    )?.length || 0;
+    products?.filter(p => activeStatuses.includes(p.product_status ?? ''))
+      ?.length ?? 0;
 
   // Produits publiés: tous sauf draft (sourcing)
   const publishedProducts =
-    products?.filter(p => p.product_status !== 'draft')?.length || 0;
+    products?.filter(p => p.product_status !== 'draft')?.length ?? 0;
 
   // Produits archivés (discontinued)
   const archivedProducts =
-    products?.filter(p => p.product_status === 'discontinued')?.length || 0;
+    products?.filter(p => p.product_status === 'discontinued')?.length ?? 0;
 
   // Trend: nouveaux produits derniers 7 jours
   const weekAgo = new Date();
   weekAgo.setDate(weekAgo.getDate() - 7);
   const recentProducts =
     products?.filter(
-      p => new Date(p.created_at || new Date().toISOString()) >= weekAgo
-    )?.length || 0;
+      p => new Date(p.created_at ?? new Date().toISOString()) >= weekAgo
+    )?.length ?? 0;
   const trend =
     totalProducts > 0 ? Math.round((recentProducts / totalProducts) * 100) : 0;
 
   // Variant groups metrics (pas de filtre published car colonne inexistante)
-  const totalVariantGroups = variantGroups?.length || 0;
+  const totalVariantGroups = variantGroups?.length ?? 0;
 
   // Collections metrics
-  const totalCollections = collections?.length || 0;
-  const activeCollections = collections?.filter(c => c.is_active)?.length || 0;
+  const totalCollections = collections?.length ?? 0;
+  const activeCollections = collections?.filter(c => c.is_active)?.length ?? 0;
 
   return {
     products: {
@@ -104,20 +104,19 @@ const metricsFetcher = async () => {
 };
 
 export function useRealDashboardMetrics() {
-  const { data, error, isLoading, mutate } = useSWR(
-    'real-dashboard-metrics',
-    metricsFetcher,
-    {
-      refreshInterval: 60000, // Refresh toutes les 60s
-      revalidateOnFocus: false, // Pas de re-fetch au focus
-      revalidateOnReconnect: true,
-      dedupingInterval: 10000, // Dédupe 10s
-      keepPreviousData: true, // Garde données pendant refresh
-    }
-  );
+  const { data, error, isLoading, mutate } = useSWR<
+    RealDashboardMetrics,
+    Error
+  >('real-dashboard-metrics', metricsFetcher, {
+    refreshInterval: 60000, // Refresh toutes les 60s
+    revalidateOnFocus: false, // Pas de re-fetch au focus
+    revalidateOnReconnect: true,
+    dedupingInterval: 10000, // Dédupe 10s
+    keepPreviousData: true, // Garde données pendant refresh
+  });
 
   return {
-    metrics: data || null,
+    metrics: data ?? null,
     isLoading,
     error,
     refetch: () => mutate(),

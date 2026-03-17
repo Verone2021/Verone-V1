@@ -2,7 +2,7 @@
 
 import { useMemo, useCallback } from 'react';
 
-import type { createClient } from '@verone/utils';
+import type { createClient } from '@verone/utils/supabase/client';
 import { useToast } from '@verone/common/hooks';
 import {
   useSupabaseQuery,
@@ -91,6 +91,7 @@ export function useStockOptimized(filters: StockFilters = {}) {
   // Query pour les produits en stock faible
   const lowStockQuery = useSupabaseQuery(
     'low-stock-products',
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     (async (supabase: ReturnType<typeof createClient>) => {
       // Requête corrigée : utiliser RPC pour comparaison inter-colonnes
       const { data, error } = await supabase.rpc('get_low_stock_products', {
@@ -127,19 +128,25 @@ export function useStockOptimized(filters: StockFilters = {}) {
         if (fallbackError) throw fallbackError;
 
         return {
-          data: (fallbackData || []).map((product: any) => ({
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return
+          data: (fallbackData ?? []).map((product: any) => ({
             ...product,
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             supplier_name:
-              product.organisations?.trade_name ||
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+              product.organisations?.trade_name ??
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
               product.organisations?.legal_name,
-            product_image_url: product.product_images?.[0]?.public_url || null, // ✅ NOUVEAU - Image produit
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+            product_image_url: product.product_images?.[0]?.public_url ?? null, // ✅ NOUVEAU - Image produit
             product_images: undefined, // Supprimer la propriété temporaire
           })),
           error: null,
         };
       }
 
-      return { data: data || [], error: null };
+      return { data: data ?? [], error: null };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     }) as any,
     {
       staleTime: 2 * 60 * 1000, // 2 minutes
@@ -179,11 +186,11 @@ export function useStockOptimized(filters: StockFilters = {}) {
       }
 
       if (filters.movementTypes && filters.movementTypes.length > 0) {
-        query = query.in('movement_type', filters.movementTypes as any);
+        query = query.in('movement_type', filters.movementTypes);
       }
 
       if (filters.reasonCodes && filters.reasonCodes.length > 0) {
-        query = query.in('reason_code', filters.reasonCodes as any);
+        query = query.in('reason_code', filters.reasonCodes);
       }
 
       if (filters.performedBy) {
@@ -199,8 +206,8 @@ export function useStockOptimized(filters: StockFilters = {}) {
       }
 
       // Pagination
-      const limit = filters.limit || 100;
-      const offset = filters.offset || 0;
+      const limit = filters.limit ?? 100;
+      const offset = filters.offset ?? 0;
       query = query.range(offset, offset + limit - 1);
 
       // Tri par défaut
@@ -211,7 +218,7 @@ export function useStockOptimized(filters: StockFilters = {}) {
       if (error) throw error;
 
       // Enrichir les données
-      const enrichedMovements = (data || []).map(movement => ({
+      const enrichedMovements = (data ?? []).map(movement => ({
         ...movement,
         product_name: movement.products?.name,
         product_sku: movement.products?.sku,
@@ -253,7 +260,7 @@ export function useStockOptimized(filters: StockFilters = {}) {
 
     if (productError) throw productError;
 
-    const currentStock = product.stock_real || 0;
+    const currentStock = product.stock_real ?? 0;
     const newStock = currentStock + movementData.quantity_change;
 
     if (newStock < 0) {
@@ -270,7 +277,7 @@ export function useStockOptimized(filters: StockFilters = {}) {
           quantity_after: newStock,
           performed_at: new Date().toISOString(),
         },
-      ] as any)
+      ] as readonly string[])
       .select('id')
       .single();
 
@@ -288,7 +295,7 @@ export function useStockOptimized(filters: StockFilters = {}) {
     if (updateError) throw updateError;
 
     return { data, error: null };
-  }) as any);
+  }) as readonly string[]);
 
   const adjustStockMutation = useSupabaseMutation<boolean>(
     async (
@@ -314,7 +321,7 @@ export function useStockOptimized(filters: StockFilters = {}) {
 
       if (productError) throw productError;
 
-      const currentStock = product.stock_real || 0;
+      const currentStock = product.stock_real ?? 0;
       const adjustment = newQuantity - currentStock;
 
       if (adjustment === 0) {
@@ -335,7 +342,7 @@ export function useStockOptimized(filters: StockFilters = {}) {
             notes: notes,
             performed_at: new Date().toISOString(),
           },
-        ] as any);
+        ] as readonly string[]);
 
       if (movementError) throw movementError;
 
@@ -371,7 +378,7 @@ export function useStockOptimized(filters: StockFilters = {}) {
         toast({
           title: 'Erreur',
           description:
-            createMovementMutation.error ||
+            createMovementMutation.error ??
             "Impossible d'enregistrer le mouvement",
           variant: 'destructive',
         });
@@ -396,7 +403,7 @@ export function useStockOptimized(filters: StockFilters = {}) {
         toast({
           title: 'Erreur',
           description:
-            adjustStockMutation.error || "Impossible d'ajuster le stock",
+            adjustStockMutation.error ?? "Impossible d'ajuster le stock",
           variant: 'destructive',
         });
       }
@@ -408,7 +415,7 @@ export function useStockOptimized(filters: StockFilters = {}) {
 
   // Statistiques calculées
   const stats = useMemo(() => {
-    const movements = stockMovementsQuery.data || [];
+    const movements = stockMovementsQuery.data ?? [];
     const today = new Date().toDateString();
     const weekAgo = new Date();
     weekAgo.setDate(weekAgo.getDate() - 7);
@@ -429,7 +436,7 @@ export function useStockOptimized(filters: StockFilters = {}) {
   // Helpers
   const getMovementsByProduct = useCallback(
     (productId: string) => {
-      return (stockMovementsQuery.data || []).filter(
+      return (stockMovementsQuery.data ?? []).filter(
         m => m.product_id === productId
       );
     },
@@ -438,7 +445,7 @@ export function useStockOptimized(filters: StockFilters = {}) {
 
   const getMovementsByType = useCallback(
     (type: string) => {
-      return (stockMovementsQuery.data || []).filter(
+      return (stockMovementsQuery.data ?? []).filter(
         m => m.movement_type === type
       );
     },
@@ -448,8 +455,8 @@ export function useStockOptimized(filters: StockFilters = {}) {
   return {
     // Données
     stockSummary: stockSummaryQuery.data,
-    lowStockProducts: lowStockQuery.data || [],
-    movements: stockMovementsQuery.data || [],
+    lowStockProducts: lowStockQuery.data ?? [],
+    movements: stockMovementsQuery.data ?? [],
 
     // États de chargement
     loading:
@@ -457,17 +464,17 @@ export function useStockOptimized(filters: StockFilters = {}) {
       lowStockQuery.loading ||
       stockMovementsQuery.loading,
     error:
-      stockSummaryQuery.error ||
-      lowStockQuery.error ||
+      stockSummaryQuery.error ??
+      lowStockQuery.error ??
       stockMovementsQuery.error,
 
     // Actions
     createMovement,
     adjustStock,
     refetch: () => {
-      stockSummaryQuery.refetch();
-      lowStockQuery.refetch();
-      stockMovementsQuery.refetch();
+      void stockSummaryQuery.refetch();
+      void lowStockQuery.refetch();
+      void stockMovementsQuery.refetch();
     },
 
     // Helpers

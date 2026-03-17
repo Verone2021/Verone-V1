@@ -47,20 +47,24 @@ function loadRuntimeEnvVariable(key: string): string | undefined {
     throw new Error('Runtime env loading is server-side only');
   }
 
-  const fs = require('fs');
-  const path = require('path');
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const fs = require('fs') as typeof import('fs');
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const path = require('path') as typeof import('path');
 
   try {
-    const envPath = path.join(process.cwd(), '.env.local');
-    const envContent = fs.readFileSync(envPath, 'utf-8');
+    const envPath: string = path.join(process.cwd(), '.env.local');
+    const envContent: string = fs.readFileSync(envPath, 'utf-8');
 
     // Parse .env.local line by line
-    const lines = envContent.split('\n');
+    const lines: string[] = envContent.split('\n');
     for (const line of lines) {
       // Match: KEY="value" or KEY=value
-      const match = line.match(/^([A-Z_][A-Z0-9_]*)=["']?(.+?)["']?$/);
+      const match: RegExpMatchArray | null = line.match(
+        /^([A-Z_][A-Z0-9_]*)=["']?(.+?)["']?$/
+      );
       if (match?.[1] === key) {
-        let value = match[2];
+        let value: string = match[2];
 
         // Handle quoted values
         if (
@@ -73,7 +77,7 @@ function loadRuntimeEnvVariable(key: string): string | undefined {
         return value;
       }
     }
-  } catch (error) {
+  } catch (_error) {
     // Fallback to process.env if file read fails
     console.warn(
       `[Runtime Env] Failed to read .env.local for ${key}, using process.env fallback`
@@ -112,24 +116,24 @@ function createServiceAccountCredentials(): ServiceAccountCredentials {
       // Decode Base64 format
       privateKey = Buffer.from(privateKey, 'base64').toString('utf-8');
     }
-  } catch (error) {
+  } catch (_error) {
     // Not Base64, continue with other formats
   }
 
   // 🔍 DIAGNOSTIC: Log key format before processing
-  console.log('[DEBUG] Private key length:', privateKey.length);
-  console.log('[DEBUG] Has \\n literal?', privateKey.includes('\\n'));
-  console.log('[DEBUG] Has real newline?', privateKey.includes('\n'));
-  console.log('[DEBUG] First 100 chars:', privateKey.substring(0, 100));
+  console.warn('[DEBUG] Private key length:', privateKey.length);
+  console.warn('[DEBUG] Has \\n literal?', privateKey.includes('\\n'));
+  console.warn('[DEBUG] Has real newline?', privateKey.includes('\n'));
+  console.warn('[DEBUG] First 100 chars:', privateKey.substring(0, 100));
 
   // Handle literal \n characters (convert to real newlines)
   // Note: In .env files, \n can be stored in multiple formats
   // Format 1: Literal \\n (double backslash) from some env loaders
   // Format 2: Literal \n (escaped in string) - most common
   if (privateKey.includes('\\n')) {
-    console.log('[DEBUG] Converting \\n to real newlines...');
+    console.warn('[DEBUG] Converting \\n to real newlines...');
     privateKey = privateKey.replace(/\\n/g, '\n');
-    console.log(
+    console.warn(
       '[DEBUG] After conversion - has newlines?',
       privateKey.includes('\n')
     );
@@ -145,15 +149,15 @@ function createServiceAccountCredentials(): ServiceAccountCredentials {
     );
   }
 
-  console.log('[DEBUG] PEM validation passed - key ready for JWT');
+  console.warn('[DEBUG] PEM validation passed - key ready for JWT');
 
   return {
     type: 'service_account',
-    project_id: projectId || 'verone-merchant-center',
-    private_key_id: privateKeyId || '',
+    project_id: projectId ?? 'verone-merchant-center',
+    private_key_id: privateKeyId ?? '',
     private_key: privateKey,
     client_email: clientEmail,
-    client_id: clientId || '',
+    client_id: clientId ?? '',
     auth_uri: 'https://accounts.google.com/o/oauth2/auth',
     token_uri: 'https://oauth2.googleapis.com/token',
     auth_provider_x509_cert_url: 'https://www.googleapis.com/oauth2/v1/certs',
@@ -174,7 +178,7 @@ export class GoogleMerchantAuth {
 
       this.auth = new GoogleAuth({
         credentials,
-        scopes: GOOGLE_MERCHANT_CONFIG.scopes as any,
+        scopes: GOOGLE_MERCHANT_CONFIG.scopes as string[],
       });
 
       // Log de configuration (sans les clés sensibles)
@@ -228,13 +232,13 @@ export class GoogleMerchantAuth {
     try {
       const client = await this.getJWTClient();
 
-      console.log('[DEBUG] Calling getAccessToken()...');
-      console.log('[DEBUG] Client email:', client.email);
-      console.log('[DEBUG] Scopes:', client.scopes);
+      console.warn('[DEBUG] Calling getAccessToken()...');
+      console.warn('[DEBUG] Client email:', client.email);
+      console.warn('[DEBUG] Scopes:', client.scopes);
 
       const tokenResponse = await client.getAccessToken();
 
-      console.log('[DEBUG] Token response received:', {
+      console.warn('[DEBUG] Token response received:', {
         hasToken: !!tokenResponse.token,
         tokenLength: tokenResponse.token?.length,
       });
@@ -243,7 +247,7 @@ export class GoogleMerchantAuth {
         throw new Error("Token d'accès non obtenu");
       }
 
-      console.log('[DEBUG] Access token obtained successfully');
+      console.warn('[DEBUG] Access token obtained successfully');
       return tokenResponse.token;
     } catch (error) {
       // 🔍 ENHANCED ERROR DIAGNOSTIC
@@ -282,7 +286,7 @@ export class GoogleMerchantAuth {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
       'X-Goog-User-Project':
-        process.env.GOOGLE_CLOUD_PROJECT_ID || 'verone-merchant-center',
+        process.env.GOOGLE_CLOUD_PROJECT_ID ?? 'verone-merchant-center',
     };
   }
 
@@ -315,7 +319,9 @@ export class GoogleMerchantAuth {
    */
   async getGoogleApisAuth() {
     const client = await this.getJWTClient();
-    return google.auth.fromJSON((client.credentials || {}) as any);
+    return google.auth.fromJSON(
+      (client.credentials ?? {}) as Parameters<typeof google.auth.fromJSON>[0]
+    );
   }
 }
 
@@ -326,9 +332,7 @@ let authInstance: GoogleMerchantAuth | null = null;
  * Obtient l'instance singleton d'authentification
  */
 export function getGoogleMerchantAuth(): GoogleMerchantAuth {
-  if (!authInstance) {
-    authInstance = new GoogleMerchantAuth();
-  }
+  authInstance ??= new GoogleMerchantAuth();
   return authInstance;
 }
 

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 
 import { Plus, Minus, Settings, Loader2 } from 'lucide-react';
 
@@ -47,7 +47,7 @@ export function QuickStockMovementModal({
   const [movementType, setMovementType] = useState<'IN' | 'OUT' | 'ADJUST'>(
     'IN'
   );
-  const [productId, setProductId] = useState(initialProductId || '');
+  const [productId, setProductId] = useState(initialProductId ?? '');
   const [quantity, setQuantity] = useState('');
   const [notes, setNotes] = useState('');
   const [reasonCode, setReasonCode] = useState('');
@@ -91,19 +91,19 @@ export function QuickStockMovementModal({
 
       switch (movementType) {
         case 'IN':
-          await addStock(productId, qty, undefined, notes || undefined);
+          await addStock(productId, qty, undefined, notes ?? undefined);
           break;
         case 'OUT':
           await removeStock(
             productId,
             qty,
-            reasonCode || 'manual_entry',
+            reasonCode ?? 'manual_entry',
             undefined,
-            notes || undefined
+            notes ?? undefined
           );
           break;
         case 'ADJUST':
-          await adjustStock(productId, qty, notes || undefined);
+          await adjustStock(productId, qty, notes ?? undefined);
           break;
       }
 
@@ -119,7 +119,8 @@ export function QuickStockMovementModal({
 
       onSuccess();
       onClose();
-    } catch (error: any) {
+    } catch (err: unknown) {
+      const error = err instanceof Error ? err : new Error(String(err));
       // L'erreur est déjà gérée par le hook avec un toast
       console.error('Erreur mouvement stock:', error);
     } finally {
@@ -167,10 +168,14 @@ export function QuickStockMovementModal({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit}>
+        <form
+          onSubmit={e => {
+            void handleSubmit(e);
+          }}
+        >
           <Tabs
             value={movementType}
-            onValueChange={v => setMovementType(v as any)}
+            onValueChange={v => setMovementType(v as readonly string[])}
             className="w-full"
           >
             <TabsList className="grid w-full grid-cols-3">
@@ -299,7 +304,7 @@ export function QuickStockMovementModal({
                   {initialCurrentStock !== undefined && (
                     <p className="text-xs text-gray-500 mt-1">
                       Stock actuel : {initialCurrentStock} unités → Nouvelle
-                      quantité : {quantity || '0'} unités
+                      quantité : {quantity ?? '0'} unités
                       {quantity && (
                         <span
                           className={`ml-2 font-medium ${

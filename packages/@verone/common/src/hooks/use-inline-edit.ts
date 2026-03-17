@@ -38,14 +38,14 @@ export interface UseInlineEditOptions {
   contactId?: string; // Pour les contacts
   salesOrderId?: string; // Pour les commandes clients
   purchaseOrderId?: string; // Pour les commandes fournisseurs
-  onUpdate: (updatedData: any) => void;
+  onUpdate: (updatedData: Record<string, unknown>) => void;
   onError?: (error: string) => void;
 }
 
 // État d'édition par section
 interface SectionEditState {
   isEditing: boolean;
-  editedData: any;
+  editedData: Record<string, unknown> | null;
   isSaving: boolean;
   error: string | null;
   hasChanges: boolean;
@@ -67,7 +67,7 @@ export function useInlineEdit(options: UseInlineEditOptions) {
   } = options;
   const [sections, setSections] = useState<
     Record<EditableSection, SectionEditState>
-  >({} as any);
+  >({} as Record<EditableSection, SectionEditState>);
   const supabase = createClient();
 
   // Getters par section
@@ -108,7 +108,7 @@ export function useInlineEdit(options: UseInlineEditOptions) {
 
   // Actions par section
   const startEdit = useCallback(
-    (section: EditableSection, initialData: any) => {
+    (section: EditableSection, initialData: Record<string, unknown>) => {
       setSections(prev => ({
         ...prev,
         [section]: {
@@ -137,7 +137,7 @@ export function useInlineEdit(options: UseInlineEditOptions) {
   }, []);
 
   const updateEditedData = useCallback(
-    (section: EditableSection, updates: any) => {
+    (section: EditableSection, updates: Record<string, unknown>) => {
       setSections(prev => ({
         ...prev,
         [section]: {
@@ -166,11 +166,13 @@ export function useInlineEdit(options: UseInlineEditOptions) {
         if (productId) {
           // ✅ BUSINESS RULE: Précommande/Arrêté → min_stock=0 + Supprimer alertes
           if (section === 'stock') {
-            const newStatus = sectionState.editedData.product_status;
+            const newStatus = sectionState.editedData['product_status'] as
+              | string
+              | undefined;
 
             if (newStatus === 'preorder' || newStatus === 'discontinued') {
               // Forcer min_stock à 0 (règle métier)
-              sectionState.editedData.min_stock = 0;
+              sectionState.editedData['min_stock'] = 0;
 
               // ❌ TODO: Supprimer alertes stock (géré dans l'app via use-product-status.ts)
               // Cannot call Server Actions from packages - must be called from app layer
@@ -178,7 +180,7 @@ export function useInlineEdit(options: UseInlineEditOptions) {
               // try {
               //   const result = await deleteProductAlerts(productId);
               //   if (result.success) {
-              //     console.log(
+              //     console.warn(
               //       `✅ ${result.deletedCount} alerte(s) supprimée(s) pour passage en ${newStatus}`
               //     );
               //   } else {
@@ -208,7 +210,7 @@ export function useInlineEdit(options: UseInlineEditOptions) {
           if (error) throw error;
         } else if (organisationId) {
           // Mise à jour organisation/fournisseur
-          console.log(
+          console.warn(
             '🔄 Updating organisation with data:',
             sectionState.editedData
           );
@@ -237,7 +239,7 @@ export function useInlineEdit(options: UseInlineEditOptions) {
             }
           });
 
-          console.log(
+          console.warn(
             '🧹 Cleaned data for organisation update (sans legacy):',
             cleanedData
           );
@@ -258,16 +260,16 @@ export function useInlineEdit(options: UseInlineEditOptions) {
               code: error.code,
             });
             throw new Error(
-              error.message ||
-                error.details ||
+              error.message ??
+                error.details ??
                 'Erreur de mise à jour organisation'
             );
           } else {
-            console.log('✅ Organisation update successful:', data);
+            console.warn('✅ Organisation update successful:', data);
           }
         } else if (contactId) {
           // Mise à jour contact
-          console.log(
+          console.warn(
             '🔄 Updating contact with data:',
             sectionState.editedData
           );
@@ -282,7 +284,7 @@ export function useInlineEdit(options: UseInlineEditOptions) {
             }
           });
 
-          console.log('🧹 Cleaned data for contact update:', cleanedData);
+          console.warn('🧹 Cleaned data for contact update:', cleanedData);
 
           const { error, data } = await supabase
             .from('contacts')
@@ -300,14 +302,14 @@ export function useInlineEdit(options: UseInlineEditOptions) {
               code: error.code,
             });
             throw new Error(
-              error.message || error.details || 'Erreur de mise à jour contact'
+              error.message ?? error.details ?? 'Erreur de mise à jour contact'
             );
           } else {
-            console.log('✅ Contact update successful:', data);
+            console.warn('✅ Contact update successful:', data);
           }
         } else if (salesOrderId) {
           // Mise à jour commande client
-          console.log(
+          console.warn(
             '🔄 Updating sales order with data:',
             sectionState.editedData
           );
@@ -321,7 +323,7 @@ export function useInlineEdit(options: UseInlineEditOptions) {
             }
           });
 
-          console.log('🧹 Cleaned data for sales order update:', cleanedData);
+          console.warn('🧹 Cleaned data for sales order update:', cleanedData);
 
           const { error, data } = await supabase
             .from('sales_orders')
@@ -333,16 +335,16 @@ export function useInlineEdit(options: UseInlineEditOptions) {
           if (error) {
             console.error('❌ Supabase sales order update error:', error);
             throw new Error(
-              error.message ||
-                error.details ||
+              error.message ??
+                error.details ??
                 'Erreur de mise à jour commande client'
             );
           } else {
-            console.log('✅ Sales order update successful:', data);
+            console.warn('✅ Sales order update successful:', data);
           }
         } else if (purchaseOrderId) {
           // Mise à jour commande fournisseur
-          console.log(
+          console.warn(
             '🔄 Updating purchase order with data:',
             sectionState.editedData
           );
@@ -356,7 +358,7 @@ export function useInlineEdit(options: UseInlineEditOptions) {
             }
           });
 
-          console.log(
+          console.warn(
             '🧹 Cleaned data for purchase order update:',
             cleanedData
           );
@@ -371,12 +373,12 @@ export function useInlineEdit(options: UseInlineEditOptions) {
           if (error) {
             console.error('❌ Supabase purchase order update error:', error);
             throw new Error(
-              error.message ||
-                error.details ||
+              error.message ??
+                error.details ??
                 'Erreur de mise à jour commande fournisseur'
             );
           } else {
-            console.log('✅ Purchase order update successful:', data);
+            console.warn('✅ Purchase order update successful:', data);
           }
         }
 

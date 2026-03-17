@@ -1,21 +1,12 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 
 import useSWR from 'swr';
 
-import {
-  calculateMinimumSellingPrice,
-  formatPrice,
-} from '@verone/finance/utils';
+import { calculateMinimumSellingPrice } from '@verone/finance/utils';
 import { createClient } from '@verone/utils/supabase/client';
 import { useToast } from '@verone/common/hooks';
-
-// ✅ Interface pour product_images (BR-TECH-002)
-interface ProductImage {
-  public_url: string;
-  is_primary: boolean;
-}
 
 export interface Product {
   id: string;
@@ -34,8 +25,8 @@ export interface Product {
   stock_status: 'in_stock' | 'out_of_stock' | 'coming_soon'; // Disponibilité physique (automatique)
   product_status: 'draft' | 'active' | 'preorder' | 'discontinued'; // Statut commercial (manuel)
   condition: 'new' | 'refurbished' | 'used';
-  variant_attributes?: any;
-  dimensions?: any;
+  variant_attributes?: Record<string, unknown>;
+  dimensions?: Record<string, unknown>;
   weight?: number;
 
   // ✅ BR-TECH-002: Images via product_images JOIN (primary_image_url enrichi côté client)
@@ -146,8 +137,8 @@ export interface CreateProductData {
   // Champs optionnels existants
   slug?: string;
   condition?: string;
-  variant_attributes?: any;
-  dimensions?: any;
+  variant_attributes?: Record<string, unknown>;
+  dimensions?: Record<string, unknown>;
   weight?: number;
   brand?: string;
 
@@ -226,7 +217,10 @@ const productsFetcher = async (
   }
 
   if (filters?.status) {
-    query = query.eq('product_status', filters.status as any);
+    query = query.eq(
+      'product_status',
+      filters.status as NonNullable<Product['product_status']>
+    );
   }
 
   if (filters?.supplier_id) {
@@ -246,32 +240,47 @@ const productsFetcher = async (
   if (error) throw error;
 
   // Enrichir avec prix minimum de vente + images + supplier (BR-TECH-002)
-  const enriched = (data || []).map((product: any) => {
-    const { organisations, ...productWithoutOrgs } = product;
+
+  const enriched = (data ?? []).map(product => {
+    const { organisations, ...productWithoutOrgs } = product as Record<
+      string,
+      unknown
+    >;
 
     return {
       ...productWithoutOrgs,
-      primary_image_url: product.product_images?.[0]?.public_url || null,
+      primary_image_url: (product as Record<string, unknown>).product_images
+        ? ((
+            (product as Record<string, unknown>).product_images as Array<{
+              public_url: string;
+            }>
+          )?.[0]?.public_url ?? null)
+        : null,
       supplier_name:
-        organisations?.trade_name || organisations?.legal_name || undefined,
+        (organisations as Record<string, unknown>)?.trade_name ??
+        (organisations as Record<string, unknown>)?.legal_name ??
+        undefined,
       supplier: organisations
         ? {
-            id: organisations.id,
-            name: organisations.trade_name || organisations.legal_name || '',
-            type: 'supplier', // Type par défaut pour la compatibilité interface
+            id: (organisations as Record<string, unknown>).id,
+            name:
+              (organisations as Record<string, unknown>).trade_name ??
+              (organisations as Record<string, unknown>).legal_name ??
+              '',
+            type: 'supplier',
           }
         : undefined,
       minimumSellingPrice:
         product.cost_price && product.margin_percentage
           ? calculateMinimumSellingPrice(
-              product.cost_price,
-              product.margin_percentage
+              Number(product.cost_price),
+              Number(product.margin_percentage)
             )
           : 0,
     };
   });
 
-  return { products: enriched, totalCount: count || 0 };
+  return { products: enriched, totalCount: count ?? 0 };
 };
 
 export function useProducts(filters?: ProductFilters, page: number = 0) {
@@ -280,18 +289,19 @@ export function useProducts(filters?: ProductFilters, page: number = 0) {
 
   // 🔑 Clé SWR stable basée sur filtres + page
   const swrKey = useMemo(
-    () => ['products', JSON.stringify(filters || {}), page],
+    () => ['products', JSON.stringify(filters ?? {}), page],
     [filters, page]
   );
 
   // 🚀 Utiliser SWR avec cache et revalidation automatique
+  /* eslint-disable @typescript-eslint/no-unsafe-assignment -- SWR key destructuring returns unknown types */
   const { data, error, isLoading, mutate } = useSWR(
     swrKey,
     ([_, filtersJson]) =>
       productsFetcher(
         'products' as string,
-        JSON.parse(filtersJson as string),
-        page as any
+        JSON.parse(filtersJson as string) as ProductFilters | undefined,
+        page
       ),
     {
       revalidateOnFocus: false,
@@ -300,9 +310,10 @@ export function useProducts(filters?: ProductFilters, page: number = 0) {
       keepPreviousData: true, // Garde les données pendant rechargement
     }
   );
+  /* eslint-enable @typescript-eslint/no-unsafe-assignment */
 
-  const products = data?.products || [];
-  const totalCount = data?.totalCount || 0;
+  const products = data?.products ?? [];
+  const totalCount = data?.totalCount ?? 0;
   const totalPages = Math.ceil(totalCount / PRODUCTS_PER_PAGE);
 
   // 📝 Méthodes CRUD avec invalidation cache SWR
@@ -316,23 +327,23 @@ export function useProducts(filters?: ProductFilters, page: number = 0) {
         .insert({
           name: productData.name,
           slug:
-            productData.slug ||
+            productData.slug ??
             productData.name
               .toLowerCase()
               .replace(/[^a-z0-9]/g, '-')
               .replace(/-+/g, '-'),
           cost_price: productData.cost_price,
           margin_percentage: productData.margin_percentage,
-          availability_type: productData.availability_type || 'normal',
+          availability_type: productData.availability_type ?? 'normal',
           description: productData.description,
           subcategory_id: productData.subcategory_id,
           technical_description: productData.technical_description,
-          selling_points: productData.selling_points || [],
-          product_type: productData.product_type || 'standard',
+          selling_points: productData.selling_points ?? [],
+          product_type: productData.product_type ?? 'standard',
           assigned_client_id: productData.assigned_client_id,
-          creation_mode: productData.creation_mode || 'complete',
+          creation_mode: productData.creation_mode ?? 'complete',
           supplier_page_url: productData.supplier_page_url,
-          condition: productData.condition || 'new',
+          condition: productData.condition ?? 'new',
           variant_attributes: productData.variant_attributes,
           dimensions: productData.dimensions,
           weight: productData.weight,
@@ -352,7 +363,7 @@ export function useProducts(filters?: ProductFilters, page: number = 0) {
           stock_forecasted_out: productData.stock_forecasted_out,
           min_stock: productData.min_stock,
           reorder_point: productData.reorder_point,
-        } as any)
+        } as Record<string, unknown>)
         .select(
           'id, name, sku, slug, cost_price, margin_percentage, stock_status, product_status, condition, variant_attributes, dimensions, weight, video_url, supplier_reference, gtin, stock_quantity, supplier_page_url, supplier_id, description, technical_description, selling_points, product_type, assigned_client_id, creation_mode, created_at, updated_at'
         )
@@ -367,7 +378,7 @@ export function useProducts(filters?: ProductFilters, page: number = 0) {
         title: 'Succès',
         description: 'Produit créé avec succès',
       });
-      return newProduct as Product;
+      return newProduct as unknown as Product;
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Erreur lors de la création';
@@ -387,7 +398,8 @@ export function useProducts(filters?: ProductFilters, page: number = 0) {
     try {
       const { data: updatedProduct, error } = await supabase
         .from('products')
-        .update(productData as any)
+
+        .update(productData as Record<string, unknown>)
         .eq('id', id)
         .select(
           'id, name, sku, slug, cost_price, margin_percentage, stock_status, product_status, condition, variant_attributes, dimensions, weight, video_url, supplier_reference, gtin, stock_quantity, supplier_page_url, supplier_id, description, technical_description, selling_points, product_type, assigned_client_id, creation_mode, created_at, updated_at'
@@ -445,7 +457,7 @@ export function useProducts(filters?: ProductFilters, page: number = 0) {
   return {
     products,
     loading: isLoading,
-    error: error?.message || null,
+    error: error instanceof Error ? error.message : null,
     refetch: () => mutate(),
     createProduct,
     updateProduct,
@@ -530,7 +542,7 @@ export function useProduct(id: string) {
         // Enrichir le produit avec le prix minimum de vente + image primaire
         if (data) {
           const supplierCost = data.cost_price;
-          const margin = data.margin_percentage || 0;
+          const margin = data.margin_percentage ?? 0;
 
           const minimumSellingPrice =
             supplierCost && margin
@@ -538,19 +550,17 @@ export function useProduct(id: string) {
               : 0;
 
           // Extraire image primaire depuis product_images (BR-TECH-002)
-          const primaryImage = data.product_images?.find(
-            (img: any) => img.is_primary
-          );
+          const primaryImage = data.product_images?.find(img => img.is_primary);
           const primaryImageUrl =
-            primaryImage?.public_url ||
-            data.product_images?.[0]?.public_url ||
+            primaryImage?.public_url ??
+            data.product_images?.[0]?.public_url ??
             null;
 
           setProduct({
             ...data,
             primary_image_url: primaryImageUrl,
             minimumSellingPrice,
-          } as any);
+          } as unknown as Product);
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Erreur inconnue');
@@ -559,7 +569,7 @@ export function useProduct(id: string) {
       }
     };
 
-    fetchProduct();
+    void fetchProduct();
   }, [id, supabase]);
 
   return { product, loading, error };

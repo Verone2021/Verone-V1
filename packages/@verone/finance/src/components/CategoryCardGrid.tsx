@@ -6,7 +6,7 @@ import {
   PCG_SUGGESTED_CATEGORIES,
   PCG_CLASSES,
   PCG_ACCOUNTS,
-  type PcgCategory,
+  type PcgCategory as _PcgCategory,
 } from '../lib/pcg-categories';
 
 // Pour compatibilité arrière, on exporte aussi les anciens types
@@ -33,7 +33,7 @@ export function CategoryCardGrid({
   className,
   showAll = false,
 }: CategoryCardGridProps) {
-  const categoriesToShow = showAll ? PCG_ACCOUNTS : PCG_SUGGESTED_CATEGORIES;
+  const _categoriesToShow = showAll ? PCG_ACCOUNTS : PCG_SUGGESTED_CATEGORIES;
 
   return (
     <div className={cn('space-y-4', className)}>
@@ -45,7 +45,7 @@ export function CategoryCardGrid({
             Suggestion :{' '}
             <strong>
               {PCG_SUGGESTED_CATEGORIES.find(c => c.code === suggestedCategory)
-                ?.label || suggestedCategory}
+                ?.label ?? suggestedCategory}
             </strong>
           </span>
         </div>
@@ -76,7 +76,7 @@ export function CategoryCardGrid({
                   'focus:outline-none focus:ring-2 focus:ring-blue-400'
                 )}
               >
-                <span className="text-xl">{parentClass?.icon || '📋'}</span>
+                <span className="text-xl">{parentClass?.icon ?? '📋'}</span>
                 <span
                   className={cn(
                     'text-center text-xs font-medium leading-tight',

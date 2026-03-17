@@ -110,7 +110,7 @@ export async function validatePurchaseReception(
           purchase_order_id: validatedData.purchase_order_id,
           product_id: item.product_id,
           quantity_received: item.quantity_to_receive,
-          received_at: validatedData.received_at || new Date().toISOString(),
+          received_at: validatedData.received_at ?? new Date().toISOString(),
           received_by: validatedData.received_by,
           carrier_name: validatedData.carrier_name,
           tracking_number: validatedData.tracking_number,

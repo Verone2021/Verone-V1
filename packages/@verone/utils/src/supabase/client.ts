@@ -171,7 +171,7 @@ export async function getUserSafe() {
     }
 
     return { data, error: null };
-  } catch (err) {
+  } catch (_err) {
     // Catch network errors (Failed to fetch)
     if (process.env.NODE_ENV === 'development') {
       console.warn('[Supabase] getUser network error (expected in dev)');

@@ -110,7 +110,7 @@ export function useGoogleMerchantSync() {
     });
 
     try {
-      const startTime = Date.now();
+      const _startTime = Date.now();
 
       // Call API
       const response = await fetch('/api/google-merchant/sync', {
@@ -125,11 +125,24 @@ export function useGoogleMerchantSync() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `HTTP ${response.status}`);
+        const errorData: { error?: string } = (await response.json()) as {
+          error?: string;
+        };
+        throw new Error(errorData.error ?? `HTTP ${response.status}`);
       }
 
-      const data = await response.json();
+      interface SyncResponseData {
+        success: boolean;
+        total: number;
+        synced: number;
+        failed: number;
+        skipped: number;
+        duration: number;
+        results: SyncResult[];
+      }
+
+      const data: SyncResponseData =
+        (await response.json()) as SyncResponseData;
 
       const newState: SyncState = {
         isLoading: false,
@@ -171,10 +184,9 @@ export function useGoogleMerchantSync() {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
 
-      logger.error('[useGoogleMerchantSync] Sync failed', {
-        action,
-        error: errorMessage,
-      } as any);
+      logger.error(
+        `[useGoogleMerchantSync] Sync failed: action=${action} error=${errorMessage}`
+      );
 
       const errorState: SyncState = {
         isLoading: false,

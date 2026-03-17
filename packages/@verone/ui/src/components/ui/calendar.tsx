@@ -54,12 +54,12 @@ function Calendar({
           defaultClassNames.nav
         ),
         button_previous: cn(
-          (buttonVariants as any)({ variant: buttonVariant }),
+          buttonVariants({ variant: buttonVariant }),
           'h-[--cell-size] w-[--cell-size] select-none p-0 aria-disabled:opacity-50',
           defaultClassNames.button_previous
         ),
         button_next: cn(
-          (buttonVariants as any)({ variant: buttonVariant }),
+          buttonVariants({ variant: buttonVariant }),
           'h-[--cell-size] w-[--cell-size] select-none p-0 aria-disabled:opacity-50',
           defaultClassNames.button_next
         ),
@@ -207,7 +207,10 @@ function CalendarDayButton({
         defaultClassNames.day,
         className
       )}
-      {...(props as any)}
+      {...(props as Omit<
+        React.ComponentProps<typeof DayButton>,
+        'className' | 'day' | 'modifiers'
+      >)}
     />
   );
 }

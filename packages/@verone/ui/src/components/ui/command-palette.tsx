@@ -281,8 +281,14 @@ export function CommandPalette({
     const savedRecent = localStorage.getItem('verone-recent-commands');
     const savedFavorites = localStorage.getItem('verone-favorite-commands');
 
-    if (savedRecent) setRecentCommands(JSON.parse(savedRecent));
-    if (savedFavorites) setFavorites(JSON.parse(savedFavorites));
+    if (savedRecent) {
+      const parsed: unknown = JSON.parse(savedRecent);
+      if (Array.isArray(parsed)) setRecentCommands(parsed as string[]);
+    }
+    if (savedFavorites) {
+      const parsed: unknown = JSON.parse(savedFavorites);
+      if (Array.isArray(parsed)) setFavorites(parsed as string[]);
+    }
   }, []);
 
   // Gestion des raccourcis clavier globaux
@@ -308,14 +314,14 @@ export function CommandPalette({
       commands.forEach(command => {
         if (command.shortcut && isShortcutMatch(e, command.shortcut)) {
           e.preventDefault();
-          executeCommand(command);
+          void executeCommand(command);
         }
       });
     };
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [mounted, open, commands]);
+  }, [mounted, open, commands, executeCommand]);
 
   // Vérifier si un raccourci correspond
   const isShortcutMatch = (e: KeyboardEvent, shortcut: string[]): boolean => {
@@ -354,7 +360,7 @@ export function CommandPalette({
       .filter(
         command =>
           command.title.toLowerCase().includes(query) ||
-          command.description?.toLowerCase().includes(query) ||
+          (command.description?.toLowerCase().includes(query) ?? false) ||
           command.keywords.some(keyword =>
             keyword.toLowerCase().includes(query)
           )
@@ -473,7 +479,7 @@ export function CommandPalette({
         e.preventDefault();
         const selectedCommand = filteredCommands[selectedIndex];
         if (selectedCommand) {
-          executeCommand(selectedCommand);
+          void executeCommand(selectedCommand);
         }
       }
     };
@@ -571,7 +577,7 @@ export function CommandPalette({
                       <CommandItem
                         key={command.id}
                         value={command.id}
-                        onSelect={() => executeCommand(command)}
+                        onSelect={() => void executeCommand(command)}
                         className={cn(
                           'flex items-center justify-between',
                           'data-[selected=true]:bg-black data-[selected=true]:text-white',

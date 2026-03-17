@@ -161,7 +161,7 @@ export function ConfirmDialog({
             {cancelText}
           </AlertDialogCancel>
           <AlertDialogAction
-            onClick={handleConfirm}
+            onClick={() => void handleConfirm()}
             disabled={isLoading}
             className={
               variant === 'destructive'

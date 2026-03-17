@@ -50,8 +50,8 @@ export function generateSalesOrderPDF(
   // Calcul nom client
   const clientName =
     order.customer_type === 'organization'
-      ? order.organisations?.name || 'Client professionnel'
-      : `${order.individual_customers?.first_name || ''} ${order.individual_customers?.last_name || ''}`.trim() ||
+      ? (order.organisations?.name ?? 'Client professionnel')
+      : `${order.individual_customers?.first_name ?? ''} ${order.individual_customers?.last_name ?? ''}`.trim() ||
         'Client particulier';
 
   // Calcul totaux
@@ -146,8 +146,8 @@ export function generateSalesOrderPDF(
 
   // ============ ITEMS TABLE ============
   const tableData = items.map(item => [
-    item.products?.name || 'Produit',
-    item.products?.sku || 'N/A',
+    item.products?.name ?? 'Produit',
+    item.products?.sku ?? 'N/A',
     item.quantity.toString(),
     formatCurrency(item.unit_price_ht),
     item.discount_percentage > 0 ? `${item.discount_percentage}%` : '-',
@@ -179,7 +179,8 @@ export function generateSalesOrderPDF(
   });
 
   // Get position after table
-  const finalY = (doc as any).lastAutoTable.finalY || yPosition + 50;
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
+  const finalY: number = (doc as any).lastAutoTable?.finalY ?? yPosition + 50;
 
   // ============ TOTALS ============
   yPosition = finalY + 10;
@@ -221,7 +222,9 @@ export function generateSalesOrderPDF(
 
     doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
-    const splitNotes = doc.splitTextToSize(order.notes, 160);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const splitNotes: string | string[] = doc.splitTextToSize(order.notes, 160);
+
     doc.text(splitNotes, 25, yPosition + 13);
   }
 

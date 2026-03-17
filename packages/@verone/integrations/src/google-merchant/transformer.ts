@@ -27,10 +27,10 @@ interface VéroneProduct {
   brand?: string;
   gtin?: string;
   supplier_reference?: string; // MPH
-  variant_attributes?: Record<string, any>;
+  variant_attributes?: Record<string, string>;
   selling_points?: string[];
   weight?: number;
-  dimensions?: Record<string, any>;
+  dimensions?: Record<string, number>;
   created_at: string;
   updated_at: string;
 
@@ -115,7 +115,7 @@ function mapAvailability(
     discontinued: 'OUT_OF_STOCK',
   } as const;
 
-  return mapping[status] || 'OUT_OF_STOCK';
+  return mapping[status] ?? 'OUT_OF_STOCK';
 }
 
 /**
@@ -130,14 +130,14 @@ function mapCondition(
     used: 'USED',
   } as const;
 
-  return mapping[condition] || 'NEW';
+  return mapping[condition] ?? 'NEW';
 }
 
 /**
  * Génère l'URL du produit
  */
 function generateProductUrl(product: VéroneProduct): string {
-  const slug = product.slug || product.sku.toLowerCase();
+  const slug = product.slug ?? product.sku.toLowerCase();
   return `${GOOGLE_MERCHANT_CONFIG.productBaseUrl}/products/${slug}`;
 }
 
@@ -149,8 +149,8 @@ function extractPrimaryImage(product: VéroneProduct): string {
   const fallbackImage = product.images?.[0];
 
   return (
-    primaryImage?.public_url ||
-    fallbackImage?.public_url ||
+    primaryImage?.public_url ??
+    fallbackImage?.public_url ??
     `${GOOGLE_MERCHANT_CONFIG.productBaseUrl}/images/placeholder.jpg`
   );
 }
@@ -207,16 +207,16 @@ function extractProductDetails(
  * Extrait les attributs variants (couleur, matériau, taille)
  */
 function extractVariantAttributes(product: VéroneProduct) {
-  const variants = product.variant_attributes || {};
+  const variants = product.variant_attributes ?? {};
 
   return {
-    color: variants.color || variants.couleur || undefined,
+    color: variants.color ?? variants.couleur ?? undefined,
     material:
-      variants.material || variants.materiau || variants.matiere || undefined,
+      variants.material ?? variants.materiau ?? variants.matiere ?? undefined,
     size:
-      variants.size ||
-      variants.taille ||
-      extractSizeFromDimensions(product.dimensions) ||
+      variants.size ??
+      variants.taille ??
+      extractSizeFromDimensions(product.dimensions) ??
       undefined,
   };
 }
@@ -225,7 +225,7 @@ function extractVariantAttributes(product: VéroneProduct) {
  * Extrait la taille depuis les dimensions
  */
 function extractSizeFromDimensions(
-  dimensions?: Record<string, any>
+  dimensions?: Record<string, number>
 ): string | undefined {
   if (!dimensions) return undefined;
 
@@ -253,7 +253,7 @@ function calculatePriceMicros(priceEur: number): number {
  * Détermine si le produit a des identifiants uniques
  */
 function hasUniqueIdentifiers(product: VéroneProduct): boolean {
-  return !!(product.gtin || product.supplier_reference);
+  return !!(product.gtin ?? product.supplier_reference);
 }
 
 /**
@@ -290,7 +290,7 @@ export function transformProductForGoogle(
         0,
         GOOGLE_MERCHANT_CONFIG.validation.maxTitleLength
       ),
-      description: (product.description || product.name).substring(
+      description: (product.description ?? product.name).substring(
         0,
         GOOGLE_MERCHANT_CONFIG.validation.maxDescriptionLength
       ),
@@ -391,7 +391,7 @@ export function debugTransformedProduct(product: VéroneProduct): void {
   const transformed = transformProductForGoogle(product);
   const validation = validateGoogleMerchantProduct(transformed);
 
-  console.log('🔄 Produit transformé:', {
+  console.warn('🔄 Produit transformé:', {
     original: {
       sku: product.sku,
       name: product.name,

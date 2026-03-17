@@ -14,11 +14,11 @@ import {
 } from './transformer';
 
 // Types de réponse Google Merchant API
-interface GoogleMerchantApiResponse<T = any> {
+interface GoogleMerchantApiResponse<T = unknown> {
   success: boolean;
   data?: T;
   error?: string;
-  details?: any;
+  details?: unknown;
 }
 
 interface ProductInputResponse {
@@ -27,7 +27,48 @@ interface ProductInputResponse {
   offerId: string;
   contentLanguage: string;
   feedLabel: string;
-  productAttributes: any;
+  productAttributes: Record<string, unknown>;
+}
+
+interface GoogleApiErrorResponse {
+  error?: {
+    message?: string;
+  };
+}
+
+// Produit input pour le client (données brutes de la DB)
+interface ProductData {
+  sku: string;
+  slug?: string;
+  name: string;
+  description?: string;
+  technical_description?: string;
+  price_ht: number;
+  cost_price?: number;
+  status: string;
+  condition?: string;
+  brand?: string;
+  gtin?: string;
+  supplier_reference?: string;
+  variant_attributes?: Record<string, unknown>;
+  selling_points?: string[];
+  weight?: number;
+  dimensions?: Record<string, unknown>;
+  item_group_id?: string;
+  images?: Array<{
+    public_url: string;
+    is_primary: boolean;
+    alt_text?: string;
+    display_order: number;
+  }>;
+  supplier?: {
+    name: string;
+    id: string;
+  };
+  subcategory?: {
+    name: string;
+    google_category?: string;
+  };
 }
 
 // ProductInsertRequest supprimé - Format SDK non utilisé pour REST API
@@ -47,7 +88,7 @@ export class GoogleMerchantClient {
     this.accountId = GOOGLE_MERCHANT_CONFIG.accountId;
     this.dataSourcePath = getResourcePaths().dataSource;
 
-    console.log('[Google Merchant Client] Initialized:', {
+    console.warn('[Google Merchant Client] Initialized:', {
       accountId: this.accountId,
       dataSource: this.dataSourcePath,
       baseUrl: this.baseUrl,
@@ -60,39 +101,39 @@ export class GoogleMerchantClient {
   private async makeRequest<T>(
     endpoint: string,
     method: 'GET' | 'POST' | 'PATCH' | 'DELETE' = 'GET',
-    body?: any
+    body?: unknown
   ): Promise<GoogleMerchantApiResponse<T>> {
     try {
       const headers = await this.auth.getAuthHeaders();
       const url = `${this.baseUrl}/${endpoint}`;
 
-      console.log(`[Google Merchant Client] ${method} ${url}`);
+      console.warn(`[Google Merchant Client] ${method} ${url}`);
 
       const response = await fetch(url, {
         method,
         headers,
-        ...(body && { body: JSON.stringify(body) }),
+        ...(body ? { body: JSON.stringify(body) } : {}),
       });
 
       // Log raw response for debugging
       const responseText = await response.text();
-      console.log(
+      console.warn(
         `[Google Merchant Client] Response status: ${response.status}`
       );
-      console.log(
+      console.warn(
         `[Google Merchant Client] Response headers:`,
         Object.fromEntries(response.headers.entries())
       );
-      console.log(
+      console.warn(
         `[Google Merchant Client] Response body (first 500 chars):`,
         responseText.substring(0, 500)
       );
 
       // Parse JSON response
-      let responseData: any;
+      let responseData: unknown;
       try {
         responseData = JSON.parse(responseText);
-      } catch (parseError) {
+      } catch (_parseError) {
         console.error('[Google Merchant Client] Failed to parse JSON response');
         return {
           success: false,
@@ -102,6 +143,7 @@ export class GoogleMerchantClient {
       }
 
       if (!response.ok) {
+        const errorResponse = responseData as GoogleApiErrorResponse;
         console.error('[Google Merchant Client] API Error:', {
           status: response.status,
           statusText: response.statusText,
@@ -110,25 +152,27 @@ export class GoogleMerchantClient {
 
         return {
           success: false,
-          error: `API Error ${response.status}: ${responseData.error?.message || response.statusText}`,
+          error: `API Error ${response.status}: ${errorResponse.error?.message ?? response.statusText}`,
           details: responseData,
         };
       }
 
-      console.log('[Google Merchant Client] API Success:', {
+      console.warn('[Google Merchant Client] API Success:', {
         endpoint,
         status: response.status,
       });
 
       return {
         success: true,
-        data: responseData,
+        data: responseData as T,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       console.error('[Google Merchant Client] Request failed:', error);
       return {
         success: false,
-        error: `Network error: ${error.message}`,
+        error: `Network error: ${errorMessage}`,
         details: error,
       };
     }
@@ -138,7 +182,7 @@ export class GoogleMerchantClient {
    * Insère un produit dans Google Merchant Center
    */
   async insertProduct(
-    productData: any
+    productData: ProductData
   ): Promise<GoogleMerchantApiResponse<ProductInputResponse>> {
     try {
       // 1. Transformer le produit
@@ -167,18 +211,23 @@ export class GoogleMerchantClient {
       );
 
       if (result.success) {
-        console.log('[Google Merchant Client] Product inserted successfully:', {
-          sku: productData.sku,
-          googleProductId: result.data?.name,
-        });
+        console.warn(
+          '[Google Merchant Client] Product inserted successfully:',
+          {
+            sku: productData.sku,
+            googleProductId: result.data?.name,
+          }
+        );
       }
 
       return result;
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       console.error('[Google Merchant Client] Insert product failed:', error);
       return {
         success: false,
-        error: `Insert failed: ${error.message}`,
+        error: `Insert failed: ${errorMessage}`,
         details: error,
       };
     }
@@ -188,7 +237,7 @@ export class GoogleMerchantClient {
    * Met à jour un produit existant dans Google Merchant Center
    */
   async updateProduct(
-    productData: any
+    productData: ProductData
   ): Promise<GoogleMerchantApiResponse<ProductInputResponse>> {
     try {
       // Pour Google Merchant API, la mise à jour se fait via une nouvelle insertion
@@ -196,17 +245,19 @@ export class GoogleMerchantClient {
       const result = await this.insertProduct(productData);
 
       if (result.success) {
-        console.log('[Google Merchant Client] Product updated successfully:', {
+        console.warn('[Google Merchant Client] Product updated successfully:', {
           sku: productData.sku,
         });
       }
 
       return result;
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       console.error('[Google Merchant Client] Update product failed:', error);
       return {
         success: false,
-        error: `Update failed: ${error.message}`,
+        error: `Update failed: ${errorMessage}`,
         details: error,
       };
     }
@@ -222,17 +273,19 @@ export class GoogleMerchantClient {
       const result = await this.makeRequest(productInputName, 'DELETE');
 
       if (result.success) {
-        console.log('[Google Merchant Client] Product deleted successfully:', {
+        console.warn('[Google Merchant Client] Product deleted successfully:', {
           sku,
         });
       }
 
       return result;
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       console.error('[Google Merchant Client] Delete product failed:', error);
       return {
         success: false,
-        error: `Delete failed: ${error.message}`,
+        error: `Delete failed: ${errorMessage}`,
         details: error,
       };
     }
@@ -246,11 +299,13 @@ export class GoogleMerchantClient {
       const productName = `${getResourcePaths().products}/${GOOGLE_MERCHANT_CONFIG.contentLanguage}~${GOOGLE_MERCHANT_CONFIG.feedLabel}~${sku}`;
 
       return await this.makeRequest(productName, 'GET');
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       console.error('[Google Merchant Client] Get product failed:', error);
       return {
         success: false,
-        error: `Get failed: ${error.message}`,
+        error: `Get failed: ${errorMessage}`,
         details: error,
       };
     }
@@ -270,11 +325,13 @@ export class GoogleMerchantClient {
       }
 
       return await this.makeRequest(endpoint, 'GET');
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       console.error('[Google Merchant Client] List products failed:', error);
       return {
         success: false,
-        error: `List failed: ${error.message}`,
+        error: `List failed: ${errorMessage}`,
         details: error,
       };
     }
@@ -284,9 +341,9 @@ export class GoogleMerchantClient {
    * Synchronise un lot de produits (batch operation)
    */
   async batchSyncProducts(
-    products: any[]
+    products: ProductData[]
   ): Promise<GoogleMerchantApiResponse[]> {
-    console.log(
+    console.warn(
       `[Google Merchant Client] Batch syncing ${products.length} products`
     );
 
@@ -297,7 +354,7 @@ export class GoogleMerchantClient {
     for (let i = 0; i < products.length; i += batchSize) {
       const batch = products.slice(i, i + batchSize);
 
-      console.log(
+      console.warn(
         `[Google Merchant Client] Processing batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(products.length / batchSize)}`
       );
 
@@ -321,7 +378,7 @@ export class GoogleMerchantClient {
     const successCount = results.filter(r => r.success).length;
     const errorCount = results.filter(r => !r.success).length;
 
-    console.log(
+    console.warn(
       `[Google Merchant Client] Batch sync completed: ${successCount} success, ${errorCount} errors`
     );
 
@@ -333,7 +390,7 @@ export class GoogleMerchantClient {
    */
   async testConnection(): Promise<GoogleMerchantApiResponse> {
     try {
-      console.log('[Google Merchant Client] Testing connection...');
+      console.warn('[Google Merchant Client] Testing connection...');
 
       // Test d'authentification
       const authTest = await this.auth.testAuthentication();
@@ -348,20 +405,22 @@ export class GoogleMerchantClient {
       const listResult = await this.listProducts(1);
 
       if (listResult.success) {
-        console.log('[Google Merchant Client] Connection test: ✅ Success');
+        console.warn('[Google Merchant Client] Connection test: ✅ Success');
         return {
           success: true,
           data: { message: 'Connection successful', auth: true, api: true },
         };
       } else {
-        console.log('[Google Merchant Client] Connection test: ❌ API Failed');
+        console.warn('[Google Merchant Client] Connection test: ❌ API Failed');
         return listResult;
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       console.error('[Google Merchant Client] Connection test failed:', error);
       return {
         success: false,
-        error: `Connection test failed: ${error.message}`,
+        error: `Connection test failed: ${errorMessage}`,
         details: error,
       };
     }
@@ -375,9 +434,7 @@ let clientInstance: GoogleMerchantClient | null = null;
  * Obtient l'instance singleton du client
  */
 export function getGoogleMerchantClient(): GoogleMerchantClient {
-  if (!clientInstance) {
-    clientInstance = new GoogleMerchantClient();
-  }
+  clientInstance ??= new GoogleMerchantClient();
   return clientInstance;
 }
 

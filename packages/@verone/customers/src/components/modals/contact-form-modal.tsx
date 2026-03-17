@@ -22,7 +22,7 @@ import {
 } from '@verone/ui';
 import { Switch } from '@verone/ui';
 import { Textarea } from '@verone/ui';
-import { Loader2, Phone, Users } from 'lucide-react';
+import { Loader2, Users } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -76,7 +76,7 @@ export function ContactFormModal({
   onClose,
   onSave,
   contact,
-  organisationId,
+  organisationId: _organisationId,
   organisationName,
 }: ContactFormModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -110,15 +110,15 @@ export function ContactFormModal({
   useEffect(() => {
     if (isEditing && contact) {
       form.reset({
-        first_name: contact.first_name || '',
-        last_name: contact.last_name || '',
-        title: contact.title || undefined,
-        department: contact.department || undefined,
-        email: contact.email || '',
-        phone: contact.phone || undefined,
-        mobile: contact.mobile || undefined,
-        secondary_email: contact.secondary_email || undefined,
-        direct_line: contact.direct_line || undefined,
+        first_name: contact.first_name ?? '',
+        last_name: contact.last_name ?? '',
+        title: contact.title ?? undefined,
+        department: contact.department ?? undefined,
+        email: contact.email ?? '',
+        phone: contact.phone ?? undefined,
+        mobile: contact.mobile ?? undefined,
+        secondary_email: contact.secondary_email ?? undefined,
+        direct_line: contact.direct_line ?? undefined,
         is_primary_contact: contact.is_primary_contact ?? false,
         is_billing_contact: contact.is_billing_contact ?? false,
         is_technical_contact: contact.is_technical_contact ?? false,
@@ -127,11 +127,11 @@ export function ContactFormModal({
           (contact.preferred_communication_method as
             | 'email'
             | 'phone'
-            | 'both') || 'email',
+            | 'both') ?? 'email',
         accepts_marketing: contact.accepts_marketing ?? true,
         accepts_notifications: contact.accepts_notifications ?? true,
-        language_preference: contact.language_preference || 'fr',
-        notes: contact.notes || undefined,
+        language_preference: contact.language_preference ?? 'fr',
+        notes: contact.notes ?? undefined,
       });
     } else {
       // Réinitialiser pour nouveau contact
@@ -162,7 +162,7 @@ export function ContactFormModal({
     setIsSubmitting(true);
 
     try {
-      await onSave(data);
+      onSave(data);
     } catch (error) {
       console.error('❌ Erreur lors de la sauvegarde du contact:', error);
     } finally {
@@ -204,7 +204,16 @@ export function ContactFormModal({
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+        <form
+          onSubmit={e => {
+            void form
+              .handleSubmit(handleSubmit)(e)
+              .catch((error: unknown) => {
+                console.error('[ContactFormModal] Submit failed:', error);
+              });
+          }}
+          className="space-y-6"
+        >
           {/* Informations personnelles */}
           <div className="space-y-4">
             <h3 className="text-lg font-medium text-black border-b pb-2">

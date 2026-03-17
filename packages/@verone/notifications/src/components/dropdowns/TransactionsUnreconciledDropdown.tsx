@@ -20,7 +20,7 @@ import { ScrollArea } from '@verone/ui';
 import { Skeleton } from '@verone/ui';
 import { cn } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
-import { formatDistanceToNow, format } from 'date-fns';
+import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import {
   ArrowLeftRight,
@@ -93,8 +93,8 @@ function TransactionItem({ transaction }: TransactionItemProps) {
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between gap-2">
           <span className="font-medium text-sm truncate">
-            {transaction.counterparty_name ||
-              transaction.label ||
+            {transaction.counterparty_name ??
+              transaction.label ??
               'Transaction'}
           </span>
           <span className={cn('font-semibold text-sm', colorClass)}>
@@ -196,7 +196,9 @@ export function TransactionsUnreconciledDropdown({
 
   useEffect(() => {
     if (open) {
-      fetchTransactions();
+      void fetchTransactions().catch((err: unknown) => {
+        console.error('[TransactionsUnreconciledDropdown] Fetch error:', err);
+      });
       onOpen?.();
     }
   }, [open, fetchTransactions, onOpen]);
@@ -230,7 +232,14 @@ export function TransactionsUnreconciledDropdown({
             variant="ghost"
             size="sm"
             className="h-7 w-7 p-0"
-            onClick={handleRefresh}
+            onClick={() => {
+              void handleRefresh().catch((err: unknown) => {
+                console.error(
+                  '[TransactionsUnreconciledDropdown] Refresh error:',
+                  err
+                );
+              });
+            }}
             disabled={loading}
           >
             <RefreshCw
@@ -243,7 +252,7 @@ export function TransactionsUnreconciledDropdown({
         <ScrollArea className="max-h-80">
           {loading && transactions.length === 0 ? (
             <div className="p-4 space-y-3">
-              {[...Array(3)].map((_, i) => (
+              {Array.from({ length: 3 }).map((_, i) => (
                 <div key={i} className="flex items-center gap-3">
                   <Skeleton className="w-8 h-8 rounded-md" />
                   <div className="flex-1 space-y-1.5">
@@ -260,7 +269,14 @@ export function TransactionsUnreconciledDropdown({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={handleRefresh}
+                onClick={() => {
+                  void handleRefresh().catch((err: unknown) => {
+                    console.error(
+                      '[TransactionsUnreconciledDropdown] Retry error:',
+                      err
+                    );
+                  });
+                }}
                 className="mt-2"
               >
                 Réessayer

@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 'use client';
 
 import { useState, useRef, useCallback } from 'react';
@@ -207,7 +208,7 @@ export function SourcingQuickForm({
     setIsSubmitting(true);
 
     try {
-      let supplierId = formData.supplier_id || undefined;
+      let supplierId = formData.supplier_id ?? undefined;
 
       // Create supplier first if "new" mode
       if (supplierMode === 'new') {
@@ -219,7 +220,7 @@ export function SourcingQuickForm({
           has_different_trade_name: newSupplier.has_different_trade_name,
           type: 'supplier',
           is_active: true,
-          website: newSupplier.website || null,
+          website: newSupplier.website ?? null,
           country: newSupplier.country || 'FR',
         });
 
@@ -237,16 +238,16 @@ export function SourcingQuickForm({
 
       const productData = {
         name: formData.name,
-        supplier_page_url: formData.supplier_page_url || undefined,
-        cost_price: formData.cost_price || undefined,
-        supplier_reference: formData.supplier_reference || undefined,
-        brand: formData.brand || undefined,
-        description: formData.description || undefined,
-        supplier_moq: formData.supplier_moq || undefined,
-        sourcing_channel: formData.sourcing_channel || undefined,
+        supplier_page_url: formData.supplier_page_url ?? undefined,
+        cost_price: formData.cost_price ?? undefined,
+        supplier_reference: formData.supplier_reference ?? undefined,
+        brand: formData.brand ?? undefined,
+        description: formData.description ?? undefined,
+        supplier_moq: formData.supplier_moq ?? undefined,
+        sourcing_channel: formData.sourcing_channel ?? undefined,
         supplier_id: supplierId,
-        assigned_client_id: formData.assigned_client_id || undefined,
-        enseigne_id: formData.enseigne_id || undefined,
+        assigned_client_id: formData.assigned_client_id ?? undefined,
+        enseigne_id: formData.enseigne_id ?? undefined,
         imageFiles: selectedImages.length > 0 ? selectedImages : undefined,
       };
 
@@ -383,11 +384,11 @@ export function SourcingQuickForm({
             {supplierMode === 'existing' && (
               <div className="ml-7">
                 <SupplierSelector
-                  selectedSupplierId={formData.supplier_id || null}
+                  selectedSupplierId={formData.supplier_id ?? null}
                   onSupplierChange={supplierId => {
                     setFormData(prev => ({
                       ...prev,
-                      supplier_id: supplierId || '',
+                      supplier_id: supplierId ?? '',
                     }));
                   }}
                   label=""
@@ -637,7 +638,7 @@ export function SourcingQuickForm({
                   multiple
                   className="hidden"
                   onChange={e => {
-                    const files = Array.from(e.target.files || []);
+                    const files = Array.from(e.target.files ?? []);
                     if (files.length > 0) handleImagesSelect(files);
                     e.target.value = '';
                   }}
@@ -723,7 +724,7 @@ export function SourcingQuickForm({
               type="number"
               step="0.01"
               min="0"
-              value={formData.cost_price || ''}
+              value={formData.cost_price ?? ''}
               onChange={e => {
                 const value = parseFloat(e.target.value) || 0;
                 setFormData(prev => ({ ...prev, cost_price: value }));
@@ -809,7 +810,7 @@ export function SourcingQuickForm({
             id="supplier_moq"
             type="number"
             min="1"
-            value={formData.supplier_moq || ''}
+            value={formData.supplier_moq ?? ''}
             onChange={e => {
               const value = parseInt(e.target.value) || 0;
               setFormData(prev => ({ ...prev, supplier_moq: value }));
@@ -852,19 +853,19 @@ export function SourcingQuickForm({
         {/* 11. CLIENT DESTINATAIRE - Facultatif */}
         <div className="space-y-2">
           <ClientOrEnseigneSelector
-            enseigneId={formData.enseigne_id || null}
-            organisationId={formData.assigned_client_id || null}
+            enseigneId={formData.enseigne_id ?? null}
+            organisationId={formData.assigned_client_id ?? null}
             onEnseigneChange={(enseigneId, _enseigneName, parentOrgId) => {
               setFormData(prev => ({
                 ...prev,
-                enseigne_id: enseigneId || '',
-                assigned_client_id: parentOrgId || '',
+                enseigne_id: enseigneId ?? '',
+                assigned_client_id: parentOrgId ?? '',
               }));
             }}
             onOrganisationChange={(organisationId, _organisationName) => {
               setFormData(prev => ({
                 ...prev,
-                assigned_client_id: organisationId || '',
+                assigned_client_id: organisationId ?? '',
                 enseigne_id: '',
               }));
             }}

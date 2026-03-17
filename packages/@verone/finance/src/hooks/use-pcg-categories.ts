@@ -66,8 +66,10 @@ export function usePcgCategories(): UsePcgCategoriesReturn {
       const supabase = createClient();
 
       // Table pcg_categories n'est pas dans les types Supabase générés
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error: fetchError } = (await (supabase as any)
+      /* eslint-disable @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
+      const { data, error: fetchError } = (await (
+        supabase as { from: CallableFunction }
+      )
         .from('pcg_categories')
         .select('*')
         .eq('is_active', true)
@@ -75,12 +77,13 @@ export function usePcgCategories(): UsePcgCategoriesReturn {
         data: PcgCategory[] | null;
         error: { message: string } | null;
       };
+      /* eslint-enable @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
 
       if (fetchError) {
         throw new Error(fetchError.message);
       }
 
-      setCategories(data || []);
+      setCategories(data ?? []);
     } catch (err) {
       console.error('[usePcgCategories] Error:', err);
       setError(err instanceof Error ? err.message : 'Erreur inconnue');
@@ -90,7 +93,7 @@ export function usePcgCategories(): UsePcgCategoriesReturn {
   }, []);
 
   useEffect(() => {
-    fetchCategories();
+    void fetchCategories();
   }, [fetchCategories]);
 
   // Classes (niveau 1)
@@ -161,7 +164,7 @@ export function usePcgCategories(): UsePcgCategoriesReturn {
           c =>
             c.code.includes(q) ||
             c.label.toLowerCase().includes(q) ||
-            (c.description && c.description.toLowerCase().includes(q))
+            c.description?.toLowerCase().includes(q)
         )
         .slice(0, 15);
     },

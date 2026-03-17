@@ -248,7 +248,7 @@ export function RapprochementModal({
   >(null);
   const [allocatedAmount, setAllocatedAmount] = useState<string>('');
   const [transactionDate, setTransactionDate] = useState<string | undefined>();
-  const [transactionSide, setTransactionSide] = useState<
+  const [_transactionSide, setTransactionSide] = useState<
     'credit' | 'debit' | undefined
   >();
 
@@ -314,7 +314,7 @@ export function RapprochementModal({
             total_ttc: d.total_ttc,
             amount_paid: d.amount_paid || 0,
             partner_name:
-              d.organisations?.trade_name || d.organisations?.legal_name,
+              d.organisations?.trade_name ?? d.organisations?.legal_name,
             document_date: d.document_date,
           }))
         );
@@ -342,7 +342,7 @@ export function RapprochementModal({
         .limit(100);
 
       // DEBUG: Log pour identifier le problème de rapprochement
-      console.log('[RapprochementModal] sales_orders query result:', {
+      console.warn('[RapprochementModal] sales_orders query result:', {
         dataLength: ordersData?.length,
         error: ordersError,
         firstOrder: ordersData?.[0],
@@ -496,7 +496,7 @@ export function RapprochementModal({
         const { score, reasons } = calculateMatchScore(
           amount,
           transactionDate,
-          organisationId || undefined,
+          organisationId ?? undefined,
           order,
           counterpartyName
         );
@@ -510,7 +510,7 @@ export function RapprochementModal({
 
     // DEBUG: Log des scores calculés
     if (result.length > 0) {
-      console.log('[RapprochementModal] Scoring results:', {
+      console.warn('[RapprochementModal] Scoring results:', {
         transactionAmount: amount,
         ordersCount: result.length,
         topMatches: result.slice(0, 3).map(o => ({
@@ -568,7 +568,7 @@ export function RapprochementModal({
   useEffect(() => {
     if (!open) return;
 
-    fetchAvailableItems();
+    void fetchAvailableItems();
 
     // Reset des sélections
     setSelectedDocumentId(null);
@@ -584,7 +584,7 @@ export function RapprochementModal({
     } else {
       setActiveTab('orders');
     }
-  }, [open, fetchAvailableItems]);
+  }, [open, fetchAvailableItems, amount]);
 
   // Filtrer les documents
   const filteredDocuments = documents.filter(
@@ -618,14 +618,11 @@ export function RapprochementModal({
         ? parseFloat(allocatedAmount)
         : remainingAmount;
 
-      const { error } = await (supabase.rpc as CallableFunction)(
-        'link_transaction_to_document',
-        {
-          p_transaction_id: transactionId,
-          p_document_id: selectedDocumentId,
-          p_allocated_amount: amountToAllocate,
-        }
-      );
+      const { error } = await supabase.rpc('link_transaction_to_document', {
+        p_transaction_id: transactionId,
+        p_document_id: selectedDocumentId,
+        p_allocated_amount: amountToAllocate,
+      });
 
       if (error) throw error;
 
@@ -654,14 +651,11 @@ export function RapprochementModal({
         ? parseFloat(allocatedAmount)
         : remainingAmount;
 
-      const { error } = await (supabase.rpc as CallableFunction)(
-        'link_transaction_to_document',
-        {
-          p_transaction_id: transactionId,
-          p_sales_order_id: selectedOrderId,
-          p_allocated_amount: amountToAllocate,
-        }
-      );
+      const { error } = await supabase.rpc('link_transaction_to_document', {
+        p_transaction_id: transactionId,
+        p_sales_order_id: selectedOrderId,
+        p_allocated_amount: amountToAllocate,
+      });
 
       if (error) throw error;
 
@@ -690,14 +684,11 @@ export function RapprochementModal({
         ? parseFloat(allocatedAmount)
         : remainingAmount;
 
-      const { error } = await (supabase.rpc as CallableFunction)(
-        'link_transaction_to_document',
-        {
-          p_transaction_id: transactionId,
-          p_purchase_order_id: selectedPurchaseOrderId,
-          p_allocated_amount: amountToAllocate,
-        }
-      );
+      const { error } = await supabase.rpc('link_transaction_to_document', {
+        p_transaction_id: transactionId,
+        p_purchase_order_id: selectedPurchaseOrderId,
+        p_allocated_amount: amountToAllocate,
+      });
 
       if (error) throw error;
 
@@ -818,7 +809,7 @@ export function RapprochementModal({
                   {suggestions.map(order => (
                     <button
                       key={order.id}
-                      onClick={() => handleQuickLink(order.id)}
+                      onClick={() => void handleQuickLink(order.id)}
                       className="w-full flex items-center justify-between p-2 bg-white rounded border border-amber-200 hover:border-amber-400 transition-colors text-left"
                     >
                       <div className="flex items-center gap-2">
@@ -939,7 +930,7 @@ export function RapprochementModal({
                                     {doc.document_number}
                                   </p>
                                   <p className="text-xs text-slate-500">
-                                    {doc.partner_name || 'Sans partenaire'} -{' '}
+                                    {doc.partner_name ?? 'Sans partenaire'} -{' '}
                                     {formatDate(doc.document_date)}
                                   </p>
                                 </div>
@@ -979,7 +970,7 @@ export function RapprochementModal({
                     </div>
                     <Button
                       className="w-full"
-                      onClick={handleLinkDocument}
+                      onClick={() => void handleLinkDocument()}
                       disabled={isLinking}
                     >
                       {isLinking ? (
@@ -1053,7 +1044,7 @@ export function RapprochementModal({
                                   #{order.order_number}
                                 </p>
                                 <p className="text-xs text-slate-500">
-                                  {order.customer_name || 'Client'} -{' '}
+                                  {order.customer_name ?? 'Client'} -{' '}
                                   {formatDate(order.created_at)}
                                 </p>
                                 {order.matchReasons &&
@@ -1115,7 +1106,7 @@ export function RapprochementModal({
                     </div>
                     <Button
                       className="w-full"
-                      onClick={handleLinkOrder}
+                      onClick={() => void handleLinkOrder()}
                       disabled={isLinking}
                     >
                       {isLinking ? (
@@ -1164,7 +1155,9 @@ export function RapprochementModal({
                         {purchaseOrderSuggestions.map(po => (
                           <button
                             key={po.id}
-                            onClick={() => handleQuickLinkPurchaseOrder(po.id)}
+                            onClick={() =>
+                              void handleQuickLinkPurchaseOrder(po.id)
+                            }
                             className="w-full flex items-center justify-between p-2 bg-white rounded border border-orange-200 hover:border-orange-400 transition-colors text-left"
                           >
                             <div className="flex items-center gap-2">
@@ -1240,7 +1233,7 @@ export function RapprochementModal({
                                   #{po.po_number}
                                 </p>
                                 <p className="text-xs text-slate-500">
-                                  {po.supplier_name || 'Fournisseur'} -{' '}
+                                  {po.supplier_name ?? 'Fournisseur'} -{' '}
                                   {formatDate(po.created_at)}
                                 </p>
                                 {po.matchReasons &&
@@ -1296,7 +1289,7 @@ export function RapprochementModal({
                     </div>
                     <Button
                       className="w-full"
-                      onClick={handleLinkPurchaseOrder}
+                      onClick={() => void handleLinkPurchaseOrder()}
                       disabled={isLinking}
                     >
                       {isLinking ? (

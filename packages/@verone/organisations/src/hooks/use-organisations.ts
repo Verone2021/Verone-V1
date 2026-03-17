@@ -78,7 +78,7 @@ export function useOrganisations(filters?: OrganisationFilters) {
       if (data) {
         const orgWithName: Organisation = {
           ...data,
-          name: data.trade_name || data.legal_name,
+          name: data.trade_name ?? data.legal_name,
         };
         return orgWithName;
       }
@@ -94,7 +94,7 @@ export function useOrganisations(filters?: OrganisationFilters) {
       const errorMessage =
         pgError?.message instanceof Error
           ? pgError.message.message
-          : pgError?.message || (error instanceof Error ? error.message : '');
+          : (pgError?.message ?? (error instanceof Error ? error.message : ''));
 
       // Silencieusement ignorer les erreurs réseau (Failed to fetch, network, timeout)
       if (
@@ -113,14 +113,14 @@ export function useOrganisations(filters?: OrganisationFilters) {
       }
 
       // Silencieusement ignorer les erreurs vides/malformées (pas d'info utile)
-      const hasContent = errorMessage || pgError?.code || pgError?.details;
+      const hasContent = errorMessage ?? pgError?.code ?? pgError?.details;
       if (!hasContent) {
         return null;
       }
 
       // Logger uniquement les erreurs significatives (non-réseau, non-expected)
       console.error("Erreur lors de la récupération de l'organisation:", {
-        message: errorMessage || 'Erreur inconnue',
+        message: errorMessage ?? 'Erreur inconnue',
         code: pgError?.code,
         details: error,
       });
@@ -207,9 +207,9 @@ export function useOrganisations(filters?: OrganisationFilters) {
       }
 
       // ✅ Ajouter le champ 'name' calculé pour chaque organisation
-      const organisationsWithName = (data || []).map(org => ({
+      const organisationsWithName = (data ?? []).map(org => ({
         ...org,
-        name: org.trade_name || org.legal_name,
+        name: org.trade_name ?? org.legal_name,
       }));
 
       // Add product counts for suppliers (optimized - single query)
@@ -262,6 +262,7 @@ export function useOrganisations(filters?: OrganisationFilters) {
     void fetchOrganisations().catch((error: unknown) => {
       console.error('[useOrganisations] Fetch failed:', error);
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fetchOrganisations is defined inside component, adding it causes infinite loop
   }, [
     filters?.type,
     filters?.is_active,
@@ -283,36 +284,36 @@ export function useOrganisations(filters?: OrganisationFilters) {
           {
             // ✅ Colonnes de base (REQUIRED)
             legal_name: data.legal_name, // ✅ CORRIGÉ - name → legal_name
-            trade_name: data.trade_name || null, // ✅ NOUVEAU - nom commercial
+            trade_name: data.trade_name ?? null, // ✅ NOUVEAU - nom commercial
             has_different_trade_name: data.has_different_trade_name ?? false, // ✅ NOUVEAU
             type: data.type,
-            email: data.email || null,
-            phone: data.phone || null,
-            country: data.country || 'FR',
+            email: data.email ?? null,
+            phone: data.phone ?? null,
+            country: data.country ?? 'FR',
             is_active: data.is_active ?? true,
-            website: data.website || null,
+            website: data.website ?? null,
 
             // ✅ Identifiants légaux
-            siren: data.siren || null, // ✅ NOUVEAU - SIREN (9 chiffres)
-            siret: data.siret || null,
-            vat_number: data.vat_number || null,
-            legal_form: data.legal_form || null,
+            siren: data.siren ?? null, // ✅ NOUVEAU - SIREN (9 chiffres)
+            siret: data.siret ?? null,
+            vat_number: data.vat_number ?? null,
+            legal_form: data.legal_form ?? null,
 
             // ✅ Adresses de facturation (existantes en BD)
-            billing_address_line1: data.billing_address_line1 || null,
-            billing_address_line2: data.billing_address_line2 || null,
-            billing_postal_code: data.billing_postal_code || null,
-            billing_city: data.billing_city || null,
-            billing_region: data.billing_region || null,
-            billing_country: data.billing_country || 'FR',
+            billing_address_line1: data.billing_address_line1 ?? null,
+            billing_address_line2: data.billing_address_line2 ?? null,
+            billing_postal_code: data.billing_postal_code ?? null,
+            billing_city: data.billing_city ?? null,
+            billing_region: data.billing_region ?? null,
+            billing_country: data.billing_country ?? 'FR',
 
             // ✅ Adresses de livraison (existantes en BD)
-            shipping_address_line1: data.shipping_address_line1 || null,
-            shipping_address_line2: data.shipping_address_line2 || null,
-            shipping_postal_code: data.shipping_postal_code || null,
-            shipping_city: data.shipping_city || null,
-            shipping_region: data.shipping_region || null,
-            shipping_country: data.shipping_country || 'FR',
+            shipping_address_line1: data.shipping_address_line1 ?? null,
+            shipping_address_line2: data.shipping_address_line2 ?? null,
+            shipping_postal_code: data.shipping_postal_code ?? null,
+            shipping_city: data.shipping_city ?? null,
+            shipping_region: data.shipping_region ?? null,
+            shipping_country: data.shipping_country ?? 'FR',
             has_different_shipping_address:
               data.has_different_shipping_address ?? false,
 
@@ -321,12 +322,12 @@ export function useOrganisations(filters?: OrganisationFilters) {
             longitude: data.longitude ?? null,
 
             // ✅ Classification client (existantes en BD)
-            customer_type: data.customer_type || null,
+            customer_type: data.customer_type ?? null,
             prepayment_required: data.prepayment_required ?? false,
 
             // ✅ Rattachement enseigne (clients B2B)
-            enseigne_id: data.enseigne_id || null,
-            ownership_type: data.ownership_type || null,
+            enseigne_id: data.enseigne_id ?? null,
+            ownership_type: data.ownership_type ?? null,
           },
         ])
         .select(ORGANISATION_COLUMNS)
@@ -343,7 +344,7 @@ export function useOrganisations(filters?: OrganisationFilters) {
       if (newOrg) {
         const orgWithName: Organisation = {
           ...newOrg,
-          name: newOrg.trade_name || newOrg.legal_name,
+          name: newOrg.trade_name ?? newOrg.legal_name,
         };
         return orgWithName;
       }
@@ -427,7 +428,7 @@ export function useOrganisations(filters?: OrganisationFilters) {
       if (updatedOrg) {
         const orgWithName: Organisation = {
           ...updatedOrg,
-          name: updatedOrg.trade_name || updatedOrg.legal_name,
+          name: updatedOrg.trade_name ?? updatedOrg.legal_name,
         };
         return orgWithName;
       }
@@ -583,7 +584,7 @@ export function useOrganisations(filters?: OrganisationFilters) {
       } | null;
 
       if (!result?.success) {
-        setError(result?.error || 'Erreur lors de la suppression');
+        setError(result?.error ?? 'Erreur lors de la suppression');
         return false;
       }
 
@@ -733,6 +734,7 @@ export function useOrganisation(id: string) {
     void fetchOrganisation().catch((error: unknown) => {
       console.error('[useOrganisationById] Fetch failed:', error);
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- supabase client is stable singleton
   }, [id, refreshKey]);
 
   return { organisation, loading, error, refetch };

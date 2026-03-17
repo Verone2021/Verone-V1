@@ -110,7 +110,7 @@ export function useDashboardAnalytics() {
         const productsByWeek = (products || []).reduce(
           (acc: Record<string, number>, product) => {
             const date = new Date(
-              product.created_at || new Date().toISOString()
+              product.created_at ?? new Date().toISOString()
             );
             const weekStart = new Date(date);
             weekStart.setDate(date.getDate() - date.getDay());
@@ -214,7 +214,7 @@ export function useDashboardAnalytics() {
       }
     }
 
-    fetchAnalytics();
+    void fetchAnalytics();
   }, []);
 
   return {

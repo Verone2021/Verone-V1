@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 
 import type { ContactBO } from '@verone/orders';
 import {
@@ -95,8 +95,10 @@ export function EditConsultationModal({
     formData.organisation_id
   );
 
-  const contacts: ContactBO[] =
-    enseigneContacts?.contacts ?? orgContacts?.contacts ?? [];
+  const contacts: ContactBO[] = useMemo(
+    () => enseigneContacts?.contacts ?? orgContacts?.contacts ?? [],
+    [enseigneContacts?.contacts, orgContacts?.contacts]
+  );
 
   // Initialize form from consultation data
   useEffect(() => {
@@ -104,18 +106,18 @@ export function EditConsultationModal({
       setFormData({
         enseigne_id: consultation.enseigne_id ?? null,
         organisation_id: consultation.organisation_id ?? null,
-        client_email: consultation.client_email || '',
-        client_phone: consultation.client_phone || '',
-        descriptif: consultation.descriptif || '',
-        notes_internes: consultation.notes_internes || '',
-        tarif_maximum: consultation.tarif_maximum || 0,
+        client_email: consultation.client_email ?? '',
+        client_phone: consultation.client_phone ?? '',
+        descriptif: consultation.descriptif ?? '',
+        notes_internes: consultation.notes_internes ?? '',
+        tarif_maximum: consultation.tarif_maximum ?? 0,
         estimated_response_date: consultation.estimated_response_date
           ? new Date(consultation.estimated_response_date)
               .toISOString()
               .split('T')[0]
           : '',
-        priority_level: consultation.priority_level || 2,
-        source_channel: consultation.source_channel || 'website',
+        priority_level: consultation.priority_level ?? 2,
+        source_channel: consultation.source_channel ?? 'website',
       });
       // Reset contact selection — will be auto-matched below
       setSelectedContactId(null);

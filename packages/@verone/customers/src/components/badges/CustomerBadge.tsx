@@ -71,7 +71,7 @@ export function CustomerBadge({
 
   if (isB2B) {
     displayName =
-      organisationTradeName || organisationLegalName || 'Organisation inconnue';
+      organisationTradeName ?? organisationLegalName ?? 'Organisation inconnue';
     fullName = `${organisationLegalName}${organisationTradeName ? ` (${organisationTradeName})` : ''}`;
     customerType = 'B2B';
   } else if (isB2C) {

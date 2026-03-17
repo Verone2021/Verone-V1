@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from '@verone/ui';
 import { ScrollArea } from '@verone/ui';
-import { spacing, colors } from '@verone/ui';
+import { colors } from '@verone/ui';
 import { cn } from '@verone/utils';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -58,7 +58,7 @@ const SeverityBadge = ({
     },
   };
 
-  const config = variants[severity];
+  const config = variants[severity] as { className: string; label: string };
 
   return (
     <Badge className={cn('text-xs font-medium px-2 py-0.5', config.className)}>
@@ -92,7 +92,7 @@ const NotificationIcon = ({
       operations: Info,
       performance: Info,
       maintenance: AlertCircle,
-    }[type] || Info;
+    }[type] ?? Info;
 
   return (
     <div
@@ -123,7 +123,7 @@ const NotificationItem = ({
   onDelete,
 }: NotificationItemProps) => {
   const timeAgo = formatDistanceToNow(
-    new Date(notification.created_at || new Date()),
+    new Date(notification.created_at ?? new Date()),
     { addSuffix: true, locale: fr }
   );
 

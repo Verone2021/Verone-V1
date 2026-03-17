@@ -96,7 +96,7 @@ export function useStockAlerts() {
 
         const { data, error } = await query;
 
-        console.log('🔍 STOCK ALERTS (vue dynamique):', {
+        console.warn('🔍 STOCK ALERTS (vue dynamique):', {
           count: data?.length,
           error,
         });
@@ -104,32 +104,53 @@ export function useStockAlerts() {
         if (error) throw error;
 
         // Transformer en StockAlert[] - La vue retourne déjà les données formatées
-        const alertsList: StockAlert[] = (data || []).map((alert: any) => ({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const alertsList: StockAlert[] = (data ?? []).map((alert: any) => ({
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
           id: alert.id,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
           product_id: alert.product_id,
-          product_name: alert.product_name || 'Produit inconnu',
-          sku: alert.sku || 'N/A',
-          product_image_url: alert.product_image_url || null,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+          product_name: alert.product_name ?? 'Produit inconnu',
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+          sku: alert.sku ?? 'N/A',
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+          product_image_url: alert.product_image_url ?? null,
           // ✅ alert_type calculé dynamiquement par la vue
           // out_of_stock si stock_previsionnel < 0, low_stock si stock_real < min_stock
-          alert_type: (alert.alert_type as StockAlertType) || 'low_stock',
-          severity: alert.severity || 'warning',
-          stock_real: alert.stock_real || 0,
-          stock_forecasted_in: alert.stock_forecasted_in || 0,
-          stock_forecasted_out: alert.stock_forecasted_out || 0,
-          min_stock: alert.min_stock || 0,
-          shortage_quantity: alert.shortage_quantity || 0,
-          quantity_in_draft: alert.quantity_in_draft || null,
-          draft_order_id: alert.draft_order_id || null,
-          draft_order_number: alert.draft_order_number || null,
-          is_in_draft: alert.is_in_draft || false,
-          validated: alert.validated || false,
-          validated_at: alert.validated_at || null,
-          alert_color: alert.alert_color || null,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+          alert_type: (alert.alert_type as StockAlertType) ?? 'low_stock',
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+          severity: alert.severity ?? 'warning',
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+          stock_real: alert.stock_real ?? 0,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+          stock_forecasted_in: alert.stock_forecasted_in ?? 0,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+          stock_forecasted_out: alert.stock_forecasted_out ?? 0,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+          min_stock: alert.min_stock ?? 0,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+          shortage_quantity: alert.shortage_quantity ?? 0,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+          quantity_in_draft: alert.quantity_in_draft ?? null,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+          draft_order_id: alert.draft_order_id ?? null,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+          draft_order_number: alert.draft_order_number ?? null,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+          is_in_draft: alert.is_in_draft ?? false,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+          validated: alert.validated ?? false,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+          validated_at: alert.validated_at ?? null,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+          alert_color: alert.alert_color ?? null,
         }));
 
         setAlerts(alertsList);
-      } catch (error: any) {
+      } catch (err: unknown) {
+        const error = err instanceof Error ? err : new Error(String(err));
         console.error('Erreur chargement alertes:', error);
         toast({
           title: 'Erreur',
@@ -144,7 +165,7 @@ export function useStockAlerts() {
   );
 
   useEffect(() => {
-    fetchAlerts();
+    void fetchAlerts();
   }, [fetchAlerts]);
 
   // ✅ Alertes actives = low_stock OU out_of_stock
@@ -176,6 +197,6 @@ export function useStockAlerts() {
       alerts.some(a => a.product_id === productId && a.is_in_draft),
     // Helper pour récupérer quantité commandée
     getQuantityInDraft: (productId: string) =>
-      alerts.find(a => a.product_id === productId)?.quantity_in_draft || 0,
+      alerts.find(a => a.product_id === productId)?.quantity_in_draft ?? 0,
   };
 }

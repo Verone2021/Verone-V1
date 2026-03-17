@@ -91,7 +91,7 @@ export function useValorisationReport() {
         ),
       ];
 
-      let subcategoryMap = new Map<string, string>();
+      const subcategoryMap = new Map<string, string>();
       if (subcategoryIds.length > 0) {
         const { data: subcategories } = await supabase
           .from('subcategories')
@@ -107,7 +107,7 @@ export function useValorisationReport() {
 
       // Calcul valorisation par produit
       const productsWithValuation: ProductWithValuation[] = products.map(p => {
-        const stockReal = p.stock_real || 0;
+        const stockReal = p.stock_real ?? 0;
         const costPrice = Number(p.cost_price) || 0;
         const costNetAvg =
           p.cost_net_avg != null ? Number(p.cost_net_avg) : null;
@@ -124,7 +124,7 @@ export function useValorisationReport() {
           value: stockReal * unitCost,
           value_cost_price: stockReal * costPrice,
           subcategory_name: p.subcategory_id
-            ? subcategoryMap.get(p.subcategory_id) || 'Non categorise'
+            ? (subcategoryMap.get(p.subcategory_id) ?? 'Non categorise')
             : 'Non categorise',
         };
       });
@@ -148,7 +148,7 @@ export function useValorisationReport() {
         { count: number; quantity: number; value: number }
       >();
       productsWithValuation.forEach(p => {
-        const existing = categoryMap.get(p.subcategory_name) || {
+        const existing = categoryMap.get(p.subcategory_name) ?? {
           count: 0,
           quantity: 0,
           value: 0,

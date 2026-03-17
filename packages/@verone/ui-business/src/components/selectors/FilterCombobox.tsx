@@ -125,7 +125,7 @@ export function FilterCombobox({
 
   // Trouver label d'une option
   const getOptionLabel = (value: string) => {
-    return options.find(o => o.value === value)?.label || value;
+    return options.find(o => o.value === value)?.label ?? value;
   };
 
   return (

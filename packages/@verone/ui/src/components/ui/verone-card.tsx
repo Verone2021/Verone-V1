@@ -92,6 +92,7 @@ export function VéroneCard({
           {iconPosition === 'top-left' && (
             <div className="flex-shrink-0 mr-3">
               {imageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={imageUrl}
                   alt={`Icône ${title}`}
@@ -129,6 +130,7 @@ export function VéroneCard({
             {iconPosition === 'top-right' && (
               <div className="flex-shrink-0 flex flex-col items-center gap-2">
                 {imageUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={imageUrl}
                     alt={`Icône ${title}`}
@@ -153,7 +155,7 @@ export function VéroneCard({
             )}
 
             {/* Actions Edit/Delete */}
-            {(onEdit || onDelete) && (
+            {(onEdit ?? onDelete) && (
               <div className="flex items-center space-x-1">
                 {onEdit && (
                   <Button

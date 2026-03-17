@@ -36,7 +36,6 @@ import { Check, ChevronDown, X } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 import type { SupplierCategoryCode } from '@verone/categories/components/badges/SupplierCategoryBadge';
-import { getCategoryLabel } from '@verone/categories/components/badges/SupplierCategoryBadge';
 
 interface SupplierCategorySelectProps {
   /** Valeur actuelle: array de codes OU string comma-separated */

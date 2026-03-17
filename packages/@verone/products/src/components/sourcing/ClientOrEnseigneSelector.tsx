@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-floating-promises, @typescript-eslint/prefer-nullish-coalescing */
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';

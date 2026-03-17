@@ -73,6 +73,7 @@ export function useLibraryDocuments(filters?: {
     try {
       const supabase = createClient();
 
+      /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
       let query = (supabase as { from: CallableFunction })
         .from('v_library_documents')
         .select(
@@ -113,9 +114,10 @@ export function useLibraryDocuments(filters?: {
       }
 
       const { data, error: fetchError } = await query;
+      /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
 
       if (fetchError) {
-        throw new Error(fetchError.message);
+        throw new Error((fetchError as { message: string }).message);
       }
 
       setDocuments((data ?? []) as LibraryDocument[]);

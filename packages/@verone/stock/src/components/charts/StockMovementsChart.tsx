@@ -18,7 +18,6 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-  TooltipProps,
 } from 'recharts';
 
 import type { StockMovementDataPoint } from '@verone/dashboard/hooks';
@@ -29,11 +28,16 @@ interface StockMovementsChartProps {
 }
 
 // Custom Tooltip
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const CustomTooltip = ({ active, payload }: any) => {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
   if (!active || !payload?.length) return null;
 
-  const entrees = payload[0]?.value || 0;
-  const sorties = payload[1]?.value || 0;
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+  const entrees = payload[0]?.value ?? 0;
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+  const sorties = payload[1]?.value ?? 0;
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
   const dataPoint = payload[0]?.payload as StockMovementDataPoint;
 
   return (

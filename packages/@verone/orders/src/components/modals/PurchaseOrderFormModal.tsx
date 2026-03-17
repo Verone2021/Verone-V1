@@ -32,7 +32,11 @@ import { Textarea } from '@verone/ui';
 import { formatCurrency } from '@verone/utils';
 import { Plus } from 'lucide-react';
 
-import type { CreateOrderItemData } from '@verone/orders/hooks';
+import type {
+  CreateOrderItemData,
+  OrderItem,
+  UpdatePurchaseOrderData,
+} from '@verone/orders/hooks';
 import { useOrderItems } from '@verone/orders/hooks';
 import { usePurchaseOrders } from '@verone/orders/hooks';
 
@@ -95,7 +99,12 @@ interface PurchaseOrderFormModalProps {
   isOpen?: boolean;
   onClose?: () => void;
   onSuccess?: () => void;
-  prefilledProduct?: any;
+  prefilledProduct?: {
+    supplier_id?: string;
+    requires_sample?: boolean;
+    name?: string;
+    product_id?: string;
+  };
   prefilledSupplier?: string;
 }
 
@@ -108,12 +117,12 @@ export function PurchaseOrderFormModal({
   prefilledSupplier,
 }: PurchaseOrderFormModalProps) {
   const isEditMode = !!order;
-  const [open, setOpen] = useState(isOpen || false);
+  const [open, setOpen] = useState(isOpen ?? false);
   const [loading, setLoading] = useState(false);
 
   // États form métadonnées
   const [selectedSupplierId, setSelectedSupplierId] = useState(
-    order?.supplier_id || ''
+    order?.supplier_id ?? ''
   );
   const [selectedSupplier, setSelectedSupplier] = useState<Organisation | null>(
     null
@@ -126,24 +135,24 @@ export function PurchaseOrderFormModal({
   const [deliveryAddress, setDeliveryAddress] = useState<string>(
     (typeof order?.delivery_address === 'string'
       ? order.delivery_address
-      : null) || 'Groupe DSA - (Verone)\n4, rue du Pérou\n91300 Massy\nFrance'
+      : null) ?? 'Groupe DSA - (Verone)\n4, rue du Pérou\n91300 Massy\nFrance'
   );
-  const [notes, setNotes] = useState(order?.notes || '');
+  const [notes, setNotes] = useState(order?.notes ?? '');
   const [ecoTaxVatRate, setEcoTaxVatRate] = useState<number | null>(
-    // @ts-ignore - eco_tax_vat_rate exists in DB, types might be stale
+    // @ts-expect-error eco_tax_vat_rate exists in DB, types might be stale
     order?.eco_tax_vat_rate ?? null
   );
-  const [paymentTerms, setPaymentTerms] = useState(order?.payment_terms || '');
+  const [paymentTerms, setPaymentTerms] = useState(order?.payment_terms ?? '');
 
   // Frais additionnels (fournisseurs)
   const [shippingCostHt, setShippingCostHt] = useState<number>(
-    (order as any)?.shipping_cost_ht || 0
+    (order as unknown as { shipping_cost_ht?: number })?.shipping_cost_ht ?? 0
   );
   const [customsCostHt, setCustomsCostHt] = useState<number>(
-    (order as any)?.customs_cost_ht || 0
+    (order as unknown as { customs_cost_ht?: number })?.customs_cost_ht ?? 0
   );
   const [insuranceCostHt, setInsuranceCostHt] = useState<number>(
-    (order as any)?.insurance_cost_ht || 0
+    (order as unknown as { insurance_cost_ht?: number })?.insurance_cost_ht ?? 0
   );
 
   // Modal ajout produit
@@ -154,7 +163,7 @@ export function PurchaseOrderFormModal({
 
   // Hooks
   const {
-    organisations: suppliers,
+    organisations: _suppliers,
     getOrganisationById,
     refetch: refetchSuppliers,
   } = useOrganisations({
@@ -167,7 +176,7 @@ export function PurchaseOrderFormModal({
     addItem,
     updateItem,
     removeItem,
-    refetch: refetchItems,
+    refetch: _refetchItems,
   } = useOrderItems({
     orderId: order?.id,
     orderType: 'purchase',
@@ -191,7 +200,7 @@ export function PurchaseOrderFormModal({
   // Charger fournisseur sélectionné
   useEffect(() => {
     if (selectedSupplierId) {
-      getOrganisationById(selectedSupplierId).then(setSelectedSupplier);
+      void getOrganisationById(selectedSupplierId).then(setSelectedSupplier);
     } else {
       setSelectedSupplier(null);
     }
@@ -209,7 +218,7 @@ export function PurchaseOrderFormModal({
 
       // Ajouter note échantillon
       if (prefilledProduct.requires_sample) {
-        const sampleNote = `Commande d'échantillon pour le produit "${prefilledProduct.name || 'sans nom'}"`;
+        const sampleNote = `Commande d'échantillon pour le produit "${prefilledProduct.name ?? 'sans nom'}"`;
         setNotes((prev: string) =>
           prev ? `${prev}\n\n${sampleNote}` : sampleNote
         );
@@ -242,13 +251,13 @@ export function PurchaseOrderFormModal({
 
   // Memoize excludeProductIds pour éviter re-renders infinis
   const excludeProductIds = useMemo(
-    () => displayItems.map(item => item.product_id),
+    () => displayItems.map((item: { product_id: string }) => item.product_id),
     [displayItems]
   );
 
   // Gérer changement fournisseur
   const handleSupplierChange = async (supplierId: string | null) => {
-    setSelectedSupplierId(supplierId || '');
+    setSelectedSupplierId(supplierId ?? '');
 
     // Règle métier : Vider les items locaux au changement de fournisseur (évite mélange produits)
     if (!isEditMode) {
@@ -289,11 +298,11 @@ export function PurchaseOrderFormModal({
         for (const product of selectedProducts) {
           const itemData: CreateOrderItemData = {
             product_id: product.id,
-            quantity: product.quantity || 1,
-            unit_price_ht: product.unit_price || 0,
-            discount_percentage: product.discount_percentage || 0,
+            quantity: product.quantity ?? 1,
+            unit_price_ht: product.unit_price ?? 0,
+            discount_percentage: product.discount_percentage ?? 0,
             eco_tax: 0,
-            notes: product.notes || '',
+            notes: product.notes ?? '',
           };
           await addItem(itemData);
         }
@@ -303,18 +312,18 @@ export function PurchaseOrderFormModal({
         const newItems: LocalOrderItem[] = selectedProducts.map(product => ({
           id: `temp-${Date.now()}-${product.id}`,
           product_id: product.id,
-          quantity: product.quantity || 1,
+          quantity: product.quantity ?? 1,
           unit_price_ht: product.cost_price ?? 0, // Prix d'achat depuis fiche produit
-          discount_percentage: product.discount_percentage || 0,
+          discount_percentage: product.discount_percentage ?? 0,
           eco_tax:
             (product as { eco_tax_default?: number }).eco_tax_default ?? 0, // Éco-taxe depuis fiche produit
-          notes: product.notes || '',
+          notes: product.notes ?? '',
           products: {
             id: product.id,
             name: product.name,
-            sku: product.sku || '',
+            sku: product.sku ?? '',
             primary_image_url:
-              product.product_images?.find(img => img.is_primary)?.public_url ||
+              product.product_images?.find(img => img.is_primary)?.public_url ??
               product.product_images?.[0]?.public_url,
             product_images: product.product_images,
           },
@@ -340,7 +349,7 @@ export function PurchaseOrderFormModal({
   };
 
   // Handler modification item (gère les deux modes)
-  const handleUpdateItem = async (itemId: string, data: any) => {
+  const handleUpdateItem = async (itemId: string, data: Partial<OrderItem>) => {
     if (isEditMode) {
       // Mode édition : utiliser hook useOrderItems
       try {
@@ -417,6 +426,7 @@ export function PurchaseOrderFormModal({
       if (isEditMode) {
         // MODE ÉDITION : Mettre à jour métadonnées uniquement
         // Les items sont modifiés via useOrderItems en temps réel
+
         await updateOrder(order.id, {
           supplier_id: selectedSupplierId,
           expected_delivery_date: expectedDeliveryDate || undefined,
@@ -428,7 +438,7 @@ export function PurchaseOrderFormModal({
           shipping_cost_ht: shippingCostHt || 0,
           customs_cost_ht: customsCostHt || 0,
           insurance_cost_ht: insuranceCostHt || 0,
-        } as any); // Cast car UpdatePurchaseOrderData type incomplet
+        } as unknown as UpdatePurchaseOrderData);
 
         toast({
           title: '✅ Commande mise à jour',
@@ -549,7 +559,12 @@ export function PurchaseOrderFormModal({
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form
+            onSubmit={e => {
+              void handleSubmit(e);
+            }}
+            className="space-y-6"
+          >
             {/* Informations générales */}
             <Card>
               <CardHeader>
@@ -561,7 +576,9 @@ export function PurchaseOrderFormModal({
                     <div className="flex-1">
                       <SupplierSelector
                         selectedSupplierId={selectedSupplierId || null}
-                        onSupplierChange={handleSupplierChange}
+                        onSupplierChange={id => {
+                          void handleSupplierChange(id);
+                        }}
                         disabled={loading || isBlocked}
                         required
                         label="Fournisseur"
@@ -570,7 +587,9 @@ export function PurchaseOrderFormModal({
                     </div>
                     {!isEditMode && (
                       <CreateOrganisationModal
-                        onOrganisationCreated={handleSupplierCreated}
+                        onOrganisationCreated={(...args) => {
+                          void handleSupplierCreated(...args);
+                        }}
                         defaultType="supplier"
                       />
                     )}
@@ -623,7 +642,7 @@ export function PurchaseOrderFormModal({
                           <div className="text-sm font-semibold text-green-800">
                             {paymentTermsOptions.find(
                               opt => opt.value === paymentTerms
-                            )?.label || paymentTerms}
+                            )?.label ?? paymentTerms}
                           </div>
                         </div>
                       </div>
@@ -771,16 +790,22 @@ export function PurchaseOrderFormModal({
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {displayItems.map(item => (
-                          <EditableOrderItemRow
-                            key={item.id}
-                            item={item}
-                            orderType="purchase"
-                            onUpdate={handleUpdateItem}
-                            onDelete={handleRemoveItem}
-                            readonly={isBlocked}
-                          />
-                        ))}
+                        {displayItems.map(
+                          (item: OrderItem | LocalOrderItem) => (
+                            <EditableOrderItemRow
+                              key={item.id}
+                              item={item as OrderItem}
+                              orderType="purchase"
+                              onUpdate={(id, data) => {
+                                void handleUpdateItem(id, data);
+                              }}
+                              onDelete={id => {
+                                void handleRemoveItem(id);
+                              }}
+                              readonly={isBlocked}
+                            />
+                          )
+                        )}
                       </TableBody>
                     </Table>
                   </div>

@@ -49,7 +49,7 @@ export function useOrganisationTabCounts({
   // Note: On utilise un ref pour éviter les re-fetch en cascade
   useEffect(() => {
     if (organisationId) {
-      fetchOrganisationContacts(organisationId);
+      void fetchOrganisationContacts(organisationId);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [organisationId]);
@@ -67,7 +67,7 @@ export function useOrganisationTabCounts({
   // Charger les commandes (si fournisseur)
   useEffect(() => {
     if (organisationId && organisationType === 'supplier') {
-      fetchOrders({ supplier_id: organisationId });
+      void fetchOrders({ supplier_id: organisationId });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [organisationId, organisationType]);
@@ -91,7 +91,7 @@ export function useOrganisationTabCounts({
   // Charger les produits (si fournisseur)
   useEffect(() => {
     if (organisationId && organisationType === 'supplier') {
-      refetchProducts();
+      void refetchProducts();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [organisationId, organisationType]);
@@ -104,7 +104,7 @@ export function useOrganisationTabCounts({
       products.length > 0
     ) {
       const orgProducts = products.filter(
-        p => p.supplier_id === organisationId
+        (p: { supplier_id?: string | null }) => p.supplier_id === organisationId
       );
       setCounts(prev => ({ ...prev, products: orgProducts.length }));
     }
@@ -133,7 +133,7 @@ export function useOrganisationTabCounts({
           console.error('Erreur comptage échantillons:', err);
         }
       };
-      fetchSamplesCount();
+      void fetchSamplesCount();
     }
   }, [organisationId, organisationType]);
 

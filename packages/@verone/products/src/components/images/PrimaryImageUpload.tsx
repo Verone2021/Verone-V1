@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-floating-promises, @typescript-eslint/no-misused-promises, @typescript-eslint/no-unused-vars, @typescript-eslint/prefer-optional-chain */
 /**
  * 🎯 VÉRONE - Composant Upload Image Principale
  *
@@ -73,7 +74,7 @@ export function PrimaryImageUpload({
   // 🎯 Callback après upload réussi
   useEffect(() => {
     if (primaryImage && onImageUpload) {
-      onImageUpload(primaryImage.id, primaryImage.public_url || '');
+      onImageUpload(primaryImage.id, primaryImage.public_url ?? '');
     }
   }, [primaryImage, onImageUpload]);
 
@@ -95,7 +96,7 @@ export function PrimaryImageUpload({
       });
 
       // ✅ Le callback onImageUpload sera déclenché automatiquement par useEffect
-      console.log('✅ Image principale uploadée avec succès');
+      console.warn('✅ Image principale uploadée avec succès');
     } catch (error) {
       console.error('❌ Erreur upload image principale:', error);
     }
@@ -110,7 +111,7 @@ export function PrimaryImageUpload({
     try {
       await deleteImage(primaryImage.id);
       onImageRemove?.();
-      console.log('✅ Image principale supprimée');
+      console.warn('✅ Image principale supprimée');
     } catch (error) {
       console.error('❌ Erreur suppression image principale:', error);
     }

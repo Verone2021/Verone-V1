@@ -89,10 +89,11 @@ export function useTopProducts(days = 30, limit = 5): UseTopProductsResult {
         { quantity: number; revenue: number }
       >();
 
-      salesData.forEach((item: any) => {
-        const productId = item.product_id;
-        const quantity = item.quantity || 0;
-        const revenue = (item.quantity || 0) * (item.unit_price_ht || 0);
+      salesData.forEach(item => {
+        const productId = String(item.product_id);
+        const quantity = Number(item.quantity ?? 0);
+        const revenue =
+          Number(item.quantity ?? 0) * Number(item.unit_price_ht ?? 0);
 
         if (productSalesMap.has(productId)) {
           const current = productSalesMap.get(productId)!;
@@ -162,10 +163,10 @@ export function useTopProducts(days = 30, limit = 5): UseTopProductsResult {
 
         const prevQuantity =
           prevSales?.reduce(
-            (sum: number, item: any) => sum + (item.quantity || 0),
+            (sum: number, item) => sum + (Number(item.quantity) || 0),
             0
-          ) || 0;
-        const currentQuantity = productSalesMap.get(productId)?.quantity || 0;
+          ) ?? 0;
+        const currentQuantity = productSalesMap.get(productId)?.quantity ?? 0;
 
         // Calculer la tendance en %
         if (prevQuantity === 0) {
@@ -180,17 +181,17 @@ export function useTopProducts(days = 30, limit = 5): UseTopProductsResult {
       const trends = await Promise.all(trendPromises);
 
       // Construire le résultat final
-      const result: TopProduct[] = productsData.map((product: any) => {
+      const result: TopProduct[] = productsData.map(product => {
         const sales = productSalesMap.get(product.id);
         const trendIndex = topProductIds.indexOf(product.id);
 
         return {
           id: product.id,
-          name: product.name || 'Produit sans nom',
-          sales: sales?.quantity || 0,
+          name: product.name ?? 'Produit sans nom',
+          sales: sales?.quantity ?? 0,
           stock: product.stock_real ?? product.stock_quantity ?? 0,
-          trend: trends[trendIndex] || 0,
-          revenue: sales?.revenue || 0,
+          trend: trends[trendIndex] ?? 0,
+          revenue: sales?.revenue ?? 0,
         };
       });
 
@@ -198,16 +199,21 @@ export function useTopProducts(days = 30, limit = 5): UseTopProductsResult {
       result.sort((a, b) => b.sales - a.sales);
 
       setTopProducts(result);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Erreur chargement top produits:', err);
-      setError(err.message || 'Erreur lors du chargement des produits');
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Erreur lors du chargement des produits'
+      );
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchTopProducts();
+    void fetchTopProducts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fetchTopProducts is stable, adding it would cause infinite loop
   }, [days, limit]);
 
   return {

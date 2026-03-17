@@ -17,7 +17,7 @@ import { logger } from '@verone/utils/logger';
 
 // Configuration CORS sécurisée
 const ALLOWED_ORIGINS = [
-  process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
+  process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000',
   'https://verone.fr',
   'https://www.verone.fr',
 ].filter(Boolean);
@@ -61,7 +61,10 @@ export async function verifyAuth(request: NextRequest) {
 
     return { authenticated: true, user };
   } catch (error) {
-    logger.error('Auth verification failed:', error as any);
+    logger.error(
+      'Auth verification failed:',
+      error instanceof Error ? error : undefined
+    );
     return { authenticated: false, user: null };
   }
 }
@@ -120,7 +123,7 @@ export async function withApiSecurity(
     requireAuth = true,
     rateLimit = true,
     allowedMethods = ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  } = options || {};
+  } = options ?? {};
 
   // Check method
   if (!allowedMethods.includes(request.method)) {
@@ -152,14 +155,14 @@ export async function withApiSecurity(
     }
 
     // Add user to request for downstream use
-    (request as any).user = user;
+    (request as unknown as { user: typeof user }).user = user;
   }
 
   // Check rate limit
   if (rateLimit) {
     const identifier =
-      (request as any).ip ||
-      request.headers.get('x-forwarded-for') ||
+      (request as unknown as { ip?: string }).ip ??
+      request.headers.get('x-forwarded-for') ??
       'unknown';
 
     if (!checkRateLimit(identifier)) {
@@ -186,7 +189,10 @@ export async function withApiSecurity(
 
     return response;
   } catch (error) {
-    logger.error('API handler error:', error as any);
+    logger.error(
+      'API handler error:',
+      error instanceof Error ? error : undefined
+    );
 
     return new NextResponse(
       JSON.stringify({ error: 'Internal Server Error' }),
@@ -216,7 +222,7 @@ export function handleCors(request: NextRequest): NextResponse {
   return new NextResponse(null, {
     status: 200,
     headers: {
-      'Access-Control-Allow-Origin': origin || ALLOWED_ORIGINS[0],
+      'Access-Control-Allow-Origin': origin ?? ALLOWED_ORIGINS[0],
       'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
       'Access-Control-Allow-Credentials': 'true',
@@ -254,31 +260,39 @@ export function addSecurityHeaders(headers: Headers, request: NextRequest) {
 /**
  * Input validation helpers
  */
+interface InputValidationRule {
+  type: 'string' | 'number' | 'boolean' | 'array' | 'object';
+  required?: boolean;
+  min?: number;
+  max?: number;
+  pattern?: RegExp;
+  validator?: (value: unknown) => boolean;
+}
+
 export function validateInput<T>(
   input: unknown,
   schema: {
-    [K in keyof T]: {
-      type: 'string' | 'number' | 'boolean' | 'array' | 'object';
-      required?: boolean;
-      min?: number;
-      max?: number;
-      pattern?: RegExp;
-      validator?: (value: any) => boolean;
-    };
+    [K in keyof T]: InputValidationRule;
   }
 ): { valid: boolean; data?: T; errors?: string[] } {
   const errors: string[] = [];
   const data = {} as T;
+  const inputRecord =
+    input != null && typeof input === 'object'
+      ? (input as Record<string, unknown>)
+      : {};
 
-  for (const [key, rules] of Object.entries(schema) as Array<[keyof T, any]>) {
-    const value = (input as any)?.[key];
+  for (const [key, rules] of Object.entries(schema) as Array<
+    [keyof T & string, InputValidationRule]
+  >) {
+    const value: unknown = inputRecord[key];
 
     // Check required
     if (
       rules.required &&
       (value === undefined || value === null || value === '')
     ) {
-      errors.push(`${String(key)} is required`);
+      errors.push(`${key} is required`);
       continue;
     }
 
@@ -290,39 +304,41 @@ export function validateInput<T>(
     // Type check
     const actualType = Array.isArray(value) ? 'array' : typeof value;
     if (actualType !== rules.type) {
-      errors.push(`${String(key)} must be of type ${rules.type}`);
+      errors.push(`${key} must be of type ${rules.type}`);
       continue;
     }
 
     // Additional validations
     if (rules.type === 'string') {
-      if (rules.min && value.length < rules.min) {
-        errors.push(`${String(key)} must be at least ${rules.min} characters`);
+      const strValue = value as string;
+      if (rules.min && strValue.length < rules.min) {
+        errors.push(`${key} must be at least ${rules.min} characters`);
       }
-      if (rules.max && value.length > rules.max) {
-        errors.push(`${String(key)} must be at most ${rules.max} characters`);
+      if (rules.max && strValue.length > rules.max) {
+        errors.push(`${key} must be at most ${rules.max} characters`);
       }
-      if (rules.pattern && !rules.pattern.test(value)) {
-        errors.push(`${String(key)} has invalid format`);
+      if (rules.pattern && !rules.pattern.test(strValue)) {
+        errors.push(`${key} has invalid format`);
       }
     }
 
     if (rules.type === 'number') {
-      if (rules.min && value < rules.min) {
-        errors.push(`${String(key)} must be at least ${rules.min}`);
+      const numValue = value as number;
+      if (rules.min && numValue < rules.min) {
+        errors.push(`${key} must be at least ${rules.min}`);
       }
-      if (rules.max && value > rules.max) {
-        errors.push(`${String(key)} must be at most ${rules.max}`);
+      if (rules.max && numValue > rules.max) {
+        errors.push(`${key} must be at most ${rules.max}`);
       }
     }
 
     // Custom validator
     if (rules.validator && !rules.validator(value)) {
-      errors.push(`${String(key)} is invalid`);
+      errors.push(`${key} is invalid`);
       continue;
     }
 
-    data[key] = value;
+    data[key] = value as T[keyof T];
   }
 
   return errors.length > 0 ? { valid: false, errors } : { valid: true, data };

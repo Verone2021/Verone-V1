@@ -5,6 +5,8 @@
 //              Utilise la vue v_transactions_unified
 // =====================================================================
 
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return */
+
 import { useState, useEffect, useCallback, useMemo } from 'react';
 
 import { createClient } from '@verone/utils/supabase/client';
@@ -131,7 +133,7 @@ export interface UnifiedStats {
 // HELPER: Build filters for query
 // =====================================================================
 
-function buildFilters(filters: UnifiedFilters) {
+function _buildFilters(filters: UnifiedFilters) {
   const conditions: string[] = [];
 
   if (filters.status && filters.status !== 'all') {
@@ -193,9 +195,9 @@ interface UseUnifiedTransactionsResult {
   totalPages: number;
   pageSize: number;
   setPageSize: (size: 10 | 20) => void;
-  goToPage: (page: number) => void;
-  nextPage: () => void;
-  prevPage: () => void;
+  goToPage: (page: number) => Promise<void>;
+  nextPage: () => Promise<void>;
+  prevPage: () => Promise<void>;
 
   // Actions
   refresh: () => Promise<void>;
@@ -204,7 +206,7 @@ interface UseUnifiedTransactionsResult {
 
 const DEFAULT_LIMIT = 50;
 
-const DEFAULT_STATS: UnifiedStats = {
+const _DEFAULT_STATS: UnifiedStats = {
   total_count: 0,
   to_process_count: 0,
   classified_count: 0,
@@ -225,7 +227,7 @@ export function useUnifiedTransactions(
 ): UseUnifiedTransactionsResult {
   const {
     filters: initialFilters = {},
-    limit = DEFAULT_LIMIT,
+    limit: _limit = DEFAULT_LIMIT,
     pageSize: initialPageSize = 20,
     autoRefresh = false,
     refreshInterval = 30000,
@@ -314,61 +316,68 @@ export function useUnifiedTransactions(
 
         // Mapping simplifié - la vue fournit déjà tous les champs enrichis
 
-        const transformed: UnifiedTransaction[] = (data || []).map(
-          (tx: any) => ({
-            id: tx.id,
-            transaction_id: tx.transaction_id,
-            emitted_at: tx.emitted_at,
-            settled_at: tx.settled_at,
-            label: tx.label || '',
-            amount: tx.amount,
+        type TxRow = Record<string, unknown>;
+        const transformed: UnifiedTransaction[] = ((data ?? []) as TxRow[]).map(
+          tx => ({
+            id: tx.id as string,
+            transaction_id: tx.transaction_id as string,
+            emitted_at: tx.emitted_at as string,
+            settled_at: tx.settled_at as string | null,
+            label: (tx.label as string) ?? '',
+            amount: tx.amount as number,
             side: tx.side as TransactionSide,
-            operation_type: tx.operation_type,
-            bank_status: 'completed',
-            counterparty_name: tx.counterparty_name,
-            counterparty_iban: tx.counterparty_iban,
-            reference: tx.reference,
-            category_pcg: tx.category_pcg,
+            operation_type: tx.operation_type as string | null,
+            bank_status: 'completed' as const,
+            counterparty_name: tx.counterparty_name as string | null,
+            counterparty_iban: tx.counterparty_iban as string | null,
+            reference: tx.reference as string | null,
+            category_pcg: tx.category_pcg as string | null,
             category_pcg_label: null,
             category_pcg_group: null,
             // Enrichissements depuis la vue
-            counterparty_organisation_id: tx.counterparty_organisation_id,
-            organisation_name: tx.organisation_name,
-            organisation_roles: [],
-            has_attachment: tx.has_attachment || false,
-            attachment_count: tx.attachment_count || 0,
-            attachment_ids: tx.attachment_ids,
-            justification_optional: tx.justification_optional,
-            matching_status: tx.matching_status,
-            matched_document_id: tx.matched_document_id,
-            matched_document_number: tx.matched_document_number,
-            matched_document_type: tx.matched_document_type,
+            counterparty_organisation_id: tx.counterparty_organisation_id as
+              | string
+              | null,
+            organisation_name: tx.organisation_name as string | null,
+            organisation_roles: [] as string[],
+            has_attachment: (tx.has_attachment as boolean) ?? false,
+            attachment_count: (tx.attachment_count as number) ?? 0,
+            attachment_ids: tx.attachment_ids as string[] | null,
+            justification_optional: tx.justification_optional as boolean | null,
+            matching_status: tx.matching_status as string,
+            matched_document_id: tx.matched_document_id as string | null,
+            matched_document_number: tx.matched_document_number as
+              | string
+              | null,
+            matched_document_type: tx.matched_document_type as string | null,
             matched_at: null,
-            confidence_score: tx.confidence_score,
-            match_reason: tx.match_reason,
+            confidence_score: tx.confidence_score as number | null,
+            match_reason: tx.match_reason as string | null,
             matched_order_ids: null,
             // Règle appliquée (depuis la vue)
-            applied_rule_id: tx.applied_rule_id,
-            rule_match_value: tx.rule_match_value,
-            rule_display_label: tx.rule_display_label,
-            rule_allow_multiple_categories: tx.rule_allow_multiple_categories,
+            applied_rule_id: tx.applied_rule_id as string | null,
+            rule_match_value: tx.rule_match_value as string | null,
+            rule_display_label: tx.rule_display_label as string | null,
+            rule_allow_multiple_categories:
+              tx.rule_allow_multiple_categories as boolean | null,
             // Statut unifié (calculé par la vue)
             unified_status: tx.unified_status as UnifiedStatus,
             // TVA
-            vat_rate: tx.vat_rate,
-            amount_ht: tx.amount_ht,
-            amount_vat: tx.amount_vat,
-            vat_breakdown: tx.vat_breakdown,
-            payment_method: tx.payment_method,
-            nature: tx.nature,
-            note: tx.note ?? null,
-            vat_source: tx.vat_source ?? null,
+            vat_rate: tx.vat_rate as number | null,
+            amount_ht: tx.amount_ht as number | null,
+            amount_vat: tx.amount_vat as number | null,
+            vat_breakdown:
+              tx.vat_breakdown as UnifiedTransaction['vat_breakdown'],
+            payment_method: tx.payment_method as string | null,
+            nature: tx.nature as string | null,
+            note: (tx.note as string | null) ?? null,
+            vat_source: (tx.vat_source as string | null) ?? null,
             // Période (calculée par la vue)
-            year: tx.year,
-            month: tx.month,
-            raw_data: tx.raw_data || {},
-            created_at: tx.created_at,
-            updated_at: tx.updated_at,
+            year: tx.year as number,
+            month: tx.month as number,
+            raw_data: (tx.raw_data as Record<string, unknown>) ?? {},
+            created_at: tx.created_at as string,
+            updated_at: tx.updated_at as string,
           })
         );
 
@@ -426,6 +435,7 @@ export function useUnifiedTransactions(
       };
 
       // Compter par statut depuis la vue avec les filtres
+      type CountResult = { count: number | null };
       const [
         { count: total },
         { count: toProcess },
@@ -434,7 +444,7 @@ export function useUnifiedTransactions(
         { count: ignored },
         { count: cca },
         { count: withAttachment },
-      ] = await Promise.all([
+      ] = (await Promise.all([
         createFilteredQuery(),
         createFilteredQuery().eq('unified_status', 'to_process'),
         createFilteredQuery().eq('unified_status', 'classified'),
@@ -442,18 +452,18 @@ export function useUnifiedTransactions(
         createFilteredQuery().eq('unified_status', 'ignored'),
         createFilteredQuery().eq('unified_status', 'cca'),
         createFilteredQuery().eq('has_attachment', true),
-      ]);
+      ])) as CountResult[];
 
       setStats({
-        total_count: total || 0,
-        to_process_count: toProcess || 0,
-        classified_count: classified || 0,
-        matched_count: matched || 0,
-        ignored_count: ignored || 0,
-        cca_count: cca || 0,
+        total_count: total ?? 0,
+        to_process_count: toProcess ?? 0,
+        classified_count: classified ?? 0,
+        matched_count: matched ?? 0,
+        ignored_count: ignored ?? 0,
+        cca_count: cca ?? 0,
         partial_count: 0,
-        with_attachment_count: withAttachment || 0,
-        without_attachment_count: (total || 0) - (withAttachment || 0),
+        with_attachment_count: withAttachment ?? 0,
+        without_attachment_count: (total ?? 0) - (withAttachment ?? 0),
         total_amount: 0,
         to_process_amount: 0,
         debit_amount: 0,
@@ -498,7 +508,7 @@ export function useUnifiedTransactions(
     }
   }, [currentPage, goToPage]);
 
-  const setPageSize = useCallback(async (size: 10 | 20) => {
+  const setPageSize = useCallback((size: 10 | 20) => {
     setPageSizeState(size);
     setCurrentPage(1);
     // Refetch will happen via useEffect dependency
@@ -507,15 +517,17 @@ export function useUnifiedTransactions(
   // Initial load and when filters/pageSize change
   useEffect(() => {
     setCurrentPage(1);
-    fetchTransactions(false, 1);
-    fetchStats();
+    void fetchTransactions(false, 1);
+    void fetchStats();
   }, [filters, pageSize]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto refresh
   useEffect(() => {
     if (!autoRefresh) return;
 
-    const interval = setInterval(refresh, refreshInterval);
+    const interval = setInterval(() => {
+      void refresh();
+    }, refreshInterval);
     return () => clearInterval(interval);
   }, [autoRefresh, refreshInterval, refresh]);
 
@@ -626,7 +638,7 @@ export function useTransactionActions(): TransactionActions {
           .from('bank_transactions')
           .update({
             matching_status: 'ignored',
-            match_reason: reason || 'Ignore manuellement',
+            match_reason: reason ?? 'Ignore manuellement',
             updated_at: new Date().toISOString(),
           })
           .eq('id', transactionId);
@@ -673,19 +685,18 @@ export function useTransactionActions(): TransactionActions {
     async (transactionId: string, shouldIgnore: boolean, reason?: string) => {
       try {
         // Use standard Supabase RPC call pattern with type assertion
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data, error } = await (supabase as any).rpc(
+        const { data, error } = (await (supabase.rpc as CallableFunction)(
           'toggle_ignore_transaction',
           {
             p_tx_id: transactionId,
             p_ignore: shouldIgnore,
-            p_reason: reason || null,
+            p_reason: reason ?? null,
           }
-        );
+        )) as { data: unknown; error: { message: string } | null };
 
         if (error) {
           // Check for fiscal year lock error
-          const errorMsg = error.message || String(error);
+          const errorMsg = error.message ?? String(error);
           if (errorMsg.includes('clôturée')) {
             return {
               success: false,

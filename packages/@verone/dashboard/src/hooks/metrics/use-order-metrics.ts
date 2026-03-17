@@ -144,7 +144,7 @@ export function useOrderMetrics() {
             trade_name?: string;
           } | null;
           customerName =
-            org?.trade_name || org?.legal_name || 'Organisation inconnue';
+            org?.trade_name ?? org?.legal_name ?? 'Organisation inconnue';
         } else if (
           order.customer_type === 'individual' &&
           order.individual_customer_id
@@ -158,7 +158,7 @@ export function useOrderMetrics() {
         return {
           id: order.order_number,
           customer: customerName,
-          amount: order.total_ht || 0,
+          amount: order.total_ht ?? 0,
           status: order.status,
         };
       });
@@ -171,10 +171,10 @@ export function useOrderMetrics() {
         trend: Math.round(trend * 10) / 10, // Arrondir à 1 décimale
         recentOrders: formattedRecentOrders,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(
         'Erreur lors de la récupération des métriques de commandes:',
-        error?.message || 'Erreur inconnue'
+        error instanceof Error ? error.message : 'Erreur inconnue'
       );
 
       // Retourner des valeurs vides en cas d'erreur

@@ -103,7 +103,7 @@ export function useSampleOrder() {
               quantity: 1,
               unit_price_ht: product.cost_price,
               discount_percentage: 0,
-              sample_type: sampleType || 'internal',
+              sample_type: sampleType ?? 'internal',
               notes: `Échantillon pour validation qualité - ${product.name}`,
             },
           ]);
@@ -169,7 +169,7 @@ export function useSampleOrder() {
               quantity: 1,
               unit_price_ht: product.cost_price,
               discount_percentage: 0,
-              sample_type: sampleType || 'internal',
+              sample_type: sampleType ?? 'internal',
               notes: `Échantillon pour validation qualité - ${product.name}`,
             },
           ]);

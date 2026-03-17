@@ -17,7 +17,6 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  TooltipProps,
 } from 'recharts';
 
 import type { RevenueDataPoint } from '@verone/dashboard/hooks';
@@ -28,10 +27,16 @@ interface RevenueChartProps {
 }
 
 // Custom Tooltip avec formatage €
-const CustomTooltip = ({ active, payload }: any) => {
+const CustomTooltip = ({
+  active,
+  payload,
+}: {
+  active?: boolean;
+  payload?: Array<{ value?: number; payload?: RevenueDataPoint }>;
+}) => {
   if (!active || !payload?.length) return null;
 
-  const revenue = payload[0].value || 0;
+  const revenue = payload[0].value ?? 0;
   const dataPoint = payload[0].payload as RevenueDataPoint;
 
   return (
@@ -43,7 +48,7 @@ const CustomTooltip = ({ active, payload }: any) => {
           currency: 'EUR',
           minimumFractionDigits: 0,
           maximumFractionDigits: 0,
-        }).format(revenue as number)}
+        }).format(revenue)}
       </p>
     </div>
   );

@@ -1,26 +1,21 @@
 'use client';
 
 /**
- * 🎯 CategoryHierarchyFilterV2 - Filtre de catégories hiérarchique avec badges
+ * CategoryHierarchyFilterV2 - Filtre de categories hierarchique avec badges
  *
- * FONCTIONNALITÉS :
- * - Arborescence à 3 niveaux (Famille > Catégorie > Sous-catégorie)
+ * FONCTIONNALITES :
+ * - Arborescence a 3 niveaux (Famille > Categorie > Sous-categorie)
  * - Affichage uniquement des niveaux contenant des produits
- * - Badges amovibles pour les sélections actives
- * - Repliage automatique après sélection
- * - Compteurs de produits à chaque niveau
- * - Design minimaliste noir/blanc Vérone
+ * - Badges amovibles pour les selections actives
+ * - Repliage automatique apres selection
+ * - Compteurs de produits a chaque niveau
+ * - Design minimaliste noir/blanc Verone
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 
 import { Badge } from '@verone/ui';
 import { Button } from '@verone/ui';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@verone/ui';
 import { cn } from '@verone/utils';
 import {
   ChevronRight,
@@ -112,7 +107,7 @@ export function CategoryHierarchyFilterV2({
       products.forEach(product => {
         if (product.subcategory_id) {
           const count =
-            subcategoryProductCounts.get(product.subcategory_id) || 0;
+            subcategoryProductCounts.get(product.subcategory_id) ?? 0;
           subcategoryProductCounts.set(product.subcategory_id, count + 1);
         }
       });
@@ -121,7 +116,7 @@ export function CategoryHierarchyFilterV2({
     // Enrichir sous-catégories
     const enrichedSubcategories = subcategories.map(sub => ({
       ...sub,
-      productCount: subcategoryProductCounts.get(sub.id) || 0,
+      productCount: subcategoryProductCounts.get(sub.id) ?? 0,
     }));
 
     // Regrouper par catégorie
@@ -182,15 +177,15 @@ export function CategoryHierarchyFilterV2({
         return {
           subcategoryId: subId,
           subcategoryName: subcategory.name,
-          categoryName: category?.name || '',
-          familyName: family?.name || '',
+          categoryName: category?.name ?? '',
+          familyName: family?.name ?? '',
         };
       })
       .filter(Boolean) as SelectedFilter[];
   }, [selectedSubcategories, subcategories, categories, families]);
 
   // Auto-expand les familles/catégories des sélections actives au chargement
-  useEffect(() => {
+  const autoExpand = useCallback(() => {
     if (selectedSubcategories.length > 0) {
       const newExpandedFamilies = new Set<string>();
       const newExpandedCategories = new Set<string>();
@@ -213,6 +208,11 @@ export function CategoryHierarchyFilterV2({
       setExpandedFamilies(newExpandedFamilies);
       setExpandedCategories(newExpandedCategories);
     }
+  }, [selectedSubcategories, categories, subcategories]);
+
+  useEffect(() => {
+    autoExpand();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Uniquement au montage
 
   // Toggle famille (expand/collapse)

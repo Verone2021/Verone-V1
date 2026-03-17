@@ -34,9 +34,10 @@ import {
 import {
   useABCAnalysis,
   ABC_CLASSES,
-  type ABCReportData,
+  type ABCReportData as _ABCReportData,
 } from '../../hooks/use-abc-analysis';
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface ABCAnalysisViewProps {
   // Future : dateFrom, dateTo si on veut filtrer par période
 }
@@ -46,7 +47,7 @@ export function ABCAnalysisView(_props: ABCAnalysisViewProps) {
   const { toast } = useToast();
 
   useEffect(() => {
-    generateReport();
+    void generateReport();
   }, [generateReport]);
 
   const handleExportCSV = () => {
@@ -110,7 +111,7 @@ export function ABCAnalysisView(_props: ABCAnalysisViewProps) {
         title: 'Export CSV réussi',
         description: 'Le rapport ABC a été téléchargé au format CSV.',
       });
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: 'Erreur export CSV',
         description: 'Impossible de générer le fichier CSV.',

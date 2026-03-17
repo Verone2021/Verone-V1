@@ -74,7 +74,7 @@ export async function DELETE(
       );
     }
 
-    const localPdfPath = record.local_pdf_path as string | null;
+    const localPdfPath = record.local_pdf_path;
 
     if (!localPdfPath) {
       return NextResponse.json(

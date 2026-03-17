@@ -84,7 +84,7 @@ export interface UseImageUploadReturn {
 
 export function useImageUpload({
   bucket,
-  autoUpload = true,
+  _autoUpload = true,
   onUploadSuccess,
   onUploadError,
   onProgress,
@@ -145,7 +145,7 @@ export function useImageUpload({
       setUser(session?.user ?? null);
     };
 
-    getSession();
+    void getSession();
 
     // Écouter les changements d'authentification
     const {
@@ -159,7 +159,7 @@ export function useImageUpload({
 
   // Charger le profil au montage et changement d'utilisateur
   useEffect(() => {
-    loadUserProfile();
+    void loadUserProfile();
   }, [loadUserProfile]);
 
   /**
@@ -222,12 +222,12 @@ export function useImageUpload({
       const result = await deleteFile(bucket, filePath);
 
       if (result.success) {
-        console.log('🗑️ Fichier supprimé avec succès');
+        console.warn('🗑️ Fichier supprimé avec succès');
         reset();
         return true;
       } else {
         console.error('❌ Erreur suppression:', result.error);
-        setError(result.error as any);
+        setError(result.error as UploadError);
         return false;
       }
     } catch (error) {
@@ -241,7 +241,7 @@ export function useImageUpload({
    */
   const uploadFile = useCallback(
     async (file: File): Promise<boolean> => {
-      console.log(
+      console.warn(
         '🚀 Début upload:',
         file.name,
         `(${Math.round(file.size / 1024)}KB)`
@@ -261,17 +261,17 @@ export function useImageUpload({
 
       try {
         // 1. Validation préalable
-        console.log('🛡️ Validation fichier...');
+        console.warn('🛡️ Validation fichier...');
         const validation = validateFile(file);
 
         if (!validation.isValid) {
-          setValidationError(validation.error || 'Fichier invalide');
+          setValidationError(validation.error ?? 'Fichier invalide');
           setState('error');
           return false;
         }
 
         // 2. Vérification du bucket
-        console.log('🪣 Vérification bucket...');
+        console.warn('🪣 Vérification bucket...');
         const bucketStatus = await checkBucketStatus(bucket);
         if (!bucketStatus.success) {
           setError(bucketStatus.error!);
@@ -285,7 +285,7 @@ export function useImageUpload({
         // Stocker pour cleanup éventuel
         currentUploadRef.current = { filePath, meta };
 
-        console.log('📁 Chemin généré:', filePath);
+        console.warn('📁 Chemin généré:', filePath);
 
         // 4. Upload avec retry automatique
         setState('uploading');
@@ -305,7 +305,7 @@ export function useImageUpload({
 
         // 5. Traitement du résultat
         if (result.success && result.data) {
-          console.log('🎉 Upload réussi:', result.data.publicUrl);
+          console.warn('🎉 Upload réussi:', result.data.publicUrl);
 
           setUploadResult(result.data);
           setState('success');

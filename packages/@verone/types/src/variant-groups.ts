@@ -89,7 +89,7 @@ export interface VariantProduct {
   variant_group_id?: string;
   variant_position?: number;
   item_group_id?: string; // Google Merchant Center identifier
-  variant_attributes?: Record<string, any>; // Attributs variantes JSONB (color, material, etc.)
+  variant_attributes?: Record<string, unknown>; // Attributs variantes JSONB (color, material, etc.)
 
   // Attributs physiques
   dimensions?: ProductDimensions | null;
@@ -213,7 +213,7 @@ export interface UpdateVariantGroupData {
   } | null;
 }
 
-export interface ProductWithVariantInfo extends VariantProduct {}
+export type ProductWithVariantInfo = VariantProduct;
 
 // Champs modifiables d'un produit (pour EditProductInGroupModal)
 export interface EditableProductFields {

@@ -1,8 +1,5 @@
 'use client';
 
-import { useState } from 'react';
-
-import { Badge } from '@verone/ui';
 import { Button } from '@verone/ui';
 import { cn } from '@verone/utils';
 import { Tag, Save, X, Edit, Barcode, Award } from 'lucide-react';
@@ -56,22 +53,22 @@ export function IdentifiersCompleteEditSection({
   const editData = getEditedData(section);
   const error = getError(section);
 
-  const currentBrand = product.brand || '-';
-  const currentGtin = product.gtin || '-';
+  const currentBrand = product.brand ?? '-';
+  const currentGtin = product.gtin ?? '-';
 
   const handleStartEdit = () => {
     startEdit(section, {
-      slug: product.slug || '',
-      brand: product.brand || '',
-      gtin: product.gtin || '',
-      condition: product.condition || 'new',
+      slug: product.slug ?? '',
+      brand: product.brand ?? '',
+      gtin: product.gtin ?? '',
+      condition: product.condition ?? 'new',
     });
   };
 
   const handleSave = async () => {
     const success = await saveChanges(section);
     if (success) {
-      console.log('✅ Identifiants mis à jour avec succès');
+      console.warn('✅ Identifiants mis à jour avec succès');
     }
   };
 
@@ -104,7 +101,7 @@ export function IdentifiersCompleteEditSection({
             </Button>
             <Button
               size="sm"
-              onClick={handleSave}
+              onClick={() => void handleSave()}
               disabled={!hasChanges(section) || isSaving(section)}
               className="text-xs px-2 py-1"
             >
@@ -139,7 +136,7 @@ export function IdentifiersCompleteEditSection({
               </label>
               <input
                 type="text"
-                value={editData?.slug || ''}
+                value={editData?.slug ?? ''}
                 onChange={e => handleFieldChange('slug', e.target.value)}
                 className="w-full px-3 py-2 border border-blue-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono"
                 placeholder="url-slug-produit"
@@ -162,7 +159,7 @@ export function IdentifiersCompleteEditSection({
               </label>
               <input
                 type="text"
-                value={editData?.brand || ''}
+                value={editData?.brand ?? ''}
                 onChange={e => handleFieldChange('brand', e.target.value)}
                 className="w-full px-3 py-2 border border-purple-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                 placeholder="ex: Kartell, Fermob, Vitra"
@@ -185,7 +182,7 @@ export function IdentifiersCompleteEditSection({
               </label>
               <input
                 type="text"
-                value={editData?.gtin || ''}
+                value={editData?.gtin ?? ''}
                 onChange={e => handleFieldChange('gtin', e.target.value)}
                 className="w-full px-3 py-2 border border-blue-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono"
                 placeholder="ex: 3760123456789"

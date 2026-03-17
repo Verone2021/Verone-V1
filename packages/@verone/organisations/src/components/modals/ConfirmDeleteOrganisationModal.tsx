@@ -75,7 +75,9 @@ export function ConfirmDeleteOrganisationModal({
   };
 
   const getDisplayName = () => {
-    return getOrganisationDisplayName(organisation as any);
+    return getOrganisationDisplayName(
+      organisation as Pick<Organisation, 'legal_name' | 'trade_name'>
+    );
   };
 
   return (
@@ -158,7 +160,7 @@ export function ConfirmDeleteOrganisationModal({
           </ButtonV2>
           <ButtonV2
             variant="destructive"
-            onClick={handleConfirm}
+            onClick={() => void handleConfirm()}
             disabled={isDeleting}
           >
             {isDeleting ? (

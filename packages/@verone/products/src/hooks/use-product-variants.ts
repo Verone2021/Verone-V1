@@ -60,7 +60,7 @@ export function useProductVariants(productId: string) {
           setProduct({
             ...productData,
             siblings: [],
-          } as any);
+          } as unknown as ProductWithVariants);
           setSiblings([]);
           setLoading(false);
           return;
@@ -116,7 +116,7 @@ export function useProductVariants(productId: string) {
 
         // Récupérer les images pour chaque sibling
         const siblingsWithImages = await Promise.all(
-          (siblingsData || []).map(async sibling => {
+          (siblingsData ?? []).map(async sibling => {
             const { data: images } = await supabase
               .from('product_images')
               .select('public_url, alt_text, display_order')
@@ -135,12 +135,13 @@ export function useProductVariants(productId: string) {
         // Construire l'objet produit complet
         const fullProduct = {
           ...productData,
-          variant_group: (groupData || undefined) as any,
-          siblings: siblingsWithImages as any,
+          variant_group: (groupData ??
+            undefined) as ProductWithVariants['variant_group'],
+          siblings: siblingsWithImages as VariantProduct[],
         };
 
-        setProduct(fullProduct as any);
-        setSiblings(siblingsWithImages as any);
+        setProduct(fullProduct as unknown as ProductWithVariants);
+        setSiblings(siblingsWithImages as VariantProduct[]);
       } catch (err) {
         console.error('Erreur fetch variantes:', err);
         setError(err instanceof Error ? err.message : 'Erreur inconnue');
@@ -149,7 +150,7 @@ export function useProductVariants(productId: string) {
       }
     };
 
-    fetchProductVariants();
+    void fetchProductVariants();
   }, [productId, supabase]);
 
   return {

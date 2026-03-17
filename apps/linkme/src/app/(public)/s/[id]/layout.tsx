@@ -7,17 +7,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import type { Database } from '@verone/types';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { createClient } from '@verone/utils/supabase/client';
-import {
-  Check,
-  CheckCircle,
-  Clock,
-  Mail,
-  Package,
-  ShoppingCart,
-  Store,
-  Truck,
-  User,
-} from 'lucide-react';
+import { CheckCircle, Clock, Mail, ShoppingCart, Truck } from 'lucide-react';
 
 import { OrderFormUnified } from '@/components/OrderFormUnified';
 import type {

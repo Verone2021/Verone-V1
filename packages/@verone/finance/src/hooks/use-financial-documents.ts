@@ -182,18 +182,27 @@ export function useFinancialDocuments(filters?: FinancialDocumentFilters) {
 
         if (fetchError) throw fetchError;
 
-        setDocuments((data as any) || []);
-      } catch (err: any) {
+        setDocuments((data as unknown as FinancialDocument[]) ?? []);
+      } catch (err: unknown) {
         console.error('Error fetching financial documents:', err);
-        setError(err.message || 'Erreur chargement documents');
-        toast.error(err.message || 'Erreur chargement');
+        const message =
+          err instanceof Error ? err.message : 'Erreur chargement documents';
+        setError(message);
+        toast.error(message);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchData();
-  }, [JSON.stringify(filters), supabase]);
+    void fetchData();
+  }, [
+    filters?.date_from,
+    filters?.date_to,
+    filters?.document_type,
+    filters?.partner_id,
+    filters?.status,
+    supabase,
+  ]);
 
   // ===================================================================
   // FEATURE FLAG: FINANCE MODULE DISABLED (Phase 1)
@@ -288,12 +297,13 @@ export function useFinancialDocuments(filters?: FinancialDocumentFilters) {
   // Créer facture client depuis commande
   const createCustomerInvoice = async (salesOrderId: string) => {
     try {
-      const { data, error: rpcError } = await (supabase as any).rpc(
-        'create_customer_invoice_from_order',
-        {
-          p_sales_order_id: salesOrderId,
-        }
-      );
+      /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call */
+      const { data, error: rpcError } = await (
+        supabase.rpc as CallableFunction
+      )('create_customer_invoice_from_order', {
+        p_sales_order_id: salesOrderId,
+      });
+      /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call */
 
       if (rpcError) throw rpcError;
 
@@ -323,21 +333,22 @@ export function useFinancialDocuments(filters?: FinancialDocumentFilters) {
     notes?: string;
   }) => {
     try {
-      const { data, error: rpcError } = await (supabase as any).rpc(
-        'create_supplier_invoice',
-        {
-          p_supplier_id: params.supplier_id,
-          p_purchase_order_id: params.purchase_order_id,
-          p_invoice_number: params.invoice_number,
-          p_invoice_date: params.invoice_date,
-          p_due_date: params.due_date,
-          p_total_ht: params.total_ht,
-          p_total_ttc: params.total_ttc,
-          p_tva_amount: params.tva_amount,
-          p_uploaded_file_url: params.uploaded_file_url,
-          p_notes: params.notes || null,
-        }
-      );
+      /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call */
+      const { data, error: rpcError } = await (
+        supabase.rpc as CallableFunction
+      )('create_supplier_invoice', {
+        p_supplier_id: params.supplier_id,
+        p_purchase_order_id: params.purchase_order_id,
+        p_invoice_number: params.invoice_number,
+        p_invoice_date: params.invoice_date,
+        p_due_date: params.due_date,
+        p_total_ht: params.total_ht,
+        p_total_ttc: params.total_ttc,
+        p_tva_amount: params.tva_amount,
+        p_uploaded_file_url: params.uploaded_file_url,
+        p_notes: params.notes ?? null,
+      });
+      /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call */
 
       if (rpcError) throw rpcError;
 
@@ -381,10 +392,10 @@ export function useFinancialDocuments(filters?: FinancialDocumentFilters) {
           total_ttc: params.amount_ttc,
           tva_amount: params.tva_amount,
           document_date: params.expense_date,
-          uploaded_file_url: params.uploaded_file_url || null,
-          notes: params.notes || null,
+          uploaded_file_url: params.uploaded_file_url ?? null,
+          notes: params.notes ?? null,
           status: 'draft',
-        } as any)
+        } as never)
         .select('id')
         .single();
 

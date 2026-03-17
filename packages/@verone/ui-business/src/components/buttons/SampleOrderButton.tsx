@@ -15,7 +15,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@verone/ui';
-import { cn } from '@verone/utils';
 import { Package, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 
 interface SampleOrderButtonProps {
@@ -152,7 +151,9 @@ export function SampleOrderButton({
               Annuler
             </ButtonV2>
             <ButtonV2
-              onClick={handleRequestSample}
+              onClick={() => {
+                void handleRequestSample();
+              }}
               disabled={isLoading}
               className="bg-blue-600 hover:bg-blue-700 text-white"
             >

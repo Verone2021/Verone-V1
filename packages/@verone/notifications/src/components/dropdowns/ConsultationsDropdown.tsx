@@ -25,7 +25,6 @@ import { fr } from 'date-fns/locale';
 import {
   MessageCircle,
   Clock,
-  User,
   ArrowRight,
   RefreshCw,
   ExternalLink,
@@ -110,8 +109,8 @@ function ConsultationItem({ consultation }: ConsultationItemProps) {
   });
 
   const clientName =
-    consultation.organisation?.trade_name ||
-    consultation.organisation?.legal_name ||
+    consultation.organisation?.trade_name ??
+    consultation.organisation?.legal_name ??
     consultation.client_email.split('@')[0];
 
   return (
@@ -251,7 +250,7 @@ export function ConsultationsDropdown({
         throw new Error(queryError.message);
       }
 
-      setConsultations((data as any[]) || []);
+      setConsultations((data as unknown as Consultation[]) ?? []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur chargement');
       console.error('[ConsultationsDropdown] Error:', err);
@@ -265,7 +264,9 @@ export function ConsultationsDropdown({
    */
   useEffect(() => {
     if (open) {
-      fetchConsultations();
+      void fetchConsultations().catch((err: unknown) => {
+        console.error('[ConsultationsDropdown] Fetch error:', err);
+      });
       onOpen?.();
     }
   }, [open, fetchConsultations, onOpen]);
@@ -302,7 +303,11 @@ export function ConsultationsDropdown({
             variant="ghost"
             size="sm"
             className="h-7 w-7 p-0"
-            onClick={handleRefresh}
+            onClick={() => {
+              void handleRefresh().catch((err: unknown) => {
+                console.error('[ConsultationsDropdown] Refresh error:', err);
+              });
+            }}
             disabled={loading}
           >
             <RefreshCw
@@ -315,7 +320,7 @@ export function ConsultationsDropdown({
         <ScrollArea className="max-h-80">
           {loading && consultations.length === 0 ? (
             <div className="p-4 space-y-3">
-              {[...Array(3)].map((_, i) => (
+              {Array.from({ length: 3 }).map((_, i) => (
                 <div key={i} className="flex items-center gap-3">
                   <Skeleton className="w-8 h-8 rounded-md" />
                   <div className="flex-1 space-y-1.5">
@@ -332,7 +337,11 @@ export function ConsultationsDropdown({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={handleRefresh}
+                onClick={() => {
+                  void handleRefresh().catch((err: unknown) => {
+                    console.error('[ConsultationsDropdown] Retry error:', err);
+                  });
+                }}
                 className="mt-2"
               >
                 Réessayer

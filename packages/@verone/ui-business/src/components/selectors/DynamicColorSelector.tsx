@@ -146,7 +146,7 @@ export function DynamicColorSelector({
         <input
           ref={inputRef}
           type="text"
-          value={inputFocused ? searchQuery : selectedColor || ''}
+          value={inputFocused ? searchQuery : (selectedColor ?? '')}
           onChange={handleInputChange}
           onFocus={handleInputFocus}
           placeholder={placeholder}
@@ -262,7 +262,9 @@ export function DynamicColorSelector({
               <div className="border-t">
                 <button
                   type="button"
-                  onClick={handleCreateColor}
+                  onClick={() => {
+                    void handleCreateColor();
+                  }}
                   disabled={isCreating}
                   className={cn(
                     'w-full px-3 py-3 flex items-center gap-2 hover:bg-green-50 transition-colors text-left',

@@ -8,8 +8,8 @@ export interface ActivityEvent {
   action: string;
   table_name?: string;
   record_id?: string;
-  old_data?: Record<string, any>;
-  new_data?: Record<string, any>;
+  old_data?: Record<string, unknown>;
+  new_data?: Record<string, unknown>;
   severity?: 'info' | 'warning' | 'error' | 'critical';
   metadata?: {
     page_url?: string;
@@ -19,7 +19,7 @@ export interface ActivityEvent {
     click_position?: { x: number; y: number };
     element_target?: string;
     search_query?: string;
-    filter_applied?: Record<string, any>;
+    filter_applied?: Record<string, unknown>;
     performance_metrics?: {
       load_time?: number;
       interaction_time?: number;
@@ -93,9 +93,7 @@ export function useUserActivityTracker() {
         .insert(
           events.map(event => {
             // Extract app_source from new_data if provided (e.g. 'linkme')
-            const appSource = (
-              event.new_data as Record<string, unknown> | undefined
-            )?.app_source as string | undefined;
+            const appSource = event.new_data?.app_source as string | undefined;
 
             return {
               user_id: user.id,
@@ -105,10 +103,10 @@ export function useUserActivityTracker() {
               record_id: event.record_id,
               old_data: event.old_data,
               new_data: event.new_data,
-              severity: event.severity || 'info',
+              severity: event.severity ?? 'info',
               page_url: event.metadata?.page_url,
               ip_address: event.metadata?.ip_address,
-              user_agent: event.metadata?.user_agent || navigator.userAgent,
+              user_agent: event.metadata?.user_agent ?? navigator.userAgent,
               metadata: event.metadata,
               created_at: new Date().toISOString(),
               ...(appSource ? { app_source: appSource } : {}),
@@ -123,10 +121,6 @@ export function useUserActivityTracker() {
             error
           );
         }
-      } else if (process.env.NODE_ENV !== 'production') {
-        console.log(
-          `✅ Activity tracking: ${events.length} events logged for user ${user.id} (session: ${sessionIdRef.current.substring(0, 8)}...)`
-        );
       }
 
       return { data: !error, error };
@@ -141,7 +135,7 @@ export function useUserActivityTracker() {
       // Gain: 2900ms (JS) → <500ms (RPC)
       const { data, error } = await supabase.rpc('get_activity_stats', {
         days_ago: 7,
-      } as any);
+      } as never);
 
       if (error) throw error;
 
@@ -170,14 +164,20 @@ export function useUserActivityTracker() {
 
   // ✅ FIX: Réactiver auto-flush périodique avec cleanup proper
   useEffect(() => {
-    batchIntervalRef.current = setInterval(flushEventQueue, BATCH_INTERVAL);
+    batchIntervalRef.current = setInterval(() => {
+      void flushEventQueue().catch((err: unknown) => {
+        console.error('[useUserActivityTracker] Flush error:', err);
+      });
+    }, BATCH_INTERVAL);
 
     return () => {
       if (batchIntervalRef.current) {
         clearInterval(batchIntervalRef.current);
       }
       // Flush final au démontage (garantir 0 perte)
-      flushEventQueue();
+      void flushEventQueue().catch((err: unknown) => {
+        console.error('[useUserActivityTracker] Final flush error:', err);
+      });
     };
   }, [flushEventQueue]);
 
@@ -273,7 +273,7 @@ export function useUserActivityTracker() {
         severity: 'error',
         new_data: {
           page_url: window.location.pathname,
-          error_reason: event.reason?.toString(),
+          error_reason: String(event.reason ?? 'unknown'),
           user_agent: navigator.userAgent,
         },
       });
@@ -313,8 +313,8 @@ export function useUserActivityTracker() {
         ...event,
         metadata: {
           ...event.metadata,
-          page_url: event.metadata?.page_url || window.location.pathname,
-          user_agent: event.metadata?.user_agent || navigator.userAgent,
+          page_url: event.metadata?.page_url ?? window.location.pathname,
+          user_agent: event.metadata?.user_agent ?? navigator.userAgent,
           session_duration: Date.now() - currentSession.start_time,
         },
       };
@@ -326,7 +326,9 @@ export function useUserActivityTracker() {
 
       // Flush si la queue est pleine
       if (eventQueueRef.current.length >= BATCH_SIZE) {
-        flushEventQueue();
+        void flushEventQueue().catch((err: unknown) => {
+          console.error('[useUserActivityTracker] Batch flush error:', err);
+        });
       }
     },
     [flushEventQueue]
@@ -334,7 +336,7 @@ export function useUserActivityTracker() {
 
   // Helpers pour tracker des actions spécifiques
   const trackFormSubmit = useCallback(
-    (formName: string, formData?: Record<string, any>) => {
+    (formName: string, formData?: Record<string, unknown>) => {
       trackEvent({
         action: 'form_submit',
         new_data: {
@@ -360,7 +362,7 @@ export function useUserActivityTracker() {
   );
 
   const trackFilterApplied = useCallback(
-    (filters: Record<string, any>) => {
+    (filters: Record<string, unknown>) => {
       trackEvent({
         action: 'filter_applied',
         new_data: {

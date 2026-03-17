@@ -179,7 +179,7 @@ export function GoogleMerchantConfigModal({
                 <CardContent className="p-4">
                   <p className="text-sm text-gray-600 mb-1">Account ID</p>
                   <p className="font-mono text-lg font-bold text-black">
-                    {config?.accountId || '5495521926'}
+                    {config?.accountId ?? '5495521926'}
                   </p>
                 </CardContent>
               </Card>
@@ -188,7 +188,7 @@ export function GoogleMerchantConfigModal({
                 <CardContent className="p-4">
                   <p className="text-sm text-gray-600 mb-1">Data Source ID</p>
                   <p className="font-mono text-lg font-bold text-black">
-                    {config?.dataSourceId || '10571293810'}
+                    {config?.dataSourceId ?? '10571293810'}
                   </p>
                 </CardContent>
               </Card>
@@ -197,8 +197,8 @@ export function GoogleMerchantConfigModal({
                 <CardContent className="p-4">
                   <p className="text-sm text-gray-600 mb-1">Langue / Pays</p>
                   <p className="font-medium text-black">
-                    {config?.contentLanguage.toUpperCase() || 'FR'} /{' '}
-                    {config?.targetCountry || 'FR'}
+                    {config?.contentLanguage.toUpperCase() ?? 'FR'} /{' '}
+                    {config?.targetCountry ?? 'FR'}
                   </p>
                 </CardContent>
               </Card>
@@ -207,7 +207,7 @@ export function GoogleMerchantConfigModal({
                 <CardContent className="p-4">
                   <p className="text-sm text-gray-600 mb-1">Devise</p>
                   <p className="font-medium text-black">
-                    {config?.currency || 'EUR'}
+                    {config?.currency ?? 'EUR'}
                   </p>
                 </CardContent>
               </Card>
@@ -227,14 +227,14 @@ export function GoogleMerchantConfigModal({
                     </p>
                     <p className="text-black break-all">
                       {process.env
-                        .NEXT_PUBLIC_GOOGLE_MERCHANT_SERVICE_ACCOUNT_EMAIL ||
+                        .NEXT_PUBLIC_GOOGLE_MERCHANT_SERVICE_ACCOUNT_EMAIL ??
                         'google-merchant-verone@make-gmail-integration-428317.iam.gserviceaccount.com'}
                     </p>
                   </div>
                   <div className="font-mono text-xs">
                     <p className="text-gray-700">GOOGLE_CLOUD_PROJECT_ID</p>
                     <p className="text-black">
-                      {process.env.NEXT_PUBLIC_GOOGLE_CLOUD_PROJECT_ID ||
+                      {process.env.NEXT_PUBLIC_GOOGLE_CLOUD_PROJECT_ID ??
                         'make-gmail-integration-428317'}
                     </p>
                   </div>
@@ -335,7 +335,7 @@ export function GoogleMerchantConfigModal({
           {/* Action Buttons */}
           <div className="flex items-center space-x-3">
             <ButtonV2
-              onClick={testConnection}
+              onClick={() => void testConnection()}
               disabled={testing}
               className="flex-1 bg-black hover:bg-gray-800 text-white"
             >

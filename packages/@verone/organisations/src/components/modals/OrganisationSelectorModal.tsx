@@ -40,7 +40,6 @@ import {
   Loader2,
   Users,
   MapPin,
-  ChevronRight,
   Check,
 } from 'lucide-react';
 
@@ -121,7 +120,7 @@ function AvailableOrganisationItem({
   onAdd: () => void;
   loading: boolean;
 }) {
-  const displayName = organisation.trade_name || organisation.legal_name;
+  const displayName = organisation.trade_name ?? organisation.legal_name;
 
   return (
     <div
@@ -194,7 +193,7 @@ function SelectedOrganisationItem({
   canSetParent: boolean;
   loading: boolean;
 }) {
-  const displayName = organisation.trade_name || organisation.legal_name;
+  const displayName = organisation.trade_name ?? organisation.legal_name;
 
   return (
     <div
@@ -297,7 +296,7 @@ export function OrganisationSelectorModal({
   >([]);
   const [parentId, setParentId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [actionLoading, _setActionLoading] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasChanges, setHasChanges] = useState(false);
@@ -331,7 +330,7 @@ export function OrganisationSelectorModal({
 
       // Trouver la société mère
       const parent = currentOrganisations.find(org => org.is_enseigne_parent);
-      setParentId(parent?.id || null);
+      setParentId(parent?.id ?? null);
 
       setHasChanges(false);
     }
@@ -348,7 +347,7 @@ export function OrganisationSelectorModal({
       try {
         // Filtrer uniquement les organisations clientes (type = 'customer')
         // Les fournisseurs et autres types ne peuvent pas être membres d'une enseigne
-        let query = (supabase as any)
+        let query = supabase
           .from('organisations')
           .select(
             'id, legal_name, trade_name, is_active, city, country, enseigne_id, is_enseigne_parent, type, logo_url'
@@ -373,7 +372,9 @@ export function OrganisationSelectorModal({
 
         // Double vérification côté client : ne garder que les customers
         // (car le .or() peut annuler les filtres précédents)
-        const filteredData: OrganisationListItem[] = ((data as any[]) || [])
+        const filteredData: OrganisationListItem[] = (
+          (data as OrganisationListItem[]) ?? []
+        )
           .filter(org => org.type === 'customer')
           .map(org => ({
             ...org,
@@ -391,7 +392,8 @@ export function OrganisationSelectorModal({
       }
     };
 
-    fetchAvailableOrganisations();
+    void fetchAvailableOrganisations();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- supabase client is stable singleton
   }, [open, debouncedSearch]);
 
   // IDs des organisations déjà sélectionnées
@@ -623,7 +625,10 @@ export function OrganisationSelectorModal({
               <ButtonV2 variant="outline" onClick={handleClose}>
                 Annuler
               </ButtonV2>
-              <ButtonV2 onClick={handleSave} disabled={saving || !hasChanges}>
+              <ButtonV2
+                onClick={() => void handleSave()}
+                disabled={saving || !hasChanges}
+              >
                 {saving ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />

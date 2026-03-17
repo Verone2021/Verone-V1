@@ -184,7 +184,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // Vérifier unicité en DB, ajouter suffixe numérique si doublon
     let selectionSlug = baseSlug;
     let suffix = 2;
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- loop until unique slug found
     while (true) {
       const { data: existing } = await supabaseAdmin
         .from('linkme_selections')

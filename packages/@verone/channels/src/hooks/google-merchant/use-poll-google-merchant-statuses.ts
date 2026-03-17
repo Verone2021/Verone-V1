@@ -18,7 +18,7 @@ import { logger } from '@verone/utils/logger';
 interface StatusData {
   productId: string;
   googleStatus: 'approved' | 'pending' | 'rejected' | 'not_synced';
-  googleStatusDetail?: Record<string, any>;
+  googleStatusDetail?: Record<string, unknown>;
 }
 
 interface PollStatusesRequest {
@@ -54,20 +54,23 @@ export function usePollGoogleMerchantStatuses() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `HTTP ${response.status}`);
+        const errorData: { error?: string } = (await response.json()) as {
+          error?: string;
+        };
+        throw new Error(errorData.error ?? `HTTP ${response.status}`);
       }
 
-      const data: PollStatusesResponse = await response.json();
+      const data: PollStatusesResponse =
+        (await response.json()) as PollStatusesResponse;
 
       if (!data.success) {
-        throw new Error(data.error || 'Failed to poll statuses');
+        throw new Error(data.error ?? 'Failed to poll statuses');
       }
 
       return data;
     },
     onSuccess: data => {
-      const { updatedCount } = data.data || {};
+      const { updatedCount } = data.data ?? {};
 
       logger.info('[usePollGoogleMerchantStatuses] Success', {
         updatedCount,
@@ -76,8 +79,12 @@ export function usePollGoogleMerchantStatuses() {
       toast.success(`${updatedCount} statut(s) mis à jour depuis Google`);
 
       // Invalidate queries pour refresh dashboard
-      queryClient.invalidateQueries({ queryKey: ['google-merchant-products'] });
-      queryClient.invalidateQueries({ queryKey: ['google-merchant-stats'] });
+      void queryClient.invalidateQueries({
+        queryKey: ['google-merchant-products'],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ['google-merchant-stats'],
+      });
     },
     onError: error => {
       logger.error(`[usePollGoogleMerchantStatuses] Failed: ${error.message}`);

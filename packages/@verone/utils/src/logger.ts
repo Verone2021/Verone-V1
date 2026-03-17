@@ -33,7 +33,7 @@ export type LogContext = {
   action?: string;
 
   // Additional metadata
-  [key: string]: any;
+  [key: string]: unknown;
 };
 
 export interface LogEntry {
@@ -71,8 +71,10 @@ class VeroneLogger {
 
   constructor() {
     this.serviceName = 'verone-back-office';
-    this.environment = (process.env.NODE_ENV as any) || 'development';
-    this.version = process.env.npm_package_version || '1.0.0';
+    this.environment =
+      (process.env.NODE_ENV as LogEntry['environment'] | undefined) ??
+      'development';
+    this.version = process.env.npm_package_version ?? '1.0.0';
   }
 
   private createLogEntry(
@@ -86,7 +88,7 @@ class VeroneLogger {
       timestamp: new Date().toISOString(),
       level,
       message,
-      environment: this.environment as any,
+      environment: this.environment as LogEntry['environment'],
       service: this.serviceName,
       version: this.version,
     };
@@ -102,7 +104,7 @@ class VeroneLogger {
         name: error.name,
         message: error.message,
         stack: this.environment !== 'production' ? error.stack : undefined,
-        code: (error as any).code,
+        code: (error as Error & { code?: string }).code,
       };
     }
 
@@ -136,8 +138,9 @@ class VeroneLogger {
 
     // Truncate long strings
     Object.keys(sanitized).forEach(key => {
-      if (typeof sanitized[key] === 'string' && sanitized[key].length > 1000) {
-        sanitized[key] = sanitized[key].substring(0, 997) + '...';
+      const val = sanitized[key];
+      if (typeof val === 'string' && val.length > 1000) {
+        sanitized[key] = val.substring(0, 997) + '...';
       }
     });
 
@@ -151,12 +154,12 @@ class VeroneLogger {
     if (this.environment === 'development') {
       const emoji = this.getLevelEmoji(entry.level);
       const timestamp = new Date(entry.timestamp).toLocaleTimeString();
-      console.log(
+      console.warn(
         `${emoji} ${timestamp} [${entry.level.toUpperCase()}] ${entry.message}`
       );
 
       if (entry.context) {
-        console.log('  Context:', entry.context);
+        console.warn('  Context:', entry.context);
       }
 
       if (entry.error) {
@@ -167,11 +170,11 @@ class VeroneLogger {
       }
 
       if (entry.metrics) {
-        console.log('  Metrics:', entry.metrics);
+        console.warn('  Metrics:', entry.metrics);
       }
     } else {
       // En production, JSON structuré pour parsing
-      console.log(logString);
+      console.warn(logString);
     }
   }
 
@@ -331,14 +334,27 @@ class VeroneLogger {
   }
 
   // Helper pour créer le contexte depuis une requête
-  createRequestContext(req: any): LogContext {
+  createRequestContext(req: {
+    headers:
+      | Record<string, string | undefined>
+      | { get?: (name: string) => string | null };
+    method?: string;
+    url?: string;
+    connection?: { remoteAddress?: string };
+  }): LogContext {
+    const getHeader = (name: string): string | undefined => {
+      if ('get' in req.headers && typeof req.headers.get === 'function') {
+        return req.headers.get(name) ?? undefined;
+      }
+      return (req.headers as Record<string, string | undefined>)[name];
+    };
     return {
-      requestId: req.headers['x-request-id'] || crypto.randomUUID(),
-      userAgent: req.headers['user-agent'],
-      ip: req.headers['x-forwarded-for'] || req.connection?.remoteAddress,
+      requestId: getHeader('x-request-id') ?? crypto.randomUUID(),
+      userAgent: getHeader('user-agent'),
+      ip: getHeader('x-forwarded-for') ?? req.connection?.remoteAddress,
       method: req.method,
       url: req.url,
-      sessionId: req.headers['x-session-id'],
+      sessionId: getHeader('x-session-id'),
     };
   }
 }

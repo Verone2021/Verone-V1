@@ -96,12 +96,17 @@ export function ConsultationProductAssociation({
         }),
       });
 
-      const result = await response.json();
+      const result: unknown = await response.json();
 
       if (!response.ok) {
-        throw new Error(
-          result.error || "Erreur lors de la création de l'association"
-        );
+        const errorMessage =
+          result != null &&
+          typeof result === 'object' &&
+          'error' in result &&
+          typeof (result as { error: unknown }).error === 'string'
+            ? (result as { error: string }).error
+            : "Erreur lors de la création de l'association";
+        throw new Error(errorMessage);
       }
 
       toast({
@@ -295,7 +300,7 @@ export function ConsultationProductAssociation({
               )}
 
               <ButtonV2
-                onClick={handleCreateAssociation}
+                onClick={() => void handleCreateAssociation()}
                 disabled={loading || !selectedProduct}
                 className="flex-1 bg-black hover:bg-gray-800 text-white"
               >

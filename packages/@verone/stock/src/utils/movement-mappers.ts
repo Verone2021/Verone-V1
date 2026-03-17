@@ -50,6 +50,7 @@ export interface RecentMovement {
  * <StockMovementCard {...props} />
  * ```
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function mapRecentMovementToCard(movement: RecentMovement): any {
   return {
     movement: {
@@ -86,6 +87,7 @@ export function mapRecentMovementToCard(movement: RecentMovement): any {
  * cardProps.map(props => <StockMovementCard key={props.movement.id} {...props} />)
  * ```
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function mapRecentMovementsToCards(movements: RecentMovement[]): any[] {
   return movements.map(mapRecentMovementToCard);
 }

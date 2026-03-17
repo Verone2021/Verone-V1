@@ -40,8 +40,8 @@ export function ContactRolesEditSection({
     hasChanges,
   } = useInlineEdit({
     contactId: contact.id,
-    onUpdate: updatedData => {
-      onUpdate(updatedData);
+    onUpdate: (updatedData: unknown) => {
+      onUpdate(updatedData as Partial<Contact>);
     },
     onError: error => {
       console.error('❌ Erreur mise à jour rôles:', error);
@@ -49,22 +49,24 @@ export function ContactRolesEditSection({
   });
 
   const section: EditableSection = 'roles';
-  const editData = getEditedData(section);
+  const editData = getEditedData(section) as
+    | Record<string, boolean>
+    | undefined;
   const error = getError(section);
 
   const handleStartEdit = () => {
     startEdit(section, {
-      is_primary_contact: contact.is_primary_contact || false,
-      is_commercial_contact: contact.is_commercial_contact || false,
-      is_billing_contact: contact.is_billing_contact || false,
-      is_technical_contact: contact.is_technical_contact || false,
+      is_primary_contact: contact.is_primary_contact ?? false,
+      is_commercial_contact: contact.is_commercial_contact ?? false,
+      is_billing_contact: contact.is_billing_contact ?? false,
+      is_technical_contact: contact.is_technical_contact ?? false,
     });
   };
 
   const handleSave = async () => {
     const success = await saveChanges(section);
     if (success) {
-      console.log('✅ Rôles mis à jour avec succès');
+      console.warn('✅ Rôles mis à jour avec succès');
     }
   };
 
@@ -76,7 +78,17 @@ export function ContactRolesEditSection({
     updateEditedData(section, { [role]: checked });
   };
 
-  const getContactTypeBadges = (contactData: any) => {
+  const getContactTypeBadges = (
+    contactData: Partial<
+      Pick<
+        Contact,
+        | 'is_primary_contact'
+        | 'is_commercial_contact'
+        | 'is_billing_contact'
+        | 'is_technical_contact'
+      >
+    >
+  ) => {
     const badges: JSX.Element[] = [];
 
     if (contactData?.is_primary_contact) {
@@ -152,7 +164,9 @@ export function ContactRolesEditSection({
             <ButtonV2
               variant="secondary"
               size="sm"
-              onClick={handleSave}
+              onClick={() => {
+                void handleSave();
+              }}
               disabled={!hasChanges(section) || isSaving(section)}
             >
               <Save className="h-3 w-3 mr-1" />
@@ -172,7 +186,7 @@ export function ContactRolesEditSection({
             <input
               type="checkbox"
               id="is_primary_contact"
-              checked={editData?.is_primary_contact || false}
+              checked={editData?.is_primary_contact ?? false}
               onChange={e =>
                 handleRoleChange('is_primary_contact', e.target.checked)
               }
@@ -199,7 +213,7 @@ export function ContactRolesEditSection({
             <input
               type="checkbox"
               id="is_commercial_contact"
-              checked={editData?.is_commercial_contact || false}
+              checked={editData?.is_commercial_contact ?? false}
               onChange={e =>
                 handleRoleChange('is_commercial_contact', e.target.checked)
               }
@@ -226,7 +240,7 @@ export function ContactRolesEditSection({
             <input
               type="checkbox"
               id="is_billing_contact"
-              checked={editData?.is_billing_contact || false}
+              checked={editData?.is_billing_contact ?? false}
               onChange={e =>
                 handleRoleChange('is_billing_contact', e.target.checked)
               }
@@ -253,7 +267,7 @@ export function ContactRolesEditSection({
             <input
               type="checkbox"
               id="is_technical_contact"
-              checked={editData?.is_technical_contact || false}
+              checked={editData?.is_technical_contact ?? false}
               onChange={e =>
                 handleRoleChange('is_technical_contact', e.target.checked)
               }

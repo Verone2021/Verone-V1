@@ -33,6 +33,7 @@ import {
 import { AddProductToOrderModal } from '@verone/orders/components/modals/AddProductToOrderModal';
 import { OrderHeaderEditSection } from '@verone/orders/components/sections/OrderHeaderEditSection';
 import { EditableOrderItemRow } from '@verone/orders/components/tables/EditableOrderItemRow';
+import type { CreateOrderItemData, OrderItem } from '@verone/orders/hooks';
 import { useOrderItems } from '@verone/orders/hooks';
 
 interface UniversalOrderDetailsModalProps {
@@ -112,19 +113,22 @@ export function UniversalOrderDetailsModal({
     addItem,
     updateItem,
     removeItem,
-    refetch,
+    refetch: _refetch,
   } = useOrderItems({
-    orderId: orderId || '',
-    orderType: orderType || 'purchase',
+    orderId: orderId ?? '',
+    orderType: orderType ?? 'purchase',
   });
 
   // 🎯 Hook useInlineEdit pour édition header
   const inlineEdit = useInlineEdit({
-    salesOrderId: orderType === 'sales' ? orderId || undefined : undefined,
+    salesOrderId: orderType === 'sales' ? (orderId ?? undefined) : undefined,
     purchaseOrderId:
-      orderType === 'purchase' ? orderId || undefined : undefined,
+      orderType === 'purchase' ? (orderId ?? undefined) : undefined,
     onUpdate: updatedData => {
-      console.log('✅ Order header updated:', updatedData);
+      console.warn(
+        '[UniversalOrderDetailsModal] Order header updated:',
+        updatedData
+      );
       // Mettre à jour le state local
       setOrderHeader(prev => (prev ? { ...prev, ...updatedData } : null));
       onUpdate?.();
@@ -169,7 +173,7 @@ export function UniversalOrderDetailsModal({
   };
 
   // Handler ajout produit
-  const handleAddProduct = async (data: any) => {
+  const handleAddProduct = async (data: CreateOrderItemData) => {
     try {
       await addItem(data);
       setShowAddProductModal(false);
@@ -183,7 +187,7 @@ export function UniversalOrderDetailsModal({
   };
 
   // Handler modification item
-  const handleUpdateItem = async (itemId: string, data: any) => {
+  const handleUpdateItem = async (itemId: string, data: Partial<OrderItem>) => {
     try {
       await updateItem(itemId, data);
       onUpdate?.(); // Notifier le parent
@@ -222,9 +226,10 @@ export function UniversalOrderDetailsModal({
       try {
         const supabase = createClient();
 
+        /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument, @typescript-eslint/prefer-nullish-coalescing, @typescript-eslint/no-explicit-any */
         if (orderType === 'sales') {
           // Récupérer Sales Order SANS items
-          // ⚠️ Type cast needed: Supabase types might be stale, eco_tax_vat_rate exists in DB
+          // Type cast needed: Supabase types might be stale, eco_tax_vat_rate exists in DB
           const { data: order, error: orderError } = (await supabase
             .from('sales_orders')
             .select(
@@ -348,31 +353,38 @@ export function UniversalOrderDetailsModal({
             eco_tax_vat_rate: order.eco_tax_vat_rate,
           });
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
+        const supaError = err as {
+          message?: string;
+          code?: string;
+          details?: string;
+          hint?: string;
+        };
         console.error(
           '[UniversalOrderDetailsModal] Erreur chargement en-tête commande:',
           {
             orderId,
             orderType,
-            errorMessage: err?.message,
-            errorCode: err?.code,
-            errorDetails: err?.details,
-            errorHint: err?.hint,
+            errorMessage: supaError.message,
+            errorCode: supaError.code,
+            errorDetails: supaError.details,
+            errorHint: supaError.hint,
             fullError: err,
           }
         );
 
         const errorMessage =
-          err?.message ||
+          supaError.message ??
           `Impossible de charger la commande ${orderType === 'sales' ? 'client' : 'fournisseur'}`;
 
         setError(errorMessage);
+        /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument, @typescript-eslint/prefer-nullish-coalescing, @typescript-eslint/no-explicit-any */
       } finally {
         setLoading(false);
       }
     };
 
-    fetchOrderHeader();
+    void fetchOrderHeader();
   }, [orderId, orderType, open]);
 
   const formatDate = (date: string | null) => {
@@ -391,14 +403,14 @@ export function UniversalOrderDetailsModal({
       const subtotal =
         item.quantity *
         item.unit_price_ht *
-        (1 - (item.discount_percentage || 0) / 100);
-      return sum + subtotal + (item.eco_tax || 0) * item.quantity;
+        (1 - (item.discount_percentage ?? 0) / 100);
+      return sum + subtotal + (item.eco_tax ?? 0) * item.quantity;
     }, 0);
   };
 
   // Loading combiné (header + items)
   const isLoading = loading || itemsLoading;
-  const hasError = error || itemsError;
+  const hasError = error ?? itemsError;
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -453,9 +465,9 @@ export function UniversalOrderDetailsModal({
             {/* En-tête commande - Mode READ ou EDIT */}
             {isEditMode ? (
               <OrderHeaderEditSection
-                orderType={orderType || 'purchase'}
+                orderType={orderType ?? 'purchase'}
                 data={
-                  inlineEdit.getEditedData('order_header') || {
+                  inlineEdit.getEditedData('order_header') ?? {
                     billing_address: orderHeader.billing_address,
                     shipping_address: orderHeader.shipping_address,
                     delivery_address: orderHeader.delivery_address,
@@ -611,10 +623,14 @@ export function UniversalOrderDetailsModal({
                       <EditableOrderItemRow
                         key={item.id}
                         item={item}
-                        orderType={orderType || 'purchase'}
+                        orderType={orderType ?? 'purchase'}
                         readonly={!isEditMode}
-                        onUpdate={handleUpdateItem}
-                        onDelete={handleRemoveItem}
+                        onUpdate={(id, data) => {
+                          void handleUpdateItem(id, data);
+                        }}
+                        onDelete={id => {
+                          void handleRemoveItem(id);
+                        }}
                       />
                     ))}
                   </TableBody>
@@ -637,8 +653,10 @@ export function UniversalOrderDetailsModal({
         <AddProductToOrderModal
           open={showAddProductModal}
           onClose={() => setShowAddProductModal(false)}
-          orderType={orderType || 'purchase'}
-          onAdd={handleAddProduct}
+          orderType={orderType ?? 'purchase'}
+          onAdd={data => {
+            void handleAddProduct(data);
+          }}
         />
 
         {/* Footer avec boutons Enregistrer/Annuler en mode édition */}
@@ -653,7 +671,9 @@ export function UniversalOrderDetailsModal({
               Annuler
             </ButtonV2>
             <ButtonV2
-              onClick={handleSaveHeader}
+              onClick={() => {
+                void handleSaveHeader();
+              }}
               disabled={
                 !inlineEdit.hasChanges('order_header') ||
                 inlineEdit.isSaving('order_header')

@@ -141,7 +141,7 @@ export function useContacts() {
 
         if (error) throw error;
 
-        setContacts((data as any) || []);
+        setContacts((data as Contact[]) ?? []);
       } catch (error) {
         logger.error(
           'Erreur récupération contacts',
@@ -187,8 +187,8 @@ export function useContacts() {
 
         if (error) throw error;
 
-        setCurrentContact(data as any);
-        return data as any;
+        setCurrentContact(data as Contact);
+        return data as Contact;
       } catch (error) {
         logger.error(
           'Erreur récupération contact',
@@ -247,7 +247,7 @@ export function useContacts() {
 
         if (error && error.code !== 'PGRST116') throw error; // PGRST116 = pas de résultat
 
-        return data || null;
+        return data ?? null;
       } catch (error) {
         logger.error(
           'Erreur récupération contact principal',
@@ -343,23 +343,33 @@ export function useContacts() {
 
         await fetchContacts();
         return contact;
-      } catch (error: any) {
+      } catch (error: unknown) {
+        const err = error as {
+          code?: string;
+          details?: string;
+          hint?: string;
+          message?: string;
+        };
         logger.error(
           'Erreur création contact',
           error instanceof Error ? error : new Error(String(error)),
           {
             operation: 'create_contact_failed',
             resource: 'contacts',
-            errorCode: error?.code,
-            errorDetails: error?.details,
-            errorHint: error?.hint,
+            errorCode: err.code,
+            errorDetails: err.details,
+            errorHint: err.hint,
             organisationId: data.organisation_id,
           }
         );
 
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : 'Impossible de créer le contact';
         toast({
           title: 'Erreur',
-          description: error.message || 'Impossible de créer le contact',
+          description: errorMessage,
           variant: 'destructive',
         });
         throw error;
@@ -401,10 +411,10 @@ export function useContacts() {
 
         await fetchContacts();
         if (currentContact?.id === contactId) {
-          setCurrentContact(contact as any);
+          setCurrentContact(contact as Contact);
         }
-        return contact as any;
-      } catch (error: any) {
+        return contact as Contact;
+      } catch (error: unknown) {
         logger.error(
           'Erreur mise à jour contact',
           error instanceof Error ? error : new Error(String(error)),
@@ -414,10 +424,13 @@ export function useContacts() {
             contactId,
           }
         );
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : 'Impossible de mettre à jour le contact';
         toast({
           title: 'Erreur',
-          description:
-            error.message || 'Impossible de mettre à jour le contact',
+          description: errorMessage,
           variant: 'destructive',
         });
         throw error;
@@ -457,7 +470,7 @@ export function useContacts() {
     async (contactId: string) => {
       return updateContact(contactId, {
         last_contact_date: new Date().toISOString(),
-      } as any);
+      } as UpdateContactData);
     },
     [updateContact]
   );
@@ -483,7 +496,7 @@ export function useContacts() {
         if (currentContact?.id === contactId) {
           setCurrentContact(null);
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         logger.error(
           'Erreur suppression contact',
           error instanceof Error ? error : new Error(String(error)),
@@ -493,9 +506,13 @@ export function useContacts() {
             contactId,
           }
         );
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : 'Impossible de supprimer le contact';
         toast({
           title: 'Erreur',
-          description: error.message || 'Impossible de supprimer le contact',
+          description: errorMessage,
           variant: 'destructive',
         });
         throw error;
@@ -521,7 +538,8 @@ export function useContacts() {
     if (contact.is_commercial_contact) roles.push('Commercial');
     if (contact.is_billing_contact) roles.push('Facturation');
     if (contact.is_technical_contact) roles.push('Technique');
-    return roles.join(', ') || 'Aucun rôle';
+    const rolesStr = roles.join(', ');
+    return rolesStr.length > 0 ? rolesStr : 'Aucun rôle';
   }, []);
 
   return {

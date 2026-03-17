@@ -26,7 +26,7 @@ export function QuickSourcingModal({
   onClose,
   onSuccess,
 }: QuickSourcingModalProps) {
-  const handleProductCreated = (productId: string) => {
+  const handleProductCreated = (_productId: string) => {
     // Rafraîchir la liste en appelant onSuccess
     onSuccess?.();
     // Fermer la modal

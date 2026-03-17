@@ -17,6 +17,8 @@
  * - Error handling complet
  */
 
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { logger } from '@verone/utils/logger';
@@ -88,15 +90,15 @@ export function useProductPrice(params: PricingParams) {
     queryFn: async (): Promise<PricingResult> => {
       try {
         // IMPORTANT: Utiliser calculate_product_price_v2 (nouvelle architecture Price Lists)
-        const { data, error } = await (supabase as any).rpc(
+        const { data, error } = await (supabase.rpc as CallableFunction)(
           'calculate_product_price_v2',
           {
             p_product_id: params.productId,
-            p_quantity: params.quantity || 1,
-            p_channel_id: params.channelId || null,
-            p_customer_id: params.customerId || null,
-            p_customer_type: params.customerType || null,
-            p_date: params.date || new Date().toISOString().split('T')[0],
+            p_quantity: params.quantity ?? 1,
+            p_channel_id: params.channelId ?? null,
+            p_customer_id: params.customerId ?? null,
+            p_customer_type: params.customerType ?? null,
+            p_date: params.date ?? new Date().toISOString().split('T')[0],
           }
         );
 
@@ -109,18 +111,18 @@ export function useProductPrice(params: PricingParams) {
           throw new Error(`Pricing calculation failed: ${error.message}`);
         }
 
-        if (!data || (data as any[]).length === 0) {
+        if (!data || (data as unknown[]).length === 0) {
           throw new Error('No pricing data returned');
         }
 
         // Fonction RPC retourne un array avec 1 élément (PricingResultV2)
-        const resultV2 = (data as any[])[0] as PricingResultV2;
+        const resultV2 = (data as unknown[])[0] as PricingResultV2;
 
         // Mapper vers format legacy pour compatibilité
         const result: PricingResult = {
           final_cost_price: resultV2.cost_price,
           pricing_source: resultV2.price_source,
-          discount_applied: resultV2.discount_rate || 0,
+          discount_applied: resultV2.discount_rate ?? 0,
           original_cost_price: resultV2.original_price,
         };
 
@@ -171,15 +173,15 @@ export function useBatchPricing() {
           request.items.map(async (params): Promise<BatchPricingResult> => {
             try {
               // IMPORTANT: Utiliser calculate_product_price_v2
-              const { data, error } = await (supabase as any).rpc(
+              const { data, error } = await (supabase.rpc as CallableFunction)(
                 'calculate_product_price_v2',
                 {
                   p_product_id: params.productId,
-                  p_quantity: params.quantity || 1,
-                  p_channel_id: params.channelId || null,
-                  p_customer_id: params.customerId || null,
-                  p_customer_type: params.customerType || null,
-                  p_date: params.date || new Date().toISOString().split('T')[0],
+                  p_quantity: params.quantity ?? 1,
+                  p_channel_id: params.channelId ?? null,
+                  p_customer_id: params.customerId ?? null,
+                  p_customer_type: params.customerType ?? null,
+                  p_date: params.date ?? new Date().toISOString().split('T')[0],
                 }
               );
 
@@ -192,13 +194,13 @@ export function useBatchPricing() {
               }
 
               // Mapper résultat V2 vers legacy
-              const resultV2 = ((data as any[])?.[0] ||
+              const resultV2 = ((data as unknown[])?.[0] ??
                 null) as PricingResultV2 | null;
               if (resultV2) {
                 const pricing: PricingResult = {
                   final_cost_price: resultV2.cost_price,
                   pricing_source: resultV2.price_source,
-                  discount_applied: resultV2.discount_rate || 0,
+                  discount_applied: resultV2.discount_rate ?? 0,
                   original_cost_price: resultV2.original_price,
                 };
                 return {
@@ -240,13 +242,15 @@ export function useBatchPricing() {
         throw error;
       }
     },
-    onSuccess: results => {
+    onSuccess: async results => {
       // Invalider cache des produits concernés (queryKey V2)
-      results.forEach(result => {
-        queryClient.invalidateQueries({
-          queryKey: ['pricing-v2', { productId: result.productId }],
-        });
-      });
+      await Promise.all(
+        results.map(result =>
+          queryClient.invalidateQueries({
+            queryKey: ['pricing-v2', { productId: result.productId }],
+          })
+        )
+      );
     },
   });
 }
@@ -275,7 +279,7 @@ export function useSalesChannels() {
     queryKey: ['sales-channels'],
     queryFn: async (): Promise<SalesChannel[]> => {
       try {
-        const { data, error } = await (supabase as any)
+        const { data, error } = await (supabase as { from: CallableFunction })
           .from('sales_channels')
           .select('*')
           .eq('is_active', true)
@@ -291,10 +295,10 @@ export function useSalesChannels() {
 
         logger.info('Sales channels fetched successfully', {
           operation: 'useSalesChannels',
-          count: data?.length || 0,
+          count: data?.length ?? 0,
         });
 
-        return (data as unknown as SalesChannel[]) || [];
+        return (data as unknown as SalesChannel[]) ?? [];
       } catch (error) {
         logger.error('Exception in useSalesChannels', undefined, {
           operation: 'useSalesChannels',
@@ -333,7 +337,7 @@ export function useChannelPricing(productId: string) {
     queryKey: ['channel-pricing', productId],
     queryFn: async (): Promise<ChannelPricing[]> => {
       try {
-        const { data, error } = await (supabase as any)
+        const { data, error } = await (supabase as { from: CallableFunction })
           .from('channel_pricing')
           .select(
             `
@@ -357,10 +361,10 @@ export function useChannelPricing(productId: string) {
         logger.info('Channel pricing fetched successfully', {
           operation: 'useChannelPricing',
           productId,
-          count: data?.length || 0,
+          count: data?.length ?? 0,
         });
 
-        return (data as unknown as ChannelPricing[]) || [];
+        return (data as unknown as ChannelPricing[]) ?? [];
       } catch (error) {
         logger.error('Exception in useChannelPricing', undefined, {
           operation: 'useChannelPricing',
@@ -431,10 +435,10 @@ export function useCustomerPricing(
         logger.info('Customer pricing fetched successfully', {
           operation: 'useCustomerPricing',
           customerId,
-          count: data?.length || 0,
+          count: data?.length ?? 0,
         });
 
-        return (data as unknown as CustomerPricing[]) || [];
+        return (data as unknown as CustomerPricing[]) ?? [];
       } catch (error) {
         logger.error('Exception in useCustomerPricing', undefined, {
           operation: 'useCustomerPricing',
@@ -487,22 +491,22 @@ export function useInvalidatePricing() {
 
   return {
     invalidateAll: () => {
-      queryClient.invalidateQueries({ queryKey: ['pricing-v2'] });
-      queryClient.invalidateQueries({ queryKey: ['channel-pricing'] });
-      queryClient.invalidateQueries({ queryKey: ['customer-pricing'] });
-      queryClient.invalidateQueries({ queryKey: ['quantity-breaks'] });
+      void queryClient.invalidateQueries({ queryKey: ['pricing-v2'] });
+      void queryClient.invalidateQueries({ queryKey: ['channel-pricing'] });
+      void queryClient.invalidateQueries({ queryKey: ['customer-pricing'] });
+      void queryClient.invalidateQueries({ queryKey: ['quantity-breaks'] });
       logger.info('All pricing caches invalidated (V2)', {
         operation: 'invalidatePricing',
       });
     },
     invalidateProduct: (productId: string) => {
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: ['pricing-v2', { productId }],
       });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: ['channel-pricing', productId],
       });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: ['quantity-breaks', productId],
       });
       logger.info('Product pricing cache invalidated (V2)', {
@@ -511,7 +515,7 @@ export function useInvalidatePricing() {
       });
     },
     invalidateCustomer: (customerId: string) => {
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: ['customer-pricing', customerId],
       });
       logger.info('Customer pricing cache invalidated (V2)', {
@@ -552,14 +556,14 @@ export function useQuantityBreaks(params: QuantityBreaksParams) {
     queryKey: ['quantity-breaks', params],
     queryFn: async (): Promise<QuantityBreak[]> => {
       try {
-        const { data, error } = await (supabase as any).rpc(
+        const { data, error } = await (supabase.rpc as CallableFunction)(
           'get_quantity_breaks',
           {
             p_product_id: params.productId,
-            p_channel_id: params.channelId || null,
-            p_customer_id: params.customerId || null,
-            p_customer_type: params.customerType || null,
-            p_date: params.date || new Date().toISOString().split('T')[0],
+            p_channel_id: params.channelId ?? null,
+            p_customer_id: params.customerId ?? null,
+            p_customer_type: params.customerType ?? null,
+            p_date: params.date ?? new Date().toISOString().split('T')[0],
           }
         );
 
@@ -579,7 +583,7 @@ export function useQuantityBreaks(params: QuantityBreaksParams) {
         logger.info('Quantity breaks fetched successfully', {
           operation: 'useQuantityBreaks',
           productId: params.productId,
-          breaksCount: (data as any[]).length,
+          breaksCount: (data as unknown[]).length,
         });
 
         return data as unknown as QuantityBreak[];

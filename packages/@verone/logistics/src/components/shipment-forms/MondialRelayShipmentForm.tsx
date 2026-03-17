@@ -4,14 +4,13 @@ import { useState } from 'react';
 
 import { MapPin, Package, AlertCircle } from 'lucide-react';
 
-import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import { Card, CardContent } from '@verone/ui';
 import type { SalesOrder } from '@verone/orders/hooks';
 // import { ShipmentRecapData } from './shipment-recap-modal'
 
 // Temporary type until shipment-recap-modal is implemented
-type ShipmentRecapData = any;
+type ShipmentRecapData = unknown;
 
 interface MondialRelayShipmentFormProps {
   order: SalesOrder;

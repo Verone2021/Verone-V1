@@ -32,7 +32,7 @@ const DEFAULT_OPTIONS: LoggingOptions = {
 /**
  * Middleware de logging pour API Routes Next.js
  */
-export function withLogging<T extends any[]>(
+export function withLogging<T extends unknown[]>(
   handler: (req: NextRequest, ...args: T) => Promise<NextResponse>,
   options: LoggingOptions = {}
 ) {
@@ -62,12 +62,13 @@ export function withLogging<T extends any[]>(
       try {
         const body = await req.clone().text();
         if (body) {
+          const sanitizedBody: unknown = sanitizeRequestBody(body);
           logger.debug('Request body', {
             ...requestContext,
-            body: sanitizeRequestBody(body),
+            body: sanitizedBody,
           });
         }
-      } catch (error) {
+      } catch (_error) {
         // Ignore les erreurs de parsing du body
       }
     }
@@ -131,13 +132,13 @@ export function withLogging<T extends any[]>(
       logLevel = 'error';
     } else if (statusCode >= 400) {
       logLevel = 'warn';
-    } else if (duration > (opts.slowRequestThreshold || 2000)) {
+    } else if (duration > (opts.slowRequestThreshold ?? 2000)) {
       logLevel = 'warn';
       message = `🐌 SLOW REQUEST: ${message}`;
     }
 
     // Log de fin de requête
-    logger[logLevel](message, endContext as any, metrics);
+    logger[logLevel](message, endContext, metrics);
 
     // Log response body si activé
     if (opts.logResponseBody && statusCode >= 400) {
@@ -147,7 +148,7 @@ export function withLogging<T extends any[]>(
           ...requestContext,
           body: sanitizeResponseBody(responseText),
         });
-      } catch (error) {
+      } catch (_error) {
         // Ignore les erreurs de parsing du body
       }
     }
@@ -162,7 +163,10 @@ export function withLogging<T extends any[]>(
     );
 
     // Ajouter headers de tracing
-    response.headers.set('X-Request-ID', requestContext.requestId || '');
+    response.headers.set(
+      'X-Request-ID',
+      (requestContext.requestId as string) ?? ''
+    );
     response.headers.set('X-Response-Time', duration.toString());
 
     return response;
@@ -172,9 +176,9 @@ export function withLogging<T extends any[]>(
 /**
  * Sanitize request body pour logging sécurisé
  */
-function sanitizeRequestBody(body: string): any {
+function sanitizeRequestBody(body: string): unknown {
   try {
-    const parsed = JSON.parse(body);
+    const parsed = JSON.parse(body) as Record<string, unknown>;
 
     // Remove sensitive fields
     const sensitiveFields = ['password', 'token', 'secret', 'key', 'apiKey'];
@@ -194,9 +198,9 @@ function sanitizeRequestBody(body: string): any {
 /**
  * Sanitize response body pour logging sécurisé
  */
-function sanitizeResponseBody(body: string): any {
+function sanitizeResponseBody(body: string): unknown {
   try {
-    const parsed = JSON.parse(body);
+    const parsed: unknown = JSON.parse(body);
 
     // Truncate si trop large
     const stringified = JSON.stringify(parsed);
@@ -241,7 +245,7 @@ function logBusinessMetrics(
 
   // Feeds endpoints
   if (pathname.startsWith('/api/feeds/')) {
-    const feedType = pathname.split('/').pop() || 'unknown';
+    const feedType = pathname.split('/').pop() ?? 'unknown';
     logger.business(
       'feed_api_usage',
       {
@@ -268,7 +272,7 @@ function logBusinessMetrics(
 
   // Webhooks endpoints
   if (pathname.startsWith('/api/webhooks/')) {
-    const source = pathname.split('/').pop() || 'unknown';
+    const source = pathname.split('/').pop() ?? 'unknown';
     logger.business(
       'webhook_received',
       {
@@ -288,7 +292,10 @@ function logBusinessMetrics(
 /**
  * Middleware simple pour Route Handlers (app router)
  */
-export function logApiRoute(handler: any, options: LoggingOptions = {}) {
+export function logApiRoute(
+  handler: (req: NextRequest, ...args: unknown[]) => Promise<NextResponse>,
+  options: LoggingOptions = {}
+) {
   return withLogging(handler, options);
 }
 

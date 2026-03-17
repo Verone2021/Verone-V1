@@ -44,7 +44,7 @@ export function useLogoUpload({
   organisationId, // deprecated, backward compat
 }: UseLogoUploadOptions): UseLogoUploadReturn {
   // Backward compatibility: use organisationId if entityId not provided
-  const id = entityId || organisationId || '';
+  const id = entityId ?? organisationId ?? '';
 
   // Table and storage path for organisations
   const storagePath = id;
@@ -88,11 +88,11 @@ export function useLogoUpload({
 
       // Générer nom de fichier unique
       const timestamp = Date.now();
-      const extension = file.name.split('.').pop()?.toLowerCase() || 'png';
+      const extension = file.name.split('.').pop()?.toLowerCase() ?? 'png';
       const filePath = `${storagePath}/${timestamp}-logo.${extension}`;
 
       // Upload vers Storage
-      const { data: uploadData, error: uploadError } = await supabase.storage
+      const { data: _uploadData, error: uploadError } = await supabase.storage
         .from('organisation-logos')
         .upload(filePath, file, {
           cacheControl: '3600',

@@ -12,7 +12,7 @@ export interface VariantProduct {
   cost_price: number;
   stock_status: 'in_stock' | 'out_of_stock' | 'coming_soon';
   product_status: 'active' | 'preorder' | 'discontinued' | 'draft';
-  variant_attributes?: any;
+  variant_attributes?: Record<string, unknown>;
   variant_group_id: string | null;
   variant_position: number;
   is_variant_parent: boolean;
@@ -28,7 +28,7 @@ interface CreateVariantProductData {
     size?: string;
     material?: string;
     pattern?: string;
-    [key: string]: any;
+    [key: string]: unknown;
   };
   cost_price: number;
   stock_quantity?: number;
@@ -89,7 +89,7 @@ export function useVariantProducts() {
           .order('variant_position', { ascending: false })
           .limit(1);
 
-        finalPosition = (maxPositionData?.[0]?.variant_position || 0) + 1;
+        finalPosition = (maxPositionData?.[0]?.variant_position ?? 0) + 1;
       }
 
       // Vérifier que le produit n'est pas déjà dans un groupe
@@ -249,14 +249,14 @@ export function useVariantProducts() {
         .order('variant_position', { ascending: false })
         .limit(1);
 
-      const nextPosition = (maxPositionData?.[0]?.variant_position || 0) + 1;
+      const nextPosition = (maxPositionData?.[0]?.variant_position ?? 0) + 1;
 
       // Générer un SKU unique basé sur le SKU de base
       const variantSuffix = Object.entries(data.variant_attributes)
         .filter(([_, value]) => value)
         .map(
           ([key, value]) =>
-            `${key.charAt(0).toUpperCase()}${value.toString().substring(0, 3)}`
+            `${key.charAt(0).toUpperCase()}${String(value).substring(0, 3)}`
         )
         .join('-');
 
@@ -275,9 +275,9 @@ export function useVariantProducts() {
             variant_attributes: data.variant_attributes,
             variant_group_id: variantGroupId,
             variant_position: nextPosition,
-            stock_quantity: data.stock_quantity || 0,
-            subcategory_id: data.subcategory_id || baseProduct.subcategory_id,
-            supplier_id: data.supplier_id || baseProduct.supplier_id,
+            stock_quantity: data.stock_quantity ?? 0,
+            subcategory_id: data.subcategory_id ?? baseProduct.subcategory_id,
+            supplier_id: data.supplier_id ?? baseProduct.supplier_id,
             brand: baseProduct.brand,
             description: baseProduct.description,
             technical_description: baseProduct.technical_description,
@@ -306,7 +306,7 @@ export function useVariantProducts() {
             is_primary: true,
             display_order: 1,
           },
-        ] as any);
+        ] as Record<string, unknown>[]);
       }
 
       toast({
@@ -342,7 +342,7 @@ export function useVariantProducts() {
       .filter(
         ([key, value]) => value && key !== 'cost_price' && key !== 'image_url'
       )
-      .map(([_, value]) => value)
+      .map(([_, value]) => String(value))
       .join(' ')}`;
 
     const fullProductData: CreateVariantProductData = {
@@ -358,11 +358,7 @@ export function useVariantProducts() {
       image_url: data.image_url,
     };
 
-    return await createVariantProduct(
-      variantGroupId,
-      baseProductId,
-      fullProductData
-    );
+    return createVariantProduct(variantGroupId, baseProductId, fullProductData);
   };
 
   // Mettre à jour l'ordre des produits dans un groupe

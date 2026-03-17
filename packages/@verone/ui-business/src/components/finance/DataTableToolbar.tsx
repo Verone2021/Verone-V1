@@ -22,7 +22,6 @@ import {
 import { cn } from '@verone/utils';
 import {
   Search,
-  Filter,
   SlidersHorizontal,
   Download,
   RefreshCw,
@@ -340,7 +339,7 @@ export function DateRangeFilter({
       <Calendar className="h-4 w-4 text-muted-foreground" />
       <Input
         type="date"
-        value={startDate || ''}
+        value={startDate ?? ''}
         onChange={e => onStartDateChange?.(e.target.value)}
         className="h-8 w-[130px]"
         placeholder="Début"
@@ -348,7 +347,7 @@ export function DateRangeFilter({
       <span className="text-muted-foreground">→</span>
       <Input
         type="date"
-        value={endDate || ''}
+        value={endDate ?? ''}
         onChange={e => onEndDateChange?.(e.target.value)}
         className="h-8 w-[130px]"
         placeholder="Fin"

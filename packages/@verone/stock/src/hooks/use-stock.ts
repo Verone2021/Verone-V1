@@ -3,7 +3,7 @@
  * Intègre toute la logique de stock avancée pour Vérone
  */
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback } from 'react';
 
 import { createClient } from '@verone/utils/supabase/client';
 import { useToast } from '@verone/common/hooks';
@@ -79,7 +79,7 @@ export function useStock() {
 
       // Calculer le stock disponible pour chaque produit
       const enrichedData: StockData[] = await Promise.all(
-        (data || []).map(async product => {
+        (data ?? []).map(async product => {
           const stockAdvanced = await getProductStockAdvanced(product.id);
 
           return {
@@ -91,7 +91,7 @@ export function useStock() {
             stock_forecasted_out: stockAdvanced.stock_forecasted_out,
             stock_available: stockAdvanced.stock_available,
             stock_total_forecasted: stockAdvanced.stock_total_forecasted,
-            min_stock: product.min_stock || 5,
+            min_stock: product.min_stock ?? 5,
             last_movement_at: undefined, // TODO: Récupérer le dernier mouvement si nécessaire
           };
         })
@@ -112,6 +112,7 @@ export function useStock() {
     } finally {
       setLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [supabase, toast]);
 
   // Récupérer le stock avancé d'un produit spécifique
@@ -126,7 +127,7 @@ export function useStock() {
         if (error) throw error;
 
         return (
-          data?.[0] || {
+          data?.[0] ?? {
             stock_real: 0,
             stock_forecasted_in: 0,
             stock_forecasted_out: 0,
@@ -211,7 +212,7 @@ export function useStock() {
           throw new Error('Produit introuvable');
         }
 
-        const currentStock = product.stock_real || 0;
+        const currentStock = product.stock_real ?? 0;
         let quantityChange: number;
         let newQuantity: number;
 
@@ -249,7 +250,7 @@ export function useStock() {
               ? 'OUT'
               : 'ADJUST';
 
-        console.log('Création mouvement:', {
+        console.warn('Création mouvement:', {
           product_id: movementData.product_id,
           movement_type: dbMovementType,
           quantity_change: quantityChange,
@@ -267,11 +268,11 @@ export function useStock() {
             quantity_change: quantityChange,
             quantity_before: currentStock,
             quantity_after: newQuantity,
-            unit_cost: movementData.unit_cost || null,
+            unit_cost: movementData.unit_cost ?? null,
             reference_type: 'manual_adjustment',
             reference_id: crypto.randomUUID(),
-            notes: movementData.notes || null,
-            reason_code: movementData.reason_code || 'manual_adjustment',
+            notes: movementData.notes ?? null,
+            reason_code: movementData.reason_code ?? 'manual_adjustment',
             affects_forecast: false, // Mouvement manuel = stock réel uniquement
             performed_by: user.id,
           })
@@ -314,12 +315,12 @@ export function useStock() {
             );
           } else {
             throw new Error(
-              movementError.message || 'Erreur lors de la création du mouvement'
+              movementError.message ?? 'Erreur lors de la création du mouvement'
             );
           }
         }
 
-        console.log('Mouvement créé avec succès:', insertedMovement);
+        console.warn('Mouvement créé avec succès:', insertedMovement);
 
         // Message de succès personnalisé
         const actionText =
@@ -338,14 +339,15 @@ export function useStock() {
         });
 
         // Rafraîchir les données après un court délai pour laisser le trigger s'exécuter
-        setTimeout(async () => {
-          // Éviter la boucle infinie en appelant directement au lieu d'utiliser la dépendance
-          setLoading(true);
-          try {
-            const { data, error } = await supabase
-              .from('products')
-              .select(
-                `
+        setTimeout(() => {
+          void (async () => {
+            // Éviter la boucle infinie en appelant directement au lieu d'utiliser la dépendance
+            setLoading(true);
+            try {
+              const { data, error } = await supabase
+                .from('products')
+                .select(
+                  `
               id,
               name,
               sku,
@@ -356,50 +358,55 @@ export function useStock() {
               cost_price,
               updated_at
             `
-              )
-              .order('name');
+                )
+                .order('name');
 
-            if (error) throw error;
+              if (error) throw error;
 
-            // Calculer le stock disponible pour chaque produit
-            const enrichedData: StockData[] = await Promise.all(
-              (data || []).map(async product => {
-                const stockAdvanced = await getProductStockAdvanced(product.id);
+              // Calculer le stock disponible pour chaque produit
+              const enrichedData: StockData[] = await Promise.all(
+                (data ?? []).map(async product => {
+                  const stockAdvanced = await getProductStockAdvanced(
+                    product.id
+                  );
 
-                return {
-                  product_id: product.id,
-                  product_name: product.name,
-                  product_sku: product.sku,
-                  stock_real: stockAdvanced.stock_real,
-                  stock_forecasted_in: stockAdvanced.stock_forecasted_in,
-                  stock_forecasted_out: stockAdvanced.stock_forecasted_out,
-                  stock_available: stockAdvanced.stock_available,
-                  stock_total_forecasted: stockAdvanced.stock_total_forecasted,
-                  min_stock: product.min_stock || 5,
-                  last_movement_at: undefined,
-                };
-              })
-            );
+                  return {
+                    product_id: product.id,
+                    product_name: product.name,
+                    product_sku: product.sku,
+                    stock_real: stockAdvanced.stock_real,
+                    stock_forecasted_in: stockAdvanced.stock_forecasted_in,
+                    stock_forecasted_out: stockAdvanced.stock_forecasted_out,
+                    stock_available: stockAdvanced.stock_available,
+                    stock_total_forecasted:
+                      stockAdvanced.stock_total_forecasted,
+                    min_stock: product.min_stock ?? 5,
+                    last_movement_at: undefined,
+                  };
+                })
+              );
 
-            setStockData(enrichedData);
+              setStockData(enrichedData);
 
-            // Calculer le résumé
-            const summaryData = calculateStockSummary(enrichedData);
-            setSummary(summaryData);
-          } catch (error) {
-            console.error('Erreur refresh stock après mouvement:', error);
-          } finally {
-            setLoading(false);
-          }
+              // Calculer le résumé
+              const summaryData = calculateStockSummary(enrichedData);
+              setSummary(summaryData);
+            } catch (error) {
+              console.error('Erreur refresh stock après mouvement:', error);
+            } finally {
+              setLoading(false);
+            }
+          })();
         }, 500);
 
         return insertedMovement;
-      } catch (error: any) {
+      } catch (err: unknown) {
+        const error = err instanceof Error ? err : new Error(String(err));
         console.error('❌ Erreur mouvement manuel:', error);
         toast({
           title: '❌ Erreur',
           description:
-            error.message || "Impossible d'effectuer le mouvement de stock",
+            error.message ?? "Impossible d'effectuer le mouvement de stock",
           variant: 'destructive',
         });
         throw error;
@@ -407,6 +414,7 @@ export function useStock() {
         setLoading(false);
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [supabase, toast, fetchAllStock]
   );
 
@@ -558,7 +566,7 @@ export function useStock() {
 
       // Extraire les IDs uniques de produits avec mouvements
       const productIdsWithMovements = [
-        ...new Set(movements?.map(m => m.product_id) || []),
+        ...new Set(movements?.map(m => m.product_id) ?? []),
       ];
 
       // Récupérer les produits avec mouvements mais stock = 0
@@ -566,6 +574,7 @@ export function useStock() {
         id => !productsWithStock?.some(p => p.id === id)
       );
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let productsWithMovements: any[] = [];
       if (productIdsToFetch.length > 0) {
         const { data, error } = await supabase
@@ -590,28 +599,33 @@ export function useStock() {
           .is('archived_at', null);
 
         if (error) throw error;
-        productsWithMovements = data || [];
+        productsWithMovements = data ?? [];
       }
 
       // Combiner les deux listes et dédupliquer
       const allInventoryProducts = [
-        ...(productsWithStock || []),
+        ...(productsWithStock ?? []),
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         ...productsWithMovements,
       ];
 
       // Trier par date de mise à jour (plus récent en premier)
       allInventoryProducts.sort(
         (a, b) =>
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
           new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
       );
 
       // Normaliser les données: extraire product_image_url de product_images
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return
       const normalizedProducts = allInventoryProducts.map((p: any) => ({
         ...p,
-        product_image_url: p.product_images?.[0]?.public_url || null,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        product_image_url: p.product_images?.[0]?.public_url ?? null,
         product_images: undefined, // Supprimer la propriété temporaire
       }));
 
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
       return normalizedProducts;
     } catch (error) {
       console.error('❌ Erreur chargement inventaire:', error);

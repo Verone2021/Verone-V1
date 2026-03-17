@@ -382,7 +382,7 @@ function interpolateTemplate(
   template: string,
   data: Record<string, unknown>
 ): string {
-  return template.replace(/\{\{(\w+)\}\}/g, (_, key) =>
+  return template.replace(/\{\{(\w+)\}\}/g, (_match: string, key: string) =>
     String(data[key] ?? '')
   );
 }

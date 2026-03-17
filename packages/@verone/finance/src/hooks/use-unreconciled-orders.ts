@@ -90,7 +90,7 @@ export function useUnreconciledOrders(): UnreconciledOrdersStats & {
   }, [supabase]);
 
   useEffect(() => {
-    fetchUnreconciledOrders();
+    void fetchUnreconciledOrders();
   }, [fetchUnreconciledOrders]);
 
   return {

@@ -79,6 +79,7 @@ export function ValorisationReportPdf({ report }: ValorisationReportPdfProps) {
         />
         {/* Header */}
         <View style={styles.headerContainer}>
+          {/* eslint-disable-next-line jsx-a11y/alt-text -- react-pdf Image */}
           <Image src={VERONE_LOGO_BASE64} style={styles.logoImage} />
           <Text
             style={[

@@ -333,7 +333,7 @@ export async function validateRequestBody<T>(
   { success: true; data: T } | { success: false; response: Response }
 > {
   try {
-    const body = await request.json();
+    const body: unknown = await request.json();
     const result = schema.safeParse(body);
 
     if (!result.success) {
@@ -403,7 +403,7 @@ export async function validateRequestBodyNoSanitize<T>(
   { success: true; data: T } | { success: false; response: Response }
 > {
   try {
-    const body = await request.json();
+    const body: unknown = await request.json();
     const result = schema.safeParse(body);
 
     if (!result.success) {

@@ -207,7 +207,7 @@ export function OrderSelectModal({
         if (orgs) {
           for (const org of orgs) {
             orgMap.set(org.id, {
-              name: org.trade_name || org.legal_name || 'Organisation',
+              name: org.trade_name ?? org.legal_name ?? 'Organisation',
               email: org.email,
             });
           }
@@ -228,7 +228,7 @@ export function OrderSelectModal({
           for (const indiv of indivs) {
             indivMap.set(indiv.id, {
               name:
-                `${indiv.first_name || ''} ${indiv.last_name || ''}`.trim() ||
+                `${indiv.first_name ?? ''} ${indiv.last_name ?? ''}`.trim() ||
                 'Client',
               email: indiv.email,
             });
@@ -252,22 +252,22 @@ export function OrderSelectModal({
         const invoiceCount = new Map<string, number>();
         const creditNoteCount = new Map<string, number>();
 
-        for (const doc of docs || []) {
+        for (const doc of docs ?? []) {
           const orderId = doc.sales_order_id;
           if (!orderId) continue;
           if (doc.document_type === 'customer_invoice') {
-            invoiceCount.set(orderId, (invoiceCount.get(orderId) || 0) + 1);
+            invoiceCount.set(orderId, (invoiceCount.get(orderId) ?? 0) + 1);
           } else if (doc.document_type === 'customer_credit_note') {
             creditNoteCount.set(
               orderId,
-              (creditNoteCount.get(orderId) || 0) + 1
+              (creditNoteCount.get(orderId) ?? 0) + 1
             );
           }
         }
 
         // Order is NOT available if it has more invoices than credit notes
         for (const [orderId, count] of invoiceCount) {
-          const credits = creditNoteCount.get(orderId) || 0;
+          const credits = creditNoteCount.get(orderId) ?? 0;
           if (count > credits) {
             invoicedOrderIds.add(orderId);
           }
@@ -284,19 +284,19 @@ export function OrderSelectModal({
         let customerInfo = { name: 'Client', email: null as string | null };
 
         if (order.customer_type === 'organization' && order.customer_id) {
-          customerInfo = orgMap.get(order.customer_id) || customerInfo;
+          customerInfo = orgMap.get(order.customer_id) ?? customerInfo;
         } else if (order.customer_type === 'individual' && order.customer_id) {
-          customerInfo = indivMap.get(order.customer_id) || customerInfo;
+          customerInfo = indivMap.get(order.customer_id) ?? customerInfo;
         }
 
         return {
           id: order.id,
           order_number: order.order_number,
-          total_ht: order.total_ht || 0,
-          total_ttc: order.total_ttc || 0,
-          tax_rate: order.tax_rate || 20,
-          currency: order.currency || 'EUR',
-          payment_terms: order.payment_terms || 'immediate',
+          total_ht: order.total_ht ?? 0,
+          total_ttc: order.total_ttc ?? 0,
+          tax_rate: order.tax_rate ?? 20,
+          currency: order.currency ?? 'EUR',
+          payment_terms: order.payment_terms ?? 'immediate',
           status: order.status,
           created_at: order.created_at,
           customer_id: order.customer_id,
@@ -396,7 +396,7 @@ export function OrderSelectModal({
           .single();
         if (org) {
           customerOrg = {
-            name: org.trade_name || org.legal_name,
+            name: org.trade_name ?? org.legal_name,
             legal_name: org.legal_name,
             trade_name: org.trade_name,
             email: org.email,
@@ -436,11 +436,11 @@ export function OrderSelectModal({
       const orderForDocument: IOrderForDocument = {
         id: order.id,
         order_number: order.order_number,
-        total_ht: order.total_ht || 0,
-        total_ttc: order.total_ttc || 0,
-        tax_rate: order.tax_rate || 20,
-        currency: order.currency || 'EUR',
-        payment_terms: order.payment_terms || 'immediate',
+        total_ht: order.total_ht ?? 0,
+        total_ttc: order.total_ttc ?? 0,
+        tax_rate: order.tax_rate ?? 20,
+        currency: order.currency ?? 'EUR',
+        payment_terms: order.payment_terms ?? 'immediate',
         customer_id: order.customer_id,
         customer_type: order.customer_type,
         billing_address: order.billing_address as IDocumentAddress | null,

@@ -114,7 +114,7 @@ export function DraggableProductGrid({
   );
 
   const handleDragEnter = useCallback(
-    (e: React.DragEvent, index: number) => {
+    (e: React.DragEvent, _index: number) => {
       if (disabled) return;
       e.preventDefault();
     },
@@ -153,13 +153,15 @@ export function DraggableProductGrid({
       e.preventDefault();
 
       try {
-        const dragData = JSON.parse(e.dataTransfer.getData('application/json'));
+        const dragData = JSON.parse(
+          e.dataTransfer.getData('application/json')
+        ) as { type: string; collectionId: string; fromIndex: number };
 
         if (
           dragData.type === 'collection-product' &&
           dragData.collectionId === collectionId
         ) {
-          const fromIndex = dragData.fromIndex;
+          const fromIndex: number = dragData.fromIndex;
 
           if (fromIndex !== dropIndex) {
             // Reorder products
@@ -293,7 +295,9 @@ export function DraggableProductGrid({
 
             <ButtonV2
               size="sm"
-              onClick={saveChanges}
+              onClick={() => {
+                void saveChanges();
+              }}
               disabled={saving || !hasChanges}
               className="bg-blue-600 hover:bg-blue-700 text-white"
             >
@@ -381,19 +385,21 @@ export function DraggableProductGrid({
                     {
                       id: product.id,
                       name: product.name,
-                      sku: product.sku || '',
-                      cost_price: product.cost_price || 0,
-                      price_ht: product.cost_price || 0,
-                      status: 'in_stock' as any,
-                      condition: 'new' as any,
+                      sku: product.sku ?? '',
+                      cost_price: product.cost_price ?? 0,
+                      price_ht: product.cost_price ?? 0,
+                      status: 'in_stock' as const,
+                      condition: 'new' as const,
                       created_at: product.added_at,
                       updated_at: product.added_at,
                       archived_at: null,
                       supplier: null,
-                    } as any
+                    } as Parameters<typeof ProductCard>[0]['product']
                   }
                   showActions={!disabled}
-                  onDelete={() => handleRemoveProduct(product.id)}
+                  onDelete={() => {
+                    void handleRemoveProduct(product.id);
+                  }}
                   className={cn('cursor-move', disabled && 'cursor-default')}
                 />
               </div>

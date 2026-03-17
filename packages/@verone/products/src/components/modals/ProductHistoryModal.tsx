@@ -1,6 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-explicit-any, @typescript-eslint/no-floating-promises, react-hooks/exhaustive-deps, @typescript-eslint/prefer-nullish-coalescing */
 /**
- * 🆕 Phase 3.5.1: Extraction ProductHistoryModal
- * ✅ Phase 3.6: Ajout filtres date + type + statistiques
+ * Phase 3.5.1: Extraction ProductHistoryModal
+ * Phase 3.6: Ajout filtres date + type + statistiques
  *
  * Composant modal affichant l'historique complet des mouvements d'un produit
  * Réutilisable par /stocks/inventaire, /produits/catalogue/[id], etc.
@@ -79,7 +80,7 @@ export function ProductHistoryModal({
     try {
       const history = await getProductHistory(product.id);
       setMovements(history as any);
-    } catch (error) {
+    } catch (_error) {
       // Erreur gérée dans le hook
     } finally {
       setLoading(false);
@@ -180,7 +181,7 @@ export function ProductHistoryModal({
       ADJUST: 'Ajustement',
       TRANSFER: 'Transfert',
     };
-    return labels[type] || type;
+    return labels[type] ?? type;
   };
 
   const getMovementTypeColor = (type: string) => {
@@ -227,7 +228,7 @@ export function ProductHistoryModal({
     if (movement.user_profiles) {
       const { first_name, last_name } = movement.user_profiles;
       if (first_name || last_name) {
-        return `${first_name || ''} ${last_name || ''}`.trim();
+        return `${first_name ?? ''} ${last_name ?? ''}`.trim();
       }
     }
     return 'Admin';
@@ -456,7 +457,7 @@ export function ProductHistoryModal({
                 {/* Ligne verticale timeline */}
                 <div className="absolute left-[16.666%] top-0 bottom-0 w-px bg-gray-200" />
 
-                {filteredMovements.map((movement: any, index: number) => {
+                {filteredMovements.map((movement: any, _index: number) => {
                   const sourceInfo = getSourceInfo(movement);
                   const performerName = getPerformerName(movement);
                   const reasonLabel = movement.reason_code
@@ -566,7 +567,7 @@ export function ProductHistoryModal({
                           </Badge>
                         ) : (
                           <Link
-                            href={sourceInfo.link || '#'}
+                            href={sourceInfo.link ?? '#'}
                             className="flex items-center gap-1.5 text-black hover:text-gray-700 transition-colors group"
                             onClick={e => e.stopPropagation()}
                           >

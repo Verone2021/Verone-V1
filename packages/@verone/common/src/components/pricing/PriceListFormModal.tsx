@@ -60,19 +60,19 @@ export function PriceListFormModal({
   const { mutate: updatePriceList, isPending: isUpdating } =
     useUpdatePriceList();
 
-  const isLoading = isCreating || isUpdating;
+  const isLoading = isCreating ?? isUpdating;
 
   // Charger les données en mode édition
   useEffect(() => {
     if (priceList) {
       setCode(priceList.code);
       setName(priceList.name);
-      setDescription(priceList.description || '');
+      setDescription(priceList.description ?? '');
       setListType(priceList.list_type);
       setPriority(priceList.priority);
       setCurrency(priceList.currency);
-      setValidFrom(priceList.valid_from || '');
-      setValidUntil(priceList.valid_until || '');
+      setValidFrom(priceList.valid_from ?? '');
+      setValidUntil(priceList.valid_until ?? '');
       setIsActive(priceList.is_active);
     } else {
       resetForm();
@@ -98,12 +98,12 @@ export function PriceListFormModal({
       const data: UpdatePriceListData = {
         code,
         name,
-        description: description || undefined,
+        description: description ?? undefined,
         list_type: listType,
         priority,
         currency,
-        valid_from: validFrom || undefined,
-        valid_until: validUntil || undefined,
+        valid_from: validFrom ?? undefined,
+        valid_until: validUntil ?? undefined,
         is_active: isActive,
       };
 
@@ -120,12 +120,12 @@ export function PriceListFormModal({
       const data: CreatePriceListData = {
         code,
         name,
-        description: description || undefined,
+        description: description ?? undefined,
         list_type: listType,
         priority,
         currency,
-        valid_from: validFrom || undefined,
-        valid_until: validUntil || undefined,
+        valid_from: validFrom ?? undefined,
+        valid_until: validUntil ?? undefined,
         is_active: isActive,
       };
 
@@ -238,7 +238,7 @@ export function PriceListFormModal({
                   min="1"
                   max="1000"
                   value={priority}
-                  onChange={e => setPriority(parseInt(e.target.value) || 100)}
+                  onChange={e => setPriority(parseInt(e.target.value) ?? 100)}
                   required
                   disabled={isLoading}
                 />

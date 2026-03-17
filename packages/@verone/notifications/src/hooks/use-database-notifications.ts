@@ -271,7 +271,7 @@ export function useDatabaseNotifications(): DatabaseNotificationsHook {
 
         const notificationData = {
           ...data,
-          user_id: data.user_id || user.id,
+          user_id: data.user_id ?? user.id,
         };
 
         const { data: newNotification, error } = await supabase
@@ -343,7 +343,9 @@ export function useDatabaseNotifications(): DatabaseNotificationsHook {
       }
 
       // Initial fetch (authentifié)
-      loadNotifications();
+      void loadNotifications().catch((err: unknown) => {
+        console.error('[useDatabaseNotifications] Initial fetch error:', err);
+      });
 
       // Setup Realtime seulement si authentifié
       channel = supabase
@@ -437,12 +439,14 @@ export function useDatabaseNotifications(): DatabaseNotificationsHook {
         });
     };
 
-    setupSubscriptions();
+    void setupSubscriptions().catch((err: unknown) => {
+      console.error('[useDatabaseNotifications] Setup error:', err);
+    });
 
     return () => {
       isMounted = false;
       if (channel) {
-        supabase.removeChannel(channel);
+        void supabase.removeChannel(channel);
       }
     };
   }, [loadNotifications, supabase]);

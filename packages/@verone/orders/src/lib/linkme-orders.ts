@@ -127,10 +127,11 @@ export async function getLinkMeOrders(
 ): Promise<LinkMeOrder[]> {
   const supabase = createClient();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
   const { data, error } = await (supabase as any).rpc('get_linkme_orders', {
     p_affiliate_id: affiliateId ?? null,
   });
+  /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
 
   if (error) {
     console.error('Erreur getLinkMeOrders:', error);
@@ -151,13 +152,14 @@ export async function getLinkMeOrderItems(
 ): Promise<LinkMeOrderItem[]> {
   const supabase = createClient();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
   const { data, error } = await (supabase as any).rpc(
     'get_linkme_order_items',
     {
       p_order_id: orderId,
     }
   );
+  /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
 
   if (error) {
     console.error('Erreur getLinkMeOrderItems:', error);
@@ -178,13 +180,14 @@ export async function getCustomersForAffiliate(
 ): Promise<LinkMeCustomer[]> {
   const supabase = createClient();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
   const { data, error } = await (supabase as any).rpc(
     'get_customers_for_affiliate',
     {
       p_affiliate_id: affiliateId,
     }
   );
+  /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
 
   if (error) {
     console.error('Erreur getCustomersForAffiliate:', error);
