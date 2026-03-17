@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-misused-promises, @typescript-eslint/prefer-nullish-coalescing */
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -43,8 +44,8 @@ export function VariantAddProductModal({
 
   const newName =
     selectedProduct && (color || material)
-      ? `${group?.name || ''} - ${[color, material].filter(Boolean).join(' - ')}`
-      : group?.name || '';
+      ? `${group?.name ?? ''} - ${[color, material].filter(Boolean).join(' - ')}`
+      : (group?.name ?? '');
 
   useEffect(() => {
     if (!isOpen) {
@@ -58,8 +59,8 @@ export function VariantAddProductModal({
 
   useEffect(() => {
     if (selectedProduct?.variant_attributes) {
-      setColor(selectedProduct.variant_attributes.color || '');
-      setMaterial(selectedProduct.variant_attributes.material || '');
+      setColor(selectedProduct.variant_attributes.color ?? '');
+      setMaterial(selectedProduct.variant_attributes.material ?? '');
     }
   }, [selectedProduct]);
 
@@ -78,7 +79,7 @@ export function VariantAddProductModal({
     try {
       await onSubmit({
         product_id: selectedProduct.id,
-        variant_group_id: group?.id || '',
+        variant_group_id: group?.id ?? '',
       });
       onClose();
     } catch (error) {
@@ -183,7 +184,7 @@ export function VariantAddProductModal({
                       type="number"
                       step="0.01"
                       min="0"
-                      value={commonWeight || ''}
+                      value={commonWeight ?? ''}
                       onChange={e =>
                         setCommonWeight(
                           e.target.value

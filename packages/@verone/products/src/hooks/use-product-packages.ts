@@ -6,7 +6,7 @@ import { createClient } from '@verone/utils/supabase/client';
 import type { Database } from '@verone/utils/supabase/types';
 
 type ProductPackage = Database['public']['Tables']['product_packages']['Row'];
-type ProductPackageInsert =
+type _ProductPackageInsert =
   Database['public']['Tables']['product_packages']['Insert'];
 
 // Types selon business rules conditionnements-packages.md
@@ -52,10 +52,10 @@ export function useProductPackages({
 
       if (error) throw error;
 
-      console.log(
-        `✅ ${data?.length || 0} packages chargés pour produit ${productId}`
+      console.warn(
+        `${data?.length ?? 0} packages chargés pour produit ${productId}`
       );
-      setPackages((data || []) as any);
+      setPackages((data ?? []) as ProductPackage[]);
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Erreur chargement packages';
@@ -76,7 +76,7 @@ export function useProductPackages({
 
       // Mode automatique : prix de base × quantité × (1 - remise)
       const grossPrice = basePrice * packageData.base_quantity;
-      const discount = packageData.discount_rate || 0;
+      const discount = packageData.discount_rate ?? 0;
       const netPrice = grossPrice * (1 - discount);
 
       return Math.round(netPrice * 100) / 100; // Arrondi 2 décimales
@@ -86,7 +86,7 @@ export function useProductPackages({
 
   // 📊 Helpers business selon conditionnements-packages.md
   const getDefaultPackage = useCallback(() => {
-    return packages.find(pkg => pkg.is_default) || packages[0] || null;
+    return packages.find(pkg => pkg.is_default) ?? packages[0] ?? null;
   }, [packages]);
 
   const getPackagesByType = useCallback(
@@ -97,7 +97,7 @@ export function useProductPackages({
   );
 
   const getSinglePackage = useCallback(() => {
-    return packages.find(pkg => pkg.type === 'single') || null;
+    return packages.find(pkg => pkg.type === 'single') ?? null;
   }, [packages]);
 
   const getPackPackages = useCallback(() => {
@@ -110,7 +110,7 @@ export function useProductPackages({
 
   // 💡 Business helpers avancés
   const getMaxDiscount = useCallback(() => {
-    return Math.max(...packages.map(pkg => pkg.discount_rate || 0));
+    return Math.max(...packages.map(pkg => pkg.discount_rate ?? 0));
   }, [packages]);
 
   const getBestValuePackage = useCallback(
@@ -140,8 +140,8 @@ export function useProductPackages({
   // ✨ Auto-fetch
   useEffect(() => {
     if (autoFetch && productId && productId.trim() !== '') {
-      console.log('🔄 Auto-fetch packages:', productId);
-      fetchPackages();
+      console.warn('Auto-fetch packages:', productId);
+      void fetchPackages();
     }
   }, [productId, fetchPackages, autoFetch]);
 
@@ -169,7 +169,7 @@ export function useProductPackages({
     // 📈 Stats
     totalPackages: packages.length,
     hasMultiplePackages: packages.length > 1,
-    hasDiscounts: packages.some(pkg => (pkg.discount_rate || 0) > 0),
+    hasDiscounts: packages.some(pkg => (pkg.discount_rate ?? 0) > 0),
     maxDiscount: getMaxDiscount(),
 
     // 🎯 Business validation

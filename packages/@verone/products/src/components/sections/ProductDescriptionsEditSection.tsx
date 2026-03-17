@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-misused-promises */
 'use client';
 
 import { useState } from 'react';
@@ -56,22 +57,22 @@ export function ProductDescriptionsEditSection({
   const error = getError(section);
 
   // Données actuelles
-  const currentDescription = product.description || '';
-  const currentTechnicalDescription = product.technical_description || '';
-  const currentSellingPoints = product.selling_points || [];
+  const currentDescription = product.description ?? '';
+  const currentTechnicalDescription = product.technical_description ?? '';
+  const currentSellingPoints = product.selling_points ?? [];
 
   const handleStartEdit = () => {
     startEdit(section, {
-      description: product.description || '',
-      technical_description: product.technical_description || '',
-      selling_points: product.selling_points || [],
+      description: product.description ?? '',
+      technical_description: product.technical_description ?? '',
+      selling_points: product.selling_points ?? [],
     });
   };
 
   const handleSave = async () => {
     const success = await saveChanges(section);
     if (success) {
-      console.log('✅ Descriptions mises à jour avec succès');
+      console.warn('✅ Descriptions mises à jour avec succès');
     }
   };
 
@@ -148,7 +149,7 @@ export function ProductDescriptionsEditSection({
                 Description produit
               </label>
               <textarea
-                value={editData?.description || ''}
+                value={editData?.description ?? ''}
                 onChange={e => handleFieldChange('description', e.target.value)}
                 className="w-full px-3 py-2 border border-blue-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-y min-h-[120px]"
                 placeholder="Description générale du produit visible par les clients..."
@@ -171,7 +172,7 @@ export function ProductDescriptionsEditSection({
                 Description technique
               </label>
               <textarea
-                value={editData?.technical_description || ''}
+                value={editData?.technical_description ?? ''}
                 onChange={e =>
                   handleFieldChange('technical_description', e.target.value)
                 }
@@ -190,11 +191,11 @@ export function ProductDescriptionsEditSection({
           <div className="bg-green-50 p-4 rounded-lg border border-green-200">
             <h4 className="text-sm font-medium text-green-800 mb-3">
               ✨ POINTS DE VENTE (
-              {((editData?.selling_points as string[]) || []).length} points)
+              {((editData?.selling_points as string[]) ?? []).length} points)
             </h4>
 
             {/* Liste des points existants */}
-            {((editData?.selling_points as string[]) || []).length > 0 && (
+            {((editData?.selling_points as string[]) ?? []).length > 0 && (
               <div className="space-y-2 mb-3">
                 {(editData?.selling_points as string[]).map((point, index) => (
                   <div

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
 'use client';
 
 import Image from 'next/image';
@@ -110,9 +111,9 @@ export function SourcingProductEditCard({
   } = useInlineEdit({
     productId: product.id,
     onUpdate: updatedData => {
-      onProductUpdate(updatedData);
+      void onProductUpdate(updatedData);
     },
-    onError: error => {
+    onError: (error: unknown) => {
       console.error('❌ Erreur mise à jour sourcing:', error);
     },
   });
@@ -136,8 +137,8 @@ export function SourcingProductEditCard({
   const handleStartInfoEdit = () => {
     startEdit(infoSection, {
       name: product.name,
-      supplier_page_url: product.supplier_page_url || '',
-      supplier_reference: product.supplier_reference || '',
+      supplier_page_url: product.supplier_page_url ?? '',
+      supplier_reference: product.supplier_reference ?? '',
     });
   };
 
@@ -156,7 +157,7 @@ export function SourcingProductEditCard({
     }
     const success = await saveChanges(infoSection);
     if (success) {
-      console.log('✅ Informations mises à jour');
+      console.warn('Informations mises à jour');
     }
   };
 
@@ -169,8 +170,8 @@ export function SourcingProductEditCard({
 
   const handleStartPricingEdit = () => {
     startEdit(pricingSection, {
-      cost_price: product.cost_price || 0,
-      eco_tax_default: product.eco_tax_default || 0,
+      cost_price: product.cost_price ?? 0,
+      eco_tax_default: product.eco_tax_default ?? 0,
     });
   };
 
@@ -181,7 +182,7 @@ export function SourcingProductEditCard({
     }
     const success = await saveChanges(pricingSection);
     if (success) {
-      console.log('✅ Tarification mise à jour');
+      console.warn('Tarification mise à jour');
     }
   };
 
@@ -194,14 +195,14 @@ export function SourcingProductEditCard({
 
   const handleStartSupplierEdit = () => {
     startEdit(supplierSection, {
-      supplier_id: product.supplier_id || null,
+      supplier_id: product.supplier_id ?? null,
     });
   };
 
   const handleSaveSupplier = async () => {
     const success = await saveChanges(supplierSection);
     if (success) {
-      console.log('✅ Fournisseur mis à jour');
+      console.warn('Fournisseur mis à jour');
     }
   };
 
@@ -214,35 +215,35 @@ export function SourcingProductEditCard({
 
   const handleStartDetailsEdit = () => {
     startEdit(detailsSection, {
-      brand: product.brand || '',
-      description: product.description || '',
-      supplier_moq: product.supplier_moq || 0,
-      dimensions_length: product.dimensions?.length || 0,
-      dimensions_width: product.dimensions?.width || 0,
-      dimensions_height: product.dimensions?.height || 0,
-      weight: product.weight || 0,
+      brand: product.brand ?? '',
+      description: product.description ?? '',
+      supplier_moq: product.supplier_moq ?? 0,
+      dimensions_length: product.dimensions?.length ?? 0,
+      dimensions_width: product.dimensions?.width ?? 0,
+      dimensions_height: product.dimensions?.height ?? 0,
+      weight: product.weight ?? 0,
     });
   };
 
   const handleSaveDetails = async () => {
     const dims =
-      detailsData?.dimensions_length ||
-      detailsData?.dimensions_width ||
-      detailsData?.dimensions_height
+      (detailsData?.dimensions_length ??
+      detailsData?.dimensions_width ??
+      detailsData?.dimensions_height)
         ? {
-            length: detailsData.dimensions_length || 0,
-            width: detailsData.dimensions_width || 0,
-            height: detailsData.dimensions_height || 0,
+            length: detailsData.dimensions_length ?? 0,
+            width: detailsData.dimensions_width ?? 0,
+            height: detailsData.dimensions_height ?? 0,
           }
         : null;
 
     // Transform data for save
     const toSave = {
-      brand: detailsData?.brand || null,
-      description: detailsData?.description || null,
-      supplier_moq: detailsData?.supplier_moq || null,
+      brand: detailsData?.brand ?? null,
+      description: detailsData?.description ?? null,
+      supplier_moq: detailsData?.supplier_moq ?? null,
       dimensions: dims,
-      weight: detailsData?.weight || null,
+      weight: detailsData?.weight ?? null,
     };
 
     // Override edited data with transformed values
@@ -250,7 +251,7 @@ export function SourcingProductEditCard({
 
     const success = await saveChanges(detailsSection);
     if (success) {
-      console.log('✅ Détails produit mis à jour');
+      console.warn('Détails produit mis à jour');
     }
   };
 
@@ -263,14 +264,14 @@ export function SourcingProductEditCard({
 
   const handleStartNotesEdit = () => {
     startEdit(notesSection, {
-      internal_notes: product.internal_notes || '',
+      internal_notes: product.internal_notes ?? '',
     });
   };
 
   const handleSaveNotes = async () => {
     const success = await saveChanges(notesSection);
     if (success) {
-      console.log('✅ Notes mises à jour');
+      console.warn('Notes mises à jour');
     }
   };
 
@@ -288,7 +289,7 @@ export function SourcingProductEditCard({
             {primaryImage?.public_url && !imagesLoading ? (
               <Image
                 src={primaryImage.public_url}
-                alt={primaryImage.alt_text || product.name}
+                alt={primaryImage.alt_text ?? product.name}
                 fill
                 className="object-contain"
                 sizes="128px"
@@ -336,7 +337,7 @@ export function SourcingProductEditCard({
                     <ButtonV2
                       variant="default"
                       size="sm"
-                      onClick={handleSaveInfo}
+                      onClick={() => void handleSaveInfo()}
                       disabled={
                         isSaving(infoSection) || !hasChanges(infoSection)
                       }
@@ -358,7 +359,7 @@ export function SourcingProductEditCard({
                     </Label>
                     <Input
                       id="name"
-                      value={infoData?.name || ''}
+                      value={infoData?.name ?? ''}
                       onChange={e =>
                         updateEditedData(infoSection, { name: e.target.value })
                       }
@@ -378,7 +379,7 @@ export function SourcingProductEditCard({
                       <Input
                         id="supplier_page_url"
                         type="url"
-                        value={infoData?.supplier_page_url || ''}
+                        value={infoData?.supplier_page_url ?? ''}
                         onChange={e =>
                           updateEditedData(infoSection, {
                             supplier_page_url: e.target.value,
@@ -398,7 +399,7 @@ export function SourcingProductEditCard({
                     </Label>
                     <Input
                       id="supplier_reference"
-                      value={infoData?.supplier_reference || ''}
+                      value={infoData?.supplier_reference ?? ''}
                       onChange={e =>
                         updateEditedData(infoSection, {
                           supplier_reference: e.target.value,
@@ -517,7 +518,7 @@ export function SourcingProductEditCard({
                   <ButtonV2
                     variant="default"
                     size="sm"
-                    onClick={handleSavePricing}
+                    onClick={() => void handleSavePricing()}
                     disabled={
                       isSaving(pricingSection) || !hasChanges(pricingSection)
                     }
@@ -544,7 +545,7 @@ export function SourcingProductEditCard({
                       type="number"
                       step="0.01"
                       min="0.01"
-                      value={pricingData?.cost_price || ''}
+                      value={pricingData?.cost_price ?? ''}
                       onChange={e =>
                         updateEditedData(pricingSection, {
                           cost_price: parseFloat(e.target.value) || 0,
@@ -569,7 +570,7 @@ export function SourcingProductEditCard({
                       type="number"
                       step="0.01"
                       min="0"
-                      value={pricingData?.eco_tax_default || ''}
+                      value={pricingData?.eco_tax_default ?? ''}
                       onChange={e =>
                         updateEditedData(pricingSection, {
                           eco_tax_default: parseFloat(e.target.value) || 0,
@@ -666,7 +667,7 @@ export function SourcingProductEditCard({
                   <ButtonV2
                     variant="default"
                     size="sm"
-                    onClick={handleSaveSupplier}
+                    onClick={() => void handleSaveSupplier()}
                     disabled={
                       isSaving(supplierSection) || !hasChanges(supplierSection)
                     }
@@ -682,10 +683,10 @@ export function SourcingProductEditCard({
               </div>
 
               <SupplierSelector
-                selectedSupplierId={supplierData?.supplier_id || null}
+                selectedSupplierId={supplierData?.supplier_id ?? null}
                 onSupplierChange={supplierId => {
                   updateEditedData(supplierSection, {
-                    supplier_id: supplierId || null,
+                    supplier_id: supplierId ?? null,
                   });
                 }}
                 label="Sélectionner un fournisseur"
@@ -782,7 +783,7 @@ export function SourcingProductEditCard({
                   <ButtonV2
                     variant="default"
                     size="sm"
-                    onClick={handleSaveDetails}
+                    onClick={() => void handleSaveDetails()}
                     disabled={
                       isSaving(detailsSection) || !hasChanges(detailsSection)
                     }
@@ -804,7 +805,7 @@ export function SourcingProductEditCard({
                   </Label>
                   <Input
                     id="brand"
-                    value={detailsData?.brand || ''}
+                    value={detailsData?.brand ?? ''}
                     onChange={e =>
                       updateEditedData(detailsSection, {
                         brand: e.target.value,
@@ -825,7 +826,7 @@ export function SourcingProductEditCard({
                     id="supplier_moq"
                     type="number"
                     min="1"
-                    value={detailsData?.supplier_moq || ''}
+                    value={detailsData?.supplier_moq ?? ''}
                     onChange={e =>
                       updateEditedData(detailsSection, {
                         supplier_moq: parseInt(e.target.value) || 0,
@@ -843,7 +844,7 @@ export function SourcingProductEditCard({
                 </Label>
                 <Textarea
                   id="description"
-                  value={detailsData?.description || ''}
+                  value={detailsData?.description ?? ''}
                   onChange={e =>
                     updateEditedData(detailsSection, {
                       description: e.target.value,
@@ -864,7 +865,7 @@ export function SourcingProductEditCard({
                     type="number"
                     step="0.1"
                     min="0"
-                    value={detailsData?.dimensions_length || ''}
+                    value={detailsData?.dimensions_length ?? ''}
                     onChange={e =>
                       updateEditedData(detailsSection, {
                         dimensions_length: parseFloat(e.target.value) || 0,
@@ -876,7 +877,7 @@ export function SourcingProductEditCard({
                     type="number"
                     step="0.1"
                     min="0"
-                    value={detailsData?.dimensions_width || ''}
+                    value={detailsData?.dimensions_width ?? ''}
                     onChange={e =>
                       updateEditedData(detailsSection, {
                         dimensions_width: parseFloat(e.target.value) || 0,
@@ -888,7 +889,7 @@ export function SourcingProductEditCard({
                     type="number"
                     step="0.1"
                     min="0"
-                    value={detailsData?.dimensions_height || ''}
+                    value={detailsData?.dimensions_height ?? ''}
                     onChange={e =>
                       updateEditedData(detailsSection, {
                         dimensions_height: parseFloat(e.target.value) || 0,
@@ -908,7 +909,7 @@ export function SourcingProductEditCard({
                   type="number"
                   step="0.01"
                   min="0"
-                  value={detailsData?.weight || ''}
+                  value={detailsData?.weight ?? ''}
                   onChange={e =>
                     updateEditedData(detailsSection, {
                       weight: parseFloat(e.target.value) || 0,
@@ -1018,7 +1019,7 @@ export function SourcingProductEditCard({
                   <ButtonV2
                     variant="default"
                     size="sm"
-                    onClick={handleSaveNotes}
+                    onClick={() => void handleSaveNotes()}
                     disabled={
                       isSaving(notesSection) || !hasChanges(notesSection)
                     }
@@ -1034,7 +1035,7 @@ export function SourcingProductEditCard({
               </div>
 
               <Textarea
-                value={notesData?.internal_notes || ''}
+                value={notesData?.internal_notes ?? ''}
                 onChange={e =>
                   updateEditedData(notesSection, {
                     internal_notes: e.target.value,

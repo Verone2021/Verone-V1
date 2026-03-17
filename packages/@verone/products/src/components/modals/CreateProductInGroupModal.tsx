@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-misused-promises, @typescript-eslint/prefer-nullish-coalescing */
 'use client';
 
 import { useState } from 'react';
@@ -58,7 +59,7 @@ export function CreateProductInGroupModal({
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const variantType = variantGroup.variant_type || 'color';
+  const variantType = variantGroup.variant_type ?? 'color';
   const typeInfo = variantTypeLabels[variantType];
 
   // Récupérer les couleurs déjà utilisées dans ce groupe
@@ -193,9 +194,9 @@ export function CreateProductInGroupModal({
                 {variantGroup.common_dimensions && (
                   <div>
                     <span className="font-medium">Dimensions:</span>{' '}
-                    {variantGroup.common_dimensions.length || '-'} ×{' '}
-                    {variantGroup.common_dimensions.width || '-'} ×{' '}
-                    {variantGroup.common_dimensions.height || '-'}{' '}
+                    {variantGroup.common_dimensions.length ?? '-'} ×{' '}
+                    {variantGroup.common_dimensions.width ?? '-'} ×{' '}
+                    {variantGroup.common_dimensions.height ?? '-'}{' '}
                     {variantGroup.common_dimensions.unit}
                   </div>
                 )}

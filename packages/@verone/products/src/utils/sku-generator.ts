@@ -191,10 +191,10 @@ export function generateProductName(
  * extractVariantValue({ size: 'XL' }, 'size') // 'XL'
  */
 export function extractVariantValue(
-  variantAttributes: Record<string, any>,
+  variantAttributes: Record<string, unknown>,
   variantType: 'color' | 'size' | 'material' | 'pattern'
 ): string | null {
-  return variantAttributes?.[variantType] || null;
+  return (variantAttributes?.[variantType] as string) ?? null;
 }
 
 /**

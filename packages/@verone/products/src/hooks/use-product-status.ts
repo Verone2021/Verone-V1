@@ -113,7 +113,7 @@ export function useProductStatus({
       setError(null);
 
       try {
-        const updates: any = { product_status: newStatus };
+        const updates: Record<string, unknown> = { product_status: newStatus };
 
         // ✅ BUSINESS RULE: Précommande/Arrêté → min_stock=0 + Supprimer alertes
         if (newStatus === 'preorder' || newStatus === 'discontinued') {
@@ -172,7 +172,7 @@ export function useProductStatus({
   const getStatusOption = useCallback(
     (status: ProductStatus): ProductStatusOption => {
       return (
-        PRODUCT_STATUS_OPTIONS.find(opt => opt.value === status) ||
+        PRODUCT_STATUS_OPTIONS.find(opt => opt.value === status) ??
         PRODUCT_STATUS_OPTIONS[0]
       );
     },

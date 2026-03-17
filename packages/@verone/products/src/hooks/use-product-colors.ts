@@ -34,21 +34,24 @@ export function useGroupUsedColors(
         setUsedColors([]);
       } else {
         // Extraire les valeurs de variantes selon le type
-        const colors = (data || [])
-          .map((product: any) => {
-            const attrs = product.variant_attributes || {};
+        const colors = (data ?? [])
+          .map(product => {
+            const attrs = (product.variant_attributes ?? {}) as Record<
+              string,
+              string | undefined
+            >;
 
             // Extraire la valeur selon le type de variante
             let value: string | null = null;
 
             if (variantType === 'color') {
-              value = attrs.color_name || attrs.color || null;
+              value = attrs.color_name ?? attrs.color ?? null;
             } else if (variantType === 'material') {
-              value = attrs.material || null;
+              value = attrs.material ?? null;
             } else if (variantType === 'size') {
-              value = attrs.size || null;
+              value = attrs.size ?? null;
             } else if (variantType === 'pattern') {
-              value = attrs.pattern || null;
+              value = attrs.pattern ?? null;
             }
 
             return value;
@@ -63,11 +66,12 @@ export function useGroupUsedColors(
     }
 
     if (groupId) {
-      fetchUsedColors();
+      void fetchUsedColors();
     } else {
       setUsedColors([]);
       setLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- supabase client is stable singleton
   }, [groupId, variantType]);
 
   return { usedColors, loading };
@@ -147,7 +151,8 @@ export function useProductColors() {
       setLoading(false);
     }
 
-    fetchColors();
+    void fetchColors();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- defaultColors is a constant array defined in render, adding it would cause infinite loop
   }, [supabase]);
 
   // Créer nouvelle couleur

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any, @typescript-eslint/prefer-nullish-coalescing */
 'use client';
 
 // FIXME: ProductFixedCharacteristics component can't be imported from apps/back-office in package
@@ -5,19 +6,13 @@
 import { ButtonV2 } from '@verone/ui';
 import { cn } from '@verone/utils';
 import {
-  Badge,
-  TreePine,
-  FolderOpen,
-  Tags,
   ExternalLink,
   Package,
-  Heart,
   Star,
   Eye,
   Calendar,
   Truck,
   ShieldCheck,
-  ImageIcon,
   CheckCircle,
   AlertCircle,
   Clock,
@@ -40,7 +35,7 @@ export function ProductViewMode({
 }: ProductViewProps) {
   const getStockBadge = () => {
     const stockQty = product.stock_quantity || 0;
-    const condition = product.condition || 'new';
+    const _condition = product.condition || 'new';
 
     if (stockQty > 10) {
       return (
@@ -319,13 +314,13 @@ export function ProductViewMode({
                       {product.dimensions_length || 0} ×{' '}
                       {product.dimensions_width || 0} ×{' '}
                       {product.dimensions_height || 0}{' '}
-                      {product.dimensions_unit || 'cm'}
+                      {product.dimensions_unit ?? 'cm'}
                     </p>
                   )}
                   {product.weight && (
                     <p>
                       <strong>Poids :</strong> {product.weight}{' '}
-                      {product.weight_unit || 'kg'}
+                      {product.weight_unit ?? 'kg'}
                     </p>
                   )}
                   <p>

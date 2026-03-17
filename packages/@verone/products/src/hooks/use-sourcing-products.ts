@@ -136,7 +136,7 @@ export function useSourcingProducts(filters?: SourcingFilters) {
       }
 
       if (filters?.product_status) {
-        query = query.eq('product_status', filters.product_status as any);
+        query = query.eq('product_status', filters.product_status);
       }
 
       if (filters?.sourcing_type) {
@@ -179,8 +179,8 @@ export function useSourcingProducts(filters?: SourcingFilters) {
 
       // Enrichir les produits avec les calculs (BR-TECH-002: images via product_images)
       const enrichedProducts = (data || []).map(product => {
-        const supplierCost = product.cost_price || 0; // Prix d'achat LPP comme base calcul
-        const margin = product.margin_percentage || 50; // Marge par défaut 50%
+        const supplierCost = product.cost_price ?? 0; // Prix d'achat LPP comme base calcul
+        const margin = product.margin_percentage ?? 50; // Marge par défaut 50%
         const estimatedSellingPrice = supplierCost * (1 + margin / 100);
 
         // ✅ FIX: Calculer les noms d'affichage pour supplier et assigned_client
@@ -188,8 +188,8 @@ export function useSourcingProducts(filters?: SourcingFilters) {
           ? {
               ...product.supplier,
               name:
-                product.supplier.trade_name ||
-                product.supplier.legal_name ||
+                product.supplier.trade_name ??
+                product.supplier.legal_name ??
                 'Fournisseur',
             }
           : null;
@@ -198,8 +198,8 @@ export function useSourcingProducts(filters?: SourcingFilters) {
           ? {
               ...product.assigned_client,
               name:
-                product.assigned_client.trade_name ||
-                product.assigned_client.legal_name ||
+                product.assigned_client.trade_name ??
+                product.assigned_client.legal_name ??
                 'Client',
             }
           : null;
@@ -212,7 +212,7 @@ export function useSourcingProducts(filters?: SourcingFilters) {
         };
       });
 
-      setProducts(enrichedProducts as any);
+      setProducts(enrichedProducts as SourcingProduct[]);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur inconnue');
       toast({
@@ -228,7 +228,7 @@ export function useSourcingProducts(filters?: SourcingFilters) {
   useEffect(() => {
     // 🔥 FIX: Appeler directement sans dépendances sur la fonction
     // Dépendre uniquement des valeurs primitives de filters
-    fetchSourcingProducts();
+    void fetchSourcingProducts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     filters?.search,
@@ -303,7 +303,7 @@ export function useSourcingProducts(filters?: SourcingFilters) {
 
       await fetchSourcingProducts();
       return true;
-    } catch (err) {
+    } catch (_err) {
       toast({
         title: 'Erreur',
         description: 'Impossible de valider le produit',
@@ -323,7 +323,9 @@ export function useSourcingProducts(filters?: SourcingFilters) {
    * @param productId - UUID du produit à vérifier
    * @returns true si déjà commandé (échantillon interdit), false sinon (échantillon autorisé)
    */
-  const hasProductBeenOrdered = async (productId: string): Promise<boolean> => {
+  const _hasProductBeenOrdered = async (
+    productId: string
+  ): Promise<boolean> => {
     try {
       // Chercher dans purchase_order_items si le produit a déjà été commandé
       // On exclut les items avec notes = 'Échantillon pour validation'
@@ -425,7 +427,7 @@ export function useSourcingProducts(filters?: SourcingFilters) {
           type: string;
         } | null;
         const clientName = assignedClient
-          ? assignedClient.trade_name || assignedClient.legal_name
+          ? (assignedClient.trade_name ?? assignedClient.legal_name)
           : null;
         const sampleType = product.assigned_client_id ? 'customer' : 'internal';
 
@@ -440,7 +442,7 @@ export function useSourcingProducts(filters?: SourcingFilters) {
               unit_price_ht: product.cost_price,
               discount_percentage: 0,
               sample_type: sampleType,
-              customer_organisation_id: product.assigned_client_id || null,
+              customer_organisation_id: product.assigned_client_id ?? null,
               notes: clientName
                 ? `Échantillon sourcing - Client: ${clientName}`
                 : 'Échantillon pour validation',
@@ -511,7 +513,7 @@ export function useSourcingProducts(filters?: SourcingFilters) {
               notes: 'Commande échantillon automatique',
               created_by: user?.id,
             },
-          ] as any)
+          ] as Record<string, unknown>[])
           .select('id')
           .single();
 
@@ -527,7 +529,7 @@ export function useSourcingProducts(filters?: SourcingFilters) {
           type: string;
         } | null;
         const clientNameNew = assignedClientNew
-          ? assignedClientNew.trade_name || assignedClientNew.legal_name
+          ? (assignedClientNew.trade_name ?? assignedClientNew.legal_name)
           : null;
         const sampleTypeNew = product.assigned_client_id
           ? 'customer'
@@ -544,7 +546,7 @@ export function useSourcingProducts(filters?: SourcingFilters) {
               unit_price_ht: product.cost_price,
               discount_percentage: 0,
               sample_type: sampleTypeNew,
-              customer_organisation_id: product.assigned_client_id || null,
+              customer_organisation_id: product.assigned_client_id ?? null,
               notes: clientNameNew
                 ? `Échantillon sourcing - Client: ${clientNameNew}`
                 : 'Échantillon pour validation',
@@ -573,11 +575,15 @@ export function useSourcingProducts(filters?: SourcingFilters) {
 
       await fetchSourcingProducts();
       return true;
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Erreur commande échantillon:', err);
+      const errMsg =
+        err instanceof Error
+          ? err.message
+          : "Impossible de commander l'échantillon";
       toast({
         title: 'Erreur',
-        description: err.message || "Impossible de commander l'échantillon",
+        description: errMsg,
         variant: 'destructive',
       });
       return false;
@@ -652,11 +658,15 @@ export function useSourcingProducts(filters?: SourcingFilters) {
       // 4. Recharger liste sourcing
       await fetchSourcingProducts();
       return true;
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Erreur approbation échantillon:', err);
+      const errMsg =
+        err instanceof Error
+          ? err.message
+          : "Impossible d'approuver l'échantillon";
       toast({
         title: 'Erreur',
-        description: err.message || "Impossible d'approuver l'échantillon",
+        description: errMsg,
         variant: 'destructive',
       });
       return false;
@@ -673,7 +683,7 @@ export function useSourcingProducts(filters?: SourcingFilters) {
           product_status: 'discontinued',
           archived_at: new Date().toISOString(),
           rejection_reason:
-            reason || 'Échantillon refusé lors de la validation',
+            reason ?? 'Échantillon refusé lors de la validation',
         })
         .eq('id', productId);
 
@@ -696,11 +706,15 @@ export function useSourcingProducts(filters?: SourcingFilters) {
       // 3. Recharger liste sourcing
       await fetchSourcingProducts();
       return true;
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Erreur rejet échantillon:', err);
+      const errMsg =
+        err instanceof Error
+          ? err.message
+          : "Impossible de rejeter l'échantillon";
       toast({
         title: 'Erreur',
-        description: err.message || "Impossible de rejeter l'échantillon",
+        description: errMsg,
         variant: 'destructive',
       });
       return false;
@@ -734,7 +748,7 @@ export function useSourcingProducts(filters?: SourcingFilters) {
       }
 
       // Déterminer sourcing_type : 'client' si enseigne OU organisation, sinon 'interne'
-      const isClientSourcing = !!(data.enseigne_id || data.assigned_client_id);
+      const isClientSourcing = !!(data.enseigne_id ?? data.assigned_client_id);
 
       // Créer le produit (champs facultatifs envoyés uniquement si renseignés)
       const { data: newProduct, error } = await supabase
@@ -742,23 +756,23 @@ export function useSourcingProducts(filters?: SourcingFilters) {
         .insert([
           {
             name: data.name,
-            supplier_page_url: data.supplier_page_url || null,
-            cost_price: data.cost_price || null,
-            supplier_reference: data.supplier_reference || null,
-            brand: data.brand || null,
-            description: data.description || null,
-            supplier_moq: data.supplier_moq || null,
-            sourcing_channel: data.sourcing_channel || null,
-            supplier_id: data.supplier_id || null,
-            assigned_client_id: data.assigned_client_id || null,
-            enseigne_id: data.enseigne_id || null,
+            supplier_page_url: data.supplier_page_url ?? null,
+            cost_price: data.cost_price ?? null,
+            supplier_reference: data.supplier_reference ?? null,
+            brand: data.brand ?? null,
+            description: data.description ?? null,
+            supplier_moq: data.supplier_moq ?? null,
+            sourcing_channel: data.sourcing_channel ?? null,
+            supplier_id: data.supplier_id ?? null,
+            assigned_client_id: data.assigned_client_id ?? null,
+            enseigne_id: data.enseigne_id ?? null,
             creation_mode: 'sourcing',
             sourcing_type: isClientSourcing ? 'client' : 'interne',
             product_status: 'draft',
             completion_status: 'draft',
             stock_status: 'out_of_stock',
           },
-        ] as any)
+        ] as Record<string, unknown>[])
         .select('id, name, sku, product_status, creation_mode, sourcing_type')
         .single();
 
@@ -801,7 +815,7 @@ export function useSourcingProducts(filters?: SourcingFilters) {
                 is_primary: i === 0,
                 image_type: i === 0 ? 'primary' : 'gallery',
               },
-            ] as any);
+            ] as Record<string, unknown>[]);
           } catch (imgError) {
             console.error(`Erreur gestion image ${i}:`, imgError);
           }
@@ -815,7 +829,7 @@ export function useSourcingProducts(filters?: SourcingFilters) {
 
       await fetchSourcingProducts();
       return newProduct;
-    } catch (err) {
+    } catch (_err) {
       toast({
         title: 'Erreur',
         description: 'Impossible de créer le produit',
@@ -919,7 +933,7 @@ export function useSourcingProducts(filters?: SourcingFilters) {
 
       await fetchSourcingProducts();
       return true;
-    } catch (err) {
+    } catch (_err) {
       toast({
         title: 'Erreur',
         description: 'Impossible de mettre à jour le produit',
@@ -953,7 +967,7 @@ export function useSourcingProducts(filters?: SourcingFilters) {
 
       await fetchSourcingProducts();
       return true;
-    } catch (err) {
+    } catch (_err) {
       toast({
         title: 'Erreur',
         description: "Impossible d'archiver le produit",
@@ -1012,7 +1026,7 @@ export function useSourcingProducts(filters?: SourcingFilters) {
 
       await fetchSourcingProducts();
       return true;
-    } catch (err) {
+    } catch (_err) {
       toast({
         title: 'Erreur',
         description: 'Impossible de supprimer le produit',
