@@ -338,7 +338,7 @@ export function validateInput<T>(
       continue;
     }
 
-    data[key] = value as T[keyof T];
+    data[key] = value as T[keyof T & string];
   }
 
   return errors.length > 0 ? { valid: false, errors } : { valid: true, data };

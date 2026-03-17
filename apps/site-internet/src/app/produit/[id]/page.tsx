@@ -222,8 +222,8 @@ export default function ProductPage({
         />
       </div>
 
-      {/* ===== CROSS-SELL (Mock) ===== */}
-      <ProductCrossSell />
+      {/* ===== CROSS-SELL ===== */}
+      <ProductCrossSell currentProductId={product.product_id} />
     </div>
   );
 }
