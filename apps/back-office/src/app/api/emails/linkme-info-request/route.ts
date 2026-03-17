@@ -11,6 +11,7 @@ import { Resend } from 'resend';
 
 import type { Database, Json } from '@verone/types';
 
+import { getLogoAttachments } from '../_shared/email-logo';
 import { buildEmailHtml } from '../_shared/email-template';
 
 function getResendClient(): Resend {
@@ -146,19 +147,13 @@ export async function POST(request: NextRequest) {
           .join('');
         return `
           <div style="margin-bottom: 12px;">
-            <p style="margin: 0 0 4px 0; color: #78350f; font-weight: bold; font-size: 13px;">${catLabel}</p>
+            <p style="margin: 0 0 4px 0; color: #0f766e; font-weight: bold; font-size: 13px;">${catLabel}</p>
             <ul style="margin: 0; padding-left: 20px; color: #1f2937;">${fieldsList}</ul>
           </div>`;
       })
       .join('');
 
-    const customMessageHtml = customMessage
-      ? `
-      <div style="background-color: #ffffff; padding: 16px; border-radius: 6px; margin: 16px 0; border-left: 3px solid #f59e0b;">
-        <p style="margin: 0 0 4px 0; color: #78350f; font-weight: bold; font-size: 14px;">Message de notre &eacute;quipe :</p>
-        <p style="margin: 0; color: #1f2937; white-space: pre-wrap;">${customMessage}</p>
-      </div>`
-      : '';
+    // Custom message removed — redundant with the structured fields list above
 
     const formattedTotal = new Intl.NumberFormat('fr-FR', {
       style: 'currency',
@@ -205,17 +200,15 @@ export async function POST(request: NextRequest) {
           nous avons besoin d&rsquo;informations compl&eacute;mentaires pour pouvoir la traiter.
         </p>
 
-        <div style="background-color: #fff7ed; padding: 16px; border-radius: 6px; margin: 16px 0; border: 1px solid #fed7aa;">
-          <p style="margin: 0 0 8px 0; color: #9a3412; font-weight: bold; font-size: 14px;">Informations manquantes :</p>
+        <div style="background-color: #f0fdfa; padding: 16px; border-radius: 6px; margin: 16px 0; border: 1px solid #99d5d1;">
+          <p style="margin: 0 0 8px 0; color: #0f766e; font-weight: bold; font-size: 14px;">Informations requises :</p>
           ${fieldsHtml}
-        </div>
-
-        ${customMessageHtml}`;
+        </div>`;
 
       const emailHtml = buildEmailHtml({
         title: 'Informations compl\u00e9mentaires requises',
         recipientName: recipientName || 'Madame, Monsieur',
-        accentColor: 'orange',
+        accentColor: 'teal',
         bodyHtml,
         ctaUrl: formUrl,
         ctaLabel: 'Compl\u00e9ter les informations',
@@ -227,7 +220,8 @@ export async function POST(request: NextRequest) {
         to: email,
         subject: `Commande ${orderNumber} - Informations compl\u00e9mentaires requises`,
         html: emailHtml,
-        replyTo: process.env.RESEND_REPLY_TO ?? 'commandes@verone.fr',
+        replyTo: process.env.RESEND_REPLY_TO ?? 'romeo@veronecollections.fr',
+        attachments: getLogoAttachments(),
       });
 
       if (emailError) {
@@ -241,6 +235,21 @@ export async function POST(request: NextRequest) {
       console.warn(
         `[API Info Request Email] Sent for order ${orderNumber} to ${email} (token: ${infoRequest.token})`
       );
+
+      // Log event in sales_order_events (non-blocking)
+      try {
+        await supabase.from('sales_order_events').insert({
+          sales_order_id: salesOrderId,
+          event_type: 'email_info_request_sent',
+          metadata: { recipient_email: email, info_request_id: infoRequest.id },
+          created_by: sentBy,
+        });
+      } catch (logError) {
+        console.error(
+          '[API Info Request Email] Failed to log event:',
+          logError
+        );
+      }
 
       results.push({
         email,

@@ -7,9 +7,20 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
+import { createClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
 
+import type { Database } from '@verone/types';
+
+import { getLogoAttachments } from '../_shared/email-logo';
 import { buildEmailHtml } from '../_shared/email-template';
+
+function getAdminClient() {
+  return createClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 function getResendClient(): Resend {
   const apiKey = process.env.RESEND_API_KEY;
@@ -20,6 +31,7 @@ function getResendClient(): Resend {
 }
 
 interface Step4ConfirmedEmailRequest {
+  salesOrderId?: string;
   orderNumber: string;
   requesterEmail: string;
   requesterName: string;
@@ -110,7 +122,8 @@ export async function POST(request: NextRequest) {
       to: requesterEmail,
       subject: `Commande ${orderNumber} - Livraison confirm\u00e9e`,
       html: requesterHtml,
-      replyTo: process.env.RESEND_REPLY_TO ?? 'commandes@verone.fr',
+      replyTo: process.env.RESEND_REPLY_TO ?? 'romeo@veronecollections.fr',
+      attachments: getLogoAttachments(),
     });
 
     // 2. Admin notification (optional)
@@ -120,6 +133,7 @@ export async function POST(request: NextRequest) {
             from: process.env.RESEND_FROM_EMAIL ?? 'commandes@verone.fr',
             to: adminEmail,
             subject: `[LinkMe] \u00c9tape 4 compl\u00e9t\u00e9e - ${orderNumber}`,
+            attachments: getLogoAttachments(),
             html: buildEmailHtml({
               title: '\u00c9tape 4 compl\u00e9t\u00e9e',
               recipientName: 'Admin',
@@ -150,6 +164,20 @@ export async function POST(request: NextRequest) {
     console.warn(
       `[API Step4 Confirmed] Sent for order ${orderNumber} - ${results.length} emails`
     );
+
+    // Log event in sales_order_events (non-blocking)
+    if (body.salesOrderId) {
+      try {
+        const supabase = getAdminClient();
+        await supabase.from('sales_order_events').insert({
+          sales_order_id: body.salesOrderId,
+          event_type: 'email_step4_confirmed',
+          metadata: { recipient_email: requesterEmail },
+        });
+      } catch (logError) {
+        console.error('[API Step4 Confirmed] Failed to log event:', logError);
+      }
+    }
 
     return NextResponse.json({
       success: true,

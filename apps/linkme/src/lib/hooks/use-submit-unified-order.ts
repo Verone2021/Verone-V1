@@ -127,8 +127,8 @@ export function useSubmitUnifiedOrder() {
             owner_type: null,
             // Billing (Step 4)
             billing_contact_source: data.billing.useParentOrganisation
-              ? 'parent'
-              : data.billing.contactSource,
+              ? 'parent_organisation'
+              : data.billing.contactSource || 'responsable',
             billing_name:
               data.billing.contactSource === 'custom'
                 ? data.billing.name
@@ -156,7 +156,10 @@ export function useSubmitUnifiedOrder() {
             delivery_city: data.delivery.city || null,
             delivery_latitude: data.delivery.latitude ?? null,
             delivery_longitude: data.delivery.longitude ?? null,
-            desired_delivery_date: data.delivery.deliveryDate || null,
+            desired_delivery_date: data.delivery.deliveryAsap
+              ? null
+              : data.delivery.deliveryDate || null,
+            delivery_asap: data.delivery.deliveryAsap || false,
             is_mall_delivery: data.delivery.isMallDelivery || false,
             mall_email: data.delivery.isMallDelivery
               ? data.delivery.mallEmail || null
@@ -189,7 +192,7 @@ export function useSubmitUnifiedOrder() {
             throw new Error(`Erreur création commande: ${rpcError.message}`);
           }
 
-          console.error(
+          console.info(
             '[useSubmitUnifiedOrder] Order created (existing org):',
             orderId
           );
@@ -203,6 +206,65 @@ export function useSubmitUnifiedOrder() {
               .eq('id', orderId)
               .single();
             orderNumber = orderData?.order_number ?? undefined;
+          }
+
+          // Send confirmation email to requester (non-blocking)
+          try {
+            const { data: selectionData } = await supabase
+              .from('linkme_selections')
+              .select('name')
+              .eq('id', selectionId)
+              .single();
+
+            const { data: orgData } = await supabase
+              .from('organisations')
+              .select('trade_name')
+              .eq('id', data.existingOrganisationId)
+              .single();
+
+            const emailResponse = await fetch(
+              '/api/emails/order-confirmation',
+              {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  salesOrderId: orderId,
+                  orderNumber: orderNumber ?? '',
+                  requesterName: data.requester.name,
+                  requesterEmail: data.requester.email,
+                  restaurantName: orgData?.trade_name ?? 'Restaurant',
+                  selectionName: selectionData?.name ?? '',
+                  itemsCount: cart.length,
+                  totalHT: cart.reduce(
+                    (sum, item) => sum + item.selling_price_ht * item.quantity,
+                    0
+                  ),
+                  totalTTC: cart.reduce(
+                    (sum, item) => sum + item.selling_price_ttc * item.quantity,
+                    0
+                  ),
+                }),
+              }
+            );
+            if (!emailResponse.ok) {
+              const errorBody = (await emailResponse
+                .json()
+                .catch(() => null)) as { error?: string } | null;
+              console.error(
+                '[useSubmitUnifiedOrder] Email confirmation HTTP error:',
+                emailResponse.status,
+                errorBody?.error ?? 'no details'
+              );
+            }
+          } catch (emailError) {
+            console.error(
+              '[useSubmitUnifiedOrder] Email confirmation error:',
+              emailError
+            );
+            toast.warning(
+              "Commande enregistrée, mais l'email de confirmation n'a pas pu être envoyé.",
+              { description: "Vous recevrez un email lors de l'approbation." }
+            );
           }
 
           // Invalider les caches
@@ -295,6 +357,7 @@ export function useSubmitUnifiedOrder() {
                 name: data.responsable.name,
                 email: data.responsable.email,
                 phone: data.responsable.phone ?? null,
+                type: data.newRestaurant.ownershipType ?? null,
                 company_legal_name:
                   data.newRestaurant.ownershipType === 'franchise'
                     ? (data.responsable.companyLegalName ?? null)
@@ -321,7 +384,12 @@ export function useSubmitUnifiedOrder() {
                 };
 
           // Facturation (Step 4)
-          const p_billing = data.billing.useParentOrganisation
+          // useParentOrganisation only applies to succursales (propre), never franchises
+          const isFranchiseOrder =
+            data.newRestaurant?.ownershipType === 'franchise';
+          const useParent =
+            data.billing.useParentOrganisation && !isFranchiseOrder;
+          const p_billing = useParent
             ? {
                 use_parent: true,
                 contact_source: null,
@@ -418,7 +486,7 @@ export function useSubmitUnifiedOrder() {
 
           const rpcResult = result as unknown as RpcResponse;
 
-          console.error(
+          console.info(
             '[useSubmitUnifiedOrder] Order created (new org):',
             rpcResult
           );
@@ -468,7 +536,17 @@ export function useSubmitUnifiedOrder() {
               }),
             });
           } catch (emailError) {
-            console.error('Erreur envoi notification email:', emailError);
+            console.error(
+              '[useSubmitUnifiedOrder] Notify enseigne email error:',
+              emailError
+            );
+            toast.warning(
+              "Commande enregistrée, mais la notification n'a pas pu être envoyée.",
+              {
+                description:
+                  "L'équipe Verone sera notifiée par un autre canal.",
+              }
+            );
           }
 
           // Invalider les caches

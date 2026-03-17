@@ -1,5 +1,17 @@
 # Règles Générales Verone Back Office
 
+## Regle d'Or : Explorer AVANT de coder
+
+AVANT toute implementation :
+
+1. Verifier le schema DB des tables concernees (`mcp__supabase__execute_sql`)
+2. Verifier les RLS policies existantes
+3. Lire le code existant du meme domaine (Serena `find_symbol`)
+4. Identifier les patterns utilises par les features similaires
+
+Si tu n'as pas fait ces 4 verifications, tu n'es PAS PRET a coder.
+Utilise `/research <domaine>` pour automatiser cette exploration.
+
 ## Philosophy
 
 - **Minimum viable** : Faire le minimum nécessaire, pas plus

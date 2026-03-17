@@ -425,7 +425,6 @@ export function PurchaseOrderDetailModal({
     transfer_other: 'Virement bancaire',
     card: 'Carte bancaire',
     compensation: 'Compensation',
-    verified_bubble: 'Vérifié Bubble',
   };
 
   const openPaymentDialog = () => {
@@ -1360,9 +1359,6 @@ export function PurchaseOrderDetailModal({
                     <SelectItem value="check">Chèque</SelectItem>
                     <SelectItem value="card">Carte bancaire</SelectItem>
                     <SelectItem value="compensation">Compensation</SelectItem>
-                    <SelectItem value="verified_bubble">
-                      Vérifié Bubble (legacy)
-                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>

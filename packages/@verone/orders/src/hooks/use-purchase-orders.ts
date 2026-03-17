@@ -993,7 +993,6 @@ export function usePurchaseOrders() {
           transfer_other: 'Virement autre banque',
           card: 'Carte bancaire',
           compensation: 'Compensation',
-          verified_bubble: 'Vérifié Bubble',
         };
 
         toast({

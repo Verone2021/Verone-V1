@@ -91,7 +91,7 @@ import {
 
 import { ContactCardBO } from '../../../components/contacts/ContactCardBO';
 import { NewContactForm } from '../../../components/contacts/NewContactForm';
-import { isOrderLocked } from '@verone/orders';
+import { isOrderLocked, OrderTimeline, useOrderHistory } from '@verone/orders';
 import { PaymentSection } from '@/components/orders/PaymentSection';
 import { FeesSection } from '@/components/orders/FeesSection';
 import { InvoicesSection } from '@/components/orders/InvoicesSection';
@@ -129,6 +129,7 @@ interface OrderWithDetails {
   notes: string | null;
   customer_id: string | null;
   expected_delivery_date: string | null;
+  pending_admin_validation: boolean | null;
   created_by_affiliate_id: string | null;
   linkme_selection_id: string | null;
   created_by: string | null;
@@ -285,6 +286,10 @@ export default function LinkMeOrderDetailsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Order history timeline
+  const { events: historyEvents, loading: historyLoading } =
+    useOrderHistory(orderId);
+
   // Status management
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
@@ -346,7 +351,7 @@ export default function LinkMeOrderDetailsPage() {
         .select(
           `
           id, order_number, linkme_display_number, created_at, status, total_ht, total_ttc, notes,
-          customer_id, customer_type, expected_delivery_date,
+          customer_id, customer_type, expected_delivery_date, pending_admin_validation,
           created_by_affiliate_id, linkme_selection_id, created_by,
           payment_status_v2, payment_terms, currency, tax_rate,
           shipping_cost_ht, handling_cost_ht, insurance_cost_ht, fees_vat_rate,
@@ -487,6 +492,7 @@ export default function LinkMeOrderDetailsPage() {
         notes: orderData.notes,
         customer_id: orderData.customer_id,
         expected_delivery_date: orderData.expected_delivery_date,
+        pending_admin_validation: orderData.pending_admin_validation ?? null,
         created_by_affiliate_id: orderData.created_by_affiliate_id ?? null,
         linkme_selection_id: orderData.linkme_selection_id ?? null,
         created_by: createdByUserId,
@@ -1727,19 +1733,32 @@ export default function LinkMeOrderDetailsPage() {
                 {getStatusBadge(order.status)}
               </div>
               <div className="space-y-2">
-                {order.status === 'draft' && (
-                  <Button
-                    className="w-full gap-2"
-                    disabled={isUpdatingStatus}
-                    onClick={() => {
-                      void handleStatusChange('validated').catch(err =>
-                        console.error(err)
-                      );
-                    }}
-                  >
-                    <CheckCircle2 className="h-4 w-4" />
-                    {isUpdatingStatus ? 'En cours...' : 'Valider la commande'}
-                  </Button>
+                {order.status === 'draft' &&
+                  !order.pending_admin_validation && (
+                    <Button
+                      className="w-full gap-2"
+                      disabled={isUpdatingStatus}
+                      onClick={() => {
+                        void handleStatusChange('validated').catch(err =>
+                          console.error(err)
+                        );
+                      }}
+                    >
+                      <CheckCircle2 className="h-4 w-4" />
+                      {isUpdatingStatus ? 'En cours...' : 'Valider la commande'}
+                    </Button>
+                  )}
+                {order.status === 'draft' && order.pending_admin_validation && (
+                  <div className="text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-lg p-3">
+                    En attente d&apos;approbation. Rendez-vous dans{' '}
+                    <a
+                      href="/canaux-vente/linkme/approbations"
+                      className="underline font-medium hover:text-amber-700"
+                    >
+                      Approbations
+                    </a>{' '}
+                    pour traiter cette commande.
+                  </div>
                 )}
                 {order.status === 'validated' && (
                   <>
@@ -2104,6 +2123,9 @@ export default function LinkMeOrderDetailsPage() {
               </CardContent>
             </Card>
           )}
+
+          {/* HISTORIQUE */}
+          <OrderTimeline events={historyEvents} loading={historyLoading} />
         </div>
       </div>
 

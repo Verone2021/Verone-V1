@@ -24,6 +24,7 @@ interface SalesOrderUpdateFields {
   shipped_at?: string;
   cancelled_at?: string;
   cancelled_by?: string;
+  pending_admin_validation?: boolean;
 }
 
 /**
@@ -97,10 +98,12 @@ export async function updateSalesOrderStatus(
     } else if (newStatus === 'cancelled') {
       updateFields.cancelled_at = new Date().toISOString();
       updateFields.cancelled_by = userId;
+      updateFields.pending_admin_validation = false;
     } else if (newStatus === 'draft') {
       // Dévalidation : remettre confirmed_at à null (supprime le point vert)
       updateFields.confirmed_at = null;
       updateFields.confirmed_by = null;
+      updateFields.pending_admin_validation = false;
     }
 
     console.warn(`🔧 [Server Action] Champs à mettre à jour:`, updateFields);

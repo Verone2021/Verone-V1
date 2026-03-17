@@ -6,9 +6,20 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
+import { createClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
 
+import type { Database } from '@verone/types';
+
 import { buildEmailHtml } from '../_shared/email-template';
+import { getLogoAttachments } from '../_shared/email-logo';
+
+function getAdminClient() {
+  return createClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 function getResendClient(): Resend {
   const apiKey = process.env.RESEND_API_KEY;
@@ -19,6 +30,7 @@ function getResendClient(): Resend {
 }
 
 interface ApprovalEmailRequest {
+  salesOrderId?: string;
   orderNumber: string;
   ownerEmail: string;
   ownerName: string;
@@ -107,6 +119,7 @@ export async function POST(request: NextRequest) {
       to: ownerEmail,
       subject: `Votre commande ${orderNumber} a \u00e9t\u00e9 approuv\u00e9e - Action requise`,
       html: emailHtml,
+      attachments: getLogoAttachments(),
     });
 
     if (error) {
@@ -120,6 +133,20 @@ export async function POST(request: NextRequest) {
     console.warn(
       `[API Approval Email] Sent for order ${orderNumber} to ${ownerEmail}`
     );
+
+    // Log event in sales_order_events (non-blocking)
+    if (body.salesOrderId) {
+      try {
+        const supabase = getAdminClient();
+        await supabase.from('sales_order_events').insert({
+          sales_order_id: body.salesOrderId,
+          event_type: 'email_approval_sent',
+          metadata: { recipient_email: ownerEmail, resend_id: data?.id },
+        });
+      } catch (logError) {
+        console.error('[API Approval Email] Failed to log event:', logError);
+      }
+    }
 
     return NextResponse.json({
       success: true,

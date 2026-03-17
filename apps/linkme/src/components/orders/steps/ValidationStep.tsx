@@ -629,6 +629,23 @@ export function ValidationStep({
         </div>
       </Card>
 
+      {/* Info transport et surcouts */}
+      <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+        <div className="flex items-start gap-3">
+          <Truck className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+          <div className="text-sm text-blue-800">
+            <p className="font-medium">Frais de transport</p>
+            <p className="mt-1">
+              Le montant affiche correspond uniquement aux produits. Les frais
+              de transport seront calcules en fonction des informations
+              renseignees et ajoutes au devis. Pensez a indiquer votre date de
+              livraison souhaitee : sans cette information, aucune estimation de
+              transport ne pourra etre etablie.
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Note importante */}
       <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
         <div className="flex items-start gap-3">
@@ -636,8 +653,9 @@ export function ValidationStep({
           <div className="text-sm text-amber-800">
             <p className="font-medium">Prochaine étape</p>
             <p className="mt-1">
-              Après validation, votre commande sera soumise à notre équipe pour
-              approbation. Vous recevrez une confirmation par email.
+              Apres validation, votre commande sera soumise a notre equipe pour
+              approbation. Vous recevrez un email de confirmation, puis un devis
+              detaille incluant les frais de transport vous sera adresse.
             </p>
           </div>
         </div>

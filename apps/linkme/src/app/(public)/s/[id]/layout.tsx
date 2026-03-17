@@ -7,7 +7,17 @@ import { usePathname, useRouter } from 'next/navigation';
 import type { Database } from '@verone/types';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { createClient } from '@verone/utils/supabase/client';
-import { Check, ShoppingCart } from 'lucide-react';
+import {
+  Check,
+  CheckCircle,
+  Clock,
+  Mail,
+  Package,
+  ShoppingCart,
+  Store,
+  Truck,
+  User,
+} from 'lucide-react';
 
 import { OrderFormUnified } from '@/components/OrderFormUnified';
 import type {
@@ -60,6 +70,24 @@ export default function SelectionLayout({
   const [error, setError] = useState<string | null>(null);
   const [isOrderFormOpen, setIsOrderFormOpen] = useState(false);
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
+  const [submittedOrderData, setSubmittedOrderData] = useState<{
+    requesterName: string;
+    requesterEmail: string;
+    restaurantName: string;
+    isNewRestaurant: boolean;
+    deliveryAddress: string;
+    deliveryAsap: boolean;
+    items: {
+      name: string;
+      sku: string;
+      image: string | null;
+      qty: number;
+      priceTtc: number;
+    }[];
+    totalHT: number;
+    totalTVA: number;
+    totalTTC: number;
+  } | null>(null);
   const [affiliateInfo, setAffiliateInfo] = useState<IAffiliateInfo | null>(
     null
   );
@@ -333,10 +361,49 @@ export default function SelectionLayout({
       });
 
       if (result.success && (result.orderNumber ?? result.orderId)) {
+        // Store order summary for confirmation screen
+        const restaurantName = data.isNewRestaurant
+          ? data.newRestaurant.tradeName
+          : (organisations.find(o => o.id === data.existingOrganisationId)
+              ?.trade_name ?? 'Restaurant');
+        const totalHT = cartItems.reduce(
+          (sum, item) => sum + item.selling_price_ht * item.quantity,
+          0
+        );
+        const totalTVA = totalHT * 0.2;
+        const totalTTC = cartItems.reduce(
+          (sum, item) => sum + item.selling_price_ttc * item.quantity,
+          0
+        );
+
+        setSubmittedOrderData({
+          requesterName: data.requester.name,
+          requesterEmail: data.requester.email,
+          restaurantName,
+          isNewRestaurant: !!data.isNewRestaurant,
+          deliveryAddress: data.delivery.address,
+          deliveryAsap: data.delivery.deliveryAsap,
+          items: cartItems.map(item => ({
+            name: item.product_name,
+            sku: item.product_sku,
+            image: item.product_image ?? null,
+            qty: item.quantity,
+            priceTtc: item.selling_price_ttc * item.quantity,
+          })),
+          totalHT,
+          totalTVA,
+          totalTTC,
+        });
         setOrderNumber(result.orderNumber ?? result.orderId ?? null);
       }
+
+      if (!result.success) {
+        throw new Error(
+          result.error ?? 'Erreur lors de la creation de la commande'
+        );
+      }
     },
-    [selection, submitOrder]
+    [selection, submitOrder, organisations]
   );
 
   // Navigation tabs
@@ -480,35 +547,149 @@ export default function SelectionLayout({
             />
             <div className="absolute inset-4 md:inset-8 lg:inset-12 bg-white rounded-2xl shadow-2xl overflow-hidden">
               {orderNumber ? (
-                <div className="flex flex-col items-center justify-center h-full p-8 text-center">
-                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
-                    <Check className="h-8 w-8 text-green-600" />
+                <div className="flex flex-col h-full overflow-y-auto">
+                  {/* Header */}
+                  <div className="px-8 pt-8 pb-6 border-b bg-gradient-to-b from-green-50 to-white text-center">
+                    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <CheckCircle className="h-8 w-8 text-green-600" />
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-1">
+                      Commande envoyee !
+                    </h3>
+                    <p className="text-gray-600">
+                      Votre commande <strong>{orderNumber}</strong> a ete
+                      enregistree.
+                    </p>
                   </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">
-                    Commande envoyee !
-                  </h3>
-                  <p className="text-gray-600 mb-4">
-                    Votre commande <strong>{orderNumber}</strong> a ete recue.
-                  </p>
-                  <p className="text-sm text-gray-500 mb-8">
-                    Elle sera validee par notre equipe sous 24h.
-                  </p>
-                  <button
-                    onClick={() => {
-                      setOrderNumber(null);
-                      setIsOrderFormOpen(false);
-                      setCart([]);
-                    }}
-                    className="px-6 py-2 text-white rounded-lg hover:opacity-90"
-                    style={{ backgroundColor: branding.text_color }}
-                  >
-                    Fermer
-                  </button>
+
+                  {/* Body */}
+                  <div className="px-8 py-6 space-y-4 flex-1">
+                    {submittedOrderData && (
+                      <>
+                        {/* Résumé compact */}
+                        <div className="bg-gray-50 rounded-xl p-4 space-y-2">
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-600">
+                              {submittedOrderData.items.length} produit
+                              {submittedOrderData.items.length > 1 ? 's' : ''}
+                            </span>
+                            <span className="font-medium text-gray-900">
+                              {formatPrice(submittedOrderData.totalHT)} HT
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-600">Total TTC</span>
+                            <span className="font-bold text-gray-900">
+                              {formatPrice(submittedOrderData.totalTTC)} TTC
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-600">Livraison</span>
+                            <span className="text-gray-500 italic">
+                              a definir
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Transport notice */}
+                        <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
+                          <div className="flex items-start gap-2">
+                            <Truck className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                            <p className="text-xs text-amber-800">
+                              <span className="font-semibold">
+                                Frais de transport non inclus.
+                              </span>{' '}
+                              Les frais seront calcules et communiques dans le
+                              devis detaille.
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Prochaines etapes */}
+                        <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+                          <p className="text-sm font-semibold text-green-900 mb-3">
+                            Prochaines etapes
+                          </p>
+                          <div className="space-y-3">
+                            <div className="flex items-start gap-3">
+                              <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
+                              <div>
+                                <p className="text-sm font-medium text-green-900">
+                                  Commande recue
+                                </p>
+                                <p className="text-xs text-green-700">
+                                  Votre commande a ete enregistree avec succes
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-start gap-3">
+                              <Clock className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
+                              <div>
+                                <p className="text-sm font-medium text-green-900">
+                                  Validation sous 24h
+                                </p>
+                                <p className="text-xs text-green-700">
+                                  Notre equipe verifie et valide votre commande
+                                  sous 24h ouvrees
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-start gap-3">
+                              <Mail className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
+                              <div>
+                                <p className="text-sm font-medium text-green-900">
+                                  Devis detaille par email
+                                </p>
+                                <p className="text-xs text-green-700">
+                                  Vous recevrez un devis incluant les frais de
+                                  transport a{' '}
+                                  <span className="font-semibold">
+                                    {submittedOrderData.requesterEmail}
+                                  </span>
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Email info */}
+                        <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
+                          <div className="flex items-center gap-2">
+                            <Mail className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                            <p className="text-xs text-blue-800">
+                              Un email de confirmation sera envoye a{' '}
+                              <span className="font-semibold">
+                                {submittedOrderData.requesterEmail}
+                              </span>
+                            </p>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Footer */}
+                  <div className="px-8 py-5 border-t bg-gray-50">
+                    <button
+                      onClick={() => {
+                        setOrderNumber(null);
+                        setSubmittedOrderData(null);
+                        setIsOrderFormOpen(false);
+                        setCart([]);
+                      }}
+                      className="w-full px-6 py-3 text-white rounded-lg hover:opacity-90 font-semibold"
+                      style={{ backgroundColor: branding.primary_color }}
+                    >
+                      Fermer
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <OrderFormUnified
                   affiliateId={selection.affiliate_id}
                   selectionId={selection.id}
+                  selectionName={selection.name}
+                  selectionSlug={id}
                   cart={cart.map(
                     (item): UnifiedCartItem => ({
                       id: item.id,
