@@ -47,6 +47,7 @@ import {
   XCircle,
   Clock,
   AlertCircle,
+  AlertTriangle,
   Euro,
   Percent,
   Ruler,
@@ -69,6 +70,10 @@ import {
 
 import { createClient } from '@verone/utils/supabase/client';
 
+import {
+  getOrderMissingFields,
+  type MissingFieldsResult,
+} from '../utils/order-missing-fields';
 import {
   usePendingOrdersCount,
   useApproveOrder,
@@ -420,6 +425,9 @@ function CommandesTab() {
                 <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
                   Montant
                 </th>
+                <th className="text-center px-6 py-4 text-sm font-medium text-gray-500">
+                  Infos manquantes
+                </th>
                 <th className="text-right px-6 py-4 text-sm font-medium text-gray-500">
                   Actions
                 </th>
@@ -429,6 +437,21 @@ function CommandesTab() {
               {orders.map(order => {
                 const isExpanded = expandedRows.has(order.id);
                 const details = order.linkme_details;
+                const missingFields: MissingFieldsResult | null = details
+                  ? getOrderMissingFields({
+                      details: details as unknown as Parameters<
+                        typeof getOrderMissingFields
+                      >[0]['details'],
+                      organisationSiret: order.organisation_siret ?? undefined,
+                      organisationCountry:
+                        order.organisation_country ?? undefined,
+                      organisationVatNumber:
+                        order.organisation_vat_number ?? undefined,
+                      ownerType: details.owner_type,
+                      ignoredFields:
+                        (details.ignored_missing_fields as string[]) ?? [],
+                    })
+                  : null;
 
                 return (
                   <Fragment key={order.id}>
@@ -535,6 +558,26 @@ function CommandesTab() {
                           </p>
                         </div>
                       </td>
+                      <td className="px-6 py-4 text-center">
+                        {missingFields && !missingFields.isComplete ? (
+                          <Link
+                            href={`/canaux-vente/linkme/commandes/${order.id}`}
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-medium border border-amber-300 text-amber-700 bg-amber-50 hover:bg-amber-100 transition-colors"
+                            onClick={e => e.stopPropagation()}
+                          >
+                            <AlertTriangle className="h-3 w-3" />
+                            {missingFields.total} manquant
+                            {missingFields.total > 1 ? 's' : ''}
+                          </Link>
+                        ) : missingFields?.isComplete ? (
+                          <span className="inline-flex items-center gap-1 text-xs text-green-600">
+                            <CheckCircle className="h-3.5 w-3.5" />
+                            Complet
+                          </span>
+                        ) : (
+                          <span className="text-xs text-gray-400">-</span>
+                        )}
+                      </td>
                       <td className="px-6 py-4">
                         {(() => {
                           const validationStatus =
@@ -614,7 +657,110 @@ function CommandesTab() {
                         key={`${order.id}-expanded`}
                         className="bg-gray-50 hover:bg-gray-50"
                       >
-                        <td colSpan={6} className="p-0">
+                        <td colSpan={7} className="p-0">
+                          {/* Contacts fusionnés */}
+                          {details &&
+                            (details.requester_name ??
+                              details.billing_name) && (
+                              <div className="px-6 pt-3 pb-1">
+                                <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">
+                                  Contacts
+                                </p>
+                                <div className="flex flex-wrap gap-3">
+                                  {(() => {
+                                    type ContactRole =
+                                      | 'demandeur'
+                                      | 'responsable'
+                                      | 'facturation';
+                                    const contacts: {
+                                      name: string;
+                                      email: string | null;
+                                      phone: string | null;
+                                      roles: ContactRole[];
+                                    }[] = [];
+                                    const seen = new Map<string, number>();
+                                    const addContact = (
+                                      name: string | null,
+                                      email: string | null,
+                                      phone: string | null,
+                                      role: ContactRole
+                                    ) => {
+                                      if (!name) return;
+                                      const key = `${name}|${email ?? ''}`;
+                                      if (seen.has(key)) {
+                                        const existing =
+                                          contacts[seen.get(key)!];
+                                        if (
+                                          existing &&
+                                          !existing.roles.includes(role)
+                                        ) {
+                                          existing.roles.push(role);
+                                        }
+                                      } else {
+                                        seen.set(key, contacts.length);
+                                        contacts.push({
+                                          name,
+                                          email,
+                                          phone,
+                                          roles: [role],
+                                        });
+                                      }
+                                    };
+                                    addContact(
+                                      details.requester_name,
+                                      details.requester_email,
+                                      details.requester_phone,
+                                      'demandeur'
+                                    );
+                                    addContact(
+                                      details.billing_name,
+                                      details.billing_email,
+                                      details.billing_phone,
+                                      'facturation'
+                                    );
+                                    addContact(
+                                      details.delivery_contact_name,
+                                      details.delivery_contact_email,
+                                      details.delivery_contact_phone,
+                                      'responsable'
+                                    );
+                                    return contacts.map((c, i) => (
+                                      <div
+                                        key={i}
+                                        className="flex items-center gap-2 bg-white border rounded-lg px-3 py-2 text-sm"
+                                      >
+                                        <User className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                                        <div className="min-w-0">
+                                          <p className="font-medium text-gray-900 truncate">
+                                            {c.name}
+                                          </p>
+                                          {c.email && (
+                                            <p className="text-xs text-gray-500 truncate">
+                                              {c.email}
+                                            </p>
+                                          )}
+                                        </div>
+                                        <div className="flex gap-1 flex-shrink-0">
+                                          {c.roles.map(r => (
+                                            <span
+                                              key={r}
+                                              className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200"
+                                            >
+                                              {r === 'demandeur'
+                                                ? 'Dem.'
+                                                : r === 'responsable'
+                                                  ? 'Resp.'
+                                                  : 'Fact.'}
+                                            </span>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    ));
+                                  })()}
+                                </div>
+                              </div>
+                            )}
+                          {/* Produits */}
                           <div className="py-3 px-6 space-y-2">
                             {order.items.map(item => (
                               <div

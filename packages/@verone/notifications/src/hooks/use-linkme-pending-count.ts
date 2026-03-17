@@ -99,7 +99,7 @@ export function useLinkmePendingCount(options?: {
       // Note: linkme_orders_enriched est une vue, cast nécessaire
       const { count: totalCount, error: countError } = await supabase
         .from('linkme_orders_enriched' as 'sales_orders')
-        .select('*', { count: 'exact', head: true })
+        .select('id', { count: 'exact', head: true })
         .in('status', ['draft', 'validated']);
 
       if (countError) {

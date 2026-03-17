@@ -54,7 +54,7 @@ export function useLinkmeMissingInfoCount(options?: {
       // Count pending info requests (sent but not completed/cancelled/expired)
       const { count: totalCount, error: countError } = await supabase
         .from('linkme_info_requests')
-        .select('*', { count: 'exact', head: true })
+        .select('id', { count: 'exact', head: true })
         .not('sent_at', 'is', null)
         .is('completed_at', null)
         .is('cancelled_at', null)

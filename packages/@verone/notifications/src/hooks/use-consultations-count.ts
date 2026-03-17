@@ -99,7 +99,7 @@ export function useConsultationsCount(options?: {
       // Query consultations actives (en_attente + en_cours)
       const { count: totalCount, error: countError } = await supabase
         .from('client_consultations')
-        .select('*', { count: 'exact', head: true })
+        .select('id', { count: 'exact', head: true })
         .in('status', ['en_attente', 'en_cours'])
         .is('archived_at', null) // Exclure archivées
         .is('deleted_at', null); // Exclure supprimées
@@ -119,13 +119,13 @@ export function useConsultationsCount(options?: {
           await Promise.all([
             supabase
               .from('client_consultations')
-              .select('*', { count: 'exact', head: true })
+              .select('id', { count: 'exact', head: true })
               .eq('status', 'en_attente')
               .is('archived_at', null)
               .is('deleted_at', null),
             supabase
               .from('client_consultations')
-              .select('*', { count: 'exact', head: true })
+              .select('id', { count: 'exact', head: true })
               .eq('status', 'en_cours')
               .is('archived_at', null)
               .is('deleted_at', null),
