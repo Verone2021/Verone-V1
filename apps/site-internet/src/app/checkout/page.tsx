@@ -6,15 +6,31 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 import { formatPrice } from '@verone/utils';
-import { ArrowLeft, Lock, ShoppingCart, Truck } from 'lucide-react';
+import {
+  ArrowLeft,
+  Check,
+  CreditCard,
+  Lock,
+  Package,
+  Shield,
+  ShoppingCart,
+  Truck,
+} from 'lucide-react';
 
 import { useCart } from '@/contexts/CartContext';
+
+const CHECKOUT_STEPS = [
+  { label: 'Panier', icon: ShoppingCart, done: true },
+  { label: 'Livraison', icon: Truck, done: false },
+  { label: 'Paiement', icon: CreditCard, done: false },
+  { label: 'Confirmation', icon: Check, done: false },
+];
 
 export default function CheckoutPage() {
   const { items, itemCount, subtotal } = useCart();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [useSameBillingAddress, setUseSameBillingAddress] = useState(true);
 
-  // Redirect to cart if empty
   if (items.length === 0) {
     return (
       <div className="max-w-4xl mx-auto px-6 lg:px-8 py-12 text-center">
@@ -62,6 +78,7 @@ export default function CheckoutPage() {
             address: formData.get('address'),
             postalCode: formData.get('postalCode'),
             city: formData.get('city'),
+            country: formData.get('country'),
           },
         }),
       });
@@ -86,11 +103,61 @@ export default function CheckoutPage() {
   const shippingEstimate = subtotal >= 500 ? 0 : 49;
   const total = subtotal + shippingEstimate;
 
+  const inputClass =
+    'w-full px-4 py-3 border border-verone-gray-300 rounded-lg focus:ring-2 focus:ring-verone-black focus:border-transparent outline-none transition-all text-sm';
+
   return (
     <div className="max-w-6xl mx-auto px-6 lg:px-8 py-12">
+      {/* Progress bar */}
+      <div className="mb-10">
+        <div className="flex items-center justify-between max-w-lg mx-auto">
+          {CHECKOUT_STEPS.map((step, i) => {
+            const isActive = i === 1;
+            const Icon = step.icon;
+            return (
+              <div key={step.label} className="flex items-center">
+                <div className="flex flex-col items-center">
+                  <div
+                    className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                      step.done
+                        ? 'bg-green-500 text-white'
+                        : isActive
+                          ? 'bg-verone-black text-verone-white'
+                          : 'bg-verone-gray-200 text-verone-gray-400'
+                    }`}
+                  >
+                    {step.done ? (
+                      <Check className="h-5 w-5" />
+                    ) : (
+                      <Icon className="h-4 w-4" />
+                    )}
+                  </div>
+                  <span
+                    className={`text-xs mt-1.5 ${
+                      isActive
+                        ? 'text-verone-black font-medium'
+                        : 'text-verone-gray-400'
+                    }`}
+                  >
+                    {step.label}
+                  </span>
+                </div>
+                {i < CHECKOUT_STEPS.length - 1 && (
+                  <div
+                    className={`w-12 md:w-20 h-0.5 mx-2 mb-5 ${
+                      step.done ? 'bg-green-500' : 'bg-verone-gray-200'
+                    }`}
+                  />
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
       <Link
         href="/panier"
-        className="inline-flex items-center gap-2 text-sm text-verone-gray-500 hover:text-verone-black transition-colors mb-8"
+        className="inline-flex items-center gap-2 text-sm text-verone-gray-500 hover:text-verone-black transition-colors mb-6"
       >
         <ArrowLeft className="h-4 w-4" />
         Retour au panier
@@ -101,7 +168,7 @@ export default function CheckoutPage() {
       </h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-        {/* Form - 3 columns */}
+        {/* Form */}
         <div className="lg:col-span-3">
           <form
             onSubmit={e => {
@@ -114,7 +181,7 @@ export default function CheckoutPage() {
             {/* Shipping info */}
             <div className="border border-verone-gray-200 rounded-lg p-6">
               <h2 className="text-lg font-semibold text-verone-black mb-4">
-                Informations de livraison
+                Adresse de livraison
               </h2>
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
@@ -131,7 +198,7 @@ export default function CheckoutPage() {
                       type="text"
                       required
                       autoComplete="given-name"
-                      className="w-full px-4 py-3 border border-verone-gray-300 rounded-lg focus:ring-2 focus:ring-verone-black focus:border-transparent outline-none transition-all text-sm"
+                      className={inputClass}
                     />
                   </div>
                   <div>
@@ -147,7 +214,7 @@ export default function CheckoutPage() {
                       type="text"
                       required
                       autoComplete="family-name"
-                      className="w-full px-4 py-3 border border-verone-gray-300 rounded-lg focus:ring-2 focus:ring-verone-black focus:border-transparent outline-none transition-all text-sm"
+                      className={inputClass}
                     />
                   </div>
                 </div>
@@ -164,7 +231,7 @@ export default function CheckoutPage() {
                     type="email"
                     required
                     autoComplete="email"
-                    className="w-full px-4 py-3 border border-verone-gray-300 rounded-lg focus:ring-2 focus:ring-verone-black focus:border-transparent outline-none transition-all text-sm"
+                    className={inputClass}
                   />
                 </div>
                 <div>
@@ -180,7 +247,7 @@ export default function CheckoutPage() {
                     type="tel"
                     required
                     autoComplete="tel"
-                    className="w-full px-4 py-3 border border-verone-gray-300 rounded-lg focus:ring-2 focus:ring-verone-black focus:border-transparent outline-none transition-all text-sm"
+                    className={inputClass}
                   />
                 </div>
                 <div>
@@ -196,10 +263,10 @@ export default function CheckoutPage() {
                     type="text"
                     required
                     autoComplete="street-address"
-                    className="w-full px-4 py-3 border border-verone-gray-300 rounded-lg focus:ring-2 focus:ring-verone-black focus:border-transparent outline-none transition-all text-sm"
+                    className={inputClass}
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-3 gap-4">
                   <div>
                     <label
                       htmlFor="postalCode"
@@ -213,7 +280,7 @@ export default function CheckoutPage() {
                       type="text"
                       required
                       autoComplete="postal-code"
-                      className="w-full px-4 py-3 border border-verone-gray-300 rounded-lg focus:ring-2 focus:ring-verone-black focus:border-transparent outline-none transition-all text-sm"
+                      className={inputClass}
                     />
                   </div>
                   <div>
@@ -229,11 +296,120 @@ export default function CheckoutPage() {
                       type="text"
                       required
                       autoComplete="address-level2"
-                      className="w-full px-4 py-3 border border-verone-gray-300 rounded-lg focus:ring-2 focus:ring-verone-black focus:border-transparent outline-none transition-all text-sm"
+                      className={inputClass}
                     />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="country"
+                      className="block text-sm font-medium text-verone-gray-700 mb-1.5"
+                    >
+                      Pays
+                    </label>
+                    <select
+                      id="country"
+                      name="country"
+                      required
+                      autoComplete="country"
+                      className={inputClass}
+                      defaultValue="FR"
+                    >
+                      <option value="FR">France</option>
+                      <option value="BE">Belgique</option>
+                      <option value="CH">Suisse</option>
+                      <option value="LU">Luxembourg</option>
+                      <option value="MC">Monaco</option>
+                    </select>
                   </div>
                 </div>
               </div>
+            </div>
+
+            {/* Billing address toggle */}
+            <div className="border border-verone-gray-200 rounded-lg p-6">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={useSameBillingAddress}
+                  onChange={e => setUseSameBillingAddress(e.target.checked)}
+                  className="w-4 h-4 accent-verone-black"
+                />
+                <span className="text-sm text-verone-gray-700">
+                  Utiliser la même adresse pour la facturation
+                </span>
+              </label>
+
+              {!useSameBillingAddress && (
+                <div className="mt-4 space-y-4 pt-4 border-t border-verone-gray-100">
+                  <h3 className="text-sm font-semibold text-verone-black">
+                    Adresse de facturation
+                  </h3>
+                  <div>
+                    <label
+                      htmlFor="billingAddress"
+                      className="block text-sm font-medium text-verone-gray-700 mb-1.5"
+                    >
+                      Adresse
+                    </label>
+                    <input
+                      id="billingAddress"
+                      name="billingAddress"
+                      type="text"
+                      className={inputClass}
+                    />
+                  </div>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <label
+                        htmlFor="billingPostalCode"
+                        className="block text-sm font-medium text-verone-gray-700 mb-1.5"
+                      >
+                        Code postal
+                      </label>
+                      <input
+                        id="billingPostalCode"
+                        name="billingPostalCode"
+                        type="text"
+                        className={inputClass}
+                      />
+                    </div>
+                    <div>
+                      <label
+                        htmlFor="billingCity"
+                        className="block text-sm font-medium text-verone-gray-700 mb-1.5"
+                      >
+                        Ville
+                      </label>
+                      <input
+                        id="billingCity"
+                        name="billingCity"
+                        type="text"
+                        className={inputClass}
+                      />
+                    </div>
+                    <div>
+                      <label
+                        htmlFor="billingCountry"
+                        className="block text-sm font-medium text-verone-gray-700 mb-1.5"
+                      >
+                        Pays
+                      </label>
+                      <select
+                        id="billingCountry"
+                        name="billingCountry"
+                        className={inputClass}
+                        defaultValue="FR"
+                      >
+                        <option value="FR">France</option>
+                        <option value="BE">Belgique</option>
+                        <option value="CH">Suisse</option>
+                        <option value="LU">Luxembourg</option>
+                        <option value="MC">Monaco</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Submit */}
@@ -248,21 +424,35 @@ export default function CheckoutPage() {
                 : `Payer ${formatPrice(total)}`}
             </button>
 
-            <p className="text-xs text-verone-gray-400 text-center">
-              Paiement sécurisé par Stripe. Vos données bancaires ne sont jamais
-              stockées sur nos serveurs.
-            </p>
+            {/* Trust badges */}
+            <div className="flex flex-wrap items-center justify-center gap-6 pt-2">
+              <div className="flex items-center gap-1.5 text-verone-gray-400">
+                <Lock className="h-3.5 w-3.5" />
+                <span className="text-xs">Paiement sécurisé SSL</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-verone-gray-400">
+                <CreditCard className="h-3.5 w-3.5" />
+                <span className="text-xs">Visa, Mastercard, Amex</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-verone-gray-400">
+                <Shield className="h-3.5 w-3.5" />
+                <span className="text-xs">Stripe certifié PCI-DSS</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-verone-gray-400">
+                <Package className="h-3.5 w-3.5" />
+                <span className="text-xs">Retours 30 jours</span>
+              </div>
+            </div>
           </form>
         </div>
 
-        {/* Order summary - 2 columns */}
+        {/* Order summary */}
         <div className="lg:col-span-2">
           <div className="border border-verone-gray-200 rounded-lg p-6 sticky top-24">
             <h2 className="text-lg font-semibold text-verone-black mb-4">
               Récapitulatif ({itemCount} article{itemCount > 1 ? 's' : ''})
             </h2>
 
-            {/* Items */}
             <div className="space-y-4 mb-6">
               {items.map(item => {
                 const itemTotal =
@@ -306,7 +496,6 @@ export default function CheckoutPage() {
               })}
             </div>
 
-            {/* Totals */}
             <div className="space-y-3 border-t border-verone-gray-100 pt-4">
               <div className="flex justify-between text-sm text-verone-gray-600">
                 <span>Sous-total</span>

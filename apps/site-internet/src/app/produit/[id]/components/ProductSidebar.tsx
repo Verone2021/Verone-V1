@@ -154,6 +154,12 @@ export function ProductSidebar({
           )}
 
           <p className="text-xs text-muted-foreground">TVA incluse</p>
+
+          {/* Stock status */}
+          <div className="flex items-center gap-1.5 mt-1">
+            <span className="w-2 h-2 rounded-full bg-green-500" />
+            <span className="text-xs font-medium text-green-700">En stock</span>
+          </div>
         </div>
 
         {/* Variantes (SI eligible_variants_count > 1) */}
