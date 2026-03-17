@@ -23,7 +23,10 @@ import { createClient } from '@/lib/supabase/client';
 import { ShareButtons } from '@/components/product/ShareButtons';
 import { StickyAddToCart } from '@/components/product/StickyAddToCart';
 import { JsonLdProduct } from '@/components/seo/JsonLdProduct';
+import { useReviewStats } from '@/hooks/use-reviews';
 import { useCart } from '@/contexts/CartContext';
+
+import { ProductReviews } from '@/components/product/ProductReviews';
 
 import { ProductAccordions } from './components/ProductAccordions';
 import { ProductCrossSell } from './components/ProductCrossSell';
@@ -123,6 +126,9 @@ export default function ProductPage({
     staleTime: 60000,
   });
 
+  // Review stats for JSON-LD
+  const reviewStats = useReviewStats(product?.product_id);
+
   // ===== LOADING STATE =====
   if (isLoading) {
     return (
@@ -175,6 +181,8 @@ export default function ProductPage({
         imageUrl={product.primary_image_url}
         brand={product.brand}
         sku={product.sku}
+        reviewCount={reviewStats.count}
+        averageRating={reviewStats.average}
       />
 
       {/* Breadcrumb */}
@@ -266,6 +274,12 @@ export default function ProductPage({
       </div>
 
       <ProductCrossSell currentProductId={product.product_id} />
+
+      {/* Reviews */}
+      <ProductReviews
+        productId={product.product_id}
+        productName={product.name}
+      />
 
       {/* Sticky mobile add-to-cart */}
       <StickyAddToCart

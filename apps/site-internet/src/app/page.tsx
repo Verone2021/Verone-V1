@@ -8,6 +8,7 @@ import { HeroSection } from '@/components/home/HeroSection';
 import { CardProductLuxury } from '@/components/ui/CardProductLuxury';
 import { useCatalogueProducts } from '@/hooks/use-catalogue-products';
 import { useCollections } from '@/hooks/use-collections';
+import { useReassuranceContent } from '@/hooks/use-site-content';
 
 export default function HomePage() {
   const { data: products, isLoading: productsLoading } = useCatalogueProducts({
@@ -18,6 +19,25 @@ export default function HomePage() {
 
   const { data: collections } = useCollections();
   const featuredCollections = collections?.slice(0, 3);
+  const { data: reassuranceContent } = useReassuranceContent();
+
+  const reassuranceItems = reassuranceContent?.items ?? [
+    {
+      title: 'Livraison soignée',
+      description:
+        'Chaque pièce est emballée avec soin et livrée à domicile avec prise de rendez-vous.',
+    },
+    {
+      title: 'Qualité garantie',
+      description:
+        'Des matériaux nobles sélectionnés auprès des meilleurs artisans et manufactures.',
+    },
+    {
+      title: 'Conseil personnalisé',
+      description:
+        'Notre équipe vous accompagne dans le choix de vos pièces de mobilier et décoration.',
+    },
+  ];
 
   return (
     <div>
@@ -120,36 +140,19 @@ export default function HomePage() {
         </section>
       )}
 
-      {/* Reassurance */}
+      {/* Reassurance (CMS-driven) */}
       <section className="max-w-7xl mx-auto px-6 lg:px-8 py-24">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12 text-center">
-          <div>
-            <h4 className="font-playfair text-lg font-semibold text-verone-black mb-2">
-              Livraison soignée
-            </h4>
-            <p className="text-sm text-verone-gray-500 leading-relaxed">
-              Chaque pièce est emballée avec soin et livrée à domicile avec
-              prise de rendez-vous.
-            </p>
-          </div>
-          <div>
-            <h4 className="font-playfair text-lg font-semibold text-verone-black mb-2">
-              Qualité garantie
-            </h4>
-            <p className="text-sm text-verone-gray-500 leading-relaxed">
-              Des matériaux nobles sélectionnés auprès des meilleurs artisans et
-              manufactures.
-            </p>
-          </div>
-          <div>
-            <h4 className="font-playfair text-lg font-semibold text-verone-black mb-2">
-              Conseil personnalisé
-            </h4>
-            <p className="text-sm text-verone-gray-500 leading-relaxed">
-              Notre équipe vous accompagne dans le choix de vos pièces de
-              mobilier et décoration.
-            </p>
-          </div>
+          {reassuranceItems.map((item, index) => (
+            <div key={index}>
+              <h4 className="font-playfair text-lg font-semibold text-verone-black mb-2">
+                {item.title}
+              </h4>
+              <p className="text-sm text-verone-gray-500 leading-relaxed">
+                {item.description}
+              </p>
+            </div>
+          ))}
         </div>
       </section>
     </div>

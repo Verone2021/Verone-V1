@@ -4,7 +4,19 @@ import Link from 'next/link';
 
 import { ArrowRight } from 'lucide-react';
 
+import { useHeroContent } from '@/hooks/use-site-content';
+
 export function HeroSection() {
+  const { data: heroContent } = useHeroContent();
+
+  // Default values (fallback if CMS not loaded yet)
+  const title = heroContent?.title ?? "L'art de vivre à la française";
+  const subtitle =
+    heroContent?.subtitle ??
+    "Mobilier et décoration d'intérieur haut de gamme pour sublimer votre espace de vie avec raffinement et authenticité.";
+  const ctaText = heroContent?.cta_text ?? 'Découvrir le catalogue';
+  const ctaLink = heroContent?.cta_link ?? '/catalogue';
+
   return (
     <section className="relative min-h-[90vh] flex items-center justify-center bg-verone-white overflow-hidden">
       {/* Background Gradient Subtle */}
@@ -14,9 +26,7 @@ export function HeroSection() {
       <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8 py-24 lg:py-32 text-center">
         {/* Heading */}
         <h1 className="font-playfair text-6xl md:text-7xl lg:text-8xl font-bold text-verone-black tracking-tight leading-none mb-8 animate-fade-in-up">
-          L'élégance
-          <br />
-          <span className="italic">à l'état pur</span>
+          {title}
         </h1>
 
         {/* Subtitle */}
@@ -24,8 +34,7 @@ export function HeroSection() {
           className="text-lg md:text-xl text-verone-gray-600 max-w-2xl mx-auto mb-12 leading-relaxed animate-fade-in-up"
           style={{ animationDelay: '0.2s' }}
         >
-          Mobilier et décoration d'intérieur haut de gamme pour sublimer votre
-          espace de vie avec raffinement et authenticité.
+          {subtitle}
         </p>
 
         {/* CTA Buttons */}
@@ -35,10 +44,10 @@ export function HeroSection() {
         >
           {/* Primary CTA */}
           <Link
-            href="/catalogue"
+            href={ctaLink}
             className="group inline-flex items-center gap-2 px-8 py-4 bg-verone-black text-verone-white text-sm font-semibold uppercase tracking-wide rounded-none hover:bg-verone-gray-800 transition-all duration-300 shadow-md hover:shadow-luxury"
           >
-            Découvrir le catalogue
+            {ctaText}
             <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
           </Link>
 

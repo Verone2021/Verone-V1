@@ -7,6 +7,8 @@ interface JsonLdProductProps {
   brand: string | null;
   sku: string | null;
   inStock?: boolean;
+  reviewCount?: number;
+  averageRating?: number;
 }
 
 export function JsonLdProduct({
@@ -18,6 +20,8 @@ export function JsonLdProduct({
   brand,
   sku,
   inStock = true,
+  reviewCount,
+  averageRating,
 }: JsonLdProductProps) {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://verone.fr';
 
@@ -34,6 +38,17 @@ export function JsonLdProduct({
           brand: {
             '@type': 'Brand',
             name: brand,
+          },
+        }
+      : {}),
+    ...(reviewCount && reviewCount > 0 && averageRating
+      ? {
+          aggregateRating: {
+            '@type': 'AggregateRating',
+            ratingValue: averageRating.toFixed(1),
+            reviewCount,
+            bestRating: 5,
+            worstRating: 1,
           },
         }
       : {}),

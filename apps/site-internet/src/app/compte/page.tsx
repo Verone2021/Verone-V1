@@ -2,7 +2,15 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 
 import type { Metadata } from 'next';
-import { Key, LogOut, Package, Pencil, Trash2, User } from 'lucide-react';
+import {
+  Heart,
+  Key,
+  LogOut,
+  Package,
+  Pencil,
+  Trash2,
+  User,
+} from 'lucide-react';
 
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 
@@ -97,6 +105,13 @@ export default async function ComptePage() {
                 <Pencil className="h-3.5 w-3.5" />
                 Informations personnelles
               </a>
+              <Link
+                href="/compte/favoris"
+                className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm text-verone-gray-600 hover:bg-verone-gray-50 transition-colors"
+              >
+                <Heart className="h-3.5 w-3.5" />
+                Mes favoris
+              </Link>
               <a
                 href="#commandes"
                 className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm text-verone-gray-600 hover:bg-verone-gray-50 transition-colors"

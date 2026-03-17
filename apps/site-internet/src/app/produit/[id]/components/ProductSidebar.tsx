@@ -17,6 +17,7 @@ import { useState } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 import {
   ButtonUnified,
@@ -32,6 +33,8 @@ import { formatPrice } from '@verone/utils';
 import { ShoppingCart, Heart, Truck, Shield, Info, Check } from 'lucide-react';
 
 import { useCart } from '@/contexts/CartContext';
+import { useAuthUser } from '@/hooks/use-auth-user';
+import { useWishlist } from '@/hooks/use-wishlist';
 
 interface ProductSidebarProps {
   product: {
@@ -64,9 +67,17 @@ export function ProductSidebar({
 }: ProductSidebarProps) {
   const [quantity, setQuantity] = useState(1);
   const [includeAssembly, setIncludeAssembly] = useState(false);
-  const [isFavorite, setIsFavorite] = useState(false); // Mock state
   const [addedToCart, setAddedToCart] = useState(false);
   const { addItem } = useCart();
+  const { user } = useAuthUser();
+  const {
+    isInWishlist,
+    toggle: toggleWishlist,
+    isToggling,
+  } = useWishlist(user?.id);
+  const router = useRouter();
+
+  const isFavorite = isInWishlist(product.product_id);
 
   // Prix calculé avec éco-participation
   const hasDiscount =
@@ -87,8 +98,15 @@ export function ProductSidebar({
       <div className="bg-white border rounded-lg p-6 space-y-6 relative">
         {/* Icône Favoris (absolute top-right) */}
         <button
-          onClick={() => setIsFavorite(!isFavorite)}
-          className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 transition-colors"
+          disabled={isToggling}
+          onClick={() => {
+            if (!user) {
+              router.push('/auth/login');
+              return;
+            }
+            toggleWishlist(product.product_id);
+          }}
+          className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 transition-colors disabled:opacity-50"
           aria-label={
             isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'
           }

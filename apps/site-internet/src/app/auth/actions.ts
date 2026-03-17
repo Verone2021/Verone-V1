@@ -58,6 +58,16 @@ export async function signup(formData: FormData) {
     redirect(`/auth/register?error=${encodeURIComponent(error.message)}`);
   }
 
+  // Send welcome email (non-blocking)
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3001';
+  void fetch(`${siteUrl}/api/emails/welcome`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, firstName }),
+  }).catch(emailError => {
+    console.error('[Signup] Welcome email failed:', emailError);
+  });
+
   revalidatePath('/', 'layout');
   redirect('/auth/login?message=check_email');
 }
