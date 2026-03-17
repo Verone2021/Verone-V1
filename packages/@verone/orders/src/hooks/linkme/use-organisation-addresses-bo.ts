@@ -197,8 +197,8 @@ export function useCreateAddressBO() {
 
       return data;
     },
-    onSuccess: (_, variables) => {
-      void queryClient.invalidateQueries({
+    onSuccess: async (_, variables) => {
+      await queryClient.invalidateQueries({
         queryKey: ['organisation-addresses-bo', variables.ownerId],
       });
       toast.success('Adresse créée avec succès');

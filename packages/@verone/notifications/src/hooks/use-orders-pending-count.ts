@@ -192,7 +192,7 @@ export function useOrdersPendingCount(options?: {
       }
 
       // Polling fallback (seulement si authentifié)
-      if (!enableRealtime || refetchInterval > 0) {
+      if (!enableRealtime && refetchInterval > 0) {
         intervalRef.current = setInterval(() => {
           void fetchCount().catch(err => {
             console.error('[useOrdersPendingCount] Polling failed:', err);

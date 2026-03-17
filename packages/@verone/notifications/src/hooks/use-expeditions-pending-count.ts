@@ -179,7 +179,7 @@ export function useExpeditionsPendingCount(options?: {
       }
 
       // Polling fallback (seulement si authentifié)
-      if (!enableRealtime || refetchInterval > 0) {
+      if (!enableRealtime && refetchInterval > 0) {
         intervalRef.current = setInterval(() => {
           void fetchCount().catch((err: unknown) => {
             console.error('[useExpeditionsPendingCount] Polling error:', err);

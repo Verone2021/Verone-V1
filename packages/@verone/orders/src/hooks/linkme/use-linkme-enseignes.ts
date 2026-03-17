@@ -67,7 +67,9 @@ async function fetchEnseignesWithStats(): Promise<EnseigneWithStats[]> {
   /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
   const { data: enseignes, error } = await (supabase as any)
     .from('enseignes')
-    .select('*')
+    .select(
+      'id, name, description, logo_url, member_count, is_active, created_at, updated_at, created_by'
+    )
     .order('name');
   /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
 

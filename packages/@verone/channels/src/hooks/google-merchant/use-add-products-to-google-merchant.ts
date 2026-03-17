@@ -68,7 +68,7 @@ export function useAddProductsToGoogleMerchant() {
 
       return data;
     },
-    onSuccess: data => {
+    onSuccess: async data => {
       const { successCount, errorCount } = data.data ?? {};
 
       logger.info('[useAddProductsToGoogleMerchant] Success', {
@@ -81,13 +81,13 @@ export function useAddProductsToGoogleMerchant() {
       );
 
       // Invalidate queries pour refresh
-      void queryClient.invalidateQueries({
+      await queryClient.invalidateQueries({
         queryKey: ['google-merchant-products'],
       });
-      void queryClient.invalidateQueries({
+      await queryClient.invalidateQueries({
         queryKey: ['google-merchant-eligible-products'],
       });
-      void queryClient.invalidateQueries({
+      await queryClient.invalidateQueries({
         queryKey: ['google-merchant-stats'],
       });
     },

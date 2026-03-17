@@ -155,7 +155,14 @@ const SECTIONS: SectionDef[] = [
     id: 'organisation',
     label: 'Entreprise',
     icon: Building2,
-    fields: [{ key: 'organisation_siret', label: 'SIRET', inputType: 'text' }],
+    fields: [
+      { key: 'organisation_siret', label: 'SIRET', inputType: 'text' },
+      {
+        key: 'organisation_vat_number',
+        label: 'N° TVA intracommunautaire',
+        inputType: 'text',
+      },
+    ],
   },
 ];
 

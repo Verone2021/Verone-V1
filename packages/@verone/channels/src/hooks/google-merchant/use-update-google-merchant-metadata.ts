@@ -73,13 +73,13 @@ export function useUpdateGoogleMerchantMetadata() {
 
       return data;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       logger.info('[useUpdateGoogleMerchantMetadata] Success');
 
       toast.success('Métadonnées mises à jour avec succès');
 
       // Invalidate queries
-      void queryClient.invalidateQueries({
+      await queryClient.invalidateQueries({
         queryKey: ['google-merchant-products'],
       });
     },
